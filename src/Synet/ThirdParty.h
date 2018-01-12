@@ -1,5 +1,5 @@
 /*
-* Tests for Synet Framework (http://github.com/ermig1979/Synet).
+* Synet Framework (http://github.com/ermig1979/Synet).
 *
 * Copyright (c) 2018-2018 Yermalayeu Ihar.
 *
@@ -22,17 +22,14 @@
 * SOFTWARE.
 */
 
-#include "Test/TestConfig.h"
+#pragma once
 
-namespace Test
-{
-    bool TestTensor();
-}
+#include "Synet/Config.h"
 
-int main(int argc, char* argv[])
-{
-    Test::TestTensor();
+#include <stddef.h>
 
-    return 0;
-}
+#include <vector>
 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdLib.hpp"
+#endif //SYNET_SIMD_LIBRARY_ENABLE

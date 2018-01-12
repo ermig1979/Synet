@@ -22,17 +22,12 @@
 * SOFTWARE.
 */
 
-#include "Test/TestConfig.h"
+#pragma once
+
+#include "Synet/Synet.h"
 
 namespace Test
 {
-    bool TestTensor();
-}
 
-int main(int argc, char* argv[])
-{
-    Test::TestTensor();
-
-    return 0;
 }
 

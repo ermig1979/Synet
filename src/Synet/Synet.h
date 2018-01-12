@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include "Synet/Tensor.h"
+
 namespace Synet
 {
 

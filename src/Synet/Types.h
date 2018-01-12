@@ -1,5 +1,5 @@
 /*
-* Tests for Synet Framework (http://github.com/ermig1979/Synet).
+* Synet Framework (http://github.com/ermig1979/Synet).
 *
 * Copyright (c) 2018-2018 Yermalayeu Ihar.
 *
@@ -22,17 +22,11 @@
 * SOFTWARE.
 */
 
-#include "Test/TestConfig.h"
+#pragma once
 
-namespace Test
+#include "Synet/ThirdParty.h"
+
+namespace Synet
 {
-    bool TestTensor();
+
 }
-
-int main(int argc, char* argv[])
-{
-    Test::TestTensor();
-
-    return 0;
-}
-

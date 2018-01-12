@@ -26,13 +26,12 @@
 
 namespace Test
 {
-    bool TestTensor();
+    bool TestTensor()
+    {
+        typedef Synet::Tensor<float> Tensor;
+
+        Tensor tensor;
+
+        return true;
+    }
 }
-
-int main(int argc, char* argv[])
-{
-    Test::TestTensor();
-
-    return 0;
-}
-
