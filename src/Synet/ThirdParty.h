@@ -27,8 +27,10 @@
 #include "Synet/Config.h"
 
 #include <stddef.h>
+#include <assert.h>
 
 #include <vector>
+#include <string>
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdLib.hpp"

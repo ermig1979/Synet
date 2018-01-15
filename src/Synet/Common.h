@@ -28,5 +28,5 @@
 
 namespace Synet
 {
-
+    typedef std::string String;
 }

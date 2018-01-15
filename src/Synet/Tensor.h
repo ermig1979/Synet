@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "Synet/Types.h"
+#include "Synet/Common.h"
 
 namespace Synet
 {
@@ -33,6 +33,7 @@ namespace Synet
     public:
         typedef T Type;
         typedef std::vector<size_t> Shape;
+        typedef std::vector<size_t> Index;
 
         inline Tensor()
         {
@@ -71,6 +72,8 @@ namespace Synet
 
         inline size_t Size(size_t startAxis, size_t endAxis) const
         {
+            assert(startAxis < endAxis && endAxus <= _shape.size());
+
             size_t size = 1;
             for (size_t axis = startAxis; axis < endAxis; ++axis)
                 size *= _shape[axis];
@@ -90,6 +93,32 @@ namespace Synet
         inline const Type * Data() const
         {
             return _data.data();
+        }
+
+        size_t Offset(const Index & index) const
+        {
+            assert(_shape.size() == index.size());
+
+            size_t offset = 0;
+            for (size_t axis = 0; axis < _shape.size(); ++axis)
+            {
+                assert(_shape[axis] > 0);
+                assert(index[axis] < _shape[axis]);
+
+                offset *= _shape[axis];
+                offset += index[axis];
+            }
+            return offset;
+        }
+
+        inline Type * DataAt(const Index & index)
+        {
+            return _data.data() + Offset(index);
+        }
+
+        inline const Type * DataAt(const Index & index) const
+        {
+            return _data.data() + Offset(index);
         }
 
     private:

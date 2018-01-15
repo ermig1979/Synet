@@ -24,5 +24,30 @@
 
 #pragma once
 
+#include "Synet/Types.h"
 #include "Synet/Tensor.h"
-#include "Synet/Layer.h"
+
+namespace Synet
+{
+    template <class T, template<class> class Allocator = std::allocator> class Layer
+    {
+    public:
+        typedef T Type;
+
+        inline void Forward(const std::vector<Tensor<Type, Allocator>*> & src, const std::vector<Tensor<Type, Allocator>*> & dst)
+        {
+            ForwardCpu(src, dst);
+        }
+
+        virtual void Reshape(const std::vector<Tensor<Type, Allocator>*> & src, const std::vector<Tensor<Type, Allocator>*> & dst) = 0;
+
+    protected:
+
+        virtual void ForwardCpu(const std::vector<Tensor<Type, Allocator>*> & src, const std::vector<Tensor<Type, Allocator>*> & dst)
+        {
+
+        }
+
+    private:
+    };
+}
