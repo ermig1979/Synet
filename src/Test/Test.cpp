@@ -33,6 +33,13 @@ int main(int argc, char* argv[])
 {
     Test::TestTensor();
 
+    typedef Synet::Network<float> Network;
+    Network net;
+
+    Synet::InputLayerOptions inputLayerOptions("Input", Synet::Shape({1, 1, 1, 1}));
+
+    Synet::InputLayer<float> InputLayer(inputLayerOptions);
+
     return 0;
 }
 

@@ -26,7 +26,12 @@
 
 #include "Synet/ThirdParty.h"
 
+#define SYNET_CLASS_INSTANCE(name) \
+  template class name<float>; 
+
 namespace Synet
 {
     typedef std::string String;
+    typedef std::vector<size_t> Shape;
+    typedef std::vector<size_t> Index;
 }

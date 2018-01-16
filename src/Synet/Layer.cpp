@@ -22,17 +22,37 @@
 * SOFTWARE.
 */
 
-#pragma once
+#include "Synet/Synet.h"
 
-#include "Synet/Config.h"
+namespace Synet
+{
+    struct LayerTypeName
+    {
+        LayerOptions::Type type;
+        String name;
+    };
 
-#include <stddef.h>
-#include <assert.h>
+    const LayerTypeName g_layerTypeNames[] =
+    {
+        { LayerOptions::InputLayer, "InputLayer" },
+    };
 
-#include <vector>
-#include <string>
-#include <memory>
+    String LayerOptions::ToString(Type type)
+    {
+        if (type > LayerOptions::UnknownLayer && type < LayerOptions::LayerTypeSize)
+            return g_layerTypeNames[type].name;
+        else
+            return "";
+    }
 
-#if defined(SYNET_SIMD_LIBRARY_ENABLE)
-#include "Simd/SimdLib.hpp"
-#endif //SYNET_SIMD_LIBRARY_ENABLE
+    LayerOptions::Type LayerOptions::FromString(const String & name)
+    {
+        LayerOptions::Type type = (LayerOptions::Type)(LayerOptions::LayerTypeSize - 1);
+        for (; type > LayerOptions::UnknownLayer; type = (LayerOptions::Type)((int)type - 1))
+        {
+            if (g_layerTypeNames[type].name == name)
+                return type;
+        }
+        return type;
+    }
+}

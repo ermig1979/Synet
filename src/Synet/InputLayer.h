@@ -24,15 +24,46 @@
 
 #pragma once
 
-#include "Synet/Config.h"
+#include "Synet/Common.h"
+#include "Synet/Layer.h"
 
-#include <stddef.h>
-#include <assert.h>
+namespace Synet
+{
+    struct InputLayerOptions : public LayerOptions
+    {
+        Shape shape;
 
-#include <vector>
-#include <string>
-#include <memory>
+        InputLayerOptions(const String & n, const Shape & s)
+            : LayerOptions(LayerOptions::InputLayer, n)
+            , shape(s)
+        {
+        }
+    };
 
-#if defined(SYNET_SIMD_LIBRARY_ENABLE)
-#include "Simd/SimdLib.hpp"
-#endif //SYNET_SIMD_LIBRARY_ENABLE
+    template <class T, template<class> class Allocator = std::allocator> class InputLayer : public Synet::Layer<T, Allocator>
+    {
+    public:
+        typedef T Type;
+        typedef Layer<T, Allocator> Base;
+        typedef typename Base::TensorPtrs TensorPtrs;
+
+        InputLayer(const InputLayerOptions & options)
+            : Base(options)
+            , _options(options)
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst) {}
+
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst);
+
+        virtual inline size_t SrcNum() const { return 0; }
+        virtual inline size_t DstMin() const { return 1; }
+
+    protected:
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst) {}
+
+    private:
+        InputLayerOptions _options;
+    };
+}

@@ -22,9 +22,36 @@
 * SOFTWARE.
 */
 
-#include "Synet/Synet.h"
+#pragma once
+
+#include "Synet/Common.h"
+#include "Synet/Tensor.h"
+#include "Synet/Layer.h"
 
 namespace Synet
 {
+    template <class T, template<class> class Allocator = std::allocator> class Network
+    {
+    public:
+        typedef T Type;
 
+        void Forward(const std::vector<Tensor<Type, Allocator>*> & src, const std::vector<Tensor<Type, Allocator>*> & dst)
+        {
+
+        }
+
+        const String & Name() const { return _name; }
+
+    protected:
+
+
+    private:
+        typedef Synet::Layer<Type, Allocator> Layer;
+        typedef std::shared_ptr<Layer> LayerSharedPtr;
+        typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
+
+        LayerSharedPtrs _layers;
+
+        String _name;
+    };
 }

@@ -32,8 +32,6 @@ namespace Synet
     {
     public:
         typedef T Type;
-        typedef std::vector<size_t> Shape;
-        typedef std::vector<size_t> Index;
 
         inline Tensor()
         {

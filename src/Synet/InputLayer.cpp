@@ -22,17 +22,19 @@
 * SOFTWARE.
 */
 
-#pragma once
+#include "Synet/InputLayer.h"
 
-#include "Synet/Config.h"
+namespace Synet
+{
+    template <class T, template<class> class A> void InputLayer<T, A>::Setup(const InputLayer::TensorPtrs & src, const InputLayer::TensorPtrs & dst)
+    {
+        const Shape & shape = _options.shape;
+        if (shape.size() > 0) 
+        {
+            for (size_t i = 0; i < dst.size(); ++i)
+                dst[i]->Reshape(shape);
+        }
+    }
 
-#include <stddef.h>
-#include <assert.h>
-
-#include <vector>
-#include <string>
-#include <memory>
-
-#if defined(SYNET_SIMD_LIBRARY_ENABLE)
-#include "Simd/SimdLib.hpp"
-#endif //SYNET_SIMD_LIBRARY_ENABLE
+    SYNET_CLASS_INSTANCE(InputLayer);
+}
