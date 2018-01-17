@@ -28,6 +28,7 @@
 
 #include <stddef.h>
 #include <assert.h>
+#include <math.h>
 
 #include <vector>
 #include <string>

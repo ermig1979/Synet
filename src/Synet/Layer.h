@@ -37,6 +37,7 @@ namespace Synet
             InputLayer,
             InnerProductLayer,
             ReluLayer,
+            SigmoidLayer,
             LayerTypeSize
         };
         const Type type;

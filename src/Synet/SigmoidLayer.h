@@ -22,40 +22,46 @@
 * SOFTWARE.
 */
 
+#pragma once
+
+#include "Synet/Common.h"
 #include "Synet/Layer.h"
 
 namespace Synet
 {
-    struct LayerTypeName
+    struct SigmoidLayerOptions : public LayerOptions
     {
-        LayerOptions::Type type;
-        String name;
-    };
+        float slope;
 
-    const LayerTypeName g_layerTypeNames[] =
-    {
-        { LayerOptions::InputLayer, "InputLayer" },
-        { LayerOptions::InnerProductLayer, "InnerProductLayer" },
-        { LayerOptions::ReluLayer, "ReluLayer" },
-        { LayerOptions::SigmoidLayer, "SigmoidLayer" },
-    };
-
-    String LayerOptions::ToString(Type type)
-    {
-        if (type > LayerOptions::UnknownLayer && type < LayerOptions::LayerTypeSize)
-            return g_layerTypeNames[type].name;
-        else
-            return "";
-    }
-
-    LayerOptions::Type LayerOptions::FromString(const String & name)
-    {
-        LayerOptions::Type type = (LayerOptions::Type)(LayerOptions::LayerTypeSize - 1);
-        for (; type > LayerOptions::UnknownLayer; type = (LayerOptions::Type)((int)type - 1))
+        SigmoidLayerOptions(const String & n, const float & s = 1.0f)
+            : LayerOptions(LayerOptions::SigmoidLayer, n)
+            , slope(s)
         {
-            if (g_layerTypeNames[type].name == name)
-                return type;
         }
-        return type;
-    }
+    };
+
+    template <class T, template<class> class Allocator = std::allocator> class SigmoidLayer : public Synet::Layer<T, Allocator>
+    {
+    public:
+        typedef T Type;
+        typedef Layer<T, Allocator> Base;
+        typedef typename Base::TensorPtrs TensorPtrs;
+
+        SigmoidLayer(const SigmoidLayerOptions & options)
+            : Base(options)
+            , _options(options)
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst) {}
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) {};
+        virtual inline size_t SrcNum() const { return 1; }
+        virtual inline size_t DstMin() const { return 1; }
+
+    protected:
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst);
+
+    private:
+        SigmoidLayerOptions _options;
+    };
 }

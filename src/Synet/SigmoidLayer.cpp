@@ -22,40 +22,19 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layer.h"
+#include "Synet/SigmoidLayer.h"
 
 namespace Synet
 {
-    struct LayerTypeName
+    template <class T, template<class> class A> void SigmoidLayer<T, A>::ForwardCpu(const SigmoidLayer::TensorPtrs & src, const SigmoidLayer::TensorPtrs & dst)
     {
-        LayerOptions::Type type;
-        String name;
-    };
-
-    const LayerTypeName g_layerTypeNames[] =
-    {
-        { LayerOptions::InputLayer, "InputLayer" },
-        { LayerOptions::InnerProductLayer, "InnerProductLayer" },
-        { LayerOptions::ReluLayer, "ReluLayer" },
-        { LayerOptions::SigmoidLayer, "SigmoidLayer" },
-    };
-
-    String LayerOptions::ToString(Type type)
-    {
-        if (type > LayerOptions::UnknownLayer && type < LayerOptions::LayerTypeSize)
-            return g_layerTypeNames[type].name;
-        else
-            return "";
+        const Type * pSrc = src[0]->Data();
+        Type * pDst = dst[0]->Data();
+        size_t size = src[0]->Size();
+        Type slope = _options.slope;
+        for (size_t i = 0; i < size; ++i)
+            pDst[i] = Type(1.0) / (Type(1.0) + ::exp(-pSrc[i] * slope));
     }
 
-    LayerOptions::Type LayerOptions::FromString(const String & name)
-    {
-        LayerOptions::Type type = (LayerOptions::Type)(LayerOptions::LayerTypeSize - 1);
-        for (; type > LayerOptions::UnknownLayer; type = (LayerOptions::Type)((int)type - 1))
-        {
-            if (g_layerTypeNames[type].name == name)
-                return type;
-        }
-        return type;
-    }
+    SYNET_CLASS_INSTANCE(SigmoidLayer);
 }
