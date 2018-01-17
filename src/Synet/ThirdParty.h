@@ -32,6 +32,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <algorithm>
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdLib.hpp"

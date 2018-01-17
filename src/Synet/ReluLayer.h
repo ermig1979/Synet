@@ -22,39 +22,46 @@
 * SOFTWARE.
 */
 
+#pragma once
+
+#include "Synet/Common.h"
 #include "Synet/Layer.h"
 
 namespace Synet
 {
-    struct LayerTypeName
+    struct ReluLayerOptions : public LayerOptions
     {
-        LayerOptions::Type type;
-        String name;
-    };
+        float negativeSlope;
 
-    const LayerTypeName g_layerTypeNames[] =
-    {
-        { LayerOptions::InputLayer, "InputLayer" },
-        { LayerOptions::InnerProductLayer, "InnerProductLayer" },
-        { LayerOptions::ReluLayer, "ReluLayer" },
-    };
-
-    String LayerOptions::ToString(Type type)
-    {
-        if (type > LayerOptions::UnknownLayer && type < LayerOptions::LayerTypeSize)
-            return g_layerTypeNames[type].name;
-        else
-            return "";
-    }
-
-    LayerOptions::Type LayerOptions::FromString(const String & name)
-    {
-        LayerOptions::Type type = (LayerOptions::Type)(LayerOptions::LayerTypeSize - 1);
-        for (; type > LayerOptions::UnknownLayer; type = (LayerOptions::Type)((int)type - 1))
+        ReluLayerOptions(const String & n, const float & ns = 0.0f)
+            : LayerOptions(LayerOptions::ReluLayer, n)
+            , negativeSlope(ns)
         {
-            if (g_layerTypeNames[type].name == name)
-                return type;
         }
-        return type;
-    }
+    };
+
+    template <class T, template<class> class Allocator = std::allocator> class ReluLayer : public Synet::Layer<T, Allocator>
+    {
+    public:
+        typedef T Type;
+        typedef Layer<T, Allocator> Base;
+        typedef typename Base::TensorPtrs TensorPtrs;
+
+        ReluLayer(const ReluLayerOptions & options)
+            : Base(options)
+            , _options(options)
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst) {}
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) {};
+        virtual inline size_t SrcNum() const { return 1; }
+        virtual inline size_t DstMin() const { return 1; }
+
+    protected:
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst);
+
+    private:
+        ReluLayerOptions _options;
+    };
 }

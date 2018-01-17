@@ -28,3 +28,4 @@
 #include "Synet/Layer.h"
 #include "Synet/Network.h"
 #include "Synet/InputLayer.h"
+#include "Synet/InnerProductLayer.h"

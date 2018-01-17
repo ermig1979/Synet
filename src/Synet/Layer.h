@@ -36,6 +36,7 @@ namespace Synet
             UnknownLayer = -1,
             InputLayer,
             InnerProductLayer,
+            ReluLayer,
             LayerTypeSize
         };
         const Type type;
