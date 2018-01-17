@@ -22,38 +22,20 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layer.h"
+#pragma once
+
+#include "Synet/Common.h"
 
 namespace Synet
 {
-    struct LayerTypeName
+    enum CblasTranspose
     {
-        LayerOptions::Type type;
-        String name;
+        CblasNoTrans = 111, 
+        CblasTrans = 112, 
+        CblasConjTrans = 113, 
+        CblasConjNoTrans = 114,
     };
 
-    const LayerTypeName g_layerTypeNames[] =
-    {
-        { LayerOptions::InputLayer, "InputLayer" },
-        { LayerOptions::InnerProductLayer, "InnerProductLayer" },
-    };
-
-    String LayerOptions::ToString(Type type)
-    {
-        if (type > LayerOptions::UnknownLayer && type < LayerOptions::LayerTypeSize)
-            return g_layerTypeNames[type].name;
-        else
-            return "";
-    }
-
-    LayerOptions::Type LayerOptions::FromString(const String & name)
-    {
-        LayerOptions::Type type = (LayerOptions::Type)(LayerOptions::LayerTypeSize - 1);
-        for (; type > LayerOptions::UnknownLayer; type = (LayerOptions::Type)((int)type - 1))
-        {
-            if (g_layerTypeNames[type].name == name)
-                return type;
-        }
-        return type;
-    }
+    template <typename T> void CpuGemm(CblasTranspose transA, CblasTranspose transB, 
+        size_t M, size_t N, size_t K, T alpha, const T * A, const T * B, T beta, T * C);
 }
