@@ -38,6 +38,7 @@ namespace Synet
         { LayerOptions::InnerProductLayer, "InnerProductLayer" },
         { LayerOptions::ReluLayer, "ReluLayer" },
         { LayerOptions::SigmoidLayer, "SigmoidLayer" },
+        { LayerOptions::PoolingLayer, "PoolingLayer" },
     };
 
     String LayerOptions::ToString(Type type)

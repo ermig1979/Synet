@@ -38,4 +38,6 @@ namespace Synet
 
     template <typename T> void CpuGemm(CblasTranspose transA, CblasTranspose transB, 
         size_t M, size_t N, size_t K, T alpha, const T * A, const T * B, T beta, T * C);
+
+    template <typename T> void CpuSet(size_t size, T value, T * dst);
 }

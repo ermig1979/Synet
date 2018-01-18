@@ -29,6 +29,8 @@
 #include <stddef.h>
 #include <assert.h>
 #include <math.h>
+#include <memory.h>
+#include <float.h>
 
 #include <vector>
 #include <string>

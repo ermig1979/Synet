@@ -32,7 +32,7 @@ namespace Synet
         _biasTerm = _options.biasTerm;
         _transpose = _options.transpose;
         _N = _options.outputNum;
-        _K = src[0]->AxisSize(_options.axis);
+        _K = src[0]->Axis(_options.axis);
         if (this->_tensors.empty())
         {
             if (_biasTerm)
@@ -61,7 +61,7 @@ namespace Synet
 
     template <class T, template<class> class A> void InnerProductLayer<T, A>::Reshape(const InnerProductLayer::TensorPtrs & src, const InnerProductLayer::TensorPtrs & dst)
     {
-        const size_t newK = src[0]->AxisSize(_options.axis);
+        const size_t newK = src[0]->Axis(_options.axis);
         _M = src[0]->Size(0, _options.axis);
         Shape dstShape = src[0]->GetShape();
         dstShape.resize(_options.axis + 1);

@@ -96,4 +96,17 @@ namespace Synet
         if (transA == CblasTrans && transB == CblasTrans)
             CpuGemmTT(M, N, K, alpha, A, B, C);
     }
+
+    template <> void CpuSet<float>(size_t size, float value, float * dst)
+    {
+        if (value == 0)
+        {
+            memset(dst, 0, size * sizeof(float));
+        }
+        else
+        {
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = value;
+        }
+    }
 }

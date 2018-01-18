@@ -58,19 +58,19 @@ namespace Synet
             return _shape;
         }
 
-        inline size_t AxisCount() const
+        inline size_t Count() const
         {
             return _shape.size();
         }
 
-        inline size_t AxisSize(size_t axis) const
+        inline size_t Axis(size_t axis) const
         {
             return _shape[axis];
         }
 
         inline size_t Size(size_t startAxis, size_t endAxis) const
         {
-            assert(startAxis < endAxis && endAxus <= _shape.size());
+            assert(startAxis < endAxis && endAxis <= _shape.size());
 
             size_t size = 1;
             for (size_t axis = startAxis; axis < endAxis; ++axis)
@@ -81,16 +81,6 @@ namespace Synet
         inline size_t Size() const
         {
             return Size(0, _shape.size());
-        }
-
-        inline Type * Data()
-        {
-            return _data.data();
-        }
-
-        inline const Type * Data() const
-        {
-            return _data.data();
         }
 
         size_t Offset(const Index & index) const
@@ -109,12 +99,22 @@ namespace Synet
             return offset;
         }
 
-        inline Type * DataAt(const Index & index)
+        inline Type * Data()
+        {
+            return _data.data();
+        }
+
+        inline const Type * Data() const
+        {
+            return _data.data();
+        }
+
+        inline Type * Data(const Index & index)
         {
             return _data.data() + Offset(index);
         }
 
-        inline const Type * DataAt(const Index & index) const
+        inline const Type * Data(const Index & index) const
         {
             return _data.data() + Offset(index);
         }
