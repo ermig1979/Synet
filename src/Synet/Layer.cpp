@@ -39,6 +39,7 @@ namespace Synet
         { LayerOptions::ReluLayer, "ReluLayer" },
         { LayerOptions::SigmoidLayer, "SigmoidLayer" },
         { LayerOptions::PoolingLayer, "PoolingLayer" },
+        { LayerOptions::ConvolutionLayer, "ConvolutionLayer" },
     };
 
     String LayerOptions::ToString(Type type)

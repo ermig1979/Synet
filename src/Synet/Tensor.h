@@ -40,7 +40,7 @@ namespace Synet
         inline Tensor(const Shape & shape, const Type & value = Type())
             : _shape(shape)
         {
-            _data.resize(Size(), value);
+            _data.resize(Size(0, _shape.size()), value);
         }
 
         inline ~Tensor()
@@ -49,8 +49,8 @@ namespace Synet
 
         inline void Reshape(const Shape & shape, const Type & value = Type())
         {
-            _shape = shape;            
-            _data.resize(Size(), value);
+            _shape = shape; 
+            _data.resize(Size(0, _shape.size()), value);
         }
 
         inline const Shape & GetShape() const
@@ -78,9 +78,14 @@ namespace Synet
             return size;
         }
 
+        inline size_t Size(size_t startAxis) const
+        {
+            return Size(startAxis, _shape.size());
+        }
+
         inline size_t Size() const
         {
-            return Size(0, _shape.size());
+            return _data.size();
         }
 
         size_t Offset(const Index & index) const

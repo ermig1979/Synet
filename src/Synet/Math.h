@@ -40,4 +40,7 @@ namespace Synet
         size_t M, size_t N, size_t K, T alpha, const T * A, const T * B, T beta, T * C);
 
     template <typename T> void CpuSet(size_t size, T value, T * dst);
+
+    template <typename T> void ImToCol(const T * src, size_t channels, size_t srcX, size_t srcY, size_t kernelX, size_t kernelY,
+        size_t padX, size_t padY, size_t strideX, size_t strideY, size_t dilationX, size_t dilationY, T * dst);
 }

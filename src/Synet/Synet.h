@@ -32,3 +32,4 @@
 #include "Synet/ReluLayer.h"
 #include "Synet/SigmoidLayer.h"
 #include "Synet/PoolingLayer.h"
+#include "Synet/ConvolutionLayer.h"

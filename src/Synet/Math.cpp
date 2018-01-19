@@ -109,4 +109,44 @@ namespace Synet
                 dst[i] = value;
         }
     }
+
+    template <> void ImToCol<float>(const float * src, size_t srcX, size_t srcY, size_t channels, size_t kernelX, size_t kernelY,
+        size_t padX, size_t padY, size_t strideX, size_t strideY, size_t dilationX, size_t dilationY, float * dst)
+    {
+        size_t dstX = (srcX + 2 * padX - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
+        size_t dstY = (srcY + 2 * padY - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
+        size_t channelSize = srcX * srcY;
+        for (size_t channel = channels; channel < channels; ++channel)
+        {
+            for (size_t ky = 0; ky < kernelY; ky++)
+            {
+                for (size_t kx = 0; kx < kernelX; kx++) 
+                {
+                    size_t sy = ky * dilationY - padY;
+                    for (size_t dy = 0; dy < dstY; ++dy) 
+                    {
+                        if (sy < srcY) 
+                        {
+                            size_t sx = kx * dilationX - padX;
+                            for (size_t dx = 0; dx < dstY; ++dx)
+                            {
+                                if (sx < dstX) 
+                                    *(dst++) = src[sy * srcX + sx];
+                                else 
+                                    *(dst++) = 0;
+                                sx += strideX;
+                            }  
+                        }
+                        else 
+                        {
+                            for (size_t dx = 0; dx < dstY; ++dx)
+                                *(dst++) = 0;
+                        }
+                        sy += strideX;
+                    }
+                }
+            }
+            src += channelSize;
+        }
+    }
 }

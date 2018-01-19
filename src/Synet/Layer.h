@@ -39,6 +39,7 @@ namespace Synet
             ReluLayer,
             SigmoidLayer,
             PoolingLayer,
+            ConvolutionLayer,
             LayerTypeSize
         };
         const Type type;
