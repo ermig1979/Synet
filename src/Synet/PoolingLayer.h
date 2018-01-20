@@ -29,7 +29,7 @@
 
 namespace Synet
 {
-    struct PoolingLayerOptions : public LayerOptions
+    struct PoolingLayerParam : public LayerParam
     {
         enum MethodType
         {
@@ -46,8 +46,8 @@ namespace Synet
         uint32_t strideY;
         bool globalPooling;
 
-        PoolingLayerOptions(const String & n)
-            : LayerOptions(LayerOptions::PoolingLayer, n)
+        PoolingLayerParam(const String & n)
+            : LayerParam(LayerParam::PoolingLayer, n)
             , method(MethodMax)
             , padX(0)
             , padY(0)
@@ -67,9 +67,9 @@ namespace Synet
         typedef Layer<T, Allocator> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        PoolingLayer(const PoolingLayerOptions & options)
-            : Base(options)
-            , _options(options)
+        PoolingLayer(const PoolingLayerParam & param)
+            : Base(param)
+            , _param(param)
         {
         }
 
@@ -82,7 +82,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst);
 
     private:
-        PoolingLayerOptions _options;
+        PoolingLayerParam _param;
         size_t _channels, _srcX, _srcY, _kernelX, _kernelY, _dstX, _dstY;
     };
 }

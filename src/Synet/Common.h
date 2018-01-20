@@ -32,6 +32,8 @@
 namespace Synet
 {
     typedef std::string String;
+    typedef std::vector<String> Strings;
     typedef std::vector<size_t> Shape;
+    typedef std::vector<Shape> Shapes;
     typedef std::vector<size_t> Index;
 }

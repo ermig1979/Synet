@@ -22,19 +22,24 @@
 * SOFTWARE.
 */
 
-#include "Synet/ReluLayer.h"
+#include "Synet/Network.h"
 
 namespace Synet
 {
-    template <class T, template<class> class A> void ReluLayer<T, A>::ForwardCpu(const ReluLayer::TensorPtrs & src, const ReluLayer::TensorPtrs & dst)
+    template <class T, template<class> class A> Network<T, A>::Network(const NetworkParam & param)
+        : _param(param)
     {
-        const Type * pSrc = src[0]->Data();
-        Type * pDst = dst[0]->Data();
-        size_t size = src[0]->Size();
-        Type negativeSlope = _param.negativeSlope;
-        for (size_t i = 0; i < size; ++i)
-            pDst[i] = std::max(pSrc[i], Type(0)) + negativeSlope * std::min(pSrc[i], Type(0));
+        Init();
     }
 
-    SYNET_CLASS_INSTANCE(ReluLayer);
+    template <class T, template<class> class A> void Network<T, A>::Init()
+    {
+        _layers.clear();
+        for (size_t i = 0; i < _param.layers.size(); ++i)
+        {
+            _layers.push_back(LayerSharedPtr(Synet::Layer<T, A>::Create(*_param.layers[i])));
+        }
+    }
+
+    SYNET_CLASS_INSTANCE(Network);
 }

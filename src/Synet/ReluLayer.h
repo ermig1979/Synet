@@ -29,12 +29,12 @@
 
 namespace Synet
 {
-    struct ReluLayerOptions : public LayerOptions
+    struct ReluLayerParam : public LayerParam
     {
         float negativeSlope;
 
-        ReluLayerOptions(const String & n, const float & ns = 0.0f)
-            : LayerOptions(LayerOptions::ReluLayer, n)
+        ReluLayerParam(const String & n, const float & ns = 0.0f)
+            : LayerParam(LayerParam::ReluLayer, n)
             , negativeSlope(ns)
         {
         }
@@ -47,9 +47,9 @@ namespace Synet
         typedef Layer<T, Allocator> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ReluLayer(const ReluLayerOptions & options)
-            : Base(options)
-            , _options(options)
+        ReluLayer(const ReluLayerParam & param)
+            : Base(param)
+            , _param(param)
         {
         }
 
@@ -62,6 +62,6 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst);
 
     private:
-        ReluLayerOptions _options;
+        ReluLayerParam _param;
     };
 }

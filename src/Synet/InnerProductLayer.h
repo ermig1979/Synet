@@ -29,15 +29,15 @@
 
 namespace Synet
 {
-    struct InnerProductLayerOptions : public LayerOptions
+    struct InnerProductLayerParam : public LayerParam
     {
         uint32_t outputNum;
         bool biasTerm;
         bool transpose;
         uint32_t axis;
 
-        InnerProductLayerOptions(const String & n)
-            : LayerOptions(LayerOptions::InnerProductLayer, n)
+        InnerProductLayerParam(const String & n)
+            : LayerParam(LayerParam::InnerProductLayer, n)
             , biasTerm(true)
             , transpose(false)
             , axis(1)
@@ -53,9 +53,9 @@ namespace Synet
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        InnerProductLayer(const InnerProductLayerOptions & options)
-            : Base(options)
-            , _options(options)
+        InnerProductLayer(const InnerProductLayerParam & param)
+            : Base(param)
+            , _param(param)
         {
         }
 
@@ -68,7 +68,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst);
 
     private:
-        InnerProductLayerOptions _options;
+        InnerProductLayerParam _param;
 
         size_t _M;
         size_t _K;

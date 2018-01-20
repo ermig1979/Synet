@@ -29,7 +29,7 @@
 
 namespace Synet
 {
-    struct LayerOptions
+    struct LayerParam
     {
         enum Type
         {
@@ -42,10 +42,12 @@ namespace Synet
             ConvolutionLayer,
             LayerTypeSize
         };
-        const Type type;
-        const String name;
+        Type type;
+        String name;
+        Strings src;
+        Strings dst;
 
-        LayerOptions(Type t, const String & n)
+        LayerParam(Type t, const String & n)
             : type(t)
             , name(n)
         {
@@ -64,12 +66,12 @@ namespace Synet
         typedef std::shared_ptr<Tensor> TensorSharedPtr;
         typedef std::vector<TensorSharedPtr> TensorSharedPtrs;
 
-        Layer(const LayerOptions & options)
-            : _options(options)
+        Layer(const LayerParam & param)
+            : _param(param)
         {
         }
 
-        const LayerOptions & Options() const { return _options; }
+        const LayerParam & Param() const { return _param; }
         TensorSharedPtrs Tensors() { return _tensors; }
 
         inline void Forward(const TensorPtrs & src, const TensorPtrs & dst)
@@ -88,11 +90,13 @@ namespace Synet
         virtual inline size_t DstMin() const { return -1; }
         virtual inline size_t DstMax() const { return -1; }
 
+        static Layer * Create(const LayerParam & param);
+
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst) = 0;
 
         TensorSharedPtrs _tensors;
     private:
-        LayerOptions _options;
+        LayerParam _param;
     };
 }

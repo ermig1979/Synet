@@ -37,26 +37,26 @@ namespace Synet
         _channels = src[0]->Axis(1);
         _srcX = src[0]->Axis(3);
         _srcY = src[0]->Axis(2);
-        if (_options.globalPooling) 
+        if (_param.globalPooling) 
         {
             _kernelX = src[0]->Axis(3);
             _kernelY = src[0]->Axis(2);
         }
         else
         {
-            _kernelX = _options.kernelX;
-            _kernelY = _options.kernelY;
+            _kernelX = _param.kernelX;
+            _kernelY = _param.kernelY;
         }
-        _dstX = (size_t)(::ceil((float)(_srcX + 2 * _options.padX - _kernelX) / _options.strideX)) + 1;
-        _dstY = (size_t)(::ceil((float)(_srcY + 2 * _options.padY - _kernelY) / _options.strideY)) + 1;
-        if (_options.padX || _options.padY) 
+        _dstX = (size_t)(::ceil((float)(_srcX + 2 * _param.padX - _kernelX) / _param.strideX)) + 1;
+        _dstY = (size_t)(::ceil((float)(_srcY + 2 * _param.padY - _kernelY) / _param.strideY)) + 1;
+        if (_param.padX || _param.padY) 
         {
-            if ((_dstX - 1) * _options.strideX >= _srcX + _options.padX)
+            if ((_dstX - 1) * _param.strideX >= _srcX + _param.padX)
                 --_dstX;
-            if ((_dstY - 1) * _options.strideY >= _srcY + _options.padY)
+            if ((_dstY - 1) * _param.strideY >= _srcY + _param.padY)
                 --_dstY;
-            assert((_dstX - 1) * _options.strideX < _srcX + _options.padX);
-            assert((_dstY - 1) * _options.strideY < _srcY + _options.padY);
+            assert((_dstX - 1) * _param.strideX < _srcX + _param.padX);
+            assert((_dstY - 1) * _param.strideY < _srcY + _param.padY);
         }
         dst[0]->Reshape(Shape({ src[0]->Axis(0), _channels, _dstY, _dstX }));
     }
@@ -67,9 +67,9 @@ namespace Synet
         Type * pDst = dst[0]->Data();
         size_t num = dst[0]->Axis(0);
         size_t dstSize = dst[0]->Size();
-        switch (_options.method) 
+        switch (_param.method) 
         {
-        case PoolingLayerOptions::MethodMax:
+        case PoolingLayerParam::MethodMax:
             CpuSet(dstSize, Type(-FLT_MAX), pDst);
             for (size_t n = 0; n < num; ++n)
             {
@@ -77,11 +77,11 @@ namespace Synet
                 {
                     for (size_t ph = 0; ph < _dstY; ++ph) 
                     {
-                        size_t hStart = std::max(size_t(0), ph * _options.strideY - _options.padY);
+                        size_t hStart = std::max(size_t(0), ph * _param.strideY - _param.padY);
                         size_t hEnd = std::min(hStart + _kernelY, _srcY);
                         for (size_t pw = 0; pw < _dstX; ++pw) 
                         {
-                            size_t wStart = std::max(size_t(0), pw * _options.strideX - _options.padX);
+                            size_t wStart = std::max(size_t(0), pw * _param.strideX - _param.padX);
                             size_t wEnd = std::min(wStart + _kernelX, _srcX);
                             Type max = -FLT_MAX;
                             for (size_t h = hStart; h < hEnd; ++h)
@@ -95,7 +95,7 @@ namespace Synet
                 }
             }
             break;
-        case PoolingLayerOptions::MethodAverage:
+        case PoolingLayerParam::MethodAverage:
             CpuSet(dstSize, Type(0), pDst);
             for (size_t n = 0; n < num; ++n)
             {
@@ -103,11 +103,11 @@ namespace Synet
                 {
                     for (size_t ph = 0; ph < _dstY; ++ph)
                     {
-                        size_t hStart = std::max(size_t(0), ph * _options.strideY - _options.padY);
+                        size_t hStart = std::max(size_t(0), ph * _param.strideY - _param.padY);
                         size_t hEnd = std::min(hStart + _kernelY, _srcY);
                         for (size_t pw = 0; pw < _dstX; ++pw)
                         {
-                            size_t wStart = std::max(size_t(0), pw * _options.strideX - _options.padX);
+                            size_t wStart = std::max(size_t(0), pw * _param.strideX - _param.padX);
                             size_t wEnd = std::min(wStart + _kernelX, _srcX);
                             size_t poolSize = (hEnd - hStart) * (wEnd - wStart);
                             Type sum = 0;
@@ -122,7 +122,7 @@ namespace Synet
                 }
             }
             break;
-        case PoolingLayerOptions::MethodStochastic:
+        case PoolingLayerParam::MethodStochastic:
             assert(0);
             break;
         default:

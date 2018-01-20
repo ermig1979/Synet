@@ -29,12 +29,12 @@
 
 namespace Synet
 {
-    struct SigmoidLayerOptions : public LayerOptions
+    struct SigmoidLayerParam : public LayerParam
     {
         float slope;
 
-        SigmoidLayerOptions(const String & n, const float & s = 1.0f)
-            : LayerOptions(LayerOptions::SigmoidLayer, n)
+        SigmoidLayerParam(const String & n, const float & s = 1.0f)
+            : LayerParam(LayerParam::SigmoidLayer, n)
             , slope(s)
         {
         }
@@ -47,9 +47,9 @@ namespace Synet
         typedef Layer<T, Allocator> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        SigmoidLayer(const SigmoidLayerOptions & options)
-            : Base(options)
-            , _options(options)
+        SigmoidLayer(const SigmoidLayerParam & param)
+            : Base(param)
+            , _param(param)
         {
         }
 
@@ -62,6 +62,6 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst);
 
     private:
-        SigmoidLayerOptions _options;
+        SigmoidLayerParam _param;
     };
 }

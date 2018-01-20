@@ -33,13 +33,14 @@ int main(int argc, char* argv[])
 {
     Test::TestTensor();
 
+    Synet::NetworkParam netParam;
     typedef Synet::Network<float> Network;
-    Network net;
+    Network net(netParam);
 
-    Synet::InputLayerOptions inputLayerOptions("Input", Synet::Shape({1, 1, 1, 1}));
-    Synet::InputLayer<float> inputLayer(inputLayerOptions);
+    Synet::InputLayerParam inputLayerParam("Input", Synet::Shape({1, 1, 1, 1}));
+    Synet::InputLayer<float> inputLayer(inputLayerParam);
 
-    Synet::InnerProductLayer<float> innerProductLayer(Synet::InnerProductLayerOptions("InnerLayer"));
+    Synet::InnerProductLayer<float> innerProductLayer(Synet::InnerProductLayerParam("InnerLayer"));
 
     return 0;
 }

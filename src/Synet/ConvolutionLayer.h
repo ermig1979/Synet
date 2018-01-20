@@ -29,7 +29,7 @@
 
 namespace Synet
 {
-    struct ConvolutionLayerOptions : public LayerOptions
+    struct ConvolutionLayerParam : public LayerParam
     {
         uint32_t outputNum;
         bool biasTerm;
@@ -44,8 +44,8 @@ namespace Synet
         uint32_t axis;
         uint32_t group;
 
-        ConvolutionLayerOptions(const String & n)
-            : LayerOptions(LayerOptions::ConvolutionLayer, n)
+        ConvolutionLayerParam(const String & n)
+            : LayerParam(LayerParam::ConvolutionLayer, n)
             , biasTerm(true)
             , padX(0)
             , padY(0)
@@ -69,9 +69,9 @@ namespace Synet
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ConvolutionLayer(const ConvolutionLayerOptions & options)
-            : Base(options)
-            , _options(options)
+        ConvolutionLayer(const ConvolutionLayerParam & param)
+            : Base(param)
+            , _param(param)
         {
         }
 
@@ -85,8 +85,10 @@ namespace Synet
 
         virtual bool IsConv() { return true; }
 
+        void ImToCol(const T * src, T * dst);
+
     private:
-        ConvolutionLayerOptions _options;
+        ConvolutionLayerParam _param;
 
         Shape _srcShape, _kernelShape, _strideShape, _dilationShape, _padShape, _dstShape, _srcConvShape;
         bool _is1x1;

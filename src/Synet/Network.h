@@ -30,28 +30,37 @@
 
 namespace Synet
 {
+    typedef std::shared_ptr<LayerParam> LayerParamPtr;
+    typedef std::vector<LayerParamPtr> LayerParamPtrs;
+
+    struct NetworkParam
+    {
+        String name;
+        LayerParamPtrs layers;
+    };
+
     template <class T, template<class> class Allocator = std::allocator> class Network
     {
     public:
         typedef T Type;
+
+        Network(const NetworkParam & param);
 
         void Forward(const std::vector<Tensor<Type, Allocator>*> & src, const std::vector<Tensor<Type, Allocator>*> & dst)
         {
 
         }
 
-        const String & Name() const { return _name; }
-
-    protected:
-
+        const String & Name() const { return _param.name; }
 
     private:
         typedef Synet::Layer<Type, Allocator> Layer;
         typedef std::shared_ptr<Layer> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
 
+        NetworkParam _param;
         LayerSharedPtrs _layers;
 
-        String _name;
+        void Init();
     };
 }

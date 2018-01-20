@@ -23,41 +23,64 @@
 */
 
 #include "Synet/Layer.h"
+#include "Synet/InputLayer.h"
+#include "Synet/InnerProductLayer.h"
+#include "Synet/ReluLayer.h"
+#include "Synet/SigmoidLayer.h"
+#include "Synet/PoolingLayer.h"
+#include "Synet/ConvolutionLayer.h"
 
 namespace Synet
 {
     struct LayerTypeName
     {
-        LayerOptions::Type type;
+        LayerParam::Type type;
         String name;
     };
 
     const LayerTypeName g_layerTypeNames[] =
     {
-        { LayerOptions::InputLayer, "InputLayer" },
-        { LayerOptions::InnerProductLayer, "InnerProductLayer" },
-        { LayerOptions::ReluLayer, "ReluLayer" },
-        { LayerOptions::SigmoidLayer, "SigmoidLayer" },
-        { LayerOptions::PoolingLayer, "PoolingLayer" },
-        { LayerOptions::ConvolutionLayer, "ConvolutionLayer" },
+        { LayerParam::InputLayer, "InputLayer" },
+        { LayerParam::InnerProductLayer, "InnerProductLayer" },
+        { LayerParam::ReluLayer, "ReluLayer" },
+        { LayerParam::SigmoidLayer, "SigmoidLayer" },
+        { LayerParam::PoolingLayer, "PoolingLayer" },
+        { LayerParam::ConvolutionLayer, "ConvolutionLayer" },
     };
 
-    String LayerOptions::ToString(Type type)
+    String LayerParam::ToString(Type type)
     {
-        if (type > LayerOptions::UnknownLayer && type < LayerOptions::LayerTypeSize)
+        if (type > LayerParam::UnknownLayer && type < LayerParam::LayerTypeSize)
             return g_layerTypeNames[type].name;
         else
             return "";
     }
 
-    LayerOptions::Type LayerOptions::FromString(const String & name)
+    LayerParam::Type LayerParam::FromString(const String & name)
     {
-        LayerOptions::Type type = (LayerOptions::Type)(LayerOptions::LayerTypeSize - 1);
-        for (; type > LayerOptions::UnknownLayer; type = (LayerOptions::Type)((int)type - 1))
+        LayerParam::Type type = (LayerParam::Type)(LayerParam::LayerTypeSize - 1);
+        for (; type > LayerParam::UnknownLayer; type = (LayerParam::Type)((int)type - 1))
         {
             if (g_layerTypeNames[type].name == name)
                 return type;
         }
         return type;
     }
+
+    template <class T, template<class> class A> Layer<T, A> * Layer<T, A>::Create(const LayerParam & param)
+    {
+        switch (param.type)
+        {
+        case LayerParam::InputLayer: return new InputLayer<T, A>(*(InputLayerParam*)&param);
+        case LayerParam::InnerProductLayer: return new InnerProductLayer<T, A>(*(InnerProductLayerParam*)&param);
+        case LayerParam::ReluLayer: return new ReluLayer<T, A>(*(ReluLayerParam*)&param);
+        case LayerParam::SigmoidLayer: return new SigmoidLayer<T, A>(*(SigmoidLayerParam*)&param);
+        case LayerParam::PoolingLayer: return new PoolingLayer<T, A>(*(PoolingLayerParam*)&param);
+        case LayerParam::ConvolutionLayer: return new ConvolutionLayer<T, A>(*(ConvolutionLayerParam*)&param);
+        default:
+            return NULL;
+        }
+    }
+
+    SYNET_CLASS_INSTANCE(Layer);
 }

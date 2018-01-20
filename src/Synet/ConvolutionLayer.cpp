@@ -29,27 +29,27 @@ namespace Synet
 {
     template <class T, template<class> class A> void ConvolutionLayer<T, A>::Setup(const ConvolutionLayer::TensorPtrs & src, const ConvolutionLayer::TensorPtrs & dst)
     {
-        size_t firstSpatialAxis = _options.axis + 1;
+        size_t firstSpatialAxis = _param.axis + 1;
         _spatialAxisNum = src[0]->Count() - firstSpatialAxis;
-        if (_options.kernelX && _options.kernelY)
+        if (_param.kernelX && _param.kernelY)
         {
             assert(_spatialAxisNum == 2);
-            _kernelShape = { _options.kernelY, _options.kernelX };
+            _kernelShape = { _param.kernelY, _param.kernelX };
         }
-        if (_options.strideX && _options.strideY)
+        if (_param.strideX && _param.strideY)
         {
             assert(_spatialAxisNum == 2);
-            _strideShape = { _options.strideY, _options.strideX };
+            _strideShape = { _param.strideY, _param.strideX };
         }
-        if (_options.padX && _options.padY)
+        if (_param.padX && _param.padY)
         {
             assert(_spatialAxisNum == 2);
-            _padShape = { _options.padY, _options.padX };
+            _padShape = { _param.padY, _param.padX };
         }
-        if (_options.dilationX && _options.dilationY)
+        if (_param.dilationX && _param.dilationY)
         {
             assert(_spatialAxisNum == 2);
-            _dilationShape = { _options.dilationY, _options.dilationX };
+            _dilationShape = { _param.dilationY, _param.dilationX };
         }
         _is1x1 = true;
         for (size_t i = 0; i < _spatialAxisNum; ++i)
@@ -60,9 +60,9 @@ namespace Synet
                 break;
             }
         }
-        _srcChannels = src[0]->Axis(_options.axis);
-        _dstChannels = _options.outputNum;
-        assert(_dstChannels  > 0 && _dstChannels % _options.group == 0);
+        _srcChannels = src[0]->Axis(_param.axis);
+        _dstChannels = _param.outputNum;
+        assert(_dstChannels  > 0 && _dstChannels % _param.group == 0);
         if (IsConv())
         {
             _srcConvChannels = _srcChannels;
@@ -75,29 +75,29 @@ namespace Synet
         }
         Shape weightShape(2 + _spatialAxisNum);
         weightShape[0] = _dstConvChannels;
-        weightShape[1] = _srcConvChannels / _options.group;
+        weightShape[1] = _srcConvChannels / _param.group;
         for (size_t i = 0; i < _spatialAxisNum; ++i)
             weightShape[2 + i] = _kernelShape[i];
-        Shape biasShape(_options.biasTerm, _dstChannels);
+        Shape biasShape(_param.biasTerm, _dstChannels);
         if (this->_tensors.size() > 0) 
         {
-            assert(this->_tensors.size() == _options.biasTerm + 1);
+            assert(this->_tensors.size() == _param.biasTerm + 1);
             assert(this->_tensors[0]->GetShape() == weightShape);
-            if(_options.biasTerm)
+            if(_param.biasTerm)
                 assert(this->_tensors[1]->GetShape() == biasShape);
         }
         else
         {
-            if (_options.biasTerm) 
+            if (_param.biasTerm) 
                 this->_tensors.resize(2);
             else 
                 this->_tensors.resize(1);
             this->_tensors[0].reset(new Tensor(weightShape));
-            if (_options.biasTerm) 
+            if (_param.biasTerm) 
                 this->_tensors[1].reset(new Tensor(biasShape));
         }
         _kernelSize = this->_tensors[0]->Size(1);
-        _weightOffset = _dstConvChannels * _kernelSize / _options.group;
+        _weightOffset = _dstConvChannels * _kernelSize / _param.group;
     }
 
     template <class T, template<class> class A> void ConvolutionLayer<T, A>::Reshape(const ConvolutionLayer::TensorPtrs & src, const ConvolutionLayer::TensorPtrs & dst)
@@ -105,8 +105,8 @@ namespace Synet
         const Type * pSrc = src[0]->Data();
         Type * pDst = dst[0]->Data();
 
-        size_t firstSpatialAxis = _options.axis + 1;
-        _num = src[0]->Size(0, _options.axis);
+        size_t firstSpatialAxis = _param.axis + 1;
+        _num = src[0]->Size(0, _param.axis);
         _srcShape = src[0]->GetShape();
         if(IsConv())
         {
@@ -117,7 +117,7 @@ namespace Synet
                 _dstShape[i] = (_srcShape[firstSpatialAxis + i] + 2 * _padShape[i] - kernelExtent)/ _strideShape[i] + 1;
             }
         }
-        Shape dstShape(_srcShape.begin(), _srcShape.begin() + _options.axis);
+        Shape dstShape(_srcShape.begin(), _srcShape.begin() + _param.axis);
         dstShape.push_back(_dstChannels);
         for (size_t i = 0; i < _spatialAxisNum; ++i) 
             dstShape.push_back(_dstShape[i]);
@@ -128,17 +128,17 @@ namespace Synet
         else 
             _dstConvSpatialSize = src[0]->Size(firstSpatialAxis);
         _colOffset = _kernelSize * _dstConvSpatialSize;
-        _dstOffset = _dstChannels * _dstConvChannels / _options.group;
+        _dstOffset = _dstChannels * _dstConvChannels / _param.group;
         _srcConvShape.resize(_spatialAxisNum + 1);
         for (size_t i = 0; i < _spatialAxisNum + 1; ++i)
         {
             if (IsConv())
-                _srcConvShape[i] = src[0]->Axis(_options.axis + i);
+                _srcConvShape[i] = src[0]->Axis(_param.axis + i);
             else
-                _srcConvShape[i] = dst[0]->Axis(_options.axis + i);
+                _srcConvShape[i] = dst[0]->Axis(_param.axis + i);
         }
         Shape colBufferShape;
-        colBufferShape.push_back(_kernelSize * _options.group);
+        colBufferShape.push_back(_kernelSize * _param.group);
         for (int i = 0; i < _spatialAxisNum; ++i)
         {
             if (IsConv()) 
@@ -147,12 +147,10 @@ namespace Synet
                 colBufferShape.push_back(_srcShape[i + 1]);
         }
         _colBuffer.Reshape(colBufferShape);
-        _srcSize = src[0]->Size(_options.axis);
-        _dstSize = dst[0]->Size(_options.axis);
-        //num_kernels_im2col_ = conv_in_channels_ * conv_out_spatial_dim_;
-        //num_kernels_col2im_ = reverse_dimensions() ? top_dim_ : bottom_dim_;
+        _srcSize = src[0]->Size(_param.axis);
+        _dstSize = dst[0]->Size(_param.axis);
         _dstSpatialSize = dst[0]->Size(firstSpatialAxis);
-        if (_options.biasTerm)
+        if (_param.biasTerm)
         {
             Shape shape(1, _dstSpatialSize);
             _biasMultiplier.Reshape(shape, Type(1));
@@ -171,26 +169,31 @@ namespace Synet
                 Type * pBuf = (Type*)pSrc;
                 if (!_is1x1) 
                 {
-                    //if (!skip_im2col)
-                    //    conv_im2col_cpu(input, col_buffer_.mutable_cpu_data());
+                    ImToCol(pSrc, pBuf);
                     pBuf = _colBuffer.Data();
                 }
-                //this->forward_cpu_gemm(bottom_data + n * this->bottom_dim_, weight, pDst);
-
-                if (_options.biasTerm) 
+                for (size_t g = 0; g < _param.group; ++g) 
+                {
+                    CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _dstConvChannels / _param.group, _dstConvSpatialSize, _kernelSize, 
+                        Type(1.0), weight + _weightOffset * g, pBuf + _colOffset * g, Type(0.0), pDst +_dstOffset * g);
+                }                
+                if (_param.biasTerm) 
                 {
                     const Type * bias = this->_tensors[1]->Data();
                     CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _dstChannels, _dstSpatialSize, 1, Type(1.0), bias, _biasMultiplier.Data(), Type(1.0), pDst);
                 }
             }
         }
-        //for (int g = 0; g < group_; ++g) 
-        //{
-        //    CpuGemm<Type>(CblasNoTrans, CblasNoTrans, conv_out_channels_ /
-        //        group_, conv_out_spatial_dim_, kernel_dim_,
-        //        (Dtype)1., weights + weight_offset_ * g, col_buff + col_offset_ * g,
-        //        (Dtype)0., output + output_offset_ * g);
-        //}
+
+    }
+
+    template <class T, template<class> class A> void ConvolutionLayer<T, A>::ImToCol(const T * src, T * dst)
+    {
+        if (_spatialAxisNum == 2)
+        {
+            Synet::ImToCol(src, _srcConvShape[0], _srcConvShape[1], _srcConvShape[2], _kernelShape[0], _kernelShape[1],
+                _padShape[0], _padShape[1], _strideShape[0], _strideShape[1], _dilationShape[0], _dilationShape[1], dst);
+        }
     }
 
     SYNET_CLASS_INSTANCE(ConvolutionLayer);

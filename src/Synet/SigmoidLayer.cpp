@@ -31,7 +31,7 @@ namespace Synet
         const Type * pSrc = src[0]->Data();
         Type * pDst = dst[0]->Data();
         size_t size = src[0]->Size();
-        Type slope = _options.slope;
+        Type slope = _param.slope;
         for (size_t i = 0; i < size; ++i)
             pDst[i] = Type(1.0) / (Type(1.0) + ::exp(-pSrc[i] * slope));
     }
