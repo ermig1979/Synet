@@ -53,6 +53,10 @@ namespace Synet
 
         const String & Name() const { return _param.name; }
 
+        bool Load(const void * data, size_t size);
+        bool Load(std::istream & is);
+        bool Load(const String & path);
+
     private:
         typedef Synet::Layer<Type, Allocator> Layer;
         typedef std::shared_ptr<Layer> LayerSharedPtr;

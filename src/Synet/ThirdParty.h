@@ -36,6 +36,8 @@
 #include <string>
 #include <memory>
 #include <algorithm>
+#include <iostream>
+#include <fstream>
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdLib.hpp"

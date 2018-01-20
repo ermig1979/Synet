@@ -67,6 +67,46 @@ namespace Synet
         return type;
     }
 
+    template <class T, template<class> class A> bool Layer<T, A>::Load(const void * & data, size_t & size)
+    {
+        for (size_t i = 0; i < _tensors.size(); ++i)
+        {
+            size_t requred = _tensors[i]->Size()*sizeof(Type);
+            if (requred > size)
+                return false;
+            ::memcpy(_tensors[i]->Data(), data, requred);
+            (char*&)data += requred;
+            size -= requred;
+        }
+        return true;
+    }
+
+    template <class T> inline void LoadValue(std::istream & is, T & value)
+    {
+        char buffer[64];
+        is >> buffer;
+        value = (T)::atof(buffer);
+    }
+
+    template <class T, template<class> class A> bool Layer<T, A>::Load(std::istream & is)
+    {
+        for (size_t i = 0; i < _tensors.size(); ++i)
+        {
+            T * data = _tensors[i]->Data();
+            size_t size = _tensors[i]->Size();
+            if (is.flags() & std::istream::binary)
+            {
+                is.read((char*)data, size*sizeof(T));
+            }
+            else
+            {
+                for (size_t j = 0; j < size; ++j)
+                    LoadValue(is, data[j]);
+            }
+        }
+        return true;
+    }
+
     template <class T, template<class> class A> Layer<T, A> * Layer<T, A>::Create(const LayerParam & param)
     {
         switch (param.type)

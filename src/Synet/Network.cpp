@@ -41,5 +41,37 @@ namespace Synet
         }
     }
 
+    template <class T, template<class> class A> bool Network<T, A>::Load(const void * data, size_t size)
+    {
+        for (size_t i = 0; i < _layers.size(); ++i)
+        {
+            if (!_layers[i]->Load(data, size))
+                return false;
+        }
+        return true;
+    }
+
+    template <class T, template<class> class A> bool Network<T, A>::Load(std::istream & is)
+    {
+        for (size_t i = 0; i < _layers.size(); ++i)
+        {
+            if (!_layers[i]->Load(is))
+                return false;
+        }
+        return true;
+    }
+
+    template <class T, template<class> class A> bool Network<T, A>::Load(const String & path)
+    {
+        std::ifstream ifs(path.c_str());
+        if (ifs.is_open())
+        {
+            bool result = Load(ifs);
+            ifs.close();
+            return result;
+        }
+        return false;
+    }
+
     SYNET_CLASS_INSTANCE(Network);
 }

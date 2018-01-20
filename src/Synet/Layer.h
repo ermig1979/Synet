@@ -90,6 +90,9 @@ namespace Synet
         virtual inline size_t DstMin() const { return -1; }
         virtual inline size_t DstMax() const { return -1; }
 
+        bool Load(const void * & data, size_t & size);
+        bool Load(std::istream & is);        
+        
         static Layer * Create(const LayerParam & param);
 
     protected:
