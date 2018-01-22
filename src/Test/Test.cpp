@@ -26,12 +26,47 @@
 
 namespace Test
 {
-    bool TestTensor();
+    struct Test0
+    {
+        SYNET_ELEM_PARAM(int, test0_param1, 1);
+        SYNET_ELEM_PARAM(double, test0_param2, 2.0);
+        SYNET_ELEM_PARAM(Synet::String, test0_param3, "3.0");
+    };
+
+    struct Test1
+    {
+        SYNET_ELEM_PARAM(int, test1_param1, 4);
+        SYNET_NODE_PARAM(Test0, test1_param2);
+        SYNET_NODE_PARAM(Test0, test1_param3);
+    };
+
+    struct Test2
+    {
+        SYNET_ELEM_PARAM(Synet::String, test2_param1, "5.0");
+        SYNET_NODE_PARAM(Test0, test2_param2);
+        SYNET_NODE_PARAM(Test1, test2_param3);
+    };
+
+    SYNET_ROOT_CLASS(Test2, Config);
+
+    bool ParamTest()
+    {
+        Config config;
+        config().test2_param2().test0_param1() = 3;
+        config().test2_param1() = "Value";
+        config().test2_param3().test1_param2().test0_param2() = 1.2;
+
+        Synet::XmlSaver saver;
+        config.Save(saver);
+
+        return true;
+    }
 }
 
 int main(int argc, char* argv[])
 {
-    Test::TestTensor();
+    Test::ParamTest();
+
 
     Synet::NetworkParam netParam;
     typedef Synet::Network<float> Network;
