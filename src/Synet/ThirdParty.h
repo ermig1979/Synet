@@ -39,6 +39,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <array>
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdLib.hpp"

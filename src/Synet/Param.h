@@ -31,61 +31,106 @@ namespace Synet
     template<class T> struct Param
     {
         typedef T Type;
-
-        Param()
-        {
-            _value = Default();
-        }        
         
         const Type & operator () () const { return _value; }
-        Type & operator () () { return _value; }
+        Type & operator () ()  { return _value; }
+        const String & Name() const { return _name; }
 
-        virtual bool Node() const { return false; }
-        virtual Type Default() const { return Type(); }
-        virtual String ToString() const { return ""; }
-        virtual String Name() const = 0;
-        virtual size_t Size() const = 0;
+        virtual Type Default() const { return T(); }
 
-        template <class Saver> bool Save(Saver & saver) const
+        template <class Saver> bool Save(Saver & saver, bool full) const
         {
-            if (Node())
+            saver.WriteBegin(Name(), _mode != Value);
+            switch (_mode)
             {
-                for (const Param * child = Begin(); child < End(); child = Next(child))
-                {
-                    saver.WriteBegin(child->Name(), child->Node());
-                    if (!child->Save(saver))
-                        return false;
-                    saver.WriteEnd(child->Name(), child->Node());
-                }
-            }
-            else
-            {
+            case Value:
                 saver.WriteValue(ToString());
+                break;
+            case Struct:
+                for (const Param * child = StructBegin(); child < StructEnd(); child = StructNext(child))
+                {
+                    if (full || child->Changed())
+                    {
+                        if (!child->Save(saver, full))
+                            return false;
+                    }
+                }
+                break;
+            case Vector:
+                for (const Param * item = VectorBegin(); item < VectorEnd(); item = VectorNext(item))
+                {
+                    saver.WriteBegin(ItemName(), _mode != Value);
+                    for (const Param * child = item, *childEnd = VectorNext(item); child < childEnd; child = StructNext(child))
+                    {
+                        if (full || child->Changed())
+                        {
+                            if (!child->Save(saver, full))
+                                return false;
+                        }
+                    }
+                    saver.WriteEnd(ItemName(), _mode != Value);
+                }
+                break;
             }
+            saver.WriteEnd(Name(), _mode != Value);
             return true;
         }
 
         template <class Loader> bool Load(Loader & loader)
         {
-            if (Node())
-            {
-                for (Param * child = Begin(); child < End(); child = Next(child))
-                {
-                    if (!child->Load(loader))
-                        return false;
-                }
-            }
-            else
-                return loader.Load(Name(), _value, Default());
+            //if (Node())
+            //{
+            //    for (Param * child = Begin(); child < End(); child = Next(child))
+            //    {
+            //        if (!child->Load(loader))
+            //            return false;
+            //    }
+            //}
+            //else
+            //    return loader.Load(Name(), _value, Default());
             return true;
         }
 
     protected:
+        enum Mode
+        {
+            Value,
+            Struct,
+            Vector,
+        };
+
+        Mode _mode;
+        String _name;
         Type _value;
 
-        Param * Begin() const { return (Param*)(&_value); }
-        Param * Next(const Param * param) const { return (Param*)((char*)param + param->Size()); }
-        const Param * End() const { return (Param *)((char*)this + Size()); }
+        Param(Mode mode, const String & name)
+            : _mode(mode)
+            , _name(name)
+        {
+        }
+        
+        virtual size_t TotalSize() const = 0;
+        virtual size_t ChildSize() const { return 0; }
+        virtual String ToString() const { return ""; }
+        virtual String & ItemName() const { return "item"; }
+
+        Param * StructBegin() const { return (Param*)(&_value); }
+        Param * StructNext(const Param * param) const { return (Param*)((char*)param + param->TotalSize()); }
+        Param * StructEnd() const { return (Param *)((char*)this + TotalSize()); }
+
+        Param * VectorBegin() const { return (*(std::vector<Param>*)&_value).data(); }
+        Param * VectorNext(const Param * param) const { return (Param*)((char*)param + ChildSize()); }
+        Param * VectorEnd() const { return (*(std::vector<Param>*)&_value).data() + (*(std::vector<Param>*)&_value).size(); }
+
+        virtual bool Changed() const
+        {
+            for (const Param * child = StructBegin(); child < StructEnd(); child = StructNext(child))
+            {
+                if (child->Changed())
+                    return true;
+            }
+            return false;
+        }
     };
 
     template<class T> String ToString(const T & value)
@@ -94,32 +139,51 @@ namespace Synet
         ss << value;
         return ss.str();
     }
+
+    template<> inline String ToString<std::vector<int>>(const std::vector<int> & values)
+    {
+        std::stringstream ss;
+        for (size_t i = 0; i < values.size(); ++i)
+            ss << (i ? " " : "") << values[i];
+        return ss.str();
+    }
 }
 
-#define SYNET_ELEM_PARAM(type, name, value) \
-struct __Param_##name : public Synet::Param<type> \
+#define SYNET_PARAM_VALUE(type, name, value) \
+struct Param_##name : public Synet::Param<type> \
 { \
-__Param_##name() { _value = Default(); } \
+typedef Synet::Param<type> Base; \
+Param_##name() : Base(Base::Value, #name) { _value = Default(); } \
 virtual type Default() const { return value; } \
-virtual Synet::String Name() const { return #name; } \
-virtual size_t Size() const { return sizeof(__Param_##name); } \
+virtual size_t TotalSize() const { return sizeof(Param_##name); } \
 virtual Synet::String ToString() const { return Synet::ToString((*this)()); } \
+virtual bool Changed() const { return Default() != _value; } \
 } name;
 
-#define SYNET_NODE_PARAM(type, name) \
-struct __Param_##name : public Synet::Param<type> \
+#define SYNET_PARAM_STRUCT(type, name) \
+struct Param_##name : public Synet::Param<type> \
 { \
-virtual Synet::String Name() const { return #name; } \
-virtual size_t Size() const { return sizeof(__Param_##name); } \
-virtual bool Node() const { return true; } \
+typedef Synet::Param<type> Base; \
+Param_##name() : Base(Base::Struct, #name) {} \
+virtual size_t TotalSize() const { return sizeof(Param_##name); } \
 } name;
 
-#define SYNET_ROOT_CLASS(type, name) \
+#define SYNET_PARAM_VECTOR(type, name) \
+struct Param_##name : public Synet::Param<std::vector<type>> \
+{ \
+typedef Synet::Param<std::vector<type>> Base; \
+Param_##name() : Base(Base::Vector, #name) {} \
+virtual size_t TotalSize() const { return sizeof(Param_##name); } \
+virtual size_t ChildSize() const { return sizeof(type); } \
+virtual bool Changed() const { return !_value.empty(); } \
+} name;
+
+#define SYNET_PARAM_ROOT(type, name) \
 struct name : public Synet::Param<type> \
 { \
-virtual Synet::String Name() const { return #name; } \
-virtual size_t Size() const { return sizeof(name); } \
-virtual bool Node() const { return true; } \
+typedef Synet::Param<type> Base; \
+name() : Base(Base::Struct, #name) {} \
+virtual size_t TotalSize() const { return sizeof(name); } \
 };
 
 namespace Synet
@@ -128,6 +192,13 @@ namespace Synet
     {
         XmlSaver()
             : _os(std::cout)
+            , _indent(0)
+        {
+            WriteRoot();
+        }
+
+        XmlSaver(std::ostream & os)
+            : _os(os)
             , _indent(0)
         {
             WriteRoot();

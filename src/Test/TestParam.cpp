@@ -24,20 +24,52 @@
 
 #include "Test/TestCommon.h"
 
-int main(int argc, char* argv[])
+namespace Test
 {
-    Test::TestParam();
+    typedef std::vector<int> Ints;
 
+    struct Test0
+    {
+        SYNET_PARAM_VALUE(int, t0_p1, 1);
+        SYNET_PARAM_VALUE(double, t0_p2, 2.0);
+        SYNET_PARAM_VALUE(String, t0_p3, "3.0");
+    };
 
-    Synet::NetworkParam netParam;
-    typedef Synet::Network<float> Network;
-    Network net(netParam);
+    struct Test1
+    {
+        SYNET_PARAM_VALUE(int, t1_p1, 4);
+        SYNET_PARAM_STRUCT(Test0, t1_p2);
+        SYNET_PARAM_VECTOR(Test0, t1_p3);
+    };
 
-    Synet::InputLayerParam inputLayerParam("Input", Synet::Shape({1, 1, 1, 1}));
-    Synet::InputLayer<float> inputLayer(inputLayerParam);
+    struct Test2
+    {
+        SYNET_PARAM_VALUE(Ints, t2_p0, Ints());
+        SYNET_PARAM_VALUE(String, t2_p1, "5.0");
+        SYNET_PARAM_STRUCT(Test0, t2_p2);
+        SYNET_PARAM_STRUCT(Test1, t2_p3);
+        SYNET_PARAM_VECTOR(Test1, t2_p4);
+        SYNET_PARAM_VALUE(Ints, t2_p5, Ints());
+    };
 
-    Synet::InnerProductLayer<float> innerProductLayer(Synet::InnerProductLayerParam("InnerLayer"));
+    SYNET_PARAM_ROOT(Test2, Config);
 
-    return 0;
+    bool TestParam()
+    {
+        Config config;
+        config().t2_p2().t0_p1() = 3;
+        config().t2_p1() = "Value";
+        config().t2_p3().t1_p2().t0_p2() = 1.2;
+        config().t2_p4().resize(2);
+        config().t2_p4()[1].t1_p1() = 10;
+        config().t2_p0().resize(3, 6);
+
+        Synet::XmlSaver saver(std::cout);
+        config.Save(saver, true);
+
+        std::cout << std::endl;
+        config.Save(saver,false);
+
+        return true;
+    }
 }
-

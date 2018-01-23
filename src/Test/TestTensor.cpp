@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Test/TestConfig.h"
+#include "Test/TestCommon.h"
 
 namespace Test
 {
