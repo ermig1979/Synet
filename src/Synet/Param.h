@@ -119,7 +119,7 @@ namespace Synet
         }
         
         virtual String ToString() const { return ""; }
-        virtual void FromString(const String & string) {}
+        virtual void ToValue(const String & string) {}
         virtual void Resize(size_t size) {}
         String ItemName() const { return "item"; }
 
@@ -202,14 +202,14 @@ namespace Synet
         }
     };
 
-    template<class T> inline String ToString(const T & value)
+    template<class T> inline String ValueToString(const T & value)
     {
         std::stringstream ss;
         ss << value;
         return ss.str();
     }
 
-    template<class T> inline String ToString(const std::vector<T> & values)
+    template<class T> inline String ValueToString(const std::vector<T> & values)
     {
         std::stringstream ss;
         for (size_t i = 0; i < values.size(); ++i)
@@ -217,13 +217,13 @@ namespace Synet
         return ss.str();
     }
 
-    template<class T> inline void FromString(const String & string, T & value)
+    template<class T> inline void StringToValue(const String & string, T & value)
     {
         std::stringstream ss(string);
         ss >> value;
     }
 
-    template<class T> inline void FromString(const String & string, std::vector<T> & values)
+    template<class T> inline void StringToValue(const String & string, std::vector<T> & values)
     {
         std::stringstream ss(string);
         values.clear();
@@ -234,7 +234,7 @@ namespace Synet
             if (item.size())
             {
                 T value;
-                FromString(item, value);
+                StringToValue(item, value);
                 values.push_back(value);
             }
         }
@@ -245,11 +245,11 @@ namespace Synet
 struct Param_##name : public Synet::Param<type> \
 { \
 typedef Synet::Param<type> Base; \
-Param_##name() : Base(Base::Value, #name, sizeof(Param_##name)) { _value = Default(); } \
+Param_##name() : Base(Base::Value, #name, sizeof(Param_##name)) { this->_value = this->Default(); } \
 virtual type Default() const { return value; } \
-virtual Synet::String ToString() const { return Synet::ToString((*this)()); } \
-virtual void FromString(const Synet::String & string) { Synet::FromString(string, _value); } \
-virtual bool Changed() const { return Default() != _value; } \
+virtual Synet::String ToString() const { using namespace Synet; return ValueToString((*this)()); } \
+virtual void ToValue(const Synet::String & string) { using namespace Synet; StringToValue(string, this->_value); } \
+virtual bool Changed() const { return this->Default() != this->_value; } \
 } name;
 
 #define SYNET_PARAM_STRUCT(type, name) \
@@ -264,8 +264,8 @@ struct Param_##name : public Synet::Param<std::vector<type>> \
 { \
 typedef Synet::Param<std::vector<type>> Base; \
 Param_##name() : Base(Base::Vector, #name, sizeof(Param_##name), sizeof(type)) {} \
-virtual void Resize(size_t size) { _value.resize(size); } \
-virtual bool Changed() const { return !_value.empty(); } \
+virtual void Resize(size_t size) { this->_value.resize(size); } \
+virtual bool Changed() const { return !this->_value.empty(); } \
 } name;
 
 #define SYNET_PARAM_ROOT(type, name) \

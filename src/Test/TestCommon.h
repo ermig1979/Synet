@@ -31,5 +31,6 @@ namespace Test
     typedef Synet::String String;
 
     bool TestParam();
+    bool TestParams();
 }
 

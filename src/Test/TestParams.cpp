@@ -1,5 +1,5 @@
 /*
-* Synet Framework (http://github.com/ermig1979/Synet).
+* Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
 * Copyright (c) 2018-2018 Yermalayeu Ihar.
 *
@@ -22,31 +22,31 @@
 * SOFTWARE.
 */
 
-#pragma once
+#include "Test/TestCommon.h"
 
-#include "Synet/Common.h"
-#include "Synet/Layer.h"
-
-namespace Synet
+namespace Test
 {
-    template <class T, template<class> class Allocator = std::allocator> class ReluLayer : public Synet::Layer<T, Allocator>
+    SYNET_PARAM_ROOT(Synet::NetworkParam, Config);
+
+    bool TestParams()
     {
-    public:
-        typedef T Type;
-        typedef Layer<T, Allocator> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
+        Config config;
+        config().name() = "Network_Test_1";
+        config().layers().resize(2);
 
-        ReluLayer(const LayerParam & param)
-            : Base(param)
-        {
-        }
+        config().layers()[0].type() = Synet::LayerTypeInput;
+        config().layers()[0].name() = "Input";
+        config().layers()[0].inputLayer().shape() = Synet::Shape({1, 2, 3});
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst) {}
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) {};
-        virtual inline size_t SrcNum() const { return 1; }
-        virtual inline size_t DstMin() const { return 1; }
+        config().layers()[1].type() = Synet::LayerTypeInnerProduct;
+        config().layers()[1].name() = "Full_1";
 
-    protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst);
-    };
+        std::cout << std::endl << "Saved (only changed):" << std::endl;
+        config.Save(std::cout, false);
+
+        //std::cout << std::endl << "Saved (full):" << std::endl;
+        //config.Save(std::cout, true);
+
+        return true;
+    }
 }

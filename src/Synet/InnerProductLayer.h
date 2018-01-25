@@ -29,22 +29,6 @@
 
 namespace Synet
 {
-    struct InnerProductLayerParam : public LayerParam
-    {
-        uint32_t outputNum;
-        bool biasTerm;
-        bool transpose;
-        uint32_t axis;
-
-        InnerProductLayerParam(const String & n)
-            : LayerParam(LayerParam::InnerProductLayer, n)
-            , biasTerm(true)
-            , transpose(false)
-            , axis(1)
-        {
-        }
-    };
-
     template <class T, template<class> class Allocator = std::allocator> class InnerProductLayer : public Synet::Layer<T, Allocator>
     {
     public:
@@ -53,9 +37,8 @@ namespace Synet
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        InnerProductLayer(const InnerProductLayerParam & param)
+        InnerProductLayer(const LayerParam & param)
             : Base(param)
-            , _param(param)
         {
         }
 
@@ -68,11 +51,10 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst);
 
     private:
-        InnerProductLayerParam _param;
-
         size_t _M;
         size_t _K;
         size_t _N;
+        size_t _axis;
         bool _biasTerm;
         Tensor _biasMultiplier;
         bool _transpose;

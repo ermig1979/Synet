@@ -29,17 +29,6 @@
 
 namespace Synet
 {
-    struct SigmoidLayerParam : public LayerParam
-    {
-        float slope;
-
-        SigmoidLayerParam(const String & n, const float & s = 1.0f)
-            : LayerParam(LayerParam::SigmoidLayer, n)
-            , slope(s)
-        {
-        }
-    };
-
     template <class T, template<class> class Allocator = std::allocator> class SigmoidLayer : public Synet::Layer<T, Allocator>
     {
     public:
@@ -47,9 +36,8 @@ namespace Synet
         typedef Layer<T, Allocator> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        SigmoidLayer(const SigmoidLayerParam & param)
+        SigmoidLayer(const LayerParam & param)
             : Base(param)
-            , _param(param)
         {
         }
 
@@ -60,8 +48,5 @@ namespace Synet
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst);
-
-    private:
-        SigmoidLayerParam _param;
     };
 }

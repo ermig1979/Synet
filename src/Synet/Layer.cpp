@@ -32,41 +32,6 @@
 
 namespace Synet
 {
-    struct LayerTypeName
-    {
-        LayerParam::Type type;
-        String name;
-    };
-
-    const LayerTypeName g_layerTypeNames[] =
-    {
-        { LayerParam::InputLayer, "InputLayer" },
-        { LayerParam::InnerProductLayer, "InnerProductLayer" },
-        { LayerParam::ReluLayer, "ReluLayer" },
-        { LayerParam::SigmoidLayer, "SigmoidLayer" },
-        { LayerParam::PoolingLayer, "PoolingLayer" },
-        { LayerParam::ConvolutionLayer, "ConvolutionLayer" },
-    };
-
-    String LayerParam::ToString(Type type)
-    {
-        if (type > LayerParam::UnknownLayer && type < LayerParam::LayerTypeSize)
-            return g_layerTypeNames[type].name;
-        else
-            return "";
-    }
-
-    LayerParam::Type LayerParam::FromString(const String & name)
-    {
-        LayerParam::Type type = (LayerParam::Type)(LayerParam::LayerTypeSize - 1);
-        for (; type > LayerParam::UnknownLayer; type = (LayerParam::Type)((int)type - 1))
-        {
-            if (g_layerTypeNames[type].name == name)
-                return type;
-        }
-        return type;
-    }
-
     template <class T, template<class> class A> bool Layer<T, A>::Load(const void * & data, size_t & size)
     {
         for (size_t i = 0; i < _tensors.size(); ++i)
@@ -109,14 +74,14 @@ namespace Synet
 
     template <class T, template<class> class A> Layer<T, A> * Layer<T, A>::Create(const LayerParam & param)
     {
-        switch (param.type)
+        switch (param.type())
         {
-        case LayerParam::InputLayer: return new InputLayer<T, A>(*(InputLayerParam*)&param);
-        case LayerParam::InnerProductLayer: return new InnerProductLayer<T, A>(*(InnerProductLayerParam*)&param);
-        case LayerParam::ReluLayer: return new ReluLayer<T, A>(*(ReluLayerParam*)&param);
-        case LayerParam::SigmoidLayer: return new SigmoidLayer<T, A>(*(SigmoidLayerParam*)&param);
-        case LayerParam::PoolingLayer: return new PoolingLayer<T, A>(*(PoolingLayerParam*)&param);
-        case LayerParam::ConvolutionLayer: return new ConvolutionLayer<T, A>(*(ConvolutionLayerParam*)&param);
+        case LayerTypeInput: return new InputLayer<T, A>(param);
+        case LayerTypeInnerProduct: return new InnerProductLayer<T, A>(param);
+        case LayerTypeRelu: return new ReluLayer<T, A>(param);
+        case LayerTypeSigmoid: return new SigmoidLayer<T, A>(param);
+        case LayerTypePooling: return new PoolingLayer<T, A>(param);
+        case LayerTypeConvolution: return new ConvolutionLayer<T, A>(param);
         default:
             return NULL;
         }

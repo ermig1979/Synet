@@ -29,38 +29,6 @@
 
 namespace Synet
 {
-    struct ConvolutionLayerParam : public LayerParam
-    {
-        uint32_t outputNum;
-        bool biasTerm;
-        uint32_t padX;
-        uint32_t padY;
-        uint32_t kernelX;
-        uint32_t kernelY;
-        uint32_t strideX;
-        uint32_t strideY;
-        uint32_t dilationX;
-        uint32_t dilationY;
-        uint32_t axis;
-        uint32_t group;
-
-        ConvolutionLayerParam(const String & n)
-            : LayerParam(LayerParam::ConvolutionLayer, n)
-            , biasTerm(true)
-            , padX(0)
-            , padY(0)
-            , kernelX(3)
-            , kernelY(3)
-            , strideX(1)
-            , strideY(1)
-            , dilationX(1)
-            , dilationY(1)
-            , axis(1)
-            , group(1)
-        {
-        }
-    };
-
     template <class T, template<class> class Allocator = std::allocator> class ConvolutionLayer : public Synet::Layer<T, Allocator>
     {
     public:
@@ -69,9 +37,8 @@ namespace Synet
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ConvolutionLayer(const ConvolutionLayerParam & param)
+        ConvolutionLayer(const LayerParam & param)
             : Base(param)
-            , _param(param)
         {
         }
 
@@ -88,11 +55,9 @@ namespace Synet
         void ImToCol(const T * src, T * dst);
 
     private:
-        ConvolutionLayerParam _param;
-
         Shape _srcShape, _kernelShape, _strideShape, _dilationShape, _padShape, _dstShape, _srcConvShape;
-        bool _is1x1;
-        size_t _spatialAxisNum, _srcChannels, _dstChannels, _srcConvChannels, _dstConvChannels, _weightOffset, _kernelSize;
+        bool _is1x1, _biasTerm;
+        size_t _axis, _group, _spatialAxisNum, _srcChannels, _dstChannels, _srcConvChannels, _dstConvChannels, _weightOffset, _kernelSize;
         size_t _channelAxis, _num, _dstConvSpatialSize, _dstSpatialSize, _colOffset, _dstOffset, _srcSize, _dstSize;
         Tensor _biasMultiplier, _colBuffer;
     };

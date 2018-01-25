@@ -26,7 +26,8 @@
 
 int main(int argc, char* argv[])
 {
-    Test::TestParam();
+    //Test::TestParam();
+    Test::TestParams();
 
 
     Synet::NetworkParam netParam;

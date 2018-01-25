@@ -29,37 +29,6 @@
 
 namespace Synet
 {
-    struct PoolingLayerParam : public LayerParam
-    {
-        enum MethodType
-        {
-            MethodMax,
-            MethodAverage,
-            MethodStochastic
-        };
-        MethodType method;
-        uint32_t padX;
-        uint32_t padY;
-        uint32_t kernelX;
-        uint32_t kernelY;
-        uint32_t strideX;
-        uint32_t strideY;
-        bool globalPooling;
-
-        PoolingLayerParam(const String & n)
-            : LayerParam(LayerParam::PoolingLayer, n)
-            , method(MethodMax)
-            , padX(0)
-            , padY(0)
-            , kernelX(2)
-            , kernelY(2)
-            , strideX(1)
-            , strideY(1)
-            , globalPooling(false)
-        {
-        }
-    };
-
     template <class T, template<class> class Allocator = std::allocator> class PoolingLayer : public Synet::Layer<T, Allocator>
     {
     public:
@@ -67,9 +36,8 @@ namespace Synet
         typedef Layer<T, Allocator> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        PoolingLayer(const PoolingLayerParam & param)
+        PoolingLayer(const LayerParam & param)
             : Base(param)
-            , _param(param)
         {
         }
 
@@ -82,7 +50,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst);
 
     private:
-        PoolingLayerParam _param;
-        size_t _channels, _srcX, _srcY, _kernelX, _kernelY, _dstX, _dstY;
+        PoolingMethodType _method;
+        size_t _channels, _srcX, _srcY, _kernelX, _kernelY, _dstX, _dstY, _strideX, _strideY, _padX, _padY;
     };
 }

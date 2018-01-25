@@ -33,30 +33,64 @@ namespace Synet
 
     template <class T, template<class> class A> void PoolingLayer<T, A>::Reshape(const PoolingLayer::TensorPtrs & src, const PoolingLayer::TensorPtrs & dst)
     {
+        _method = Param().poolingLayer().method();
+
         assert(src[0]->Count() == 4);
         _channels = src[0]->Axis(1);
-        _srcX = src[0]->Axis(3);
         _srcY = src[0]->Axis(2);
-        if (_param.globalPooling) 
+        _srcX = src[0]->Axis(3);
+
+        if (Param().poolingLayer().globalPooling())
         {
-            _kernelX = src[0]->Axis(3);
             _kernelY = src[0]->Axis(2);
+            _kernelX = src[0]->Axis(3);
         }
         else
         {
-            _kernelX = _param.kernelX;
-            _kernelY = _param.kernelY;
+            const Shape & kernel = Param().poolingLayer().kernel();
+            assert(kernel.size() == 1 || kernel.size() == 2);
+            _kernelY = kernel[0];
+            _kernelX = kernel.size() > 1 ? kernel[1] : kernel[0];
+            assert(_kernelY > 0 && _kernelX > 0);
         }
-        _dstX = (size_t)(::ceil((float)(_srcX + 2 * _param.padX - _kernelX) / _param.strideX)) + 1;
-        _dstY = (size_t)(::ceil((float)(_srcY + 2 * _param.padY - _kernelY) / _param.strideY)) + 1;
-        if (_param.padX || _param.padY) 
+
+        const Shape & pad = Param().poolingLayer().pad();
+        if (pad.empty())
         {
-            if ((_dstX - 1) * _param.strideX >= _srcX + _param.padX)
+            _padY = 0;
+            _padX = 0;
+        }
+        else
+        {
+            assert(pad.size() == 2 || pad.size() == 2);
+            _padY = pad[0];
+            _padX = pad.size() > 1 ? pad[1] : pad[0];
+            assert(_padY < _kernelY && _padX < _kernelX );
+        }
+
+        const Shape & stride = Param().poolingLayer().stride();
+        if (stride.empty())
+        {
+            _strideY = 1;
+            _strideX = 1;
+        }
+        else
+        {
+            assert(stride.size() == 1 || stride.size() == 2);
+            _strideY = stride[0];
+            _strideX = stride.size() > 1 ? stride[1] : stride[0];
+        }
+
+        _dstX = (size_t)(::ceil((float)(_srcX + 2 * _padX - _kernelX) / _strideX)) + 1;
+        _dstY = (size_t)(::ceil((float)(_srcY + 2 * _padY - _kernelY) / _strideY)) + 1;
+        if (_padX || _padY) 
+        {
+            if ((_dstX - 1) * _strideX >= _srcX + _padX)
                 --_dstX;
-            if ((_dstY - 1) * _param.strideY >= _srcY + _param.padY)
+            if ((_dstY - 1) * _strideY >= _srcY + _padY)
                 --_dstY;
-            assert((_dstX - 1) * _param.strideX < _srcX + _param.padX);
-            assert((_dstY - 1) * _param.strideY < _srcY + _param.padY);
+            assert((_dstX - 1) * _strideX < _srcX + _padX);
+            assert((_dstY - 1) * _strideY < _srcY + _padY);
         }
         dst[0]->Reshape(Shape({ src[0]->Axis(0), _channels, _dstY, _dstX }));
     }
@@ -67,9 +101,9 @@ namespace Synet
         Type * pDst = dst[0]->Data();
         size_t num = dst[0]->Axis(0);
         size_t dstSize = dst[0]->Size();
-        switch (_param.method) 
+        switch (_method) 
         {
-        case PoolingLayerParam::MethodMax:
+        case PoolingMethodTypeMax:
             CpuSet(dstSize, Type(-FLT_MAX), pDst);
             for (size_t n = 0; n < num; ++n)
             {
@@ -77,11 +111,11 @@ namespace Synet
                 {
                     for (size_t ph = 0; ph < _dstY; ++ph) 
                     {
-                        size_t hStart = std::max(size_t(0), ph * _param.strideY - _param.padY);
+                        size_t hStart = std::max(size_t(0), ph * _strideY - _padY);
                         size_t hEnd = std::min(hStart + _kernelY, _srcY);
                         for (size_t pw = 0; pw < _dstX; ++pw) 
                         {
-                            size_t wStart = std::max(size_t(0), pw * _param.strideX - _param.padX);
+                            size_t wStart = std::max(size_t(0), pw * _strideX - _padX);
                             size_t wEnd = std::min(wStart + _kernelX, _srcX);
                             Type max = -FLT_MAX;
                             for (size_t h = hStart; h < hEnd; ++h)
@@ -95,7 +129,7 @@ namespace Synet
                 }
             }
             break;
-        case PoolingLayerParam::MethodAverage:
+        case PoolingMethodTypeAverage:
             CpuSet(dstSize, Type(0), pDst);
             for (size_t n = 0; n < num; ++n)
             {
@@ -103,11 +137,11 @@ namespace Synet
                 {
                     for (size_t ph = 0; ph < _dstY; ++ph)
                     {
-                        size_t hStart = std::max(size_t(0), ph * _param.strideY - _param.padY);
+                        size_t hStart = std::max(size_t(0), ph * _strideY - _padY);
                         size_t hEnd = std::min(hStart + _kernelY, _srcY);
                         for (size_t pw = 0; pw < _dstX; ++pw)
                         {
-                            size_t wStart = std::max(size_t(0), pw * _param.strideX - _param.padX);
+                            size_t wStart = std::max(size_t(0), pw * _strideX - _padX);
                             size_t wEnd = std::min(wStart + _kernelX, _srcX);
                             size_t poolSize = (hEnd - hStart) * (wEnd - wStart);
                             Type sum = 0;
@@ -122,7 +156,7 @@ namespace Synet
                 }
             }
             break;
-        case PoolingLayerParam::MethodStochastic:
+        case PoolingMethodTypeStochastic:
             assert(0);
             break;
         default:

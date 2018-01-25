@@ -29,10 +29,11 @@ namespace Synet
 {
     template <class T, template<class> class A> void InnerProductLayer<T, A>::Setup(const InnerProductLayer::TensorPtrs & src, const InnerProductLayer::TensorPtrs & dst)
     {
-        _biasTerm = _param.biasTerm;
-        _transpose = _param.transpose;
-        _N = _param.outputNum;
-        _K = src[0]->Axis(_param.axis);
+        _biasTerm = Param().innerProductLayer().biasTerm();
+        _transpose = Param().innerProductLayer().transpose();
+        _axis= Param().innerProductLayer().axis();
+        _N = Param().innerProductLayer().outputNum();
+        _K = src[0]->Axis(Param().innerProductLayer().axis());
         if (this->_tensors.empty())
         {
             if (_biasTerm)
@@ -61,11 +62,11 @@ namespace Synet
 
     template <class T, template<class> class A> void InnerProductLayer<T, A>::Reshape(const InnerProductLayer::TensorPtrs & src, const InnerProductLayer::TensorPtrs & dst)
     {
-        const size_t newK = src[0]->Axis(_param.axis);
-        _M = src[0]->Size(0, _param.axis);
+        const size_t newK = src[0]->Axis(_axis);
+        _M = src[0]->Size(0, _axis);
         Shape dstShape = src[0]->GetShape();
-        dstShape.resize(_param.axis + 1);
-        dstShape[_param.axis] = _N;
+        dstShape.resize(_axis + 1);
+        dstShape[_axis] = _N;
         dst[0]->Reshape(dstShape);
         if (_biasTerm)
         {

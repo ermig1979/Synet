@@ -26,37 +26,10 @@
 
 #include "Synet/Common.h"
 #include "Synet/Tensor.h"
+#include "Synet/Params.h"
 
 namespace Synet
 {
-    struct LayerParam
-    {
-        enum Type
-        {
-            UnknownLayer = -1,
-            InputLayer,
-            InnerProductLayer,
-            ReluLayer,
-            SigmoidLayer,
-            PoolingLayer,
-            ConvolutionLayer,
-            LayerTypeSize
-        };
-        Type type;
-        String name;
-        Strings src;
-        Strings dst;
-
-        LayerParam(Type t, const String & n)
-            : type(t)
-            , name(n)
-        {
-        }
-
-        static String ToString(Type type);
-        static Type FromString(const String & string);
-    };
-
     template <class T, template<class> class Allocator = std::allocator> class Layer
     {
     public:

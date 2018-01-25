@@ -29,17 +29,6 @@
 
 namespace Synet
 {
-    struct InputLayerParam : public LayerParam
-    {
-        Shape shape;
-
-        InputLayerParam(const String & n, const Shape & s)
-            : LayerParam(LayerParam::InputLayer, n)
-            , shape(s)
-        {
-        }
-    };
-
     template <class T, template<class> class Allocator = std::allocator> class InputLayer : public Synet::Layer<T, Allocator>
     {
     public:
@@ -47,9 +36,8 @@ namespace Synet
         typedef Layer<T, Allocator> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        InputLayer(const InputLayerParam & param)
+        InputLayer(const LayerParam & param)
             : Base(param)
-            , _param(param)
         {
         }
 
@@ -61,7 +49,6 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst) {}
 
-    private:
-        InputLayerParam _param;
+
     };
 }
