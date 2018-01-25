@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Synet/Common.h"
+#include "Synet/Xml.h"
 
 namespace Synet
 {
@@ -34,61 +35,66 @@ namespace Synet
         
         const Type & operator () () const { return _value; }
         Type & operator () ()  { return _value; }
+
         const String & Name() const { return _name; }
 
         virtual Type Default() const { return T(); }
 
-        template <class Saver> bool Save(Saver & saver, bool full) const
+        virtual bool Changed() const
         {
-            saver.WriteBegin(Name(), _mode != Value);
-            switch (_mode)
+            for (const Param * child = StructBegin(); child < StructEnd(); child = StructNext(child))
             {
-            case Value:
-                saver.WriteValue(ToString());
-                break;
-            case Struct:
-                for (const Param * child = StructBegin(); child < StructEnd(); child = StructNext(child))
-                {
-                    if (full || child->Changed())
-                    {
-                        if (!child->Save(saver, full))
-                            return false;
-                    }
-                }
-                break;
-            case Vector:
-                for (const Param * item = VectorBegin(); item < VectorEnd(); item = VectorNext(item))
-                {
-                    saver.WriteBegin(ItemName(), _mode != Value);
-                    for (const Param * child = item, *childEnd = VectorNext(item); child < childEnd; child = StructNext(child))
-                    {
-                        if (full || child->Changed())
-                        {
-                            if (!child->Save(saver, full))
-                                return false;
-                        }
-                    }
-                    saver.WriteEnd(ItemName(), _mode != Value);
-                }
-                break;
+                if (child->Changed())
+                    return true;
             }
-            saver.WriteEnd(Name(), _mode != Value);
+            return false;
+        }
+
+        bool Save(std::ostream & os, bool full) const
+        {
+            Xml::XmlDocument<char> doc;
+            this->Save(doc, &doc, full);
+            Xml::Print(os, doc);
             return true;
         }
 
-        template <class Loader> bool Load(Loader & loader)
+        bool Save(const String & path, bool full) const
         {
-            //if (Node())
-            //{
-            //    for (Param * child = Begin(); child < End(); child = Next(child))
-            //    {
-            //        if (!child->Load(loader))
-            //            return false;
-            //    }
-            //}
-            //else
-            //    return loader.Load(Name(), _value, Default());
-            return true;
+            bool result = false;
+            std::ofstream ofs(path.c_str());
+            if (ofs.is_open())
+            {
+                result = this->Save(ofs, full);
+                ofs.close();
+            }
+            return result;
+        }
+
+        bool Load(std::istream & is)
+        {
+            Xml::File<char> file(is);
+            Xml::XmlDocument<char> doc;
+            try
+            {
+                doc.Parse<0>(file.Data());
+            }
+            catch (std::exception e)
+            {
+                return false;
+            }
+            return this->Load(&doc);
+        }
+
+        bool Load(const String & path) const
+        {
+            bool result = false;
+            std::ifstream ifs(path.c_str());
+            if (ifs.is_open())
+            {
+                result = this->Load(ifs);
+                ifs.close();
+            }
+            return result;
         }
 
     protected:
@@ -101,51 +107,137 @@ namespace Synet
 
         Mode _mode;
         String _name;
+        size_t _size, _item;
         Type _value;
 
-        Param(Mode mode, const String & name)
+        Param(Mode mode, const String & name, size_t size, size_t item = 0)
             : _mode(mode)
             , _name(name)
+            , _size(size)
+            , _item(item)
         {
         }
         
-        virtual size_t TotalSize() const = 0;
-        virtual size_t ChildSize() const { return 0; }
         virtual String ToString() const { return ""; }
-        virtual String & ItemName() const { return "item"; }
+        virtual void FromString(const String & string) {}
+        virtual void Resize(size_t size) {}
+        String ItemName() const { return "item"; }
 
         Param * StructBegin() const { return (Param*)(&_value); }
-        Param * StructNext(const Param * param) const { return (Param*)((char*)param + param->TotalSize()); }
-        Param * StructEnd() const { return (Param *)((char*)this + TotalSize()); }
+        Param * StructNext(const Param * param) const { return (Param*)((char*)param + param->_size); }
+        Param * StructEnd() const { return (Param *)((char*)this + this->_size); }
 
         Param * VectorBegin() const { return (*(std::vector<Param>*)&_value).data(); }
-        Param * VectorNext(const Param * param) const { return (Param*)((char*)param + ChildSize()); }
+        Param * VectorNext(const Param * param) const { return (Param*)((char*)param + this->_item); }
         Param * VectorEnd() const { return (*(std::vector<Param>*)&_value).data() + (*(std::vector<Param>*)&_value).size(); }
 
-        virtual bool Changed() const
+        bool Load(Xml::XmlNode<char> * xmlParent)
         {
-            for (const Param * child = StructBegin(); child < StructEnd(); child = StructNext(child))
+            Xml::XmlNode<char> * xmlCurrent = xmlParent->FirstNode(this->Name().c_str());
+            if (xmlCurrent)
             {
-                if (child->Changed())
-                    return true;
+                switch (_mode)
+                {
+                case Value:
+                    this->FromString(xmlCurrent->Value());
+                    break;
+                case Struct:
+                    for (Param * paramChild = this->StructBegin(); paramChild < this->StructEnd(); paramChild = this->StructNext(paramChild))
+                    {
+                        if (!paramChild->Load(xmlCurrent))
+                            return true;
+                    }
+                    break;
+                case Vector:
+                    this->Resize(Xml::CountChildren(xmlCurrent));
+                    Xml::XmlNode<char> * xmlItem = xmlCurrent->FirstNode();
+                    for (Param * paramItem = this->VectorBegin(); paramItem < this->VectorEnd(); paramItem = this->VectorNext(paramItem))
+                    {
+                        if (ItemName() != xmlItem->Name())
+                            return false;
+                        const Param * paramChildEnd = this->VectorNext(paramItem);
+                        for (Param * paramChild = this->StructBegin(); paramChild < paramChildEnd; paramChild = this->StructNext(paramChild))
+                        {
+                            if (!paramChild->Load(xmlItem))
+                                return true;
+                        }
+                        xmlItem = xmlItem->NextSibling();
+                    }
+                    break;
+                }
             }
-            return false;
+            return true;
+        }
+
+        void Save(Xml::XmlDocument<char> & xmlDoc, Xml::XmlNode<char> * xmlParent, bool full) const
+        {
+            Xml::XmlNode<char> * xmlCurrent = xmlDoc.AllocateNode(Xml::NodeElement, xmlDoc.AllocateString(this->Name().c_str()));
+            switch (_mode)
+            {
+            case Value:
+                xmlCurrent->Value(xmlDoc.AllocateString(this->ToString().c_str()));
+                break;
+            case Struct:
+                for (const Param * paramChild = this->StructBegin(); paramChild < this->StructEnd(); paramChild = this->StructNext(paramChild))
+                {
+                    if (full || paramChild->Changed())
+                        paramChild->Save(xmlDoc, xmlCurrent, full);
+                }
+                break;
+            case Vector:
+                for (const Param * paramItem = this->VectorBegin(); paramItem < this->VectorEnd(); paramItem = this->VectorNext(paramItem))
+                {
+                    Xml::XmlNode<char> * xmlItem = xmlDoc.AllocateNode(Xml::NodeElement, xmlDoc.AllocateString(ItemName().c_str()));
+                    const Param * paramChildEnd = this->VectorNext(paramItem);
+                    for (const Param * paramChild = paramItem; paramChild < paramChildEnd; paramChild = this->StructNext(paramChild))
+                    {
+                        if (full || paramChild->Changed())
+                            paramChild->Save(xmlDoc, xmlItem, full);
+                    }
+                    xmlCurrent->AppendNode(xmlItem);
+                }
+                break;
+            }
+            xmlParent->AppendNode(xmlCurrent);
         }
     };
 
-    template<class T> String ToString(const T & value)
+    template<class T> inline String ToString(const T & value)
     {
         std::stringstream ss;
         ss << value;
         return ss.str();
     }
 
-    template<> inline String ToString<std::vector<int>>(const std::vector<int> & values)
+    template<class T> inline String ToString(const std::vector<T> & values)
     {
         std::stringstream ss;
         for (size_t i = 0; i < values.size(); ++i)
             ss << (i ? " " : "") << values[i];
         return ss.str();
+    }
+
+    template<class T> inline void FromString(const String & string, T & value)
+    {
+        std::stringstream ss(string);
+        ss >> value;
+    }
+
+    template<class T> inline void FromString(const String & string, std::vector<T> & values)
+    {
+        std::stringstream ss(string);
+        values.clear();
+        while (!ss.eof())
+        {
+            String item;
+            ss >> item;
+            if (item.size())
+            {
+                T value;
+                FromString(item, value);
+                values.push_back(value);
+            }
+        }
     }
 }
 
@@ -153,10 +245,10 @@ namespace Synet
 struct Param_##name : public Synet::Param<type> \
 { \
 typedef Synet::Param<type> Base; \
-Param_##name() : Base(Base::Value, #name) { _value = Default(); } \
+Param_##name() : Base(Base::Value, #name, sizeof(Param_##name)) { _value = Default(); } \
 virtual type Default() const { return value; } \
-virtual size_t TotalSize() const { return sizeof(Param_##name); } \
 virtual Synet::String ToString() const { return Synet::ToString((*this)()); } \
+virtual void FromString(const Synet::String & string) { Synet::FromString(string, _value); } \
 virtual bool Changed() const { return Default() != _value; } \
 } name;
 
@@ -164,17 +256,15 @@ virtual bool Changed() const { return Default() != _value; } \
 struct Param_##name : public Synet::Param<type> \
 { \
 typedef Synet::Param<type> Base; \
-Param_##name() : Base(Base::Struct, #name) {} \
-virtual size_t TotalSize() const { return sizeof(Param_##name); } \
+Param_##name() : Base(Base::Struct, #name, sizeof(Param_##name)) {} \
 } name;
 
 #define SYNET_PARAM_VECTOR(type, name) \
 struct Param_##name : public Synet::Param<std::vector<type>> \
 { \
 typedef Synet::Param<std::vector<type>> Base; \
-Param_##name() : Base(Base::Vector, #name) {} \
-virtual size_t TotalSize() const { return sizeof(Param_##name); } \
-virtual size_t ChildSize() const { return sizeof(type); } \
+Param_##name() : Base(Base::Vector, #name, sizeof(Param_##name), sizeof(type)) {} \
+virtual void Resize(size_t size) { _value.resize(size); } \
 virtual bool Changed() const { return !_value.empty(); } \
 } name;
 
@@ -182,71 +272,5 @@ virtual bool Changed() const { return !_value.empty(); } \
 struct name : public Synet::Param<type> \
 { \
 typedef Synet::Param<type> Base; \
-name() : Base(Base::Struct, #name) {} \
-virtual size_t TotalSize() const { return sizeof(name); } \
+name() : Base(Base::Struct, #name, sizeof(name)) {} \
 };
-
-namespace Synet
-{
-    struct XmlSaver
-    {
-        XmlSaver()
-            : _os(std::cout)
-            , _indent(0)
-        {
-            WriteRoot();
-        }
-
-        XmlSaver(std::ostream & os)
-            : _os(os)
-            , _indent(0)
-        {
-            WriteRoot();
-        }
-
-        bool WriteBegin(const Synet::String & name, bool node)
-        {
-            WriteIndent();
-            _os << "<" << name << ">";
-            if (node)
-            {
-                _os << std::endl;
-                _indent += INDENT;
-            }
-            return true;
-        }
-
-        bool WriteValue(const Synet::String & value)
-        {
-            _os << value;
-            return true;
-        }
-
-        bool WriteEnd(const Synet::String & name, bool node)
-        {
-            if (node)
-            {
-                _indent -= INDENT;
-                WriteIndent();
-            }
-            _os << "</" << name << ">" << std::endl;
-            return true;
-        }
-
-    private:
-        void WriteRoot()
-        {
-            _os << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>" << std::endl;
-        }
-
-        void WriteIndent()
-        {
-            for (size_t i = 0; i < _indent; ++i)
-                _os << " ";
-        }
-
-        const size_t INDENT = 2;
-        std::ostream & _os;
-        size_t _indent;
-    };
-}

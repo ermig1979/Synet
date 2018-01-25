@@ -36,6 +36,7 @@
 #include <string>
 #include <memory>
 #include <algorithm>
+#include <iterator>
 #include <iostream>
 #include <fstream>
 #include <sstream>

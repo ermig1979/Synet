@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "Synet/Xml.h"
 #include "Synet/Param.h"
 #include "Synet/Tensor.h"
 #include "Synet/Layer.h"

@@ -56,19 +56,23 @@ namespace Test
 
     bool TestParam()
     {
-        Config config;
-        config().t2_p2().t0_p1() = 3;
-        config().t2_p1() = "Value";
-        config().t2_p3().t1_p2().t0_p2() = 1.2;
-        config().t2_p4().resize(2);
-        config().t2_p4()[1].t1_p1() = 10;
-        config().t2_p0().resize(3, 6);
+        Config config1;
+        config1().t2_p2().t0_p1() = 3;
+        config1().t2_p1() = "Value";
+        config1().t2_p3().t1_p2().t0_p2() = 1.2;
+        config1().t2_p4().resize(2);
+        config1().t2_p4()[1].t1_p1() = 10;
+        config1().t2_p0().resize(3, 6);
 
-        Synet::XmlSaver saver(std::cout);
-        config.Save(saver, true);
+        std::cout << std::endl << "Saved (only changed):" << std::endl;
+        std::stringstream tmp;
+        config1.Save(std::cout, false);
+        config1.Save(tmp, false);
 
-        std::cout << std::endl;
-        config.Save(saver,false);
+        Config config2;
+        config2.Load(tmp);
+        std::cout << std::endl << "Saved and Loaded (full):" << std::endl;
+        config2.Save(std::cout, true);
 
         return true;
     }
