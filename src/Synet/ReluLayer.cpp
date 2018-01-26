@@ -26,12 +26,12 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> void ReluLayer<T, A>::ForwardCpu(const ReluLayer::TensorPtrs & src, const ReluLayer::TensorPtrs & dst)
+    template <class T, template<class> class A> void ReluLayer<T, A>::ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
         const Type * pSrc = src[0]->Data();
         Type * pDst = dst[0]->Data();
         size_t size = src[0]->Size();
-        Type negativeSlope = Param().reluLayer().negativeSlope();
+        Type negativeSlope = this->Param().reluLayer().negativeSlope();
         for (size_t i = 0; i < size; ++i)
             pDst[i] = std::max(pSrc[i], Type(0)) + negativeSlope * std::min(pSrc[i], Type(0));
     }

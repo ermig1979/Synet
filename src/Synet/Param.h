@@ -139,7 +139,7 @@ namespace Synet
                 switch (_mode)
                 {
                 case Value:
-                    this->FromString(xmlCurrent->Value());
+                    this->ToValue(xmlCurrent->Value());
                     break;
                 case Struct:
                     for (Param * paramChild = this->StructBegin(); paramChild < this->StructEnd(); paramChild = this->StructNext(paramChild))

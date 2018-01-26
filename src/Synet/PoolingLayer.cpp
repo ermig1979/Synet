@@ -27,34 +27,34 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> void PoolingLayer<T, A>::Setup(const PoolingLayer::TensorPtrs & src, const PoolingLayer::TensorPtrs & dst)
+    template <class T, template<class> class A> void PoolingLayer<T, A>::Setup(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
     }
 
-    template <class T, template<class> class A> void PoolingLayer<T, A>::Reshape(const PoolingLayer::TensorPtrs & src, const PoolingLayer::TensorPtrs & dst)
+    template <class T, template<class> class A> void PoolingLayer<T, A>::Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
-        _method = Param().poolingLayer().method();
+        _method = this->Param().poolingLayer().method();
 
         assert(src[0]->Count() == 4);
         _channels = src[0]->Axis(1);
         _srcY = src[0]->Axis(2);
         _srcX = src[0]->Axis(3);
 
-        if (Param().poolingLayer().globalPooling())
+        if (this->Param().poolingLayer().globalPooling())
         {
             _kernelY = src[0]->Axis(2);
             _kernelX = src[0]->Axis(3);
         }
         else
         {
-            const Shape & kernel = Param().poolingLayer().kernel();
+            const Shape & kernel = this->Param().poolingLayer().kernel();
             assert(kernel.size() == 1 || kernel.size() == 2);
             _kernelY = kernel[0];
             _kernelX = kernel.size() > 1 ? kernel[1] : kernel[0];
             assert(_kernelY > 0 && _kernelX > 0);
         }
 
-        const Shape & pad = Param().poolingLayer().pad();
+        const Shape & pad = this->Param().poolingLayer().pad();
         if (pad.empty())
         {
             _padY = 0;
@@ -68,7 +68,7 @@ namespace Synet
             assert(_padY < _kernelY && _padX < _kernelX );
         }
 
-        const Shape & stride = Param().poolingLayer().stride();
+        const Shape & stride = this->Param().poolingLayer().stride();
         if (stride.empty())
         {
             _strideY = 1;
@@ -95,7 +95,7 @@ namespace Synet
         dst[0]->Reshape(Shape({ src[0]->Axis(0), _channels, _dstY, _dstX }));
     }
 
-    template <class T, template<class> class A> void PoolingLayer<T, A>::ForwardCpu(const PoolingLayer::TensorPtrs & src, const PoolingLayer::TensorPtrs & dst)
+    template <class T, template<class> class A> void PoolingLayer<T, A>::ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
         const Type * pSrc = src[0]->Data();
         Type * pDst = dst[0]->Data();

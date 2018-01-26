@@ -29,11 +29,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class Allocator = std::allocator> class PoolingLayer : public Synet::Layer<T, Allocator>
+    template <class T, template<class> class A = std::allocator> class PoolingLayer : public Synet::Layer<T, A>
     {
     public:
         typedef T Type;
-        typedef Layer<T, Allocator> Base;
+        typedef Layer<T, A> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         PoolingLayer(const LayerParam & param)
@@ -41,13 +41,13 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst);
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst);
+        virtual void Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
+        virtual void Setup(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
         virtual inline size_t SrcNum() const { return 1; }
         virtual inline size_t DstNum() const { return 1; }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst);
+        virtual void ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
 
     private:
         PoolingMethodType _method;

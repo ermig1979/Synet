@@ -26,12 +26,12 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> void SigmoidLayer<T, A>::ForwardCpu(const SigmoidLayer::TensorPtrs & src, const SigmoidLayer::TensorPtrs & dst)
+    template <class T, template<class> class A> void SigmoidLayer<T, A>::ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
         const Type * pSrc = src[0]->Data();
         Type * pDst = dst[0]->Data();
         size_t size = src[0]->Size();
-        Type slope = _param.slope;
+        Type slope = this->Param().sigmoidLayer().slope();
         for (size_t i = 0; i < size; ++i)
             pDst[i] = Type(1.0) / (Type(1.0) + ::exp(-pSrc[i] * slope));
     }

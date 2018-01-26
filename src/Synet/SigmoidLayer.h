@@ -29,11 +29,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class Allocator = std::allocator> class SigmoidLayer : public Synet::Layer<T, Allocator>
+    template <class T, template<class> class A = std::allocator> class SigmoidLayer : public Synet::Layer<T, A>
     {
     public:
         typedef T Type;
-        typedef Layer<T, Allocator> Base;
+        typedef Layer<T, A> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         SigmoidLayer(const LayerParam & param)
@@ -47,6 +47,6 @@ namespace Synet
         virtual inline size_t DstMin() const { return 1; }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst);
+        virtual void ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
     };
 }

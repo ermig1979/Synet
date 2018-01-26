@@ -37,7 +37,7 @@ namespace Synet
         {
         }
 
-        inline Tensor(const Shape & shape, const Type & value = Type())
+        inline Tensor(const Synet::Shape & shape, const Type & value = Type())
             : _shape(shape)
         {
             _data.resize(Size(0, _shape.size()), value);
@@ -47,13 +47,13 @@ namespace Synet
         {
         }
 
-        inline void Reshape(const Shape & shape, const Type & value = Type())
+        inline void Reshape(const Synet::Shape & shape, const Type & value = Type())
         {
             _shape = shape; 
             _data.resize(Size(0, _shape.size()), value);
         }
 
-        inline const Shape & GetShape() const
+        inline const Synet::Shape & GetShape() const
         {
             return _shape;
         }
@@ -88,7 +88,7 @@ namespace Synet
             return _data.size();
         }
 
-        size_t Offset(const Index & index) const
+        size_t Offset(const Synet::Index & index) const
         {
             assert(_shape.size() == index.size());
 
@@ -114,12 +114,12 @@ namespace Synet
             return _data.data();
         }
 
-        inline Type * Data(const Index & index)
+        inline Type * Data(const Synet::Index & index)
         {
             return _data.data() + Offset(index);
         }
 
-        inline const Type * Data(const Index & index) const
+        inline const Type * Data(const Synet::Index & index) const
         {
             return _data.data() + Offset(index);
         }
@@ -127,7 +127,7 @@ namespace Synet
     private:
         typedef std::vector<Type, Allocator<Type> > Vector;
 
-        Shape _shape;
+        Synet::Shape _shape;
         Vector _data;
     };
 }

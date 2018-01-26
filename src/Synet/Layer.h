@@ -30,11 +30,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class Allocator = std::allocator> class Layer
+    template <class T, template<class> class A = std::allocator> class Layer
     {
     public:
         typedef T Type;
-        typedef Synet::Tensor<Type, Allocator> Tensor;
+        typedef Synet::Tensor<Type, A> Tensor;
         typedef std::vector<Tensor*> TensorPtrs;
         typedef std::shared_ptr<Tensor> TensorSharedPtr;
         typedef std::vector<TensorSharedPtr> TensorSharedPtrs;

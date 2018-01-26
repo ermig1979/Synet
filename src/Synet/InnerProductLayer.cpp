@@ -27,13 +27,13 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> void InnerProductLayer<T, A>::Setup(const InnerProductLayer::TensorPtrs & src, const InnerProductLayer::TensorPtrs & dst)
+    template <class T, template<class> class A> void InnerProductLayer<T, A>::Setup(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
-        _biasTerm = Param().innerProductLayer().biasTerm();
-        _transpose = Param().innerProductLayer().transpose();
-        _axis= Param().innerProductLayer().axis();
-        _N = Param().innerProductLayer().outputNum();
-        _K = src[0]->Axis(Param().innerProductLayer().axis());
+        _biasTerm = this->Param().innerProductLayer().biasTerm();
+        _transpose = this->Param().innerProductLayer().transpose();
+        _axis = this->Param().innerProductLayer().axis();
+        _N = this->Param().innerProductLayer().outputNum();
+        _K = src[0]->Axis(_axis);
         if (this->_tensors.empty())
         {
             if (_biasTerm)
@@ -60,7 +60,7 @@ namespace Synet
         }
     }
 
-    template <class T, template<class> class A> void InnerProductLayer<T, A>::Reshape(const InnerProductLayer::TensorPtrs & src, const InnerProductLayer::TensorPtrs & dst)
+    template <class T, template<class> class A> void InnerProductLayer<T, A>::Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
         const size_t newK = src[0]->Axis(_axis);
         _M = src[0]->Size(0, _axis);
@@ -75,7 +75,7 @@ namespace Synet
         }
     }
 
-    template <class T, template<class> class A> void InnerProductLayer<T, A>::ForwardCpu(const InnerProductLayer::TensorPtrs & src, const InnerProductLayer::TensorPtrs & dst)
+    template <class T, template<class> class A> void InnerProductLayer<T, A>::ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
         CpuGemm<Type>(CblasNoTrans, _transpose ? CblasNoTrans : CblasTrans, _M, _N, _K, 
             (Type)1.0, src[0]->Data(), this->_tensors[0]->Data(), (Type)0.0, dst[0]->Data());

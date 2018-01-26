@@ -35,9 +35,9 @@ namespace Synet
     template <class T, template<class> class A> void Network<T, A>::Init()
     {
         _layers.clear();
-        for (size_t i = 0; i < _param.layers.size(); ++i)
+        for (size_t i = 0; i < _param.layers().size(); ++i)
         {
-            _layers.push_back(LayerSharedPtr(Synet::Layer<T, A>::Create(*_param.layers[i])));
+            _layers.push_back(LayerSharedPtr(Synet::Layer<T, A>::Create(_param.layers()[i])));
         }
     }
 

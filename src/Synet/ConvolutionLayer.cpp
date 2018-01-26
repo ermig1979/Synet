@@ -27,15 +27,15 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> void ConvolutionLayer<T, A>::Setup(const ConvolutionLayer::TensorPtrs & src, const ConvolutionLayer::TensorPtrs & dst)
+    template <class T, template<class> class A> void ConvolutionLayer<T, A>::Setup(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
-        _biasTerm = Param().convolutionLayer().biasTerm();
-        _axis = Param().convolutionLayer().axis();
-        _group = Param().convolutionLayer().group();
+        _biasTerm = this->Param().convolutionLayer().biasTerm();
+        _axis = this->Param().convolutionLayer().axis();
+        _group = this->Param().convolutionLayer().group();
         size_t firstSpatialAxis = _axis + 1;
         _spatialAxisNum = src[0]->Count() - firstSpatialAxis;
         
-        const Shape & kernel = Param().convolutionLayer().kernel();
+        const Shape & kernel = this->Param().convolutionLayer().kernel();
         assert(kernel.size() == 1 || kernel.size() == _spatialAxisNum);
         if (kernel.size() == 1)
             _kernelShape.resize(_spatialAxisNum, kernel[0]);
@@ -44,7 +44,7 @@ namespace Synet
         for (size_t i = 0; i < _kernelShape.size(); ++i)
             assert(_kernelShape[i] > 0);
 
-        const Shape & stride = Param().convolutionLayer().stride();
+        const Shape & stride = this->Param().convolutionLayer().stride();
         if (stride.empty())
             _strideShape.resize(_spatialAxisNum, 1);
         else
@@ -58,7 +58,7 @@ namespace Synet
         for (size_t i = 0; i < _strideShape.size(); ++i)
             assert(_strideShape[i] > 0);
 
-        const Shape & pad = Param().convolutionLayer().pad();
+        const Shape & pad = this->Param().convolutionLayer().pad();
         if (pad.empty())
             _padShape.resize(_spatialAxisNum, 0);
         else
@@ -70,7 +70,7 @@ namespace Synet
                 _padShape == pad;
         }
 
-        const Shape & dilation = Param().convolutionLayer().dilation();
+        const Shape & dilation = this->Param().convolutionLayer().dilation();
         if (dilation.empty())
             _dilationShape.resize(_spatialAxisNum, 1);
         else
@@ -94,7 +94,7 @@ namespace Synet
             }
         }
         _srcChannels = src[0]->Axis(_axis);
-        _dstChannels = Param().convolutionLayer().outputNum();
+        _dstChannels = this->Param().convolutionLayer().outputNum();
         assert(_dstChannels  > 0 && _dstChannels % _group == 0);
         if (IsConv())
         {
@@ -133,7 +133,7 @@ namespace Synet
         _weightOffset = _dstConvChannels * _kernelSize / _group;
     }
 
-    template <class T, template<class> class A> void ConvolutionLayer<T, A>::Reshape(const ConvolutionLayer::TensorPtrs & src, const ConvolutionLayer::TensorPtrs & dst)
+    template <class T, template<class> class A> void ConvolutionLayer<T, A>::Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
         const Type * pSrc = src[0]->Data();
         Type * pDst = dst[0]->Data();
@@ -190,7 +190,7 @@ namespace Synet
         }
     }
 
-    template <class T, template<class> class A> void ConvolutionLayer<T, A>::ForwardCpu(const ConvolutionLayer::TensorPtrs & src, const ConvolutionLayer::TensorPtrs & dst)
+    template <class T, template<class> class A> void ConvolutionLayer<T, A>::ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
         const Type * weight = this->_tensors[0]->Data();
         for (int i = 0; i < src.size(); ++i) 

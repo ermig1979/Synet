@@ -25,3 +25,5 @@
 #pragma once
 
 //#define SYNET_SIMD_LIBRARY_ENABLE
+
+//#define SYNET_PROTOBUF_ENABLE

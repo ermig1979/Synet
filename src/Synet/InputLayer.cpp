@@ -26,9 +26,9 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> void InputLayer<T, A>::Setup(const InputLayer::TensorPtrs & src, const InputLayer::TensorPtrs & dst)
+    template <class T, template<class> class A> void InputLayer<T, A>::Setup(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
-        const Shape & shape = Param().inputLayer().shape();
+        const Shape & shape = this->Param().inputLayer().shape();
         if (shape.size() > 0) 
         {
             for (size_t i = 0; i < dst.size(); ++i)

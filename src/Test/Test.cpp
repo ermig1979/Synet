@@ -34,10 +34,7 @@ int main(int argc, char* argv[])
     typedef Synet::Network<float> Network;
     Network net(netParam);
 
-    Synet::InputLayerParam inputLayerParam("Input", Synet::Shape({1, 1, 1, 1}));
-    Synet::InputLayer<float> inputLayer(inputLayerParam);
 
-    Synet::InnerProductLayer<float> innerProductLayer(Synet::InnerProductLayerParam("InnerLayer"));
 
     return 0;
 }

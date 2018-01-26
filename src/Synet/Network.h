@@ -30,15 +30,6 @@
 
 namespace Synet
 {
-    typedef std::shared_ptr<LayerParam> LayerParamPtr;
-    typedef std::vector<LayerParamPtr> LayerParamPtrs;
-
-    struct NetworkParam
-    {
-        String name;
-        LayerParamPtrs layers;
-    };
-
     template <class T, template<class> class Allocator = std::allocator> class Network
     {
     public:
@@ -51,7 +42,7 @@ namespace Synet
 
         }
 
-        const String & Name() const { return _param.name; }
+        const NetworkParam & Param() const { return _param; }
 
         bool Load(const void * data, size_t size);
         bool Load(std::istream & is);
