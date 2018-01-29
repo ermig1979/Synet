@@ -42,7 +42,7 @@ namespace Synet
 
         virtual bool Changed() const
         {
-            for (const Param * child = StructBegin(); child < StructEnd(); child = StructNext(child))
+            for (const Unknown * child = StructBegin(); child < StructEnd(); child = StructNext(child))
             {
                 if (child->Changed())
                     return true;
@@ -53,6 +53,10 @@ namespace Synet
         bool Save(std::ostream & os, bool full) const
         {
             Xml::XmlDocument<char> doc;
+            Synet::Xml::XmlNode<char> * xmlDeclaration = doc.AllocateNode(Synet::Xml::NodeDeclaration);
+            xmlDeclaration->AppendAttribute(doc.AllocateAttribute("version", "1.0"));
+            xmlDeclaration->AppendAttribute(doc.AllocateAttribute("encoding", "utf-8"));
+            doc.AppendNode(xmlDeclaration);
             this->Save(doc, &doc, full);
             Xml::Print(os, doc);
             return true;
@@ -123,13 +127,17 @@ namespace Synet
         virtual void Resize(size_t size) {}
         String ItemName() const { return "item"; }
 
-        Param * StructBegin() const { return (Param*)(&_value); }
-        Param * StructNext(const Param * param) const { return (Param*)((char*)param + param->_size); }
-        Param * StructEnd() const { return (Param *)((char*)this + this->_size); }
+        template<typename> friend struct Param;
 
-        Param * VectorBegin() const { return (*(std::vector<Param>*)&_value).data(); }
-        Param * VectorNext(const Param * param) const { return (Param*)((char*)param + this->_item); }
-        Param * VectorEnd() const { return (*(std::vector<Param>*)&_value).data() + (*(std::vector<Param>*)&_value).size(); }
+        typedef Param<int> Unknown;
+
+        Unknown * StructBegin() const { return (Unknown*)(&_value); }
+        Unknown * StructNext(const Unknown * param) const { return (Unknown*)((char*)param + param->_size); }
+        Unknown * StructEnd() const { return (Unknown *)((char*)this + this->_size); }
+
+        Unknown * VectorBegin() const { return (*(std::vector<Unknown>*)&_value).data(); }
+        Unknown * VectorNext(const Unknown * param) const { return (Unknown*)((char*)param + this->_item); }
+        Unknown * VectorEnd() const { return (*(std::vector<Unknown>*)&_value).data() + (*(std::vector<Unknown>*)&_value).size(); }
 
         bool Load(Xml::XmlNode<char> * xmlParent)
         {
@@ -142,7 +150,7 @@ namespace Synet
                     this->ToValue(xmlCurrent->Value());
                     break;
                 case Struct:
-                    for (Param * paramChild = this->StructBegin(); paramChild < this->StructEnd(); paramChild = this->StructNext(paramChild))
+                    for (Unknown * paramChild = this->StructBegin(); paramChild < this->StructEnd(); paramChild = this->StructNext(paramChild))
                     {
                         if (!paramChild->Load(xmlCurrent))
                             return true;
@@ -151,12 +159,12 @@ namespace Synet
                 case Vector:
                     this->Resize(Xml::CountChildren(xmlCurrent));
                     Xml::XmlNode<char> * xmlItem = xmlCurrent->FirstNode();
-                    for (Param * paramItem = this->VectorBegin(); paramItem < this->VectorEnd(); paramItem = this->VectorNext(paramItem))
+                    for (Unknown * paramItem = this->VectorBegin(); paramItem < this->VectorEnd(); paramItem = this->VectorNext(paramItem))
                     {
                         if (ItemName() != xmlItem->Name())
                             return false;
-                        const Param * paramChildEnd = this->VectorNext(paramItem);
-                        for (Param * paramChild = this->StructBegin(); paramChild < paramChildEnd; paramChild = this->StructNext(paramChild))
+                        const Unknown * paramChildEnd = this->VectorNext(paramItem);
+                        for (Unknown * paramChild = this->StructBegin(); paramChild < paramChildEnd; paramChild = this->StructNext(paramChild))
                         {
                             if (!paramChild->Load(xmlItem))
                                 return true;
@@ -178,18 +186,18 @@ namespace Synet
                 xmlCurrent->Value(xmlDoc.AllocateString(this->ToString().c_str()));
                 break;
             case Struct:
-                for (const Param * paramChild = this->StructBegin(); paramChild < this->StructEnd(); paramChild = this->StructNext(paramChild))
+                for (const Unknown * paramChild = this->StructBegin(); paramChild < this->StructEnd(); paramChild = this->StructNext(paramChild))
                 {
                     if (full || paramChild->Changed())
                         paramChild->Save(xmlDoc, xmlCurrent, full);
                 }
                 break;
             case Vector:
-                for (const Param * paramItem = this->VectorBegin(); paramItem < this->VectorEnd(); paramItem = this->VectorNext(paramItem))
+                for (const Unknown * paramItem = this->VectorBegin(); paramItem < this->VectorEnd(); paramItem = this->VectorNext(paramItem))
                 {
                     Xml::XmlNode<char> * xmlItem = xmlDoc.AllocateNode(Xml::NodeElement, xmlDoc.AllocateString(ItemName().c_str()));
-                    const Param * paramChildEnd = this->VectorNext(paramItem);
-                    for (const Param * paramChild = paramItem; paramChild < paramChildEnd; paramChild = this->StructNext(paramChild))
+                    const Unknown * paramChildEnd = this->VectorNext(paramItem);
+                    for (const Unknown * paramChild = paramItem; paramChild < paramChildEnd; paramChild = this->StructNext(paramChild))
                     {
                         if (full || paramChild->Changed())
                             paramChild->Save(xmlDoc, xmlItem, full);

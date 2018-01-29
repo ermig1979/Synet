@@ -46,7 +46,7 @@ namespace google
                 Printer().Save(message, os);
             }
 
-            static void Save(const Message& message, Synet::Xml::XmlDocument<char> & doc)
+            static void Save(const Message & message, Synet::Xml::XmlDocument<char> & doc)
             {
                 Printer().Save(message, doc);
             }
@@ -66,7 +66,7 @@ namespace google
                 void Save(const Message & message, std::ostream & os)
                 {
                     Synet::Xml::XmlDocument<char> doc;
-                    MessageToDOM(message, &doc);
+                    Save(message, doc);
                     os << doc;
                 }
 
@@ -110,7 +110,7 @@ namespace google
                     }
                 }
 
-                Sybet::String FieldName(const Message & message, const Reflection * reflection, const FieldDescriptor * field)
+                Synet::String FieldName(const Message & message, const Reflection * reflection, const FieldDescriptor * field)
                 {
                     if (field->is_extension()) 
                     {
@@ -147,7 +147,7 @@ namespace google
                     {
                         int32_t value = field->is_repeated() ? reflection->GetRepeatedInt32(message, field, fieldIndex) :  reflection->GetInt32(message, field); 
                         Synet::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Synet::Xml::NodeElement,
-                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value)); 
+                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value).c_str()); 
                         node->AppendNode(stringNode);
                         break;
                     }
@@ -155,7 +155,7 @@ namespace google
                     {
                         int64_t value = field->is_repeated() ? reflection->GetRepeatedInt64(message, field, fieldIndex) : reflection->GetInt64(message, field);
                         Synet::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Synet::Xml::NodeElement,
-                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value));
+                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value).c_str());
                         node->AppendNode(stringNode);
                         break;
                     }
@@ -163,7 +163,7 @@ namespace google
                     {
                         uint32_t value = field->is_repeated() ? reflection->GetRepeatedUInt32(message, field, fieldIndex) : reflection->GetUInt32(message, field);
                         Synet::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Synet::Xml::NodeElement,
-                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value));
+                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value).c_str());
                         node->AppendNode(stringNode);
                         break;
                     }
@@ -171,7 +171,7 @@ namespace google
                     {
                         uint64_t value = field->is_repeated() ? reflection->GetRepeatedUInt64(message, field, fieldIndex) : reflection->GetUInt64(message, field);
                         Synet::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Synet::Xml::NodeElement,
-                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value));
+                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value).c_str());
                         node->AppendNode(stringNode);
                         break; 
                     }
@@ -179,7 +179,7 @@ namespace google
                     {
                         float value = field->is_repeated() ? reflection->GetRepeatedFloat(message, field, fieldIndex) : reflection->GetFloat(message, field);
                         Synet::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Synet::Xml::NodeElement,
-                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value));
+                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value).c_str());
                         node->AppendNode(stringNode);
                         break;
                     }
@@ -187,7 +187,7 @@ namespace google
                     {
                         double value = field->is_repeated() ? reflection->GetRepeatedDouble(message, field, fieldIndex) : reflection->GetDouble(message, field);
                         Synet::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Synet::Xml::NodeElement,
-                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value));
+                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value).c_str());
                         node->AppendNode(stringNode);
                         break;
                     }
@@ -221,7 +221,7 @@ namespace google
                     {
                         Synet::String value = field->is_repeated() ? reflection->GetRepeatedEnum(message, field, fieldIndex)->name() :
                             reflection->GetEnum(message, field)->name();
-                        Synet::Xml::XmlNode<char> * enumNode = doc.AllocateNode(Synet::Xml::NodeElement, GetXmlFieldName(message, reflection, field).c_str(), value.c_str());
+                        Synet::Xml::XmlNode<char> * enumNode = doc.AllocateNode(Synet::Xml::NodeElement, FieldName(message, reflection, field).c_str(), value.c_str());
                         node->AppendNode(enumNode);
                         break;
                     }                    

@@ -36,10 +36,13 @@ namespace Synet
     {
         { LayerTypeInput, "Input" },
         { LayerTypeInnerProduct, "InnerProduct" },
-        { LayerTypeRelu, "Relu" },
+        { LayerTypeRelu, "ReLU" },
         { LayerTypeSigmoid, "Sigmoid" },
         { LayerTypePooling, "Pooling" },
         { LayerTypeConvolution, "Convolution" },
+        { LayerTypeLrn, "LRN" },
+        { LayerTypeConcat, "Concat" },
+        { LayerTypeDropout, "Dropout" },
     };
 
     template<> String ValueToString<LayerType>(const LayerType & value)

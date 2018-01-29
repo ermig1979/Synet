@@ -38,6 +38,9 @@ namespace Synet
         LayerTypeSigmoid,
         LayerTypePooling,
         LayerTypeConvolution,
+        LayerTypeLrn,
+        LayerTypeConcat,
+        LayerTypeDropout,
         LayerTypeSize
     };
     template<> String ValueToString<LayerType>(const LayerType & value);
@@ -54,9 +57,14 @@ namespace Synet
     template<> String ValueToString<PoolingMethodType>(const PoolingMethodType & value);
     template<> void StringToValue<PoolingMethodType>(const String & string, PoolingMethodType & value);
 
+    struct ShapeParam
+    {
+        SYNET_PARAM_VALUE(Shape, dim, Shape());
+    };
+
     struct InputLayerParam
     {
-        SYNET_PARAM_VALUE(Shape, shape, Shape());
+        SYNET_PARAM_VECTOR(ShapeParam, shape);
     };
 
     struct InnerProductLayerParam
@@ -118,4 +126,6 @@ namespace Synet
         SYNET_PARAM_VALUE(String, name, String());
         SYNET_PARAM_VECTOR(LayerParam, layers);
     };
+
+    SYNET_PARAM_ROOT(NetworkParam, NetworkConfig);
 }

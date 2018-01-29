@@ -31,6 +31,7 @@
 #include <math.h>
 #include <memory.h>
 #include <float.h>
+#include <io.h>
 
 #include <vector>
 #include <string>
