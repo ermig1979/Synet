@@ -57,6 +57,16 @@ namespace Synet
     template<> String ValueToString<PoolingMethodType>(const PoolingMethodType & value);
     template<> void StringToValue<PoolingMethodType>(const String & string, PoolingMethodType & value);
 
+    enum NormRegionType
+    {
+        NormRegionTypeUnknown = -1,
+        NormRegionTypeAcrossChannels,
+        NormRegionTypeWithinChannel,
+        NormRegionTypeSize
+    };
+    template<> String ValueToString<NormRegionType>(const NormRegionType & value);
+    template<> void StringToValue<NormRegionType>(const String & string, NormRegionType & value);
+
     struct ShapeParam
     {
         SYNET_PARAM_VALUE(Shape, dim, Shape());
@@ -106,6 +116,15 @@ namespace Synet
         SYNET_PARAM_VALUE(uint32_t, group, 1);
     };
 
+    struct LrnLayerParam
+    {
+        SYNET_PARAM_VALUE(uint32_t, localSize, 5);
+        SYNET_PARAM_VALUE(float, alpha, 1.0f);
+        SYNET_PARAM_VALUE(float, beta, 0.75f);
+        SYNET_PARAM_VALUE(NormRegionType, normRegion, NormRegionTypeAcrossChannels);
+        SYNET_PARAM_VALUE(float, k, 1.0f);
+    };
+
     struct LayerParam
     {
         SYNET_PARAM_VALUE(LayerType, type, LayerTypeUnknown);
@@ -119,6 +138,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(SigmoidLayerParam, sigmoidLayer);
         SYNET_PARAM_STRUCT(PoolingLayerParam, poolingLayer);
         SYNET_PARAM_STRUCT(ConvolutionLayerParam, convolutionLayer);
+        SYNET_PARAM_STRUCT(LrnLayerParam, lrnLayer);
     };
 
     struct NetworkParam

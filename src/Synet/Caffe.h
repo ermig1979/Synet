@@ -126,6 +126,11 @@ namespace Synet
                     break;
                 }
                 case Synet::LayerTypeLrn:
+                    dstLayer.lrnLayer().localSize() = srcLayer.lrn_param().local_size();
+                    dstLayer.lrnLayer().alpha() = srcLayer.lrn_param().alpha();
+                    dstLayer.lrnLayer().beta() = srcLayer.lrn_param().beta();
+                    dstLayer.lrnLayer().normRegion() = (Synet::NormRegionType)srcLayer.lrn_param().norm_region();
+                    dstLayer.lrnLayer().k() = srcLayer.lrn_param().k();
                     break;
                 case Synet::LayerTypeConcat:
                     break;

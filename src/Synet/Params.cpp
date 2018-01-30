@@ -66,6 +66,8 @@ namespace Synet
         }
     }
 
+    //-------------------------------------------------------------------------
+
     struct PoolingMethodTypeName
     {
         PoolingMethodType type;
@@ -93,6 +95,41 @@ namespace Synet
         for (; type > PoolingMethodTypeUnknown; type = (PoolingMethodType)((int)type - 1))
         {
             if (g_poolingMethodTypeNames[type].name == string)
+            {
+                value = type;
+                break;
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------
+
+    struct NormRegionTypeName
+    {
+        NormRegionType type;
+        String name;
+    };
+
+    const NormRegionTypeName g_normRegionTypeNames[] =
+    {
+        { NormRegionTypeAcrossChannels, "AcrossChannels" },
+        { NormRegionTypeWithinChannel, "WithinChannel" },
+    };
+
+    template<> String ValueToString<NormRegionType>(const NormRegionType & value)
+    {
+        if (value > NormRegionTypeUnknown && value < NormRegionTypeSize)
+            return g_normRegionTypeNames[value].name;
+        else
+            return "";
+    }
+
+    template<> void StringToValue<NormRegionType>(const String & string, NormRegionType & value)
+    {
+        NormRegionType type = (NormRegionType)(NormRegionTypeSize - 1);
+        for (; type > NormRegionTypeUnknown; type = (NormRegionType)((int)type - 1))
+        {
+            if (g_normRegionTypeNames[type].name == string)
             {
                 value = type;
                 break;

@@ -33,42 +33,54 @@ namespace Synet
     public:
         typedef T Type;
 
-        inline Tensor()
+        SYNET_INLINE Tensor()
         {
         }
 
-        inline Tensor(const Synet::Shape & shape, const Type & value = Type())
+        SYNET_INLINE Tensor(const Synet::Shape & shape, const Type & value = Type())
             : _shape(shape)
         {
             _data.resize(Size(0, _shape.size()), value);
         }
 
-        inline ~Tensor()
+        SYNET_INLINE Tensor(std::initializer_list<size_t> shape, const Type & value = Type())
+            : _shape(shape.begin(), shape.end())
+        {
+            _data.resize(Size(0, _shape.size()), value);
+        }
+
+        SYNET_INLINE ~Tensor()
         {
         }
 
-        inline void Reshape(const Synet::Shape & shape, const Type & value = Type())
+        SYNET_INLINE void Reshape(const Synet::Shape & shape, const Type & value = Type())
         {
             _shape = shape; 
             _data.resize(Size(0, _shape.size()), value);
         }
 
-        inline const Synet::Shape & GetShape() const
+        SYNET_INLINE void Reshape(std::initializer_list<size_t> shape, const Type & value = Type())
+        {
+            _shape.assign(shape.begin(), shape.end());
+            _data.resize(Size(0, _shape.size()), value);
+        }
+
+        SYNET_INLINE const Synet::Shape & GetShape() const
         {
             return _shape;
         }
 
-        inline size_t Count() const
+        SYNET_INLINE size_t Count() const
         {
             return _shape.size();
         }
 
-        inline size_t Axis(size_t axis) const
+        SYNET_INLINE size_t Axis(size_t axis) const
         {
             return _shape[axis];
         }
 
-        inline size_t Size(size_t startAxis, size_t endAxis) const
+        SYNET_INLINE size_t Size(size_t startAxis, size_t endAxis) const
         {
             assert(startAxis < endAxis && endAxis <= _shape.size());
 
@@ -78,17 +90,17 @@ namespace Synet
             return size;
         }
 
-        inline size_t Size(size_t startAxis) const
+        SYNET_INLINE size_t Size(size_t startAxis) const
         {
             return Size(startAxis, _shape.size());
         }
 
-        inline size_t Size() const
+        SYNET_INLINE size_t Size() const
         {
             return _data.size();
         }
 
-        size_t Offset(const Synet::Index & index) const
+        SYNET_INLINE size_t Offset(const Synet::Index & index) const
         {
             assert(_shape.size() == index.size());
 
@@ -104,22 +116,48 @@ namespace Synet
             return offset;
         }
 
-        inline Type * Data()
+        SYNET_INLINE size_t Offset(std::initializer_list<size_t> index) const
+        {
+            assert(_shape.size() == index.size());
+
+            size_t offset = 0;
+            for (const size_t * s = _shape.data(), * i = index.begin(); s < index.end(); ++s, ++i)
+            {
+                assert(*s > 0);
+                assert(*i < *s);
+
+                offset *= *s;
+                offset += *i;
+            }
+            return offset;
+        }
+
+        SYNET_INLINE Type * Data()
         {
             return _data.data();
         }
 
-        inline const Type * Data() const
+        SYNET_INLINE const Type * Data() const
         {
             return _data.data();
         }
 
-        inline Type * Data(const Synet::Index & index)
+        SYNET_INLINE Type * Data(const Synet::Index & index)
         {
             return _data.data() + Offset(index);
         }
 
-        inline const Type * Data(const Synet::Index & index) const
+        SYNET_INLINE const Type * Data(const Synet::Index & index) const
+        {
+            return _data.data() + Offset(index);
+        }
+
+        SYNET_INLINE Type * Data(std::initializer_list<size_t> index)
+        {
+            return _data.data() + Offset(index);
+        }
+
+        SYNET_INLINE const Type * Data(std::initializer_list<size_t> index) const
         {
             return _data.data() + Offset(index);
         }

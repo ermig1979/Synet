@@ -46,3 +46,11 @@
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdLib.hpp"
 #endif //SYNET_SIMD_LIBRARY_ENABLE
+
+#if defined(_MSC_VER)
+#define SYNET_INLINE __forceinline
+#elif defined(__GNUC__)
+#define SYNET_INLINE inline __attribute__ ((always_inline))
+#else
+#error This platform is unsupported!
+#endif

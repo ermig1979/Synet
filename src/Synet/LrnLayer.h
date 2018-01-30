@@ -25,32 +25,38 @@
 #pragma once
 
 #include "Synet/Common.h"
+#include "Synet/Layer.h"
 
 namespace Synet
 {
-    enum CblasTranspose
+    template <class T, template<class> class A = std::allocator> class LrnLayer : public Synet::Layer<T, A>
     {
-        CblasNoTrans = 111, 
-        CblasTrans = 112, 
-        CblasConjTrans = 113, 
-        CblasConjNoTrans = 114,
+    public:
+        typedef T Type;
+        typedef Layer<T, A> Base;
+        typedef typename Base::Tensor Tensor;
+        typedef typename Base::TensorPtrs TensorPtrs;
+
+        LrnLayer(const LayerParam & param)
+            : Base(param)
+        {
+        }
+
+        virtual void Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
+        virtual void Setup(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
+        virtual inline size_t SrcNum() const { return 1; }
+        virtual inline size_t DstNum() const { return 1; }
+
+    protected:
+        virtual void ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
+
+        virtual void ForwardCpuCrossChannels(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);    
+    
+    private:
+
+        NormRegionType _normRegion;
+        size_t _size, _prePad, _num, _channels, _width, _height;
+        Type _alpha, _beta, _k;
+        Tensor _scale;
     };
-
-    template <typename T> void CpuGemm(CblasTranspose transA, CblasTranspose transB, 
-        size_t M, size_t N, size_t K, T alpha, const T * A, const T * B, T beta, T * C);
-
-    template <typename T> void CpuSet(size_t size, T value, T * dst);
-
-    template <typename T> SYNET_INLINE void CpuCopy(const T * src, size_t size, T * dst)
-    {
-        ::memcpy(dst, src, size * sizeof(T));
-    }
-
-    template <typename T> void ImToCol(const T * src, size_t channels, size_t srcY, size_t srcX, size_t kernelY, size_t kernelX,
-        size_t padY, size_t padX, size_t strideY, size_t strideX, size_t dilationY, size_t dilationX, T * dst);
-
-    template <typename T> void CpuMul(const T * a, const T * b, size_t size, T * dst);
-    template <typename T> void CpuSqr(const T * src, size_t size, T * dst);
-    template <typename T> void CpuAxpy(const T * src, size_t size, const T & alpha, T * dst);
-    template <typename T> void CpuPow(const T * src, size_t size, const T & exp, T * dst);
 }
