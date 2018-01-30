@@ -72,12 +72,12 @@ namespace Synet
         SYNET_PARAM_VALUE(Shape, dim, Shape());
     };
 
-    struct InputLayerParam
+    struct InputParam
     {
         SYNET_PARAM_VECTOR(ShapeParam, shape);
     };
 
-    struct InnerProductLayerParam
+    struct InnerProductParam
     {
         SYNET_PARAM_VALUE(uint32_t, outputNum, 0);
         SYNET_PARAM_VALUE(bool, biasTerm, true);
@@ -85,17 +85,17 @@ namespace Synet
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
     };
 
-    struct ReluLayerParam
+    struct ReluParam
     {
         SYNET_PARAM_VALUE(float, negativeSlope, 0.0f);
     };
 
-    struct SigmoidLayerParam
+    struct SigmoidParam
     {
         SYNET_PARAM_VALUE(float, slope, 1.0f);
     };
 
-    struct PoolingLayerParam
+    struct PoolingParam
     {
         SYNET_PARAM_VALUE(PoolingMethodType, method, PoolingMethodTypeUnknown);
         SYNET_PARAM_VALUE(Shape, kernel, Shape());
@@ -104,7 +104,7 @@ namespace Synet
         SYNET_PARAM_VALUE(bool, globalPooling, false);
     };
 
-    struct ConvolutionLayerParam
+    struct ConvolutionParam
     {
         SYNET_PARAM_VALUE(uint32_t, outputNum, 0);
         SYNET_PARAM_VALUE(bool, biasTerm, true);
@@ -116,13 +116,18 @@ namespace Synet
         SYNET_PARAM_VALUE(uint32_t, group, 1);
     };
 
-    struct LrnLayerParam
+    struct LrnParam
     {
         SYNET_PARAM_VALUE(uint32_t, localSize, 5);
         SYNET_PARAM_VALUE(float, alpha, 1.0f);
         SYNET_PARAM_VALUE(float, beta, 0.75f);
         SYNET_PARAM_VALUE(NormRegionType, normRegion, NormRegionTypeAcrossChannels);
         SYNET_PARAM_VALUE(float, k, 1.0f);
+    };
+
+    struct ConcatParam
+    {
+        SYNET_PARAM_VALUE(uint32_t, axis, 1);
     };
 
     struct LayerParam
@@ -132,13 +137,14 @@ namespace Synet
         SYNET_PARAM_VALUE(Strings, src, Strings());
         SYNET_PARAM_VALUE(Strings, dst, Strings());
 
-        SYNET_PARAM_STRUCT(InputLayerParam, inputLayer);
-        SYNET_PARAM_STRUCT(InnerProductLayerParam, innerProductLayer);
-        SYNET_PARAM_STRUCT(ReluLayerParam, reluLayer);
-        SYNET_PARAM_STRUCT(SigmoidLayerParam, sigmoidLayer);
-        SYNET_PARAM_STRUCT(PoolingLayerParam, poolingLayer);
-        SYNET_PARAM_STRUCT(ConvolutionLayerParam, convolutionLayer);
-        SYNET_PARAM_STRUCT(LrnLayerParam, lrnLayer);
+        SYNET_PARAM_STRUCT(InputParam, input);
+        SYNET_PARAM_STRUCT(InnerProductParam, innerProduct);
+        SYNET_PARAM_STRUCT(ReluParam, relu);
+        SYNET_PARAM_STRUCT(SigmoidParam, sigmoid);
+        SYNET_PARAM_STRUCT(PoolingParam, pooling);
+        SYNET_PARAM_STRUCT(ConvolutionParam, convolution);
+        SYNET_PARAM_STRUCT(LrnParam, lrn);
+        SYNET_PARAM_STRUCT(ConcatParam, concat);
     };
 
     struct NetworkParam

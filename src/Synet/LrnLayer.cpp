@@ -29,13 +29,13 @@ namespace Synet
 {
     template <class T, template<class> class A> void LrnLayer<T, A>::Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
-        _normRegion = this->Param().lrnLayer().normRegion();
-        _size = this->Param().lrnLayer().localSize();
+        _normRegion = this->Param().lrn().normRegion();
+        _size = this->Param().lrn().localSize();
         assert(_size%2 == 1);
         _prePad = (_size - 1) / 2;
-        _alpha = this->Param().lrnLayer().alpha();
-        _beta = this->Param().lrnLayer().beta();
-        _k = this->Param().lrnLayer().k();
+        _alpha = this->Param().lrn().alpha();
+        _beta = this->Param().lrn().beta();
+        _k = this->Param().lrn().k();
         if (_normRegion == NormRegionTypeWithinChannel)
         {
             assert(0);

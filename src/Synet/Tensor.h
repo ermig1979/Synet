@@ -35,18 +35,19 @@ namespace Synet
 
         SYNET_INLINE Tensor()
         {
+            _data.reset(new Vector());
         }
 
         SYNET_INLINE Tensor(const Synet::Shape & shape, const Type & value = Type())
             : _shape(shape)
         {
-            _data.resize(Size(0, _shape.size()), value);
+            _data.reset(new Vector(Size(0, _shape.size()), value));
         }
 
         SYNET_INLINE Tensor(std::initializer_list<size_t> shape, const Type & value = Type())
             : _shape(shape.begin(), shape.end())
         {
-            _data.resize(Size(0, _shape.size()), value);
+            _data.reset(new Vector(Size(0, _shape.size()), value));
         }
 
         SYNET_INLINE ~Tensor()
@@ -56,16 +57,16 @@ namespace Synet
         SYNET_INLINE void Reshape(const Synet::Shape & shape, const Type & value = Type())
         {
             _shape = shape; 
-            _data.resize(Size(0, _shape.size()), value);
+            _data->resize(Size(0, _shape.size()), value);
         }
 
         SYNET_INLINE void Reshape(std::initializer_list<size_t> shape, const Type & value = Type())
         {
             _shape.assign(shape.begin(), shape.end());
-            _data.resize(Size(0, _shape.size()), value);
+            _data->resize(Size(0, _shape.size()), value);
         }
 
-        SYNET_INLINE const Synet::Shape & GetShape() const
+        SYNET_INLINE const Synet::Shape & Shape() const
         {
             return _shape;
         }
@@ -97,7 +98,7 @@ namespace Synet
 
         SYNET_INLINE size_t Size() const
         {
-            return _data.size();
+            return _data->size();
         }
 
         SYNET_INLINE size_t Offset(const Synet::Index & index) const
@@ -134,38 +135,44 @@ namespace Synet
 
         SYNET_INLINE Type * Data()
         {
-            return _data.data();
+            return _data->data();
         }
 
         SYNET_INLINE const Type * Data() const
         {
-            return _data.data();
+            return _data->data();
         }
 
         SYNET_INLINE Type * Data(const Synet::Index & index)
         {
-            return _data.data() + Offset(index);
+            return _data->data() + Offset(index);
         }
 
         SYNET_INLINE const Type * Data(const Synet::Index & index) const
         {
-            return _data.data() + Offset(index);
+            return _data->data() + Offset(index);
         }
 
         SYNET_INLINE Type * Data(std::initializer_list<size_t> index)
         {
-            return _data.data() + Offset(index);
+            return _data->data() + Offset(index);
         }
 
         SYNET_INLINE const Type * Data(std::initializer_list<size_t> index) const
         {
-            return _data.data() + Offset(index);
+            return _data->data() + Offset(index);
+        }
+
+        SYNET_INLINE void Share(const Tensor & tensor)
+        {
+            _data = tensor._data;
         }
 
     private:
         typedef std::vector<Type, Allocator<Type> > Vector;
+        typedef std::shared_ptr<Vector> VectorPtr;
 
         Synet::Shape _shape;
-        Vector _data;
+        VectorPtr _data;
     };
 }

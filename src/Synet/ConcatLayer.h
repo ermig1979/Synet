@@ -22,19 +22,34 @@
 * SOFTWARE.
 */
 
-#include "Synet/SigmoidLayer.h"
+#pragma once
+
+#include "Synet/Common.h"
+#include "Synet/Layer.h"
 
 namespace Synet
 {
-    template <class T, template<class> class A> void SigmoidLayer<T, A>::ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
+    template <class T, template<class> class A = std::allocator> class ConcatLayer : public Synet::Layer<T, A>
     {
-        const Type * pSrc = src[0]->Data();
-        Type * pDst = dst[0]->Data();
-        size_t size = src[0]->Size();
-        Type slope = this->Param().sigmoid().slope();
-        for (size_t i = 0; i < size; ++i)
-            pDst[i] = Type(1.0) / (Type(1.0) + ::exp(-pSrc[i] * slope));
-    }
+    public:
+        typedef T Type;
+        typedef Layer<T, A> Base;
+        typedef typename Base::TensorPtrs TensorPtrs;
 
-    SYNET_CLASS_INSTANCE(SigmoidLayer);
+        ConcatLayer(const LayerParam & param)
+            : Base(param)
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst);
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst);
+        virtual inline size_t SrcMin() const { return 1; }
+        virtual inline size_t DstNum() const { return 1; }
+
+    protected:
+        virtual void ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
+
+    private:
+        size_t _count, _concatNum, _concatInputSize, _concatAxis;
+    };
 }

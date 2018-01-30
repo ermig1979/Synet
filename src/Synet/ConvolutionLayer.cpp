@@ -29,13 +29,13 @@ namespace Synet
 {
     template <class T, template<class> class A> void ConvolutionLayer<T, A>::Setup(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
-        _biasTerm = this->Param().convolutionLayer().biasTerm();
-        _axis = this->Param().convolutionLayer().axis();
-        _group = this->Param().convolutionLayer().group();
+        _biasTerm = this->Param().convolution().biasTerm();
+        _axis = this->Param().convolution().axis();
+        _group = this->Param().convolution().group();
         size_t firstSpatialAxis = _axis + 1;
         _spatialAxisNum = src[0]->Count() - firstSpatialAxis;
         
-        const Shape & kernel = this->Param().convolutionLayer().kernel();
+        const Shape & kernel = this->Param().convolution().kernel();
         assert(kernel.size() == 1 || kernel.size() == _spatialAxisNum);
         if (kernel.size() == 1)
             _kernelShape.resize(_spatialAxisNum, kernel[0]);
@@ -44,7 +44,7 @@ namespace Synet
         for (size_t i = 0; i < _kernelShape.size(); ++i)
             assert(_kernelShape[i] > 0);
 
-        const Shape & stride = this->Param().convolutionLayer().stride();
+        const Shape & stride = this->Param().convolution().stride();
         if (stride.empty())
             _strideShape.resize(_spatialAxisNum, 1);
         else
@@ -58,7 +58,7 @@ namespace Synet
         for (size_t i = 0; i < _strideShape.size(); ++i)
             assert(_strideShape[i] > 0);
 
-        const Shape & pad = this->Param().convolutionLayer().pad();
+        const Shape & pad = this->Param().convolution().pad();
         if (pad.empty())
             _padShape.resize(_spatialAxisNum, 0);
         else
@@ -70,7 +70,7 @@ namespace Synet
                 _padShape == pad;
         }
 
-        const Shape & dilation = this->Param().convolutionLayer().dilation();
+        const Shape & dilation = this->Param().convolution().dilation();
         if (dilation.empty())
             _dilationShape.resize(_spatialAxisNum, 1);
         else
@@ -94,7 +94,7 @@ namespace Synet
             }
         }
         _srcChannels = src[0]->Axis(_axis);
-        _dstChannels = this->Param().convolutionLayer().outputNum();
+        _dstChannels = this->Param().convolution().outputNum();
         assert(_dstChannels  > 0 && _dstChannels % _group == 0);
         if (IsConv())
         {
@@ -115,9 +115,9 @@ namespace Synet
         if (this->_tensors.size() > 0) 
         {
             assert(this->_tensors.size() == _biasTerm + 1);
-            assert(this->_tensors[0]->GetShape() == weightShape);
+            assert(this->_tensors[0]->Shape() == weightShape);
             if(_biasTerm)
-                assert(this->_tensors[1]->GetShape() == biasShape);
+                assert(this->_tensors[1]->Shape() == biasShape);
         }
         else
         {
@@ -140,7 +140,7 @@ namespace Synet
 
         size_t firstSpatialAxis = _axis + 1;
         _num = src[0]->Size(0, _axis);
-        _srcShape = src[0]->GetShape();
+        _srcShape = src[0]->Shape();
         if(IsConv())
         {
             _dstShape.resize(_spatialAxisNum);

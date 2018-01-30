@@ -33,10 +33,10 @@ namespace Synet
     {
         typedef T Type;
         
-        const Type & operator () () const { return _value; }
-        Type & operator () ()  { return _value; }
+        SYNET_INLINE const Type & operator () () const { return _value; }
+        SYNET_INLINE Type & operator () ()  { return _value; }
 
-        const String & Name() const { return _name; }
+        SYNET_INLINE const String & Name() const { return _name; }
 
         virtual Type Default() const { return T(); }
 
@@ -125,19 +125,19 @@ namespace Synet
         virtual String ToString() const { return ""; }
         virtual void ToValue(const String & string) {}
         virtual void Resize(size_t size) {}
-        String ItemName() const { return "item"; }
+        SYNET_INLINE String ItemName() const { return "item"; }
 
         template<typename> friend struct Param;
 
         typedef Param<int> Unknown;
 
-        Unknown * StructBegin() const { return (Unknown*)(&_value); }
-        Unknown * StructNext(const Unknown * param) const { return (Unknown*)((char*)param + param->_size); }
-        Unknown * StructEnd() const { return (Unknown *)((char*)this + this->_size); }
+        SYNET_INLINE Unknown * StructBegin() const { return (Unknown*)(&_value); }
+        SYNET_INLINE Unknown * StructNext(const Unknown * param) const { return (Unknown*)((char*)param + param->_size); }
+        SYNET_INLINE Unknown * StructEnd() const { return (Unknown *)((char*)this + this->_size); }
 
-        Unknown * VectorBegin() const { return (*(std::vector<Unknown>*)&_value).data(); }
-        Unknown * VectorNext(const Unknown * param) const { return (Unknown*)((char*)param + this->_item); }
-        Unknown * VectorEnd() const { return (*(std::vector<Unknown>*)&_value).data() + (*(std::vector<Unknown>*)&_value).size(); }
+        SYNET_INLINE Unknown * VectorBegin() const { return (*(std::vector<Unknown>*)&_value).data(); }
+        SYNET_INLINE Unknown * VectorNext(const Unknown * param) const { return (Unknown*)((char*)param + this->_item); }
+        SYNET_INLINE Unknown * VectorEnd() const { return (*(std::vector<Unknown>*)&_value).data() + (*(std::vector<Unknown>*)&_value).size(); }
 
         bool Load(Xml::XmlNode<char> * xmlParent)
         {
@@ -210,14 +210,14 @@ namespace Synet
         }
     };
 
-    template<class T> inline String ValueToString(const T & value)
+    template<class T> SYNET_INLINE  String ValueToString(const T & value)
     {
         std::stringstream ss;
         ss << value;
         return ss.str();
     }
 
-    template<class T> inline String ValueToString(const std::vector<T> & values)
+    template<class T> SYNET_INLINE  String ValueToString(const std::vector<T> & values)
     {
         std::stringstream ss;
         for (size_t i = 0; i < values.size(); ++i)
@@ -225,13 +225,13 @@ namespace Synet
         return ss.str();
     }
 
-    template<class T> inline void StringToValue(const String & string, T & value)
+    template<class T> SYNET_INLINE  void StringToValue(const String & string, T & value)
     {
         std::stringstream ss(string);
         ss >> value;
     }
 
-    template<class T> inline void StringToValue(const String & string, std::vector<T> & values)
+    template<class T> SYNET_INLINE void StringToValue(const String & string, std::vector<T> & values)
     {
         std::stringstream ss(string);
         values.clear();

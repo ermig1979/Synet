@@ -29,9 +29,12 @@
 #include "Synet/Tensor.h"
 #include "Synet/Layer.h"
 #include "Synet/Network.h"
+
 #include "Synet/InputLayer.h"
 #include "Synet/InnerProductLayer.h"
 #include "Synet/ReluLayer.h"
 #include "Synet/SigmoidLayer.h"
 #include "Synet/PoolingLayer.h"
 #include "Synet/ConvolutionLayer.h"
+#include "Synet/LrnLayer.h"
+#include "Synet/ConcatLayer.h"

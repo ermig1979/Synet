@@ -68,71 +68,75 @@ namespace Synet
                 switch (dstLayer.type())
                 {
                 case Synet::LayerTypeInput:
-                    dstLayer.inputLayer().shape().resize(srcLayer.input_param().shape_size());
+                    dstLayer.input().shape().resize(srcLayer.input_param().shape_size());
                     for (int j = 0; j < srcLayer.top_size(); ++j)
                     {
-                        dstLayer.inputLayer().shape()[j].dim().resize(srcLayer.input_param().shape(j).dim_size());
+                        dstLayer.input().shape()[j].dim().resize(srcLayer.input_param().shape(j).dim_size());
                         for (int k = 0; k < srcLayer.input_param().shape(j).dim_size(); ++k)
-                            dstLayer.inputLayer().shape()[j].dim()[k] = srcLayer.input_param().shape(j).dim(k);
+                            dstLayer.input().shape()[j].dim()[k] = srcLayer.input_param().shape(j).dim(k);
                     }
                     break;
                 case Synet::LayerTypeInnerProduct:
-                    dstLayer.innerProductLayer().outputNum() = srcLayer.inner_product_param().num_output();
-                    dstLayer.innerProductLayer().biasTerm() = srcLayer.inner_product_param().bias_term();
-                    dstLayer.innerProductLayer().transpose() = srcLayer.inner_product_param().transpose();
-                    dstLayer.innerProductLayer().axis() = srcLayer.inner_product_param().axis();
+                    dstLayer.innerProduct().outputNum() = srcLayer.inner_product_param().num_output();
+                    dstLayer.innerProduct().biasTerm() = srcLayer.inner_product_param().bias_term();
+                    dstLayer.innerProduct().transpose() = srcLayer.inner_product_param().transpose();
+                    dstLayer.innerProduct().axis() = srcLayer.inner_product_param().axis();
                     break;
                 case Synet::LayerTypeRelu:
-                    dstLayer.reluLayer().negativeSlope() = srcLayer.relu_param().negative_slope();
+                    dstLayer.relu().negativeSlope() = srcLayer.relu_param().negative_slope();
                     break;
                 case Synet::LayerTypeSigmoid:
                     break;
                 case Synet::LayerTypePooling:
                 {
-                    dstLayer.poolingLayer().method() = (Synet::PoolingMethodType)srcLayer.pooling_param().pool();
-                    dstLayer.poolingLayer().globalPooling() = srcLayer.pooling_param().global_pooling();
+                    dstLayer.pooling().method() = (Synet::PoolingMethodType)srcLayer.pooling_param().pool();
+                    dstLayer.pooling().globalPooling() = srcLayer.pooling_param().global_pooling();
                     if (srcLayer.pooling_param().has_kernel_size())
-                        dstLayer.poolingLayer().kernel() = Shape({ srcLayer.pooling_param().kernel_size() });
+                        dstLayer.pooling().kernel() = Shape({ srcLayer.pooling_param().kernel_size() });
                     if (srcLayer.pooling_param().has_kernel_h() && srcLayer.pooling_param().has_kernel_w())
-                        dstLayer.poolingLayer().kernel() = Shape({ srcLayer.pooling_param().kernel_h(), srcLayer.pooling_param().kernel_w() });
+                        dstLayer.pooling().kernel() = Shape({ srcLayer.pooling_param().kernel_h(), srcLayer.pooling_param().kernel_w() });
                     if (srcLayer.pooling_param().has_pad())
-                        dstLayer.poolingLayer().pad() = Shape({ srcLayer.pooling_param().pad() });
+                        dstLayer.pooling().pad() = Shape({ srcLayer.pooling_param().pad() });
                     if (srcLayer.pooling_param().has_pad_h() && srcLayer.pooling_param().has_pad_w())
-                        dstLayer.poolingLayer().pad() = Shape({ srcLayer.pooling_param().pad_h(), srcLayer.pooling_param().pad_w() });
+                        dstLayer.pooling().pad() = Shape({ srcLayer.pooling_param().pad_h(), srcLayer.pooling_param().pad_w() });
                     if (srcLayer.pooling_param().has_stride())
-                        dstLayer.poolingLayer().stride() = Shape({ srcLayer.pooling_param().stride() });
+                        dstLayer.pooling().stride() = Shape({ srcLayer.pooling_param().stride() });
                     if (srcLayer.pooling_param().has_stride_h() && srcLayer.pooling_param().has_stride_w())
-                        dstLayer.poolingLayer().stride() = Shape({ srcLayer.pooling_param().stride_h(), srcLayer.pooling_param().stride_w() });
+                        dstLayer.pooling().stride() = Shape({ srcLayer.pooling_param().stride_h(), srcLayer.pooling_param().stride_w() });
                     break;
                 }
                 case Synet::LayerTypeConvolution:
                 {
-                    dstLayer.convolutionLayer().outputNum() = srcLayer.convolution_param().num_output();
-                    dstLayer.convolutionLayer().biasTerm() = srcLayer.convolution_param().bias_term();
-                    dstLayer.convolutionLayer().axis() = srcLayer.convolution_param().axis();
-                    dstLayer.convolutionLayer().group() = srcLayer.convolution_param().group();
-                    dstLayer.convolutionLayer().kernel().resize(srcLayer.convolution_param().kernel_size_size());
+                    dstLayer.convolution().outputNum() = srcLayer.convolution_param().num_output();
+                    dstLayer.convolution().biasTerm() = srcLayer.convolution_param().bias_term();
+                    dstLayer.convolution().axis() = srcLayer.convolution_param().axis();
+                    dstLayer.convolution().group() = srcLayer.convolution_param().group();
+                    dstLayer.convolution().kernel().resize(srcLayer.convolution_param().kernel_size_size());
                     for (int j = 0; j < srcLayer.convolution_param().kernel_size_size(); ++j)
-                        dstLayer.convolutionLayer().kernel()[j] = srcLayer.convolution_param().kernel_size(j);
-                    dstLayer.convolutionLayer().pad().resize(srcLayer.convolution_param().pad_size());
+                        dstLayer.convolution().kernel()[j] = srcLayer.convolution_param().kernel_size(j);
+                    dstLayer.convolution().pad().resize(srcLayer.convolution_param().pad_size());
                     for (int j = 0; j < srcLayer.convolution_param().pad_size(); ++j)
-                        dstLayer.convolutionLayer().pad()[j] = srcLayer.convolution_param().pad(j);
-                    dstLayer.convolutionLayer().stride().resize(srcLayer.convolution_param().stride_size());
+                        dstLayer.convolution().pad()[j] = srcLayer.convolution_param().pad(j);
+                    dstLayer.convolution().stride().resize(srcLayer.convolution_param().stride_size());
                     for (int j = 0; j < srcLayer.convolution_param().stride_size(); ++j)
-                        dstLayer.convolutionLayer().stride()[j] = srcLayer.convolution_param().stride(j);
-                    dstLayer.convolutionLayer().dilation().resize(srcLayer.convolution_param().dilation_size());
+                        dstLayer.convolution().stride()[j] = srcLayer.convolution_param().stride(j);
+                    dstLayer.convolution().dilation().resize(srcLayer.convolution_param().dilation_size());
                     for (int j = 0; j < srcLayer.convolution_param().dilation_size(); ++j)
-                        dstLayer.convolutionLayer().dilation()[j] = srcLayer.convolution_param().dilation(j);
+                        dstLayer.convolution().dilation()[j] = srcLayer.convolution_param().dilation(j);
                     break;
                 }
                 case Synet::LayerTypeLrn:
-                    dstLayer.lrnLayer().localSize() = srcLayer.lrn_param().local_size();
-                    dstLayer.lrnLayer().alpha() = srcLayer.lrn_param().alpha();
-                    dstLayer.lrnLayer().beta() = srcLayer.lrn_param().beta();
-                    dstLayer.lrnLayer().normRegion() = (Synet::NormRegionType)srcLayer.lrn_param().norm_region();
-                    dstLayer.lrnLayer().k() = srcLayer.lrn_param().k();
+                    dstLayer.lrn().localSize() = srcLayer.lrn_param().local_size();
+                    dstLayer.lrn().alpha() = srcLayer.lrn_param().alpha();
+                    dstLayer.lrn().beta() = srcLayer.lrn_param().beta();
+                    dstLayer.lrn().normRegion() = (Synet::NormRegionType)srcLayer.lrn_param().norm_region();
+                    dstLayer.lrn().k() = srcLayer.lrn_param().k();
                     break;
                 case Synet::LayerTypeConcat:
+                    if (srcLayer.concat_param().has_concat_dim())
+                        dstLayer.concat().axis() = srcLayer.concat_param().concat_dim();
+                    else
+                        dstLayer.concat().axis() = srcLayer.concat_param().axis();
                     break;
                 case Synet::LayerTypeDropout:
                     break;

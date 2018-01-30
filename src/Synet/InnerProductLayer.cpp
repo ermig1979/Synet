@@ -29,10 +29,10 @@ namespace Synet
 {
     template <class T, template<class> class A> void InnerProductLayer<T, A>::Setup(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
-        _biasTerm = this->Param().innerProductLayer().biasTerm();
-        _transpose = this->Param().innerProductLayer().transpose();
-        _axis = this->Param().innerProductLayer().axis();
-        _N = this->Param().innerProductLayer().outputNum();
+        _biasTerm = this->Param().innerProduct().biasTerm();
+        _transpose = this->Param().innerProduct().transpose();
+        _axis = this->Param().innerProduct().axis();
+        _N = this->Param().innerProduct().outputNum();
         _K = src[0]->Axis(_axis);
         if (this->_tensors.empty())
         {
@@ -64,7 +64,7 @@ namespace Synet
     {
         const size_t newK = src[0]->Axis(_axis);
         _M = src[0]->Size(0, _axis);
-        Shape dstShape = src[0]->GetShape();
+        Shape dstShape = src[0]->Shape();
         dstShape.resize(_axis + 1);
         dstShape[_axis] = _N;
         dst[0]->Reshape(dstShape);

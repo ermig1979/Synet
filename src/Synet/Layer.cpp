@@ -29,6 +29,8 @@
 #include "Synet/SigmoidLayer.h"
 #include "Synet/PoolingLayer.h"
 #include "Synet/ConvolutionLayer.h"
+#include "Synet/LrnLayer.h"
+#include "Synet/ConcatLayer.h"
 
 namespace Synet
 {
@@ -82,6 +84,8 @@ namespace Synet
         case LayerTypeSigmoid: return new SigmoidLayer<T, A>(param);
         case LayerTypePooling: return new PoolingLayer<T, A>(param);
         case LayerTypeConvolution: return new ConvolutionLayer<T, A>(param);
+        case LayerTypeLrn: return new LrnLayer<T, A>(param);
+        case LayerTypeConcat: return new ConcatLayer<T, A>(param);
         default:
             return NULL;
         }
