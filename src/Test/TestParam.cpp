@@ -26,33 +26,36 @@
 
 namespace Test
 {
-    typedef std::vector<int> Ints;
-
-    struct Test0
+    namespace 
     {
-        SYNET_PARAM_VALUE(int, t0_p1, 1);
-        SYNET_PARAM_VALUE(double, t0_p2, 2.0);
-        SYNET_PARAM_VALUE(String, t0_p3, "3.0");
-    };
+        typedef std::vector<int> Ints;
 
-    struct Test1
-    {
-        SYNET_PARAM_VALUE(int, t1_p1, 4);
-        SYNET_PARAM_STRUCT(Test0, t1_p2);
-        SYNET_PARAM_VECTOR(Test0, t1_p3);
-    };
+        struct Test0
+        {
+            SYNET_PARAM_VALUE(int, t0_p1, 1);
+            SYNET_PARAM_VALUE(double, t0_p2, 2.0);
+            SYNET_PARAM_VALUE(String, t0_p3, "3.0");
+        };
 
-    struct Test2
-    {
-        SYNET_PARAM_VALUE(Ints, t2_p0, Ints());
-        SYNET_PARAM_VALUE(String, t2_p1, "5.0");
-        SYNET_PARAM_STRUCT(Test0, t2_p2);
-        SYNET_PARAM_STRUCT(Test1, t2_p3);
-        SYNET_PARAM_VECTOR(Test1, t2_p4);
-        SYNET_PARAM_VALUE(Ints, t2_p5, Ints());
-    };
+        struct Test1
+        {
+            SYNET_PARAM_VALUE(int, t1_p1, 4);
+            SYNET_PARAM_STRUCT(Test0, t1_p2);
+            SYNET_PARAM_VECTOR(Test0, t1_p3);
+        };
 
-    SYNET_PARAM_ROOT(Test2, Config);
+        struct Test2
+        {
+            SYNET_PARAM_VALUE(Ints, t2_p0, Ints());
+            SYNET_PARAM_VALUE(String, t2_p1, "5.0");
+            SYNET_PARAM_STRUCT(Test0, t2_p2);
+            SYNET_PARAM_STRUCT(Test1, t2_p3);
+            SYNET_PARAM_VECTOR(Test1, t2_p4);
+            SYNET_PARAM_VALUE(Ints, t2_p5, Ints());
+        };
+
+        SYNET_PARAM_ROOT(Test2, Config);
+    }
 
     bool TestParam()
     {

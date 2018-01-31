@@ -26,7 +26,10 @@
 
 namespace Test
 {
-    SYNET_PARAM_ROOT(Synet::NetworkParam, Config);
+    namespace 
+    {
+        SYNET_PARAM_ROOT(Synet::NetworkParam, Config);
+    }
 
     bool TestParams()
     {
@@ -36,7 +39,8 @@ namespace Test
 
         config().layers()[0].type() = Synet::LayerTypeInput;
         config().layers()[0].name() = "Input";
-        config().layers()[0].inputLayer().shape() = Synet::Shape({1, 2, 3});
+        config().layers()[0].input().shape().resize(1);
+        config().layers()[0].input().shape()[0].dim() = Synet::Shape({1, 2, 3});
 
         config().layers()[1].type() = Synet::LayerTypeInnerProduct;
         config().layers()[1].name() = "Full_1";
