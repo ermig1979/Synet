@@ -30,32 +30,32 @@
 
 namespace Synet
 {
-    template <class T, template<class> class Allocator = std::allocator> class Network
+    template <class T, template<class> class A = std::allocator> class Network
     {
     public:
         typedef T Type;
 
-        Network(const NetworkParam & param);
+        Network();
 
-        void Forward(const std::vector<Tensor<Type, Allocator>*> & src, const std::vector<Tensor<Type, Allocator>*> & dst)
-        {
+        bool Empty() const { return _empty; }
+        const NetworkParam & Param() const { return _param(); }
 
-        }
+        bool Load(const String & param, const String & weight);
 
-        const NetworkParam & Param() const { return _param; }
+        //Tensor<T, A> & Src();
+        //Tensor<T, A> & Dst();
 
-        bool Load(const void * data, size_t size);
-        bool Load(std::istream & is);
-        bool Load(const String & path);
+        void Predict();
 
     private:
-        typedef Synet::Layer<Type, Allocator> Layer;
+        typedef Synet::Layer<T, A> Layer;
         typedef std::shared_ptr<Layer> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
 
-        NetworkParam _param;
+        bool _empty;
+        NetworkParamHolder _param;
         LayerSharedPtrs _layers;
 
-        void Init();
+        void Forward(const std::vector<Tensor<T, A>*> & src, const std::vector<Tensor<T, A>*> & dst);
     };
 }

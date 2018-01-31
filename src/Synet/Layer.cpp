@@ -34,43 +34,32 @@
 
 namespace Synet
 {
+    template <class T, template<class> class A> Layer<T, A>::Layer(const LayerParam & param)
+        : _param(param)
+    {
+        _weight.resize(_param.data().size());
+        for (size_t i = 0; i < _weight.size(); ++i)
+            _weight[i].Reshape(_param.data()[i].dim());
+    }
+
     template <class T, template<class> class A> bool Layer<T, A>::Load(const void * & data, size_t & size)
     {
-        for (size_t i = 0; i < _tensors.size(); ++i)
+        for (size_t i = 0; i < _weight.size(); ++i)
         {
-            size_t requred = _tensors[i]->Size()*sizeof(Type);
+            size_t requred = _weight[i].Size()*sizeof(Type);
             if (requred > size)
                 return false;
-            ::memcpy(_tensors[i]->Data(), data, requred);
+            ::memcpy(_weight[i].Data(), data, requred);
             (char*&)data += requred;
             size -= requred;
         }
         return true;
     }
 
-    template <class T> inline void LoadValue(std::istream & is, T & value)
-    {
-        char buffer[64];
-        is >> buffer;
-        value = (T)::atof(buffer);
-    }
-
     template <class T, template<class> class A> bool Layer<T, A>::Load(std::istream & is)
     {
-        for (size_t i = 0; i < _tensors.size(); ++i)
-        {
-            T * data = _tensors[i]->Data();
-            size_t size = _tensors[i]->Size();
-            if (is.flags() & std::istream::binary)
-            {
-                is.read((char*)data, size*sizeof(T));
-            }
-            else
-            {
-                for (size_t j = 0; j < size; ++j)
-                    LoadValue(is, data[j]);
-            }
-        }
+        for (size_t i = 0; i < _weight.size(); ++i)
+            is.read((char*)_weight[i].Data(), _weight[i].Size()*sizeof(T));
         return true;
     }
 

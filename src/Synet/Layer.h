@@ -34,18 +34,16 @@ namespace Synet
     {
     public:
         typedef T Type;
-        typedef Synet::Tensor<Type, A> Tensor;
+        typedef Synet::Tensor<T, A> Tensor;
+        typedef std::vector<Tensor> Tensors;
         typedef std::vector<Tensor*> TensorPtrs;
         typedef std::shared_ptr<Tensor> TensorSharedPtr;
         typedef std::vector<TensorSharedPtr> TensorSharedPtrs;
 
-        Layer(const LayerParam & param)
-            : _param(param)
-        {
-        }
+        Layer(const LayerParam & param);
 
         const LayerParam & Param() const { return _param; }
-        TensorSharedPtrs Tensors() { return _tensors; }
+        const Tensors & Weight() const { return _weight; }
 
         inline void Forward(const TensorPtrs & src, const TensorPtrs & dst)
         {
@@ -71,8 +69,8 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst) = 0;
 
-        TensorSharedPtrs _tensors;
     private:
         LayerParam _param;
+        Tensors _weight;
     };
 }

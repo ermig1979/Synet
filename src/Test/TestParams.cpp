@@ -26,30 +26,25 @@
 
 namespace Test
 {
-    namespace 
-    {
-        SYNET_PARAM_ROOT(Synet::NetworkParam, Config);
-    }
-
     bool TestParams()
     {
-        Config config;
-        config().name() = "Network_Test_1";
-        config().layers().resize(2);
+        Synet::NetworkParamHolder holder;
+        holder().name() = "Network_Test_1";
+        holder().layers().resize(2);
 
-        config().layers()[0].type() = Synet::LayerTypeInput;
-        config().layers()[0].name() = "Input";
-        config().layers()[0].input().shape().resize(1);
-        config().layers()[0].input().shape()[0].dim() = Synet::Shape({1, 2, 3});
+        holder().layers()[0].type() = Synet::LayerTypeInput;
+        holder().layers()[0].name() = "Input";
+        holder().layers()[0].input().shape().resize(1);
+        holder().layers()[0].input().shape()[0].dim() = Synet::Shape({1, 2, 3});
 
-        config().layers()[1].type() = Synet::LayerTypeInnerProduct;
-        config().layers()[1].name() = "Full_1";
+        holder().layers()[1].type() = Synet::LayerTypeInnerProduct;
+        holder().layers()[1].name() = "Full_1";
 
         std::cout << std::endl << "Saved (only changed):" << std::endl;
-        config.Save(std::cout, false);
+        holder.Save(std::cout, false);
 
         //std::cout << std::endl << "Saved (full):" << std::endl;
-        //config.Save(std::cout, true);
+        //holder.Save(std::cout, true);
 
         return true;
     }

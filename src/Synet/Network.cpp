@@ -26,51 +26,49 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> Network<T, A>::Network(const NetworkParam & param)
-        : _param(param)
+    template <class T, template<class> class A> Network<T, A>::Network()
+        : _empty(true)
     {
-        Init();
     }
 
-    template <class T, template<class> class A> void Network<T, A>::Init()
+    template <class T, template<class> class A> bool Network<T, A>::Load(const String & param, const String & weight)
     {
+        if (!_param.Load(param))
+            return false;
+
         _layers.clear();
-        for (size_t i = 0; i < _param.layers().size(); ++i)
+        for (size_t i = 0; i < _param().layers().size(); ++i)
         {
-            _layers.push_back(LayerSharedPtr(Synet::Layer<T, A>::Create(_param.layers()[i])));
+            LayerSharedPtr layer(Synet::Layer<T, A>::Create(_param().layers()[i]));
+            if(layer)
+                _layers.push_back(layer);
         }
-    }
 
-    template <class T, template<class> class A> bool Network<T, A>::Load(const void * data, size_t size)
-    {
+        std::ifstream ifs(weight.c_str(), std::ifstream::binary);
+        if (!ifs.is_open())
+            return false;
+
         for (size_t i = 0; i < _layers.size(); ++i)
         {
-            if (!_layers[i]->Load(data, size))
+            if (!_layers[i]->Load(ifs))
+            {
+                ifs.close();
                 return false;
+            }
         }
+        ifs.close();
+        _empty = false;
         return true;
     }
 
-    template <class T, template<class> class A> bool Network<T, A>::Load(std::istream & is)
+    template <class T, template<class> class A> void Network<T, A>::Predict()
     {
-        for (size_t i = 0; i < _layers.size(); ++i)
-        {
-            if (!_layers[i]->Load(is))
-                return false;
-        }
-        return true;
+
     }
 
-    template <class T, template<class> class A> bool Network<T, A>::Load(const String & path)
+    template <class T, template<class> class A> void Network<T, A>::Forward(const std::vector<Tensor<T, A>*> & src, const std::vector<Tensor<T, A>*> & dst)
     {
-        std::ifstream ifs(path.c_str());
-        if (ifs.is_open())
-        {
-            bool result = Load(ifs);
-            ifs.close();
-            return result;
-        }
-        return false;
+
     }
 
     SYNET_CLASS_INSTANCE(Network);

@@ -30,9 +30,9 @@ int main(int argc, char* argv[])
     Test::TestParams();
 
 
-    Synet::NetworkParam netParam;
-    typedef Synet::Network<float> Network;
-    Network net(netParam);
+    //Synet::NetworkParam netParam;
+    //typedef Synet::Network<float> Network;
+    //Network net(netParam);
 
 
 

@@ -112,24 +112,11 @@ namespace Synet
         for (size_t i = 0; i < _spatialAxisNum; ++i)
             weightShape[2 + i] = _kernelShape[i];
         Shape biasShape(_biasTerm, _dstChannels);
-        if (this->_tensors.size() > 0) 
-        {
-            assert(this->_tensors.size() == _biasTerm + 1);
-            assert(this->_tensors[0]->Shape() == weightShape);
-            if(_biasTerm)
-                assert(this->_tensors[1]->Shape() == biasShape);
-        }
-        else
-        {
-            if (_biasTerm) 
-                this->_tensors.resize(2);
-            else 
-                this->_tensors.resize(1);
-            this->_tensors[0].reset(new Tensor(weightShape));
-            if (_biasTerm) 
-                this->_tensors[1].reset(new Tensor(biasShape));
-        }
-        _kernelSize = this->_tensors[0]->Size(1);
+        assert(this->Weight().size() == _biasTerm + 1);
+        assert(this->Weight()[0].Shape() == weightShape);
+        if(_biasTerm)
+            assert(this->Weight()[1].Shape() == biasShape);
+        _kernelSize = this->Weight()[0].Size(1);
         _weightOffset = _dstConvChannels * _kernelSize / _group;
     }
 
@@ -192,7 +179,7 @@ namespace Synet
 
     template <class T, template<class> class A> void ConvolutionLayer<T, A>::ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
-        const Type * weight = this->_tensors[0]->Data();
+        const Type * weight = this->Weight()[0].Data();
         for (int i = 0; i < src.size(); ++i) 
         {
             for (int n = 0; n < this->_num; ++n) 
@@ -212,7 +199,7 @@ namespace Synet
                 }                
                 if (_biasTerm) 
                 {
-                    const Type * bias = this->_tensors[1]->Data();
+                    const Type * bias = this->Weight()[1].Data();
                     CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _dstChannels, _dstSpatialSize, 1, Type(1.0), bias, _biasMultiplier.Data(), Type(1.0), pDst);
                 }
             }

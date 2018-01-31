@@ -136,6 +136,7 @@ namespace Synet
         SYNET_PARAM_VALUE(String, name, String());
         SYNET_PARAM_VALUE(Strings, src, Strings());
         SYNET_PARAM_VALUE(Strings, dst, Strings());
+        SYNET_PARAM_VECTOR(ShapeParam, data);
 
         SYNET_PARAM_STRUCT(InputParam, input);
         SYNET_PARAM_STRUCT(InnerProductParam, innerProduct);
@@ -153,5 +154,5 @@ namespace Synet
         SYNET_PARAM_VECTOR(LayerParam, layers);
     };
 
-    SYNET_PARAM_ROOT(NetworkParam, NetworkConfig);
+    SYNET_PARAM_HOLDER(NetworkParamHolder, NetworkParam, network);
 }

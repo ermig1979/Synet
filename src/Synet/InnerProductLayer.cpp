@@ -34,30 +34,18 @@ namespace Synet
         _axis = this->Param().innerProduct().axis();
         _N = this->Param().innerProduct().outputNum();
         _K = src[0]->Axis(_axis);
-        if (this->_tensors.empty())
-        {
-            if (_biasTerm)
-                this->_tensors.resize(2);
-            else
-                this->_tensors.resize(1);
-            Shape weightShape(2);
-            if (_transpose) 
-            {
-                weightShape[0] = _K;
-                weightShape[1] = _N;
-            }
-            else 
-            {
-                weightShape[0] = _N;
-                weightShape[1] = _K;
-            }
-            this->_tensors[0].reset(new Tensor(weightShape));
-            if (_biasTerm)
-            {
-                Shape biasShape(1, _N);
-                this->_tensors[1].reset(new Tensor(biasShape));
-            }
-        }
+
+        const Base::Tensors & weight = this->Weight();
+        if (_biasTerm)
+            assert(weight.size() == 2);
+        else
+            assert(weight.size() == 1);
+        if (_transpose) 
+            assert(weight[0].Shape() == Shape({ _K, _N }));
+        else
+            assert(weight[0].Shape() == Shape({ _N, _K }));
+        if (_biasTerm)
+            assert(weight[1].Shape() == Shape({ 1, _N }));
     }
 
     template <class T, template<class> class A> void InnerProductLayer<T, A>::Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
@@ -78,11 +66,11 @@ namespace Synet
     template <class T, template<class> class A> void InnerProductLayer<T, A>::ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
         CpuGemm<Type>(CblasNoTrans, _transpose ? CblasNoTrans : CblasTrans, _M, _N, _K, 
-            (Type)1.0, src[0]->Data(), this->_tensors[0]->Data(), (Type)0.0, dst[0]->Data());
+            (Type)1.0, src[0]->Data(), this->Weight()[0].Data(), (Type)0.0, dst[0]->Data());
         if (_biasTerm) 
         {
             CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _M, _N, 1,
-                (Type)1.0, _biasMultiplier.Data(), this->_tensors[1]->Data(), (Type)1.0, dst[0]->Data());
+                (Type)1.0, _biasMultiplier.Data(), this->Weight()[1].Data(), (Type)1.0, dst[0]->Data());
         }
     }
 

@@ -164,7 +164,7 @@ namespace Synet
                         if (ItemName() != xmlItem->Name())
                             return false;
                         const Unknown * paramChildEnd = this->VectorNext(paramItem);
-                        for (Unknown * paramChild = this->StructBegin(); paramChild < paramChildEnd; paramChild = this->StructNext(paramChild))
+                        for (Unknown * paramChild = paramItem; paramChild < paramChildEnd; paramChild = this->StructNext(paramChild))
                         {
                             if (!paramChild->Load(xmlItem))
                                 return true;
@@ -276,9 +276,9 @@ virtual void Resize(size_t size) { this->_value.resize(size); } \
 virtual bool Changed() const { return !this->_value.empty(); } \
 } name;
 
-#define SYNET_PARAM_ROOT(type, name) \
-struct name : public Synet::Param<type> \
+#define SYNET_PARAM_HOLDER(holder, type, name) \
+struct holder : public Synet::Param<type> \
 { \
 typedef Synet::Param<type> Base; \
-name() : Base(Base::Struct, #name, sizeof(name)) {} \
+holder() : Base(Base::Struct, #name, sizeof(holder)) {} \
 };
