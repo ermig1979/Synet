@@ -89,7 +89,7 @@ namespace Synet
             return this->Load(&doc);
         }
 
-        bool Load(const String & path) const
+        bool Load(const String & path)
         {
             bool result = false;
             std::ifstream ifs(path.c_str());
