@@ -22,40 +22,14 @@
 * SOFTWARE.
 */
 
-#pragma once
-
-#include "Synet/Common.h"
-#include "Synet/Layer.h"
+#include "Synet/StubLayer.h"
 
 namespace Synet
 {
-    template <class T, template<class> class A = std::allocator> class InnerProductLayer : public Synet::Layer<T, A>
+    template <class T, template<class> class A> void StubLayer<T, A>::Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
-    public:
-        typedef T Type;
-        typedef Layer<T, A> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
+        dst[0]->Share(*src[0]);
+    }
 
-        InnerProductLayer(const LayerParam & param)
-            : Base(param)
-        {
-        }
-
-        virtual void Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
-        virtual void Setup(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
-        virtual inline size_t SrcNum() const { return 1; }
-        virtual inline size_t DstNum() const { return 1; }
-
-    protected:
-        virtual void ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
-
-    private:
-        size_t _M;
-        size_t _K;
-        size_t _N;
-        size_t _axis;
-        bool _biasTerm;
-        Synet::Tensor<T, A> _biasMultiplier;
-        bool _transpose;
-    };
+    SYNET_CLASS_INSTANCE(StubLayer);
 }

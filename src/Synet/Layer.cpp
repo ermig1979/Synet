@@ -31,6 +31,7 @@
 #include "Synet/ConvolutionLayer.h"
 #include "Synet/LrnLayer.h"
 #include "Synet/ConcatLayer.h"
+#include "Synet/StubLayer.h"
 
 namespace Synet
 {
@@ -75,6 +76,8 @@ namespace Synet
         case LayerTypeConvolution: return new ConvolutionLayer<T, A>(param);
         case LayerTypeLrn: return new LrnLayer<T, A>(param);
         case LayerTypeConcat: return new ConcatLayer<T, A>(param);
+        case LayerTypeDropout: 
+            return new StubLayer<T, A>(param);
         default:
             return NULL;
         }

@@ -41,8 +41,8 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst);
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst);
+        virtual void Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
+        virtual void Setup(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
         virtual inline size_t SrcMin() const { return 1; }
         virtual inline size_t DstNum() const { return 1; }
 

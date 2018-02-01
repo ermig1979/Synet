@@ -32,6 +32,7 @@
 #ifdef _MSC_VER
 #pragma warning (push)
 #pragma warning (disable: 4996)
+#include <io.h>
 #endif
 
 #define CPU_ONLY
@@ -97,6 +98,12 @@ namespace Synet
 
         bool ConvertLayer(const caffe::LayerParameter & src, Synet::LayerParam & dst)
         {
+            for(int i = 0; i < src.exclude_size(); ++i)
+            {
+                if (src.exclude(i).has_phase() && src.exclude(i).phase() == caffe::TEST)
+                    return false;
+            }
+
             dst.name() = src.name();
             Synet::StringToValue<LayerType>(src.type(), dst.type());
             for (int j = 0; j < src.bottom_size(); ++j)

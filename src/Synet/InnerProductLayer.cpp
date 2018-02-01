@@ -35,7 +35,7 @@ namespace Synet
         _N = this->Param().innerProduct().outputNum();
         _K = src[0]->Axis(_axis);
 
-        const Base::Tensors & weight = this->Weight();
+        const typename Base::Tensors & weight = this->Weight();
         if (_biasTerm)
             assert(weight.size() == 2);
         else

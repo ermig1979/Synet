@@ -31,7 +31,6 @@
 #include <math.h>
 #include <memory.h>
 #include <float.h>
-#include <io.h>
 
 #include <vector>
 #include <string>
@@ -41,7 +40,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <array>
+#include <map>
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdLib.hpp"

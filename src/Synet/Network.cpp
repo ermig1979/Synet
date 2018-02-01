@@ -57,18 +57,43 @@ namespace Synet
             }
         }
         ifs.close();
+
+        return Init();
+    }
+
+    template <class T, template<class> class A> bool Network<T, A>::Init()
+    {
+        _tensors.resize(_layers.size());
+        for (size_t i = 0; i < _tensors.size(); ++i)
+            _tensors[i].reset(new Tensor());
+
+        _nameIndex.clear();
+        for (size_t i = 0; i < _layers.size(); ++i)
+        {
+            const String & name = _layers[i]->Param().name();
+            if (_nameIndex.find(name) == _nameIndex.end())
+                _nameIndex[name] = i;
+            else
+                assert(0);
+        }
+
+        for (size_t i = 0; i < _stages.size(); ++i)
+            _stages[i].layer->Setup(_stages[i].src, _stages[i].dst);
+
         _empty = false;
         return true;
     }
 
-    template <class T, template<class> class A> void Network<T, A>::Predict()
+    template <class T, template<class> class A> void Network<T, A>::Reshape()
     {
-
+        for (size_t i = 0; i < _stages.size(); ++i)
+            _stages[i].layer->Reshape(_stages[i].src, _stages[i].dst);
     }
 
-    template <class T, template<class> class A> void Network<T, A>::Forward(const std::vector<Tensor<T, A>*> & src, const std::vector<Tensor<T, A>*> & dst)
+    template <class T, template<class> class A> void Network<T, A>::Forward()
     {
-
+        for (size_t i = 0; i < _stages.size(); ++i)
+            _stages[i].layer->Forward(_stages[i].src, _stages[i].dst);
     }
 
     SYNET_CLASS_INSTANCE(Network);

@@ -34,6 +34,8 @@ namespace Synet
     {
     public:
         typedef T Type;
+        typedef Synet::Tensor<T, A> Tensor;
+        typedef std::vector<Tensor*> TensorPtrs;
 
         Network();
 
@@ -42,20 +44,44 @@ namespace Synet
 
         bool Load(const String & param, const String & weight);
 
-        //Tensor<T, A> & Src();
-        //Tensor<T, A> & Dst();
+        TensorPtrs & Src() { return _src; }
+        const TensorPtrs & Dst() const { return _dst; }
 
-        void Predict();
+        void Reshape();
+
+        void Forward();
 
     private:
         typedef Synet::Layer<T, A> Layer;
+        typedef Layer * LayerPtr;
+        typedef std::vector<LayerPtr> LayerPtrs;
         typedef std::shared_ptr<Layer> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
+
+        typedef std::vector<Tensor> Tensors;
+        typedef std::shared_ptr<Tensor> TensorSharedPtr;
+        typedef std::vector<TensorSharedPtr> TensorSharedPtrs;
+
+        typedef std::map<String, size_t> NameIndexMap;
+
+        struct Stage
+        {
+            Layer * layer;
+            TensorPtrs src;
+            TensorPtrs dst;
+        };
+        typedef std::vector<Stage> Stages;
 
         bool _empty;
         NetworkParamHolder _param;
         LayerSharedPtrs _layers;
+        TensorSharedPtrs _tensors;
 
-        void Forward(const std::vector<Tensor<T, A>*> & src, const std::vector<Tensor<T, A>*> & dst);
+        NameIndexMap _nameIndex;
+
+        Stages _stages;
+        TensorPtrs _src, _dst;
+
+        bool Init();
     };
 }
