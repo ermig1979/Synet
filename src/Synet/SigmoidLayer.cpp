@@ -26,6 +26,11 @@
 
 namespace Synet
 {
+    template <class T, template<class> class A> void SigmoidLayer<T, A>::Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
+    {
+        dst[0]->Reshape(src[0]->Shape());
+    }
+
     template <class T, template<class> class A> void SigmoidLayer<T, A>::ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
         const Type * pSrc = src[0]->Data();

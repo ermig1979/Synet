@@ -41,6 +41,7 @@
 #include <fstream>
 #include <sstream>
 #include <map>
+#include <set>
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdLib.hpp"

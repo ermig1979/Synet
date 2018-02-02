@@ -62,7 +62,7 @@ namespace Synet
         }
         else
         {
-            assert(pad.size() == 2 || pad.size() == 2);
+            assert(pad.size() == 1 || pad.size() == 2);
             _padY = pad[0];
             _padX = pad.size() > 1 ? pad[1] : pad[0];
             assert(_padY < _kernelY && _padX < _kernelX );

@@ -45,7 +45,7 @@ namespace Synet
         else
             assert(weight[0].Shape() == Shape({ _N, _K }));
         if (_biasTerm)
-            assert(weight[1].Shape() == Shape({ 1, _N }));
+            assert(weight[1].Shape() == Shape({ _N }));
     }
 
     template <class T, template<class> class A> void InnerProductLayer<T, A>::Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)

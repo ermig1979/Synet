@@ -116,7 +116,7 @@ namespace Synet
         size_t dstY = (srcY + 2 * padY - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
         size_t dstX = (srcX + 2 * padX - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
         size_t channelSize = srcX * srcY;
-        for (size_t channel = channels; channel < channels; ++channel)
+        for (size_t channel = 0; channel < channels; ++channel)
         {
             for (size_t ky = 0; ky < kernelY; ky++)
             {
@@ -128,7 +128,7 @@ namespace Synet
                         if (sy < srcY) 
                         {
                             size_t sx = kx * dilationX - padX;
-                            for (size_t dx = 0; dx < dstY; ++dx)
+                            for (size_t dx = 0; dx < dstX; ++dx)
                             {
                                 if (sx < dstX) 
                                     *(dst++) = src[sy * srcX + sx];
@@ -139,7 +139,7 @@ namespace Synet
                         }
                         else 
                         {
-                            for (size_t dx = 0; dx < dstY; ++dx)
+                            for (size_t dx = 0; dx < dstX; ++dx)
                                 *(dst++) = 0;
                         }
                         sy += strideX;

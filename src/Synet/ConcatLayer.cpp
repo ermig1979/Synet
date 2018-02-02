@@ -38,7 +38,7 @@ namespace Synet
         _concatNum = src[0]->Size(0, _concatAxis);
         _concatInputSize = src[0]->Size(_concatAxis + 1);
         size_t srcSizeSum = src[0]->Size();
-        Shape dstShape = dst[0]->Shape();
+        Shape dstShape = src[0]->Shape();
         for (size_t i = 1; i < src.size(); ++i) 
         {
             assert(src[0]->Count() == src[i]->Count());

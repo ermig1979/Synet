@@ -63,23 +63,48 @@ namespace Synet
 
     template <class T, template<class> class A> bool Network<T, A>::Init()
     {
-        _tensors.resize(_layers.size());
-        for (size_t i = 0; i < _tensors.size(); ++i)
-            _tensors[i].reset(new Tensor());
-
-        _nameIndex.clear();
+        NameIndexMap index;
+        NameSet available;
         for (size_t i = 0; i < _layers.size(); ++i)
         {
-            const String & name = _layers[i]->Param().name();
-            if (_nameIndex.find(name) == _nameIndex.end())
-                _nameIndex[name] = i;
-            else
-                assert(0);
+            Stage stage;
+            stage.layer = _layers[i].get();
+            const LayerParam & param = stage.layer->Param();
+            for (size_t j = 0; j < param.src().size(); ++j)
+            {
+                const String & name = param.src()[j];
+                stage.src.push_back(_tensors[index[name]].get());
+                if (available.find(name) != available.end())
+                    available.erase(name);
+            }
+            for (size_t j = 0; j < param.dst().size(); ++j)
+            {
+                const String & name = param.dst()[j];
+                if (j < param.src().size() && name == param.src()[j])
+                {
+                    stage.dst.push_back(_tensors[index[name]].get());
+                }
+                else  if (index.find(name) != index.end())
+                {
+                    assert(0);
+                }
+                else
+                {
+                    TensorSharedPtr tensor(new Tensor());
+                    index[name] = _tensors.size();
+                    _tensors.push_back(tensor);
+                    stage.dst.push_back(tensor.get());
+                }
+                available.insert(name);
+                if (param.type() == LayerTypeInput)
+                    _src.push_back(_tensors.back().get());
+            }
+            stage.layer->Setup(stage.src, stage.dst);
+            stage.layer->Reshape(stage.src, stage.dst);
+            _stages.push_back(stage);
         }
-
-        for (size_t i = 0; i < _stages.size(); ++i)
-            _stages[i].layer->Setup(_stages[i].src, _stages[i].dst);
-
+        for (NameSet::const_iterator it = available.begin(); it != available.end(); ++it)
+            _dst.push_back(_tensors[index[*it]].get());
         _empty = false;
         return true;
     }

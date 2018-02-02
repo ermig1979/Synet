@@ -27,7 +27,7 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> void LrnLayer<T, A>::Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
+    template <class T, template<class> class A> void LrnLayer<T, A>::Setup(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
         _normRegion = this->Param().lrn().normRegion();
         _size = this->Param().lrn().localSize();
@@ -42,7 +42,7 @@ namespace Synet
         }
     }
 
-    template <class T, template<class> class A> void LrnLayer<T, A>::Setup(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
+    template <class T, template<class> class A> void LrnLayer<T, A>::Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
         assert(src[0]->Count() == 4);
         _num = src[0]->Axis(0);

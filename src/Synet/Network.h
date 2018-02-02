@@ -63,6 +63,7 @@ namespace Synet
         typedef std::vector<TensorSharedPtr> TensorSharedPtrs;
 
         typedef std::map<String, size_t> NameIndexMap;
+        typedef std::set<String> NameSet;
 
         struct Stage
         {
@@ -76,8 +77,6 @@ namespace Synet
         NetworkParamHolder _param;
         LayerSharedPtrs _layers;
         TensorSharedPtrs _tensors;
-
-        NameIndexMap _nameIndex;
 
         Stages _stages;
         TensorPtrs _src, _dst;

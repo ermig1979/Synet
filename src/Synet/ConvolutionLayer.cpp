@@ -87,7 +87,7 @@ namespace Synet
         _is1x1 = true;
         for (size_t i = 0; i < _spatialAxisNum; ++i)
         {
-            if (_kernelShape[i] != 1 && _padShape[i] != 0 && _strideShape[i] != 1)
+            if (_kernelShape[i] != 1 || _padShape[i] != 0 || _strideShape[i] != 1)
             {
                 _is1x1 = false;
                 break;
@@ -189,8 +189,8 @@ namespace Synet
                 Type * pBuf = (Type*)pSrc;
                 if (!_is1x1) 
                 {
-                    ImToCol(pSrc, pBuf);
                     pBuf = _colBuffer.Data();
+                    ImToCol(pSrc, pBuf);
                 }
                 for (size_t g = 0; g < _group; ++g) 
                 {
