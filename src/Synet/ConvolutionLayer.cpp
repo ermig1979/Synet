@@ -187,7 +187,7 @@ namespace Synet
                 const Type * pSrc = src[i]->Data() + _srcSize * n;
                 Type * pDst = dst[i]->Data() + _dstSize * n;
                 Type * pBuf = (Type*)pSrc;
-                if (!_is1x1) 
+                if (!_is1x1)
                 {
                     pBuf = _colBuffer.Data();
                     ImToCol(pSrc, pBuf);
@@ -204,7 +204,6 @@ namespace Synet
                 }
             }
         }
-
     }
 
     template <class T, template<class> class A> void ConvolutionLayer<T, A>::ImToCol(const T * src, T * dst)

@@ -82,6 +82,7 @@ namespace Synet
 
     template <class T, template<class> class A> void LrnLayer<T, A>::ForwardCpuCrossChannels(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst)
     {
+        CpuSet(_scale.Size(), _k, _scale.Data());
         Tensor paddedSquare({1, _channels + _size - 1, _height, _width});
         CpuSet(paddedSquare.Size(), Type(0), paddedSquare.Data());
         Type alphaOverSize = _alpha / _size;

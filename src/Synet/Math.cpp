@@ -130,7 +130,7 @@ namespace Synet
                             size_t sx = kx * dilationX - padX;
                             for (size_t dx = 0; dx < dstX; ++dx)
                             {
-                                if (sx < dstX) 
+                                if (sx < srcX) 
                                     *(dst++) = src[sy * srcX + sx];
                                 else 
                                     *(dst++) = 0;
@@ -142,7 +142,7 @@ namespace Synet
                             for (size_t dx = 0; dx < dstX; ++dx)
                                 *(dst++) = 0;
                         }
-                        sy += strideX;
+                        sy += strideY;
                     }
                 }
             }
