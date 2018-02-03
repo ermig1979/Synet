@@ -111,12 +111,14 @@ namespace Synet
                 {
                     for (size_t ph = 0; ph < _dstY; ++ph) 
                     {
-                        size_t hStart = std::max<ptrdiff_t>(0, ph * _strideY - _padY);
+                        size_t hStart = ph * _strideY - _padY;
                         size_t hEnd = std::min(hStart + _kernelY, _srcY);
+                        hStart = std::max<ptrdiff_t>(0, hStart);
                         for (size_t pw = 0; pw < _dstX; ++pw) 
                         {
-                            size_t wStart = std::max<ptrdiff_t>(0, pw * _strideX - _padX);
+                            size_t wStart = pw * _strideX - _padX;
                             size_t wEnd = std::min(wStart + _kernelX, _srcX);
+                            wStart = std::max<ptrdiff_t>(0, wStart);
                             Type max = -FLT_MAX;
                             for (size_t h = hStart; h < hEnd; ++h)
                                 for (size_t w = wStart; w < wEnd; ++w)
@@ -137,12 +139,14 @@ namespace Synet
                 {
                     for (size_t ph = 0; ph < _dstY; ++ph)
                     {
-                        size_t hStart = std::max(size_t(0), ph * _strideY - _padY);
+                        size_t hStart = ph * _strideY - _padY;
                         size_t hEnd = std::min(hStart + _kernelY, _srcY);
+                        hStart = std::max<ptrdiff_t>(0, hStart);
                         for (size_t pw = 0; pw < _dstX; ++pw)
                         {
-                            size_t wStart = std::max(size_t(0), pw * _strideX - _padX);
+                            size_t wStart = pw * _strideX - _padX;
                             size_t wEnd = std::min(wStart + _kernelX, _srcX);
+                            wStart = std::max<ptrdiff_t>(0, wStart);
                             size_t poolSize = (hEnd - hStart) * (wEnd - wStart);
                             Type sum = 0;
                             for (size_t h = hStart; h < hEnd; ++h)
