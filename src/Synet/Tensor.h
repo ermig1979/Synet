@@ -122,7 +122,7 @@ namespace Synet
             assert(_shape.size() == index.size());
 
             size_t offset = 0;
-            for (const size_t * s = _shape.data(), * i = index.begin(); s < index.end(); ++s, ++i)
+            for (const size_t * s = _shape.data(), * i = index.begin(); i < index.end(); ++s, ++i)
             {
                 assert(*s > 0);
                 assert(*i < *s);
