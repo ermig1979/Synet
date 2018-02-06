@@ -49,8 +49,39 @@ namespace Synet
     template <typename T> void ImToCol(const T * src, size_t channels, size_t srcY, size_t srcX, size_t kernelY, size_t kernelX,
         size_t padY, size_t padX, size_t strideY, size_t strideX, size_t dilationY, size_t dilationX, T * dst);
 
-    template <typename T> void CpuMul(const T * a, const T * b, size_t size, T * dst);
-    template <typename T> void CpuSqr(const T * src, size_t size, T * dst);
-    template <typename T> void CpuAxpy(const T * src, size_t size, const T & alpha, T * dst);
-    template <typename T> void CpuPow(const T * src, size_t size, const T & exp, T * dst);
+    template <typename T> void CpuMul(const T * a, const T * b, size_t size, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = a[i] * b[i];
+    }
+
+    template <typename T> void CpuSqr(const T * src, size_t size, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = src[i] * src[i];
+    }
+
+    template <typename T> void CpuAxpy(const T * src, size_t size, const T & alpha, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] += src[i] * alpha;
+    }
+
+    template <typename T> void CpuPow(const T * src, size_t size, const T & exp, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = ::pow(src[i], exp);
+    }
+
+    template <typename T> void CpuSigmoid(const T * src, size_t size, const T & slope, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = T(1) / (T(1) + ::exp(-src[i] * slope));
+    }
+
+    template <typename T> void CpuRelu(const T * src, size_t size, const T & negativeSlope, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = std::max(src[i], T(0)) + negativeSlope * std::min(src[i], T(0));
+    }
 }

@@ -26,10 +26,11 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
+#include "Synet/Math.h"
 
 namespace Synet
 {
-    template <class T, template<class> class A = std::allocator> class ReluLayer : public Synet::Layer<T, A>
+    template <class T, template<class> class A> class ReluLayer : public Synet::Layer<T, A>
     {
     public:
         typedef T Type;
@@ -41,12 +42,24 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst);
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) {}
-        virtual inline size_t SrcNum() const { return 1; }
-        virtual inline size_t DstMin() const { return 1; }
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) 
+        {
+            _negativeSlope = this->Param().relu().negativeSlope();
+        }
+
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            dst[0]->Reshape(src[0]->Shape());
+        }
 
     protected:
-        virtual void ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            SYNET_CHECK_PERFORMANCE();
+            CpuRelu<Type>(src[0]->Data(), src[0]->Size(), _negativeSlope, dst[0]->Data());
+        }
+
+    private:
+        Type _negativeSlope;
     };
 }

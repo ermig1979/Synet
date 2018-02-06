@@ -149,28 +149,4 @@ namespace Synet
             src += channelSize;
         }
     }
-
-    template <> void CpuSqr<float>(const float * src, size_t size, float * dst)
-    {
-        for (size_t i = 0; i < size; ++i)
-            dst[i] = src[i] * src[i];
-    }
-
-    template <> void CpuMul<float>(const float * a, const float * b, size_t size, float * dst)
-    {
-        for (size_t i = 0; i < size; ++i)
-            dst[i] = a[i] * b[i];
-    }
-
-    template <> void CpuAxpy<float>(const float * src, size_t size, const float & alpha, float * dst)
-    {
-        for (size_t i = 0; i < size; ++i)
-            dst[i] += src[i]*alpha;
-    }
-
-    template <> void CpuPow<float>(const float * src, size_t size, const float & exp, float * dst)
-    {
-        for (size_t i = 0; i < size; ++i)
-            dst[i] = ::pow(src[i], exp);
-    }
 }

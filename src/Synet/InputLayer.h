@@ -29,7 +29,7 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A = std::allocator> class InputLayer : public Synet::Layer<T, A>
+    template <class T, template<class> class A> class InputLayer : public Synet::Layer<T, A>
     {
     public:
         typedef T Type;
@@ -41,14 +41,25 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst) {}
-        virtual void Setup(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
-        virtual inline size_t SrcNum() const { return 0; }
-        virtual inline size_t DstMin() const { return 1; }
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst) 
+        {
+        }
+
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            const InputParam & input = this->Param().input();
+            size_t size = input.shape().size();
+            assert(size == 0 || size == 1 || size == dst.size());
+            if (size > 0)
+            {
+                for (size_t i = 0; i < dst.size(); ++i)
+                    dst[i]->Reshape(size == 1 ? input.shape()[0].dim() : input.shape()[i].dim());
+            }
+        }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst) {}
-
-
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst) 
+        {
+        }
     };
 }

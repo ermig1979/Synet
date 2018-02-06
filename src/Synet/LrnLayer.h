@@ -26,10 +26,11 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
+#include "Synet/Math.h"
 
 namespace Synet
 {
-    template <class T, template<class> class A = std::allocator> class LrnLayer : public Synet::Layer<T, A>
+    template <class T, template<class> class A> class LrnLayer : public Synet::Layer<T, A>
     {
     public:
         typedef T Type;
@@ -42,15 +43,83 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
-        virtual void Setup(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
-        virtual inline size_t SrcNum() const { return 1; }
-        virtual inline size_t DstNum() const { return 1; }
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            _normRegion = this->Param().lrn().normRegion();
+            _size = this->Param().lrn().localSize();
+            assert(_size % 2 == 1);
+            _prePad = (_size - 1) / 2;
+            _alpha = this->Param().lrn().alpha();
+            _beta = this->Param().lrn().beta();
+            _k = this->Param().lrn().k();
+            if (_normRegion == NormRegionTypeWithinChannel)
+            {
+                assert(0);
+            }
+        }
+
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            assert(src[0]->Count() == 4);
+            _num = src[0]->Axis(0);
+            _channels = src[0]->Axis(1);
+            _height = src[0]->Axis(2);
+            _width = src[0]->Axis(3);
+            switch (_normRegion)
+            {
+            case NormRegionTypeAcrossChannels:
+                dst[0]->Reshape({ _num, _channels, _height, _width });
+                _scale.Reshape({ _num, _channels, _height, _width });
+                break;
+            case NormRegionTypeWithinChannel:
+                assert(0);
+                break;
+            default:
+                assert(0);
+                break;
+            }
+        }
 
     protected:
-        virtual void ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            SYNET_CHECK_PERFORMANCE();
+            switch (_normRegion)
+            {
+            case NormRegionTypeAcrossChannels:
+                ForwardCpuCrossChannels(src, dst);
+                break;
+            case NormRegionTypeWithinChannel:
+                assert(0);
+                break;
+            default:
+                assert(0);
+                break;
+            }
+        }
 
-        virtual void ForwardCpuCrossChannels(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);    
+        virtual void ForwardCpuCrossChannels(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            SYNET_CHECK_PERFORMANCE();
+            CpuSet(_scale.Size(), _k, _scale.Data());
+            Tensor paddedSquare({ 1, _channels + _size - 1, _height, _width });
+            CpuSet(paddedSquare.Size(), Type(0), paddedSquare.Data());
+            Type alphaOverSize = _alpha / _size;
+            for (size_t n = 0; n < _num; ++n)
+            {
+                CpuSqr<Type>(src[0]->Data({ n, 0, 0, 0 }), _channels * _height * _width, paddedSquare.Data({ 0, _prePad, 0, 0 }));
+                for (size_t c = 0; c < _size; ++c)
+                    CpuAxpy<Type>(paddedSquare.Data({ 0, c, 0, 0 }), _height * _width, alphaOverSize, _scale.Data({ n, 0, 0, 0 }));
+                for (size_t c = 1; c < _channels; ++c)
+                {
+                    CpuCopy(_scale.Data({ n, c - 1, 0, 0 }), _height * _width, _scale.Data({ n, c, 0, 0 }));
+                    CpuAxpy<Type>(paddedSquare.Data({ 0, c + _size - 1, 0, 0 }), _height * _width, alphaOverSize, _scale.Data({ n, c, 0, 0 }));
+                    CpuAxpy<Type>(paddedSquare.Data({ 0, c - 1, 0, 0 }), _height * _width, -alphaOverSize, _scale.Data({ n, c, 0, 0 }));
+                }
+            }
+            CpuPow<Type>(_scale.Data(), _scale.Size(), -_beta, dst[0]->Data());
+            CpuMul<Type>(src[0]->Data(), dst[0]->Data(), src[0]->Size(), dst[0]->Data());
+        }
     
     private:
 

@@ -26,10 +26,11 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
+#include "Synet/Math.h"
 
 namespace Synet
 {
-    template <class T, template<class> class A = std::allocator> class InnerProductLayer : public Synet::Layer<T, A>
+    template <class T, template<class> class A> class InnerProductLayer : public Synet::Layer<T, A>
     {
     public:
         typedef T Type;
@@ -41,21 +42,58 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
-        virtual void Setup(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
-        virtual inline size_t SrcNum() const { return 1; }
-        virtual inline size_t DstNum() const { return 1; }
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            _biasTerm = this->Param().innerProduct().biasTerm();
+            _transpose = this->Param().innerProduct().transpose();
+            _axis = this->Param().innerProduct().axis();
+            _N = this->Param().innerProduct().outputNum();
+            _K = src[0]->Axis(_axis);
+
+            const typename Base::Tensors & weight = this->Weight();
+            if (_biasTerm)
+                assert(weight.size() == 2);
+            else
+                assert(weight.size() == 1);
+            if (_transpose)
+                assert(weight[0].Shape() == Shape({ _K, _N }));
+            else
+                assert(weight[0].Shape() == Shape({ _N, _K }));
+            if (_biasTerm)
+                assert(weight[1].Shape() == Shape({ _N }));
+        }
+
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            const size_t newK = src[0]->Axis(_axis);
+            _M = src[0]->Size(0, _axis);
+            Shape dstShape = src[0]->Shape();
+            dstShape.resize(_axis + 1);
+            dstShape[_axis] = _N;
+            dst[0]->Reshape(dstShape);
+            if (_biasTerm)
+            {
+                Shape biasShape(1, _M);
+                _biasMultiplier.Reshape(biasShape, Type(1.0f));
+            }
+        }
 
     protected:
-        virtual void ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst);
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            SYNET_CHECK_PERFORMANCE();
+            CpuGemm<Type>(CblasNoTrans, _transpose ? CblasNoTrans : CblasTrans, _M, _N, _K,
+                (Type)1.0, src[0]->Data(), this->Weight()[0].Data(), (Type)0.0, dst[0]->Data());
+            if (_biasTerm)
+            {
+                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _M, _N, 1,
+                    (Type)1.0, _biasMultiplier.Data(), this->Weight()[1].Data(), (Type)1.0, dst[0]->Data());
+            }
+        }
 
     private:
-        size_t _M;
-        size_t _K;
-        size_t _N;
-        size_t _axis;
-        bool _biasTerm;
+        size_t _M, _K, _N, _axis;
+        bool _biasTerm, _transpose;
         Synet::Tensor<T, A> _biasMultiplier;
-        bool _transpose;
     };
 }

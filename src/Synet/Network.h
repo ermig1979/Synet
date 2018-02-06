@@ -28,6 +28,16 @@
 #include "Synet/Tensor.h"
 #include "Synet/Layer.h"
 
+#include "Synet/InputLayer.h"
+#include "Synet/InnerProductLayer.h"
+#include "Synet/ReluLayer.h"
+#include "Synet/SigmoidLayer.h"
+#include "Synet/PoolingLayer.h"
+#include "Synet/ConvolutionLayer.h"
+#include "Synet/LrnLayer.h"
+#include "Synet/ConcatLayer.h"
+#include "Synet/StubLayer.h"
+
 namespace Synet
 {
     template <class T, template<class> class A = std::allocator> class Network
@@ -37,19 +47,73 @@ namespace Synet
         typedef Synet::Tensor<T, A> Tensor;
         typedef std::vector<Tensor*> TensorPtrs;
 
-        Network();
+        Network()
+            : _empty(true)
+        {
+        }
 
-        bool Empty() const { return _empty; }
-        const NetworkParam & Param() const { return _param(); }
+        bool Empty() const 
+        { 
+            return _empty; 
+        }
 
-        bool Load(const String & param, const String & weight);
+        const NetworkParam & Param() const 
+        { 
+            return _param(); 
+        }
 
-        TensorPtrs & Src() { return _src; }
-        const TensorPtrs & Dst() const { return _dst; }
+        bool Load(const String & param, const String & weight)
+        {
+            if (!_param.Load(param))
+                return false;
 
-        void Reshape();
+            _layers.clear();
+            for (size_t i = 0; i < _param().layers().size(); ++i)
+            {
+                LayerSharedPtr layer(Create(_param().layers()[i]));
+                if (layer)
+                    _layers.push_back(layer);
+            }
 
-        void Forward();
+            std::ifstream ifs(weight.c_str(), std::ifstream::binary);
+            if (!ifs.is_open())
+                return false;
+
+            for (size_t i = 0; i < _layers.size(); ++i)
+            {
+                if (!_layers[i]->Load(ifs))
+                {
+                    ifs.close();
+                    return false;
+                }
+            }
+            ifs.close();
+
+            return Init();
+        }
+
+        TensorPtrs & Src() 
+        { 
+            return _src; 
+        }
+
+        const TensorPtrs & Dst() const 
+        { 
+            return _dst; 
+        }
+
+        void Reshape()
+        {
+            for (size_t i = 0; i < _stages.size(); ++i)
+                _stages[i].layer->Reshape(_stages[i].src, _stages[i].dst);
+        }
+
+        void Forward()
+        {
+            SYNET_CHECK_PERFORMANCE();
+            for (size_t i = 0; i < _stages.size(); ++i)
+                _stages[i].layer->Forward(_stages[i].src, _stages[i].dst);
+        }
 
     private:
         typedef Synet::Layer<T, A> Layer;
@@ -81,6 +145,71 @@ namespace Synet
         Stages _stages;
         TensorPtrs _src, _dst;
 
-        bool Init();
+        bool Init()
+        {
+            NameIndexMap index;
+            NameSet available;
+            for (size_t i = 0; i < _layers.size(); ++i)
+            {
+                Stage stage;
+                stage.layer = _layers[i].get();
+                const LayerParam & param = stage.layer->Param();
+                for (size_t j = 0; j < param.src().size(); ++j)
+                {
+                    const String & name = param.src()[j];
+                    stage.src.push_back(_tensors[index[name]].get());
+                    if (available.find(name) != available.end())
+                        available.erase(name);
+                }
+                for (size_t j = 0; j < param.dst().size(); ++j)
+                {
+                    const String & name = param.dst()[j];
+                    if (j < param.src().size() && name == param.src()[j])
+                    {
+                        stage.dst.push_back(_tensors[index[name]].get());
+                    }
+                    else  if (index.find(name) != index.end())
+                    {
+                        assert(0);
+                    }
+                    else
+                    {
+                        TensorSharedPtr tensor(new Tensor());
+                        index[name] = _tensors.size();
+                        _tensors.push_back(tensor);
+                        stage.dst.push_back(tensor.get());
+                    }
+                    available.insert(name);
+                    if (param.type() == LayerTypeInput)
+                        _src.push_back(_tensors.back().get());
+                }
+                stage.layer->Setup(stage.src, stage.dst);
+                stage.layer->Reshape(stage.src, stage.dst);
+                _stages.push_back(stage);
+            }
+            for (NameSet::const_iterator it = available.begin(); it != available.end(); ++it)
+                _dst.push_back(_tensors[index[*it]].get());
+            _empty = false;
+            return true;
+        }
+
+        LayerPtr Create(const LayerParam & param)
+        {
+            switch (param.type())
+            {
+            case LayerTypeInput: return new InputLayer<T, A>(param);
+            case LayerTypeInnerProduct: return new InnerProductLayer<T, A>(param);
+            case LayerTypeRelu: return new ReluLayer<T, A>(param);
+            case LayerTypeSigmoid: return new SigmoidLayer<T, A>(param);
+            case LayerTypePooling: return new PoolingLayer<T, A>(param);
+            case LayerTypeConvolution: return new ConvolutionLayer<T, A>(param);
+            case LayerTypeLrn: return new LrnLayer<T, A>(param);
+            case LayerTypeConcat: return new ConcatLayer<T, A>(param);
+            case LayerTypeDropout:
+                return new StubLayer<T, A>(param);
+            default:
+                return NULL;
+            }
+        }
     };
 }

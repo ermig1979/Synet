@@ -54,3 +54,7 @@
 #else
 #error This platform is unsupported!
 #endif
+
+#ifndef SYNET_CHECK_PERFORMANCE
+#define SYNET_CHECK_PERFORMANCE()
+#endif

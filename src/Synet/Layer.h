@@ -37,34 +37,54 @@ namespace Synet
         typedef Synet::Tensor<T, A> Tensor;
         typedef std::vector<Tensor> Tensors;
         typedef std::vector<Tensor*> TensorPtrs;
-        typedef std::shared_ptr<Tensor> TensorSharedPtr;
-        typedef std::vector<TensorSharedPtr> TensorSharedPtrs;
 
-        Layer(const LayerParam & param);
+        Layer(const LayerParam & param)
+            : _param(param)
+        {
+            _weight.resize(_param.data().size());
+            for (size_t i = 0; i < _weight.size(); ++i)
+                _weight[i].Reshape(_param.data()[i].dim());
+        }
 
-        const LayerParam & Param() const { return _param; }
-        const Tensors & Weight() const { return _weight; }
+        const LayerParam & Param() const 
+        { 
+            return _param; 
+        }
+
+        const Tensors & Weight() const 
+        { 
+            return _weight; 
+        }
 
         inline void Forward(const TensorPtrs & src, const TensorPtrs & dst)
         {
             ForwardCpu(src, dst);
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst) = 0;
-
         virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) = 0;
 
-        virtual inline size_t SrcNum() const { return -1; }
-        virtual inline size_t SrcMin() const { return -1; }
-        virtual inline size_t SrcMax() const { return -1; }
-        virtual inline size_t DstNum() const { return -1; }
-        virtual inline size_t DstMin() const { return -1; }
-        virtual inline size_t DstMax() const { return -1; }
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst) = 0;
 
-        bool Load(const void * & data, size_t & size);
-        bool Load(std::istream & is);        
-        
-        static Layer * Create(const LayerParam & param);
+        bool Load(const void * & data, size_t & size)
+        {
+            for (size_t i = 0; i < _weight.size(); ++i)
+            {
+                size_t requred = _weight[i].Size() * sizeof(Type);
+                if (requred > size)
+                    return false;
+                ::memcpy(_weight[i].Data(), data, requred);
+                (char*&)data += requred;
+                size -= requred;
+            }
+            return true;
+        }
+
+        bool Load(std::istream & is)
+        {
+            for (size_t i = 0; i < _weight.size(); ++i)
+                is.read((char*)_weight[i].Data(), _weight[i].Size() * sizeof(T));
+            return true;
+        }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst) = 0;

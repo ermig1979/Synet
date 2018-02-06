@@ -29,7 +29,7 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A = std::allocator> class StubLayer : public Synet::Layer<T, A>
+    template <class T, template<class> class A> class StubLayer : public Synet::Layer<T, A>
     {
     public:
         typedef T Type;
@@ -41,12 +41,18 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) {}
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst);
-        virtual inline size_t SrcNum() const { return 1; }
-        virtual inline size_t DstNum() const { return 1; }
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) 
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            dst[0]->Share(*src[0]);
+        }
 
     protected:
-        virtual void ForwardCpu(const std::vector<Synet::Tensor<T, A>*> & src, const std::vector<Synet::Tensor<T, A>*> & dst) {}
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+        }
     };
 }
