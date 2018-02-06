@@ -26,6 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
+#include "Synet/Math.h"
 
 namespace Synet
 {
@@ -111,7 +112,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            SYNET_CHECK_PERFORMANCE();
+            SYNET_PERF_FUNC();
 
             const Type * pSrc = src[0]->Data();
             Type * pDst = dst[0]->Data();
@@ -125,23 +126,7 @@ namespace Synet
                 {
                     for (size_t c = 0; c < _channels; ++c)
                     {
-                        for (size_t ph = 0; ph < _dstY; ++ph)
-                        {
-                            size_t hStart = ph * _strideY - _padY;
-                            size_t hEnd = std::min(hStart + _kernelY, _srcY);
-                            hStart = std::max<ptrdiff_t>(0, hStart);
-                            for (size_t pw = 0; pw < _dstX; ++pw)
-                            {
-                                size_t wStart = pw * _strideX - _padX;
-                                size_t wEnd = std::min(wStart + _kernelX, _srcX);
-                                wStart = std::max<ptrdiff_t>(0, wStart);
-                                Type max = -FLT_MAX;
-                                for (size_t h = hStart; h < hEnd; ++h)
-                                    for (size_t w = wStart; w < wEnd; ++w)
-                                        max = std::max(max, pSrc[h * _srcX + w]);
-                                pDst[ph*_dstX + pw] = max;
-                            }
-                        }
+                        PoolingMax(pSrc, _srcX, _srcY, _kernelY, _kernelX, _padY, _padX, _strideY, _strideX, pDst, _dstX, _dstY);
                         pSrc += _srcX * _srcY;
                         pDst += _dstX * _dstY;
                     }

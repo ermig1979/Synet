@@ -196,7 +196,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            SYNET_CHECK_PERFORMANCE();
+            SYNET_PERF_FUNC();
             const Type * weight = this->Weight()[0].Data();
             for (int i = 0; i < src.size(); ++i)
             {

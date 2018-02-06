@@ -83,7 +83,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            SYNET_CHECK_PERFORMANCE();
+            SYNET_PERF_FUNC();
             switch (_normRegion)
             {
             case NormRegionTypeAcrossChannels:
@@ -100,7 +100,7 @@ namespace Synet
 
         virtual void ForwardCpuCrossChannels(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            SYNET_CHECK_PERFORMANCE();
+            SYNET_PERF_FUNC();
             CpuSet(_scale.Size(), _k, _scale.Data());
             Tensor paddedSquare({ 1, _channels + _size - 1, _height, _width });
             CpuSet(paddedSquare.Size(), Type(0), paddedSquare.Data());

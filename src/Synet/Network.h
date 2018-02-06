@@ -110,7 +110,7 @@ namespace Synet
 
         void Forward()
         {
-            SYNET_CHECK_PERFORMANCE();
+            SYNET_PERF_FUNC();
             for (size_t i = 0; i < _stages.size(); ++i)
                 _stages[i].layer->Forward(_stages[i].src, _stages[i].dst);
         }

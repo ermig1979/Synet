@@ -74,7 +74,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            SYNET_CHECK_PERFORMANCE();
+            SYNET_PERF_FUNC();
 
             if (src.size() == 1)
                 return;

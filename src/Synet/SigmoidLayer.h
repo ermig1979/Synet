@@ -55,7 +55,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            SYNET_CHECK_PERFORMANCE();
+            SYNET_PERF_FUNC();
             CpuSigmoid<Type>(src[0]->Data(), src[0]->Size(), _slope, dst[0]->Data());
         }
 

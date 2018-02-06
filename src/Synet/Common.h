@@ -24,7 +24,52 @@
 
 #pragma once
 
-#include "Synet/ThirdParty.h"
+//#define SYNET_SIMD_LIBRARY_ENABLE
+
+//#define SYNET_PROTOBUF_ENABLE
+
+//#define SYNET_CAFFE_ENABLE
+
+#include <stddef.h>
+#include <assert.h>
+#include <math.h>
+#include <memory.h>
+#include <float.h>
+
+#include <vector>
+#include <string>
+#include <memory>
+#include <algorithm>
+#include <iterator>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <map>
+#include <set>
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdLib.h"
+#endif //SYNET_SIMD_LIBRARY_ENABLE
+
+#if defined(_MSC_VER)
+#define SYNET_INLINE __forceinline
+#elif defined(__GNUC__)
+#define SYNET_INLINE inline __attribute__ ((always_inline))
+#else
+#error This platform is unsupported!
+#endif
+
+#ifndef SYNET_PERF_FUNC
+#define SYNET_PERF_FUNC()
+#endif
+
+#ifndef SYNET_PERF_BLOCK
+#define SYNET_PERF_BLOCK(name)
+#endif
+
+#ifndef SYNET_PERF_BLOCK_END
+#define SYNET_PERF_BLOCK_END(name)
+#endif
 
 #define SYNET_CLASS_INSTANCE(name) \
   template class name<float>; 

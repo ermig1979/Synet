@@ -81,7 +81,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            SYNET_CHECK_PERFORMANCE();
+            SYNET_PERF_FUNC();
             CpuGemm<Type>(CblasNoTrans, _transpose ? CblasNoTrans : CblasTrans, _M, _N, _K,
                 (Type)1.0, src[0]->Data(), this->Weight()[0].Data(), (Type)0.0, dst[0]->Data());
             if (_biasTerm)
