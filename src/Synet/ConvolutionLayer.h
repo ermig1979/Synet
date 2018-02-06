@@ -218,7 +218,12 @@ namespace Synet
                     if (_biasTerm)
                     {
                         const Type * bias = this->Weight()[1].Data();
+#if 1
+                        for (size_t i = 0; i < _dstChannels; ++i)
+                            CpuAdd(bias[i], pDst + i*_dstSpatialSize, _dstSpatialSize);
+#else
                         CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _dstChannels, _dstSpatialSize, 1, Type(1.0), bias, _biasMultiplier.Data(), Type(1.0), pDst);
+#endif
                     }
                 }
             }

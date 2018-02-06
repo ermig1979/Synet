@@ -26,6 +26,8 @@
 
 //#define SYNET_SIMD_LIBRARY_ENABLE
 
+//#define SYNET_OPEN_BLAS_ENABLE
+
 //#define SYNET_PROTOBUF_ENABLE
 
 //#define SYNET_CAFFE_ENABLE
@@ -47,9 +49,16 @@
 #include <map>
 #include <set>
 
-#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
 #include "Simd/SimdLib.h"
-#endif //SYNET_SIMD_LIBRARY_ENABLE
+#endif 
+
+#ifdef SYNET_OPEN_BLAS_ENABLE
+extern "C" 
+{
+#include <cblas.h>
+}
+#endif
 
 #if defined(_MSC_VER)
 #define SYNET_INLINE __forceinline

@@ -226,6 +226,12 @@ namespace Synet
             dst[i] = std::max(src[i], T(0)) + negativeSlope * std::min(src[i], T(0));
     }
 
+    template <typename T> void CpuAdd(const T & value, T * dst, size_t size)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] += value;
+    }
+
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
     template <> SYNET_INLINE void PoolingMax<float>(const float * src, size_t srcX, size_t srcY, size_t kernelY, size_t kernelX,
         size_t padY, size_t padX, size_t strideY, size_t strideX, float * dst, size_t dstX, size_t dstY)
@@ -277,6 +283,22 @@ namespace Synet
     template <> SYNET_INLINE void CpuRelu<float>(const float * src, size_t size, const float & negativeSlope, float * dst)
     {
         ::SimdNeuralRelu(src, size, &negativeSlope, dst);
+    }
+
+    template <> SYNET_INLINE void CpuAdd<float>(const float & value, float * dst, size_t size)
+    {
+        ::SimdNeuralAddValue( &value, dst, size);
+    }
+#endif
+
+#ifdef SYNET_OPEN_BLAS_ENABLE
+    template <> void CpuGemm<float>(CblasTranspose transA, CblasTranspose transB, 
+        size_t M, size_t N, size_t K, float alpha, const float * A, const float * B, float beta, float * C)
+    {
+        size_t lda = (transA == CblasNoTrans) ? K : M;
+        size_t ldb = (transB == CblasNoTrans) ? N : K;
+        ::cblas_sgemm(::CblasRowMajor, (::CBLAS_TRANSPOSE)transA, (::CBLAS_TRANSPOSE)transB, 
+            (int)M, (int)N, (int)K, alpha, A, (int)lda, B, (int)ldb, beta, C, (int)N);
     }
 #endif
 }
