@@ -22,6 +22,4 @@
 * SOFTWARE.
 */
 
-#pragma once
-
-#include "Synet/Network.h"
+#include "Synet/Synet.h"

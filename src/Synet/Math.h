@@ -292,7 +292,7 @@ namespace Synet
 #endif
 
 #ifdef SYNET_OPEN_BLAS_ENABLE
-    template <> void CpuGemm<float>(CblasTranspose transA, CblasTranspose transB, 
+    template <> SYNET_INLINE void CpuGemm<float>(CblasTranspose transA, CblasTranspose transB,
         size_t M, size_t N, size_t K, float alpha, const float * A, const float * B, float beta, float * C)
     {
         size_t lda = (transA == CblasNoTrans) ? K : M;

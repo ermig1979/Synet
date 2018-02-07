@@ -53,7 +53,7 @@ namespace Synet
                 return false;
 
             caffe::NetParameter srcModel;
-            if (!caffe::ReadProtoFromBinaryFile(srcModelPath, &srcModel))
+            if(!(caffe::ReadProtoFromTextFile(srcModelPath, &srcModel) || caffe::ReadProtoFromBinaryFile(srcModelPath, &srcModel)))
                 return false;
 
             Synet::NetworkParamHolder holder;
@@ -112,41 +112,17 @@ namespace Synet
                 dst.dst().push_back(src.top(j));
             switch (dst.type())
             {
-            case Synet::LayerTypeInput:
-                dst.input().shape().resize(src.input_param().shape_size());
-                for (int j = 0; j < src.top_size(); ++j)
-                {
-                    dst.input().shape()[j].dim().resize(src.input_param().shape(j).dim_size());
-                    for (int k = 0; k < src.input_param().shape(j).dim_size(); ++k)
-                        dst.input().shape()[j].dim()[k] = src.input_param().shape(j).dim(k);
-                }
+            case Synet::LayerTypeBatchNorm:
+                if(src.batch_norm_param().has_use_global_stats())
+                    dst.batchNorm().useGlobalStats() = src.batch_norm_param().use_global_stats();
+                dst.batchNorm().movingAverageFraction() = src.batch_norm_param().moving_average_fraction();
+                dst.batchNorm().eps() = src.batch_norm_param().eps();
                 break;
-            case Synet::LayerTypeInnerProduct:
-                dst.innerProduct().outputNum() = src.inner_product_param().num_output();
-                dst.innerProduct().biasTerm() = src.inner_product_param().bias_term();
-                dst.innerProduct().transpose() = src.inner_product_param().transpose();
-                dst.innerProduct().axis() = src.inner_product_param().axis();
-                break;
-            case Synet::LayerTypeRelu:
-                dst.relu().negativeSlope() = src.relu_param().negative_slope();
-                break;
-            case Synet::LayerTypeSigmoid:
-                break;
-            case Synet::LayerTypePooling:
-                dst.pooling().method() = (Synet::PoolingMethodType)src.pooling_param().pool();
-                dst.pooling().globalPooling() = src.pooling_param().global_pooling();
-                if (src.pooling_param().has_kernel_size())
-                    dst.pooling().kernel() = Shape({ src.pooling_param().kernel_size() });
-                if (src.pooling_param().has_kernel_h() && src.pooling_param().has_kernel_w())
-                    dst.pooling().kernel() = Shape({ src.pooling_param().kernel_h(), src.pooling_param().kernel_w() });
-                if (src.pooling_param().has_pad())
-                    dst.pooling().pad() = Shape({ src.pooling_param().pad() });
-                if (src.pooling_param().has_pad_h() && src.pooling_param().has_pad_w())
-                    dst.pooling().pad() = Shape({ src.pooling_param().pad_h(), src.pooling_param().pad_w() });
-                if (src.pooling_param().has_stride())
-                    dst.pooling().stride() = Shape({ src.pooling_param().stride() });
-                if (src.pooling_param().has_stride_h() && src.pooling_param().has_stride_w())
-                    dst.pooling().stride() = Shape({ src.pooling_param().stride_h(), src.pooling_param().stride_w() });
+            case Synet::LayerTypeConcat:
+                if (src.concat_param().has_concat_dim())
+                    dst.concat().axis() = src.concat_param().concat_dim();
+                else
+                    dst.concat().axis() = src.concat_param().axis();
                 break;
             case Synet::LayerTypeConvolution:
                 dst.convolution().outputNum() = src.convolution_param().num_output();
@@ -166,6 +142,30 @@ namespace Synet
                 for (int j = 0; j < src.convolution_param().dilation_size(); ++j)
                     dst.convolution().dilation()[j] = src.convolution_param().dilation(j);
                 break;
+            case Synet::LayerTypeEltwise:
+                dst.eltwise().operation() = (EltwiseOperationType)src.eltwise_param().operation();
+                dst.eltwise().coefficients().resize(src.eltwise_param().coeff_size());
+                for (int j = 0; j < src.eltwise_param().coeff_size(); ++j)
+                    dst.eltwise().coefficients()[j] = src.eltwise_param().coeff(j);
+                dst.eltwise().stableProductGrad() = src.eltwise_param().stable_prod_grad();
+                break;
+            case Synet::LayerTypeDropout:
+                break;
+            case Synet::LayerTypeInnerProduct:
+                dst.innerProduct().outputNum() = src.inner_product_param().num_output();
+                dst.innerProduct().biasTerm() = src.inner_product_param().bias_term();
+                dst.innerProduct().transpose() = src.inner_product_param().transpose();
+                dst.innerProduct().axis() = src.inner_product_param().axis();
+                break;
+            case Synet::LayerTypeInput:
+                dst.input().shape().resize(src.input_param().shape_size());
+                for (int j = 0; j < src.top_size(); ++j)
+                {
+                    dst.input().shape()[j].dim().resize(src.input_param().shape(j).dim_size());
+                    for (int k = 0; k < src.input_param().shape(j).dim_size(); ++k)
+                        dst.input().shape()[j].dim()[k] = src.input_param().shape(j).dim(k);
+                }
+                break;
             case Synet::LayerTypeLrn:
                 dst.lrn().localSize() = src.lrn_param().local_size();
                 dst.lrn().alpha() = src.lrn_param().alpha();
@@ -173,13 +173,34 @@ namespace Synet
                 dst.lrn().normRegion() = (Synet::NormRegionType)src.lrn_param().norm_region();
                 dst.lrn().k() = src.lrn_param().k();
                 break;
-            case Synet::LayerTypeConcat:
-                if (src.concat_param().has_concat_dim())
-                    dst.concat().axis() = src.concat_param().concat_dim();
-                else
-                    dst.concat().axis() = src.concat_param().axis();
+            case Synet::LayerTypePooling:
+                dst.pooling().method() = (Synet::PoolingMethodType)src.pooling_param().pool();
+                dst.pooling().globalPooling() = src.pooling_param().global_pooling();
+                if (src.pooling_param().has_kernel_size())
+                    dst.pooling().kernel() = Shape({ src.pooling_param().kernel_size() });
+                if (src.pooling_param().has_kernel_h() && src.pooling_param().has_kernel_w())
+                    dst.pooling().kernel() = Shape({ src.pooling_param().kernel_h(), src.pooling_param().kernel_w() });
+                if (src.pooling_param().has_pad())
+                    dst.pooling().pad() = Shape({ src.pooling_param().pad() });
+                if (src.pooling_param().has_pad_h() && src.pooling_param().has_pad_w())
+                    dst.pooling().pad() = Shape({ src.pooling_param().pad_h(), src.pooling_param().pad_w() });
+                if (src.pooling_param().has_stride())
+                    dst.pooling().stride() = Shape({ src.pooling_param().stride() });
+                if (src.pooling_param().has_stride_h() && src.pooling_param().has_stride_w())
+                    dst.pooling().stride() = Shape({ src.pooling_param().stride_h(), src.pooling_param().stride_w() });
                 break;
-            case Synet::LayerTypeDropout:
+            case Synet::LayerTypeRelu:
+                dst.relu().negativeSlope() = src.relu_param().negative_slope();
+                break;
+            case Synet::LayerTypeScale:
+                dst.scale().axis() = src.scale_param().axis();
+                dst.scale().numAxes() = src.scale_param().num_axes();
+                dst.scale().biasTerm() = src.scale_param().bias_term();
+                break;
+            case Synet::LayerTypeSigmoid:
+                break;
+            case Synet::LayerTypeSoftmax:
+                dst.softmax().axis() = src.softmax_param().axis();
                 break;
             default:
                 assert(0);

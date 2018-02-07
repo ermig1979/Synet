@@ -24,4 +24,38 @@
 
 #pragma once
 
-#include "Synet/Network.h"
+#include "Synet/Common.h"
+#include "Synet/Layer.h"
+#include "Synet/Math.h"
+
+namespace Synet
+{
+    template <class T, template<class> class A> class ScaleLayer : public Synet::Layer<T, A>
+    {
+    public:
+        typedef T Type;
+        typedef Layer<T, A> Base;
+        typedef typename Base::TensorPtrs TensorPtrs;
+
+        ScaleLayer(const LayerParam & param)
+            : Base(param)
+        {
+        }
+
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) 
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+        }
+
+    protected:
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            SYNET_PERF_FUNC();
+        }
+
+    private:
+    };
+}

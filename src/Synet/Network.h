@@ -24,18 +24,18 @@
 
 #pragma once
 
-#include "Synet/Common.h"
-#include "Synet/Tensor.h"
-#include "Synet/Layer.h"
-
-#include "Synet/InputLayer.h"
-#include "Synet/InnerProductLayer.h"
-#include "Synet/ReluLayer.h"
-#include "Synet/SigmoidLayer.h"
-#include "Synet/PoolingLayer.h"
-#include "Synet/ConvolutionLayer.h"
-#include "Synet/LrnLayer.h"
+#include "Synet/BatchNormLayer.h"
 #include "Synet/ConcatLayer.h"
+#include "Synet/ConvolutionLayer.h"
+#include "Synet/EltwiseLayer.h"
+#include "Synet/InnerProductLayer.h"
+#include "Synet/InputLayer.h"
+#include "Synet/LrnLayer.h"
+#include "Synet/PoolingLayer.h"
+#include "Synet/ReluLayer.h"
+#include "Synet/ScaleLayer.h"
+#include "Synet/SigmoidLayer.h"
+#include "Synet/SoftmaxLayer.h"
 #include "Synet/StubLayer.h"
 
 namespace Synet
@@ -197,16 +197,19 @@ namespace Synet
         {
             switch (param.type())
             {
-            case LayerTypeInput: return new InputLayer<T, A>(param);
-            case LayerTypeInnerProduct: return new InnerProductLayer<T, A>(param);
-            case LayerTypeRelu: return new ReluLayer<T, A>(param);
-            case LayerTypeSigmoid: return new SigmoidLayer<T, A>(param);
-            case LayerTypePooling: return new PoolingLayer<T, A>(param);
-            case LayerTypeConvolution: return new ConvolutionLayer<T, A>(param);
-            case LayerTypeLrn: return new LrnLayer<T, A>(param);
+            case LayerTypeBatchNorm: return new BatchNormLayer<T, A>(param);
             case LayerTypeConcat: return new ConcatLayer<T, A>(param);
-            case LayerTypeDropout:
-                return new StubLayer<T, A>(param);
+            case LayerTypeConvolution: return new ConvolutionLayer<T, A>(param);
+            case LayerTypeEltwise: return new EltwiseLayer<T, A>(param);
+            case LayerTypeDropout: return new StubLayer<T, A>(param);
+            case LayerTypeInnerProduct: return new InnerProductLayer<T, A>(param);
+            case LayerTypeInput: return new InputLayer<T, A>(param);
+            case LayerTypeLrn: return new LrnLayer<T, A>(param);
+            case LayerTypePooling: return new PoolingLayer<T, A>(param);
+            case LayerTypeRelu: return new ReluLayer<T, A>(param);
+            case LayerTypeScale: return new ScaleLayer<T, A>(param);
+            case LayerTypeSigmoid: return new SigmoidLayer<T, A>(param);
+            case LayerTypeSoftmax: return new SoftmaxLayer<T, A>(param);
             default:
                 return NULL;
             }
