@@ -83,6 +83,27 @@ namespace Synet
                 }
             }
         }
+
+        template<class T> void CpuGemvN(size_t M, size_t N, T alpha, const T * A, const T * x, T * y)
+        {
+            for (size_t i = 0; i < M; ++i)
+            {
+                register T sum = 0;
+                for (size_t j = 0; j < N; ++j)
+                    sum += x[j] * A[i*N + j];
+                y[i] += alpha*sum;
+            }
+        }
+
+        template<class T> void CpuGemvT(size_t M, size_t N, T alpha, const T * A, const T * x, T * y)
+        {
+            for (size_t j = 0; j < N; ++j)
+            {
+                register T ax = alpha*x[j];
+                for (size_t i = 0; i < M; ++i)
+                    y[i] += ax * A[j*M + i];
+            }
+        }
     }
 
     enum CblasTranspose
@@ -108,6 +129,17 @@ namespace Synet
             Detail::CpuGemmNT(M, N, K, alpha, A, B, C);
         if (transA == CblasTrans && transB == CblasTrans)
             Detail::CpuGemmTT(M, N, K, alpha, A, B, C);
+    }
+
+    template <typename T> void CpuGemv(CblasTranspose transA, size_t M, size_t N, T alpha, const T * A, const T * x, T beta, T * y)
+    {
+        for (size_t i = 0; i < M; ++i)
+            y[i] *= beta;
+
+        if (transA == CblasNoTrans)
+            Detail::CpuGemvN(M, N, alpha, A, x, y);
+        if (transA == CblasTrans)
+            Detail::CpuGemvT(M, N, alpha, A, x, y);
     }
 
     template <typename T> void CpuSet(size_t size, T value, T * dst)
@@ -196,16 +228,28 @@ namespace Synet
             dst[i] = a[i] * b[i];
     }
 
+    template <typename T> void CpuDiv(const T * a, const T * b, size_t size, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = a[i] / b[i];
+    }
+
     template <typename T> void CpuSqr(const T * src, size_t size, T * dst)
     {
         for (size_t i = 0; i < size; ++i)
             dst[i] = src[i] * src[i];
     }
 
-    template <typename T> void CpuAxpy(const T * src, size_t size, const T & alpha, T * dst)
+    template <typename T> void CpuAxpy(const T * x, size_t size, const T & alpha, T * y)
     {
         for (size_t i = 0; i < size; ++i)
-            dst[i] += src[i] * alpha;
+            y[i] += x[i] * alpha;
+    }
+
+    template <typename T> void CpuAxpby(size_t size, const T & alpha, const T * x, const T & beta, T * y)
+    {
+        for (size_t i = 0; i < size; ++i)
+            y[i] = alpha*x[i] + beta*y[i];
     }
 
     template <typename T> void CpuPow(const T * src, size_t size, const T & exp, T * dst)
@@ -230,6 +274,12 @@ namespace Synet
     {
         for (size_t i = 0; i < size; ++i)
             dst[i] += value;
+    }
+
+    template <typename T> void CpuScale(const T * src, size_t size, const T & scale, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = src[i]*scale;
     }
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
@@ -265,9 +315,9 @@ namespace Synet
         }
     }
 
-    template <> SYNET_INLINE void CpuAxpy<float>(const float * src, size_t size, const float & alpha, float * dst)
+    template <> SYNET_INLINE void CpuAxpy<float>(const float * x, size_t size, const float & alpha, float * y)
     {
-        ::SimdNeuralAddVectorMultipliedByValue(src, size, &alpha, dst);
+        ::SimdNeuralAddVectorMultipliedByValue(x, size, &alpha, y);
     }
 
     template <> SYNET_INLINE void CpuPow<float>(const float * src, size_t size, const float & exp, float * dst)
