@@ -264,6 +264,12 @@ namespace Synet
             dst[i] = ::pow(src[i], exp);
     }
 
+    template <typename T> void CpuExp(const T * src, size_t size, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = ::exp(src[i]);
+    }
+
     template <typename T> void CpuSigmoid(const T * src, size_t size, const T & slope, T * dst)
     {
         for (size_t i = 0; i < size; ++i)
