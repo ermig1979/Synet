@@ -44,18 +44,61 @@ namespace Synet
 
         virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) 
         {
+            const EltwiseParam & param = this->Param().eltwise();
+            assert(param.coefficients().size() == 0 || param.coeffecients().size() == src.size());
+            assert(!(param.operation() == EltwiseOperationTypeProduct && param.coefficients().size()));
+            _operation = param.operation();
+            _coefficients.resize(src.size(), Type(1));
+            if (param.coefficients().size())
+            {
+                for (size_t i = 0; i < src.size(); ++i)
+                    _coefficients[i] = param.coefficients()[i];
+            }
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
         {
+            for (size_t i = 1; i < src.size(); ++i) 
+                assert(src[i]->Shape() == src[0]->Shape());
+            dst[0]->Reshape(src[0]->Shape());
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
+
+            int * mask = NULL;
+            const Type * bottom_data_a = NULL;
+            const Type * bottom_data_b = NULL;
+            size_t size = dst[0]->Size();
+            Type * pDst = dst[0]->Data();
+            switch (_operation) 
+            {
+            case EltwiseOperationTypeProduct:
+                CpuMul(src[0]->Data(), src[1]->Data(), size, pDst);
+                for (size_t i = 2; i < src.size(); ++i) 
+                    CpuMul(pDst, src[i]->Data(), size, pDst);
+                break;
+            case EltwiseOperationTypeSum:
+                CpuSet(size, Type(0), pDst);
+                for (size_t i = 0; i < src.size(); ++i) 
+                    CpuAxpy(src[i]->Data(), size, _coefficients[i], pDst);
+                break;
+            case EltwiseOperationTypeMax:
+                CpuMax(src[0]->Data(), src[1]->Data(), size, pDst);
+                for (size_t j = 2; j < src.size(); ++j)
+                    CpuMax(pDst, src[j]->Data(), size, pDst);
+                break;
+            default:
+                assert(0);
+            }
         }
 
     private:
+        typedef std::vector<Type> Vector;
+
+        EltwiseOperationType _operation;
+        Vector _coefficients;
     };
 }

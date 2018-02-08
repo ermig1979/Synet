@@ -147,7 +147,6 @@ namespace Synet
                 dst.eltwise().coefficients().resize(src.eltwise_param().coeff_size());
                 for (int j = 0; j < src.eltwise_param().coeff_size(); ++j)
                     dst.eltwise().coefficients()[j] = src.eltwise_param().coeff(j);
-                dst.eltwise().stableProductGrad() = src.eltwise_param().stable_prod_grad();
                 break;
             case Synet::LayerTypeDropout:
                 break;

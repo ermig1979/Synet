@@ -199,7 +199,6 @@ namespace Synet
     {
         SYNET_PARAM_VALUE(EltwiseOperationType, operation, EltwiseOperationTypeSum);
         SYNET_PARAM_VALUE(Floats, coefficients, Floats());
-        SYNET_PARAM_VALUE(bool, stableProductGrad, true);
     };
 
     struct InnerProductParam
