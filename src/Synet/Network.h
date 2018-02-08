@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Synet/BatchNormLayer.h"
+#include "Synet/BiasLayer.h"
 #include "Synet/ConcatLayer.h"
 #include "Synet/ConvolutionLayer.h"
 #include "Synet/EltwiseLayer.h"
@@ -198,6 +199,7 @@ namespace Synet
             switch (param.type())
             {
             case LayerTypeBatchNorm: return new BatchNormLayer<T, A>(param);
+            case LayerTypeBias: return new BiasLayer<T, A>(param);
             case LayerTypeConcat: return new ConcatLayer<T, A>(param);
             case LayerTypeConvolution: return new ConvolutionLayer<T, A>(param);
             case LayerTypeEltwise: return new EltwiseLayer<T, A>(param);

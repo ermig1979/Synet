@@ -44,6 +44,7 @@ namespace Synet
     {
         LayerTypeUnknown = -1,
         LayerTypeBatchNorm,
+        LayerTypeBias,
         LayerTypeConcat,
         LayerTypeConvolution,
         LayerTypeEltwise,
@@ -64,6 +65,7 @@ namespace Synet
         static const char * names[LayerTypeSize] =
         {
             "BatchNorm",
+            "Bias",
             "Concat",
             "Convolution",
             "Eltwise",
@@ -178,6 +180,12 @@ namespace Synet
         SYNET_PARAM_VALUE(float, eps, 0.00001f);
     };
 
+    struct BiasParam
+    {
+        SYNET_PARAM_VALUE(uint32_t, axis, 1);
+        SYNET_PARAM_VALUE(uint32_t, numAxes, 1);
+    };
+
     struct ConcatParam
     {
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
@@ -263,6 +271,7 @@ namespace Synet
         SYNET_PARAM_VECTOR(ShapeParam, data);
 
         SYNET_PARAM_STRUCT(BatchNormParam, batchNorm);
+        SYNET_PARAM_STRUCT(BiasParam, bias);
         SYNET_PARAM_STRUCT(ConcatParam, concat);
         SYNET_PARAM_STRUCT(ConvolutionParam, convolution);
         SYNET_PARAM_STRUCT(EltwiseParam, eltwise);
