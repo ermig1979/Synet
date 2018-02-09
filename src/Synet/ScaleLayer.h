@@ -72,15 +72,13 @@ namespace Synet
             const ScaleParam & param = this->Param().scale();
             Tensor & scale = (src.size() > 1) ? *src[1] : (Tensor &)this->Weight()[0];
             _axis = (scale.Count() == 0) ? 0 : param.axis();
-            assert(src[0]->Count() <= _axis + scale.Count());
+            assert(src[0]->Count() >= _axis + scale.Count());
             for (size_t i = 0; i < scale.Count(); ++i)
                 assert(src[0]->Axis(_axis + i) == scale.Axis(i));
             _outerDim = src[0]->Size(0, _axis);
             _scaleDim = scale.Size();
             _innerDim = src[0]->Size(_axis + scale.Count());
-            if (src[0] == dst[0])
-                _temp.Reshape(src[0]->Shape());
-            else
+            if (src[0] != dst[0])
                 dst[0]->Reshape(src[0]->Shape());
             if (_biasLayer) 
             {
@@ -95,8 +93,6 @@ namespace Synet
             SYNET_PERF_FUNC();
 
             const Type* pSrc = src[0]->Data();
-            if (src[0] == dst[0]) 
-                CpuCopy(pSrc, src[0]->Size(), _temp.Data());
             const Type * pScale = ((src.size() > 1) ? *src[1] : this->Weight()[0]).Data();
             Type * pDst = dst[0]->Data();
             for (size_t n = 0; n < _outerDim; ++n)
@@ -115,7 +111,6 @@ namespace Synet
     private:
         std::shared_ptr<Layer<T, A>> _biasLayer;
         TensorPtrs _biasSrc;
-        Tensor _temp;
         size_t _axis, _outerDim, _scaleDim, _innerDim;
     };
 }

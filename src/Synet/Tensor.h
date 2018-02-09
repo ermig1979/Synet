@@ -83,7 +83,7 @@ namespace Synet
 
         SYNET_INLINE size_t Size(size_t startAxis, size_t endAxis) const
         {
-            assert(startAxis < endAxis && endAxis <= _shape.size());
+            assert(startAxis <= endAxis && endAxis <= _shape.size());
 
             size_t size = 1;
             for (size_t axis = startAxis; axis < endAxis; ++axis)

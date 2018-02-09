@@ -59,7 +59,7 @@ namespace Synet
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
         {
             if (src[0]->Count() >= 1)
-                assert(bottsrc[0]->Axis(1) == _channels);
+                assert(src[0]->Axis(1) == _channels);
             dst[0]->Reshape(src[0]->Shape());
 
             _mean.Reshape({_channels});

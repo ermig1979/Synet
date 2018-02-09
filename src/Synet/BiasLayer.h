@@ -48,11 +48,7 @@ namespace Synet
             if (src.size() == 1) 
             {
                 const BiasParam & param = this->Param().bias();
-                size_t axis = param.axis();
-                size_t numAxes = param.numAxes();
-                assert(numAxes >= -1);
-                if (numAxes >= 0)
-                    assert(src[0]->Count() >= axis + numAxes);
+                assert(src[0]->Count() >= param.axis() + param.numAxes());
             }
         }
 
@@ -61,7 +57,7 @@ namespace Synet
             const BiasParam & param = this->Param().bias();
             Tensor & bias = (src.size() > 1) ? *src[1] : (Tensor &)this->Weight()[0];
             size_t axis = bias.Count() == 0 ? 0 : param.axis();
-            assert(src[0]->Count() <= axis + bias.Count());
+            assert(src[0]->Count() >= axis + bias.Count());
             for (size_t i = 0; i < bias.Count(); ++i)
                 assert(src[0]->Axis(axis + i) == bias.Axis(i));
             _outerDim = src[0]->Size(0, axis);

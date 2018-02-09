@@ -139,7 +139,7 @@ namespace Synet
         if (transA == CblasNoTrans)
             Detail::CpuGemvN(M, N, alpha, A, x, y);
         if (transA == CblasTrans)
-            Detail::CpuGemvT(M, N, alpha, A, x, y);
+            Detail::CpuGemvT(N, M, alpha, A, x, y);
     }
 
     template <typename T> void CpuSet(size_t size, T value, T * dst)

@@ -51,8 +51,7 @@ namespace Synet
         {
             _softmaxAxis = this->Param().softmax().axis();
             dst[0]->Reshape(src[0]->Shape());
-            _sumMultiplier.Reshape({src[0]->Axis(_softmaxAxis)});
-            CpuSet(_sumMultiplier.Size(), Type(1), _sumMultiplier.Data());
+            _sumMultiplier.Reshape({src[0]->Axis(_softmaxAxis)}, Type(1));
             _outerNum = src[0]->Size(0, _softmaxAxis);
             _innerNum = src[0]->Size(_softmaxAxis + 1);
             Shape scaleShape = src[0]->Shape();

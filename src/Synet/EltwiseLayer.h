@@ -45,7 +45,7 @@ namespace Synet
         virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) 
         {
             const EltwiseParam & param = this->Param().eltwise();
-            assert(param.coefficients().size() == 0 || param.coeffecients().size() == src.size());
+            assert(param.coefficients().size() == 0 || param.coefficients().size() == src.size());
             assert(!(param.operation() == EltwiseOperationTypeProduct && param.coefficients().size()));
             _operation = param.operation();
             _coefficients.resize(src.size(), Type(1));
