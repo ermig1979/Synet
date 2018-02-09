@@ -270,10 +270,16 @@ namespace Synet
             dst[i] = ::exp(src[i]);
     }
 
-    template <typename T> void CpuSigmoid(const T * src, size_t size, const T & slope, T * dst)
+    template <typename T> void CpuSigmoid(const T * src, size_t size, T * dst)
     {
         for (size_t i = 0; i < size; ++i)
-            dst[i] = T(1) / (T(1) + ::exp(-src[i] * slope));
+            dst[i] = T(1) / (T(1) + ::exp(-src[i]));
+    }
+
+    template <typename T> void CpuTanh(const T * src, size_t size, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = ::tanh(src[i]);
     }
 
     template <typename T> void CpuRelu(const T * src, size_t size, const T & negativeSlope, T * dst)
@@ -337,9 +343,16 @@ namespace Synet
         ::SimdNeuralPow(src, size, &exp, dst);
     }
 
-    template <> SYNET_INLINE void CpuSigmoid<float>(const float * src, size_t size, const float & slope, float * dst)
+    template <> SYNET_INLINE void CpuSigmoid<float>(const float * src, size_t size, float * dst)
     {
+        float slope = 1.0f;
         ::SimdNeuralSigmoid(src, size, &slope, dst);
+    }
+
+    template <> SYNET_INLINE void CpuTanh<float>(const float * src, size_t size, float * dst)
+    {
+        float slope = 1.0f;
+        ::SimdNeuralTanh(src, size, &slope, dst);
     }
 
     template <> SYNET_INLINE void CpuRelu<float>(const float * src, size_t size, const float & negativeSlope, float * dst)
@@ -361,6 +374,11 @@ namespace Synet
         size_t ldb = (transB == CblasNoTrans) ? N : K;
         ::cblas_sgemm(::CblasRowMajor, (::CBLAS_TRANSPOSE)transA, (::CBLAS_TRANSPOSE)transB, 
             (int)M, (int)N, (int)K, alpha, A, (int)lda, B, (int)ldb, beta, C, (int)N);
+    }
+
+    template <> SYNET_INLINE void CpuGemv<float>(CblasTranspose transA, size_t M, size_t N, float alpha, const float * A, const float * x, float beta, float * y)
+    {
+        ::cblas_sgemv(::CblasRowMajor, (::CBLAS_TRANSPOSE)transA, (int)M, (int)N, alpha, A, (int)N, x, 1, beta, y, 1);
     }
 #endif
 }

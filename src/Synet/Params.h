@@ -57,6 +57,7 @@ namespace Synet
         LayerTypeScale,
         LayerTypeSigmoid,
         LayerTypeSoftmax,
+        LayerTypeTanh,
         LayerTypeSize
     };
 
@@ -78,6 +79,7 @@ namespace Synet
             "Scale",
             "Sigmoid",
             "Softmax",
+            "Tanh",
         };
         return (value > LayerTypeUnknown && value < LayerTypeSize) ? names[value] : "";
     }
@@ -252,11 +254,6 @@ namespace Synet
         SYNET_PARAM_VALUE(bool, biasTerm, false);
     };
 
-    struct SigmoidParam
-    {
-        SYNET_PARAM_VALUE(float, slope, 1.0f);
-    };
-
     struct SoftmaxParam
     {
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
@@ -281,7 +278,6 @@ namespace Synet
         SYNET_PARAM_STRUCT(PoolingParam, pooling);
         SYNET_PARAM_STRUCT(ReluParam, relu);
         SYNET_PARAM_STRUCT(ScaleParam, scale);
-        SYNET_PARAM_STRUCT(SigmoidParam, sigmoid);
         SYNET_PARAM_STRUCT(SoftmaxParam, softmax);
     };
 

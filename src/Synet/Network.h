@@ -38,6 +38,7 @@
 #include "Synet/SigmoidLayer.h"
 #include "Synet/SoftmaxLayer.h"
 #include "Synet/StubLayer.h"
+#include "Synet/TanhLayer.h"
 
 namespace Synet
 {
@@ -212,6 +213,7 @@ namespace Synet
             case LayerTypeScale: return new ScaleLayer<T, A>(param);
             case LayerTypeSigmoid: return new SigmoidLayer<T, A>(param);
             case LayerTypeSoftmax: return new SoftmaxLayer<T, A>(param);
+            case LayerTypeTanh: return new TanhLayer<T, A>(param);
             default:
                 return NULL;
             }
