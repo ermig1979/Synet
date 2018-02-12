@@ -163,40 +163,104 @@ namespace Synet
     template <typename T> void ImToCol(const T * src, size_t channels, size_t srcY, size_t srcX, size_t kernelY, size_t kernelX,
         size_t padY, size_t padX, size_t strideY, size_t strideX, size_t dilationY, size_t dilationX, T * dst)
     {
+        SYNET_PERF_FUNC();
+
         size_t dstY = (srcY + 2 * padY - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
         size_t dstX = (srcX + 2 * padX - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
         size_t channelSize = srcX * srcY;
-        for (size_t channel = 0; channel < channels; ++channel)
+        if (dilationX == 1 && dilationY == 1 && strideX == 2 && strideY == 2 && padX == 0 && padY == 0 && kernelX == 1 && kernelY == 1)
         {
-            for (size_t ky = 0; ky < kernelY; ky++)
+            for (size_t channel = 0; channel < channels; ++channel)
             {
-                for (size_t kx = 0; kx < kernelX; kx++)
+                for (size_t dy = 0; dy < dstY; ++dy)
                 {
-                    size_t sy = ky * dilationY - padY;
-                    for (size_t dy = 0; dy < dstY; ++dy)
+                    const T * psrc = src + 2*dy*srcX;
+                    for (size_t dx = 0, sx = 0; dx < dstX; ++dx, sx += 2)
+                        *(dst++) = psrc[sx];
+                }
+                src += channelSize;
+            }
+        }
+        else if (dilationX*dilationY*strideX*strideY != 1)
+        {
+            for (size_t channel = 0; channel < channels; ++channel)
+            {
+                for (size_t ky = 0; ky < kernelY; ky++)
+                {
+                    for (size_t kx = 0; kx < kernelX; kx++)
                     {
-                        if (sy < srcY)
+                        size_t sy = ky * dilationY - padY;
+                        for (size_t dy = 0; dy < dstY; ++dy)
                         {
-                            size_t sx = kx * dilationX - padX;
-                            for (size_t dx = 0; dx < dstX; ++dx)
+                            if (sy < srcY)
                             {
-                                if (sx < srcX)
-                                    *(dst++) = src[sy * srcX + sx];
-                                else
-                                    *(dst++) = 0;
-                                sx += strideX;
+                                size_t sx = kx * dilationX - padX;
+                                for (size_t dx = 0; dx < dstX; ++dx)
+                                {
+                                    if (sx < srcX)
+                                        *(dst++) = src[sy * srcX + sx];
+                                    else
+                                        *(dst++) = 0;
+                                    sx += strideX;
+                                }
                             }
+                            else
+                            {
+                                for (size_t dx = 0; dx < dstX; ++dx)
+                                    *(dst++) = 0;
+                            }
+                            sy += strideY;
                         }
-                        else
-                        {
-                            for (size_t dx = 0; dx < dstX; ++dx)
-                                *(dst++) = 0;
-                        }
-                        sy += strideY;
                     }
                 }
+                src += channelSize;
+            }        
+        }
+        else
+        {
+            const size_t bodySize = dstX - padX * 2;
+            for (size_t channel = 0; channel < channels; ++channel)
+            {
+                for (size_t ky = 0; ky < kernelY; ++ky)
+                {
+                    for (size_t kx = 0; kx < kernelX; ++kx)
+                    {
+                        size_t sy = ky - padY;
+                        for (size_t dy = 0; dy < dstY; ++dy, ++sy)
+                        {
+                            if (sy < srcY)
+                            {
+                                size_t sx = kx - padX, dx = 0;
+                                const T * psrc = src + sy*srcX;
+                                for (; dx < padX; ++dx, ++sx)
+                                {
+                                    if (sx < srcX)
+                                        *(dst++) = psrc[sx];
+                                    else
+                                        *(dst++) = 0;
+                                }
+                                memcpy(dst, psrc + sx, bodySize * sizeof(T));
+                                dst += bodySize;
+                                dx += bodySize;
+                                sx += bodySize;
+                                for (; dx < dstX; ++dx, ++sx)
+                                {
+                                    if (sx < srcX)
+                                        *(dst++) = psrc[sx];
+                                    else
+                                        *(dst++) = 0;
+                                }
+                            }
+                            else
+                            {
+                                memset(dst, 0, dstX * sizeof(T));
+                                dst += dstX;
+                            }
+                        }
+                    }
+                }
+                src += channelSize;
             }
-            src += channelSize;
         }
     }
 
@@ -220,6 +284,18 @@ namespace Synet
                 dst[dy*dstX + dx] = max;
             }
         }
+    }
+
+    template <typename T> void CpuAdd(const T * a, const T * b, size_t size, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = a[i] + b[i];
+    }
+
+    template <typename T> void CpuSub(const T * a, const T * b, size_t size, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = a[i] - b[i];
     }
 
     template <typename T> void CpuMul(const T * a, const T * b, size_t size, T * dst)
@@ -298,6 +374,43 @@ namespace Synet
     {
         for (size_t i = 0; i < size; ++i)
             dst[i] = src[i]*scale;
+    }
+
+    template <typename T> void CpuSoftmax(const T * src, size_t channels, size_t inner, T * buffer, T * dst)
+    {
+        CpuCopy(src, inner, buffer);
+        const T * s = src + inner;
+        for (size_t i = 1; i < channels; ++i)
+        {
+            CpuMax(s, buffer, inner, buffer);
+            s += inner;
+        }
+
+        s = src;
+        T * d = dst;
+        for (size_t i = 0; i < channels; ++i)
+        {
+            CpuSub(s, buffer, inner, d);
+            s += inner;
+            d += inner;
+        }
+
+        CpuExp(dst, channels*inner, dst);
+
+        CpuCopy(dst, inner, buffer);
+        d = dst + inner;
+        for (size_t i = 1; i < channels; ++i)
+        {
+            CpuAdd(d, buffer, inner, buffer);
+            d += inner;
+        }
+
+        d = dst;
+        for (size_t i = 0; i < channels; ++i)
+        {
+            CpuDiv(d, buffer, inner, d);
+            d += inner;
+        }
     }
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE

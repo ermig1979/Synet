@@ -51,7 +51,6 @@ namespace Synet
         {
             _softmaxAxis = this->Param().softmax().axis();
             dst[0]->Reshape(src[0]->Shape());
-            _sumMultiplier.Reshape({src[0]->Axis(_softmaxAxis)}, Type(1));
             _outerNum = src[0]->Size(0, _softmaxAxis);
             _innerNum = src[0]->Size(_softmaxAxis + 1);
             Shape scaleShape = src[0]->Shape();
@@ -64,33 +63,14 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            const Type * pSrc = src[0]->Data();
-            Type * pDst = dst[0]->Data();
-            Type * pScale = _scale.Data();
             size_t channels = src[0]->Axis(_softmaxAxis);
             size_t dim = src[0]->Size() / _outerNum;
-            CpuCopy(pSrc, src[0]->Size(), pDst);
             for (size_t i = 0; i < _outerNum; ++i)
-            {
-                CpuCopy(pSrc + i * dim, _innerNum, pScale);
-                for (size_t j = 0; j < channels; j++) 
-                {
-                    for (size_t k = 0; k < _innerNum; k++)
-                        pScale[k] = std::max(pScale[k], pSrc[i * dim + j * _innerNum + k]);
-                }
-                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, channels, _innerNum, 1, Type(-1), _sumMultiplier.Data(), pScale, Type(1), pDst);
-                CpuExp(pDst, dim, pDst);
-                CpuGemv<Type>(CblasTrans, channels, _innerNum, Type(1), pDst, _sumMultiplier.Data(), Type(0), pScale);
-                for (size_t j = 0; j < channels; j++)
-                {
-                    CpuDiv(pDst, pScale, _innerNum, pDst);
-                    pDst += _innerNum;
-                }
-            }
+                CpuSoftmax(src[0]->Data() + i*dim, channels, _innerNum, _scale.Data(), dst[0]->Data() + i*dim);
         }
 
     private:
         size_t _outerNum, _innerNum, _softmaxAxis;
-        Tensor _scale, _sumMultiplier;
+        Tensor _scale;
     };
 }
