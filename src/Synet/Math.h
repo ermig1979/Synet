@@ -376,43 +376,6 @@ namespace Synet
             dst[i] = src[i]*scale;
     }
 
-    template <typename T> void CpuSoftmax(const T * src, size_t channels, size_t inner, T * buffer, T * dst)
-    {
-        CpuCopy(src, inner, buffer);
-        const T * s = src + inner;
-        for (size_t i = 1; i < channels; ++i)
-        {
-            CpuMax(s, buffer, inner, buffer);
-            s += inner;
-        }
-
-        s = src;
-        T * d = dst;
-        for (size_t i = 0; i < channels; ++i)
-        {
-            CpuSub(s, buffer, inner, d);
-            s += inner;
-            d += inner;
-        }
-
-        CpuExp(dst, channels*inner, dst);
-
-        CpuCopy(dst, inner, buffer);
-        d = dst + inner;
-        for (size_t i = 1; i < channels; ++i)
-        {
-            CpuAdd(d, buffer, inner, buffer);
-            d += inner;
-        }
-
-        d = dst;
-        for (size_t i = 0; i < channels; ++i)
-        {
-            CpuDiv(d, buffer, inner, d);
-            d += inner;
-        }
-    }
-
     template <typename T> void CpuAddBias(const T * bias, size_t count, size_t size, T * dst)
     {
         for (size_t i = 0; i < count; ++i)

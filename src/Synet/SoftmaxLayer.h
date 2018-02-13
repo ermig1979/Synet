@@ -30,6 +30,46 @@
 
 namespace Synet
 {
+    namespace Detail
+    {
+        template <typename T> void SoftmaxLayerForwardCpu(const T * src, size_t channels, size_t inner, T * buffer, T * dst)
+        {
+            Synet::CpuCopy(src, inner, buffer);
+            const T * s = src + inner;
+            for (size_t i = 1; i < channels; ++i)
+            {
+                Synet::CpuMax(s, buffer, inner, buffer);
+                s += inner;
+            }
+
+            s = src;
+            T * d = dst;
+            for (size_t i = 0; i < channels; ++i)
+            {
+                Synet::CpuSub(s, buffer, inner, d);
+                s += inner;
+                d += inner;
+            }
+
+            Synet::CpuExp(dst, channels*inner, dst);
+
+            Synet::CpuCopy(dst, inner, buffer);
+            d = dst + inner;
+            for (size_t i = 1; i < channels; ++i)
+            {
+                Synet::CpuAdd(d, buffer, inner, buffer);
+                d += inner;
+            }
+
+            d = dst;
+            for (size_t i = 0; i < channels; ++i)
+            {
+                Synet::CpuDiv(d, buffer, inner, d);
+                d += inner;
+            }
+        }
+    }
+
     template <class T, template<class> class A> class SoftmaxLayer : public Synet::Layer<T, A>
     {
     public:
@@ -66,7 +106,7 @@ namespace Synet
             size_t channels = src[0]->Axis(_softmaxAxis);
             size_t dim = src[0]->Size() / _outerNum;
             for (size_t i = 0; i < _outerNum; ++i)
-                CpuSoftmax(src[0]->Data() + i*dim, channels, _innerNum, _scale.Data(), dst[0]->Data() + i*dim);
+                Detail::SoftmaxLayerForwardCpu(src[0]->Data() + i*dim, channels, _innerNum, _scale.Data(), dst[0]->Data() + i*dim);
         }
 
     private:

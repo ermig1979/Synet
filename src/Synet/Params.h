@@ -56,6 +56,7 @@ namespace Synet
         LayerTypeRelu,
         LayerTypeScale,
         LayerTypeSigmoid,
+        LayerTypeSlice,
         LayerTypeSoftmax,
         LayerTypeTanh,
         LayerTypeSize
@@ -78,6 +79,7 @@ namespace Synet
             "ReLU",
             "Scale",
             "Sigmoid",
+            "Slice",
             "Softmax",
             "Tanh",
         };
@@ -254,6 +256,12 @@ namespace Synet
         SYNET_PARAM_VALUE(bool, biasTerm, false);
     };
 
+    struct SliceParam
+    {
+        SYNET_PARAM_VALUE(uint32_t, axis, 1);
+        SYNET_PARAM_VALUE(Index, slicePoint, Index());
+    };
+
     struct SoftmaxParam
     {
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
@@ -265,7 +273,7 @@ namespace Synet
         SYNET_PARAM_VALUE(String, name, String());
         SYNET_PARAM_VALUE(Strings, src, Strings());
         SYNET_PARAM_VALUE(Strings, dst, Strings());
-        SYNET_PARAM_VECTOR(ShapeParam, data);
+        SYNET_PARAM_VECTOR(ShapeParam, weight);
 
         SYNET_PARAM_STRUCT(BatchNormParam, batchNorm);
         SYNET_PARAM_STRUCT(BiasParam, bias);
@@ -278,6 +286,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(PoolingParam, pooling);
         SYNET_PARAM_STRUCT(ReluParam, relu);
         SYNET_PARAM_STRUCT(ScaleParam, scale);
+        SYNET_PARAM_STRUCT(SliceParam, slice);
         SYNET_PARAM_STRUCT(SoftmaxParam, softmax);
     };
 

@@ -36,6 +36,7 @@
 #include "Synet/ReluLayer.h"
 #include "Synet/ScaleLayer.h"
 #include "Synet/SigmoidLayer.h"
+#include "Synet/SliceLayer.h"
 #include "Synet/SoftmaxLayer.h"
 #include "Synet/StubLayer.h"
 #include "Synet/TanhLayer.h"
@@ -212,6 +213,7 @@ namespace Synet
             case LayerTypeRelu: return new ReluLayer<T, A>(param);
             case LayerTypeScale: return new ScaleLayer<T, A>(param);
             case LayerTypeSigmoid: return new SigmoidLayer<T, A>(param);
+            case LayerTypeSlice: return new SliceLayer<T, A>(param);
             case LayerTypeSoftmax: return new SoftmaxLayer<T, A>(param);
             case LayerTypeTanh: return new TanhLayer<T, A>(param);
             default:

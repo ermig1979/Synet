@@ -41,9 +41,9 @@ namespace Synet
         Layer(const LayerParam & param)
             : _param(param)
         {
-            _weight.resize(_param.data().size());
+            _weight.resize(_param.weight().size());
             for (size_t i = 0; i < _weight.size(); ++i)
-                _weight[i].Reshape(_param.data()[i].dim());
+                _weight[i].Reshape(_param.weight()[i].dim());
         }
 
         const LayerParam & Param() const 

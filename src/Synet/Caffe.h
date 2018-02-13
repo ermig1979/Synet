@@ -64,15 +64,15 @@ namespace Synet
             if (!caffe::ReadProtoFromBinaryFile(srcWeightPath, &srcWeight))
                 return false;
 
-            Tensors data;
-            data.reserve(holder().layers().size() * 2);
-            if (!ConvertWeight(srcWeight, holder(), data))
+            Tensors weight;
+            weight.reserve(holder().layers().size() * 2);
+            if (!ConvertWeight(srcWeight, holder(), weight))
                 return false;
 
             if (!holder.Save(dstModelPath, false))
                 return false;
 
-            if (!SaveWeight(data, dstWeightPath))
+            if (!SaveWeight(weight, dstWeightPath))
                 return false;
 
             return true;
@@ -198,6 +198,15 @@ namespace Synet
                 break;
             case Synet::LayerTypeSigmoid:
                 break;
+            case Synet::LayerTypeSlice:
+                if (src.slice_param().has_slice_dim())
+                    dst.slice().axis() = src.slice_param().slice_dim();
+                else
+                    dst.slice().axis() = src.slice_param().axis();
+                dst.slice().slicePoint().resize(src.slice_param().slice_point_size());
+                for (int j = 0; j < src.slice_param().slice_point_size(); ++j)
+                    dst.slice().slicePoint()[j] = src.slice_param().slice_point(j);
+                break;
             case Synet::LayerTypeSoftmax:
                 dst.softmax().axis() = src.softmax_param().axis();
                 break;
@@ -208,7 +217,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertWeight(const caffe::NetParameter & src, Synet::NetworkParam & dst, Tensors & data)
+        bool ConvertWeight(const caffe::NetParameter & src, Synet::NetworkParam & dst, Tensors & weight)
         {
             for (int i = 0; i < src.layer_size(); ++i)
             {
@@ -216,16 +225,16 @@ namespace Synet
                 {
                     if (src.layer(i).name() == dst.layers()[l].name())
                     {
-                        dst.layers()[l].data().resize(src.layer(i).blobs_size());
+                        dst.layers()[l].weight().resize(src.layer(i).blobs_size());
                         for (int j = 0; j < src.layer(i).blobs_size(); ++j)
                         {
-                            dst.layers()[l].data()[j].dim().resize(src.layer(i).blobs(j).shape().dim_size());
+                            dst.layers()[l].weight()[j].dim().resize(src.layer(i).blobs(j).shape().dim_size());
                             for (int k = 0; k < src.layer(i).blobs(j).shape().dim_size(); ++k)
-                                dst.layers()[l].data()[j].dim()[k] = src.layer(i).blobs(j).shape().dim(k);
-                            data.push_back(Tensor());
-                            data.back().Reshape(dst.layers()[l].data()[j].dim(), 0);
+                                dst.layers()[l].weight()[j].dim()[k] = src.layer(i).blobs(j).shape().dim(k);
+                            weight.push_back(Tensor());
+                            weight.back().Reshape(dst.layers()[l].weight()[j].dim(), 0);
                             for (int k = 0; k < src.layer(i).blobs(j).data_size(); ++k)
-                                data.back().Data()[k] = src.layer(i).blobs(j).data(k);
+                                weight.back().Data()[k] = src.layer(i).blobs(j).data(k);
                         }
                     }
                 }
@@ -233,14 +242,14 @@ namespace Synet
             return true;
         }
 
-        bool SaveWeight(const Tensors & data, const String & path)
+        bool SaveWeight(const Tensors & weight, const String & path)
         {
             std::ofstream ofs(path.c_str(), std::ofstream::binary);
             if (ofs.is_open())
             {
-                for (size_t i = 0; i < data.size(); ++i)
+                for (size_t i = 0; i < weight.size(); ++i)
                 {
-                    ofs.write((const char*)data[i].Data(), data[i].Size()*sizeof(float));
+                    ofs.write((const char*)weight[i].Data(), weight[i].Size()*sizeof(float));
                 }
                 ofs.close();
                 return true;
