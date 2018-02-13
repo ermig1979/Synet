@@ -25,11 +25,34 @@
 #pragma once
 
 #include "Synet/Common.h"
-#include "Synet/BiasLayer.h"
+#include "Synet/Layer.h"
 #include "Synet/Math.h"
 
 namespace Synet
 {
+    namespace Detail
+    {
+        template <typename T> void ScaleLayerForwardCpu(const T * src, const T * scale, const T * bias, size_t count, size_t size, T * dst)
+        {
+            for (size_t i = 0; i < count; ++i)
+            {
+                const T s = scale[i];
+                const T b = bias ? bias[i] : 0;
+                for (size_t j = 0; j < size; ++j)
+                    dst[j] = src[j] * s + b;
+                src += size;
+                dst += size;
+            }
+        }
+
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        template <> SYNET_INLINE void ScaleLayerForwardCpu<float>(const float * src, const float * scale, const float * bias, size_t count, size_t size, float * dst)
+        {
+            ::SimdSynetScaleLayerForward(src, scale, bias, count, size, dst);
+        }
+#endif
+    }
+
     template <class T, template<class> class A> class ScaleLayer : public Synet::Layer<T, A>
     {
     public:
@@ -48,30 +71,18 @@ namespace Synet
         {
             const ScaleParam & param = this->Param().scale();
             _axis = param.axis();
-            if (param.biasTerm()) 
+            _biasTerm = param.biasTerm();
+            assert(this->Weight().size());
+            if (_biasTerm)
             {
-                LayerParam layerParam(this->Param());
-                layerParam.type() = LayerTypeBias;
-                layerParam.bias().axis() = param.axis();
-                if(src.size() > 1)
-                    layerParam.bias().numAxes() = (uint32_t)src[1]->Count();
-                else
-                    layerParam.bias().numAxes() = param.numAxes();
-                _biasLayer.reset(new BiasLayer<T, A>(layerParam));
-                Tensors & weight = (Tensors &)_biasLayer->Weight();
-                weight.resize(1);
-                weight[0].Share(this->Weight().back());
-                _biasSrc.resize(1);
-                _biasSrc[0] = src[0];
-                _biasLayer->Setup(_biasSrc, dst);
+                assert(this->Weight().size() > 1);
+                assert(this->Weight()[0].Shape() == this->Weight()[1].Shape());
             }
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            const ScaleParam & param = this->Param().scale();
-            Tensor & scale = (src.size() > 1) ? *src[1] : (Tensor &)this->Weight()[0];
-            _axis = (scale.Count() == 0) ? 0 : param.axis();
+            const Tensor & scale = this->Weight()[0];
             assert(src[0]->Count() >= _axis + scale.Count());
             for (size_t i = 0; i < scale.Count(); ++i)
                 assert(src[0]->Axis(_axis + i) == scale.Axis(i));
@@ -80,37 +91,26 @@ namespace Synet
             _innerDim = src[0]->Size(_axis + scale.Count());
             if (src[0] != dst[0])
                 dst[0]->Reshape(src[0]->Shape());
-            if (_biasLayer) 
-            {
-                _biasSrc[0] = dst[0];
-                _biasLayer->Reshape(_biasSrc, dst);
-            }
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-
             const Type* pSrc = src[0]->Data();
-            const Type * pScale = ((src.size() > 1) ? *src[1] : this->Weight()[0]).Data();
+            const Type * pScale = this->Weight()[0].Data();
+            const Type * pBias = _biasTerm ? this->Weight()[1].Data() : NULL;
             Type * pDst = dst[0]->Data();
             for (size_t n = 0; n < _outerDim; ++n)
             {
-                for (size_t d = 0; d < _scaleDim; ++d)
-                {
-                    CpuScale(pSrc, _innerDim, pScale[d], pDst);
-                    pSrc += _innerDim;
-                    pDst += _innerDim;
-                }
+                Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _scaleDim, _innerDim, pDst);
+                pSrc += _scaleDim*_innerDim;
+                pDst += _scaleDim*_innerDim;
             }
-            if (_biasLayer)
-                _biasLayer->Forward(_biasSrc, dst);
         }
 
     private:
-        std::shared_ptr<Layer<T, A>> _biasLayer;
-        TensorPtrs _biasSrc;
         size_t _axis, _outerDim, _scaleDim, _innerDim;
+        bool _biasTerm;
     };
 }
