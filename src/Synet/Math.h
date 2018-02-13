@@ -413,6 +413,17 @@ namespace Synet
         }
     }
 
+    template <typename T> void CpuAddBias(const T * bias, size_t count, size_t size, T * dst)
+    {
+        for (size_t i = 0; i < count; ++i)
+        {
+            const T value = bias[i];
+            for (size_t j = 0; j < size; ++j)
+                dst[j] += value;
+            dst += size;
+        }
+    }
+
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
     template <> SYNET_INLINE void PoolingMax<float>(const float * src, size_t srcX, size_t srcY, size_t kernelY, size_t kernelX,
         size_t padY, size_t padX, size_t strideY, size_t strideX, float * dst, size_t dstX, size_t dstY)
@@ -476,6 +487,11 @@ namespace Synet
     template <> SYNET_INLINE void CpuAdd<float>(const float & value, float * dst, size_t size)
     {
         ::SimdNeuralAddValue( &value, dst, size);
+    }
+
+    template <> SYNET_INLINE void CpuAddBias<float>(const float * bias, size_t count, size_t size, float * dst)
+    {
+        ::SimdSynetAddBias(bias, count, size, dst);
     }
 #endif
 

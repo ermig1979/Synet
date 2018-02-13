@@ -66,7 +66,6 @@ namespace Synet
             _dim = _biasDim * _innerDim;
             if (src[0] != dst[0])
                 dst[0]->Reshape(src[0]->Shape());
-            _biasMultiplier.Reshape({ _innerDim }, Type(1));
         }
 
     protected:
@@ -80,13 +79,12 @@ namespace Synet
                 CpuCopy(src[0]->Data(), src[0]->Size(), pDst);
             for (size_t n = 0; n < _outerDim; ++n)
             {
-                CpuGemm(CblasNoTrans, CblasNoTrans, _biasDim, _innerDim, 1, Type(1), pBias, _biasMultiplier.Data(), Type(1), pDst);
+                CpuAddBias(pBias, _biasDim, _innerDim, pDst);
                 pDst += _dim;
             }
         }
 
     private:
-        Tensor _biasMultiplier;
         size_t _outerDim, _biasDim, _innerDim, _dim;
     };
 }

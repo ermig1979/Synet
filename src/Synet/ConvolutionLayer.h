@@ -186,11 +186,6 @@ namespace Synet
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);
             _dstSpatialSize = dst[0]->Size(firstSpatialAxis);
-            if (_biasTerm)
-            {
-                Shape shape(1, _dstSpatialSize);
-                _biasMultiplier.Reshape(shape, Type(1));
-            }
         }
 
     protected:
@@ -216,15 +211,7 @@ namespace Synet
                             Type(1.0), weight + _weightOffset * g, pBuf + _colOffset * g, Type(0.0), pDst + _dstOffset * g);
                     }
                     if (_biasTerm)
-                    {
-                        const Type * bias = this->Weight()[1].Data();
-#if 1
-                        for (size_t i = 0; i < _dstChannels; ++i)
-                            CpuAdd(bias[i], pDst + i*_dstSpatialSize, _dstSpatialSize);
-#else
-                        CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _dstChannels, _dstSpatialSize, 1, Type(1.0), bias, _biasMultiplier.Data(), Type(1.0), pDst);
-#endif
-                    }
+                        CpuAddBias(this->Weight()[1].Data(), _dstChannels, _dstSpatialSize, pDst);
                 }
             }
         }
@@ -248,6 +235,6 @@ namespace Synet
         bool _is1x1, _biasTerm;
         size_t _axis, _group, _spatialAxisNum, _srcChannels, _dstChannels, _srcConvChannels, _dstConvChannels, _weightOffset, _kernelSize;
         size_t _channelAxis, _num, _dstConvSpatialSize, _dstSpatialSize, _colOffset, _dstOffset, _srcSize, _dstSize;
-        Tensor _biasMultiplier, _colBuffer;
+        Tensor _colBuffer;
     };
 }
