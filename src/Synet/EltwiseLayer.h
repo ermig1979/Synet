@@ -30,6 +30,41 @@
 
 namespace Synet
 {
+    namespace Detail
+    {
+        template <class T> void EltwiseLayerForwardCpu(T const * const * src, const T * weight, size_t count, size_t size, EltwiseOperationType type, T * dst)
+        {
+            assert(count >= 2);
+            swtich(type)
+            {
+            case EltwiseOperationTypeProduct:
+                CpuMul(src[0], src[1], size, dst);
+                for (size_t i = 2; i < count; ++i)
+                    CpuMul(dst, src[i], size, dst);
+                break;
+            case EltwiseOperationTypeSum:
+                CpuScale(src[0], size, weight[0], dst);
+                for (size_t i = 1; i < count; ++i)
+                    CpuAxpy(src[i], size, weight[i], dst);
+                break;
+            case EltwiseOperationTypeMax:
+                CpuMax(src[0], src[1], size, dst);
+                for (size_t i = 2; i < count; ++i)
+                    CpuMax(dst, src[i], size, dst);
+                break;
+            default:
+                assert(0);
+            }
+        }
+
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        template <> void EltwiseLayerForwardCpu<float>(float const * const * src, const float * weight, size_t count, size_t size, EltwiseOperationType type, float * dst)
+        {
+            ::SimdSynetEltwiseLayerForward(src, weight, count, size, (::SimdSynetEltwiseOperationType)type, dst);
+        }
+#endif
+    }
+
     template <class T, template<class> class A> class EltwiseLayer : public Synet::Layer<T, A>
     {
     public:
@@ -58,8 +93,12 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            for (size_t i = 1; i < src.size(); ++i) 
+            _src.resize(src.size());
+            for (size_t i = 0; i < src.size(); ++i)
+            {
                 assert(src[i]->Shape() == src[0]->Shape());
+                _src[i] = src[i]->Data();
+            }
             dst[0]->Reshape(src[0]->Shape());
         }
 
@@ -68,37 +107,15 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            int * mask = NULL;
-            const Type * bottom_data_a = NULL;
-            const Type * bottom_data_b = NULL;
-            size_t size = dst[0]->Size();
-            Type * pDst = dst[0]->Data();
-            switch (_operation) 
-            {
-            case EltwiseOperationTypeProduct:
-                CpuMul(src[0]->Data(), src[1]->Data(), size, pDst);
-                for (size_t i = 2; i < src.size(); ++i) 
-                    CpuMul(pDst, src[i]->Data(), size, pDst);
-                break;
-            case EltwiseOperationTypeSum:
-                CpuSet(size, Type(0), pDst);
-                for (size_t i = 0; i < src.size(); ++i) 
-                    CpuAxpy(src[i]->Data(), size, _coefficients[i], pDst);
-                break;
-            case EltwiseOperationTypeMax:
-                CpuMax(src[0]->Data(), src[1]->Data(), size, pDst);
-                for (size_t j = 2; j < src.size(); ++j)
-                    CpuMax(pDst, src[j]->Data(), size, pDst);
-                break;
-            default:
-                assert(0);
-            }
+            Detail::EltwiseLayerForwardCpu(_src.data(), _coefficients.data(), _src.size(), dst[0]->Size(), _operation, dst[0]->Data());
         }
 
     private:
         typedef std::vector<Type> Vector;
+        typedef std::vector<Type*> Pointers;
 
         EltwiseOperationType _operation;
         Vector _coefficients;
+        Pointers _src;
     };
 }
