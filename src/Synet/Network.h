@@ -31,6 +31,7 @@
 #include "Synet/EltwiseLayer.h"
 #include "Synet/InnerProductLayer.h"
 #include "Synet/InputLayer.h"
+#include "Synet/LogLayer.h"
 #include "Synet/LrnLayer.h"
 #include "Synet/PoolingLayer.h"
 #include "Synet/ReluLayer.h"
@@ -208,6 +209,7 @@ namespace Synet
             case LayerTypeDropout: return new StubLayer<T, A>(param);
             case LayerTypeInnerProduct: return new InnerProductLayer<T, A>(param);
             case LayerTypeInput: return new InputLayer<T, A>(param);
+            case LayerTypeLog: return new LogLayer<T, A>(param);
             case LayerTypeLrn: return new LrnLayer<T, A>(param);
             case LayerTypePooling: return new PoolingLayer<T, A>(param);
             case LayerTypeRelu: return new ReluLayer<T, A>(param);

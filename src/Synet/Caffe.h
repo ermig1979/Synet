@@ -165,6 +165,11 @@ namespace Synet
                         dst.input().shape()[j].dim()[k] = src.input_param().shape(j).dim(k);
                 }
                 break;
+            case Synet::LayerTypeLog:
+                dst.log().base() = src.log_param().base();
+                dst.log().scale() = src.log_param().scale();
+                dst.log().shift() = src.log_param().shift();
+                break;
             case Synet::LayerTypeLrn:
                 dst.lrn().localSize() = src.lrn_param().local_size();
                 dst.lrn().alpha() = src.lrn_param().alpha();

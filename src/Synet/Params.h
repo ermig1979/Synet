@@ -51,6 +51,7 @@ namespace Synet
         LayerTypeDropout,
         LayerTypeInnerProduct,
         LayerTypeInput,
+        LayerTypeLog,
         LayerTypeLrn,
         LayerTypePooling,
         LayerTypeRelu,
@@ -74,6 +75,7 @@ namespace Synet
             "Dropout",
             "InnerProduct",
             "Input",
+            "Log",
             "LRN",
             "Pooling",
             "ReLU",
@@ -226,6 +228,13 @@ namespace Synet
         SYNET_PARAM_VECTOR(ShapeParam, shape);
     };
 
+    struct LogParam
+    {
+        SYNET_PARAM_VALUE(float, base, -1.0f);
+        SYNET_PARAM_VALUE(float, scale, 1.0f);
+        SYNET_PARAM_VALUE(float, shift, 0.0f);
+    };
+
     struct LrnParam
     {
         SYNET_PARAM_VALUE(uint32_t, localSize, 5);
@@ -282,6 +291,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(EltwiseParam, eltwise);
         SYNET_PARAM_STRUCT(InnerProductParam, innerProduct);
         SYNET_PARAM_STRUCT(InputParam, input);
+        SYNET_PARAM_STRUCT(LogParam, log);
         SYNET_PARAM_STRUCT(LrnParam, lrn);
         SYNET_PARAM_STRUCT(PoolingParam, pooling);
         SYNET_PARAM_STRUCT(ReluParam, relu);
