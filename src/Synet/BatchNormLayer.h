@@ -25,7 +25,7 @@
 #pragma once
 
 #include "Synet/Common.h"
-#include "Synet/Layer.h"
+#include "Synet/ScaleLayer.h"
 #include "Synet/Math.h"
 
 namespace Synet
@@ -62,24 +62,37 @@ namespace Synet
                 assert(src[0]->Axis(1) == _channels);
             dst[0]->Reshape(src[0]->Shape());
 
-            _mean.Reshape({_channels});
-            _variance.Reshape({ _channels });
-            _temp.Reshape(src[0]->Shape());
-            _xNorm.Reshape(src[0]->Shape());
-            _batchSumMultiplier.Reshape({src[0]->Axis(0)});
-
-            Shape spatialDim = { src[0]->Size() / (_channels*src[0]->Axis(0)) };
-            if (_spatialSumMultiplier.Shape() != spatialDim)
+            if (_useGlobalStats)
             {
-                _spatialSumMultiplier.Reshape(spatialDim);
-                CpuSet(_spatialSumMultiplier.Size(), Type(1), _spatialSumMultiplier.Data());
+                const Type scaleFactor = this->Weight()[2].Data()[0] == 0 ? 0 : 1 / this->Weight()[2].Data()[0];
+                _scale.Reshape({ _channels });
+                _bias.Reshape({ _channels });
+                for (size_t i = 0; i < _mean.Size(); ++i)
+                {
+                    _scale.Data()[i] = Type(1) / ::sqrt(_eps + this->Weight()[1].Data()[i] * scaleFactor);
+                    _bias.Data()[i] = -this->Weight()[0].Data()[i] * scaleFactor * _scale.Data()[i];
+                }
             }
-
-            Shape numByChans = { _channels*src[0]->Axis(0) };
-            if (_numByChans.Shape() != numByChans)
+            else
             {
-                _numByChans.Reshape(numByChans);
-                CpuSet(_batchSumMultiplier.Size(), Type(1), _batchSumMultiplier.Data());
+                _mean.Reshape({_channels});
+                _variance.Reshape({ _channels });
+                _temp.Reshape(src[0]->Shape());
+                _batchSumMultiplier.Reshape({src[0]->Axis(0)});
+
+                Shape spatialDim = { src[0]->Size() / (_channels*src[0]->Axis(0)) };
+                if (_spatialSumMultiplier.Shape() != spatialDim)
+                {
+                    _spatialSumMultiplier.Reshape(spatialDim);
+                    CpuSet(_spatialSumMultiplier.Size(), Type(1), _spatialSumMultiplier.Data());
+                }
+
+                Shape numByChans = { _channels*src[0]->Axis(0) };
+                if (_numByChans.Shape() != numByChans)
+                {
+                    _numByChans.Reshape(numByChans);
+                    CpuSet(_batchSumMultiplier.Size(), Type(1), _batchSumMultiplier.Data());
+                }
             }
         }
 
@@ -93,26 +106,27 @@ namespace Synet
             size_t num = src[0]->Axis(0);
             size_t spatialDim = src[0]->Size() / (num*_channels);
 
-            if (src[0] != dst[0])
-                CpuCopy(pSrc, src[0]->Size(), pDst);
-
             if (_useGlobalStats)
             {
-                const Type scaleFactor = this->Weight()[2].Data()[0] == 0 ? 0 : 1 / this->Weight()[2].Data()[0];
-                CpuScale(this->Weight()[0].Data(), _mean.Size(), scaleFactor, _mean.Data());
-                CpuScale(this->Weight()[1].Data(), _variance.Size(), scaleFactor, _variance.Data());
+                size_t size = src[0]->Size(1);
+                for (size_t i = 0; i < num; ++i)
+                {
+                    Detail::ScaleLayerForwardCpu(pSrc, _scale.Data(), _bias.Data(), _channels, spatialDim, pDst);
+                    pSrc += size;
+                    pDst += size;
+                }
             }
-            else 
+            else
             {
+                if (src[0] != dst[0])
+                    CpuCopy(pSrc, src[0]->Size(), pDst);
+
                 CpuGemv<Type>(CblasNoTrans, _channels * num, spatialDim, Type(1) / (num * spatialDim), pSrc, _spatialSumMultiplier.Data(), Type(0), _numByChans.Data());
                 CpuGemv<Type>(CblasTrans, num, _channels, Type(1), _numByChans.Data(), _batchSumMultiplier.Data(), Type(0), _mean.Data());
-            }
 
-            CpuGemm<Type>(CblasNoTrans, CblasNoTrans, num, _channels, 1, 1, _batchSumMultiplier.Data(), _mean.Data(), Type(0), _numByChans.Data());
-            CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _channels * num, spatialDim, 1, -1, _numByChans.Data(), _spatialSumMultiplier.Data(), Type(1), pDst);
+                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, num, _channels, 1, Type(1), _batchSumMultiplier.Data(), _mean.Data(), Type(0), _numByChans.Data());
+                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _channels * num, spatialDim, 1, Type(-1), _numByChans.Data(), _spatialSumMultiplier.Data(), Type(1), pDst);
 
-            if (!_useGlobalStats) 
-            {
                 CpuPow(pDst, dst[0]->Size(), Type(2), _temp.Data());
                 CpuGemv<Type>(CblasNoTrans, _channels * num, spatialDim, Type(1) / (num * spatialDim), _temp.Data(), _spatialSumMultiplier.Data(), Type(0), _numByChans.Data());
                 CpuGemv<Type>(CblasTrans, num, _channels, Type(1), _numByChans.Data(), _batchSumMultiplier.Data(), Type(0), _variance.Data());
@@ -123,22 +137,21 @@ namespace Synet
                 size_t m = src[0]->Size() / _channels;
                 Type biasCorrectionFactor = m > 1 ? Type(m) / (m - 1) : Type(1);
                 CpuAxpby(_variance.Size(), biasCorrectionFactor, _variance.Data(), _movingAverageFraction, weights[1].Data());
+                CpuAdd(_eps, _variance.Data(), _variance.Size());
+                CpuPow(_variance.Data(), _variance.Size(), Type(0.5), _variance.Data());
+
+                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, num, _channels, 1, 1, _batchSumMultiplier.Data(), _variance.Data(), Type(0), _numByChans.Data());
+                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _channels * num, spatialDim, 1, Type(1), _numByChans.Data(), _spatialSumMultiplier.Data(), Type(0), _temp.Data());
+                CpuDiv(pDst, _temp.Data(), _temp.Size(), pDst);
             }
-
-            CpuAdd(_eps, _variance.Data(), _variance.Size());
-            CpuPow(_variance.Data(), _variance.Size(), Type(0.5), _variance.Data());
-
-            CpuGemm<Type>(CblasNoTrans, CblasNoTrans, num, _channels, 1, 1, _batchSumMultiplier.Data(), _variance.Data(), Type(0), _numByChans.Data());
-            CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _channels * num, spatialDim, 1, Type(1), _numByChans.Data(), _spatialSumMultiplier.Data(), Type(0), _temp.Data());
-            CpuDiv(pDst, _temp.Data(), _temp.Size(), pDst);
-            CpuCopy(pDst, _xNorm.Size(), _xNorm.Data());
         }
 
     private:
         size_t _channels;
         bool _useGlobalStats;
         Type _movingAverageFraction, _eps;
-        Tensor _mean, _variance, _temp, _xNorm;
+        Tensor _mean, _variance, _temp;
         Tensor _batchSumMultiplier, _numByChans, _spatialSumMultiplier;
+        Tensor _scale, _bias;
     };
 }
