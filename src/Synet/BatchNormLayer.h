@@ -44,7 +44,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) 
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst)
         {
             const BatchNormParam & param = this->Param().batchNorm();
             _movingAverageFraction = param.movingAverageFraction();
@@ -67,7 +67,7 @@ namespace Synet
                 const Type scaleFactor = this->Weight()[2].Data()[0] == 0 ? 0 : 1 / this->Weight()[2].Data()[0];
                 _scale.Reshape({ _channels });
                 _bias.Reshape({ _channels });
-                for (size_t i = 0; i < _mean.Size(); ++i)
+                for (size_t i = 0; i < _channels; ++i)
                 {
                     _scale.Data()[i] = Type(1) / ::sqrt(_eps + this->Weight()[1].Data()[i] * scaleFactor);
                     _bias.Data()[i] = -this->Weight()[0].Data()[i] * scaleFactor * _scale.Data()[i];
@@ -75,10 +75,10 @@ namespace Synet
             }
             else
             {
-                _mean.Reshape({_channels});
+                _mean.Reshape({ _channels });
                 _variance.Reshape({ _channels });
                 _temp.Reshape(src[0]->Shape());
-                _batchSumMultiplier.Reshape({src[0]->Axis(0)});
+                _batchSumMultiplier.Reshape({ src[0]->Axis(0) });
 
                 Shape spatialDim = { src[0]->Size() / (_channels*src[0]->Axis(0)) };
                 if (_spatialSumMultiplier.Shape() != spatialDim)
