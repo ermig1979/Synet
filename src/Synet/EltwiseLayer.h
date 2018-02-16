@@ -35,7 +35,7 @@ namespace Synet
         template <class T> void EltwiseLayerForwardCpu(T const * const * src, const T * weight, size_t count, size_t size, EltwiseOperationType type, T * dst)
         {
             assert(count >= 2);
-            swtich(type)
+            switch(type)
             {
             case EltwiseOperationTypeProduct:
                 CpuMul(src[0], src[1], size, dst);

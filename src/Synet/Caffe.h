@@ -43,13 +43,23 @@ namespace Synet
 {
     class CaffeToSynet
     {
+        bool FileExist(const String & path)
+        {
+#ifdef _MSC_VER
+            DWORD fileAttribute = ::GetFileAttributes(path.c_str());
+            return (fileAttribute != INVALID_FILE_ATTRIBUTES);
+#else
+            return (::access(path.c_str(), F_OK) != -1);
+#endif
+        }
+
     public:
         bool Convert(const String & srcModelPath, const String & srcWeightPath, const String & dstModelPath, const String & dstWeightPath)
         {
-            if (::_access(srcModelPath.c_str(), 0) == -1)
+            if (!FileExist(srcModelPath))
                 return false;
 
-            if (::_access(srcWeightPath.c_str(), 0) == -1)
+            if (!FileExist(srcWeightPath))
                 return false;
 
             caffe::NetParameter srcModel;
