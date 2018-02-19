@@ -25,18 +25,24 @@
 #pragma once
 
 //#define SYNET_SIMD_LIBRARY_ENABLE
-
 //#define SYNET_OPEN_BLAS_ENABLE
 
 //#define SYNET_PROTOBUF_ENABLE
 
 //#define SYNET_CAFFE_ENABLE
+//#define SYNET_YOLO_ENABLE
 
 #include <stddef.h>
 #include <assert.h>
 #include <math.h>
 #include <memory.h>
 #include <float.h>
+#ifdef _MSC_VER
+#pragma warning (push)
+#pragma warning (disable: 4996)
+#include <io.h>
+#pragma warning (pop)
+#endif
 
 #include <vector>
 #include <string>
@@ -83,6 +89,14 @@ extern "C"
 #define SYNET_CLASS_INSTANCE(name) \
   template class name<float>; 
 
+#define SYNET_STRINGIFY(X) SYNET_STRINGIFY2(X)    
+#define SYNET_STRINGIFY2(X) #X
+
+#define SYNET_CAT(X,Y) SYNET_CAT2(X,Y)
+#define SYNET_CAT2(X,Y) X##Y
+
+#define SYNET_INCLUDE(path, file) SYNET_STRINGIFY(SYNET_CAT(path, file))
+
 namespace Synet
 {
     typedef std::string String;
@@ -91,4 +105,13 @@ namespace Synet
     typedef std::vector<Shape> Shapes;
     typedef std::vector<size_t> Index;
     typedef std::vector<float> Floats;
+
+    SYNET_INLINE bool FileExist(const String & path)
+    {
+#ifdef _MSC_VER
+        return (::_access(path.c_str(), 0) != -1);
+#else
+        return (::access(path.c_str(), F_OK) != -1);
+#endif
+    }
 }

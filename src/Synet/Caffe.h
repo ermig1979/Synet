@@ -29,12 +29,6 @@
 
 #if defined(SYNET_CAFFE_ENABLE)
 
-#ifdef _MSC_VER
-#pragma warning (push)
-#pragma warning (disable: 4996)
-#include <io.h>
-#endif
-
 #define CPU_ONLY
 
 #include "caffe/caffe.hpp"
@@ -43,23 +37,13 @@ namespace Synet
 {
     class CaffeToSynet
     {
-        bool FileExist(const String & path)
-        {
-#ifdef _MSC_VER
-            DWORD fileAttribute = ::GetFileAttributes(path.c_str());
-            return (fileAttribute != INVALID_FILE_ATTRIBUTES);
-#else
-            return (::access(path.c_str(), F_OK) != -1);
-#endif
-        }
-
     public:
         bool Convert(const String & srcModelPath, const String & srcWeightPath, const String & dstModelPath, const String & dstWeightPath)
         {
-            if (!FileExist(srcModelPath))
+            if (!Synet::FileExist(srcModelPath))
                 return false;
 
-            if (!FileExist(srcWeightPath))
+            if (!Synet::FileExist(srcWeightPath))
                 return false;
 
             caffe::NetParameter srcModel;
@@ -279,9 +263,5 @@ namespace Synet
         return caffeToSynet.Convert(srcData, srcWeights, dstXml, dstBin);
     }
 }
-
-#ifdef _MSC_VER
-#pragma warning (pop)
-#endif
 
 #endif
