@@ -60,6 +60,11 @@ namespace Synet
     class YoloToSynet
     {
     public:
+        YoloToSynet()
+            : _id(0)
+        {
+        }
+
         bool Convert(const String & srcModelPath, const String & srcWeightPath, const String & dstModelPath, const String & dstWeightPath)
         {
             if (!Synet::FileExist(srcModelPath))
@@ -96,18 +101,19 @@ namespace Synet
         typedef Synet::Tensor<float> Tensor;
         typedef std::vector<Tensor> Tensors;
 
-        bool ConvertNetwork(const ::network & net, Synet::NetworkParam & dstNetwork, Tensors & weight)
+        bool ConvertNetwork(const ::network & net, Synet::NetworkParam & network, Tensors & weight)
         {
-            dstNetwork.layers().reserve(net.n*2);
+            network.layers().reserve(net.n*2);
+            network.name() = String("yolo_unknown");
             for (int i = 0; i < net.n; ++i)
             {
                 Synet::LayerParam main, func;
                 if (!ConvertLayer(net.layers[i], main, func, weight))
                     return false;
                 if (main.type() != LayerTypeUnknown)
-                    dstNetwork.layers().push_back(main);
+                    network.layers().push_back(main);
                 if (func.type() != LayerTypeUnknown)
-                    dstNetwork.layers().push_back(func);
+                    network.layers().push_back(func);
             }
             return true;
         }
@@ -117,16 +123,47 @@ namespace Synet
             switch (layer.type)
             {
             case ::CONVOLUTIONAL:
+                main.type() = Synet::LayerTypeConvolution;
+                main.name() = UniqueName("Conv");
+                //main.convolution().kernel().resize(src.convolution_param().kernel_size_size());
+                //for (int j = 0; j < src.convolution_param().kernel_size_size(); ++j)
+                //    main.convolution().kernel()[j] = src.convolution_param().kernel_size(j);
+                main.convolution().outputNum() = layer.out_c;
+                main.convolution().kernel().resize(1, layer.size);
+                if (layer.stride != 1)
+                    main.convolution().stride().resize(1, layer.stride);
+                if (layer.pad != 0)
+                    main.convolution().pad().resize(1, layer.pad);
                 break;
             case ::DETECTION:
                 break;
             case ::MAXPOOL:
+                main.type() = Synet::LayerTypePooling;
+                main.name() = UniqueName("MaxPool");
+                main.pooling().method() = Synet::PoolingMethodTypeMax;
                 break;
             case ::REGION:
                 break;
             case ::REORG:
                 break;
             case ::ROUTE:
+                break;
+            default:
+                assert(0);
+                return false;
+            }
+            switch (layer.activation)
+            {
+            case ::LEAKY:
+                func.type() = Synet::LayerTypeRelu;
+                func.name() = UniqueName("ReLU");
+                func.relu().negativeSlope() = 0.1f;
+                break;
+            case ::LINEAR:
+                break;
+            case ::LOGISTIC:
+                func.type() = Synet::LayerTypeSigmoid;
+                func.name() = UniqueName("Sigmoid");
                 break;
             default:
                 assert(0);
@@ -149,6 +186,13 @@ namespace Synet
             }
             return false;
         }
+
+        String UniqueName(const String & prefix)
+        {
+            return prefix + "_" + Synet::ValueToString<size_t>(_id++);
+        }
+
+        size_t _id;
     };
 
     bool ConvertYoloToSynet(const String & srcData, const String & srcWeights, const String & dstXml, const String & dstBin)
