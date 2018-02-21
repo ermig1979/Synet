@@ -35,6 +35,7 @@
 #include "Synet/LrnLayer.h"
 #include "Synet/PoolingLayer.h"
 #include "Synet/ReluLayer.h"
+#include "Synet/ReorgLayer.h"
 #include "Synet/ScaleLayer.h"
 #include "Synet/SigmoidLayer.h"
 #include "Synet/SliceLayer.h"

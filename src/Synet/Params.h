@@ -55,6 +55,7 @@ namespace Synet
         LayerTypeLrn,
         LayerTypePooling,
         LayerTypeRelu,
+        LayerTypeReorg,
         LayerTypeScale,
         LayerTypeSigmoid,
         LayerTypeSlice,
@@ -79,6 +80,7 @@ namespace Synet
             "LRN",
             "Pooling",
             "ReLU",
+            "Reorg",
             "Scale",
             "Sigmoid",
             "Slice",
@@ -258,6 +260,12 @@ namespace Synet
         SYNET_PARAM_VALUE(float, negativeSlope, 0.0f);
     };
 
+    struct ReorgParam
+    {
+        SYNET_PARAM_VALUE(bool, reverse, true);
+        SYNET_PARAM_VALUE(uint32_t, stride, 1);
+    };
+
     struct ScaleParam
     {
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
@@ -295,6 +303,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(LrnParam, lrn);
         SYNET_PARAM_STRUCT(PoolingParam, pooling);
         SYNET_PARAM_STRUCT(ReluParam, relu);
+        SYNET_PARAM_STRUCT(ReorgParam, reorg);
         SYNET_PARAM_STRUCT(ScaleParam, scale);
         SYNET_PARAM_STRUCT(SliceParam, slice);
         SYNET_PARAM_STRUCT(SoftmaxParam, softmax);

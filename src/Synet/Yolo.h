@@ -60,11 +60,6 @@ namespace Synet
     class YoloToSynet
     {
     public:
-        YoloToSynet()
-            : _id(0)
-        {
-        }
-
         bool Convert(const String & srcModelPath, const String & srcWeightPath, const String & dstModelPath, const String & dstWeightPath)
         {
             if (!Synet::FileExist(srcModelPath))
@@ -98,77 +93,233 @@ namespace Synet
 
     private:
 
+        typedef std::vector<Synet::LayerParam> LayerParams;
         typedef Synet::Tensor<float> Tensor;
         typedef std::vector<Tensor> Tensors;
 
         bool ConvertNetwork(const ::network & net, Synet::NetworkParam & network, Tensors & weight)
         {
-            network.layers().reserve(net.n*2);
+            _id = 0;
+            _dst.clear();
+            _dst.reserve(net.n);
+
+            network.layers().reserve(net.n*3);
+            weight.reserve(net.n * 2);
             network.name() = String("yolo_unknown");
+
+            if (!ConvertInputLayer(net, network.layers()))
+                return false;
+
             for (int i = 0; i < net.n; ++i)
             {
-                Synet::LayerParam main, func;
-                if (!ConvertLayer(net.layers[i], main, func, weight))
+                if (!ConvertLayer(net.layers[i], network.layers(), weight))
                     return false;
-                if (main.type() != LayerTypeUnknown)
-                    network.layers().push_back(main);
-                if (func.type() != LayerTypeUnknown)
-                    network.layers().push_back(func);
+                if (!ConvertActivationLayer(net.layers[i], network.layers()))
+                    return false;
+                _dst.push_back(network.layers().back().dst()[0]);
             }
             return true;
         }
 
-        bool ConvertLayer(const ::layer & layer, Synet::LayerParam & main, Synet::LayerParam & func, Tensors & weight)
+        bool ConvertInputLayer(const ::network & src, LayerParams & dst)
         {
-            switch (layer.type)
+            Synet::LayerParam input;
+            input.type() = Synet::LayerTypeInput;
+            input.name() = UniqueName("Input");
+            input.dst().resize(1, input.name());
+            input.input().shape().resize(1);
+            input.input().shape()[0].dim() = Shape({ (size_t)src.batch, (size_t)src.c, (size_t)src.h, (size_t)src.w });
+            dst.push_back(input);
+            return true;
+        }
+
+        bool ConvertLayer(const ::layer & src, LayerParams & dst, Tensors & weight)
+        {
+            switch (src.type)
             {
             case ::CONVOLUTIONAL:
-                main.type() = Synet::LayerTypeConvolution;
-                main.name() = UniqueName("Conv");
-                //main.convolution().kernel().resize(src.convolution_param().kernel_size_size());
-                //for (int j = 0; j < src.convolution_param().kernel_size_size(); ++j)
-                //    main.convolution().kernel()[j] = src.convolution_param().kernel_size(j);
-                main.convolution().outputNum() = layer.out_c;
-                main.convolution().kernel().resize(1, layer.size);
-                if (layer.stride != 1)
-                    main.convolution().stride().resize(1, layer.stride);
-                if (layer.pad != 0)
-                    main.convolution().pad().resize(1, layer.pad);
-                break;
-            case ::DETECTION:
+                if (!ConvertConvolitionLayer(src, dst, weight))
+                    return false;
+                if (src.batch_normalize)
+                {
+                    if (!ConvertBatchNormLayer(src, dst, weight))
+                        return false;
+                    if (!ConvertScaleLayer(src, dst, weight))
+                        return false;
+                }
+                else
+                {
+                    if (!ConvertBiasLayer(src, dst, weight))
+                        return false;
+                }
                 break;
             case ::MAXPOOL:
-                main.type() = Synet::LayerTypePooling;
-                main.name() = UniqueName("MaxPool");
-                main.pooling().method() = Synet::PoolingMethodTypeMax;
+                if (!ConvertMaxPoolingLayer(src, dst))
+                    return false;
                 break;
             case ::REGION:
-                break;
+                return true;
             case ::REORG:
+                if (!ConvertReorgLayer(src, dst))
+                    return false;
                 break;
             case ::ROUTE:
+                if (!ConvertConcatLayer(src, dst))
+                    return false;
                 break;
             default:
                 assert(0);
                 return false;
             }
-            switch (layer.activation)
+            return true;
+        }
+
+        bool ConvertBatchNormLayer(const ::layer & src, LayerParams & dst, Tensors & weight)
+        {
+            Synet::LayerParam batchNorm;
+            batchNorm.type() = Synet::LayerTypeBatchNorm;
+            batchNorm.name() = UniqueName("BatchNorm");
+            batchNorm.src() = dst.back().dst();
+            batchNorm.dst() = dst.back().dst();
+            batchNorm.batchNorm().eps() = 0.000001f;
+            batchNorm.weight().resize(2);
+            batchNorm.weight()[0].dim() = Shape({ (size_t)src.out_c });
+            batchNorm.weight()[1].dim() = Shape({ (size_t)src.out_c });
+            weight.push_back(Tensor());
+            weight.back().Reshape(batchNorm.weight()[0].dim());
+            memcpy(weight.back().Data(), src.rolling_mean, weight.back().Size() * sizeof(float));
+            weight.push_back(Tensor());
+            weight.back().Reshape(batchNorm.weight()[1].dim());
+            memcpy(weight.back().Data(), src.rolling_variance, weight.back().Size() * sizeof(float));
+            dst.push_back(batchNorm);
+            return true;
+        }
+
+        bool ConvertBiasLayer(const ::layer & src, LayerParams & dst, Tensors & weight)
+        {
+            Synet::LayerParam bias;
+            bias.type() = Synet::LayerTypeBias;
+            bias.name() = UniqueName("Bias");
+            bias.src() = dst.back().dst();
+            bias.dst() = dst.back().dst();
+            bias.weight().resize(1);
+            bias.weight()[0].dim() = Shape({ (size_t)src.out_c});
+            weight.push_back(Tensor());
+            weight.back().Reshape(bias.weight()[0].dim());
+            memcpy(weight.back().Data(), src.biases, weight.back().Size() * sizeof(float));
+            dst.push_back(bias);
+            return true;
+        }
+
+        bool ConvertConcatLayer(const ::layer & src, LayerParams & dst)
+        {
+            Synet::LayerParam concat;
+            concat.type() = Synet::LayerTypeConcat;
+            concat.name() = UniqueName("Concat");
+            for (int i = 0; i < src.n; ++i)
+                concat.src().push_back(_dst[src.input_layers[i]]);
+            concat.dst().resize(1, concat.name());
+            dst.push_back(concat);
+            return true;
+        }
+
+        bool ConvertConvolitionLayer(const ::layer & src, LayerParams & dst, Tensors & weight)
+        {
+            Synet::LayerParam convolution;
+            convolution.type() = Synet::LayerTypeConvolution;
+            convolution.name() = UniqueName("Conv");
+            convolution.src() = dst.back().dst();
+            convolution.dst().resize(1, convolution.name());
+            convolution.convolution().outputNum() = src.out_c;
+            convolution.convolution().kernel().resize(1, src.size);
+            if (src.stride != 1)
+                convolution.convolution().stride().resize(1, src.stride);
+            if (src.pad != 0)
+                convolution.convolution().pad().resize(1, src.pad);
+            convolution.convolution().biasTerm() = false;
+            convolution.weight().resize(1);
+            convolution.weight()[0].dim() = Shape({ (size_t)src.out_c, (size_t)src.c, (size_t)src.size, (size_t)src.size });
+            weight.push_back(Tensor());
+            weight.back().Reshape(convolution.weight()[0].dim());
+            memcpy(weight.back().Data(), src.weights, weight.back().Size() * sizeof(float));
+            dst.push_back(convolution);
+            return true;
+        }
+
+        bool ConvertMaxPoolingLayer(const ::layer & src, LayerParams & dst)
+        {
+            Synet::LayerParam pooling;
+            pooling.type() = Synet::LayerTypePooling;
+            pooling.name() = UniqueName("MaxPool");
+            pooling.src() = dst.back().dst();
+            pooling.dst().resize(1, pooling.name());
+            pooling.pooling().method() = Synet::PoolingMethodTypeMax;
+            pooling.pooling().kernel().resize(1, src.size);
+            if (src.stride != 1)
+                pooling.pooling().stride().resize(1, src.stride);
+            if (src.pad != 0)
+                pooling.pooling().pad().resize(1, src.pad);
+            dst.push_back(pooling);
+            return true;
+        }
+
+        bool ConvertReorgLayer(const ::layer & src, LayerParams & dst)
+        {
+            Synet::LayerParam reorg;
+            reorg.type() = Synet::LayerTypeReorg;
+            reorg.name() = UniqueName("Reorg");
+            reorg.reorg().reverse() = (src.reverse != 0);
+            reorg.reorg().stride() = src.stride;
+            reorg.src() = dst.back().dst();
+            reorg.dst().resize(1, reorg.name());
+            dst.push_back(reorg);
+            return true;
+        }
+
+        bool ConvertScaleLayer(const ::layer & src, LayerParams & dst, Tensors & weight)
+        {
+            Synet::LayerParam scale;
+            scale.type() = Synet::LayerTypeScale;
+            scale.name() = UniqueName("Scale");
+            scale.src() = dst.back().dst();
+            scale.dst() = dst.back().dst();
+            scale.scale().biasTerm() = true;
+            scale.weight().resize(2);
+            scale.weight()[0].dim() = Shape({ (size_t)src.out_c });
+            scale.weight()[1].dim() = Shape({ (size_t)src.out_c });
+            weight.push_back(Tensor());
+            weight.back().Reshape(scale.weight()[0].dim());
+            memcpy(weight.back().Data(), src.scales, weight.back().Size() * sizeof(float));            
+            weight.push_back(Tensor());
+            weight.back().Reshape(scale.weight()[1].dim());
+            memcpy(weight.back().Data(), src.biases, weight.back().Size() * sizeof(float));
+            dst.push_back(scale);
+            return true;
+        }
+
+        bool ConvertActivationLayer(const ::layer & src, LayerParams & dst)
+        {
+            Synet::LayerParam activation;
+            activation.src() = dst.back().dst();
+            activation.dst() = dst.back().dst();
+            switch (src.activation)
             {
             case ::LEAKY:
-                func.type() = Synet::LayerTypeRelu;
-                func.name() = UniqueName("ReLU");
-                func.relu().negativeSlope() = 0.1f;
+                activation.type() = Synet::LayerTypeRelu;
+                activation.name() = UniqueName("ReLU");
+                activation.relu().negativeSlope() = 0.1f;
                 break;
             case ::LINEAR:
-                break;
+                return true;
             case ::LOGISTIC:
-                func.type() = Synet::LayerTypeSigmoid;
-                func.name() = UniqueName("Sigmoid");
+                activation.type() = Synet::LayerTypeSigmoid;
+                activation.name() = UniqueName("Sigmoid");
                 break;
             default:
                 assert(0);
                 return false;
             }
+            dst.push_back(activation);
             return true;
         }
 
@@ -193,6 +344,7 @@ namespace Synet
         }
 
         size_t _id;
+        Strings _dst;
     };
 
     bool ConvertYoloToSynet(const String & srcData, const String & srcWeights, const String & dstXml, const String & dstBin)
