@@ -89,13 +89,13 @@ extern "C"
 #define SYNET_CLASS_INSTANCE(name) \
   template class name<float>; 
 
-#define SYNET_STRINGIFY(X) SYNET_STRINGIFY2(X)    
-#define SYNET_STRINGIFY2(X) #X
+#define SYNET_STRINGIFY(X) SYNET_STRINGIFY_DO(X)    
+#define SYNET_STRINGIFY_DO(X) #X
 
-#define SYNET_CAT(X,Y) SYNET_CAT2(X,Y)
-#define SYNET_CAT2(X,Y) X##Y
+#define SYNET_CAT(X,Y) SYNET_CAT_DO(X,Y)
+#define SYNET_CAT_DO(X,Y) X##Y
 
-#define SYNET_INCLUDE(path, file) SYNET_STRINGIFY(SYNET_CAT(path, file))
+#define SYNET_INCLUDE(path, file) SYNET_STRINGIFY(path/file)
 
 namespace Synet
 {

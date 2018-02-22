@@ -264,28 +264,6 @@ namespace Synet
         }
     }
 
-    template <class T> void PoolingMax(const T * src, size_t srcX, size_t srcY, size_t kernelY, size_t kernelX,
-        size_t padY, size_t padX, size_t strideY, size_t strideX, T * dst, size_t dstX, size_t dstY)
-    {
-        for (size_t dy = 0; dy < dstY; ++dy)
-        {
-            size_t yStart = dy * strideY - padY;
-            size_t yEnd = std::min(yStart + kernelY, srcY);
-            yStart = std::max<ptrdiff_t>(0, yStart);
-            for (size_t dx = 0; dx < dstX; ++dx)
-            {
-                size_t xStart = dx * strideX - padX;
-                size_t xEnd = std::min(xStart + kernelX, srcX);
-                xStart = std::max<ptrdiff_t>(0, xStart);
-                T max = -std::numeric_limits<T>::max();
-                for (size_t sy = yStart; sy < yEnd; ++sy)
-                    for (size_t sx = xStart; sx < xEnd; ++sx)
-                        max = std::max(max, src[sy * srcX + sx]);
-                dst[dy*dstX + dx] = max;
-            }
-        }
-    }
-
     template <typename T> void CpuAdd(const T * a, const T * b, size_t size, T * dst)
     {
         for (size_t i = 0; i < size; ++i)
@@ -388,38 +366,6 @@ namespace Synet
     }
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-    template <> SYNET_INLINE void PoolingMax<float>(const float * src, size_t srcX, size_t srcY, size_t kernelY, size_t kernelX,
-        size_t padY, size_t padX, size_t strideY, size_t strideX, float * dst, size_t dstX, size_t dstY)
-    {
-        if (strideY == 1 && strideX == 1 && kernelY == 3 && kernelX == 3 && padY == 1 && padX == 1)
-        {
-            ::SimdNeuralPooling1x1Max3x3(src, srcX, srcX, srcY, dst, dstX);
-            return;
-        }
-        if (strideY == 2 && strideX == 2 && kernelY == 3 && kernelX == 3 && padY == 0 && padX == 0)
-        {
-            ::SimdNeuralPooling2x2Max3x3(src, srcX, srcX, srcY, dst, dstX);
-            return;
-        }
-        for (size_t dy = 0; dy < dstY; ++dy)
-        {
-            size_t yStart = dy * strideY - padY;
-            size_t yEnd = std::min(yStart + kernelY, srcY);
-            yStart = std::max<ptrdiff_t>(0, yStart);
-            for (size_t dx = 0; dx < dstX; ++dx)
-            {
-                size_t xStart = dx * strideX - padX;
-                size_t xEnd = std::min(xStart + kernelX, srcX);
-                xStart = std::max<ptrdiff_t>(0, xStart);
-                float max = -std::numeric_limits<float>::max();
-                for (size_t sy = yStart; sy < yEnd; ++sy)
-                    for (size_t sx = xStart; sx < xEnd; ++sx)
-                        max = std::max(max, src[sy * srcX + sx]);
-                dst[dy*dstX + dx] = max;
-            }
-        }
-    }
-
     template <> SYNET_INLINE void CpuAxpy<float>(const float * x, size_t size, const float & alpha, float * y)
     {
         ::SimdNeuralAddVectorMultipliedByValue(x, size, &alpha, y);
