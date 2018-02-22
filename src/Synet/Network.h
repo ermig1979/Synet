@@ -34,6 +34,7 @@
 #include "Synet/LogLayer.h"
 #include "Synet/LrnLayer.h"
 #include "Synet/PoolingLayer.h"
+#include "Synet/RegionLayer.h"
 #include "Synet/ReluLayer.h"
 #include "Synet/ReorgLayer.h"
 #include "Synet/ScaleLayer.h"
@@ -213,7 +214,9 @@ namespace Synet
             case LayerTypeLog: return new LogLayer<T, A>(param);
             case LayerTypeLrn: return new LrnLayer<T, A>(param);
             case LayerTypePooling: return new PoolingLayer<T, A>(param);
+            case LayerTypeRegion: return new RegionLayer<T, A>(param);
             case LayerTypeRelu: return new ReluLayer<T, A>(param);
+            case LayerTypeReorg: return new ReorgLayer<T, A>(param);
             case LayerTypeScale: return new ScaleLayer<T, A>(param);
             case LayerTypeSigmoid: return new SigmoidLayer<T, A>(param);
             case LayerTypeSlice: return new SliceLayer<T, A>(param);

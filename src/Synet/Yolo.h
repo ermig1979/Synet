@@ -114,8 +114,6 @@ namespace Synet
             {
                 if (!ConvertLayer(net.layers[i], network.layers(), weight))
                     return false;
-                if (!ConvertActivationLayer(net.layers[i], network.layers()))
-                    return false;
                 _dst.push_back(network.layers().back().dst()[0]);
             }
             return true;
@@ -152,13 +150,17 @@ namespace Synet
                     if (!ConvertBiasLayer(src, dst, weight))
                         return false;
                 }
+                if (!ConvertActivationLayer(src, dst))
+                    return false;
                 break;
             case ::MAXPOOL:
                 if (!ConvertMaxPoolingLayer(src, dst))
                     return false;
                 break;
             case ::REGION:
-                return true;
+                if (!ConvertRegionLayer(src, dst))
+                    return false;
+                break;
             case ::REORG:
                 if (!ConvertReorgLayer(src, dst))
                     return false;
@@ -260,6 +262,21 @@ namespace Synet
             if (src.pad != 0)
                 pooling.pooling().pad().resize(1, src.pad);
             dst.push_back(pooling);
+            return true;
+        }
+
+        bool ConvertRegionLayer(const ::layer & src, LayerParams & dst)
+        {
+            Synet::LayerParam region;
+            region.type() = Synet::LayerTypeRegion;
+            region.name() = UniqueName("Region");
+            region.src() = dst.back().dst();
+            region.dst().resize(1, region.name());
+            region.region().coords() = src.coords;
+            region.region().classes() = src.classes;
+            region.region().num() = src.n;
+            region.region().softmax() = src.softmax != 0;
+            dst.push_back(region);
             return true;
         }
 

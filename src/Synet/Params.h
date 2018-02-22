@@ -54,6 +54,7 @@ namespace Synet
         LayerTypeLog,
         LayerTypeLrn,
         LayerTypePooling,
+        LayerTypeRegion,
         LayerTypeRelu,
         LayerTypeReorg,
         LayerTypeScale,
@@ -79,6 +80,7 @@ namespace Synet
             "Log",
             "LRN",
             "Pooling",
+            "Region",
             "ReLU",
             "Reorg",
             "Scale",
@@ -255,6 +257,14 @@ namespace Synet
         SYNET_PARAM_VALUE(bool, globalPooling, false);
     };
 
+    struct RegionParam
+    {
+        SYNET_PARAM_VALUE(uint32_t, coords, 4);
+        SYNET_PARAM_VALUE(uint32_t, classes, 20);
+        SYNET_PARAM_VALUE(uint32_t, num, 1);
+        SYNET_PARAM_VALUE(bool, softmax, false);
+    };
+
     struct ReluParam
     {
         SYNET_PARAM_VALUE(float, negativeSlope, 0.0f);
@@ -302,6 +312,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(LogParam, log);
         SYNET_PARAM_STRUCT(LrnParam, lrn);
         SYNET_PARAM_STRUCT(PoolingParam, pooling);
+        SYNET_PARAM_STRUCT(RegionParam, region);
         SYNET_PARAM_STRUCT(ReluParam, relu);
         SYNET_PARAM_STRUCT(ReorgParam, reorg);
         SYNET_PARAM_STRUCT(ScaleParam, scale);

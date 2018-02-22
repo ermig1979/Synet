@@ -34,7 +34,7 @@ namespace Synet
     {
         template< class T> void ReorgLayerForwardCpu(const T * src, size_t batch, size_t channels, size_t height, size_t width, size_t stride, bool forward, T * dst)
         {
-            size_t out_c = c / (stride*stride);
+            size_t out_c = channels / (stride*stride);
             for (size_t b = 0; b < batch; ++b)
             {
                 for (size_t k = 0; k < channels; ++k)
