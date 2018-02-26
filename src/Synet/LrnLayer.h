@@ -30,6 +30,39 @@
 
 namespace Synet
 {
+    namespace Detail
+    {
+        template<class T> void LrnLayerCrossChannelsCpu(const T * src, size_t channels, size_t size, size_t inner, T alpha, T beta, T k, T * buffer, T * dst)
+        {
+            size_t prePad = (size - 1) / 2;
+            size_t paddedSize = (channels + size - 1)*inner;
+            size_t scaleSize = channels*inner;
+            T * padded = buffer;
+            T * scale = buffer + paddedSize;
+            CpuSet(scaleSize, k, scale);
+            CpuSet(paddedSize, T(0), padded);
+            CpuSqr(src, scaleSize, padded + inner*prePad);
+            for (size_t c = 0; c < size; ++c)
+                CpuAxpy(padded + c*inner, inner, alpha, scale);
+            for (size_t c = 1; c < channels; ++c)
+            {
+                CpuCopy(scale + (c - 1)*inner, inner, scale + c*inner);
+                CpuAxpy(padded + (c + size - 1)*inner, inner, alpha, scale + c*inner);
+                CpuAxpy(padded + (c - 1)*inner, inner, -alpha, scale + c*inner);
+            }
+            CpuPow(scale, scaleSize, -beta, dst);
+            CpuMul(src, dst, scaleSize, dst);
+        }
+
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        template <> SYNET_INLINE void LrnLayerCrossChannelsCpu<float>(const float * src, size_t channels, size_t size, size_t inner, float alpha, float beta, float k, float * buffer, float * dst)
+        {
+            float _k[3] = { k, alpha, -beta };
+            ::SimdSynetLrnLayerCrossChannels(src, (size - 1)/2, channels, inner, _k, dst);
+        }
+#endif
+    }
+
     template <class T, template<class> class A> class LrnLayer : public Synet::Layer<T, A>
     {
     public:
@@ -69,7 +102,7 @@ namespace Synet
             {
             case NormRegionTypeAcrossChannels:
                 dst[0]->Reshape({ _num, _channels, _height, _width });
-                _scale.Reshape({ _num, _channels, _height, _width });
+                _buffer.Reshape({ 1, _channels*2 + _size - 1, _height, _width });
                 break;
             case NormRegionTypeWithinChannel:
                 assert(0);
@@ -87,7 +120,7 @@ namespace Synet
             switch (_normRegion)
             {
             case NormRegionTypeAcrossChannels:
-                ForwardCpuCrossChannels(src, dst);
+                CrossChannelsCpu(src, dst);
                 break;
             case NormRegionTypeWithinChannel:
                 assert(0);
@@ -98,27 +131,17 @@ namespace Synet
             }
         }
 
-        virtual void ForwardCpuCrossChannels(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void CrossChannelsCpu(const TensorPtrs & src, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            CpuSet(_scale.Size(), _k, _scale.Data());
-            Tensor paddedSquare({ 1, _channels + _size - 1, _height, _width });
-            CpuSet(paddedSquare.Size(), Type(0), paddedSquare.Data());
-            Type alphaOverSize = _alpha / _size;
+
+            Type alpha = _alpha / _size;
             for (size_t n = 0; n < _num; ++n)
             {
-                CpuSqr<Type>(src[0]->Data({ n, 0, 0, 0 }), _channels * _height * _width, paddedSquare.Data({ 0, _prePad, 0, 0 }));
-                for (size_t c = 0; c < _size; ++c)
-                    CpuAxpy<Type>(paddedSquare.Data({ 0, c, 0, 0 }), _height * _width, alphaOverSize, _scale.Data({ n, 0, 0, 0 }));
-                for (size_t c = 1; c < _channels; ++c)
-                {
-                    CpuCopy(_scale.Data({ n, c - 1, 0, 0 }), _height * _width, _scale.Data({ n, c, 0, 0 }));
-                    CpuAxpy<Type>(paddedSquare.Data({ 0, c + _size - 1, 0, 0 }), _height * _width, alphaOverSize, _scale.Data({ n, c, 0, 0 }));
-                    CpuAxpy<Type>(paddedSquare.Data({ 0, c - 1, 0, 0 }), _height * _width, -alphaOverSize, _scale.Data({ n, c, 0, 0 }));
-                }
+                const Type * pSrc = src[0]->Data({ n, 0, 0, 0 });
+                Type * pDst = dst[0]->Data({ n, 0, 0, 0 });
+                Detail::LrnLayerCrossChannelsCpu(pSrc, _channels, _size, _width*_height, alpha, _beta, _k, _buffer.Data(), pDst);
             }
-            CpuPow<Type>(_scale.Data(), _scale.Size(), -_beta, dst[0]->Data());
-            CpuMul<Type>(src[0]->Data(), dst[0]->Data(), src[0]->Size(), dst[0]->Data());
         }
     
     private:
@@ -126,6 +149,6 @@ namespace Synet
         NormRegionType _normRegion;
         size_t _size, _prePad, _num, _channels, _width, _height;
         Type _alpha, _beta, _k;
-        Tensor _scale;
+        Tensor _buffer;
     };
 }
