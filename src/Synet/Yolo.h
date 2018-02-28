@@ -276,6 +276,9 @@ namespace Synet
             region.region().classes() = src.classes;
             region.region().num() = src.n;
             region.region().softmax() = src.softmax != 0;
+            region.region().anchors().resize(src.n * 2);
+            for (size_t i = 0; i < region.region().anchors().size(); ++i)
+                region.region().anchors()[i] = src.biases[i];
             dst.push_back(region);
             return true;
         }

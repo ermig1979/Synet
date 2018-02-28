@@ -50,6 +50,7 @@ namespace Synet
         }
     }
 
+
     template <class T, template<class> class A> class RegionLayer : public Synet::Layer<T, A>
     {
     public:
@@ -69,12 +70,65 @@ namespace Synet
             _classes = param.classes();
             _num = param.num();
             _softmax = param.softmax();
+            _anchors.resize(param.anchors().size());
+            for (size_t i = 0; i < param.anchors().size(); ++i)
+                _anchors[i] = param.anchors()[i];
+            _classfix = 0;
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
         {
             assert(src[0]->Axis(1) == _num*(_coords + _classes + 1));
             dst[0]->Reshape(src[0]->Shape());
+        }
+
+        struct Region
+        {
+            Type x, y, w, h, v;
+            size_t i;
+        };
+        typedef std::vector<Region> Regions;
+
+        void GetRegions(const TensorPtrs & src, Type threshold, Type overlap, Regions & dst)
+        {
+            SYNET_PERF_FUNC();
+            dst.clear();
+
+            const Type * pPredict = src[0]->Data();
+            size_t height = src[0]->Axis(2);
+            size_t width = src[0]->Axis(3);
+            size_t outputs = src[0]->Size(1);
+            for (size_t i = 0; i < width*height; ++i) 
+            {
+                size_t row = i / height;
+                size_t col = i % width;
+                for (size_t n = 0; n < _num; ++n) 
+                {
+                    size_t index = i*_num + n;
+                    size_t p_index = index * (_classes + 5) + 4;
+                    Type scale = pPredict[p_index];
+                    if (_classfix == -1 && scale < Type(0.5)) 
+                        scale = Type(0);
+                    size_t regionIndex = index * (_classes + 5);
+                    Region r;
+                    r.x = (col + CpuSigmoid(pPredict[regionIndex + 0])) / width;
+                    r.y = (row + CpuSigmoid(pPredict[regionIndex + 1])) / height;
+                    r.w = ::exp(pPredict[regionIndex + 2]) * _anchors[2 * n] / width;
+                    r.h = ::exp(pPredict[regionIndex + 3]) * _anchors[2 * n + 1] / height;
+                    size_t classIndex = index * (_classes + 5) + 5;
+                    for (size_t j = 0; j < _classes; ++j) 
+                    {
+                        Type prob = scale*pPredict[classIndex + j];
+                        if (prob > threshold)
+                        {
+                            r.v = prob;
+                            r.i = j;
+                            dst.push_back(r);
+                        }
+                        //probs[index][j] = (prob > threshold) ? prob : 0;
+                    }
+                }
+            }
         }
 
     protected:
@@ -115,8 +169,40 @@ namespace Synet
         }
 
     private:
+        typedef typename Base::Tensor Tensor;
+        typedef std::vector<Type> Vector;
 
-        size_t _coords, _classes, _num;
+        size_t _coords, _classes, _num, _classfix;
         bool _softmax;
+        Vector _anchors;
+
+        SYNET_INLINE Type Overlap(Type x1, Type w1, Type x2, Type w2)
+        {
+            Type l1 = x1 - w1 / 2;
+            Type l2 = x2 - w2 / 2;
+            Type left = l1 > l2 ? l1 : l2;
+            Type r1 = x1 + w1 / 2;
+            Type r2 = x2 + w2 / 2;
+            Type right = r1 < r2 ? r1 : r2;
+            return right - left;
+        }
+
+        SYNET_INLINE Type RegionIntersection(const Region & a, const Region & b)
+        {
+            Type w = overlap(a.x, a.w, b.x, b.w);
+            Type h = overlap(a.y, a.h, b.y, b.h);
+            return (w < 0 || h < 0) ? 0 : w*a;
+        }
+
+        SYNET_INLINE Type RegionUnion(const Region & a, const Region & b)
+        {
+            Type i = RegionIntersection(a, b);
+            return a.w*a.h + b.w*b.h - i;
+        }
+
+        //float box_iou(box a, box b)
+        //{
+        //    return box_intersection(a, b) / box_union(a, b);
+        //}
     };
 }

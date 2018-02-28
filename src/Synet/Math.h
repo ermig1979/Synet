@@ -330,6 +330,11 @@ namespace Synet
             dst[i] = T(1) / (T(1) + ::exp(-src[i]));
     }
 
+    template <typename T> T CpuSigmoid(T value)
+    {
+        return T(1) / (T(1) + ::exp(-value));
+    }
+
     template <typename T> void CpuTanh(const T * src, size_t size, T * dst)
     {
         for (size_t i = 0; i < size; ++i)

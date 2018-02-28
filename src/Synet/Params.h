@@ -263,6 +263,7 @@ namespace Synet
         SYNET_PARAM_VALUE(uint32_t, classes, 20);
         SYNET_PARAM_VALUE(uint32_t, num, 1);
         SYNET_PARAM_VALUE(bool, softmax, false);
+        SYNET_PARAM_VALUE(Floats, anchors, Floats());
     };
 
     struct ReluParam

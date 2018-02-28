@@ -52,6 +52,8 @@ namespace Synet
         typedef T Type;
         typedef Synet::Tensor<T, A> Tensor;
         typedef std::vector<Tensor*> TensorPtrs;
+        typedef Synet::Layer<T, A> Layer;
+        typedef Layer * LayerPtr;
 
         Network()
             : _empty(true)
@@ -108,6 +110,11 @@ namespace Synet
             return _dst; 
         }
 
+        LayerPtr Back() const
+        {
+            return _back;
+        }
+
         void Reshape()
         {
             for (size_t i = 0; i < _stages.size(); ++i)
@@ -122,8 +129,6 @@ namespace Synet
         }
 
     private:
-        typedef Synet::Layer<T, A> Layer;
-        typedef Layer * LayerPtr;
         typedef std::vector<LayerPtr> LayerPtrs;
         typedef std::shared_ptr<Layer> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
@@ -137,7 +142,7 @@ namespace Synet
 
         struct Stage
         {
-            Layer * layer;
+            LayerPtr layer;
             TensorPtrs src;
             TensorPtrs dst;
         };
@@ -150,6 +155,7 @@ namespace Synet
 
         Stages _stages;
         TensorPtrs _src, _dst;
+        LayerPtr _back;
 
         bool Init()
         {
@@ -195,6 +201,7 @@ namespace Synet
             }
             for (NameSet::const_iterator it = available.begin(); it != available.end(); ++it)
                 _dst.push_back(_tensors[index[*it]].get());
+            _back = _stages.empty() ? NULL : _stages.back().layer;
             _empty = false;
             return true;
         }
