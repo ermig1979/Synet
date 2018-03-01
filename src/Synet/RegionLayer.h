@@ -84,8 +84,8 @@ namespace Synet
 
         struct Region
         {
-            Type x, y, w, h, v;
-            size_t i;
+            Type x, y, w, h, prob;
+            size_t id;
         };
         typedef std::vector<Region> Regions;
 
@@ -116,16 +116,27 @@ namespace Synet
                     r.w = ::exp(pPredict[regionIndex + 2]) * _anchors[2 * n] / width;
                     r.h = ::exp(pPredict[regionIndex + 3]) * _anchors[2 * n + 1] / height;
                     size_t classIndex = index * (_classes + 5) + 5;
-                    for (size_t j = 0; j < _classes; ++j) 
+                    for (size_t id = 0; id < _classes; ++id)
                     {
-                        Type prob = scale*pPredict[classIndex + j];
+                        Type prob = scale*pPredict[classIndex + id];
                         if (prob > threshold)
                         {
-                            r.v = prob;
-                            r.i = j;
-                            dst.push_back(r);
+                            r.prob = prob;
+                            r.id = id;
+                            bool insert = true;
+                            for (size_t k = 0; k < dst.size() && insert; ++k)
+                            {
+                                if (r.id == dst[k].id && RelativeIntersection(r, dst[k]) >= overlap)
+                                {
+                                    if (r.prob > dst[k].prob)
+                                        dst[k] = r;
+                                    insert = false;
+                                    break;
+                                }
+                            }
+                            if(insert)
+                                dst.push_back(r);
                         }
-                        //probs[index][j] = (prob > threshold) ? prob : 0;
                     }
                 }
             }
@@ -187,22 +198,22 @@ namespace Synet
             return right - left;
         }
 
-        SYNET_INLINE Type RegionIntersection(const Region & a, const Region & b)
+        SYNET_INLINE Type Intersection(const Region & a, const Region & b)
         {
-            Type w = overlap(a.x, a.w, b.x, b.w);
-            Type h = overlap(a.y, a.h, b.y, b.h);
-            return (w < 0 || h < 0) ? 0 : w*a;
+            Type w = Overlap(a.x, a.w, b.x, b.w);
+            Type h = Overlap(a.y, a.h, b.y, b.h);
+            return (w < 0 || h < 0) ? 0 : w*h;
         }
 
-        SYNET_INLINE Type RegionUnion(const Region & a, const Region & b)
+        SYNET_INLINE Type Union(const Region & a, const Region & b)
         {
-            Type i = RegionIntersection(a, b);
+            Type i = Intersection(a, b);
             return a.w*a.h + b.w*b.h - i;
         }
 
-        //float box_iou(box a, box b)
-        //{
-        //    return box_intersection(a, b) / box_union(a, b);
-        //}
+        SYNET_INLINE Type RelativeIntersection(const Region & a, const Region & b)
+        {
+            return Intersection(a, b) / Union(a, b);
+        }
     };
 }
