@@ -41,10 +41,16 @@ namespace Synet
         bool Convert(const String & srcModelPath, const String & srcWeightPath, const String & dstModelPath, const String & dstWeightPath)
         {
             if (!Synet::FileExist(srcModelPath))
+            {
+                std::cout << "File '" << srcModelPath << "' is not exist!" << std::endl;
                 return false;
+            }
 
             if (!Synet::FileExist(srcWeightPath))
+            {
+                std::cout << "File '" << srcWeightPath << "' is not exist!" << std::endl;
                 return false;
+            }
 
             caffe::NetParameter srcModel;
             if(!(caffe::ReadProtoFromTextFile(srcModelPath, &srcModel) || caffe::ReadProtoFromBinaryFile(srcModelPath, &srcModel)))

@@ -64,9 +64,9 @@ namespace Synet
 
             if (_useGlobalStats)
             {
-                const Type scaleFactor = Type(1);
+                Type scaleFactor = Type(1);
                 if(this->Weight().size() > 2)
-                    this->Weight()[2].Data()[0] == 0 ? Type(0) : Type(1) / this->Weight()[2].Data()[0];
+                    scaleFactor = this->Weight()[2].Data()[0] == 0 ? Type(0) : Type(1) / this->Weight()[2].Data()[0];
                 _scale.Reshape({ _channels });
                 _bias.Reshape({ _channels });
                 for (size_t i = 0; i < _channels; ++i)

@@ -31,6 +31,7 @@
 
 //#define SYNET_CAFFE_ENABLE
 //#define SYNET_YOLO_ENABLE
+//#define SYNET_TENSORFLOW_ENABLE
 
 #include <stddef.h>
 #include <assert.h>
