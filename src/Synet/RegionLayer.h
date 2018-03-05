@@ -63,7 +63,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) 
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const RegionParam & param = this->Param().region();
             _coords = param.coords();
@@ -76,7 +76,7 @@ namespace Synet
             _classfix = 0;
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             assert(src[0]->Axis(1) == _num*(_coords + _classes + 1));
             dst[0]->Reshape(src[0]->Shape());
@@ -143,7 +143,7 @@ namespace Synet
         }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
 

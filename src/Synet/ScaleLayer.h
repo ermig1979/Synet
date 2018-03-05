@@ -67,7 +67,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) 
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const ScaleParam & param = this->Param().scale();
             _axis = param.axis();
@@ -80,7 +80,7 @@ namespace Synet
             }
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const Tensor & scale = this->Weight()[0];
             assert(src[0]->Count() >= _axis + scale.Count());
@@ -94,7 +94,7 @@ namespace Synet
         }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
             const Type* pSrc = src[0]->Data();

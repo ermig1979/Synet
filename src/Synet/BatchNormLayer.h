@@ -44,7 +44,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const BatchNormParam & param = this->Param().batchNorm();
             _movingAverageFraction = param.movingAverageFraction();
@@ -56,7 +56,7 @@ namespace Synet
                 _channels = src[0]->Axis(1);
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             if (src[0]->Count() >= 1)
                 assert(src[0]->Axis(1) == _channels);
@@ -99,7 +99,7 @@ namespace Synet
         }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
 

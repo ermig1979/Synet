@@ -42,18 +42,18 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) 
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _negativeSlope = this->Param().relu().negativeSlope();
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             dst[0]->Reshape(src[0]->Shape());
         }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
             CpuRelu<Type>(src[0]->Data(), src[0]->Size(), _negativeSlope, dst[0]->Data());

@@ -86,7 +86,6 @@ namespace Synet
             std::ifstream ifs(weight.c_str(), std::ifstream::binary);
             if (!ifs.is_open())
                 return false;
-
             for (size_t i = 0; i < _layers.size(); ++i)
             {
                 if (!_layers[i]->Load(ifs))
@@ -118,14 +117,14 @@ namespace Synet
         void Reshape()
         {
             for (size_t i = 0; i < _stages.size(); ++i)
-                _stages[i].layer->Reshape(_stages[i].src, _stages[i].dst);
+                _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst);
         }
 
         void Forward()
         {
             SYNET_PERF_FUNC();
             for (size_t i = 0; i < _stages.size(); ++i)
-                _stages[i].layer->Forward(_stages[i].src, _stages[i].dst);
+                _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
         }
 
     private:
@@ -144,6 +143,7 @@ namespace Synet
         {
             LayerPtr layer;
             TensorPtrs src;
+            TensorPtrs buf;
             TensorPtrs dst;
         };
         typedef std::vector<Stage> Stages;
@@ -159,6 +159,15 @@ namespace Synet
 
         bool Init()
         {
+            const size_t bufs = 1;
+            TensorPtrs buf;
+            for (size_t i = 0; i < bufs; ++i)
+            {
+                TensorSharedPtr tensor(new Tensor());
+                _tensors.push_back(tensor);
+                buf.push_back(tensor.get());
+            }
+
             NameIndexMap index;
             NameSet available;
             for (size_t i = 0; i < _layers.size(); ++i)
@@ -195,8 +204,9 @@ namespace Synet
                     if (param.type() == LayerTypeInput)
                         _src.push_back(_tensors.back().get());
                 }
-                stage.layer->Setup(stage.src, stage.dst);
-                stage.layer->Reshape(stage.src, stage.dst);
+                stage.buf = buf;
+                stage.layer->Setup(stage.src, stage.buf, stage.dst);
+                stage.layer->Reshape(stage.src, stage.buf, stage.dst);
                 _stages.push_back(stage);
             }
             for (NameSet::const_iterator it = available.begin(); it != available.end(); ++it)

@@ -34,6 +34,7 @@ namespace Synet
         typedef T Type;
 
         SYNET_INLINE Tensor()
+            : _size(0)
         {
             _data.reset(new Vector());
         }
@@ -41,13 +42,15 @@ namespace Synet
         SYNET_INLINE Tensor(const Synet::Shape & shape, const Type & value = Type())
             : _shape(shape)
         {
-            _data.reset(new Vector(Size(0, _shape.size()), value));
+            _size = Size(0, _shape.size());
+            _data.reset(new Vector(_size, value));
         }
 
         SYNET_INLINE Tensor(std::initializer_list<size_t> shape, const Type & value = Type())
             : _shape(shape.begin(), shape.end())
         {
-            _data.reset(new Vector(Size(0, _shape.size()), value));
+            _size = Size(0, _shape.size());
+            _data.reset(new Vector(_size, value));
         }
 
         SYNET_INLINE ~Tensor()
@@ -56,14 +59,32 @@ namespace Synet
 
         SYNET_INLINE void Reshape(const Synet::Shape & shape, const Type & value = Type())
         {
-            _shape = shape; 
-            _data->resize(Size(0, _shape.size()), value);
+            _shape = shape;
+            _size = Size(0, _shape.size());
+            _data->resize(_size, value);
         }
 
         SYNET_INLINE void Reshape(std::initializer_list<size_t> shape, const Type & value = Type())
         {
             _shape.assign(shape.begin(), shape.end());
-            _data->resize(Size(0, _shape.size()), value);
+            _size = Size(0, _shape.size());
+            _data->resize(_size, value);
+        }
+
+        SYNET_INLINE void Extend(const Synet::Shape & shape)
+        {
+            _shape = shape;
+            _size = Size(0, _shape.size());
+            if(_size > _data->size())
+                _data->resize(_size);
+        }
+
+        SYNET_INLINE void Extend(std::initializer_list<size_t> shape)
+        {
+            _shape.assign(shape.begin(), shape.end());
+            _size = Size(0, _shape.size());
+            if (_size > _data->size())
+                _data->resize(_size);
         }
 
         SYNET_INLINE const Synet::Shape & Shape() const
@@ -98,7 +119,7 @@ namespace Synet
 
         SYNET_INLINE size_t Size() const
         {
-            return _data->size();
+            return _size;
         }
 
         SYNET_INLINE size_t Offset(const Synet::Index & index) const
@@ -173,6 +194,7 @@ namespace Synet
         typedef std::shared_ptr<Vector> VectorPtr;
 
         Synet::Shape _shape;
+        size_t _size;
         VectorPtr _data;
     };
 }

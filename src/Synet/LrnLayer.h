@@ -76,7 +76,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _normRegion = this->Param().lrn().normRegion();
             _size = this->Param().lrn().localSize();
@@ -91,7 +91,7 @@ namespace Synet
             }
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             assert(src[0]->Count() == 4);
             _num = src[0]->Axis(0);
@@ -114,13 +114,13 @@ namespace Synet
         }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
             switch (_normRegion)
             {
             case NormRegionTypeAcrossChannels:
-                CrossChannelsCpu(src, dst);
+                CrossChannelsCpu(src, buf, dst);
                 break;
             case NormRegionTypeWithinChannel:
                 assert(0);
@@ -131,7 +131,7 @@ namespace Synet
             }
         }
 
-        virtual void CrossChannelsCpu(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void CrossChannelsCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
 

@@ -43,7 +43,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _biasTerm = this->Param().convolution().biasTerm();
             _axis = this->Param().convolution().axis();
@@ -136,7 +136,7 @@ namespace Synet
             _weightOffset = _dstConvChannels * _kernelSize / _group;
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const Type * pSrc = src[0]->Data();
             Type * pDst = dst[0]->Data();
@@ -182,14 +182,14 @@ namespace Synet
                 else
                     colBufferShape.push_back(_srcShape[i + 1]);
             }
-            _colBuffer.Reshape(colBufferShape);
+            buf[0]->Extend(colBufferShape);
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);
             _dstSpatialSize = dst[0]->Size(firstSpatialAxis);
         }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst)
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
             const Type * weight = this->Weight()[0].Data();
@@ -202,7 +202,7 @@ namespace Synet
                     Type * pBuf = (Type*)pSrc;
                     if (!_is1x1)
                     {
-                        pBuf = _colBuffer.Data();
+                        pBuf = buf[0]->Data() + _dstSize * n;
                         ImToCol(pSrc, pBuf);
                     }
                     for (size_t g = 0; g < _group; ++g)
@@ -235,6 +235,5 @@ namespace Synet
         bool _is1x1, _biasTerm;
         size_t _axis, _group, _spatialAxisNum, _srcChannels, _dstChannels, _srcConvChannels, _dstConvChannels, _weightOffset, _kernelSize;
         size_t _channelAxis, _num, _dstConvSpatialSize, _dstSpatialSize, _colOffset, _dstOffset, _srcSize, _dstSize;
-        Tensor _colBuffer;
     };
 }

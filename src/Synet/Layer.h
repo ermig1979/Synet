@@ -56,14 +56,14 @@ namespace Synet
             return _weight; 
         }
 
-        inline void Forward(const TensorPtrs & src, const TensorPtrs & dst)
+        inline void Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            ForwardCpu(src, dst);
+            ForwardCpu(src, buf, dst);
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & dst) = 0;
+        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & dst) = 0;
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
 
         bool Load(const void * & data, size_t & size)
         {
@@ -87,7 +87,7 @@ namespace Synet
         }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & dst) = 0;
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
 
     private:
         LayerParam _param;
