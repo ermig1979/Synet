@@ -30,6 +30,8 @@
 #if defined(SYNET_TENSORFLOW_ENABLE)
 #include "tensorflow/core/public/session.h"
 
+#define SYNET_TENSORFLOW_DEBUG
+
 namespace Synet
 {
     class TensorflowToSynet
@@ -50,8 +52,6 @@ namespace Synet
                 std::cout << "Error in building graph: " << status.error_message() << std::endl;
                 return false;
             }
-
-            //RemoveUnused(graph);
 
             Synet::NetworkParamHolder holder;
             Tensors weight;
@@ -84,53 +84,143 @@ namespace Synet
             Pin() : name(""), index(-1) {}
         };
 
-        bool ConvertNetwork(const tensorflow::GraphDef & graph, Synet::NetworkParam & network, Tensors & weight)
+        bool ConvertNetwork(tensorflow::GraphDef & graph, Synet::NetworkParam & network, Tensors & weight)
         {
+            RemoveUnused(graph);
+
+#ifdef SYNET_TENSORFLOW_DEBUG
+            for (int i = 0; i < graph.node_size(); ++i)
+                PrintLayerAttr(graph.node(i));
+#endif //SYNET_TENSORFLOW_DEBUG
+
             NameIndexMap valueId;
             std::set<String> ignore;
 
-            //AddConst(graph, ignore, valueId);
+            AddConst(graph, ignore, valueId);
 
             network.name() = "tensorflow_unknown";
             for (int i = 0; i < graph.node_size(); ++i)
             {
                 const ::tensorflow::NodeDef & node = graph.node(i);
+                google::protobuf::Map<String, tensorflow::AttrValue> attr = node.attr();
+
                 if (ignore.find(node.name()) != ignore.end())
                     continue;
-
-                PrintLayerAttr(node);
-                continue;
 
                 String type = node.op();
                 LayerParam layer;
                 layer.name() = node.name();
-                if (type == "Conv2D")
+                if (type == "Placeholder")
+                {
+                    layer.type() = LayerTypeInput;
+                    layer.dst().push_back(layer.name());
+                }
+                else if (type == "Conv2D")
                 {
                     layer.type() = LayerTypeConvolution;
                     layer.src().push_back(node.input(0));
                     layer.convolution().biasTerm() = false;
                     layer.weight().resize(1);
-
-
-                    //const tensorflow::TensorProto & tensor = node.attr().at("value").tensor();
-                    //Shape shape = GetShape(tensor);
-                    //layer.weight()[0].dim() = shape;
+                    weight.push_back(Tensor());
+                    ConvertKernel(GetConst(graph, node, valueId), weight.back());
+                    layer.weight()[0].dim() = weight.back().Shape();
 
                     NameIndexVector nextLayers = NextLayers(graph, node.name(), "BiasAdd");
                     if (nextLayers.size() == 1)
                     {
                         layer.convolution().biasTerm() = true;
                         layer.weight().resize(2);
-                        //int weights_layer_index = next_layers[0].second;
-                        //blobFromTensor(getConstBlob(net.node(weights_layer_index), value_id), layerParams.blobs[1]);
-                        //ExcludeLayer(net, weights_layer_index, 0, false);
+                        weight.push_back(Tensor());
+                        const ::tensorflow::NodeDef & bias = graph.node(nextLayers[0].second);
+                        ConvertKernel(GetConst(graph, bias, valueId), weight.back());
+                        layer.weight()[1].dim() = weight.back().Shape();
                         ignore.insert(nextLayers[0].first);
+                        ExcludeLayer(graph, nextLayers[0].second, 0, false);
+                    }
+
+                    layer.convolution().kernel() = Shape({ layer.weight()[0].dim()[2], layer.weight()[0].dim()[3]});
+                    layer.convolution().outputNum() = layer.weight()[0].dim()[0];
+                    if (attr.find("strides") != attr.end())
+                    {
+                        const tensorflow::AttrValue_ListValue & list = attr.at("strides").list();
+                        assert(list.i_size() == 4 && list.i(0) == 1 && list.i(3) == 1);
+                        layer.convolution().stride() = Shape({ (size_t)list.i(1), (size_t)list.i(2) });
+                    }
+                    if (attr.find("padding") != attr.end())
+                    {
+                        const String & pad = attr.at("padding").s();
+                        if (pad == "SAME")
+                        {
+                            Shape kernel = layer.convolution().kernel();
+                            layer.convolution().pad() = Shape({ kernel[0] / 2, kernel[1] / 2 });
+                        }
+                    }
+                    layer.dst().push_back(layer.name()); 
+                }
+                else if (type == "Relu")
+                {
+                    layer.type() = LayerTypeRelu;
+                    layer.src().push_back(node.input(0));
+                    layer.dst() = layer.src();
+                }
+                else if (type == "MaxPool")
+                {
+                    layer.type() = LayerTypeRelu;
+                    layer.src().push_back(node.input(0));
+                    layer.pooling().method() = PoolingMethodTypeMax;
+                    const tensorflow::AttrValue_ListValue & kernel = attr.at("ksize").list();
+                    assert(kernel.i_size() == 4 && kernel.i(0) == 1 && kernel.i(3) == 1);
+                    layer.pooling().kernel() = Shape({ (size_t)kernel.i(1), (size_t)kernel.i(2) });
+                    if (attr.find("strides") != attr.end())
+                    {
+                        const tensorflow::AttrValue_ListValue & list = attr.at("strides").list();
+                        assert(list.i_size() == 4 && list.i(0) == 1 && list.i(3) == 1);
+                        layer.pooling().stride() = Shape({ (size_t)list.i(1), (size_t)list.i(2) });
+                    }
+                    if (attr.find("padding") != attr.end())
+                    {
+                        const String & pad = attr.at("padding").s();
+                        if (pad == "SAME")
+                        {
+                            Shape kernel = layer.convolution().kernel();
+                            layer.pooling().pad() = Shape({ kernel[0] / 2, kernel[1] / 2 });
+                        }
+                    }
+                    layer.dst().push_back(layer.name());
+                }
+                else if (type == "Sigmoid")
+                {
+                    layer.type() = LayerTypeSigmoid;
+                    layer.src().push_back(node.input(0));
+                    layer.dst() = layer.src();
+                }
+                else if (type == "BiasAdd" || type == "Add")
+                {
+                    bool haveConst = false;
+                    for (int j = 0; !haveConst && j < node.input_size(); ++j)
+                    {
+                        Pin input = ParsePin(node.input(j));
+                        haveConst = valueId.find(input.name) != valueId.end();
+                    }
+                    if (haveConst)
+                    {
+                        layer.src().push_back(node.input(0));
+                        layer.type() = LayerTypeBias;
+                        layer.weight().resize(1);
+                        weight.push_back(Tensor());
+                        ConvertKernel(GetConst(graph, node, valueId), weight.back());
+                        layer.weight()[0].dim() = weight.back().Shape();
+                        layer.dst() = layer.src();
+                    }                   
+                    else
+                    {
+                        layer.type() = LayerTypeEltwise;
+                        layer.eltwise().operation() = EltwiseOperationTypeSum;
+                        layer.src().push_back(node.input(0));
+                        layer.src().push_back(node.input(1));
+                        layer.dst().push_back(layer.name());
                     }
                 }
-                //for (int j = 0; j < node.input_size(); ++j)
-                //    layer.src().push_back(node.input(j));
-                layer.dst().push_back(node.op());
-
                 network.layers().push_back(layer);
             }
 
@@ -148,10 +238,11 @@ namespace Synet
             {
                 const tensorflow::NodeDef & layer = graph.node(i);
                 String type = layer.op();
-                if (type == "Identity" || type == "Dropout") 
+                if (type == "Identity" || type == "Dropout" || layer.name().find("dropout") == 0)
                 {
                     unusedIndex.push_back(i);
-                    unused[layer.name()] = layer.input(0);
+                    if(layer.input_size())
+                        unused[layer.name()] = layer.input(0);
                 }
             }
 
@@ -219,6 +310,87 @@ namespace Synet
             }
         }
 
+        const tensorflow::TensorProto & GetConst(const tensorflow::GraphDef & graph, const tensorflow::NodeDef & node, const NameIndexMap & consts, int index = -1, int * actual = NULL)
+        {
+            if (index == -1) 
+            {
+                for (int i = 0; i < node.input_size(); i++)
+                {
+                    Pin input = ParsePin(node.input(i));
+                    if (consts.find(input.name) != consts.end())
+                    {
+                        assert(index == -1);
+                        index = i;
+                    }
+                }
+            }
+            assert(index != -1);
+
+            Pin kernel_inp = ParsePin(node.input(index));
+            assert(consts.find(kernel_inp.name) != consts.end());
+            assert(kernel_inp.index == 0);
+
+            if (actual) 
+                *actual = index;
+
+            int nodeIdx = consts.at(kernel_inp.name);
+            return graph.node(nodeIdx).attr().at("value").tensor();
+        }
+
+        template <class T> void ConvertKernel(const tensorflow::TensorProto & src, Tensor & dst)
+        {
+            Shape shape = GetShape(src); 
+            if(shape.size() == 4)
+                shape = Shape({shape[3], shape[2], shape[0], shape[1]});
+            dst.Reshape(shape);    
+            float * pDst = dst.Data();
+
+            String content = src.tensor_content();
+            const T * pSrc = (T*)content.c_str();
+            size_t size = content.size() / sizeof(T);
+            assert(size = dst.Size());
+
+            if (shape.size() == 4)
+            {
+                size_t out_c = shape[0], input_c = shape[1], height = shape[2], width = shape[3];
+                for (size_t i_oc = 0; i_oc < out_c; i_oc++)
+                {
+                    for (size_t i_ic = 0; i_ic < input_c; i_ic++)
+                    {
+                        for (size_t i_h = 0; i_h < height; i_h++)
+                        {
+                            for (size_t i_w = 0; i_w < width; i_w++)
+                            {
+                                size_t dst_i = input_c*height*width*i_oc + height*width*i_ic + width*i_h + i_w;
+                                size_t src_i = out_c*input_c*width*i_h + out_c*input_c*i_w + out_c*i_ic + i_oc;
+                                pDst[dst_i] = pSrc[src_i];
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i < size; i++)
+                    pDst[i] = (float)pSrc[i];
+            }
+        }
+
+        void ConvertKernel(const tensorflow::TensorProto & src, Tensor & dst)
+        {
+            switch (src.dtype())
+            {
+            case tensorflow::DT_FLOAT:
+                ConvertKernel<float>(src, dst);
+                break;
+            case tensorflow::DT_INT32:
+                ConvertKernel<int>(src, dst);
+                break;
+            default: 
+                assert(0);
+            }
+        }
+
         Shape GetShape(const tensorflow::TensorProto & tensor)
         {
             Shape shape;
@@ -238,43 +410,84 @@ namespace Synet
             return shape;
         }
 
+        void ExcludeLayer(tensorflow::GraphDef & graph, const int layerIndex, const int inputIndex, bool remove = true) 
+        {
+            String layerName = graph.node(layerIndex).name();
+            NameIndexVector layers = NextLayers(graph, layerName);
+            String removedInput = graph.node(layerIndex).input(inputIndex);
+            for (size_t i = 0; i < layers.size(); i++)
+            {
+                tensorflow::NodeDef * layer = graph.mutable_node(layers[i].second);
+                for (int input_id = 0; input_id < layer->input_size(); input_id++) 
+                {
+                    String inputName = layer->input(input_id);
+                    if (inputName == layerName)
+                        layer->set_input(input_id, removedInput);
+                }
+            }
+            if (remove)
+                graph.mutable_node()->DeleteSubrange(layerIndex, 1);
+        }
+
+
+#ifdef SYNET_TENSORFLOW_DEBUG
         void PrintLayerAttr(const tensorflow::NodeDef & layer)
         {
             std::cout << std::endl << layer.name() << ":" << layer.op();
             for (int ii = 0; ii < layer.input_size(); ii++)
                 std::cout << "(" << layer.input(ii) << ")";
             std::cout << std::endl;
-            google::protobuf::Map<std::string, tensorflow::AttrValue> attr
-                = layer.attr();
-            for (google::protobuf::Map<std::string, tensorflow::AttrValue>::const_iterator ai = attr.begin();
-                ai != attr.end(); ++ai)
+            const google::protobuf::Map<String, tensorflow::AttrValue> & attrs = layer.attr();
+            for (google::protobuf::Map<String, tensorflow::AttrValue>::const_iterator ai = attrs.begin(); ai != attrs.end(); ++ai)
             {
-                std::cout << ai->first << ":";
-                if (ai->first == "dtype" || ai->first == "T")
-                    std::cout << ai->second.i();
-                else if (ai->first == "padding")
-                    std::cout << ai->second.s();
-                else if (ai->first == "transpose_a" || ai->first == "transpose_b")
-                    std::cout << ai->second.b();
-                else if (ai->first == "shape")
-                     PrintTensorShape(ai->second.shape());
-                else if (ai->first == "strides" || ai->first == "ksize")
-                    PrintList(ai->second.list());
-                else
-                    PrintTensor(ai->second.tensor());
+                const String & name = ai->first;
+                std::cout << name << ":";
+                const tensorflow::AttrValue & attr = ai->second;
+                switch (attr.value_case())
+                {
+                case tensorflow::AttrValue::kS:
+                    std::cout << attr.s();
+                    break;
+                case tensorflow::AttrValue::kI:
+                    std::cout << attr.i();
+                    break;
+                case tensorflow::AttrValue::kF:
+                    std::cout << attr.f();
+                    break;
+                case tensorflow::AttrValue::kB:
+                    std::cout << attr.b();
+                    break;
+                case tensorflow::AttrValue::kType:
+                    std::cout << attr.type();
+                    break;
+                case tensorflow::AttrValue::kShape:
+                    PrintTensorShape(attr.shape());
+                    break;
+                case tensorflow::AttrValue::kTensor:
+                    PrintTensor(attr.tensor());
+                    break;
+                case tensorflow::AttrValue::kList:
+                    PrintList(attr.list());
+                    break;
+                default:
+                    assert(0);
+                    break;
+                }
                 std::cout << std::endl;
             }
         }
 
-        void PrintList(const tensorflow::AttrValue::ListValue & val)
+        void PrintList(const tensorflow::AttrValue::ListValue & value)
         {
             std::cout << "(";
-            for (int i = 0; i < val.i_size(); i++)
-                std::cout << " " << val.i(i);
+            for (int i = 0; i < value.i_size(); i++)
+                std::cout << " " << value.i(i);
+            for (int i = 0; i < value.s_size(); i++)
+                std::cout << " " << value.s(i);
             std::cout << " )";
         }
 
-        void PrintTensorShape(const tensorflow::TensorShapeProto &shape)
+        void PrintTensorShape(const tensorflow::TensorShapeProto & shape)
         {
             std::cout << "[ ";
             for (int d = 0; d < shape.dim_size(); d++)
@@ -283,12 +496,23 @@ namespace Synet
             std::cout << "]";
         }
 
-        void PrintTensor(const tensorflow::TensorProto &tensor)
+        void PrintTensor(const tensorflow::TensorProto & tensor)
         {
-            PrintTensorShape(tensor.tensor_shape());
-
-            if (tensor.tensor_content().empty())
+            if (tensor.int_val_size())
+            {
+                for (int i = 0; i < tensor.int_val_size(); i++)
+                    std::cout << " " << tensor.int_val(i);
                 return;
+            }
+
+            if (tensor.float_val_size())
+            {
+                for (int i = 0; i < tensor.float_val_size(); i++)
+                    std::cout << " " << tensor.float_val(i);
+                return;
+            }
+
+            PrintTensorShape(tensor.tensor_shape());
 
             switch (tensor.dtype())
             {
@@ -317,6 +541,7 @@ namespace Synet
                 break;
             }
         }
+#endif //SYNET_TENSORFLOW_DEBUG
 
         bool SaveWeight(const Tensors & weight, const String & path)
         {
