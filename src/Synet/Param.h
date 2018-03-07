@@ -217,11 +217,16 @@ namespace Synet
         return ss.str();
     }
 
-    template<class T> SYNET_INLINE  String ValueToString(const std::vector<T> & values)
+    template<> SYNET_INLINE String ValueToString<size_t>(const size_t & value)
+    {
+        return ValueToString((ptrdiff_t)value);
+    }
+
+    template<class T> SYNET_INLINE String ValueToString(const std::vector<T> & values)
     {
         std::stringstream ss;
         for (size_t i = 0; i < values.size(); ++i)
-            ss << (i ? " " : "") << values[i];
+            ss << (i ? " " : "") << ValueToString<T>(values[i]);
         return ss.str();
     }
 
@@ -229,6 +234,11 @@ namespace Synet
     {
         std::stringstream ss(string);
         ss >> value;
+    }
+
+    template<> SYNET_INLINE void StringToValue<size_t>(const String & string, size_t & value)
+    {
+        StringToValue(string, (ptrdiff_t&)value);
     }
 
     template<class T> SYNET_INLINE void StringToValue(const String & string, std::vector<T> & values)

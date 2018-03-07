@@ -165,7 +165,7 @@ namespace Synet
                 }
                 else if (type == "MaxPool")
                 {
-                    layer.type() = LayerTypeRelu;
+                    layer.type() = LayerTypePooling;
                     layer.src().push_back(node.input(0));
                     layer.pooling().method() = PoolingMethodTypeMax;
                     const tensorflow::AttrValue_ListValue & kernel = attr.at("ksize").list();
@@ -220,6 +220,76 @@ namespace Synet
                         layer.src().push_back(node.input(1));
                         layer.dst().push_back(layer.name());
                     }
+                }
+                else if (type == "MatMul")
+                {
+                    assert(node.input_size() == 2);
+                    bool haveConst = false;
+                    for (int j = 0; !haveConst && j < node.input_size(); ++j)
+                    {
+                        Pin input = ParsePin(node.input(j));
+                        haveConst = valueId.find(input.name) != valueId.end();
+                    }
+                    layer.type() = LayerTypeInnerProduct;
+                    layer.innerProduct().biasTerm() = false;
+                    layer.src().push_back(node.input(0));
+                    if (attr.find("transpose_a") != attr.end())
+                        layer.innerProduct().transposeA() = attr.at("transpose_a").b();
+                    if (attr.find("transpose_b") != attr.end())
+                        layer.innerProduct().transposeB() = attr.at("transpose_b").b();
+                    if (haveConst)
+                    {
+                        layer.weight().resize(1);
+                        weight.push_back(Tensor());
+                        ConvertKernel(GetConst(graph, node, valueId), weight.back());
+                        layer.weight()[0].dim() = weight.back().Shape();
+                        layer.innerProduct().outputNum() = layer.innerProduct().transposeB() ? layer.weight()[0].dim()[1] : layer.weight()[0].dim()[0];
+                        NameIndexVector nextLayers = NextLayers(graph, node.name(), "BiasAdd");
+                        if (nextLayers.size() == 1)
+                        {
+                            layer.innerProduct().biasTerm() = true;
+                            layer.weight().resize(2);
+                            weight.push_back(Tensor());
+                            const ::tensorflow::NodeDef & bias = graph.node(nextLayers[0].second);
+                            ConvertKernel(GetConst(graph, bias, valueId), weight.back());
+                            layer.weight()[1].dim() = weight.back().Shape();
+                            ignore.insert(nextLayers[0].first);
+                            ExcludeLayer(graph, nextLayers[0].second, 0, false);
+                        }
+                    }
+                    else
+                    {
+                        layer.src().push_back(node.input(1));
+                    }
+                    layer.dst().push_back(layer.name());
+                }
+                else if (type == "Reshape")
+                {
+                    layer.type() = LayerTypeReshape;
+                    layer.src().push_back(node.input(0));
+                    bool haveConst = false;
+                    for (int j = 0; !haveConst && j < node.input_size(); ++j)
+                    {
+                        Pin input = ParsePin(node.input(j));
+                        haveConst = valueId.find(input.name) != valueId.end();
+                    }
+                    if (haveConst)
+                    {
+                        const tensorflow::TensorProto & tensor = GetConst(graph, node, valueId, 1);
+                        assert(tensor.tensor_shape().dim_size() == 1);
+                        layer.reshape().shape().resize(tensor.tensor_shape().dim(0).size());
+                        for (size_t j = 0; j < layer.reshape().shape().size(); ++j)
+                            layer.reshape().shape()[j] = ((int*)tensor.tensor_content().c_str())[j];
+                    }
+                    else
+                    {
+
+                    }
+                    layer.dst().push_back(layer.name());
+                }                
+                else
+                {
+                    layer.dst().push_back(type);
                 }
                 network.layers().push_back(layer);
             }
@@ -345,7 +415,7 @@ namespace Synet
             dst.Reshape(shape);    
             float * pDst = dst.Data();
 
-            String content = src.tensor_content();
+            const String & content = src.tensor_content();
             const T * pSrc = (T*)content.c_str();
             size_t size = content.size() / sizeof(T);
             assert(size = dst.Size());
@@ -428,7 +498,6 @@ namespace Synet
             if (remove)
                 graph.mutable_node()->DeleteSubrange(layerIndex, 1);
         }
-
 
 #ifdef SYNET_TENSORFLOW_DEBUG
         void PrintLayerAttr(const tensorflow::NodeDef & layer)

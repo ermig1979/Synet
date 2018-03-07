@@ -153,7 +153,7 @@ namespace Synet
             case Synet::LayerTypeInnerProduct:
                 dst.innerProduct().outputNum() = src.inner_product_param().num_output();
                 dst.innerProduct().biasTerm() = src.inner_product_param().bias_term();
-                dst.innerProduct().transpose() = src.inner_product_param().transpose();
+                dst.innerProduct().transposeB() = src.inner_product_param().transpose();
                 dst.innerProduct().axis() = src.inner_product_param().axis();
                 break;
             case Synet::LayerTypeInput:

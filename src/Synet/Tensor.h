@@ -186,6 +186,16 @@ namespace Synet
 
         SYNET_INLINE void Share(const Tensor & tensor)
         {
+            _shape = tensor._shape;
+            _size = tensor._size;
+            _data = tensor._data;
+        }
+
+        SYNET_INLINE void ShareAs(const Tensor & tensor, const Synet::Shape & shape)
+        {
+            _shape = shape;
+            _size = Size(0, _shape.size());
+            assert(_size == tensor._size);
             _data = tensor._data;
         }
 

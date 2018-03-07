@@ -45,27 +45,36 @@ namespace Synet
         virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _biasTerm = this->Param().innerProduct().biasTerm();
-            _transpose = this->Param().innerProduct().transpose();
+            _transposeA = this->Param().innerProduct().transposeA();
+            _transposeB = this->Param().innerProduct().transposeB();
             _axis = this->Param().innerProduct().axis();
-            _N = this->Param().innerProduct().outputNum();
             _K = src[0]->Axis(_axis);
+            if (src.size() == 2)
+            {
+                assert(_biasTerm == false);
+                assert(_K = src[1]->Size(0, _axis));
+                _N = src[1]->Axis(_axis);
+            }
+            else
+            {
+                _N = this->Param().innerProduct().outputNum();
+                const typename Base::Tensors & weight = this->Weight();
+                if (_biasTerm)
+                    assert(weight.size() == 2);
+                else
+                    assert(weight.size() == 1);
+                if (_transposeB)
+                    assert(weight[0].Shape() == Shape({ _K, _N }));
+                else
+                    assert(weight[0].Shape() == Shape({ _N, _K }));
+                if (_biasTerm)
+                    assert(weight[1].Shape() == Shape({ _N }));
+            }
 
-            const typename Base::Tensors & weight = this->Weight();
-            if (_biasTerm)
-                assert(weight.size() == 2);
-            else
-                assert(weight.size() == 1);
-            if (_transpose)
-                assert(weight[0].Shape() == Shape({ _K, _N }));
-            else
-                assert(weight[0].Shape() == Shape({ _N, _K }));
-            if (_biasTerm)
-                assert(weight[1].Shape() == Shape({ _N }));
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            const size_t newK = src[0]->Axis(_axis);
             _M = src[0]->Size(0, _axis);
             Shape dstShape = src[0]->Shape();
             dstShape.resize(_axis + 1);
@@ -82,8 +91,10 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            CpuGemm<Type>(CblasNoTrans, _transpose ? CblasNoTrans : CblasTrans, _M, _N, _K,
-                (Type)1.0, src[0]->Data(), this->Weight()[0].Data(), (Type)0.0, dst[0]->Data());
+            const Type * pA = src[0]->Data();
+            const Type * pB = src.size() > 1 ? src[1]->Data() : this->Weight()[0].Data();
+            CpuGemm<Type>(_transposeA ? CblasNoTrans : CblasTrans, _transposeB ? CblasNoTrans : CblasTrans, _M, _N, _K,
+                Type(1), pA, pB, Type(0), dst[0]->Data());
             if (_biasTerm)
             {
                 CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _M, _N, 1,
@@ -93,7 +104,7 @@ namespace Synet
 
     private:
         size_t _M, _K, _N, _axis;
-        bool _biasTerm, _transpose;
+        bool _biasTerm, _transposeA, _transposeB;
         Synet::Tensor<T, A> _biasMultiplier;
     };
 }
