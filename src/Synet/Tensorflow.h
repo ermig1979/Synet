@@ -283,10 +283,20 @@ namespace Synet
                     }
                     else
                     {
-
+                        //if()
                     }
                     layer.dst().push_back(layer.name());
-                }                
+                } 
+                else if (type == "Transpose")
+                {
+                    layer.type() = LayerTypePermute;
+                    layer.src().push_back(node.input(0));
+                    const tensorflow::TensorProto & tensor = GetConst(graph, node, valueId, 1);
+                    layer.permute().order().resize(tensor.tensor_shape().dim(0).size());
+                    for (size_t j = 0; j < layer.permute().order().size(); ++j)
+                        layer.permute().order()[j] = ((int*)tensor.tensor_content().c_str())[j];
+                    layer.dst().push_back(layer.name());
+                }
                 else
                 {
                     layer.dst().push_back(type);

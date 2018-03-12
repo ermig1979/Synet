@@ -53,6 +53,7 @@ namespace Synet
         LayerTypeInput,
         LayerTypeLog,
         LayerTypeLrn,
+        LayerTypePermute,
         LayerTypePooling,
         LayerTypeRegion,
         LayerTypeRelu,
@@ -80,6 +81,7 @@ namespace Synet
             "Input",
             "Log",
             "LRN",
+            "Permute",
             "Pooling",
             "Region",
             "ReLU",
@@ -251,6 +253,11 @@ namespace Synet
         SYNET_PARAM_VALUE(float, k, 1.0f);
     };
 
+    struct PermuteParam
+    {
+        SYNET_PARAM_VALUE(Shape, order, Shape());
+    };
+
     struct PoolingParam
     {
         SYNET_PARAM_VALUE(PoolingMethodType, method, PoolingMethodTypeUnknown);
@@ -322,6 +329,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(InputParam, input);
         SYNET_PARAM_STRUCT(LogParam, log);
         SYNET_PARAM_STRUCT(LrnParam, lrn);
+        SYNET_PARAM_STRUCT(PermuteParam, permute);
         SYNET_PARAM_STRUCT(PoolingParam, pooling);
         SYNET_PARAM_STRUCT(RegionParam, region);
         SYNET_PARAM_STRUCT(ReluParam, relu);
