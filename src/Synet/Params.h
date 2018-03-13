@@ -47,8 +47,9 @@ namespace Synet
         LayerTypeBias,
         LayerTypeConcat,
         LayerTypeConvolution,
-        LayerTypeEltwise,
         LayerTypeDropout,
+        LayerTypeEltwise,
+        LayerTypeFill,
         LayerTypeInnerProduct,
         LayerTypeInput,
         LayerTypeLog,
@@ -75,8 +76,9 @@ namespace Synet
             "Bias",
             "Concat",
             "Convolution",
-            "Eltwise",
             "Dropout",
+            "Eltwise",
+            "Fill",
             "InnerProduct",
             "Input",
             "Log",
@@ -217,6 +219,11 @@ namespace Synet
         SYNET_PARAM_VALUE(uint32_t, group, 1);
     };
 
+    struct FillParam
+    {
+        SYNET_PARAM_VALUE(float, value, 0.0f);
+    };
+
     struct EltwiseParam
     {
         SYNET_PARAM_VALUE(EltwiseOperationType, operation, EltwiseOperationTypeSum);
@@ -324,6 +331,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(BiasParam, bias);
         SYNET_PARAM_STRUCT(ConcatParam, concat);
         SYNET_PARAM_STRUCT(ConvolutionParam, convolution);
+        SYNET_PARAM_STRUCT(FillParam, fill);
         SYNET_PARAM_STRUCT(EltwiseParam, eltwise);
         SYNET_PARAM_STRUCT(InnerProductParam, innerProduct);
         SYNET_PARAM_STRUCT(InputParam, input);

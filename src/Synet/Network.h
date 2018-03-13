@@ -28,6 +28,7 @@
 #include "Synet/BiasLayer.h"
 #include "Synet/ConcatLayer.h"
 #include "Synet/ConvolutionLayer.h"
+#include "Synet/FillLayer.h"
 #include "Synet/EltwiseLayer.h"
 #include "Synet/InnerProductLayer.h"
 #include "Synet/InputLayer.h"
@@ -226,8 +227,9 @@ namespace Synet
             case LayerTypeBias: return new BiasLayer<T, A>(param);
             case LayerTypeConcat: return new ConcatLayer<T, A>(param);
             case LayerTypeConvolution: return new ConvolutionLayer<T, A>(param);
-            case LayerTypeEltwise: return new EltwiseLayer<T, A>(param);
             case LayerTypeDropout: return new StubLayer<T, A>(param);
+            case LayerTypeEltwise: return new EltwiseLayer<T, A>(param);
+            case LayerTypeFill: return new FillLayer<T, A>(param);
             case LayerTypeInnerProduct: return new InnerProductLayer<T, A>(param);
             case LayerTypeInput: return new InputLayer<T, A>(param);
             case LayerTypeLog: return new LogLayer<T, A>(param);

@@ -74,6 +74,7 @@ namespace Synet
         typedef std::vector<Tensor> Tensors;
         typedef std::vector<std::pair<String, int>> NameIndexVector;
         typedef std::map<String, int> NameIndexMap;
+        typedef std::map<String, String> NameNameMap;
         typedef std::set<String> NameSet;
 
         struct Pin
@@ -94,6 +95,7 @@ namespace Synet
 #endif //SYNET_TENSORFLOW_DEBUG
 
             NameIndexMap valueId;
+            NameNameMap shapes;
             std::set<String> ignore;
 
             AddConst(graph, ignore, valueId);
@@ -297,8 +299,24 @@ namespace Synet
                         layer.permute().order()[j] = ((int*)tensor.tensor_content().c_str())[j];
                     layer.dst().push_back(layer.name());
                 }
+                else if (type == "Fill")
+                {
+                    layer.type() = LayerTypeFill;
+                    layer.src().push_back(node.input(0));
+                    const tensorflow::TensorProto & tensor = GetConst(graph, node, valueId, 1);
+                    layer.fill().value() = tensor.float_val(0);
+                    layer.dst() = layer.src();
+                }
+                else if (type == "Shape")
+                {
+                    ignore.insert(node.name());
+                    shapes[node.name()] = node.input(0);
+                    continue;
+                }
                 else
                 {
+                    for (size_t j = 0; j < node.input_size(); ++j)
+                        layer.src().push_back(node.input(j));
                     layer.dst().push_back(type);
                 }
                 network.layers().push_back(layer);
