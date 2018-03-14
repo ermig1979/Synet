@@ -66,22 +66,22 @@ namespace Synet
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const ReshapeParam & param = this->Param().reshape();
-            const int inputStartAxis = param.axis();
-            const int startAxis = (inputStartAxis >= 0) ? inputStartAxis : src[0]->Count() + inputStartAxis + 1;
-            assert(startAxis >= 0 && startAxis <= src[0]->Count());
-            const int numAxes = param.numAxes();
+            const ptrdiff_t inputStartAxis = param.axis();
+            const ptrdiff_t startAxis = (inputStartAxis >= 0) ? inputStartAxis : src[0]->Count() + inputStartAxis + 1;
+            assert(startAxis >= 0 && startAxis <= (ptrdiff_t)src[0]->Count());
+            const ptrdiff_t numAxes = param.numAxes();
             assert(numAxes >= -1);
-            const int endAxis = (numAxes == -1) ? src[0]->Count() : (startAxis + numAxes);
-            assert(endAxis <= src[0]->Count());
-            const int numAxesReplaced = endAxis - startAxis;
-            const int numAxesRetained = src[0]->Count() - numAxesReplaced;
+            const ptrdiff_t endAxis = (numAxes == -1) ? src[0]->Count() : (startAxis + numAxes);
+            assert(endAxis <= (ptrdiff_t)src[0]->Count());
+            const ptrdiff_t numAxesReplaced = endAxis - startAxis;
+            const ptrdiff_t numAxesRetained = src[0]->Count() - numAxesReplaced;
             Shape shape(numAxesRetained + param.shape().size());
             int topShapeIndex = 0;
-            for (int i = 0; i < startAxis; ++i)
+            for (ptrdiff_t i = 0; i < startAxis; ++i)
                 shape[topShapeIndex++] = src[0]->Axis(i);
-            for (int i = 0; i < param.shape().size(); ++i)
+            for (size_t i = 0; i < param.shape().size(); ++i)
                 shape[topShapeIndex++] = param.shape()[i];
-            for (int i = endAxis; i < src[0]->Count(); ++i)
+            for (size_t i = endAxis; i < src[0]->Count(); ++i)
                 shape[topShapeIndex++] = src[0]->Axis(i);
             assert(topShapeIndex == shape.size());
             for (size_t i = 0; i < _copyAxes.size(); ++i)
@@ -91,10 +91,10 @@ namespace Synet
             }
             if (_inferredAxis >= 0)
             {
-                int explicitCount = _constantCount;
+                size_t explicitCount = _constantCount;
                 explicitCount *= src[0]->Size(0, startAxis);
                 explicitCount *= src[0]->Size(endAxis);
-                for (int i = 0; i < _copyAxes.size(); ++i)
+                for (size_t i = 0; i < _copyAxes.size(); ++i)
                     explicitCount *= shape[startAxis + _copyAxes[i]];
                 assert(0 == src[0]->Size() % explicitCount);
                 shape[startAxis + _inferredAxis] = src[0]->Size() / explicitCount;
@@ -108,6 +108,6 @@ namespace Synet
         }
     private:
         Shape _copyAxes;
-        int _inferredAxis, _constantCount;
+        ptrdiff_t _inferredAxis, _constantCount;
     };
 }

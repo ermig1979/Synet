@@ -263,10 +263,10 @@ namespace Synet
         }
     };
 
-    bool ConvertCaffeToSynet(const String & srcData, const String & srcWeights, const String & dstXml, const String & dstBin)
+    bool ConvertCaffeToSynet(const String & srcModel, const String & srcWeight, const String & dstXml, const String & dstBin)
     {
         CaffeToSynet caffeToSynet;
-        return caffeToSynet.Convert(srcData, srcWeights, dstXml, dstBin);
+        return caffeToSynet.Convert(srcModel, srcWeight, dstXml, dstBin);
     }
 }
 
