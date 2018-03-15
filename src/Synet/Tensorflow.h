@@ -28,7 +28,17 @@
 #include "Synet/Params.h"
 
 #if defined(SYNET_TENSORFLOW_ENABLE)
+
+#ifdef _MSC_VER
+#pragma warning (push)
+#pragma warning (disable: 4267 4800)
+#endif
+
 #include "tensorflow/core/public/session.h"
+
+#ifdef _MSC_VER
+#pragma warning (pop)
+#endif
 
 #define SYNET_TENSORFLOW_DEBUG
 
@@ -40,7 +50,7 @@ namespace Synet
         struct SizeParam
         {
             SYNET_PARAM_VALUE(String, name, String());
-            SYNET_PARAM_VALUE(int32_t, size, -1);
+            SYNET_PARAM_VALUE(int32_t, size, 0);
         };
 
         struct ShapeParam
@@ -230,10 +240,18 @@ namespace Synet
                     }
                     else
                     {
-                        //if()
+                        NotImplemented(layer);
                     }
                     layer.dst().push_back(layer.name());
                 } 
+                else if (type == "ExpandDims")
+                {
+                    layer.type() = LayerTypeExpandDims;
+                    layer.src().push_back(node.input(0));
+                    const tensorflow::TensorProto & tensor = GetConst(_graph, node, _valueId);
+                    layer.expandDims().axis() = tensor.int_val(0);
+                    layer.dst().push_back(layer.name());
+                }                
                 else if (type == "Transpose")
                 {
                     layer.type() = LayerTypePermute;
@@ -252,24 +270,25 @@ namespace Synet
                     layer.fill().value() = tensor.float_val(0);
                     layer.dst() = layer.src();
                 }
-                else if (type == "Split")
-                {
-                    //layer.type() = LayerTypeFill;
+                //else if (type == "Split")
+                //{
+                //    //layer.type() = LayerTypeFill;
 
-                }
-                else if (type == "Switch")
-                {
-                    //layer.type() = LayerTypeFill;
+                //}
+                //else if (type == "Switch")
+                //{
+                //    //layer.type() = LayerTypeFill;
 
-                }
-                else if (type == "Shape")
-                {
-                    _ignore.insert(node.name());
-                    shapes[node.name()] = node.input(0);
-                    continue;
-                }
+                //}
+                //else if (type == "Shape")
+                //{
+                //    _ignore.insert(node.name());
+                //    shapes[node.name()] = node.input(0);
+                //    continue;
+                //}
                 else
                 {
+                    NotImplemented(layer);
                     for (size_t j = 0; j < (size_t)node.input_size(); ++j)
                         layer.src().push_back(node.input((int)j));
                     layer.dst().push_back(type);
@@ -383,7 +402,7 @@ namespace Synet
                     {
                         ptrdiff_t size = shape.shape()[k].size();
                         const String & name = shape.shape()[k].name();
-                        if (size > -1)
+                        if (size > 0)
                         {
                             layer.input().shape()[0].dim().push_back(size);
                         }
@@ -424,7 +443,7 @@ namespace Synet
                 const String & pad = node.attr().at("padding").s();
                 if (pad == "SAME")
                 {
-                    Shape kernel = layer.convolution().kernel();
+                    Shape kernel = layer.pooling().kernel();
                     layer.pooling().pad() = Shape({ kernel[0] / 2, kernel[1] / 2 });
                 }
             }
@@ -568,7 +587,7 @@ namespace Synet
                             {
                                 size_t dst_i = input_c*height*width*i_oc + height*width*i_ic + width*i_h + i_w;
                                 size_t src_i = out_c*input_c*width*i_h + out_c*input_c*i_w + out_c*i_ic + i_oc;
-                                pDst[dst_i] = pSrc[src_i];
+                                pDst[dst_i] = (float)pSrc[src_i];
                             }
                         }
                     }
@@ -632,6 +651,11 @@ namespace Synet
             }
             if (remove)
                 _graph.mutable_node()->DeleteSubrange(layerIndex, 1);
+        }
+
+        void NotImplemented(LayerParam & layer)
+        {
+            layer.dst().push_back("~~~NOT_IMPLEMENTED~~~");
         }
 
 #ifdef SYNET_TENSORFLOW_DEBUG

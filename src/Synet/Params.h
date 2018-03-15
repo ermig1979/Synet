@@ -49,6 +49,7 @@ namespace Synet
         LayerTypeConvolution,
         LayerTypeDropout,
         LayerTypeEltwise,
+        LayerTypeExpandDims,
         LayerTypeFill,
         LayerTypeInnerProduct,
         LayerTypeInput,
@@ -78,6 +79,7 @@ namespace Synet
             "Convolution",
             "Dropout",
             "Eltwise",
+            "ExpandDims",
             "Fill",
             "InnerProduct",
             "Input",
@@ -224,6 +226,11 @@ namespace Synet
         SYNET_PARAM_VALUE(float, value, 0.0f);
     };
 
+    struct ExpandDimsParam
+    {
+        SYNET_PARAM_VALUE(int32_t, axis, 0);
+    };
+
     struct EltwiseParam
     {
         SYNET_PARAM_VALUE(EltwiseOperationType, operation, EltwiseOperationTypeSum);
@@ -333,6 +340,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(ConvolutionParam, convolution);
         SYNET_PARAM_STRUCT(FillParam, fill);
         SYNET_PARAM_STRUCT(EltwiseParam, eltwise);
+        SYNET_PARAM_STRUCT(ExpandDimsParam, expandDims);
         SYNET_PARAM_STRUCT(InnerProductParam, innerProduct);
         SYNET_PARAM_STRUCT(InputParam, input);
         SYNET_PARAM_STRUCT(LogParam, log);
