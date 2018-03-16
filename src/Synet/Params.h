@@ -66,6 +66,7 @@ namespace Synet
         LayerTypeSigmoid,
         LayerTypeSlice,
         LayerTypeSoftmax,
+        LayerTypeSqueeze,
         LayerTypeTanh,
         LayerTypeSize
     };
@@ -97,6 +98,7 @@ namespace Synet
             "Sigmoid",
             "Slice",
             "Softmax",
+            "Squeeze",
             "Tanh",
         };
         return (value > LayerTypeUnknown && value < LayerTypeSize) ? names[value] : "";
@@ -363,6 +365,7 @@ namespace Synet
     struct NetworkParam
     {
         SYNET_PARAM_VALUE(String, name, String());
+        SYNET_PARAM_VALUE(Strings, dst, Strings());
         SYNET_PARAM_VECTOR(LayerParam, layers);
     };
 

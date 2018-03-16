@@ -142,7 +142,11 @@ namespace Synet
 
         bool ConvertNetwork(const TensorflowParam & param, Synet::NetworkParam & network, Tensors & weight)
         {
+            for (size_t i = 0; i < param.output().size(); ++i)
+                network.dst().push_back(param.output()[i].name());
+
             RemoveUnused();
+
             AddConst();
 
 #ifdef SYNET_TENSORFLOW_DEBUG
@@ -464,6 +468,12 @@ namespace Synet
                     layer.expandDims().axis() = tensor.int_val(0);
                     layer.dst().push_back(layer.name());
                 }
+                else if (type == "Squeeze")
+                {
+                    layer.type() = LayerTypeSqueeze;
+                    layer.src().push_back(node.input(0));
+                    layer.dst().push_back(layer.name());
+                }
                 else if (type == "Transpose")
                 {
                     layer.type() = LayerTypePermute;
@@ -482,22 +492,6 @@ namespace Synet
                     layer.fill().value() = tensor.float_val(0);
                     layer.dst() = layer.src();
                 }
-                //else if (type == "Split")
-                //{
-                //    //layer.type() = LayerTypeFill;
-
-                //}
-                //else if (type == "Switch")
-                //{
-                //    //layer.type() = LayerTypeFill;
-
-                //}
-                //else if (type == "Shape")
-                //{
-                //    _ignore.insert(node.name());
-                //    shapes[node.name()] = node.input(0);
-                //    continue;
-                //}
                 else
                 {
                     SetNotImplemented(layer, node);

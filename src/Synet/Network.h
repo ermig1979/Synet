@@ -46,6 +46,7 @@
 #include "Synet/SigmoidLayer.h"
 #include "Synet/SliceLayer.h"
 #include "Synet/SoftmaxLayer.h"
+#include "Synet/SqueezeLayer.h"
 #include "Synet/StubLayer.h"
 #include "Synet/TanhLayer.h"
 
@@ -215,10 +216,25 @@ namespace Synet
                 _stages.push_back(stage);
             }
             for (NameSet::const_iterator it = available.begin(); it != available.end(); ++it)
-                _dst.push_back(_tensors[index[*it]].get());
+            {
+                if(InsertDst(*it))
+                    _dst.push_back(_tensors[index[*it]].get());
+            }
             _back = _stages.empty() ? NULL : _stages.back().layer;
             _empty = false;
             return true;
+        }
+
+        bool InsertDst(const String & name)
+        {
+            if (_param().dst().empty())
+                return true;
+            for (size_t i = 0; i < _param().dst().size(); ++i)
+            {
+                if (_param().dst()[i] == name)
+                    return true;
+            }
+            return false;
         }
 
         static LayerPtr Create(const LayerParam & param)
@@ -248,12 +264,13 @@ namespace Synet
             case LayerTypeSigmoid: return new SigmoidLayer<T, A>(param);
             case LayerTypeSlice: return new SliceLayer<T, A>(param);
             case LayerTypeSoftmax: return new SoftmaxLayer<T, A>(param);
+            case LayerTypeSqueeze: return new SqueezeLayer<T, A>(param);
             case LayerTypeTanh: return new TanhLayer<T, A>(param);
             default:
                 return NULL;
             }
         }
-
+        
         friend class TensorflowToSynet;
     };
 }
