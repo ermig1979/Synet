@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "Synet/AbsLayer.h"
 #include "Synet/BatchNormLayer.h"
 #include "Synet/BiasLayer.h"
 #include "Synet/ConcatLayer.h"
@@ -220,10 +221,11 @@ namespace Synet
             return true;
         }
 
-        LayerPtr Create(const LayerParam & param)
+        static LayerPtr Create(const LayerParam & param)
         {
             switch (param.type())
             {
+            case LayerTypeAbs: return new AbsLayer<T, A>(param);
             case LayerTypeBatchNorm: return new BatchNormLayer<T, A>(param);
             case LayerTypeBias: return new BiasLayer<T, A>(param);
             case LayerTypeConcat: return new ConcatLayer<T, A>(param);
@@ -251,5 +253,7 @@ namespace Synet
                 return NULL;
             }
         }
+
+        friend class TensorflowToSynet;
     };
 }

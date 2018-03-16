@@ -56,7 +56,7 @@ namespace Synet
             if (kernel.size() == 1)
                 _kernelShape.resize(_spatialAxisNum, kernel[0]);
             else
-                _kernelShape == kernel;
+                _kernelShape = kernel;
             for (size_t i = 0; i < _kernelShape.size(); ++i)
                 assert(_kernelShape[i] > 0);
 
@@ -69,7 +69,7 @@ namespace Synet
                 if (stride.size() == 1)
                     _strideShape.resize(_spatialAxisNum, stride[0]);
                 else
-                    _strideShape == stride;
+                    _strideShape = stride;
             }
             for (size_t i = 0; i < _strideShape.size(); ++i)
                 assert(_strideShape[i] > 0);
@@ -83,7 +83,7 @@ namespace Synet
                 if (pad.size() == 1)
                     _padShape.resize(_spatialAxisNum, pad[0]);
                 else
-                    _padShape == pad;
+                    _padShape = pad;
             }
 
             const Shape & dilation = this->Param().convolution().dilation();
@@ -95,7 +95,7 @@ namespace Synet
                 if (dilation.size() == 1)
                     _dilationShape.resize(_spatialAxisNum, dilation[0]);
                 else
-                    _dilationShape == dilation;
+                    _dilationShape = dilation;
             }
             for (size_t i = 0; i < _dilationShape.size(); ++i)
                 assert(_dilationShape[i] > 0);

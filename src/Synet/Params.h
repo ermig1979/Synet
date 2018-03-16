@@ -43,6 +43,7 @@ namespace Synet
     enum LayerType
     {
         LayerTypeUnknown = -1,
+        LayerTypeAbs,
         LayerTypeBatchNorm,
         LayerTypeBias,
         LayerTypeConcat,
@@ -73,6 +74,7 @@ namespace Synet
     {
         static const char * names[LayerTypeSize] =
         {
+            "Abs",
             "BatchNorm",
             "Bias",
             "Concat",
@@ -354,6 +356,8 @@ namespace Synet
         SYNET_PARAM_STRUCT(ScaleParam, scale);
         SYNET_PARAM_STRUCT(SliceParam, slice);
         SYNET_PARAM_STRUCT(SoftmaxParam, softmax);
+
+        SYNET_PARAM_VALUE(Strings, debug, Strings());
     };
 
     struct NetworkParam

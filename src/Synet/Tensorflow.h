@@ -24,14 +24,13 @@
 
 #pragma once
 
-#include "Synet/Common.h"
-#include "Synet/Params.h"
+#include "Synet/Network.h"
 
 #if defined(SYNET_TENSORFLOW_ENABLE)
 
 #ifdef _MSC_VER
 #pragma warning (push)
-#pragma warning (disable: 4267 4800)
+#pragma warning (disable: 4267 4800 4554)
 #endif
 
 #include "tensorflow/core/public/session.h"
@@ -57,6 +56,7 @@ namespace Synet
         {
             SYNET_PARAM_VALUE(String, name, String());
             SYNET_PARAM_VECTOR(SizeParam, shape);
+            SYNET_PARAM_VALUE(int32_t, size, 0);
         };
 
         struct TensorflowParam
@@ -66,7 +66,6 @@ namespace Synet
         };
 
         SYNET_PARAM_HOLDER(TensorflowParamHolder, TensorflowParam, network);
-
 
         bool Convert(const String & srcParamPath, const String & srcGraphPath, const String & dstModelPath, const String & dstWeightPath)
         {
@@ -90,7 +89,7 @@ namespace Synet
             }
 
             tensorflow::Status status = tensorflow::ReadBinaryProto(tensorflow::Env::Default(), srcGraphPath, &_graph);
-            if (!status.ok()) 
+            if (!status.ok())
             {
                 std::cout << "Error in building graph: " << status.error_message() << std::endl;
                 return false;
@@ -119,6 +118,11 @@ namespace Synet
         typedef std::map<String, int> NameIndexMap;
         typedef std::map<String, String> NameNameMap;
         typedef std::set<String> NameSet;
+        typedef Synet::Tensor<int> ITensor;
+        typedef std::map<String, ITensor> IConstMap;
+        typedef std::map<String, Tensor> FConstMap;
+        typedef std::vector<Shape> Shapes;
+        typedef std::map<String, Shapes> ShapeMap;
 
         struct Pin
         {
@@ -131,6 +135,10 @@ namespace Synet
         tensorflow::GraphDef _graph;
         NameIndexMap _valueId;
         NameSet _ignore;
+
+        IConstMap _iConst;
+        FConstMap _fConst;
+        ShapeMap _shape;
 
         bool ConvertNetwork(const TensorflowParam & param, Synet::NetworkParam & network, Tensors & weight)
         {
@@ -157,13 +165,114 @@ namespace Synet
                 layer.name() = node.name();
                 if (type == "Placeholder")
                 {
-                    if (!ConvertInputLayer(param, node, layer))
-                        return false;
+                    if (node.attr().at("dtype").type() == 1)
+                    {
+                        if (!ConvertInputLayer(param, node, layer))
+                            return false;
+                    }
+                    else
+                    {
+                        bool found = false;
+                        for (size_t j = 0; j < param.input().size(); ++j)
+                        {
+                            if (param.input()[j].name() == layer.name())
+                            {
+                                ITensor size({ 1 });
+                                size.Data()[0] = param.input()[j].size();
+                                _iConst[node.name()] = size;
+                                _ignore.insert(node.name());
+                                found = true;
+                            }
+                        }
+                        if (!found)
+                            return false;
+                        continue;
+                    }
+                }
+                else if (AllConstInt(node) || type == "Shape")
+                {
+                    if (type == "Sub")
+                    {
+                        assert(node.input_size() == 2);
+                        const ITensor & a = _iConst[node.input(0)];
+                        const ITensor & b = _iConst[node.input(1)];
+                        assert(a.Shape() == b.Shape());
+                        ITensor c(a.Shape());
+                        for (size_t j = 0; j < a.Size(); ++j)
+                            c.Data()[j] = a.Data()[j] - b.Data()[j];
+                        _iConst[node.name()] = c;
+                        _ignore.insert(node.name());
+                    }
+                    else if (type == "Pack")
+                    {
+                        Shape shape;
+                        for (int j = 0; j < node.input_size(); ++j)
+                            shape.push_back(_iConst[node.input(j)].Data()[0]);
+                        ITensor tensor({ shape.size() });
+                        for (size_t j = 0; j < shape.size(); ++j)
+                            tensor.Data()[j] = (int)shape[j];
+                        _iConst[node.name()] = tensor;
+                        _ignore.insert(node.name());
+                    }
+                    else if (type == "Shape")
+                    {
+                        if (_shape.find(node.input(0)) == _shape.end())
+                            return false;
+                        Shape shape = _shape[node.input(0)][0];
+                        if (shape.size() == 4)
+                            shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
+                        ITensor tensor({ shape.size() });
+                        for (size_t j = 0; j < shape.size(); ++j)
+                            tensor.Data()[j] = (int)shape[j];
+                        _iConst[node.name()] = tensor;
+                        _ignore.insert(node.name());
+                    } 
+                    else if (type == "Slice")
+                    {
+                        assert(node.input_size() == 3);
+                        const ITensor & a = _iConst[node.input(0)];
+                        const ITensor & b = _iConst[node.input(1)];
+                        const ITensor & s = _iConst[node.input(2)];
+                        assert(a.Count() == 1 && b.Size() == 1 && s.Size() == 1);
+                        ITensor tensor({ (size_t)s.Data()[0] });
+                        for (int j = 0; j < s.Data()[0]; ++j)
+                            tensor.Data()[j] = a.Data()[j + b.Data()[0]];
+                        _iConst[node.name()] = tensor;
+                        _ignore.insert(node.name());
+                    }
+                    else if (type == "Concat" || type == "ConcatV2")
+                    {
+                        int axisId = (type == "Concat" ? 0 : node.input_size() - 1);
+                        int axis = _iConst[node.input(axisId)].Data()[0];
+                        Shape shape;
+                        for (int j = 0; j < node.input_size(); ++j)
+                        {
+                            if(j != axisId)
+                                shape.push_back(_iConst[node.input(j)].Data()[0]);
+                        }
+                        ITensor tensor({ shape.size() });
+                        for (size_t j = 0; j < shape.size(); ++j)
+                            tensor.Data()[j] = (int)shape[j];
+                        _iConst[node.name()] = tensor;
+                        _ignore.insert(node.name());
+                    }
+                    else
+                    {
+                        SetNotImplemented(layer, node, "const");
+                    }
+                    if (!IsNotImplemented(layer))
+                        continue;
                 }
                 else if (type == "Conv2D")
                 {
                     if (!ConvertConvolutionLayer(node, layer, weight))
                         return false;
+                }
+                else if (type == "Abs")
+                {
+                    layer.type() = LayerTypeAbs;
+                    layer.src().push_back(node.input(0));
+                    layer.dst() = layer.src();
                 }
                 else if (type == "Relu")
                 {
@@ -188,6 +297,12 @@ namespace Synet
                     layer.src().push_back(node.input(0));
                     layer.dst() = layer.src();
                 }
+                else if (type == "Softmax")
+                {
+                    layer.type() = LayerTypeSoftmax;
+                    layer.src().push_back(node.input(0));
+                    layer.dst() = layer.src();
+                }
                 else if (type == "BiasAdd" || type == "Add")
                 {
                     bool haveConst = false;
@@ -205,7 +320,7 @@ namespace Synet
                         ConvertKernel(GetConst(_graph, node, _valueId), weight.back());
                         layer.weight()[0].dim() = weight.back().Shape();
                         layer.dst() = layer.src();
-                    }                   
+                    }
                     else
                     {
                         layer.type() = LayerTypeEltwise;
@@ -215,6 +330,106 @@ namespace Synet
                         layer.dst().push_back(layer.name());
                     }
                 }
+                else if (type == "Mul")
+                {
+                    assert(node.input_size() == 2);
+                    ptrdiff_t constIndex = -1, constCount = 0;
+                    for (int j = 0; j < node.input_size(); ++j)
+                    {
+                        Pin input = ParsePin(node.input(j));
+                        if (_valueId.find(input.name) != _valueId.end())
+                        {
+                            assert(constIndex == -1);
+                            constIndex = j;
+                            constCount++;
+                        }
+                    }
+                    assert(constCount < 2);
+                    if (constIndex < 0)
+                    {
+                        layer.type() = LayerTypeEltwise;
+                        layer.eltwise().operation() = EltwiseOperationTypeProduct;
+                        layer.src().push_back(node.input(0));
+                        layer.src().push_back(node.input(1));
+                        layer.dst().push_back(layer.name());
+                    }
+                    else
+                    {
+                        layer.type() = LayerTypeScale;
+                        layer.src().push_back(node.input(1 - (int)constIndex));
+                        layer.scale().biasTerm() = false;
+                        Tensor scale;
+                        ConvertKernel(GetConst(_graph, node, _valueId), scale);
+                        if (scale.Size() == 1)
+                            layer.scale().axis() = 0;
+                        layer.weight().resize(1);
+                        layer.weight()[0].dim() = scale.Shape();
+                        weight.push_back(scale);
+                        layer.dst() = layer.src();
+                    }
+                }
+                else if (type == "Sub")
+                {
+                    assert(node.input_size() == 2);
+                    ptrdiff_t constIndex = -1, constCount = 0;
+                    for (int j = 0; j < node.input_size(); ++j)
+                    {
+                        Pin input = ParsePin(node.input(j));
+                        if (_valueId.find(input.name) != _valueId.end())
+                        {
+                            assert(constIndex == -1);
+                            constIndex = j;
+                            constCount++;
+                        }
+                    }
+                    if (constCount == 2)
+                    {
+                        if (_iConst.find(node.input(0)) != _iConst.end() && _iConst.find(node.input(1)) != _iConst.end())
+                        {
+                            const ITensor & a = _iConst[node.input(0)];
+                            const ITensor & b = _iConst[node.input(1)];
+                            assert(a.Shape() == b.Shape());
+                            ITensor c(a.Shape());
+                            for (size_t j = 0; j < a.Size(); ++j)
+                                c.Data()[j] = a.Data()[j] - b.Data()[j];
+                            _iConst[node.name()] = c;
+                            _ignore.insert(node.name());
+                            continue;
+                        }
+                        SetNotImplemented(layer, node);
+                    }
+                    else if (constIndex < 0)
+                    {
+                        layer.type() = LayerTypeEltwise;
+                        layer.eltwise().operation() = EltwiseOperationTypeSum;
+                        layer.eltwise().coefficients() = Floats({ 1.0f, -1.0f });
+                        layer.src().push_back(node.input(0));
+                        layer.src().push_back(node.input(1));
+                        layer.dst().push_back(layer.name());
+                    }
+                    else
+                    {
+                        layer.type() = LayerTypeScale;
+                        layer.src().push_back(node.input(1 - (int)constIndex));
+                        layer.scale().biasTerm() = true;
+                        Tensor scale, bias;
+                        ConvertKernel(GetConst(_graph, node, _valueId), bias);
+                        if (constIndex)
+                        {
+                            for (size_t j = 0; j < bias.Size(); ++j)
+                                bias.Data()[j] *= -1.0f;
+                        }
+                        scale.Reshape(bias.Shape(), constIndex ? 1.0f : -1.0f);
+                        if (bias.Size() == 1)
+                            layer.scale().axis() = 0;
+                        layer.weight().resize(2);
+                        layer.weight()[0].dim() = scale.Shape();
+                        layer.weight()[1].dim() = bias.Shape();
+                        weight.push_back(scale);
+                        weight.push_back(bias);
+                        layer.dst() = layer.src();
+                    }
+                }
                 else if (type == "MatMul")
                 {
                     if (!ConvertInnerProductLayer(node, layer, weight))
@@ -222,28 +437,25 @@ namespace Synet
                 }
                 else if (type == "Reshape")
                 {
+                    assert(node.input_size() == 2);
                     layer.type() = LayerTypeReshape;
                     layer.src().push_back(node.input(0));
-                    bool haveConst = false;
-                    for (int j = 0; !haveConst && j < node.input_size(); ++j)
+                    if (_iConst.find(node.input(1)) != _iConst.end())
                     {
-                        Pin input = ParsePin(node.input(j));
-                        haveConst = _valueId.find(input.name) != _valueId.end();
-                    }
-                    if (haveConst)
-                    {
-                        const tensorflow::TensorProto & tensor = GetConst(_graph, node, _valueId, 1);
-                        assert(tensor.tensor_shape().dim_size() == 1);
-                        layer.reshape().shape().resize(tensor.tensor_shape().dim(0).size());
-                        for (size_t j = 0; j < layer.reshape().shape().size(); ++j)
-                            layer.reshape().shape()[j] = ((int*)tensor.tensor_content().c_str())[j];
+                        const ITensor & tensor = _iConst[node.input(1)];
+                        Shape shape;
+                        for (size_t j = 0; j < tensor.Size(); ++j)
+                            shape.push_back(tensor.Data()[j]);
+                        if (shape.size() == 4)
+                            shape = Shape({ shape[0], shape[3], shape[1], shape[2] });
+                        layer.reshape().shape() = shape;
+                        layer.dst().push_back(layer.name());
                     }
                     else
                     {
-                        NotImplemented(layer);
+                        SetNotImplemented(layer, node);
                     }
-                    layer.dst().push_back(layer.name());
-                } 
+                }
                 else if (type == "ExpandDims")
                 {
                     layer.type() = LayerTypeExpandDims;
@@ -251,7 +463,7 @@ namespace Synet
                     const tensorflow::TensorProto & tensor = GetConst(_graph, node, _valueId);
                     layer.expandDims().axis() = tensor.int_val(0);
                     layer.dst().push_back(layer.name());
-                }                
+                }
                 else if (type == "Transpose")
                 {
                     layer.type() = LayerTypePermute;
@@ -288,11 +500,10 @@ namespace Synet
                 //}
                 else
                 {
-                    NotImplemented(layer);
-                    for (size_t j = 0; j < (size_t)node.input_size(); ++j)
-                        layer.src().push_back(node.input((int)j));
-                    layer.dst().push_back(type);
+                    SetNotImplemented(layer, node);
                 }
+                if(!IsNotImplemented(layer))
+                    SetShape(layer);
                 network.layers().push_back(layer);
             }
 
@@ -465,7 +676,7 @@ namespace Synet
                 if (type == "Identity" || type == "Dropout" || layer.name().find("dropout") == 0)
                 {
                     unusedIndex.push_back(i);
-                    if(layer.input_size())
+                    if (layer.input_size())
                         unused[layer.name()] = layer.input(0);
                 }
             }
@@ -473,7 +684,7 @@ namespace Synet
             for (int i = 0; i < layersCount; i++)
             {
                 tensorflow::NodeDef * layer = _graph.mutable_node(i);
-                for (int j = 0; j < layer->input_size(); j++) 
+                for (int j = 0; j < layer->input_size(); j++)
                 {
                     String inputOpName = layer->input(j);
                     UnusedMap::iterator it = unused.find(inputOpName);
@@ -510,7 +721,7 @@ namespace Synet
             for (int i = 0; i < _graph.node_size(); i++)
             {
                 const tensorflow::NodeDef & layer = _graph.node(i);
-                for (int j = 0; j < layer.input_size(); j++) 
+                for (int j = 0; j < layer.input_size(); j++)
                 {
                     String input_op_name = ParsePin(layer.input(j)).name;
                     if (input_op_name == name && (type.empty() ? true : type == layer.op()))
@@ -530,13 +741,41 @@ namespace Synet
                     _ignore.insert(node.name());
                     if (node.attr().find("value") != node.attr().end())
                         _valueId.insert(std::make_pair(node.name(), i));
+
+                    const tensorflow::TensorProto & src = node.attr().at("value").tensor();
+                    if (node.attr().at("dtype").type() == tensorflow::DT_FLOAT)
+                    {
+                        Tensor dst;
+                        if (src.float_val_size())
+                        {
+                            dst.Reshape({ (size_t)src.float_val_size() });
+                            for (int j = 0; j < src.float_val_size(); j++)
+                                dst.Data()[j] = src.float_val(j);
+                        }
+                        else
+                            ConvertKernel<float, float>(src, dst);
+                        _fConst[node.name()] = dst;
+                    }
+                    if (node.attr().at("dtype").type() == tensorflow::DT_INT32)
+                    {
+                        ITensor dst;
+                        if (src.int_val_size())
+                        {
+                            dst.Reshape({ (size_t)src.int_val_size() });
+                            for (int j = 0; j < src.int_val_size(); j++)
+                                dst.Data()[j] = src.int_val(j);
+                        }
+                        else
+                            ConvertKernel<int, int>(src, dst);
+                        _iConst[node.name()] = dst;
+                    }
                 }
             }
         }
 
         const tensorflow::TensorProto & GetConst(const tensorflow::GraphDef & graph, const tensorflow::NodeDef & node, const NameIndexMap & consts, int index = -1, int * actual = NULL)
         {
-            if (index == -1) 
+            if (index == -1)
             {
                 for (int i = 0; i < node.input_size(); i++)
                 {
@@ -554,24 +793,34 @@ namespace Synet
             assert(consts.find(kernel_inp.name) != consts.end());
             assert(kernel_inp.index == 0);
 
-            if (actual) 
+            if (actual)
                 *actual = index;
 
             int nodeIdx = consts.at(kernel_inp.name);
             return graph.node(nodeIdx).attr().at("value").tensor();
         }
 
-        template <class T> void ConvertKernel(const tensorflow::TensorProto & src, Tensor & dst)
+        bool AllConstInt(const tensorflow::NodeDef & node) const
+        {
+            for (int j = 0; j < node.input_size(); ++j)
+            {
+                if (_iConst.find(node.input(j)) == _iConst.end())
+                    return false;
+            }
+            return true;
+        }
+
+        template <class TS, class TD> void ConvertKernel(const tensorflow::TensorProto & src, Synet::Tensor<TD> & dst)
         {
             Shape shape = GetShape(src); 
             if(shape.size() == 4)
                 shape = Shape({shape[3], shape[2], shape[0], shape[1]});
             dst.Reshape(shape);    
-            float * pDst = dst.Data();
+            TD * pDst = dst.Data();
 
             const String & content = src.tensor_content();
-            const T * pSrc = (T*)content.c_str();
-            size_t size = content.size() / sizeof(T);
+            const TS * pSrc = (TS*)content.c_str();
+            size_t size = content.size() / sizeof(TS);
             assert(size = dst.Size());
 
             if (shape.size() == 4)
@@ -587,7 +836,7 @@ namespace Synet
                             {
                                 size_t dst_i = input_c*height*width*i_oc + height*width*i_ic + width*i_h + i_w;
                                 size_t src_i = out_c*input_c*width*i_h + out_c*input_c*i_w + out_c*i_ic + i_oc;
-                                pDst[dst_i] = (float)pSrc[src_i];
+                                pDst[dst_i] = (TD)pSrc[src_i];
                             }
                         }
                     }
@@ -596,7 +845,7 @@ namespace Synet
             else
             {
                 for (size_t i = 0; i < size; i++)
-                    pDst[i] = (float)pSrc[i];
+                    pDst[i] = (TD)pSrc[i];
             }
         }
 
@@ -605,10 +854,10 @@ namespace Synet
             switch (src.dtype())
             {
             case tensorflow::DT_FLOAT:
-                ConvertKernel<float>(src, dst);
+                ConvertKernel<float, float>(src, dst);
                 break;
             case tensorflow::DT_INT32:
-                ConvertKernel<int>(src, dst);
+                ConvertKernel<int, float>(src, dst);
                 break;
             default: 
                 assert(0);
@@ -653,9 +902,71 @@ namespace Synet
                 _graph.mutable_node()->DeleteSubrange(layerIndex, 1);
         }
 
-        void NotImplemented(LayerParam & layer)
+        bool SetShape(const LayerParam & param)
         {
-            layer.dst().push_back("~~~NOT_IMPLEMENTED~~~");
+            if (param.type() == LayerTypeInput)
+            {
+                _shape[param.name()].push_back(param.input().shape()[0].dim());
+            }
+            else
+            {
+                typedef Synet::Network<float> Net;
+                std::unique_ptr<Net::Layer> layer(Net::Create(param));
+                if (!layer)
+                    return false;
+                std::vector<std::shared_ptr<Tensor>> tensors;
+                Net::TensorPtrs src, buf, dst;
+                tensors.push_back(std::make_shared<Tensor>());
+                buf.push_back(tensors.back().get());
+                tensors.push_back(std::make_shared<Tensor>());
+                dst.push_back(tensors.back().get());
+                for (size_t i = 0; i < param.src().size(); ++i)
+                {
+                    if (_shape.find(param.src()[i]) == _shape.end())
+                        return false;
+                    const Shape & shape = _shape[param.src()[i]][0];
+                    tensors.push_back(std::make_shared<Tensor>(shape));
+                    src.push_back(tensors.back().get());
+                }
+                layer->Setup(src, buf, dst);
+                layer->Reshape(src, buf, dst);
+                _shape[param.name()].push_back(dst[0]->Shape());            
+            }
+            return true;
+        }
+
+        String NotImplementedMarker()
+        {
+            return "~~~NOT_IMPLEMENTED~~~";
+        }
+
+        bool IsNotImplemented(const LayerParam & layer)
+        {
+            for (size_t i = 0; i < layer.debug().size(); ++i)
+            {
+                if (layer.debug()[i] == NotImplementedMarker())
+                    return true;
+            }
+            return false;
+        }
+
+        void SetNotImplemented(LayerParam & layer, const tensorflow::NodeDef & node, const String & info = String())
+        {
+#ifdef SYNET_TENSORFLOW_DEBUG
+            if (!IsNotImplemented(layer))
+            {
+                layer.debug().clear();
+                layer.debug().push_back(NotImplementedMarker());
+                layer.debug().push_back(node.op());
+                if(!info.empty())
+                    layer.debug().push_back(info);
+                layer.src().clear();
+                for (size_t j = 0; j < (size_t)node.input_size(); ++j)
+                    layer.src().push_back(node.input((int)j));
+            }
+#else
+            assert(0);
+#endif
         }
 
 #ifdef SYNET_TENSORFLOW_DEBUG

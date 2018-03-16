@@ -26,17 +26,27 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
+#include "Synet/Math.h"
 
 namespace Synet
 {
-    template <class T, template<class> class A> class ExpandDimsLayer : public Synet::Layer<T, A>
+    namespace Detail
+    {
+        template <class T> void AbsLayerForwardCpu(const T * src, size_t size, T * dst)
+        {
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = ::abs(src[i]);
+        }
+    }
+
+    template <class T, template<class> class A> class AbsLayer : public Synet::Layer<T, A>
     {
     public:
         typedef T Type;
         typedef Layer<T, A> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ExpandDimsLayer(const LayerParam & param)
+        AbsLayer(const LayerParam & param)
             : Base(param)
         {
         }
@@ -47,23 +57,15 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            assert(src[0] != dst[0]);
-            const ExpandDimsParam & param = this->Param().expandDims();
-            ptrdiff_t axis = param.axis();
-            if (axis < 0)
-                axis += src[0]->Count();
-            Shape shape;
-            for (ptrdiff_t i = 0; i < axis; ++i)
-                shape.push_back(src[0]->Axis(i));
-            shape.push_back(1);
-            for (size_t i = axis; i < src[0]->Count(); ++i)
-                shape.push_back(src[0]->Axis(i));
-            dst[0]->ShareAs(*src[0], shape);
+            dst[0]->Reshape(src[0]->Shape());
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            SYNET_PERF_FUNC();
+
+            Detail::AbsLayerForwardCpu(src[0]->Data(), src[0]->Size(), dst[0]->Data());
         }
     };
 }
