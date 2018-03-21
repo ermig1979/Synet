@@ -310,6 +310,7 @@ namespace Synet
                 else if (type == "Softmax")
                 {
                     layer.type() = LayerTypeSoftmax;
+                    layer.softmax().axis() = 0;
                     layer.src().push_back(node.input(0));
                     layer.dst().push_back(layer.name());
                     //layer.dst() = layer.src();
@@ -457,6 +458,8 @@ namespace Synet
                         Shape shape;
                         for (size_t j = 0; j < tensor.Size(); ++j)
                             shape.push_back(tensor.Data()[j]);
+                        if (shape.size() == 2)
+                            shape = Shape({ shape[1], shape[0] });
                         if (shape.size() == 4)
                             shape = Shape({ shape[0], shape[3], shape[1], shape[2] });
                         layer.reshape().shape() = shape;
@@ -855,10 +858,26 @@ namespace Synet
             switch (src.dtype())
             {
             case tensorflow::DT_FLOAT:
-                ConvertKernel<float, float>(src, dst);
+                if (src.float_val_size())
+                {
+                    Shape shape(1, src.float_val_size());
+                    dst.Reshape(shape);
+                    for (int i = 0; i < src.float_val_size(); i++)
+                        dst.Data()[i] = src.float_val(i);
+                }
+                else
+                    ConvertKernel<float, float>(src, dst);
                 break;
             case tensorflow::DT_INT32:
-                ConvertKernel<int, float>(src, dst);
+                if (src.int_val_size())
+                {
+                    Shape shape(1, src.int_val_size());
+                    dst.Reshape(shape);
+                    for (int i = 0; i < src.int_val_size(); i++)
+                        dst.Data()[i] = (float)src.int_val(i);
+                }
+                else
+                    ConvertKernel<int, float>(src, dst);
                 break;
             default: 
                 assert(0);
