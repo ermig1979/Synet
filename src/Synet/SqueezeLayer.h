@@ -49,7 +49,7 @@ namespace Synet
         {
             assert(src[0] != dst[0]);
             Shape shape;
-            for (ptrdiff_t i = 0; i < src[0]->Count(); ++i)
+            for (size_t i = 0; i < src[0]->Count(); ++i)
             {
                 if(src[0]->Axis(i) != 1)
                     shape.push_back(src[0]->Axis(i));

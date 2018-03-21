@@ -133,6 +133,28 @@ namespace Synet
                 _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
         }
 
+#ifdef SYNET_DEBUG_PRINT_ENABLE
+        void DebugPrint(std::ostream & os, bool weight)
+        {
+            for (size_t i = 0; i < _stages.size(); ++i)
+            {
+                _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
+                os << "Layer: " << _stages[i].layer->Param().name() << " : ";
+                os << ValueToString(_stages[i].layer->Param().type()) << " ( ";
+                for(size_t j = 0; j < _stages[i].layer->Param().src().size(); ++j)
+                    os << _stages[i].layer->Param().src()[j] << " ";
+                os << ")." << std::endl;
+                if (weight)
+                {
+                    for (size_t j = 0; j < _stages[i].layer->Weight().size(); ++j)
+                        _stages[i].layer->Weight()[j].DebugPrint(os, String("weight[") + ValueToString(j) + "]");
+                }
+                for (size_t j = 0; j < _stages[i].dst.size(); ++j)
+                    _stages[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]");
+            }
+        }
+#endif
+
     private:
         typedef std::vector<LayerPtr> LayerPtrs;
         typedef std::shared_ptr<Layer> LayerSharedPtr;
@@ -184,9 +206,14 @@ namespace Synet
                 for (size_t j = 0; j < param.src().size(); ++j)
                 {
                     const String & name = param.src()[j];
-                    stage.src.push_back(_tensors[index[name]].get());
-                    if (available.find(name) != available.end())
-                        available.erase(name);
+                    if (index.find(name) != index.end())
+                    {
+                        stage.src.push_back(_tensors[index[name]].get());
+                        if (available.find(name) != available.end())
+                            available.erase(name);
+                    }
+                    else
+                        assert(0);
                 }
                 for (size_t j = 0; j < param.dst().size(); ++j)
                 {

@@ -33,6 +33,8 @@
 //#define SYNET_YOLO_ENABLE
 //#define SYNET_TENSORFLOW_ENABLE
 
+//#define SYNET_DEBUG_PRINT_ENABLE
+
 #include <stddef.h>
 #include <assert.h>
 #include <math.h>

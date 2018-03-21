@@ -276,13 +276,15 @@ namespace Synet
                 {
                     layer.type() = LayerTypeAbs;
                     layer.src().push_back(node.input(0));
-                    layer.dst() = layer.src();
+                    layer.dst().push_back(layer.name());
                 }
                 else if (type == "Relu")
                 {
                     layer.type() = LayerTypeRelu;
                     layer.src().push_back(node.input(0));
-                    layer.dst() = layer.src();
+                    layer.dst().push_back(layer.name());
+                    //layer.dst() = layer.src();
+                    //RenameInput(layer.name(), layer.src()[0]);
                 }
                 else if (type == "MaxPool")
                 {
@@ -293,19 +295,25 @@ namespace Synet
                 {
                     layer.type() = LayerTypeSigmoid;
                     layer.src().push_back(node.input(0));
-                    layer.dst() = layer.src();
+                    layer.dst().push_back(layer.name());
+                    //layer.dst() = layer.src();
+                    //RenameInput(layer.name(), layer.src()[0]);
                 }
                 else if (type == "Tanh")
                 {
                     layer.type() = LayerTypeTanh;
                     layer.src().push_back(node.input(0));
-                    layer.dst() = layer.src();
+                    layer.dst().push_back(layer.name());
+                    //layer.dst() = layer.src();
+                    //RenameInput(layer.name(), layer.src()[0]);
                 }
                 else if (type == "Softmax")
                 {
                     layer.type() = LayerTypeSoftmax;
                     layer.src().push_back(node.input(0));
-                    layer.dst() = layer.src();
+                    layer.dst().push_back(layer.name());
+                    //layer.dst() = layer.src();
+                    //RenameInput(layer.name(), layer.src()[0]);
                 }
                 else if (type == "BiasAdd" || type == "Add")
                 {
@@ -355,7 +363,6 @@ namespace Synet
                         layer.eltwise().operation() = EltwiseOperationTypeProduct;
                         layer.src().push_back(node.input(0));
                         layer.src().push_back(node.input(1));
-                        layer.dst().push_back(layer.name());
                     }
                     else
                     {
@@ -369,8 +376,8 @@ namespace Synet
                         layer.weight().resize(1);
                         layer.weight()[0].dim() = scale.Shape();
                         weight.push_back(scale);
-                        layer.dst() = layer.src();
                     }
+                    layer.dst().push_back(layer.name());
                 }
                 else if (type == "Sub")
                 {
@@ -894,6 +901,19 @@ namespace Synet
             }
             if (remove)
                 _graph.mutable_node()->DeleteSubrange(layerIndex, 1);
+        }
+
+        void RenameInput(const String & oldName, const String & newName)
+        {
+            for (int i = 0; i < _graph.node_size(); ++i)
+            {
+                tensorflow::NodeDef * node = _graph.mutable_node(i);
+                for (int j = 0; j < node->input_size(); ++j)
+                {
+                    if (node->input(j) == oldName)
+                        node->set_input(j, newName);
+                }
+            }
         }
 
         bool SetShape(const LayerParam & param)

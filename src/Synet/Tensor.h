@@ -75,7 +75,7 @@ namespace Synet
         {
             _shape = shape;
             _size = Size(0, _shape.size());
-            if(_size > _data->size())
+            if (_size > _data->size())
                 _data->resize(_size);
         }
 
@@ -143,7 +143,7 @@ namespace Synet
             assert(_shape.size() == index.size());
 
             size_t offset = 0;
-            for (const size_t * s = _shape.data(), * i = index.begin(); i < index.end(); ++s, ++i)
+            for (const size_t * s = _shape.data(), *i = index.begin(); i < index.end(); ++s, ++i)
             {
                 assert(*s > 0);
                 assert(*i < *s);
@@ -199,7 +199,78 @@ namespace Synet
             _data = tensor._data;
         }
 
+#ifdef SYNET_DEBUG_PRINT_ENABLE
+        void DebugPrint(std::ostream & os, const String & name, size_t first = 4, size_t last = 2) const
+        {
+            os << name << " { ";
+            for (size_t i = 0; i < _shape.size(); ++i)
+                os << _shape[i] << " ";
+            os << "} " << std::endl;
+
+            if (_size == 0)
+                return;
+
+            size_t n = _shape.size();
+            Synet::Shape firsts(n), lasts(n), index(n, 0);
+            Strings separators(n);
+            for (ptrdiff_t i = n - 1; i >= 0; --i)
+            {
+                if (i == n - 1)
+                {
+                    firsts[i] = first;
+                    lasts[i] = last;
+                    separators[i] = "\t";
+                }
+                else
+                {
+                    firsts[i] = std::max<size_t>(firsts[i + 1] - 1, 1);
+                    lasts[i] = std::max<size_t>(lasts[i + 1] - 1, 1);
+                    separators[i] = separators[i + 1] + "\n";
+                }
+            }
+            DebugPrint(os, firsts, lasts, separators, index, 0);
+            if (n == 1)
+                os << "\n";
+        }
+#endif
+
     private:
+
+#ifdef SYNET_DEBUG_PRINT_ENABLE
+        void DebugPrint(std::ostream & os, const Synet::Shape & firsts, const Synet::Shape & lasts, const Strings & separators, Synet::Shape index, size_t order) const
+        {
+            if (order == _shape.size())
+            {
+                std::cout << std::fixed << std::setprecision(4);
+                os << *Data(index);
+                return;
+            }
+            if (firsts[order] + lasts[order] < _shape[order])
+            {
+                size_t lo = firsts[order], hi = _shape[order] - lasts[order];
+                for (index[order] = 0; index[order] < lo; ++index[order])
+                {
+                    DebugPrint(os, firsts, lasts, separators, index, order + 1);
+                    os << separators[order];
+                }
+                os << "..." << separators[order];
+                for (index[order] = hi; index[order] < _shape[order]; ++index[order])
+                {
+                    DebugPrint(os, firsts, lasts, separators, index, order + 1);
+                    os << separators[order];
+                }
+            }
+            else
+            {
+                for (index[order] = 0; index[order] < _shape[order]; ++index[order])
+                {
+                    DebugPrint(os, firsts, lasts, separators, index, order + 1);
+                    os << separators[order];
+                }
+            }  
+        }
+#endif
+
         typedef std::vector<Type, Allocator<Type> > Vector;
         typedef std::shared_ptr<Vector> VectorPtr;
 
