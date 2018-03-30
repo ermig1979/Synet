@@ -25,8 +25,10 @@
 #pragma once
 
 //#define SYNET_SIMD_LIBRARY_ENABLE
+//#define SYNET_SIMD_LIBRARY_GEMM_ENABLE
 //#define SYNET_OPEN_BLAS_ENABLE
 
+//#define SYNET_SIMD_LIBRARY_AND_OPEN_BLASS_COMPARE
 //#define SYNET_PROTOBUF_ENABLE
 
 //#define SYNET_CAFFE_ENABLE
@@ -58,7 +60,7 @@
 #include <map>
 #include <set>
 
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) || defined(SYNET_SIMD_LIBRARY_GEMM_ENABLE)
 #include "Simd/SimdLib.h"
 #endif 
 

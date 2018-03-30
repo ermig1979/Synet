@@ -409,16 +409,63 @@ namespace Synet
     }
 #endif
 
-#ifdef SYNET_OPEN_BLAS_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_AND_OPEN_BLASS_COMPARE)
+    inline void CpuGemmNN(int M, int N, int K, const float * A, const float * B, float * C)
+    {
+        const float alpha = 1.0f, beta = 0.0f;
+        {
+            std::stringstream ss;
+            ss << M << "-" << N << "-" << K << " blas";
+            SYNET_PERF_BLOCK(ss.str().c_str());
+            ::cblas_sgemm(::CblasRowMajor, ::CblasNoTrans, ::CblasNoTrans, M, N, K, alpha, A, K, B, N, beta, C, N);
+        }
+        {
+            std::stringstream ss;
+            ss << M << "-" << N << "-" << K << " simd";
+            SYNET_PERF_BLOCK(ss.str().c_str());
+            ::SimdGemm32fNN(M, N, K, &alpha, A, K, B, N, &beta, C, N);
+        }
+    }
+
+    template <> void CpuGemm<float>(CblasTranspose transA, CblasTranspose transB,
+        size_t M, size_t N, size_t K, float alpha, const float * A, const float * B, float beta, float * C)
+    {
+        assert(transA == CblasNoTrans && transB == CblasNoTrans && alpha == 1.0f && beta == 0.0f);
+        CpuGemmNN((int)M, (int)N, (int)K, A, B, C);
+    }
+#elif defined(SYNET_SIMD_LIBRARY_GEMM_ENABLE)
+    template <> void CpuGemm<float>(CblasTranspose transA, CblasTranspose transB,
+        size_t M, size_t N, size_t K, float alpha, const float * A, const float * B, float beta, float * C)
+    {
+        if (transA == CblasNoTrans && transB == CblasNoTrans)
+        {
+            ::SimdGemm32fNN(M, N, K, &alpha, A, K, B, N, &beta, C, N);
+        }
+        else
+        {
+            for (size_t i = 0; i < M; ++i)
+                for (size_t j = 0; j < N; ++j)
+                    C[i*N + j] *= beta;
+            if (transA == CblasTrans && transB == CblasNoTrans)
+                Detail::CpuGemmTN(M, N, K, alpha, A, B, C);
+            if (transA == CblasNoTrans && transB == CblasTrans)
+                Detail::CpuGemmNT(M, N, K, alpha, A, B, C);
+            if (transA == CblasTrans && transB == CblasTrans)
+                Detail::CpuGemmTT(M, N, K, alpha, A, B, C);        
+        }
+    }
+#elif defined(SYNET_OPEN_BLAS_ENABLE)
     template <> SYNET_INLINE void CpuGemm<float>(CblasTranspose transA, CblasTranspose transB,
         size_t M, size_t N, size_t K, float alpha, const float * A, const float * B, float beta, float * C)
     {
         size_t lda = (transA == CblasNoTrans) ? K : M;
         size_t ldb = (transB == CblasNoTrans) ? N : K;
-        ::cblas_sgemm(::CblasRowMajor, (::CBLAS_TRANSPOSE)transA, (::CBLAS_TRANSPOSE)transB, 
+        ::cblas_sgemm(::CblasRowMajor, (::CBLAS_TRANSPOSE)transA, (::CBLAS_TRANSPOSE)transB,
             (int)M, (int)N, (int)K, alpha, A, (int)lda, B, (int)ldb, beta, C, (int)N);
     }
+#endif
 
+#ifdef SYNET_OPEN_BLAS_ENABLE
     template <> SYNET_INLINE void CpuGemv<float>(CblasTranspose transA, size_t M, size_t N, float alpha, const float * A, const float * x, float beta, float * y)
     {
         ::cblas_sgemv(::CblasRowMajor, (::CBLAS_TRANSPOSE)transA, (int)M, (int)N, alpha, A, (int)N, x, 1, beta, y, 1);
