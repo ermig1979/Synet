@@ -35,22 +35,22 @@ namespace Synet
 
         SYNET_INLINE Tensor()
             : _size(0)
+            , _data(std::make_shared<Vector>())
         {
-            _data.reset(new Vector());
         }
 
         SYNET_INLINE Tensor(const Synet::Shape & shape, const Type & value = Type())
             : _shape(shape)
+            , _data(std::make_shared<Vector>())
         {
-            _size = Size(0, _shape.size());
-            _data.reset(new Vector(_size, value));
+            Resize(value);
         }
 
         SYNET_INLINE Tensor(std::initializer_list<size_t> shape, const Type & value = Type())
             : _shape(shape.begin(), shape.end())
+            , _data(std::make_shared<Vector>())
         {
-            _size = Size(0, _shape.size());
-            _data.reset(new Vector(_size, value));
+            Resize(value);
         }
 
         SYNET_INLINE ~Tensor()
@@ -60,31 +60,25 @@ namespace Synet
         SYNET_INLINE void Reshape(const Synet::Shape & shape, const Type & value = Type())
         {
             _shape = shape;
-            _size = Size(0, _shape.size());
-            _data->resize(_size, value);
+            Resize(value);
         }
 
         SYNET_INLINE void Reshape(std::initializer_list<size_t> shape, const Type & value = Type())
         {
             _shape.assign(shape.begin(), shape.end());
-            _size = Size(0, _shape.size());
-            _data->resize(_size, value);
+            Resize(value);
         }
 
         SYNET_INLINE void Extend(const Synet::Shape & shape)
         {
             _shape = shape;
-            _size = Size(0, _shape.size());
-            if (_size > _data->size())
-                _data->resize(_size);
+            Extend();
         }
 
         SYNET_INLINE void Extend(std::initializer_list<size_t> shape)
         {
             _shape.assign(shape.begin(), shape.end());
-            _size = Size(0, _shape.size());
-            if (_size > _data->size())
-                _data->resize(_size);
+            Extend();
         }
 
         SYNET_INLINE const Synet::Shape & Shape() const
@@ -97,22 +91,27 @@ namespace Synet
             return _shape.size();
         }
 
-        SYNET_INLINE size_t Axis(size_t axis) const
+        SYNET_INLINE size_t Axis(ptrdiff_t axis) const
         {
+            if (axis < 0)
+                axis += _shape.size();
             return _shape[axis];
         }
 
-        SYNET_INLINE size_t Size(size_t startAxis, size_t endAxis) const
+        SYNET_INLINE size_t Size(ptrdiff_t startAxis, ptrdiff_t endAxis) const
         {
-            assert(startAxis <= endAxis && endAxis <= _shape.size());
-
+            if (startAxis < 0)
+                startAxis += _shape.size();
+            if (endAxis < 0)
+                endAxis += _shape.size();
+            assert(startAxis <= endAxis && (size_t)endAxis <= _shape.size());
             size_t size = 1;
-            for (size_t axis = startAxis; axis < endAxis; ++axis)
+            for (ptrdiff_t axis = startAxis; axis < endAxis; ++axis)
                 size *= _shape[axis];
             return size;
         }
 
-        SYNET_INLINE size_t Size(size_t startAxis) const
+        SYNET_INLINE size_t Size(ptrdiff_t startAxis) const
         {
             return Size(startAxis, _shape.size());
         }
@@ -189,6 +188,7 @@ namespace Synet
             _shape = tensor._shape;
             _size = tensor._size;
             _data = tensor._data;
+            SetDebugPtr();
         }
 
         SYNET_INLINE void ShareAs(const Tensor & tensor, const Synet::Shape & shape)
@@ -197,6 +197,7 @@ namespace Synet
             _size = Size(0, _shape.size());
             assert(_size == tensor._size);
             _data = tensor._data;
+            SetDebugPtr();
         }
 
 #ifdef SYNET_DEBUG_PRINT_ENABLE
@@ -268,6 +269,34 @@ namespace Synet
                     os << separators[order];
                 }
             }  
+        }
+#endif
+
+        SYNET_INLINE void Resize(const Type & value)
+        {
+            _size = Size(0, _shape.size());
+            _data->resize(_size, value);
+            SetDebugPtr();
+        }
+
+        SYNET_INLINE void Extend()
+        {
+            _size = Size(0, _shape.size());
+            if (_size > _data->size())
+                _data->resize(_size);
+            SetDebugPtr();
+        }
+
+#if defined(_DEBUG) && defined(_MSC_VER)
+        const Type * _ptr;
+
+        SYNET_INLINE void SetDebugPtr()
+        {
+            _ptr = _data->data();
+        }
+#else
+        SYNET_INLINE void SetDebugPtr()
+        {
         }
 #endif
 

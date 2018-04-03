@@ -56,6 +56,7 @@ namespace Synet
         LayerTypeInput,
         LayerTypeLog,
         LayerTypeLrn,
+        LayerTypeNormalize,
         LayerTypePermute,
         LayerTypePooling,
         LayerTypeRegion,
@@ -88,6 +89,7 @@ namespace Synet
             "Input",
             "Log",
             "LRN",
+            "Normalize",
             "Permute",
             "Pooling",
             "Region",
@@ -271,6 +273,13 @@ namespace Synet
         SYNET_PARAM_VALUE(float, k, 1.0f);
     };
 
+    struct NormalizeParam
+    {
+        SYNET_PARAM_VALUE(bool, acrossSpatial, true);
+        SYNET_PARAM_VALUE(bool, channelShared, true);
+        SYNET_PARAM_VALUE(float, eps, 1e-10f);
+    };
+
     struct PermuteParam
     {
         SYNET_PARAM_VALUE(Shape, order, Shape());
@@ -283,6 +292,7 @@ namespace Synet
         SYNET_PARAM_VALUE(Shape, pad, Shape());
         SYNET_PARAM_VALUE(Shape, stride, Shape());
         SYNET_PARAM_VALUE(bool, globalPooling, false);
+        SYNET_PARAM_VALUE(bool, yoloCompatible, false);
     };
 
     struct RegionParam
@@ -349,6 +359,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(InputParam, input);
         SYNET_PARAM_STRUCT(LogParam, log);
         SYNET_PARAM_STRUCT(LrnParam, lrn);
+        SYNET_PARAM_STRUCT(NormalizeParam, normalize);
         SYNET_PARAM_STRUCT(PermuteParam, permute);
         SYNET_PARAM_STRUCT(PoolingParam, pooling);
         SYNET_PARAM_STRUCT(RegionParam, region);

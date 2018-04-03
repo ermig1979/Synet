@@ -267,6 +267,7 @@ namespace Synet
                 pooling.pooling().stride().resize(1, src.stride);
             if (src.pad != 0)
                 pooling.pooling().pad().resize(1, src.pad);
+            pooling.pooling().yoloCompatible() = true;
             dst.push_back(pooling);
             return true;
         }

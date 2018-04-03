@@ -113,26 +113,27 @@ namespace Synet
         
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            const PoolingParam & param = this->Param().pooling();
             assert(src[0]->Count() == 4);
             _channels = src[0]->Axis(1);
             _srcY = src[0]->Axis(2);
             _srcX = src[0]->Axis(3);
 
-            if (this->Param().pooling().globalPooling())
+            if (param.globalPooling())
             {
                 _kernelY = src[0]->Axis(2);
                 _kernelX = src[0]->Axis(3);
             }
             else
             {
-                const Shape & kernel = this->Param().pooling().kernel();
+                const Shape & kernel = param.kernel();
                 assert(kernel.size() == 1 || kernel.size() == 2);
                 _kernelY = kernel[0];
                 _kernelX = kernel.size() > 1 ? kernel[1] : kernel[0];
                 assert(_kernelY > 0 && _kernelX > 0);
             }
 
-            const Shape & pad = this->Param().pooling().pad();
+            const Shape & pad = param.pad();
             if (pad.empty())
             {
                 _padY = 0;
@@ -146,7 +147,7 @@ namespace Synet
                 assert(_padY < _kernelY && _padX < _kernelX);
             }
 
-            const Shape & stride = this->Param().pooling().stride();
+            const Shape & stride = param.stride();
             if (stride.empty())
             {
                 _strideY = 1;
@@ -159,17 +160,26 @@ namespace Synet
                 _strideX = stride.size() > 1 ? stride[1] : stride[0];
             }
 
-            _dstX = (size_t)(::ceil((float)(_srcX + 2 * _padX - _kernelX) / _strideX)) + 1;
-            _dstY = (size_t)(::ceil((float)(_srcY + 2 * _padY - _kernelY) / _strideY)) + 1;
-            if (_padX || _padY)
+            if (param.yoloCompatible())
             {
-                if ((_dstX - 1) * _strideX >= _srcX + _padX)
-                    --_dstX;
-                if ((_dstY - 1) * _strideY >= _srcY + _padY)
-                    --_dstY;
-                assert((_dstX - 1) * _strideX < _srcX + _padX);
-                assert((_dstY - 1) * _strideY < _srcY + _padY);
+                _dstX = (_srcX + 2 * _padX) / _strideX;
+                _dstY = (_srcY + 2 * _padY) / _strideY;
             }
+            else
+            {
+                _dstX = (size_t)(::ceil((float)(_srcX + 2 * _padX - _kernelX) / _strideX)) + 1;
+                _dstY = (size_t)(::ceil((float)(_srcY + 2 * _padY - _kernelY) / _strideY)) + 1;
+                if (_padX || _padY)
+                {
+                    if ((_dstX - 1) * _strideX >= _srcX + _padX)
+                        --_dstX;
+                    if ((_dstY - 1) * _strideY >= _srcY + _padY)
+                        --_dstY;
+                    assert((_dstX - 1) * _strideX < _srcX + _padX);
+                    assert((_dstY - 1) * _strideY < _srcY + _padY);
+                }
+            }
+
             dst[0]->Reshape(Shape({ src[0]->Axis(0), _channels, _dstY, _dstX }));
         }
 
