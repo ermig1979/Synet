@@ -48,7 +48,7 @@ namespace Synet
             _transposeA = this->Param().innerProduct().transposeA();
             _transposeB = this->Param().innerProduct().transposeB();
             _axis = this->Param().innerProduct().axis();
-            _K = src[0]->Axis(_axis);
+            _K = src[0]->Size(_axis);
             if (src.size() == 2)
             {
                 assert(_biasTerm == false);

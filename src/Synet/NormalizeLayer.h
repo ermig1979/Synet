@@ -121,6 +121,7 @@ namespace Synet
         }
 
     private:
+        typedef typename Base::Tensor Tensor;
 
         //Blob<Dtype> norm_;
         //Blob<Dtype> sum_channel_multiplier_, sum_spatial_multiplier_;

@@ -164,7 +164,7 @@ namespace Synet
             else
                 _dstConvSpatialSize = src[0]->Size(firstSpatialAxis);
             _colOffset = _kernelSize * _dstConvSpatialSize;
-            _dstOffset = _dstChannels * _dstConvChannels / _group;
+            _dstOffset = _dstChannels * _dstConvSpatialSize / _group;
             _srcConvShape.resize(_spatialAxisNum + 1);
             for (size_t i = 0; i < _spatialAxisNum + 1; ++i)
             {
