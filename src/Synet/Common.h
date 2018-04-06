@@ -59,6 +59,7 @@
 #include <sstream>
 #include <map>
 #include <set>
+#include <cmath>
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) || defined(SYNET_SIMD_LIBRARY_GEMM_ENABLE)
 #include "Simd/SimdLib.h"

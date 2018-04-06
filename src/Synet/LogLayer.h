@@ -58,9 +58,9 @@ namespace Synet
             if (base != Type(-1))
                 assert(base > 0);
             Type logBase = (base == Type(-1)) ? Type(1) : ::log(base);
-            assert(!(::isnan(logBase) || ::isinf(logBase)));
+            assert(!(std::isnan(logBase) || std::isinf(logBase)));
             _baseScale = Type(1) / logBase;
-            assert(!(::isnan(_baseScale) || ::isinf(_baseScale)));
+            assert(!(std::isnan(_baseScale) || std::isinf(_baseScale)));
             _inputScale = param.scale();
             _inputShift = param.shift();
         }
