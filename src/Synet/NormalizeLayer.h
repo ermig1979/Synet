@@ -58,6 +58,7 @@ namespace Synet
             if (!_acrossSpatial)
                 _norm.Reshape({ src[0]->Axis(-4), 1, src[0]->Axis(-2), src[0]->Axis(-1) });
             size_t spatialDim = src[0]->Size(-2);
+            _sumChannelMultiplier.Reshape({ 1, src[0]->Axis(-3), 1, 1 }, Type(1));
             if (spatialDim != _sumSpatialMultiplier.Size()) 
             {
                 _sumSpatialMultiplier.Reshape({ 1, 1, src[0]->Axis(-2), src[0]->Axis(-1) });
@@ -70,63 +71,52 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            //const Type * pSrc = src[0]->Data();
-            //Type * pDst = dst[0]->Data();
-            //const Type * scale = this->Weight()[0]->Data();
-            //Type * pBuffer = _buffer.Data();
-            //Type * pNorm = _norm.Data();
-            //CpuSet(_norm.Size(), Type(_eps), pNorm);
-            //const Type * sum_channel_multiplier = sum_channel_multiplier_.cpu_data();
-            //const Type * sum_spatial_multiplier = sum_spatial_multiplier_.cpu_data();
-            //size_t num = src[0]->Axis(0);
-            //size_t dim = src[0]->Size() / num;
-            //size_t spatialDim = src[0]->Size(-2);
-            //int channels = src[0]->channels();
-            //for (size_t n = 0; n < num; ++n) 
-            //{
-            //    caffe_sqr<Dtype>(dim, bottom_data, buffer_data);
-            //    if (_acrossSpatial) 
-            //    {
-            //        // add eps to avoid overflow
-            //        norm_data[n] = pow(caffe_cpu_asum<Dtype>(dim, buffer_data) + eps_, Dtype(0.5));
-            //        caffe_cpu_scale<Dtype>(dim, Dtype(1.0 / norm_data[n]), bottom_data, top_data);
-            //    }
-            //    else 
-            //    {
-            //        CpuGemv(CblasTrans, channels, spatialDim, Type(1), pBuffer, sum_channel_multiplier, Type(1), pNorm);
-            //        // compute norm
-            //        caffe_powx<Dtype>(spatial_dim, norm_data, Dtype(0.5), norm_data);
-            //        // scale the layer
-            //        caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, channels, spatial_dim,
-            //            1, Dtype(1), sum_channel_multiplier, norm_data,
-            //            Dtype(0), buffer_data);
-            //        caffe_div<Dtype>(dim, bottom_data, buffer_data, top_data);
-            //        norm_data += spatial_dim;
-            //    }
-            //    if (_channelShared)
-            //    {
-            //        caffe_scal<Dtype>(dim, scale[0], top_data);
-            //    }
-            //    else 
-            //    {
-            //        caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, channels, spatial_dim,
-            //            1, Dtype(1), scale, sum_spatial_multiplier,
-            //            Dtype(0),
-            //            buffer_data);
-            //        caffe_mul<Dtype>(dim, top_data, buffer_data, top_data);
-            //    }
-            //    bottom_data += dim;
-            //    top_data += dim;
-            //}
+            const Type * pSrc = src[0]->Data();
+            Type * pDst = dst[0]->Data();
+            const Type * scale = this->Weight()[0].Data();
+            Type * pBuffer = _buffer.Data();
+            Type * pNorm = _norm.Data();
+            CpuSet(_norm.Size(), Type(_eps), pNorm);
+            const Type * sumChannelMultiplier = _sumChannelMultiplier.Data();
+            const Type * sumSpatialMultiplier = _sumSpatialMultiplier.Data();
+            size_t num = src[0]->Axis(0);
+            size_t dim = src[0]->Size() / num;
+            size_t spatialDim = src[0]->Size(-2);
+            size_t channels = src[0]->Axis(1);
+            for (size_t n = 0; n < num; ++n) 
+            {
+                CpuSqr(pSrc, dim, pBuffer);
+                if (_acrossSpatial) 
+                {
+                    pNorm[n] = ::sqrt(CpuAbsSum(pBuffer, dim) + _eps);
+                    CpuScale(pSrc, dim, Type(1) / pNorm[n], pDst);
+                }
+                else 
+                {
+                    CpuGemv(CblasTrans, channels, spatialDim, Type(1), pBuffer, sumChannelMultiplier, Type(1), pNorm);
+                    CpuPow(pNorm, spatialDim, Type(0.5), pNorm);
+                    CpuGemm(CblasNoTrans, CblasNoTrans, channels, spatialDim, 1, Type(1), sumChannelMultiplier, pNorm, Type(0), pBuffer);
+                    CpuDiv(pSrc, pBuffer, dim,  pDst);
+                    pNorm += spatialDim;
+                }
+                if (_channelShared)
+                {
+                    CpuScale(pDst, dim, scale[0], pDst);
+                }
+                else 
+                {
+                    CpuGemm(CblasNoTrans, CblasNoTrans, channels, spatialDim, 1, Type(1), scale, sumSpatialMultiplier, Type(0), pBuffer);
+                    CpuMul(pDst, pBuffer, dim, pDst);
+                }
+                pSrc += dim;
+                pDst += dim;
+            }
         }
 
     private:
         typedef typename Base::Tensor Tensor;
 
-        //Blob<Dtype> norm_;
-        //Blob<Dtype> sum_channel_multiplier_, sum_spatial_multiplier_;
-        //Blob<Dtype> buffer_, buffer_channel_, buffer_spatial_;
-        Tensor _buffer, _norm, _sumSpatialMultiplier, _bufferSpatial;
+        Tensor _buffer, _norm, _sumSpatialMultiplier, _bufferSpatial, _sumChannelMultiplier;
         bool _acrossSpatial, _channelShared;
         Type _eps;
     };
