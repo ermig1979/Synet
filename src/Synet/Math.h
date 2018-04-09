@@ -409,7 +409,29 @@ namespace Synet
     }
 #endif
 
-#if defined(SYNET_SIMD_LIBRARY_AND_OPEN_BLASS_COMPARE)
+    size_t GetThreadNumber()
+    {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        return ::SimdGetThreadNumber();
+#elif defined(SYNET_OPEN_BLAS_ENABLE)
+        return ::openblas_get_num_threads();
+#else
+        return 1;
+#endif
+    }
+
+    void SetThreadNumber(size_t threadNumber)
+    {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        ::SimdSetThreadNumber(threadNumber);
+#endif
+#ifdef SYNET_OPEN_BLAS_ENABLE
+        ::openblas_set_num_threads((int)threadNumber);
+        ::goto_set_num_threads((int)threadNumber);
+#endif
+    }
+
+#if defined(SYNET_GEMM_COMPARE) && defined(SYNET_SIMD_LIBRARY_ENABLE) && defined(SYNET_OPEN_BLAS_ENABLE)
     inline void CpuGemmNN(int M, int N, int K, const float * A, const float * B, float * C)
     {
         const float alpha = 1.0f, beta = 0.0f;
@@ -433,7 +455,24 @@ namespace Synet
         assert(transA == CblasNoTrans && transB == CblasNoTrans && alpha == 1.0f && beta == 0.0f);
         CpuGemmNN((int)M, (int)N, (int)K, A, B, C);
     }
-#elif defined(SYNET_SIMD_LIBRARY_GEMM_ENABLE)
+#elif defined(SYNET_GEMM_DYNAMIC) && defined(SYNET_SIMD_LIBRARY_ENABLE) && defined(SYNET_OPEN_BLAS_ENABLE)
+    template <> void CpuGemm<float>(CblasTranspose transA, CblasTranspose transB,
+        size_t M, size_t N, size_t K, float alpha, const float * A, const float * B, float beta, float * C)
+    {
+        size_t threadNumber = GetThreadNumber();
+        if (transA == CblasNoTrans && transB == CblasNoTrans && (threadNumber == 1 || N * M * K > threadNumber * 4 * 256 * 256 * 256))
+        {
+            ::SimdGemm32fNN(M, N, K, &alpha, A, K, B, N, &beta, C, N);
+        }
+        else
+        {
+            size_t lda = (transA == CblasNoTrans) ? K : M;
+            size_t ldb = (transB == CblasNoTrans) ? N : K;
+            ::cblas_sgemm(::CblasRowMajor, (::CBLAS_TRANSPOSE)transA, (::CBLAS_TRANSPOSE)transB,
+                (int)M, (int)N, (int)K, alpha, A, (int)lda, B, (int)ldb, beta, C, (int)N);
+        }
+    }
+#elif defined(SYNET_GEMM_SIMD_LIBRARY) && defined(SYNET_SIMD_LIBRARY_ENABLE)
     template <> void CpuGemm<float>(CblasTranspose transA, CblasTranspose transB,
         size_t M, size_t N, size_t K, float alpha, const float * A, const float * B, float beta, float * C)
     {
