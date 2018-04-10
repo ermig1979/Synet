@@ -91,19 +91,22 @@ namespace Synet
             return _shape.size();
         }
 
-        SYNET_INLINE size_t Axis(ptrdiff_t axis) const
+        SYNET_INLINE size_t Index(ptrdiff_t axis) const
         {
             if (axis < 0)
                 axis += _shape.size();
-            return _shape[axis];
+            return axis;
+        }
+
+        SYNET_INLINE size_t Axis(ptrdiff_t axis) const
+        {
+            return _shape[Index(axis)];
         }
 
         SYNET_INLINE size_t Size(ptrdiff_t startAxis, ptrdiff_t endAxis) const
         {
-            if (startAxis < 0)
-                startAxis += _shape.size();
-            if (endAxis < 0)
-                endAxis += _shape.size();
+            startAxis = Index(startAxis);
+            endAxis = Index(endAxis);
             assert(startAxis <= endAxis && (size_t)endAxis <= _shape.size());
             size_t size = 1;
             for (ptrdiff_t axis = startAxis; axis < endAxis; ++axis)

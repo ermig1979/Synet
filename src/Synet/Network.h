@@ -29,9 +29,10 @@
 #include "Synet/BiasLayer.h"
 #include "Synet/ConcatLayer.h"
 #include "Synet/ConvolutionLayer.h"
-#include "Synet/FillLayer.h"
 #include "Synet/EltwiseLayer.h"
 #include "Synet/ExpandDimsLayer.h"
+#include "Synet/FillLayer.h"
+#include "Synet/FlattenLayer.h"
 #include "Synet/InnerProductLayer.h"
 #include "Synet/InputLayer.h"
 #include "Synet/LogLayer.h"
@@ -278,6 +279,7 @@ namespace Synet
             case LayerTypeEltwise: return new EltwiseLayer<T, A>(param);
             case LayerTypeExpandDims: return new ExpandDimsLayer<T, A>(param);
             case LayerTypeFill: return new FillLayer<T, A>(param);
+            case LayerTypeFlatten: return new FlattenLayer<T, A>(param);
             case LayerTypeInnerProduct: return new InnerProductLayer<T, A>(param);
             case LayerTypeInput: return new InputLayer<T, A>(param);
             case LayerTypeLog: return new LogLayer<T, A>(param);

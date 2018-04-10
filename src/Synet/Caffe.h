@@ -148,6 +148,10 @@ namespace Synet
                 for (int j = 0; j < src.eltwise_param().coeff_size(); ++j)
                     dst.eltwise().coefficients()[j] = src.eltwise_param().coeff(j);
                 break;
+            case Synet::LayerTypeFlatten:
+                dst.flatten().axis() = src.flatten_param().axis();
+                dst.flatten().endAxis() = src.flatten_param().end_axis();
+                break;
             case Synet::LayerTypeDropout:
                 break;
             case Synet::LayerTypeInnerProduct:
@@ -176,6 +180,16 @@ namespace Synet
                 dst.lrn().beta() = src.lrn_param().beta();
                 dst.lrn().normRegion() = (Synet::NormRegionType)src.lrn_param().norm_region();
                 dst.lrn().k() = src.lrn_param().k();
+                break;
+            case Synet::LayerTypeNormalize:
+                dst.normalize().acrossSpatial() = src.norm_param().across_spatial();
+                dst.normalize().channelShared() = src.norm_param().channel_shared();
+                dst.normalize().eps() = src.norm_param().eps();
+                break;
+            case Synet::LayerTypePermute:
+                dst.permute().order().resize(src.permute_param().order_size());
+                for (int i = 0; i < src.permute_param().order_size(); ++i)
+                    dst.permute().order()[i] = src.permute_param().order(i);
                 break;
             case Synet::LayerTypePooling:
                 dst.pooling().method() = (Synet::PoolingMethodType)src.pooling_param().pool();

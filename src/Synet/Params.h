@@ -52,6 +52,7 @@ namespace Synet
         LayerTypeEltwise,
         LayerTypeExpandDims,
         LayerTypeFill,
+        LayerTypeFlatten,
         LayerTypeInnerProduct,
         LayerTypeInput,
         LayerTypeLog,
@@ -85,6 +86,7 @@ namespace Synet
             "Eltwise",
             "ExpandDims",
             "Fill",
+            "Flatten",
             "InnerProduct",
             "Input",
             "Log",
@@ -227,11 +229,6 @@ namespace Synet
         SYNET_PARAM_VALUE(uint32_t, group, 1);
     };
 
-    struct FillParam
-    {
-        SYNET_PARAM_VALUE(float, value, 0.0f);
-    };
-
     struct ExpandDimsParam
     {
         SYNET_PARAM_VALUE(int32_t, axis, 0);
@@ -243,6 +240,17 @@ namespace Synet
         SYNET_PARAM_VALUE(Floats, coefficients, Floats());
     };
 
+    struct FillParam
+    {
+        SYNET_PARAM_VALUE(float, value, 0.0f);
+    }; 
+
+    struct FlattenParam
+    {
+        SYNET_PARAM_VALUE(int32_t, axis, 1);
+        SYNET_PARAM_VALUE(int32_t, endAxis, -1);
+    };
+    
     struct InnerProductParam
     {
         SYNET_PARAM_VALUE(uint32_t, outputNum, 0);
@@ -352,9 +360,10 @@ namespace Synet
         SYNET_PARAM_STRUCT(BiasParam, bias);
         SYNET_PARAM_STRUCT(ConcatParam, concat);
         SYNET_PARAM_STRUCT(ConvolutionParam, convolution);
-        SYNET_PARAM_STRUCT(FillParam, fill);
         SYNET_PARAM_STRUCT(EltwiseParam, eltwise);
         SYNET_PARAM_STRUCT(ExpandDimsParam, expandDims);
+        SYNET_PARAM_STRUCT(FillParam, fill);
+        SYNET_PARAM_STRUCT(FlattenParam, flatten);
         SYNET_PARAM_STRUCT(InnerProductParam, innerProduct);
         SYNET_PARAM_STRUCT(InputParam, input);
         SYNET_PARAM_STRUCT(LogParam, log);
