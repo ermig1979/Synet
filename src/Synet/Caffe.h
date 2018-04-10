@@ -207,8 +207,40 @@ namespace Synet
                 if (src.pooling_param().has_stride_h() && src.pooling_param().has_stride_w())
                     dst.pooling().stride() = Shape({ src.pooling_param().stride_h(), src.pooling_param().stride_w() });
                 break;
+            case Synet::LayerTypePriorBox:
+                dst.priorBox().minSize().resize(src.prior_box_param().min_size_size());
+                for (int i = 0; i < src.prior_box_param().min_size_size(); ++i)
+                    dst.priorBox().minSize()[i] = src.prior_box_param().min_size(i);
+                dst.priorBox().maxSize().resize(src.prior_box_param().max_size_size());
+                for (int i = 0; i < src.prior_box_param().max_size_size(); ++i)
+                    dst.priorBox().maxSize()[i] = src.prior_box_param().max_size(i);
+                dst.priorBox().aspectRatio().resize(src.prior_box_param().aspect_ratio_size());
+                for (int i = 0; i < src.prior_box_param().aspect_ratio_size(); ++i)
+                    dst.priorBox().aspectRatio()[i] = src.prior_box_param().aspect_ratio(i);
+                dst.priorBox().flip() = src.prior_box_param().flip();
+                dst.priorBox().clip() = src.prior_box_param().clip();
+                dst.priorBox().variance().resize(src.prior_box_param().variance_size());
+                for (int i = 0; i < src.prior_box_param().variance_size(); ++i)
+                    dst.priorBox().variance()[i] = src.prior_box_param().variance(i);
+                if (src.prior_box_param().has_img_size())
+                    dst.priorBox().imgSize() = Shape({ src.prior_box_param().img_size() });
+                if (src.prior_box_param().has_img_h() && src.prior_box_param().has_img_w())
+                    dst.priorBox().imgSize() = Shape({ src.prior_box_param().img_h(), src.prior_box_param().img_w() });
+                if (src.prior_box_param().has_step())
+                    dst.priorBox().step() = Floats({ src.prior_box_param().step() });
+                if (src.prior_box_param().has_step_h() && src.prior_box_param().has_step_w())
+                    dst.priorBox().step() = Floats({ src.prior_box_param().step_h(), src.prior_box_param().step_w() });
+                dst.priorBox().offset() = src.prior_box_param().offset();
+                break;
             case Synet::LayerTypeRelu:
                 dst.relu().negativeSlope() = src.relu_param().negative_slope();
+                break;
+            case Synet::LayerTypeReshape:
+                dst.reshape().shape().resize(src.reshape_param().shape().dim_size());
+                for (int i = 0; i < src.reshape_param().shape().dim_size(); ++i)
+                    dst.reshape().shape()[i] = src.reshape_param().shape().dim(i);
+                dst.reshape().axis() = src.reshape_param().axis();
+                dst.reshape().numAxes() = src.reshape_param().num_axes();
                 break;
             case Synet::LayerTypeScale:
                 dst.scale().axis() = src.scale_param().axis();

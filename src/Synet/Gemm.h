@@ -142,7 +142,7 @@ namespace Synet
             Detail::CpuGemvT(N, M, alpha, A, x, y);
     }
 
-    size_t GetThreadNumber()
+    inline size_t GetThreadNumber()
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return ::SimdGetThreadNumber();
@@ -153,7 +153,7 @@ namespace Synet
 #endif
     }
 
-    void SetThreadNumber(size_t threadNumber)
+    inline void SetThreadNumber(size_t threadNumber)
     {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
         ::SimdSetThreadNumber(threadNumber);

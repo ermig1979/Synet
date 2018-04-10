@@ -40,6 +40,7 @@
 #include "Synet/NormalizeLayer.h"
 #include "Synet/PermuteLayer.h"
 #include "Synet/PoolingLayer.h"
+#include "Synet/PriorBoxLayer.h"
 #include "Synet/RegionLayer.h"
 #include "Synet/ReluLayer.h"
 #include "Synet/ReorgLayer.h"
@@ -287,6 +288,7 @@ namespace Synet
             case LayerTypeNormalize: return new NormalizeLayer<T, A>(param);
             case LayerTypePermute: return new PermuteLayer<T, A>(param);
             case LayerTypePooling: return new PoolingLayer<T, A>(param);
+            case LayerTypePriorBox: return new PriorBoxLayer<T, A>(param);
             case LayerTypeRegion: return new RegionLayer<T, A>(param);
             case LayerTypeRelu: return new ReluLayer<T, A>(param);
             case LayerTypeReorg: return new ReorgLayer<T, A>(param);

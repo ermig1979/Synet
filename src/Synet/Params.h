@@ -60,6 +60,7 @@ namespace Synet
         LayerTypeNormalize,
         LayerTypePermute,
         LayerTypePooling,
+        LayerTypePriorBox,
         LayerTypeRegion,
         LayerTypeRelu,
         LayerTypeReorg,
@@ -94,6 +95,7 @@ namespace Synet
             "Normalize",
             "Permute",
             "Pooling",
+            "PriorBox",
             "Region",
             "ReLU",
             "Reorg",
@@ -190,6 +192,33 @@ namespace Synet
     template<> SYNET_INLINE void StringToValue<PoolingMethodType>(const String & string, PoolingMethodType & value)
     {
         value = StringToEnum<PoolingMethodType, PoolingMethodTypeSize>(string);
+    }
+
+    //-------------------------------------------------------------------------
+
+    enum PriorBoxCodeType
+    {
+        PriorBoxCodeTypeUnknown = 0,
+        PriorBoxCodeTypeCorner = 1,
+        PriorBoxCodeTypeCenter = 2,
+        PriorBoxCodeTypeCornerSize = 3,
+        PriorBoxCodeTypeSize,
+    };
+
+    template<> SYNET_INLINE String ValueToString<PriorBoxCodeType>(const PriorBoxCodeType & value)
+    {
+        static const char * names[PriorBoxCodeTypeSize] =
+        {
+            "Corner",
+            "Center",
+            "CornerSize",
+        };
+        return (value > PriorBoxCodeTypeUnknown && value < PriorBoxCodeTypeSize) ? names[value] : "";
+    }
+
+    template<> SYNET_INLINE void StringToValue<PriorBoxCodeType>(const String & string, PriorBoxCodeType & value)
+    {
+        value = StringToEnum<PriorBoxCodeType, PriorBoxCodeTypeSize>(string);
     }
 
     //-------------------------------------------------------------------------
@@ -303,6 +332,19 @@ namespace Synet
         SYNET_PARAM_VALUE(bool, yoloCompatible, false);
     };
 
+    struct PriorBoxParam
+    {
+        SYNET_PARAM_VALUE(Floats, minSize, Floats());
+        SYNET_PARAM_VALUE(Floats, maxSize, Floats());
+        SYNET_PARAM_VALUE(Floats, aspectRatio, Floats());
+        SYNET_PARAM_VALUE(bool, flip, true);
+        SYNET_PARAM_VALUE(bool, clip, false);
+        SYNET_PARAM_VALUE(Floats, variance, Floats());
+        SYNET_PARAM_VALUE(Shape, imgSize, Shape());
+        SYNET_PARAM_VALUE(Floats, step, Floats());
+        SYNET_PARAM_VALUE(float, offset, 0.5f);
+    };
+
     struct RegionParam
     {
         SYNET_PARAM_VALUE(uint32_t, coords, 4);
@@ -371,6 +413,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(NormalizeParam, normalize);
         SYNET_PARAM_STRUCT(PermuteParam, permute);
         SYNET_PARAM_STRUCT(PoolingParam, pooling);
+        SYNET_PARAM_STRUCT(PriorBoxParam, priorBox);
         SYNET_PARAM_STRUCT(RegionParam, region);
         SYNET_PARAM_STRUCT(ReluParam, relu);
         SYNET_PARAM_STRUCT(ReorgParam, reorg);
