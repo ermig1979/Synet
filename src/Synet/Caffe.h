@@ -152,6 +152,19 @@ namespace Synet
                 dst.flatten().axis() = src.flatten_param().axis();
                 dst.flatten().endAxis() = src.flatten_param().end_axis();
                 break;
+            case Synet::LayerTypeDetectionOutput:
+                dst.detectionOutput().numClasses() = src.detection_output_param().num_classes();
+                dst.detectionOutput().shareLocation() = src.detection_output_param().share_location();
+                dst.detectionOutput().backgroundLabelId() = src.detection_output_param().background_label_id();
+                dst.detectionOutput().nms().nmsThreshold() = src.detection_output_param().nms_param().nms_threshold();
+                dst.detectionOutput().nms().topK() = src.detection_output_param().nms_param().top_k();
+                dst.detectionOutput().nms().eta() = src.detection_output_param().nms_param().eta();
+                dst.detectionOutput().codeType() = (PriorBoxCodeType)src.detection_output_param().code_type();
+                dst.detectionOutput().varianceEncodedInTarget() = src.detection_output_param().variance_encoded_in_target();
+                dst.detectionOutput().keepTopK() = src.detection_output_param().keep_top_k();
+                dst.detectionOutput().confidenceThreshold() = src.detection_output_param().confidence_threshold();
+                dst.detectionOutput().keepMaxClassScoresOnly() = src.detection_output_param().keep_max_class_scores_only();
+                break;
             case Synet::LayerTypeDropout:
                 break;
             case Synet::LayerTypeInnerProduct:

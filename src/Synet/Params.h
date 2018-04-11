@@ -48,6 +48,7 @@ namespace Synet
         LayerTypeBias,
         LayerTypeConcat,
         LayerTypeConvolution,
+        LayerTypeDetectionOutput,
         LayerTypeDropout,
         LayerTypeEltwise,
         LayerTypeExpandDims,
@@ -83,6 +84,7 @@ namespace Synet
             "Bias",
             "Concat",
             "Convolution",
+            "DetectionOutput",
             "Dropout",
             "Eltwise",
             "ExpandDims",
@@ -223,6 +225,13 @@ namespace Synet
 
     //-------------------------------------------------------------------------
 
+    struct NonMaximumSuppressionParam
+    {
+        SYNET_PARAM_VALUE(float, nmsThreshold, 0.3f);
+        SYNET_PARAM_VALUE(int32_t, topK, -1);
+        SYNET_PARAM_VALUE(float, eta, 1.0f);
+    };
+
     struct ShapeParam
     {
         SYNET_PARAM_VALUE(Shape, dim, Shape());
@@ -256,6 +265,19 @@ namespace Synet
         SYNET_PARAM_VALUE(Shape, dilation, Shape());
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
         SYNET_PARAM_VALUE(uint32_t, group, 1);
+    };
+
+    struct DetectionOutputParam
+    {
+        SYNET_PARAM_VALUE(uint32_t, numClasses, 0);
+        SYNET_PARAM_VALUE(bool, shareLocation, true);
+        SYNET_PARAM_VALUE(int32_t, backgroundLabelId, 0);
+        SYNET_PARAM_STRUCT(NonMaximumSuppressionParam, nms);
+        SYNET_PARAM_VALUE(PriorBoxCodeType, codeType, PriorBoxCodeTypeCorner);
+        SYNET_PARAM_VALUE(bool, varianceEncodedInTarget, false);
+        SYNET_PARAM_VALUE(int32_t, keepTopK, -1);
+        SYNET_PARAM_VALUE(float, confidenceThreshold, -FLT_MAX);
+        SYNET_PARAM_VALUE(bool, keepMaxClassScoresOnly, false);
     };
 
     struct ExpandDimsParam
@@ -402,6 +424,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(BiasParam, bias);
         SYNET_PARAM_STRUCT(ConcatParam, concat);
         SYNET_PARAM_STRUCT(ConvolutionParam, convolution);
+        SYNET_PARAM_STRUCT(DetectionOutputParam, detectionOutput);
         SYNET_PARAM_STRUCT(EltwiseParam, eltwise);
         SYNET_PARAM_STRUCT(ExpandDimsParam, expandDims);
         SYNET_PARAM_STRUCT(FillParam, fill);
