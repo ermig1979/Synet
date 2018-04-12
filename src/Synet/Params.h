@@ -202,7 +202,7 @@ namespace Synet
     {
         PriorBoxCodeTypeUnknown = 0,
         PriorBoxCodeTypeCorner = 1,
-        PriorBoxCodeTypeCenter = 2,
+        PriorBoxCodeTypeCenterSize = 2,
         PriorBoxCodeTypeCornerSize = 3,
         PriorBoxCodeTypeSize,
     };
@@ -212,7 +212,7 @@ namespace Synet
         static const char * names[PriorBoxCodeTypeSize] =
         {
             "Corner",
-            "Center",
+            "CenterSize",
             "CornerSize",
         };
         return (value > PriorBoxCodeTypeUnknown && value < PriorBoxCodeTypeSize) ? names[value] : "";
