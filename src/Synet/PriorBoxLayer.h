@@ -119,8 +119,8 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            size_t layerW = src[0]->Axis(-1);
-            size_t layerH = src[0]->Axis(-2);
+            size_t layerW = src[0]->Axis(3);
+            size_t layerH = src[0]->Axis(2);
             Shape shape(3);
             shape[0] = 1;
             shape[1] = 2;
@@ -131,13 +131,15 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            size_t layerW = src[0]->Axis(-1);
-            size_t layerH = src[0]->Axis(-2);
+            SYNET_PERF_FUNC();
+
+            size_t layerW = src[0]->Axis(3);
+            size_t layerH = src[0]->Axis(2);
             size_t imgW, imgH;
             if (_imgH == 0 || _imgW == 0)
             {
-                imgW = src[1]->Axis(-1);
-                imgH = src[1]->Axis(-2);
+                imgW = src[1]->Axis(3);
+                imgH = src[1]->Axis(2);
             }
             else 
             {

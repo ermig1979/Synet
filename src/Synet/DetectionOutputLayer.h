@@ -65,9 +65,9 @@ namespace Synet
             if (_shareLocation)
                 _bboxPermute.Reshape(src[0]->Shape());
             _confPermute.Reshape(src[1]->Shape());
-            _numPriors = src[2]->Axis(-2) / 4;
-            assert(_numPriors * _numLocClasses * 4 == src[0]->Axis(-3));
-            assert(_numPriors * _numLocClasses * 4 == src[1]->Axis(-3));
+            _numPriors = src[2]->Axis(2) / 4;
+            assert(_numPriors * _numLocClasses * 4 == src[0]->Axis(1));
+            assert(_numPriors * _numLocClasses * 4 == src[1]->Axis(1));
             Shape shape(2, 1);
             shape.push_back(1);
             shape.push_back(7);
@@ -84,15 +84,23 @@ namespace Synet
             bool difficult;
             float score;
             float size;
+
+            NormalizedBBox()
+                : xmin(0), ymin(0), xmax(0), ymax(0)
+                , label(0), difficult(false), score(0), size(0)
+            {
+            }
         };
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            SYNET_PERF_FUNC();
+
             const Type * pLoc = src[0]->Data();
             const Type * pConf = src[1]->Data();
             const Type * pPrior = src[2]->Data();
-            size_t num = src[0]->Axis(-4);
+            size_t num = src[0]->Axis(0);
 
             LabelBBoxes allLocPreds;
             GetLocPredictions(pLoc, num, _numPriors, _numLocClasses, _shareLocation, allLocPreds);
@@ -240,7 +248,7 @@ namespace Synet
             }
         }
     private:
-        typedef Base::Tensor Tensor;
+        typedef typename Base::Tensor Tensor;
         typedef std::map<int, std::vector<NormalizedBBox>> LabelBBox;
         typedef std::vector<LabelBBox> LabelBBoxes;
         typedef std::map<int, Floats> LabelPred;
@@ -471,7 +479,7 @@ namespace Synet
                     int label = shareLocation ? -1 : (int)c;
                     if (label == backgroundLabelId)
                         continue;
-                    assert(allLocPreds[i].find(label) == allLocPreds[i].end());
+                    assert(allLocPreds[i].find(label) != allLocPreds[i].end());
                     const NormalizedBBoxes & labelLocPreds = allLocPreds[i].find(label)->second;
                     DecodeBBoxes(priorBboxes, priorVariances, codeType, varianceEncodedInTarget, clip, labelLocPreds, decodeBboxes[label]);
                 }

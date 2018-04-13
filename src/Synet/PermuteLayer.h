@@ -75,11 +75,15 @@ namespace Synet
                     _dstShape.push_back(_srcShape[_order[i]]);
                 _srcStride.resize(_count, 1);
                 _dstStride.resize(_count, 1);
+                Shape dstStride(_count, 1);
                 for (ptrdiff_t i = _count - 2; i >= 0; i--)
                 {
                     _srcStride[i] = _srcStride[i + 1] * _srcShape[i + 1];
-                    _dstStride[i] = _dstStride[i + 1] * _dstShape[i + 1];
+                    dstStride[i] = dstStride[i + 1] * _dstShape[i + 1];
                 }
+                for (size_t i = 0; i < _count; ++i)
+                    _dstStride[_order[i]] = dstStride[i];
+
                 dst[0]->Reshape(_dstShape);
             }
             else
@@ -90,6 +94,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
+
             if (_permute)
             {
                 const Type * pSrc = src[0]->Data();

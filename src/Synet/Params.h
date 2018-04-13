@@ -211,6 +211,7 @@ namespace Synet
     {
         static const char * names[PriorBoxCodeTypeSize] =
         {
+            "Unknown",
             "Corner",
             "CenterSize",
             "CornerSize",

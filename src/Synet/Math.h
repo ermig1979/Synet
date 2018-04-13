@@ -105,7 +105,7 @@ namespace Synet
         }
         else
         {
-            const size_t bodySize = dstX - padX * 2;
+            const ptrdiff_t bodySize = dstX - padX * 2;
             for (size_t channel = 0; channel < channels; ++channel)
             {
                 for (size_t ky = 0; ky < kernelY; ++ky)
@@ -126,10 +126,13 @@ namespace Synet
                                     else
                                         *(dst++) = 0;
                                 }
-                                memcpy(dst, psrc + sx, bodySize * sizeof(T));
-                                dst += bodySize;
-                                dx += bodySize;
-                                sx += bodySize;
+                                if (bodySize > 0)
+                                {
+                                    memcpy(dst, psrc + sx, bodySize * sizeof(T));
+                                    dst += bodySize;
+                                    dx += bodySize;
+                                    sx += bodySize;
+                                }
                                 for (; dx < dstX; ++dx, ++sx)
                                 {
                                     if (sx < srcX)

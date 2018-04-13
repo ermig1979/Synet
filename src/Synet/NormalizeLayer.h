@@ -71,6 +71,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
+
             const Type * pSrc = src[0]->Data();
             Type * pDst = dst[0]->Data();
             const Type * scale = this->Weight()[0].Data();

@@ -94,6 +94,6 @@ namespace Synet
         }
 
     private:
-        size_t _count, _concatNum, _concatInputSize, _concatAxis;
+        size_t _concatNum, _concatInputSize, _concatAxis;
     };
 }
