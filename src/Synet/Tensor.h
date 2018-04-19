@@ -203,8 +203,13 @@ namespace Synet
             SetDebugPtr();
         }
 
+        SYNET_INLINE void SetShape(const Synet::Shape & shape)
+        {
+            _shape = shape;
+        }
+
 #ifdef SYNET_DEBUG_PRINT_ENABLE
-        void DebugPrint(std::ostream & os, const String & name, size_t first = 4, size_t last = 2) const
+        void DebugPrint(std::ostream & os, const String & name, size_t first = 5, size_t last = 2) const
         {
             os << name << " { ";
             for (size_t i = 0; i < _shape.size(); ++i)

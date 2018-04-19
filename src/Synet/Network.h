@@ -38,6 +38,7 @@
 #include "Synet/InputLayer.h"
 #include "Synet/LogLayer.h"
 #include "Synet/LrnLayer.h"
+#include "Synet/MetaLayer.h"
 #include "Synet/NormalizeLayer.h"
 #include "Synet/PermuteLayer.h"
 #include "Synet/PoolingLayer.h"
@@ -287,6 +288,7 @@ namespace Synet
             case LayerTypeInput: return new InputLayer<T, A>(param);
             case LayerTypeLog: return new LogLayer<T, A>(param);
             case LayerTypeLrn: return new LrnLayer<T, A>(param);
+            case LayerTypeMeta: return new MetaLayer<T, A>(param);
             case LayerTypeNormalize: return new NormalizeLayer<T, A>(param);
             case LayerTypePermute: return new PermuteLayer<T, A>(param);
             case LayerTypePooling: return new PoolingLayer<T, A>(param);

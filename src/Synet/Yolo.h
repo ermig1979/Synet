@@ -190,6 +190,7 @@ namespace Synet
             batchNorm.src() = dst.back().dst();
             batchNorm.dst() = dst.back().dst();
             batchNorm.batchNorm().eps() = 0.000001f;
+            batchNorm.batchNorm().yoloCompatible() = true;
             batchNorm.weight().resize(2);
             batchNorm.weight()[0].dim() = Shape({ (size_t)src.out_c });
             batchNorm.weight()[1].dim() = Shape({ (size_t)src.out_c });

@@ -50,6 +50,7 @@ namespace Synet
             _movingAverageFraction = param.movingAverageFraction();
             _eps = param.eps();
             _useGlobalStats = param.useGlobalStats();
+            _yoloCompatible = param.yoloCompatible();
             if (src[0]->Count() == 1)
                 _channels = 1;
             else
@@ -71,7 +72,10 @@ namespace Synet
                 _bias.Reshape({ _channels });
                 for (size_t i = 0; i < _channels; ++i)
                 {
-                    _scale.Data()[i] = Type(1) / ::sqrt(_eps + this->Weight()[1].Data()[i] * scaleFactor);
+                    if(_yoloCompatible)
+                        _scale.Data()[i] = Type(1) / (::sqrt(this->Weight()[1].Data()[i]) + _eps);
+                    else
+                        _scale.Data()[i] = Type(1) / ::sqrt(_eps + this->Weight()[1].Data()[i] * scaleFactor);
                     _bias.Data()[i] = -this->Weight()[0].Data()[i] * scaleFactor * _scale.Data()[i];
                 }
             }
@@ -150,7 +154,7 @@ namespace Synet
 
     private:
         size_t _channels;
-        bool _useGlobalStats;
+        bool _useGlobalStats, _yoloCompatible;
         Type _movingAverageFraction, _eps;
         Tensor _mean, _variance, _temp;
         Tensor _batchSumMultiplier, _numByChans, _spatialSumMultiplier;

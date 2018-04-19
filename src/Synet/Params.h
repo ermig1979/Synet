@@ -58,6 +58,7 @@ namespace Synet
         LayerTypeInput,
         LayerTypeLog,
         LayerTypeLrn,
+        LayerTypeMeta,
         LayerTypeNormalize,
         LayerTypePermute,
         LayerTypePooling,
@@ -94,6 +95,7 @@ namespace Synet
             "Input",
             "Log",
             "LRN",
+            "Meta",
             "Normalize",
             "Permute",
             "Pooling",
@@ -226,6 +228,33 @@ namespace Synet
 
     //-------------------------------------------------------------------------
 
+    enum MetaType
+    {
+        MetaTypeUnknown = -1,
+        MetaTypeInput,
+        MetaTypeConst,
+        MetaTypeShape,
+        MetaTypeSize,
+    };
+
+    template<> SYNET_INLINE String ValueToString<MetaType>(const MetaType & value)
+    {
+        static const char * names[MetaTypeSize] =
+        {
+            "Input",
+            "Const",
+            "Shape",
+        };
+        return (value > MetaTypeUnknown && value < MetaTypeSize) ? names[value] : "";
+    }
+
+    template<> SYNET_INLINE void StringToValue<MetaType>(const String & string, MetaType & value)
+    {
+        value = StringToEnum<MetaType, MetaTypeSize>(string);
+    }
+
+    //-------------------------------------------------------------------------
+
     struct NonMaximumSuppressionParam
     {
         SYNET_PARAM_VALUE(float, nmsThreshold, 0.3f);
@@ -243,6 +272,7 @@ namespace Synet
         SYNET_PARAM_VALUE(bool, useGlobalStats, true);
         SYNET_PARAM_VALUE(float, movingAverageFraction, 0.999f);
         SYNET_PARAM_VALUE(float, eps, 0.00001f);
+        SYNET_PARAM_VALUE(bool, yoloCompatible, false);
     };
 
     struct BiasParam
@@ -331,6 +361,12 @@ namespace Synet
         SYNET_PARAM_VALUE(float, beta, 0.75f);
         SYNET_PARAM_VALUE(NormRegionType, normRegion, NormRegionTypeAcrossChannels);
         SYNET_PARAM_VALUE(float, k, 1.0f);
+    };
+
+    struct MetaParam
+    {
+        SYNET_PARAM_VALUE(MetaType, type, MetaTypeUnknown);
+        SYNET_PARAM_VALUE(Shape, alpha, Shape());
     };
 
     struct NormalizeParam
@@ -434,6 +470,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(InputParam, input);
         SYNET_PARAM_STRUCT(LogParam, log);
         SYNET_PARAM_STRUCT(LrnParam, lrn);
+        SYNET_PARAM_STRUCT(MetaParam, meta);
         SYNET_PARAM_STRUCT(NormalizeParam, normalize);
         SYNET_PARAM_STRUCT(PermuteParam, permute);
         SYNET_PARAM_STRUCT(PoolingParam, pooling);

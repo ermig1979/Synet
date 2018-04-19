@@ -40,6 +40,7 @@
 #endif
 
 #define SYNET_TENSORFLOW_DEBUG
+//#define SYNET_TENSORFLOW_DYNAMIC
 
 namespace Synet
 {
@@ -147,7 +148,10 @@ namespace Synet
 
             RemoveUnused();
 
-            AddConst();
+            AddConstFloat();
+#ifndef SYNET_TENSORFLOW_DYNAMIC
+            AddConstInt();
+#endif
 
 #ifdef SYNET_TENSORFLOW_DEBUG
             for (int i = 0; i < _graph.node_size(); ++i)
@@ -176,6 +180,10 @@ namespace Synet
                     }
                     else
                     {
+#ifdef SYNET_TENSORFLOW_DYNAMIC
+                        layer.type() = LayerTypeMeta;
+                        layer.meta().type() = MetaTypeInput;
+#else
                         bool found = false;
                         for (size_t j = 0; j < param.input().size(); ++j)
                         {
@@ -191,10 +199,13 @@ namespace Synet
                         if (!found)
                             return false;
                         continue;
+#endif
                     }
                 }
-                else if (AllConstInt(node) || type == "Shape")
+                else if (AllConstInt(node) || type == "Shape" || type == "Const")
                 {
+#ifdef SYNET_TENSORFLOW_DYNAMIC
+#else
                     if (type == "Sub")
                     {
                         assert(node.input_size() == 2);
@@ -266,6 +277,7 @@ namespace Synet
                     }
                     if (!IsNotImplemented(layer))
                         continue;
+#endif
                 }
                 else if (type == "Conv2D")
                 {
@@ -735,44 +747,52 @@ namespace Synet
             return layers;
         }
 
-        void AddConst()
+        void AddConstFloat()
         {
             for (int i = 0; i < _graph.node_size(); i++)
             {
                 const tensorflow::NodeDef & node = _graph.node(i);
-                if (node.op() == "Const")
+                if (node.op() == "Const" && node.attr().at("dtype").type() == tensorflow::DT_FLOAT)
                 {
                     _ignore.insert(node.name());
                     if (node.attr().find("value") != node.attr().end())
                         _valueId.insert(std::make_pair(node.name(), i));
-
                     const tensorflow::TensorProto & src = node.attr().at("value").tensor();
-                    if (node.attr().at("dtype").type() == tensorflow::DT_FLOAT)
+                    Tensor dst;
+                    if (src.float_val_size())
                     {
-                        Tensor dst;
-                        if (src.float_val_size())
-                        {
-                            dst.Reshape({ (size_t)src.float_val_size() });
-                            for (int j = 0; j < src.float_val_size(); j++)
-                                dst.Data()[j] = src.float_val(j);
-                        }
-                        else
-                            ConvertKernel<float, float>(src, dst);
-                        _fConst[node.name()] = dst;
+                        dst.Reshape({ (size_t)src.float_val_size() });
+                        for (int j = 0; j < src.float_val_size(); j++)
+                            dst.Data()[j] = src.float_val(j);
                     }
-                    if (node.attr().at("dtype").type() == tensorflow::DT_INT32)
+                    else
+                        ConvertKernel<float, float>(src, dst);
+                    _fConst[node.name()] = dst;
+                }
+            }
+        }
+
+        void AddConstInt()
+        {
+            for (int i = 0; i < _graph.node_size(); i++)
+            {
+                const tensorflow::NodeDef & node = _graph.node(i);
+                if (node.op() == "Const" && node.attr().at("dtype").type() == tensorflow::DT_INT32)
+                {
+                    _ignore.insert(node.name());
+                    if (node.attr().find("value") != node.attr().end())
+                        _valueId.insert(std::make_pair(node.name(), i));
+                    const tensorflow::TensorProto & src = node.attr().at("value").tensor();
+                    ITensor dst;
+                    if (src.int_val_size())
                     {
-                        ITensor dst;
-                        if (src.int_val_size())
-                        {
-                            dst.Reshape({ (size_t)src.int_val_size() });
-                            for (int j = 0; j < src.int_val_size(); j++)
-                                dst.Data()[j] = src.int_val(j);
-                        }
-                        else
-                            ConvertKernel<int, int>(src, dst);
-                        _iConst[node.name()] = dst;
+                        dst.Reshape({ (size_t)src.int_val_size() });
+                        for (int j = 0; j < src.int_val_size(); j++)
+                            dst.Data()[j] = src.int_val(j);
                     }
+                    else
+                        ConvertKernel<int, int>(src, dst);
+                    _iConst[node.name()] = dst;
                 }
             }
         }
