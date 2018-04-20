@@ -52,19 +52,49 @@ namespace Synet
         {
             switch (_type)
             {
-            case MetaTypeInput:
-            {
-                //dst[0]->SetShape(src[0]->Shape());
-                break;
-            }
             case MetaTypeConst:
             {
                 dst[0]->SetShape(_alpha);
                 break;
+            }            
+            case MetaTypeInput:
+            {
+                dst[0]->SetShape(src[0]->Shape());
+                break;
+            }
+            case MetaTypePack:
+            {
+                Shape dstShape;
+                for (size_t i = 0; i < src.size(); ++i)
+                    for (size_t j = 0; j < src[i]->Count(); ++j)
+                        dstShape.push_back(src[i]->Axis(j));
+                dst[0]->SetShape(dstShape);
+                break;
             }
             case MetaTypeShape:
             {
-                dst[0]->SetShape(src[0]->Shape());
+                Shape shape = src[0]->Shape();
+                if (shape.size() == 4)
+                    shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
+                dst[0]->SetShape(shape);
+                break;
+            }
+            case MetaTypeSlice:
+            {
+                assert(src.size() == 3);
+                Shape dstShape(src[2]->Axis(0));
+                for (size_t i = 0; i < src[2]->Axis(0); ++i)
+                    dstShape[i] = src[0]->Shape()[i + src[1]->Axis(0)];
+                dst[0]->SetShape(dstShape);
+                break;
+            }
+            case MetaTypeSub:
+            {
+                assert(src.size() == 2 && src[0]->Count() == src[1]->Count());
+                Shape dstShape = src[0]->Shape();
+                for (size_t i = 0; i < dstShape.size(); ++i)
+                    dstShape[i] -= src[1]->Shape()[i];
+                dst[0]->SetShape(dstShape);
                 break;
             }
             default:

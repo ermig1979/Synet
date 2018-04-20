@@ -135,7 +135,7 @@ namespace Synet
 
         tensorflow::GraphDef _graph;
         NameIndexMap _valueId;
-        NameSet _ignore;
+        NameSet _ignore, _meta;
 
         IConstMap _iConst;
         FConstMap _fConst;
@@ -183,6 +183,8 @@ namespace Synet
 #ifdef SYNET_TENSORFLOW_DYNAMIC
                         layer.type() = LayerTypeMeta;
                         layer.meta().type() = MetaTypeInput;
+                        layer.dst().push_back(layer.name());
+                        _meta.insert(node.name());
 #else
                         bool found = false;
                         for (size_t j = 0; j < param.input().size(); ++j)
@@ -202,10 +204,69 @@ namespace Synet
 #endif
                     }
                 }
-                else if (AllConstInt(node) || type == "Shape" || type == "Const")
-                {
 #ifdef SYNET_TENSORFLOW_DYNAMIC
+                else if (AllMeta(node) || type == "Shape" || type == "Const")
+                {
+                    layer.type() = LayerTypeMeta;
+                    if (type == "Concat" || type == "ConcatV2")
+                    {
+                        layer.meta().type() = MetaTypePack;
+                        int axisId = (type == "Concat" ? 0 : node.input_size() - 1);
+                        for (int j = 0; j < node.input_size(); ++j)
+                        {
+                            if (j != axisId)
+                                layer.src().push_back(node.input(j));
+                        }
+                    }
+                    else if (type == "Const")
+                    {
+                        layer.meta().type() = MetaTypeConst;
+                        const tensorflow::TensorProto & src = node.attr().at("value").tensor();
+                        ITensor dst;
+                        if (src.int_val_size())
+                        {
+                            dst.Reshape({ (size_t)src.int_val_size() });
+                            for (int j = 0; j < src.int_val_size(); j++)
+                                dst.Data()[j] = src.int_val(j);
+                        }
+                        else
+                            ConvertKernel<int, int>(src, dst);
+                        layer.meta().alpha().assign(dst.Data(), dst.Data() + dst.Size());
+                    }
+                    else if (type == "Pack")
+                    {
+                        layer.meta().type() = MetaTypePack;
+                        for(int j = 0; j < node.input_size(); ++j)
+                            layer.src().push_back(node.input(j));
+                    }
+                    else if (type == "Shape")
+                    {
+                        layer.meta().type() = MetaTypeShape;
+                        layer.src().push_back(node.input(0));
+                    }
+                    else if (type == "Slice")
+                    {
+                        layer.meta().type() = MetaTypeSlice;
+                        layer.src().push_back(node.input(0));
+                        layer.src().push_back(node.input(1));
+                        layer.src().push_back(node.input(2));
+                    }
+                    else if (type == "Sub")
+                    {
+                        layer.meta().type() = MetaTypeSub;
+                        layer.src().push_back(node.input(0));
+                        layer.src().push_back(node.input(1));
+                    }
+                    else
+                    {
+                        SetNotImplemented(layer, node);
+                    }
+                    layer.dst().push_back(layer.name());
+                    _meta.insert(node.name());
+                }
 #else
+                else if (AllConstInt(node) || type == "Shape")
+                {
                     if (type == "Sub")
                     {
                         assert(node.input_size() == 2);
@@ -277,8 +338,8 @@ namespace Synet
                     }
                     if (!IsNotImplemented(layer))
                         continue;
-#endif
                 }
+#endif
                 else if (type == "Conv2D")
                 {
                     if (!ConvertConvolutionLayer(node, layer, weight))
@@ -464,6 +525,13 @@ namespace Synet
                     assert(node.input_size() == 2);
                     layer.type() = LayerTypeReshape;
                     layer.src().push_back(node.input(0));
+#ifdef SYNET_TENSORFLOW_DYNAMIC
+                    if (_meta.find(node.input(1)) != _meta.end())
+                    {
+                        layer.src().push_back(node.input(1));
+                        layer.dst().push_back(layer.name());
+                    }
+#else
                     if (_iConst.find(node.input(1)) != _iConst.end())
                     {
                         const ITensor & tensor = _iConst[node.input(1)];
@@ -477,6 +545,7 @@ namespace Synet
                         layer.reshape().shape() = shape;
                         layer.dst().push_back(layer.name());
                     }
+#endif
                     else
                     {
                         SetNotImplemented(layer, node);
@@ -518,8 +587,10 @@ namespace Synet
                 {
                     SetNotImplemented(layer, node);
                 }
+#ifndef SYNET_TENSORFLOW_DYNAMIC
                 if(!IsNotImplemented(layer))
                     SetShape(layer);
+#endif
                 network.layers().push_back(layer);
             }
 
@@ -829,6 +900,16 @@ namespace Synet
             for (int j = 0; j < node.input_size(); ++j)
             {
                 if (_iConst.find(node.input(j)) == _iConst.end())
+                    return false;
+            }
+            return true;
+        }
+
+        bool AllMeta(const tensorflow::NodeDef & node) const
+        {
+            for (int j = 0; j < node.input_size(); ++j)
+            {
+                if (_meta.find(node.input(j)) == _meta.end())
                     return false;
             }
             return true;

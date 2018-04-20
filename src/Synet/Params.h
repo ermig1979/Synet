@@ -231,9 +231,12 @@ namespace Synet
     enum MetaType
     {
         MetaTypeUnknown = -1,
-        MetaTypeInput,
         MetaTypeConst,
+        MetaTypeInput,
+        MetaTypePack,
         MetaTypeShape,
+        MetaTypeSlice,
+        MetaTypeSub,
         MetaTypeSize,
     };
 
@@ -241,9 +244,12 @@ namespace Synet
     {
         static const char * names[MetaTypeSize] =
         {
-            "Input",
             "Const",
+            "Input",
+            "Pack",
             "Shape",
+            "Slice",
+            "Sub",
         };
         return (value > MetaTypeUnknown && value < MetaTypeSize) ? names[value] : "";
     }
