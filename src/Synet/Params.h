@@ -56,6 +56,7 @@ namespace Synet
         LayerTypeFlatten,
         LayerTypeInnerProduct,
         LayerTypeInput,
+        LayerTypeInterp,
         LayerTypeLog,
         LayerTypeLrn,
         LayerTypeMeta,
@@ -93,6 +94,7 @@ namespace Synet
             "Flatten",
             "InnerProduct",
             "Input",
+            "Interp",
             "Log",
             "LRN",
             "Meta",
@@ -353,6 +355,17 @@ namespace Synet
         SYNET_PARAM_VECTOR(ShapeParam, shape);
     };
 
+    struct InterpParam
+    {
+        SYNET_PARAM_VALUE(int32_t, height, 0);
+        SYNET_PARAM_VALUE(int32_t, width, 0);
+        SYNET_PARAM_VALUE(int32_t, zoomFactor, 1);
+        SYNET_PARAM_VALUE(int32_t, shrinkFactor, 1);
+        SYNET_PARAM_VALUE(int32_t, cropBeg, 0);
+        SYNET_PARAM_VALUE(int32_t, cropEnd, 0);
+        SYNET_PARAM_VALUE(bool, useTensorSize, false);
+    };
+
     struct LogParam
     {
         SYNET_PARAM_VALUE(float, base, -1.0f);
@@ -474,6 +487,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(FlattenParam, flatten);
         SYNET_PARAM_STRUCT(InnerProductParam, innerProduct);
         SYNET_PARAM_STRUCT(InputParam, input);
+        SYNET_PARAM_STRUCT(InterpParam, interp);
         SYNET_PARAM_STRUCT(LogParam, log);
         SYNET_PARAM_STRUCT(LrnParam, lrn);
         SYNET_PARAM_STRUCT(MetaParam, meta);

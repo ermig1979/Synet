@@ -112,11 +112,8 @@ namespace Synet
                 dst.dst().push_back(src.top(j));
             switch (dst.type())
             {
-            case Synet::LayerTypeBatchNorm:
-                if(src.batch_norm_param().has_use_global_stats())
-                    dst.batchNorm().useGlobalStats() = src.batch_norm_param().use_global_stats();
-                dst.batchNorm().movingAverageFraction() = src.batch_norm_param().moving_average_fraction();
-                dst.batchNorm().eps() = src.batch_norm_param().eps();
+            case Synet::LayerTypeBatchNorm: 
+                ConvertBatchNorm(src.batch_norm_param(), dst.batchNorm()); 
                 break;
             case Synet::LayerTypeConcat:
                 if (src.concat_param().has_concat_dim())
@@ -124,23 +121,8 @@ namespace Synet
                 else
                     dst.concat().axis() = src.concat_param().axis();
                 break;
-            case Synet::LayerTypeConvolution:
-                dst.convolution().outputNum() = src.convolution_param().num_output();
-                dst.convolution().biasTerm() = src.convolution_param().bias_term();
-                dst.convolution().axis() = src.convolution_param().axis();
-                dst.convolution().group() = src.convolution_param().group();
-                dst.convolution().kernel().resize(src.convolution_param().kernel_size_size());
-                for (int j = 0; j < src.convolution_param().kernel_size_size(); ++j)
-                    dst.convolution().kernel()[j] = src.convolution_param().kernel_size(j);
-                dst.convolution().pad().resize(src.convolution_param().pad_size());
-                for (int j = 0; j < src.convolution_param().pad_size(); ++j)
-                    dst.convolution().pad()[j] = src.convolution_param().pad(j);
-                dst.convolution().stride().resize(src.convolution_param().stride_size());
-                for (int j = 0; j < src.convolution_param().stride_size(); ++j)
-                    dst.convolution().stride()[j] = src.convolution_param().stride(j);
-                dst.convolution().dilation().resize(src.convolution_param().dilation_size());
-                for (int j = 0; j < src.convolution_param().dilation_size(); ++j)
-                    dst.convolution().dilation()[j] = src.convolution_param().dilation(j);
+            case Synet::LayerTypeConvolution: 
+                ConvertConvolution(src.convolution_param(), dst.convolution()); 
                 break;
             case Synet::LayerTypeEltwise:
                 dst.eltwise().operation() = (EltwiseOperationType)src.eltwise_param().operation();
@@ -181,6 +163,9 @@ namespace Synet
                     for (int k = 0; k < src.input_param().shape(j).dim_size(); ++k)
                         dst.input().shape()[j].dim()[k] = src.input_param().shape(j).dim(k);
                 }
+                break;
+            case Synet::LayerTypeInterp:
+                ConvertInterp(src.interp_param(), dst.interp());
                 break;
             case Synet::LayerTypeLog:
                 dst.log().base() = src.log_param().base();
@@ -279,6 +264,45 @@ namespace Synet
                 break;
             }
             return true;
+        }
+
+        void ConvertBatchNorm(const caffe::BatchNormParameter & src, Synet::BatchNormParam & dst)
+        {
+            if (src.has_use_global_stats())
+                dst.useGlobalStats() = src.use_global_stats();
+            dst.movingAverageFraction() = src.moving_average_fraction();
+            dst.eps() = src.eps();
+        }
+
+        void ConvertConvolution(const caffe::ConvolutionParameter & src, Synet::ConvolutionParam & dst)
+        {
+            dst.outputNum() = src.num_output();
+            dst.biasTerm() = src.bias_term();
+            dst.axis() = src.axis();
+            dst.group() = src.group();
+            dst.kernel().resize(src.kernel_size_size());
+            for (int j = 0; j < src.kernel_size_size(); ++j)
+                dst.kernel()[j] = src.kernel_size(j);
+            dst.pad().resize(src.pad_size());
+            for (int j = 0; j < src.pad_size(); ++j)
+                dst.pad()[j] = src.pad(j);
+            dst.stride().resize(src.stride_size());
+            for (int j = 0; j < src.stride_size(); ++j)
+                dst.stride()[j] = src.stride(j);
+            dst.dilation().resize(src.dilation_size());
+            for (int j = 0; j < src.dilation_size(); ++j)
+                dst.dilation()[j] = src.dilation(j);
+        }
+
+        void ConvertInterp(const caffe::InterpParameter & src, Synet::InterpParam & dst)
+        {
+            dst.height() = src.height();
+            dst.width() = src.width();
+            dst.zoomFactor() = src.zoom_factor();
+            dst.shrinkFactor() = src.shrink_factor();
+            dst.cropBeg() = -src.pad_beg();
+            dst.cropEnd() = -src.pad_end();
+            dst.useTensorSize() = src.use_blob_size();
         }
 
         bool ConvertWeight(const caffe::NetParameter & src, Synet::NetworkParam & dst, Tensors & weight)

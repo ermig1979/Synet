@@ -36,6 +36,7 @@
 #include "Synet/FlattenLayer.h"
 #include "Synet/InnerProductLayer.h"
 #include "Synet/InputLayer.h"
+#include "Synet/InterpLayer.h"
 #include "Synet/LogLayer.h"
 #include "Synet/LrnLayer.h"
 #include "Synet/MetaLayer.h"
@@ -286,6 +287,7 @@ namespace Synet
             case LayerTypeFlatten: return new FlattenLayer<T, A>(param);
             case LayerTypeInnerProduct: return new InnerProductLayer<T, A>(param);
             case LayerTypeInput: return new InputLayer<T, A>(param);
+            case LayerTypeInterp: return new InterpLayer<T, A>(param);
             case LayerTypeLog: return new LogLayer<T, A>(param);
             case LayerTypeLrn: return new LrnLayer<T, A>(param);
             case LayerTypeMeta: return new MetaLayer<T, A>(param);

@@ -192,6 +192,8 @@ namespace Synet
     template <> SYNET_INLINE void CpuGemm<float>(CblasTranspose transA, CblasTranspose transB,
         size_t M, size_t N, size_t K, float alpha, const float * A, const float * B, float beta, float * C)
     {
+        SYNET_PERF_FUNC();
+
         size_t threadNumber = GetThreadNumber();
         if (transA == CblasNoTrans && transB == CblasNoTrans && (threadNumber == 1 || N * M * K > threadNumber * 4 * 256 * 256 * 256))
         {
