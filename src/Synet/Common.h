@@ -121,4 +121,42 @@ namespace Synet
         return (::access(path.c_str(), F_OK) != -1);
 #endif
     }
+
+    inline size_t GetThreadNumber()
+    {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        return ::SimdGetThreadNumber();
+#elif defined(SYNET_OPEN_BLAS_ENABLE)
+        return ::openblas_get_num_threads();
+#else
+        return 1;
+#endif
+    }
+
+    inline void SetThreadNumber(size_t threadNumber)
+    {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        ::SimdSetThreadNumber(threadNumber);
+#endif
+#ifdef SYNET_OPEN_BLAS_ENABLE
+        ::openblas_set_num_threads((int)threadNumber);
+        ::goto_set_num_threads((int)threadNumber);
+#endif
+    }
+
+    inline bool GetFlushToZero()
+    {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        return ::SimdGetFlushToZero() == ::SimdTrue;
+#else
+        return false;
+#endif
+    }
+
+    inline void SetFlushToZero(bool value)
+    {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        ::SimdSetFlushToZero(value ? ::SimdTrue : ::SimdFalse);
+#endif
+    }
 }

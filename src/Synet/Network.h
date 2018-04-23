@@ -135,8 +135,11 @@ namespace Synet
         void Forward()
         {
             SYNET_PERF_FUNC();
+            bool ftz = GetFlushToZero();
+            SetFlushToZero(true);
             for (size_t i = 0; i < _stages.size(); ++i)
                 _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
+            SetFlushToZero(ftz);
         }
 
 #ifdef SYNET_DEBUG_PRINT_ENABLE
