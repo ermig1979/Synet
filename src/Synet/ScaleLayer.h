@@ -53,11 +53,11 @@ namespace Synet
 #endif
     }
 
-    template <class T, template<class> class A> class ScaleLayer : public Synet::Layer<T, A>
+    template <class T> class ScaleLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::Tensor Tensor;
         typedef typename Base::Tensors Tensors;
         typedef typename Base::TensorPtrs TensorPtrs;
@@ -97,10 +97,10 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            const Type* pSrc = src[0]->Data();
-            const Type * pScale = this->Weight()[0].Data();
-            const Type * pBias = _biasTerm ? this->Weight()[1].Data() : NULL;
-            Type * pDst = dst[0]->Data();
+            const Type* pSrc = src[0]->CpuData();
+            const Type * pScale = this->Weight()[0].CpuData();
+            const Type * pBias = _biasTerm ? this->Weight()[1].CpuData() : NULL;
+            Type * pDst = dst[0]->CpuData();
             for (size_t n = 0; n < _outerDim; ++n)
             {
                 Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _scaleDim, _innerDim, pDst);

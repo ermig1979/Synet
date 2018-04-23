@@ -94,11 +94,11 @@ namespace Synet
 #endif
     }
 
-    template <class T, template<class> class A> class PoolingLayer : public Synet::Layer<T, A>
+    template <class T> class PoolingLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         PoolingLayer(const LayerParam & param)
@@ -188,8 +188,8 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            const Type * pSrc = src[0]->Data();
-            Type * pDst = dst[0]->Data();
+            const Type * pSrc = src[0]->CpuData();
+            Type * pDst = dst[0]->CpuData();
             size_t num = dst[0]->Axis(0);
             size_t dstSize = dst[0]->Size();
             switch (_method)

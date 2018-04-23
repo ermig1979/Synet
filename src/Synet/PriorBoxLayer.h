@@ -29,11 +29,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> class PriorBoxLayer : public Synet::Layer<T, A>
+    template <class T> class PriorBoxLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         PriorBoxLayer(const LayerParam & param)
@@ -157,7 +157,7 @@ namespace Synet
                 stepW = _stepW;
                 stepH = _stepH;
             }
-            Type * pDst = dst[0]->Data();
+            Type * pDst = dst[0]->CpuData();
             size_t dim = layerH * layerW * _numPriors * 4;
             size_t index = 0;
             for (size_t h = 0; h < layerH; ++h) 

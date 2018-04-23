@@ -30,11 +30,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> class InnerProductLayer : public Synet::Layer<T, A>
+    template <class T> class InnerProductLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         InnerProductLayer(const LayerParam & param)
@@ -91,20 +91,22 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            const Type * pA = src[0]->Data();
-            const Type * pB = src.size() > 1 ? src[1]->Data() : this->Weight()[0].Data();
+            const Type * pA = src[0]->CpuData();
+            const Type * pB = src.size() > 1 ? src[1]->CpuData() : this->Weight()[0].CpuData();
             CpuGemm<Type>(_transposeA ? CblasNoTrans : CblasTrans, _transposeB ? CblasNoTrans : CblasTrans, _M, _N, _K,
-                Type(1), pA, pB, Type(0), dst[0]->Data());
+                Type(1), pA, pB, Type(0), dst[0]->CpuData());
             if (_biasTerm)
             {
                 CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _M, _N, 1,
-                    (Type)1.0, _biasMultiplier.Data(), this->Weight()[1].Data(), (Type)1.0, dst[0]->Data());
+                    (Type)1.0, _biasMultiplier.CpuData(), this->Weight()[1].CpuData(), (Type)1.0, dst[0]->CpuData());
             }
         }
 
     private:
+        typedef typename Base::Tensor Tensor;
+
         size_t _M, _K, _N, _axis;
         bool _biasTerm, _transposeA, _transposeB;
-        Synet::Tensor<T, A> _biasMultiplier;
+        Tensor _biasMultiplier;
     };
 }

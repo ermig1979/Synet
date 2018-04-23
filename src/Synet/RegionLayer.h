@@ -51,11 +51,11 @@ namespace Synet
     }
 
 
-    template <class T, template<class> class A> class RegionLayer : public Synet::Layer<T, A>
+    template <class T> class RegionLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         RegionLayer(const LayerParam & param)
@@ -152,8 +152,8 @@ namespace Synet
             size_t height = src[0]->Axis(2);
             size_t width = src[0]->Axis(3);
             size_t outputs = src[0]->Size(1);
-            T * pDst = dst[0]->Data();
-            Detail::FlattenCpu(src[0]->Data(), width*height, size*_num, batch, pDst);
+            T * pDst = dst[0]->CpuData();
+            Detail::FlattenCpu(src[0]->CpuData(), width*height, size*_num, batch, pDst);
 
 
             for (size_t b = 0; b < batch; ++b) 

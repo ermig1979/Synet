@@ -30,11 +30,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> class SliceLayer : public Synet::Layer<T, A>
+    template <class T> class SliceLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         SliceLayer(const LayerParam & param)
@@ -99,11 +99,11 @@ namespace Synet
             if (dst.size() == 1) 
                 return;
             size_t offsetSliceAxis = 0;
-            const Type * pSrc = src[0]->Data();
+            const Type * pSrc = src[0]->CpuData();
             size_t srcSliceAxis = src[0]->Axis(_sliceAxis);
             for (size_t i = 0; i < dst.size(); ++i)
             {
-                Type * pDst = dst[i]->Data();
+                Type * pDst = dst[i]->CpuData();
                 size_t dstSliceAxis = dst[i]->Axis(_sliceAxis);
                 for (int n = 0; n < _numSlices; ++n)
                 {

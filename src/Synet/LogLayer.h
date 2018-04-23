@@ -39,11 +39,11 @@ namespace Synet
         }
     }
 
-    template <class T, template<class> class A> class LogLayer : public Synet::Layer<T, A>
+    template <class T> class LogLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         LogLayer(const LayerParam & param)
@@ -75,7 +75,7 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            Detail::LogLayerForwardCpu(src[0]->Data(), src[0]->Size(), _inputScale, _inputShift, _baseScale, dst[0]->Data());
+            Detail::LogLayerForwardCpu(src[0]->CpuData(), src[0]->Size(), _inputScale, _inputShift, _baseScale, dst[0]->CpuData());
         }
 
     private:

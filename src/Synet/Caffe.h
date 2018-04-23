@@ -322,7 +322,7 @@ namespace Synet
                             weight.push_back(Tensor());
                             weight.back().Reshape(dst.layers()[l].weight()[j].dim(), 0);
                             for (int k = 0; k < src.layer(i).blobs(j).data_size(); ++k)
-                                weight.back().Data()[k] = src.layer(i).blobs(j).data(k);
+                                weight.back().CpuData()[k] = src.layer(i).blobs(j).data(k);
                         }
                     }
                 }
@@ -337,7 +337,7 @@ namespace Synet
             {
                 for (size_t i = 0; i < weight.size(); ++i)
                 {
-                    ofs.write((const char*)weight[i].Data(), weight[i].Size()*sizeof(float));
+                    ofs.write((const char*)weight[i].CpuData(), weight[i].Size()*sizeof(float));
                 }
                 ofs.close();
                 return true;

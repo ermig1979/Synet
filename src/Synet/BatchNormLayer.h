@@ -30,11 +30,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> class BatchNormLayer : public Synet::Layer<T, A>
+    template <class T> class BatchNormLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::Tensor Tensor;
         typedef typename Base::Tensors Tensors;
         typedef typename Base::TensorPtrs TensorPtrs;
@@ -67,16 +67,16 @@ namespace Synet
             {
                 Type scaleFactor = Type(1);
                 if(this->Weight().size() > 2)
-                    scaleFactor = this->Weight()[2].Data()[0] == 0 ? Type(0) : Type(1) / this->Weight()[2].Data()[0];
+                    scaleFactor = this->Weight()[2].CpuData()[0] == 0 ? Type(0) : Type(1) / this->Weight()[2].CpuData()[0];
                 _scale.Reshape({ _channels });
                 _bias.Reshape({ _channels });
                 for (size_t i = 0; i < _channels; ++i)
                 {
                     if(_yoloCompatible)
-                        _scale.Data()[i] = Type(1) / (::sqrt(this->Weight()[1].Data()[i]) + _eps);
+                        _scale.CpuData()[i] = Type(1) / (::sqrt(this->Weight()[1].CpuData()[i]) + _eps);
                     else
-                        _scale.Data()[i] = Type(1) / ::sqrt(_eps + this->Weight()[1].Data()[i] * scaleFactor);
-                    _bias.Data()[i] = -this->Weight()[0].Data()[i] * scaleFactor * _scale.Data()[i];
+                        _scale.CpuData()[i] = Type(1) / ::sqrt(_eps + this->Weight()[1].CpuData()[i] * scaleFactor);
+                    _bias.CpuData()[i] = -this->Weight()[0].CpuData()[i] * scaleFactor * _scale.CpuData()[i];
                 }
             }
             else
@@ -90,14 +90,14 @@ namespace Synet
                 if (_spatialSumMultiplier.Shape() != spatialDim)
                 {
                     _spatialSumMultiplier.Reshape(spatialDim);
-                    CpuSet(_spatialSumMultiplier.Size(), Type(1), _spatialSumMultiplier.Data());
+                    CpuSet(_spatialSumMultiplier.Size(), Type(1), _spatialSumMultiplier.CpuData());
                 }
 
                 Shape numByChans = { _channels*src[0]->Axis(0) };
                 if (_numByChans.Shape() != numByChans)
                 {
                     _numByChans.Reshape(numByChans);
-                    CpuSet(_batchSumMultiplier.Size(), Type(1), _batchSumMultiplier.Data());
+                    CpuSet(_batchSumMultiplier.Size(), Type(1), _batchSumMultiplier.CpuData());
                 }
             }
         }
@@ -107,8 +107,8 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            const Type * pSrc = src[0]->Data();
-            Type * pDst = dst[0]->Data();
+            const Type * pSrc = src[0]->CpuData();
+            Type * pDst = dst[0]->CpuData();
             size_t num = src[0]->Axis(0);
             size_t spatialDim = src[0]->Size() / (num*_channels);
 
@@ -117,7 +117,7 @@ namespace Synet
                 size_t size = src[0]->Size(1);
                 for (size_t i = 0; i < num; ++i)
                 {
-                    Detail::ScaleLayerForwardCpu(pSrc, _scale.Data(), _bias.Data(), _channels, spatialDim, pDst);
+                    Detail::ScaleLayerForwardCpu(pSrc, _scale.CpuData(), _bias.CpuData(), _channels, spatialDim, pDst);
                     pSrc += size;
                     pDst += size;
                 }
@@ -127,28 +127,28 @@ namespace Synet
                 if (src[0] != dst[0])
                     CpuCopy(pSrc, src[0]->Size(), pDst);
 
-                CpuGemv<Type>(CblasNoTrans, _channels * num, spatialDim, Type(1) / (num * spatialDim), pSrc, _spatialSumMultiplier.Data(), Type(0), _numByChans.Data());
-                CpuGemv<Type>(CblasTrans, num, _channels, Type(1), _numByChans.Data(), _batchSumMultiplier.Data(), Type(0), _mean.Data());
+                CpuGemv<Type>(CblasNoTrans, _channels * num, spatialDim, Type(1) / (num * spatialDim), pSrc, _spatialSumMultiplier.CpuData(), Type(0), _numByChans.CpuData());
+                CpuGemv<Type>(CblasTrans, num, _channels, Type(1), _numByChans.CpuData(), _batchSumMultiplier.CpuData(), Type(0), _mean.CpuData());
 
-                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, num, _channels, 1, Type(1), _batchSumMultiplier.Data(), _mean.Data(), Type(0), _numByChans.Data());
-                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _channels * num, spatialDim, 1, Type(-1), _numByChans.Data(), _spatialSumMultiplier.Data(), Type(1), pDst);
+                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, num, _channels, 1, Type(1), _batchSumMultiplier.CpuData(), _mean.CpuData(), Type(0), _numByChans.CpuData());
+                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _channels * num, spatialDim, 1, Type(-1), _numByChans.CpuData(), _spatialSumMultiplier.CpuData(), Type(1), pDst);
 
-                CpuPow(pDst, dst[0]->Size(), Type(2), _temp.Data());
-                CpuGemv<Type>(CblasNoTrans, _channels * num, spatialDim, Type(1) / (num * spatialDim), _temp.Data(), _spatialSumMultiplier.Data(), Type(0), _numByChans.Data());
-                CpuGemv<Type>(CblasTrans, num, _channels, Type(1), _numByChans.Data(), _batchSumMultiplier.Data(), Type(0), _variance.Data());
+                CpuPow(pDst, dst[0]->Size(), Type(2), _temp.CpuData());
+                CpuGemv<Type>(CblasNoTrans, _channels * num, spatialDim, Type(1) / (num * spatialDim), _temp.CpuData(), _spatialSumMultiplier.CpuData(), Type(0), _numByChans.CpuData());
+                CpuGemv<Type>(CblasTrans, num, _channels, Type(1), _numByChans.CpuData(), _batchSumMultiplier.CpuData(), Type(0), _variance.CpuData());
 
                 Tensors & weights = (Tensors&)this->Weight();
-                weights[2].Data()[0] *= _movingAverageFraction;
-                weights[2].Data()[0] += Type(1);
+                weights[2].CpuData()[0] *= _movingAverageFraction;
+                weights[2].CpuData()[0] += Type(1);
                 size_t m = src[0]->Size() / _channels;
                 Type biasCorrectionFactor = m > 1 ? Type(m) / (m - 1) : Type(1);
-                CpuAxpby(_variance.Size(), biasCorrectionFactor, _variance.Data(), _movingAverageFraction, weights[1].Data());
-                CpuAdd(_eps, _variance.Data(), _variance.Size());
-                CpuPow(_variance.Data(), _variance.Size(), Type(0.5), _variance.Data());
+                CpuAxpby(_variance.Size(), biasCorrectionFactor, _variance.CpuData(), _movingAverageFraction, weights[1].CpuData());
+                CpuAdd(_eps, _variance.CpuData(), _variance.Size());
+                CpuPow(_variance.CpuData(), _variance.Size(), Type(0.5), _variance.CpuData());
 
-                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, num, _channels, 1, 1, _batchSumMultiplier.Data(), _variance.Data(), Type(0), _numByChans.Data());
-                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _channels * num, spatialDim, 1, Type(1), _numByChans.Data(), _spatialSumMultiplier.Data(), Type(0), _temp.Data());
-                CpuDiv(pDst, _temp.Data(), _temp.Size(), pDst);
+                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, num, _channels, 1, 1, _batchSumMultiplier.CpuData(), _variance.CpuData(), Type(0), _numByChans.CpuData());
+                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _channels * num, spatialDim, 1, Type(1), _numByChans.CpuData(), _spatialSumMultiplier.CpuData(), Type(0), _temp.CpuData());
+                CpuDiv(pDst, _temp.CpuData(), _temp.Size(), pDst);
             }
         }
 

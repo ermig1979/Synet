@@ -29,11 +29,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> class DetectionOutputLayer : public Synet::Layer<T, A>
+    template <class T> class DetectionOutputLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         DetectionOutputLayer(const LayerParam & param)
@@ -97,9 +97,9 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            const Type * pLoc = src[0]->Data();
-            const Type * pConf = src[1]->Data();
-            const Type * pPrior = src[2]->Data();
+            const Type * pLoc = src[0]->CpuData();
+            const Type * pConf = src[1]->CpuData();
+            const Type * pPrior = src[2]->CpuData();
             size_t num = src[0]->Axis(0);
 
             LabelBBoxes allLocPreds;
@@ -203,7 +203,7 @@ namespace Synet
             {
                 shape[2] = num;
                 dst[0]->Reshape(shape);
-                pDst = dst[0]->Data();
+                pDst = dst[0]->CpuData();
                 CpuSet(dst[0]->Size(), Type(-1), pDst);
                 for (size_t i = 0; i < num; ++i) 
                 {
@@ -214,7 +214,7 @@ namespace Synet
             else 
             {
                 dst[0]->Reshape(shape);
-                pDst = dst[0]->Data();
+                pDst = dst[0]->CpuData();
             }
 
             size_t count = 0;

@@ -30,11 +30,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A = std::allocator> class Layer
+    template <class T> class Layer
     {
     public:
         typedef T Type;
-        typedef Synet::Tensor<T, A> Tensor;
+        typedef Synet::Tensor<T> Tensor;
         typedef std::vector<Tensor> Tensors;
         typedef std::vector<Tensor*> TensorPtrs;
 
@@ -72,7 +72,7 @@ namespace Synet
                 size_t requred = _weight[i].Size() * sizeof(Type);
                 if (requred > size)
                     return false;
-                ::memcpy(_weight[i].Data(), data, requred);
+                ::memcpy(_weight[i].CpuData(), data, requred);
                 (char*&)data += requred;
                 size -= requred;
             }
@@ -82,7 +82,7 @@ namespace Synet
         bool Load(std::istream & is)
         {
             for (size_t i = 0; i < _weight.size(); ++i)
-                is.read((char*)_weight[i].Data(), _weight[i].Size() * sizeof(T));
+                is.read((char*)_weight[i].CpuData(), _weight[i].Size() * sizeof(T));
             return true;
         }
 

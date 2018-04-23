@@ -192,7 +192,7 @@ namespace Synet
                             if (param.input()[j].name() == layer.name())
                             {
                                 ITensor size({ 1 });
-                                size.Data()[0] = param.input()[j].size();
+                                size.CpuData()[0] = param.input()[j].size();
                                 _iConst[node.name()] = size;
                                 _ignore.insert(node.name());
                                 found = true;
@@ -275,7 +275,7 @@ namespace Synet
                         assert(a.Shape() == b.Shape());
                         ITensor c(a.Shape());
                         for (size_t j = 0; j < a.Size(); ++j)
-                            c.Data()[j] = a.Data()[j] - b.Data()[j];
+                            c.CpuData()[j] = a.CpuData()[j] - b.CpuData()[j];
                         _iConst[node.name()] = c;
                         _ignore.insert(node.name());
                     }
@@ -283,10 +283,10 @@ namespace Synet
                     {
                         Shape shape;
                         for (int j = 0; j < node.input_size(); ++j)
-                            shape.push_back(_iConst[node.input(j)].Data()[0]);
+                            shape.push_back(_iConst[node.input(j)].CpuData()[0]);
                         ITensor tensor({ shape.size() });
                         for (size_t j = 0; j < shape.size(); ++j)
-                            tensor.Data()[j] = (int)shape[j];
+                            tensor.CpuData()[j] = (int)shape[j];
                         _iConst[node.name()] = tensor;
                         _ignore.insert(node.name());
                     }
@@ -299,7 +299,7 @@ namespace Synet
                             shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
                         ITensor tensor({ shape.size() });
                         for (size_t j = 0; j < shape.size(); ++j)
-                            tensor.Data()[j] = (int)shape[j];
+                            tensor.CpuData()[j] = (int)shape[j];
                         _iConst[node.name()] = tensor;
                         _ignore.insert(node.name());
                     } 
@@ -310,25 +310,25 @@ namespace Synet
                         const ITensor & b = _iConst[node.input(1)];
                         const ITensor & s = _iConst[node.input(2)];
                         assert(a.Count() == 1 && b.Size() == 1 && s.Size() == 1);
-                        ITensor tensor({ (size_t)s.Data()[0] });
-                        for (int j = 0; j < s.Data()[0]; ++j)
-                            tensor.Data()[j] = a.Data()[j + b.Data()[0]];
+                        ITensor tensor({ (size_t)s.CpuData()[0] });
+                        for (int j = 0; j < s.CpuData()[0]; ++j)
+                            tensor.CpuData()[j] = a.CpuData()[j + b.CpuData()[0]];
                         _iConst[node.name()] = tensor;
                         _ignore.insert(node.name());
                     }
                     else if (type == "Concat" || type == "ConcatV2")
                     {
                         int axisId = (type == "Concat" ? 0 : node.input_size() - 1);
-                        int axis = _iConst[node.input(axisId)].Data()[0];
+                        int axis = _iConst[node.input(axisId)].CpuData()[0];
                         Shape shape;
                         for (int j = 0; j < node.input_size(); ++j)
                         {
                             if(j != axisId)
-                                shape.push_back(_iConst[node.input(j)].Data()[0]);
+                                shape.push_back(_iConst[node.input(j)].CpuData()[0]);
                         }
                         ITensor tensor({ shape.size() });
                         for (size_t j = 0; j < shape.size(); ++j)
-                            tensor.Data()[j] = (int)shape[j];
+                            tensor.CpuData()[j] = (int)shape[j];
                         _iConst[node.name()] = tensor;
                         _ignore.insert(node.name());
                     }
@@ -476,7 +476,7 @@ namespace Synet
                             assert(a.Shape() == b.Shape());
                             ITensor c(a.Shape());
                             for (size_t j = 0; j < a.Size(); ++j)
-                                c.Data()[j] = a.Data()[j] - b.Data()[j];
+                                c.CpuData()[j] = a.CpuData()[j] - b.CpuData()[j];
                             _iConst[node.name()] = c;
                             _ignore.insert(node.name());
                             continue;
@@ -502,7 +502,7 @@ namespace Synet
                         if (constIndex)
                         {
                             for (size_t j = 0; j < bias.Size(); ++j)
-                                bias.Data()[j] *= -1.0f;
+                                bias.CpuData()[j] *= -1.0f;
                         }
                         scale.Reshape(bias.Shape(), constIndex ? 1.0f : -1.0f);
                         if (bias.Size() == 1)
@@ -537,7 +537,7 @@ namespace Synet
                         const ITensor & tensor = _iConst[node.input(1)];
                         Shape shape;
                         for (size_t j = 0; j < tensor.Size(); ++j)
-                            shape.push_back(tensor.Data()[j]);
+                            shape.push_back(tensor.CpuData()[j]);
                         if (shape.size() == 2)
                             shape = Shape({ shape[1], shape[0] });
                         if (shape.size() == 4)
@@ -834,7 +834,7 @@ namespace Synet
                     {
                         dst.Reshape({ (size_t)src.float_val_size() });
                         for (int j = 0; j < src.float_val_size(); j++)
-                            dst.Data()[j] = src.float_val(j);
+                            dst.CpuData()[j] = src.float_val(j);
                     }
                     else
                         ConvertKernel<float, float>(src, dst);
@@ -859,7 +859,7 @@ namespace Synet
                     {
                         dst.Reshape({ (size_t)src.int_val_size() });
                         for (int j = 0; j < src.int_val_size(); j++)
-                            dst.Data()[j] = src.int_val(j);
+                            dst.CpuData()[j] = src.int_val(j);
                     }
                     else
                         ConvertKernel<int, int>(src, dst);
@@ -921,7 +921,7 @@ namespace Synet
             if(shape.size() == 4)
                 shape = Shape({shape[3], shape[2], shape[0], shape[1]});
             dst.Reshape(shape);    
-            TD * pDst = dst.Data();
+            TD * pDst = dst.CpuData();
 
             const String & content = src.tensor_content();
             const TS * pSrc = (TS*)content.c_str();
@@ -964,7 +964,7 @@ namespace Synet
                     Shape shape(1, src.float_val_size());
                     dst.Reshape(shape);
                     for (int i = 0; i < src.float_val_size(); i++)
-                        dst.Data()[i] = src.float_val(i);
+                        dst.CpuData()[i] = src.float_val(i);
                 }
                 else
                     ConvertKernel<float, float>(src, dst);
@@ -975,7 +975,7 @@ namespace Synet
                     Shape shape(1, src.int_val_size());
                     dst.Reshape(shape);
                     for (int i = 0; i < src.int_val_size(); i++)
-                        dst.Data()[i] = (float)src.int_val(i);
+                        dst.CpuData()[i] = (float)src.int_val(i);
                 }
                 else
                     ConvertKernel<int, float>(src, dst);
@@ -1223,7 +1223,7 @@ namespace Synet
             {
                 for (size_t i = 0; i < weight.size(); ++i)
                 {
-                    ofs.write((const char*)weight[i].Data(), weight[i].Size()*sizeof(float));
+                    ofs.write((const char*)weight[i].CpuData(), weight[i].Size()*sizeof(float));
                 }
                 ofs.close();
                 return true;

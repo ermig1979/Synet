@@ -30,11 +30,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> class TanhLayer : public Synet::Layer<T, A>
+    template <class T> class TanhLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         TanhLayer(const LayerParam & param)
@@ -55,7 +55,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            CpuTanh<Type>(src[0]->Data(), src[0]->Size(), dst[0]->Data());
+            CpuTanh<Type>(src[0]->CpuData(), src[0]->Size(), dst[0]->CpuData());
         }
 
     private:

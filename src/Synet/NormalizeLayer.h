@@ -30,11 +30,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> class NormalizeLayer : public Synet::Layer<T, A>
+    template <class T> class NormalizeLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         NormalizeLayer(const LayerParam & param)
@@ -62,7 +62,7 @@ namespace Synet
             if (spatialDim != _sumSpatialMultiplier.Size()) 
             {
                 _sumSpatialMultiplier.Reshape({ 1, 1, src[0]->Axis(-2), src[0]->Axis(-1) });
-                CpuSet(spatialDim, Type(1), _sumSpatialMultiplier.Data());
+                CpuSet(spatialDim, Type(1), _sumSpatialMultiplier.CpuData());
                 _bufferSpatial.Reshape({ 1, 1, src[0]->Axis(-2), src[0]->Axis(-1) });
             }
         }
@@ -72,14 +72,14 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            const Type * pSrc = src[0]->Data();
-            Type * pDst = dst[0]->Data();
-            const Type * scale = this->Weight()[0].Data();
-            Type * pBuffer = _buffer.Data();
-            Type * pNorm = _norm.Data();
+            const Type * pSrc = src[0]->CpuData();
+            Type * pDst = dst[0]->CpuData();
+            const Type * scale = this->Weight()[0].CpuData();
+            Type * pBuffer = _buffer.CpuData();
+            Type * pNorm = _norm.CpuData();
             CpuSet(_norm.Size(), Type(_eps), pNorm);
-            const Type * sumChannelMultiplier = _sumChannelMultiplier.Data();
-            const Type * sumSpatialMultiplier = _sumSpatialMultiplier.Data();
+            const Type * sumChannelMultiplier = _sumChannelMultiplier.CpuData();
+            const Type * sumSpatialMultiplier = _sumSpatialMultiplier.CpuData();
             size_t num = src[0]->Axis(0);
             size_t dim = src[0]->Size() / num;
             size_t spatialDim = src[0]->Size(-2);

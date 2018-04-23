@@ -60,11 +60,11 @@ namespace Synet
         }
     }
 
-    template <class T, template<class> class A> class ReorgLayer : public Synet::Layer<T, A>
+    template <class T> class ReorgLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         ReorgLayer(const LayerParam & param)
@@ -103,7 +103,7 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
             const Shape & shape = src[0]->Shape();
-            Detail::ReorgLayerForwardCpu(src[0]->Data(), shape[0], shape[1], shape[2], shape[3], _stride, _reverse, dst[0]->Data());
+            Detail::ReorgLayerForwardCpu(src[0]->CpuData(), shape[0], shape[1], shape[2], shape[3], _stride, _reverse, dst[0]->CpuData());
         }
 
     private:

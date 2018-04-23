@@ -70,11 +70,11 @@ namespace Synet
         }
     }
 
-    template <class T, template<class> class A> class SoftmaxLayer : public Synet::Layer<T, A>
+    template <class T> class SoftmaxLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
@@ -106,7 +106,7 @@ namespace Synet
             size_t channels = src[0]->Axis(_softmaxAxis);
             size_t dim = src[0]->Size() / _outerNum;
             for (size_t i = 0; i < _outerNum; ++i)
-                Detail::SoftmaxLayerForwardCpu(src[0]->Data() + i*dim, channels, _innerNum, _scale.Data(), dst[0]->Data() + i*dim);
+                Detail::SoftmaxLayerForwardCpu(src[0]->CpuData() + i*dim, channels, _innerNum, _scale.CpuData(), dst[0]->CpuData() + i*dim);
         }
 
     private:

@@ -29,11 +29,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> class InputLayer : public Synet::Layer<T, A>
+    template <class T> class InputLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         InputLayer(const LayerParam & param)

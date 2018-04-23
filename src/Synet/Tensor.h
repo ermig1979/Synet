@@ -28,27 +28,27 @@
 
 namespace Synet
 {
-    template<class T, template<class> class Allocator = std::allocator> class Tensor
+    template<class T> class Tensor
     {
     public:
         typedef T Type;
 
         SYNET_INLINE Tensor()
             : _size(0)
-            , _data(std::make_shared<Vector>())
+            , _cpuData(std::make_shared<Vector>())
         {
         }
 
         SYNET_INLINE Tensor(const Synet::Shape & shape, const Type & value = Type())
             : _shape(shape)
-            , _data(std::make_shared<Vector>())
+            , _cpuData(std::make_shared<Vector>())
         {
             Resize(value);
         }
 
         SYNET_INLINE Tensor(std::initializer_list<size_t> shape, const Type & value = Type())
             : _shape(shape.begin(), shape.end())
-            , _data(std::make_shared<Vector>())
+            , _cpuData(std::make_shared<Vector>())
         {
             Resize(value);
         }
@@ -156,41 +156,41 @@ namespace Synet
             return offset;
         }
 
-        SYNET_INLINE Type * Data()
+        SYNET_INLINE Type * CpuData()
         {
-            return _data->data();
+            return _cpuData->data();
         }
 
-        SYNET_INLINE const Type * Data() const
+        SYNET_INLINE const Type * CpuData() const
         {
-            return _data->data();
+            return _cpuData->data();
         }
 
-        SYNET_INLINE Type * Data(const Synet::Index & index)
+        SYNET_INLINE Type * CpuData(const Synet::Index & index)
         {
-            return _data->data() + Offset(index);
+            return CpuData() + Offset(index);
         }
 
-        SYNET_INLINE const Type * Data(const Synet::Index & index) const
+        SYNET_INLINE const Type * CpuData(const Synet::Index & index) const
         {
-            return _data->data() + Offset(index);
+            return CpuData() + Offset(index);
         }
 
-        SYNET_INLINE Type * Data(std::initializer_list<size_t> index)
+        SYNET_INLINE Type * CpuData(std::initializer_list<size_t> index)
         {
-            return _data->data() + Offset(index);
+            return CpuData() + Offset(index);
         }
 
-        SYNET_INLINE const Type * Data(std::initializer_list<size_t> index) const
+        SYNET_INLINE const Type * CpuData(std::initializer_list<size_t> index) const
         {
-            return _data->data() + Offset(index);
+            return CpuData() + Offset(index);
         }
 
         SYNET_INLINE void Share(const Tensor & tensor)
         {
             _shape = tensor._shape;
             _size = tensor._size;
-            _data = tensor._data;
+            _cpuData = tensor._cpuData;
             SetDebugPtr();
         }
 
@@ -199,7 +199,7 @@ namespace Synet
             _shape = shape;
             _size = Size(0, _shape.size());
             assert(_size == tensor._size);
-            _data = tensor._data;
+            _cpuData = tensor._cpuData;
             SetDebugPtr();
         }
 
@@ -251,7 +251,7 @@ namespace Synet
             if (order == _shape.size())
             {
                 std::cout << std::fixed << std::setprecision(4);
-                os << *Data(index);
+                os << *CpuData(index);
                 return;
             }
             if (firsts[order] + lasts[order] < _shape[order])
@@ -283,15 +283,15 @@ namespace Synet
         SYNET_INLINE void Resize(const Type & value)
         {
             _size = Size(0, _shape.size());
-            _data->resize(_size, value);
+            _cpuData->resize(_size, value);
             SetDebugPtr();
         }
 
         SYNET_INLINE void Extend()
         {
             _size = Size(0, _shape.size());
-            if (_size > _data->size())
-                _data->resize(_size);
+            if (_size > _cpuData->size())
+                _cpuData->resize(_size);
             SetDebugPtr();
         }
 
@@ -300,7 +300,7 @@ namespace Synet
 
         SYNET_INLINE void SetDebugPtr()
         {
-            _ptr = _data->data();
+            _ptr = _cpuData->data();
         }
 #else
         SYNET_INLINE void SetDebugPtr()
@@ -308,11 +308,15 @@ namespace Synet
         }
 #endif
 
-        typedef std::vector<Type, Allocator<Type> > Vector;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        typedef std::vector<Type, Simd::Allocator<Type>> Vector;
+#else
+        typedef std::vector<Type, std::allocator<Type>> Vector;
+#endif
         typedef std::shared_ptr<Vector> VectorPtr;
 
         Synet::Shape _shape;
         size_t _size;
-        VectorPtr _data;
+        VectorPtr _cpuData;
     };
 }

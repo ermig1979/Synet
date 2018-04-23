@@ -58,13 +58,13 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A = std::allocator> class Network
+    template <class T> class Network
     {
     public:
         typedef T Type;
-        typedef Synet::Tensor<T, A> Tensor;
+        typedef Synet::Tensor<T> Tensor;
         typedef std::vector<Tensor*> TensorPtrs;
-        typedef Synet::Layer<T, A> Layer;
+        typedef Synet::Layer<T> Layer;
         typedef Layer * LayerPtr;
 
         Network()
@@ -277,37 +277,37 @@ namespace Synet
         {
             switch (param.type())
             {
-            case LayerTypeAbs: return new AbsLayer<T, A>(param);
-            case LayerTypeBatchNorm: return new BatchNormLayer<T, A>(param);
-            case LayerTypeBias: return new BiasLayer<T, A>(param);
-            case LayerTypeConcat: return new ConcatLayer<T, A>(param);
-            case LayerTypeConvolution: return new ConvolutionLayer<T, A>(param);
-            case LayerTypeDetectionOutput: return new DetectionOutputLayer<T, A>(param);
-            case LayerTypeDropout: return new StubLayer<T, A>(param);
-            case LayerTypeEltwise: return new EltwiseLayer<T, A>(param);
-            case LayerTypeExpandDims: return new ExpandDimsLayer<T, A>(param);
-            case LayerTypeFill: return new FillLayer<T, A>(param);
-            case LayerTypeFlatten: return new FlattenLayer<T, A>(param);
-            case LayerTypeInnerProduct: return new InnerProductLayer<T, A>(param);
-            case LayerTypeInput: return new InputLayer<T, A>(param);
-            case LayerTypeInterp: return new InterpLayer<T, A>(param);
-            case LayerTypeLog: return new LogLayer<T, A>(param);
-            case LayerTypeLrn: return new LrnLayer<T, A>(param);
-            case LayerTypeMeta: return new MetaLayer<T, A>(param);
-            case LayerTypeNormalize: return new NormalizeLayer<T, A>(param);
-            case LayerTypePermute: return new PermuteLayer<T, A>(param);
-            case LayerTypePooling: return new PoolingLayer<T, A>(param);
-            case LayerTypePriorBox: return new PriorBoxLayer<T, A>(param);
-            case LayerTypeRegion: return new RegionLayer<T, A>(param);
-            case LayerTypeRelu: return new ReluLayer<T, A>(param);
-            case LayerTypeReorg: return new ReorgLayer<T, A>(param);
-            case LayerTypeReshape: return new ReshapeLayer<T, A>(param);
-            case LayerTypeScale: return new ScaleLayer<T, A>(param);
-            case LayerTypeSigmoid: return new SigmoidLayer<T, A>(param);
-            case LayerTypeSlice: return new SliceLayer<T, A>(param);
-            case LayerTypeSoftmax: return new SoftmaxLayer<T, A>(param);
-            case LayerTypeSqueeze: return new SqueezeLayer<T, A>(param);
-            case LayerTypeTanh: return new TanhLayer<T, A>(param);
+            case LayerTypeAbs: return new AbsLayer<T>(param);
+            case LayerTypeBatchNorm: return new BatchNormLayer<T>(param);
+            case LayerTypeBias: return new BiasLayer<T>(param);
+            case LayerTypeConcat: return new ConcatLayer<T>(param);
+            case LayerTypeConvolution: return new ConvolutionLayer<T>(param);
+            case LayerTypeDetectionOutput: return new DetectionOutputLayer<T>(param);
+            case LayerTypeDropout: return new StubLayer<T>(param);
+            case LayerTypeEltwise: return new EltwiseLayer<T>(param);
+            case LayerTypeExpandDims: return new ExpandDimsLayer<T>(param);
+            case LayerTypeFill: return new FillLayer<T>(param);
+            case LayerTypeFlatten: return new FlattenLayer<T>(param);
+            case LayerTypeInnerProduct: return new InnerProductLayer<T>(param);
+            case LayerTypeInput: return new InputLayer<T>(param);
+            case LayerTypeInterp: return new InterpLayer<T>(param);
+            case LayerTypeLog: return new LogLayer<T>(param);
+            case LayerTypeLrn: return new LrnLayer<T>(param);
+            case LayerTypeMeta: return new MetaLayer<T>(param);
+            case LayerTypeNormalize: return new NormalizeLayer<T>(param);
+            case LayerTypePermute: return new PermuteLayer<T>(param);
+            case LayerTypePooling: return new PoolingLayer<T>(param);
+            case LayerTypePriorBox: return new PriorBoxLayer<T>(param);
+            case LayerTypeRegion: return new RegionLayer<T>(param);
+            case LayerTypeRelu: return new ReluLayer<T>(param);
+            case LayerTypeReorg: return new ReorgLayer<T>(param);
+            case LayerTypeReshape: return new ReshapeLayer<T>(param);
+            case LayerTypeScale: return new ScaleLayer<T>(param);
+            case LayerTypeSigmoid: return new SigmoidLayer<T>(param);
+            case LayerTypeSlice: return new SliceLayer<T>(param);
+            case LayerTypeSoftmax: return new SoftmaxLayer<T>(param);
+            case LayerTypeSqueeze: return new SqueezeLayer<T>(param);
+            case LayerTypeTanh: return new TanhLayer<T>(param);
             default:
                 return NULL;
             }

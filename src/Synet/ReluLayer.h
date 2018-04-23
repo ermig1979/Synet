@@ -30,11 +30,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> class ReluLayer : public Synet::Layer<T, A>
+    template <class T> class ReluLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         ReluLayer(const LayerParam & param)
@@ -56,7 +56,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            CpuRelu<Type>(src[0]->Data(), src[0]->Size(), _negativeSlope, dst[0]->Data());
+            CpuRelu<Type>(src[0]->CpuData(), src[0]->Size(), _negativeSlope, dst[0]->CpuData());
         }
 
     private:

@@ -34,11 +34,11 @@ namespace Synet
     {
     }
 
-    template <class T, template<class> class A> class PermuteLayer : public Synet::Layer<T, A>
+    template <class T> class PermuteLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         PermuteLayer(const LayerParam & param)
@@ -97,8 +97,8 @@ namespace Synet
 
             if (_permute)
             {
-                const Type * pSrc = src[0]->Data();
-                Type * pDst = dst[0]->Data();
+                const Type * pSrc = src[0]->CpuData();
+                Type * pDst = dst[0]->CpuData();
                 switch (_count)
                 {
                 case 2:

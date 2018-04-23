@@ -65,11 +65,11 @@ namespace Synet
 #endif
     }
 
-    template <class T, template<class> class A> class EltwiseLayer : public Synet::Layer<T, A>
+    template <class T> class EltwiseLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         EltwiseLayer(const LayerParam & param)
@@ -97,7 +97,7 @@ namespace Synet
             for (size_t i = 0; i < src.size(); ++i)
             {
                 assert(src[i]->Shape() == src[0]->Shape());
-                _src[i] = src[i]->Data();
+                _src[i] = src[i]->CpuData();
             }
             dst[0]->Reshape(src[0]->Shape());
         }
@@ -107,7 +107,7 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            Detail::EltwiseLayerForwardCpu(_src.data(), _coefficients.data(), _src.size(), dst[0]->Size(), _operation, dst[0]->Data());
+            Detail::EltwiseLayerForwardCpu(_src.data(), _coefficients.data(), _src.size(), dst[0]->Size(), _operation, dst[0]->CpuData());
         }
 
     private:

@@ -30,11 +30,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> class ConcatLayer : public Synet::Layer<T, A>
+    template <class T> class ConcatLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         ConcatLayer(const LayerParam & param)
@@ -79,12 +79,12 @@ namespace Synet
             if (src.size() == 1)
                 return;
 
-            Type * dstData = dst[0]->Data();
+            Type * dstData = dst[0]->CpuData();
             size_t concatAxisOffset = 0;
             size_t dstConcatAxis = dst[0]->Axis(_concatAxis);
             for (size_t i = 0; i < src.size(); ++i)
             {
-                const Type * srcData = src[i]->Data();
+                const Type * srcData = src[i]->CpuData();
                 size_t srcConcatAxis = src[i]->Axis(_concatAxis);
                 for (size_t n = 0; n < _concatNum; ++n)
                     CpuCopy(srcData + n * srcConcatAxis * _concatInputSize, srcConcatAxis * _concatInputSize, 

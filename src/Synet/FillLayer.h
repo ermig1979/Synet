@@ -29,11 +29,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> class FillLayer : public Synet::Layer<T, A>
+    template <class T> class FillLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         FillLayer(const LayerParam & param)
@@ -54,7 +54,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            CpuSet(dst[0]->Size(), _value, dst[0]->Data());
+            CpuSet(dst[0]->Size(), _value, dst[0]->CpuData());
         }
 
     private:

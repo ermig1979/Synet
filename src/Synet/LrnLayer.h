@@ -63,11 +63,11 @@ namespace Synet
 #endif
     }
 
-    template <class T, template<class> class A> class LrnLayer : public Synet::Layer<T, A>
+    template <class T> class LrnLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
@@ -138,9 +138,9 @@ namespace Synet
             Type alpha = _alpha / _size;
             for (size_t n = 0; n < _num; ++n)
             {
-                const Type * pSrc = src[0]->Data({ n, 0, 0, 0 });
-                Type * pDst = dst[0]->Data({ n, 0, 0, 0 });
-                Detail::LrnLayerCrossChannelsCpu(pSrc, _channels, _size, _width*_height, alpha, _beta, _k, _buffer.Data(), pDst);
+                const Type * pSrc = src[0]->CpuData({ n, 0, 0, 0 });
+                Type * pDst = dst[0]->CpuData({ n, 0, 0, 0 });
+                Detail::LrnLayerCrossChannelsCpu(pSrc, _channels, _size, _width*_height, alpha, _beta, _k, _buffer.CpuData(), pDst);
             }
         }
     

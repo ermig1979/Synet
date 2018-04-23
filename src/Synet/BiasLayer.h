@@ -30,11 +30,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> class BiasLayer : public Synet::Layer<T, A>
+    template <class T> class BiasLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
@@ -73,10 +73,10 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            const Type * pBias = ((src.size() > 1) ? *src[1] : this->Weight()[0]).Data();
-            Type * pDst = dst[0]->Data();
+            const Type * pBias = ((src.size() > 1) ? *src[1] : this->Weight()[0]).CpuData();
+            Type * pDst = dst[0]->CpuData();
             if (src[0] != dst[0])
-                CpuCopy(src[0]->Data(), src[0]->Size(), pDst);
+                CpuCopy(src[0]->CpuData(), src[0]->Size(), pDst);
             for (size_t n = 0; n < _outerDim; ++n)
             {
                 CpuAddBias(pBias, _biasDim, _innerDim, pDst);

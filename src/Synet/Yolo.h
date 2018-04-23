@@ -196,10 +196,10 @@ namespace Synet
             batchNorm.weight()[1].dim() = Shape({ (size_t)src.out_c });
             weight.push_back(Tensor());
             weight.back().Reshape(batchNorm.weight()[0].dim());
-            memcpy(weight.back().Data(), src.rolling_mean, weight.back().Size() * sizeof(float));
+            memcpy(weight.back().CpuData(), src.rolling_mean, weight.back().Size() * sizeof(float));
             weight.push_back(Tensor());
             weight.back().Reshape(batchNorm.weight()[1].dim());
-            memcpy(weight.back().Data(), src.rolling_variance, weight.back().Size() * sizeof(float));
+            memcpy(weight.back().CpuData(), src.rolling_variance, weight.back().Size() * sizeof(float));
             dst.push_back(batchNorm);
             return true;
         }
@@ -215,7 +215,7 @@ namespace Synet
             bias.weight()[0].dim() = Shape({ (size_t)src.out_c});
             weight.push_back(Tensor());
             weight.back().Reshape(bias.weight()[0].dim());
-            memcpy(weight.back().Data(), src.biases, weight.back().Size() * sizeof(float));
+            memcpy(weight.back().CpuData(), src.biases, weight.back().Size() * sizeof(float));
             dst.push_back(bias);
             return true;
         }
@@ -250,7 +250,7 @@ namespace Synet
             convolution.weight()[0].dim() = Shape({ (size_t)src.out_c, (size_t)src.c, (size_t)src.size, (size_t)src.size });
             weight.push_back(Tensor());
             weight.back().Reshape(convolution.weight()[0].dim());
-            memcpy(weight.back().Data(), src.weights, weight.back().Size() * sizeof(float));
+            memcpy(weight.back().CpuData(), src.weights, weight.back().Size() * sizeof(float));
             dst.push_back(convolution);
             return true;
         }
@@ -317,10 +317,10 @@ namespace Synet
             scale.weight()[1].dim() = Shape({ (size_t)src.out_c });
             weight.push_back(Tensor());
             weight.back().Reshape(scale.weight()[0].dim());
-            memcpy(weight.back().Data(), src.scales, weight.back().Size() * sizeof(float));            
+            memcpy(weight.back().CpuData(), src.scales, weight.back().Size() * sizeof(float));
             weight.push_back(Tensor());
             weight.back().Reshape(scale.weight()[1].dim());
-            memcpy(weight.back().Data(), src.biases, weight.back().Size() * sizeof(float));
+            memcpy(weight.back().CpuData(), src.biases, weight.back().Size() * sizeof(float));
             dst.push_back(scale);
             return true;
         }
@@ -358,7 +358,7 @@ namespace Synet
             {
                 for (size_t i = 0; i < weight.size(); ++i)
                 {
-                    ofs.write((const char*)weight[i].Data(), weight[i].Size()*sizeof(float));
+                    ofs.write((const char*)weight[i].CpuData(), weight[i].Size()*sizeof(float));
                 }
                 ofs.close();
                 return true;

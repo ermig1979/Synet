@@ -53,14 +53,14 @@ namespace Synet
                 for (int h2 = 0; h2 < dstH; ++h2) 
                 {
                     const float h1r = rheight * h2;
-                    const int h1 = h1r;
+                    const int h1 = (int)h1r;
                     const int h1p = (h1 < sizeH - 1) ? 1 : 0;
                     const T h1lambda = h1r - h1;
                     const T h0lambda = T(1.) - h1lambda;
                     for (int w2 = 0; w2 < dstW; ++w2) 
                     {
                         const float w1r = rwidth * w2;
-                        const int w1 = w1r;
+                        const int w1 = (int)w1r;
                         const int w1p = (w1 < sizeW - 1) ? 1 : 0;
                         const T w1lambda = w1r - w1;
                         const T w0lambda = T(1.) - w1lambda;
@@ -80,11 +80,11 @@ namespace Synet
         }
     }
 
-    template <class T, template<class> class A> class InterpLayer : public Synet::Layer<T, A>
+    template <class T> class InterpLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         InterpLayer(const LayerParam & param)
@@ -150,7 +150,7 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            Detail::InterpLayerForwardCpu(_num * _channels, src[0]->Data(), _srcH, _srcW, _cropBeg, _cropEnd, dst[0]->Data(), _dstH, _dstW);
+            Detail::InterpLayerForwardCpu(_num * _channels, src[0]->CpuData(), _srcH, _srcW, _cropBeg, _cropEnd, dst[0]->CpuData(), _dstH, _dstW);
         }
 
     private:

@@ -30,11 +30,11 @@
 
 namespace Synet
 {
-    template <class T, template<class> class A> class ConvolutionLayer : public Synet::Layer<T, A>
+    template <class T> class ConvolutionLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
-        typedef Layer<T, A> Base;
+        typedef Layer<T> Base;
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
@@ -138,8 +138,8 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            const Type * pSrc = src[0]->Data();
-            Type * pDst = dst[0]->Data();
+            const Type * pSrc = src[0]->CpuData();
+            Type * pDst = dst[0]->CpuData();
 
             size_t firstSpatialAxis = _axis + 1;
             _num = src[0]->Size(0, _axis);
@@ -192,17 +192,17 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            const Type * weight = this->Weight()[0].Data();
+            const Type * weight = this->Weight()[0].CpuData();
             for (int i = 0; i < src.size(); ++i)
             {
                 for (int n = 0; n < this->_num; ++n)
                 {
-                    const Type * pSrc = src[i]->Data() + _srcSize * n;
-                    Type * pDst = dst[i]->Data() + _dstSize * n;
+                    const Type * pSrc = src[i]->CpuData() + _srcSize * n;
+                    Type * pDst = dst[i]->CpuData() + _dstSize * n;
                     Type * pBuf = (Type*)pSrc;
                     if (!_is1x1)
                     {
-                        pBuf = buf[0]->Data() + _dstSize * n;
+                        pBuf = buf[0]->CpuData() + _dstSize * n;
                         ImToCol(pSrc, pBuf);
                     }
                     for (size_t g = 0; g < _group; ++g)
@@ -211,7 +211,7 @@ namespace Synet
                             Type(1.0), weight + _weightOffset * g, pBuf + _colOffset * g, Type(0.0), pDst + _dstOffset * g);
                     }
                     if (_biasTerm)
-                        CpuAddBias(this->Weight()[1].Data(), _dstChannels, _dstSpatialSize, pDst);
+                        CpuAddBias(this->Weight()[1].CpuData(), _dstChannels, _dstSpatialSize, pDst);
                 }
             }
         }
