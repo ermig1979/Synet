@@ -78,6 +78,36 @@ namespace Synet
                 }
             }
         }
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        template <> void InterpLayerForwardCpu<float>(size_t channels, const float * src, size_t srcH, size_t srcW, size_t cropB, size_t cropE, float * dst, size_t dstH, size_t dstW)
+        {
+            size_t sizeH = srcH - cropB - cropE;
+            size_t sizeW = srcW - cropB - cropE;
+            src += cropB * srcW + cropB;
+            if (sizeH == dstH && sizeW == dstW)
+            {
+                for (size_t c = 0; c < channels; ++c)
+                {
+                    for (size_t h = 0; h < dstH; ++h)
+                        memcpy(dst + h*dstW, src + h*srcW, sizeW * sizeof(float));
+                    src += srcH * srcW;
+                    dst += dstH * dstW;
+                }
+            }
+            else
+            {
+                void * resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, 1, ::SimdResizeChannelFloat, ::SimdResizeMethodCaffeInterp);
+                for (size_t c = 0; c < channels; ++c)
+                {
+                    ::SimdResizerRun(resizer, (uint8_t*)src, srcW * sizeof(float), (uint8_t*)dst, dstW * sizeof(float));
+                    src += srcH * srcW;
+                    dst += dstH * dstW;
+                }
+                ::SimdRelease(resizer);
+            }
+        }
+#endif
     }
 
     template <class T> class InterpLayer : public Synet::Layer<T>
