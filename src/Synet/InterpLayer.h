@@ -80,7 +80,7 @@ namespace Synet
         }
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-        template <> void InterpLayerForwardCpu<float>(size_t channels, const float * src, size_t srcH, size_t srcW, size_t cropB, size_t cropE, float * dst, size_t dstH, size_t dstW)
+        template <> inline void InterpLayerForwardCpu<float>(size_t channels, const float * src, size_t srcH, size_t srcW, size_t cropB, size_t cropE, float * dst, size_t dstH, size_t dstW)
         {
             size_t sizeH = srcH - cropB - cropE;
             size_t sizeW = srcW - cropB - cropE;

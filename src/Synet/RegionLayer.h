@@ -94,7 +94,7 @@ namespace Synet
             SYNET_PERF_FUNC();
             dst.clear();
 
-            const Type * pPredict = src[0]->Data();
+            const Type * pPredict = src[0]->CpuData();
             size_t height = src[0]->Axis(2);
             size_t width = src[0]->Axis(3);
             size_t outputs = src[0]->Size(1);
