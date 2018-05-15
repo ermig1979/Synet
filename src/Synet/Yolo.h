@@ -174,6 +174,11 @@ namespace Synet
             case ::ROUTE:
                 if (!ConvertConcatLayer(src, dst))
                     return false;
+            case ::SHORTCUT:
+                if (!ConvertStubLayer(src, dst))
+                    return false;
+                if (!ConvertActivationLayer(src, dst))
+                    return false;
                 break;
             default:
                 assert(0);
@@ -348,6 +353,17 @@ namespace Synet
                 return false;
             }
             dst.push_back(activation);
+            return true;
+        }
+
+        bool ConvertStubLayer(const ::layer & src, LayerParams & dst)
+        {
+            Synet::LayerParam stub;
+            stub.type() = Synet::LayerTypeStub;
+            stub.name() = UniqueName("Stub");
+            stub.src().push_back(_dst[src.index]);
+            stub.dst().resize(1, stub.name());
+            dst.push_back(stub);
             return true;
         }
 

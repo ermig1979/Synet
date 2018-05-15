@@ -73,6 +73,7 @@ namespace Synet
         LayerTypeSlice,
         LayerTypeSoftmax,
         LayerTypeSqueeze,
+        LayerTypeStub,
         LayerTypeTanh,
         LayerTypeSize
     };
@@ -111,6 +112,7 @@ namespace Synet
             "Slice",
             "Softmax",
             "Squeeze",
+            "Stub",
             "Tanh",
         };
         return (value > LayerTypeUnknown && value < LayerTypeSize) ? names[value] : "";

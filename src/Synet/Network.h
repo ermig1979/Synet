@@ -307,6 +307,7 @@ namespace Synet
             case LayerTypeSlice: return new SliceLayer<T>(param);
             case LayerTypeSoftmax: return new SoftmaxLayer<T>(param);
             case LayerTypeSqueeze: return new SqueezeLayer<T>(param);
+            case LayerTypeStub: return new StubLayer<T>(param);
             case LayerTypeTanh: return new TanhLayer<T>(param);
             default:
                 return NULL;
