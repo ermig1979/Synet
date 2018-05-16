@@ -180,6 +180,10 @@ namespace Synet
                 if (!ConvertActivationLayer(src, dst))
                     return false;
                 break;
+            case ::YOLO:
+                if (!ConvertYoloLayer(src, dst))
+                    return false;
+                break;
             default:
                 assert(0);
                 return false;
@@ -364,6 +368,29 @@ namespace Synet
             stub.src().push_back(_dst[src.index]);
             stub.dst().resize(1, stub.name());
             dst.push_back(stub);
+            return true;
+        }
+
+        bool ConvertYoloLayer(const ::layer & src, LayerParams & dst)
+        {
+            Synet::LayerParam yolo;
+            yolo.type() = Synet::LayerTypeYolo;
+            yolo.name() = UniqueName("Yolo");
+            yolo.src() = dst.back().dst();
+            yolo.dst().resize(1, yolo.name());
+            yolo.yolo().classes() = src.classes;
+            yolo.yolo().num() = src.n;
+            yolo.yolo().max() = src.max_boxes;
+            yolo.yolo().jitter() = src.jitter;
+            yolo.yolo().ignoreThresh() = src.ignore_thresh;
+            yolo.yolo().truthThresh() = src.truth_thresh;
+            yolo.yolo().mask().resize(src.n);
+            for (size_t i = 0; i < yolo.yolo().mask().size(); ++i)
+                yolo.yolo().mask()[i] = src.mask[i];
+            yolo.yolo().anchors().resize(src.n * 2);
+            for (size_t i = 0; i < yolo.yolo().anchors().size(); ++i)
+                yolo.yolo().anchors()[i] = src.biases[i];
+            dst.push_back(yolo);
             return true;
         }
 
