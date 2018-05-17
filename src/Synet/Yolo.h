@@ -180,6 +180,10 @@ namespace Synet
                 if (!ConvertActivationLayer(src, dst))
                     return false;
                 break;
+            case ::UPSAMPLE:
+                if (!ConvertUpsampleLayer(src, dst))
+                    return false;
+                break;
             case ::YOLO:
                 if (!ConvertYoloLayer(src, dst))
                     return false;
@@ -188,6 +192,32 @@ namespace Synet
                 assert(0);
                 return false;
             }
+            return true;
+        }
+
+        bool ConvertActivationLayer(const ::layer & src, LayerParams & dst)
+        {
+            Synet::LayerParam activation;
+            activation.src() = dst.back().dst();
+            activation.dst() = dst.back().dst();
+            switch (src.activation)
+            {
+            case ::LEAKY:
+                activation.type() = Synet::LayerTypeRelu;
+                activation.name() = UniqueName("ReLU");
+                activation.relu().negativeSlope() = 0.1f;
+                break;
+            case ::LINEAR:
+                return true;
+            case ::LOGISTIC:
+                activation.type() = Synet::LayerTypeSigmoid;
+                activation.name() = UniqueName("Sigmoid");
+                break;
+            default:
+                assert(0);
+                return false;
+            }
+            dst.push_back(activation);
             return true;
         }
 
@@ -334,40 +364,27 @@ namespace Synet
             return true;
         }
 
-        bool ConvertActivationLayer(const ::layer & src, LayerParams & dst)
-        {
-            Synet::LayerParam activation;
-            activation.src() = dst.back().dst();
-            activation.dst() = dst.back().dst();
-            switch (src.activation)
-            {
-            case ::LEAKY:
-                activation.type() = Synet::LayerTypeRelu;
-                activation.name() = UniqueName("ReLU");
-                activation.relu().negativeSlope() = 0.1f;
-                break;
-            case ::LINEAR:
-                return true;
-            case ::LOGISTIC:
-                activation.type() = Synet::LayerTypeSigmoid;
-                activation.name() = UniqueName("Sigmoid");
-                break;
-            default:
-                assert(0);
-                return false;
-            }
-            dst.push_back(activation);
-            return true;
-        }
-
         bool ConvertStubLayer(const ::layer & src, LayerParams & dst)
         {
             Synet::LayerParam stub;
             stub.type() = Synet::LayerTypeStub;
-            stub.name() = UniqueName("Stub");
+            stub.name() = UniqueName("Shortcut");
             stub.src().push_back(_dst[src.index]);
             stub.dst().resize(1, stub.name());
             dst.push_back(stub);
+            return true;
+        }
+
+        bool ConvertUpsampleLayer(const ::layer & src, LayerParams & dst)
+        {
+            Synet::LayerParam upsample;
+            upsample.type() = Synet::LayerTypeUpsample;
+            upsample.name() = UniqueName("Upsample");
+            upsample.src() = dst.back().dst();
+            upsample.dst().resize(1, upsample.name());
+            upsample.upsample().stride() = src.stride;
+            upsample.upsample().scale() = src.scale;
+            dst.push_back(upsample);
             return true;
         }
 
@@ -379,7 +396,7 @@ namespace Synet
             yolo.src() = dst.back().dst();
             yolo.dst().resize(1, yolo.name());
             yolo.yolo().classes() = src.classes;
-            yolo.yolo().num() = src.n;
+            yolo.yolo().num() = src.total;
             yolo.yolo().max() = src.max_boxes;
             yolo.yolo().jitter() = src.jitter;
             yolo.yolo().ignoreThresh() = src.ignore_thresh;
@@ -387,7 +404,7 @@ namespace Synet
             yolo.yolo().mask().resize(src.n);
             for (size_t i = 0; i < yolo.yolo().mask().size(); ++i)
                 yolo.yolo().mask()[i] = src.mask[i];
-            yolo.yolo().anchors().resize(src.n * 2);
+            yolo.yolo().anchors().resize(src.total * 2);
             for (size_t i = 0; i < yolo.yolo().anchors().size(); ++i)
                 yolo.yolo().anchors()[i] = src.biases[i];
             dst.push_back(yolo);

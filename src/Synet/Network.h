@@ -55,6 +55,7 @@
 #include "Synet/SqueezeLayer.h"
 #include "Synet/StubLayer.h"
 #include "Synet/TanhLayer.h"
+#include "Synet/UpsampleLayer.h"
 #include "Synet/YoloLayer.h"
 
 namespace Synet
@@ -310,6 +311,7 @@ namespace Synet
             case LayerTypeSqueeze: return new SqueezeLayer<T>(param);
             case LayerTypeStub: return new StubLayer<T>(param);
             case LayerTypeTanh: return new TanhLayer<T>(param);
+            case LayerTypeUpsample: return new UpsampleLayer<T>(param);
             case LayerTypeYolo: return new YoloLayer<T>(param);
             default:
                 return NULL;

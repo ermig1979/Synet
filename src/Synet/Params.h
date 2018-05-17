@@ -75,6 +75,7 @@ namespace Synet
         LayerTypeSqueeze,
         LayerTypeStub,
         LayerTypeTanh,
+        LayerTypeUpsample,
         LayerTypeYolo,
         LayerTypeSize
     };
@@ -115,6 +116,7 @@ namespace Synet
             "Squeeze",
             "Stub",
             "Tanh",
+            "Upsample",
             "Yolo",
         };
         return (value > LayerTypeUnknown && value < LayerTypeSize) ? names[value] : "";
@@ -472,6 +474,12 @@ namespace Synet
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
     };
 
+    struct UpsampleParam
+    {
+        SYNET_PARAM_VALUE(int32_t, stride, 2);
+        SYNET_PARAM_VALUE(float, scale, 1.0f);
+    };
+
     struct YoloParam
     {
         SYNET_PARAM_VALUE(uint32_t, classes, 20);
@@ -518,6 +526,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(ScaleParam, scale);
         SYNET_PARAM_STRUCT(SliceParam, slice);
         SYNET_PARAM_STRUCT(SoftmaxParam, softmax);
+        SYNET_PARAM_STRUCT(UpsampleParam, upsample);
         SYNET_PARAM_STRUCT(YoloParam, yolo);
 
         SYNET_PARAM_VALUE(Strings, debug, Strings());
