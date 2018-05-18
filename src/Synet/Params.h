@@ -69,6 +69,7 @@ namespace Synet
         LayerTypeReorg,
         LayerTypeReshape,
         LayerTypeScale,
+        LayerTypeShortcut,
         LayerTypeSigmoid,
         LayerTypeSlice,
         LayerTypeSoftmax,
@@ -110,6 +111,7 @@ namespace Synet
             "Reorg",
             "Reshape",
             "Scale",
+            "Shortcut",
             "Sigmoid",
             "Slice",
             "Softmax",
@@ -484,6 +486,7 @@ namespace Synet
     {
         SYNET_PARAM_VALUE(uint32_t, classes, 20);
         SYNET_PARAM_VALUE(uint32_t, num, 1);
+        SYNET_PARAM_VALUE(uint32_t, total, 1);
         SYNET_PARAM_VALUE(uint32_t, max, 30);
         SYNET_PARAM_VALUE(float, jitter, 0.2f);
         SYNET_PARAM_VALUE(float, ignoreThresh, 0.5f);

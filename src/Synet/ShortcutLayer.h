@@ -26,48 +26,43 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
+#include "Synet/EltwiseLayer.h"
 
 namespace Synet
 {
-    template <class T> class YoloLayer : public Synet::Layer<T>
+    template <class T> class ShortcutLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        YoloLayer(const LayerParam & param)
+        ShortcutLayer(const LayerParam & param)
             : Base(param)
         {
         }
 
         virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            const YoloParam & param = this->Param().yolo();
-            _num = param.num();
-            _total = param.total();
-            _classes = param.classes();
-            _anchors.resize(param.anchors().size());
-            for (size_t i = 0; i < param.anchors().size(); ++i)
-                _anchors[i] = param.anchors()[i];
+            _coeff[0] = 1.0f;
+            _coeff[1] = 1.0f;
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            Shape dstShape = src[0]->Shape();
-            dstShape[1] = _num*(_classes + 4 + 1);
-            dst[0]->Reshape(dstShape);
+            assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape());
+            dst[0]->Reshape(src[0]->Shape());
+            _src[0] = src[0]->CpuData();
+            _src[1] = src[1]->CpuData();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            Detail::EltwiseLayerForwardCpu(_src, _coeff, 2, dst[0]->Size(), EltwiseOperationTypeSum, dst[0]->CpuData());
         }
-
     private:
-        typedef std::vector<Type> Vector;
-
-        size_t _total, _num, _classes;
-        Vector _anchors;
+        Type _coeff[2];
+        Type * _src[2];
     };
 }

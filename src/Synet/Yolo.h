@@ -174,8 +174,9 @@ namespace Synet
             case ::ROUTE:
                 if (!ConvertConcatLayer(src, dst))
                     return false;
+                break;
             case ::SHORTCUT:
-                if (!ConvertStubLayer(src, dst))
+                if (!ConvertShortcutLayer(src, dst))
                     return false;
                 if (!ConvertActivationLayer(src, dst))
                     return false;
@@ -364,14 +365,15 @@ namespace Synet
             return true;
         }
 
-        bool ConvertStubLayer(const ::layer & src, LayerParams & dst)
+        bool ConvertShortcutLayer(const ::layer & src, LayerParams & dst)
         {
-            Synet::LayerParam stub;
-            stub.type() = Synet::LayerTypeStub;
-            stub.name() = UniqueName("Shortcut");
-            stub.src().push_back(_dst[src.index]);
-            stub.dst().resize(1, stub.name());
-            dst.push_back(stub);
+            Synet::LayerParam shortcut;
+            shortcut.type() = Synet::LayerTypeShortcut;
+            shortcut.name() = UniqueName("Shortcut");
+            shortcut.src().push_back(_dst.back());
+            shortcut.src().push_back(_dst[src.index]);
+            shortcut.dst().resize(1, shortcut.name());
+            dst.push_back(shortcut);
             return true;
         }
 
@@ -396,7 +398,8 @@ namespace Synet
             yolo.src() = dst.back().dst();
             yolo.dst().resize(1, yolo.name());
             yolo.yolo().classes() = src.classes;
-            yolo.yolo().num() = src.total;
+            yolo.yolo().num() = src.n;
+            yolo.yolo().total() = src.total;
             yolo.yolo().max() = src.max_boxes;
             yolo.yolo().jitter() = src.jitter;
             yolo.yolo().ignoreThresh() = src.ignore_thresh;

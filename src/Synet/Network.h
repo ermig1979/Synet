@@ -49,6 +49,7 @@
 #include "Synet/ReorgLayer.h"
 #include "Synet/ReshapeLayer.h"
 #include "Synet/ScaleLayer.h"
+#include "Synet/ShortcutLayer.h"
 #include "Synet/SigmoidLayer.h"
 #include "Synet/SliceLayer.h"
 #include "Synet/SoftmaxLayer.h"
@@ -68,6 +69,7 @@ namespace Synet
         typedef std::vector<Tensor*> TensorPtrs;
         typedef Synet::Layer<T> Layer;
         typedef Layer * LayerPtr;
+        typedef std::vector<LayerPtr> LayerPtrs;
 
         Network()
             : _empty(true)
@@ -123,7 +125,7 @@ namespace Synet
             return _dst; 
         }
 
-        LayerPtr Back() const
+        LayerPtrs Back() const
         {
             return _back;
         }
@@ -167,7 +169,6 @@ namespace Synet
 #endif
 
     private:
-        typedef std::vector<LayerPtr> LayerPtrs;
         typedef std::shared_ptr<Layer> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
 
@@ -194,7 +195,7 @@ namespace Synet
 
         Stages _stages;
         TensorPtrs _src, _dst;
-        LayerPtr _back;
+        LayerPtrs _back;
 
         bool Init()
         {
@@ -255,10 +256,19 @@ namespace Synet
             }
             for (NameSet::const_iterator it = available.begin(); it != available.end(); ++it)
             {
-                if(InsertDst(*it))
+                if (InsertDst(*it))
+                {
                     _dst.push_back(_tensors[index[*it]].get());
+                    for (size_t i = 0; i < _layers.size(); ++i)
+                    {
+                        if (_layers[i]->Param().name() == *it)
+                        {
+                            _back.push_back(_layers[i].get());
+                            break;
+                        }
+                    }
+                }
             }
-            _back = _stages.empty() ? NULL : _stages.back().layer;
             _empty = false;
             return true;
         }
@@ -305,6 +315,7 @@ namespace Synet
             case LayerTypeReorg: return new ReorgLayer<T>(param);
             case LayerTypeReshape: return new ReshapeLayer<T>(param);
             case LayerTypeScale: return new ScaleLayer<T>(param);
+            case LayerTypeShortcut: return new ShortcutLayer<T>(param);
             case LayerTypeSigmoid: return new SigmoidLayer<T>(param);
             case LayerTypeSlice: return new SliceLayer<T>(param);
             case LayerTypeSoftmax: return new SoftmaxLayer<T>(param);
