@@ -59,6 +59,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            SYNET_PERF_FUNC();
             Detail::EltwiseLayerForwardCpu(_src, _coeff, 2, dst[0]->Size(), EltwiseOperationTypeSum, dst[0]->CpuData());
         }
     private:

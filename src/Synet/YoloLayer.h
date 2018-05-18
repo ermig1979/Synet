@@ -62,6 +62,22 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            SYNET_PERF_FUNC();
+            size_t batch = src[0]->Axis(0);
+            size_t area = src[0]->Axis(2)*src[0]->Axis(3);
+            Index index(4, 0);
+            for (index[0] = 0; index[0] < batch; ++index[0])
+            {
+                for (size_t n = 0; n < _num; ++n)
+                {
+                    index[1] = n*(_classes + 4 + 1);
+                    CpuSigmoid(src[0]->CpuData(index), 2 * area, dst[0]->CpuData(index));
+                    index[1] += 2;
+                    CpuCopy(src[0]->CpuData(index), 2 * area, dst[0]->CpuData(index));
+                    index[1] += 2;
+                    CpuSigmoid(src[0]->CpuData(index), (_classes + 1) * area, dst[0]->CpuData(index));
+                }
+            }
         }
 
     private:

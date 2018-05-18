@@ -114,6 +114,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            SYNET_PERF_FUNC();
             Detail::UpsampleLayerForwardCpu(src[0]->CpuData(), _number, _height, _width, _stride, _reverse, _scale, dst[0]->CpuData());
         }
 
