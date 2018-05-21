@@ -50,13 +50,15 @@ namespace Synet
         }
     }
 
-
     template <class T> class RegionLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
+        typedef Synet::Region<T> Region;
+        typedef std::vector<Region> Regions;
+
 
         RegionLayer(const LayerParam & param)
             : Base(param)
@@ -82,13 +84,6 @@ namespace Synet
             dst[0]->Reshape(src[0]->Shape());
         }
 
-        struct Region
-        {
-            Type x, y, w, h, prob;
-            size_t id;
-        };
-        typedef std::vector<Region> Regions;
-
         void GetRegions(const TensorPtrs & src, Type threshold, Type overlap, Regions & dst)
         {
             SYNET_PERF_FUNC();
@@ -105,8 +100,8 @@ namespace Synet
                 for (size_t n = 0; n < _num; ++n) 
                 {
                     size_t index = i*_num + n;
-                    size_t p_index = index * (_classes + 5) + 4;
-                    Type scale = pPredict[p_index];
+                    size_t predictIndex = index * (_classes + 5) + 4;
+                    Type scale = pPredict[predictIndex];
                     if (_classfix == -1 && scale < Type(0.5)) 
                         scale = Type(0);
                     size_t regionIndex = index * (_classes + 5);

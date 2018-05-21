@@ -35,6 +35,8 @@ namespace Synet
         typedef T Type;
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
+        typedef Synet::Region<T> Region;
+        typedef std::vector<Region> Regions;
 
         YoloLayer(const LayerParam & param)
             : Base(param)
@@ -50,6 +52,9 @@ namespace Synet
             _anchors.resize(param.anchors().size());
             for (size_t i = 0; i < param.anchors().size(); ++i)
                 _anchors[i] = param.anchors()[i];
+            _mask.resize(param.mask().size());
+            for (size_t i = 0; i < param.mask().size(); ++i)
+                _mask[i] = param.mask()[i];
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -57,6 +62,74 @@ namespace Synet
             Shape dstShape = src[0]->Shape();
             dstShape[1] = _num*(_classes + 4 + 1);
             dst[0]->Reshape(dstShape);
+        }
+
+        void GetRegions(const TensorPtrs & src, size_t width, size_t height, Type threshold, bool relative, bool letter, Regions & dst)
+        {
+            SYNET_PERF_FUNC();
+            dst.clear();
+
+            size_t b = 0;
+            size_t w = src[0]->Axis(2);
+            size_t h = src[0]->Axis(3);
+            size_t W = 0;
+            size_t H = 0;
+            if (letter)
+            {
+                if (((float)w / width) < ((float)h / h))
+                {
+                    W = w;
+                    H = (height * w) / width;
+                }
+                else
+                {
+                    W = (width * h) / height;
+                    H = h;
+                }
+            }
+            else
+            {
+                W = w;
+                H = h;
+            }
+            for (size_t y = 0; y < h; ++y)
+            {
+                for (size_t x = 0; x < w; ++x)
+                {
+                    for (size_t n = 0; n < _num; ++n)
+                    {
+                        Type objectness = src[0]->CpuData({ b, n*(_classes + 5) + 4, y, x });
+                        if (objectness > threshold)
+                        {
+                            Region region;
+                            region.x = (x + src[0]->CpuData({ b, n*(_classes + 5) + 0, y, x })) / w;
+                            region.y = (y + src[0]->CpuData({ b, n*(_classes + 5) + 1, y, x })) / h;
+                            region.w = ::exp(src[0]->CpuData({ b, n*(_classes + 5) + 2, y, x }))*_anchors[2*_mask[n] + 0] / w;
+                            region.h = ::exp(src[0]->CpuData({ b, n*(_classes + 5) + 3, y, x }))*_anchors[2*_mask[n] + 1] / h;
+                            for (size_t i = 0; i < _classes; ++i)
+                            {
+                                region.id = i;
+                                region.prob = objectness*src[0]->CpuData({ b, n*(_classes + 5) + 5 + i, y, x });
+                                if (region.prob > threshold)
+                                {
+                                    region.x = (region.x - (netw - W) / 2. / w) / ((float)W / w);
+                                    region.y = (region.y - (neth - H) / 2. / h) / ((float)H / h);
+                                    region.w *= (float)w / W;
+                                    region.h *= (float)h / H;
+                                    if (!relative) 
+                                    {
+                                        region.x *= width;
+                                        region.w *= width;
+                                        region.y *= height;
+                                        region.h *= height;
+                                    }
+                                    dst.push_back(region)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
     protected:
@@ -81,9 +154,11 @@ namespace Synet
         }
 
     private:
-        typedef std::vector<Type> Vector;
+        typedef std::vector<Type> VectorF;
+        typedef std::vector<size_t> VectorI;
 
         size_t _total, _num, _classes;
-        Vector _anchors;
+        VectorF _anchors;
+        VectorI _mask;
     };
 }

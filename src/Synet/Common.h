@@ -159,4 +159,10 @@ namespace Synet
         ::SimdSetFlushToZero(value ? ::SimdTrue : ::SimdFalse);
 #endif
     }
+
+    template <class T> struct Region
+    {
+        T x, y, w, h, prob;
+        size_t id;
+    };
 }
