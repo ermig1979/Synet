@@ -64,7 +64,7 @@ namespace Synet
             dst[0]->Reshape(dstShape);
         }
 
-        void GetRegions(const TensorPtrs & src, size_t width, size_t height, Type threshold, bool relative, bool letter, Regions & dst)
+        void GetRegions(const TensorPtrs & src, size_t width, size_t height, Type threshold, bool relative, bool letter, Regions & dst) const
         {
             SYNET_PERF_FUNC();
             dst.clear();
@@ -98,22 +98,22 @@ namespace Synet
                 {
                     for (size_t n = 0; n < _num; ++n)
                     {
-                        Type objectness = src[0]->CpuData({ b, n*(_classes + 5) + 4, y, x });
+                        Type objectness = src[0]->CpuData({ b, n*(_classes + 5) + 4, y, x })[0];
                         if (objectness > threshold)
                         {
                             Region region;
-                            region.x = (x + src[0]->CpuData({ b, n*(_classes + 5) + 0, y, x })) / w;
-                            region.y = (y + src[0]->CpuData({ b, n*(_classes + 5) + 1, y, x })) / h;
-                            region.w = ::exp(src[0]->CpuData({ b, n*(_classes + 5) + 2, y, x }))*_anchors[2*_mask[n] + 0] / w;
-                            region.h = ::exp(src[0]->CpuData({ b, n*(_classes + 5) + 3, y, x }))*_anchors[2*_mask[n] + 1] / h;
+                            region.x = (x + src[0]->CpuData({ b, n*(_classes + 5) + 0, y, x })[0]) / w;
+                            region.y = (y + src[0]->CpuData({ b, n*(_classes + 5) + 1, y, x })[0]) / h;
+                            region.w = ::exp(src[0]->CpuData({ b, n*(_classes + 5) + 2, y, x })[0])*_anchors[2*_mask[n] + 0] / w;
+                            region.h = ::exp(src[0]->CpuData({ b, n*(_classes + 5) + 3, y, x })[0])*_anchors[2*_mask[n] + 1] / h;
                             for (size_t i = 0; i < _classes; ++i)
                             {
                                 region.id = i;
-                                region.prob = objectness*src[0]->CpuData({ b, n*(_classes + 5) + 5 + i, y, x });
+                                region.prob = objectness*src[0]->CpuData({ b, n*(_classes + 5) + 5 + i, y, x })[0];
                                 if (region.prob > threshold)
                                 {
-                                    region.x = (region.x - (netw - W) / 2. / w) / ((float)W / w);
-                                    region.y = (region.y - (neth - H) / 2. / h) / ((float)H / h);
+                                    region.x = (region.x - (w - W) / 2.0f / w) / ((float)W / w);
+                                    region.y = (region.y - (h - H) / 2.0f / h) / ((float)H / h);
                                     region.w *= (float)w / W;
                                     region.h *= (float)h / H;
                                     if (!relative) 
@@ -123,7 +123,7 @@ namespace Synet
                                         region.y *= height;
                                         region.h *= height;
                                     }
-                                    dst.push_back(region)
+                                    dst.push_back(region);
                                 }
                             }
                         }
