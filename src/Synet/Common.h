@@ -48,6 +48,8 @@
 #pragma warning (disable: 4996)
 #include <io.h>
 #pragma warning (pop)
+#else
+#include <unistd.h>
 #endif
 
 #include <vector>
