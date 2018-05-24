@@ -102,7 +102,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            const Shape & shape = src[0]->Shape();
+            const Shape & shape = dst[0]->Shape();
             Detail::ReorgLayerForwardCpu(src[0]->CpuData(), shape[0], shape[1], shape[2], shape[3], _stride, _reverse, dst[0]->CpuData());
         }
 

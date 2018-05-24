@@ -84,11 +84,10 @@ namespace Synet
             dst[0]->Reshape(src[0]->Shape());
         }
 
-        void GetRegions(const TensorPtrs & src, Type threshold, Type overlap, Regions & dst)
+        void GetRegions(const TensorPtrs & src, Type threshold, Regions & dst)
         {
             SYNET_PERF_FUNC();
             dst.clear();
-
             const Type * pPredict = src[0]->CpuData();
             size_t height = src[0]->Axis(2);
             size_t width = src[0]->Axis(3);
@@ -118,19 +117,7 @@ namespace Synet
                         {
                             r.prob = prob;
                             r.id = id;
-                            bool insert = true;
-                            for (size_t k = 0; k < dst.size() && insert; ++k)
-                            {
-                                if (r.id == dst[k].id && RelativeIntersection(r, dst[k]) >= overlap)
-                                {
-                                    if (r.prob > dst[k].prob)
-                                        dst[k] = r;
-                                    insert = false;
-                                    break;
-                                }
-                            }
-                            if(insert)
-                                dst.push_back(r);
+                            dst.push_back(r);
                         }
                     }
                 }
@@ -181,34 +168,5 @@ namespace Synet
         size_t _coords, _classes, _num, _classfix;
         bool _softmax;
         Vector _anchors;
-
-        SYNET_INLINE Type Overlap(Type x1, Type w1, Type x2, Type w2)
-        {
-            Type l1 = x1 - w1 / 2;
-            Type l2 = x2 - w2 / 2;
-            Type left = l1 > l2 ? l1 : l2;
-            Type r1 = x1 + w1 / 2;
-            Type r2 = x2 + w2 / 2;
-            Type right = r1 < r2 ? r1 : r2;
-            return right - left;
-        }
-
-        SYNET_INLINE Type Intersection(const Region & a, const Region & b)
-        {
-            Type w = Overlap(a.x, a.w, b.x, b.w);
-            Type h = Overlap(a.y, a.h, b.y, b.h);
-            return (w < 0 || h < 0) ? 0 : w*h;
-        }
-
-        SYNET_INLINE Type Union(const Region & a, const Region & b)
-        {
-            Type i = Intersection(a, b);
-            return a.w*a.h + b.w*b.h - i;
-        }
-
-        SYNET_INLINE Type RelativeIntersection(const Region & a, const Region & b)
-        {
-            return Intersection(a, b) / Union(a, b);
-        }
     };
 }

@@ -70,6 +70,8 @@ namespace Synet
         typedef Synet::Layer<T> Layer;
         typedef Layer * LayerPtr;
         typedef std::vector<LayerPtr> LayerPtrs;
+        typedef Synet::Region<T> Region;
+        typedef std::vector<Region> Regions;
 
         Network()
             : _empty(true)
@@ -167,6 +169,46 @@ namespace Synet
             }
         }
 #endif
+
+        Regions GetRegions(size_t imageW, size_t imageH, Type threshold, Type overlap) const
+        {
+            size_t netW = _src[0]->Axis(-1);
+            size_t netH = _src[0]->Axis(-2);
+            Regions regions;
+            for (size_t i = 0; i < _dst.size(); ++i)
+            {
+                TensorPtrs dst(1, _dst[i]);
+                const Layer * layer = _back[i];
+                Regions candidats;
+                if (layer->Param().type() == Synet::LayerTypeYolo)
+                    ((YoloLayer<float>*)layer)->GetRegions(dst, netW, netH, threshold, candidats);
+                if (layer->Param().type() == Synet::LayerTypeRegion)
+                    ((RegionLayer<float>*)layer)->GetRegions(dst, threshold, candidats);
+                for (size_t j = 0; j < candidats.size(); ++j)
+                {
+                    Region & c = candidats[j];
+                    c.x *= imageW;
+                    c.w *= imageW;
+                    c.y *= imageH;
+                    c.h *= imageH;
+                    bool insert = true;
+                    for (size_t k = 0; k < regions.size(); ++k)
+                    {
+                        Region & r = regions[k];
+                        if (c.id == r.id && RelativeIntersection(c, r) >= overlap)
+                        {
+                            if (c.prob > r.prob)
+                               r = c;
+                            insert = false;
+                            break;
+                        }
+                    }
+                    if (insert)
+                        regions.push_back(c);
+                }
+            }
+            return regions;
+        }
 
     private:
         typedef std::shared_ptr<Layer> LayerSharedPtr;
@@ -327,6 +369,35 @@ namespace Synet
             default:
                 return NULL;
             }
+        }
+
+        static SYNET_INLINE Type Overlap(Type x1, Type w1, Type x2, Type w2)
+        {
+            Type l1 = x1 - w1 / 2;
+            Type l2 = x2 - w2 / 2;
+            Type left = l1 > l2 ? l1 : l2;
+            Type r1 = x1 + w1 / 2;
+            Type r2 = x2 + w2 / 2;
+            Type right = r1 < r2 ? r1 : r2;
+            return right - left;
+        }
+
+        static SYNET_INLINE Type Intersection(const Region & a, const Region & b)
+        {
+            Type w = Overlap(a.x, a.w, b.x, b.w);
+            Type h = Overlap(a.y, a.h, b.y, b.h);
+            return (w < 0 || h < 0) ? 0 : w*h;
+        }
+
+        static SYNET_INLINE Type Union(const Region & a, const Region & b)
+        {
+            Type i = Intersection(a, b);
+            return a.w*a.h + b.w*b.h - i;
+        }
+
+        static SYNET_INLINE Type RelativeIntersection(const Region & a, const Region & b)
+        {
+            return Intersection(a, b) / Union(a, b);
         }
         
         friend class TensorflowToSynet;

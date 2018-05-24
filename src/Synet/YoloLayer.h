@@ -64,34 +64,13 @@ namespace Synet
             dst[0]->Reshape(dstShape);
         }
 
-        void GetRegions(const TensorPtrs & src, size_t imageW, size_t imageH, size_t netW, size_t netH, Type threshold, bool relative, bool letter, Regions & dst) const
+        void GetRegions(const TensorPtrs & src, size_t netW, size_t netH, Type threshold, Regions & dst) const
         {
             SYNET_PERF_FUNC();
             dst.clear();
-
             size_t b = 0;
             size_t layerW = src[0]->Axis(2);
             size_t layerH = src[0]->Axis(3);
-            size_t newW = 0;
-            size_t newH = 0;
-            if (letter)
-            {
-                if (((float)netW / imageW) < ((float)netH / imageH))
-                {
-                    newW = netW;
-                    newH = (imageH * netW) / imageW;
-                }
-                else
-                {
-                    newW = (imageW * netH) / imageH;
-                    newH = netH;
-                }
-            }
-            else
-            {
-                newW = netW;
-                newH = netH;
-            }
             for (size_t y = 0; y < layerH; ++y)
             {
                 for (size_t x = 0; x < layerW; ++x)
@@ -111,20 +90,7 @@ namespace Synet
                                 region.id = i;
                                 region.prob = objectness*src[0]->CpuData({ b, n*(_classes + 5) + 5 + i, y, x })[0];
                                 if (region.prob > threshold)
-                                {
-                                    region.x = (region.x - (netW - newW) / 2.0f / netW) / ((float)newW / netW);
-                                    region.y = (region.y - (netH - newH) / 2.0f / netH) / ((float)newH / netH);
-                                    region.w *= (float)netW / newW;
-                                    region.h *= (float)netH / newH;
-                                    if (!relative) 
-                                    {
-                                        region.x *= imageW;
-                                        region.w *= imageW;
-                                        region.y *= imageH;
-                                        region.h *= imageH;
-                                    }
                                     dst.push_back(region);
-                                }
                             }
                         }
                     }
