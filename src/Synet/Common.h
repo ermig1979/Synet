@@ -66,6 +66,7 @@
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) || defined(SYNET_SIMD_LIBRARY_GEMM_ENABLE)
 #include "Simd/SimdLib.h"
+#include "Simd/SimdLib.hpp"
 #endif 
 
 #ifdef SYNET_OPEN_BLAS_ENABLE
