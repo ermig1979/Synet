@@ -283,6 +283,7 @@ namespace Synet
                     else
                     {
                         TensorSharedPtr tensor(new Tensor());
+                        tensor->SetName(name);
                         index[name] = _tensors.size();
                         _tensors.push_back(tensor);
                         stage.dst.push_back(tensor.get());

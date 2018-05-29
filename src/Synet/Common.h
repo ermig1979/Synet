@@ -48,6 +48,8 @@
 #pragma warning (disable: 4996)
 #include <io.h>
 #pragma warning (pop)
+#else
+#include <unistd.h>
 #endif
 
 #include <vector>
@@ -64,7 +66,8 @@
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) || defined(SYNET_SIMD_LIBRARY_GEMM_ENABLE)
 #include "Simd/SimdLib.h"
-#endif 
+#include "Simd/SimdLib.hpp"
+#endif
 
 #ifdef SYNET_OPEN_BLAS_ENABLE
 extern "C" 

@@ -40,7 +40,7 @@
 #endif
 
 #define SYNET_TENSORFLOW_DEBUG
-//#define SYNET_TENSORFLOW_DYNAMIC
+#define SYNET_TENSORFLOW_DYNAMIC
 
 namespace Synet
 {
@@ -227,11 +227,11 @@ namespace Synet
                         {
                             dst.Reshape({ (size_t)src.int_val_size() });
                             for (int j = 0; j < src.int_val_size(); j++)
-                                dst.Data()[j] = src.int_val(j);
+                                dst.CpuData()[j] = src.int_val(j);
                         }
                         else
                             ConvertKernel<int, int>(src, dst);
-                        layer.meta().alpha().assign(dst.Data(), dst.Data() + dst.Size());
+                        layer.meta().alpha().assign(dst.CpuData(), dst.CpuData() + dst.Size());
                     }
                     else if (type == "Pack")
                     {

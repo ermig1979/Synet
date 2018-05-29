@@ -39,16 +39,18 @@ namespace Synet
         {
         }
 
-        SYNET_INLINE Tensor(const Synet::Shape & shape, const Type & value = Type())
+        SYNET_INLINE Tensor(const Synet::Shape & shape, const Type & value = Type(), const String & name = String())
             : _shape(shape)
             , _cpuData(std::make_shared<Vector>())
+            , _name(name)
         {
             Resize(value);
         }
 
-        SYNET_INLINE Tensor(std::initializer_list<size_t> shape, const Type & value = Type())
+        SYNET_INLINE Tensor(std::initializer_list<size_t> shape, const Type & value = Type(), const String & name = String())
             : _shape(shape.begin(), shape.end())
             , _cpuData(std::make_shared<Vector>())
+            , _name(name)
         {
             Resize(value);
         }
@@ -57,14 +59,16 @@ namespace Synet
         {
         }
 
-        SYNET_INLINE void Reshape(const Synet::Shape & shape, const Type & value = Type())
+        SYNET_INLINE void Reshape(const Synet::Shape & shape, const Type & value = Type(), const String & name = String())
         {
+            _name = name;
             _shape = shape;
             Resize(value);
         }
 
-        SYNET_INLINE void Reshape(std::initializer_list<size_t> shape, const Type & value = Type())
+        SYNET_INLINE void Reshape(std::initializer_list<size_t> shape, const Type & value = Type(), const String & name = String())
         {
+            _name = name;
             _shape.assign(shape.begin(), shape.end());
             Resize(value);
         }
@@ -79,6 +83,16 @@ namespace Synet
         {
             _shape.assign(shape.begin(), shape.end());
             Extend();
+        }
+
+        SYNET_INLINE const String & Name() const
+        {
+            return _name;
+        }
+
+        SYNET_INLINE void SetName(const String & name)
+        {
+            _name = name;
         }
 
         SYNET_INLINE const Synet::Shape & Shape() const
@@ -189,6 +203,7 @@ namespace Synet
         SYNET_INLINE void Share(const Tensor & tensor)
         {
             _shape = tensor._shape;
+            _name = tensor._name;
             _size = tensor._size;
             _cpuData = tensor._cpuData;
             SetDebugPtr();
@@ -315,6 +330,7 @@ namespace Synet
 #endif
         typedef std::shared_ptr<Vector> VectorPtr;
 
+        Synet::String _name;
         Synet::Shape _shape;
         size_t _size;
         VectorPtr _cpuData;

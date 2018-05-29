@@ -76,6 +76,8 @@ namespace Synet
                 Shape shape = src[0]->Shape();
                 if (shape.size() == 4)
                     shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
+                if (shape.size() == 2)
+                    shape = Shape({ shape[1], shape[0] });
                 dst[0]->SetShape(shape);
                 break;
             }
