@@ -132,10 +132,78 @@ namespace Synet
             return _back;
         }
 
-        void Reshape()
+        bool Reshape(const Strings & srcNames, const Shapes & srcShapes, const Strings & dstNames)
         {
+            if (srcNames.size() != srcShapes.size())
+                return false;
+
+            _src.clear();
+            for (size_t i = 0; i < srcNames.size(); ++i)
+            {
+                bool found = false;
+                for (size_t j = 0; j < _input.size(); ++j)
+                {
+                    const LayerParam & param = _input[j].layer->Param();
+                    if (param.name() == srcNames[i])
+                    {
+                        if (param.type() == LayerTypeInput)
+                        {
+                            _input[j].dst[0]->Reshape(srcShapes[i]);
+                            _src.push_back(_input[j].dst[0]);
+                        }
+                        else if (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput)
+                        {
+                            _input[j].dst[0]->SetShape(srcShapes[j]);
+                        }
+                        else
+                            assert(0);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                    return false;
+            }
+
             for (size_t i = 0; i < _stages.size(); ++i)
+            {
+                _stages[i].layer->Setup(_stages[i].src, _stages[i].buf, _stages[i].dst);
                 _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst);
+            }
+
+            _dst.clear();
+            for (size_t i = 0; i < dstNames.size(); ++i)
+            {
+                bool found = false;
+                for (size_t j = 0; j < _stages.size(); ++j)
+                {
+                    const LayerParam & param = _stages[j].layer->Param();
+                    if (param.name() == dstNames[i])
+                    {
+                        _dst.push_back(_stages[j].dst[0]);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                    return false;
+            }
+
+            return true;
+        }
+
+        bool GetMetaConst(const String & name, Shape & value) const
+        {
+            for (size_t i = 0; i < _param().layers().size(); ++i)
+            {
+                const LayerParam & layer = _param().layers()[i];
+                if (layer.name() == name && layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeConst)
+                {
+                    value = layer.meta().alpha();
+                    return true;
+                }
+            }
+            return false;
         }
 
         void Forward()
@@ -235,12 +303,14 @@ namespace Synet
         LayerSharedPtrs _layers;
         TensorSharedPtrs _tensors;
 
-        Stages _stages;
+        Stages _input, _stages;
         TensorPtrs _src, _dst;
         LayerPtrs _back;
 
         bool Init()
         {
+            bool dynamic = Dynamic();
+
             const size_t bufs = 1;
             TensorPtrs buf;
             for (size_t i = 0; i < bufs; ++i)
@@ -289,13 +359,21 @@ namespace Synet
                         stage.dst.push_back(tensor.get());
                     }
                     available.insert(name);
-                    if (param.type() == LayerTypeInput)
+                    if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput))
+                    {
                         _src.push_back(_tensors.back().get());
+                    }
                 }
                 stage.buf = buf;
-                stage.layer->Setup(stage.src, stage.buf, stage.dst);
-                stage.layer->Reshape(stage.src, stage.buf, stage.dst);
-                _stages.push_back(stage);
+                if (!dynamic)
+                {
+                    stage.layer->Setup(stage.src, stage.buf, stage.dst);
+                    stage.layer->Reshape(stage.src, stage.buf, stage.dst);
+                }
+                if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput))
+                    _input.push_back(stage);
+                else
+                    _stages.push_back(stage);
             }
             for (NameSet::const_iterator it = available.begin(); it != available.end(); ++it)
             {
@@ -312,7 +390,7 @@ namespace Synet
                     }
                 }
             }
-            _empty = false;
+            _empty = dynamic;
             return true;
         }
 
@@ -323,6 +401,16 @@ namespace Synet
             for (size_t i = 0; i < _param().dst().size(); ++i)
             {
                 if (_param().dst()[i] == name)
+                    return true;
+            }
+            return false;
+        }
+
+        bool Dynamic()
+        {
+            for (size_t i = 0; i < _param().layers().size(); ++i)
+            {
+                if (_param().layers()[i].type() == LayerTypeMeta && _param().layers()[i].meta().type() == MetaTypeInput)
                     return true;
             }
             return false;

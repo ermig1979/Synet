@@ -72,6 +72,25 @@ namespace Synet
                     shape = Shape({ shape[1], shape[0] });
                 if (shape.size() == 4)
                     shape = Shape({ shape[0], shape[3], shape[1], shape[2] });
+                size_t unknown = 0;
+                for (size_t i = 0; i < shape.size(); ++i)
+                {
+                    if (shape[i] == -1)
+                        unknown++;
+                }
+                assert(unknown <= 1);
+                if (unknown)
+                {
+                    size_t known = 1, index = shape.size();
+                    for (size_t i = 0; i < shape.size(); ++i)
+                    {
+                        if (shape[i] != -1)
+                            known *= shape[i];
+                        else
+                            index = i;
+                    }
+                    shape[index] = src[0]->Size()/known;
+                }
                 dst[0]->ShareAs(*src[0], shape);
             }
             else
