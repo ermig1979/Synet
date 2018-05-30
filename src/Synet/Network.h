@@ -410,7 +410,10 @@ namespace Synet
         {
             for (size_t i = 0; i < _param().layers().size(); ++i)
             {
-                if (_param().layers()[i].type() == LayerTypeMeta && _param().layers()[i].meta().type() == MetaTypeInput)
+                const LayerParam & layer = _param().layers()[i];
+                if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeInput)
+                    return true;
+                if (layer.type() == LayerTypeInput && layer.input().shape().empty())
                     return true;
             }
             return false;

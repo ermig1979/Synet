@@ -689,7 +689,7 @@ namespace Synet
         {
             layer.type() = LayerTypeInput;
             layer.dst().push_back(layer.name());
-            bool found = false;
+            bool found = param.input().empty();
             for (size_t j = 0; j < param.input().size(); ++j)
             {
                 if (param.input()[j].name() == layer.name())
