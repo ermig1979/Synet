@@ -50,6 +50,25 @@ namespace Synet
             return false;
         }
 
+        virtual void Clone(const Param & other)
+        {
+            switch (_mode)
+            {
+            case Value:
+                this->Clone(other);
+                break;
+            case Struct:
+                for (Unknown * tc = this->StructBegin(), *oc = other.StructBegin(); tc < this->StructEnd(); tc = this->StructNext(tc), oc = this->StructNext(oc))
+                    tc->Clone(*oc);
+                break;
+            case Vector:
+                this->Resize(other.VectorEnd() - other.VectorBegin());
+                for (Unknown * tc = this->VectorBegin(), *oc = other.VectorBegin(); tc < this->VectorEnd(); tc = this->VectorNext(tc), oc = this->VectorNext(oc))
+                    tc->Clone(*oc);
+                break;
+            }
+        }
+
         bool Save(std::ostream & os, bool full) const
         {
             Xml::XmlDocument<char> doc;
@@ -268,6 +287,7 @@ virtual type Default() const { return value; } \
 virtual Synet::String ToString() const { using namespace Synet; return ValueToString((*this)()); } \
 virtual void ToValue(const Synet::String & string) { using namespace Synet; StringToValue(string, this->_value); } \
 virtual bool Changed() const { return this->Default() != this->_value; } \
+virtual void Clone(const Param_##name & other) { this->_value = other._value; } \
 } name;
 
 #define SYNET_PARAM_STRUCT(type, name) \

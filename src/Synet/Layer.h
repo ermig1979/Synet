@@ -90,7 +90,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
 
     private:
-        LayerParam _param;
+        const LayerParam & _param;
         Tensors _weight;
     };
 }
