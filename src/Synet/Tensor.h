@@ -223,6 +223,15 @@ namespace Synet
             _shape = shape;
         }
 
+        SYNET_INLINE void Clone(const Tensor & tensor)
+        {
+            _shape = tensor._shape;
+            _name = tensor._name;
+            _size = tensor._size;
+            _cpuData(std::make_shared<Vector>(tensor._cpuData->begin(), tensor._cpuData->end()));
+            SetDebugPtr();
+        }
+
 #ifdef SYNET_DEBUG_PRINT_ENABLE
         void DebugPrint(std::ostream & os, const String & name, size_t first = 5, size_t last = 2) const
         {
