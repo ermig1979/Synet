@@ -583,6 +583,14 @@ namespace Synet
                     layer.fill().value() = tensor.float_val(0);
                     layer.dst() = layer.src();
                 }
+                else if (type == "Pad")
+                {
+                    assert(node.input_size() == 2);
+                    layer.type() = LayerTypePad;
+                    layer.src().push_back(node.input(0));
+                    layer.src().push_back(node.input(1));
+                    layer.dst().push_back(layer.name());
+                }
                 else
                 {
                     SetNotImplemented(layer, node);
@@ -689,34 +697,18 @@ namespace Synet
         {
             layer.type() = LayerTypeInput;
             layer.dst().push_back(layer.name());
-            bool found = param.input().empty();
-            for (size_t j = 0; j < param.input().size(); ++j)
+            if (node.attr().find("shape") != node.attr().end())
             {
-                if (param.input()[j].name() == layer.name())
-                {
-                    const ShapeParam & shape = param.input()[j];
-                    layer.input().shape().resize(1);
-                    for (size_t k = 0; k < shape.shape().size(); ++k)
-                    {
-                        ptrdiff_t size = shape.shape()[k].size();
-                        const String & name = shape.shape()[k].name();
-                        if (size > 0)
-                        {
-                            layer.input().shape()[0].dim().push_back(size);
-                        }
-                        else if (name.size() > 0 && _valueId.find(name) != _valueId.end())
-                        {
-                            int nodeIdx = _valueId.at(name);
-                            const tensorflow::TensorProto & tensor = _graph.node(nodeIdx).attr().at("value").tensor();
-                            layer.input().shape()[0].dim().push_back(tensor.int_val(0));
-                        }
-                        else
-                            return false;
-                    }
-                    found = true;
-                }
+                const tensorflow::TensorShapeProto & src = node.attr().find("shape")->second.shape();
+                layer.input().shape().resize(1);
+                Shape & dst = layer.input().shape()[0].dim();
+                dst.resize(src.dim_size());
+                for (int d = 0; d < src.dim_size(); d++)
+                    dst[d] = src.dim(d).size();
+                if (dst.size() == 4)
+                    dst = Shape({ size_t(1), dst[3], dst[1], dst[2] });
             }
-            return found;
+            return true;
         }
 
         bool ConvertPoolingLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer)
@@ -926,7 +918,7 @@ namespace Synet
             const String & content = src.tensor_content();
             const TS * pSrc = (TS*)content.c_str();
             size_t size = content.size() / sizeof(TS);
-            assert(size = dst.Size());
+            assert(size == dst.Size());
 
             if (shape.size() == 4)
             {
@@ -1205,6 +1197,16 @@ namespace Synet
                 size_t size = tensor.tensor_content().size() / sizeof(int);
                 for (size_t i = 0; i < std::min(size_t(10), size); i++)
                     std::cout << " " << data[i];
+                if (size > size_t(10))
+                    std::cout << " ... " << size - 10 << " more";
+                break;
+            }
+            case tensorflow::DT_BOOL:
+            {
+                const bool * data = reinterpret_cast<const bool*>(tensor.tensor_content().c_str());
+                size_t size = tensor.tensor_content().size() / sizeof(bool);
+                for (size_t i = 0; i < std::min(size_t(10), size); i++)
+                    std::cout << " " << (int)data[i];
                 if (size > size_t(10))
                     std::cout << " ... " << size - 10 << " more";
                 break;

@@ -41,6 +41,7 @@
 #include "Synet/LrnLayer.h"
 #include "Synet/MetaLayer.h"
 #include "Synet/NormalizeLayer.h"
+#include "Synet/PadLayer.h"
 #include "Synet/PermuteLayer.h"
 #include "Synet/PoolingLayer.h"
 #include "Synet/PriorBoxLayer.h"
@@ -132,37 +133,48 @@ namespace Synet
             return _back;
         }
 
-        bool Reshape(const Strings & srcNames, const Shapes & srcShapes, const Strings & dstNames)
+        bool Reshape(const Strings & srcNames = Strings(), const Shapes & srcShapes = Shapes(), const Strings & dstNames = Strings())
         {
             if (srcNames.size() != srcShapes.size())
                 return false;
 
-            _src.clear();
-            for (size_t i = 0; i < srcNames.size(); ++i)
+            if (srcNames.size())
             {
-                bool found = false;
-                for (size_t j = 0; j < _input.size(); ++j)
+                _src.clear();
+                for (size_t i = 0; i < srcNames.size(); ++i)
                 {
-                    const LayerParam & param = _input[j].layer->Param();
-                    if (param.name() == srcNames[i])
+                    bool found = false;
+                    for (size_t j = 0; j < _input.size(); ++j)
                     {
-                        if (param.type() == LayerTypeInput)
+                        const LayerParam & param = _input[j].layer->Param();
+                        if (param.name() == srcNames[i])
                         {
-                            _input[j].dst[0]->Reshape(srcShapes[i]);
-                            _src.push_back(_input[j].dst[0]);
+                            if (param.type() == LayerTypeInput)
+                            {
+                                _input[j].dst[0]->Reshape(srcShapes[i]);
+                                _src.push_back(_input[j].dst[0]);
+                            }
+                            else if (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput)
+                            {
+                                _input[j].dst[0]->SetShape(srcShapes[j]);
+                            }
+                            else
+                                assert(0);
+                            found = true;
+                            break;
                         }
-                        else if (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput)
-                        {
-                            _input[j].dst[0]->SetShape(srcShapes[j]);
-                        }
-                        else
-                            assert(0);
-                        found = true;
-                        break;
                     }
+                    if (!found)
+                        return false;
+                }            
+            }
+            else
+            {
+                for (size_t i = 0; i < _input.size(); ++i)
+                {
+                    _input[i].layer->Setup(_input[i].src, _input[i].buf, _input[i].dst);
+                    _input[i].layer->Reshape(_input[i].src, _input[i].buf, _input[i].dst);
                 }
-                if (!found)
-                    return false;
             }
 
             for (size_t i = 0; i < _stages.size(); ++i)
@@ -171,22 +183,25 @@ namespace Synet
                 _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst);
             }
 
-            _dst.clear();
-            for (size_t i = 0; i < dstNames.size(); ++i)
+            if (dstNames.size())
             {
-                bool found = false;
-                for (size_t j = 0; j < _stages.size(); ++j)
+                _dst.clear();
+                for (size_t i = 0; i < dstNames.size(); ++i)
                 {
-                    const LayerParam & param = _stages[j].layer->Param();
-                    if (param.name() == dstNames[i])
+                    bool found = false;
+                    for (size_t j = 0; j < _stages.size(); ++j)
                     {
-                        _dst.push_back(_stages[j].dst[0]);
-                        found = true;
-                        break;
+                        const LayerParam & param = _stages[j].layer->Param();
+                        if (param.name() == dstNames[i])
+                        {
+                            _dst.push_back(_stages[j].dst[0]);
+                            found = true;
+                            break;
+                        }
                     }
+                    if (!found)
+                        return false;
                 }
-                if (!found)
-                    return false;
             }
 
             return true;
@@ -309,8 +324,6 @@ namespace Synet
 
         bool Init()
         {
-            bool dynamic = Dynamic();
-
             const size_t bufs = 1;
             TensorPtrs buf;
             for (size_t i = 0; i < bufs; ++i)
@@ -365,11 +378,6 @@ namespace Synet
                     }
                 }
                 stage.buf = buf;
-                if (!dynamic)
-                {
-                    stage.layer->Setup(stage.src, stage.buf, stage.dst);
-                    stage.layer->Reshape(stage.src, stage.buf, stage.dst);
-                }
                 if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput))
                     _input.push_back(stage);
                 else
@@ -390,7 +398,9 @@ namespace Synet
                     }
                 }
             }
-            _empty = dynamic;
+            if (!Dynamic())
+                Reshape();
+            _empty = false;
             return true;
         }
 
@@ -441,6 +451,7 @@ namespace Synet
             case LayerTypeLrn: return new LrnLayer<T>(param);
             case LayerTypeMeta: return new MetaLayer<T>(param);
             case LayerTypeNormalize: return new NormalizeLayer<T>(param);
+            case LayerTypePad: return new PadLayer<T>(param);
             case LayerTypePermute: return new PermuteLayer<T>(param);
             case LayerTypePooling: return new PoolingLayer<T>(param);
             case LayerTypePriorBox: return new PriorBoxLayer<T>(param);
