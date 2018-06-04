@@ -248,6 +248,7 @@ namespace Synet
         MetaTypePack,
         MetaTypeShape,
         MetaTypeSlice,
+        MetaTypeStridedSlice,
         MetaTypeSub,
         MetaTypeSize,
     };
@@ -261,6 +262,7 @@ namespace Synet
             "Pack",
             "Shape",
             "Slice",
+            "StridedSlice",
             "Sub",
         };
         return (value > MetaTypeUnknown && value < MetaTypeSize) ? names[value] : "";

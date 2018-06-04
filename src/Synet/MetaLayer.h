@@ -90,6 +90,15 @@ namespace Synet
                 dst[0]->SetShape(dstShape);
                 break;
             }
+            case MetaTypeStridedSlice:
+            {
+                assert(src.size() == 4);
+                Shape dstShape;
+                for (size_t i = src[1]->Axis(0); i < src[2]->Axis(0); i += src[3]->Axis(0))
+                    dstShape.push_back(src[0]->Shape()[i]);
+                dst[0]->SetShape(dstShape);
+                break;
+            }
             case MetaTypeSub:
             {
                 assert(src.size() == 2 && src[0]->Count() == src[1]->Count());
