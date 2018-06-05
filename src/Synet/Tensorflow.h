@@ -181,6 +181,12 @@ namespace Synet
                     layer.src().push_back(node.input(0));
                     layer.dst().push_back(layer.name());
                 }
+                else if (type == "Rsqrt")
+                {
+                    layer.type() = LayerTypeRsqrt;
+                    layer.src().push_back(node.input(0));
+                    layer.dst().push_back(layer.name());
+                }
                 else if (type == "MaxPool")
                 {
                     if (!ConvertPoolingLayer(node, layer))
