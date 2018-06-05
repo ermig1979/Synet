@@ -71,6 +71,19 @@ namespace Synet
                 dst[0]->SetShape(dstShape);
                 break;
             }
+            case MetaTypeRange:
+            {
+                assert(src.size() == 3);
+                Shape dstShape;
+                if(src[1]->Axis(2) > 0)
+                    for (size_t i = src[0]->Axis(0); i < src[1]->Axis(0); i += src[2]->Axis(0))
+                        dstShape.push_back(i);
+                else
+                    for (size_t i = src[0]->Axis(0); i > src[1]->Axis(0); i += src[2]->Axis(0))
+                        dstShape.push_back(i);
+                dst[0]->SetShape(dstShape);
+                break;
+            }
             case MetaTypeShape:
             {
                 Shape shape = src[0]->Shape();
@@ -99,6 +112,11 @@ namespace Synet
                 dst[0]->SetShape(dstShape);
                 break;
             }
+            case MetaTypeStub:
+            {
+                dst[0]->SetShape({});
+                break;
+            }            
             case MetaTypeSub:
             {
                 assert(src.size() == 2 && src[0]->Count() == src[1]->Count());
@@ -108,6 +126,7 @@ namespace Synet
                 dst[0]->SetShape(dstShape);
                 break;
             }
+
             default:
                 assert(0);
             }

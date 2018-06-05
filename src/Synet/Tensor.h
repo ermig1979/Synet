@@ -262,7 +262,7 @@ namespace Synet
                 }
             }
             DebugPrint(os, firsts, lasts, separators, index, 0);
-            if (n == 1)
+            if (n == 1 || n == 0)
                 os << "\n";
         }
 #endif

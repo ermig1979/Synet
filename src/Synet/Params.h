@@ -69,6 +69,7 @@ namespace Synet
         LayerTypeRelu,
         LayerTypeReorg,
         LayerTypeReshape,
+        LayerTypeRestrictRange,
         LayerTypeScale,
         LayerTypeShortcut,
         LayerTypeSigmoid,
@@ -112,6 +113,7 @@ namespace Synet
             "ReLU",
             "Reorg",
             "Reshape",
+            "RestrictRange",
             "Scale",
             "Shortcut",
             "Sigmoid",
@@ -246,9 +248,11 @@ namespace Synet
         MetaTypeConst,
         MetaTypeInput,
         MetaTypePack,
+        MetaTypeRange,
         MetaTypeShape,
         MetaTypeSlice,
         MetaTypeStridedSlice,
+        MetaTypeStub,
         MetaTypeSub,
         MetaTypeSize,
     };
@@ -260,9 +264,11 @@ namespace Synet
             "Const",
             "Input",
             "Pack",
+            "Range",
             "Shape",
             "Slice",
             "StridedSlice",
+            "Stub",
             "Sub",
         };
         return (value > MetaTypeUnknown && value < MetaTypeSize) ? names[value] : "";
@@ -462,6 +468,12 @@ namespace Synet
         SYNET_PARAM_VALUE(int32_t, numAxes, -1);
     };
 
+    struct RestrictRangeParam
+    {
+        SYNET_PARAM_VALUE(float, lower, -FLT_MAX);
+        SYNET_PARAM_VALUE(float, upper, +FLT_MAX);
+    };
+
     struct ScaleParam
     {
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
@@ -530,6 +542,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(ReluParam, relu);
         SYNET_PARAM_STRUCT(ReorgParam, reorg);
         SYNET_PARAM_STRUCT(ReshapeParam, reshape);
+        SYNET_PARAM_STRUCT(RestrictRangeParam, restrictRange);
         SYNET_PARAM_STRUCT(ScaleParam, scale);
         SYNET_PARAM_STRUCT(SliceParam, slice);
         SYNET_PARAM_STRUCT(SoftmaxParam, softmax);

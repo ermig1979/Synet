@@ -172,8 +172,14 @@ namespace Synet
                     layer.type() = LayerTypeRelu;
                     layer.src().push_back(node.input(0));
                     layer.dst().push_back(layer.name());
-                    //layer.dst() = layer.src();
-                    //RenameInput(layer.name(), layer.src()[0]);
+                }
+                else if (type == "Relu6")
+                {
+                    layer.type() = LayerTypeRestrictRange;
+                    layer.restrictRange().lower() = 0;
+                    layer.restrictRange().upper() = 6;
+                    layer.src().push_back(node.input(0));
+                    layer.dst().push_back(layer.name());
                 }
                 else if (type == "MaxPool")
                 {
@@ -185,16 +191,12 @@ namespace Synet
                     layer.type() = LayerTypeSigmoid;
                     layer.src().push_back(node.input(0));
                     layer.dst().push_back(layer.name());
-                    //layer.dst() = layer.src();
-                    //RenameInput(layer.name(), layer.src()[0]);
                 }
                 else if (type == "Tanh")
                 {
                     layer.type() = LayerTypeTanh;
                     layer.src().push_back(node.input(0));
                     layer.dst().push_back(layer.name());
-                    //layer.dst() = layer.src();
-                    //RenameInput(layer.name(), layer.src()[0]);
                 }
                 else if (type == "Softmax")
                 {
@@ -202,8 +204,6 @@ namespace Synet
                     layer.softmax().axis() = 0;
                     layer.src().push_back(node.input(0));
                     layer.dst().push_back(layer.name());
-                    //layer.dst() = layer.src();
-                    //RenameInput(layer.name(), layer.src()[0]);
                 }
                 else if (type == "BiasAdd" || type == "Add")
                 {
@@ -559,6 +559,13 @@ namespace Synet
                 for (int j = 0; j < node.input_size(); ++j)
                     layer.src().push_back(node.input(j));
             }
+            else if (type == "Range")
+            {
+                layer.meta().type() = MetaTypeRange;
+                layer.src().push_back(node.input(0));
+                layer.src().push_back(node.input(1));
+                layer.src().push_back(node.input(2));
+            }
             else if (type == "Shape")
             {
                 layer.meta().type() = MetaTypeShape;
@@ -584,6 +591,10 @@ namespace Synet
                 layer.meta().type() = MetaTypeSub;
                 layer.src().push_back(node.input(0));
                 layer.src().push_back(node.input(1));
+            }
+            else if (type == "TensorArrayV3" || type == "Enter")
+            {
+                layer.meta().type() = MetaTypeStub;
             }
             else
             {
@@ -787,7 +798,10 @@ namespace Synet
         {
             for (int j = 0; j < node.input_size(); ++j)
             {
-                if (_meta.find(node.input(j)) == _meta.end())
+                String name = node.input(j);
+                if (name.find(":") != String::npos)
+                    name = name.substr(0, name.find(":"));
+                if (_meta.find(name) == _meta.end())
                     return false;
             }
             return true;
