@@ -70,7 +70,6 @@ namespace Synet
         LayerTypeReorg,
         LayerTypeReshape,
         LayerTypeRestrictRange,
-        LayerTypeRsqrt,
         LayerTypeScale,
         LayerTypeShortcut,
         LayerTypeSigmoid,
@@ -116,7 +115,6 @@ namespace Synet
             "Reorg",
             "Reshape",
             "RestrictRange",
-            "Rsqrt",
             "Scale",
             "Shortcut",
             "Sigmoid",
@@ -290,6 +288,7 @@ namespace Synet
     enum UnaryOperationType
     {
         UnaryOperationTypeUnknown = -1,
+        UnaryOperationTypeRsqrt,
         UnaryOperationTypeSqrt,
         UnaryOperationTypeSize
     };
@@ -298,6 +297,7 @@ namespace Synet
     {
         static const char * names[UnaryOperationTypeSize] =
         {
+            "Rsqrt",
             "Sqrt",
         };
         return (value > UnaryOperationTypeUnknown && value < UnaryOperationTypeSize) ? names[value] : "";

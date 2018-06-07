@@ -50,7 +50,6 @@
 #include "Synet/ReorgLayer.h"
 #include "Synet/ReshapeLayer.h"
 #include "Synet/RestrictRangeLayer.h"
-#include "Synet/RsqrtLayer.h"
 #include "Synet/ScaleLayer.h"
 #include "Synet/ShortcutLayer.h"
 #include "Synet/SigmoidLayer.h"
@@ -463,7 +462,6 @@ namespace Synet
             case LayerTypeReorg: return new ReorgLayer<T>(param);
             case LayerTypeReshape: return new ReshapeLayer<T>(param);
             case LayerTypeRestrictRange: return new RestrictRangeLayer<T>(param);
-            case LayerTypeRsqrt: return new RsqrtLayer<T>(param);
             case LayerTypeScale: return new ScaleLayer<T>(param);
             case LayerTypeShortcut: return new ShortcutLayer<T>(param);
             case LayerTypeSigmoid: return new SigmoidLayer<T>(param);
