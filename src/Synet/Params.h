@@ -79,6 +79,7 @@ namespace Synet
         LayerTypeSqueeze,
         LayerTypeStub,
         LayerTypeTanh,
+        LayerTypeUnaryOperation,
         LayerTypeUpsample,
         LayerTypeYolo,
         LayerTypeSize
@@ -124,6 +125,7 @@ namespace Synet
             "Squeeze",
             "Stub",
             "Tanh",
+            "UnaryOperation",
             "Upsample",
             "Yolo",
         };
@@ -164,6 +166,47 @@ namespace Synet
 
     //-------------------------------------------------------------------------
 
+    enum MetaType
+    {
+        MetaTypeUnknown = -1,
+        MetaTypeAdd,
+        MetaTypeConst,
+        MetaTypeInput,
+        MetaTypePack,
+        MetaTypeRange,
+        MetaTypeShape,
+        MetaTypeSlice,
+        MetaTypeStridedSlice,
+        MetaTypeStub,
+        MetaTypeSub,
+        MetaTypeSize,
+    };
+
+    template<> SYNET_INLINE String ValueToString<MetaType>(const MetaType & value)
+    {
+        static const char * names[MetaTypeSize] =
+        {
+            "Add",
+            "Const",
+            "Input",
+            "Pack",
+            "Range",
+            "Shape",
+            "Slice",
+            "StridedSlice",
+            "Stub",
+            "Sub",
+        };
+        return (value > MetaTypeUnknown && value < MetaTypeSize) ? names[value] : "";
+    }
+
+    template<> SYNET_INLINE void StringToValue<MetaType>(const String & string, MetaType & value)
+    {
+        value = StringToEnum<MetaType, MetaTypeSize>(string);
+    }
+
+    //-------------------------------------------------------------------------
+
     enum NormRegionType
     {
         NormRegionTypeUnknown = -1,
@@ -200,7 +243,7 @@ namespace Synet
 
     template<> SYNET_INLINE String ValueToString<PoolingMethodType>(const PoolingMethodType & value)
     {
-        static const char * names[LayerTypeSize] =
+        static const char * names[PoolingMethodTypeSize] =
         {
             "Max",
             "Average",
@@ -244,41 +287,25 @@ namespace Synet
 
     //-------------------------------------------------------------------------
 
-    enum MetaType
+    enum UnaryOperationType
     {
-        MetaTypeUnknown = -1,
-        MetaTypeConst,
-        MetaTypeInput,
-        MetaTypePack,
-        MetaTypeRange,
-        MetaTypeShape,
-        MetaTypeSlice,
-        MetaTypeStridedSlice,
-        MetaTypeStub,
-        MetaTypeSub,
-        MetaTypeSize,
+        UnaryOperationTypeUnknown = -1,
+        UnaryOperationTypeSqrt,
+        UnaryOperationTypeSize
     };
 
-    template<> SYNET_INLINE String ValueToString<MetaType>(const MetaType & value)
+    template<> SYNET_INLINE String ValueToString<UnaryOperationType>(const UnaryOperationType & value)
     {
-        static const char * names[MetaTypeSize] =
+        static const char * names[UnaryOperationTypeSize] =
         {
-            "Const",
-            "Input",
-            "Pack",
-            "Range",
-            "Shape",
-            "Slice",
-            "StridedSlice",
-            "Stub",
-            "Sub",
+            "Sqrt",
         };
-        return (value > MetaTypeUnknown && value < MetaTypeSize) ? names[value] : "";
+        return (value > UnaryOperationTypeUnknown && value < UnaryOperationTypeSize) ? names[value] : "";
     }
 
-    template<> SYNET_INLINE void StringToValue<MetaType>(const String & string, MetaType & value)
+    template<> SYNET_INLINE void StringToValue<UnaryOperationType>(const String & string, UnaryOperationType & value)
     {
-        value = StringToEnum<MetaType, MetaTypeSize>(string);
+        value = StringToEnum<UnaryOperationType, UnaryOperationTypeSize>(string);
     }
 
     //-------------------------------------------------------------------------
@@ -494,6 +521,11 @@ namespace Synet
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
     };
 
+    struct UnaryOperationParam
+    {
+        SYNET_PARAM_VALUE(UnaryOperationType, type, UnaryOperationTypeUnknown);
+    };
+
     struct UpsampleParam
     {
         SYNET_PARAM_VALUE(int32_t, stride, 2);
@@ -548,6 +580,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(ScaleParam, scale);
         SYNET_PARAM_STRUCT(SliceParam, slice);
         SYNET_PARAM_STRUCT(SoftmaxParam, softmax);
+        SYNET_PARAM_STRUCT(UnaryOperationParam, unaryOperation);
         SYNET_PARAM_STRUCT(UpsampleParam, upsample);
         SYNET_PARAM_STRUCT(YoloParam, yolo);
 

@@ -395,6 +395,11 @@ namespace Synet
                     layer.src().push_back(node.input(1));
                     layer.dst().push_back(layer.name());
                 }
+                else if (type == "Sqrt")
+                {
+                    if (!ConvertUnaryOperationLayer(node, layer))
+                        return false;
+                }
                 else
                 {
                     SetNotImplemented(layer, node);
@@ -534,7 +539,13 @@ namespace Synet
         {
             layer.type() = LayerTypeMeta;
             String type = node.op();
-            if (type == "Concat" || type == "ConcatV2")
+            if (type == "Add")
+            {
+                layer.meta().type() = MetaTypeAdd;
+                layer.src().push_back(node.input(0));
+                layer.src().push_back(node.input(1));
+            }
+            else if (type == "Concat" || type == "ConcatV2")
             {
                 layer.meta().type() = MetaTypePack;
                 int axisId = (type == "Concat" ? 0 : node.input_size() - 1);
@@ -638,6 +649,18 @@ namespace Synet
                 }
             }
             layer.dst().push_back(layer.name());
+            return true;
+        }
+
+        bool ConvertUnaryOperationLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer)
+        {
+            layer.type() = LayerTypeUnaryOperation;
+            layer.src().push_back(node.input(0));
+            layer.dst().push_back(layer.name());
+            if (node.op() == "Sqrt")
+                layer.unaryOperation().type() = UnaryOperationTypeSqrt;
+            else
+                return false;
             return true;
         }
 

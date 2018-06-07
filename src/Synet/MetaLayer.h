@@ -52,6 +52,15 @@ namespace Synet
         {
             switch (_type)
             {
+            case MetaTypeAdd:
+            {
+                assert(src.size() == 2 && src[0]->Count() == src[1]->Count());
+                Shape dstShape = src[0]->Shape();
+                for (size_t i = 0; i < dstShape.size(); ++i)
+                    dstShape[i] += src[1]->Shape()[i];
+                dst[0]->SetShape(dstShape);
+                break;
+            }
             case MetaTypeConst:
             {
                 dst[0]->SetShape(_alpha);
@@ -126,7 +135,6 @@ namespace Synet
                 dst[0]->SetShape(dstShape);
                 break;
             }
-
             default:
                 assert(0);
             }
