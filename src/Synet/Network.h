@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include "Synet/AbsLayer.h"
 #include "Synet/BatchNormLayer.h"
 #include "Synet/BiasLayer.h"
 #include "Synet/ConcatLayer.h"
@@ -435,7 +434,6 @@ namespace Synet
         {
             switch (param.type())
             {
-            case LayerTypeAbs: return new AbsLayer<T>(param);
             case LayerTypeBatchNorm: return new BatchNormLayer<T>(param);
             case LayerTypeBias: return new BiasLayer<T>(param);
             case LayerTypeConcat: return new ConcatLayer<T>(param);

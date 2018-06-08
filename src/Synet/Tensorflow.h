@@ -161,12 +161,6 @@ namespace Synet
                     if (!ConvertConvolutionLayer(node, layer, weight))
                         return false;
                 }
-                else if (type == "Abs")
-                {
-                    layer.type() = LayerTypeAbs;
-                    layer.src().push_back(node.input(0));
-                    layer.dst().push_back(layer.name());
-                }
                 else if (type == "Relu")
                 {
                     layer.type() = LayerTypeRelu;
@@ -389,7 +383,7 @@ namespace Synet
                     layer.src().push_back(node.input(1));
                     layer.dst().push_back(layer.name());
                 }
-                else if (type == "Rsqrt" || type == "Sqrt")
+                else if (type == "Abs" || type == "Rsqrt" || type == "Sqrt")
                 {
                     if (!ConvertUnaryOperationLayer(node, layer))
                         return false;
@@ -651,7 +645,9 @@ namespace Synet
             layer.type() = LayerTypeUnaryOperation;
             layer.src().push_back(node.input(0));
             layer.dst().push_back(layer.name());
-            if (node.op() == "Rsqrt")
+            if (node.op() == "Abs")
+                layer.unaryOperation().type() = UnaryOperationTypeAbs;
+            else if (node.op() == "Rsqrt")
                 layer.unaryOperation().type() = UnaryOperationTypeRsqrt;
             else if (node.op() == "Sqrt")
                 layer.unaryOperation().type() = UnaryOperationTypeSqrt;

@@ -31,6 +31,12 @@ namespace Synet
 {
     namespace Detail
     {
+        template <class T> void CpuAbs(const T * src, size_t size, T * dst)
+        {
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = ::abs(src[i]);
+        }
+
         template<class T> void CpuRsqrt(const T * src, size_t size, T * dst)
         {
             for (size_t i = 0; i < size; ++i)
@@ -61,6 +67,9 @@ namespace Synet
             _type = this->Param().unaryOperation().type();
             switch (_type)
             {
+            case UnaryOperationTypeAbs:
+                _func = Detail::CpuAbs;
+                break;
             case UnaryOperationTypeRsqrt:
                 _func = Detail::CpuRsqrt;
                 break;

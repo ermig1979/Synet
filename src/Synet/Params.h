@@ -43,7 +43,6 @@ namespace Synet
     enum LayerType
     {
         LayerTypeUnknown = -1,
-        LayerTypeAbs,
         LayerTypeBatchNorm,
         LayerTypeBias,
         LayerTypeConcat,
@@ -88,7 +87,6 @@ namespace Synet
     {
         static const char * names[LayerTypeSize] =
         {
-            "Abs",
             "BatchNorm",
             "Bias",
             "Concat",
@@ -288,6 +286,7 @@ namespace Synet
     enum UnaryOperationType
     {
         UnaryOperationTypeUnknown = -1,
+        UnaryOperationTypeAbs,
         UnaryOperationTypeRsqrt,
         UnaryOperationTypeSqrt,
         UnaryOperationTypeSize
@@ -297,6 +296,7 @@ namespace Synet
     {
         static const char * names[UnaryOperationTypeSize] =
         {
+            "Abs",
             "Rsqrt",
             "Sqrt",
         };
