@@ -106,7 +106,7 @@ namespace Synet
 
         tensorflow::GraphDef _graph;
         NameIndexMap _valueId;
-        NameSet _ignore, _meta;
+        NameSet _ignore, _meta, _fMeta;
 
         IConstMap _iConst;
         FConstMap _fConst;
@@ -151,8 +151,10 @@ namespace Synet
                         _meta.insert(node.name());
                     }
                 }
-                else if (AllMeta(node) || type == "Shape" || type == "Const")
+                else if (IsMeta(node))
                 {
+                    if (!ConvertMetaConstFloatLayer(node, network))
+                        return false;
                     if (!ConvertMetaLayer(node, layer))
                         return false;
                 }
@@ -382,6 +384,12 @@ namespace Synet
                     if (!ConvertUnaryOperationLayer(node, layer))
                         return false;
                 }
+                else if (type == "NextIteration")
+                {
+                    layer.type() = LayerTypeStub;
+                    layer.src().push_back(node.input(0));
+                    layer.dst().push_back(layer.name());
+                }
                 else
                 {
                     SetNotImplemented(layer, node);
@@ -517,6 +525,28 @@ namespace Synet
             return true;
         }
 
+        bool ConvertMetaConstFloatLayer(const ::tensorflow::NodeDef & node, Synet::NetworkParam & network)
+        {
+            for (int j = 0; j < node.input_size(); ++j)
+            {
+                String name = node.input(j);
+                Pin input = ParsePin(name);
+                if (_valueId.find(input.name) != _valueId.end() && _fMeta.find(name) == _fMeta.end())
+                {
+                    Synet::LayerParam layer;
+                    layer.name() = name;
+                    layer.type() = LayerTypeMeta;
+                    layer.meta().type() = MetaTypeConst;
+                    Tensor alpha;
+                    ConvertKernel(GetConst(_graph, node, _valueId), alpha);
+                    alpha.Export(layer.meta().alpha());
+                    network.layers().push_back(layer);
+                    _fMeta.insert(name);
+                }
+            }
+            return true;
+        }
+
         bool ConvertMetaLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer)
         {
             layer.type() = LayerTypeMeta;
@@ -564,6 +594,18 @@ namespace Synet
                     ConvertKernel<int, int>(src, dst);
                 dst.Export(layer.meta().alpha());
             }
+            else if (type == "Fill")
+            {
+                layer.meta().type() = MetaTypeFill;
+                layer.src().push_back(node.input(0));
+                layer.src().push_back(node.input(1));
+            }
+            else if (type == "Mul")
+            {
+                layer.meta().type() = MetaTypeMul;
+                layer.src().push_back(node.input(0));
+                layer.src().push_back(node.input(1));
+            }
             else if (type == "Pack")
             {
                 layer.meta().type() = MetaTypePack;
@@ -577,6 +619,17 @@ namespace Synet
                 layer.src().push_back(node.input(1));
                 layer.src().push_back(node.input(2));
             }
+            else if (type == "RealDiv")
+            {
+                layer.meta().type() = MetaTypeRealDiv;
+                layer.src().push_back(node.input(0));
+                layer.src().push_back(node.input(1));
+            }
+            else if (type == "Rsqrt")
+            {
+                layer.meta().type() = MetaTypeRsqrt;
+                layer.src().push_back(node.input(0));
+            }
             else if (type == "Shape")
             {
                 layer.meta().type() = MetaTypeShape;
@@ -588,6 +641,11 @@ namespace Synet
                 layer.src().push_back(node.input(0));
                 layer.src().push_back(node.input(1));
                 layer.src().push_back(node.input(2));
+            }
+            else if (type == "Sqrt")
+            {
+                layer.meta().type() = MetaTypeSqrt;
+                layer.src().push_back(node.input(0));
             }
             else if (type == "StridedSlice")
             {
@@ -823,17 +881,23 @@ namespace Synet
             return true;
         }
 
-        bool AllMeta(const tensorflow::NodeDef & node) const
+        bool IsMeta(const tensorflow::NodeDef & node)
         {
+            if (node.op() == "Shape" || node.op() == "Const")
+                return true;
+
+            int meta = 0, fConst = 0;
             for (int j = 0; j < node.input_size(); ++j)
             {
                 String name = node.input(j);
                 if (name.find(":") != String::npos)
                     name = name.substr(0, name.find(":"));
-                if (_meta.find(name) == _meta.end())
-                    return false;
+                if (_meta.find(name) != _meta.end())
+                    meta++;
+                if (_fConst.find(name) != _fConst.end())
+                    fConst++;
             }
-            return true;
+            return meta + fConst == node.input_size();
         }
 
         template <class TS, class TD> void ConvertKernel(const tensorflow::TensorProto & src, Synet::Tensor<TD> & dst)

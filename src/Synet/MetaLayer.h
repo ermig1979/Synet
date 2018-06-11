@@ -53,11 +53,16 @@ namespace Synet
             case MetaTypeAdd: ReshapeAdd(src, dst); break;
             case MetaTypeCast: ReshapeCast(src, param.alpha(), dst); break;
             case MetaTypeConst: ReshapeConst(param.alpha(), dst); break;
+            case MetaTypeFill: ReshapeFill(src, dst); break;
             case MetaTypeInput: ReshapeInput(src, dst); break;
+            case MetaTypeMul: ReshapeMul(src, dst); break;
             case MetaTypePack: ReshapePack(src, dst); break;
             case MetaTypeRange: ReshapeRange(src, dst); break;
+            case MetaTypeRealDiv: ReshapeRealDiv(src, dst); break;
+            case MetaTypeRsqrt: ReshapeRsqrt(src, dst); break;
             case MetaTypeShape: ReshapeShape(src, dst); break;
             case MetaTypeSlice: ReshapeSlice(src, dst); break;
+            case MetaTypeSqrt: ReshapeSqrt(src, dst); break;
             case MetaTypeStridedSlice: ReshapeStridedSlice(src, dst); break;
             case MetaTypeStub: /*dst[0]->Reshape({});*/ break;
             case MetaTypeSub: ReshapeSub(src, dst); break;
@@ -135,6 +140,22 @@ namespace Synet
                 assert(0);
         }
 
+        void ReshapeFill(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            assert(src.size() == 2 && && src[0]->GetType() == TensorType32i && src[0]->Count() == 1 && src[1]->Size() == 1);
+            const Synet::Tensor<int32_t> & src0 = src[0]->As32i();
+            Shape shape;
+            for (size_t i = 0; i < src0.Size(); ++i)
+                shape.push_back(src0.CpuData()[i]);
+            if (src[1]->GetType() == TensorType32i)
+            {
+                Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
+                dst0.Reshape(shape, src[1]->As32i().CpuData()[0]);
+            }
+            else
+                assert(0);
+        }
+
         void ReshapeInput(const TensorPtrs & src, const TensorPtrs & dst)
         {
             assert(src.size() == 1);
@@ -145,6 +166,22 @@ namespace Synet
                 dst0.Reshape(src0.Shape());
                 for (size_t i = 0; i < src0.Size(); ++i)
                     dst0.CpuData()[i] = src0.CpuData()[i];
+            }
+            else
+                assert(0);
+        }
+
+        void ReshapeMul(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape() && src[0]->GetType() == src[1]->GetType());
+            if (src[0]->GetType() == TensorType32f)
+            {
+                const Synet::Tensor<float> & src0 = src[0]->As32f();
+                const Synet::Tensor<float> & src1 = src[1]->As32f();
+                Synet::Tensor<float> & dst0 = dst[0]->As32f();
+                dst0.Reshape(src0.Shape());
+                for (size_t i = 0; i < src0.Size(); ++i)
+                    dst0.CpuData()[i] = src0.CpuData()[i] * src1.CpuData()[i];
             }
             else
                 assert(0);
@@ -191,6 +228,37 @@ namespace Synet
                 assert(0);
         }
 
+        void ReshapeRealDiv(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape() && src[0]->GetType() == src[1]->GetType());
+            if (src[0]->GetType() == TensorType32f)
+            {
+                const Synet::Tensor<float> & src0 = src[0]->As32f();
+                const Synet::Tensor<float> & src1 = src[1]->As32f();
+                Synet::Tensor<float> & dst0 = dst[0]->As32f();
+                dst0.Reshape(src0.Shape());
+                for (size_t i = 0; i < src0.Size(); ++i)
+                    dst0.CpuData()[i] = src0.CpuData()[i] / src1.CpuData()[i];
+            }
+            else
+                assert(0);
+        }
+
+        void ReshapeRsqrt(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            assert(src.size() == 1);
+            if (src[0]->GetType() == TensorType32f)
+            {
+                const Synet::Tensor<float> & src0 = src[0]->As32f();
+                Synet::Tensor<float> & dst0 = dst[0]->As32f();
+                dst0.Reshape(src0.Shape());
+                for (size_t i = 0; i < src0.Size(); ++i)
+                    dst0.CpuData()[i] = 1.0f/::sqrt(src0.CpuData()[i]);
+            }
+            else
+                assert(0);
+        }
+
         void ReshapeShape(const TensorPtrs & src, const TensorPtrs & dst)
         {
             assert(src.size() == 1);
@@ -217,6 +285,21 @@ namespace Synet
                 dst0.Reshape({ size });
                 for (size_t i = 0; i < size; ++i)
                     dst0.CpuData()[i] = src0.CpuData()[begin + i];
+            }
+            else
+                assert(0);
+        }
+
+        void ReshapeSqrt(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            assert(src.size() == 1);
+            if (src[0]->GetType() == TensorType32f)
+            {
+                const Synet::Tensor<float> & src0 = src[0]->As32f();
+                Synet::Tensor<float> & dst0 = dst[0]->As32f();
+                dst0.Reshape(src0.Shape());
+                for (size_t i = 0; i < src0.Size(); ++i)
+                    dst0.CpuData()[i] = ::sqrt(src0.CpuData()[i]);
             }
             else
                 assert(0);

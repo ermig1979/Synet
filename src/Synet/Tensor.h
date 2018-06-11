@@ -289,6 +289,13 @@ namespace Synet
             param.shape() = _shape;
             switch (_type)
             {
+            case TensorType32f:
+            {
+                param.f32().resize(_size);
+                const Synet::Tensor<float> & f32 = As32f();
+                CpuCopy(f32.CpuData(), _size, param.f32().data());
+                break;
+            }
             case TensorType32i:
             {
                 param.i32().resize(_size);
