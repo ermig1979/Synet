@@ -157,7 +157,10 @@ namespace Synet
                             }
                             else if (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput)
                             {
-                                _input[j].dst[0]->SetShape(srcShapes[j]);
+                                Synet::Tensor<int32_t> & i32 = _input[j].dst[0]->As32i();
+                                i32.Reshape({ srcShapes[j].size()});
+                                for (size_t l = 0; l < srcShapes[j].size(); ++l)
+                                    i32.CpuData()[l] = (int)srcShapes[j][l];
                             }
                             else
                                 assert(0);
@@ -208,14 +211,14 @@ namespace Synet
             return true;
         }
 
-        bool GetMetaConst(const String & name, Shape & value) const
+        bool GetMetaConst(const String & name, Tensor & value) const
         {
             for (size_t i = 0; i < _param().layers().size(); ++i)
             {
                 const LayerParam & layer = _param().layers()[i];
                 if (layer.name() == name && layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeConst)
                 {
-                    value = layer.meta().alpha();
+                    value.Import(layer.meta().alpha());
                     return true;
                 }
             }

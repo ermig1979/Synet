@@ -67,7 +67,11 @@ namespace Synet
         {
             if (src.size() == 2)
             {
-                Shape shape = src[1]->Shape();
+                assert(src[1]->Count() == 1 && src[1]->GetType() == TensorType32i);
+                const Synet::Tensor<int32_t> & src1 = src[1]->As32i();
+                Shape shape;
+                for (size_t i = 0; i < src1.Size(); ++i)
+                    shape.push_back(src1.CpuData()[i]);
                 if (shape.size() == 2)
                     shape = Shape({ shape[1], shape[0] });
                 if (shape.size() == 4)

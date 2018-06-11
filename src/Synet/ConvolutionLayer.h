@@ -138,9 +138,6 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            const Type * pSrc = src[0]->CpuData();
-            Type * pDst = dst[0]->CpuData();
-
             size_t firstSpatialAxis = _axis + 1;
             _num = src[0]->Size(0, _axis);
             _srcShape = src[0]->Shape();

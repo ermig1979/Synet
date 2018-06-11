@@ -25,9 +25,18 @@
 #pragma once
 
 #include "Synet/Common.h"
+#include "Synet/Params.h"
+#include "Synet/Math.h"
 
 namespace Synet
 {
+    namespace Detail
+    {
+        template <class T> TensorType GetTensorType();
+        template <> SYNET_INLINE TensorType GetTensorType<float>() { return TensorType32f; }
+        template <> SYNET_INLINE TensorType GetTensorType<int32_t>() { return TensorType32i; }
+    }
+
     template<class T> class Tensor
     {
     public:
@@ -36,6 +45,7 @@ namespace Synet
         SYNET_INLINE Tensor()
             : _size(0)
             , _cpuData(std::make_shared<Vector>())
+            , _type(TensorTypeUnknown)
         {
         }
 
@@ -83,6 +93,21 @@ namespace Synet
         {
             _shape.assign(shape.begin(), shape.end());
             Extend();
+        }
+
+        SYNET_INLINE Tensor<int32_t> & As32i()
+        {
+            return *(Tensor<int32_t>*)this;
+        }
+
+        SYNET_INLINE const Tensor<int32_t> & As32i() const
+        {
+            return *(const Tensor<int32_t>*)this;
+        }
+
+        SYNET_INLINE TensorType GetType() const
+        {
+            return _type;
         }
 
         SYNET_INLINE const String & Name() const
@@ -172,11 +197,13 @@ namespace Synet
 
         SYNET_INLINE Type * CpuData()
         {
+            assert(_type == Detail::GetTensorType<Type>());
             return _cpuData->data();
         }
 
         SYNET_INLINE const Type * CpuData() const
         {
+            assert(_type == Detail::GetTensorType<Type>());
             return _cpuData->data();
         }
 
@@ -202,6 +229,7 @@ namespace Synet
 
         SYNET_INLINE void Share(const Tensor & tensor)
         {
+            _type = tensor._type;
             _shape = tensor._shape;
             _name = tensor._name;
             _size = tensor._size;
@@ -211,6 +239,7 @@ namespace Synet
 
         SYNET_INLINE void ShareAs(const Tensor & tensor, const Synet::Shape & shape)
         {
+            _type = tensor._type;
             _shape = shape;
             _size = Size(0, _shape.size());
             assert(_size == tensor._size);
@@ -218,18 +247,48 @@ namespace Synet
             SetDebugPtr();
         }
 
-        SYNET_INLINE void SetShape(const Synet::Shape & shape)
-        {
-            _shape = shape;
-        }
-
         SYNET_INLINE void Clone(const Tensor & tensor)
         {
+            _type = tensor._type;
             _shape = tensor._shape;
             _name = tensor._name;
             _size = tensor._size;
             _cpuData(std::make_shared<Vector>(tensor._cpuData->begin(), tensor._cpuData->end()));
             SetDebugPtr();
+        }
+
+        SYNET_INLINE void Import(const TensorParam & param)
+        {
+            switch (param.type())
+            {
+            case TensorType32i:
+            {
+                Synet::Tensor<int32_t> & i32 = As32i();
+                i32.Reshape(param.shape());
+                CpuCopy(param.i32().data(), param.i32().size(), i32.CpuData());
+                break;
+            }
+            default:
+                assert(0);
+            }
+        }
+
+        SYNET_INLINE void Export(TensorParam & param)
+        {
+            param.type() = _type;
+            param.shape() = _shape;
+            switch (_type)
+            {
+            case TensorType32i:
+            {
+                param.i32().resize(_size);
+                const Synet::Tensor<int32_t> & i32 = As32i();
+                CpuCopy(i32.CpuData(), _size, param.i32().data());
+                break;
+            }
+            default:
+                assert(0);
+            }
         }
 
 #ifdef SYNET_DEBUG_PRINT_ENABLE
@@ -306,6 +365,7 @@ namespace Synet
 
         SYNET_INLINE void Resize(const Type & value)
         {
+            _type = Detail::GetTensorType<Type>();
             _size = Size(0, _shape.size());
             _cpuData->resize(_size, value);
             SetDebugPtr();
@@ -313,6 +373,9 @@ namespace Synet
 
         SYNET_INLINE void Extend()
         {
+            if(_type == TensorTypeUnknown)
+                _type = Detail::GetTensorType<Type>();
+            assert(_type == Detail::GetTensorType<Type>());
             _size = Size(0, _shape.size());
             if (_size > _cpuData->size())
                 _cpuData->resize(_size);
@@ -340,6 +403,7 @@ namespace Synet
         typedef std::shared_ptr<Vector> VectorPtr;
 
         Synet::String _name;
+        TensorType _type;
         Synet::Shape _shape;
         size_t _size;
         VectorPtr _cpuData;

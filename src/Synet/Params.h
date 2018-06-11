@@ -283,6 +283,31 @@ namespace Synet
 
     //-------------------------------------------------------------------------
 
+    enum TensorType
+    {
+        TensorTypeUnknown = -1,
+        TensorType32f,
+        TensorType32i,
+        TensorTypeSize,
+    };
+
+    template<> SYNET_INLINE String ValueToString<TensorType>(const TensorType & value)
+    {
+        static const char * names[TensorTypeSize] =
+        {
+            "32f",
+            "32i",
+        };
+        return (value > TensorTypeUnknown && value < TensorTypeSize) ? names[value] : "";
+    }
+
+    template<> SYNET_INLINE void StringToValue<TensorType>(const String & string, TensorType & value)
+    {
+        value = StringToEnum<TensorType, TensorTypeSize>(string);
+    }
+
+    //-------------------------------------------------------------------------
+
     enum UnaryOperationType
     {
         UnaryOperationTypeUnknown = -1,
@@ -309,6 +334,14 @@ namespace Synet
     }
 
     //-------------------------------------------------------------------------
+
+    struct TensorParam
+    {
+        SYNET_PARAM_VALUE(TensorType, type, TensorTypeUnknown);
+        SYNET_PARAM_VALUE(Shape, shape, Shape());
+        SYNET_PARAM_VALUE(Ints, i32, Ints());
+        SYNET_PARAM_VALUE(Floats, f32, Floats());
+    };
 
     struct NonMaximumSuppressionParam
     {
@@ -432,7 +465,7 @@ namespace Synet
     struct MetaParam
     {
         SYNET_PARAM_VALUE(MetaType, type, MetaTypeUnknown);
-        SYNET_PARAM_VALUE(Shape, alpha, Shape());
+        SYNET_PARAM_STRUCT(TensorParam, alpha);
     };
 
     struct NormalizeParam

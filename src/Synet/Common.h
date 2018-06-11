@@ -114,6 +114,7 @@ namespace Synet
     typedef std::vector<size_t> Shape;
     typedef std::vector<Shape> Shapes;
     typedef std::vector<size_t> Index;
+    typedef std::vector<int> Ints;
     typedef std::vector<float> Floats;
 
     SYNET_INLINE bool FileExist(const String & path)

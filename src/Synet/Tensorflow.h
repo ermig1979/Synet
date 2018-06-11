@@ -556,7 +556,7 @@ namespace Synet
                 }
                 else
                     ConvertKernel<int, int>(src, dst);
-                layer.meta().alpha().assign(dst.CpuData(), dst.CpuData() + dst.Size());
+                dst.Export(layer.meta().alpha());
             }
             else if (type == "Pack")
             {
