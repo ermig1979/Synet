@@ -186,12 +186,6 @@ namespace Synet
                     layer.src().push_back(node.input(0));
                     layer.dst().push_back(layer.name());
                 }
-                else if (type == "Tanh")
-                {
-                    layer.type() = LayerTypeTanh;
-                    layer.src().push_back(node.input(0));
-                    layer.dst().push_back(layer.name());
-                }
                 else if (type == "Softmax")
                 {
                     layer.type() = LayerTypeSoftmax;
@@ -383,7 +377,7 @@ namespace Synet
                     layer.src().push_back(node.input(1));
                     layer.dst().push_back(layer.name());
                 }
-                else if (type == "Abs" || type == "Rsqrt" || type == "Sqrt")
+                else if (type == "Abs" || type == "Rsqrt" || type == "Sqrt" || type == "Tanh")
                 {
                     if (!ConvertUnaryOperationLayer(node, layer))
                         return false;
@@ -651,6 +645,8 @@ namespace Synet
                 layer.unaryOperation().type() = UnaryOperationTypeRsqrt;
             else if (node.op() == "Sqrt")
                 layer.unaryOperation().type() = UnaryOperationTypeSqrt;
+            else if (node.op() == "Tanh")
+                layer.unaryOperation().type() = UnaryOperationTypeTanh;
             else
                 return false;
             return true;

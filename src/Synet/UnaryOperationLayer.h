@@ -48,6 +48,20 @@ namespace Synet
             for (size_t i = 0; i < size; ++i)
                 dst[i] = sqrt(src[i]);
         }
+
+        template <typename T> void CpuTanh(const T * src, size_t size, T * dst)
+        {
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = ::tanh(src[i]);
+        }
+
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        template <> SYNET_INLINE void CpuTanh<float>(const float * src, size_t size, float * dst)
+        {
+            float slope = 1.0f;
+            ::SimdNeuralTanh(src, size, &slope, dst);
+        }
+#endif
     }
 
     template <class T> class UnaryOperationLayer : public Synet::Layer<T>
@@ -75,6 +89,9 @@ namespace Synet
                 break;
             case UnaryOperationTypeSqrt:
                 _func = Detail::CpuSqrt;
+                break;
+            case UnaryOperationTypeTanh:
+                _func = Detail::CpuTanh;
                 break;
             default:
                 assert(0);

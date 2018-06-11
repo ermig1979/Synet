@@ -76,7 +76,6 @@ namespace Synet
         LayerTypeSoftmax,
         LayerTypeSqueeze,
         LayerTypeStub,
-        LayerTypeTanh,
         LayerTypeUnaryOperation,
         LayerTypeUpsample,
         LayerTypeYolo,
@@ -120,7 +119,6 @@ namespace Synet
             "Softmax",
             "Squeeze",
             "Stub",
-            "Tanh",
             "UnaryOperation",
             "Upsample",
             "Yolo",
@@ -314,6 +312,7 @@ namespace Synet
         UnaryOperationTypeAbs,
         UnaryOperationTypeRsqrt,
         UnaryOperationTypeSqrt,
+        UnaryOperationTypeTanh,
         UnaryOperationTypeSize
     };
 
@@ -324,6 +323,7 @@ namespace Synet
             "Abs",
             "Rsqrt",
             "Sqrt",
+            "Tanh",
         };
         return (value > UnaryOperationTypeUnknown && value < UnaryOperationTypeSize) ? names[value] : "";
     }

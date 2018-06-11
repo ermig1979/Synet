@@ -225,12 +225,6 @@ namespace Synet
         return T(1) / (T(1) + ::exp(-value));
     }
 
-    template <typename T> void CpuTanh(const T * src, size_t size, T * dst)
-    {
-        for (size_t i = 0; i < size; ++i)
-            dst[i] = ::tanh(src[i]);
-    }
-
     template <typename T> void CpuRelu(const T * src, size_t size, const T & negativeSlope, T * dst)
     {
         for (size_t i = 0; i < size; ++i)
@@ -283,12 +277,6 @@ namespace Synet
     {
         float slope = 1.0f;
         ::SimdNeuralSigmoid(src, size, &slope, dst);
-    }
-
-    template <> SYNET_INLINE void CpuTanh<float>(const float * src, size_t size, float * dst)
-    {
-        float slope = 1.0f;
-        ::SimdNeuralTanh(src, size, &slope, dst);
     }
 
     template <> SYNET_INLINE void CpuRelu<float>(const float * src, size_t size, const float & negativeSlope, float * dst)
