@@ -164,6 +164,7 @@ namespace Synet
     {
         MetaTypeUnknown = -1,
         MetaTypeAdd,
+        MetaTypeCast,
         MetaTypeConst,
         MetaTypeInput,
         MetaTypePack,
@@ -181,6 +182,7 @@ namespace Synet
         static const char * names[MetaTypeSize] =
         {
             "Add",
+            "Cast",
             "Const",
             "Input",
             "Pack",

@@ -527,6 +527,18 @@ namespace Synet
                 layer.src().push_back(node.input(0));
                 layer.src().push_back(node.input(1));
             }
+            else if (type == "Cast")
+            {
+                layer.meta().type() = MetaTypeCast;
+                layer.src().push_back(node.input(0));
+                const tensorflow::AttrValue & attr = node.attr().at("DstT");
+                if (attr.type() == tensorflow::DT_FLOAT)
+                    layer.meta().alpha().type() = TensorType32f;
+                else if (attr.type() == tensorflow::DT_INT32)
+                    layer.meta().alpha().type() = TensorType32i;
+                else
+                    assert(0);
+            }            
             else if (type == "Concat" || type == "ConcatV2")
             {
                 layer.meta().type() = MetaTypePack;

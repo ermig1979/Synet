@@ -51,6 +51,7 @@ namespace Synet
             switch (param.type())
             {
             case MetaTypeAdd: ReshapeAdd(src, dst); break;
+            case MetaTypeCast: ReshapeCast(src, param.alpha(), dst); break;
             case MetaTypeConst: ReshapeConst(param.alpha(), dst); break;
             case MetaTypeInput: ReshapeInput(src, dst); break;
             case MetaTypePack: ReshapePack(src, dst); break;
@@ -83,6 +84,42 @@ namespace Synet
                 dst0.Reshape(src0.Shape());
                 for (size_t i = 0; i < src0.Size(); ++i)
                     dst0.CpuData()[i] = src0.CpuData()[i] + src1.CpuData()[i];
+            }
+            else
+                assert(0);
+        }
+
+        void ReshapeCast(const TensorPtrs & src, const TensorParam & alpha, const TensorPtrs & dst)
+        {
+            assert(src.size() == 1);
+            if (alpha.type() == TensorType32i)
+            {
+                Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
+                dst0.Reshape(src[0]->Shape());
+                if (src[0]->GetType() == TensorType32i)
+                {
+                    const Synet::Tensor<int32_t> & src0 = src[0]->As32i();
+                    for (size_t i = 0; i < src0.Size(); ++i)
+                        dst0.CpuData()[i] = src0.CpuData()[i];
+
+                }
+                else if (src[0]->GetType() == TensorType32f)
+                {
+                    const Synet::Tensor<float> & src0 = src[0]->As32f();
+                    for (size_t i = 0; i < src0.Size(); ++i)
+                        dst0.CpuData()[i] = (int32_t)src0.CpuData()[i];
+                }
+                else
+                    assert(0);
+            }
+            else if (alpha.type() == TensorType32f)
+            {
+                assert(src[0]->GetType() == TensorType32i);
+                const Synet::Tensor<int32_t> & src0 = src[0]->As32i();
+                Synet::Tensor<float> & dst0 = dst[0]->As32f();
+                dst0.Reshape(src0.Shape());
+                for (size_t i = 0; i < src0.Size(); ++i)
+                    dst0.CpuData()[i] = (float)src0.CpuData()[i];
             }
             else
                 assert(0);

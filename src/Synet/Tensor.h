@@ -105,6 +105,16 @@ namespace Synet
             return *(const Tensor<int32_t>*)this;
         }
 
+        SYNET_INLINE Tensor<float> & As32f()
+        {
+            return *(Tensor<float>*)this;
+        }
+
+        SYNET_INLINE const Tensor<float> & As32f() const
+        {
+            return *(const Tensor<float>*)this;
+        }
+
         SYNET_INLINE TensorType GetType() const
         {
             return _type;
