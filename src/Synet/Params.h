@@ -166,12 +166,15 @@ namespace Synet
         MetaTypeAdd,
         MetaTypeCast,
         MetaTypeConst,
+        MetaTypeExpandDims,
         MetaTypeFill,
         MetaTypeInput,
+        MetaTypeMinimum,
         MetaTypeMul,
         MetaTypePack,
         MetaTypeRange,
         MetaTypeRealDiv,
+        MetaTypeReshape,
         MetaTypeRsqrt,
         MetaTypeShape,
         MetaTypeSlice,
@@ -179,6 +182,7 @@ namespace Synet
         MetaTypeStridedSlice,
         MetaTypeStub,
         MetaTypeSub,
+        MetaTypeTile,
         MetaTypeSize,
     };
 
@@ -189,12 +193,15 @@ namespace Synet
             "Add",
             "Cast",
             "Const",
+            "ExpandDims",
             "Fill",
             "Input",
+            "Minimum",
             "Mul",
             "Pack",
             "Range",
             "RealDiv",
+            "Reshape",
             "Rsqrt",
             "Shape",
             "Slice",
@@ -202,6 +209,7 @@ namespace Synet
             "StridedSlice",
             "Stub",
             "Sub",
+            "Tile",
         };
         return (value > MetaTypeUnknown && value < MetaTypeSize) ? names[value] : "";
     }

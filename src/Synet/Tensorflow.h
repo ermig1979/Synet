@@ -384,7 +384,7 @@ namespace Synet
                     if (!ConvertUnaryOperationLayer(node, layer))
                         return false;
                 }
-                else if (type == "NextIteration")
+                else if (type == "NextIteration" || type == "TensorArrayScatterV3")
                 {
                     layer.type() = LayerTypeStub;
                     layer.src().push_back(node.input(0));
@@ -594,11 +594,23 @@ namespace Synet
                     ConvertKernel<int, int>(src, dst);
                 dst.Export(layer.meta().alpha());
             }
+            else if (type == "ExpandDims")
+            {
+                layer.meta().type() = MetaTypeExpandDims;
+                layer.src().push_back(node.input(0));
+                layer.src().push_back(node.input(1));
+            }
             else if (type == "Fill")
             {
                 layer.meta().type() = MetaTypeFill;
                 layer.src().push_back(node.input(0));
                 layer.src().push_back(node.input(1));
+            }
+            else if (type == "Minimum")
+            {
+                layer.meta().type() = MetaTypeMinimum;
+                for (int j = 0; j < node.input_size(); ++j)
+                    layer.src().push_back(node.input(j));
             }
             else if (type == "Mul")
             {
@@ -622,6 +634,12 @@ namespace Synet
             else if (type == "RealDiv")
             {
                 layer.meta().type() = MetaTypeRealDiv;
+                layer.src().push_back(node.input(0));
+                layer.src().push_back(node.input(1));
+            }
+            else if (type == "Reshape")
+            {
+                layer.meta().type() = MetaTypeReshape;
                 layer.src().push_back(node.input(0));
                 layer.src().push_back(node.input(1));
             }
@@ -658,6 +676,12 @@ namespace Synet
             else if (type == "Sub")
             {
                 layer.meta().type() = MetaTypeSub;
+                layer.src().push_back(node.input(0));
+                layer.src().push_back(node.input(1));
+            }
+            else if (type == "Tile")
+            {
+                layer.meta().type() = MetaTypeTile;
                 layer.src().push_back(node.input(0));
                 layer.src().push_back(node.input(1));
             }
@@ -883,7 +907,7 @@ namespace Synet
 
         bool IsMeta(const tensorflow::NodeDef & node)
         {
-            if (node.op() == "Shape" || node.op() == "Const")
+            if (node.op() == "Shape" || node.op() == "Const" || node.op() == "TensorArraySizeV3")
                 return true;
 
             int meta = 0, fConst = 0;
