@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-set(ROOT_DIR ${CMAKE_SOURCE_DIR}/../..)
+set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 
 if(CMAKE_BUILD_TYPE STREQUAL "")
     set(CMAKE_BUILD_TYPE "Release")
