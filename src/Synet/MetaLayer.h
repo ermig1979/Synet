@@ -146,7 +146,7 @@ namespace Synet
 
         void ReshapeExpandDims(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            assert(src.size() == 2 && && src[1]->GetType() == TensorType32i && src[1]->Size() == 1);
+            assert(src.size() == 2 && src[1]->GetType() == TensorType32i && src[1]->Size() == 1);
             const Synet::Tensor<int32_t> & src1 = src[1]->As32i();
             ptrdiff_t axis = src1.CpuData()[0];
             if (axis < 0)
@@ -162,7 +162,7 @@ namespace Synet
 
         void ReshapeFill(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            assert(src.size() == 2 && && src[0]->GetType() == TensorType32i && src[0]->Count() == 1 && src[1]->Size() == 1);
+            assert(src.size() == 2 && src[0]->GetType() == TensorType32i && src[0]->Count() == 1 && src[1]->Size() == 1);
             const Synet::Tensor<int32_t> & src0 = src[0]->As32i();
             Shape shape;
             for (size_t i = 0; i < src0.Size(); ++i)

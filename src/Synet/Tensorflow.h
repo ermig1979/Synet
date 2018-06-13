@@ -48,11 +48,30 @@ namespace Synet
     {
     public:
 
-        bool Convert(const String &, const String & srcGraphPath, const String & dstModelPath, const String & dstWeightPath)
+        struct ConvertParam
         {
+            SYNET_PARAM_VALUE(Strings, output, Strings());
+        };
+
+        SYNET_PARAM_HOLDER(ConvertParamHolder, ConvertParam, convert);
+
+        bool Convert(const String & srcParamPath, const String & srcGraphPath, const String & dstModelPath, const String & dstWeightPath)
+        {
+            if (!Synet::FileExist(srcParamPath))
+            {
+                std::cout << "File '" << srcParamPath << "' is not exist!" << std::endl;
+                return false;
+            }
+
             if (!Synet::FileExist(srcGraphPath))
             {
                 std::cout << "File '" << srcGraphPath << "' is not exist!" << std::endl;
+                return false;
+            }
+
+            if (!_param.Load(srcParamPath))
+            {
+                std::cout << "Can't load converion partameters!" << std::endl;
                 return false;
             }
 
@@ -104,6 +123,7 @@ namespace Synet
             Pin() : name(""), index(-1) {}
         };
 
+        ConvertParamHolder _param;
         tensorflow::GraphDef _graph;
         NameIndexMap _valueId;
         NameSet _ignore, _meta, _fMeta;
@@ -158,7 +178,7 @@ namespace Synet
                     if (!ConvertMetaLayer(node, layer))
                         return false;
                 }
-                else if (type == "Conv2D")
+                else if (type == "Conv2D" || type == "DepthwiseConv2dNative")
                 {
                     if (!ConvertConvolutionLayer(node, layer, weight))
                         return false;
@@ -384,7 +404,7 @@ namespace Synet
                     if (!ConvertUnaryOperationLayer(node, layer))
                         return false;
                 }
-                else if (type == "NextIteration" || type == "TensorArrayScatterV3")
+                else if (type == "NextIteration" || type == "TensorArrayScatterV3" || type == "Identity")
                 {
                     layer.type() = LayerTypeStub;
                     layer.src().push_back(node.input(0));
@@ -426,7 +446,13 @@ namespace Synet
             }
 
             layer.convolution().kernel() = Shape({ layer.weight()[0].dim()[2], layer.weight()[0].dim()[3] });
-            layer.convolution().outputNum() = (uint32_t)layer.weight()[0].dim()[0];
+            if (node.op() == "Conv2d")
+                layer.convolution().outputNum() = (uint32_t)layer.weight()[0].dim()[0];
+            else if (node.op() == "DepthwiseConv2dNative")
+            {
+                layer.convolution().outputNum() = (uint32_t)layer.weight()[0].dim()[1];
+                layer.convolution().group() = (uint32_t)layer.weight()[0].dim()[1];
+            }
             if (node.attr().find("strides") != node.attr().end())
             {
                 const tensorflow::AttrValue_ListValue & list = node.attr().at("strides").list();
@@ -748,18 +774,71 @@ namespace Synet
 
         //---------------------------------------------------------------------
 
+        bool IsOutput(const String & name)
+        {
+            for (size_t i = 0; i < _param().output().size(); ++i)
+            {
+                if (name == _param().output()[i])
+                    return true;
+            }
+            return false;
+        }
+
+        void GetUsed(NameSet & used)
+        {
+            typedef std::map<String, int> Index;
+            Index index;
+            for (int i = 0; i < _graph.node_size(); i++)
+                index[_graph.node(i).name()] = i;
+
+            typedef std::queue<String> Queue;
+            Queue queue;
+            used.clear();
+            for (size_t i = 0; i < _param().output().size(); ++i)
+            {
+                const String & output = _param().output()[i];
+                used.insert(output);
+                queue.push(output);
+            }
+
+            while (queue.size())
+            {
+                const tensorflow::NodeDef & node = _graph.node(index[queue.front()]);
+                for (int i = 0; i < node.input_size(); ++i)
+                {
+                    String name = node.input(i);
+                    size_t delimiter = name.find_first_of(":");
+                    if (delimiter != std::string::npos)
+                        name = name.substr(0, delimiter);
+                    if (used.find(name) == used.end())
+                    {
+                        used.insert(name);
+                        queue.push(name);
+                    }
+                }
+                queue.pop();
+            }
+        }
+
         void RemoveUnused()
         {
             typedef std::map<String, String>  UnusedMap;
             UnusedMap unused;
             std::vector<int> unusedIndex;
 
+            NameSet used;
+            GetUsed(used);
+
             int layersCount = _graph.node_size();
             for (int i = 0; i < layersCount; i++)
             {
                 const tensorflow::NodeDef & layer = _graph.node(i);
                 String type = layer.op();
-                if (type == "Identity" || type == "Dropout" || layer.name().find("dropout") == 0)
+                String name = layer.name();
+                if (IsOutput(name))
+                    continue;
+                if(type == "Identity" || type == "Dropout" || type == "Assert" || type == "NextIteration" ||
+                    used.find(name) == used.end())
                 {
                     unusedIndex.push_back(i);
                     if (layer.input_size())
