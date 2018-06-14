@@ -240,12 +240,14 @@ namespace Synet
                     }
                     else
                     {
-                        layer.type() = LayerTypeEltwise;
-                        layer.eltwise().operation() = EltwiseOperationTypeSum;
-                        layer.src().push_back(node.input(0));
-                        layer.src().push_back(node.input(1));
-                        layer.dst().push_back(layer.name());
+                        if (!ConvertEltwiseLayer(node, layer))
+                            return false;
                     }
+                }
+                else if (type == "Maximum" || type == "Minimum")
+                {
+                    if (!ConvertEltwiseLayer(node, layer))
+                        return false;
                 }
                 else if (type == "Mul")
                 {
@@ -264,10 +266,8 @@ namespace Synet
                     assert(constCount < 2);
                     if (constIndex < 0)
                     {
-                        layer.type() = LayerTypeEltwise;
-                        layer.eltwise().operation() = EltwiseOperationTypeProduct;
-                        layer.src().push_back(node.input(0));
-                        layer.src().push_back(node.input(1));
+                        if (!ConvertEltwiseLayer(node, layer))
+                            return false;
                     }
                     else
                     {
@@ -281,8 +281,8 @@ namespace Synet
                         layer.weight().resize(1);
                         layer.weight()[0].dim() = scale.Shape();
                         weight.push_back(scale);
+                        layer.dst().push_back(layer.name());
                     }
-                    layer.dst().push_back(layer.name());
                 }
                 else if (type == "Sub")
                 {
@@ -316,12 +316,8 @@ namespace Synet
                     }
                     else if (constIndex < 0)
                     {
-                        layer.type() = LayerTypeEltwise;
-                        layer.eltwise().operation() = EltwiseOperationTypeSum;
-                        layer.eltwise().coefficients() = Floats({ 1.0f, -1.0f });
-                        layer.src().push_back(node.input(0));
-                        layer.src().push_back(node.input(1));
-                        layer.dst().push_back(layer.name());
+                        if (!ConvertEltwiseLayer(node, layer))
+                            return false;
                     }
                     else
                     {
@@ -404,7 +400,7 @@ namespace Synet
                     layer.src().push_back(node.input(1));
                     layer.dst().push_back(layer.name());
                 }
-                else if (type == "Abs" || type == "Rsqrt" || type == "Sqrt" || type == "Tanh")
+                else if (type == "Abs" || type == "Rsqrt" || type == "Sqrt" || type == "Tanh" || type == "ZerosLike")
                 {
                     if (!ConvertUnaryOperationLayer(node, layer))
                         return false;
@@ -500,14 +496,41 @@ namespace Synet
             return true;
         }
 
+        bool ConvertEltwiseLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer)
+        {
+            layer.type() = LayerTypeEltwise;
+            for (int j = 0; j < node.input_size(); ++j)
+            {
+                Pin input = ParsePin(node.input(j));
+                assert(_valueId.find(input.name) == _valueId.end());
+            }
+            layer.src().push_back(node.input(0));
+            layer.src().push_back(node.input(1));
+            if (node.op() == "BiasAdd" || node.op() == "Add")
+                layer.eltwise().operation() = EltwiseOperationTypeSum;
+            else if (node.op() == "Maximim")
+                layer.eltwise().operation() = EltwiseOperationTypeMax;
+            else if (node.op() == "Minimum")
+                layer.eltwise().operation() = EltwiseOperationTypeMin;
+            else if(node.op() == "Mul")
+                layer.eltwise().operation() = EltwiseOperationTypeProduct;
+            else if (node.op() == "Sub")
+            {
+                layer.eltwise().operation() = EltwiseOperationTypeSum;
+                layer.eltwise().coefficients() = Floats({ 1.0f, -1.0f });
+            }
+            else
+                assert(0);
+            layer.dst().push_back(layer.name());
+            return true;
+        }
+
         bool ConvertExpandDimsLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer)
         {
             layer.type() = LayerTypeExpandDims;
             layer.src().push_back(node.input(0));
             if (node.attr().find("Tdim") != node.attr().end())
-            {
                 layer.expandDims().axis() = (int)node.attr().at("Tdim").i();
-            }
             else
             {
                 const tensorflow::TensorProto & tensor = GetConst(_graph, node, _valueId);
@@ -800,6 +823,8 @@ namespace Synet
                 layer.unaryOperation().type() = UnaryOperationTypeSqrt;
             else if (node.op() == "Tanh")
                 layer.unaryOperation().type() = UnaryOperationTypeTanh;
+            else if (node.op() == "ZerosLike")
+                layer.unaryOperation().type() = UnaryOperationTypeZero;
             else
                 return false;
             return true;

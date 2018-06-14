@@ -55,6 +55,11 @@ namespace Synet
                 dst[i] = ::tanh(src[i]);
         }
 
+        template <typename T> void CpuZero(const T * src, size_t size, T * dst)
+        {
+            ::memset(dst, 0, size * sizeof(T));
+        }
+
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
         template <> SYNET_INLINE void CpuTanh<float>(const float * src, size_t size, float * dst)
         {
@@ -92,6 +97,9 @@ namespace Synet
                 break;
             case UnaryOperationTypeTanh:
                 _func = Detail::CpuTanh;
+                break;
+            case UnaryOperationTypeZero:
+                _func = Detail::CpuZero;
                 break;
             default:
                 assert(0);

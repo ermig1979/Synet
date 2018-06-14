@@ -184,6 +184,12 @@ namespace Synet
             dst[i] = std::max(a[i], b[i]);
     }
 
+    template <typename T> void CpuMin(const T * a, const T * b, size_t size, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = std::min(a[i], b[i]);
+    }
+
     template <typename T> void CpuSqr(const T * src, size_t size, T * dst)
     {
         for (size_t i = 0; i < size; ++i)

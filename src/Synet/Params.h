@@ -141,6 +141,7 @@ namespace Synet
         EltwiseOperationTypeProduct,
         EltwiseOperationTypeSum,
         EltwiseOperationTypeMax,
+        EltwiseOperationTypeMin,
         EltwiseOperationTypeSize
     };
 
@@ -151,6 +152,7 @@ namespace Synet
             "Product",
             "Sum",
             "Max",
+            "Min",
         };
         return (value > EltwiseOperationTypeUnknown && value < EltwiseOperationTypeSize) ? names[value] : "";
     }
@@ -335,6 +337,7 @@ namespace Synet
         UnaryOperationTypeRsqrt,
         UnaryOperationTypeSqrt,
         UnaryOperationTypeTanh,
+        UnaryOperationTypeZero,
         UnaryOperationTypeSize
     };
 
@@ -346,6 +349,7 @@ namespace Synet
             "Rsqrt",
             "Sqrt",
             "Tanh",
+            "Zero",
         };
         return (value > UnaryOperationTypeUnknown && value < UnaryOperationTypeSize) ? names[value] : "";
     }

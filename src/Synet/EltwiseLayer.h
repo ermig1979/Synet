@@ -52,6 +52,11 @@ namespace Synet
                 for (size_t i = 2; i < count; ++i)
                     CpuMax(dst, src[i], size, dst);
                 break;
+            case EltwiseOperationTypeMin:
+                CpuMax(src[0], src[1], size, dst);
+                for (size_t i = 2; i < count; ++i)
+                    CpuMax(dst, src[i], size, dst);
+                break;
             default:
                 assert(0);
             }
