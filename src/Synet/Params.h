@@ -45,6 +45,7 @@ namespace Synet
         LayerTypeUnknown = -1,
         LayerTypeBatchNorm,
         LayerTypeBias,
+        LayerTypeCast,
         LayerTypeConcat,
         LayerTypeConvolution,
         LayerTypeDetectionOutput,
@@ -88,6 +89,7 @@ namespace Synet
         {
             "BatchNorm",
             "Bias",
+            "Cast",
             "Concat",
             "Convolution",
             "DetectionOutput",
@@ -375,6 +377,11 @@ namespace Synet
         SYNET_PARAM_VALUE(Shape, dim, Shape());
     };
 
+    struct CastParam
+    {
+        SYNET_PARAM_VALUE(TensorType, type, TensorTypeUnknown);
+    };
+
     struct BatchNormParam
     {
         SYNET_PARAM_VALUE(bool, useGlobalStats, true);
@@ -608,6 +615,7 @@ namespace Synet
 
         SYNET_PARAM_STRUCT(BatchNormParam, batchNorm);
         SYNET_PARAM_STRUCT(BiasParam, bias);
+        SYNET_PARAM_STRUCT(CastParam, cast);
         SYNET_PARAM_STRUCT(ConcatParam, concat);
         SYNET_PARAM_STRUCT(ConvolutionParam, convolution);
         SYNET_PARAM_STRUCT(DetectionOutputParam, detectionOutput);

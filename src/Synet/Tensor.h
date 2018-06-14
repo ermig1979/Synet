@@ -97,21 +97,25 @@ namespace Synet
 
         SYNET_INLINE Tensor<int32_t> & As32i()
         {
+            assert(_type == TensorTypeUnknown || _type == TensorType32i);
             return *(Tensor<int32_t>*)this;
         }
 
         SYNET_INLINE const Tensor<int32_t> & As32i() const
         {
+            assert(_type == TensorTypeUnknown || _type == TensorType32i);
             return *(const Tensor<int32_t>*)this;
         }
 
         SYNET_INLINE Tensor<float> & As32f()
         {
+            assert(_type == TensorTypeUnknown || _type == TensorType32f);
             return *(Tensor<float>*)this;
         }
 
         SYNET_INLINE const Tensor<float> & As32f() const
         {
+            assert(_type == TensorTypeUnknown || _type == TensorType32f);
             return *(const Tensor<float>*)this;
         }
 

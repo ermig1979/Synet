@@ -26,6 +26,7 @@
 
 #include "Synet/BatchNormLayer.h"
 #include "Synet/BiasLayer.h"
+#include "Synet/CastLayer.h"
 #include "Synet/ConcatLayer.h"
 #include "Synet/ConvolutionLayer.h"
 #include "Synet/DetectionOutputLayer.h"
@@ -438,6 +439,7 @@ namespace Synet
             {
             case LayerTypeBatchNorm: return new BatchNormLayer<T>(param);
             case LayerTypeBias: return new BiasLayer<T>(param);
+            case LayerTypeCast: return new CastLayer<T>(param);
             case LayerTypeConcat: return new ConcatLayer<T>(param);
             case LayerTypeConvolution: return new ConvolutionLayer<T>(param);
             case LayerTypeDetectionOutput: return new DetectionOutputLayer<T>(param);

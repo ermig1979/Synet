@@ -178,6 +178,11 @@ namespace Synet
                     if (!ConvertMetaLayer(node, layer))
                         return false;
                 }
+                else if (type == "Cast")
+                {
+                    if (!ConvertCastLayer(node, layer))
+                        return false;
+                }
                 else if (type == "Conv2D" || type == "DepthwiseConv2dNative")
                 {
                     if (!ConvertConvolutionLayer(node, layer, weight))
@@ -410,6 +415,14 @@ namespace Synet
                     layer.src().push_back(node.input(0));
                     layer.dst().push_back(layer.name());
                 }
+                else if(type == "Switch" || type == "Merge" || type == "Unpack" || type == "Split")
+                {
+                    layer.type() = LayerTypeStub;
+                    for(size_t j = 0; j < node.input_size(); ++j)
+                        layer.src().push_back(node.input(j));
+                    layer.dst().push_back(layer.name());
+                    layer.dst().push_back(layer.name() + ":1");
+                }
                 else
                 {
                     SetNotImplemented(layer, node);
@@ -421,6 +434,21 @@ namespace Synet
         }
 
         //---------------------------------------------------------------------
+
+        bool ConvertCastLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer)
+        {
+            layer.type() = LayerTypeCast;
+            layer.src().push_back(node.input(0));
+            const tensorflow::AttrValue & attr = node.attr().at("DstT");
+            if (attr.type() == tensorflow::DT_FLOAT)
+                layer.cast().type() = TensorType32f;
+            else if (attr.type() == tensorflow::DT_INT32)
+                layer.cast().type() = TensorType32i;
+            else
+                assert(0);
+            layer.dst().push_back(layer.name());
+            return true;
+        }
 
         bool ConvertConvolutionLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Tensors & weight)
         {
@@ -714,12 +742,17 @@ namespace Synet
             else if (type == "TensorArrayV3" || type == "Enter")
             {
                 layer.meta().type() = MetaTypeStub;
+                layer.src().push_back(node.input(0));
             }
             else
             {
                 SetNotImplemented(layer, node);
             }
             layer.dst().push_back(layer.name());
+            if (type == "TensorArrayV3")
+            {
+                layer.dst().push_back(layer.name() + ":1");
+            }
             _meta.insert(node.name());
             return true;
         }
