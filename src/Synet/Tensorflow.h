@@ -30,7 +30,7 @@
 
 #ifdef _MSC_VER
 #pragma warning (push)
-#pragma warning (disable: 4267 4800 4554)
+#pragma warning (disable: 4267 4800 4554 4244)
 #endif
 
 #include "tensorflow/core/public/session.h"
@@ -400,6 +400,13 @@ namespace Synet
                     layer.src().push_back(node.input(1));
                     layer.dst().push_back(layer.name());
                 }
+                else if (type == "Gather")
+                {
+                    layer.type() = LayerTypeStub;
+                    layer.src().push_back(node.input(0));
+                    layer.src().push_back(node.input(1));
+                    layer.dst().push_back(layer.name());
+                }
                 else if (type == "Abs" || type == "Rsqrt" || type == "Sqrt" || type == "Tanh" || type == "ZerosLike")
                 {
                     if (!ConvertUnaryOperationLayer(node, layer))
@@ -414,7 +421,7 @@ namespace Synet
                 else if(type == "Switch" || type == "Merge" || type == "Unpack" || type == "Split")
                 {
                     layer.type() = LayerTypeStub;
-                    for(size_t j = 0; j < node.input_size(); ++j)
+                    for(int j = 0; j < node.input_size(); ++j)
                         layer.src().push_back(node.input(j));
                     layer.dst().push_back(layer.name());
                     layer.dst().push_back(layer.name() + ":1");

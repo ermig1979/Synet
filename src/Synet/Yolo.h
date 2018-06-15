@@ -141,6 +141,10 @@ namespace Synet
         {
             switch (src.type)
             {
+            case ::AVGPOOL:
+                if (!ConvertAveragePoolingLayer(src, dst))
+                    return false;
+                break;
             case ::CONVOLUTIONAL:
                 if (!ConvertConvolitionLayer(src, dst, weight))
                     return false;
@@ -181,6 +185,10 @@ namespace Synet
                 if (!ConvertActivationLayer(src, dst))
                     return false;
                 break;
+            case ::SOFTMAX:
+                if (!ConvertSoftmaxLayer(src, dst))
+                    return false;
+                break;
             case ::UPSAMPLE:
                 if (!ConvertUpsampleLayer(src, dst))
                     return false;
@@ -219,6 +227,19 @@ namespace Synet
                 return false;
             }
             dst.push_back(activation);
+            return true;
+        }
+
+        bool ConvertAveragePoolingLayer(const ::layer & src, LayerParams & dst)
+        {
+            Synet::LayerParam pooling;
+            pooling.type() = Synet::LayerTypePooling;
+            pooling.name() = UniqueName("AvgPool");
+            pooling.src() = dst.back().dst();
+            pooling.dst().resize(1, pooling.name());
+            pooling.pooling().method() = Synet::PoolingMethodTypeAverage;
+            pooling.pooling().globalPooling() = true;
+            dst.push_back(pooling);
             return true;
         }
 
@@ -374,6 +395,17 @@ namespace Synet
             shortcut.src().push_back(_dst[src.index]);
             shortcut.dst().resize(1, shortcut.name());
             dst.push_back(shortcut);
+            return true;
+        }
+
+        bool ConvertSoftmaxLayer(const ::layer & src, LayerParams & dst)
+        {
+            Synet::LayerParam softmax;
+            softmax.type() = Synet::LayerTypeSoftmax;
+            softmax.name() = UniqueName("Softmax");
+            softmax.src().push_back(_dst.back());
+            softmax.dst().push_back(softmax.name());
+            dst.push_back(softmax);
             return true;
         }
 
