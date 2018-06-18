@@ -188,6 +188,13 @@ namespace Synet
                     if (!ConvertConvolutionLayer(node, layer, weight))
                         return false;
                 }
+                else if (type == "Gather")
+                {
+                    layer.type() = LayerTypeGather;
+                    layer.src().push_back(node.input(0));
+                    layer.src().push_back(node.input(1));
+                    layer.dst().push_back(layer.name());
+                }
                 else if (type == "Relu")
                 {
                     layer.type() = LayerTypeRelu;
@@ -400,19 +407,12 @@ namespace Synet
                     layer.src().push_back(node.input(1));
                     layer.dst().push_back(layer.name());
                 }
-                else if (type == "Gather")
-                {
-                    layer.type() = LayerTypeStub;
-                    layer.src().push_back(node.input(0));
-                    layer.src().push_back(node.input(1));
-                    layer.dst().push_back(layer.name());
-                }
                 else if (type == "Abs" || type == "Rsqrt" || type == "Sqrt" || type == "Tanh" || type == "ZerosLike")
                 {
                     if (!ConvertUnaryOperationLayer(node, layer))
                         return false;
                 }
-                else if (type == "NextIteration" || type == "TensorArrayScatterV3" || type == "Identity")
+                else if (type == "NextIteration" || type == "TensorArrayScatterV3" || type == "Identity" || type == "Enter")
                 {
                     layer.type() = LayerTypeStub;
                     layer.src().push_back(node.input(0));
@@ -515,7 +515,7 @@ namespace Synet
             layer.src().push_back(node.input(1));
             if (node.op() == "BiasAdd" || node.op() == "Add")
                 layer.eltwise().operation() = EltwiseOperationTypeSum;
-            else if (node.op() == "Maximim")
+            else if (node.op() == "Maximum")
                 layer.eltwise().operation() = EltwiseOperationTypeMax;
             else if (node.op() == "Minimum")
                 layer.eltwise().operation() = EltwiseOperationTypeMin;
