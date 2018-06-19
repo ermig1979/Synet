@@ -69,6 +69,7 @@ namespace Synet
             case MetaTypeStridedSlice: ReshapeStridedSlice(src, dst); break;
             case MetaTypeStub: /*dst[0]->Reshape({});*/ break;
             case MetaTypeSub: ReshapeSub(src, dst); break;
+            case MetaTypeSwitch: ReshapeSwitch(src, dst); break;
             case MetaTypeTile: ReshapeTile(src, dst); break;
             case MetaTypeUnpack: ReshapeUnpack(src, dst); break;
             default:
@@ -401,6 +402,32 @@ namespace Synet
                 dst0.Reshape(src0.Shape());
                 for (size_t i = 0; i < src0.Size(); ++i)
                     dst0.CpuData()[i] = src0.CpuData()[i] - src1.CpuData()[i];
+            }
+            else
+                assert(0);
+        }
+
+        void ReshapeSwitch(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            assert(src.size() == 2 && src[1]->Size() == 1 && src[1]->GetType() == TensorType32i);
+            int32_t pred = src[1]->As32i().CpuData()[0];
+            if (src[0]->GetType() == TensorType32i)
+            {
+                const Synet::Tensor<int32_t> & src0 = src[0]->As32i();
+                Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
+                Synet::Tensor<int32_t> & dst1 = dst[1]->As32i();
+                if (pred)
+                {
+                    dst0.Reshape(src0.Shape());
+                    for (size_t i = 0; i < src0.Size(); ++i)
+                        dst0.CpuData()[i] = src0.CpuData()[i];
+                }
+                else
+                {
+                    dst1.Reshape(src0.Shape());
+                    for (size_t i = 0; i < src0.Size(); ++i)
+                        dst1.CpuData()[i] = src0.CpuData()[i];
+                }
             }
             else
                 assert(0);

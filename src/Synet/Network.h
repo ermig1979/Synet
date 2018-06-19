@@ -58,6 +58,7 @@
 #include "Synet/SoftmaxLayer.h"
 #include "Synet/SqueezeLayer.h"
 #include "Synet/StubLayer.h"
+#include "Synet/SwitchLayer.h"
 #include "Synet/UnaryOperationLayer.h"
 #include "Synet/UpsampleLayer.h"
 #include "Synet/UnpackLayer.h"
@@ -474,6 +475,7 @@ namespace Synet
             case LayerTypeSoftmax: return new SoftmaxLayer<T>(param);
             case LayerTypeSqueeze: return new SqueezeLayer<T>(param);
             case LayerTypeStub: return new StubLayer<T>(param);
+            case LayerTypeSwitch: return new SwitchLayer<T>(param);
             case LayerTypeUnaryOperation: return new UnaryOperationLayer<T>(param);
             case LayerTypeUnpack: return new UnpackLayer<T>(param);
             case LayerTypeUpsample: return new UpsampleLayer<T>(param);

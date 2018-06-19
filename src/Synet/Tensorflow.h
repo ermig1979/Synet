@@ -298,7 +298,15 @@ namespace Synet
                 {
                     if (!ConvertSubLayer(node, layer, weight))
                         return false;
-                }               
+                }
+                else if (type == "Switch")
+                {
+                    layer.type() = LayerTypeSwitch;
+                    layer.src().push_back(node.input(0));
+                    layer.src().push_back(node.input(1));
+                    layer.dst().push_back(layer.name());
+                    layer.dst().push_back(layer.name() + ":1");
+                }
                 else if (type == "Transpose")
                 {
                     SetNotImplemented(layer, node);
@@ -320,13 +328,13 @@ namespace Synet
                     if (!ConvertUnaryOperationLayer(node, layer))
                         return false;
                 }
-                else if (type == "NextIteration" || type == "TensorArrayScatterV3" || type == "Identity" || type == "Enter")
+                else if (type == "NextIteration" || type == "TensorArrayScatterV3" || type == "Identity" || type == "Enter" || type == "LoopCond")
                 {
                     layer.type() = LayerTypeStub;
                     layer.src().push_back(node.input(0));
                     layer.dst().push_back(layer.name());
                 }
-                else if(type == "Switch" || type == "Merge" || type == "Split")
+                else if(type == "Merge" || type == "Split")
                 {
                     layer.type() = LayerTypeStub;
                     for(int j = 0; j < node.input_size(); ++j)
@@ -696,6 +704,15 @@ namespace Synet
                 layer.meta().type() = MetaTypeSub;
                 layer.src().push_back(node.input(0));
                 layer.src().push_back(node.input(1));
+            }
+            else if (type == "Switch")
+            {
+                layer.meta().type() = MetaTypeSwitch;
+                layer.src().push_back(node.input(0));
+                layer.src().push_back(node.input(1));
+                layer.dst().push_back(layer.name());
+                layer.dst().push_back(layer.name() + ":1");
+                return true;
             }
             else if (type == "Tile")
             {
