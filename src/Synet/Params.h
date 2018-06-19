@@ -79,6 +79,7 @@ namespace Synet
         LayerTypeSqueeze,
         LayerTypeStub,
         LayerTypeUnaryOperation,
+        LayerTypeUnpack,
         LayerTypeUpsample,
         LayerTypeYolo,
         LayerTypeSize
@@ -124,6 +125,7 @@ namespace Synet
             "Squeeze",
             "Stub",
             "UnaryOperation",
+            "Unpack",
             "Upsample",
             "Yolo",
         };
@@ -189,6 +191,7 @@ namespace Synet
         MetaTypeStub,
         MetaTypeSub,
         MetaTypeTile,
+        MetaTypeUnpack,
         MetaTypeSize,
     };
 
@@ -216,6 +219,7 @@ namespace Synet
             "Stub",
             "Sub",
             "Tile",
+            "Unpack",
         };
         return (value > MetaTypeUnknown && value < MetaTypeSize) ? names[value] : "";
     }
@@ -336,6 +340,7 @@ namespace Synet
     {
         UnaryOperationTypeUnknown = -1,
         UnaryOperationTypeAbs,
+        UnaryOperationTypeExp,
         UnaryOperationTypeRsqrt,
         UnaryOperationTypeSqrt,
         UnaryOperationTypeTanh,
@@ -348,6 +353,7 @@ namespace Synet
         static const char * names[UnaryOperationTypeSize] =
         {
             "Abs",
+            "Exp",
             "Rsqrt",
             "Sqrt",
             "Tanh",
@@ -592,6 +598,11 @@ namespace Synet
         SYNET_PARAM_VALUE(UnaryOperationType, type, UnaryOperationTypeUnknown);
     };
 
+    struct UnpackParam
+    {
+        SYNET_PARAM_VALUE(int32_t, axis, 0);
+    };
+
     struct UpsampleParam
     {
         SYNET_PARAM_VALUE(int32_t, stride, 2);
@@ -648,6 +659,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(SliceParam, slice);
         SYNET_PARAM_STRUCT(SoftmaxParam, softmax);
         SYNET_PARAM_STRUCT(UnaryOperationParam, unaryOperation);
+        SYNET_PARAM_STRUCT(UnpackParam, unpack);
         SYNET_PARAM_STRUCT(UpsampleParam, upsample);
         SYNET_PARAM_STRUCT(YoloParam, yolo);
 

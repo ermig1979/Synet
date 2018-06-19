@@ -70,6 +70,7 @@ namespace Synet
             case MetaTypeStub: /*dst[0]->Reshape({});*/ break;
             case MetaTypeSub: ReshapeSub(src, dst); break;
             case MetaTypeTile: ReshapeTile(src, dst); break;
+            case MetaTypeUnpack: ReshapeUnpack(src, dst); break;
             default:
                 assert(0);
             }
@@ -433,6 +434,23 @@ namespace Synet
                 }
                 else
                     assert(0);
+            }
+            else
+                assert(0);
+        }
+
+        void ReshapeUnpack(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            if (src[0]->GetType() == TensorType32i)
+            {
+                Synet::Tensor<int32_t> & src0 = src[0]->As32i();
+                assert(src0.Size() == dst.size());
+                for (size_t i = 0; i < dst.size(); ++i)
+                {
+                    Synet::Tensor<int32_t> & dsti = dst[i]->As32i();
+                    dsti.Reshape({ size_t(1) });
+                    dsti.CpuData()[0] = src0.CpuData()[i];
+                }
             }
             else
                 assert(0);

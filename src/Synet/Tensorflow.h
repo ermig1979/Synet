@@ -178,6 +178,11 @@ namespace Synet
                     if (!ConvertMetaLayer(node, layer))
                         return false;
                 }
+                else if (type == "Add" || type == "BiasAdd")
+                {
+                    if (!ConvertAddLayer(node, layer, weight))
+                        return false;
+                }
                 else if (type == "Cast")
                 {
                     if (!ConvertCastLayer(node, layer))
@@ -188,12 +193,58 @@ namespace Synet
                     if (!ConvertConvolutionLayer(node, layer, weight))
                         return false;
                 }
+                else if (type == "ExpandDims")
+                {
+                    if (!ConvertExpandDimsLayer(node, layer))
+                        return false;
+                }
+                else if (type == "Fill")
+                {
+                    layer.type() = LayerTypeFill;
+                    layer.src().push_back(node.input(0));
+                    const tensorflow::TensorProto & tensor = GetConst(_graph, node, _valueId, 1);
+                    layer.fill().value() = tensor.float_val(0);
+                    layer.dst() = layer.src();
+                }
                 else if (type == "Gather")
                 {
                     layer.type() = LayerTypeGather;
                     layer.src().push_back(node.input(0));
                     layer.src().push_back(node.input(1));
                     layer.dst().push_back(layer.name());
+                }
+                else if (type == "MaxPool")
+                {
+                    if (!ConvertPoolingLayer(node, layer))
+                        return false;
+                }
+                else if (type == "MatMul")
+                {
+                    if (!ConvertInnerProductLayer(node, layer, weight))
+                        return false;
+                }
+                else if (type == "Maximum" || type == "Minimum")
+                {
+                    if (!ConvertEltwiseLayer(node, layer))
+                        return false;
+                }
+                else if (type == "Mul")
+                {
+                    if (!ConvertMulLayer(node, layer, weight))
+                        return false;
+                }
+                else if (type == "Pad")
+                {
+                    assert(node.input_size() == 2);
+                    layer.type() = LayerTypePad;
+                    layer.src().push_back(node.input(0));
+                    layer.src().push_back(node.input(1));
+                    layer.dst().push_back(layer.name());
+                }
+                else if (type == "RealDiv")
+                {
+                    if (!ConvertRealDivLayer(node, layer, weight))
+                        return false;
                 }
                 else if (type == "Relu")
                 {
@@ -208,151 +259,6 @@ namespace Synet
                     layer.restrictRange().upper() = 6;
                     layer.src().push_back(node.input(0));
                     layer.dst().push_back(layer.name());
-                }
-                else if (type == "MaxPool")
-                {
-                    if (!ConvertPoolingLayer(node, layer))
-                        return false;
-                }
-                else if (type == "Sigmoid")
-                {
-                    layer.type() = LayerTypeSigmoid;
-                    layer.src().push_back(node.input(0));
-                    layer.dst().push_back(layer.name());
-                }
-                else if (type == "Softmax")
-                {
-                    layer.type() = LayerTypeSoftmax;
-                    layer.softmax().axis() = 0;
-                    layer.src().push_back(node.input(0));
-                    layer.dst().push_back(layer.name());
-                }
-                else if (type == "BiasAdd" || type == "Add")
-                {
-                    bool haveConst = false;
-                    for (int j = 0; !haveConst && j < node.input_size(); ++j)
-                    {
-                        Pin input = ParsePin(node.input(j));
-                        haveConst = _valueId.find(input.name) != _valueId.end();
-                    }
-                    if (haveConst)
-                    {
-                        layer.src().push_back(node.input(0));
-                        layer.type() = LayerTypeBias;
-                        layer.weight().resize(1);
-                        weight.push_back(Tensor());
-                        ConvertKernel(GetConst(_graph, node, _valueId), weight.back());
-                        layer.weight()[0].dim() = weight.back().Shape();
-                        layer.dst() = layer.src();
-                    }
-                    else
-                    {
-                        if (!ConvertEltwiseLayer(node, layer))
-                            return false;
-                    }
-                }
-                else if (type == "Maximum" || type == "Minimum")
-                {
-                    if (!ConvertEltwiseLayer(node, layer))
-                        return false;
-                }
-                else if (type == "Mul")
-                {
-                    assert(node.input_size() == 2);
-                    ptrdiff_t constIndex = -1, constCount = 0;
-                    for (int j = 0; j < node.input_size(); ++j)
-                    {
-                        Pin input = ParsePin(node.input(j));
-                        if (_valueId.find(input.name) != _valueId.end())
-                        {
-                            assert(constIndex == -1);
-                            constIndex = j;
-                            constCount++;
-                        }
-                    }
-                    assert(constCount < 2);
-                    if (constIndex < 0)
-                    {
-                        if (!ConvertEltwiseLayer(node, layer))
-                            return false;
-                    }
-                    else
-                    {
-                        layer.type() = LayerTypeScale;
-                        layer.src().push_back(node.input(1 - (int)constIndex));
-                        layer.scale().biasTerm() = false;
-                        Tensor scale;
-                        ConvertKernel(GetConst(_graph, node, _valueId), scale);
-                        if (scale.Size() == 1)
-                            layer.scale().axis() = 0;
-                        layer.weight().resize(1);
-                        layer.weight()[0].dim() = scale.Shape();
-                        weight.push_back(scale);
-                        layer.dst().push_back(layer.name());
-                    }
-                }
-                else if (type == "Sub")
-                {
-                    assert(node.input_size() == 2);
-                    ptrdiff_t constIndex = -1, constCount = 0;
-                    for (int j = 0; j < node.input_size(); ++j)
-                    {
-                        Pin input = ParsePin(node.input(j));
-                        if (_valueId.find(input.name) != _valueId.end())
-                        {
-                            assert(constIndex == -1);
-                            constIndex = j;
-                            constCount++;
-                        }
-                    }
-                    if (constCount == 2)
-                    {
-                        if (_iConst.find(node.input(0)) != _iConst.end() && _iConst.find(node.input(1)) != _iConst.end())
-                        {
-                            const ITensor & a = _iConst[node.input(0)];
-                            const ITensor & b = _iConst[node.input(1)];
-                            assert(a.Shape() == b.Shape());
-                            ITensor c(a.Shape());
-                            for (size_t j = 0; j < a.Size(); ++j)
-                                c.CpuData()[j] = a.CpuData()[j] - b.CpuData()[j];
-                            _iConst[node.name()] = c;
-                            _ignore.insert(node.name());
-                            continue;
-                        }
-                        SetNotImplemented(layer, node);
-                    }
-                    else if (constIndex < 0)
-                    {
-                        if (!ConvertEltwiseLayer(node, layer))
-                            return false;
-                    }
-                    else
-                    {
-                        layer.type() = LayerTypeScale;
-                        layer.src().push_back(node.input(1 - (int)constIndex));
-                        layer.scale().biasTerm() = true;
-                        Tensor scale, bias;
-                        ConvertKernel(GetConst(_graph, node, _valueId), bias);
-                        if (constIndex)
-                        {
-                            for (size_t j = 0; j < bias.Size(); ++j)
-                                bias.CpuData()[j] *= -1.0f;
-                        }
-                        scale.Reshape(bias.Shape(), constIndex ? 1.0f : -1.0f);
-                        if (bias.Size() == 1)
-                            layer.scale().axis() = 0;
-                        layer.weight().resize(2);
-                        layer.weight()[0].dim() = scale.Shape();
-                        layer.weight()[1].dim() = bias.Shape();
-                        weight.push_back(scale);
-                        weight.push_back(bias);
-                        layer.dst() = layer.src();
-                    }
-                }
-                else if (type == "MatMul")
-                {
-                    if (!ConvertInnerProductLayer(node, layer, weight))
-                        return false;
                 }
                 else if (type == "Reshape")
                 {
@@ -369,10 +275,18 @@ namespace Synet
                         SetNotImplemented(layer, node);
                     }
                 }
-                else if (type == "ExpandDims")
+                else if (type == "Sigmoid")
                 {
-                    if (!ConvertExpandDimsLayer(node, layer))
-                        return false;
+                    layer.type() = LayerTypeSigmoid;
+                    layer.src().push_back(node.input(0));
+                    layer.dst().push_back(layer.name());
+                }
+                else if (type == "Softmax")
+                {
+                    layer.type() = LayerTypeSoftmax;
+                    layer.softmax().axis() = 0;
+                    layer.src().push_back(node.input(0));
+                    layer.dst().push_back(layer.name());
                 }
                 else if (type == "Squeeze")
                 {
@@ -380,6 +294,11 @@ namespace Synet
                     layer.src().push_back(node.input(0));
                     layer.dst().push_back(layer.name());
                 }
+                else if (type == "Sub")
+                {
+                    if (!ConvertSubLayer(node, layer, weight))
+                        return false;
+                }               
                 else if (type == "Transpose")
                 {
                     SetNotImplemented(layer, node);
@@ -391,23 +310,12 @@ namespace Synet
                     //    layer.permute().order()[j] = ((int*)tensor.tensor_content().c_str())[j];
                     //layer.dst().push_back(layer.name());
                 }
-                else if (type == "Fill")
+                else if (type == "Unpack")
                 {
-                    layer.type() = LayerTypeFill;
-                    layer.src().push_back(node.input(0));
-                    const tensorflow::TensorProto & tensor = GetConst(_graph, node, _valueId, 1);
-                    layer.fill().value() = tensor.float_val(0);
-                    layer.dst() = layer.src();
+                    if (!ConvertUnpackLayer(node, layer))
+                        return false;
                 }
-                else if (type == "Pad")
-                {
-                    assert(node.input_size() == 2);
-                    layer.type() = LayerTypePad;
-                    layer.src().push_back(node.input(0));
-                    layer.src().push_back(node.input(1));
-                    layer.dst().push_back(layer.name());
-                }
-                else if (type == "Abs" || type == "Rsqrt" || type == "Sqrt" || type == "Tanh" || type == "ZerosLike")
+                else if (type == "Abs" || type == "Exp" || type == "Rsqrt" || type == "Sqrt" || type == "Tanh" || type == "ZerosLike")
                 {
                     if (!ConvertUnaryOperationLayer(node, layer))
                         return false;
@@ -418,7 +326,7 @@ namespace Synet
                     layer.src().push_back(node.input(0));
                     layer.dst().push_back(layer.name());
                 }
-                else if(type == "Switch" || type == "Merge" || type == "Unpack" || type == "Split")
+                else if(type == "Switch" || type == "Merge" || type == "Split")
                 {
                     layer.type() = LayerTypeStub;
                     for(int j = 0; j < node.input_size(); ++j)
@@ -437,6 +345,32 @@ namespace Synet
         }
 
         //---------------------------------------------------------------------
+
+        bool ConvertAddLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Tensors & weight)
+        {
+            bool haveConst = false;
+            for (int j = 0; !haveConst && j < node.input_size(); ++j)
+            {
+                Pin input = ParsePin(node.input(j));
+                haveConst = _valueId.find(input.name) != _valueId.end();
+            }
+            if (haveConst)
+            {
+                layer.src().push_back(node.input(0));
+                layer.type() = LayerTypeBias;
+                layer.weight().resize(1);
+                weight.push_back(Tensor());
+                ConvertKernel(GetConst(_graph, node, _valueId), weight.back());
+                layer.weight()[0].dim() = weight.back().Shape();
+                layer.dst() = layer.src();
+            }
+            else
+            {
+                if (!ConvertEltwiseLayer(node, layer))
+                    return false;
+            }
+            return true;
+        }
 
         bool ConvertCastLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer)
         {
@@ -769,6 +703,20 @@ namespace Synet
                 layer.src().push_back(node.input(0));
                 layer.src().push_back(node.input(1));
             }
+            else if (type == "Unpack")
+            {
+                layer.meta().type() = MetaTypeUnpack;
+                layer.src().push_back(node.input(0));
+                int axis = (int)node.attr().at("axis").i();
+                layer.meta().alpha().type() = TensorType32i;
+                layer.meta().alpha().shape().resize(1, 1);
+                layer.meta().alpha().i32().push_back(axis);
+                int num = (int)node.attr().at("num").i();
+                layer.dst().push_back(layer.name());
+                for(int i = 1; i < num; ++i)
+                    layer.dst().push_back(layer.name() + ":" + ValueToString(i));
+                return true;
+            }
             else if (type == "TensorArrayV3" || type == "Enter")
             {
                 layer.meta().type() = MetaTypeStub;
@@ -784,6 +732,43 @@ namespace Synet
                 layer.dst().push_back(layer.name() + ":1");
             }
             _meta.insert(node.name());
+            return true;
+        }
+
+        bool ConvertMulLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Tensors & weight)
+        {
+            assert(node.input_size() == 2);
+            ptrdiff_t constIndex = -1, constCount = 0;
+            for (int j = 0; j < node.input_size(); ++j)
+            {
+                Pin input = ParsePin(node.input(j));
+                if (_valueId.find(input.name) != _valueId.end())
+                {
+                    assert(constIndex == -1);
+                    constIndex = j;
+                    constCount++;
+                }
+            }
+            assert(constCount < 2);
+            if (constIndex < 0)
+            {
+                if (!ConvertEltwiseLayer(node, layer))
+                    return false;
+            }
+            else
+            {
+                layer.type() = LayerTypeScale;
+                layer.src().push_back(node.input(1 - (int)constIndex));
+                layer.scale().biasTerm() = false;
+                Tensor scale;
+                ConvertKernel(GetConst(_graph, node, _valueId), scale);
+                if (scale.Size() == 1)
+                    layer.scale().axis() = 0;
+                layer.weight().resize(1);
+                layer.weight()[0].dim() = scale.Shape();
+                weight.push_back(scale);
+                layer.dst().push_back(layer.name());
+            }
             return true;
         }
 
@@ -817,6 +802,97 @@ namespace Synet
             return true;
         }
 
+        bool ConvertRealDivLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Tensors & weight)
+        {
+            assert(node.input_size() == 2);
+            ptrdiff_t constIndex = -1, constCount = 0;
+            for (int j = 0; j < node.input_size(); ++j)
+            {
+                Pin input = ParsePin(node.input(j));
+                if (_valueId.find(input.name) != _valueId.end())
+                {
+                    assert(constIndex == -1);
+                    constIndex = j;
+                    constCount++;
+                }
+            }
+            if (constCount == 1 && constIndex == 1)
+            {
+                layer.type() = LayerTypeScale;
+                layer.src().push_back(node.input(0));
+                layer.scale().biasTerm() = false;
+                Tensor divider;
+                ConvertKernel(GetConst(_graph, node, _valueId), divider);
+                assert(divider.Size() == 1);
+                Tensor scale(divider.Shape(), 1.0f / divider.CpuData()[0]);
+                layer.scale().axis() = 0;
+                layer.weight().resize(1);
+                layer.weight()[0].dim() = scale.Shape();
+                weight.push_back(scale);
+                layer.dst().push_back(layer.name());
+            }
+            else
+                assert(0);
+            return true;
+        }
+
+        bool ConvertSubLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Tensors & weight)
+        {
+            assert(node.input_size() == 2);
+            ptrdiff_t constIndex = -1, constCount = 0;
+            for (int j = 0; j < node.input_size(); ++j)
+            {
+                Pin input = ParsePin(node.input(j));
+                if (_valueId.find(input.name) != _valueId.end())
+                {
+                    assert(constIndex == -1);
+                    constIndex = j;
+                    constCount++;
+                }
+            }
+            assert(constCount < 2);
+            if (constIndex < 0)
+            {
+                if (!ConvertEltwiseLayer(node, layer))
+                    return false;
+            }
+            else
+            {
+                layer.type() = LayerTypeScale;
+                layer.src().push_back(node.input(1 - (int)constIndex));
+                layer.scale().biasTerm() = true;
+                Tensor scale, bias;
+                ConvertKernel(GetConst(_graph, node, _valueId), bias);
+                if (constIndex)
+                {
+                    for (size_t j = 0; j < bias.Size(); ++j)
+                        bias.CpuData()[j] *= -1.0f;
+                }
+                scale.Reshape(bias.Shape(), constIndex ? 1.0f : -1.0f);
+                if (bias.Size() == 1)
+                    layer.scale().axis() = 0;
+                layer.weight().resize(2);
+                layer.weight()[0].dim() = scale.Shape();
+                layer.weight()[1].dim() = bias.Shape();
+                weight.push_back(scale);
+                weight.push_back(bias);
+                layer.dst() = layer.src();
+            }
+            return true;
+        }
+
+        bool ConvertUnpackLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer)
+        {
+            layer.type() = LayerTypeUnpack;
+            layer.src().push_back(node.input(0));
+            layer.unpack().axis() = (int)node.attr().at("axis").i();
+            int num = (int)node.attr().at("num").i();
+            layer.dst().push_back(layer.name());
+            for (int i = 1; i < num; ++i)
+                layer.dst().push_back(layer.name() + ":" + ValueToString(i));
+            return true;
+        }
+
         bool ConvertUnaryOperationLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer)
         {
             layer.type() = LayerTypeUnaryOperation;
@@ -824,6 +900,8 @@ namespace Synet
             layer.dst().push_back(layer.name());
             if (node.op() == "Abs")
                 layer.unaryOperation().type() = UnaryOperationTypeAbs;
+            else if (node.op() == "Exp")
+                layer.unaryOperation().type() = UnaryOperationTypeExp;
             else if (node.op() == "Rsqrt")
                 layer.unaryOperation().type() = UnaryOperationTypeRsqrt;
             else if (node.op() == "Sqrt")

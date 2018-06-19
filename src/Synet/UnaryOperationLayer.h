@@ -37,6 +37,12 @@ namespace Synet
                 dst[i] = ::abs(src[i]);
         }
 
+        template <typename T> void CpuExp(const T * src, size_t size, T * dst)
+        {
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = ::exp(src[i]);
+        }
+
         template<class T> void CpuRsqrt(const T * src, size_t size, T * dst)
         {
             for (size_t i = 0; i < size; ++i)
@@ -89,6 +95,9 @@ namespace Synet
             case UnaryOperationTypeAbs:
                 _func = Detail::CpuAbs;
                 break;
+            case UnaryOperationTypeExp:
+                _func = Detail::CpuExp;
+                break;
             case UnaryOperationTypeRsqrt:
                 _func = Detail::CpuRsqrt;
                 break;
@@ -115,6 +124,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
+
             _func(src[0]->CpuData(), src[0]->Size(), dst[0]->CpuData());
         }
 

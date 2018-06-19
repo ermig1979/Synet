@@ -60,6 +60,7 @@
 #include "Synet/StubLayer.h"
 #include "Synet/UnaryOperationLayer.h"
 #include "Synet/UpsampleLayer.h"
+#include "Synet/UnpackLayer.h"
 #include "Synet/YoloLayer.h"
 
 namespace Synet
@@ -474,6 +475,7 @@ namespace Synet
             case LayerTypeSqueeze: return new SqueezeLayer<T>(param);
             case LayerTypeStub: return new StubLayer<T>(param);
             case LayerTypeUnaryOperation: return new UnaryOperationLayer<T>(param);
+            case LayerTypeUnpack: return new UnpackLayer<T>(param);
             case LayerTypeUpsample: return new UpsampleLayer<T>(param);
             case LayerTypeYolo: return new YoloLayer<T>(param);
             default:

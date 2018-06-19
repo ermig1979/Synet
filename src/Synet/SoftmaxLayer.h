@@ -27,6 +27,7 @@
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
 #include "Synet/Math.h"
+#include "Synet/UnaryOperationLayer.h"
 
 namespace Synet
 {
@@ -51,7 +52,7 @@ namespace Synet
                 d += inner;
             }
 
-            Synet::CpuExp(dst, channels*inner, dst);
+            CpuExp(dst, channels*inner, dst);
 
             Synet::CpuCopy(dst, inner, buffer);
             d = dst + inner;
