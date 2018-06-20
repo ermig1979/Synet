@@ -328,7 +328,7 @@ namespace Synet
                     if (!ConvertUnaryOperationLayer(node, layer))
                         return false;
                 }
-                else if (type == "NextIteration" || type == "TensorArrayScatterV3" || type == "Identity" || type == "Enter" || type == "LoopCond")
+                else if (type == "NextIteration" || type == "TensorArrayScatterV3" || type == "Identity" || type == "Enter" || type == "LoopCond" || type == "Exit")
                 {
                     layer.type() = LayerTypeStub;
                     layer.src().push_back(node.input(0));
@@ -353,6 +353,16 @@ namespace Synet
         }
 
         //---------------------------------------------------------------------
+
+        void AddSrcDst(const ::tensorflow::NodeDef & node, int src, int dst, Synet::LayerParam & layer)
+        {
+            for(int i = 0; i < src; ++i)
+                layer.src().push_back(node.input(i));
+            if(dst)
+                layer.dst().push_back(layer.name());
+            for (int i = 1; i < dst; ++i)
+                layer.dst().push_back(layer.name() + ":" + ValueToString(i));
+        }
 
         bool ConvertAddLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Tensors & weight)
         {
@@ -580,13 +590,11 @@ namespace Synet
             if (type == "Add")
             {
                 layer.meta().type() = MetaTypeAdd;
-                layer.src().push_back(node.input(0));
-                layer.src().push_back(node.input(1));
+                AddSrcDst(node, 2, 1, layer);
             }
             else if (type == "Cast")
             {
                 layer.meta().type() = MetaTypeCast;
-                layer.src().push_back(node.input(0));
                 const tensorflow::AttrValue & attr = node.attr().at("DstT");
                 if (attr.type() == tensorflow::DT_FLOAT)
                     layer.meta().alpha().type() = TensorType32f;
@@ -594,7 +602,8 @@ namespace Synet
                     layer.meta().alpha().type() = TensorType32i;
                 else
                     assert(0);
-            }            
+                AddSrcDst(node, 1, 1, layer);
+            }
             else if (type == "Concat" || type == "ConcatV2")
             {
                 layer.meta().type() = MetaTypePack;
@@ -604,6 +613,7 @@ namespace Synet
                     if (j != axisId)
                         layer.src().push_back(node.input(j));
                 }
+                AddSrcDst(node, 0, 1, layer);
             }
             else if (type == "Const")
             {
@@ -619,36 +629,49 @@ namespace Synet
                 else
                     ConvertKernel<int, int>(src, dst);
                 dst.Export(layer.meta().alpha());
+                AddSrcDst(node, 0, 1, layer);
             }
             else if (type == "ExpandDims")
             {
                 layer.meta().type() = MetaTypeExpandDims;
-                layer.src().push_back(node.input(0));
-                layer.src().push_back(node.input(1));
+                AddSrcDst(node, 2, 1, layer);
             }
             else if (type == "Fill")
             {
                 layer.meta().type() = MetaTypeFill;
-                layer.src().push_back(node.input(0));
-                layer.src().push_back(node.input(1));
+                AddSrcDst(node, 2, 1, layer);
+            }
+            else if (type == "Gather")
+            {
+                layer.meta().type() = MetaTypeGather;
+                AddSrcDst(node, 2, 1, layer);
+            }
+            else if (type == "Greater")
+            {
+                layer.meta().type() = MetaTypeGreater;
+                AddSrcDst(node, 2, 1, layer);
+            }
+            else if (type == "Maximum")
+            {
+                layer.meta().type() = MetaTypeMaximum;
+                AddSrcDst(node, 2, 1, layer);
             }
             else if (type == "Minimum")
             {
                 layer.meta().type() = MetaTypeMinimum;
-                for (int j = 0; j < node.input_size(); ++j)
-                    layer.src().push_back(node.input(j));
+                AddSrcDst(node, 2, 1, layer);
             }
             else if (type == "Mul")
             {
                 layer.meta().type() = MetaTypeMul;
-                layer.src().push_back(node.input(0));
-                layer.src().push_back(node.input(1));
+                AddSrcDst(node, 2, 1, layer);
             }
             else if (type == "Pack")
             {
                 layer.meta().type() = MetaTypePack;
                 for (int j = 0; j < node.input_size(); ++j)
                     layer.src().push_back(node.input(j));
+                layer.dst().push_back(layer.name());
             }
             else if (type == "Range")
             {
@@ -656,28 +679,33 @@ namespace Synet
                 layer.src().push_back(node.input(0));
                 layer.src().push_back(node.input(1));
                 layer.src().push_back(node.input(2));
+                layer.dst().push_back(layer.name());
             }
             else if (type == "RealDiv")
             {
                 layer.meta().type() = MetaTypeRealDiv;
                 layer.src().push_back(node.input(0));
                 layer.src().push_back(node.input(1));
+                layer.dst().push_back(layer.name());
             }
             else if (type == "Reshape")
             {
                 layer.meta().type() = MetaTypeReshape;
                 layer.src().push_back(node.input(0));
                 layer.src().push_back(node.input(1));
+                layer.dst().push_back(layer.name());
             }
             else if (type == "Rsqrt")
             {
                 layer.meta().type() = MetaTypeRsqrt;
                 layer.src().push_back(node.input(0));
+                layer.dst().push_back(layer.name());
             }
             else if (type == "Shape")
             {
                 layer.meta().type() = MetaTypeShape;
                 layer.src().push_back(node.input(0));
+                layer.dst().push_back(layer.name());
             }
             else if (type == "Slice")
             {
@@ -685,11 +713,13 @@ namespace Synet
                 layer.src().push_back(node.input(0));
                 layer.src().push_back(node.input(1));
                 layer.src().push_back(node.input(2));
+                layer.dst().push_back(layer.name());
             }
             else if (type == "Sqrt")
             {
                 layer.meta().type() = MetaTypeSqrt;
                 layer.src().push_back(node.input(0));
+                layer.dst().push_back(layer.name());
             }
             else if (type == "StridedSlice")
             {
@@ -698,12 +728,14 @@ namespace Synet
                 layer.src().push_back(node.input(1));
                 layer.src().push_back(node.input(2));
                 layer.src().push_back(node.input(3));
+                layer.dst().push_back(layer.name());
             }
             else if (type == "Sub")
             {
                 layer.meta().type() = MetaTypeSub;
                 layer.src().push_back(node.input(0));
                 layer.src().push_back(node.input(1));
+                layer.dst().push_back(layer.name());
             }
             else if (type == "Switch")
             {
@@ -712,13 +744,28 @@ namespace Synet
                 layer.src().push_back(node.input(1));
                 layer.dst().push_back(layer.name());
                 layer.dst().push_back(layer.name() + ":1");
-                return true;
+            }
+            else if (type == "TensorArrayV3")
+            {
+                layer.meta().type() = MetaTypeTensorArray;
+                layer.src().push_back(node.input(0));
+                tensorflow::AttrValue attr = node.attr().at("dtype");
+                tensorflow::DataType dtype = attr.type();
+                if (dtype == tensorflow::DT_FLOAT)
+                    layer.meta().alpha().type() = TensorType32f;
+                else if (dtype == tensorflow::DT_INT32)
+                    layer.meta().alpha().type() = TensorType32i;
+                else
+                    assert(0);
+                layer.dst().push_back(layer.name());
+                layer.dst().push_back(layer.name() + ":1");
             }
             else if (type == "Tile")
             {
                 layer.meta().type() = MetaTypeTile;
                 layer.src().push_back(node.input(0));
                 layer.src().push_back(node.input(1));
+                layer.dst().push_back(layer.name());
             }
             else if (type == "Unpack")
             {
@@ -732,21 +779,16 @@ namespace Synet
                 layer.dst().push_back(layer.name());
                 for(int i = 1; i < num; ++i)
                     layer.dst().push_back(layer.name() + ":" + ValueToString(i));
-                return true;
             }
-            else if (type == "TensorArrayV3" || type == "Enter")
+            else if (type == "Enter" || type == "Squeeze")
             {
                 layer.meta().type() = MetaTypeStub;
                 layer.src().push_back(node.input(0));
+                layer.dst().push_back(layer.name());
             }
             else
             {
                 SetNotImplemented(layer, node);
-            }
-            layer.dst().push_back(layer.name());
-            if (type == "TensorArrayV3")
-            {
-                layer.dst().push_back(layer.name() + ":1");
             }
             _meta.insert(node.name());
             return true;
@@ -1146,7 +1188,7 @@ namespace Synet
 
         bool IsMeta(const tensorflow::NodeDef & node)
         {
-            if (node.op() == "Shape" || node.op() == "Const" || node.op() == "TensorArraySizeV3")
+            if (node.op() == "Shape" || node.op() == "Const" || node.op() == "TensorArraySizeV3" || node.op() == "TensorArrayReadV3" || node.op() == "TensorArrayV3")
                 return true;
 
             int meta = 0, fConst = 0;

@@ -59,9 +59,9 @@ namespace Synet
 
             int pred = src[1]->As32i().CpuData()[0];
             if (pred)
-                CpuCopy(src[0]->CpuData(), src[0]->Size(), dst[0]->CpuData());
-            else
                 CpuCopy(src[0]->CpuData(), src[0]->Size(), dst[1]->CpuData());
+            else
+                CpuCopy(src[0]->CpuData(), src[0]->Size(), dst[0]->CpuData());
         }
     };
 }
