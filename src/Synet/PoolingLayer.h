@@ -108,7 +108,9 @@ namespace Synet
 
         virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            _method = this->Param().pooling().method();
+            const PoolingParam & param = this->Param().pooling();
+            _method = param.method();
+            _yoloCompatible = param.yoloCompatible();
         }        
         
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -160,7 +162,7 @@ namespace Synet
                 _strideX = stride.size() > 1 ? stride[1] : stride[0];
             }
 
-            if (param.yoloCompatible())
+            if (_yoloCompatible)
             {
                 _dstX = (_srcX + 2 * _padX) / _strideX;
                 _dstY = (_srcY + 2 * _padY) / _strideY;
@@ -200,7 +202,13 @@ namespace Synet
                 {
                     for (size_t c = 0; c < _channels; ++c)
                     {
-                        Detail::PoolingForwardMaxCpu(pSrc, _srcX, _srcY, _kernelY, _kernelX, _padY, _padX, _strideY, _strideX, pDst, _dstX, _dstY);
+                        size_t srcX = _srcX, srcY = _srcY;
+                        if (_yoloCompatible)
+                        {
+                            srcX = _dstX*_strideX - 2 * _padX;
+                            srcY = _dstY*_strideY - 2 * _padY;
+                        }
+                        Detail::PoolingForwardMaxCpu(pSrc, srcX, srcY, _kernelY, _kernelX, _padY, _padX, _strideY, _strideX, pDst, _dstX, _dstY);
                         pSrc += _srcX * _srcY;
                         pDst += _dstX * _dstY;
                     }
@@ -245,6 +253,7 @@ namespace Synet
 
     private:
         PoolingMethodType _method;
+        bool _yoloCompatible;
         size_t _channels, _srcX, _srcY, _kernelX, _kernelY, _dstX, _dstY, _strideX, _strideY, _padX, _padY;
     };
 }

@@ -74,6 +74,8 @@ namespace Synet
             case MetaTypeSub: ReshapeSub(src, dst); break;
             case MetaTypeSwitch: ReshapeSwitch(src, dst); break;
             case MetaTypeTensorArray: ReshapeTensorArray(src, param.alpha(), dst); break;
+            case MetaTypeTensorArrayRead: ReshapeTensorArrayRead(src, dst); break;
+            case MetaTypeTensorArraySize: ReshapeTensorArraySize(src, dst); break;
             case MetaTypeTile: ReshapeTile(src, dst); break;
             case MetaTypeUnpack: ReshapeUnpack(src, dst); break;
             default:
@@ -512,6 +514,33 @@ namespace Synet
             }
             else
                 assert(0);
+        }
+
+        void ReshapeTensorArrayRead(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            assert(src.size() == 3 && src[1]->Size() == 1 && src[1]->GetType() == TensorType32i && dst.size() == 1);
+            size_t index = src[1]->As32i().CpuData()[0];
+            if (src[0]->GetType() == TensorType32f)
+            {
+                dst[0]->As32f().Reshape({ size_t(1)});
+                dst[0]->As32f().CpuData()[0] = src[0]->As32f().CpuData()[index];
+            }
+            else if (src[0]->GetType() == TensorType32i)
+            {
+                dst[0]->As32i().Reshape({ size_t(1) });
+                dst[0]->As32i().CpuData()[0] = src[0]->As32i().CpuData()[index];
+            }
+            else
+                assert(0);
+        }
+
+        void ReshapeTensorArraySize(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            assert(src.size() == 2 && dst.size() == 2);
+            size_t size = src[0]->Size();
+            dst[0]->As32i().Reshape({ size_t(1) });
+            dst[0]->As32i().CpuData()[0] = (int)size;
+            dst[1]->As32i().Reshape({ size_t(1) });
         }
 
         void ReshapeTile(const TensorPtrs & src, const TensorPtrs & dst)
