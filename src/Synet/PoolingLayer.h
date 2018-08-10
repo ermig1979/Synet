@@ -32,7 +32,7 @@ namespace Synet
 {
     namespace Detail
     {
-        template <class T> void PoolingForwardMaxCpu(const T * src, size_t srcX, size_t srcY, size_t kernelY, size_t kernelX, 
+        template <class T> void PoolingForwardMaxCpu(const T * src, size_t srcStride, size_t srcX, size_t srcY, size_t kernelY, size_t kernelX, 
             size_t padY, size_t padX, size_t strideY, size_t strideX, T * dst, size_t dstX, size_t dstY)
         {
             for (size_t dy = 0; dy < dstY; ++dy)
@@ -48,29 +48,29 @@ namespace Synet
                     T max = -std::numeric_limits<T>::max();
                     for (size_t sy = yStart; sy < yEnd; ++sy)
                         for (size_t sx = xStart; sx < xEnd; ++sx)
-                            max = std::max(max, src[sy * srcX + sx]);
+                            max = std::max(max, src[sy * srcStride + sx]);
                     dst[dy*dstX + dx] = max;
                 }
             }
         }
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-        template <> SYNET_INLINE void PoolingForwardMaxCpu<float>(const float * src, size_t srcX, size_t srcY, size_t kernelY, size_t kernelX,
+        template <> SYNET_INLINE void PoolingForwardMaxCpu<float>(const float * src, size_t srcStride, size_t srcX, size_t srcY, size_t kernelY, size_t kernelX,
             size_t padY, size_t padX, size_t strideY, size_t strideX, float * dst, size_t dstX, size_t dstY)
         {
             if (strideY == 1 && strideX == 1 && kernelY == 3 && kernelX == 3 && padY == 1 && padX == 1)
             {
-                ::SimdNeuralPooling1x1Max3x3(src, srcX, srcX, srcY, dst, dstX);
+                ::SimdNeuralPooling1x1Max3x3(src, srcStride, srcX, srcY, dst, dstX);
                 return;
             }
             if (strideY == 2 && strideX == 2 && kernelY == 3 && kernelX == 3 && padY == 0 && padX == 0)
             {
-                ::SimdNeuralPooling2x2Max3x3(src, srcX, srcX, srcY, dst, dstX);
+                ::SimdNeuralPooling2x2Max3x3(src, srcStride, srcX, srcY, dst, dstX);
                 return;
             }
             if (strideY == 2 && strideX == 2 && kernelY == 2 && kernelX == 2 && padY == 0 && padX == 0)
             {
-                ::SimdNeuralPooling2x2Max2x2(src, srcX, srcX, srcY, dst, dstX);
+                ::SimdNeuralPooling2x2Max2x2(src, srcStride, srcX, srcY, dst, dstX);
                 return;
             }
             for (size_t dy = 0; dy < dstY; ++dy)
@@ -86,7 +86,7 @@ namespace Synet
                     float max = -std::numeric_limits<float>::max();
                     for (size_t sy = yStart; sy < yEnd; ++sy)
                         for (size_t sx = xStart; sx < xEnd; ++sx)
-                            max = std::max(max, src[sy * srcX + sx]);
+                            max = std::max(max, src[sy * srcStride + sx]);
                     dst[dy*dstX + dx] = max;
                 }
             }
@@ -208,7 +208,7 @@ namespace Synet
                             srcX = _dstX*_strideX - 2 * _padX;
                             srcY = _dstY*_strideY - 2 * _padY;
                         }
-                        Detail::PoolingForwardMaxCpu(pSrc, srcX, srcY, _kernelY, _kernelX, _padY, _padX, _strideY, _strideX, pDst, _dstX, _dstY);
+                        Detail::PoolingForwardMaxCpu(pSrc, _srcX, srcX, srcY, _kernelY, _kernelX, _padY, _padX, _strideY, _strideX, pDst, _dstX, _dstY);
                         pSrc += _srcX * _srcY;
                         pDst += _dstX * _dstY;
                     }
