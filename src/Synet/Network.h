@@ -331,13 +331,6 @@ namespace Synet
 
         bool Init()
         {
-            _tensors.clear();
-            _input.clear();
-            _stages.clear();
-            _src.clear();
-            _dst.clear();
-            _back.clear();
-
             const size_t bufs = 1;
             TensorPtrs buf;
             for (size_t i = 0; i < bufs; ++i)

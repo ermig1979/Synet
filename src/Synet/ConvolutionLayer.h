@@ -28,6 +28,7 @@
 #include "Synet/Layer.h"
 #include "Synet/Gemm.h"
 #include "Synet/ImgToCol.h"
+#include "Synet/Winograd.h"
 
 namespace Synet
 {

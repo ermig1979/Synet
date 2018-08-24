@@ -27,6 +27,7 @@
 #include "Synet/Common.h"
 #include "Synet/ScaleLayer.h"
 #include "Synet/Math.h"
+#include "Synet/Gemm.h"
 
 namespace Synet
 {
