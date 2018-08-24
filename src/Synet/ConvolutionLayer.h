@@ -26,7 +26,8 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/Math.h"
+#include "Synet/Gemm.h"
+#include "Synet/ImgToCol.h"
 
 namespace Synet
 {
@@ -200,7 +201,7 @@ namespace Synet
                     if (!_is1x1)
                     {
                         pBuf = buf[0]->CpuData() + _dstSize * n;
-                        ImToCol(pSrc, pBuf);
+                        ImgToCol(pSrc, pBuf);
                     }
                     for (size_t g = 0; g < _group; ++g)
                     {
@@ -218,11 +219,11 @@ namespace Synet
             return true;
         }
 
-        void ImToCol(const T * src, T * dst)
+        void ImgToCol(const T * src, T * dst)
         {
             if (_spatialAxisNum == 2)
             {
-                Synet::ImToCol(src, _srcConvShape[0], _srcConvShape[1], _srcConvShape[2], _kernelShape[0], _kernelShape[1],
+                Synet::ImgToCol(src, _srcConvShape[0], _srcConvShape[1], _srcConvShape[2], _kernelShape[0], _kernelShape[1],
                     _padShape[0], _padShape[1], _strideShape[0], _strideShape[1], _dilationShape[0], _dilationShape[1], dst);
             }
         }
