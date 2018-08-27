@@ -136,6 +136,15 @@ namespace Synet
                 assert(this->Weight()[1].Shape() == biasShape);
             _kernelSize = this->Weight()[0].Size(1);
             _weightOffset = _dstConvChannels * _kernelSize / _group;
+            _winograd = false;
+            if (_kernelShape[0] == 3 && _kernelShape[1] == 3 && _strideShape[0] == 1 && _strideShape[1] == 1 && _dilationShape[0] == 1 && _dilationShape[1] == 1)
+                _winograd = false;
+            if (_winograd)
+            {
+                _winogradWeightStride = _srcChannels*_dstChannels;
+                _winogradWeight.Reshape({ 36, _winogradWeightStride }, 0);
+                WinogradTransformFilter4x3(this->Weight()[0].CpuData(), _srcChannels, _dstChannels, _winogradWeight.CpuData(), _winogradWeightStride);
+            }
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -199,16 +208,28 @@ namespace Synet
                     const Type * pSrc = src[i]->CpuData() + _srcSize * n;
                     Type * pDst = dst[i]->CpuData() + _dstSize * n;
                     Type * pBuf = (Type*)pSrc;
-                    if (!_is1x1)
+                    if (_winograd)
                     {
-                        pBuf = buf[0]->CpuData() + _dstSize * n;
-                        ImgToCol(pSrc, pBuf);
+                        Tensor padded({ src[i]->Axis(1), src[i]->Axis(2) + 2, src[i]->Axis(3) + 2 }, 0);
+                        for (size_t c = 0; c < src[i]->Axis(1); ++c)
+                            for (size_t y = 0; y < src[i]->Axis(2); ++y)
+                                CpuCopy(src[i]->CpuData({size_t(n), c, y, 0 }), src[i]->Axis(3), padded.CpuData({ c, y + 1, 1 }));
+                        WinogradConvolution4x3(padded.CpuData(), _winogradWeight.CpuData(), _winogradWeightStride, pDst, size_t(1), padded.Axis(0), padded.Axis(1), padded.Axis(2), _dstChannels);
                     }
-                    for (size_t g = 0; g < _group; ++g)
+                    else
                     {
-                        CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _dstConvChannels / _group, _dstConvSpatialSize, _kernelSize,
-                            Type(1.0), weight + _weightOffset * g, pBuf + _colOffset * g, Type(0.0), pDst + _dstOffset * g);
+                        if (!_is1x1)
+                        {
+                            pBuf = buf[0]->CpuData() + _dstSize * n;
+                            ImgToCol(pSrc, pBuf);
+                        }
+                        for (size_t g = 0; g < _group; ++g)
+                        {
+                            CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _dstConvChannels / _group, _dstConvSpatialSize, _kernelSize,
+                                Type(1.0), weight + _weightOffset * g, pBuf + _colOffset * g, Type(0.0), pDst + _dstOffset * g);
+                        }
                     }
+
                     if (_biasTerm)
                         CpuAddBias(this->Weight()[1].CpuData(), _dstChannels, _dstSpatialSize, pDst);
                 }
@@ -234,5 +255,9 @@ namespace Synet
         bool _is1x1, _biasTerm;
         size_t _axis, _group, _spatialAxisNum, _srcChannels, _dstChannels, _srcConvChannels, _dstConvChannels, _weightOffset, _kernelSize;
         size_t _channelAxis, _num, _dstConvSpatialSize, _dstSpatialSize, _colOffset, _dstOffset, _srcSize, _dstSize;
+
+        bool _winograd;
+        size_t _winogradWeightStride;
+        Tensor _winogradWeight;
     };
 }

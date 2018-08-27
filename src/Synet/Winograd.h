@@ -31,6 +31,7 @@ namespace Synet
 {
     template <class T> void WinogradTransformFilter4x3(const T * src, size_t srcChannels, size_t dstChannels, T * dst, size_t dstStride)
     {
+        SYNET_PERF_FUNC();
         const T r4 = T(1.0 / 4);
         const T r6 = T(1.0 / 6);
         const T r12 = T(1.0 / 12);
@@ -257,6 +258,7 @@ namespace Synet
 
     template <class T> void WinogradGetTiles4x3(const T * src, size_t srcStride, size_t irows, size_t icols, size_t sizeI, size_t C, T * dst, size_t dstStride, size_t N, size_t ntiles, size_t M)
     {
+        SYNET_PERF_FUNC();
         size_t outHeight = irows - 2;
         size_t outWidth = icols - 2;
         size_t fullOutHeight = outHeight / 4 * 4;
@@ -287,6 +289,7 @@ namespace Synet
 
     template <class T> void WinogradGemm4x3(const T * src, size_t srcStride, size_t irows, size_t icols, const T * filter, size_t filterStride, size_t frows, size_t fcols, T * dst, size_t dstStride, size_t batch)
     {
+        SYNET_PERF_FUNC();
         const T alpha = T(1.0);
         const T beta = T(0.0);
         const size_t lda = fcols;
@@ -302,8 +305,168 @@ namespace Synet
                 const T * a = filter + i * filterStride;
                 const T * b = src + i * srcStride + t * irows * icols;
                 T * c = dst + i * dstStride + t * irows * fcols;
-                CpuGemm(M, N, K, &alpha, a, lda, b, ldb, &beta, c, ldc);
+                CpuGemm(CblasNoTrans, CblasNoTrans, M, N, K, alpha, a, b, beta, c);
             }
         }
+    }
+
+    template <class T> void WinogradTransformOut4x3x1(int x, int y, int nrows, const T * dataSrc, size_t OSTRIDE, T * dataDst, size_t * counter)
+    {
+        size_t coter = *counter;
+        T c1[36];
+        c1[0] = dataSrc[0 * OSTRIDE + coter];
+        c1[1] = dataSrc[1 * OSTRIDE + coter];
+        c1[2] = dataSrc[2 * OSTRIDE + coter];
+        c1[3] = dataSrc[3 * OSTRIDE + coter];
+        c1[4] = dataSrc[4 * OSTRIDE + coter];
+        c1[5] = dataSrc[5 * OSTRIDE + coter];
+        c1[6] = dataSrc[6 * OSTRIDE + coter];
+        c1[7] = dataSrc[7 * OSTRIDE + coter];
+        c1[8] = dataSrc[8 * OSTRIDE + coter];
+        c1[9] = dataSrc[9 * OSTRIDE + coter];
+        c1[10] = dataSrc[10 * OSTRIDE + coter];
+        c1[11] = dataSrc[11 * OSTRIDE + coter];
+        c1[12] = dataSrc[12 * OSTRIDE + coter];
+        c1[13] = dataSrc[13 * OSTRIDE + coter];
+        c1[14] = dataSrc[14 * OSTRIDE + coter];
+        c1[15] = dataSrc[15 * OSTRIDE + coter];
+        c1[16] = dataSrc[16 * OSTRIDE + coter];
+        c1[17] = dataSrc[17 * OSTRIDE + coter];
+        c1[18] = dataSrc[18 * OSTRIDE + coter];
+        c1[19] = dataSrc[19 * OSTRIDE + coter];
+        c1[20] = dataSrc[20 * OSTRIDE + coter];
+        c1[21] = dataSrc[21 * OSTRIDE + coter];
+        c1[22] = dataSrc[22 * OSTRIDE + coter];
+        c1[23] = dataSrc[23 * OSTRIDE + coter];
+        c1[24] = dataSrc[24 * OSTRIDE + coter];
+        c1[25] = dataSrc[25 * OSTRIDE + coter];
+        c1[26] = dataSrc[26 * OSTRIDE + coter];
+        c1[27] = dataSrc[27 * OSTRIDE + coter];
+        c1[28] = dataSrc[28 * OSTRIDE + coter];
+        c1[29] = dataSrc[29 * OSTRIDE + coter];
+        c1[30] = dataSrc[30 * OSTRIDE + coter];
+        c1[31] = dataSrc[31 * OSTRIDE + coter];
+        c1[32] = dataSrc[32 * OSTRIDE + coter];
+        c1[33] = dataSrc[33 * OSTRIDE + coter];
+        c1[34] = dataSrc[34 * OSTRIDE + coter];
+        c1[35] = dataSrc[35 * OSTRIDE + coter];
+
+        T temp[24];
+        temp[0] = c1[0] + c1[6] + c1[12] + c1[18] + c1[24];
+        temp[1] = c1[1] + c1[7] + c1[13] + c1[19] + c1[25];
+        temp[2] = c1[2] + c1[8] + c1[14] + c1[20] + c1[26];
+        temp[3] = c1[3] + c1[9] + c1[15] + c1[21] + c1[27];
+        temp[4] = c1[4] + c1[10] + c1[16] + c1[22] + c1[28];
+        temp[5] = c1[5] + c1[11] + c1[17] + c1[23] + c1[29];
+        temp[6] = c1[6] - c1[12] + 2 * c1[18] - 2 * c1[24];
+        temp[7] = c1[7] - c1[13] + 2 * c1[19] - 2 * c1[25];
+        temp[8] = c1[8] - c1[14] + 2 * c1[20] - 2 * c1[26];
+        temp[9] = c1[9] - c1[15] + 2 * c1[21] - 2 * c1[27];
+        temp[10] = c1[10] - c1[16] + 2 * c1[22] - 2 * c1[28];
+        temp[11] = c1[11] - c1[17] + 2 * c1[23] - 2 * c1[29];
+        temp[12] = c1[6] + c1[12] + 4 * c1[18] + 4 * c1[24];
+        temp[13] = c1[7] + c1[13] + 4 * c1[19] + 4 * c1[25];
+        temp[14] = c1[8] + c1[14] + 4 * c1[20] + 4 * c1[26];
+        temp[15] = c1[9] + c1[15] + 4 * c1[21] + 4 * c1[27];
+        temp[16] = c1[10] + c1[16] + 4 * c1[22] + 4 * c1[28];
+        temp[17] = c1[11] + c1[17] + 4 * c1[23] + 4 * c1[29];
+        temp[18] = c1[6] - c1[12] + 8 * c1[18] - 8 * c1[24] + c1[30];
+        temp[19] = c1[7] - c1[13] + 8 * c1[19] - 8 * c1[25] + c1[31];
+        temp[20] = c1[8] - c1[14] + 8 * c1[20] - 8 * c1[26] + c1[32];
+        temp[21] = c1[9] - c1[15] + 8 * c1[21] - 8 * c1[27] + c1[33];
+        temp[22] = c1[10] - c1[16] + 8 * c1[22] - 8 * c1[28] + c1[34];
+        temp[23] = c1[11] - c1[17] + 8 * c1[23] - 8 * c1[29] + c1[35];
+
+        dataDst[(x + 0) * nrows + y] = temp[0] + temp[1] + temp[2] + temp[3] + temp[4];
+        dataDst[(x + 0) * nrows + y + 1] = temp[1] - temp[2] + 2 * temp[3] - 2 * temp[4];
+        dataDst[(x + 0) * nrows + y + 2] = temp[1] + temp[2] + 4 * temp[3] + 4 * temp[4];
+        dataDst[(x + 0) * nrows + y + 3] = temp[1] - temp[2] + 8 * temp[3] - 8 * temp[4] + temp[5];
+        dataDst[(x + 1) * nrows + y] = temp[6] + temp[7] + temp[8] + temp[9] + temp[10];
+        dataDst[(x + 1) * nrows + y + 1] = temp[7] - temp[8] + 2 * temp[9] - 2 * temp[10];
+        dataDst[(x + 1) * nrows + y + 2] = temp[7] + temp[8] + 4 * temp[9] + 4 * temp[10];
+        dataDst[(x + 1) * nrows + y + 3] = temp[7] - temp[8] + 8 * temp[9] - 8 * temp[10] + temp[11];
+        dataDst[(x + 2) * nrows + y] = temp[12] + temp[13] + temp[14] + temp[15] + temp[16];
+        dataDst[(x + 2) * nrows + y + 1] = temp[13] - temp[14] + 2 * temp[15] - 2 * temp[16];
+        dataDst[(x + 2) * nrows + y + 2] = temp[13] + temp[14] + 4 * temp[15] + 4 * temp[16];
+        dataDst[(x + 2) * nrows + y + 3] = temp[13] - temp[14] + 8 * temp[15] - 8 * temp[16] + temp[17];
+        dataDst[(x + 3) * nrows + y] = temp[18] + temp[19] + temp[20] + temp[21] + temp[22];
+        dataDst[(x + 3) * nrows + y + 1] = temp[19] - temp[20] + 2 * temp[21] - 2 * temp[22];
+        dataDst[(x + 3) * nrows + y + 2] = temp[19] + temp[20] + 4 * temp[21] + 4 * temp[22];
+        dataDst[(x + 3) * nrows + y + 3] = temp[19] - temp[20] + 8 * temp[21] - 8 * temp[22] + temp[23];
+
+        (*counter)++;
+    }
+
+    template <class T> void WinogradTransformOut4x3x1pad(int x, int y, int lenX, int lenY, int nrows, const T * src, size_t OSTRIDE, T * dst, size_t *counter)
+    {
+        if (0 == lenX || 0 == lenY)
+            return;
+
+        T tmp[4 * 4];
+
+        WinogradTransformOut4x3x1(0, 0, 4, src, OSTRIDE, tmp, counter);
+
+        for (int i = 0; i < lenX; ++i)
+            for (int j = 0; j < lenY; ++j)
+                dst[(x + i) * nrows + y + j] = tmp[i * 4 + j];
+    }
+
+    template <class T> void WinogradTransformOut4x3(const T * d, size_t OSTRIDE, const int K, const int ntiles, T * out, const int ldo, const int oH, const int oW, const int N, const int M)
+    {
+        SYNET_PERF_FUNC();
+        int t;
+        int sizeO = oH * oW;
+        const int OHP = oH / 4 * 4;
+        const int OWP = oW / 4 * 4;
+
+        for (t = 0; t < N * K; ++t)
+        {
+            int i, j;
+
+            const int t1 = t / (K * M);
+            const int t2 = (t % (K * M)) / M;
+            const int t3 = t % M;
+
+            T * data = out + (t1 * M * K + t3 * K + t2) * sizeO;
+            size_t tile_offset = t * ntiles;
+            for (i = 0; i < OHP; i += 4)
+            {
+                for (j = 0; j < OWP; j += 4)
+                    WinogradTransformOut4x3x1(i, j, ldo, d, OSTRIDE, data, &tile_offset);
+                WinogradTransformOut4x3x1pad(i, j, 4, oW - j, ldo, d, OSTRIDE, data, &tile_offset);
+            }
+            for (j = 0; j < OWP; j += 4) {
+                WinogradTransformOut4x3x1pad(i, j, oH - i, 4, ldo, d, OSTRIDE, data, &tile_offset);
+            }
+            WinogradTransformOut4x3x1pad(i, j, oH - i, oW - j, ldo, d, OSTRIDE, data, &tile_offset);
+        }
+    }
+
+    template <class T> void WinogradConvolution4x3(const T * in, const T * filter, size_t filterStride, T * out, size_t N, size_t C, size_t H, size_t W, size_t K)
+    {
+        typedef std::vector<T> Vector;
+
+        SYNET_PERF_FUNC();
+
+        const int M = 1;
+        const int outHeight = H - 2;
+        const int outWidth = W - 2;
+        const int sizeI = H * W;
+        const int padHeight = (outHeight + 3) / 4 * 4;
+        const int padWidth = (outWidth + 3) / 4 * 4;
+        const int padTiles = padHeight / 4 * padWidth / 4;
+
+        int htile = (H + 1) / 4;
+        int wtile = (W + 1) / 4;
+
+        size_t ISTRIDE = N * htile * wtile * C +16;
+        Vector imgT(36 * ISTRIDE);
+        WinogradGetTiles4x3(in, W, H, W, H*W, C, imgT.data(), ISTRIDE, N, padTiles, 1);
+
+        size_t OSTRIDE = N * htile * wtile * K;// +16;
+        Vector outT(36 * OSTRIDE);
+        WinogradGemm4x3(imgT.data(), ISTRIDE, C, M * padTiles, filter, filterStride, K, C, outT.data(), OSTRIDE, M);
+
+        WinogradTransformOut4x3(outT.data(), OSTRIDE, K, padTiles, out, outWidth, outHeight, outWidth, N, 1);
     }
 }
