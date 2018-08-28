@@ -331,7 +331,7 @@ namespace Synet
 
         bool Init()
         {
-            const size_t bufs = 1;
+            const size_t bufs = 2;
             TensorPtrs buf;
             for (size_t i = 0; i < bufs; ++i)
             {
