@@ -29,6 +29,216 @@
 
 namespace Synet
 {
+    namespace Winograd2x3
+    {
+        template <class T> void SetFilter(const T * src, size_t srcChannels, size_t dstChannels, T * dst, size_t dstStride)
+        {
+            const T r2 = T(1.0 / 2);
+            const T r4 = T(1.0 / 4);
+            for (size_t m = 0; m < dstChannels; ++m)
+            {
+                for (size_t n = 0; n < srcChannels; ++n)
+                {
+                    T c1[16];
+                    const T * F = src + 9 * (n + m * srcChannels);
+                    c1[0] = F[0];
+                    c1[1] = (F[0] + F[2] + F[1])*r2;
+                    c1[2] = (F[0] + F[2] - F[1])*r2;
+                    c1[3] = F[2];
+                    c1[4] = (F[0] + F[6] + F[3])*r2;
+                    c1[5] = ((F[0] + F[6] + F[3]) + (F[2] + F[8] + F[5]) + (F[1] + F[7] + F[4]))*r4;
+                    c1[6] = ((F[0] + F[6] + F[3]) + (F[2] + F[8] + F[5]) - (F[1] + F[7] + F[4]))*r4;
+                    c1[7] = (F[2] + F[8] + F[5])*r2;
+                    c1[8] = (F[0] + F[6] - F[3])*r2;
+                    c1[9] = ((F[0] + F[6] - F[3]) + (F[2] + F[8] - F[5]) + (F[1] + F[7] - F[4]))*r4;
+                    c1[10] = ((F[0] + F[6] - F[3]) + (F[2] + F[8] - F[5]) - (F[1] + F[7] - F[4]))*r4;
+                    c1[11] = (F[2] + F[8] - F[5])*r2;
+                    c1[12] = F[6];
+                    c1[13] = (F[6] + F[8] + F[7])*r2;
+                    c1[14] = (F[6] + F[8] - F[7])*r2;
+                    c1[15] = F[8];
+
+                    for (size_t x = 0; x < 16; ++x)
+                        dst[x * dstStride + m * srcChannels + n] = c1[x];
+                }
+            }
+        }
+
+        template <class T> void SetInput1(const T * src, size_t srcStride, T * dst, size_t dstStride)
+        {
+            float tmp[16];
+            tmp[0] = src[0*srcStride + 0];
+            tmp[1] = src[0*srcStride + 1];
+            tmp[2] = src[0*srcStride + 2];
+            tmp[3] = src[0*srcStride + 3];
+
+            tmp[4] = src[1*srcStride + 0];
+            tmp[5] = src[1*srcStride + 1];
+            tmp[6] = src[1*srcStride + 2];
+            tmp[7] = src[1*srcStride + 3];
+
+            tmp[8] = src[2*srcStride + 0];
+            tmp[9] = src[2*srcStride + 1];
+            tmp[10] = src[2*srcStride + 2];
+            tmp[11] = src[2*srcStride + 3];
+
+            tmp[12] = src[3*srcStride + 0];
+            tmp[13] = src[3*srcStride + 1];
+            tmp[14] = src[3*srcStride + 2];
+            tmp[15] = src[3*srcStride + 3];
+
+            dst[0 * dstStride] = (tmp[0] - tmp[8]) - (tmp[2] - tmp[10]);
+            dst[1 * dstStride] = (tmp[1] - tmp[9]) + (tmp[2] - tmp[10]);
+            dst[2 * dstStride] = (tmp[2] - tmp[10]) - (tmp[1] - tmp[9]);
+            dst[3 * dstStride] = (tmp[1] - tmp[9]) - (tmp[3] - tmp[11]);
+            dst[4 * dstStride] = (tmp[4] + tmp[8]) - (tmp[6] + tmp[10]);
+            dst[5 * dstStride] = (tmp[5] + tmp[9]) + (tmp[6] + tmp[10]);
+            dst[6 * dstStride] = (tmp[6] + tmp[10]) - (tmp[5] + tmp[9]);
+            dst[7 * dstStride] = (tmp[5] + tmp[9]) - (tmp[7] + tmp[11]);
+            dst[8 * dstStride] = (tmp[8] - tmp[4]) - (tmp[10] - tmp[6]);
+            dst[9 * dstStride] = (tmp[9] - tmp[5]) + (tmp[10] - tmp[6]);
+            dst[10 * dstStride] = (tmp[10] - tmp[6]) - (tmp[9] - tmp[5]);
+            dst[11 * dstStride] = (tmp[9] - tmp[5]) - (tmp[11] - tmp[7]);
+            dst[12 * dstStride] = (tmp[4] - tmp[12]) - (tmp[6] - tmp[14]);
+            dst[13 * dstStride] = (tmp[5] - tmp[13]) + (tmp[6] - tmp[14]);
+            dst[14 * dstStride] = (tmp[6] - tmp[14]) - (tmp[5] - tmp[13]);
+            dst[15 * dstStride] = (tmp[5] - tmp[13]) - (tmp[7] - tmp[15]);
+        }
+
+        template <class T> void SetInput1p(const T * src, size_t srcStride, size_t rowB, size_t rowE, size_t colB, size_t colE, T * dst, size_t dstStride)
+        {
+            float tmp[4 * 4] = { 0 };
+            for (size_t row = rowB; row < rowE; ++row)
+                for (size_t col = colB; col < colE; ++col)
+                    tmp[row * 4 + col] = src[row * srcStride + col];
+            SetInput1(tmp, 4, dst, dstStride);
+        }
+
+        template <class T> void SetInput(const T * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, T * dst, size_t dstStride, bool pad)
+        {
+            size_t dstHeight = pad ? srcHeight : srcHeight - 2;
+            size_t dstWidth = pad ? srcWidth : srcWidth - 2;
+            size_t dstHeightFull = dstHeight / 2 * 2;
+            size_t dstWidthFull = dstWidth / 2 * 2;
+            size_t noseW = std::min<size_t>(4, dstWidth + 1);
+            size_t noseH = std::min<size_t>(4, dstHeight + 1);
+            size_t start = pad ? 2 : 0;
+            if (pad)
+            {
+                if (dstHeight == dstHeightFull)
+                    dstHeightFull -= 2;
+                if (dstWidth == dstWidthFull)
+                    dstWidthFull -= 2;
+                src -= srcWidth + 1;
+            }
+            size_t tailW = dstWidth - dstWidthFull + (pad ? 1 : 2);
+            size_t tailH = dstHeight - dstHeightFull + (pad ? 1 : 2);
+            for (size_t c = 0; c < srcChannels; ++c)
+            {
+                size_t row = 0, col = 0;
+                if (pad)
+                {
+                    if (pad)
+                        SetInput1p(src, srcWidth, 1, noseH, 1, noseW, dst++, dstStride);
+                    for (col = start; col < dstWidthFull; col += 2)
+                        SetInput1p(src + col, srcWidth, 1, noseH, 0, 4, dst++, dstStride);
+                    if (col < dstWidth)
+                        SetInput1p(src + col, srcWidth, 1, noseH, 0, tailW, dst++, dstStride);
+                }
+                for (row = start; row < dstHeightFull; row += 2)
+                {
+                    if (pad)
+                        SetInput1p(src + row * srcWidth, srcWidth, 0, 4, 1, noseW, dst++, dstStride);
+                    for (col = start; col < dstWidthFull; col += 2)
+                        SetInput1(src + row * srcWidth + col, srcWidth, dst++, dstStride);
+                    if (col < dstWidth)
+                        SetInput1p(src + row * srcWidth + col, srcWidth, 0, 4, 0, tailW, dst++, dstStride);
+                }
+                if (row < dstHeight)
+                {
+                    if (pad)
+                        SetInput1p(src + row * srcWidth, srcWidth, 0, tailH, 1, noseW, dst++, dstStride);
+                    for (col = start; col < dstWidthFull; col += 2)
+                        SetInput1p(src + row * srcWidth + col, srcWidth, 0, tailH, 0, 4, dst++, dstStride);
+                    if (col < dstWidth)
+                        SetInput1p(src + row * srcWidth + col, srcWidth, 0, tailH, 0, tailW, dst++, dstStride);
+                }
+                src += srcWidth*srcHeight;
+            }
+        }
+
+        template <class T> void SetOutput1(const T * src, size_t srcStride, T * dst, size_t dstStride)
+        {
+
+            float c1[16];
+            c1[0] = src[0 * srcStride];
+            c1[1] = src[1 * srcStride];
+            c1[2] = src[2 * srcStride];
+            c1[3] = src[3 * srcStride];
+            c1[4] = src[4 * srcStride];
+            c1[5] = src[5 * srcStride];
+            c1[6] = src[6 * srcStride];
+            c1[7] = src[7 * srcStride];
+            c1[8] = src[8 * srcStride];
+            c1[9] = src[9 * srcStride];
+            c1[10] = src[10 * srcStride];
+            c1[11] = src[11 * srcStride];
+            c1[12] = src[12 * srcStride];
+            c1[13] = src[13 * srcStride];
+            c1[14] = src[14 * srcStride];
+            c1[15] = src[15 * srcStride];
+
+            float tmp[8];
+            tmp[0] = c1[0] + c1[1] + c1[2];
+            tmp[1] = c1[1] - c1[2] - c1[3];
+            tmp[2] = c1[4] + c1[5] + c1[6];
+            tmp[3] = c1[5] - c1[6] - c1[7];
+            tmp[4] = c1[8] + c1[9] + c1[10];
+            tmp[5] = c1[9] - c1[10] - c1[11];
+            tmp[6] = c1[12] + c1[13] + c1[14];
+            tmp[7] = c1[13] - c1[14] - c1[15];
+
+            dst[0*dstStride + 0] = tmp[0] + tmp[2] + tmp[4];
+            dst[0*dstStride + 1] = tmp[1] + tmp[3] + tmp[5];
+            dst[1*dstStride + 0] = tmp[2] - tmp[4] - tmp[6];
+            dst[1*dstStride + 1] = tmp[3] - tmp[5] - tmp[7];
+        }
+
+        template <class T> void SetOutput1p(const T * src, size_t srcStride, T * dst, size_t dstStride, size_t rowE, size_t colE)
+        {
+            T tmp[2 * 2];
+            SetOutput1(src, srcStride, tmp, 2);
+            for (size_t row = 0; row < rowE; ++row)
+                for (size_t col = 0; col < colE; ++col)
+                    dst[row*dstStride + col] = tmp[row * 2 + col];
+        }
+
+        template <class T> void SetOutput(const T * src, size_t srcStride, T * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
+        {
+            size_t dstHeightFull = dstHeight / 2 * 2;
+            size_t dstWidthFull = dstWidth / 2 * 2;
+            for (size_t c = 0; c < dstChannels; ++c)
+            {
+                size_t row, col;
+                for (row = 0; row < dstHeightFull; row += 2)
+                {
+                    for (col = 0; col < dstWidthFull; col += 2)
+                        SetOutput1(src++, srcStride, dst + row*dstWidth + col, dstWidth);
+                    if (col < dstWidth)
+                        SetOutput1p(src++, srcStride, dst + row*dstWidth + col, dstWidth, 2, dstWidth - col);
+                }
+                if (row < dstHeight)
+                {
+                    for (col = 0; col < dstWidthFull; col += 2)
+                        SetOutput1p(src++, srcStride, dst + row*dstWidth + col, dstWidth, dstHeight - row, 2);
+                    if (col < dstWidth)
+                        SetOutput1p(src++, srcStride, dst + row*dstWidth + col, dstWidth, dstHeight - row, dstWidth - col);
+                }
+                dst += dstHeight * dstWidth;
+            }
+        }
+    }
+
     namespace Winograd4x3
     {
         template <class T> void SetFilter(const T * src, size_t srcChannels, size_t dstChannels, T * dst, size_t dstStride)
@@ -444,9 +654,18 @@ namespace Synet
                     _dstW = _srcW - 2;
                 }
 
-                _block = 4;
-                _count = 36;
-                _type = Winograd::Winograd4x3;
+                if (1)
+                {
+                    _block = 2;
+                    _count = 16;
+                    _type = Winograd::Winograd2x3;
+                }
+                else
+                {
+                    _block = 4;
+                    _count = 36;
+                    _type = Winograd::Winograd4x3;
+                }
 
                 _tileH = (_dstH + _block - 1) / _block;
                 _tileW = (_dstW + _block - 1) / _block;
@@ -468,6 +687,9 @@ namespace Synet
             _filter.Reshape({ _count, _strideF }, 0);
             switch (_type)
             {
+            case Winograd::Winograd2x3:
+                Winograd2x3::SetFilter(src, _srcC, _dstC, _filter.CpuData(), _strideF);
+                break;
             case Winograd::Winograd4x3:
                 Winograd4x3::SetFilter(src, _srcC, _dstC, _filter.CpuData(), _strideF);
                 break;
@@ -503,6 +725,7 @@ namespace Synet
         enum WinogradType
         {
             WinogradNone,
+            Winograd2x3,
             Winograd4x3,
         } _type;  
 
@@ -518,6 +741,9 @@ namespace Synet
 
             switch (_type)
             {
+            case Winograd::Winograd2x3:
+                Winograd2x3::SetInput(src, _srcC, _srcH, _srcW, dst, _strideS, _pad);
+                break;
             case Winograd::Winograd4x3:
                 Winograd4x3::SetInput(src, _srcC, _srcH, _srcW, dst, _strideS, _pad);
                 break;
@@ -548,6 +774,9 @@ namespace Synet
 
             switch (_type)
             {
+            case Winograd::Winograd2x3:
+                Winograd2x3::SetOutput(src, _strideD, dst, _dstC, _dstH, _dstW);
+                break;
             case Winograd::Winograd4x3:
                 Winograd4x3::SetOutput(src, _strideD, dst, _dstC, _dstH, _dstW);
                 break;
