@@ -136,17 +136,6 @@ namespace Synet
                 assert(this->Weight()[1].Shape() == biasShape);
             _kernelSize = this->Weight()[0].Size(1);
             _weightOffset = _dstConvChannels * _kernelSize / _group;
-            _winograd = false;
-            if (_kernelShape[0] == 3 && _kernelShape[1] == 3 && _strideShape[0] == 1 && _strideShape[1] == 1 && _dilationShape[0] == 1 && _dilationShape[1] == 1)
-                _winograd = false;
-            if (_winograd)
-            {
-                if (_padShape[0] == 1 && _padShape[1] == 1)
-                    _winogradPad = true;
-                _winogradWeightStride = _srcChannels*_dstChannels;
-                _winogradWeight.Reshape({ 36, _winogradWeightStride }, 0);
-                WinogradTransformFilter4x3(this->Weight()[0].CpuData(), _srcChannels, _dstChannels, _winogradWeight.CpuData(), _winogradWeightStride);
-            }
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -192,10 +181,12 @@ namespace Synet
                 else
                     colBufferShape.push_back(_srcShape[i + 1]);
             }
-            if (_winograd)
+            _winograd.Init(_srcConvShape, _dstChannels, _kernelShape, _strideShape, _dilationShape, _padShape, _group);
+            if (_winograd.Enable())
             {
-                buf[0]->Extend({ size_t(_srcChannels * ((_dstShape[0] + 3) / 4) * ((_dstShape[1] + 3) / 4) * 36) });
-                buf[1]->Extend({ size_t(_dstChannels * ((_dstShape[0] + 3) / 4) * ((_dstShape[1] + 3) / 4) * 36) });
+                _winograd.SetFilter(this->Weight()[0].CpuData());
+                buf[0]->Extend({ _winograd.SrcBufSize() });
+                buf[1]->Extend({ _winograd.DstBufSize() });
             }
             else
             {
@@ -218,10 +209,9 @@ namespace Synet
                     const Type * pSrc = src[i]->CpuData() + _srcSize * n;
                     Type * pDst = dst[i]->CpuData() + _dstSize * n;
                     Type * pBuf = (Type*)pSrc;
-                    if (_winograd)
+                    if (_winograd.Enable())
                     {
-                        WinogradConvolution4x3(pSrc, _winogradWeight.CpuData(), _winogradWeightStride, pDst, size_t(1), 
-                            src[i]->Axis(1), src[i]->Axis(2), src[i]->Axis(3), _dstChannels, _winogradPad, buf[0]->CpuData(), buf[1]->CpuData());
+                        _winograd.Convolution(pSrc, buf[0]->CpuData(), buf[1]->CpuData(), pDst);
                     }
                     else
                     {
@@ -263,8 +253,6 @@ namespace Synet
         size_t _axis, _group, _spatialAxisNum, _srcChannels, _dstChannels, _srcConvChannels, _dstConvChannels, _weightOffset, _kernelSize;
         size_t _channelAxis, _num, _dstConvSpatialSize, _dstSpatialSize, _colOffset, _dstOffset, _srcSize, _dstSize;
 
-        bool _winograd, _winogradPad;
-        size_t _winogradWeightStride;
-        Tensor _winogradWeight;
+        Winograd<Type> _winograd;
     };
 }
