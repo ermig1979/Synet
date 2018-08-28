@@ -244,6 +244,7 @@ namespace Synet
             size_t dstWidthFull = dstWidth / 4 * 4;
             size_t noseW = std::min<size_t>(6, dstWidth + 1);
             size_t noseH = std::min<size_t>(6, dstHeight + 1);
+            size_t start = pad ? 4 : 0;
             if (pad)
             {
                 if (dstHeight == dstHeightFull)
@@ -261,16 +262,16 @@ namespace Synet
                 {
                     if (pad)
                         SetInput1p(src, srcWidth, 1, noseH, 1, noseW, dst++, dstStride);
-                    for (col = 4; col < dstWidthFull; col += 4)
+                    for (col = start; col < dstWidthFull; col += 4)
                         SetInput1p(src + col, srcWidth, 1, noseH, 0, 6, dst++, dstStride);
                     if (col < dstWidth)
                         SetInput1p(src + col, srcWidth, 1, noseH, 0, tailW, dst++, dstStride);
                 }
-                for (row = 4; row < dstHeightFull; row += 4)
+                for (row = start; row < dstHeightFull; row += 4)
                 {
                     if (pad)
                         SetInput1p(src + row * srcWidth, srcWidth, 0, 6, 1, noseW, dst++, dstStride);
-                    for (col = 4; col < dstWidthFull; col += 4)
+                    for (col = start; col < dstWidthFull; col += 4)
                         SetInput1(src + row * srcWidth + col, srcWidth, dst++, dstStride);
                     if (col < dstWidth)
                         SetInput1p(src + row * srcWidth + col, srcWidth, 0, 6, 0, tailW, dst++, dstStride);
@@ -279,13 +280,13 @@ namespace Synet
                 {
                     if (pad)
                         SetInput1p(src + row * srcWidth, srcWidth, 0, tailH, 1, noseW, dst++, dstStride);
-                    for (col = 4; col < dstWidthFull; col += 4)
+                    for (col = start; col < dstWidthFull; col += 4)
                         SetInput1p(src + row * srcWidth + col, srcWidth, 0, tailH, 0, 6, dst++, dstStride);
                     if (col < dstWidth)
                         SetInput1p(src + row * srcWidth + col, srcWidth, 0, tailH, 0, tailW, dst++, dstStride);
                 }
+                src += srcWidth*srcHeight;
             }
-            src += srcWidth*srcHeight;
         }
 
         template <class T> void SetOutput1(const T * src, size_t srcStride, T * dst, size_t dstStride)
@@ -438,7 +439,7 @@ namespace Synet
                 }
                 else
                 {
-                    _pad = true;
+                    _pad = false;
                     _dstH = _srcH - 2;
                     _dstW = _srcW - 2;
                 }
