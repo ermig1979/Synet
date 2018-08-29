@@ -66,7 +66,7 @@ namespace Synet
 
         template <class T> void SetInput1(const T * src, size_t srcStride, T * dst, size_t dstStride)
         {
-            float tmp[16];
+            T tmp[16];
             tmp[0] = src[0*srcStride + 0];
             tmp[1] = src[0*srcStride + 1];
             tmp[2] = src[0*srcStride + 2];
@@ -107,7 +107,7 @@ namespace Synet
 
         template <class T> void SetInput1p(const T * src, size_t srcStride, size_t rowB, size_t rowE, size_t colB, size_t colE, T * dst, size_t dstStride)
         {
-            float tmp[4 * 4] = { 0 };
+            T tmp[4 * 4] = { 0 };
             for (size_t row = rowB; row < rowE; ++row)
                 for (size_t col = colB; col < colE; ++col)
                     tmp[row * 4 + col] = src[row * srcStride + col];
@@ -169,8 +169,7 @@ namespace Synet
 
         template <class T> void SetOutput1(const T * src, size_t srcStride, T * dst, size_t dstStride)
         {
-
-            float c1[16];
+            T c1[16];
             c1[0] = src[0 * srcStride];
             c1[1] = src[1 * srcStride];
             c1[2] = src[2 * srcStride];
@@ -188,7 +187,7 @@ namespace Synet
             c1[14] = src[14 * srcStride];
             c1[15] = src[15 * srcStride];
 
-            float tmp[8];
+            T tmp[8];
             tmp[0] = c1[0] + c1[1] + c1[2];
             tmp[1] = c1[1] - c1[2] - c1[3];
             tmp[2] = c1[4] + c1[5] + c1[6];
@@ -237,6 +236,23 @@ namespace Synet
                 dst += dstHeight * dstWidth;
             }
         }
+
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        template <> SYNET_INLINE void SetFilter<float>(const float * src, size_t srcChannels, size_t dstChannels, float * dst, size_t dstStride)
+        {
+            ::SimdWinograd2x3SetFilter(src, srcChannels, dstChannels, dst, dstStride);
+        }
+
+        template <> SYNET_INLINE void SetInput<float>(const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, size_t dstStride, bool pad)
+        {
+            ::SimdWinograd2x3SetInput(src, srcChannels, srcHeight, srcWidth, dst, dstStride, pad ? 1 : 0);
+        }
+
+        template <> SYNET_INLINE void SetOutput<float>(const float * src, size_t srcStride, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
+        {
+            ::SimdWinograd2x3SetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth);
+        }
+#endif
     }
 
     namespace Winograd4x3
@@ -439,7 +455,7 @@ namespace Synet
 
         template <class T> void SetInput1p(const T * src, size_t srcStride, size_t rowB, size_t rowE, size_t colB, size_t colE, T * dst, size_t dstStride)
         {
-            float tmp[6 * 6] = { 0 };
+            T tmp[6 * 6] = { 0 };
             for (size_t row = rowB; row < rowE; ++row)
                 for (size_t col = colB; col < colE; ++col)
                     tmp[row * 6 + col] = src[row * srcStride + col];
@@ -616,6 +632,23 @@ namespace Synet
                 dst += dstHeight * dstWidth;
             }
         }
+
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        template <> SYNET_INLINE void SetFilter<float>(const float * src, size_t srcChannels, size_t dstChannels, float * dst, size_t dstStride)
+        {
+            ::SimdWinograd4x3SetFilter(src, srcChannels, dstChannels, dst, dstStride);
+        }
+
+        template <> SYNET_INLINE void SetInput<float>(const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, size_t dstStride, bool pad)
+        {
+            ::SimdWinograd4x3SetInput(src, srcChannels, srcHeight, srcWidth, dst, dstStride, pad ? 1 : 0);
+        }
+
+        template <> SYNET_INLINE void SetOutput<float>(const float * src, size_t srcStride, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
+        {
+            ::SimdWinograd4x3SetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth);
+        }
+#endif
     }
 
     template <class T> class Winograd
