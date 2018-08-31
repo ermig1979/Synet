@@ -258,6 +258,13 @@ namespace Synet
                 dst += dstHeight * dstWidth;
             }
         }
+
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        template <> SYNET_INLINE void SetInput<float>(const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, bool pad)
+        {
+            ::SimdWinograd2x3iSetInput(src, srcChannels, srcHeight, srcWidth, dst, pad ? 1 : 0);
+        }
+#endif
     }
 
     namespace Winograd2x3p
@@ -337,10 +344,11 @@ namespace Synet
             SetInput1(tmp, 4, dst, dstStride);
         }
 
-        template <class T> void SetInput(const T * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, T * dst, size_t dstStride, bool pad)
+        template <class T> void SetInput(const T * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, T * dst, bool pad)
         {
             size_t dstHeight = pad ? srcHeight : srcHeight - 2;
             size_t dstWidth = pad ? srcWidth : srcWidth - 2;
+            size_t dstStride = ((dstHeight + 1) / 2) * ((dstWidth + 1) / 2)*srcChannels;
             size_t dstHeightFull = dstHeight / 2 * 2;
             size_t dstWidthFull = dstWidth / 2 * 2;
             size_t noseW = std::min<size_t>(4, dstWidth + 1);
@@ -435,8 +443,9 @@ namespace Synet
                     dst[row*dstStride + col] = tmp[row * 2 + col];
         }
 
-        template <class T> void SetOutput(const T * src, size_t srcStride, T * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
+        template <class T> void SetOutput(const T * src, T * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
         {
+            size_t srcStride = ((dstHeight + 1) / 2) * ((dstWidth + 1) / 2)*dstChannels;
             size_t dstHeightFull = dstHeight / 2 * 2;
             size_t dstWidthFull = dstWidth / 2 * 2;
             for (size_t c = 0; c < dstChannels; ++c)
@@ -466,14 +475,14 @@ namespace Synet
             ::SimdWinograd2x3pSetFilter(src, size, dst);
         }
 
-        template <> SYNET_INLINE void SetInput<float>(const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, size_t dstStride, bool pad)
+        template <> SYNET_INLINE void SetInput<float>(const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, bool pad)
         {
-            ::SimdWinograd2x3pSetInput(src, srcChannels, srcHeight, srcWidth, dst, dstStride, pad ? 1 : 0);
+            ::SimdWinograd2x3pSetInput(src, srcChannels, srcHeight, srcWidth, dst, pad ? 1 : 0);
         }
 
-        template <> SYNET_INLINE void SetOutput<float>(const float * src, size_t srcStride, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
+        template <> SYNET_INLINE void SetOutput<float>(const float * src, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
         {
-            ::SimdWinograd2x3pSetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth);
+            ::SimdWinograd2x3pSetOutput(src, dst, dstChannels, dstHeight, dstWidth);
         }
 #endif
     }
@@ -677,10 +686,11 @@ namespace Synet
             SetInput1(tmp, 6, dst, dstStride);
         }
 
-        template <class T> void SetInput(const T * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, T * dst, size_t dstStride, bool pad)
+        template <class T> void SetInput(const T * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, T * dst, bool pad)
         {
             size_t dstHeight = pad ? srcHeight : srcHeight - 2;
             size_t dstWidth = pad ? srcWidth : srcWidth - 2;
+            size_t dstStride = ((dstHeight + 3) / 4) * ((dstWidth + 3) / 4)*srcChannels;
             size_t dstHeightFull = dstHeight / 4 * 4;
             size_t dstWidthFull = dstWidth / 4 * 4;
             size_t noseW = std::min<size_t>(6, dstWidth + 1);
@@ -823,8 +833,9 @@ namespace Synet
                     dst[row*dstStride + col] = tmp[row * 4 + col];
         }
 
-        template <class T> void SetOutput(const T * src, size_t srcStride, T * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
+        template <class T> void SetOutput(const T * src, T * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
         {
+            size_t srcStride = ((dstHeight + 3) / 4) * ((dstWidth + 3) / 4)*dstChannels;
             size_t dstHeightFull = dstHeight / 4 * 4;
             size_t dstWidthFull = dstWidth / 4 * 4;
             for (size_t c = 0; c < dstChannels; ++c)
@@ -854,14 +865,14 @@ namespace Synet
             ::SimdWinograd4x3pSetFilter(src, size, dst);
         }
 
-        template <> SYNET_INLINE void SetInput<float>(const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, size_t dstStride, bool pad)
+        template <> SYNET_INLINE void SetInput<float>(const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, bool pad)
         {
-            ::SimdWinograd4x3pSetInput(src, srcChannels, srcHeight, srcWidth, dst, dstStride, pad ? 1 : 0);
+            ::SimdWinograd4x3pSetInput(src, srcChannels, srcHeight, srcWidth, dst, pad ? 1 : 0);
         }
 
-        template <> SYNET_INLINE void SetOutput<float>(const float * src, size_t srcStride, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
+        template <> SYNET_INLINE void SetOutput<float>(const float * src, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
         {
-            ::SimdWinograd4x3pSetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth);
+            ::SimdWinograd4x3pSetOutput(src, dst, dstChannels, dstHeight, dstWidth);
         }
 #endif
     }
@@ -999,10 +1010,10 @@ namespace Synet
                 Winograd2x3i::SetInput(src, _srcC, _srcH, _srcW, dst, _pad);
                 break;
             case Winograd::Winograd2x3p:
-                Winograd2x3p::SetInput(src, _srcC, _srcH, _srcW, dst, _strideS, _pad);
+                Winograd2x3p::SetInput(src, _srcC, _srcH, _srcW, dst, _pad);
                 break;
             case Winograd::Winograd4x3p:
-                Winograd4x3p::SetInput(src, _srcC, _srcH, _srcW, dst, _strideS, _pad);
+                Winograd4x3p::SetInput(src, _srcC, _srcH, _srcW, dst, _pad);
                 break;
             default:
                 assert(0);
@@ -1049,10 +1060,10 @@ namespace Synet
                 Winograd2x3i::SetOutput(src, dst, _dstC, _dstH, _dstW);
                 break;
             case Winograd::Winograd2x3p:
-                Winograd2x3p::SetOutput(src, _strideD, dst, _dstC, _dstH, _dstW);
+                Winograd2x3p::SetOutput(src, dst, _dstC, _dstH, _dstW);
                 break;
             case Winograd::Winograd4x3p:
-                Winograd4x3p::SetOutput(src, _strideD, dst, _dstC, _dstH, _dstW);
+                Winograd4x3p::SetOutput(src, dst, _dstC, _dstH, _dstW);
                 break;
             default:
                 assert(0);
