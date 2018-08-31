@@ -187,6 +187,9 @@ namespace Synet
                 _winograd.SetFilter(this->Weight()[0].CpuData());
                 buf[0]->Extend({ _winograd.SrcBufSize() });
                 buf[1]->Extend({ _winograd.DstBufSize() });
+#ifdef SYNET_WINOGRAD_COMPARE
+                buf[0]->Extend(colBufferShape);
+#endif
             }
             else
             {
@@ -211,7 +214,23 @@ namespace Synet
                     Type * pBuf = (Type*)pSrc;
                     if (_winograd.Enable())
                     {
+#ifdef SYNET_WINOGRAD_COMPARE
+                        {
+                            std::stringstream ss;
+                            ss << _dstConvChannels << "-" << _dstConvSpatialSize << "-" << _kernelSize << " img2col ";
+                            SYNET_PERF_BLOCK(ss.str().c_str());
+                            ImgToCol(pSrc, buf[0]->CpuData());
+                            CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _dstConvChannels, _dstConvSpatialSize, _kernelSize, Type(1.0), weight, buf[0]->CpuData(), Type(0.0), pDst);
+                        }
+                        {
+                            std::stringstream ss;
+                            ss << _dstConvChannels << "-" << _dstConvSpatialSize << "-" << _kernelSize << " winograd";
+                            SYNET_PERF_BLOCK(ss.str().c_str());
+                            _winograd.Convolution(pSrc, buf[0]->CpuData(), buf[1]->CpuData(), pDst);
+                        }
+#else
                         _winograd.Convolution(pSrc, buf[0]->CpuData(), buf[1]->CpuData(), pDst);
+#endif
                     }
                     else
                     {

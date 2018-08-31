@@ -29,38 +29,261 @@
 
 namespace Synet
 {
-    namespace Winograd2x3
+
+    namespace Winograd2x3i
     {
-        template <class T> void SetFilter(const T * src, size_t srcChannels, size_t dstChannels, T * dst, size_t dstStride)
+        template <class T> void SetFilter(const T * src, size_t size, T * dst)
         {
             const T r2 = T(1.0 / 2);
             const T r4 = T(1.0 / 4);
-            for (size_t m = 0; m < dstChannels; ++m)
+            for (size_t i = 0; i < size; ++i, src += 9, dst += 16)
             {
-                for (size_t n = 0; n < srcChannels; ++n)
-                {
-                    T c1[16];
-                    const T * F = src + 9 * (n + m * srcChannels);
-                    c1[0] = F[0];
-                    c1[1] = (F[0] + F[2] + F[1])*r2;
-                    c1[2] = (F[0] + F[2] - F[1])*r2;
-                    c1[3] = F[2];
-                    c1[4] = (F[0] + F[6] + F[3])*r2;
-                    c1[5] = ((F[0] + F[6] + F[3]) + (F[2] + F[8] + F[5]) + (F[1] + F[7] + F[4]))*r4;
-                    c1[6] = ((F[0] + F[6] + F[3]) + (F[2] + F[8] + F[5]) - (F[1] + F[7] + F[4]))*r4;
-                    c1[7] = (F[2] + F[8] + F[5])*r2;
-                    c1[8] = (F[0] + F[6] - F[3])*r2;
-                    c1[9] = ((F[0] + F[6] - F[3]) + (F[2] + F[8] - F[5]) + (F[1] + F[7] - F[4]))*r4;
-                    c1[10] = ((F[0] + F[6] - F[3]) + (F[2] + F[8] - F[5]) - (F[1] + F[7] - F[4]))*r4;
-                    c1[11] = (F[2] + F[8] - F[5])*r2;
-                    c1[12] = F[6];
-                    c1[13] = (F[6] + F[8] + F[7])*r2;
-                    c1[14] = (F[6] + F[8] - F[7])*r2;
-                    c1[15] = F[8];
+                dst[0] = src[0];
+                dst[1] = (src[0] + src[2] + src[1])*r2;
+                dst[2] = (src[0] + src[2] - src[1])*r2;
+                dst[3] = src[2];
+                dst[4] = (src[0] + src[6] + src[3])*r2;
+                dst[5] = ((src[0] + src[6] + src[3]) + (src[2] + src[8] + src[5]) + (src[1] + src[7] + src[4]))*r4;
+                dst[6] = ((src[0] + src[6] + src[3]) + (src[2] + src[8] + src[5]) - (src[1] + src[7] + src[4]))*r4;
+                dst[7] = (src[2] + src[8] + src[5])*r2;
+                dst[8] = (src[0] + src[6] - src[3])*r2;
+                dst[9] = ((src[0] + src[6] - src[3]) + (src[2] + src[8] - src[5]) + (src[1] + src[7] - src[4]))*r4;
+                dst[10] = ((src[0] + src[6] - src[3]) + (src[2] + src[8] - src[5]) - (src[1] + src[7] - src[4]))*r4;
+                dst[11] = (src[2] + src[8] - src[5])*r2;
+                dst[12] = src[6];
+                dst[13] = (src[6] + src[8] + src[7])*r2;
+                dst[14] = (src[6] + src[8] - src[7])*r2;
+                dst[15] = src[8];
+            }
+        }
 
-                    for (size_t x = 0; x < 16; ++x)
-                        dst[x * dstStride + m * srcChannels + n] = c1[x];
+        template <class T> void SetInput1(const T * src, size_t srcStride, T * dst)
+        {
+            T tmp[16];
+            tmp[0] = src[0 * srcStride + 0];
+            tmp[1] = src[0 * srcStride + 1];
+            tmp[2] = src[0 * srcStride + 2];
+            tmp[3] = src[0 * srcStride + 3];
+
+            tmp[4] = src[1 * srcStride + 0];
+            tmp[5] = src[1 * srcStride + 1];
+            tmp[6] = src[1 * srcStride + 2];
+            tmp[7] = src[1 * srcStride + 3];
+
+            tmp[8] = src[2 * srcStride + 0];
+            tmp[9] = src[2 * srcStride + 1];
+            tmp[10] = src[2 * srcStride + 2];
+            tmp[11] = src[2 * srcStride + 3];
+
+            tmp[12] = src[3 * srcStride + 0];
+            tmp[13] = src[3 * srcStride + 1];
+            tmp[14] = src[3 * srcStride + 2];
+            tmp[15] = src[3 * srcStride + 3];
+
+            dst[0] = (tmp[0] - tmp[8]) - (tmp[2] - tmp[10]);
+            dst[1] = (tmp[1] - tmp[9]) + (tmp[2] - tmp[10]);
+            dst[2] = (tmp[2] - tmp[10]) - (tmp[1] - tmp[9]);
+            dst[3] = (tmp[1] - tmp[9]) - (tmp[3] - tmp[11]);
+            dst[4] = (tmp[4] + tmp[8]) - (tmp[6] + tmp[10]);
+            dst[5] = (tmp[5] + tmp[9]) + (tmp[6] + tmp[10]);
+            dst[6] = (tmp[6] + tmp[10]) - (tmp[5] + tmp[9]);
+            dst[7] = (tmp[5] + tmp[9]) - (tmp[7] + tmp[11]);
+            dst[8] = (tmp[8] - tmp[4]) - (tmp[10] - tmp[6]);
+            dst[9] = (tmp[9] - tmp[5]) + (tmp[10] - tmp[6]);
+            dst[10] = (tmp[10] - tmp[6]) - (tmp[9] - tmp[5]);
+            dst[11] = (tmp[9] - tmp[5]) - (tmp[11] - tmp[7]);
+            dst[12] = (tmp[4] - tmp[12]) - (tmp[6] - tmp[14]);
+            dst[13] = (tmp[5] - tmp[13]) + (tmp[6] - tmp[14]);
+            dst[14] = (tmp[6] - tmp[14]) - (tmp[5] - tmp[13]);
+            dst[15] = (tmp[5] - tmp[13]) - (tmp[7] - tmp[15]);
+        }
+
+        template <class T> void SetInput1p(const T * src, size_t srcStride, size_t rowB, size_t rowE, size_t colB, size_t colE, T * dst)
+        {
+            T tmp[4 * 4] = { 0 };
+            for (size_t row = rowB; row < rowE; ++row)
+                for (size_t col = colB; col < colE; ++col)
+                    tmp[row * 4 + col] = src[row * srcStride + col];
+            SetInput1(tmp, 4, dst);
+        }
+
+        template <class T> void SetInput(const T * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, T * dst, bool pad)
+        {
+            size_t dstHeight = pad ? srcHeight : srcHeight - 2;
+            size_t dstWidth = pad ? srcWidth : srcWidth - 2;
+            size_t dstHeightFull = dstHeight / 2 * 2;
+            size_t dstWidthFull = dstWidth / 2 * 2;
+            size_t noseW = std::min<size_t>(4, dstWidth + 1);
+            size_t noseH = std::min<size_t>(4, dstHeight + 1);
+            size_t start = pad ? 2 : 0;
+            if (pad)
+            {
+                if (dstHeight == dstHeightFull)
+                    dstHeightFull -= 2;
+                if (dstWidth == dstWidthFull)
+                    dstWidthFull -= 2;
+                src -= srcWidth + 1;
+            }
+            size_t tailW = dstWidth - dstWidthFull + (pad ? 1 : 2);
+            size_t tailH = dstHeight - dstHeightFull + (pad ? 1 : 2);
+            for (size_t c = 0; c < srcChannels; ++c)
+            {
+                size_t row = 0, col = 0;
+                if (pad)
+                {
+                    if (pad)
+                        SetInput1p(src, srcWidth, 1, noseH, 1, noseW, dst), dst += 16;
+                    for (col = start; col < dstWidthFull; col += 2)
+                        SetInput1p(src + col, srcWidth, 1, noseH, 0, 4, dst), dst += 16;
+                    if (col < dstWidth)
+                        SetInput1p(src + col, srcWidth, 1, noseH, 0, tailW, dst), dst += 16;
                 }
+                for (row = start; row < dstHeightFull; row += 2)
+                {
+                    if (pad)
+                        SetInput1p(src + row * srcWidth, srcWidth, 0, 4, 1, noseW, dst), dst += 16;
+                    for (col = start; col < dstWidthFull; col += 2)
+                        SetInput1(src + row * srcWidth + col, srcWidth, dst), dst += 16;
+                    if (col < dstWidth)
+                        SetInput1p(src + row * srcWidth + col, srcWidth, 0, 4, 0, tailW, dst), dst += 16;
+                }
+                if (row < dstHeight)
+                {
+                    if (pad)
+                        SetInput1p(src + row * srcWidth, srcWidth, 0, tailH, 1, noseW, dst), dst += 16;
+                    for (col = start; col < dstWidthFull; col += 2)
+                        SetInput1p(src + row * srcWidth + col, srcWidth, 0, tailH, 0, 4, dst), dst += 16;
+                    if (col < dstWidth)
+                        SetInput1p(src + row * srcWidth + col, srcWidth, 0, tailH, 0, tailW, dst), dst += 16;
+                }
+                src += srcWidth*srcHeight;
+            }
+        }
+
+        template <class T> void Gemm(size_t M, size_t N, size_t K, const T * A, const T * B, T * C)
+        {
+            std::vector<T> pB(K * 16);
+            for (size_t j = 0; j < N; ++j)
+            {
+                for (size_t i = 0; i < M; ++i)
+                {
+                    T * c = C + (i * N + j) * 16;
+                    for (size_t l = 0; l < 16; ++l)
+                        c[l] = 0;
+                    if (i == 0)
+                    {
+                        for (size_t k = 0; k < K; ++k)
+                        {
+                            const T * b = B + (k * N + j) * 16;
+                            T * pb = pB.data() + k * 16;
+                            for (size_t l = 0; l < 16; ++l)
+                                pb[l] = b[l];
+                        }
+                    }
+                    const T * b = pB.data();
+                    const T * a = A + (i * K) * 16;
+                    for (size_t k = 0; k < K; ++k)
+                    {
+                        c[0] += a[0] * b[0];
+                        c[1] += a[1] * b[1];
+                        c[2] += a[2] * b[2];
+                        c[3] += a[3] * b[3];
+                        c[4] += a[4] * b[4];
+                        c[5] += a[5] * b[5];
+                        c[6] += a[6] * b[6];
+                        c[7] += a[7] * b[7];
+                        c[8] += a[8] * b[8];
+                        c[9] += a[9] * b[9];
+                        c[10] += a[10] * b[10];
+                        c[11] += a[11] * b[11];
+                        c[12] += a[12] * b[12];
+                        c[13] += a[13] * b[13];
+                        c[14] += a[14] * b[14];
+                        c[15] += a[15] * b[15];
+                        b += 16;
+                        a += 16;
+                    }
+                }
+            }
+        }
+
+        template <class T> void SetOutput1(const T * src, T * dst, size_t dstStride)
+        {
+            T tmp[8];
+            tmp[0] = src[0] + src[1] + src[2];
+            tmp[1] = src[1] - src[2] - src[3];
+            tmp[2] = src[4] + src[5] + src[6];
+            tmp[3] = src[5] - src[6] - src[7];
+            tmp[4] = src[8] + src[9] + src[10];
+            tmp[5] = src[9] - src[10] - src[11];
+            tmp[6] = src[12] + src[13] + src[14];
+            tmp[7] = src[13] - src[14] - src[15];
+
+            dst[0 * dstStride + 0] = tmp[0] + tmp[2] + tmp[4];
+            dst[0 * dstStride + 1] = tmp[1] + tmp[3] + tmp[5];
+            dst[1 * dstStride + 0] = tmp[2] - tmp[4] - tmp[6];
+            dst[1 * dstStride + 1] = tmp[3] - tmp[5] - tmp[7];
+        }
+
+        template <class T> void SetOutput1p(const T * src, T * dst, size_t dstStride, size_t rowE, size_t colE)
+        {
+            T tmp[2 * 2];
+            SetOutput1(src, tmp, 2);
+            for (size_t row = 0; row < rowE; ++row)
+                for (size_t col = 0; col < colE; ++col)
+                    dst[row*dstStride + col] = tmp[row * 2 + col];
+        }
+
+        template <class T> void SetOutput(const T * src, T * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
+        {
+            size_t dstHeightFull = dstHeight / 2 * 2;
+            size_t dstWidthFull = dstWidth / 2 * 2;
+            for (size_t c = 0; c < dstChannels; ++c)
+            {
+                size_t row, col;
+                for (row = 0; row < dstHeightFull; row += 2)
+                {
+                    for (col = 0; col < dstWidthFull; col += 2)
+                        SetOutput1(src, dst + row*dstWidth + col, dstWidth), src += 16;
+                    if (col < dstWidth)
+                        SetOutput1p(src, dst + row*dstWidth + col, dstWidth, 2, dstWidth - col), src += 16;
+                }
+                if (row < dstHeight)
+                {
+                    for (col = 0; col < dstWidthFull; col += 2)
+                        SetOutput1p(src, dst + row*dstWidth + col, dstWidth, dstHeight - row, 2), src += 16;
+                    if (col < dstWidth)
+                        SetOutput1p(src, dst + row*dstWidth + col, dstWidth, dstHeight - row, dstWidth - col), src += 16;
+                }
+                dst += dstHeight * dstWidth;
+            }
+        }
+    }
+
+    namespace Winograd2x3p
+    {
+        template <class T> void SetFilter(const T * src, size_t size, T * dst)
+        {
+            const T r2 = T(1.0 / 2);
+            const T r4 = T(1.0 / 4);
+            for (size_t i = 0; i < size; ++i, src += 9, dst += 1)
+            {
+                dst[0 * size] = src[0];
+                dst[1 * size] = (src[0] + src[2] + src[1])*r2;
+                dst[2 * size] = (src[0] + src[2] - src[1])*r2;
+                dst[3 * size] = src[2];
+                dst[4 * size] = (src[0] + src[6] + src[3])*r2;
+                dst[5 * size] = ((src[0] + src[6] + src[3]) + (src[2] + src[8] + src[5]) + (src[1] + src[7] + src[4]))*r4;
+                dst[6 * size] = ((src[0] + src[6] + src[3]) + (src[2] + src[8] + src[5]) - (src[1] + src[7] + src[4]))*r4;
+                dst[7 * size] = (src[2] + src[8] + src[5])*r2;
+                dst[8 * size] = (src[0] + src[6] - src[3])*r2;
+                dst[9 * size] = ((src[0] + src[6] - src[3]) + (src[2] + src[8] - src[5]) + (src[1] + src[7] - src[4]))*r4;
+                dst[10 * size] = ((src[0] + src[6] - src[3]) + (src[2] + src[8] - src[5]) - (src[1] + src[7] - src[4]))*r4;
+                dst[11 * size] = (src[2] + src[8] - src[5])*r2;
+                dst[12 * size] = src[6];
+                dst[13 * size] = (src[6] + src[8] + src[7])*r2;
+                dst[14 * size] = (src[6] + src[8] - src[7])*r2;
+                dst[15 * size] = src[8];
             }
         }
 
@@ -238,102 +461,94 @@ namespace Synet
         }
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-        template <> SYNET_INLINE void SetFilter<float>(const float * src, size_t srcChannels, size_t dstChannels, float * dst, size_t dstStride)
+        template <> SYNET_INLINE void SetFilter<float>(const float * src, size_t size, float * dst)
         {
-            ::SimdWinograd2x3SetFilter(src, srcChannels, dstChannels, dst, dstStride);
+            ::SimdWinograd2x3pSetFilter(src, size, dst);
         }
 
         template <> SYNET_INLINE void SetInput<float>(const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, size_t dstStride, bool pad)
         {
-            ::SimdWinograd2x3SetInput(src, srcChannels, srcHeight, srcWidth, dst, dstStride, pad ? 1 : 0);
+            ::SimdWinograd2x3pSetInput(src, srcChannels, srcHeight, srcWidth, dst, dstStride, pad ? 1 : 0);
         }
 
         template <> SYNET_INLINE void SetOutput<float>(const float * src, size_t srcStride, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
         {
-            ::SimdWinograd2x3SetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth);
+            ::SimdWinograd2x3pSetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth);
         }
 #endif
     }
 
-    namespace Winograd4x3
+    namespace Winograd4x3p
     {
-        template <class T> void SetFilter(const T * src, size_t srcChannels, size_t dstChannels, T * dst, size_t dstStride)
+        template <class T> void SetFilter(const T * src, size_t size, T * dst)
         {
             const T r4 = T(1.0 / 4);
             const T r6 = T(1.0 / 6);
             const T r12 = T(1.0 / 12);
             const T r24 = T(1.0 / 24);
-            for (size_t m = 0; m < dstChannels; ++m)
+            for (size_t i = 0; i < size; ++i, src += 9, dst += 1)
             {
-                for (size_t n = 0; n < srcChannels; ++n)
-                {
-                    T c1[18];
-                    const T * F = src + 9 * (n + m * srcChannels);
-                    c1[0] = r4 * F[0];
-                    c1[1] = r4 * F[1];
-                    c1[2] = r4 * F[2];
-                    c1[3] = -r6 * (F[0] + F[3] + F[6]);
-                    c1[4] = -r6 * (F[1] + F[4] + F[7]);
-                    c1[5] = -r6 * (F[2] + F[5] + F[8]);
-                    c1[6] = -r6 * (F[0] - F[3] + F[6]);
-                    c1[7] = -r6 * (F[1] - F[4] + F[7]);
-                    c1[8] = -r6 * (F[2] - F[5] + F[8]);
-                    c1[9] = r24 * F[0] + r12 * F[3] + r6 * F[6];
-                    c1[10] = r24 * F[1] + r12 * F[4] + r6 * F[7];
-                    c1[11] = r24 * F[2] + r12 * F[5] + r6 * F[8];
-                    c1[12] = r24 * F[0] - r12 * F[3] + r6 * F[6];
-                    c1[13] = r24 * F[1] - r12 * F[4] + r6 * F[7];
-                    c1[14] = r24 * F[2] - r12 * F[5] + r6 * F[8];
-                    c1[15] = F[6];
-                    c1[16] = F[7];
-                    c1[17] = F[8];
+                T t[18];
+                t[0] = r4 * src[0];
+                t[1] = r4 * src[1];
+                t[2] = r4 * src[2];
+                t[3] = -r6 * (src[0] + src[3] + src[6]);
+                t[4] = -r6 * (src[1] + src[4] + src[7]);
+                t[5] = -r6 * (src[2] + src[5] + src[8]);
+                t[6] = -r6 * (src[0] - src[3] + src[6]);
+                t[7] = -r6 * (src[1] - src[4] + src[7]);
+                t[8] = -r6 * (src[2] - src[5] + src[8]);
+                t[9] = r24 * src[0] + r12 * src[3] + r6 * src[6];
+                t[10] = r24 * src[1] + r12 * src[4] + r6 * src[7];
+                t[11] = r24 * src[2] + r12 * src[5] + r6 * src[8];
+                t[12] = r24 * src[0] - r12 * src[3] + r6 * src[6];
+                t[13] = r24 * src[1] - r12 * src[4] + r6 * src[7];
+                t[14] = r24 * src[2] - r12 * src[5] + r6 * src[8];
+                t[15] = src[6];
+                t[16] = src[7];
+                t[17] = src[8];
 
-                    T c2[36];
-                    c2[0] = r4 * c1[0];
-                    c2[1] = -r6 * (c1[0] + c1[1] + c1[2]);
-                    c2[2] = -r6 * (c1[0] - c1[1] + c1[2]);
-                    c2[3] = r24 * c1[0] + r12 * c1[1] + r6 * c1[2];
-                    c2[4] = r24 * c1[0] - r12 * c1[1] + r6 * c1[2];
-                    c2[5] = c1[2];
+                dst[size * 0] = r4 * t[0];
+                dst[size * 1] = -r6 * (t[0] + t[1] + t[2]);
+                dst[size * 2] = -r6 * (t[0] - t[1] + t[2]);
+                dst[size * 3] = r24 * t[0] + r12 * t[1] + r6 * t[2];
+                dst[size * 4] = r24 * t[0] - r12 * t[1] + r6 * t[2];
+                dst[size * 5] = t[2];
 
-                    c2[6] = r4 * c1[3];
-                    c2[7] = -r6 * (c1[3] + c1[4] + c1[5]);
-                    c2[8] = -r6 * (c1[3] - c1[4] + c1[5]);
-                    c2[9] = r24 * c1[3] + r12 * c1[4] + r6 * c1[5];
-                    c2[10] = r24 * c1[3] - r12 * c1[4] + r6 * c1[5];
-                    c2[11] = c1[5];
+                dst[size * 6] = r4 * t[3];
+                dst[size * 7] = -r6 * (t[3] + t[4] + t[5]);
+                dst[size * 8] = -r6 * (t[3] - t[4] + t[5]);
+                dst[size * 9] = r24 * t[3] + r12 * t[4] + r6 * t[5];
+                dst[size * 10] = r24 * t[3] - r12 * t[4] + r6 * t[5];
+                dst[size * 11] = t[5];
 
-                    c2[12] = r4 * c1[6];
-                    c2[13] = -r6 * (c1[6] + c1[7] + c1[8]);
-                    c2[14] = -r6 * (c1[6] - c1[7] + c1[8]);
-                    c2[15] = r24 * c1[6] + r12 * c1[7] + r6 * c1[8];
-                    c2[16] = r24 * c1[6] - r12 * c1[7] + r6 * c1[8];
-                    c2[17] = c1[8];
+                dst[size * 12] = r4 * t[6];
+                dst[size * 13] = -r6 * (t[6] + t[7] + t[8]);
+                dst[size * 14] = -r6 * (t[6] - t[7] + t[8]);
+                dst[size * 15] = r24 * t[6] + r12 * t[7] + r6 * t[8];
+                dst[size * 16] = r24 * t[6] - r12 * t[7] + r6 * t[8];
+                dst[size * 17] = t[8];
 
-                    c2[18] = r4 * c1[9];
-                    c2[19] = -r6 * (c1[9] + c1[10] + c1[11]);
-                    c2[20] = -r6 * (c1[9] - c1[10] + c1[11]);
-                    c2[21] = r24 * c1[9] + r12 * c1[10] + r6 * c1[11];
-                    c2[22] = r24 * c1[9] - r12 * c1[10] + r6 * c1[11];
-                    c2[23] = c1[11];
+                dst[size * 18] = r4 * t[9];
+                dst[size * 19] = -r6 * (t[9] + t[10] + t[11]);
+                dst[size * 20] = -r6 * (t[9] - t[10] + t[11]);
+                dst[size * 21] = r24 * t[9] + r12 * t[10] + r6 * t[11];
+                dst[size * 22] = r24 * t[9] - r12 * t[10] + r6 * t[11];
+                dst[size * 23] = t[11];
 
-                    c2[24] = r4 * c1[12];
-                    c2[25] = -r6 * (c1[12] + c1[13] + c1[14]);
-                    c2[26] = -r6 * (c1[12] - c1[13] + c1[14]);
-                    c2[27] = r24 * c1[12] + r12 * c1[13] + r6 * c1[14];
-                    c2[28] = r24 * c1[12] - r12 * c1[13] + r6 * c1[14];
-                    c2[29] = c1[14];
+                dst[size * 24] = r4 * t[12];
+                dst[size * 25] = -r6 * (t[12] + t[13] + t[14]);
+                dst[size * 26] = -r6 * (t[12] - t[13] + t[14]);
+                dst[size * 27] = r24 * t[12] + r12 * t[13] + r6 * t[14];
+                dst[size * 28] = r24 * t[12] - r12 * t[13] + r6 * t[14];
+                dst[size * 29] = t[14];
 
-                    c2[30] = r4 * c1[15];
-                    c2[31] = -r6 * (c1[15] + c1[16] + c1[17]);
-                    c2[32] = -r6 * (c1[15] - c1[16] + c1[17]);
-                    c2[33] = r24 * c1[15] + r12 * c1[16] + r6 * c1[17];
-                    c2[34] = r24 * c1[15] - r12 * c1[16] + r6 * c1[17];
-                    c2[35] = c1[17];
-
-                    for (size_t x = 0; x < 36; ++x)
-                        dst[x * dstStride + m * srcChannels + n] = c2[x];
-                }
+                dst[size * 30] = r4 * t[15];
+                dst[size * 31] = -r6 * (t[15] + t[16] + t[17]);
+                dst[size * 32] = -r6 * (t[15] - t[16] + t[17]);
+                dst[size * 33] = r24 * t[15] + r12 * t[16] + r6 * t[17];
+                dst[size * 34] = r24 * t[15] - r12 * t[16] + r6 * t[17];
+                dst[size * 35] = t[17];
             }
         }
 
@@ -634,19 +849,19 @@ namespace Synet
         }
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-        template <> SYNET_INLINE void SetFilter<float>(const float * src, size_t srcChannels, size_t dstChannels, float * dst, size_t dstStride)
+        template <> SYNET_INLINE void SetFilter<float>(const float * src, size_t size, float * dst)
         {
-            ::SimdWinograd4x3SetFilter(src, srcChannels, dstChannels, dst, dstStride);
+            ::SimdWinograd4x3pSetFilter(src, size, dst);
         }
 
         template <> SYNET_INLINE void SetInput<float>(const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, size_t dstStride, bool pad)
         {
-            ::SimdWinograd4x3SetInput(src, srcChannels, srcHeight, srcWidth, dst, dstStride, pad ? 1 : 0);
+            ::SimdWinograd4x3pSetInput(src, srcChannels, srcHeight, srcWidth, dst, dstStride, pad ? 1 : 0);
         }
 
         template <> SYNET_INLINE void SetOutput<float>(const float * src, size_t srcStride, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
         {
-            ::SimdWinograd4x3SetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth);
+            ::SimdWinograd4x3pSetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth);
         }
 #endif
     }
@@ -667,6 +882,8 @@ namespace Synet
             if (!((pad[0] == 0 && pad[1] == 0) || (pad[0] == 1 && pad[1] == 1)))
                 return;
             if (group != 1)
+                return;
+            if (src[0] < 16)
                 return;
             if (kernel[0] == 3 && kernel[1] == 3)
             {
@@ -691,13 +908,13 @@ namespace Synet
                 {
                     _block = 2;
                     _count = 16;
-                    _type = Winograd::Winograd2x3;
+                    _type = Winograd::Winograd2x3p;
                 }
                 else
                 {
                     _block = 4;
                     _count = 36;
-                    _type = Winograd::Winograd4x3;
+                    _type = Winograd::Winograd4x3p;
                 }
 
                 _tileH = (_dstH + _block - 1) / _block;
@@ -720,11 +937,14 @@ namespace Synet
             _filter.Reshape({ _count, _strideF }, 0);
             switch (_type)
             {
-            case Winograd::Winograd2x3:
-                Winograd2x3::SetFilter(src, _srcC, _dstC, _filter.CpuData(), _strideF);
+            case Winograd::Winograd2x3i:
+                Winograd2x3i::SetFilter(src, _srcC*_dstC, _filter.CpuData());
                 break;
-            case Winograd::Winograd4x3:
-                Winograd4x3::SetFilter(src, _srcC, _dstC, _filter.CpuData(), _strideF);
+            case Winograd::Winograd2x3p:
+                Winograd2x3p::SetFilter(src, _srcC*_dstC, _filter.CpuData());
+                break;
+            case Winograd::Winograd4x3p:
+                Winograd4x3p::SetFilter(src, _srcC*_dstC, _filter.CpuData());
                 break;
             default:
                 assert(0);
@@ -758,8 +978,9 @@ namespace Synet
         enum WinogradType
         {
             WinogradNone,
-            Winograd2x3,
-            Winograd4x3,
+            Winograd2x3i,
+            Winograd2x3p,
+            Winograd4x3p,
         } _type;  
 
         bool _pad;
@@ -774,11 +995,14 @@ namespace Synet
 
             switch (_type)
             {
-            case Winograd::Winograd2x3:
-                Winograd2x3::SetInput(src, _srcC, _srcH, _srcW, dst, _strideS, _pad);
+            case Winograd::Winograd2x3i:
+                Winograd2x3i::SetInput(src, _srcC, _srcH, _srcW, dst, _pad);
                 break;
-            case Winograd::Winograd4x3:
-                Winograd4x3::SetInput(src, _srcC, _srcH, _srcW, dst, _strideS, _pad);
+            case Winograd::Winograd2x3p:
+                Winograd2x3p::SetInput(src, _srcC, _srcH, _srcW, dst, _strideS, _pad);
+                break;
+            case Winograd::Winograd4x3p:
+                Winograd4x3p::SetInput(src, _srcC, _srcH, _srcW, dst, _strideS, _pad);
                 break;
             default:
                 assert(0);
@@ -791,13 +1015,27 @@ namespace Synet
 
             const size_t M = _dstC;
             const size_t N = _tileW*_tileH;
-            const size_t K = _srcC;
-            for (size_t i = 0; i < _count; ++i)
+            const size_t K = _srcC;            
+            switch (_type)
             {
-                const T * a = _filter.CpuData() + i * _strideF;
-                const T * b = src + i * _strideS;
-                T * c = dst + i * _strideD;
-                CpuGemm(CblasNoTrans, CblasNoTrans, M, N, K, T(1.0), a, b, T(0.0), c);
+            case Winograd::Winograd2x3i:
+                Winograd2x3i::Gemm(M, N, K, _filter.CpuData(), src, dst);
+                break;
+            case Winograd::Winograd2x3p:
+            case Winograd::Winograd4x3p:
+            {
+
+                for (size_t i = 0; i < _count; ++i)
+                {
+                    const T * a = _filter.CpuData() + i * _strideF;
+                    const T * b = src + i * _strideS;
+                    T * c = dst + i * _strideD;
+                    CpuGemm(CblasNoTrans, CblasNoTrans, M, N, K, T(1.0), a, b, T(0.0), c);
+                }
+                break;
+            }
+            default:
+                assert(0);
             }
         }
 
@@ -807,11 +1045,14 @@ namespace Synet
 
             switch (_type)
             {
-            case Winograd::Winograd2x3:
-                Winograd2x3::SetOutput(src, _strideD, dst, _dstC, _dstH, _dstW);
+            case Winograd::Winograd2x3i:
+                Winograd2x3i::SetOutput(src, dst, _dstC, _dstH, _dstW);
                 break;
-            case Winograd::Winograd4x3:
-                Winograd4x3::SetOutput(src, _strideD, dst, _dstC, _dstH, _dstW);
+            case Winograd::Winograd2x3p:
+                Winograd2x3p::SetOutput(src, _strideD, dst, _dstC, _dstH, _dstW);
+                break;
+            case Winograd::Winograd4x3p:
+                Winograd4x3p::SetOutput(src, _strideD, dst, _dstC, _dstH, _dstW);
                 break;
             default:
                 assert(0);
