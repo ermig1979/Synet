@@ -331,7 +331,7 @@ namespace Synet
 
         bool Init()
         {
-			_tensors.clear();
+            _tensors.clear();
             _input.clear();
             _stages.clear();
             _src.clear();

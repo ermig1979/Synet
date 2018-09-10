@@ -894,8 +894,6 @@ namespace Synet
                 return;
             if (group != 1)
                 return;
-            if (src[0] < 16)
-                return;
             if (kernel[0] == 3 && kernel[1] == 3)
             {
                 _srcC = src[0];
@@ -915,6 +913,19 @@ namespace Synet
                     _dstW = _srcW - 2;
                 }
 
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+                if (src[0] <= 16)
+                {
+                    _type = Winograd::DirectConv;
+                    _block = 1;
+                    _count = 1;
+                }
+                else
+#else
+                if (src[0] < 16)
+                    return;
+                else
+#endif
                 if (1)
                 {
                     _block = 2;
@@ -945,6 +956,14 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_type == Winograd::DirectConv)
+            {
+                _weight = src;
+                return;
+            }
+#endif
+
             _filter.Reshape({ _count, _strideF }, 0);
             switch (_type)
             {
@@ -964,7 +983,12 @@ namespace Synet
 
         size_t SrcBufSize()
         {
-            return _strideS*_count;
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_type == Winograd::DirectConv)
+                return _srcC*(_srcH + 2)*(_srcW + 2);
+            else
+#endif
+                return _strideS*_count;
         }
 
         size_t DstBufSize()
@@ -975,6 +999,17 @@ namespace Synet
         void Convolution(const T * src, T * srcBuf, T * dstBuf, T * dst)
         {
             SYNET_PERF_FUNC();
+
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if(_type == Winograd::DirectConv)
+            {
+                SYNET_PERF_BLOCK("direct");
+                int pad = _pad ? 1 : 0;
+                size_t size = SrcBufSize();
+                ::SimdNeuralConvolutionForward(src, _srcW, _srcH, _srcC, _weight, 3, 3, pad, pad, 1, 1, 1, 1,  srcBuf, &size, dst, _dstW, _dstH, _dstC, 0);
+                return;
+            }
+#endif
 
             SetInput(src, srcBuf);
 
@@ -992,6 +1027,7 @@ namespace Synet
             Winograd2x3i,
             Winograd2x3p,
             Winograd4x3p,
+            DirectConv,
         } _type;  
 
         bool _pad;
@@ -999,6 +1035,7 @@ namespace Synet
         size_t _count, _block, _tileH, _tileW, _strideF, _strideS, _strideD;
         
         Tensor _filter;
+        const T * _weight;
 
         void SetInput(const T * src, T * dst)
         {
