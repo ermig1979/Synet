@@ -2147,39 +2147,48 @@ namespace Synet
         template<class Ch = char> class File
         {
         public:
-            File(const char * fileName)
+            File()
             {
-                using namespace std;
-                basic_ifstream<Ch> stream(fileName, ios::binary);
-                if (!stream)
-                    throw runtime_error(string("cannot open file ") + fileName);
-                stream.unsetf(ios::skipws);
-                stream.seekg(0, ios::end);
-                size_t size = stream.tellg();
-                stream.seekg(0);
-                _data.resize(size + 1);
-                stream.read(&_data.front(), static_cast<streamsize>(size));
-                _data[size] = 0;
             }
 
-            File(std::basic_istream<Ch> & stream)
+            File(const char * fileName)
             {
-                using namespace std;
-                stream.unsetf(ios::skipws);
-                _data.assign(istreambuf_iterator<Ch>(stream), istreambuf_iterator<Ch>());
-                if (stream.fail() || stream.bad())
-                    throw runtime_error("error reading stream");
+                if (!Open(fileName))
+                    throw std::runtime_error(std::string("cannot open file ") + fileName);
+            }
+
+            File(std::basic_istream<Ch> & is)
+            {
+                is.unsetf(std::ios::skipws);
+                _data.assign(std::istreambuf_iterator<Ch>(is), std::istreambuf_iterator<Ch>());
+                if (is.fail() || is.bad())
+                    throw std::runtime_error("error reading stream");
                 _data.push_back(0);
+            }
+
+            bool Open(const char * fileName)
+            {
+                std::basic_ifstream<Ch> ifs(fileName, std::ios::binary);
+                if (!ifs)
+                    return false;
+                ifs.unsetf(std::ios::skipws);
+                ifs.seekg(0, std::ios::end);
+                size_t size = ifs.tellg();
+                ifs.seekg(0);
+                _data.resize(size + 1);
+                ifs.read(_data.data(), (std::streamsize)size);
+                _data[size] = 0;
+                return true;
             }
 
             Ch * Data()
             {
-                return &_data.front();
+                return _data.data();
             }
 
             const Ch * Data() const
             {
-                return &_data.front();
+                return _data.data();
             }
 
             size_t Size() const
