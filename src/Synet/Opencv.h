@@ -195,11 +195,21 @@ namespace Synet
                 layer.dst().push_back(layer.name());
 
                 String type = pLayer->FirstAttribute("type")->Value();
+                if (type == "Activation" && !ConvertActivationLayer(pLayer, layer))
+                    return false;
                 if (type == "Clamp" && !ConvertClampLayer(pLayer, layer))
+                    return false;
+                if (type == "Concat" && !ConvertConcatLayer(pLayer, layer))
                     return false;
                 if (type == "Convolution" && !ConvertConvolutionLayer(pLayer, bin, layer, weight))
                     return false;
+                if (type == "Eltwise" && !ConvertEltwiseLayer(pLayer, layer))
+                    return false;
                 if (type == "Input" && !ConvertInputLayer(pLayer, layer))
+                    return false;
+                if (type == "Permute" && !ConvertPermuteLayer(pLayer, layer))
+                    return false;
+                if (type == "Reshape" && !ConvertReshapeLayer(pLayer, layer))
                     return false;
 
                 if (layer.type() == LayerTypeUnknown)
@@ -226,6 +236,28 @@ namespace Synet
             return shape;
         }
 
+        static Shape ConvertShape(const String & str)
+        {
+            Strings strs = Separate(str, ",");
+            Shape shape(strs.size());
+            for (size_t i = 0; i < strs.size(); ++i)
+                StringToValue(strs[i], shape[i]);
+            return shape;
+        }
+
+        bool ConvertActivationLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            String type = pData->FirstAttribute("type")->Value();
+            if (type == "sigmoid")
+                layer.type() = Synet::LayerTypeSigmoid;
+            else
+                assert(0);
+            return true;
+        }
+
         bool ConvertClampLayer(const XmlNode * pLayer, LayerParam & layer)
         {
             layer.type() = Synet::LayerTypeRestrictRange;
@@ -234,6 +266,16 @@ namespace Synet
                 return false;
             StringToValue(pData->FirstAttribute("min")->Value(), layer.restrictRange().lower());
             StringToValue(pData->FirstAttribute("max")->Value(), layer.restrictRange().upper());
+            return true;
+        }
+
+        bool ConvertConcatLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            layer.type() = Synet::LayerTypeConcat;
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            StringToValue(pData->FirstAttribute("axis")->Value(), layer.concat().axis());
             return true;
         }
 
@@ -330,6 +372,23 @@ namespace Synet
             return true;
         }
 
+        bool ConvertEltwiseLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            layer.type() = Synet::LayerTypeEltwise;
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            String operation = pData->FirstAttribute("operation")->Value();
+            if (operation == "sum")
+            {
+                layer.eltwise().operation() = EltwiseOperationTypeSum;
+                assert(pData->FirstAttribute("coeff") == NULL);
+            }
+            else
+                assert(0);
+            return true;
+        }
+
         bool ConvertInputLayer(const XmlNode * pLayer, LayerParam & layer)
         {
             layer.type() = Synet::LayerTypeInput;
@@ -343,6 +402,38 @@ namespace Synet
                     layer.input().shape()[0].dim() = ConvertShape(pPort);
                 }
             }
+            return true;
+        }
+
+        bool ConvertPermuteLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            layer.type() = Synet::LayerTypePermute;
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            const XmlAttr * pOrder = pData->FirstAttribute("order");
+            if (pOrder == NULL)
+                return false;
+            layer.permute().order() = ConvertShape(pOrder->Value());
+            return true;
+        }
+
+        bool ConvertReshapeLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            layer.type() = Synet::LayerTypeReshape;
+            const XmlNode * pOutput = pLayer->FirstNode("output");
+            if (pOutput)
+            {
+                const XmlNode * pPort = pOutput->FirstNode("port");
+                if (pPort)
+                {
+                    layer.reshape().shape() = ConvertShape(pPort);
+                }
+                else
+                    return false;
+            }
+            else
+                return false;
             return true;
         }
 
