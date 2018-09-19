@@ -128,6 +128,21 @@ namespace Synet
 #endif
     }
 
+    SYNET_INLINE Strings Separate(const String & str, const String & delimeter)
+    {
+        size_t current = 0;
+        Strings result;
+        while (current != String::npos)
+        {
+            size_t next = str.find(delimeter, current);
+            result.push_back(str.substr(current, next - current));
+            current = next;
+            if (current != String::npos)
+                current += delimeter.size();
+        }
+        return result;
+    }
+
     inline size_t GetThreadNumber()
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)

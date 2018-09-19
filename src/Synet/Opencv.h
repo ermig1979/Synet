@@ -199,15 +199,21 @@ namespace Synet
                     return false;
                 if (type == "Clamp" && !ConvertClampLayer(pLayer, layer))
                     return false;
+                if (type == "Const" && !ConvertConstLayer(pLayer, bin, layer, weight))
+                    return false;
                 if (type == "Concat" && !ConvertConcatLayer(pLayer, layer))
                     return false;
                 if (type == "Convolution" && !ConvertConvolutionLayer(pLayer, bin, layer, weight))
+                    return false;
+                if (type == "DetectionOutput" && !ConvertDetectionOutputLayer(pLayer, layer))
                     return false;
                 if (type == "Eltwise" && !ConvertEltwiseLayer(pLayer, layer))
                     return false;
                 if (type == "Input" && !ConvertInputLayer(pLayer, layer))
                     return false;
                 if (type == "Permute" && !ConvertPermuteLayer(pLayer, layer))
+                    return false;
+                if (type == "Power" && !ConvertPowerLayer(pLayer, layer, weight))
                     return false;
                 if (type == "Reshape" && !ConvertReshapeLayer(pLayer, layer))
                     return false;
@@ -276,6 +282,45 @@ namespace Synet
             if (pData == NULL)
                 return false;
             StringToValue(pData->FirstAttribute("axis")->Value(), layer.concat().axis());
+            return true;
+        }
+
+        bool ConvertConstLayer(const XmlNode * pLayer, const Vector & bin, LayerParam & layer, Tensors & weight)
+        {
+            layer.type() = Synet::LayerTypeConst;
+            const XmlNode * pOutput = pLayer->FirstNode("output");
+            if (pOutput)
+            {
+                const XmlNode * pPort = pOutput->FirstNode("port");
+                if (pPort)
+                {
+                    layer.weight().resize(1);
+                    layer.weight()[0].dim() = ConvertShape(pPort);
+                }
+                else
+                    return false;
+            }
+            else
+                return false;
+            const XmlNode * pBlobs = pLayer->FirstNode("blobs");
+            if (pBlobs)
+            {
+                const XmlNode * pCustom = pBlobs->FirstNode("custom");
+                if (pCustom)
+                {
+                    size_t offset, size;
+                    StringToValue(pCustom->FirstAttribute("offset")->Value(), offset);
+                    StringToValue(pCustom->FirstAttribute("size")->Value(), size);
+                    weight.push_back(Tensor());
+                    weight.back().Reshape(layer.weight()[0].dim());
+                    assert(size == weight.back().Size() * sizeof(float));
+                    memcpy(weight.back().CpuData(), bin.data() + offset / sizeof(float), size);
+                }
+                else
+                    return false;
+            }
+            else
+                return false;
             return true;
         }
 
@@ -372,6 +417,28 @@ namespace Synet
             return true;
         }
 
+        bool ConvertDetectionOutputLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            layer.type() = Synet::LayerTypeDetectionOutput;
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            String codeType = pData->FirstAttribute("code_type")->Value();
+            if (codeType == "caffe.PriorBoxParameter.CENTER_SIZE")
+                layer.detectionOutput().codeType() = PriorBoxCodeTypeCenterSize;
+            else
+                assert(0);
+            StringToValue(pData->FirstAttribute("confidence_threshold")->Value(), layer.detectionOutput().confidenceThreshold());
+            StringToValue(pData->FirstAttribute("keep_top_k")->Value(), layer.detectionOutput().keepTopK());
+            StringToValue(pData->FirstAttribute("nms_threshold")->Value(), layer.detectionOutput().nms().nmsThreshold());
+            StringToValue(pData->FirstAttribute("num_classes")->Value(), layer.detectionOutput().numClasses());
+            StringToValue(pData->FirstAttribute("variance_encoded_in_target")->Value(), layer.detectionOutput().varianceEncodedInTarget());
+            StringToValue(pData->FirstAttribute("top_k")->Value(), layer.detectionOutput().nms().topK());
+            StringToValue(pData->FirstAttribute("share_location")->Value(), layer.detectionOutput().shareLocation());
+
+            return true;
+        }
+
         bool ConvertEltwiseLayer(const XmlNode * pLayer, LayerParam & layer)
         {
             layer.type() = Synet::LayerTypeEltwise;
@@ -415,6 +482,33 @@ namespace Synet
             if (pOrder == NULL)
                 return false;
             layer.permute().order() = ConvertShape(pOrder->Value());
+            return true;
+        }
+
+        bool ConvertPowerLayer(const XmlNode * pLayer, LayerParam & layer, Tensors & weight)
+        {
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            float power, scale, shift;
+            StringToValue(pData->FirstAttribute("power")->Value(), power);
+            StringToValue(pData->FirstAttribute("scale")->Value(), scale);
+            StringToValue(pData->FirstAttribute("shift")->Value(), shift);
+            if (power == 1.0f)
+            {
+                layer.type() = Synet::LayerTypeScale;
+                layer.scale().axis() = 0;
+                layer.scale().biasTerm() = true;
+
+                Shape scalar = { size_t(1) };
+                layer.weight().resize(2);
+                layer.weight()[0].dim() = scalar;
+                layer.weight()[1].dim() = scalar;
+                weight.push_back(Tensor(scalar, scale));
+                weight.push_back(Tensor(scalar, shift));
+            }
+            else
+                assert(0);
             return true;
         }
 

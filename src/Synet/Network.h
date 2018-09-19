@@ -28,6 +28,7 @@
 #include "Synet/BiasLayer.h"
 #include "Synet/CastLayer.h"
 #include "Synet/ConcatLayer.h"
+#include "Synet/ConstLayer.h"
 #include "Synet/ConvolutionLayer.h"
 #include "Synet/DetectionOutputLayer.h"
 #include "Synet/EltwiseLayer.h"
@@ -451,6 +452,7 @@ namespace Synet
             case LayerTypeBias: return new BiasLayer<T>(param);
             case LayerTypeCast: return new CastLayer<T>(param);
             case LayerTypeConcat: return new ConcatLayer<T>(param);
+            case LayerTypeConst: return new ConstLayer<T>(param);
             case LayerTypeConvolution: return new ConvolutionLayer<T>(param);
             case LayerTypeDetectionOutput: return new DetectionOutputLayer<T>(param);
             case LayerTypeDropout: return new StubLayer<T>(param);
