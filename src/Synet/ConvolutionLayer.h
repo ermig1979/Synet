@@ -114,19 +114,9 @@ namespace Synet
             _srcChannels = src[0]->Axis(_axis);
             _dstChannels = this->Param().convolution().outputNum();
             assert(_dstChannels  > 0 && _dstChannels % _group == 0);
-            if (IsConv())
-            {
-                _srcConvChannels = _srcChannels;
-                _dstConvChannels = _dstChannels;
-            }
-            else
-            {
-                _srcConvChannels = _dstChannels;
-                _dstConvChannels = _srcChannels;
-            }
             Shape weightShape(2 + _spatialAxisNum);
-            weightShape[0] = _dstConvChannels;
-            weightShape[1] = _srcConvChannels / _group;
+            weightShape[0] = _dstChannels;
+            weightShape[1] = _srcChannels / _group;
             for (size_t i = 0; i < _spatialAxisNum; ++i)
                 weightShape[2 + i] = _kernelShape[i];
             Shape biasShape(_biasTerm, _dstChannels);
@@ -135,7 +125,7 @@ namespace Synet
             if (_biasTerm)
                 assert(this->Weight()[1].Shape() == biasShape);
             _kernelSize = this->Weight()[0].Size(1);
-            _weightOffset = _dstConvChannels * _kernelSize / _group;
+            _weightOffset = _dstChannels * _kernelSize / _group;
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -143,14 +133,11 @@ namespace Synet
             size_t firstSpatialAxis = _axis + 1;
             _num = src[0]->Size(0, _axis);
             _srcShape = src[0]->Shape();
-            if (IsConv())
+            _dstShape.resize(_spatialAxisNum);
+            for (size_t i = 0; i < _spatialAxisNum; ++i)
             {
-                _dstShape.resize(_spatialAxisNum);
-                for (size_t i = 0; i < _spatialAxisNum; ++i)
-                {
-                    size_t kernelExtent = _dilationShape[i] * (_kernelShape[i] - 1) + 1;
-                    _dstShape[i] = (_srcShape[firstSpatialAxis + i] + 2 * _padShape[i] - kernelExtent) / _strideShape[i] + 1;
-                }
+                size_t kernelExtent = _dilationShape[i] * (_kernelShape[i] - 1) + 1;
+                _dstShape[i] = (_srcShape[firstSpatialAxis + i] + 2 * _padShape[i] - kernelExtent) / _strideShape[i] + 1;
             }
             Shape dstShape(_srcShape.begin(), _srcShape.begin() + _axis);
             dstShape.push_back(_dstChannels);
@@ -158,29 +145,16 @@ namespace Synet
                 dstShape.push_back(_dstShape[i]);
             for (size_t i = 0; i < dst.size(); ++i)
                 dst[i]->Reshape(dstShape);
-            if (IsConv())
-                _dstConvSpatialSize = dst[0]->Size(firstSpatialAxis);
-            else
-                _dstConvSpatialSize = src[0]->Size(firstSpatialAxis);
-            _colOffset = _kernelSize * _dstConvSpatialSize;
-            _dstOffset = _dstChannels * _dstConvSpatialSize / _group;
+            _dstSpatialSize = dst[0]->Size(firstSpatialAxis);
+            _colOffset = _kernelSize * _dstSpatialSize;
+            _dstOffset = _dstChannels * _dstSpatialSize / _group;
             _srcConvShape.resize(_spatialAxisNum + 1);
             for (size_t i = 0; i < _spatialAxisNum + 1; ++i)
-            {
-                if (IsConv())
-                    _srcConvShape[i] = src[0]->Axis(_axis + i);
-                else
-                    _srcConvShape[i] = dst[0]->Axis(_axis + i);
-            }
+                _srcConvShape[i] = src[0]->Axis(_axis + i);
             Shape colBufferShape;
             colBufferShape.push_back(_kernelSize * _group);
             for (int i = 0; i < _spatialAxisNum; ++i)
-            {
-                if (IsConv())
-                    colBufferShape.push_back(_dstShape[i]);
-                else
-                    colBufferShape.push_back(_srcShape[i + 1]);
-            }
+                colBufferShape.push_back(_dstShape[i]);
             _winograd.Init(_srcConvShape, _dstChannels, _kernelShape, _strideShape, _dilationShape, _padShape, _group);
             if (_winograd.Enable())
             {
@@ -197,7 +171,6 @@ namespace Synet
             }
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);
-            _dstSpatialSize = dst[0]->Size(firstSpatialAxis);
         }
 
     protected:
@@ -217,14 +190,14 @@ namespace Synet
 #ifdef SYNET_WINOGRAD_COMPARE
                         {
                             std::stringstream ss;
-                            ss << _dstConvChannels << "-" << _dstConvSpatialSize << "-" << _kernelSize << " img2col ";
+                            ss << _dstChannels << "-" << _dstSpatialSize << "-" << _kernelSize << " img2col ";
                             SYNET_PERF_BLOCK(ss.str().c_str());
                             ImgToCol(pSrc, buf[0]->CpuData());
-                            CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _dstConvChannels, _dstConvSpatialSize, _kernelSize, Type(1.0), weight, buf[0]->CpuData(), Type(0.0), pDst);
+                            CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _dstChannels, _dstSpatialSize, _kernelSize, Type(1.0), weight, buf[0]->CpuData(), Type(0.0), pDst);
                         }
                         {
                             std::stringstream ss;
-                            ss << _dstConvChannels << "-" << _dstConvSpatialSize << "-" << _kernelSize << " winograd";
+                            ss << _dstConvChannels << "-" << _dstSpatialSize << "-" << _kernelSize << " winograd";
                             SYNET_PERF_BLOCK(ss.str().c_str());
                             _winograd.Convolution(pSrc, buf[0]->CpuData(), buf[1]->CpuData(), pDst);
                         }
@@ -241,7 +214,7 @@ namespace Synet
                         }
                         for (size_t g = 0; g < _group; ++g)
                         {
-                            CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _dstConvChannels / _group, _dstConvSpatialSize, _kernelSize,
+                            CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _dstChannels / _group, _dstSpatialSize, _kernelSize,
                                 Type(1.0), weight + _weightOffset * g, pBuf + _colOffset * g, Type(0.0), pDst + _dstOffset * g);
                         }
                     }
@@ -252,25 +225,20 @@ namespace Synet
             }
         }
 
-        virtual bool IsConv() 
-        {
-            return true;
-        }
-
         void ImgToCol(const T * src, T * dst)
         {
             if (_spatialAxisNum == 2)
             {
                 Synet::ImgToCol(src, _srcConvShape[0], _srcConvShape[1], _srcConvShape[2], _kernelShape[0], _kernelShape[1],
-                    _padShape[0], _padShape[1], _strideShape[0], _strideShape[1], _dilationShape[0], _dilationShape[1], dst);
+                    _padShape[0], _padShape[1], _padShape[0], _padShape[1], _strideShape[0], _strideShape[1], _dilationShape[0], _dilationShape[1], dst);
             }
         }
 
     private:
         Shape _srcShape, _kernelShape, _strideShape, _dilationShape, _padShape, _dstShape, _srcConvShape;
         bool _is1x1, _biasTerm;
-        size_t _axis, _group, _spatialAxisNum, _srcChannels, _dstChannels, _srcConvChannels, _dstConvChannels, _weightOffset, _kernelSize;
-        size_t _channelAxis, _num, _dstConvSpatialSize, _dstSpatialSize, _colOffset, _dstOffset, _srcSize, _dstSize;
+        size_t _axis, _group, _spatialAxisNum, _srcChannels, _dstChannels, _weightOffset, _kernelSize;
+        size_t _channelAxis, _num, _dstSpatialSize, _colOffset, _dstOffset, _srcSize, _dstSize;
 
         Winograd<Type> _winograd;
     };

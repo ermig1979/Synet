@@ -29,14 +29,14 @@
 namespace Synet
 {
     template <typename T> void ImgToCol(const T * src, size_t channels, size_t srcY, size_t srcX, size_t kernelY, size_t kernelX,
-        size_t padY, size_t padX, size_t strideY, size_t strideX, size_t dilationY, size_t dilationX, T * dst)
+        size_t padY, size_t padX, size_t padH, size_t padW, size_t strideY, size_t strideX, size_t dilationY, size_t dilationX, T * dst)
     {
         SYNET_PERF_FUNC();
 
-        size_t dstY = (srcY + 2 * padY - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
-        size_t dstX = (srcX + 2 * padX - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
+        size_t dstY = (srcY + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
+        size_t dstX = (srcX + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
         size_t channelSize = srcX * srcY;
-        if (dilationX == 1 && dilationY == 1 && strideX == 2 && strideY == 2 && padX == 0 && padY == 0 && kernelX == 1 && kernelY == 1)
+        if (dilationX == 1 && dilationY == 1 && strideX == 2 && strideY == 2 && padX == 0 && padY == 0 && padW == 0 && padH == 0 && kernelX == 1 && kernelY == 1)
         {
             for (size_t channel = 0; channel < channels; ++channel)
             {
@@ -86,7 +86,7 @@ namespace Synet
         }
         else
         {
-            const ptrdiff_t bodySize = dstX - padX * 2;
+            const ptrdiff_t bodySize = dstX - padX - padW;
             for (size_t channel = 0; channel < channels; ++channel)
             {
                 for (size_t ky = 0; ky < kernelY; ++ky)
