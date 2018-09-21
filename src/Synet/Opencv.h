@@ -437,6 +437,7 @@ namespace Synet
             StringToValue(pData->FirstAttribute("variance_encoded_in_target")->Value(), layer.detectionOutput().varianceEncodedInTarget());
             StringToValue(pData->FirstAttribute("top_k")->Value(), layer.detectionOutput().nms().topK());
             StringToValue(pData->FirstAttribute("share_location")->Value(), layer.detectionOutput().shareLocation());
+            StringToValue(pData->FirstAttribute("clip")->Value(), layer.detectionOutput().clip());
 
             return true;
         }

@@ -456,6 +456,7 @@ namespace Synet
         SYNET_PARAM_VALUE(int32_t, keepTopK, -1);
         SYNET_PARAM_VALUE(float, confidenceThreshold, -FLT_MAX);
         SYNET_PARAM_VALUE(bool, keepMaxClassScoresOnly, false);
+        SYNET_PARAM_VALUE(bool, clip, false);
     };
 
     struct ExpandDimsParam

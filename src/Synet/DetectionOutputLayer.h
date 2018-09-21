@@ -55,6 +55,7 @@ namespace Synet
             _keepTopK = param.keepTopK();
             _confidenceThreshold = param.confidenceThreshold();
             _keepMaxClassScoresOnly = param.keepMaxClassScoresOnly();
+            _clip = param.clip();
             _nmsThreshold = param.nms().nmsThreshold();
             _topK = param.nms().topK();
             _eta = param.nms().eta();
@@ -109,8 +110,8 @@ namespace Synet
                     r.prob = pSrc[2];
                     r.w = pSrc[5] - pSrc[3];
                     r.h = pSrc[6] - pSrc[4];
-                    r.x = (pSrc[3] + pSrc[5]) / Type(2);// -r.w / 2;
-                    r.y = (pSrc[4] + pSrc[6]) / Type(2);// -r.h / 2;
+                    r.x = (pSrc[3] + pSrc[5]) / Type(2);
+                    r.y = (pSrc[4] + pSrc[6]) / Type(2);
                     dst.push_back(r);
                 }
                 pSrc += 7;
@@ -162,9 +163,8 @@ namespace Synet
             GetPriorBBoxes(pPrior, _numPriors, priorBboxes, priorVariances);
 
             LabelBBoxes allDecodeBboxes;
-            const bool clipBbox = false;
             DecodeBBoxesAll(allLocPreds, priorBboxes, priorVariances, num, _shareLocation, _numLocClasses, 
-                _backgroundLabelId, _codeType, _varianceEncodedInTarget, clipBbox, allDecodeBboxes);
+                _backgroundLabelId, _codeType, _varianceEncodedInTarget, _clip, allDecodeBboxes);
 
             size_t numKept = 0;
             IndexMaps allIndices;
@@ -288,7 +288,7 @@ namespace Synet
         typedef std::pair<float, IndexPair> ScoreIndexPair;
         typedef std::vector<ScoreIndexPair> ScoreIndexPairs;
 
-        bool _shareLocation, _varianceEncodedInTarget, _keepMaxClassScoresOnly;
+        bool _shareLocation, _varianceEncodedInTarget, _keepMaxClassScoresOnly, _clip;
         size_t _numClasses, _numLocClasses, _numPriors;
         ptrdiff_t _backgroundLabelId, _keepTopK, _topK;
         PriorBoxCodeType _codeType;

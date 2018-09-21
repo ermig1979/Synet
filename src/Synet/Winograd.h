@@ -887,7 +887,7 @@ namespace Synet
 
         void Init(Shape src, size_t dst, Shape kernel, Shape stride, Shape dilation, Shape pad, size_t group)
         {
-            assert(src.size() == 3 && kernel.size() == 2 && stride.size() == 2 && dilation.size() == 2 && pad.size() == 2);
+            assert(src.size() == 3 && kernel.size() == 2 && stride.size() == 2 && dilation.size() == 2 && pad.size() == 4);
             if (stride[0] != 1 || stride[1] != 1 || dilation[0] != 1 || dilation[1] != 1)
                 return;
             if (!((pad[0] == 0 && pad[1] == 0) || (pad[0] == 1 && pad[1] == 1)))
