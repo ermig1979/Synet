@@ -78,7 +78,7 @@ namespace Synet
 
             const Shape & pad = this->Param().convolution().pad();
             if (pad.empty())
-                _padShape.resize(_spatialAxisNum, 0);
+                _padShape.resize(_spatialAxisNum*2, 0);
             else
             {
                 assert(pad.size() == 1 || pad.size() == _spatialAxisNum || pad.size() == _spatialAxisNum*2);
@@ -114,7 +114,7 @@ namespace Synet
             _is1x1 = true;
             for (size_t i = 0; i < _spatialAxisNum; ++i)
             {
-                if (_kernelShape[i] != 1 || _padShape[i] != 0 || _strideShape[i] != 1)
+                if (_kernelShape[i] != 1 || _padShape[i] != 0 || _padShape[_spatialAxisNum + i] != 0 || _strideShape[i] != 1)
                 {
                     _is1x1 = false;
                     break;
