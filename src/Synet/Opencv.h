@@ -343,9 +343,11 @@ namespace Synet
             String padType = pData->FirstAttribute("auto_pad")->Value();
             if (padType == "same_upper" || padType == "same_lower")
             {
-                layer.convolution().pad().resize(2);
-                layer.convolution().pad()[0] = layer.convolution().kernel()[0] / 2;
-                layer.convolution().pad()[1] = layer.convolution().kernel()[1] / 2;
+                layer.convolution().pad().resize(4);
+                StringToValue(pData->FirstAttribute("pad-y")->Value(), layer.convolution().pad()[0]);
+                StringToValue(pData->FirstAttribute("pad-x")->Value(), layer.convolution().pad()[1]);
+                StringToValue(pData->FirstAttribute("pad-b")->Value(), layer.convolution().pad()[2]);
+                StringToValue(pData->FirstAttribute("pad-r")->Value(), layer.convolution().pad()[3]);
             }
             size_t inputNum;
             const XmlNode * pInput = pLayer->FirstNode("input");

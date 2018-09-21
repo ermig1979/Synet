@@ -81,9 +81,18 @@ namespace Synet
                 _padShape.resize(_spatialAxisNum, 0);
             else
             {
-                assert(pad.size() == 1 || pad.size() == _spatialAxisNum);
+                assert(pad.size() == 1 || pad.size() == _spatialAxisNum || pad.size() == _spatialAxisNum*2);
                 if (pad.size() == 1)
-                    _padShape.resize(_spatialAxisNum, pad[0]);
+                    _padShape.resize(_spatialAxisNum*2, pad[0]);
+                else if (pad.size() == _spatialAxisNum)
+                {
+                    _padShape.resize(_spatialAxisNum * 2);
+                    for (size_t i = 0; i < _spatialAxisNum; ++i)
+                    {
+                        _padShape[0 * _spatialAxisNum + i] = pad[i];
+                        _padShape[1 * _spatialAxisNum + i] = pad[i];
+                    }
+                }
                 else
                     _padShape = pad;
             }
@@ -137,7 +146,7 @@ namespace Synet
             for (size_t i = 0; i < _spatialAxisNum; ++i)
             {
                 size_t kernelExtent = _dilationShape[i] * (_kernelShape[i] - 1) + 1;
-                _dstShape[i] = (_srcShape[firstSpatialAxis + i] + 2 * _padShape[i] - kernelExtent) / _strideShape[i] + 1;
+                _dstShape[i] = (_srcShape[firstSpatialAxis + i] + _padShape[i] + _padShape[_spatialAxisNum + i] - kernelExtent) / _strideShape[i] + 1;
             }
             Shape dstShape(_srcShape.begin(), _srcShape.begin() + _axis);
             dstShape.push_back(_dstChannels);
@@ -230,7 +239,7 @@ namespace Synet
             if (_spatialAxisNum == 2)
             {
                 Synet::ImgToCol(src, _srcConvShape[0], _srcConvShape[1], _srcConvShape[2], _kernelShape[0], _kernelShape[1],
-                    _padShape[0], _padShape[1], _padShape[0], _padShape[1], _strideShape[0], _strideShape[1], _dilationShape[0], _dilationShape[1], dst);
+                    _padShape[0], _padShape[1], _padShape[2], _padShape[3], _strideShape[0], _strideShape[1], _dilationShape[0], _dilationShape[1], dst);
             }
         }
 

@@ -275,6 +275,8 @@ namespace Synet
                     ((YoloLayer<float>*)layer)->GetRegions(dst, netW, netH, threshold, candidats);
                 if (layer->Param().type() == Synet::LayerTypeRegion)
                     ((RegionLayer<float>*)layer)->GetRegions(dst, threshold, candidats);
+                if (layer->Param().type() == Synet::LayerTypeDetectionOutput)
+                    ((DetectionOutputLayer<float>*)layer)->GetRegions(dst, threshold, candidats);
                 for (size_t j = 0; j < candidats.size(); ++j)
                 {
                     Region & c = candidats[j];

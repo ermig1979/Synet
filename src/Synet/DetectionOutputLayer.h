@@ -35,6 +35,8 @@ namespace Synet
         typedef T Type;
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
+        typedef Synet::Region<T> Region;
+        typedef std::vector<Region> Regions;
 
         DetectionOutputLayer(const LayerParam & param)
             : Base(param)
@@ -91,6 +93,29 @@ namespace Synet
             {
             }
         };
+
+        void GetRegions(const TensorPtrs & src, Type threshold, Regions & dst)
+        {
+            SYNET_PERF_FUNC();
+            dst.clear();
+            const Type * pSrc = src[0]->CpuData();
+            size_t count = src[0]->Axis(2);
+            for (size_t i = 0; i < count; ++i)
+            {
+                if (pSrc[2] > threshold)
+                {
+                    Region r;
+                    r.id = (size_t)pSrc[1];
+                    r.prob = pSrc[2];
+                    r.w = pSrc[5] - pSrc[3];
+                    r.h = pSrc[6] - pSrc[4];
+                    r.x = (pSrc[3] + pSrc[5]) / Type(2);// -r.w / 2;
+                    r.y = (pSrc[4] + pSrc[6]) / Type(2);// -r.h / 2;
+                    dst.push_back(r);
+                }
+                pSrc += 7;
+            }
+        }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
