@@ -215,6 +215,8 @@ namespace Synet
                     return false;
                 if (type == "Power" && !ConvertPowerLayer(pLayer, layer, weight))
                     return false;
+                if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
+                    return false;
                 if (type == "Reshape" && !ConvertReshapeLayer(pLayer, layer))
                     return false;
 
@@ -409,9 +411,10 @@ namespace Synet
                     weight.back().Reshape(layer.weight()[1].dim());
                     assert(size == weight.back().Size() * sizeof(float));
                     memcpy(weight.back().CpuData(), bin.data() + offset / sizeof(float), size);
+                    layer.convolution().biasTerm() = true;
                 }
                 else
-                    return false;
+                    layer.convolution().biasTerm() = false;
             }
             else
                 return false;
@@ -512,6 +515,12 @@ namespace Synet
             }
             else
                 assert(0);
+            return true;
+        }
+
+        bool ConvertReluLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            layer.type() = Synet::LayerTypeRelu;
             return true;
         }
 

@@ -29,20 +29,7 @@
 
 namespace Synet
 {
-    template<typename Enum, int Size> SYNET_INLINE Enum StringToEnum(const String & string)
-    {
-        int type = Size - 1;
-        for (; type >= 0; --type)
-        {
-            if (ValueToString<Enum>((Enum)type) == string)
-                return (Enum)type;
-        }
-        return (Enum)type;
-    }
-
-    enum LayerType
-    {
-        LayerTypeUnknown = -1,
+    SYNET_PARAM_ENUM(LayerType,
         LayerTypeBatchNorm,
         LayerTypeBias,
         LayerTypeCast,
@@ -83,98 +70,15 @@ namespace Synet
         LayerTypeUnaryOperation,
         LayerTypeUnpack,
         LayerTypeUpsample,
-        LayerTypeYolo,
-        LayerTypeSize
-    };
+        LayerTypeYolo); 
 
-    template<> SYNET_INLINE String ValueToString<LayerType>(const LayerType & value)
-    {
-        static const char * names[LayerTypeSize] =
-        {
-            "BatchNorm",
-            "Bias",
-            "Cast",
-            "Concat",
-            "Const",
-            "Convolution",
-            "DetectionOutput",
-            "Dropout",
-            "Eltwise",
-            "ExpandDims",
-            "Fill",
-            "Flatten",
-            "Gather",
-            "InnerProduct",
-            "Input",
-            "Interp",
-            "Log",
-            "LRN",
-            "Meta",
-            "Normalize",
-            "Pad",
-            "Permute",
-            "Pooling",
-            "PriorBox",
-            "Region",
-            "ReLU",
-            "Reorg",
-            "Reshape",
-            "RestrictRange",
-            "Scale",
-            "Shortcut",
-            "Sigmoid",
-            "Slice",
-            "Softmax",
-            "Squeeze",
-            "Stub",
-            "Switch",
-            "UnaryOperation",
-            "Unpack",
-            "Upsample",
-            "Yolo",
-        };
-        return (value > LayerTypeUnknown && value < LayerTypeSize) ? names[value] : "";
-    }
-
-    template<> SYNET_INLINE void StringToValue<LayerType>(const String & string, LayerType & value)
-    {
-        value = StringToEnum<LayerType, LayerTypeSize>(string);
-    }
-
-    //-------------------------------------------------------------------------
-
-    enum EltwiseOperationType
-    {
-        EltwiseOperationTypeUnknown = -1,
+    SYNET_PARAM_ENUM(EltwiseOperationType,
         EltwiseOperationTypeProduct,
         EltwiseOperationTypeSum,
         EltwiseOperationTypeMax,
-        EltwiseOperationTypeMin,
-        EltwiseOperationTypeSize
-    };
+        EltwiseOperationTypeMin);
 
-    template<> SYNET_INLINE String ValueToString<EltwiseOperationType>(const EltwiseOperationType & value)
-    {
-        static const char * names[EltwiseOperationTypeSize] =
-        {
-            "Product",
-            "Sum",
-            "Max",
-            "Min",
-        };
-        return (value > EltwiseOperationTypeUnknown && value < EltwiseOperationTypeSize) ? names[value] : "";
-    }
-
-    template<> SYNET_INLINE void StringToValue<EltwiseOperationType>(const String & string, EltwiseOperationType & value)
-    {
-        value = StringToEnum<EltwiseOperationType, EltwiseOperationTypeSize>(string);
-    }
-
-    //-------------------------------------------------------------------------
-
-    enum MetaType
-    {
-        MetaTypeUnknown = -1,
+    SYNET_PARAM_ENUM(MetaType,
         MetaTypeAdd,
         MetaTypeCast,
         MetaTypeConst,
@@ -203,189 +107,34 @@ namespace Synet
         MetaTypeTensorArraySize,
         MetaTypeTensorArrayWrite,
         MetaTypeTile,
-        MetaTypeUnpack,
-        MetaTypeSize,
-    };
+        MetaTypeUnpack);
 
-    template<> SYNET_INLINE String ValueToString<MetaType>(const MetaType & value)
-    {
-        static const char * names[MetaTypeSize] =
-        {
-            "Add",
-            "Cast",
-            "Const",
-            "ExpandDims",
-            "Fill",
-            "Gather",
-            "Greater",
-            "Input",
-            "Maximum",
-            "Minimum",
-            "Mul",
-            "Pack",
-            "Range",
-            "RealDiv",
-            "Reshape",
-            "Rsqrt",
-            "Shape",
-            "Slice",
-            "Sqrt",
-            "StridedSlice",
-            "Stub",
-            "Sub",
-            "Switch",
-            "TensorArray",
-            "TensorArrayRead",
-            "TensorArraySize",
-            "TensorArrayWrite",
-            "Tile",
-            "Unpack",
-        };
-        return (value > MetaTypeUnknown && value < MetaTypeSize) ? names[value] : "";
-    }
-
-    template<> SYNET_INLINE void StringToValue<MetaType>(const String & string, MetaType & value)
-    {
-        value = StringToEnum<MetaType, MetaTypeSize>(string);
-    }
-
-    //-------------------------------------------------------------------------
-
-    enum NormRegionType
-    {
-        NormRegionTypeUnknown = -1,
+    SYNET_PARAM_ENUM(NormRegionType,
         NormRegionTypeAcrossChannels,
-        NormRegionTypeWithinChannel,
-        NormRegionTypeSize
-    };
-
-    template<> SYNET_INLINE String ValueToString<NormRegionType>(const NormRegionType & value)
-    {
-        static const char * names[NormRegionTypeSize] =
-        {
-            "AcrossChannels",
-            "WithinChannel",
-        };
-        return (value > NormRegionTypeUnknown && value < NormRegionTypeSize) ? names[value] : "";
-    }
-
-    template<> SYNET_INLINE void StringToValue<NormRegionType>(const String & string, NormRegionType & value)
-    {
-        value = StringToEnum<NormRegionType, NormRegionTypeSize>(string);
-    }
-
-    //-------------------------------------------------------------------------
+        NormRegionTypeWithinChannel);
     
-    enum PoolingMethodType
-    {
-        PoolingMethodTypeUnknown = -1,
+    SYNET_PARAM_ENUM(PoolingMethodType,
         PoolingMethodTypeMax,
         PoolingMethodTypeAverage,
-        PoolingMethodTypeStochastic,
-        PoolingMethodTypeSize
-    };
+        PoolingMethodTypeStochastic);
 
-    template<> SYNET_INLINE String ValueToString<PoolingMethodType>(const PoolingMethodType & value)
-    {
-        static const char * names[PoolingMethodTypeSize] =
-        {
-            "Max",
-            "Average",
-            "Stochastic",
-        };
-        return (value > PoolingMethodTypeUnknown && value < PoolingMethodTypeSize) ? names[value] : "";
-    }
+    SYNET_PARAM_ENUM_(PriorBoxCodeType, Undefined, Size,
+        PriorBoxCodeTypeUnknown,
+        PriorBoxCodeTypeCorner,
+        PriorBoxCodeTypeCenterSize,
+        PriorBoxCodeTypeCornerSize);
 
-    template<> SYNET_INLINE void StringToValue<PoolingMethodType>(const String & string, PoolingMethodType & value)
-    {
-        value = StringToEnum<PoolingMethodType, PoolingMethodTypeSize>(string);
-    }
-
-    //-------------------------------------------------------------------------
-
-    enum PriorBoxCodeType
-    {
-        PriorBoxCodeTypeUnknown = 0,
-        PriorBoxCodeTypeCorner = 1,
-        PriorBoxCodeTypeCenterSize = 2,
-        PriorBoxCodeTypeCornerSize = 3,
-        PriorBoxCodeTypeSize,
-    };
-
-    template<> SYNET_INLINE String ValueToString<PriorBoxCodeType>(const PriorBoxCodeType & value)
-    {
-        static const char * names[PriorBoxCodeTypeSize] =
-        {
-            "Unknown",
-            "Corner",
-            "CenterSize",
-            "CornerSize",
-        };
-        return (value > PriorBoxCodeTypeUnknown && value < PriorBoxCodeTypeSize) ? names[value] : "";
-    }
-
-    template<> SYNET_INLINE void StringToValue<PriorBoxCodeType>(const String & string, PriorBoxCodeType & value)
-    {
-        value = StringToEnum<PriorBoxCodeType, PriorBoxCodeTypeSize>(string);
-    }
-
-    //-------------------------------------------------------------------------
-
-    enum TensorType
-    {
-        TensorTypeUnknown = -1,
+    SYNET_PARAM_ENUM(TensorType,
         TensorType32f,
-        TensorType32i,
-        TensorTypeSize,
-    };
+        TensorType32i);
 
-    template<> SYNET_INLINE String ValueToString<TensorType>(const TensorType & value)
-    {
-        static const char * names[TensorTypeSize] =
-        {
-            "32f",
-            "32i",
-        };
-        return (value > TensorTypeUnknown && value < TensorTypeSize) ? names[value] : "";
-    }
-
-    template<> SYNET_INLINE void StringToValue<TensorType>(const String & string, TensorType & value)
-    {
-        value = StringToEnum<TensorType, TensorTypeSize>(string);
-    }
-
-    //-------------------------------------------------------------------------
-
-    enum UnaryOperationType
-    {
-        UnaryOperationTypeUnknown = -1,
+    SYNET_PARAM_ENUM(UnaryOperationType,
         UnaryOperationTypeAbs,
         UnaryOperationTypeExp,
         UnaryOperationTypeRsqrt,
         UnaryOperationTypeSqrt,
         UnaryOperationTypeTanh,
-        UnaryOperationTypeZero,
-        UnaryOperationTypeSize
-    };
-
-    template<> SYNET_INLINE String ValueToString<UnaryOperationType>(const UnaryOperationType & value)
-    {
-        static const char * names[UnaryOperationTypeSize] =
-        {
-            "Abs",
-            "Exp",
-            "Rsqrt",
-            "Sqrt",
-            "Tanh",
-            "Zero",
-        };
-        return (value > UnaryOperationTypeUnknown && value < UnaryOperationTypeSize) ? names[value] : "";
-    }
-
-    template<> SYNET_INLINE void StringToValue<UnaryOperationType>(const String & string, UnaryOperationType & value)
-    {
-        value = StringToEnum<UnaryOperationType, UnaryOperationTypeSize>(string);
-    }
+        UnaryOperationTypeZero);
 
     //-------------------------------------------------------------------------
 

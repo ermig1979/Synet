@@ -276,6 +276,34 @@ namespace Synet
             }
         }
     }
+
+    template<typename Enum, int Size> SYNET_INLINE Enum StringToEnum(const String & string)
+    {
+        int type = Size - 1;
+        for (; type >= 0; --type)
+        {
+            if (ValueToString<Enum>((Enum)type) == string)
+                return (Enum)type;
+        }
+        return (Enum)type;
+    }
+
+    SYNET_INLINE void ParseEnumNames(const char * data, Strings & names)
+    {
+        if (names.size())
+            return;
+        while (*data)
+        {
+            const char * beg = data;
+            while (*beg == ' ' || *beg == ',') beg++;
+            const char * end = beg;
+            while (*end && *end != ' ' && *end != ',') end++;
+            if (beg == end)
+                break;
+            names.push_back(String(beg, end));
+            data = end;
+        }
+    }
 }
 
 #define SYNET_PARAM_VALUE(type, name, value) \
@@ -305,6 +333,28 @@ Param_##name() : Base(Base::Vector, #name, sizeof(Param_##name), sizeof(type)) {
 virtual void Resize(size_t size) { this->_value.resize(size); } \
 virtual bool Changed() const { return !this->_value.empty(); } \
 } name;
+
+#define SYNET_PARAM_ENUM_(type, unknown, size, ...) \
+enum type \
+{ \
+    type##unknown = -1, \
+    ##__VA_ARGS__, \
+    type##size \
+}; \
+\
+template<> inline Synet::String ValueToString<type>(const type & value) \
+{\
+    static Synet::Strings names;\
+    Synet::ParseEnumNames(#__VA_ARGS__, names); \
+    return (value > type##unknown && value < type##size) ? names[value].substr(sizeof(#type) - 1) : Synet::String();\
+}\
+\
+template<> SYNET_INLINE void StringToValue<type>(const Synet::String & string, type & value)\
+{\
+    value = Synet::StringToEnum<type, type##size>(string);\
+}
+
+#define SYNET_PARAM_ENUM(type, ...) SYNET_PARAM_ENUM_(type, Unknown, Size, __VA_ARGS__)
 
 #define SYNET_PARAM_HOLDER(holder, type, name) \
 struct holder : public Synet::Param<type> \
