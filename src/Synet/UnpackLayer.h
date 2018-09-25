@@ -50,12 +50,14 @@ namespace Synet
             const UnpackParam & param = this->Param().unpack();
             _axis = src[0]->Index(param.axis());
             _count = dst.size();
-            assert(src[0]->Axis(_axis) == _count);
+            _step = src[0]->Axis(_axis) / _count;
+            assert(src[0]->Axis(_axis) == _count*_step);
             _outer = src[0]->Size(0, _axis);
             _inner = src[0]->Size(_axis + 1);
             Shape shape;
             for (size_t i = 0; i < _axis; ++i)
                 shape.push_back(src[0]->Axis(i));
+            shape.push_back(_step);
             for (size_t i = _axis + 1; i < src[0]->Count(); ++i)
                 shape.push_back(src[0]->Axis(i));
             if (dst.size() > 1)
@@ -76,17 +78,17 @@ namespace Synet
             {
                 for (size_t o = 0; o < _outer; ++o)
                 {
-                    for (size_t c = 0; c < _count; ++c)
+                    for (size_t c = 0; c < _count; c += _step)
                     {
                         const Type * pSrc = src[0]->CpuData() + (_count*o + c)*_inner;
                         Type * pDst = dst[c]->CpuData() + o*_inner;
-                        CpuCopy(pSrc, _inner, pDst);
+                        CpuCopy(pSrc, _inner*_step, pDst);
                     }
                 }
             }
         }
 
     private:
-        size_t _axis, _outer, _count, _inner;
+        size_t _axis, _outer, _count, _inner, _step;
     };
 }

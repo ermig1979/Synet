@@ -140,14 +140,33 @@ namespace Synet
             {
                 _padY = 0;
                 _padX = 0;
+                _padH = 0;
+                _padW = 0;
+            }
+            else if (pad.size() == 1)
+            {
+                _padY = pad[0];
+                _padX = pad[0];
+                _padH = pad[0];
+                _padW = pad[0];
+            }
+            else if (pad.size() == 2)
+            {
+                _padY = pad[0];
+                _padX = pad[1];
+                _padH = pad[0];
+                _padW = pad[1];
+            }
+            else if (pad.size() == 4)
+            {
+                _padY = pad[0];
+                _padX = pad[1];
+                _padH = pad[2];
+                _padW = pad[3];
             }
             else
-            {
-                assert(pad.size() == 1 || pad.size() == 2);
-                _padY = pad[0];
-                _padX = pad.size() > 1 ? pad[1] : pad[0];
-                assert(_padY < _kernelY && _padX < _kernelX);
-            }
+                assert(0);
+            assert(_padY + _padH < _kernelY && _padX + _padW < _kernelX);
 
             const Shape & stride = param.stride();
             if (stride.empty())
@@ -164,13 +183,13 @@ namespace Synet
 
             if (_yoloCompatible)
             {
-                _dstX = (_srcX + 2 * _padX) / _strideX;
-                _dstY = (_srcY + 2 * _padY) / _strideY;
+                _dstX = (_srcX + _padX + _padW) / _strideX;
+                _dstY = (_srcY + _padY + _padH) / _strideY;
             }
             else
             {
-                _dstX = (size_t)(::ceil((float)(_srcX + 2 * _padX - _kernelX) / _strideX)) + 1;
-                _dstY = (size_t)(::ceil((float)(_srcY + 2 * _padY - _kernelY) / _strideY)) + 1;
+                _dstX = (size_t)(::ceil((float)(_srcX + _padX + _padW - _kernelX) / _strideX)) + 1;
+                _dstY = (size_t)(::ceil((float)(_srcY + _padY + _padH - _kernelY) / _strideY)) + 1;
                 if (_padX || _padY)
                 {
                     if ((_dstX - 1) * _strideX >= _srcX + _padX)
@@ -205,8 +224,8 @@ namespace Synet
                         size_t srcX = _srcX, srcY = _srcY;
                         if (_yoloCompatible)
                         {
-                            srcX = _dstX*_strideX - 2 * _padX;
-                            srcY = _dstY*_strideY - 2 * _padY;
+                            srcX = _dstX*_strideX - _padX - _padW;
+                            srcY = _dstY*_strideY - _padY - _padH;
                         }
                         Detail::PoolingForwardMaxCpu(pSrc, _srcX, srcX, srcY, _kernelY, _kernelX, _padY, _padX, _strideY, _strideX, pDst, _dstX, _dstY);
                         pSrc += _srcX * _srcY;
@@ -254,6 +273,6 @@ namespace Synet
     private:
         PoolingMethodType _method;
         bool _yoloCompatible;
-        size_t _channels, _srcX, _srcY, _kernelX, _kernelY, _dstX, _dstY, _strideX, _strideY, _padX, _padY;
+        size_t _channels, _srcX, _srcY, _kernelX, _kernelY, _dstX, _dstY, _strideX, _strideY, _padX, _padY, _padW, _padH;
     };
 }
