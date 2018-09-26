@@ -42,7 +42,18 @@ namespace Synet
 
         ConvolutionLayer(const LayerParam & param)
             : Base(param)
+#ifdef SYNET_SIMD_CONVOLUTION_ENABLE
+            , _convolution(NULL)
+#endif
         {
+        }
+
+        virtual ~ConvolutionLayer()
+        {
+#ifdef SYNET_SIMD_CONVOLUTION_ENABLE
+            if(_convolution)
+                ::SimdRelease(_convolution);
+#endif
         }
 
         virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -164,6 +175,15 @@ namespace Synet
             colBufferShape.push_back(_kernelSize * _group);
             for (int i = 0; i < _spatialAxisNum; ++i)
                 colBufferShape.push_back(_dstShape[i]);
+            _srcSize = src[0]->Size(_axis);
+            _dstSize = dst[0]->Size(_axis);
+#ifdef SYNET_SIMD_CONVOLUTION_ENABLE
+            _convolution = ::SimdConvolutionInit(_srcConvShape[0], _srcConvShape[1], _srcConvShape[2], _dstChannels, _kernelShape[0], _kernelShape[1],
+                _dilationShape[0], _dilationShape[1], _strideShape[0], _strideShape[1], _padShape[0], _padShape[1], _padShape[2], _padShape[3], _group);
+            assert(_convolution);
+            buf[0]->Extend({ ::SimdConvolutionBufferSize(_convolution) });
+            ::SimdConvolutionSetWeight(_convolution, this->Weight()[0].CpuData(), _biasTerm ? this->Weight()[1].CpuData() : NULL);
+#else
             _winograd.Init(_srcConvShape, _dstChannels, _kernelShape, _strideShape, _dilationShape, _padShape, _group);
             if (_winograd.Enable())
             {
@@ -182,8 +202,7 @@ namespace Synet
                 else
                     buf[0]->Extend(colBufferShape);
             }
-            _srcSize = src[0]->Size(_axis);
-            _dstSize = dst[0]->Size(_axis);
+#endif
         }
 
     protected:
@@ -206,6 +225,9 @@ namespace Synet
             SYNET_PERF_FUNC();
 #endif
 
+#ifdef SYNET_SIMD_CONVOLUTION_ENABLE
+            ::SimdConvolutionForward(_convolution, src, buf0, dst);
+#else
             const Type * weight = this->Weight()[0].CpuData();
 
             if (_winograd.Enable())
@@ -248,6 +270,7 @@ namespace Synet
 
             if (_biasTerm)
                 CpuAddBias(this->Weight()[1].CpuData(), _dstChannels, _dstSpatialSize, dst);
+#endif
         }
 
         void ImgToCol(const T * src, T * dst)
@@ -346,5 +369,9 @@ namespace Synet
             size_t _group, _wStep, _dStep;
 
         } _direct;
+
+#ifdef SYNET_SIMD_CONVOLUTION_ENABLE
+        void * _convolution;
+#endif
     };
 }

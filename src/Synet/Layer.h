@@ -46,6 +46,10 @@ namespace Synet
                 _weight[i].Reshape(_param.weight()[i].dim());
         }
 
+        virtual ~Layer()
+        {
+        }
+
         const LayerParam & Param() const 
         { 
             return _param; 
