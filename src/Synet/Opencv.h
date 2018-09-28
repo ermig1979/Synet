@@ -611,6 +611,8 @@ namespace Synet
             String method = pData->FirstAttribute("pool-method")->Value();
             if (method == "max")
                 layer.pooling().method() = PoolingMethodTypeMax;
+            else if (method == "avg")
+                layer.pooling().method() = PoolingMethodTypeAverage;
             else
                 assert(0);
             layer.pooling().kernel().resize(2);
@@ -619,15 +621,15 @@ namespace Synet
             layer.pooling().stride().resize(2);
             StringToValue(pData->FirstAttribute("stride-y")->Value(), layer.pooling().stride()[0]);
             StringToValue(pData->FirstAttribute("stride-x")->Value(), layer.pooling().stride()[1]);
-            String padType = pData->FirstAttribute("auto_pad")->Value();
-            if (padType == "same_upper" || padType == "same_lower")
-            {
+            //String padType = pData->FirstAttribute("auto_pad")->Value();
+            //if (padType == "same_upper" || padType == "same_lower")
+            //{
                 layer.pooling().pad().resize(4);
                 StringToValue(pData->FirstAttribute("pad-y")->Value(), layer.pooling().pad()[0]);
                 StringToValue(pData->FirstAttribute("pad-x")->Value(), layer.pooling().pad()[1]);
                 StringToValue(pData->FirstAttribute("pad-b")->Value(), layer.pooling().pad()[2]);
                 StringToValue(pData->FirstAttribute("pad-r")->Value(), layer.pooling().pad()[3]);
-            }
+            //}
 
             return true;
         }
@@ -695,7 +697,7 @@ namespace Synet
                 if (pPort)
                 {
                     Shape input = ConvertShape(pPort);
-                    assert(input.size() == 4);
+                    assert(input.size() >= 2);
                     channels = input[1];
                 }
                 else
@@ -710,7 +712,7 @@ namespace Synet
                 if (pPort)
                 {
                     Shape output = ConvertShape(pPort);
-                    assert(output.size() == 4 && channels == output[1]);
+                    assert(output.size() >= 2 && channels == output[1]);
                 }
                 else
                     return false;
