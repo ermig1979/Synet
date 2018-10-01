@@ -154,6 +154,14 @@ namespace Synet
         return sum;
     }
 
+    template <typename T> T CpuDotProduct(const T * a, const T * b, size_t size)
+    {
+        T sum = 0;
+        for (size_t i = 0; i < size; ++i)
+           sum += a[i]*b[i];
+        return sum;
+    }
+
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
     template <> SYNET_INLINE void CpuAxpy<float>(const float * x, size_t size, const float & alpha, float * y)
     {
@@ -184,6 +192,13 @@ namespace Synet
     template <> SYNET_INLINE void CpuAddBias<float>(const float * bias, size_t count, size_t size, float * dst)
     {
         ::SimdSynetAddBias(bias, count, size, dst);
+    }
+
+    template <> SYNET_INLINE float CpuDotProduct<float>(const float * a, const float * b, size_t size)
+    {
+        float sum = 0;
+        ::SimdNeuralProductSum(a, b, size, &sum);
+        return sum;
     }
 #endif
 }

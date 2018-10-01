@@ -70,7 +70,6 @@ namespace Synet
                 if (_biasTerm)
                     assert(weight[1].Shape() == Shape({ _N }));
             }
-
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -80,33 +79,40 @@ namespace Synet
             dstShape.resize(_axis + 1);
             dstShape[_axis] = _N;
             dst[0]->Reshape(dstShape);
-            if (_biasTerm)
-            {
-                Shape biasShape(1, _M);
-                _biasMultiplier.Reshape(biasShape, Type(1.0f));
-            }
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            const Type * pA = src[0]->CpuData();
-            const Type * pB = src.size() > 1 ? src[1]->CpuData() : this->Weight()[0].CpuData();
-            CpuGemm<Type>(_transposeA ? CblasNoTrans : CblasTrans, _transposeB ? CblasNoTrans : CblasTrans, _M, _N, _K,
-                Type(1), pA, pB, Type(0), dst[0]->CpuData());
-            if (_biasTerm)
-            {
-                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _M, _N, 1,
-                    (Type)1.0, _biasMultiplier.CpuData(), this->Weight()[1].CpuData(), (Type)1.0, dst[0]->CpuData());
-            }
+            ForwardCpu(src[0]->CpuData(), src.size() > 1 ? src[1]->CpuData() : this->Weight()[0].CpuData(), dst[0]->CpuData());
         }
+
+        void ForwardCpu(const T * a, const T * b, T * c)
+        {
+#ifdef SYNET_CONVOLUTION_STATISTIC
+            std::stringstream ss;
+            ss << " M=" << _M << " N=" << _N << " K=" << _K;
+            SYNET_PERF_BLOCK(ss.str().c_str());
+#else
+            SYNET_PERF_FUNC();
+#endif
+            if (_M == 1 && !_transposeB)
+            {
+                for (size_t i = 0; i < _N; ++i)
+                    c[i] = CpuDotProduct(a, b + _K*i, _K);
+            }
+            else
+                CpuGemm<Type>(_transposeA ? CblasNoTrans : CblasTrans, _transposeB ? CblasNoTrans : CblasTrans, _M, _N, _K, Type(1), a, b, Type(0), c);
+            if (_biasTerm)
+                CpuAddBias(this->Weight()[1].CpuData(), _N, _M, c);
+        }
+
 
     private:
         typedef typename Base::Tensor Tensor;
 
         size_t _M, _K, _N, _axis;
         bool _biasTerm, _transposeA, _transposeB;
-        Tensor _biasMultiplier;
     };
 }
