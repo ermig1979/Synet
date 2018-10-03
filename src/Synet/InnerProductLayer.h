@@ -90,7 +90,7 @@ namespace Synet
 
         void ForwardCpu(const T * a, const T * b, T * c)
         {
-#ifdef SYNET_CONVOLUTION_STATISTIC
+#ifdef SYNET_SIZE_STATISTIC
             std::stringstream ss;
             ss << " M=" << _M << " N=" << _N << " K=" << _K;
             SYNET_PERF_BLOCK(ss.str().c_str());

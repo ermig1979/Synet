@@ -29,6 +29,7 @@
 #include "Synet/Gemm.h"
 #include "Synet/ImgToCol.h"
 #include "Synet/Winograd.h"
+#include "Synet/Convolution.h"
 
 namespace Synet
 {
@@ -42,18 +43,7 @@ namespace Synet
 
         ConvolutionLayer(const LayerParam & param)
             : Base(param)
-#ifdef SYNET_SIMD_CONVOLUTION_ENABLE
-            , _convolution(NULL)
-#endif
         {
-        }
-
-        virtual ~ConvolutionLayer()
-        {
-#ifdef SYNET_SIMD_CONVOLUTION_ENABLE
-            if(_convolution)
-                ::SimdRelease(_convolution);
-#endif
         }
 
         virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -177,32 +167,17 @@ namespace Synet
                 colBufferShape.push_back(_dstShape[i]);
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);
-#ifdef SYNET_SIMD_CONVOLUTION_ENABLE
-            _convolution = ::SimdConvolutionInit(_srcConvShape[0], _srcConvShape[1], _srcConvShape[2], _dstChannels, _kernelShape[0], _kernelShape[1],
+            _convolution.Init(_srcConvShape[0], _srcConvShape[1], _srcConvShape[2], _dstChannels, _kernelShape[0], _kernelShape[1],
                 _dilationShape[0], _dilationShape[1], _strideShape[0], _strideShape[1], _padShape[0], _padShape[1], _padShape[2], _padShape[3], _group);
-            assert(_convolution);
-            buf[0]->Extend({ ::SimdConvolutionBufferSize(_convolution) });
-            ::SimdConvolutionSetWeight(_convolution, this->Weight()[0].CpuData(), _biasTerm ? this->Weight()[1].CpuData() : NULL);
-#else
-            _winograd.Init(_srcConvShape, _dstChannels, _kernelShape, _strideShape, _dilationShape, _padShape, _group);
-            if (_winograd.Enable())
+            if (_convolution.Enable())
             {
-                _winograd.SetFilter(this->Weight()[0].CpuData());
-                buf[0]->Extend({ _winograd.SrcBufSize() });
-                buf[1]->Extend({ _winograd.DstBufSize() });
-#ifdef SYNET_WINOGRAD_COMPARE
-                buf[0]->Extend(colBufferShape);
-#endif
+                buf[0]->Extend({ _convolution.BufferSize() });
+                _convolution.SetWeight(this->Weight()[0].CpuData(), _biasTerm ? this->Weight()[1].CpuData() : NULL);
             }
             else
             {
-                _direct.Init(_srcConvShape, _dstChannels, _kernelShape, _strideShape, _dilationShape, _padShape, _group);
-                if(_direct.Enable())
-                    buf[0]->Extend({ _direct.BufferSize() });
-                else
-                    buf[0]->Extend(colBufferShape);
+                buf[0]->Extend(colBufferShape);
             }
-#endif
         }
 
     protected:
@@ -217,45 +192,18 @@ namespace Synet
 
         void ForwardCpu(const T * src, T * buf0, T * buf1, T * dst)
         {
-#ifdef SYNET_CONVOLUTION_STATISTIC
+#ifdef SYNET_SIZE_STATISTIC
             std::stringstream ss;
             ss << " i=" << _srcShape[1] << "x" << _srcShape[2] << "x" << _srcShape[3] << " o=" << _dstChannels << " k=" << _kernelShape[0] << " s=" << _strideShape[0] << " g=" << _group;
             SYNET_PERF_BLOCK(ss.str().c_str());
 #else
             SYNET_PERF_FUNC();
 #endif
-
-#ifdef SYNET_SIMD_CONVOLUTION_ENABLE
-            ::SimdConvolutionForward(_convolution, src, buf0, dst);
-#else
-            const Type * weight = this->Weight()[0].CpuData();
-
-            if (_winograd.Enable())
-            {
-#ifdef SYNET_WINOGRAD_COMPARE
-                {
-                    std::stringstream ss;
-                    ss << _dstChannels << "-" << _dstSpatialSize << "-" << _kernelSize << " img2col ";
-                    SYNET_PERF_BLOCK(ss.str().c_str());
-                    ImgToCol(src, buf0);
-                    CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _dstChannels, _dstSpatialSize, _kernelSize, Type(1.0), weight, buf0, Type(0.0), pDst);
-                }
-                {
-                    std::stringstream ss;
-                    ss << _dstConvChannels << "-" << _dstSpatialSize << "-" << _kernelSize << " winograd";
-                    SYNET_PERF_BLOCK(ss.str().c_str());
-                    _winograd.Convolution(src, buf0, buf1, dst);
-                }
-#else
-                _winograd.Convolution(src, buf0, buf1, dst);
-#endif
-            }
-            else if (_direct.Enable())
-            {
-                _direct.Convolution(src, weight, buf0, dst);
-            }
+            if (_convolution.Enable())
+                _convolution.Forward(src, buf0, dst);
             else
             {
+                const Type * weight = this->Weight()[0].CpuData();
                 if (!_is1x1)
                 {
                     ImgToCol(src, buf0);
@@ -266,11 +214,9 @@ namespace Synet
                     CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _dstChannels / _group, _dstSpatialSize, _kernelSize,
                         Type(1.0), weight + _weightOffset * g, src + _colOffset * g, Type(0.0), dst + _dstOffset * g);
                 }
+                if (_biasTerm)
+                    CpuAddBias(this->Weight()[1].CpuData(), _dstChannels, _dstSpatialSize, dst);            
             }
-
-            if (_biasTerm)
-                CpuAddBias(this->Weight()[1].CpuData(), _dstChannels, _dstSpatialSize, dst);
-#endif
         }
 
         void ImgToCol(const T * src, T * dst)
@@ -290,88 +236,6 @@ namespace Synet
         size_t _axis, _group, _spatialAxisNum, _srcChannels, _dstChannels, _weightOffset, _kernelSize;
         size_t _channelAxis, _num, _dstSpatialSize, _colOffset, _dstOffset, _srcSize, _dstSize;
 
-        Winograd<Type> _winograd;
-
-        struct Direct
-        {
-            Direct()
-                : _enable(false)
-            {
-            }
-
-            void Init(Shape src, size_t dst, Shape kernel, Shape stride, Shape dilation, Shape pad, size_t group)
-            {
-                if (stride[0] != 1 || stride[1] != 1 || dilation[0] != 1 || dilation[1] != 1)
-                    return;
-                if (!((pad[0] == 0 && pad[1] == 0) || (pad[0] == 1 && pad[1] == 1)))
-                    return;
-                if (group != 1)
-                    return;
-                if (kernel[0] == 3 && kernel[1] == 3)
-                {
-                    _srcC = src[0];
-                    _srcH = src[1];
-                    _srcW = src[2];
-                    _dstC = dst;
-                    if (pad[0] == 1 && pad[1] == 1)
-                    {
-                        _pad = true;
-                        _dstH = _srcH;
-                        _dstW = _srcW;
-                    }
-                    else
-                    {
-                        _pad = false;
-                        _dstH = _srcH - 2;
-                        _dstW = _srcW - 2;
-                    }
-
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-                    if (src[0] <= 16)
-                    {
-                        _enable = true;
-                    }
-                    else
-#endif
-                    return;
-                }
-            }
-
-            bool Enable()
-            {
-                return _enable;
-            }
-
-            size_t BufferSize()
-            {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-                if (_enable)
-                    return _srcC*(_srcH + 2)*(_srcW + 2);
-                else
-#endif
-                    return 1;
-            }
-
-            void Convolution(const Type * src, const Type * weight, Type * buffer, Type * dst)
-            {
-                SYNET_PERF_FUNC();
-
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-                int pad = _pad ? 1 : 0;
-                size_t size = BufferSize();
-                ::SimdNeuralConvolutionForward(src, _srcW, _srcH, _srcC, weight, 3, 3, pad, pad, 1, 1, 1, 1, buffer, &size, dst, _dstW, _dstH, _dstC, 0);
-#endif
-            }
-
-        private:
-            bool _enable, _pad;
-            size_t _srcC, _srcW, _srcH, _dstC, _dstH, _dstW;
-            size_t _group, _wStep, _dStep;
-
-        } _direct;
-
-#ifdef SYNET_SIMD_CONVOLUTION_ENABLE
-        void * _convolution;
-#endif
+        Convolution<Type> _convolution;
     };
 }
