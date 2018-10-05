@@ -277,12 +277,23 @@ namespace Synet
         }
     }
 
+    SYNET_INLINE String ToLowerCase(const String & src) 
+    {
+        String dst(src);
+        for (size_t i = 0; i < dst.size(); ++i)
+        {
+            if (dst[i] <= 'Z' && dst[i] >= 'A')
+                dst[i] = dst[i] - ('Z' - 'z');
+        }
+        return dst;
+    }
+
     template<typename Enum, int Size> SYNET_INLINE Enum StringToEnum(const String & string)
     {
         int type = Size - 1;
         for (; type >= 0; --type)
         {
-            if (ValueToString<Enum>((Enum)type) == string)
+            if (ToLowerCase(ValueToString<Enum>((Enum)type)) == ToLowerCase(string))
                 return (Enum)type;
         }
         return (Enum)type;
