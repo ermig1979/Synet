@@ -59,6 +59,10 @@ namespace Synet
         {
         }
 
+        void SetActivation(ActivationFunctionType type, const T * params)
+        {
+        }
+
         void Forward(const T * src, T * buf, T * dst)
         {
         }
@@ -88,6 +92,11 @@ namespace Synet
     template<> SYNET_INLINE void Convolution<float>::SetWeight(const float * weight, const float * bias)
     {
         ::SimdConvolutionSetWeight(_convolution, weight, bias);
+    }
+
+    template<> SYNET_INLINE void Convolution<float>::SetActivation(ActivationFunctionType type, const float * params)
+    {
+        ::SimdConvolutionSetActivation(_convolution, (::SimdConvolutionActivationType)type, params);
     }
 
     template<> SYNET_INLINE void Convolution<float>::Forward(const float * src, float * buf, float * dst)

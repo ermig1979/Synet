@@ -162,6 +162,12 @@ namespace Synet
         return sum;
     }
 
+    template<class T> void CpuRestrictRange(const T * src, size_t size, T lower, T upper, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = std::min(std::max(lower, src[i]), upper);
+    }
+
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
     template <> SYNET_INLINE void CpuAxpy<float>(const float * x, size_t size, const float & alpha, float * y)
     {
@@ -199,6 +205,11 @@ namespace Synet
         float sum = 0;
         ::SimdNeuralProductSum(a, b, size, &sum);
         return sum;
+    }
+
+    template<> SYNET_INLINE void CpuRestrictRange<float>(const float * src, size_t size, float lower, float upper, float * dst)
+    {
+        ::SimdSynetRestrictRange(src, size, &lower, &upper, dst);
     }
 #endif
 }

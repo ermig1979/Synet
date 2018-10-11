@@ -26,18 +26,10 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
+#include "Synet/Math.h"
 
 namespace Synet
 {
-    namespace Detail
-    {
-        template<class T> void RestrictRangeLayerForwardCpu(const T * src, size_t size, T lower, T upper, T * dst)
-        {
-            for (size_t i = 0; i < size; ++i)
-                dst[i] = std::min(std::max(lower, src[i]), upper);
-        }
-    }
-
     template <class T> class RestrictRangeLayer : public Synet::Layer<T>
     {
     public:
@@ -66,7 +58,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            Detail::RestrictRangeLayerForwardCpu<Type>(src[0]->CpuData(), src[0]->Size(), _lower, _upper, dst[0]->CpuData());
+            CpuRestrictRange<Type>(src[0]->CpuData(), src[0]->Size(), _lower, _upper, dst[0]->CpuData());
         }
 
     private:

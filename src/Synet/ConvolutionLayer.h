@@ -136,6 +136,9 @@ namespace Synet
                 assert(this->Weight()[1].Shape() == biasShape);
             _kernelSize = this->Weight()[0].Size(1);
             _weightOffset = _dstChannels * _kernelSize / _group;
+            _activationType = this->Param().convolution().activationType();
+            _activationParams[0] = this->Param().convolution().activationParam0();
+            _activationParams[1] = this->Param().convolution().activationParam1();
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -173,6 +176,7 @@ namespace Synet
             {
                 buf[0]->Extend({ _convolution.BufferSize() });
                 _convolution.SetWeight(this->Weight()[0].CpuData(), _biasTerm ? this->Weight()[1].CpuData() : NULL);
+                _convolution.SetActivation(_activationType, _activationParams);
             }
             else
             {
@@ -187,10 +191,10 @@ namespace Synet
 
             for (int i = 0; i < src.size(); ++i)
                 for (int n = 0; n < this->_num; ++n)
-                    ForwardCpu(src[i]->CpuData() + _srcSize * n, buf[0]->CpuData(), buf[1]->CpuData(), dst[i]->CpuData() + _dstSize * n);
+                    ForwardCpu(src[i]->CpuData() + _srcSize * n, buf[0]->CpuData(), dst[i]->CpuData() + _dstSize * n);
         }
 
-        void ForwardCpu(const T * src, T * buf0, T * buf1, T * dst)
+        void ForwardCpu(const T * src, T * buf, T * dst)
         {
 #ifdef SYNET_SIZE_STATISTIC
             std::stringstream ss;
@@ -200,14 +204,14 @@ namespace Synet
             SYNET_PERF_FUNC();
 #endif
             if (_convolution.Enable())
-                _convolution.Forward(src, buf0, dst);
+                _convolution.Forward(src, buf, dst);
             else
             {
                 const Type * weight = this->Weight()[0].CpuData();
                 if (!_is1x1)
                 {
-                    ImgToCol(src, buf0);
-                    src = buf0;
+                    ImgToCol(src, buf);
+                    src = buf;
                 }
                 for (size_t g = 0; g < _group; ++g)
                 {
@@ -215,7 +219,24 @@ namespace Synet
                         Type(1.0), weight + _weightOffset * g, src + _colOffset * g, Type(0.0), dst + _dstOffset * g);
                 }
                 if (_biasTerm)
-                    CpuAddBias(this->Weight()[1].CpuData(), _dstChannels, _dstSpatialSize, dst);            
+                    CpuAddBias(this->Weight()[1].CpuData(), _dstChannels, _dstSpatialSize, dst);   
+                if (_activationType)
+                {
+                    switch (_activationType)
+                    {
+                    case ActivationFunctionTypeRelu:
+                        CpuRelu(dst, _dstChannels*_dstSpatialSize, 0.0f, dst);
+                        break;
+                    case ActivationFunctionTypeLeakyRelu:
+                        CpuRelu(dst, _dstChannels*_dstSpatialSize, _activationParams[0], dst);
+                        break;
+                    case ActivationFunctionTypeRestrictRange:
+                        CpuRestrictRange(dst, _dstChannels*_dstSpatialSize, _activationParams[0], _activationParams[1], dst);
+                        break;
+                    default:
+                        assert(0);
+                    }
+                }
             }
         }
 
@@ -235,6 +256,8 @@ namespace Synet
         bool _is1x1, _biasTerm;
         size_t _axis, _group, _spatialAxisNum, _srcChannels, _dstChannels, _weightOffset, _kernelSize;
         size_t _channelAxis, _num, _dstSpatialSize, _colOffset, _dstOffset, _srcSize, _dstSize;
+        ActivationFunctionType _activationType;
+        float _activationParams[2];
 
         Convolution<Type> _convolution;
     };

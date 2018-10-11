@@ -72,6 +72,12 @@ namespace Synet
         LayerTypeUpsample,
         LayerTypeYolo); 
 
+    SYNET_PARAM_ENUM(ActivationFunctionType,
+        ActivationFunctionTypeIdentity,
+        ActivationFunctionTypeRelu,
+        ActivationFunctionTypeLeakyRelu,
+        ActivationFunctionTypeRestrictRange);
+
     SYNET_PARAM_ENUM(EltwiseOperationType,
         EltwiseOperationTypeProduct,
         EltwiseOperationTypeSum,
@@ -192,6 +198,9 @@ namespace Synet
         SYNET_PARAM_VALUE(Shape, dilation, Shape());
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
         SYNET_PARAM_VALUE(uint32_t, group, 1);
+        SYNET_PARAM_VALUE(ActivationFunctionType, activationType, ActivationFunctionTypeIdentity);
+        SYNET_PARAM_VALUE(float, activationParam0, 0.0f);
+        SYNET_PARAM_VALUE(float, activationParam1, 6.0f);
     };
 
     struct DetectionOutputParam
