@@ -27,12 +27,12 @@
 #include "Synet/Common.h"
 #include "Synet/Params.h"
 
-#if defined(SYNET_YOLO_ENABLE)
+#if defined(SYNET_DARKNET_ENABLE)
 
-#ifdef SYNET_YOLO_PATH
-#define SYNET_INCLUDE_YOLO(file) SYNET_INCLUDE(SYNET_YOLO_PATH, file)
+#ifdef SYNET_DARKNET_PATH
+#define SYNET_INCLUDE_DARKNET(file) SYNET_INCLUDE(SYNET_DARKNET_PATH, file)
 #else
-#error yolo library path is not defined!
+#error darknet library path is not defined!
 #endif
 
 #ifdef _MSC_VER
@@ -41,14 +41,14 @@
 #pragma warning (disable: 4244 4305)
 #endif
 
-#include SYNET_INCLUDE_YOLO(network.h)
+#include SYNET_INCLUDE_DARKNET(network.h)
 extern "C" 
 {
-#include SYNET_INCLUDE_YOLO(region_layer.h)
-#include SYNET_INCLUDE_YOLO(utils.h)
-#include SYNET_INCLUDE_YOLO(parser.h)
-#include SYNET_INCLUDE_YOLO(box.h)
-#include SYNET_INCLUDE_YOLO(stb_image.h)
+#include SYNET_INCLUDE_DARKNET(region_layer.h)
+#include SYNET_INCLUDE_DARKNET(utils.h)
+#include SYNET_INCLUDE_DARKNET(parser.h)
+#include SYNET_INCLUDE_DARKNET(box.h)
+#include SYNET_INCLUDE_DARKNET(stb_image.h)
 }
 
 #ifdef _MSC_VER
@@ -57,7 +57,7 @@ extern "C"
 
 namespace Synet
 {
-    class YoloToSynet
+    class DarknetToSynet
     {
     public:
         bool Convert(const String & srcModelPath, const String & srcWeightPath, const String & dstModelPath, const String & dstWeightPath)
@@ -111,7 +111,7 @@ namespace Synet
 
             network.layers().reserve(net.n*3);
             weight.reserve(net.n * 2);
-            network.name() = String("yolo_unknown");
+            network.name() = String("darknet_unknown");
 
             if (!ConvertInputLayer(net, network.layers()))
                 return false;
@@ -470,10 +470,10 @@ namespace Synet
         Strings _dst;
     };
 
-    bool ConvertYoloToSynet(const String & srcData, const String & srcWeights, const String & dstXml, const String & dstBin)
+    bool ConvertDarknetToSynet(const String & srcData, const String & srcWeights, const String & dstXml, const String & dstBin)
     {
-        YoloToSynet yoloToSynet;
-        return yoloToSynet.Convert(srcData, srcWeights, dstXml, dstBin);
+        DarknetToSynet darknetToSynet;
+        return darknetToSynet.Convert(srcData, srcWeights, dstXml, dstBin);
     }
 }
 
