@@ -26,6 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Params.h"
+#include "Synet/Optimizer.h"
 
 #if defined(SYNET_OPENCV_ENABLE)
 
@@ -69,6 +70,10 @@ namespace Synet
             Synet::NetworkParamHolder holder;
             Tensors weight;
             if (!ConvertNetwork(xml, bin, holder(), weight))
+                return false;
+
+            Optimizer optimizer;
+            if (!optimizer.Run(holder()))
                 return false;
 
             if (!holder.Save(dstModelPath, false))
