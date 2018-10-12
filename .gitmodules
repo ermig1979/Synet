@@ -1,0 +1,3 @@
+[submodule "3rd/Simd"]
+	path = 3rd/Simd
+	url = https://github.com/ermig1979/Simd.git

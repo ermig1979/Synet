@@ -1,2 +1,2 @@
 # Synet
-A small framework to play neural network
+A small framework to inference neural network
