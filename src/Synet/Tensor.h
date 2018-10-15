@@ -95,6 +95,14 @@ namespace Synet
             Extend();
         }
 
+        SYNET_INLINE void Clear()
+        {
+            _shape.clear();
+            _cpuData->clear();
+            _size = 0;
+            _type = TensorTypeUnknown;
+        }
+
         SYNET_INLINE Tensor<int32_t> & As32i()
         {
             assert(_type == TensorTypeUnknown || _type == TensorType32i);

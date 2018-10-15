@@ -143,6 +143,9 @@ namespace Synet
             if (srcNames.size() != srcShapes.size())
                 return false;
 
+            for (size_t i = 0; i < _tensors.size(); ++i)
+                _tensors[i]->Clear();
+
             if (srcNames.size())
             {
                 _src.clear();
@@ -304,6 +307,8 @@ namespace Synet
         }
 
     private:
+        static const size_t BUFFER_COUNT = 1;
+
         typedef std::shared_ptr<Layer> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
 
@@ -341,9 +346,8 @@ namespace Synet
             _dst.clear();
             _back.clear();
 
-            const size_t bufs = 2;
             TensorPtrs buf;
-            for (size_t i = 0; i < bufs; ++i)
+            for (size_t i = 0; i < BUFFER_COUNT; ++i)
             {
                 TensorSharedPtr tensor(new Tensor());
                 _tensors.push_back(tensor);
