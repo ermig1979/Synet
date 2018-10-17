@@ -437,13 +437,13 @@ namespace Synet
 
         void ReshapeStridedSlice(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            assert(src.size() == 4 && src[0]->Count() == 1 && src[1]->Size() == 1 && src[2]->Size() == 1 && src[3]->Size() == 1);
+            assert(src.size() >= 3 && src[0]->Count() == 1 && src[1]->Size() == 1 && src[2]->Size() == 1);
             if (src[0]->GetType() == TensorType32i)
             {
                 const Synet::Tensor<int32_t> & src0 = src[0]->As32i();
                 size_t begin = src[1]->As32i().CpuData()[0];
                 size_t end = src[2]->As32i().CpuData()[0];
-                size_t step = src[3]->As32i().CpuData()[0];
+                size_t step = src.size() > 3 ? src[3]->As32i().CpuData()[0] : 1;
                 Shape result;
                 for (size_t i = begin; i < end; i += step)
                     result.push_back(src0.CpuData()[i]);

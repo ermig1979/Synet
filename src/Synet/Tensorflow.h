@@ -28,15 +28,20 @@
 
 #if defined(SYNET_TENSORFLOW_ENABLE)
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 #pragma warning (push)
 #pragma warning (disable: 4267 4800 4554 4244)
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-attributes"
 #endif
 
 #include "tensorflow/core/public/session.h"
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 #pragma warning (pop)
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
 #endif
 
 //#define SYNET_TENSORFLOW_DEBUG
@@ -48,10 +53,17 @@ namespace Synet
     {
     public:
 
+        struct ShapeTipParam
+        {
+            SYNET_PARAM_VALUE(String, name, String());
+            SYNET_PARAM_VALUE(Shape, shape, Shape());
+        };
+
         struct ConvertParam
         {
             SYNET_PARAM_VALUE(Strings, ignore, Strings());
             SYNET_PARAM_VALUE(Strings, output, Strings());
+            SYNET_PARAM_VECTOR(ShapeTipParam, tips);
         };
 
         SYNET_PARAM_HOLDER(ConvertParamHolder, ConvertParam, convert);
@@ -495,6 +507,35 @@ namespace Synet
             return true;
         }
 
+        bool ReorderWeightSpecial(const String & name, Tensor & weight)
+        {
+            assert(weight.Count() == 2);
+            Shape shape;
+            for (size_t j = 0; j < _param().tips().size(); ++j)
+            {
+                if (_param().tips()[j].name() == name)
+                {
+                    shape = _param().tips()[j].shape();
+                    break;
+                }
+            } 
+            if (shape.empty())
+                return true;
+            assert(shape.size() == 2 && shape[0] * shape[1] == weight.Axis(1));
+            Tensor buf(shape);
+            for (size_t j = 0; j < weight.Axis(0); ++j)
+            {
+                float * pSrc = weight.CpuData({j, size_t(0)});
+                float * pDst = buf.CpuData();
+                size_t on = shape[1], in = shape[0];
+                for (size_t o = 0; o < on; o++)
+                    for (size_t i = 0; i < in; i++)
+                        pDst[in*o + i] = pSrc[on*i + o];
+                memcpy(pSrc, pDst, on*in * sizeof(float));
+            }
+            return true;
+        }
+
         bool ConvertInnerProductLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Tensors & weight)
         {
             assert(node.input_size() == 2);
@@ -510,11 +551,14 @@ namespace Synet
                 layer.innerProduct().transposeA() = node.attr().at("transpose_a").b();
             if (node.attr().find("transpose_b") != node.attr().end())
                 layer.innerProduct().transposeB() = node.attr().at("transpose_b").b();
+            layer.innerProduct().axis() = 0;
             if (haveConst)
             {
                 layer.weight().resize(1);
                 weight.push_back(Tensor());
-                ConvertKernel(GetConst(_graph, node, _valueId), weight.back());
+                ConvertKernel(GetConst(_graph, node, _valueId), weight.back()); 
+                if (!ReorderWeightSpecial(layer.name(), weight.back()))
+                    return false;
                 layer.weight()[0].dim() = weight.back().Shape();
                 layer.innerProduct().outputNum() = (uint32_t)(layer.innerProduct().transposeB() ? layer.weight()[0].dim()[1] : layer.weight()[0].dim()[0]);
                 NameIndexVector nextLayers = NextLayers(node.name(), "BiasAdd");
@@ -528,6 +572,14 @@ namespace Synet
                     layer.weight()[1].dim() = weight.back().Shape();
                     _ignore.insert(nextLayers[0].first);
                     ExcludeLayer(nextLayers[0].second, 0, false);
+                    for (size_t j = 0; j < _param().output().size(); ++j)
+                    {
+                        if (_param().output()[j] == nextLayers[0].first)
+                        {
+                            layer.name() = nextLayers[0].first;
+                            break;
+                        }
+                    }
                 }
                 AddSrcDst(node, 1, 1, layer);
             }
@@ -832,7 +884,7 @@ namespace Synet
                     layer.pooling().pad() = Shape({ kernel[0] / 2, kernel[1] / 2 });
                 }
             }
-            layer.pooling().yoloCompatible() = true;
+            layer.pooling().yoloCompatible() = layer.pooling().kernel()[0] == 2;
             AddSrcDst(node, 1, 1, layer);
             return true;
         }
@@ -1191,6 +1243,8 @@ namespace Synet
             Shape shape = GetShape(src); 
             if(shape.size() == 4)
                 shape = Shape({shape[3], shape[2], shape[0], shape[1]});
+            if (shape.size() == 2)
+                shape = Shape({ shape[1], shape[0] });
             dst.Reshape(shape);    
             TD * pDst = dst.CpuData();
 
@@ -1213,6 +1267,19 @@ namespace Synet
                                 pDst[dst_i] = (TD)pSrc[src_i];
                             }
                         }
+                    }
+                }
+            }
+            else if (shape.size() == 2)
+            {
+                size_t out_c = shape[0], in_c = shape[1];
+                for (size_t i_oc = 0; i_oc < out_c; i_oc++)
+                {
+                    for (size_t i_ic = 0; i_ic < in_c; i_ic++)
+                    {
+                        size_t dst_i = in_c*i_oc + i_ic;
+                        size_t src_i = out_c*i_ic + i_oc;
+                        pDst[dst_i] = (TD)pSrc[src_i];                        
                     }
                 }
             }
