@@ -317,6 +317,7 @@ namespace Synet
         typedef std::vector<TensorSharedPtr> TensorSharedPtrs;
 
         typedef std::map<String, size_t> NameIndexMap;
+        typedef std::map<size_t, String> IndexNameMap;
         typedef std::set<String> NameSet;
 
         struct Stage
@@ -354,19 +355,20 @@ namespace Synet
                 buf.push_back(tensor.get());
             }
 
-            NameIndexMap index;
+            NameIndexMap tensorIndex, layerIndex;
             NameSet available;
             for (size_t i = 0; i < _layers.size(); ++i)
             {
                 Stage stage;
                 stage.layer = _layers[i].get();
                 const LayerParam & param = stage.layer->Param();
+                layerIndex[param.name()] = i;
                 for (size_t j = 0; j < param.src().size(); ++j)
                 {
                     const String & name = param.src()[j];
-                    if (index.find(name) != index.end())
+                    if (tensorIndex.find(name) != tensorIndex.end())
                     {
-                        stage.src.push_back(_tensors[index[name]].get());
+                        stage.src.push_back(_tensors[tensorIndex[name]].get());
                         if (available.find(name) != available.end())
                             available.erase(name);
                     }
@@ -378,9 +380,9 @@ namespace Synet
                     const String & name = param.dst()[j];
                     if (j < param.src().size() && name == param.src()[j])
                     {
-                        stage.dst.push_back(_tensors[index[name]].get());
+                        stage.dst.push_back(_tensors[tensorIndex[name]].get());
                     }
-                    else  if (index.find(name) != index.end())
+                    else  if (tensorIndex.find(name) != tensorIndex.end())
                     {
                         assert(0);
                     }
@@ -388,7 +390,7 @@ namespace Synet
                     {
                         TensorSharedPtr tensor(new Tensor());
                         tensor->SetName(name);
-                        index[name] = _tensors.size();
+                        tensorIndex[name] = _tensors.size();
                         _tensors.push_back(tensor);
                         stage.dst.push_back(tensor.get());
                     }
@@ -404,18 +406,18 @@ namespace Synet
                 else
                     _stages.push_back(stage);
             }
+            IndexNameMap sorted;
             for (NameSet::const_iterator it = available.begin(); it != available.end(); ++it)
+                sorted[layerIndex[*it]] = *it;
+            for (IndexNameMap::const_iterator it = sorted.begin(); it != sorted.end(); ++it)
             {
-                if (InsertDst(*it))
+                if (InsertDst(it->second))
                 {
-                    _dst.push_back(_tensors[index[*it]].get());
-                    for (size_t i = 0; i < _layers.size(); ++i)
+                    LayerPtr layer = _layers[layerIndex[it->second]].get();
+                    if (layer->Param().type() != LayerTypeMeta)
                     {
-                        if (_layers[i]->Param().name() == *it)
-                        {
-                            _back.push_back(_layers[i].get());
-                            break;
-                        }
+                        _dst.push_back(_tensors[tensorIndex[it->second]].get());
+                        _back.push_back(layer);
                     }
                 }
             }

@@ -29,9 +29,17 @@
 
 #if defined(SYNET_CAFFE_ENABLE)
 
-#define CPU_ONLY
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wterminate"
+#endif
 
+#define CPU_ONLY
 #include "caffe/caffe.hpp"
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 namespace Synet
 {
