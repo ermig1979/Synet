@@ -42,6 +42,7 @@ namespace Synet
         LayerTypeExpandDims,
         LayerTypeFill,
         LayerTypeFlatten,
+        LayerTypeFused,
         LayerTypeGather,
         LayerTypeInnerProduct,
         LayerTypeInput,
@@ -238,6 +239,11 @@ namespace Synet
         SYNET_PARAM_VALUE(int32_t, axis, 1);
         SYNET_PARAM_VALUE(int32_t, endAxis, -1);
     };
+
+    struct FusedParam
+    {
+        SYNET_PARAM_VALUE(int, type, -1);
+    };
     
     struct InnerProductParam
     {
@@ -419,6 +425,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(ExpandDimsParam, expandDims);
         SYNET_PARAM_STRUCT(FillParam, fill);
         SYNET_PARAM_STRUCT(FlattenParam, flatten);
+        SYNET_PARAM_STRUCT(FusedParam, fused);
         SYNET_PARAM_STRUCT(InnerProductParam, innerProduct);
         SYNET_PARAM_STRUCT(InputParam, input);
         SYNET_PARAM_STRUCT(InterpParam, interp);

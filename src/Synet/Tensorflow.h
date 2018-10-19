@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Synet/Network.h"
+#include "Synet/Optimizer.h"
 
 #if defined(SYNET_TENSORFLOW_ENABLE)
 
@@ -102,6 +103,10 @@ namespace Synet
             Synet::NetworkParamHolder holder;
             Tensors weight;
             if (!ConvertNetwork(holder(), weight))
+                return false;
+
+            Optimizer optimizer;
+            if (!optimizer.Run(holder()))
                 return false;
 
             if (!holder.Save(dstModelPath, false))

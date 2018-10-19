@@ -35,6 +35,7 @@
 #include "Synet/ExpandDimsLayer.h"
 #include "Synet/FillLayer.h"
 #include "Synet/FlattenLayer.h"
+#include "Synet/FusedLayer.h"
 #include "Synet/GatherLayer.h"
 #include "Synet/InnerProductLayer.h"
 #include "Synet/InputLayer.h"
@@ -468,6 +469,7 @@ namespace Synet
             case LayerTypeExpandDims: return new ExpandDimsLayer<T>(param);
             case LayerTypeFill: return new FillLayer<T>(param);
             case LayerTypeFlatten: return new FlattenLayer<T>(param);
+            case LayerTypeFused: return new FusedLayer<T>(param);
             case LayerTypeGather: return new GatherLayer<T>(param);
             case LayerTypeInnerProduct: return new InnerProductLayer<T>(param);
             case LayerTypeInput: return new InputLayer<T>(param);
