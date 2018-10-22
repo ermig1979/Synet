@@ -47,6 +47,23 @@ namespace Synet
             }
         }
 
+        template <class T> void FusedLayerForwardCpu1(const T * src, const T * bias0, const T * scale1, const T * bias1, size_t count, size_t size, T * dst)
+        {
+            for (size_t i = 0; i < count; ++i)
+            {
+                const T b0 = bias0[i];
+                const T s1 = scale1[i];
+                const T b1 = bias1[i];
+                for (size_t j = 0; j < size; ++j)
+                {
+                    T x = src[j] + b0;
+                    dst[j] = std::max(T(0), -x)*s1 + b1 + std::max(T(0), x);
+                }
+                src += size;
+                dst += size;
+            }
+        }
+
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
         template <> SYNET_INLINE void FusedLayerForwardCpu0<float>(const float * src, const float * bias, const float * scale, size_t count, size_t size, float * dst)
         {
@@ -103,6 +120,17 @@ namespace Synet
                 }
                 break;
             }
+            case 1:
+            {
+                assert(weight.size() == 5);
+                _t1.bias0.Share(weight[0]);
+                _t1.count = _t1.bias0.Size();
+                assert(weight[1].Size() == 1 && weight[1].CpuData()[0] == -1.0f);
+                assert(weight[2].Size() == 1 && weight[2].CpuData()[0] == 0.0f);
+                _t1.scale1.Share(weight[3]);
+                _t1.bias1.Share(weight[4]);
+                break;
+            }
             default:
                 assert(0);
             }
@@ -117,6 +145,14 @@ namespace Synet
                 _t0.size = src[0]->Size() / _t0.count;
                 assert(_t0.count == src[0]->Axis(1));
                 assert(_t0.size*_t0.count == src[0]->Size());
+                dst[0]->Reshape(src[0]->Shape());
+                break;
+            }
+            case 1:
+            {
+                _t1.size = src[0]->Size() / _t1.count;
+                assert(_t1.count == src[0]->Axis(1));
+                assert(_t1.size*_t1.count == src[0]->Size());
                 dst[0]->Reshape(src[0]->Shape());
                 break;
             }
@@ -136,6 +172,9 @@ namespace Synet
             case 0:
                 Detail::FusedLayerForwardCpu0(pSrc, _t0.bias.CpuData(), _t0.scale.CpuData(), _t0.count, _t0.size, pDst);
                 break;
+            case 1:
+                Detail::FusedLayerForwardCpu1(pSrc, _t1.bias0.CpuData(), _t1.scale1.CpuData(), _t1.bias1.CpuData(), _t1.count, _t1.size, pDst);
+                break;
             default:
                 assert(0);
             }
@@ -152,5 +191,11 @@ namespace Synet
             size_t count, size;
             Tensor bias, scale;
         } _t0;
+
+        struct T1
+        {
+            size_t count, size;
+            Tensor bias0, scale1, bias1;
+        } _t1;
     };
 }
