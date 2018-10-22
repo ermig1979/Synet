@@ -46,6 +46,13 @@ namespace Synet
                 dst += size;
             }
         }
+
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        template <> SYNET_INLINE void FusedLayerForwardCpu0<float>(const float * src, const float * bias, const float * scale, size_t count, size_t size, float * dst)
+        {
+            ::SimdSynetFusedLayerForward0(src, bias, scale, count, size, dst);
+        }
+#endif
     }
 
     template <class T> class FusedLayer : public Synet::Layer<T>
