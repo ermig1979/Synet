@@ -30,6 +30,30 @@
 
 namespace Synet
 {
+    namespace Detail
+    {
+        template <class T> void InnerProductLayerForwardCpu(const T * src, const T * weight, const T * bias, size_t count, size_t size, T * dst)
+        {
+            if (bias)
+            {
+                for (size_t i = 0; i < count; ++i)
+                    dst[i] = CpuDotProduct(src, weight + size*i, size) + bias[i];
+            }
+            else
+            {
+                for (size_t i = 0; i < count; ++i)
+                    dst[i] = CpuDotProduct(src, weight + size*i, size);
+            }
+        }
+
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        template <> SYNET_INLINE void InnerProductLayerForwardCpu<float>(const float * src, const float * weight, const float * bias, size_t count, size_t size, float * dst)
+        {
+            ::SimdSynetInnerProductLayerForward(src, weight, bias, count, size, dst);
+        }
+#endif
+    }
+
     template <class T> class InnerProductLayer : public Synet::Layer<T>
     {
     public:
@@ -99,13 +123,14 @@ namespace Synet
 #endif
             if (_M == 1 && !_transposeB)
             {
-                for (size_t i = 0; i < _N; ++i)
-                    c[i] = CpuDotProduct(a, b + _K*i, _K);
+                Detail::InnerProductLayerForwardCpu(a, b, _biasTerm ? this->Weight()[1].CpuData() : NULL, _N, _K, c);
             }
             else
+            {
                 CpuGemm<Type>(_transposeA ? CblasNoTrans : CblasTrans, _transposeB ? CblasNoTrans : CblasTrans, _M, _N, _K, Type(1), a, b, Type(0), c);
-            if (_biasTerm)
-                CpuAddBias(this->Weight()[1].CpuData(), _N, _M, c);
+                if (_biasTerm)
+                    CpuAddBias(this->Weight()[1].CpuData(), _N, _M, c);
+            }
         }
 
 

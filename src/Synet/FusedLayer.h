@@ -69,6 +69,11 @@ namespace Synet
         {
             ::SimdSynetFusedLayerForward0(src, bias, scale, count, size, dst);
         }
+
+        template <> SYNET_INLINE void FusedLayerForwardCpu1<float>(const float * src, const float * bias0, const float * scale1, const float * bias1, size_t count, size_t size, float * dst)
+        {
+            ::SimdSynetFusedLayerForward1(src, bias0, scale1, bias1, count, size, dst);
+        }
 #endif
     }
 
@@ -165,15 +170,27 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            const Type* pSrc = src[0]->CpuData();
-            Type * pDst = dst[0]->CpuData();
+            ForwardCpu(src[0]->CpuData(), dst[0]->CpuData());
+        }
+
+        void ForwardCpu(const Type * src, Type * dst)
+        {
+#ifdef SYNET_SIZE_STATISTIC
+            std::stringstream ss;
+            ss << " t=" << _type;
+            ss << " c=" << (_type == 0 ? _t0.count : _t1.count);
+            ss << " s=" << (_type == 0 ? _t0.size : _t1.size);
+            SYNET_PERF_BLOCK(ss.str().c_str());
+#else
+            SYNET_PERF_FUNC();
+#endif
             switch (_type)
             {
             case 0:
-                Detail::FusedLayerForwardCpu0(pSrc, _t0.bias.CpuData(), _t0.scale.CpuData(), _t0.count, _t0.size, pDst);
+                Detail::FusedLayerForwardCpu0(src, _t0.bias.CpuData(), _t0.scale.CpuData(), _t0.count, _t0.size, dst);
                 break;
             case 1:
-                Detail::FusedLayerForwardCpu1(pSrc, _t1.bias0.CpuData(), _t1.scale1.CpuData(), _t1.bias1.CpuData(), _t1.count, _t1.size, pDst);
+                Detail::FusedLayerForwardCpu1(src, _t1.bias0.CpuData(), _t1.scale1.CpuData(), _t1.bias1.CpuData(), _t1.count, _t1.size, dst);
                 break;
             default:
                 assert(0);
