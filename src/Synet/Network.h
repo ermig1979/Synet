@@ -304,6 +304,7 @@ namespace Synet
                         regions.push_back(c);
                 }
             }
+            std::sort(regions.begin(), regions.end(), [](const Region & a, const Region & b) {return a.prob > b.prob; });
             return regions;
         }
 
