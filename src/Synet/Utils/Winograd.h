@@ -25,7 +25,7 @@
 #pragma once
 
 #include "Synet/Common.h"
-#include "Synet/Gemm.h"
+#include "Synet/Utils/Gemm.h"
 
 namespace Synet
 {

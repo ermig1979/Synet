@@ -26,42 +26,44 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/Math.h"
+#include "Synet/Layers/EltwiseLayer.h"
 
 namespace Synet
 {
-    template <class T> class RestrictRangeLayer : public Synet::Layer<T>
+    template <class T> class ShortcutLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        RestrictRangeLayer(const LayerParam & param)
+        ShortcutLayer(const LayerParam & param)
             : Base(param)
         {
         }
 
         virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            const RestrictRangeParam & param = this->Param().restrictRange();
-            _lower = param.lower();
-            _upper = param.upper();
+            _coeff[0] = 1.0f;
+            _coeff[1] = 1.0f;
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape());
             dst[0]->Reshape(src[0]->Shape());
+            _src[0] = src[0]->CpuData();
+            _src[1] = src[1]->CpuData();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            CpuRestrictRange<Type>(src[0]->CpuData(), src[0]->Size(), _lower, _upper, dst[0]->CpuData());
+            Detail::EltwiseLayerForwardCpu(_src, _coeff, 2, dst[0]->Size(), EltwiseOperationTypeSum, dst[0]->CpuData());
         }
-
     private:
-        Type _lower, _upper;
+        Type _coeff[2];
+        Type * _src[2];
     };
 }

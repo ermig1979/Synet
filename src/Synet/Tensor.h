@@ -26,7 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Params.h"
-#include "Synet/Math.h"
+#include "Synet/Utils/Math.h"
 
 namespace Synet
 {

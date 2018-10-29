@@ -25,7 +25,7 @@
 #pragma once
 
 #include "Synet/Network.h"
-#include "Synet/Optimizer.h"
+#include "Synet/Converters/Optimizer.h"
 
 #if defined(SYNET_TENSORFLOW_ENABLE)
 

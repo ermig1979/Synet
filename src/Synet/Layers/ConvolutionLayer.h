@@ -26,10 +26,10 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/Gemm.h"
-#include "Synet/ImgToCol.h"
-#include "Synet/Winograd.h"
-#include "Synet/Convolution.h"
+#include "Synet/Utils/Gemm.h"
+#include "Synet/Utils/ImgToCol.h"
+#include "Synet/Utils/Winograd.h"
+#include "Synet/Utils/Convolution.h"
 
 namespace Synet
 {

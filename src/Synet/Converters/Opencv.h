@@ -26,7 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Params.h"
-#include "Synet/Optimizer.h"
+#include "Synet/Converters/Optimizer.h"
 
 #if defined(SYNET_OPENCV_ENABLE)
 

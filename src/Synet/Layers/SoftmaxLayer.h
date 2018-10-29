@@ -26,8 +26,8 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/Math.h"
-#include "Synet/UnaryOperationLayer.h"
+#include "Synet/Layers/UnaryOperationLayer.h"
+#include "Synet/Utils/Math.h"
 
 namespace Synet
 {

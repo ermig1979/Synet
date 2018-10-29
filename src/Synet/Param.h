@@ -25,7 +25,7 @@
 #pragma once
 
 #include "Synet/Common.h"
-#include "Synet/Xml.h"
+#include "Synet/Utils/Xml.h"
 
 namespace Synet
 {

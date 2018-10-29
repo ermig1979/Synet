@@ -25,9 +25,9 @@
 #pragma once
 
 #include "Synet/Common.h"
-#include "Synet/ScaleLayer.h"
-#include "Synet/Math.h"
-#include "Synet/Gemm.h"
+#include "Synet/Layers/ScaleLayer.h"
+#include "Synet/Utils/Math.h"
+#include "Synet/Utils/Gemm.h"
 
 namespace Synet
 {

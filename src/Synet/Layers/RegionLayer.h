@@ -26,8 +26,8 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/SoftmaxLayer.h"
-#include "Synet/Math.h"
+#include "Synet/Layers/SoftmaxLayer.h"
+#include "Synet/Utils/Math.h"
 
 namespace Synet
 {
