@@ -243,6 +243,7 @@ namespace Synet
     struct FusedParam
     {
         SYNET_PARAM_VALUE(int, type, -1);
+        SYNET_PARAM_VALUE(Floats, floats, Floats());
     };
     
     struct InnerProductParam

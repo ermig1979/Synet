@@ -19,9 +19,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\Synet\*.hpp" />
-    <ClInclude Include="..\..\src\Synet\*.h" />
-    <ClCompile Include="..\..\src\Synet\*.cpp">
+    <ClInclude Include="..\Synet\*.h" />
+	<ClInclude Include="..\Synet\Layers\*.h" />
+	<ClInclude Include="..\Synet\Converters\*.h" />
+	<ClInclude Include="..\Synet\Utils\*.h" />
+    <ClCompile Include="..\Synet\Synet.cpp">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">NoExtensions</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
     </ClCompile>

@@ -60,6 +60,8 @@ namespace Synet
                     continue;
                 if (MergeFused1(src, i, dst, changes))
                     continue;
+                if (MergeFused2(src, i, dst, changes))
+                    continue;
                 dst.push_back(src[i]);
             }
             for (size_t k = 0; k < changes.size(); ++k)
@@ -204,6 +206,40 @@ namespace Synet
             dst.back().convolution().biasTerm() = false;
             dst.push_back(layer);
             index += 4;
+            return true;
+        }
+
+        bool MergeFused2(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            if (index == 0 || src.size() < index + 2)
+                return false;
+            if (src[index - 1].type() != LayerTypeConvolution || src[index - 1].convolution().biasTerm() ||
+                src[index - 1].convolution().activationType() != ActivationFunctionTypeIdentity)
+                return false;
+            if (src[index + 0].type() != LayerTypeBatchNorm || !src[index + 0].batchNorm().useGlobalStats() || !src[index + 0].batchNorm().yoloCompatible() || 
+                src[index + 0].src()[0] != src[index - 1].name() || src[index + 0].dst()[0] != src[index - 1].name())
+                return false;
+            if (src[index + 1].type() != LayerTypeScale || !src[index + 1].scale().biasTerm() || src[index + 1].scale().axis() != 1 ||
+                src[index + 1].src()[0] != src[index - 1].name() || src[index + 1].dst()[0] != src[index - 1].name())
+                return false;
+            if (src[index + 2].type() != LayerTypeRelu || 
+                src[index + 2].src()[0] != src[index - 1].name() || src[index + 2].dst()[0] != src[index - 1].name())
+                return false;
+            LayerParam layer;
+            layer.type() = LayerTypeFused;
+            layer.name() = src[index + 2].name();
+            layer.src().push_back(src[index - 1].name());
+            layer.dst() = src[index + 2].dst();
+            layer.fused().type() = 2;
+            layer.fused().floats().resize(2);
+            layer.fused().floats()[0] = src[index + 0].batchNorm().eps();
+            layer.fused().floats()[1] = src[index + 2].relu().negativeSlope();
+            layer.weight().push_back(src[index + 0].weight()[0]);
+            layer.weight().push_back(src[index + 0].weight()[1]);
+            layer.weight().push_back(src[index + 1].weight()[0]);
+            layer.weight().push_back(src[index + 1].weight()[1]);
+            dst.push_back(layer);
+            index += 2;
             return true;
         }
     };

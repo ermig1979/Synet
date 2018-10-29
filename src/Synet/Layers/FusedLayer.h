@@ -64,6 +64,22 @@ namespace Synet
             }
         }
 
+        template <class T> void FusedLayerForwardCpu2(const T * src, const T * scale, const T * bias, size_t count, size_t size, const T & slope, T * dst)
+        {
+            for (size_t i = 0; i < count; ++i)
+            {
+                const T s = scale[i];
+                const T b = bias[i];
+                for (size_t j = 0; j < size; ++j)
+                {
+                    T x = src[j]*s + b;
+                    dst[j] = std::max(x, T(0)) + slope * std::min(x, T(0));
+                }
+                src += size;
+                dst += size;
+            }
+        }
+
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
         template <> SYNET_INLINE void FusedLayerForwardCpu0<float>(const float * src, const float * bias, const float * scale, size_t count, size_t size, float * dst)
         {
@@ -91,7 +107,8 @@ namespace Synet
 
         virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            _type = this->Param().fused().type();
+            const FusedParam & fused = this->Param().fused();
+            _type = fused.type();
             const Tensors & weight = this->Weight();
             switch (_type)
             {
@@ -136,6 +153,23 @@ namespace Synet
                 _t1.bias1.Share(weight[4]);
                 break;
             }
+            case 2:
+                assert(weight.size() == 4 && weight[0].Count() == 1);
+                assert(weight[0].Shape() == weight[1].Shape() && weight[0].Shape() == weight[2].Shape() && weight[0].Shape() == weight[3].Shape());
+                assert(fused.floats().size() == 2);
+                _t2.scale.Reshape(weight[0].Shape());
+                _t2.bias.Reshape(weight[0].Shape());
+                _t2.count = _t2.scale.Size();
+                for (size_t i = 0; i < _t2.count; ++i)
+                {
+                    Type eps = fused.floats()[0];
+                    Type scale = Type(1) / (::sqrt(weight[1].CpuData()[i]) + eps);
+                    Type bias = - weight[0].CpuData()[i] * scale;
+                    _t2.scale.CpuData()[i] = scale*weight[2].CpuData()[i];
+                    _t2.bias.CpuData()[i] = bias*weight[2].CpuData()[i] + weight[3].CpuData()[i];
+                }
+                _t2.slope = fused.floats()[1];
+                break;
             default:
                 assert(0);
             }
@@ -161,6 +195,14 @@ namespace Synet
                 dst[0]->Reshape(src[0]->Shape());
                 break;
             }
+            case 2:
+            {
+                _t2.size = src[0]->Size() / _t2.count;
+                assert(_t2.count == src[0]->Axis(1));
+                assert(_t2.size*_t2.count == src[0]->Size());
+                dst[0]->Reshape(src[0]->Shape());
+                break;
+            }
             default: 
                 assert(0);
             }
@@ -178,8 +220,8 @@ namespace Synet
 #ifdef SYNET_SIZE_STATISTIC
             std::stringstream ss;
             ss << " t=" << _type;
-            ss << " c=" << (_type == 0 ? _t0.count : _t1.count);
-            ss << " s=" << (_type == 0 ? _t0.size : _t1.size);
+            ss << " c=" << (_type == 0 ? _t0.count : (_type == 1 ? _t1.count : _t2.count));
+            ss << " s=" << (_type == 0 ? _t0.size : (_type == 1 ? _t1.size : _t2.size));
             SYNET_PERF_BLOCK(ss.str().c_str());
 #else
             SYNET_PERF_FUNC();
@@ -191,6 +233,9 @@ namespace Synet
                 break;
             case 1:
                 Detail::FusedLayerForwardCpu1(src, _t1.bias0.CpuData(), _t1.scale1.CpuData(), _t1.bias1.CpuData(), _t1.count, _t1.size, dst);
+                break;
+            case 2:
+                Detail::FusedLayerForwardCpu2(src, _t2.scale.CpuData(), _t2.bias.CpuData(), _t2.count, _t2.size, _t2.slope, dst);
                 break;
             default:
                 assert(0);
@@ -214,5 +259,12 @@ namespace Synet
             size_t count, size;
             Tensor bias0, scale1, bias1;
         } _t1;
+
+        struct T2
+        {
+            size_t count, size;
+            Tensor scale, bias;
+            Type slope;
+        } _t2;
     };
 }

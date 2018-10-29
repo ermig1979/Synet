@@ -26,6 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Params.h"
+#include "Synet/Converters/Optimizer.h"
 
 #if defined(SYNET_DARKNET_ENABLE)
 
@@ -87,6 +88,10 @@ namespace Synet
             }
 
             ::free_network(net);
+
+            Optimizer optimizer;
+            if (!optimizer.Run(holder()))
+                return false;
 
             if (!holder.Save(dstModelPath, false))
                 return false;
