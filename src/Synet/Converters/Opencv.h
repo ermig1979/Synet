@@ -248,6 +248,8 @@ namespace Synet
                     return false;
                 if (type == "Power" && !ConvertPowerLayer(pLayer, layer, weight))
                     return false;
+                if (type == "PReLU" && !ConvertPreluLayer(pLayer, bin, layer, weight))
+                    return false;
                 if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
                     return false;
                 if (type == "Reshape" && !ConvertReshapeLayer(pLayer, layer))
@@ -663,6 +665,33 @@ namespace Synet
             }
             else
                 assert(0);
+            return true;
+        }
+
+        bool ConvertPreluLayer(const XmlNode * pLayer, const Vector & bin, LayerParam & layer, Tensors & weight)
+        {
+            layer.type() = Synet::LayerTypePrelu;
+            const XmlNode * pBlobs = pLayer->FirstNode("blobs");
+            if (pBlobs)
+            {
+                const XmlNode * pWeights = pBlobs->FirstNode("weights");
+                if (pWeights)
+                {
+                    size_t offset, size;
+                    StringToValue(pWeights->FirstAttribute("offset")->Value(), offset);
+                    StringToValue(pWeights->FirstAttribute("size")->Value(), size);
+                    layer.weight().resize(1);
+                    layer.weight()[0].dim() = Shape({size/ sizeof(float) });
+                    weight.push_back(Tensor());
+                    weight.back().Reshape(layer.weight()[0].dim());
+                    assert(size == weight.back().Size() * sizeof(float));
+                    memcpy(weight.back().CpuData(), bin.data() + offset / sizeof(float), size);
+                }
+                else
+                    return false;
+            }
+            else
+                return false;
             return true;
         }
 

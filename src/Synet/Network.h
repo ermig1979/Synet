@@ -47,6 +47,7 @@
 #include "Synet/Layers/PadLayer.h"
 #include "Synet/Layers/PermuteLayer.h"
 #include "Synet/Layers/PoolingLayer.h"
+#include "Synet/Layers/PreluLayer.h"
 #include "Synet/Layers/PriorBoxLayer.h"
 #include "Synet/Layers/RegionLayer.h"
 #include "Synet/Layers/ReluLayer.h"
@@ -482,6 +483,7 @@ namespace Synet
             case LayerTypePad: return new PadLayer<T>(param);
             case LayerTypePermute: return new PermuteLayer<T>(param);
             case LayerTypePooling: return new PoolingLayer<T>(param);
+            case LayerTypePrelu: return new PreluLayer<T>(param);
             case LayerTypePriorBox: return new PriorBoxLayer<T>(param);
             case LayerTypeRegion: return new RegionLayer<T>(param);
             case LayerTypeRelu: return new ReluLayer<T>(param);

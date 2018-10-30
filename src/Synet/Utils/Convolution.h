@@ -55,7 +55,7 @@ namespace Synet
             return 1;
         }
 
-        void SetWeight(const T * weight, const T * bias)
+        void SetWeight(const T * weight, const T * bias, int * internal)
         {
         }
 
@@ -89,9 +89,9 @@ namespace Synet
         return ::SimdConvolutionBufferSize(_convolution);
     }
 
-    template<> SYNET_INLINE void Convolution<float>::SetWeight(const float * weight, const float * bias)
+    template<> SYNET_INLINE void Convolution<float>::SetWeight(const float * weight, const float * bias, int * internal)
     {
-        ::SimdConvolutionSetWeight(_convolution, weight, bias);
+        ::SimdConvolutionSetWeight(_convolution, weight, bias, (SimdBool*)internal);
     }
 
     template<> SYNET_INLINE void Convolution<float>::SetActivation(ActivationFunctionType type, const float * params)

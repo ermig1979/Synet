@@ -54,6 +54,7 @@ namespace Synet
         LayerTypePad,
         LayerTypePermute,
         LayerTypePooling,
+        LayerTypePrelu,
         LayerTypePriorBox,
         LayerTypeRegion,
         LayerTypeRelu,
