@@ -97,8 +97,21 @@ namespace Synet
 
         SYNET_INLINE void Clear()
         {
+#ifdef SYNET_MALLOC_DEBUG
+            if (_size * sizeof(T) > SYNET_MALLOC_TRIM_THRESHOLD)
+            {
+                std::cout << "Try to free " << _size * sizeof(T) / 1024 / 1024 << " MB :" << std::endl;
+                PrintMemoryUsage();
+            }
+#endif
             _shape.clear();
             _cpuData->clear();
+#ifdef SYNET_MALLOC_DEBUG
+            if (_size * sizeof(T) > SYNET_MALLOC_TRIM_THRESHOLD)
+            {
+                PrintMemoryUsage();
+            }
+#endif
             _size = 0;
             _type = TensorTypeUnknown;
         }

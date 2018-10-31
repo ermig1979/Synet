@@ -40,11 +40,20 @@
 
 //#define SYNET_DEBUG_PRINT_ENABLE
 
+#define SYNET_MALLOC_TRIM_THRESHOLD 1024*1024
+//#define SYNET_MALLOC_DEBUG
+
 #include <stddef.h>
 #include <assert.h>
 #include <math.h>
 #include <memory.h>
 #include <float.h>
+#ifdef __linux__
+#include <malloc.h>
+#include <unistd.h>
+#include <sys/resource.h>
+#include <stdio.h>
+#endif
 #ifdef _MSC_VER
 #pragma warning (push)
 #pragma warning (disable: 4996)
@@ -178,6 +187,28 @@ namespace Synet
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
         ::SimdSetFlushToZero(value ? ::SimdTrue : ::SimdFalse);
+#endif
+    }
+
+    inline void PrintMemoryUsage()
+    {
+#if defined(__linux__)
+        size_t rss, peak_rss;
+        FILE* fp = NULL;
+        if ((fp = fopen("/proc/self/statm", "r")) == NULL)
+            return;
+        if (fscanf(fp, "%*s%ld", &rss) != 1)
+        {
+            fclose(fp);
+            return;
+        }
+        fclose(fp);
+        rss *= (size_t)sysconf(_SC_PAGESIZE);
+
+        struct rusage rusage;
+        getrusage(RUSAGE_SELF, &rusage);
+        peak_rss = (size_t)(rusage.ru_maxrss * 1024L);
+        std::cout << " WorkingSetSize = " << rss / 1024 / 1024 << " MB, PeakWorkingSetSize = " << peak_rss / 1024 / 1024 << " MB" << std::endl;
 #endif
     }
 

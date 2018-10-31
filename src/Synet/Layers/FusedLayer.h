@@ -64,7 +64,7 @@ namespace Synet
             }
         }
 
-        template <class T> void FusedLayerForwardCpu2(const T * src, const T * scale, const T * bias, size_t count, size_t size, const T & slope, T * dst)
+        template <class T> void FusedLayerForwardCpu2(const T * src, const T * scale, const T * bias, size_t count, size_t size, T slope, T * dst)
         {
             for (size_t i = 0; i < count; ++i)
             {
@@ -89,6 +89,11 @@ namespace Synet
         template <> SYNET_INLINE void FusedLayerForwardCpu1<float>(const float * src, const float * bias0, const float * scale1, const float * bias1, size_t count, size_t size, float * dst)
         {
             ::SimdSynetFusedLayerForward1(src, bias0, scale1, bias1, count, size, dst);
+        }
+
+        template <> SYNET_INLINE void FusedLayerForwardCpu2<float>(const float * src, const float * scale, const float * bias, size_t count, size_t size, float slope, float * dst)
+        {
+            ::SimdSynetFusedLayerForward2(src, scale, bias, count, size, &slope, dst);
         }
 #endif
     }
