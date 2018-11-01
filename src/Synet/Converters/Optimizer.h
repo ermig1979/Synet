@@ -109,6 +109,13 @@ namespace Synet
                 changes.push_back(Change(src[index].name(), src[index - 1].name()));
                 return true;
             }
+            if (src[index].type() == LayerTypePrelu)
+            {
+                dst.back().convolution().activationType() = ActivationFunctionTypePrelu;
+                dst.back().weight().push_back(src[index].weight()[0]);
+                changes.push_back(Change(src[index].name(), src[index - 1].name()));
+                return true;
+            }
             return false;
         }
 

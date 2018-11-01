@@ -130,15 +130,17 @@ namespace Synet
             for (size_t i = 0; i < _spatialAxisNum; ++i)
                 weightShape[2 + i] = _kernelShape[i];
             Shape biasShape(_biasTerm, _dstChannels);
-            assert(this->Weight().size() == _biasTerm + 1);
-            assert(this->Weight()[0].Shape() == weightShape);
-            if (_biasTerm)
-                assert(this->Weight()[1].Shape() == biasShape);
             _kernelSize = this->Weight()[0].Size(1);
             _weightOffset = _dstChannels * _kernelSize / _group;
             _activationType = this->Param().convolution().activationType();
             _activationParams[0] = this->Param().convolution().activationParam0();
             _activationParams[1] = this->Param().convolution().activationParam1();
+            assert(this->Weight().size() == 1 + _biasTerm + (_activationType == ActivationFunctionTypePrelu));
+            assert(this->Weight()[0].Shape() == weightShape);
+            if (_biasTerm)
+                assert(this->Weight()[1].Size() == _dstChannels);
+            if(_activationType == ActivationFunctionTypePrelu)
+                assert(this->Weight().back().Size() == _dstChannels);
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -179,7 +181,7 @@ namespace Synet
                 _convolution.SetWeight(this->Weight()[0].CpuData(), _biasTerm ? this->Weight()[1].CpuData() : NULL, &internal);
                 if (internal)
                     const_cast<Tensor&>(this->Weight()[0]).Clear();
-                _convolution.SetActivation(_activationType, _activationParams);
+                _convolution.SetActivation(_activationType, _activationType == ActivationFunctionTypePrelu ? this->Weight().back().CpuData() : _activationParams);
             }
             else
             {
@@ -235,6 +237,10 @@ namespace Synet
                         break;
                     case ActivationFunctionTypeRestrictRange:
                         CpuRestrictRange(dst, _dstChannels*_dstSpatialSize, _activationParams[0], _activationParams[1], dst);
+                        break;
+                    case ActivationFunctionTypePrelu:
+                        for (size_t i = 0; i < _dstChannels; ++i)
+                            CpuRelu<Type>(dst + i*_dstSpatialSize, _dstSpatialSize, this->Weight().back().CpuData()[i], dst + i*_dstSpatialSize);
                         break;
                     default:
                         assert(0);

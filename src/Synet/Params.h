@@ -78,7 +78,8 @@ namespace Synet
         ActivationFunctionTypeIdentity,
         ActivationFunctionTypeRelu,
         ActivationFunctionTypeLeakyRelu,
-        ActivationFunctionTypeRestrictRange);
+        ActivationFunctionTypeRestrictRange,
+        ActivationFunctionTypePrelu);
 
     SYNET_PARAM_ENUM(EltwiseOperationType,
         EltwiseOperationTypeProduct,
