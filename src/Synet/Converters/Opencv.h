@@ -509,7 +509,7 @@ namespace Synet
             if (pData == NULL)
                 return false;
             StringToValue(pData->FirstAttribute("out-size")->Value(), layer.innerProduct().outputNum());
-            size_t inputNum;
+            size_t inputSize;
             const XmlNode * pInput = pLayer->FirstNode("input");
             if (pInput)
             {
@@ -517,8 +517,9 @@ namespace Synet
                 if (pPort)
                 {
                     Shape input = ConvertShape(pPort);
-                    assert(input.size() == 2);
-                    inputNum = input[1];
+                    inputSize = 1;
+                    for (size_t i = 0; i < input.size(); ++i)
+                        inputSize *= input[i];
                 }
                 else
                     return false;
@@ -540,7 +541,7 @@ namespace Synet
             else
                 return false;
             layer.weight().resize(1);
-            layer.weight()[0].dim() = Shape({ (size_t)layer.innerProduct().outputNum(), inputNum});
+            layer.weight()[0].dim() = Shape({ (size_t)layer.innerProduct().outputNum(), inputSize });
             const XmlNode * pBlobs = pLayer->FirstNode("blobs");
             if (pBlobs)
             {
