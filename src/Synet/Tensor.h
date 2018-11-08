@@ -46,20 +46,23 @@ namespace Synet
             : _size(0)
             , _cpuData(std::make_shared<Vector>())
             , _type(TensorTypeUnknown)
+            , _format(TensorFormatUnknown)
         {
         }
 
-        SYNET_INLINE Tensor(const Synet::Shape & shape, const Type & value = Type(), const String & name = String())
+        SYNET_INLINE Tensor(const Synet::Shape & shape, const Type & value = Type(), const TensorFormat & format = TensorFormatUnknown, const String & name = String())
             : _shape(shape)
             , _cpuData(std::make_shared<Vector>())
+            , _format(format)
             , _name(name)
         {
             Resize(value);
         }
 
-        SYNET_INLINE Tensor(std::initializer_list<size_t> shape, const Type & value = Type(), const String & name = String())
+        SYNET_INLINE Tensor(std::initializer_list<size_t> shape, const Type & value = Type(), const TensorFormat & format = TensorFormatUnknown, const String & name = String())
             : _shape(shape.begin(), shape.end())
             , _cpuData(std::make_shared<Vector>())
+            , _format(format)
             , _name(name)
         {
             Resize(value);
@@ -69,29 +72,33 @@ namespace Synet
         {
         }
 
-        SYNET_INLINE void Reshape(const Synet::Shape & shape, const Type & value = Type(), const String & name = String())
+        SYNET_INLINE void Reshape(const Synet::Shape & shape, const Type & value = Type(), const TensorFormat & format = TensorFormatUnknown, const String & name = String())
         {
             _name = name;
             _shape = shape;
+            _format = format;
             Resize(value);
         }
 
-        SYNET_INLINE void Reshape(std::initializer_list<size_t> shape, const Type & value = Type(), const String & name = String())
+        SYNET_INLINE void Reshape(std::initializer_list<size_t> shape, const Type & value = Type(), const TensorFormat & format = TensorFormatUnknown, const String & name = String())
         {
             _name = name;
             _shape.assign(shape.begin(), shape.end());
+            _format = format;
             Resize(value);
         }
 
-        SYNET_INLINE void Extend(const Synet::Shape & shape)
+        SYNET_INLINE void Extend(const Synet::Shape & shape, const TensorFormat & format = TensorFormatUnknown)
         {
             _shape = shape;
+            _format = format;
             Extend();
         }
 
-        SYNET_INLINE void Extend(std::initializer_list<size_t> shape)
+        SYNET_INLINE void Extend(std::initializer_list<size_t> shape, const TensorFormat & format = TensorFormatUnknown)
         {
             _shape.assign(shape.begin(), shape.end());
+            _format = format;
             Extend();
         }
 
@@ -114,6 +121,7 @@ namespace Synet
 #endif
             _size = 0;
             _type = TensorTypeUnknown;
+            _format = TensorFormatUnknown;
         }
 
         SYNET_INLINE Tensor<int32_t> & As32i()
@@ -143,6 +151,16 @@ namespace Synet
         SYNET_INLINE TensorType GetType() const
         {
             return _type;
+        }
+
+        SYNET_INLINE TensorFormat Format() const
+        {
+            return _format;
+        }
+
+        SYNET_INLINE void SetFormat(const TensorFormat & format)
+        {
+            _format = format;
         }
 
         SYNET_INLINE const String & Name() const
@@ -266,16 +284,18 @@ namespace Synet
         {
             _type = tensor._type;
             _shape = tensor._shape;
+            _format = tensor._format;
             _name = tensor._name;
             _size = tensor._size;
             _cpuData = tensor._cpuData;
             SetDebugPtr();
         }
 
-        SYNET_INLINE void ShareAs(const Tensor & tensor, const Synet::Shape & shape)
+        SYNET_INLINE void ShareAs(const Tensor & tensor, const Synet::Shape & shape, const TensorFormat & format = TensorFormatUnknown)
         {
             _type = tensor._type;
             _shape = shape;
+            _format = format;
             _size = Size(0, _shape.size());
             assert(_size == tensor._size);
             _cpuData = tensor._cpuData;
@@ -286,6 +306,7 @@ namespace Synet
         {
             _type = tensor._type;
             _shape = tensor._shape;
+            _format = tensor._format;
             _name = tensor._name;
             _size = tensor._size;
             _cpuData(std::make_shared<Vector>(tensor._cpuData->begin(), tensor._cpuData->end()));
@@ -339,7 +360,7 @@ namespace Synet
             os << name << " { ";
             for (size_t i = 0; i < _shape.size(); ++i)
                 os << _shape[i] << " ";
-            os << "} " << std::endl;
+            os << "} " << (_format == TensorFormatNchw ? "NCHW" : (_format == TensorFormatNhwc ? "NHWC" : "")) << std::endl;
 
             if (_size == 0)
                 return;
@@ -446,6 +467,7 @@ namespace Synet
 
         Synet::String _name;
         TensorType _type;
+        TensorFormat _format;
         Synet::Shape _shape;
         size_t _size;
         VectorPtr _cpuData;

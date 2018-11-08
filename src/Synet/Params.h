@@ -137,6 +137,10 @@ namespace Synet
         TensorType32f,
         TensorType32i);
 
+    SYNET_PARAM_ENUM(TensorFormat,
+        TensorFormatNchw,
+        TensorFormatNhwc);
+
     SYNET_PARAM_ENUM(UnaryOperationType,
         UnaryOperationTypeAbs,
         UnaryOperationTypeExp,
