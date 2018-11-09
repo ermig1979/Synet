@@ -15,12 +15,12 @@
       <PreprocessorDefinitions>_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem> 
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Test\*.h" />
-    <ClCompile Include="..\..\src\Test\*.cpp" />
+    <ClCompile Include="..\..\src\Test\TestDarknet.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Synet.vcxproj">

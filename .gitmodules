@@ -1,3 +1,6 @@
 [submodule "3rd/Simd"]
 	path = 3rd/Simd
 	url = https://github.com/ermig1979/Simd.git
+[submodule "3rd/darknet"]
+	path = 3rd/darknet
+	url = https://github.com/ermig1979/darknet.git

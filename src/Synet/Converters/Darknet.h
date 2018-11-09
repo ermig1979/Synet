@@ -42,6 +42,7 @@
 #pragma warning (disable: 4244 4305)
 #endif
 
+#ifdef SYNET_DARKNET_CUSTOM
 #include SYNET_INCLUDE_DARKNET(network.h)
 extern "C" 
 {
@@ -51,6 +52,9 @@ extern "C"
 #include SYNET_INCLUDE_DARKNET(box.h)
 #include SYNET_INCLUDE_DARKNET(stb_image.h)
 }
+#else
+#include SYNET_INCLUDE_DARKNET(darknet.h)
+#endif
 
 #ifdef _MSC_VER
 #pragma warning (pop)
@@ -75,10 +79,9 @@ namespace Synet
                 return false;
             }
 
+#ifdef SYNET_DARKNET_CUSTOM
             ::network net = ::parse_network_cfg((char*)srcModelPath.c_str());
-
             ::load_weights(&net, (char*)srcWeightPath.c_str());
-
             Synet::NetworkParamHolder holder;
             Tensors weight;
             if (!ConvertNetwork(net, holder(), weight))
@@ -86,8 +89,19 @@ namespace Synet
                 ::free_network(net);
                 return false;
             }
-
             ::free_network(net);
+#else
+            ::network * net = ::parse_network_cfg((char*)srcModelPath.c_str());
+            ::load_weights(net, (char*)srcWeightPath.c_str());
+            Synet::NetworkParamHolder holder;
+            Tensors weight;
+            if (!ConvertNetwork(*net, holder(), weight))
+            {
+                ::free_network(net);
+                return false;
+            }
+            ::free_network(net);
+#endif
 
             Optimizer optimizer;
             if (!optimizer.Run(holder()))

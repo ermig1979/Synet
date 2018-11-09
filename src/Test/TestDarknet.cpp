@@ -22,25 +22,26 @@
 * SOFTWARE.
 */
 
-#pragma once
+#include "TestOptions.h"
 
-#include <iostream>
-#include <sstream>
+#define SYNET_DARKNET_ENABLE
+#define SYNET_DARKNET_PATH ../../../3rd/darknet/include
+#include "Synet/Converters/Darknet.h"
 
-#define SYNET_SIMD_LIBRARY_ENABLE
-#include "Synet/Synet.h"
-
-namespace Test
+int main(int argc, char* argv[])
 {
-    typedef Synet::String String;
-    typedef Synet::Strings Strings;
+    Test::Options options(argc, argv);
 
-    template <class T> SIMD_INLINE T FromString(const String & str)
+    if (options.mode == "convert")
     {
-        std::stringstream ss(str);
-        T value;
-        ss >> value;
-        return value;
+        std::cout << "Convert network from Yolo to Synet :" << std::endl;
+        options.result = Synet::ConvertDarknetToSynet(options.otherModel, options.otherWeight, options.synetModel, options.synetWeight);
+        std::cout << "Conversion is finished " << (options.result ? "successfully." : "with errors.") << std::endl;
     }
-}
+    //else if (options.mode == "compare")
+    //    options.result = SynetTest::CompareOtherAndSynet<SynetTest::DarknetClassifier>(options);
+    else
+        std::cout << "Unknown mode : " << options.mode << std::endl;
 
+    return options.result ? 0 : 1;
+}
