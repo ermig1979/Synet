@@ -35,7 +35,14 @@ namespace Test
         String otherWeight;
         String synetModel;
         String synetWeight;
-
+        String testParam;
+        String imageDirectory;
+        String imageFilter;
+        String outputDirectory;
+        size_t repeatNumber;
+        size_t threadNumber;
+        float threshold;
+        String logName;
         bool result;
 
         Options(int argc, char* argv[])
@@ -48,6 +55,33 @@ namespace Test
             otherWeight = GetArg("-ow", "./other.dat");
             synetModel = GetArg("-sm", "./synet.xml");
             synetWeight = GetArg("-sw", "./synet.bin");
+            testParam = GetArg("-tp", "./param.xml");
+            imageDirectory = GetArg("-id", "./image");
+            imageFilter = GetArg("-if", "*.jpg");
+            outputDirectory = GetArg("-od", "./output");
+            Synet::StringToValue(GetArg("-rn", "1"), repeatNumber);
+            Synet::StringToValue(GetArg("-tn", "1"), threadNumber);
+            Synet::StringToValue(GetArg("-t", "0.001"), threshold);
+            logName = GetArg("-ln", "", false);
+        }
+
+        ~Options()
+        {
+            if (result)
+            {
+                std::stringstream ss;
+                PerformanceMeasurerStorage::s_storage.Print(ss);
+                std::cout << ss.str();
+                if (!logName.empty())
+                {
+                    std::ofstream log(logName.c_str());
+                    if (log.is_open())
+                    {
+                        log << ss.str();
+                        log.close();
+                    }
+                }
+            }
         }
 
     private:

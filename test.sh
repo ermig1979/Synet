@@ -27,6 +27,7 @@ if [ ! -d ./test ];then
 	mkdir ./test
 fi
 
-TEST darknet yolov3 1 1 000
+TEST darknet darknet 1 1 000
+#TEST darknet yolov3 1 1 000
 
 exit

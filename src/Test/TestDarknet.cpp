@@ -28,12 +28,15 @@
 #define SYNET_DARKNET_PATH ../../../3rd/darknet/include
 #include "Synet/Converters/Darknet.h"
 
+Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
+
 int main(int argc, char* argv[])
 {
     Test::Options options(argc, argv);
 
     if (options.mode == "convert")
     {
+        SYNET_PERF_FUNC();
         std::cout << "Convert network from Yolo to Synet :" << std::endl;
         options.result = Synet::ConvertDarknetToSynet(options.otherModel, options.otherWeight, options.synetModel, options.synetWeight);
         std::cout << "Conversion is finished " << (options.result ? "successfully." : "with errors.") << std::endl;

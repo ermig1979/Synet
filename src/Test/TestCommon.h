@@ -25,22 +25,19 @@
 #pragma once
 
 #include <iostream>
-#include <sstream>
 
+#include "TestPerformance.h"
+
+#ifndef SYNET_SIMD_LIBRARY_ENABLE
 #define SYNET_SIMD_LIBRARY_ENABLE
+#endif
+#define SYNET_PERF_FUNC() TEST_PERF_FUNC()
+#define SYNET_PERF_BLOCK(name) TEST_PERF_BLOCK(name)
+#define SYNET_PERF_BLOCK_END(name) TEST_PERF_BLOCK_END(name)
 #include "Synet/Synet.h"
 
 namespace Test
 {
-    typedef Synet::String String;
     typedef Synet::Strings Strings;
-
-    template <class T> SIMD_INLINE T FromString(const String & str)
-    {
-        std::stringstream ss(str);
-        T value;
-        ss >> value;
-        return value;
-    }
 }
 

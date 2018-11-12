@@ -19,11 +19,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\Synet\*.h" />
-	<ClInclude Include="..\Synet\Layers\*.h" />
-	<ClInclude Include="..\Synet\Converters\*.h" />
-	<ClInclude Include="..\Synet\Utils\*.h" />
-    <ClCompile Include="..\Synet\Synet.cpp">
+    <ClInclude Include="..\..\src\Synet\*.h" />
+	<ClInclude Include="..\..\src\Synet\Layers\*.h" />
+	<ClInclude Include="..\..\src\Synet\Converters\*.h" />
+	<ClInclude Include="..\..\src\Synet\Utils\*.h" />
+    <ClCompile Include="..\..\src\Synet\Synet.cpp">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">NoExtensions</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
