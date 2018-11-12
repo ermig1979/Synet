@@ -24,11 +24,7 @@
 
 #pragma once
 
-#include <sstream>
-#include <iomanip>
-#include <thread>
-#include <mutex>
-#include <map>
+#include "TestUtils.h"
 
 #if defined(_MSC_VER)
 #define NOMINMAX
@@ -37,10 +33,6 @@
 #include <sys/time.h>
 #else
 #error Platform is not supported!
-#endif
-
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-#include "Simd/SimdLib.h"
 #endif
 
 namespace Test
@@ -261,8 +253,14 @@ namespace Test
     };
 }
 
-#define TEST_PERF_FUNC() Test::ScopedPerformanceMeasurer SYNET_CAT(__spm, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(__FUNCTION__));
-#define TEST_PERF_BLOCK(name) Test::ScopedPerformanceMeasurer SYNET_CAT(__spm, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(__FUNCTION__, name));
-#define TEST_PERF_BLOCK_END(name) Test::PerformanceMeasurerStorage::s_storage.Get(__FUNCTION__, name)->Leave();
+#ifdef _MSC_VER
+#define TEST_FUNCTION __FUNCTION__
+#else
+#define TEST_FUNCTION __PRETTY_FUNCTION__
+#endif
+
+#define TEST_PERF_FUNC() Test::ScopedPerformanceMeasurer SYNET_CAT(__spm, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION));
+#define TEST_PERF_BLOCK(name) Test::ScopedPerformanceMeasurer SYNET_CAT(__spm, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, name));
+#define TEST_PERF_BLOCK_END(name) Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, name)->Leave();
 
 

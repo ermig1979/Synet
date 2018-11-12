@@ -181,7 +181,12 @@ namespace Synet
                 _strideX = stride.size() > 1 ? stride[1] : stride[0];
             }
 
-            if (_yoloCompatible)
+            if (_yoloCompatible == 2)
+            {
+                _dstX = (_srcX + _padW - _kernelX) / _strideX + 1;
+                _dstY = (_srcY + _padH - _kernelY) / _strideY + 1;
+            }
+            else if (_yoloCompatible == 1)
             {
                 _dstX = (_srcX + _padX + _padW) / _strideX;
                 _dstY = (_srcY + _padY + _padH) / _strideY;
@@ -222,7 +227,7 @@ namespace Synet
                     for (size_t c = 0; c < _channels; ++c)
                     {
                         size_t srcX = _srcX, srcY = _srcY;
-                        if (_yoloCompatible)
+                        if (_yoloCompatible == 1)
                         {
                             srcX = _dstX*_strideX - _padX - _padW;
                             srcY = _dstY*_strideY - _padY - _padH;
@@ -272,7 +277,7 @@ namespace Synet
 
     private:
         PoolingMethodType _method;
-        bool _yoloCompatible;
+        int _yoloCompatible;
         size_t _channels, _srcX, _srcY, _kernelX, _kernelY, _dstX, _dstY, _strideX, _strideY, _padX, _padY, _padW, _padH;
     };
 }

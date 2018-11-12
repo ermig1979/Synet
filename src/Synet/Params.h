@@ -318,7 +318,7 @@ namespace Synet
         SYNET_PARAM_VALUE(Shape, pad, Shape());
         SYNET_PARAM_VALUE(Shape, stride, Shape());
         SYNET_PARAM_VALUE(bool, globalPooling, false);
-        SYNET_PARAM_VALUE(bool, yoloCompatible, false);
+        SYNET_PARAM_VALUE(int, yoloCompatible, 0);
     };
 
     struct PriorBoxParam

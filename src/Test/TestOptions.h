@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "TestCommon.h"
+#include "TestPerformance.h"
 
 namespace Test
 {
@@ -57,11 +57,11 @@ namespace Test
             synetWeight = GetArg("-sw", "./synet.bin");
             testParam = GetArg("-tp", "./param.xml");
             imageDirectory = GetArg("-id", "./image");
-            imageFilter = GetArg("-if", "*.jpg");
+            imageFilter = GetArg("-if", "*.ppm");
             outputDirectory = GetArg("-od", "./output");
-            Synet::StringToValue(GetArg("-rn", "1"), repeatNumber);
-            Synet::StringToValue(GetArg("-tn", "1"), threadNumber);
-            Synet::StringToValue(GetArg("-t", "0.001"), threshold);
+            repeatNumber = FromString<size_t>(GetArg("-rn", "1"));
+            threadNumber = FromString<size_t>(GetArg("-tn", "1"));
+            threshold = FromString<float>(GetArg("-t", "0.001"));
             logName = GetArg("-ln", "", false);
         }
 

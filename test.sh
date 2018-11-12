@@ -19,7 +19,7 @@ fi
 
 ./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=convert $PATHES
 
-#../build_"$PREFIX"/synet_"$FRAMEWORK"_test -m compare $PATHES -if *.jpg  -rn $NUMBER -tn $THREAD -t 0.001 -ln $LOG
+./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=compare $PATHES -if=*.ppm  -rn=$NUMBER -tn=$THREAD -t=0.001 -ln=$LOG
 
 }
 

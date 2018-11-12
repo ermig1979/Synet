@@ -24,20 +24,51 @@
 
 #pragma once
 
-#include <iostream>
-
-#include "TestPerformance.h"
-
 #ifndef SYNET_SIMD_LIBRARY_ENABLE
 #define SYNET_SIMD_LIBRARY_ENABLE
 #endif
-#define SYNET_PERF_FUNC() TEST_PERF_FUNC()
-#define SYNET_PERF_BLOCK(name) TEST_PERF_BLOCK(name)
-#define SYNET_PERF_BLOCK_END(name) TEST_PERF_BLOCK_END(name)
-#include "Synet/Synet.h"
+#define SYNET_GEMM_SIMD_LIBRARY
+
+#define SYNET_OTHER_RUN
+#define SYNET_SYNET_RUN
+//#define SYNET_DEBUG_PRINT_ENABLE
+//#define SYNET_ANNOTATE_REGIONS
+#define SYNET_SIZE_STATISTIC
+
+#include <string>
+#include <vector>
+#include <list>
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <iomanip>
+#include <thread>
+#include <mutex>
+#include <map>
+#include <algorithm>
+
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#include "Simd/SimdLib.h"
+#include "Simd/SimdLib.hpp"
+#include "Simd/SimdView.hpp"
+#include "Simd/SimdDrawing.hpp"
+#include "Simd/SimdPixel.hpp"
+#include "Simd/SimdFont.hpp"
+#endif
 
 namespace Test
 {
-    typedef Synet::Strings Strings;
+    typedef std::string String;
+    typedef std::vector<String> Strings;
+    typedef std::list<String> StringList;
+
+    typedef Simd::View<Simd::Allocator> View;
+    typedef std::vector<View> Views;
+
+    typedef Simd::Point<ptrdiff_t> Point;
+    typedef Point Size;
+
+    typedef std::vector<float> Vector;
 }
+
 

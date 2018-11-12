@@ -26,6 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Params.h"
+#include "Synet/Tensor.h"
 #include "Synet/Converters/Optimizer.h"
 
 #if defined(SYNET_DARKNET_ENABLE)
@@ -346,9 +347,19 @@ namespace Synet
             pooling.pooling().kernel().resize(1, src.size);
             if (src.stride != 1)
                 pooling.pooling().stride().resize(1, src.stride);
+#ifdef SYNET_DARKNET_CUSTOM
             if (src.pad != 0)
                 pooling.pooling().pad().resize(1, src.pad);
-            pooling.pooling().yoloCompatible() = true;
+            pooling.pooling().yoloCompatible() = 1;
+#else
+            if (src.pad != 0)
+            {
+                pooling.pooling().pad().resize(4, 0);
+                pooling.pooling().pad()[2] = src.pad;
+                pooling.pooling().pad()[3] = src.pad;
+            }
+            pooling.pooling().yoloCompatible() = 2;
+#endif
             dst.push_back(pooling);
             return true;
         }
