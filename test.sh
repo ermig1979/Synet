@@ -28,6 +28,7 @@ if [ ! -d ./test ];then
 fi
 
 TEST darknet darknet 1 1 000
+#TEST darknet darknet19 1 1 000
 #TEST darknet yolov3 1 1 000
 
 exit

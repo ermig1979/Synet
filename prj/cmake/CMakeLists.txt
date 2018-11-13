@@ -47,16 +47,6 @@ else()
 	set(SIMD_LIBRARY "")
 endif()
 
-file(GLOB_RECURSE SYNET_SRC ${ROOT_DIR}/src/Synet/*.cpp)
-set_source_files_properties(${SYNET_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
-add_library(Synet STATIC ${SYNET_SRC})
-
-#file(GLOB_RECURSE TEST_SRC ${ROOT_DIR}/src/Test/*.cpp)
-#set_source_files_properties(${TEST_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS} -mtune=native -std=c++11")
-#add_executable(Test ${TEST_SRC})
-#target_link_libraries(Test Synet ${SIMD_LIBRARY} -lpthread)
-
-
 if(MODE STREQUAL "darknet")
 	set(DARKNET_DIR ${ROOT_DIR}/3rd/darknet)
 	include_directories(${DARKNET_DIR}/src)
