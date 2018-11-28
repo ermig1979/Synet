@@ -48,7 +48,7 @@ namespace Synet
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
         template <> SYNET_INLINE void ScaleLayerForwardCpu<float>(const float * src, const float * scale, const float * bias, size_t count, size_t size, float * dst)
         {
-            ::SimdSynetScaleLayerForward(src, scale, bias, count, size, dst);
+            ::SimdSynetScaleLayerForward(src, scale, bias, count, size, dst, ::SimdFalse);
         }
 #endif
     }

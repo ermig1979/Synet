@@ -45,7 +45,7 @@
 #pragma GCC diagnostic pop
 #endif
 
-//#define SYNET_TENSORFLOW_DEBUG
+#define SYNET_TENSORFLOW_DEBUG
 //#define SYNET_TENSORFLOW_DYNAMIC
 
 namespace Synet

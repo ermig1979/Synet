@@ -140,7 +140,7 @@ namespace Synet
             return _back;
         }
 
-        bool Reshape(const Strings & srcNames = Strings(), const Shapes & srcShapes = Shapes(), const Strings & dstNames = Strings())
+        bool Reshape(const Strings & srcNames = Strings(), const Shapes & srcShapes = Shapes(), const Strings & dstNames = Strings(), TensorFormat format = TensorFormatNchw)
         {
             if (srcNames.size() != srcShapes.size())
                 return false;
@@ -161,7 +161,7 @@ namespace Synet
                         {
                             if (param.type() == LayerTypeInput)
                             {
-                                _input[j].dst[0]->Reshape(srcShapes[i]);
+                                _input[j].dst[0]->Reshape(srcShapes[i], Type(0), format);
                                 _src.push_back(_input[j].dst[0]);
                             }
                             else if (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput)

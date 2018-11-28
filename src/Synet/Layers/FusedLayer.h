@@ -83,17 +83,17 @@ namespace Synet
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
         template <> SYNET_INLINE void FusedLayerForwardCpu0<float>(const float * src, const float * bias, const float * scale, size_t count, size_t size, float * dst)
         {
-            ::SimdSynetFusedLayerForward0(src, bias, scale, count, size, dst);
+            ::SimdSynetFusedLayerForward0(src, bias, scale, count, size, dst, SimdFalse);
         }
 
         template <> SYNET_INLINE void FusedLayerForwardCpu1<float>(const float * src, const float * bias0, const float * scale1, const float * bias1, size_t count, size_t size, float * dst)
         {
-            ::SimdSynetFusedLayerForward1(src, bias0, scale1, bias1, count, size, dst);
+            ::SimdSynetFusedLayerForward1(src, bias0, scale1, bias1, count, size, dst, SimdFalse);
         }
 
         template <> SYNET_INLINE void FusedLayerForwardCpu2<float>(const float * src, const float * scale, const float * bias, size_t count, size_t size, float slope, float * dst)
         {
-            ::SimdSynetFusedLayerForward2(src, scale, bias, count, size, &slope, dst);
+            ::SimdSynetFusedLayerForward2(src, scale, bias, count, size, &slope, dst, SimdFalse);
         }
 #endif
     }
