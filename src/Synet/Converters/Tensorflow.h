@@ -923,7 +923,11 @@ namespace Synet
                 AddSrcDst(node, 1, 1, layer);
             }
             else
-                assert(0);
+            {
+                layer.type() = LayerTypeBinaryOperation;
+                layer.binaryOperation().type() = BinaryOperationTypeDiv;
+                AddSrcDst(node, 2, 1, layer);
+            }
             return true;
         }
 

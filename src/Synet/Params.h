@@ -32,6 +32,7 @@ namespace Synet
     SYNET_PARAM_ENUM(LayerType,
         LayerTypeBatchNorm,
         LayerTypeBias,
+        LayerTypeBinaryOperation,
         LayerTypeCast,
         LayerTypeConcat,
         LayerTypeConst,
@@ -80,6 +81,9 @@ namespace Synet
         ActivationFunctionTypeLeakyRelu,
         ActivationFunctionTypeRestrictRange,
         ActivationFunctionTypePrelu);
+
+    SYNET_PARAM_ENUM(BinaryOperationType,
+        BinaryOperationTypeDiv);
 
     SYNET_PARAM_ENUM(EltwiseOperationType,
         EltwiseOperationTypeProduct,
@@ -188,6 +192,11 @@ namespace Synet
     {
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
         SYNET_PARAM_VALUE(uint32_t, numAxes, 1);
+    };
+
+    struct BinaryOperationParam
+    {
+        SYNET_PARAM_VALUE(BinaryOperationType, type, BinaryOperationTypeUnknown);
     };
 
     struct ConcatParam
@@ -424,6 +433,7 @@ namespace Synet
 
         SYNET_PARAM_STRUCT(BatchNormParam, batchNorm);
         SYNET_PARAM_STRUCT(BiasParam, bias);
+        SYNET_PARAM_STRUCT(BinaryOperationParam, binaryOperation);
         SYNET_PARAM_STRUCT(CastParam, cast);
         SYNET_PARAM_STRUCT(ConcatParam, concat);
         SYNET_PARAM_STRUCT(ConvolutionParam, convolution);
