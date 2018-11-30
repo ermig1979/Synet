@@ -58,6 +58,7 @@ namespace Synet
             case MetaTypeGreater: ReshapeGreater(src, dst); break;
             case MetaTypeFill: ReshapeFill(src, dst); break;
             case MetaTypeInput: ReshapeInput(src, dst); break;
+            case MetaTypeInputWithDefault: ReshapeInputWithDefault(src, dst); break;
             case MetaTypeMaximum: ReshapeMaximum(src, dst); break;
             case MetaTypeMinimum: ReshapeMinimum(src, dst); break;
             case MetaTypeMul: ReshapeMul(src, dst); break;
@@ -240,6 +241,21 @@ namespace Synet
             }
             else
                 assert(0);
+        }
+
+        void ReshapeInputWithDefault(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            assert(src.size() == 2);
+            Synet::Tensor<int32_t> * pSrc = NULL;
+            if (src[0]->GetType() == TensorType32i)
+                pSrc = &src[0]->As32i();
+            else if (src[1]->GetType() == TensorType32i)
+                pSrc = &src[1]->As32i();
+            assert(pSrc);
+            Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
+            dst0.Reshape(pSrc->Shape());
+            for (size_t i = 0; i < dst0.Size(); ++i)
+                dst0.CpuData()[i] = pSrc->CpuData()[i];
         }
 
         void ReshapeMaximum(const TensorPtrs & src, const TensorPtrs & dst)

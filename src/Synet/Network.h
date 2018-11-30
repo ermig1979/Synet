@@ -165,7 +165,7 @@ namespace Synet
                                 _input[j].dst[0]->Reshape(srcShapes[i], Type(0), format);
                                 _src.push_back(_input[j].dst[0]);
                             }
-                            else if (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput)
+                            else if (param.type() == LayerTypeMeta && (param.meta().type() == MetaTypeInput || param.meta().type() == MetaTypeInputWithDefault))
                             {
                                 Synet::Tensor<int32_t> & i32 = _input[j].dst[0]->As32i();
                                 i32.Reshape({ srcShapes[j].size()});
@@ -399,7 +399,7 @@ namespace Synet
                         stage.dst.push_back(tensor.get());
                     }
                     available.insert(name);
-                    if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput))
+                    if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && (param.meta().type() == MetaTypeInput || param.meta().type() == MetaTypeInputWithDefault)))
                     {
                         _src.push_back(_tensors.back().get());
                     }

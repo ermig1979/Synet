@@ -721,6 +721,11 @@ namespace Synet
                 layer.meta().type() = MetaTypePack;
                 AddSrcDst(node, node.input_size(), 1, layer);
             }
+            else if (type == "PlaceholderWithDefault")
+            {
+                layer.meta().type() = MetaTypeInputWithDefault;
+                AddSrcDst(node, 1, 1, layer);
+            }
             else if (type == "Range")
             {
                 layer.meta().type() = MetaTypeRange;

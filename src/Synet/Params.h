@@ -100,6 +100,7 @@ namespace Synet
         MetaTypeGather,
         MetaTypeGreater,
         MetaTypeInput,
+        MetaTypeInputWithDefault,
         MetaTypeMaximum,
         MetaTypeMinimum,
         MetaTypeMul,
