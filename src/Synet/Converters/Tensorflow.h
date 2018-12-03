@@ -231,7 +231,7 @@ namespace Synet
                     layer.src().push_back(node.input(1));
                     layer.dst().push_back(layer.name());
                 }
-                else if (type == "MaxPool")
+                else if (type == "MaxPool" || type == "AvgPool")
                 {
                     if (!ConvertPoolingLayer(node, layer))
                         return false;
@@ -306,6 +306,11 @@ namespace Synet
                     layer.src().push_back(node.input(0));
                     layer.dst().push_back(layer.name());
                 }
+                else if (type == "Split")
+                {
+                    if (!ConvertSplitLayer(node, layer, network))
+                        return false;
+                }                
                 else if (type == "Squeeze")
                 {
                     layer.type() = LayerTypeSqueeze;
@@ -325,6 +330,7 @@ namespace Synet
                     layer.dst().push_back(layer.name());
                     layer.dst().push_back(layer.name() + ":1");
                 }
+
                 else if (type == "Transpose")
                 {
                     SetNotImplemented(layer, node);
@@ -352,7 +358,7 @@ namespace Synet
                     layer.src().push_back(node.input(0));
                     layer.dst().push_back(layer.name());
                 }
-                else if(type == "Merge" || type == "Split")
+                else if(type == "Merge")
                 {
                     layer.type() = LayerTypeStub;
                     for(int j = 0; j < node.input_size(); ++j)
@@ -874,6 +880,8 @@ namespace Synet
             layer.type() = LayerTypePooling;
             if (node.op() == "MaxPool")
                 layer.pooling().method() = PoolingMethodTypeMax;
+            else if (node.op() == "AvgPool")
+                layer.pooling().method() = PoolingMethodTypeAverage;
             else
                 return false;
             const tensorflow::AttrValue_ListValue & kernel = node.attr().at("ksize").list();
@@ -933,6 +941,35 @@ namespace Synet
                 layer.binaryOperation().type() = BinaryOperationTypeDiv;
                 AddSrcDst(node, 2, 1, layer);
             }
+            return true;
+        }
+
+        bool ConvertSplitLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Synet::NetworkParam & network)
+        {
+            assert(node.input_size() == 2);
+            String name = ParsePin(node.input(0)).name;
+            ptrdiff_t index = -1;
+            for (size_t i = 0; i < network.layers().size(); ++i)
+            {
+                if (network.layers()[i].name() == name)
+                {
+                    index = i; 
+                    break;
+                }
+            }
+            assert(index >= 0);
+            TensorParam axis = network.layers()[index].meta().alpha();
+            layer.type() = LayerTypeSlice;
+            layer.src().push_back(node.input(1));
+            layer.slice().axis() = axis.i32()[0];
+            network.layers().erase(network.layers().begin() + index);
+            if (node.attr().find("num_split") != node.attr().end())
+            {
+                int num = (int)node.attr().at("num_split").i();
+                AddSrcDst(node, 0, num, layer);
+            }
+            else
+                return false;
             return true;
         }
 

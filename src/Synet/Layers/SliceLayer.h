@@ -116,7 +116,7 @@ namespace Synet
         }
 
     private:
-        size_t _count, _numSlices, _sliceSize, _sliceAxis;
+        size_t _numSlices, _sliceSize, _sliceAxis;
         Index _slicePoint;
     };
 }
