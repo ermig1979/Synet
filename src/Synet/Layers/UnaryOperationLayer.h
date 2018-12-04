@@ -43,16 +43,22 @@ namespace Synet
                 dst[i] = ::exp(src[i]);
         }
 
+        template <typename T> void CpuNeg(const T * src, size_t size, T * dst)
+        {
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = -src[i];
+        }
+
         template<class T> void CpuRsqrt(const T * src, size_t size, T * dst)
         {
             for (size_t i = 0; i < size; ++i)
-                dst[i] = 1.0f / sqrt(src[i]);
+                dst[i] = 1.0f / ::sqrt(src[i]);
         }
 
         template<class T> void CpuSqrt(const T * src, size_t size, T * dst)
         {
             for (size_t i = 0; i < size; ++i)
-                dst[i] = sqrt(src[i]);
+                dst[i] = ::sqrt(src[i]);
         }
 
         template <typename T> void CpuTanh(const T * src, size_t size, T * dst)
@@ -97,6 +103,9 @@ namespace Synet
                 break;
             case UnaryOperationTypeExp:
                 _func = Detail::CpuExp;
+                break;
+            case UnaryOperationTypeNeg:
+                _func = Detail::CpuNeg;
                 break;
             case UnaryOperationTypeRsqrt:
                 _func = Detail::CpuRsqrt;

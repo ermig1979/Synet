@@ -149,6 +149,7 @@ namespace Synet
     SYNET_PARAM_ENUM(UnaryOperationType,
         UnaryOperationTypeAbs,
         UnaryOperationTypeExp,
+        UnaryOperationTypeNeg,
         UnaryOperationTypeRsqrt,
         UnaryOperationTypeSqrt,
         UnaryOperationTypeTanh,

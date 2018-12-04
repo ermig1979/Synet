@@ -347,7 +347,7 @@ namespace Synet
                     if (!ConvertUnpackLayer(node, layer))
                         return false;
                 }
-                else if (type == "Abs" || type == "Exp" || type == "Rsqrt" || type == "Sqrt" || type == "Tanh" || type == "ZerosLike")
+                else if (type == "Abs" || type == "Exp" || type == "Neg" || type == "Rsqrt" || type == "Sqrt" || type == "Tanh" || type == "ZerosLike")
                 {
                     if (!ConvertUnaryOperationLayer(node, layer))
                         return false;
@@ -1034,6 +1034,8 @@ namespace Synet
                 layer.unaryOperation().type() = UnaryOperationTypeAbs;
             else if (node.op() == "Exp")
                 layer.unaryOperation().type() = UnaryOperationTypeExp;
+            else if (node.op() == "Neg")
+                layer.unaryOperation().type() = UnaryOperationTypeNeg;
             else if (node.op() == "Rsqrt")
                 layer.unaryOperation().type() = UnaryOperationTypeRsqrt;
             else if (node.op() == "Sqrt")
