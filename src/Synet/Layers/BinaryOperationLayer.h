@@ -31,10 +31,46 @@ namespace Synet
 {
     namespace Detail
     {
-        template <class T> void CpuDiv(const T * a, const T * b, size_t size, T * dst)
+        template <class T> void BinaryOperationLayerForwardCpuDiv(const T * a, size_t aSize, const T * b, size_t bSize, T * dst)
         {
-            for (size_t i = 0; i < size; ++i)
-                dst[i] = a[i] / b[i];
+            if (aSize == bSize)
+            {
+                for (size_t i = 0; i < aSize; ++i)
+                    dst[i] = a[i] / b[i];
+            }
+            else if (aSize == 1)
+            {
+                for (size_t i = 0; i < bSize; ++i)
+                    dst[i] = a[0] / b[i];
+            }
+            else if (bSize == 1)
+            {
+                for (size_t i = 0; i < aSize; ++i)
+                    dst[i] = a[i] / b[0];
+            }
+            else
+                assert(0);
+        }
+
+        template <class T> void BinaryOperationLayerForwardCpuSub(const T * a, size_t aSize, const T * b, size_t bSize, T * dst)
+        {
+            if (aSize == bSize)
+            {
+                for (size_t i = 0; i < aSize; ++i)
+                    dst[i] = a[i] - b[i];
+            }
+            else if (aSize == 1)
+            {
+                for (size_t i = 0; i < bSize; ++i)
+                    dst[i] = a[0] - b[i];
+            }
+            else if (bSize == 1)
+            {
+                for (size_t i = 0; i < aSize; ++i)
+                    dst[i] = a[i] - b[0];
+            }
+            else
+                assert(0);
         }
     }
 
@@ -56,7 +92,10 @@ namespace Synet
             switch (_type)
             {
             case BinaryOperationTypeDiv:
-                _func = Detail::CpuDiv;
+                _func = Detail::BinaryOperationLayerForwardCpuDiv;
+                break;
+            case BinaryOperationTypeSub:
+                _func = Detail::BinaryOperationLayerForwardCpuSub;
                 break;
             default:
                 assert(0);
@@ -65,8 +104,8 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape());
-            dst[0]->Reshape(src[0]->Shape());
+            assert(src.size() == 2 && (src[0]->Shape() == src[1]->Shape() || src[0]->Size() == 1 || src[1]->Size() == 1));
+            dst[0]->Reshape(src[0]->Size() == 1 ? src[1]->Shape() : src[0]->Shape());
         }
 
     protected:
@@ -74,11 +113,11 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            _func(src[0]->CpuData(), src[1]->CpuData(), src[0]->Size(), dst[0]->CpuData());
+            _func(src[0]->CpuData(), src[0]->Size(), src[1]->CpuData(), src[1]->Size(), dst[0]->CpuData());
         }
 
     private:
-        typedef void(*FuncPtr)(const Type * a, const Type * b, size_t size, Type * dst);
+        typedef void(*FuncPtr)(const Type * a, size_t aSize, const Type * b, size_t bSize, Type * dst);
 
         BinaryOperationType _type;
         FuncPtr _func;

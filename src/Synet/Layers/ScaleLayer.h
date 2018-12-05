@@ -83,12 +83,21 @@ namespace Synet
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const Tensor & scale = this->Weight()[0];
-            assert(src[0]->Count() >= _axis + scale.Count());
-            for (size_t i = 0; i < scale.Count(); ++i)
-                assert(src[0]->Axis(_axis + i) == scale.Axis(i));
-            _outerDim = src[0]->Size(0, _axis);
-            _scaleDim = scale.Size();
-            _innerDim = src[0]->Size(_axis + scale.Count());
+            if (scale.Size() == src[0]->Size())
+            {
+                _outerDim = 1;
+                _scaleDim = scale.Size();
+                _innerDim = 1;
+            }
+            else
+            {
+                assert(src[0]->Count() >= _axis + scale.Count());
+                for (size_t i = 0; i < scale.Count(); ++i)
+                    assert(src[0]->Axis(_axis + i) == scale.Axis(i));
+                _outerDim = src[0]->Size(0, _axis);
+                _scaleDim = scale.Size();
+                _innerDim = src[0]->Size(_axis + scale.Count());
+            }
             if (src[0] != dst[0])
                 dst[0]->Reshape(src[0]->Shape());
         }

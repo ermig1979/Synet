@@ -179,7 +179,7 @@ namespace Synet
                 buf[0]->Extend({ _convolution.BufferSize() });
                 int internal;
                 _convolution.SetWeight(this->Weight()[0].CpuData(), _biasTerm ? this->Weight()[1].CpuData() : NULL, &internal);
-                if (internal)
+                if (internal && 0)
                     const_cast<Tensor&>(this->Weight()[0]).Clear();
                 _convolution.SetActivation(_activationType, _activationType == ActivationFunctionTypePrelu ? this->Weight().back().CpuData() : _activationParams);
             }

@@ -135,8 +135,45 @@ namespace Synet
                 assert(_kernelY > 0 && _kernelX > 0);
             }
 
+            const Shape & stride = param.stride();
+            if (stride.empty())
+            {
+                _strideY = 1;
+                _strideX = 1;
+            }
+            else
+            {
+                assert(stride.size() == 1 || stride.size() == 2);
+                _strideY = stride[0];
+                _strideX = stride.size() > 1 ? stride[1] : stride[0];
+            }
+
             const Shape & pad = param.pad();
-            if (pad.empty())
+            if (param.padType() == PoolingPadTypeTensorflowSame)
+            {
+                if (_strideX == 2 && _strideY == 2)
+                {
+                    if (_kernelX == 3 && _kernelY == 3)
+                    {
+                        _padY = _srcY%_strideY;
+                        _padX = _srcX%_strideX;
+                        _padH = 1;
+                        _padW = 1;
+                    }
+                    else if (_kernelX == 2 && _kernelY == 2)
+                    {
+                        _padY = 0;
+                        _padX = 0;
+                        _padH = _srcY%_strideY;
+                        _padW = _srcX%_strideX;
+                    }
+                    else
+                        assert(0);
+                }
+                else
+                    assert(0);
+            }
+            else if (pad.empty())
             {
                 _padY = 0;
                 _padX = 0;
@@ -167,19 +204,6 @@ namespace Synet
             else
                 assert(0);
             assert(_padY + _padH < _kernelY && _padX + _padW < _kernelX);
-
-            const Shape & stride = param.stride();
-            if (stride.empty())
-            {
-                _strideY = 1;
-                _strideX = 1;
-            }
-            else
-            {
-                assert(stride.size() == 1 || stride.size() == 2);
-                _strideY = stride[0];
-                _strideX = stride.size() > 1 ? stride[1] : stride[0];
-            }
 
             if (_yoloCompatible == 2)
             {

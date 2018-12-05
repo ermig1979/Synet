@@ -50,6 +50,7 @@
 #include "Synet/Layers/PoolingLayer.h"
 #include "Synet/Layers/PreluLayer.h"
 #include "Synet/Layers/PriorBoxLayer.h"
+#include "Synet/Layers/ReductionLayer.h"
 #include "Synet/Layers/RegionLayer.h"
 #include "Synet/Layers/ReluLayer.h"
 #include "Synet/Layers/ReorgLayer.h"
@@ -487,6 +488,7 @@ namespace Synet
             case LayerTypePooling: return new PoolingLayer<T>(param);
             case LayerTypePrelu: return new PreluLayer<T>(param);
             case LayerTypePriorBox: return new PriorBoxLayer<T>(param);
+            case LayerTypeReduction: return new ReductionLayer<T>(param);
             case LayerTypeRegion: return new RegionLayer<T>(param);
             case LayerTypeRelu: return new ReluLayer<T>(param);
             case LayerTypeReorg: return new ReorgLayer<T>(param);

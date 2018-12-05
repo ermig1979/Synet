@@ -57,6 +57,7 @@ namespace Synet
         LayerTypePooling,
         LayerTypePrelu,
         LayerTypePriorBox,
+        LayerTypeReduction,
         LayerTypeRegion,
         LayerTypeRelu,
         LayerTypeReorg,
@@ -83,7 +84,8 @@ namespace Synet
         ActivationFunctionTypePrelu);
 
     SYNET_PARAM_ENUM(BinaryOperationType,
-        BinaryOperationTypeDiv);
+        BinaryOperationTypeDiv,
+        BinaryOperationTypeSub);
 
     SYNET_PARAM_ENUM(EltwiseOperationType,
         EltwiseOperationTypeProduct,
@@ -131,6 +133,13 @@ namespace Synet
         PoolingMethodTypeMax,
         PoolingMethodTypeAverage,
         PoolingMethodTypeStochastic);
+
+    SYNET_PARAM_ENUM(PoolingPadType,
+        PoolingPadTypeTensorflowSame);
+
+    SYNET_PARAM_ENUM(ReductionType,
+        ReductionTypeMax,
+        ReductionTypeSum);
 
     SYNET_PARAM_ENUM_(PriorBoxCodeType, Undefined, Size,
         PriorBoxCodeTypeUnknown,
@@ -330,6 +339,7 @@ namespace Synet
         SYNET_PARAM_VALUE(Shape, stride, Shape());
         SYNET_PARAM_VALUE(bool, globalPooling, false);
         SYNET_PARAM_VALUE(int, yoloCompatible, 0);
+        SYNET_PARAM_VALUE(PoolingPadType, padType, PoolingPadTypeUnknown);
     };
 
     struct PriorBoxParam
@@ -343,6 +353,13 @@ namespace Synet
         SYNET_PARAM_VALUE(Shape, imgSize, Shape());
         SYNET_PARAM_VALUE(Floats, step, Floats());
         SYNET_PARAM_VALUE(float, offset, 0.5f);
+    };
+
+    struct ReductionParam
+    {
+        SYNET_PARAM_VALUE(ReductionType, type, ReductionTypeUnknown);
+        SYNET_PARAM_VALUE(Ints, axis, Ints());
+        SYNET_PARAM_VALUE(bool, keepDims, true);
     };
 
     struct RegionParam
@@ -455,6 +472,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(PermuteParam, permute);
         SYNET_PARAM_STRUCT(PoolingParam, pooling);
         SYNET_PARAM_STRUCT(PriorBoxParam, priorBox);
+        SYNET_PARAM_STRUCT(ReductionParam, reduction);
         SYNET_PARAM_STRUCT(RegionParam, region);
         SYNET_PARAM_STRUCT(ReluParam, relu);
         SYNET_PARAM_STRUCT(ReorgParam, reorg);

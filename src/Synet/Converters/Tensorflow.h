@@ -45,7 +45,7 @@
 #pragma GCC diagnostic pop
 #endif
 
-#define SYNET_TENSORFLOW_DEBUG
+//#define SYNET_TENSORFLOW_DEBUG
 //#define SYNET_TENSORFLOW_DYNAMIC
 
 namespace Synet
@@ -262,6 +262,11 @@ namespace Synet
                 else if (type == "RealDiv")
                 {
                     if (!ConvertRealDivLayer(node, layer, weight))
+                        return false;
+                }
+                else if (type == "Max" || type == "Sum")
+                {
+                    if (!ConvertReductionLayer(node, layer, network))
                         return false;
                 }
                 else if (type == "Relu")
@@ -897,10 +902,7 @@ namespace Synet
             {
                 const String & pad = node.attr().at("padding").s();
                 if (pad == "SAME")
-                {
-                    Shape kernel = layer.pooling().kernel();
-                    layer.pooling().pad() = Shape({ kernel[0] / 2, kernel[1] / 2 });
-                }
+                    layer.pooling().padType() = PoolingPadTypeTensorflowSame;
             }
             layer.pooling().yoloCompatible() = layer.pooling().kernel()[0] == 2;
             AddSrcDst(node, 1, 1, layer);
@@ -941,6 +943,43 @@ namespace Synet
                 layer.binaryOperation().type() = BinaryOperationTypeDiv;
                 AddSrcDst(node, 2, 1, layer);
             }
+            return true;
+        }
+
+        bool ConvertReductionLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Synet::NetworkParam & network)
+        {
+            assert(node.input_size() == 2);
+            String name = ParsePin(node.input(1)).name;
+            ptrdiff_t index = -1;
+            for (size_t i = 0; i < network.layers().size(); ++i)
+            {
+                if (network.layers()[i].name() == name)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            assert(index >= 0);
+            layer.type() = LayerTypeReduction;
+            AddSrcDst(node, 1, 1, layer);
+            Ints axis = network.layers()[index].meta().alpha().i32();
+            if (axis.size() == 1)
+            {
+                if (axis[0] == 0)
+                    axis[0] = 1;
+                if (axis[0] == 1)
+                    axis[0] = 0;
+            }
+            layer.reduction().axis() = axis;
+            network.layers().erase(network.layers().begin() + index);
+            if (node.attr().find("keep_dims") != node.attr().end())
+                layer.reduction().keepDims() = node.attr().at("keep_dims").b();
+            if (node.op() == "Max")
+                layer.reduction().type() = ReductionTypeMax;
+            else if (node.op() == "Sum")
+                layer.reduction().type() = ReductionTypeSum;
+            else
+                assert(0);
             return true;
         }
 
@@ -990,8 +1029,11 @@ namespace Synet
             assert(constCount < 2);
             if (constIndex < 0)
             {
-                if (!ConvertEltwiseLayer(node, layer))
-                    return false;
+                layer.type() = LayerTypeBinaryOperation;
+                layer.binaryOperation().type() = BinaryOperationTypeSub;
+                AddSrcDst(node, 2, 1, layer);
+                //if (!ConvertEltwiseLayer(node, layer))
+                //    return false;
             }
             else
             {
