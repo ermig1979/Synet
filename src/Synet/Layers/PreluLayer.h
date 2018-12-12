@@ -30,6 +30,40 @@
 
 namespace Synet
 {
+    namespace Detail
+    {
+        template <class T> void PreluLayerForwardCpu(const T * src, const T * slope, size_t count, size_t size, T * dst, int trans)
+        {
+            if (trans)
+            {
+                for (size_t j = 0; j < size; ++j)
+                {
+                    for (size_t i = 0; i < count; ++i)
+                        dst[i] = CpuRelu(src[i], slope[i]);
+                    src += count;
+                    dst += count;
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i < count; ++i)
+                {
+                    for (size_t j = 0; j < size; ++j)
+                        dst[j] = CpuRelu(src[j], slope[i]);
+                    src += size;
+                    dst += size;
+                }
+            }
+        }
+
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        template <> SYNET_INLINE void PreluLayerForwardCpu(const float * src, const float * slope, size_t count, size_t size, float * dst, int trans)
+        {
+            ::SimdSynetPreluLayerForward(src, slope, count, size, dst, (::SimdBool)trans);
+        }
+#endif
+    }
+
     template <class T> class PreluLayer : public Synet::Layer<T>
     {
     public:
@@ -42,14 +76,10 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             assert(this->Weight().size() == 1);
             _count = this->Weight()[0].Size();
-        }
-
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
             assert(_count == 1 || _count == src[0]->Axis(1));
             _size = src[0]->Size() / _count;
             assert(_size*_count == src[0]->Size());
@@ -60,8 +90,8 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            for (size_t i = 0; i < _count; ++i)
-                CpuRelu<Type>(src[0]->CpuData() + i*_size, _size, this->Weight()[0].CpuData()[i], dst[0]->CpuData() + i*_size);
+
+            Detail::PreluLayerForwardCpu(src[0]->CpuData(), this->Weight()[0].CpuData(), _count, _size, dst[0]->CpuData(), 0);
         }
 
     private:

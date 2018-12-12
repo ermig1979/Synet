@@ -30,6 +30,7 @@
 #include "Synet/Utils/ImgToCol.h"
 #include "Synet/Utils/Winograd.h"
 #include "Synet/Utils/Convolution.h"
+#include "Synet/Layers/PreluLayer.h"
 
 namespace Synet
 {
@@ -39,6 +40,7 @@ namespace Synet
         typedef T Type;
         typedef Layer<T> Base;
         typedef typename Base::Tensor Tensor;
+        typedef std::vector<Tensor> Tensors;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         ConvolutionLayer(const LayerParam & param)
@@ -46,147 +48,124 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            _biasTerm = this->Param().convolution().biasTerm();
-            _axis = this->Param().convolution().axis();
-            _group = this->Param().convolution().group();
-            size_t firstSpatialAxis = _axis + 1;
-            _spatialAxisNum = src[0]->Count() - firstSpatialAxis;
-
-            const Shape & kernel = this->Param().convolution().kernel();
-            assert(kernel.size() == 1 || kernel.size() == _spatialAxisNum);
-            if (kernel.size() == 1)
-                _kernelShape.resize(_spatialAxisNum, kernel[0]);
-            else
-                _kernelShape = kernel;
-            for (size_t i = 0; i < _kernelShape.size(); ++i)
-                assert(_kernelShape[i] > 0);
-
-            const Shape & stride = this->Param().convolution().stride();
-            if (stride.empty())
-                _strideShape.resize(_spatialAxisNum, 1);
-            else
-            {
-                assert(stride.size() == 1 || stride.size() == _spatialAxisNum);
-                if (stride.size() == 1)
-                    _strideShape.resize(_spatialAxisNum, stride[0]);
-                else
-                    _strideShape = stride;
-            }
-            for (size_t i = 0; i < _strideShape.size(); ++i)
-                assert(_strideShape[i] > 0);
-
-            const Shape & pad = this->Param().convolution().pad();
-            if (pad.empty())
-                _padShape.resize(_spatialAxisNum*2, 0);
-            else
-            {
-                assert(pad.size() == 1 || pad.size() == _spatialAxisNum || pad.size() == _spatialAxisNum*2);
-                if (pad.size() == 1)
-                    _padShape.resize(_spatialAxisNum*2, pad[0]);
-                else if (pad.size() == _spatialAxisNum)
-                {
-                    _padShape.resize(_spatialAxisNum * 2);
-                    for (size_t i = 0; i < _spatialAxisNum; ++i)
-                    {
-                        _padShape[0 * _spatialAxisNum + i] = pad[i];
-                        _padShape[1 * _spatialAxisNum + i] = pad[i];
-                    }
-                }
-                else
-                    _padShape = pad;
-            }
-
-            const Shape & dilation = this->Param().convolution().dilation();
-            if (dilation.empty())
-                _dilationShape.resize(_spatialAxisNum, 1);
-            else
-            {
-                assert(dilation.size() == 1 || dilation.size() == _spatialAxisNum);
-                if (dilation.size() == 1)
-                    _dilationShape.resize(_spatialAxisNum, dilation[0]);
-                else
-                    _dilationShape = dilation;
-            }
-            for (size_t i = 0; i < _dilationShape.size(); ++i)
-                assert(_dilationShape[i] > 0);
-
-            _is1x1 = true;
-            for (size_t i = 0; i < _spatialAxisNum; ++i)
-            {
-                if (_kernelShape[i] != 1 || _padShape[i] != 0 || _padShape[_spatialAxisNum + i] != 0 || _strideShape[i] != 1)
-                {
-                    _is1x1 = false;
-                    break;
-                }
-            }
-            _srcChannels = src[0]->Axis(_axis);
-            _dstChannels = this->Param().convolution().outputNum();
-            assert(_dstChannels  > 0 && _dstChannels % _group == 0);
-            Shape weightShape(2 + _spatialAxisNum);
-            weightShape[0] = _dstChannels;
-            weightShape[1] = _srcChannels / _group;
-            for (size_t i = 0; i < _spatialAxisNum; ++i)
-                weightShape[2 + i] = _kernelShape[i];
-            Shape biasShape(_biasTerm, _dstChannels);
-            _kernelSize = this->Weight()[0].Size(1);
-            _weightOffset = _dstChannels * _kernelSize / _group;
-            _activationType = this->Param().convolution().activationType();
-            _activationParams[0] = this->Param().convolution().activationParam0();
-            _activationParams[1] = this->Param().convolution().activationParam1();
-            assert(this->Weight().size() == 1 + _biasTerm + (_activationType == ActivationFunctionTypePrelu));
-            assert(this->Weight()[0].Shape() == weightShape);
-            if (_biasTerm)
-                assert(this->Weight()[1].Size() == _dstChannels);
-            if(_activationType == ActivationFunctionTypePrelu)
-                assert(this->Weight().back().Size() == _dstChannels);
-        }
-
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            size_t firstSpatialAxis = _axis + 1;
+            const ConvolutionParam & param = this->Param().convolution();
+            const Tensors & weight = this->Weight();
+
+            const Shape & kernel = param.kernel();
+            assert(kernel.size() == 1 || kernel.size() == 2);
+            _kernelY = kernel[0];
+            _kernelX = kernel.size() > 1 ? kernel[1] : _kernelY;
+            assert(_kernelY > 0 && _kernelX > 0);
+
+            const Shape & stride = param.stride();
+            assert(stride.size() <= 2);
+            _strideY = stride.size() > 0 ? stride[0] : 1;
+            _strideX = stride.size() > 1 ? stride[1] : _strideY;
+            assert(_strideY > 0 && _strideX > 0);
+
+            const Shape & dilation = param.dilation();
+            assert(dilation.size() <= 2);
+            _dilationY = dilation.size() > 0 ? dilation[0] : 1;
+            _dilationX = dilation.size() > 1 ? dilation[1] : _dilationY;
+            assert(_dilationY > 0 && _dilationX > 0);
+
+            const Shape & pad = param.pad();
+            assert(pad.size() <= 4 && pad.size() != 3);
+            _padY = pad.size() > 0 ? pad[0] : 0;
+            _padX = pad.size() > 1 ? pad[1] : _padY;
+            _padH = pad.size() > 2 ? pad[2] : _padY;
+            _padW = pad.size() > 3 ? pad[3] : _padX;
+            assert(_padY >= 0 && _padX >= 0 && _padH >= 0 && _padW >= 0);
+
+            _is1x1 = _kernelY == 1 && _kernelX == 1 && _strideY == 1 && _strideX == 1 && _dilationY == 1 && _dilationX == 1 && _padY == 0 && _padX == 0 && _padH == 0 && _padW == 0;
+
+            _group = param.group();
+            _dstC = this->Param().convolution().outputNum();
+            assert(_dstC  > 0 && _dstC % _group == 0);
+
+            _biasTerm = param.biasTerm();
+            if (_biasTerm)
+                assert(weight[1].Size() == _dstC);
+
+            _activation = param.activationType();
+            _params[0] = param.activationParam0();
+            _params[1] = param.activationParam1();
+            if (_activation == ActivationFunctionTypePrelu)
+                assert(weight.back().Size() == _dstC);
+
+            assert(weight.size() == 1 + _biasTerm + (_activation == ActivationFunctionTypePrelu));
+
+            _axis = param.axis();
+            assert(src[0]->Count() == _axis + 3);
+
             _num = src[0]->Size(0, _axis);
-            _srcShape = src[0]->Shape();
-            _dstShape.resize(_spatialAxisNum);
-            for (size_t i = 0; i < _spatialAxisNum; ++i)
+            _trans = src[0]->Format() == TensorFormatNhwc;
+            if (_trans)
             {
-                size_t kernelExtent = _dilationShape[i] * (_kernelShape[i] - 1) + 1;
-                _dstShape[i] = (_srcShape[firstSpatialAxis + i] + _padShape[i] + _padShape[_spatialAxisNum + i] - kernelExtent) / _strideShape[i] + 1;
+                _srcH = src[0]->Axis(-3);
+                _srcW = src[0]->Axis(-2);
+                _srcC = src[0]->Axis(-1);
+
+                assert(weight[0].Shape() == Shape({ _kernelY, _kernelX, _srcC / _group, _dstC }) && weight[0].Format() == TensorFormatNhwc);
             }
-            Shape dstShape(_srcShape.begin(), _srcShape.begin() + _axis);
-            dstShape.push_back(_dstChannels);
-            for (size_t i = 0; i < _spatialAxisNum; ++i)
-                dstShape.push_back(_dstShape[i]);
+            else
+            {
+                _srcC = src[0]->Axis(-3);
+                _srcH = src[0]->Axis(-2);
+                _srcW = src[0]->Axis(-1);
+
+                assert(weight[0].Shape() == Shape({ _dstC, _srcC / _group, _kernelY, _kernelX }) && weight[0].Format() == TensorFormatNchw);
+            }
+
+            _dstH = (_srcH + _padY + _padH - (_dilationY * (_kernelY - 1) + 1)) / _strideY + 1;
+            _dstW = (_srcW + _padX + _padW - (_dilationX * (_kernelX - 1) + 1)) / _strideX + 1;
+
+            Shape dstShape(src[0]->Shape().begin(), src[0]->Shape().begin() + _axis);
+            if (_trans)
+            {
+                dstShape.push_back(_dstH);
+                dstShape.push_back(_dstW);
+                dstShape.push_back(_dstC);
+            }
+            else
+            {
+                dstShape.push_back(_dstC);
+                dstShape.push_back(_dstH);
+                dstShape.push_back(_dstW);
+
+                _siW = _srcC * _kernelY * _kernelX / _group;
+                _ldW = _siW;
+                _grW = _dstC * _siW / _group;
+
+                _siS = _dstH * _dstW;
+                _ldS = _siS;
+                _grS = _siS * _siW;
+
+                _siD = _dstC / _group;
+                _ldD = _dstH * _dstW;
+                _grD = _siD * _siS;
+            }
+
             for (size_t i = 0; i < dst.size(); ++i)
                 dst[i]->Reshape(dstShape);
-            _dstSpatialSize = dst[0]->Size(firstSpatialAxis);
-            _colOffset = _kernelSize * _dstSpatialSize;
-            _dstOffset = _dstChannels * _dstSpatialSize / _group;
-            _srcConvShape.resize(_spatialAxisNum + 1);
-            for (size_t i = 0; i < _spatialAxisNum + 1; ++i)
-                _srcConvShape[i] = src[0]->Axis(_axis + i);
-            Shape colBufferShape;
-            colBufferShape.push_back(_kernelSize * _group);
-            for (int i = 0; i < _spatialAxisNum; ++i)
-                colBufferShape.push_back(_dstShape[i]);
+
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);
-            _convolution.Init(_srcConvShape[0], _srcConvShape[1], _srcConvShape[2], _dstChannels, _kernelShape[0], _kernelShape[1],
-                _dilationShape[0], _dilationShape[1], _strideShape[0], _strideShape[1], _padShape[0], _padShape[1], _padShape[2], _padShape[3], _group);
+
+            _convolution.Init(_srcC, _srcH, _srcW, _trans, _dstC, _trans, _kernelY, _kernelX, _dilationY, _dilationX, _strideY, _strideX, _padY, _padX, _padH, _padW, _group, _activation);
             if (_convolution.Enable())
             {
                 buf[0]->Extend({ _convolution.BufferSize() });
                 int internal;
-                _convolution.SetWeight(this->Weight()[0].CpuData(), _biasTerm ? this->Weight()[1].CpuData() : NULL, &internal);
+                _convolution.SetParams(weight[0].CpuData(), _trans, &internal, _biasTerm ? weight[1].CpuData() : NULL, 
+                    _activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : _params);
                 if (internal && 0)
-                    const_cast<Tensor&>(this->Weight()[0]).Clear();
-                _convolution.SetActivation(_activationType, _activationType == ActivationFunctionTypePrelu ? this->Weight().back().CpuData() : _activationParams);
+                    const_cast<Tensor&>(weight[0]).Clear();
             }
             else
-            {
-                buf[0]->Extend(colBufferShape);
-            }
+                buf[0]->Extend(Shape({ _kernelY*_kernelX*_srcC, _dstH*_dstW }));
         }
 
     protected:
@@ -203,7 +182,7 @@ namespace Synet
         {
 #ifdef SYNET_SIZE_STATISTIC
             std::stringstream ss;
-            ss << " i=" << _srcShape[1] << "x" << _srcShape[2] << "x" << _srcShape[3] << " o=" << _dstChannels << " k=" << _kernelShape[0] << " s=" << _strideShape[0] << " g=" << _group;
+            ss << " i=" << _srcC << "x" << _srcH << "x" << _srcW << " o=" << _dstC << " k=" << _kernelY << " s=" << _strideY << " g=" << _group;
             SYNET_PERF_BLOCK(ss.str().c_str());
 #else
             SYNET_PERF_FUNC();
@@ -215,58 +194,50 @@ namespace Synet
                 const Type * weight = this->Weight()[0].CpuData();
                 if (!_is1x1)
                 {
-                    ImgToCol(src, buf);
+                    if (_trans)
+                        ;
+                    else
+                        Synet::ImgToCol(src, _srcC, _srcH, _srcW, _kernelY, _kernelX, _padY, _padX, _padH, _padW, _strideY, _strideX, _dilationY, _dilationX, buf);
                     src = buf;
                 }
                 for (size_t g = 0; g < _group; ++g)
                 {
-                    CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _dstChannels / _group, _dstSpatialSize, _kernelSize,
-                        Type(1.0), weight + _weightOffset * g, src + _colOffset * g, Type(0.0), dst + _dstOffset * g);
+                    if (_trans)
+                        ;
+                    else
+                        CpuGemm(CblasNoTrans, CblasNoTrans, _siD, _siS, _siW, Type(1), weight + _grW * g, _ldW, src + _grS * g, _ldS, Type(0), dst + _grD * g, _ldD);
                 }
                 if (_biasTerm)
-                    CpuAddBias(this->Weight()[1].CpuData(), _dstChannels, _dstSpatialSize, dst);   
-                if (_activationType)
+                    CpuAddBias(this->Weight()[1].CpuData(), _dstC, _dstH*_dstW, dst);
+                switch (_activation)
                 {
-                    switch (_activationType)
-                    {
-                    case ActivationFunctionTypeRelu:
-                        CpuRelu(dst, _dstChannels*_dstSpatialSize, 0.0f, dst);
-                        break;
-                    case ActivationFunctionTypeLeakyRelu:
-                        CpuRelu(dst, _dstChannels*_dstSpatialSize, _activationParams[0], dst);
-                        break;
-                    case ActivationFunctionTypeRestrictRange:
-                        CpuRestrictRange(dst, _dstChannels*_dstSpatialSize, _activationParams[0], _activationParams[1], dst);
-                        break;
-                    case ActivationFunctionTypePrelu:
-                        for (size_t i = 0; i < _dstChannels; ++i)
-                            CpuRelu<Type>(dst + i*_dstSpatialSize, _dstSpatialSize, this->Weight().back().CpuData()[i], dst + i*_dstSpatialSize);
-                        break;
-                    default:
-                        assert(0);
-                    }
+                case ActivationFunctionTypeIdentity:
+                    break;
+                case ActivationFunctionTypeRelu:
+                    CpuRelu(dst, _dstSize, 0.0f, dst);
+                    break;
+                case ActivationFunctionTypeLeakyRelu:
+                    CpuRelu(dst, _dstSize, _params[0], dst);
+                    break;
+                case ActivationFunctionTypeRestrictRange:
+                    CpuRestrictRange(dst, _dstSize, _params[0], _params[1], dst);
+                    break;
+                case ActivationFunctionTypePrelu:
+                    Detail::PreluLayerForwardCpu(dst, this->Weight().back().CpuData(), _dstC, _dstH*_dstW, dst, _trans);
+                    break;
+                default:
+                    assert(0);
                 }
             }
-        }
-
-        void ImgToCol(const T * src, T * dst)
-        {
-            if (_spatialAxisNum == 2)
-            {
-                Synet::ImgToCol(src, _srcConvShape[0], _srcConvShape[1], _srcConvShape[2], _kernelShape[0], _kernelShape[1],
-                    _padShape[0], _padShape[1], _padShape[2], _padShape[3], _strideShape[0], _strideShape[1], _dilationShape[0], _dilationShape[1], dst);
-            }
-            else
-                assert(0);
         }
 
     private:
-        Shape _srcShape, _kernelShape, _strideShape, _dilationShape, _padShape, _dstShape, _srcConvShape;
-        bool _is1x1, _biasTerm;
-        size_t _axis, _group, _spatialAxisNum, _srcChannels, _dstChannels, _weightOffset, _kernelSize;
-        size_t _channelAxis, _num, _dstSpatialSize, _colOffset, _dstOffset, _srcSize, _dstSize;
-        ActivationFunctionType _activationType;
-        float _activationParams[2];
+        bool _is1x1, _biasTerm, _trans;
+        size_t _kernelY, _kernelX, _strideY, _strideX, _dilationY, _dilationX, _padY, _padX, _padH, _padW;
+        size_t _axis, _group, _num, _srcC, _srcH, _srcW, _dstC, _dstH, _dstW, _srcSize, _dstSize;
+        size_t _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
+        ActivationFunctionType _activation;
+        float _params[2];
 
         Convolution<Type> _convolution;
     };

@@ -41,13 +41,9 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            _value = this->Param().fill().value();
-        }
-
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            _value = this->Param().fill().value();
             dst[0]->Share(*src[0]);
         }
 

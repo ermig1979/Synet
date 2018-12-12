@@ -75,7 +75,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const UpsampleParam & param = this->Param().upsample();
             if (param.stride() < 0)
@@ -89,10 +89,7 @@ namespace Synet
                 _stride = param.stride();
             }
             _scale = param.scale();
-        }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
             Shape shape = src[0]->Shape();
             size_t n = src[0]->Count();
             if (_reverse)

@@ -43,7 +43,7 @@ namespace Synet
         {
             _weight.resize(_param.weight().size());
             for (size_t i = 0; i < _weight.size(); ++i)
-                _weight[i].Reshape(_param.weight()[i].dim());
+                _weight[i].Reshape(_param.weight()[i].dim(), Type(), _param.weight()[i].format());
         }
 
         virtual ~Layer()
@@ -64,8 +64,6 @@ namespace Synet
         {
             ForwardCpu(src, buf, dst);
         }
-
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
 

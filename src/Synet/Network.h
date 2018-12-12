@@ -186,17 +186,11 @@ namespace Synet
             else
             {
                 for (size_t i = 0; i < _input.size(); ++i)
-                {
-                    _input[i].layer->Setup(_input[i].src, _input[i].buf, _input[i].dst);
                     _input[i].layer->Reshape(_input[i].src, _input[i].buf, _input[i].dst);
-                }
             }
 
             for (size_t i = 0; i < _stages.size(); ++i)
-            {
-                _stages[i].layer->Setup(_stages[i].src, _stages[i].buf, _stages[i].dst);
                 _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst);
-            }
 
             if (dstNames.size())
             {
@@ -451,8 +445,15 @@ namespace Synet
                 const LayerParam & layer = _param().layers()[i];
                 if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeInput)
                     return true;
-                if (layer.type() == LayerTypeInput && layer.input().shape().empty())
-                    return true;
+                if (layer.type() == LayerTypeInput)
+                {
+                    if (layer.input().shape().empty())
+                        return true;
+                    for (size_t j = 0; j < layer.input().shape().size(); ++j)
+                        for (size_t k = 0; k < layer.input().shape()[j].dim().size(); ++k)
+                            if (layer.input().shape()[j].dim()[k] == (size_t)-1)
+                                return true;
+                }
             }
             return false;
         }

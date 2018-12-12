@@ -133,8 +133,7 @@ namespace Synet
             if (src[index + 1].type() != LayerTypeUnaryOperation || src[index + 1].unaryOperation().type() != UnaryOperationTypeAbs || 
                 src[index + 1].src()[0] != src[index - 1].name())
                 return false;
-            if (src[index + 2].type() != LayerTypeEltwise || src[index + 2].eltwise().operation() != EltwiseOperationTypeSum || 
-                src[index + 2].eltwise().coefficients() != Floats({ 1.0f, -1.0f }) || src[index + 2].src() != Strings({ src[index - 1].name(), src[index + 1].name() }))
+            if (!IsSub(src[index + 2]) || src[index + 2].src() != Strings({ src[index - 1].name(), src[index + 1].name() }))
                 return false;
             if (src[index + 3].type() != LayerTypeScale || src[index + 3].scale().biasTerm() || src[index + 3].src()[0] != src[index + 2].name())
                 return false;
@@ -302,6 +301,15 @@ namespace Synet
             dst.push_back(layer);
             index += 5;
             return true;
+        }
+
+        bool IsSub(const LayerParam & layer)
+        {
+            if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum && layer.eltwise().coefficients() == Floats({ 1.0f, -1.0f }))
+                return true;
+            if (layer.type() == LayerTypeBinaryOperation && layer.binaryOperation().type() == BinaryOperationTypeSub)
+                return true;
+            return false;
         }
     };
 }

@@ -105,17 +105,12 @@ namespace Synet
             : Base(param)
         {
         }
-
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            const PoolingParam & param = this->Param().pooling();
-            _method = param.method();
-            _yoloCompatible = param.yoloCompatible();
-        }        
         
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const PoolingParam & param = this->Param().pooling();
+            _method = param.method();
+            _yoloCompatible = param.yoloCompatible();
             assert(src[0]->Count() == 4);
             _channels = src[0]->Axis(1);
             _srcY = src[0]->Axis(2);

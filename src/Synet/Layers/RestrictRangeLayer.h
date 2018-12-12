@@ -42,15 +42,12 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const RestrictRangeParam & param = this->Param().restrictRange();
             _lower = param.lower();
             _upper = param.upper();
-        }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
             dst[0]->Reshape(src[0]->Shape());
         }
 

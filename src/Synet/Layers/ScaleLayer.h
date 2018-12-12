@@ -67,7 +67,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const ScaleParam & param = this->Param().scale();
             _axis = param.axis();
@@ -78,10 +78,7 @@ namespace Synet
                 assert(this->Weight().size() > 1);
                 assert(this->Weight()[0].Shape() == this->Weight()[1].Shape());
             }
-        }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
             const Tensor & scale = this->Weight()[0];
             if (scale.Size() == src[0]->Size())
             {

@@ -33,35 +33,33 @@ namespace Synet
     {
         template <class T> void ReductionLayerForwardCpuMax(const T * src, size_t outer, size_t count, size_t inner, T * dst)
         {
-            for (size_t c = 0; c < count; ++c)
-                dst[c] = -FLT_MAX;
             for (size_t o = 0; o < outer; ++o)
             {
+                for (size_t i = 0; i < inner; ++i)
+                    dst[i] = -FLT_MAX;
                 for (size_t c = 0; c < count; ++c)
                 {
-                    float max = dst[c];
                     for (size_t i = 0; i < inner; ++i)
-                        max = std::max(max, src[i]);
-                    dst[c] = max;
+                        dst[i] = std::max(dst[i], src[i]);
                     src += inner;
                 }
+                dst += inner;
             }
         }
 
         template <class T> void ReductionLayerForwardCpuSum(const T * src, size_t outer, size_t count, size_t inner, T * dst)
         {
-            for (size_t c = 0; c < count; ++c)
-                dst[c] = 0;
             for (size_t o = 0; o < outer; ++o)
             {
+                for (size_t i = 0; i < inner; ++i)
+                    dst[i] = 0;
                 for (size_t c = 0; c < count; ++c)
                 {
-                    float sum = dst[c];
                     for (size_t i = 0; i < inner; ++i)
-                        sum += src[i];
-                    dst[c] += sum;
+                        dst[i] += src[i];
                     src += inner;
                 }
+                dst += inner;
             }
         }
     }
@@ -78,7 +76,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const ReductionParam & param = this->Param().reduction();
             _type = param.type();
@@ -93,42 +91,36 @@ namespace Synet
             default:
                 assert(0);
             }
-        }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            const ReductionParam & param = this->Param().reduction();
             Shape shape;
-            _outer = 1, _count = 0, _inner = 1;
+            _outer = 1, _count = 1, _inner = 1;
             if (src[0]->Count() > 1)
             {
                 std::set<size_t> axis;
                 for (size_t i = 0; i < param.axis().size(); ++i)
                     axis.insert(src[0]->Index(param.axis()[i]));
-                assert(axis.size() == src[0]->Count() - 1);
                 for (size_t i = 0; i < src[0]->Count(); ++i)
                 {
                     size_t size = src[0]->Axis(i);
-                    if (axis.find(param.axis()[i]) != axis.end())
+                    if (axis.find(i) != axis.end())
                     {
-                        (_count ? _inner : _outer) *= size;
+                        _count *= size;
                         if (param.keepDims())
                             shape.push_back(1);
                     }
                     else
                     {
-                        _count = size;
+                        (_count > 1 ? _inner : _outer) *= size;
                         shape.push_back(size);
                     }
                 }
             }
             else
             {
-                _count = 1;
-                _inner = src[0]->Size();
+                _count = src[0]->Size();
                 shape.push_back(1);
             }
-            assert(_count && _outer*_count*_inner == src[0]->Size());
+            assert(_outer*_count*_inner == src[0]->Size());
             dst[0]->Reshape(shape);
         }
 

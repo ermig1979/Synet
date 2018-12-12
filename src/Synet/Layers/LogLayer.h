@@ -51,7 +51,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const LogParam & param = this->Param().log();
             Type base = param.base();
@@ -62,11 +62,8 @@ namespace Synet
             _baseScale = Type(1) / logBase;
             assert(!(std::isnan(_baseScale) || std::isinf(_baseScale)));
             _inputScale = param.scale();
-            _inputShift = param.shift();
-        }
-
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
+            _inputShift = param.shift();            
+            
             dst[0]->Reshape(src[0]->Shape());
         }
 

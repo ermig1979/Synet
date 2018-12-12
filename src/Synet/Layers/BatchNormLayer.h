@@ -45,7 +45,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const BatchNormParam & param = this->Param().batchNorm();
             _movingAverageFraction = param.movingAverageFraction();
@@ -55,11 +55,8 @@ namespace Synet
             if (src[0]->Count() == 1)
                 _channels = 1;
             else
-                _channels = src[0]->Axis(1);
-        }
-
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
+                _channels = src[0]->Axis(1);            
+            
             if (src[0]->Count() >= 1)
                 assert(src[0]->Axis(1) == _channels);
             dst[0]->Reshape(src[0]->Shape());
@@ -131,8 +128,8 @@ namespace Synet
                 CpuGemv<Type>(CblasNoTrans, _channels * num, spatialDim, Type(1) / (num * spatialDim), pSrc, _spatialSumMultiplier.CpuData(), Type(0), _numByChans.CpuData());
                 CpuGemv<Type>(CblasTrans, num, _channels, Type(1), _numByChans.CpuData(), _batchSumMultiplier.CpuData(), Type(0), _mean.CpuData());
 
-                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, num, _channels, 1, Type(1), _batchSumMultiplier.CpuData(), _mean.CpuData(), Type(0), _numByChans.CpuData());
-                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _channels * num, spatialDim, 1, Type(-1), _numByChans.CpuData(), _spatialSumMultiplier.CpuData(), Type(1), pDst);
+                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, num, _channels, 1, Type(1), _batchSumMultiplier.CpuData(), 1, _mean.CpuData(), _channels, Type(0), _numByChans.CpuData(), _channels);
+                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _channels * num, spatialDim, 1, Type(-1), _numByChans.CpuData(), 1, _spatialSumMultiplier.CpuData(), spatialDim, Type(1), pDst, spatialDim);
 
                 CpuPow(pDst, dst[0]->Size(), Type(2), _temp.CpuData());
                 CpuGemv<Type>(CblasNoTrans, _channels * num, spatialDim, Type(1) / (num * spatialDim), _temp.CpuData(), _spatialSumMultiplier.CpuData(), Type(0), _numByChans.CpuData());
@@ -147,8 +144,8 @@ namespace Synet
                 CpuAdd(_eps, _variance.CpuData(), _variance.Size());
                 CpuPow(_variance.CpuData(), _variance.Size(), Type(0.5), _variance.CpuData());
 
-                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, num, _channels, 1, 1, _batchSumMultiplier.CpuData(), _variance.CpuData(), Type(0), _numByChans.CpuData());
-                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _channels * num, spatialDim, 1, Type(1), _numByChans.CpuData(), _spatialSumMultiplier.CpuData(), Type(0), _temp.CpuData());
+                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, num, _channels, 1, 1, _batchSumMultiplier.CpuData(), 1, _variance.CpuData(), _channels, Type(0), _numByChans.CpuData(), _channels);
+                CpuGemm<Type>(CblasNoTrans, CblasNoTrans, _channels * num, spatialDim, 1, Type(1), _numByChans.CpuData(), 1, _spatialSumMultiplier.CpuData(), spatialDim, Type(0), _temp.CpuData(), spatialDim);
                 CpuDiv(pDst, _temp.CpuData(), _temp.Size(), pDst);
             }
         }

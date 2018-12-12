@@ -42,16 +42,13 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const NormalizeParam & param = this->Param().normalize();
             _acrossSpatial = param.acrossSpatial();
             _channelShared = param.channelShared();
             _eps = param.eps();
-        }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
             assert(src[0]->Count() >= 3);
             dst[0]->Reshape(src[0]->Shape());
             _buffer.Reshape({ 1, src[0]->Axis(-3), src[0]->Axis(-2), src[0]->Axis(-1) });
@@ -96,7 +93,7 @@ namespace Synet
                 {
                     CpuGemv(CblasTrans, channels, spatialDim, Type(1), pBuffer, sumChannelMultiplier, Type(1), pNorm);
                     CpuPow(pNorm, spatialDim, Type(0.5), pNorm);
-                    CpuGemm(CblasNoTrans, CblasNoTrans, channels, spatialDim, 1, Type(1), sumChannelMultiplier, pNorm, Type(0), pBuffer);
+                    CpuGemm(CblasNoTrans, CblasNoTrans, channels, spatialDim, 1, Type(1), sumChannelMultiplier, 1, pNorm, spatialDim, Type(0), pBuffer, spatialDim);
                     CpuDiv(pSrc, pBuffer, dim,  pDst);
                     pNorm += spatialDim;
                 }
@@ -106,7 +103,7 @@ namespace Synet
                 }
                 else 
                 {
-                    CpuGemm(CblasNoTrans, CblasNoTrans, channels, spatialDim, 1, Type(1), scale, sumSpatialMultiplier, Type(0), pBuffer);
+                    CpuGemm(CblasNoTrans, CblasNoTrans, channels, spatialDim, 1, Type(1), scale, 1, sumSpatialMultiplier, spatialDim, Type(0), pBuffer, spatialDim);
                     CpuMul(pDst, pBuffer, dim, pDst);
                 }
                 pSrc += dim;

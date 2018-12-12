@@ -131,7 +131,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const FusedParam & fused = this->Param().fused();
             _type = fused.type();
@@ -190,7 +190,7 @@ namespace Synet
                 {
                     Type eps = fused.floats()[0];
                     Type scale = Type(1) / (::sqrt(weight[1].CpuData()[i]) + eps);
-                    Type bias = - weight[0].CpuData()[i] * scale;
+                    Type bias = -weight[0].CpuData()[i] * scale;
                     _t2.scale.CpuData()[i] = scale*weight[2].CpuData()[i];
                     _t2.bias.CpuData()[i] = bias*weight[2].CpuData()[i] + weight[3].CpuData()[i];
                 }
@@ -207,10 +207,7 @@ namespace Synet
             default:
                 assert(0);
             }
-        }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
             switch (_type)
             {
             case 0:

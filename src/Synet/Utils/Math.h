@@ -117,10 +117,15 @@ namespace Synet
         return T(1) / (T(1) + ::exp(-value));
     }
 
-    template <typename T> void CpuRelu(const T * src, size_t size, const T & negativeSlope, T * dst)
+    template <typename T> SYNET_INLINE T CpuRelu(T value, T slope)
+    {
+        return std::max(value, T(0)) + slope * std::min(value, T(0));
+    }
+
+    template <typename T> void CpuRelu(const T * src, size_t size, const T & slope, T * dst)
     {
         for (size_t i = 0; i < size; ++i)
-            dst[i] = std::max(src[i], T(0)) + negativeSlope * std::min(src[i], T(0));
+            dst[i] = CpuRelu(src[i], slope);
     }
 
     template <typename T> void CpuAdd(const T & value, T * dst, size_t size)

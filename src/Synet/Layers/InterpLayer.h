@@ -122,16 +122,11 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const InterpParam & param = this->Param().interp();
             _cropBeg = param.cropBeg();
             _cropEnd = param.cropEnd();
-        }
-
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            const InterpParam & param = this->Param().interp();
             _num = src[0]->Axis(0);
             _channels = src[0]->Axis(1);
             _srcH = src[0]->Axis(2);

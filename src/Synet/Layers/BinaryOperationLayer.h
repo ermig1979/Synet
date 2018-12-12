@@ -31,43 +31,59 @@ namespace Synet
 {
     namespace Detail
     {
-        template <class T> void BinaryOperationLayerForwardCpuDiv(const T * a, size_t aSize, const T * b, size_t bSize, T * dst)
+        template <BinaryOperationType type, class T> struct BinaryOperation;
+        
+        template <class T> struct BinaryOperation<BinaryOperationTypeDiv, T>
         {
-            if (aSize == bSize)
+            static T Run(T a, T b)
             {
-                for (size_t i = 0; i < aSize; ++i)
-                    dst[i] = a[i] / b[i];
+                return a / b;
             }
-            else if (aSize == 1)
-            {
-                for (size_t i = 0; i < bSize; ++i)
-                    dst[i] = a[0] / b[i];
-            }
-            else if (bSize == 1)
-            {
-                for (size_t i = 0; i < aSize; ++i)
-                    dst[i] = a[i] / b[0];
-            }
-            else
-                assert(0);
-        }
+        };
 
-        template <class T> void BinaryOperationLayerForwardCpuSub(const T * a, size_t aSize, const T * b, size_t bSize, T * dst)
+        template <class T> struct BinaryOperation<BinaryOperationTypeSub, T>
+        {
+            static T Run(T a, T b)
+            {
+                return a - b;
+            }
+        };
+
+        template <BinaryOperationType type, class T> void BinaryOperationLayerForwardCpu(const T * a, const T * b, size_t outer, size_t aSize, size_t bSize, size_t inner, T * dst)
         {
             if (aSize == bSize)
             {
-                for (size_t i = 0; i < aSize; ++i)
-                    dst[i] = a[i] - b[i];
+                size_t size = outer*aSize*inner;
+                for (size_t i = 0; i < size; ++i)
+                    dst[i] = BinaryOperation<type, T>::Run(a[i], b[i]);
             }
             else if (aSize == 1)
             {
-                for (size_t i = 0; i < bSize; ++i)
-                    dst[i] = a[0] - b[i];
+                for (size_t o = 0; o < outer; ++o)
+                {
+                    for (size_t s = 0; s < bSize; ++s)
+                    {
+                        for (size_t i = 0; i < inner; ++i)
+                            dst[i] = BinaryOperation<type, T>::Run(a[i], b[i]);
+                        b += inner;
+                        dst += inner;
+                    }
+                    a += inner;
+                }
             }
             else if (bSize == 1)
             {
-                for (size_t i = 0; i < aSize; ++i)
-                    dst[i] = a[i] - b[0];
+                for (size_t o = 0; o < outer; ++o)
+                {
+                    for (size_t s = 0; s < aSize; ++s)
+                    {
+                        for (size_t i = 0; i < inner; ++i)
+                            dst[i] = BinaryOperation<type, T>::Run(a[i], b[i]);
+                        a += inner;
+                        dst += inner;
+                    }
+                    b += inner;
+                }
             }
             else
                 assert(0);
@@ -86,26 +102,44 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _type = this->Param().binaryOperation().type();
             switch (_type)
             {
             case BinaryOperationTypeDiv:
-                _func = Detail::BinaryOperationLayerForwardCpuDiv;
+                _func = Detail::BinaryOperationLayerForwardCpu<BinaryOperationTypeDiv, Type>;
                 break;
             case BinaryOperationTypeSub:
-                _func = Detail::BinaryOperationLayerForwardCpuSub;
+                _func = Detail::BinaryOperationLayerForwardCpu<BinaryOperationTypeSub, Type>;
                 break;
             default:
                 assert(0);
+            }            
+            assert(src.size() == 2 && src[0]->Count() == src[1]->Count());
+            Shape shape;
+            _outer = 1, _aSize = 1, _bSize = 1, _inner = 1;
+            for (size_t i = 0; i < src[0]->Count(); ++i)
+            {
+                if (src[0]->Axis(i) == src[1]->Axis(i))
+                {
+                    (_aSize*_bSize > 1 ? _inner : _outer) *= src[0]->Axis(i);
+                    shape.push_back(src[0]->Axis(i));
+                }
+                else if (src[0]->Axis(i) == 1)
+                {
+                    _bSize *= src[1]->Axis(i);
+                    shape.push_back(src[1]->Axis(i));
+                }
+                else if (src[1]->Axis(i) == 1)
+                {
+                    _aSize *= src[0]->Axis(i);
+                    shape.push_back(src[0]->Axis(i));
+                }
+                else
+                    assert(0);
             }
-        }
-
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            assert(src.size() == 2 && (src[0]->Shape() == src[1]->Shape() || src[0]->Size() == 1 || src[1]->Size() == 1));
-            dst[0]->Reshape(src[0]->Size() == 1 ? src[1]->Shape() : src[0]->Shape());
+            dst[0]->Reshape(shape);
         }
 
     protected:
@@ -113,13 +147,14 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            _func(src[0]->CpuData(), src[0]->Size(), src[1]->CpuData(), src[1]->Size(), dst[0]->CpuData());
+            _func(src[0]->CpuData(), src[1]->CpuData(), _outer, _aSize, _bSize, _inner, dst[0]->CpuData());
         }
 
     private:
-        typedef void(*FuncPtr)(const Type * a, size_t aSize, const Type * b, size_t bSize, Type * dst);
+        typedef void(*FuncPtr)(const Type * a, const Type * b, size_t outer, size_t aSize, size_t bSize, size_t inner, Type * dst);
 
         BinaryOperationType _type;
+        size_t _outer, _aSize, _bSize, _inner;
         FuncPtr _func;
     };
 }

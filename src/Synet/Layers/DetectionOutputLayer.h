@@ -43,7 +43,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const DetectionOutputParam & param = this->Param().detectionOutput();
             _numClasses = param.numClasses();
@@ -58,11 +58,8 @@ namespace Synet
             _clip = param.clip();
             _nmsThreshold = param.nms().nmsThreshold();
             _topK = param.nms().topK();
-            _eta = param.nms().eta();
-        }
-
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
+            _eta = param.nms().eta();            
+            
             assert(src[0]->Shape() == src[1]->Shape());
             _bboxPreds.Reshape(src[0]->Shape());
             if (_shareLocation)

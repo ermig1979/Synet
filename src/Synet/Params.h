@@ -169,6 +169,7 @@ namespace Synet
     struct TensorParam
     {
         SYNET_PARAM_VALUE(TensorType, type, TensorTypeUnknown);
+        SYNET_PARAM_VALUE(TensorFormat, format, TensorFormatUnknown);
         SYNET_PARAM_VALUE(Shape, shape, Shape());
         SYNET_PARAM_VALUE(Ints, i32, Ints());
         SYNET_PARAM_VALUE(Floats, f32, Floats());
@@ -184,6 +185,7 @@ namespace Synet
     struct ShapeParam
     {
         SYNET_PARAM_VALUE(Shape, dim, Shape());
+        SYNET_PARAM_VALUE(TensorFormat, format, TensorFormatNchw);
     };
 
     struct CastParam

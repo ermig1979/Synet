@@ -42,16 +42,11 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const SliceParam & param = this->Param().slice();
             _sliceAxis = param.axis();            
             _slicePoint = param.slicePoint();
-        }
-
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            const SliceParam & param = this->Param().slice();
             Shape dstShape = src[0]->Shape();
             size_t srcSliceAxis = src[0]->Axis(_sliceAxis);
             _numSlices = src[0]->Size(0, _sliceAxis);

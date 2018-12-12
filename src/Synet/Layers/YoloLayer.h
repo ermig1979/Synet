@@ -43,7 +43,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const YoloParam & param = this->Param().yolo();
             _num = param.num();
@@ -54,11 +54,8 @@ namespace Synet
                 _anchors[i] = param.anchors()[i];
             _mask.resize(param.mask().size());
             for (size_t i = 0; i < param.mask().size(); ++i)
-                _mask[i] = param.mask()[i];
-        }
-
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
+                _mask[i] = param.mask()[i];            
+            
             Shape dstShape = src[0]->Shape();
             dstShape[1] = _num*(_classes + 4 + 1);
             dst[0]->Reshape(dstShape);

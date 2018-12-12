@@ -46,7 +46,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const PermuteParam & param = this->Param().permute();
             _permute = false;
@@ -62,10 +62,7 @@ namespace Synet
                 os += _order[i];
             }
             assert(is == os);
-        }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
             if (_permute)
             {
                 _srcShape = src[0]->Shape();

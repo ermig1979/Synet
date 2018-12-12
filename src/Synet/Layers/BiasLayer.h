@@ -43,18 +43,11 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            if (src.size() == 1) 
-            {
-                const BiasParam & param = this->Param().bias();
-                assert(src[0]->Count() >= param.axis() + param.numAxes());
-            }
-        }
-
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const BiasParam & param = this->Param().bias();
+            if (src.size() == 1)
+                assert(src[0]->Count() >= param.axis() + param.numAxes());
             Tensor & bias = (src.size() > 1) ? *src[1] : (Tensor &)this->Weight()[0];
             size_t axis = bias.Count() == 0 ? 0 : param.axis();
             assert(src[0]->Count() >= axis + bias.Count());

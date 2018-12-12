@@ -93,7 +93,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _type = this->Param().unaryOperation().type();
             switch (_type)
@@ -121,11 +121,8 @@ namespace Synet
                 break;
             default:
                 assert(0);
-            }
-        }
-
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
+            }            
+            
             dst[0]->Reshape(src[0]->Shape());
         }
 

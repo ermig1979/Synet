@@ -76,7 +76,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _normRegion = this->Param().lrn().normRegion();
             _size = this->Param().lrn().localSize();
@@ -86,13 +86,8 @@ namespace Synet
             _beta = this->Param().lrn().beta();
             _k = this->Param().lrn().k();
             if (_normRegion == NormRegionTypeWithinChannel)
-            {
                 assert(0);
-            }
-        }
-
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
+            
             assert(src[0]->Count() == 4);
             _num = src[0]->Axis(0);
             _channels = src[0]->Axis(1);

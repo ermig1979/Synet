@@ -42,13 +42,9 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            _negativeSlope = this->Param().relu().negativeSlope();
-        }
-
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            _negativeSlope = this->Param().relu().negativeSlope();
             dst[0]->Reshape(src[0]->Shape());
         }
 

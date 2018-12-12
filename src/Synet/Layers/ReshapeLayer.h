@@ -41,7 +41,7 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             assert(src[0] != dst[0]);
             const ReshapeParam & param = this->Param().reshape();
@@ -61,10 +61,7 @@ namespace Synet
                 else
                     _constantCount *= shape[i];
             }
-        }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
             if (src.size() == 2)
             {
                 assert(src[1]->Count() == 1 && src[1]->GetType() == TensorType32i);

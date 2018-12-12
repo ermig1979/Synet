@@ -66,42 +66,39 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _biasTerm = this->Param().innerProduct().biasTerm();
             _transposeA = this->Param().innerProduct().transposeA();
             _transposeB = this->Param().innerProduct().transposeB();
             _axis = this->Param().innerProduct().axis();
-            _K = src[0]->Size(_axis);
+            _Kdim = src[0]->Size(_axis);
             if (src.size() == 2)
             {
                 assert(_biasTerm == false);
-                assert(_K = src[1]->Size(0, _axis));
-                _N = src[1]->Axis(_axis);
+                assert(_Kdim = src[1]->Size(0, _axis));
+                _Ndim = src[1]->Axis(_axis);
             }
             else
             {
-                _N = this->Param().innerProduct().outputNum();
+                _Ndim = this->Param().innerProduct().outputNum();
                 const typename Base::Tensors & weight = this->Weight();
                 if (_biasTerm)
                     assert(weight.size() == 2);
                 else
                     assert(weight.size() == 1);
                 if (_transposeB)
-                    assert(weight[0].Shape() == Shape({ _K, _N }));
+                    assert(weight[0].Shape() == Shape({ _Kdim, _Ndim }));
                 else
-                    assert(weight[0].Shape() == Shape({ _N, _K }));
+                    assert(weight[0].Shape() == Shape({ _Ndim, _Kdim }));
                 if (_biasTerm)
-                    assert(weight[1].Shape() == Shape({ _N }));
+                    assert(weight[1].Shape() == Shape({ _Ndim }));
             }
-        }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            _M = src[0]->Size(0, _axis);
+            _Mdim = src[0]->Size(0, _axis);
             Shape dstShape = src[0]->Shape();
             dstShape.resize(_axis + 1);
-            dstShape[_axis] = _N;
+            dstShape[_axis] = _Ndim;
             dst[0]->Reshape(dstShape);
         }
 
@@ -116,20 +113,20 @@ namespace Synet
         {
 #ifdef SYNET_SIZE_STATISTIC
             std::stringstream ss;
-            ss << " M=" << _M << " N=" << _N << " K=" << _K;
+            ss << " M=" << _Mdim << " N=" << _Ndim << " K=" << _Kdim;
             SYNET_PERF_BLOCK(ss.str().c_str());
 #else
             SYNET_PERF_FUNC();
 #endif
-            if (_M == 1 && !_transposeB)
+            if (_Mdim == 1 && !_transposeB)
             {
-                Detail::InnerProductLayerForwardCpu(a, b, _biasTerm ? this->Weight()[1].CpuData() : NULL, _N, _K, c);
+                Detail::InnerProductLayerForwardCpu(a, b, _biasTerm ? this->Weight()[1].CpuData() : NULL, _Ndim, _Kdim, c);
             }
             else
             {
-                CpuGemm<Type>(_transposeA ? CblasNoTrans : CblasTrans, _transposeB ? CblasNoTrans : CblasTrans, _M, _N, _K, Type(1), a, b, Type(0), c);
+                CpuGemm<Type>(_transposeA ? CblasNoTrans : CblasTrans, _transposeB ? CblasNoTrans : CblasTrans, _Mdim, _Ndim, _Kdim, Type(1), a, _Kdim, b, _Ndim, Type(0), c, _Ndim);
                 if (_biasTerm)
-                    CpuAddBias(this->Weight()[1].CpuData(), _N, _M, c);
+                    CpuAddBias(this->Weight()[1].CpuData(), _Ndim, _Mdim, c);
             }
         }
 
@@ -137,7 +134,7 @@ namespace Synet
     private:
         typedef typename Base::Tensor Tensor;
 
-        size_t _M, _K, _N, _axis;
+        size_t _Mdim, _Kdim, _Ndim, _axis;
         bool _biasTerm, _transposeA, _transposeB;
     };
 }

@@ -30,20 +30,20 @@ namespace Synet
 {
     namespace Detail
     {
-        template<class T> void CpuGemmNN(size_t M, size_t N, size_t K, T alpha, const T * A, const T * B, T * C)
+        template<class T> void CpuGemmNN(size_t M, size_t N, size_t K, T alpha, const T * A, size_t lda, const T * B, size_t ldb, T * C, size_t ldc)
         {
             for (size_t i = 0; i < M; ++i)
             {
                 for (size_t k = 0; k < K; ++k)
                 {
-                    register T a = alpha * A[i*K + k];
+                    register T a = alpha * A[i*lda + k];
                     for (size_t j = 0; j < N; ++j)
-                        C[i*N + j] += a * B[k*N + j];
+                        C[i*ldc + j] += a * B[k*ldb + j];
                 }
             }
         }
 
-        template<class T> void CpuGemmNT(size_t M, size_t N, size_t K, T alpha, const T * A, const T * B, T * C)
+        template<class T> void CpuGemmNT(size_t M, size_t N, size_t K, T alpha, const T * A, size_t lda, const T * B, size_t ldb, T * C, size_t ldc)
         {
             for (size_t i = 0; i < M; ++i)
             {
@@ -51,26 +51,26 @@ namespace Synet
                 {
                     register T sum = 0;
                     for (size_t k = 0; k < K; ++k)
-                        sum += alpha * A[i*K + k] * B[j*K + k];
-                    C[i*N + j] += sum;
+                        sum += alpha * A[i*lda + k] * B[j*ldb + k];
+                    C[i*ldc + j] += sum;
                 }
             }
         }
 
-        template<class T> void CpuGemmTN(size_t M, size_t N, size_t K, float alpha, const T * A, const T * B, T * C)
+        template<class T> void CpuGemmTN(size_t M, size_t N, size_t K, T alpha, const T * A, size_t lda, const T * B, size_t ldb, T * C, size_t ldc)
         {
             for (size_t i = 0; i < M; ++i)
             {
                 for (size_t k = 0; k < K; ++k)
                 {
-                    register T a = alpha * A[k*M + i];
+                    register T a = alpha * A[k*lda + i];
                     for (size_t j = 0; j < N; ++j)
-                        C[i*N + j] += a * B[k*N + j];
+                        C[i*ldc + j] += a * B[k*ldb + j];
                 }
             }
         }
 
-        template<class T> void CpuGemmTT(size_t M, size_t N, size_t K, T alpha, const T * A, const T * B, T * C)
+        template<class T> void CpuGemmTT(size_t M, size_t N, size_t K, T alpha, const T * A, size_t lda, const T * B, size_t ldb, T * C, size_t ldc)
         {
             for (size_t i = 0; i < M; ++i)
             {
@@ -78,8 +78,8 @@ namespace Synet
                 {
                     register T sum = 0;
                     for (size_t k = 0; k < K; ++k)
-                        sum += alpha * A[i + k * M] * B[k + j * K];
-                    C[i*N + j] += sum;
+                        sum += alpha * A[i + k * lda] * B[k + j * ldb];
+                    C[i*ldc + j] += sum;
                 }
             }
         }
@@ -115,20 +115,20 @@ namespace Synet
     };
 
     template <typename T> void CpuGemm(CblasTranspose transA, CblasTranspose transB,
-        size_t M, size_t N, size_t K, T alpha, const T * A, const T * B, T beta, T * C)
+        size_t M, size_t N, size_t K, T alpha, const T * A, size_t lda, const T * B, size_t ldb, T beta, T * C, size_t ldc)
     {
         for (size_t i = 0; i < M; ++i)
             for (size_t j = 0; j < N; ++j)
-                C[i*N + j] *= beta;
+                C[i*ldc + j] *= beta;
 
         if (transA == CblasNoTrans && transB == CblasNoTrans)
-            Detail::CpuGemmNN(M, N, K, alpha, A, B, C);
+            Detail::CpuGemmNN(M, N, K, alpha, A, lda, B, ldb, C, ldc);
         if (transA == CblasTrans && transB == CblasNoTrans)
-            Detail::CpuGemmTN(M, N, K, alpha, A, B, C);
+            Detail::CpuGemmTN(M, N, K, alpha, A, lda, B, ldb, C, ldc);
         if (transA == CblasNoTrans && transB == CblasTrans)
-            Detail::CpuGemmNT(M, N, K, alpha, A, B, C);
+            Detail::CpuGemmNT(M, N, K, alpha, A, lda, B, ldb, C, ldc);
         if (transA == CblasTrans && transB == CblasTrans)
-            Detail::CpuGemmTT(M, N, K, alpha, A, B, C);
+            Detail::CpuGemmTT(M, N, K, alpha, A, lda, B, ldb, C, ldc);
     }
 
     template <typename T> void CpuGemv(CblasTranspose transA, size_t M, size_t N, T alpha, const T * A, const T * x, T beta, T * y)
@@ -143,20 +143,20 @@ namespace Synet
     }
 
 #if defined(SYNET_GEMM_COMPARE) && defined(SYNET_SIMD_LIBRARY_ENABLE) && defined(SYNET_OPEN_BLAS_ENABLE)
-    SYNET_INLINE void CpuGemmNN(int M, int N, int K, const float * A, const float * B, float * C)
+    SYNET_INLINE void CpuGemmNN(int M, int N, int K, const float * A, size_t lda, const float * B, size_t ldb, float * C, size_t ldc)
     {
         const float alpha = 1.0f, beta = 0.0f;
         {
             std::stringstream ss;
             ss << M << "-" << N << "-" << K << " blas";
             SYNET_PERF_BLOCK(ss.str().c_str());
-            ::cblas_sgemm(::CblasRowMajor, ::CblasNoTrans, ::CblasNoTrans, M, N, K, alpha, A, K, B, N, beta, C, N);
+            ::cblas_sgemm(::CblasRowMajor, ::CblasNoTrans, ::CblasNoTrans, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
         }
         {
             std::stringstream ss;
             ss << M << "-" << N << "-" << K << " simd";
             SYNET_PERF_BLOCK(ss.str().c_str());
-            ::SimdGemm32fNN(M, N, K, &alpha, A, K, B, N, &beta, C, N);
+            ::SimdGemm32fNN(M, N, K, &alpha, A, lda, B, ldb, &beta, C, ldc);
         }
     }
 
@@ -168,52 +168,48 @@ namespace Synet
     }
 #elif defined(SYNET_GEMM_DYNAMIC) && defined(SYNET_SIMD_LIBRARY_ENABLE) && defined(SYNET_OPEN_BLAS_ENABLE)
     template <> SYNET_INLINE void CpuGemm<float>(CblasTranspose transA, CblasTranspose transB,
-        size_t M, size_t N, size_t K, float alpha, const float * A, const float * B, float beta, float * C)
+        size_t M, size_t N, size_t K, float alpha, const float * A, size_t lda, const float * B, size_t ldb, float beta, float * C, size_t ldc)
     {
         SYNET_PERF_FUNC();
 
         size_t threadNumber = GetThreadNumber();
         if (transA == CblasNoTrans && transB == CblasNoTrans && (threadNumber == 1 || N * M * K > threadNumber * 4 * 256 * 256 * 256))
         {
-            ::SimdGemm32fNN(M, N, K, &alpha, A, K, B, N, &beta, C, N);
+            ::SimdGemm32fNN(M, N, K, &alpha, A, lda, B, ldb, &beta, C, ldc);
         }
         else
         {
-            size_t lda = (transA == CblasNoTrans) ? K : M;
-            size_t ldb = (transB == CblasNoTrans) ? N : K;
             ::cblas_sgemm(::CblasRowMajor, (::CBLAS_TRANSPOSE)transA, (::CBLAS_TRANSPOSE)transB,
-                (int)M, (int)N, (int)K, alpha, A, (int)lda, B, (int)ldb, beta, C, (int)N);
+                (int)M, (int)N, (int)K, alpha, A, (int)lda, B, (int)ldb, beta, C, (int)ldc);
         }
     }
 #elif defined(SYNET_GEMM_SIMD_LIBRARY) && defined(SYNET_SIMD_LIBRARY_ENABLE)
     template <> SYNET_INLINE void CpuGemm<float>(CblasTranspose transA, CblasTranspose transB,
-        size_t M, size_t N, size_t K, float alpha, const float * A, const float * B, float beta, float * C)
+        size_t M, size_t N, size_t K, float alpha, const float * A, size_t lda, const float * B, size_t ldb, float beta, float * C, size_t ldc)
     {
         if (transA == CblasNoTrans && transB == CblasNoTrans)
         {
-            ::SimdGemm32fNN(M, N, K, &alpha, A, K, B, N, &beta, C, N);
+            ::SimdGemm32fNN(M, N, K, &alpha, A, lda, B, ldb, &beta, C, ldc);
         }
         else
         {
             for (size_t i = 0; i < M; ++i)
                 for (size_t j = 0; j < N; ++j)
-                    C[i*N + j] *= beta;
+                    C[i*ldc + j] *= beta;
             if (transA == CblasTrans && transB == CblasNoTrans)
-                Detail::CpuGemmTN(M, N, K, alpha, A, B, C);
+                Detail::CpuGemmTN(M, N, K, alpha, A, lda, B, ldb, C, ldc);
             if (transA == CblasNoTrans && transB == CblasTrans)
-                Detail::CpuGemmNT(M, N, K, alpha, A, B, C);
+                Detail::CpuGemmNT(M, N, K, alpha, A, lda, B, ldb, C, ldc);
             if (transA == CblasTrans && transB == CblasTrans)
-                Detail::CpuGemmTT(M, N, K, alpha, A, B, C);        
+                Detail::CpuGemmTT(M, N, K, alpha, A, lda, B, ldb, C, ldc);
         }
     }
 #elif defined(SYNET_OPEN_BLAS_ENABLE)
     template <> SYNET_INLINE void CpuGemm<float>(CblasTranspose transA, CblasTranspose transB,
-        size_t M, size_t N, size_t K, float alpha, const float * A, const float * B, float beta, float * C)
+        size_t M, size_t N, size_t K, float alpha, const float * A, size_t lda, const float * B, size_t ldb, float beta, float * C, size_t ldc)
     {
-        size_t lda = (transA == CblasNoTrans) ? K : M;
-        size_t ldb = (transB == CblasNoTrans) ? N : K;
         ::cblas_sgemm(::CblasRowMajor, (::CBLAS_TRANSPOSE)transA, (::CBLAS_TRANSPOSE)transB,
-            (int)M, (int)N, (int)K, alpha, A, (int)lda, B, (int)ldb, beta, C, (int)N);
+            (int)M, (int)N, (int)K, alpha, A, (int)lda, B, (int)ldb, beta, C, (int)ldc);
     }
 #endif
 

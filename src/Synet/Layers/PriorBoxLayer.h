@@ -41,14 +41,14 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const PriorBoxParam & param = this->Param().priorBox();
             _minSizes = param.minSize();
             _flip = param.flip();
             _aspectRatios.clear();
             _aspectRatios.push_back(1.0f);
-            for (int i = 0; i < param.aspectRatio().size(); ++i) 
+            for (int i = 0; i < param.aspectRatio().size(); ++i)
             {
                 float aspectRatio = param.aspectRatio()[i];
                 bool alreadyExist = false;
@@ -60,7 +60,7 @@ namespace Synet
                         break;
                     }
                 }
-                if (!alreadyExist) 
+                if (!alreadyExist)
                 {
                     _aspectRatios.push_back(aspectRatio);
                     if (_flip)
@@ -68,7 +68,7 @@ namespace Synet
                 }
             }
             _numPriors = _aspectRatios.size() * _minSizes.size();
-            if (param.maxSize().size() > 0) 
+            if (param.maxSize().size() > 0)
             {
                 assert(param.minSize().size() == param.maxSize().size());
                 _maxSizes = param.maxSize();
@@ -82,19 +82,19 @@ namespace Synet
             }
             else if (param.variance().size() == 1)
                 _variance.push_back(param.variance()[0]);
-            else 
+            else
                 _variance.push_back(0.1f);
-            if (param.imgSize().size() == 2) 
+            if (param.imgSize().size() == 2)
             {
                 _imgH = param.imgSize()[0];
                 _imgW = param.imgSize()[1];
             }
-            else if (param.imgSize().size() == 1) 
+            else if (param.imgSize().size() == 1)
             {
                 _imgH = param.imgSize()[0];
                 _imgW = param.imgSize()[0];
             }
-            else 
+            else
             {
                 _imgH = 0;
                 _imgW = 0;
@@ -115,10 +115,7 @@ namespace Synet
                 _stepW = 0;
             }
             _offset = param.offset();
-        }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
             size_t layerW = src[0]->Axis(3);
             size_t layerH = src[0]->Axis(2);
             Shape shape(3);

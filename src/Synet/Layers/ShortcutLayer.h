@@ -42,14 +42,11 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _coeff[0] = 1.0f;
             _coeff[1] = 1.0f;
-        }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
             assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape());
             dst[0]->Reshape(src[0]->Shape());
             _src[0] = src[0]->CpuData();

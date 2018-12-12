@@ -40,8 +40,9 @@ namespace Synet
         {
         }
 
-        void Init(size_t srcC, size_t srcH, size_t srcW, size_t dstC, size_t kernelY, size_t kernelX, size_t dilationY, size_t dilationX,
-            size_t strideY, size_t strideX, size_t padY, size_t padX, size_t padH, size_t padW, size_t group)
+        void Init(size_t srcC, size_t srcH, size_t srcW, int srcT, size_t dstC, int dstT,
+            size_t kernelY, size_t kernelX, size_t dilationY, size_t dilationX, size_t strideY, size_t strideX, 
+            size_t padY, size_t padX, size_t padH, size_t padW, size_t group, ActivationFunctionType activation)
         {
         }
 
@@ -55,11 +56,7 @@ namespace Synet
             return 1;
         }
 
-        void SetWeight(const T * weight, const T * bias, int * internal)
-        {
-        }
-
-        void SetActivation(ActivationFunctionType type, const T * params)
+        void SetParams(const T * weight, int trans, int * internal, const T * bias, const T * params)
         {
         }
 
@@ -78,10 +75,12 @@ namespace Synet
             ::SimdRelease(_convolution);
     }
 
-    template<> SYNET_INLINE void Convolution<float>::Init(size_t srcC, size_t srcH, size_t srcW, size_t dstC, size_t kernelY, size_t kernelX, size_t dilationY, size_t dilationX,
-        size_t strideY, size_t strideX, size_t padY, size_t padX, size_t padH, size_t padW, size_t group)
+    template<> SYNET_INLINE void Convolution<float>::Init(size_t srcC, size_t srcH, size_t srcW, int srcT, size_t dstC, int dstT,
+        size_t kernelY, size_t kernelX, size_t dilationY, size_t dilationX, size_t strideY, size_t strideX,
+        size_t padY, size_t padX, size_t padH, size_t padW, size_t group, ActivationFunctionType activation)
     {
-        _convolution = ::SimdConvolutionInit(srcC, srcH, srcW, dstC, kernelY, kernelX, dilationY, dilationX, strideY, strideX, padY, padX, padH, padW, group);
+        _convolution = ::SimdConvolutionInit(srcC, srcH, srcW, (::SimdBool)srcT, dstC, (::SimdBool)dstT, kernelY, kernelX,
+            dilationY, dilationX, strideY, strideX, padY, padX, padH, padW, group, (::SimdConvolutionActivationType)activation);
     }
 
     template<> SYNET_INLINE size_t Convolution<float>::BufferSize()
@@ -89,14 +88,9 @@ namespace Synet
         return ::SimdConvolutionBufferSize(_convolution);
     }
 
-    template<> SYNET_INLINE void Convolution<float>::SetWeight(const float * weight, const float * bias, int * internal)
+    template<> SYNET_INLINE void Convolution<float>::SetParams(const float * weight, int trans, int * internal, const float * bias, const float * params)
     {
-        ::SimdConvolutionSetWeight(_convolution, weight, bias, (SimdBool*)internal);
-    }
-
-    template<> SYNET_INLINE void Convolution<float>::SetActivation(ActivationFunctionType type, const float * params)
-    {
-        ::SimdConvolutionSetActivation(_convolution, (::SimdConvolutionActivationType)type, params);
+        ::SimdConvolutionSetParams(_convolution, weight, (::SimdBool)trans, (::SimdBool*)internal, bias, params);
     }
 
     template<> SYNET_INLINE void Convolution<float>::Forward(const float * src, float * buf, float * dst)

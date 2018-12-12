@@ -28,45 +28,45 @@
 
 namespace Synet
 {
-    template <typename T> void ImgToCol(const T * src, size_t channels, size_t srcY, size_t srcX, size_t kernelY, size_t kernelX,
+    template <typename T> void ImgToCol(const T * src, size_t srcC, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
         size_t padY, size_t padX, size_t padH, size_t padW, size_t strideY, size_t strideX, size_t dilationY, size_t dilationX, T * dst)
     {
         SYNET_PERF_FUNC();
 
-        size_t dstY = (srcY + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
-        size_t dstX = (srcX + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
-        size_t channelSize = srcX * srcY;
+        size_t dstH = (srcH + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
+        size_t dstW = (srcW + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
+        size_t srcSize = srcW * srcH;
         if (dilationX == 1 && dilationY == 1 && strideX == 2 && strideY == 2 && padX == 0 && padY == 0 && padW == 0 && padH == 0 && kernelX == 1 && kernelY == 1)
         {
-            for (size_t channel = 0; channel < channels; ++channel)
+            for (size_t channel = 0; channel < srcC; ++channel)
             {
-                for (size_t dy = 0; dy < dstY; ++dy)
+                for (size_t dy = 0; dy < dstH; ++dy)
                 {
-                    const T * psrc = src + 2*dy*srcX;
-                    for (size_t dx = 0, sx = 0; dx < dstX; ++dx, sx += 2)
+                    const T * psrc = src + 2*dy*srcW;
+                    for (size_t dx = 0, sx = 0; dx < dstW; ++dx, sx += 2)
                         *(dst++) = psrc[sx];
                 }
-                src += channelSize;
+                src += srcSize;
             }
         }
         else if (dilationX*dilationY*strideX*strideY != 1)
         {
-            for (size_t channel = 0; channel < channels; ++channel)
+            for (size_t channel = 0; channel < srcC; ++channel)
             {
                 for (size_t ky = 0; ky < kernelY; ky++)
                 {
                     for (size_t kx = 0; kx < kernelX; kx++)
                     {
                         size_t sy = ky * dilationY - padY;
-                        for (size_t dy = 0; dy < dstY; ++dy)
+                        for (size_t dy = 0; dy < dstH; ++dy)
                         {
-                            if (sy < srcY)
+                            if (sy < srcH)
                             {
                                 size_t sx = kx * dilationX - padX;
-                                for (size_t dx = 0; dx < dstX; ++dx)
+                                for (size_t dx = 0; dx < dstW; ++dx)
                                 {
-                                    if (sx < srcX)
-                                        *(dst++) = src[sy * srcX + sx];
+                                    if (sx < srcW)
+                                        *(dst++) = src[sy * srcW + sx];
                                     else
                                         *(dst++) = 0;
                                     sx += strideX;
@@ -74,35 +74,35 @@ namespace Synet
                             }
                             else
                             {
-                                for (size_t dx = 0; dx < dstX; ++dx)
+                                for (size_t dx = 0; dx < dstW; ++dx)
                                     *(dst++) = 0;
                             }
                             sy += strideY;
                         }
                     }
                 }
-                src += channelSize;
+                src += srcSize;
             }        
         }
         else
         {
-            const ptrdiff_t bodySize = dstX - padX - padW;
-            for (size_t channel = 0; channel < channels; ++channel)
+            const ptrdiff_t bodySize = dstW - padX - padW;
+            for (size_t channel = 0; channel < srcC; ++channel)
             {
                 for (size_t ky = 0; ky < kernelY; ++ky)
                 {
                     for (size_t kx = 0; kx < kernelX; ++kx)
                     {
                         size_t sy = ky - padY;
-                        for (size_t dy = 0; dy < dstY; ++dy, ++sy)
+                        for (size_t dy = 0; dy < dstH; ++dy, ++sy)
                         {
-                            if (sy < srcY)
+                            if (sy < srcH)
                             {
                                 size_t sx = kx - padX, dx = 0;
-                                const T * psrc = src + sy*srcX;
+                                const T * psrc = src + sy*srcW;
                                 for (; dx < padX; ++dx, ++sx)
                                 {
-                                    if (sx < srcX)
+                                    if (sx < srcW)
                                         *(dst++) = psrc[sx];
                                     else
                                         *(dst++) = 0;
@@ -114,9 +114,9 @@ namespace Synet
                                     dx += bodySize;
                                     sx += bodySize;
                                 }
-                                for (; dx < dstX; ++dx, ++sx)
+                                for (; dx < dstW; ++dx, ++sx)
                                 {
-                                    if (sx < srcX)
+                                    if (sx < srcW)
                                         *(dst++) = psrc[sx];
                                     else
                                         *(dst++) = 0;
@@ -124,13 +124,56 @@ namespace Synet
                             }
                             else
                             {
-                                memset(dst, 0, dstX * sizeof(T));
-                                dst += dstX;
+                                memset(dst, 0, dstW * sizeof(T));
+                                dst += dstW;
                             }
                         }
                     }
                 }
-                src += channelSize;
+                src += srcSize;
+            }
+        }
+    }
+
+    template <typename T> void ImgToRow(const T * src, size_t srcH, size_t srcW, size_t srcC, size_t kernelY, size_t kernelX,
+        size_t padY, size_t padX, size_t padH, size_t padW, size_t strideY, size_t strideX, size_t dilationY, size_t dilationX, T * dst)
+    {
+        SYNET_PERF_FUNC();
+
+        size_t dstH = (srcH + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
+        size_t dstW = (srcW + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
+        for (size_t ky = 0; ky < kernelY; ky++)
+        {
+            for (size_t kx = 0; kx < kernelX; kx++)
+            {
+                size_t sy = ky * dilationY - padY;
+                for (size_t dy = 0; dy < dstH; ++dy)
+                {
+                    if (sy < srcH)
+                    {
+                        size_t sx = kx * dilationX - padX;
+                        for (size_t dx = 0; dx < dstW; ++dx)
+                        {
+                            if (sx < srcW)
+                            {
+                                memcpy(dst, src + (sy * srcW + sx)*srcC, srcC * sizeof(float));
+                                dst += srcC;
+                            }
+                            else
+                            {
+                                memset(dst, 0, srcC * sizeof(float));
+                                dst += srcC;
+                            }
+                            sx += strideX;
+                        }
+                    }
+                    else
+                    {
+                        memset(dst, 0, dstW*srcC * sizeof(float));
+                        dst += dstW*srcC;
+                    }
+                    sy += strideY;
+                }
             }
         }
     }

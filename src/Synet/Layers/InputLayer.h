@@ -43,17 +43,13 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-        }
-
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
             const InputParam & input = this->Param().input();
             size_t size = input.shape().size();
             assert(size == 0 || size == 1 || size == dst.size());
             if (size > 0)
             {
                 for (size_t i = 0; i < dst.size(); ++i)
-                    dst[i]->Reshape(size == 1 ? input.shape()[0].dim() : input.shape()[i].dim());
+                    dst[i]->Reshape(size == 1 ? input.shape()[0].dim() : input.shape()[i].dim(), Type(), input.shape()[i].format());
             }
         }
 

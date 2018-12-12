@@ -45,7 +45,7 @@
 #pragma GCC diagnostic pop
 #endif
 
-//#define SYNET_TENSORFLOW_DEBUG
+#define SYNET_TENSORFLOW_DEBUG
 //#define SYNET_TENSORFLOW_DYNAMIC
 
 namespace Synet
@@ -69,7 +69,7 @@ namespace Synet
 
         SYNET_PARAM_HOLDER(ConvertParamHolder, ConvertParam, convert);
 
-        bool Convert(const String & srcParamPath, const String & srcGraphPath, const String & dstModelPath, const String & dstWeightPath)
+        bool Convert(const String & srcParamPath, const String & srcGraphPath, bool trans, const String & dstModelPath, const String & dstWeightPath)
         {
             if (!Synet::FileExist(srcParamPath))
             {
@@ -99,6 +99,8 @@ namespace Synet
                     return false;
                 }
             }
+
+            _trans = trans;
 
             Synet::NetworkParamHolder holder;
             Tensors weight;
@@ -143,6 +145,7 @@ namespace Synet
 
         ConvertParamHolder _param;
         tensorflow::GraphDef _graph;
+        bool _trans;
         NameIndexMap _valueId;
         NameSet _ignore, _meta, _fMeta;
 
@@ -453,6 +456,14 @@ namespace Synet
                 layer.weight()[1].dim() = weight.back().Shape();
                 _ignore.insert(nextLayers[0].first);
                 ExcludeLayer(nextLayers[0].second, 0, false);
+                for (size_t j = 0; j < _param().output().size(); ++j)
+                {
+                    if (_param().output()[j] == nextLayers[0].first)
+                    {
+                        layer.name() = nextLayers[0].first;
+                        break;
+                    }
+                }
             }
 
             layer.convolution().kernel() = Shape({ layer.weight()[0].dim()[2], layer.weight()[0].dim()[3] });
@@ -616,8 +627,9 @@ namespace Synet
                 dst.resize(src.dim_size());
                 for (int d = 0; d < src.dim_size(); d++)
                     dst[d] = src.dim(d).size();
-                if (dst.size() == 4)
+                if (_trans && dst.size() == 4)
                     dst = Shape({ size_t(1), dst[3], dst[1], dst[2] });
+                layer.input().shape()[0].format() = _trans ? TensorFormatNchw : TensorFormatNhwc;
             }
             return true;
         }
@@ -969,6 +981,8 @@ namespace Synet
                     axis[0] = 1;
                 if (axis[0] == 1)
                     axis[0] = 0;
+                if (axis[0] == 3)
+                    axis[0] = 1;
             }
             layer.reduction().axis() = axis;
             network.layers().erase(network.layers().begin() + index);
@@ -1496,7 +1510,6 @@ namespace Synet
                     tensors.push_back(std::make_shared<Tensor>(shape));
                     src.push_back(tensors.back().get());
                 }
-                layer->Setup(src, buf, dst);
                 layer->Reshape(src, buf, dst);
                 _shape[param.name()].push_back(dst[0]->Shape());            
             }
@@ -1702,10 +1715,10 @@ namespace Synet
         }
     };
 
-    bool ConvertTensorflowToSynet(const String & srcParam, const String & srcGraph, const String & dstXml, const String & dstBin)
+    bool ConvertTensorflowToSynet(const String & srcParam, const String & srcGraph, bool trans, const String & dstXml, const String & dstBin)
     {
         TensorflowToSynet tensorflowToSynet;
-        return tensorflowToSynet.Convert(srcParam, srcGraph, dstXml, dstBin);
+        return tensorflowToSynet.Convert(srcParam, srcGraph, trans, dstXml, dstBin);
     }
 }
 

@@ -72,15 +72,11 @@ namespace Synet
         {
         }
 
-        virtual void Setup(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const ReorgParam & param = this->Param().reorg();
             _reverse = param.reverse();
             _stride = param.stride();
-        }
-
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
             Shape shape = src[0]->Shape();
             assert(shape.size() == 4);
             if (_reverse) 
