@@ -142,7 +142,7 @@ namespace Synet
             return _back;
         }
 
-        bool Reshape(const Strings & srcNames = Strings(), const Shapes & srcShapes = Shapes(), const Strings & dstNames = Strings(), TensorFormat format = TensorFormatNchw)
+        bool Reshape(const Strings & srcNames = Strings(), const Shapes & srcShapes = Shapes(), const Strings & dstNames = Strings())
         {
             if (srcNames.size() != srcShapes.size())
                 return false;
@@ -163,7 +163,7 @@ namespace Synet
                         {
                             if (param.type() == LayerTypeInput)
                             {
-                                _input[j].dst[0]->Reshape(srcShapes[i], Type(0), format);
+                                _input[j].dst[0]->Reshape(srcShapes[i], Type(0), param.input().shape()[0].format());
                                 _src.push_back(_input[j].dst[0]);
                             }
                             else if (param.type() == LayerTypeMeta && (param.meta().type() == MetaTypeInput || param.meta().type() == MetaTypeInputWithDefault))
@@ -228,6 +228,18 @@ namespace Synet
                 }
             }
             return false;
+        }
+
+        TensorFormat Format() const
+        {
+            for (size_t i = 0; i < _input.size(); ++i)
+            {
+                const LayerParam & param = _input[i].layer->Param();
+                if (param.type() == LayerTypeInput && param.input().shape().size())
+                    return param.input().shape()[0].format();
+            }
+            assert(0);
+            return TensorFormatUnknown;
         }
 
         void Forward()

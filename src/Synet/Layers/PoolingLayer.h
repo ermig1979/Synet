@@ -32,6 +32,63 @@ namespace Synet
 {
     namespace Detail
     {
+        template <class T> void PoolingForwardMaxCpu(const T * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
+            size_t strideY, size_t strideX, size_t padY, size_t padX, T * dst, size_t dstH, size_t dstW, int trans)
+        {
+            if (trans)
+            {
+                for (size_t ph = 0; ph < dstH; ++ph)
+                {
+                    size_t hStart = ph * strideY - padY;
+                    size_t hEnd = std::min(hStart + kernelY, srcH);
+                    hStart = std::max<ptrdiff_t>(0, hStart);
+                    for (size_t pw = 0; pw < dstW; ++pw)
+                    {
+                        size_t wStart = pw * strideX - padX;
+                        size_t wEnd = std::min(wStart + kernelX, srcW);
+                        wStart = std::max<ptrdiff_t>(0, wStart);
+                        for (size_t c = 0; c < channels; ++c)
+                            dst[c] = T(-FLT_MAX);
+                        for (size_t h = hStart; h < hEnd; ++h)
+                        {
+                            for (size_t w = wStart; w < wEnd; ++w)
+                            {
+                                const T * pc = src + (h * srcW + w)*channels;
+                                for (size_t c = 0; c < channels; ++c)
+                                    dst[c] = std::max(dst[c], pc[c]);
+                            }
+                        }
+                        dst += channels;
+                    }
+                }
+            }
+            else
+            {
+                for (size_t c = 0; c < channels; ++c)
+                {
+                    for (size_t ph = 0; ph < dstH; ++ph)
+                    {
+                        size_t hStart = ph * strideY - padY;
+                        size_t hEnd = std::min(hStart + kernelY, srcH);
+                        hStart = std::max<ptrdiff_t>(0, hStart);
+                        for (size_t pw = 0; pw < dstW; ++pw)
+                        {
+                            size_t wStart = pw * strideX - padX;
+                            size_t wEnd = std::min(wStart + kernelX, srcW);
+                            wStart = std::max<ptrdiff_t>(0, wStart);
+                            T max = T(-FLT_MAX);
+                            for (size_t h = hStart; h < hEnd; ++h)
+                                for (size_t w = wStart; w < wEnd; ++w)
+                                    max = std::max(max, src[h * srcW + w]);
+                            dst[ph*dstW + pw] = max;
+                        }
+                    }
+                    src += srcW * srcH;
+                    dst += dstW * dstH;
+                }            
+            }
+        }
+
         template <class T> void PoolingForwardMaxCpu(const T * src, size_t srcStride, size_t srcX, size_t srcY, size_t kernelY, size_t kernelX, 
             size_t padY, size_t padX, size_t strideY, size_t strideX, T * dst, size_t dstX, size_t dstY)
         {
@@ -112,14 +169,18 @@ namespace Synet
             _method = param.method();
             _yoloCompatible = param.yoloCompatible();
             assert(src[0]->Count() == 4);
-            _channels = src[0]->Axis(1);
-            _srcY = src[0]->Axis(2);
-            _srcX = src[0]->Axis(3);
+
+            _trans = src[0]->Format() == TensorFormatNhwc;
+
+            _num = src[0]->Axis(0);
+            _channels = _trans ? src[0]->Axis(3) : src[0]->Axis(1);
+            _srcH = _trans ? src[0]->Axis(1) : src[0]->Axis(2);
+            _srcW = _trans ? src[0]->Axis(2) : src[0]->Axis(3);
 
             if (param.globalPooling())
             {
-                _kernelY = src[0]->Axis(2);
-                _kernelX = src[0]->Axis(3);
+                _kernelY = _srcH;
+                _kernelX = _srcW;
             }
             else
             {
@@ -150,8 +211,8 @@ namespace Synet
                 {
                     if (_kernelX == 3 && _kernelY == 3)
                     {
-                        _padY = _srcY%_strideY;
-                        _padX = _srcX%_strideX;
+                        _padY = _srcH%_strideY;
+                        _padX = _srcW%_strideX;
                         _padH = 1;
                         _padW = 1;
                     }
@@ -159,8 +220,8 @@ namespace Synet
                     {
                         _padY = 0;
                         _padX = 0;
-                        _padH = _srcY%_strideY;
-                        _padW = _srcX%_strideX;
+                        _padH = _srcH%_strideY;
+                        _padW = _srcW%_strideX;
                     }
                     else
                         assert(0);
@@ -202,30 +263,33 @@ namespace Synet
 
             if (_yoloCompatible == 2)
             {
-                _dstX = (_srcX + _padW - _kernelX) / _strideX + 1;
-                _dstY = (_srcY + _padH - _kernelY) / _strideY + 1;
+                _dstH = (_srcH + _padH - _kernelY) / _strideY + 1;
+                _dstW = (_srcW + _padW - _kernelX) / _strideX + 1;
             }
             else if (_yoloCompatible == 1)
             {
-                _dstX = (_srcX + _padX + _padW) / _strideX;
-                _dstY = (_srcY + _padY + _padH) / _strideY;
+                _dstH = (_srcH + _padY + _padH) / _strideY;
+                _dstW = (_srcW + _padX + _padW) / _strideX;
             }
             else
             {
-                _dstX = (size_t)(::ceil((float)(_srcX + _padX + _padW - _kernelX) / _strideX)) + 1;
-                _dstY = (size_t)(::ceil((float)(_srcY + _padY + _padH - _kernelY) / _strideY)) + 1;
+                _dstH = (size_t)(::ceil((float)(_srcH + _padY + _padH - _kernelY) / _strideY)) + 1;
+                _dstW = (size_t)(::ceil((float)(_srcW + _padX + _padW - _kernelX) / _strideX)) + 1;
                 if (_padX || _padY)
                 {
-                    if ((_dstX - 1) * _strideX >= _srcX + _padX)
-                        --_dstX;
-                    if ((_dstY - 1) * _strideY >= _srcY + _padY)
-                        --_dstY;
-                    assert((_dstX - 1) * _strideX < _srcX + _padX);
-                    assert((_dstY - 1) * _strideY < _srcY + _padY);
+                    if ((_dstH - 1) * _strideY >= _srcH + _padY)
+                        --_dstH;
+                    if ((_dstW - 1) * _strideX >= _srcW + _padX)
+                        --_dstW;
+                    assert((_dstH - 1) * _strideY < _srcH + _padY);
+                    assert((_dstW - 1) * _strideX < _srcW + _padX);
                 }
             }
 
-            dst[0]->Reshape(Shape({ src[0]->Axis(0), _channels, _dstY, _dstX }));
+            if(_trans)
+                dst[0]->Reshape(Shape({ _num, _dstH, _dstW , _channels}), Type(), TensorFormatNhwc);
+            else
+                dst[0]->Reshape(Shape({ _num, _channels, _dstH, _dstW }), Type(), TensorFormatNchw);
         }
 
     protected:
@@ -235,54 +299,62 @@ namespace Synet
 
             const Type * pSrc = src[0]->CpuData();
             Type * pDst = dst[0]->CpuData();
-            size_t num = dst[0]->Axis(0);
             size_t dstSize = dst[0]->Size();
             switch (_method)
             {
             case PoolingMethodTypeMax:
-                CpuSet(dstSize, Type(-FLT_MAX), pDst);
-                for (size_t n = 0; n < num; ++n)
+                //CpuSet(dstSize, Type(-FLT_MAX), pDst);
+                for (size_t n = 0; n < _num; ++n)
                 {
-                    for (size_t c = 0; c < _channels; ++c)
+                    if (_trans)
                     {
-                        size_t srcX = _srcX, srcY = _srcY;
-                        if (_yoloCompatible == 1)
+                        Detail::PoolingForwardMaxCpu(pSrc, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, pDst, _dstH, _dstW, _trans);
+                        pSrc += _channels*_srcW * _srcH;
+                        pDst += _channels*_srcW * _srcH;
+                    }
+                    else
+                    {
+                        for (size_t c = 0; c < _channels; ++c)
                         {
-                            srcX = _dstX*_strideX - _padX - _padW;
-                            srcY = _dstY*_strideY - _padY - _padH;
+                            size_t srcW = _srcW, srcH = _srcH;
+                            if (_yoloCompatible == 1)
+                            {
+                                srcH = _dstH*_strideY - _padY - _padH;
+                                srcW = _dstW*_strideX - _padX - _padW;
+                            }
+                            Detail::PoolingForwardMaxCpu(pSrc, _srcW, srcW, srcH, _kernelY, _kernelX, _padY, _padX, _strideY, _strideX, pDst, _dstW, _dstH);
+                            pSrc += _srcW * _srcH;
+                            pDst += _dstW * _dstH;
                         }
-                        Detail::PoolingForwardMaxCpu(pSrc, _srcX, srcX, srcY, _kernelY, _kernelX, _padY, _padX, _strideY, _strideX, pDst, _dstX, _dstY);
-                        pSrc += _srcX * _srcY;
-                        pDst += _dstX * _dstY;
                     }
                 }
                 break;
             case PoolingMethodTypeAverage:
                 CpuSet(dstSize, Type(0), pDst);
-                for (size_t n = 0; n < num; ++n)
+                for (size_t n = 0; n < _num; ++n)
                 {
                     for (size_t c = 0; c < _channels; ++c)
                     {
-                        for (size_t ph = 0; ph < _dstY; ++ph)
+                        for (size_t ph = 0; ph < _dstH; ++ph)
                         {
                             size_t hStart = ph * _strideY - _padY;
-                            size_t hEnd = std::min(hStart + _kernelY, _srcY);
+                            size_t hEnd = std::min(hStart + _kernelY, _srcH);
                             hStart = std::max<ptrdiff_t>(0, hStart);
-                            for (size_t pw = 0; pw < _dstX; ++pw)
+                            for (size_t pw = 0; pw < _dstW; ++pw)
                             {
                                 size_t wStart = pw * _strideX - _padX;
-                                size_t wEnd = std::min(wStart + _kernelX, _srcX);
+                                size_t wEnd = std::min(wStart + _kernelX, _srcW);
                                 wStart = std::max<ptrdiff_t>(0, wStart);
                                 size_t poolSize = (hEnd - hStart) * (wEnd - wStart);
                                 Type sum = 0;
                                 for (size_t h = hStart; h < hEnd; ++h)
                                     for (size_t w = wStart; w < wEnd; ++w)
-                                        sum += pSrc[h * _srcX + w];
-                                pDst[ph*_dstX + pw] = sum / poolSize;
+                                        sum += pSrc[h * _srcW + w];
+                                pDst[ph*_dstW + pw] = sum / poolSize;
                             }
                         }
-                        pSrc += _srcX * _srcY;
-                        pDst += _dstX * _dstY;
+                        pSrc += _srcW * _srcH;
+                        pDst += _dstW * _dstH;
                     }
                 }
                 break;
@@ -296,7 +368,7 @@ namespace Synet
 
     private:
         PoolingMethodType _method;
-        int _yoloCompatible;
-        size_t _channels, _srcX, _srcY, _kernelX, _kernelY, _dstX, _dstY, _strideX, _strideY, _padX, _padY, _padW, _padH;
+        int _yoloCompatible, _trans;
+        size_t _num, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideX, _strideY, _padX, _padY, _padW, _padH, _dstH, _dstW;
     };
 }

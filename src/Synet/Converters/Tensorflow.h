@@ -45,7 +45,7 @@
 #pragma GCC diagnostic pop
 #endif
 
-#define SYNET_TENSORFLOW_DEBUG
+//#define SYNET_TENSORFLOW_DEBUG
 //#define SYNET_TENSORFLOW_DYNAMIC
 
 namespace Synet
@@ -444,6 +444,7 @@ namespace Synet
             weight.push_back(Tensor());
             ConvertKernel(GetConst(_graph, node, _valueId), weight.back());
             layer.weight()[0].dim() = weight.back().Shape();
+            layer.weight()[0].format() = _trans ? TensorFormatNchw : TensorFormatNhwc;
 
             NameIndexVector nextLayers = NextLayers(node.name(), "BiasAdd");
             if (nextLayers.size() == 1)
@@ -466,13 +467,14 @@ namespace Synet
                 }
             }
 
-            layer.convolution().kernel() = Shape({ layer.weight()[0].dim()[2], layer.weight()[0].dim()[3] });
+            const Shape & shape = layer.weight()[0].dim();
+            layer.convolution().kernel() = _trans ? Shape({ shape[2], shape[3] }) : Shape({ shape[0], shape[1] });
             if (node.op() == "Conv2D")
-                layer.convolution().outputNum() = (uint32_t)layer.weight()[0].dim()[0];
+                layer.convolution().outputNum() = _trans ? (uint32_t)shape[0] : (uint32_t)shape[3];
             else if (node.op() == "DepthwiseConv2dNative")
             {
-                layer.convolution().outputNum() = (uint32_t)layer.weight()[0].dim()[1];
-                layer.convolution().group() = (uint32_t)layer.weight()[0].dim()[1];
+                layer.convolution().outputNum() = _trans ? (uint32_t)shape[1] : (uint32_t)shape[2];
+                layer.convolution().group() = _trans ? (uint32_t)shape[1] : (uint32_t)shape[2];
             }
             if (node.attr().find("strides") != node.attr().end())
             {
@@ -584,7 +586,7 @@ namespace Synet
                 layer.weight().resize(1);
                 weight.push_back(Tensor());
                 ConvertKernel(GetConst(_graph, node, _valueId), weight.back()); 
-                if (!ReorderWeightSpecial(layer.name(), weight.back()))
+                if (_trans && !ReorderWeightSpecial(layer.name(), weight.back()))
                     return false;
                 layer.weight()[0].dim() = weight.back().Shape();
                 layer.innerProduct().outputNum() = (uint32_t)(layer.innerProduct().transposeB() ? layer.weight()[0].dim()[1] : layer.weight()[0].dim()[0]);
@@ -627,8 +629,9 @@ namespace Synet
                 dst.resize(src.dim_size());
                 for (int d = 0; d < src.dim_size(); d++)
                     dst[d] = src.dim(d).size();
+                dst[0] = 1;
                 if (_trans && dst.size() == 4)
-                    dst = Shape({ size_t(1), dst[3], dst[1], dst[2] });
+                    dst = Shape({ dst[0], dst[3], dst[1], dst[2] });
                 layer.input().shape()[0].format() = _trans ? TensorFormatNchw : TensorFormatNhwc;
             }
             return true;
@@ -975,7 +978,7 @@ namespace Synet
             layer.type() = LayerTypeReduction;
             AddSrcDst(node, 1, 1, layer);
             Ints axis = network.layers()[index].meta().alpha().i32();
-            if (axis.size() == 1)
+            if (_trans && axis.size() == 1)
             {
                 if (axis[0] == 0)
                     axis[0] = 1;
@@ -1350,9 +1353,9 @@ namespace Synet
         template <class TS, class TD> void ConvertKernel(const tensorflow::TensorProto & src, Synet::Tensor<TD> & dst)
         {
             Shape shape = GetShape(src); 
-            if(shape.size() == 4)
+            if(_trans && shape.size() == 4)
                 shape = Shape({shape[3], shape[2], shape[0], shape[1]});
-            if (shape.size() == 2)
+            if (_trans && shape.size() == 2)
                 shape = Shape({ shape[1], shape[0] });
             dst.Reshape(shape);    
             TD * pDst = dst.CpuData();
@@ -1360,7 +1363,7 @@ namespace Synet
             const String & content = src.tensor_content();
             const TS * pSrc = (TS*)content.c_str();
 
-            if (shape.size() == 4)
+            if (_trans && shape.size() == 4)
             {
                 size_t out_c = shape[0], input_c = shape[1], height = shape[2], width = shape[3];
                 for (size_t i_oc = 0; i_oc < out_c; i_oc++)
@@ -1379,7 +1382,7 @@ namespace Synet
                     }
                 }
             }
-            else if (shape.size() == 2)
+            else if (_trans && shape.size() == 2)
             {
                 size_t out_c = shape[0], in_c = shape[1];
                 for (size_t i_oc = 0; i_oc < out_c; i_oc++)

@@ -140,14 +140,26 @@ namespace Synet
             dst[i] = src[i]*scale;
     }
 
-    template <typename T> void CpuAddBias(const T * bias, size_t count, size_t size, T * dst)
+    template <typename T> void CpuAddBias(const T * bias, size_t count, size_t size, T * dst, int trans = 0)
     {
-        for (size_t i = 0; i < count; ++i)
+        if (trans)
         {
-            const T value = bias[i];
             for (size_t j = 0; j < size; ++j)
-                dst[j] += value;
-            dst += size;
+            {
+                for (size_t i = 0; i < count; ++i)
+                    dst[i] += bias[i];
+                dst += count;
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < count; ++i)
+            {
+                const T value = bias[i];
+                for (size_t j = 0; j < size; ++j)
+                    dst[j] += value;
+                dst += size;
+            }
         }
     }
 
@@ -200,9 +212,9 @@ namespace Synet
         ::SimdNeuralAddValue( &value, dst, size);
     }
 
-    template <> SYNET_INLINE void CpuAddBias<float>(const float * bias, size_t count, size_t size, float * dst)
+    template <> SYNET_INLINE void CpuAddBias<float>(const float * bias, size_t count, size_t size, float * dst, int trans)
     {
-        ::SimdSynetAddBias(bias, count, size, dst, ::SimdFalse);
+        ::SimdSynetAddBias(bias, count, size, dst, (::SimdBool)trans);
     }
 
     template <> SYNET_INLINE float CpuDotProduct<float>(const float * a, const float * b, size_t size)

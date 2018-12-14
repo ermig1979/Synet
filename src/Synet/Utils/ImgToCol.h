@@ -142,18 +142,19 @@ namespace Synet
 
         size_t dstH = (srcH + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
         size_t dstW = (srcW + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
-        for (size_t ky = 0; ky < kernelY; ky++)
+
+        for (size_t dy = 0; dy < dstH; ++dy)
         {
-            for (size_t kx = 0; kx < kernelX; kx++)
+            for (size_t dx = 0; dx < dstW; ++dx)
             {
-                size_t sy = ky * dilationY - padY;
-                for (size_t dy = 0; dy < dstH; ++dy)
+                for (size_t ky = 0; ky < kernelY; ky++)
                 {
+                    size_t sy = dy*strideY + ky * dilationY - padY;
                     if (sy < srcH)
                     {
-                        size_t sx = kx * dilationX - padX;
-                        for (size_t dx = 0; dx < dstW; ++dx)
+                        for (size_t kx = 0; kx < kernelX; kx++)
                         {
+                            size_t sx = dx*strideX + kx * dilationX - padX;
                             if (sx < srcW)
                             {
                                 memcpy(dst, src + (sy * srcW + sx)*srcC, srcC * sizeof(float));
@@ -164,15 +165,13 @@ namespace Synet
                                 memset(dst, 0, srcC * sizeof(float));
                                 dst += srcC;
                             }
-                            sx += strideX;
                         }
                     }
                     else
                     {
-                        memset(dst, 0, dstW*srcC * sizeof(float));
-                        dst += dstW*srcC;
+                        memset(dst, 0, kernelX*srcC * sizeof(float));
+                        dst += kernelX*srcC;
                     }
-                    sy += strideY;
                 }
             }
         }

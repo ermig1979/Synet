@@ -128,6 +128,15 @@ namespace Synet
                 dstShape.push_back(_dstH);
                 dstShape.push_back(_dstW);
                 dstShape.push_back(_dstC);
+
+                _siW = _srcC * _kernelY * _kernelX;
+                _ldW = _dstC;
+
+                _siS = _dstH * _dstW;
+                _ldS = _siW;
+
+                _siD = _dstC;
+                _ldD = _dstC;
             }
             else
             {
@@ -149,7 +158,7 @@ namespace Synet
             }
 
             for (size_t i = 0; i < dst.size(); ++i)
-                dst[i]->Reshape(dstShape);
+                dst[i]->Reshape(dstShape, Type(), src[0]->Format());
 
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);
@@ -195,20 +204,23 @@ namespace Synet
                 if (!_is1x1)
                 {
                     if (_trans)
-                        ;
+                        Synet::ImgToRow(src, _srcH, _srcW, _srcC, _kernelY, _kernelX, _padY, _padX, _padH, _padW, _strideY, _strideX, _dilationY, _dilationX, buf);
                     else
                         Synet::ImgToCol(src, _srcC, _srcH, _srcW, _kernelY, _kernelX, _padY, _padX, _padH, _padW, _strideY, _strideX, _dilationY, _dilationX, buf);
                     src = buf;
                 }
-                for (size_t g = 0; g < _group; ++g)
+                if (_trans)
                 {
-                    if (_trans)
-                        ;
-                    else
+                    assert(_group = 1);
+                    CpuGemm(CblasNoTrans, CblasNoTrans, _siS, _siD, _siW, Type(1), src, _ldS, weight, _ldW, Type(0), dst, _ldD);
+                }
+                else
+                {
+                    for (size_t g = 0; g < _group; ++g)
                         CpuGemm(CblasNoTrans, CblasNoTrans, _siD, _siS, _siW, Type(1), weight + _grW * g, _ldW, src + _grS * g, _ldS, Type(0), dst + _grD * g, _ldD);
                 }
                 if (_biasTerm)
-                    CpuAddBias(this->Weight()[1].CpuData(), _dstC, _dstH*_dstW, dst);
+                    CpuAddBias(this->Weight()[1].CpuData(), _dstC, _dstH*_dstW, dst, _trans);
                 switch (_activation)
                 {
                 case ActivationFunctionTypeIdentity:
@@ -232,7 +244,8 @@ namespace Synet
         }
 
     private:
-        bool _is1x1, _biasTerm, _trans;
+        bool _is1x1, _biasTerm;
+        int _trans;
         size_t _kernelY, _kernelX, _strideY, _strideX, _dilationY, _dilationX, _padY, _padX, _padH, _padW;
         size_t _axis, _group, _num, _srcC, _srcH, _srcW, _dstC, _dstH, _dstW, _srcSize, _dstSize;
         size_t _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
