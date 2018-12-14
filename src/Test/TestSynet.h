@@ -101,6 +101,7 @@ namespace Test
             Synet::SetThreadNumber(threadNumber);
             if (_net.Load(model, weight))
             {
+                _trans = _net.Format() == Synet::TensorFormatNhwc;
                 if (param.input().size() || param.output().size())
                 {
                     if (!Reshape(param))
@@ -108,9 +109,9 @@ namespace Test
                 }
                 const Net::Tensor * src = _net.Src()[0];
                 num = src->Shape()[0];
-                channels = src->Shape()[1];
-                height = src->Shape()[2];
-                width = src->Shape()[3];
+                channels = _trans ? src->Shape()[3] : src->Shape()[1];
+                height = _trans ? src->Shape()[1] : src->Shape()[2];
+                width = _trans ? src->Shape()[2] : src->Shape()[3];
                 return true;
             }
             return false;
@@ -118,9 +119,7 @@ namespace Test
 
         virtual const Vector & Predict(const Vector & x)
         {
-            Net::Tensor * src = _net.Src()[0];
-            assert(x.size() == src->Size());
-            memcpy(src->CpuData(), x.data(), x.size() * sizeof(float));
+            SetInput(x);
             {
                 TEST_PERF_FUNC();
                 _net.Forward();
@@ -144,6 +143,24 @@ namespace Test
     private:
         typedef Synet::Network<float> Net;
         Net _net;
+        bool _trans;
+
+        void SetInput(const Vector & x)
+        {
+            Net::Tensor & src = *_net.Src()[0];
+            assert(x.size() == src.Size());
+            if (_trans && src.Count() == 4)
+            {
+                const float * px = x.data();
+                for (size_t n = 0; n < src.Axis(0); ++n)
+                    for (size_t c = 0; c < src.Axis(3); ++c)
+                        for (size_t y = 0; y < src.Axis(1); ++y)
+                            for (size_t x = 0; x < src.Axis(2); ++x)
+                                src.CpuData(Shape({ n, y, x, c }))[0] = *px++;
+            }
+            else
+                memcpy(src.CpuData(), x.data(), x.size() * sizeof(float));
+        }
 
         void SetOutput()
         {
@@ -174,7 +191,17 @@ namespace Test
                     size_t size = dst[i]->Size();
                     if (offset + size > _output.size())
                         _output.resize(offset + size);
-                    memcpy(_output.data() + offset, dst[i]->CpuData(), size * sizeof(float));
+                    if (_trans && dst[i]->Count() == 4)
+                    {
+                        float * out = _output.data() + offset;
+                        for (size_t n = 0; n < dst[i]->Axis(0); ++n)
+                            for (size_t c = 0; c < dst[i]->Axis(3); ++c)
+                                for (size_t y = 0; y < dst[i]->Axis(1); ++y)
+                                    for (size_t x = 0; x < dst[i]->Axis(2); ++x)
+                                        *out++ = dst[i]->CpuData(Shape({ n, y, x, c }))[0];
+                    }
+                    else
+                        memcpy(_output.data() + offset, dst[i]->CpuData(), size * sizeof(float));
                     offset += size;
                 }
             }
@@ -216,6 +243,8 @@ namespace Test
                             return false;
                     }
                 }
+                if (_trans && srcShape.size() == 4)
+                    srcShape = Shape({ srcShape[0], srcShape[2], srcShape[3], srcShape[1] });
                 if (srcShape.empty())
                     return false;
                 srcShapes.push_back(srcShape);

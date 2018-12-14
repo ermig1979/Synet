@@ -43,6 +43,7 @@ namespace Test
         size_t threadNumber;
         float threshold;
         String logName;
+        int tensorFormat;
         bool result;
 
         Options(int argc, char* argv[])
@@ -63,6 +64,7 @@ namespace Test
             threadNumber = FromString<size_t>(GetArg("-tn", "1"));
             threshold = FromString<float>(GetArg("-t", "0.001"));
             logName = GetArg("-ln", "", false);
+            tensorFormat = FromString<int>(GetArg("-tf", "0"));
         }
 
         ~Options()
