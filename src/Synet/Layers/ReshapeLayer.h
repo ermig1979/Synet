@@ -64,14 +64,15 @@ namespace Synet
 
             if (src.size() == 2)
             {
+                bool trans = src[0]->Format() == TensorFormatNhwc;
                 assert(src[1]->Count() == 1 && src[1]->GetType() == TensorType32i);
                 const Synet::Tensor<int32_t> & src1 = src[1]->As32i();
                 Shape shape;
                 for (size_t i = 0; i < src1.Size(); ++i)
                     shape.push_back(src1.CpuData()[i]);
-                if (shape.size() == 2)
+                if (!trans && shape.size() == 2)
                     shape = Shape({ shape[1], shape[0] });
-                if (shape.size() == 4)
+                if (!trans && shape.size() == 4)
                     shape = Shape({ shape[0], shape[3], shape[1], shape[2] });
                 size_t unknown = 0;
                 for (size_t i = 0; i < shape.size(); ++i)
@@ -92,7 +93,7 @@ namespace Synet
                     }
                     shape[index] = src[0]->Size()/known;
                 }
-                dst[0]->ShareAs(*src[0], shape);
+                dst[0]->ShareAs(*src[0], shape, src[0]->Format());
             }
             else
             {
@@ -130,7 +131,7 @@ namespace Synet
                     assert(0 == src[0]->Size() % explicitCount);
                     shape[startAxis + _inferredAxis] = src[0]->Size() / explicitCount;
                 }
-                dst[0]->ShareAs(*src[0], shape);
+                dst[0]->ShareAs(*src[0], shape, src[0]->Format());
             }
         }
 

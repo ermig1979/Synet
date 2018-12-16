@@ -405,9 +405,10 @@ namespace Synet
         {
             assert(src.size() == 1);
             Shape shape = src[0]->Shape();
-            if (shape.size() == 4)
+            bool trans = src[0]->Format() == TensorFormatNhwc;
+            if (!trans && shape.size() == 4)
                 shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
-            if (shape.size() == 2)
+            if (!trans && shape.size() == 2)
                 shape = Shape({ shape[1], shape[0] });
             Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
             dst0.Reshape({ shape.size() });

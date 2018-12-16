@@ -86,8 +86,8 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            _softmaxAxis = this->Param().softmax().axis();
-            dst[0]->Reshape(src[0]->Shape());
+            _softmaxAxis = std::min<size_t>(this->Param().softmax().axis(), src[0]->Count() - 1);
+            dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
             _outerNum = src[0]->Size(0, _softmaxAxis);
             _innerNum = src[0]->Size(_softmaxAxis + 1);
             Shape scaleShape = src[0]->Shape();

@@ -397,7 +397,12 @@ namespace Synet
             if (order == _shape.size())
             {
                 std::cout << std::fixed << std::setprecision(4);
-                os << *CpuData(index);
+                if (_type == TensorType32i)
+                    os << As32i().CpuData(index)[0];
+                else if (_type == TensorType32f)
+                    os << As32f().CpuData(index)[0];
+                else
+                    assert(0);
                 return;
             }
             if (firsts[order] + lasts[order] < _shape[order])

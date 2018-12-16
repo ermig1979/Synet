@@ -38,7 +38,7 @@ namespace Synet
     class OpencvToSynet
     {
     public:
-        bool Convert(const String & srcModelPath, const String & srcWeightPath, const String & dstModelPath, const String & dstWeightPath)
+        bool Convert(const String & srcModelPath, const String & srcWeightPath, bool trans, const String & dstModelPath, const String & dstWeightPath)
         {
             if (!Synet::FileExist(srcModelPath))
             {
@@ -69,7 +69,7 @@ namespace Synet
 
             Synet::NetworkParamHolder holder;
             Tensors weight;
-            if (!ConvertNetwork(xml, bin, holder(), weight))
+            if (!ConvertNetwork(xml, bin, trans, holder(), weight))
                 return false;
 
             Optimizer optimizer;
@@ -135,7 +135,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertNetwork(const XmlDoc & xml, const Vector & bin, Synet::NetworkParam & network, Tensors & weight)
+        bool ConvertNetwork(const XmlDoc & xml, const Vector & bin, bool trans, Synet::NetworkParam & network, Tensors & weight)
         {
             const XmlNode * pNet = xml.FirstNode("net");
             if (pNet == NULL)
@@ -232,15 +232,15 @@ namespace Synet
                     return false;
                 if (type == "Concat" && !ConvertConcatLayer(pLayer, layer))
                     return false;
-                if (type == "Convolution" && !ConvertConvolutionLayer(pLayer, bin, layer, weight))
+                if (type == "Convolution" && !ConvertConvolutionLayer(pLayer, bin, trans, layer, weight))
                     return false;
                 if (type == "DetectionOutput" && !ConvertDetectionOutputLayer(pLayer, layer))
                     return false;
                 if (type == "Eltwise" && !ConvertEltwiseLayer(pLayer, layer))
                     return false;
-                if (type == "FullyConnected" && !ConvertFullyConnectedLayer(pLayer, bin, layer, weight))
+                if (type == "FullyConnected" && !ConvertFullyConnectedLayer(pLayer, bin, trans, layer, weight))
                     return false;
-                if (type == "Input" && !ConvertInputLayer(pLayer, layer))
+                if (type == "Input" && !ConvertInputLayer(pLayer, trans, layer))
                     return false;
                 if (type == "Permute" && !ConvertPermuteLayer(pLayer, layer))
                     return false;
@@ -365,7 +365,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConvolutionLayer(const XmlNode * pLayer, const Vector & bin, LayerParam & layer, Tensors & weight)
+        bool ConvertConvolutionLayer(const XmlNode * pLayer, const Vector & bin, bool trans, LayerParam & layer, Tensors & weight)
         {
             layer.type() = Synet::LayerTypeConvolution;
             const XmlNode * pData = pLayer->FirstNode("data");
@@ -421,21 +421,36 @@ namespace Synet
             }
             else
                 return false;
-            layer.weight().resize(1);
-            layer.weight()[0].dim() = Shape({ (size_t)layer.convolution().outputNum(), inputNum / layer.convolution().group(),  (size_t)layer.convolution().kernel()[0],  (size_t)layer.convolution().kernel()[1] });
             const XmlNode * pBlobs = pLayer->FirstNode("blobs");
             if (pBlobs)
             {
                 const XmlNode * pWeights = pBlobs->FirstNode("weights");
                 if (pWeights)
                 {
+                    layer.weight().resize(1);
+                    Shape shape = Shape({ (size_t)layer.convolution().outputNum(), inputNum / layer.convolution().group(),  
+                        (size_t)layer.convolution().kernel()[0],  (size_t)layer.convolution().kernel()[1] });
+                    if(trans)
+                        shape = Shape({ shape[2], shape[3], shape[1], shape[0] });
+                    layer.weight()[0].dim() = shape;
                     size_t offset, size;
                     StringToValue(pWeights->FirstAttribute("offset")->Value(), offset);
                     StringToValue(pWeights->FirstAttribute("size")->Value(), size);
                     weight.push_back(Tensor());
-                    weight.back().Reshape(layer.weight()[0].dim());
+                    weight.back().Reshape(shape);
                     assert(size == weight.back().Size() * sizeof(float));
-                    memcpy(weight.back().CpuData(), bin.data() + offset / sizeof(float), size);
+                    const float * pSrc = bin.data() + offset / sizeof(float);
+                    if (trans)
+                    {
+                        for (size_t o = 0; o < shape[3]; ++o)
+                            for (size_t i = 0; i < shape[2]; ++i)
+                                for (size_t y = 0; y < shape[0]; ++y)
+                                    for (size_t x = 0; x < shape[1]; ++x)
+                                        weight.back().CpuData(Shape({ y, x, i, o }))[0] = *pSrc++;
+                        layer.weight()[0].format() = TensorFormatNhwc;
+                    }
+                    else
+                        memcpy(weight.back().CpuData(), pSrc, size);
                 }
                 else
                     return false;
@@ -502,13 +517,14 @@ namespace Synet
             return true;
         }
 
-        bool ConvertFullyConnectedLayer(const XmlNode * pLayer, const Vector & bin, LayerParam & layer, Tensors & weight)
+        bool ConvertFullyConnectedLayer(const XmlNode * pLayer, const Vector & bin, bool trans, LayerParam & layer, Tensors & weight)
         {
             layer.type() = Synet::LayerTypeInnerProduct;
             const XmlNode * pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
             StringToValue(pData->FirstAttribute("out-size")->Value(), layer.innerProduct().outputNum());
+            Shape inputShape;
             size_t inputSize;
             const XmlNode * pInput = pLayer->FirstNode("input");
             if (pInput)
@@ -516,10 +532,10 @@ namespace Synet
                 const XmlNode * pPort = pInput->FirstNode("port");
                 if (pPort)
                 {
-                    Shape input = ConvertShape(pPort);
+                    inputShape = ConvertShape(pPort);
                     inputSize = 1;
-                    for (size_t i = 0; i < input.size(); ++i)
-                        inputSize *= input[i];
+                    for (size_t i = 0; i < inputShape.size(); ++i)
+                        inputSize *= inputShape[i];
                 }
                 else
                     return false;
@@ -554,7 +570,30 @@ namespace Synet
                     weight.push_back(Tensor());
                     weight.back().Reshape(layer.weight()[0].dim());
                     assert(size == weight.back().Size() * sizeof(float));
-                    memcpy(weight.back().CpuData(), bin.data() + offset / sizeof(float), size);
+                    const float * pSrc = bin.data() + offset / sizeof(float);
+                    float * pDst = weight.back().CpuData();
+                    if (trans && inputShape.size() == 4)
+                    {
+                        for (size_t n = 0; n < (size_t)layer.innerProduct().outputNum(); n++)
+                        {
+                            for (size_t c = 0; c < inputShape[1]; c++)
+                            {
+                                for (size_t y = 0; y < inputShape[2]; y++)
+                                {
+                                    for (size_t x = 0; x < inputShape[3]; x++)
+                                    {
+                                        size_t srcOffset = inputShape[2] * inputShape[3] * c + inputShape[3] * y + x;
+                                        size_t dstOffset = inputShape[3] * inputShape[1] * y + inputShape[1] * x + c;
+                                        pDst[dstOffset] = pSrc[srcOffset];
+                                    }
+                                }
+                            }
+                            pSrc += inputShape[1] * inputShape[2] * inputShape[3];
+                            pDst += inputShape[1] * inputShape[2] * inputShape[3];
+                        }
+                    }
+                    else
+                        memcpy(pDst, pSrc, size);
                 }
                 else
                     return false;
@@ -581,7 +620,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertInputLayer(const XmlNode * pLayer, LayerParam & layer)
+        bool ConvertInputLayer(const XmlNode * pLayer, bool trans, LayerParam & layer)
         {
             layer.type() = Synet::LayerTypeInput;
             const XmlNode * pOutput = pLayer->FirstNode("output");
@@ -591,7 +630,14 @@ namespace Synet
                 if (pPort)
                 {
                     layer.input().shape().resize(1);
-                    layer.input().shape()[0].dim() = ConvertShape(pPort);
+                    Shape shape = ConvertShape(pPort);
+                    if (trans)
+                    {
+                        if (shape.size() == 4)
+                            shape = Shape({shape[0], shape[2], shape[3], shape[1]});
+                        layer.input().shape()[0].format() = TensorFormatNhwc;
+                    }
+                    layer.input().shape()[0].dim() = shape;
                 }
             }
             return true;
@@ -834,10 +880,10 @@ namespace Synet
         }
     };
 
-    bool ConvertOpencvToSynet(const String & srcData, const String & srcWeights, const String & dstXml, const String & dstBin)
+    bool ConvertOpencvToSynet(const String & srcData, const String & srcWeights, bool trans, const String & dstXml, const String & dstBin)
     {
         OpencvToSynet opencvToSynet;
-        return opencvToSynet.Convert(srcData, srcWeights, dstXml, dstBin);
+        return opencvToSynet.Convert(srcData, srcWeights, trans, dstXml, dstBin);
     }
 }
 

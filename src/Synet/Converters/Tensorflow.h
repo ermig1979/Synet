@@ -310,7 +310,7 @@ namespace Synet
                 else if (type == "Softmax")
                 {
                     layer.type() = LayerTypeSoftmax;
-                    layer.softmax().axis() = 0;
+                    layer.softmax().axis() = _trans ? 0 : 1;
                     layer.src().push_back(node.input(0));
                     layer.dst().push_back(layer.name());
                 }
@@ -589,7 +589,8 @@ namespace Synet
                 if (_trans && !ReorderWeightSpecial(layer.name(), weight.back()))
                     return false;
                 layer.weight()[0].dim() = weight.back().Shape();
-                layer.innerProduct().outputNum() = (uint32_t)(layer.innerProduct().transposeB() ? layer.weight()[0].dim()[1] : layer.weight()[0].dim()[0]);
+                const Shape & shape = layer.weight()[0].dim();
+                layer.innerProduct().outputNum() = (uint32_t)(/*(!_trans) ^ */layer.innerProduct().transposeB() ? shape[1] : shape[0]);
                 NameIndexVector nextLayers = NextLayers(node.name(), "BiasAdd");
                 if (nextLayers.size() == 1)
                 {
@@ -629,7 +630,8 @@ namespace Synet
                 dst.resize(src.dim_size());
                 for (int d = 0; d < src.dim_size(); d++)
                     dst[d] = src.dim(d).size();
-                dst[0] = 1;
+                if(dst.size())
+                    dst[0] = 1;
                 if (_trans && dst.size() == 4)
                     dst = Shape({ dst[0], dst[3], dst[1], dst[2] });
                 layer.input().shape()[0].format() = _trans ? TensorFormatNchw : TensorFormatNhwc;
@@ -1355,7 +1357,7 @@ namespace Synet
             Shape shape = GetShape(src); 
             if(_trans && shape.size() == 4)
                 shape = Shape({shape[3], shape[2], shape[0], shape[1]});
-            if (_trans && shape.size() == 2)
+            if (/*_trans &&*/ shape.size() == 2)
                 shape = Shape({ shape[1], shape[0] });
             dst.Reshape(shape);    
             TD * pDst = dst.CpuData();
@@ -1382,7 +1384,7 @@ namespace Synet
                     }
                 }
             }
-            else if (_trans && shape.size() == 2)
+            else if (/*_trans &&*/ shape.size() == 2)
             {
                 size_t out_c = shape[0], in_c = shape[1];
                 for (size_t i_oc = 0; i_oc < out_c; i_oc++)

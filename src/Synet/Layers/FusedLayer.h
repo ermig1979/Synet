@@ -214,7 +214,6 @@ namespace Synet
             case 0:
             {
                 _t0.size = src[0]->Size() / _t0.count;
-                assert(_t0.count == src[0]->Axis(1));
                 assert(_t0.size*_t0.count == src[0]->Size());
                 dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
                 break;
@@ -222,7 +221,6 @@ namespace Synet
             case 1:
             {
                 _t1.size = src[0]->Size() / _t1.count;
-                assert(_t1.count == src[0]->Axis(1));
                 assert(_t1.size*_t1.count == src[0]->Size());
                 dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
                 break;
@@ -230,7 +228,6 @@ namespace Synet
             case 2:
             {
                 _t2.size = src[0]->Size() / _t2.count;
-                assert(_t2.count == src[0]->Axis(1));
                 assert(_t2.size*_t2.count == src[0]->Size());
                 dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
                 break;

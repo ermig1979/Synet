@@ -115,7 +115,7 @@ namespace Synet
                 size_t size = src[0]->Size(1);
                 for (size_t i = 0; i < num; ++i)
                 {
-                    Detail::ScaleLayerForwardCpu(pSrc, _scale.CpuData(), _bias.CpuData(), _channels, spatialDim, pDst);
+                    Detail::ScaleLayerForwardCpu(pSrc, _scale.CpuData(), _bias.CpuData(), _channels, spatialDim, pDst, 0);
                     pSrc += size;
                     pDst += size;
                 }

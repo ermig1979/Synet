@@ -32,23 +32,49 @@ namespace Synet
 {
     namespace Detail
     {
-        template <typename T> void ScaleLayerForwardCpu(const T * src, const T * scale, const T * bias, size_t count, size_t size, T * dst)
+        template <typename T> void ScaleLayerForwardCpu(const T * src, const T * scale, const T * bias, size_t count, size_t size, T * dst, int trans)
         {
-            for (size_t i = 0; i < count; ++i)
+            if (trans)
             {
-                const T s = scale[i];
-                const T b = bias ? bias[i] : 0;
-                for (size_t j = 0; j < size; ++j)
-                    dst[j] = src[j] * s + b;
-                src += size;
-                dst += size;
+                if (bias)
+                {
+                    for (size_t j = 0; j < size; ++j)
+                    {
+                        for (size_t i = 0; i < count; ++i)
+                            dst[i] = src[i] * scale[i] + bias[i];
+                        src += count;
+                        dst += count;
+                    }
+                }
+                else
+                {
+                    for (size_t j = 0; j < size; ++j)
+                    {
+                        for (size_t i = 0; i < count; ++i)
+                            dst[i] = src[i] * scale[i];
+                        src += count;
+                        dst += count;
+                    }
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i < count; ++i)
+                {
+                    const T s = scale[i];
+                    const T b = bias ? bias[i] : 0;
+                    for (size_t j = 0; j < size; ++j)
+                        dst[j] = src[j] * s + b;
+                    src += size;
+                    dst += size;
+                }
             }
         }
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-        template <> SYNET_INLINE void ScaleLayerForwardCpu<float>(const float * src, const float * scale, const float * bias, size_t count, size_t size, float * dst)
+        template <> SYNET_INLINE void ScaleLayerForwardCpu<float>(const float * src, const float * scale, const float * bias, size_t count, size_t size, float * dst, int trans)
         {
-            ::SimdSynetScaleLayerForward(src, scale, bias, count, size, dst, ::SimdFalse);
+            ::SimdSynetScaleLayerForward(src, scale, bias, count, size, dst, (::SimdBool)trans);
         }
 #endif
     }
@@ -78,25 +104,22 @@ namespace Synet
                 assert(this->Weight().size() > 1);
                 assert(this->Weight()[0].Shape() == this->Weight()[1].Shape());
             }
-
             const Tensor & scale = this->Weight()[0];
+            _count = scale.Size();
+            _trans = src[0]->Format() == TensorFormatNhwc;
             if (scale.Size() == src[0]->Size())
             {
-                _outerDim = 1;
-                _scaleDim = scale.Size();
-                _innerDim = 1;
+                _num = 1;
+                _size = 1;
             }
             else
             {
-                assert(src[0]->Count() >= _axis + scale.Count());
-                for (size_t i = 0; i < scale.Count(); ++i)
-                    assert(src[0]->Axis(_axis + i) == scale.Axis(i));
-                _outerDim = src[0]->Size(0, _axis);
-                _scaleDim = scale.Size();
-                _innerDim = src[0]->Size(_axis + scale.Count());
+                _num = src[0]->Size(0, _axis);
+                _size = src[0]->Size() / _num / _count;
             }
+            assert(src[0]->Size() == _num*_count*_size);
             if (src[0] != dst[0])
-                dst[0]->Reshape(src[0]->Shape());
+                dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
         }
 
     protected:
@@ -107,16 +130,17 @@ namespace Synet
             const Type * pScale = this->Weight()[0].CpuData();
             const Type * pBias = _biasTerm ? this->Weight()[1].CpuData() : NULL;
             Type * pDst = dst[0]->CpuData();
-            for (size_t n = 0; n < _outerDim; ++n)
+            for (size_t n = 0; n < _num; ++n)
             {
-                Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _scaleDim, _innerDim, pDst);
-                pSrc += _scaleDim*_innerDim;
-                pDst += _scaleDim*_innerDim;
+                Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _count, _size, pDst, _trans);
+                pSrc += _count*_size;
+                pDst += _count*_size;
             }
         }
 
     private:
-        size_t _axis, _outerDim, _scaleDim, _innerDim;
+        size_t _axis, _num, _count, _size;
+        int _trans;
         bool _biasTerm;
     };
 }
