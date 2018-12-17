@@ -61,7 +61,7 @@ namespace Synet
                 srcSizeSum += src[i]->Size();
                 dstShape[_concatAxis] += src[i]->Axis(_concatAxis);
             }
-            dst[0]->Reshape(dstShape);
+            dst[0]->Reshape(dstShape, Type(), src[0]->Format());
             assert(srcSizeSum == dst[0]->Size());
             if (src.size() == 1)
                 dst[0]->Share(*src[0]);

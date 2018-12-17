@@ -81,7 +81,7 @@ namespace Synet
                 for (size_t i = 0; i < _count; ++i)
                     _dstStride[_order[i]] = dstStride[i];
 
-                dst[0]->Reshape(_dstShape);
+                dst[0]->Reshape(_dstShape, Type(), src[0]->Format());
             }
             else
                 dst[0]->Share(*src[0]);

@@ -164,7 +164,7 @@ namespace Synet
             const XmlNode * pLayers = pNet->FirstNode("layers");
             if (pLayers == NULL)
                 return false;
-            const XmlNode * pLayer = pLayers->FirstNode("layer");
+            const XmlNode * pLayer = pLayers->FirstNode("layer"), * pPrevLayer = NULL;
             while (pLayer)
             {
                 size_t layerId;
@@ -230,7 +230,7 @@ namespace Synet
                     return false;
                 if (type == "Const" && !ConvertConstLayer(pLayer, bin, layer, weight))
                     return false;
-                if (type == "Concat" && !ConvertConcatLayer(pLayer, layer))
+                if (type == "Concat" && !ConvertConcatLayer(pLayer, trans, layer))
                     return false;
                 if (type == "Convolution" && !ConvertConvolutionLayer(pLayer, bin, trans, layer, weight))
                     return false;
@@ -238,11 +238,11 @@ namespace Synet
                     return false;
                 if (type == "Eltwise" && !ConvertEltwiseLayer(pLayer, layer))
                     return false;
-                if (type == "FullyConnected" && !ConvertFullyConnectedLayer(pLayer, bin, trans, layer, weight))
+                if (type == "FullyConnected" && !ConvertFullyConnectedLayer(pLayer, pPrevLayer, bin, trans, layer, weight))
                     return false;
                 if (type == "Input" && !ConvertInputLayer(pLayer, trans, layer))
                     return false;
-                if (type == "Permute" && !ConvertPermuteLayer(pLayer, layer))
+                if (type == "Permute" && !ConvertPermuteLayer(pLayer, pPrevLayer, trans, layer))
                     return false;
                 if (type == "Pooling" && !ConvertPoolingLayer(pLayer, layer))
                     return false;
@@ -252,17 +252,18 @@ namespace Synet
                     return false;
                 if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
                     return false;
-                if (type == "Reshape" && !ConvertReshapeLayer(pLayer, layer))
+                if (type == "Reshape" && !ConvertReshapeLayer(pLayer, trans, layer))
                     return false;
                 if (type == "ScaleShift" && !ConvertScaleShiftLayer(pLayer, bin, layer, weight))
                     return false;
-                if (type == "Split" && !ConvertSplitLayer(pLayer, layer))
+                if (type == "Split" && !ConvertSplitLayer(pLayer, trans, layer))
                     return false;
 
                 if (layer.type() == LayerTypeUnknown)
                     NotImplemented(pLayer, layer);
 
                 network.layers().push_back(layer);
+                pPrevLayer = pLayer;
                 pLayer = pLayer->NextSibling("layer");
             }
 
@@ -292,6 +293,24 @@ namespace Synet
             return shape;
         }
 
+        static Shape ConvertInputShape(const XmlNode * pLayer)
+        {
+            const XmlNode * pInput = pLayer->FirstNode("input");
+            assert(pInput);
+            const XmlNode * pPort = pInput->FirstNode("port");
+            assert(pPort);
+            return ConvertShape(pPort);
+        }
+
+        static Shape ConvertOutputShape(const XmlNode * pLayer)
+        {
+            const XmlNode * pOutput = pLayer->FirstNode("output");
+            assert(pOutput);
+            const XmlNode * pPort = pOutput->FirstNode("port");
+            assert(pPort);
+            return ConvertShape(pPort);
+        }
+
         bool ConvertActivationLayer(const XmlNode * pLayer, LayerParam & layer)
         {
             const XmlNode * pData = pLayer->FirstNode("data");
@@ -316,13 +335,22 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConcatLayer(const XmlNode * pLayer, LayerParam & layer)
+        bool ConvertConcatLayer(const XmlNode * pLayer, bool trans, LayerParam & layer)
         {
             layer.type() = Synet::LayerTypeConcat;
             const XmlNode * pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
             StringToValue(pData->FirstAttribute("axis")->Value(), layer.concat().axis());
+            if (trans)
+            {
+                Shape input = ConvertInputShape(pLayer);
+                if (input.size() == 4)
+                {
+                    Shape nchw = Shape({ 0, 3, 1, 2 });
+                    layer.concat().axis() = nchw[layer.concat().axis()];
+                }
+            }
             return true;
         }
 
@@ -517,45 +545,26 @@ namespace Synet
             return true;
         }
 
-        bool ConvertFullyConnectedLayer(const XmlNode * pLayer, const Vector & bin, bool trans, LayerParam & layer, Tensors & weight)
+        bool ConvertFullyConnectedLayer(const XmlNode * pLayer, const XmlNode * pPrevLayer, const Vector & bin, bool trans, LayerParam & layer, Tensors & weight)
         {
             layer.type() = Synet::LayerTypeInnerProduct;
             const XmlNode * pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
             StringToValue(pData->FirstAttribute("out-size")->Value(), layer.innerProduct().outputNum());
-            Shape inputShape;
-            size_t inputSize;
-            const XmlNode * pInput = pLayer->FirstNode("input");
-            if (pInput)
+            Shape inputShape = ConvertInputShape(pLayer);
+            size_t inputSize = 1;
+            for (size_t i = 0; i < inputShape.size(); ++i)
+                inputSize *= inputShape[i];
+            if (pPrevLayer && String(pPrevLayer->FirstAttribute("type")->Value()) == "Reshape")
             {
-                const XmlNode * pPort = pInput->FirstNode("port");
-                if (pPort)
-                {
-                    inputShape = ConvertShape(pPort);
-                    inputSize = 1;
-                    for (size_t i = 0; i < inputShape.size(); ++i)
-                        inputSize *= inputShape[i];
-                }
-                else
-                    return false;
+                inputShape = ConvertInputShape(pPrevLayer);
+                size_t inputSize = 1;
+                for (size_t i = 0; i < inputShape.size(); ++i)
+                    inputSize *= inputShape[i];
             }
-            else
-                return false;
-            const XmlNode * pOutput = pLayer->FirstNode("output");
-            if (pOutput)
-            {
-                const XmlNode * pPort = pOutput->FirstNode("port");
-                if (pPort)
-                {
-                    Shape output = ConvertShape(pPort);
-                    assert(output.size() == 2 && layer.innerProduct().outputNum() == output[1]);
-                }
-                else
-                    return false;
-            }
-            else
-                return false;
+            Shape outputShape = ConvertOutputShape(pLayer);
+            assert(outputShape.size() == 2 && layer.innerProduct().outputNum() == outputShape[1]);
             layer.weight().resize(1);
             layer.weight()[0].dim() = Shape({ (size_t)layer.innerProduct().outputNum(), inputSize });
             const XmlNode * pBlobs = pLayer->FirstNode("blobs");
@@ -643,7 +652,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertPermuteLayer(const XmlNode * pLayer, LayerParam & layer)
+        bool ConvertPermuteLayer(const XmlNode * pLayer, const XmlNode * pPrevLayer, bool trans, LayerParam & layer)
         {
             layer.type() = Synet::LayerTypePermute;
             const XmlNode * pData = pLayer->FirstNode("data");
@@ -652,7 +661,27 @@ namespace Synet
             const XmlAttr * pOrder = pData->FirstAttribute("order");
             if (pOrder == NULL)
                 return false;
-            layer.permute().order() = ConvertShape(pOrder->Value());
+            Shape order = ConvertShape(pOrder->Value());
+            if (trans && order.size() == 4)
+            {
+                bool reorderChannels = false;
+                if (pPrevLayer && String(pPrevLayer->FirstAttribute("type")->Value()) == "Reshape")
+                {
+                    Shape i = ConvertInputShape(pPrevLayer);
+                    Shape o = ConvertOutputShape(pPrevLayer);
+                    if(order == Shape({ 0, 2, 1, 3 }) && i.size() == 4 && o.size() == 4 && o[1] * o[2] == i[1] && o[3] == i[2] * i[3])
+                        reorderChannels = true;
+                }
+                if (reorderChannels)
+                    order = Shape({ 0, 1, 3, 2 });
+                else
+                {
+                    Shape nhwc = Shape({ 0, 2, 3, 1 });
+                    Shape nchw = Shape({ 0, 3, 1, 2 });
+                    order = Shape({ nchw[order[nhwc[0]]], nchw[order[nhwc[1]]], nchw[order[nhwc[2]]], nchw[order[nhwc[3]]] });
+                }
+            }
+            layer.permute().order() = order;
             return true;
         }
 
@@ -748,7 +777,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertReshapeLayer(const XmlNode * pLayer, LayerParam & layer)
+        bool ConvertReshapeLayer(const XmlNode * pLayer, bool trans, LayerParam & layer)
         {
             layer.type() = Synet::LayerTypeReshape;
             const XmlNode * pOutput = pLayer->FirstNode("output");
@@ -757,7 +786,16 @@ namespace Synet
                 const XmlNode * pPort = pOutput->FirstNode("port");
                 if (pPort)
                 {
-                    layer.reshape().shape() = ConvertShape(pPort);
+                    Shape output = ConvertShape(pPort);
+                    if (trans && output.size() == 4)
+                    {
+                        Shape input = ConvertInputShape(pLayer);
+                        if (output[1]*output[2] == input[1] && output[3] == input[2]*input[3])
+                            output = Shape({ output[0], output[3] , output[1] , output[2] });
+                        else
+                            output = Shape({ output[0], output[2] , output[3] , output[1] });
+                    }
+                    layer.reshape().shape() = output;
                 }
                 else
                     return false;
@@ -842,13 +880,33 @@ namespace Synet
         }
 
 
-        bool ConvertSplitLayer(const XmlNode * pLayer, LayerParam & layer)
+        bool ConvertSplitLayer(const XmlNode * pLayer, bool trans, LayerParam & layer)
         {
             layer.type() = Synet::LayerTypeUnpack;
             const XmlNode * pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
             StringToValue(pData->FirstAttribute("axis")->Value(), layer.unpack().axis());
+            if (trans)
+            {
+                Shape input;
+                const XmlNode * pInput = pLayer->FirstNode("input");
+                if (pInput)
+                {
+                    const XmlNode * pPort = pInput->FirstNode("port");
+                    if (pPort)
+                        input = ConvertShape(pPort);
+                    else
+                        return false;
+                }
+                else
+                    return false;
+                if (input.size() == 4)
+                {
+                    Shape nchw = Shape({ 0, 3, 1, 2 });
+                    layer.unpack().axis() = nchw[layer.unpack().axis()];
+                }
+            }
             return true;
         }
 

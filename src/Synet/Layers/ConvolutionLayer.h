@@ -129,14 +129,17 @@ namespace Synet
                 dstShape.push_back(_dstW);
                 dstShape.push_back(_dstC);
 
-                _siW = _srcC * _kernelY * _kernelX;
+                _siW = _srcC * _kernelY * _kernelX / _group;
                 _ldW = _dstC;
+                _grW = _dstC / _group;
 
                 _siS = _dstH * _dstW;
                 _ldS = _siW;
+                _grS = _siS * _siW;
 
-                _siD = _dstC;
+                _siD = _dstC / _group;
                 _ldD = _dstC;
+                _grD = _siD;
             }
             else
             {
@@ -204,15 +207,16 @@ namespace Synet
                 if (!_is1x1)
                 {
                     if (_trans)
-                        Synet::ImgToRow(src, _srcH, _srcW, _srcC, _kernelY, _kernelX, _padY, _padX, _padH, _padW, _strideY, _strideX, _dilationY, _dilationX, buf);
+                        Synet::ImgToRow(src, _srcH, _srcW, _srcC, _kernelY, _kernelX, _padY, _padX, _padH, _padW, _strideY, _strideX, _dilationY, _dilationX, _group, buf);
                     else
                         Synet::ImgToCol(src, _srcC, _srcH, _srcW, _kernelY, _kernelX, _padY, _padX, _padH, _padW, _strideY, _strideX, _dilationY, _dilationX, buf);
                     src = buf;
                 }
                 if (_trans)
                 {
-                    assert(_group = 1);
-                    CpuGemm(CblasNoTrans, CblasNoTrans, _siS, _siD, _siW, Type(1), src, _ldS, weight, _ldW, Type(0), dst, _ldD);
+                    assert(_group == 1 || _group == _srcC);
+                    for (size_t g = 0; g < _group; ++g)
+                        CpuGemm(CblasNoTrans, CblasNoTrans, _siS, _siD, _siW, Type(1), src + _grS * g, _ldS, weight + _grW * g, _ldW, Type(0), dst + _grD * g, _ldD);
                 }
                 else
                 {

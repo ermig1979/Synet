@@ -59,10 +59,10 @@ namespace Synet
             if (dst.size() > 1)
             {
                 for (size_t i = 0; i < _count; ++i)
-                    dst[i]->Reshape(shape);
+                    dst[i]->Reshape(shape, Type(), src[0]->Format());
             }
             else
-                dst[0]->ShareAs(*src[0], shape);
+                dst[0]->ShareAs(*src[0], shape, src[0]->Format());
         }
 
     protected:
@@ -74,10 +74,10 @@ namespace Synet
             {
                 for (size_t o = 0; o < _outer; ++o)
                 {
-                    for (size_t c = 0; c < _count; c += _step)
+                    for (size_t c = 0; c < _count; c += 1)
                     {
-                        const Type * pSrc = src[0]->CpuData() + (_count*o + c)*_inner;
-                        Type * pDst = dst[c]->CpuData() + o*_inner;
+                        const Type * pSrc = src[0]->CpuData() + (_count*o + c)*_step*_inner;
+                        Type * pDst = dst[c]->CpuData() + o*_step*_inner;
                         CpuCopy(pSrc, _inner*_step, pDst);
                     }
                 }

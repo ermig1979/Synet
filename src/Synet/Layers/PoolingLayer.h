@@ -32,7 +32,7 @@ namespace Synet
 {
     namespace Detail
     {
-        template <class T> void PoolingForwardMaxCpu(const T * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
+        template <class T> void PoolingForwardCpuMax(const T * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
             size_t strideY, size_t strideX, size_t padY, size_t padX, T * dst, size_t dstH, size_t dstW, int trans)
         {
             if (trans)
@@ -86,6 +86,65 @@ namespace Synet
                     src += srcW * srcH;
                     dst += dstW * dstH;
                 }            
+            }
+        }
+
+        template <class T> void PoolingForwardCpuAverage(const T * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
+            size_t strideY, size_t strideX, size_t padY, size_t padX, T * dst, size_t dstH, size_t dstW, int trans)
+        {
+            if (trans)
+            {
+                for (size_t ph = 0; ph < dstH; ++ph)
+                {
+                    size_t hStart = ph * strideY - padY;
+                    size_t hEnd = std::min(hStart + kernelY, srcH);
+                    hStart = std::max<ptrdiff_t>(0, hStart);
+                    for (size_t pw = 0; pw < dstW; ++pw)
+                    {
+                        size_t wStart = pw * strideX - padX;
+                        size_t wEnd = std::min(wStart + kernelX, srcW);
+                        wStart = std::max<ptrdiff_t>(0, wStart);
+                        for (size_t c = 0; c < channels; ++c)
+                            dst[c] = T(0);
+                        for (size_t h = hStart; h < hEnd; ++h)
+                        {
+                            for (size_t w = wStart; w < wEnd; ++w)
+                            {
+                                const T * pc = src + (h * srcW + w)*channels;
+                                for (size_t c = 0; c < channels; ++c)
+                                    dst[c] += pc[c];
+                            }
+                        }
+                        for (size_t c = 0; c < channels; ++c)
+                            dst[c] = dst[c] / (hEnd - hStart) / (wEnd - wStart);
+                        dst += channels;
+                    }
+                }
+            }
+            else
+            {
+                for (size_t c = 0; c < channels; ++c)
+                {
+                    for (size_t ph = 0; ph < dstH; ++ph)
+                    {
+                        size_t hStart = ph * strideY - padY;
+                        size_t hEnd = std::min(hStart + kernelY, srcH);
+                        hStart = std::max<ptrdiff_t>(0, hStart);
+                        for (size_t pw = 0; pw < dstW; ++pw)
+                        {
+                            size_t wStart = pw * strideX - padX;
+                            size_t wEnd = std::min(wStart + kernelX, srcW);
+                            wStart = std::max<ptrdiff_t>(0, wStart);
+                            T sum = T(0);
+                            for (size_t h = hStart; h < hEnd; ++h)
+                                for (size_t w = wStart; w < wEnd; ++w)
+                                    sum += src[h * srcW + w];
+                            dst[ph*dstW + pw] = sum/(hEnd - hStart)/(wEnd - wStart);
+                        }
+                    }
+                    src += srcW * srcH;
+                    dst += dstW * dstH;
+                }
             }
         }
 
@@ -303,12 +362,11 @@ namespace Synet
             switch (_method)
             {
             case PoolingMethodTypeMax:
-                //CpuSet(dstSize, Type(-FLT_MAX), pDst);
                 for (size_t n = 0; n < _num; ++n)
                 {
                     if (_trans)
                     {
-                        Detail::PoolingForwardMaxCpu(pSrc, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, pDst, _dstH, _dstW, _trans);
+                        Detail::PoolingForwardCpuMax(pSrc, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, pDst, _dstH, _dstW, _trans);
                         pSrc += _channels*_srcW * _srcH;
                         pDst += _channels*_srcW * _srcH;
                     }
@@ -330,32 +388,11 @@ namespace Synet
                 }
                 break;
             case PoolingMethodTypeAverage:
-                CpuSet(dstSize, Type(0), pDst);
                 for (size_t n = 0; n < _num; ++n)
                 {
-                    for (size_t c = 0; c < _channels; ++c)
-                    {
-                        for (size_t ph = 0; ph < _dstH; ++ph)
-                        {
-                            size_t hStart = ph * _strideY - _padY;
-                            size_t hEnd = std::min(hStart + _kernelY, _srcH);
-                            hStart = std::max<ptrdiff_t>(0, hStart);
-                            for (size_t pw = 0; pw < _dstW; ++pw)
-                            {
-                                size_t wStart = pw * _strideX - _padX;
-                                size_t wEnd = std::min(wStart + _kernelX, _srcW);
-                                wStart = std::max<ptrdiff_t>(0, wStart);
-                                size_t poolSize = (hEnd - hStart) * (wEnd - wStart);
-                                Type sum = 0;
-                                for (size_t h = hStart; h < hEnd; ++h)
-                                    for (size_t w = wStart; w < wEnd; ++w)
-                                        sum += pSrc[h * _srcW + w];
-                                pDst[ph*_dstW + pw] = sum / poolSize;
-                            }
-                        }
-                        pSrc += _srcW * _srcH;
-                        pDst += _dstW * _dstH;
-                    }
+                    Detail::PoolingForwardCpuAverage(pSrc, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, pDst, _dstH, _dstW, _trans);
+                    pSrc += _channels*_srcW * _srcH;
+                    pDst += _channels*_srcW * _srcH;
                 }
                 break;
             case PoolingMethodTypeStochastic:

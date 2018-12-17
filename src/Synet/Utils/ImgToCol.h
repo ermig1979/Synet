@@ -136,44 +136,49 @@ namespace Synet
     }
 
     template <typename T> void ImgToRow(const T * src, size_t srcH, size_t srcW, size_t srcC, size_t kernelY, size_t kernelX,
-        size_t padY, size_t padX, size_t padH, size_t padW, size_t strideY, size_t strideX, size_t dilationY, size_t dilationX, T * dst)
+        size_t padY, size_t padX, size_t padH, size_t padW, size_t strideY, size_t strideX, size_t dilationY, size_t dilationX, size_t group, T * dst)
     {
         SYNET_PERF_FUNC();
 
         size_t dstH = (srcH + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
         size_t dstW = (srcW + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
 
-        for (size_t dy = 0; dy < dstH; ++dy)
+        size_t size = srcC / group;
+        for (size_t g = 0; g < group; ++g)
         {
-            for (size_t dx = 0; dx < dstW; ++dx)
+            for (size_t dy = 0; dy < dstH; ++dy)
             {
-                for (size_t ky = 0; ky < kernelY; ky++)
+                for (size_t dx = 0; dx < dstW; ++dx)
                 {
-                    size_t sy = dy*strideY + ky * dilationY - padY;
-                    if (sy < srcH)
+                    for (size_t ky = 0; ky < kernelY; ky++)
                     {
-                        for (size_t kx = 0; kx < kernelX; kx++)
+                        size_t sy = dy*strideY + ky * dilationY - padY;
+                        if (sy < srcH)
                         {
-                            size_t sx = dx*strideX + kx * dilationX - padX;
-                            if (sx < srcW)
+                            for (size_t kx = 0; kx < kernelX; kx++)
                             {
-                                memcpy(dst, src + (sy * srcW + sx)*srcC, srcC * sizeof(float));
-                                dst += srcC;
-                            }
-                            else
-                            {
-                                memset(dst, 0, srcC * sizeof(float));
-                                dst += srcC;
+                                size_t sx = dx*strideX + kx * dilationX - padX;
+                                if (sx < srcW)
+                                {
+                                    memcpy(dst, src + (sy * srcW + sx)*srcC, size * sizeof(float));
+                                    dst += size;
+                                }
+                                else
+                                {
+                                    memset(dst, 0, size * sizeof(float));
+                                    dst += size;
+                                }
                             }
                         }
-                    }
-                    else
-                    {
-                        memset(dst, 0, kernelX*srcC * sizeof(float));
-                        dst += kernelX*srcC;
+                        else
+                        {
+                            memset(dst, 0, kernelX * size * sizeof(float));
+                            dst += kernelX*size;
+                        }
                     }
                 }
             }
+            src += size;
         }
     }
 }
