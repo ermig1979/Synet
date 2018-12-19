@@ -331,6 +331,7 @@ namespace Synet
     struct PermuteParam
     {
         SYNET_PARAM_VALUE(Shape, order, Shape());
+        SYNET_PARAM_VALUE(TensorFormat, format, TensorFormatUnknown);
     };
 
     struct PoolingParam

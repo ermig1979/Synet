@@ -48,7 +48,7 @@ namespace Synet
             _lower = param.lower();
             _upper = param.upper();
 
-            dst[0]->Reshape(src[0]->Shape());
+            dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
         }
 
     protected:

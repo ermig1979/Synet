@@ -188,10 +188,11 @@ namespace Test
                 }
                 else
                 {
+                    bool trans = dst[i]->Format() == Synet::TensorFormatNhwc;
                     size_t size = dst[i]->Size();
                     if (offset + size > _output.size())
                         _output.resize(offset + size);
-                    if (_trans && dst[i]->Count() == 4)
+                    if (trans && dst[i]->Count() == 4)
                     {
                         float * out = _output.data() + offset;
                         for (size_t n = 0; n < dst[i]->Axis(0); ++n)
@@ -199,6 +200,21 @@ namespace Test
                                 for (size_t y = 0; y < dst[i]->Axis(1); ++y)
                                     for (size_t x = 0; x < dst[i]->Axis(2); ++x)
                                         *out++ = dst[i]->CpuData(Shape({ n, y, x, c }))[0];
+                    }
+                    else if (trans && dst[i]->Count() == 3)
+                    {
+                        float * out = _output.data() + offset;
+                        for (size_t c = 0; c < dst[i]->Axis(2); ++c)
+                            for (size_t y = 0; y < dst[i]->Axis(0); ++y)
+                                for (size_t x = 0; x < dst[i]->Axis(1); ++x)
+                                    *out++ = dst[i]->CpuData(Shape({ y, x, c }))[0];
+                    }
+                    else if (trans && dst[i]->Count() == 2)
+                    {
+                        float * out = _output.data() + offset;
+                        for (size_t c = 0; c < dst[i]->Axis(1); ++c)
+                            for (size_t s = 0; s < dst[i]->Axis(0); ++s)
+                                *out++ = dst[i]->CpuData(Shape({ s, c }))[0];
                     }
                     else
                         memcpy(_output.data() + offset, dst[i]->CpuData(), size * sizeof(float));

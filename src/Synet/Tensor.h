@@ -357,6 +357,22 @@ namespace Synet
 #ifdef SYNET_DEBUG_PRINT_ENABLE
         void DebugPrint(std::ostream & os, const String & name, size_t first = 5, size_t last = 2) const
         {
+            if (_shape.size() == 4 && _format == TensorFormatNhwc)
+            {
+                Tensor trans({ _shape[0], _shape[3], _shape[1], _shape[2] }, 0, TensorFormatNchw);
+                for (size_t n = 0; n < Axis(0); ++n)
+                    for (size_t c = 0; c < Axis(3); ++c)
+                        for (size_t y = 0; y < Axis(1); ++y)
+                            for (size_t x = 0; x < Axis(2); ++x)
+                                trans.CpuData({ n, c, y, x })[0] = CpuData({ n, y, x, c })[0];
+                std::stringstream ss;
+                ss << name << " { ";
+                for (size_t i = 0; i < _shape.size(); ++i)
+                    ss << _shape[i] << " ";
+                ss << "} NHWC -> ";
+                trans.DebugPrint(os, ss.str(), first, last);
+                return;
+            }
             os << name << " { ";
             for (size_t i = 0; i < _shape.size(); ++i)
                 os << _shape[i] << " ";

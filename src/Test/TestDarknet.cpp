@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
     {
         SYNET_PERF_FUNC();
         std::cout << "Convert network from Yolo to Synet :" << std::endl;
-        options.result = Synet::ConvertDarknetToSynet(options.otherModel, options.otherWeight, options.synetModel, options.synetWeight);
+        options.result = Synet::ConvertDarknetToSynet(options.otherModel, options.otherWeight, options.tensorFormat == 1, options.synetModel, options.synetWeight);
         std::cout << "Conversion is finished " << (options.result ? "successfully." : "with errors.") << std::endl;
     }
     else if (options.mode == "compare")

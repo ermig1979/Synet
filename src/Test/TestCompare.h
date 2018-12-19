@@ -184,6 +184,12 @@ namespace Test
     }
 #endif
 
+    inline bool Compare(float a, float b, float t)
+    {
+        float d = ::fabs(a - b);
+        return d <= t || d / std::max(::fabs(a), ::fabs(b)) <= t;
+    }
+
     template<class OtherNetwork> bool CompareOtherAndSynet(const Options & options)
     {
         OtherNetwork otherNetwork;
@@ -285,7 +291,7 @@ namespace Test
 
             for (size_t j = 0; j < test.synet.size(); ++j)
             {
-                if (::abs(test.other[j] - test.synet[j]) > options.threshold)
+                if (!Compare(test.other[j], test.synet[j], options.threshold))
                 {
                     std::cout << "Test " << i << " '" << test.path[0];
                     for (size_t k = 1; k < test.path.size(); ++k)

@@ -44,7 +44,7 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            dst[0]->Reshape(src[0]->Shape());
+            dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
         }
 
     protected:

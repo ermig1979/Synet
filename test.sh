@@ -18,9 +18,9 @@ then
 	rm $DIR/image/descript.ion
 fi
 
-./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=convert $PATHES -tf $FORMAT
+./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=convert $PATHES -tf=$FORMAT
 
-./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=compare $PATHES -if=*.ppm  -rn=$NUMBER -tn=$THREAD -t=0.001 -ln=$LOG
+./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=compare $PATHES -if=*.ppm -rn=$NUMBER -tn=$THREAD -t=0.001 -ln=$LOG
 
 }
 
@@ -28,7 +28,7 @@ if [ ! -d ./test ];then
 	mkdir ./test
 fi
 
-TEST darknet darknet 1 1 0 000
+TEST darknet darknet 1 1 1 000
 #TEST darknet darknet19 1 1 0 000
 #TEST darknet yolov3 1 1 0 000
 

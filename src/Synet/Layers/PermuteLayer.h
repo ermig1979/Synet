@@ -81,10 +81,10 @@ namespace Synet
                 for (size_t i = 0; i < _count; ++i)
                     _dstStride[_order[i]] = dstStride[i];
 
-                dst[0]->Reshape(_dstShape, Type(), src[0]->Format());
+                dst[0]->Reshape(_dstShape, Type(), param.format() == TensorFormatUnknown ? src[0]->Format() : param.format());
             }
             else
-                dst[0]->Share(*src[0]);
+                dst[0]->ShareAs(*src[0], src[0]->Shape(), param.format() == TensorFormatUnknown ? src[0]->Format() : param.format());
         }
 
     protected:

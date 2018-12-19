@@ -48,7 +48,7 @@ namespace Synet
             _coeff[1] = 1.0f;
 
             assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape());
-            dst[0]->Reshape(src[0]->Shape());
+            dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
             _src[0] = src[0]->CpuData();
             _src[1] = src[1]->CpuData();
         }

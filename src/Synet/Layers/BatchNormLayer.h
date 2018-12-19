@@ -59,8 +59,7 @@ namespace Synet
             
             if (src[0]->Count() >= 1)
                 assert(src[0]->Axis(1) == _channels);
-            dst[0]->Reshape(src[0]->Shape());
-
+            dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
             if (_useGlobalStats)
             {
                 Type scaleFactor = Type(1);
@@ -115,7 +114,7 @@ namespace Synet
                 size_t size = src[0]->Size(1);
                 for (size_t i = 0; i < num; ++i)
                 {
-                    Detail::ScaleLayerForwardCpu(pSrc, _scale.CpuData(), _bias.CpuData(), _channels, spatialDim, pDst, 0);
+                    Detail::ScaleLayerForwardCpu(pSrc, _scale.CpuData(), _bias.CpuData(), _channels, spatialDim, pDst, src[0]->Format() == TensorFormatNhwc);
                     pSrc += size;
                     pDst += size;
                 }

@@ -66,7 +66,7 @@ namespace Synet
     class DarknetToSynet
     {
     public:
-        bool Convert(const String & srcModelPath, const String & srcWeightPath, const String & dstModelPath, const String & dstWeightPath)
+        bool Convert(const String & srcModelPath, const String & srcWeightPath, bool trans, const String & dstModelPath, const String & dstWeightPath)
         {
             if (!Synet::FileExist(srcModelPath))
             {
@@ -85,7 +85,7 @@ namespace Synet
             ::load_weights(&net, (char*)srcWeightPath.c_str());
             Synet::NetworkParamHolder holder;
             Tensors weight;
-            if (!ConvertNetwork(net, holder(), weight))
+            if (!ConvertNetwork(net, trans, holder(), weight))
             {
                 ::free_network(net);
                 return false;
@@ -96,7 +96,7 @@ namespace Synet
             ::load_weights(net, (char*)srcWeightPath.c_str());
             Synet::NetworkParamHolder holder;
             Tensors weight;
-            if (!ConvertNetwork(*net, holder(), weight))
+            if (!ConvertNetwork(*net, trans, holder(), weight))
             {
                 ::free_network(net);
                 return false;
@@ -123,7 +123,7 @@ namespace Synet
         typedef Synet::Tensor<float> Tensor;
         typedef std::vector<Tensor> Tensors;
 
-        bool ConvertNetwork(const ::network & net, Synet::NetworkParam & network, Tensors & weight)
+        bool ConvertNetwork(const ::network & net, bool trans, Synet::NetworkParam & network, Tensors & weight)
         {
             _id = 0;
             _dst.clear();
@@ -133,31 +133,37 @@ namespace Synet
             weight.reserve(net.n * 2);
             network.name() = String("darknet_unknown");
 
-            if (!ConvertInputLayer(net, network.layers()))
+            if (!ConvertInputLayer(net, trans, network.layers()))
                 return false;
 
             for (int i = 0; i < net.n; ++i)
             {
-                if (!ConvertLayer(net.layers[i], network.layers(), weight))
+                if (!ConvertLayer(net.layers[i], trans, network.layers(), weight))
                     return false;
                 _dst.push_back(network.layers().back().dst()[0]);
             }
             return true;
         }
 
-        bool ConvertInputLayer(const ::network & src, LayerParams & dst)
+        bool ConvertInputLayer(const ::network & src, bool trans, LayerParams & dst)
         {
             Synet::LayerParam input;
             input.type() = Synet::LayerTypeInput;
             input.name() = UniqueName("Input");
             input.dst().resize(1, input.name());
             input.input().shape().resize(1);
-            input.input().shape()[0].dim() = Shape({ (size_t)src.batch, (size_t)src.c, (size_t)src.h, (size_t)src.w });
+            if (trans)
+            {
+                input.input().shape()[0].dim() = Shape({ (size_t)src.batch, (size_t)src.h, (size_t)src.w, (size_t)src.c });
+                input.input().shape()[0].format() = Synet::TensorFormatNhwc;
+            }
+            else
+                input.input().shape()[0].dim() = Shape({ (size_t)src.batch, (size_t)src.c, (size_t)src.h, (size_t)src.w });
             dst.push_back(input);
             return true;
         }
 
-        bool ConvertLayer(const ::layer & src, LayerParams & dst, Tensors & weight)
+        bool ConvertLayer(const ::layer & src, bool trans, LayerParams & dst, Tensors & weight)
         {
             switch (src.type)
             {
@@ -166,7 +172,7 @@ namespace Synet
                     return false;
                 break;
             case ::CONVOLUTIONAL:
-                if (!ConvertConvolitionLayer(src, dst, weight))
+                if (!ConvertConvolitionLayer(src, trans, dst, weight))
                     return false;
                 if (src.batch_normalize)
                 {
@@ -177,7 +183,7 @@ namespace Synet
                 }
                 else
                 {
-                    if (!ConvertBiasLayer(src, dst, weight))
+                    if (!ConvertBiasLayer(src, trans, dst, weight))
                         return false;
                 }
                 if (!ConvertActivationLayer(src, dst))
@@ -188,7 +194,7 @@ namespace Synet
                     return false;
                 break;
             case ::REGION:
-                if (!ConvertRegionLayer(src, dst))
+                if (!ConvertRegionLayer(src, trans, dst))
                     return false;
                 break;
             case ::REORG:
@@ -196,7 +202,7 @@ namespace Synet
                     return false;
                 break;
             case ::ROUTE:
-                if (!ConvertConcatLayer(src, dst))
+                if (!ConvertConcatLayer(src, trans, dst))
                     return false;
                 break;
             case ::SHORTCUT:
@@ -206,7 +212,7 @@ namespace Synet
                     return false;
                 break;
             case ::SOFTMAX:
-                if (!ConvertSoftmaxLayer(src, dst))
+                if (!ConvertSoftmaxLayer(src, trans, dst))
                     return false;
                 break;
             case ::UPSAMPLE:
@@ -214,7 +220,7 @@ namespace Synet
                     return false;
                 break;
             case ::YOLO:
-                if (!ConvertYoloLayer(src, dst))
+                if (!ConvertYoloLayer(src, trans, dst))
                     return false;
                 break;
             default:
@@ -285,7 +291,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertBiasLayer(const ::layer & src, LayerParams & dst, Tensors & weight)
+        bool ConvertBiasLayer(const ::layer & src, bool trans, LayerParams & dst, Tensors & weight)
         {
             Synet::LayerParam bias;
             bias.type() = Synet::LayerTypeBias;
@@ -301,7 +307,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConcatLayer(const ::layer & src, LayerParams & dst)
+        bool ConvertConcatLayer(const ::layer & src, bool trans, LayerParams & dst)
         {
             Synet::LayerParam concat;
             concat.type() = Synet::LayerTypeConcat;
@@ -309,11 +315,12 @@ namespace Synet
             for (int i = 0; i < src.n; ++i)
                 concat.src().push_back(_dst[src.input_layers[i]]);
             concat.dst().resize(1, concat.name());
+            concat.concat().axis() = trans ? 3 : 1;
             dst.push_back(concat);
             return true;
         }
 
-        bool ConvertConvolitionLayer(const ::layer & src, LayerParams & dst, Tensors & weight)
+        bool ConvertConvolitionLayer(const ::layer & src, bool trans, LayerParams & dst, Tensors & weight)
         {
             Synet::LayerParam convolution;
             convolution.type() = Synet::LayerTypeConvolution;
@@ -328,10 +335,26 @@ namespace Synet
                 convolution.convolution().pad().resize(1, src.pad);
             convolution.convolution().biasTerm() = false;
             convolution.weight().resize(1);
-            convolution.weight()[0].dim() = Shape({ (size_t)src.out_c, (size_t)src.c, (size_t)src.size, (size_t)src.size });
             weight.push_back(Tensor());
-            weight.back().Reshape(convolution.weight()[0].dim());
-            memcpy(weight.back().CpuData(), src.weights, weight.back().Size() * sizeof(float));
+            if (trans)
+            {
+                Shape shape = Shape({ (size_t)src.size, (size_t)src.size, (size_t)src.c, (size_t)src.out_c });
+                weight.back().Reshape(shape);
+                const float * pSrc = src.weights;
+                for (size_t o = 0; o < shape[3]; ++o)
+                    for (size_t i = 0; i < shape[2]; ++i)
+                        for (size_t y = 0; y < shape[0]; ++y)
+                            for (size_t x = 0; x < shape[1]; ++x)
+                                weight.back().CpuData(Shape({ y, x, i, o }))[0] = *pSrc++;
+                convolution.weight()[0].dim() = shape;
+                convolution.weight()[0].format() = TensorFormatNhwc;
+            }
+            else
+            {
+                convolution.weight()[0].dim() = Shape({ (size_t)src.out_c, (size_t)src.c, (size_t)src.size, (size_t)src.size });
+                weight.back().Reshape(convolution.weight()[0].dim());
+                memcpy(weight.back().CpuData(), src.weights, weight.back().Size() * sizeof(float));
+            }
             dst.push_back(convolution);
             return true;
         }
@@ -364,8 +387,22 @@ namespace Synet
             return true;
         }
 
-        bool ConvertRegionLayer(const ::layer & src, LayerParams & dst)
+        void ToNchwPermuteLayer(LayerParams & dst)
         {
+            Synet::LayerParam permute;
+            permute.type() = Synet::LayerTypePermute;
+            permute.name() = UniqueName("Permute");
+            permute.src() = dst.back().dst();
+            permute.dst().resize(1, permute.name());
+            permute.permute().order() = Shape({ 0, 3, 1, 2 });
+            permute.permute().format() = TensorFormatNchw;
+            dst.push_back(permute);
+        }
+
+        bool ConvertRegionLayer(const ::layer & src, bool trans, LayerParams & dst)
+        {
+            if (trans)
+                ToNchwPermuteLayer(dst);
             Synet::LayerParam region;
             region.type() = Synet::LayerTypeRegion;
             region.name() = UniqueName("Region");
@@ -428,13 +465,14 @@ namespace Synet
             return true;
         }
 
-        bool ConvertSoftmaxLayer(const ::layer & src, LayerParams & dst)
+        bool ConvertSoftmaxLayer(const ::layer & src, bool trans, LayerParams & dst)
         {
             Synet::LayerParam softmax;
             softmax.type() = Synet::LayerTypeSoftmax;
             softmax.name() = UniqueName("Softmax");
             softmax.src().push_back(_dst.back());
             softmax.dst().push_back(softmax.name());
+            softmax.softmax().axis() = trans ? 3 : 1;
             dst.push_back(softmax);
             return true;
         }
@@ -452,8 +490,10 @@ namespace Synet
             return true;
         }
 
-        bool ConvertYoloLayer(const ::layer & src, LayerParams & dst)
+        bool ConvertYoloLayer(const ::layer & src, bool trans, LayerParams & dst)
         {
+            if (trans)
+                ToNchwPermuteLayer(dst);
             Synet::LayerParam yolo;
             yolo.type() = Synet::LayerTypeYolo;
             yolo.name() = UniqueName("Yolo");
@@ -500,10 +540,10 @@ namespace Synet
         Strings _dst;
     };
 
-    bool ConvertDarknetToSynet(const String & srcData, const String & srcWeights, const String & dstXml, const String & dstBin)
+    bool ConvertDarknetToSynet(const String & srcData, const String & srcWeights, bool trans, const String & dstXml, const String & dstBin)
     {
         DarknetToSynet darknetToSynet;
-        return darknetToSynet.Convert(srcData, srcWeights, dstXml, dstBin);
+        return darknetToSynet.Convert(srcData, srcWeights, trans, dstXml, dstBin);
     }
 }
 

@@ -350,6 +350,8 @@ namespace Synet
                     Shape nchw = Shape({ 0, 3, 1, 2 });
                     layer.concat().axis() = nchw[layer.concat().axis()];
                 }
+                //if (input.size() == 3 && layer.concat().axis() == 1)
+                //    layer.concat().axis() = 2;
             }
             return true;
         }
@@ -674,6 +676,11 @@ namespace Synet
                 }
                 if (reorderChannels)
                     order = Shape({ 0, 1, 3, 2 });
+                else if (order == Shape({ 0, 2, 3, 1 }))
+                {
+                    order = Shape({ 0, 1, 2, 3 });
+                    layer.permute().format() = TensorFormatNchw;
+                }
                 else
                 {
                     Shape nhwc = Shape({ 0, 2, 3, 1 });
@@ -795,6 +802,10 @@ namespace Synet
                         else
                             output = Shape({ output[0], output[2] , output[3] , output[1] });
                     }
+                    //if (trans && output.size() == 3)
+                    //{
+                    //    output = Shape({ output[0], output[2] , output[1] });
+                    //}
                     layer.reshape().shape() = output;
                 }
                 else

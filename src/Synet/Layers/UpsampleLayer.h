@@ -31,17 +31,18 @@ namespace Synet
 {
     namespace Detail
     {
-        template <typename T> void UpsampleLayerForwardCpu(const T * src, size_t number, size_t height, size_t width, size_t stride, int reverse, T scale, T * dst)
+        template <typename T> void UpsampleLayerForwardCpu(const T * src, size_t channel, size_t height, size_t width, size_t stride, T scale, int reverse, int trans, T * dst)
         {
-            for (size_t i = 0; i < number; ++i)
+            if (trans)
             {
                 if (reverse)
                 {
                     for (size_t sy = 0; sy < height; sy += stride)
                     {
                         for (size_t sx = 0; sx < width; sx += stride)
-                            (*dst++) = scale*src[sx];
-                        src += width*stride;
+                            for (size_t i = 0; i < channel; ++i)
+                                (*dst++) = scale*src[sx*channel + i];
+                        src += width*stride*channel;
                     }
                 }
                 else
@@ -53,10 +54,41 @@ namespace Synet
                             for (size_t sx = 0; sx < width; ++sx)
                             {
                                 for (size_t kx = 0; kx < stride; ++kx)
-                                    (*dst++) = scale*src[sx];
+                                    for (size_t i = 0; i < channel; ++i)
+                                        (*dst++) = scale*src[sx*channel + i];
                             }
                         }
-                        src += width;
+                        src += width*channel;
+                    }
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i < channel; ++i)
+                {
+                    if (reverse)
+                    {
+                        for (size_t sy = 0; sy < height; sy += stride)
+                        {
+                            for (size_t sx = 0; sx < width; sx += stride)
+                                (*dst++) = scale*src[sx];
+                            src += width*stride;
+                        }
+                    }
+                    else
+                    {
+                        for (size_t sy = 0; sy < height; ++sy)
+                        {
+                            for (size_t ky = 0; ky < stride; ++ky)
+                            {
+                                for (size_t sx = 0; sx < width; ++sx)
+                                {
+                                    for (size_t kx = 0; kx < stride; ++kx)
+                                        (*dst++) = scale*src[sx];
+                                }
+                            }
+                            src += width;
+                        }
                     }
                 }
             }
@@ -89,35 +121,56 @@ namespace Synet
                 _stride = param.stride();
             }
             _scale = param.scale();
+            _trans = src[0]->Format() == TensorFormatNhwc;
 
             Shape shape = src[0]->Shape();
-            size_t n = src[0]->Count();
-            if (_reverse)
+            assert(shape.size() == 4);
+            _num = shape[0];
+            if (_trans)
             {
-                shape[n - 1] /= _stride;
-                shape[n - 2] /= _stride;
+                _height = shape[1];
+                _width = shape[2];
+                _channel = shape[3];
+                if (_reverse)
+                {
+                    shape[1] /= _stride;
+                    shape[2] /= _stride;
+                }
+                else
+                {
+                    shape[1] *= _stride;
+                    shape[2] *= _stride;
+                }
             }
             else
             {
-                shape[n - 1] *= _stride;
-                shape[n - 2] *= _stride;
+                _channel = shape[1];
+                _height = shape[2];
+                _width = shape[3];
+                if (_reverse)
+                {
+                    shape[2] /= _stride;
+                    shape[3] /= _stride;
+                }
+                else
+                {
+                    shape[2] *= _stride;
+                    shape[3] *= _stride;
+                }            
             }
-            dst[0]->Reshape(shape);
-            _number = src[0]->Size(0, -2);
-            _height = src[0]->Axis(-2);
-            _width = src[0]->Axis(-1);
+            dst[0]->Reshape(shape, Type(), src[0]->Format());
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            Detail::UpsampleLayerForwardCpu(src[0]->CpuData(), _number, _height, _width, _stride, _reverse, _scale, dst[0]->CpuData());
+            Detail::UpsampleLayerForwardCpu(src[0]->CpuData(), _channel, _height, _width, _stride, _scale, _reverse, _trans, dst[0]->CpuData());
         }
 
     private:
-        int _reverse;
-        size_t _stride, _number, _height, _width;
+        int _reverse, _trans;
+        size_t _stride, _num, _channel, _height, _width;
         float _scale;
     };
 }

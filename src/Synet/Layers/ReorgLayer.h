@@ -32,27 +32,52 @@ namespace Synet
 {
     namespace Detail
     {
-        template< class T> void ReorgLayerForwardCpu(const T * src, size_t batch, size_t channels, size_t height, size_t width, size_t stride, bool forward, T * dst)
+        template< class T> void ReorgLayerForwardCpu(const T * src, size_t batch, size_t channels, size_t height, size_t width, size_t stride, int forward, int trans, T * dst)
         {
             size_t out_c = channels / (stride*stride);
             for (size_t b = 0; b < batch; ++b)
             {
-                for (size_t k = 0; k < channels; ++k)
+                if(trans)
                 {
                     for (size_t j = 0; j < height; ++j)
                     {
                         for (size_t i = 0; i < width; ++i)
                         {
-                            size_t src_index = i + width*(j + height*(k + channels*b));
-                            size_t c2 = k % out_c;
-                            size_t offset = k / out_c;
-                            size_t w2 = i*stride + offset % stride;
-                            size_t h2 = j*stride + offset / stride;
-                            size_t dst_index = w2 + width*stride*(h2 + height*stride*(c2 + out_c*b));
-                            if (forward) 
-                                dst[dst_index] = src[src_index];
-                            else 
-                                dst[src_index] = src[dst_index];
+                            for (size_t k = 0; k < channels; ++k)
+                            {
+                                size_t src_index = k + channels*(i + width*(j + height*b));
+                                size_t c2 = k % out_c;
+                                size_t offset = k / out_c;
+                                size_t w2 = i*stride + offset % stride;
+                                size_t h2 = j*stride + offset / stride;
+                                size_t dst_index = c2 + out_c*(w2 + width*stride*(h2 + height*stride*b));
+                                if (forward)
+                                    dst[dst_index] = src[src_index];
+                                else
+                                    dst[src_index] = src[dst_index];
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    for (size_t k = 0; k < channels; ++k)
+                    {
+                        for (size_t j = 0; j < height; ++j)
+                        {
+                            for (size_t i = 0; i < width; ++i)
+                            {
+                                size_t src_index = i + width*(j + height*(k + channels*b));
+                                size_t c2 = k % out_c;
+                                size_t offset = k / out_c;
+                                size_t w2 = i*stride + offset % stride;
+                                size_t h2 = j*stride + offset / stride;
+                                size_t dst_index = w2 + width*stride*(h2 + height*stride*(c2 + out_c*b));
+                                if (forward) 
+                                    dst[dst_index] = src[src_index];
+                                else 
+                                    dst[src_index] = src[dst_index];
+                            }
                         }
                     }
                 }
@@ -75,23 +100,42 @@ namespace Synet
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const ReorgParam & param = this->Param().reorg();
-            _reverse = param.reverse();
+            _reverse = param.reverse() ? 1 : 0;
             _stride = param.stride();
+            _trans = src[0]->Format() == TensorFormatNhwc ? 1 : 0;
             Shape shape = src[0]->Shape();
             assert(shape.size() == 4);
-            if (_reverse) 
+            if (_trans)
             {
-                shape[1] = shape[1] / (_stride*_stride);
-                shape[2] = shape[2] * _stride;
-                shape[3] = shape[3] * _stride;
+                if (_reverse)
+                {
+                    shape[1] = shape[1] * _stride;
+                    shape[2] = shape[2] * _stride;
+                    shape[3] = shape[3] / (_stride*_stride);
+                }
+                else
+                {
+                    shape[1] = shape[1] / _stride;
+                    shape[2] = shape[2] / _stride;
+                    shape[3] = shape[3] * (_stride*_stride);
+                }
             }
-            else 
+            else
             {
-                shape[1] = shape[1] * (_stride*_stride);
-                shape[2] = shape[2] / _stride;
-                shape[3] = shape[3] / _stride;
+                if (_reverse) 
+                {
+                    shape[1] = shape[1] / (_stride*_stride);
+                    shape[2] = shape[2] * _stride;
+                    shape[3] = shape[3] * _stride;
+                }
+                else 
+                {
+                    shape[1] = shape[1] * (_stride*_stride);
+                    shape[2] = shape[2] / _stride;
+                    shape[3] = shape[3] / _stride;
+                }
             }
-            dst[0]->Reshape(shape);
+            dst[0]->Reshape(shape, Type(), src[0]->Format());
         }
 
     protected:
@@ -99,11 +143,14 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
             const Shape & shape = dst[0]->Shape();
-            Detail::ReorgLayerForwardCpu(src[0]->CpuData(), shape[0], shape[1], shape[2], shape[3], _stride, _reverse, dst[0]->CpuData());
+            if(_trans)
+                Detail::ReorgLayerForwardCpu(src[0]->CpuData(), shape[0], shape[3], shape[1], shape[2], _stride, _reverse, _trans, dst[0]->CpuData());
+            else
+                Detail::ReorgLayerForwardCpu(src[0]->CpuData(), shape[0], shape[1], shape[2], shape[3], _stride, _reverse, _trans, dst[0]->CpuData());
         }
 
     private:
         size_t _stride;
-        bool _reverse;
+        int _reverse, _trans;
     };
 }

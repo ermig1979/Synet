@@ -30,6 +30,34 @@
 
 namespace Synet
 {
+    namespace Detail
+    {
+        template <typename T> void BiasLayerForwardCpu(const T * src, const T * bias, size_t count, size_t size, T * dst, int trans)
+        {
+            if (trans)
+            {
+                for (size_t j = 0; j < size; ++j)
+                {
+                    for (size_t i = 0; i < count; ++i)
+                        dst[i] = src[i] + bias[i];
+                    src += count;
+                    dst += count;
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i < count; ++i)
+                {
+                    const T b = bias[i];
+                    for (size_t j = 0; j < size; ++j)
+                        dst[j] = src[j]  + b;
+                    src += size;
+                    dst += size;
+                }
+            }
+        }
+    }
+
     template <class T> class BiasLayer : public Synet::Layer<T>
     {
     public:
@@ -45,39 +73,43 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            const BiasParam & param = this->Param().bias();
-            if (src.size() == 1)
-                assert(src[0]->Count() >= param.axis() + param.numAxes());
-            Tensor & bias = (src.size() > 1) ? *src[1] : (Tensor &)this->Weight()[0];
-            size_t axis = bias.Count() == 0 ? 0 : param.axis();
-            assert(src[0]->Count() >= axis + bias.Count());
-            for (size_t i = 0; i < bias.Count(); ++i)
-                assert(src[0]->Axis(axis + i) == bias.Axis(i));
-            _outerDim = src[0]->Size(0, axis);
-            _biasDim = bias.Size();
-            _innerDim = src[0]->Size(axis + bias.Count());
-            _dim = _biasDim * _innerDim;
+            const ScaleParam & param = this->Param().scale();
+            _axis = param.axis();
+            const Tensor & bias = (src.size() > 1 ? *src[1] : this->Weight()[0]);
+            _trans = src[0]->Format() == TensorFormatNhwc;
+            _count = bias.Size();
+            if (bias.Size() == src[0]->Size())
+            {
+                _num = 1;
+                _size = 1;
+            }
+            else
+            {
+                _num = src[0]->Size(0, _axis);
+                _size = src[0]->Size() / _num / _count;
+            }
+            assert(src[0]->Size() == _num*_count*_size);
             if (src[0] != dst[0])
-                dst[0]->Reshape(src[0]->Shape());
+                dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-
-            const Type * pBias = ((src.size() > 1) ? *src[1] : this->Weight()[0]).CpuData();
+            const Type * pSrc = src[0]->CpuData();
+            const Type * pBias = (src.size() > 1 ? *src[1] : this->Weight()[0]).CpuData();
             Type * pDst = dst[0]->CpuData();
-            if (src[0] != dst[0])
-                CpuCopy(src[0]->CpuData(), src[0]->Size(), pDst);
-            for (size_t n = 0; n < _outerDim; ++n)
+            for (size_t n = 0; n < _num; ++n)
             {
-                CpuAddBias(pBias, _biasDim, _innerDim, pDst);
-                pDst += _dim;
+                Detail::BiasLayerForwardCpu(pSrc, pBias, _count, _size, pDst, _trans);
+                pSrc += _count*_size;
+                pDst += _count*_size;
             }
         }
 
     private:
-        size_t _outerDim, _biasDim, _innerDim, _dim;
+        size_t _axis, _num, _count, _size;
+        int _trans;
     };
 }
