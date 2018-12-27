@@ -139,7 +139,7 @@ namespace Synet
                 else
                     assert(0);
             }
-            dst[0]->Reshape(shape);
+            dst[0]->Reshape(shape, Type(), src[0]->Format());
         }
 
     protected:

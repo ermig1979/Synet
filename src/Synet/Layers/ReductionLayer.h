@@ -121,7 +121,7 @@ namespace Synet
                 shape.push_back(1);
             }
             assert(_outer*_count*_inner == src[0]->Size());
-            dst[0]->Reshape(shape);
+            dst[0]->Reshape(shape, Type(), src[0]->Format());
         }
 
     protected:

@@ -285,20 +285,27 @@ namespace Synet
                     }
                 }
             }
-            LayerParam layer;
-            layer.type() = LayerTypeFused;
-            layer.name() = src[index + 5].name();
-            layer.src().push_back(src[index - 1].name());
-            layer.dst().push_back(layer.name());
-            layer.fused().type() = 3;
-            layer.weight().push_back(src[index - 1].weight()[1]);
-            layer.weight().push_back(src[index + 4].weight()[0]);
-            dst.back().weight().resize(1);
-            if(dst.back().type() == LayerTypeConvolution)
-                dst.back().convolution().biasTerm() = false;
+            if (dst.back().type() == LayerTypeConvolution)
+            {
+                dst.back().name() = src[index + 5].name();
+                dst.back().dst().back() = dst.back().name();
+                dst.back().convolution().activationType() = ActivationFunctionTypePrelu;
+                dst.back().weight().push_back(src[index + 4].weight()[0]);
+            }
             else
+            {
+                LayerParam layer;
+                layer.type() = LayerTypeFused;
+                layer.name() = src[index + 5].name();
+                layer.src().push_back(src[index - 1].name());
+                layer.dst().push_back(layer.name());
+                layer.fused().type() = 3;
+                layer.weight().push_back(src[index - 1].weight()[1]);
+                layer.weight().push_back(src[index + 4].weight()[0]);
+                dst.back().weight().resize(1);
                 dst.back().innerProduct().biasTerm() = false;
-            dst.push_back(layer);
+                dst.push_back(layer);
+            }
             index += 5;
             return true;
         }
