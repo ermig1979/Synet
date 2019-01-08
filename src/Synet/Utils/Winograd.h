@@ -258,13 +258,6 @@ namespace Synet
                 dst += dstHeight * dstWidth;
             }
         }
-
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-        template <> SYNET_INLINE void SetInput<float>(const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, bool pad)
-        {
-            ::SimdWinograd2x3iSetInput(src, srcChannels, srcHeight, srcWidth, dst, pad ? 1 : 0);
-        }
-#endif
     }
 
     namespace Winograd2x3p
@@ -468,23 +461,6 @@ namespace Synet
                 dst += dstHeight * dstWidth;
             }
         }
-
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-        template <> SYNET_INLINE void SetFilter<float>(const float * src, size_t size, float * dst)
-        {
-            ::SimdWinograd2x3pSetFilter(src, size, dst);
-        }
-
-        template <> SYNET_INLINE void SetInput<float>(const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, bool pad)
-        {
-            ::SimdWinograd2x3pSetInput(src, srcChannels, srcHeight, srcWidth, dst, pad ? 1 : 0);
-        }
-
-        template <> SYNET_INLINE void SetOutput<float>(const float * src, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
-        {
-            ::SimdWinograd2x3pSetOutput(src, dst, dstChannels, dstHeight, dstWidth);
-        }
-#endif
     }
 
     namespace Winograd4x3p
@@ -858,23 +834,6 @@ namespace Synet
                 dst += dstHeight * dstWidth;
             }
         }
-
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-        template <> SYNET_INLINE void SetFilter<float>(const float * src, size_t size, float * dst)
-        {
-            ::SimdWinograd4x3pSetFilter(src, size, dst);
-        }
-
-        template <> SYNET_INLINE void SetInput<float>(const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, bool pad)
-        {
-            ::SimdWinograd4x3pSetInput(src, srcChannels, srcHeight, srcWidth, dst, pad ? 1 : 0);
-        }
-
-        template <> SYNET_INLINE void SetOutput<float>(const float * src, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth)
-        {
-            ::SimdWinograd4x3pSetOutput(src, dst, dstChannels, dstHeight, dstWidth);
-        }
-#endif
     }
 
     template <class T> class Winograd
