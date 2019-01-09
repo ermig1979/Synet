@@ -348,7 +348,7 @@ namespace Synet
                 if (input.size() == 4)
                 {
                     Shape nchw = Shape({ 0, 3, 1, 2 });
-                    layer.concat().axis() = nchw[layer.concat().axis()];
+                    layer.concat().axis() = (uint32_t)nchw[layer.concat().axis()];
                 }
                 //if (input.size() == 3 && layer.concat().axis() == 1)
                 //    layer.concat().axis() = 2;
@@ -915,7 +915,7 @@ namespace Synet
                 if (input.size() == 4)
                 {
                     Shape nchw = Shape({ 0, 3, 1, 2 });
-                    layer.unpack().axis() = nchw[layer.unpack().axis()];
+                    layer.unpack().axis() = (int32_t)nchw[layer.unpack().axis()];
                 }
             }
             return true;
