@@ -339,6 +339,16 @@ namespace Synet
 #ifdef SYNET_DEBUG_PRINT_ENABLE
         void DebugPrint(std::ostream & os, bool weight)
         {
+            for (size_t i = 0; i < _input.size(); ++i)
+            {
+                os << "Layer: " << _input[i].layer->Param().name() << " : ";
+                os << ValueToString(_input[i].layer->Param().type()) << " ( ";
+                for (size_t j = 0; j < _input[i].layer->Param().src().size(); ++j)
+                    os << _input[i].layer->Param().src()[j] << " ";
+                os << ")." << std::endl;
+                for (size_t j = 0; j < _input[i].dst.size(); ++j)
+                    _input[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]");
+            }
             for (size_t i = 0; i < _stages.size(); ++i)
             {
                 _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
