@@ -270,6 +270,40 @@ namespace Synet
             return true;
         }
 
+        template<class T> static bool ConvertVector(const XmlAttr * pSrc, std::vector<T> & dst, const String & delimeter = ",")
+        {
+            if (pSrc == NULL)
+                return false;
+            const String & str = pSrc->Value();
+            size_t current = 0;
+            Strings subs;
+            while (current != std::string::npos)
+            {
+                size_t next = str.find(delimeter, current);
+                subs.push_back(str.substr(current, next - current));
+                current = next;
+                if (current != std::string::npos)
+                    current += delimeter.size();
+            }
+            dst.resize(subs.size());
+            for (size_t i = 0; i < subs.size(); ++i)
+                StringToValue(subs[i], dst[i]);
+            return true;
+        }
+
+        template<class T> static bool ConvertVectors(const XmlAttr * pBeg, const XmlAttr * pEnd, std::vector<T> & dst, const String & delimeter = ",")
+        {
+            std::vector<T> beg, end;
+            if (!(ConvertVector(pBeg, beg, delimeter) && ConvertVector(pEnd, end, delimeter)))
+                return false;
+            dst.resize(beg.size() + end.size());
+            for (size_t i = 0; i < beg.size(); ++i)
+                dst[i] = beg[i];
+            for (size_t i = 0; i < end.size(); ++i)
+                dst[beg.size() + i] = end[i];
+            return true;
+        }
+
         static Shape ConvertShape(const XmlNode * pPort)
         {
             Shape shape;
@@ -401,25 +435,42 @@ namespace Synet
             const XmlNode * pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
-            layer.convolution().kernel().resize(2);
-            StringToValue(pData->FirstAttribute("kernel-y")->Value(), layer.convolution().kernel()[0]);
-            StringToValue(pData->FirstAttribute("kernel-x")->Value(), layer.convolution().kernel()[1]);
-            layer.convolution().stride().resize(2);
-            StringToValue(pData->FirstAttribute("stride-y")->Value(), layer.convolution().stride()[0]);
-            StringToValue(pData->FirstAttribute("stride-x")->Value(), layer.convolution().stride()[1]);
-            layer.convolution().dilation().resize(2);
-            StringToValue(pData->FirstAttribute("dilation-y")->Value(), layer.convolution().dilation()[0]);
-            StringToValue(pData->FirstAttribute("dilation-x")->Value(), layer.convolution().dilation()[1]);
+            if (pData->FirstAttribute("kernel-y") && pData->FirstAttribute("kernel-x"))
+            {
+                layer.convolution().kernel().resize(2);
+                StringToValue(pData->FirstAttribute("kernel-y")->Value(), layer.convolution().kernel()[0]);
+                StringToValue(pData->FirstAttribute("kernel-x")->Value(), layer.convolution().kernel()[1]);
+            }
+            else if (!ConvertVector(pData->FirstAttribute("kernel"), layer.convolution().kernel()))
+                return false;
+            if (pData->FirstAttribute("stride-y") && pData->FirstAttribute("stride-x"))
+            {
+                layer.convolution().stride().resize(2);
+                StringToValue(pData->FirstAttribute("stride-y")->Value(), layer.convolution().stride()[0]);
+                StringToValue(pData->FirstAttribute("stride-x")->Value(), layer.convolution().stride()[1]);
+            }
+            else if (!ConvertVector(pData->FirstAttribute("strides"), layer.convolution().stride()))
+                return false;
+            if (pData->FirstAttribute("dilation-y") && pData->FirstAttribute("dilation-x"))
+            {
+                layer.convolution().dilation().resize(2);
+                StringToValue(pData->FirstAttribute("dilation-y")->Value(), layer.convolution().dilation()[0]);
+                StringToValue(pData->FirstAttribute("dilation-x")->Value(), layer.convolution().dilation()[1]);
+            }
+            else if (!ConvertVector(pData->FirstAttribute("dilations"), layer.convolution().dilation()))
+                return false;
+
             StringToValue(pData->FirstAttribute("group")->Value(), layer.convolution().group());
-            //String padType = pData->FirstAttribute("auto_pad")->Value();
-            //if (padType == "same_upper" || padType == "same_lower")
-            //{
+            if (pData->FirstAttribute("pad-y") && pData->FirstAttribute("pad-x") && pData->FirstAttribute("pad-b") && pData->FirstAttribute("pad-r"))
+            {
                 layer.convolution().pad().resize(4);
                 StringToValue(pData->FirstAttribute("pad-y")->Value(), layer.convolution().pad()[0]);
                 StringToValue(pData->FirstAttribute("pad-x")->Value(), layer.convolution().pad()[1]);
                 StringToValue(pData->FirstAttribute("pad-b")->Value(), layer.convolution().pad()[2]);
                 StringToValue(pData->FirstAttribute("pad-r")->Value(), layer.convolution().pad()[3]);
-            //}
+            }
+            else if (!ConvertVectors(pData->FirstAttribute("pads_begin"), pData->FirstAttribute("pads_end"), layer.convolution().pad()))
+                return false;
             size_t inputNum;
             const XmlNode * pInput = pLayer->FirstNode("input");
             if (pInput)
@@ -705,22 +756,35 @@ namespace Synet
                 layer.pooling().method() = PoolingMethodTypeAverage;
             else
                 assert(0);
-            layer.pooling().kernel().resize(2);
-            StringToValue(pData->FirstAttribute("kernel-y")->Value(), layer.pooling().kernel()[0]);
-            StringToValue(pData->FirstAttribute("kernel-x")->Value(), layer.pooling().kernel()[1]);
-            layer.pooling().stride().resize(2);
-            StringToValue(pData->FirstAttribute("stride-y")->Value(), layer.pooling().stride()[0]);
-            StringToValue(pData->FirstAttribute("stride-x")->Value(), layer.pooling().stride()[1]);
-            //String padType = pData->FirstAttribute("auto_pad")->Value();
-            //if (padType == "same_upper" || padType == "same_lower")
-            //{
-                layer.pooling().pad().resize(4);
+            if (pData->FirstAttribute("kernel-y") && pData->FirstAttribute("kernel-x"))
+            {
+                layer.convolution().kernel().resize(2);
+                StringToValue(pData->FirstAttribute("kernel-y")->Value(), layer.pooling().kernel()[0]);
+                StringToValue(pData->FirstAttribute("kernel-x")->Value(), layer.pooling().kernel()[1]);
+            }
+            else if (!ConvertVector(pData->FirstAttribute("kernel"), layer.pooling().kernel()))
+                return false;
+            if (pData->FirstAttribute("stride-y") && pData->FirstAttribute("stride-x"))
+            {
+                layer.pooling().stride().resize(2);
+                StringToValue(pData->FirstAttribute("stride-y")->Value(), layer.pooling().stride()[0]);
+                StringToValue(pData->FirstAttribute("stride-x")->Value(), layer.pooling().stride()[1]);
+            }
+            else if (!ConvertVector(pData->FirstAttribute("strides"), layer.pooling().stride()))
+                return false;
+            if (pData->FirstAttribute("pad-y") && pData->FirstAttribute("pad-x") && pData->FirstAttribute("pad-b") && pData->FirstAttribute("pad-r"))
+            {
+                layer.convolution().pad().resize(4);
                 StringToValue(pData->FirstAttribute("pad-y")->Value(), layer.pooling().pad()[0]);
                 StringToValue(pData->FirstAttribute("pad-x")->Value(), layer.pooling().pad()[1]);
                 StringToValue(pData->FirstAttribute("pad-b")->Value(), layer.pooling().pad()[2]);
                 StringToValue(pData->FirstAttribute("pad-r")->Value(), layer.pooling().pad()[3]);
-            //}
-
+            }
+            else if (!ConvertVectors(pData->FirstAttribute("pads_begin"), pData->FirstAttribute("pads_end"), layer.pooling().pad()))
+                return false;
+            const XmlAttr * pRoundingType = pData->FirstAttribute("rounding_type");
+            if (pRoundingType && String(pRoundingType->Value()) == "floor")
+                layer.pooling().roundingType() = RoundingTypeFloor;
             return true;
         }
 

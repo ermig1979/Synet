@@ -92,10 +92,17 @@ namespace Synet
             _activation = param.activationType();
             _params[0] = param.activationParam0();
             _params[1] = param.activationParam1();
-            if (_activation == ActivationFunctionTypePrelu)
-                assert(weight.back().Size() == _dstC);
-
             assert(weight.size() == 1 + _biasTerm + (_activation == ActivationFunctionTypePrelu));
+            if (_activation == ActivationFunctionTypePrelu)
+            {
+                if (weight.back().Size() == 1)
+                {
+                    _activation = ActivationFunctionTypeLeakyRelu;
+                    _params[0] = weight.back().CpuData()[0];
+                }
+                else
+                    assert(weight.back().Size() == _dstC);
+            }
 
             _axis = param.axis();
             assert(src[0]->Count() == _axis + 3);

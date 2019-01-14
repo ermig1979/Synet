@@ -227,6 +227,7 @@ namespace Synet
             const PoolingParam & param = this->Param().pooling();
             _method = param.method();
             _yoloCompatible = param.yoloCompatible();
+            _roundingType = param.roundingType();
             assert(src[0]->Count() == 4);
 
             _trans = src[0]->Format() == TensorFormatNhwc;
@@ -332,8 +333,18 @@ namespace Synet
             }
             else
             {
-                _dstH = (size_t)(::ceil((float)(_srcH + _padY + _padH - _kernelY) / _strideY)) + 1;
-                _dstW = (size_t)(::ceil((float)(_srcW + _padX + _padW - _kernelX) / _strideX)) + 1;
+                if (_roundingType == RoundingTypeCeil)
+                {
+                    _dstH = (size_t)(::ceil((float)(_srcH + _padY + _padH - _kernelY) / _strideY)) + 1;
+                    _dstW = (size_t)(::ceil((float)(_srcW + _padX + _padW - _kernelX) / _strideX)) + 1;
+                }
+                else if (_roundingType == RoundingTypeFloor)
+                {
+                    _dstH = (size_t)(::floor((float)(_srcH + _padY + _padH - _kernelY) / _strideY)) + 1;
+                    _dstW = (size_t)(::floor((float)(_srcW + _padX + _padW - _kernelX) / _strideX)) + 1;
+                }
+                else
+                    assert(0);
                 if (_padX || _padY)
                 {
                     if ((_dstH - 1) * _strideY >= _srcH + _padY)
@@ -405,6 +416,7 @@ namespace Synet
 
     private:
         PoolingMethodType _method;
+        RoundingType _roundingType;
         int _yoloCompatible, _trans;
         size_t _num, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideX, _strideY, _padX, _padY, _padW, _padH, _dstH, _dstW;
     };

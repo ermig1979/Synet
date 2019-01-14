@@ -137,15 +137,19 @@ namespace Synet
     SYNET_PARAM_ENUM(PoolingPadType,
         PoolingPadTypeTensorflowSame);
 
-    SYNET_PARAM_ENUM(ReductionType,
-        ReductionTypeMax,
-        ReductionTypeSum);
-
     SYNET_PARAM_ENUM_(PriorBoxCodeType, Undefined, Size,
         PriorBoxCodeTypeUnknown,
         PriorBoxCodeTypeCorner,
         PriorBoxCodeTypeCenterSize,
-        PriorBoxCodeTypeCornerSize);
+        PriorBoxCodeTypeCornerSize);    
+    
+    SYNET_PARAM_ENUM(ReductionType,
+        ReductionTypeMax,
+        ReductionTypeSum);
+
+    SYNET_PARAM_ENUM(RoundingType,
+        RoundingTypeCeil,
+        RoundingTypeFloor);
 
     SYNET_PARAM_ENUM(TensorType,
         TensorType32f,
@@ -343,6 +347,7 @@ namespace Synet
         SYNET_PARAM_VALUE(bool, globalPooling, false);
         SYNET_PARAM_VALUE(int, yoloCompatible, 0);
         SYNET_PARAM_VALUE(PoolingPadType, padType, PoolingPadTypeUnknown);
+        SYNET_PARAM_VALUE(RoundingType, roundingType, RoundingTypeCeil);
     };
 
     struct PriorBoxParam
