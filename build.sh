@@ -9,6 +9,6 @@ fi
 
 cd $BUILD_DIR
 
-cmake ../prj/cmake -DMODE=$TEST_MODE -DAVX512=0
+cmake ../prj/cmake -DMODE=$TEST_MODE -DAVX512=0 -DBLIS=1
 make -j8 
 

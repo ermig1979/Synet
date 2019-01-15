@@ -234,7 +234,7 @@ namespace Test
             os << "----- Performance -----" << std::endl;
 #ifdef __SimdLib_h__
             int simd = ::SimdCpuInfo();
-            os << "Available SIMD:";
+            os << "Simd use:";
             os << (simd&(1 << SimdCpuInfoAvx512bw) ? " AVX-512BW" : "");
             os << (simd&(1 << SimdCpuInfoAvx512f) ? " AVX-512F" : "");
             os << (simd&(1 << SimdCpuInfoAvx2) ? " AVX2 FMA" : "");
@@ -245,6 +245,9 @@ namespace Test
             os << (simd&(1 << SimdCpuInfoSse2) ? " SSE2" : "");
             os << (simd&(1 << SimdCpuInfoSse) ? " SSE" : "");
             os << std::endl;
+#endif
+#ifdef BLIS_H        
+            os << "Blis arch: " << bli_arch_string(bli_arch_query_id()) << std::endl;
 #endif
             for (FunctionMap::const_iterator j = total.begin(); j != total.end(); j++)
                 os << j->second->Statistic() << std::endl;

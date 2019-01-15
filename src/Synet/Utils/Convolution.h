@@ -40,9 +40,11 @@ namespace Synet
         {
         }
 
+        typedef void(*Gemm32fNNPtr)(size_t M, size_t N, size_t K, const T * alpha, const T * A, size_t lda, const T * B, size_t ldb, const T * beta, T * C, size_t ldc);
+
         void Init(size_t srcC, size_t srcH, size_t srcW, int srcT, size_t dstC, int dstT,
             size_t kernelY, size_t kernelX, size_t dilationY, size_t dilationX, size_t strideY, size_t strideX, 
-            size_t padY, size_t padX, size_t padH, size_t padW, size_t group, ActivationFunctionType activation)
+            size_t padY, size_t padX, size_t padH, size_t padW, size_t group, ActivationFunctionType activation, Gemm32fNNPtr gemm)
         {
         }
 
@@ -77,10 +79,10 @@ namespace Synet
 
     template<> SYNET_INLINE void Convolution<float>::Init(size_t srcC, size_t srcH, size_t srcW, int srcT, size_t dstC, int dstT,
         size_t kernelY, size_t kernelX, size_t dilationY, size_t dilationX, size_t strideY, size_t strideX,
-        size_t padY, size_t padX, size_t padH, size_t padW, size_t group, ActivationFunctionType activation)
+        size_t padY, size_t padX, size_t padH, size_t padW, size_t group, ActivationFunctionType activation, ::SimdGemm32fNNPtr gemm)
     {
         _convolution = ::SimdConvolutionInit(srcC, srcH, srcW, (::SimdBool)srcT, dstC, (::SimdBool)dstT, kernelY, kernelX,
-            dilationY, dilationX, strideY, strideX, padY, padX, padH, padW, group, (::SimdConvolutionActivationType)activation);
+            dilationY, dilationX, strideY, strideX, padY, padX, padH, padW, group, (::SimdConvolutionActivationType)activation, gemm);
     }
 
     template<> SYNET_INLINE size_t Convolution<float>::BufferSize()

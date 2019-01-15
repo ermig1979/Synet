@@ -28,7 +28,7 @@ if [ ! -d ./test ];then
 	mkdir ./test
 fi
 
-TEST darknet darknet 1 1 1 000
+TEST darknet darknet 1 1 1 001
 #TEST darknet darknet19 1 1 0 000
 #TEST darknet yolov3 1 1 0 000
 

@@ -27,6 +27,7 @@
 //#define SYNET_SIMD_LIBRARY_ENABLE
 //#define SYNET_OPEN_BLAS_ENABLE
 //#define SYNET_GEMM_SIMD_LIBRARY
+//#define SYNET_BLIS_ENABLE
 //#define SYNET_GEMM_DYNAMIC
 
 //#define SYNET_GEMM_COMPARE
@@ -84,6 +85,14 @@
 extern "C" 
 {
 #include <cblas.h>
+}
+#endif
+
+#ifdef SYNET_BLIS_ENABLE
+extern "C"
+{
+#include <blis/blis.h>
+#include <blis/cblas.h>
 }
 #endif
 
@@ -171,6 +180,11 @@ namespace Synet
 #ifdef SYNET_OPEN_BLAS_ENABLE
         ::openblas_set_num_threads((int)threadNumber);
         ::goto_set_num_threads((int)threadNumber);
+#endif
+#ifdef SYNET_BLIS_ENABLE
+        rntm_t rntm;
+        bli_rntm_init(&rntm);
+        bli_rntm_set_num_threads((dim_t)threadNumber, &rntm);
 #endif
     }
 

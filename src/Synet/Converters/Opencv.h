@@ -228,7 +228,7 @@ namespace Synet
                     return false;
                 if (type == "Clamp" && !ConvertClampLayer(pLayer, layer))
                     return false;
-                if (type == "Const" && !ConvertConstLayer(pLayer, bin, layer, weight))
+                if (type == "Const" && !ConvertConstLayer(pLayer, bin, trans, layer, weight))
                     return false;
                 if (type == "Concat" && !ConvertConcatLayer(pLayer, trans, layer))
                     return false;
@@ -390,17 +390,24 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConstLayer(const XmlNode * pLayer, const Vector & bin, LayerParam & layer, Tensors & weight)
+        bool ConvertConstLayer(const XmlNode * pLayer, const Vector & bin, bool trans, LayerParam & layer, Tensors & weight)
         {
             layer.type() = Synet::LayerTypeConst;
             const XmlNode * pOutput = pLayer->FirstNode("output");
+            Shape shape;
             if (pOutput)
             {
                 const XmlNode * pPort = pOutput->FirstNode("port");
                 if (pPort)
                 {
                     layer.weight().resize(1);
-                    layer.weight()[0].dim() = ConvertShape(pPort);
+                    shape = ConvertShape(pPort);
+                    if (trans && shape.size() == 4)
+                    {
+                        shape = Shape({shape[0], shape[2], shape[3], shape[1]});
+                        layer.weight()[0].format() = TensorFormatNhwc;
+                    }
+                    layer.weight()[0].dim() = shape;
                 }
                 else
                     return false;
@@ -419,7 +426,17 @@ namespace Synet
                     weight.push_back(Tensor());
                     weight.back().Reshape(layer.weight()[0].dim());
                     assert(size == weight.back().Size() * sizeof(float));
-                    memcpy(weight.back().CpuData(), bin.data() + offset / sizeof(float), size);
+                    if (trans && shape.size() == 4)
+                    {
+                        const float * pSrc = weight.back().CpuData();
+                        for (size_t i = 0; i < shape[0]; ++i)
+                            for (size_t c = 0; c < shape[3]; ++c)
+                                for (size_t y = 0; y < shape[1]; ++y)
+                                    for (size_t x = 0; x < shape[2]; ++x)
+                                        weight.back().CpuData(Shape({ i, y, x, c }))[0] = *pSrc++;
+                    }
+                    else
+                        memcpy(weight.back().CpuData(), bin.data() + offset / sizeof(float), size);
                 }
                 else
                     return false;

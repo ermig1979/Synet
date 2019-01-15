@@ -173,7 +173,14 @@ namespace Synet
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);
 
-            _convolution.Init(_srcC, _srcH, _srcW, _trans, _dstC, _trans, _kernelY, _kernelX, _dilationY, _dilationX, _strideY, _strideX, _padY, _padX, _padH, _padW, _group, _activation);
+            _convolution.Init(_srcC, _srcH, _srcW, _trans, _dstC, _trans, _kernelY, _kernelX, 
+                _dilationY, _dilationX, _strideY, _strideX, _padY, _padX, _padH, _padW, _group, _activation,
+#if defined(SYNET_BLIS_ENABLE) && defined(SYNET_GEMM_SIMD_LIBRARY)
+                Synet::BlisGemm32fNN
+#else
+                NULL
+#endif
+            );
             if (_convolution.Enable())
             {
                 buf[0]->Extend({ _convolution.BufferSize() });

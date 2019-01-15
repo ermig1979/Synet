@@ -219,4 +219,16 @@ namespace Synet
         ::cblas_sgemv(::CblasRowMajor, (::CBLAS_TRANSPOSE)transA, (int)M, (int)N, alpha, A, (int)N, x, 1, beta, y, 1);
     }
 #endif
+
+#if defined(SYNET_BLIS_ENABLE) && defined(SYNET_GEMM_SIMD_LIBRARY)
+SYNET_INLINE void BlisGemm32fNN(size_t M, size_t N, size_t K, const float * alpha, const float * A, size_t lda, const float * B, size_t ldb, const float * beta, float * C, size_t ldc)
+{
+#if defined(SYNET_SIZE_STATISTIC)
+    std::stringstream ss;
+    ss << M << "-" << N << "-" << K;
+    SYNET_PERF_BLOCK(ss.str().c_str());
+#endif
+    cblas_sgemm(::CblasRowMajor, ::CblasNoTrans, ::CblasNoTrans, (f77_int)M, (f77_int)N, (f77_int)K, *alpha, A, (f77_int)lda, B, (f77_int)ldb, *beta, C, (f77_int)ldc);
+}
+#endif
 }
