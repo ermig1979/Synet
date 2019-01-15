@@ -4,3 +4,6 @@
 [submodule "3rd/darknet"]
 	path = 3rd/darknet
 	url = https://github.com/ermig1979/darknet.git
+[submodule "3rd/blis"]
+	path = 3rd/blis
+	url = https://github.com/ermig1979/blis.git
