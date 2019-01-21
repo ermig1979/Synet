@@ -92,7 +92,6 @@ extern "C"
 extern "C"
 {
 #include <blis/blis.h>
-#include <blis/cblas.h>
 }
 #endif
 
@@ -164,9 +163,11 @@ namespace Synet
     inline size_t GetThreadNumber()
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-        return ::SimdGetThreadNumber();
+        return SimdGetThreadNumber();
 #elif defined(SYNET_OPEN_BLAS_ENABLE)
-        return ::openblas_get_num_threads();
+        return openblas_get_num_threads();
+#elif defined(SYNET_BLIS_ENABLE)
+        return bli_thread_get_num_threads();
 #else
         return 1;
 #endif
@@ -175,16 +176,14 @@ namespace Synet
     inline void SetThreadNumber(size_t threadNumber)
     {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-        ::SimdSetThreadNumber(threadNumber);
+        SimdSetThreadNumber(threadNumber);
 #endif
 #ifdef SYNET_OPEN_BLAS_ENABLE
-        ::openblas_set_num_threads((int)threadNumber);
-        ::goto_set_num_threads((int)threadNumber);
+        openblas_set_num_threads((int)threadNumber);
+        goto_set_num_threads((int)threadNumber);
 #endif
 #ifdef SYNET_BLIS_ENABLE
-        rntm_t rntm;
-        bli_rntm_init(&rntm);
-        bli_rntm_set_num_threads((dim_t)threadNumber, &rntm);
+        bli_thread_set_num_threads(threadNumber);
 #endif
     }
 

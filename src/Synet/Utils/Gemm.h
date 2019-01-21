@@ -223,12 +223,12 @@ namespace Synet
 #if defined(SYNET_BLIS_ENABLE) && defined(SYNET_GEMM_SIMD_LIBRARY)
 SYNET_INLINE void BlisGemm32fNN(size_t M, size_t N, size_t K, const float * alpha, const float * A, size_t lda, const float * B, size_t ldb, const float * beta, float * C, size_t ldc)
 {
-#if defined(SYNET_SIZE_STATISTIC)
+#if defined(SYNET_SIZE_STATISTIC) && 0
     std::stringstream ss;
     ss << M << "-" << N << "-" << K;
     SYNET_PERF_BLOCK(ss.str().c_str());
 #endif
-    cblas_sgemm(::CblasRowMajor, ::CblasNoTrans, ::CblasNoTrans, (f77_int)M, (f77_int)N, (f77_int)K, *alpha, A, (f77_int)lda, B, (f77_int)ldb, *beta, C, (f77_int)ldc);
+    bli_sgemm(BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE, M, N, K, (float*)alpha, (float*)A, lda, 1, (float*)B, ldb, 1, (float*)beta, C, ldc, 1);
 }
 #endif
 }

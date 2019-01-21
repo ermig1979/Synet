@@ -775,7 +775,7 @@ namespace Synet
                 assert(0);
             if (pData->FirstAttribute("kernel-y") && pData->FirstAttribute("kernel-x"))
             {
-                layer.convolution().kernel().resize(2);
+                layer.pooling().kernel().resize(2);
                 StringToValue(pData->FirstAttribute("kernel-y")->Value(), layer.pooling().kernel()[0]);
                 StringToValue(pData->FirstAttribute("kernel-x")->Value(), layer.pooling().kernel()[1]);
             }
@@ -791,7 +791,7 @@ namespace Synet
                 return false;
             if (pData->FirstAttribute("pad-y") && pData->FirstAttribute("pad-x") && pData->FirstAttribute("pad-b") && pData->FirstAttribute("pad-r"))
             {
-                layer.convolution().pad().resize(4);
+                layer.pooling().pad().resize(4);
                 StringToValue(pData->FirstAttribute("pad-y")->Value(), layer.pooling().pad()[0]);
                 StringToValue(pData->FirstAttribute("pad-x")->Value(), layer.pooling().pad()[1]);
                 StringToValue(pData->FirstAttribute("pad-b")->Value(), layer.pooling().pad()[2]);

@@ -69,7 +69,7 @@ namespace Test
 
         ~Options()
         {
-            if (result)
+            if (mode == "compare" && result)
             {
                 std::stringstream ss;
                 PerformanceMeasurerStorage::s_storage.Print(ss);

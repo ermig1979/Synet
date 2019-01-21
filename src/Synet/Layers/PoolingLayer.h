@@ -148,64 +148,11 @@ namespace Synet
             }
         }
 
-        template <class T> void PoolingForwardMaxCpu(const T * src, size_t srcStride, size_t srcX, size_t srcY, size_t kernelY, size_t kernelX, 
-            size_t padY, size_t padX, size_t strideY, size_t strideX, T * dst, size_t dstX, size_t dstY)
-        {
-            for (size_t dy = 0; dy < dstY; ++dy)
-            {
-                size_t yStart = dy * strideY - padY;
-                size_t yEnd = std::min(yStart + kernelY, srcY);
-                yStart = std::max<ptrdiff_t>(0, yStart);
-                for (size_t dx = 0; dx < dstX; ++dx)
-                {
-                    size_t xStart = dx * strideX - padX;
-                    size_t xEnd = std::min(xStart + kernelX, srcX);
-                    xStart = std::max<ptrdiff_t>(0, xStart);
-                    T max = -std::numeric_limits<T>::max();
-                    for (size_t sy = yStart; sy < yEnd; ++sy)
-                        for (size_t sx = xStart; sx < xEnd; ++sx)
-                            max = std::max(max, src[sy * srcStride + sx]);
-                    dst[dy*dstX + dx] = max;
-                }
-            }
-        }
-
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-        template <> SYNET_INLINE void PoolingForwardMaxCpu<float>(const float * src, size_t srcStride, size_t srcX, size_t srcY, size_t kernelY, size_t kernelX,
-            size_t padY, size_t padX, size_t strideY, size_t strideX, float * dst, size_t dstX, size_t dstY)
+        template <> SYNET_INLINE void PoolingForwardCpuMax<float>(const float * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
+            size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, int trans)
         {
-            if (strideY == 1 && strideX == 1 && kernelY == 3 && kernelX == 3 && padY == 1 && padX == 1)
-            {
-                ::SimdNeuralPooling1x1Max3x3(src, srcStride, srcX, srcY, dst, dstX);
-                return;
-            }
-            if (strideY == 2 && strideX == 2 && kernelY == 3 && kernelX == 3 && padY == 0 && padX == 0)
-            {
-                ::SimdNeuralPooling2x2Max3x3(src, srcStride, srcX, srcY, dst, dstX);
-                return;
-            }
-            if (strideY == 2 && strideX == 2 && kernelY == 2 && kernelX == 2 && padY == 0 && padX == 0)
-            {
-                ::SimdNeuralPooling2x2Max2x2(src, srcStride, srcX, srcY, dst, dstX);
-                return;
-            }
-            for (size_t dy = 0; dy < dstY; ++dy)
-            {
-                size_t yStart = dy * strideY - padY;
-                size_t yEnd = std::min(yStart + kernelY, srcY);
-                yStart = std::max<ptrdiff_t>(0, yStart);
-                for (size_t dx = 0; dx < dstX; ++dx)
-                {
-                    size_t xStart = dx * strideX - padX;
-                    size_t xEnd = std::min(xStart + kernelX, srcX);
-                    xStart = std::max<ptrdiff_t>(0, xStart);
-                    float max = -std::numeric_limits<float>::max();
-                    for (size_t sy = yStart; sy < yEnd; ++sy)
-                        for (size_t sx = xStart; sx < xEnd; ++sx)
-                            max = std::max(max, src[sy * srcStride + sx]);
-                    dst[dy*dstX + dx] = max;
-                }
-            }
+            ::SimdSynetPoolingForwardMax(src, channels, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dst, dstH, dstW, (::SimdBool)trans);
         }
 #endif
     }
@@ -363,47 +310,38 @@ namespace Synet
         }
 
     protected:
+
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
+            ForwardCpu(src[0]->CpuData(), dst[0]->CpuData());
+        }
 
-            const Type * pSrc = src[0]->CpuData();
-            Type * pDst = dst[0]->CpuData();
-            size_t dstSize = dst[0]->Size();
+        void ForwardCpu(const T * src, T * dst)
+        {
+#ifdef SYNET_SIZE_STATISTIC
+            std::stringstream ss;
+            ss << "i=" << _channels << "x" << _srcH << "x" << _srcW << " k=" << _kernelY << " s=" << _strideY << (_method ? " avg" : " max");
+            SYNET_PERF_BLOCK(ss.str().c_str());
+#else
+            SYNET_PERF_FUNC();
+#endif
+
             switch (_method)
             {
             case PoolingMethodTypeMax:
                 for (size_t n = 0; n < _num; ++n)
                 {
-                    if (_trans)
-                    {
-                        Detail::PoolingForwardCpuMax(pSrc, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, pDst, _dstH, _dstW, _trans);
-                        pSrc += _channels*_srcW * _srcH;
-                        pDst += _channels*_srcW * _srcH;
-                    }
-                    else
-                    {
-                        for (size_t c = 0; c < _channels; ++c)
-                        {
-                            size_t srcW = _srcW, srcH = _srcH;
-                            if (_yoloCompatible == 1)
-                            {
-                                srcH = _dstH*_strideY - _padY - _padH;
-                                srcW = _dstW*_strideX - _padX - _padW;
-                            }
-                            Detail::PoolingForwardMaxCpu(pSrc, _srcW, srcW, srcH, _kernelY, _kernelX, _padY, _padX, _strideY, _strideX, pDst, _dstW, _dstH);
-                            pSrc += _srcW * _srcH;
-                            pDst += _dstW * _dstH;
-                        }
-                    }
+                    Detail::PoolingForwardCpuMax(src, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, dst, _dstH, _dstW, _trans);
+                    src += _channels*_srcW * _srcH;
+                    dst += _channels*_srcW * _srcH;
                 }
                 break;
             case PoolingMethodTypeAverage:
                 for (size_t n = 0; n < _num; ++n)
                 {
-                    Detail::PoolingForwardCpuAverage(pSrc, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, pDst, _dstH, _dstW, _trans);
-                    pSrc += _channels*_srcW * _srcH;
-                    pDst += _channels*_srcW * _srcH;
+                    Detail::PoolingForwardCpuAverage(src, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, dst, _dstH, _dstW, _trans);
+                    src += _channels*_srcW * _srcH;
+                    dst += _channels*_srcW * _srcH;
                 }
                 break;
             case PoolingMethodTypeStochastic:

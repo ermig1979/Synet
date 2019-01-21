@@ -208,7 +208,7 @@ namespace Synet
         {
 #ifdef SYNET_SIZE_STATISTIC
             std::stringstream ss;
-            ss << " i=" << _srcC << "x" << _srcH << "x" << _srcW << " o=" << _dstC << " k=" << _kernelY << " s=" << _strideY << " g=" << _group;
+            ss << "i=" << _srcC << "x" << _srcH << "x" << _srcW << " o=" << _dstC << " k=" << _kernelY << " s=" << _strideY << " g=" << _group;
             SYNET_PERF_BLOCK(ss.str().c_str());
 #else
             SYNET_PERF_FUNC();
