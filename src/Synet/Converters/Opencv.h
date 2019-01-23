@@ -256,6 +256,8 @@ namespace Synet
                     return false;
                 if (type == "ScaleShift" && !ConvertScaleShiftLayer(pLayer, bin, layer, weight))
                     return false;
+                if (type == "SoftMax" && !ConvertSoftmaxLayer(pLayer, trans, layer))
+                    return false;
                 if (type == "Split" && !ConvertSplitLayer(pLayer, trans, layer))
                     return false;
 
@@ -971,6 +973,40 @@ namespace Synet
             return true;
         }
 
+        bool ConvertSoftmaxLayer(const XmlNode * pLayer, bool trans, LayerParam & layer)
+        {
+            layer.type() = Synet::LayerTypeSoftmax;
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            StringToValue(pData->FirstAttribute("axis")->Value(), layer.softmax().axis());
+            if (trans)
+            {
+                Shape input;
+                const XmlNode * pInput = pLayer->FirstNode("input");
+                if (pInput)
+                {
+                    const XmlNode * pPort = pInput->FirstNode("port");
+                    if (pPort)
+                        input = ConvertShape(pPort);
+                    else
+                        return false;
+                }
+                else
+                    return false;
+                if (input.size() == 4)
+                {
+                    Shape nchw = Shape({ 0, 3, 1, 2 });
+                    layer.softmax().axis() = (int32_t)nchw[layer.softmax().axis()];
+                }
+                //if (input.size() == 2)
+                //{
+                //    Shape cs = Shape({ 1, 0 });
+                //    layer.softmax().axis() = (int32_t)cs[layer.softmax().axis()];
+                //}
+            }
+            return true;
+        }
 
         bool ConvertSplitLayer(const XmlNode * pLayer, bool trans, LayerParam & layer)
         {

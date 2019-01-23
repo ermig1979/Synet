@@ -49,6 +49,9 @@ namespace Synet
             _concatInputSize = src[0]->Size(_concatAxis + 1);
             size_t srcSizeSum = src[0]->Size();
             Shape dstShape = src[0]->Shape();
+            _srcConcatAxis.resize(src.size());
+            _srcConcatAxis[0] = src[0]->Axis(_concatAxis);
+            _src.resize(src.size());
             for (size_t i = 1; i < src.size(); ++i)
             {
                 assert(src[0]->Count() == src[i]->Count());
@@ -59,7 +62,8 @@ namespace Synet
                     assert(dstShape[j] == src[i]->Axis(j));
                 }
                 srcSizeSum += src[i]->Size();
-                dstShape[_concatAxis] += src[i]->Axis(_concatAxis);
+                _srcConcatAxis[i] = src[i]->Axis(_concatAxis);
+                dstShape[_concatAxis] += _srcConcatAxis[i];
             }
             dst[0]->Reshape(dstShape, Type(), src[0]->Format());
             assert(srcSizeSum == dst[0]->Size());
@@ -75,21 +79,41 @@ namespace Synet
             if (src.size() == 1)
                 return;
 
-            Type * dstData = dst[0]->CpuData();
-            size_t concatAxisOffset = 0;
+            Type * pDst = dst[0]->CpuData();
             size_t dstConcatAxis = dst[0]->Axis(_concatAxis);
-            for (size_t i = 0; i < src.size(); ++i)
+            if (_concatInputSize == 1)
             {
-                const Type * srcData = src[i]->CpuData();
-                size_t srcConcatAxis = src[i]->Axis(_concatAxis);
+                for (size_t i = 0; i < src.size(); ++i)
+                    _src[i] = src[i]->CpuData();
                 for (size_t n = 0; n < _concatNum; ++n)
-                    CpuCopy(srcData + n * srcConcatAxis * _concatInputSize, srcConcatAxis * _concatInputSize, 
-                        dstData + (n * dstConcatAxis + concatAxisOffset) * _concatInputSize);
-                concatAxisOffset += srcConcatAxis;
+                {
+                    for (size_t i = 0; i < src.size(); ++i)
+                    {
+                        size_t size = _srcConcatAxis[i];
+                        CpuCopy(_src[i], size, pDst);
+                        _src[i] += size;
+                        pDst += size;
+                    }
+                }
+            }
+            else
+            {
+                size_t concatAxisOffset = 0;
+                for (size_t i = 0; i < src.size(); ++i)
+                {
+                    const Type * pSrc = src[i]->CpuData();
+                    for (size_t n = 0; n < _concatNum; ++n)
+                        CpuCopy(pSrc + n * _srcConcatAxis[i] * _concatInputSize, _srcConcatAxis[i] * _concatInputSize,
+                            pDst + (n * dstConcatAxis + concatAxisOffset) * _concatInputSize);
+                    concatAxisOffset += _srcConcatAxis[i];
+                }
             }
         }
 
     private:
+        typedef std::vector<Type*> Ptrs;
         size_t _concatNum, _concatInputSize, _concatAxis;
+        Index _srcConcatAxis;
+        Ptrs _src;
     };
 }
