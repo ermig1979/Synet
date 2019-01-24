@@ -149,8 +149,7 @@ namespace Synet
                     for (size_t i = 0; i < height*width*_num; ++i)
                     {
                         size_t index = size*i + b*outputs;
-                        T buffer;
-                        Detail::SoftmaxLayerForwardCpu(pDst + index + 5, _classes, 1, &buffer, pDst + index + 5);
+                        Detail::SoftmaxLayerForwardCpu(pDst + index + 5, 1, _classes, 1, pDst + index + 5);
                     }
                 }
             }

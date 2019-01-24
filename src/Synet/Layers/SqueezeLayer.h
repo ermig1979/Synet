@@ -50,7 +50,7 @@ namespace Synet
                 if(src[0]->Axis(i) != 1)
                     shape.push_back(src[0]->Axis(i));
             }
-            dst[0]->ShareAs(*src[0], shape);
+            dst[0]->ShareAs(*src[0], shape, src[0]->Format());
         }
 
     protected:

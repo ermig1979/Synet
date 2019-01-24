@@ -33,42 +33,56 @@ namespace Synet
 {
     namespace Detail
     {
-        template <typename T> void SoftmaxLayerForwardCpu(const T * src, size_t channels, size_t inner, T * buffer, T * dst)
+        template <typename T> void SoftmaxLayerForwardCpu(const T * src, size_t outer, size_t count, size_t inner, T * dst)
         {
-            Synet::CpuCopy(src, inner, buffer);
-            const T * s = src + inner;
-            for (size_t i = 1; i < channels; ++i)
+            Synet::Tensor<T> _buffer({ inner });
+            T * buffer = _buffer.CpuData();
+            for (size_t o = 0; o < outer; ++o)
             {
-                Synet::CpuMax(s, buffer, inner, buffer);
-                s += inner;
-            }
+                Synet::CpuCopy(src, inner, buffer);
+                const T * s = src + inner;
+                for (size_t i = 1; i < count; ++i)
+                {
+                    Synet::CpuMax(s, buffer, inner, buffer);
+                    s += inner;
+                }
 
-            s = src;
-            T * d = dst;
-            for (size_t i = 0; i < channels; ++i)
-            {
-                Synet::CpuSub(s, buffer, inner, d);
-                s += inner;
-                d += inner;
-            }
+                s = src;
+                T * d = dst;
+                for (size_t i = 0; i < count; ++i)
+                {
+                    Synet::CpuSub(s, buffer, inner, d);
+                    s += inner;
+                    d += inner;
+                }
 
-            CpuExp(dst, channels*inner, dst);
+                CpuExp(dst, count*inner, dst);
 
-            Synet::CpuCopy(dst, inner, buffer);
-            d = dst + inner;
-            for (size_t i = 1; i < channels; ++i)
-            {
-                Synet::CpuAdd(d, buffer, inner, buffer);
-                d += inner;
-            }
+                Synet::CpuCopy(dst, inner, buffer);
+                d = dst + inner;
+                for (size_t i = 1; i < count; ++i)
+                {
+                    Synet::CpuAdd(d, buffer, inner, buffer);
+                    d += inner;
+                }
 
-            d = dst;
-            for (size_t i = 0; i < channels; ++i)
-            {
-                Synet::CpuDiv(d, buffer, inner, d);
-                d += inner;
+                d = dst;
+                for (size_t i = 0; i < count; ++i)
+                {
+                    Synet::CpuDiv(d, buffer, inner, d);
+                    d += inner;
+                }
+                src += count*inner;
+                dst += count*inner;
             }
         }
+
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        template <> SYNET_INLINE void SoftmaxLayerForwardCpu<float>(const float * src, size_t outer, size_t count, size_t inner, float * dst)
+        {
+            ::SimdSynetSoftmaxLayerForward(src, outer, count, inner, dst);
+        }
+#endif
     }
 
     template <class T> class SoftmaxLayer : public Synet::Layer<T>
@@ -86,13 +100,11 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            _softmaxAxis = std::min<size_t>(this->Param().softmax().axis(), src[0]->Count() - 1);
+            _axis = std::min<size_t>(this->Param().softmax().axis(), src[0]->Count() - 1);
+            _outer = src[0]->Size(0, _axis);
+            _count = src[0]->Axis(_axis);
+            _inner = src[0]->Size(_axis + 1);
             dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
-            _outerNum = src[0]->Size(0, _softmaxAxis);
-            _innerNum = src[0]->Size(_softmaxAxis + 1);
-            Shape scaleShape = src[0]->Shape();
-            scaleShape[_softmaxAxis] = 1;
-            _scale.Reshape(scaleShape);
         }
 
     protected:
@@ -100,14 +112,10 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            size_t channels = src[0]->Axis(_softmaxAxis);
-            size_t dim = src[0]->Size() / _outerNum;
-            for (size_t i = 0; i < _outerNum; ++i)
-                Detail::SoftmaxLayerForwardCpu(src[0]->CpuData() + i*dim, channels, _innerNum, _scale.CpuData(), dst[0]->CpuData() + i*dim);
+            Detail::SoftmaxLayerForwardCpu(src[0]->CpuData(), _outer, _count, _inner, dst[0]->CpuData());
         }
 
     private:
-        size_t _outerNum, _innerNum, _softmaxAxis;
-        Tensor _scale;
+        size_t _outer, _count, _inner, _axis;
     };
 }
