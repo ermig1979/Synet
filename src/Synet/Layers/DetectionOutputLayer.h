@@ -276,7 +276,7 @@ namespace Synet
         typedef std::map<int, Floats> LabelPred;
         typedef std::vector<LabelPred> LabelPreds;
         typedef std::vector<NormalizedBBox> NormalizedBBoxes;
-        typedef std::vector<Floats> Variances;
+        typedef std::vector<Type*> Variances;
         typedef std::map<int, Index> IndexMap;
         typedef std::vector<IndexMap> IndexMaps;
         typedef std::pair<float, size_t> ScoreIndex;
@@ -353,6 +353,8 @@ namespace Synet
         {
             priorBboxes.clear();
             priorVariances.clear();
+            priorBboxes.reserve(numPriors);
+            priorVariances.reserve(numPriors);
             for (size_t i = 0; i < numPriors; ++i)
             {
                 size_t startIdx = i * 4;
@@ -364,14 +366,7 @@ namespace Synet
                 float bboxSize = BBoxSize(bbox, true);
                 bbox.size = bboxSize;
                 priorBboxes.push_back(bbox);
-            }
-            for (size_t i = 0; i < numPriors; ++i)
-            {
-                size_t startIdx = (numPriors + i) * 4;
-                Floats var;
-                for (int j = 0; j < 4; ++j)
-                    var.push_back(pPrior[startIdx + j]);
-                priorVariances.push_back(var);
+                priorVariances.push_back((Type*)(pPrior + (numPriors + i) * 4));
             }
         }
 
@@ -400,7 +395,7 @@ namespace Synet
             dst.difficult = src.difficult;
         }
 
-        void DecodeBBox(const NormalizedBBox & priorBbox, const Floats & priorVariance, PriorBoxCodeType codeType, bool varianceEncodedInTarget,
+        void DecodeBBox(const NormalizedBBox & priorBbox, const T * priorVariance, PriorBoxCodeType codeType, bool varianceEncodedInTarget,
             bool clipBbox, const NormalizedBBox & bbox, NormalizedBBox & decodeBbox) 
         {
             if (codeType == PriorBoxCodeTypeCorner)
@@ -477,8 +472,6 @@ namespace Synet
             bool clipBbox, const NormalizedBBoxes & bboxes, NormalizedBBoxes & decodeBboxes) 
         {
             size_t numBboxes = priorBboxes.size();
-            if (numBboxes >= 1)
-                assert(priorVariances[0].size() == 4);
             decodeBboxes.clear();
             for (size_t i = 0; i < numBboxes; ++i) 
             {
