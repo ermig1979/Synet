@@ -60,14 +60,14 @@ namespace Synet
             _topK = param.nms().topK();
             _eta = param.nms().eta();            
             
-            assert(src[0]->Shape() == src[1]->Shape());
+            //assert(src[0]->Shape() == src[1]->Shape());
             _bboxPreds.Reshape(src[0]->Shape());
             if (_shareLocation)
                 _bboxPermute.Reshape(src[0]->Shape());
             _confPermute.Reshape(src[1]->Shape());
             _numPriors = src[2]->Axis(2) / 4;
             assert(_numPriors * _numLocClasses * 4 == src[0]->Axis(1));
-            assert(_numPriors * _numLocClasses * 4 == src[1]->Axis(1));
+            assert(_numPriors * _numClasses == src[1]->Axis(1));
             Shape shape(2, 1);
             shape.push_back(1);
             shape.push_back(7);
