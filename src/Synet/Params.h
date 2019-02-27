@@ -93,6 +93,10 @@ namespace Synet
         EltwiseOperationTypeMax,
         EltwiseOperationTypeMin);
 
+    SYNET_PARAM_ENUM(InterpolationType,
+        InterpolationTypeBilinear,
+        InterpolationTypeNearest);
+
     SYNET_PARAM_ENUM(MetaType,
         MetaTypeAdd,
         MetaTypeCast,
@@ -301,6 +305,7 @@ namespace Synet
         SYNET_PARAM_VALUE(int32_t, cropBeg, 0);
         SYNET_PARAM_VALUE(int32_t, cropEnd, 0);
         SYNET_PARAM_VALUE(bool, useTensorSize, false);
+        SYNET_PARAM_VALUE(InterpolationType, interpolationType, InterpolationTypeBilinear);
     };
 
     struct LogParam

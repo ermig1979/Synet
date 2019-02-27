@@ -252,6 +252,8 @@ namespace Synet
                     return false;
                 if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
                     return false;
+                if (type == "Resample" && !ConvertResampleLayer(pLayer, layer))
+                    return false;
                 if (type == "Reshape" && !ConvertReshapeLayer(pLayer, trans, layer))
                     return false;
                 if (type == "ScaleShift" && !ConvertScaleShiftLayer(pLayer, bin, layer, weight))
@@ -864,6 +866,40 @@ namespace Synet
         bool ConvertReluLayer(const XmlNode * pLayer, LayerParam & layer)
         {
             layer.type() = Synet::LayerTypeRelu;
+            return true;
+        }
+
+        bool ConvertResampleLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            layer.type() = Synet::LayerTypeInterp;
+            const XmlNode * pOutput = pLayer->FirstNode("output");
+            if (pOutput)
+            {
+                const XmlNode * pPort = pOutput->FirstNode("port");
+                if (pPort)
+                {
+                    Shape output = ConvertShape(pPort);
+                    if (output.size() == 4)
+                    {
+                        layer.interp().height() = output[2];
+                        layer.interp().width() = output[3];
+                    }
+                }
+                else
+                    return false;
+            }
+            else
+                return false;
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData)
+            {
+                const XmlAttr * pType = pData->FirstAttribute("type");
+                if (pType)
+                {
+                    if (String(pType->Value()) == "caffe.ResampleParameter.NEAREST")
+                        layer.interp().interpolationType() = InterpolationTypeNearest;
+                }
+            }
             return true;
         }
 
