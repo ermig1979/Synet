@@ -31,12 +31,14 @@ namespace Synet
 {
     namespace Detail
     {
-        template <typename T> void InterpLayerForwardCpu(size_t channels, const T * src, size_t srcH, size_t srcW, size_t cropB, size_t cropE, T * dst, size_t dstH, size_t dstW, InterpolationType type)
+        template <typename T> void InterpLayerForwardCpuCopy(size_t channels, const T * src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, T * dst, size_t dstH, size_t dstW, int trans)
         {
-            size_t sizeH = srcH - cropB - cropE;
-            size_t sizeW = srcW - cropB - cropE;
-            src += cropB * srcW + cropB;
-            if (sizeH == dstH && sizeW == dstW)
+            if (trans)
+            {
+                for (size_t h = 0; h < dstH; ++h)
+                    memcpy(dst + h*dstW*channels, src + h*srcW*channels, sizeW*channels * sizeof(T));
+            }
+            else
             {
                 for (size_t c = 0; c < channels; ++c)
                 {
@@ -46,57 +48,80 @@ namespace Synet
                     dst += dstH * dstW;
                 }
             }
+        }
+
+        template <typename T> void InterpLayerForwardCpuBilinear(size_t channels, const T * src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, T * dst, size_t dstH, size_t dstW, int trans)
+        {
+            if (trans)
+            {
+                assert(0);
+            }
             else
             {
-                if (type == InterpolationTypeBilinear)
+                const float rheight = (dstH > 1) ? static_cast<float>(sizeH - 1) / (dstH - 1) : 0.f;
+                const float rwidth = (dstW > 1) ? static_cast<float>(sizeW - 1) / (dstW - 1) : 0.f;
+                for (int h2 = 0; h2 < dstH; ++h2)
                 {
-                    const float rheight = (dstH > 1) ? static_cast<float>(sizeH - 1) / (dstH - 1) : 0.f;
-                    const float rwidth = (dstW > 1) ? static_cast<float>(sizeW - 1) / (dstW - 1) : 0.f;
-                    for (int h2 = 0; h2 < dstH; ++h2)
+                    const float h1r = rheight * h2;
+                    const int h1 = (int)h1r;
+                    const int h1p = (h1 < sizeH - 1) ? 1 : 0;
+                    const T h1lambda = h1r - h1;
+                    const T h0lambda = T(1.) - h1lambda;
+                    for (int w2 = 0; w2 < dstW; ++w2)
                     {
-                        const float h1r = rheight * h2;
-                        const int h1 = (int)h1r;
-                        const int h1p = (h1 < sizeH - 1) ? 1 : 0;
-                        const T h1lambda = h1r - h1;
-                        const T h0lambda = T(1.) - h1lambda;
-                        for (int w2 = 0; w2 < dstW; ++w2)
+                        const float w1r = rwidth * w2;
+                        const int w1 = (int)w1r;
+                        const int w1p = (w1 < sizeW - 1) ? 1 : 0;
+                        const T w1lambda = w1r - w1;
+                        const T w0lambda = T(1.) - w1lambda;
+                        const T * pos1 = &src[h1 * srcW + w1];
+                        T * pos2 = &dst[h2 * dstW + w2];
+                        for (int c = 0; c < channels; ++c)
                         {
-                            const float w1r = rwidth * w2;
-                            const int w1 = (int)w1r;
-                            const int w1p = (w1 < sizeW - 1) ? 1 : 0;
-                            const T w1lambda = w1r - w1;
-                            const T w0lambda = T(1.) - w1lambda;
-                            const T * pos1 = &src[h1 * srcW + w1];
-                            T * pos2 = &dst[h2 * dstW + w2];
-                            for (int c = 0; c < channels; ++c)
-                            {
-                                pos2[0] =
-                                    h0lambda * (w0lambda * pos1[0] + w1lambda * pos1[w1p]) +
-                                    h1lambda * (w0lambda * pos1[h1p * srcW] + w1lambda * pos1[h1p * srcW + w1p]);
-                                pos1 += srcH * srcH;
-                                pos2 += dstH * dstW;
-                            }
+                            pos2[0] =
+                                h0lambda * (w0lambda * pos1[0] + w1lambda * pos1[w1p]) +
+                                h1lambda * (w0lambda * pos1[h1p * srcW] + w1lambda * pos1[h1p * srcW + w1p]);
+                            pos1 += srcH * srcH;
+                            pos2 += dstH * dstW;
                         }
                     }
                 }
-                else if (type == InterpolationTypeNearest)
+            }
+        }
+
+        template <typename T> void InterpLayerForwardCpuNearest(size_t channels, const T * src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, T * dst, size_t dstH, size_t dstW, int trans)
+        {
+            float ky = float(sizeH) / float(dstH);
+            float kx = float(sizeW) / float(dstW);
+            if (trans)
+            {
+                for (int dy = 0; dy < dstH; ++dy)
                 {
-                    float ky = float(sizeH) / float(dstH);
-                    float kx = float(sizeW) / float(dstW);
-                    for (int dy = 0; dy < dstH; ++dy)
+                    size_t sy = (size_t)(ky*(dy + 0.5f));
+                    for (int dx = 0; dx < dstW; ++dx)
                     {
-                        size_t sy = (size_t)(ky*(dy+0.5f));
-                        for (int dx = 0; dx < dstW; ++dx)
+                        size_t sx = (size_t)(kx*(dx + 0.5f));
+                        const T * s = src + (sx * srcW + sy)*channels;
+                        T * d = dst + (dx * dstW + dy)*channels;
+                        memcpy(d, s, channels * sizeof(T));
+                    }
+                }
+            }
+            else
+            {
+                for (int dy = 0; dy < dstH; ++dy)
+                {
+                    size_t sy = (size_t)(ky*(dy + 0.5f));
+                    for (int dx = 0; dx < dstW; ++dx)
+                    {
+                        size_t sx = (size_t)(kx*(dx + 0.5f));
+                        const T * s = src + sx * srcW + sy;
+                        T * d = dst + dx * dstW + dy;
+                        for (int c = 0; c < channels; ++c)
                         {
-                            size_t sx = (size_t)(kx*(dx + 0.5f));
-                            const T * s = src + sx * srcW + sy;
-                            T * d = dst + dx * dstW + dy;
-                            for (int c = 0; c < channels; ++c)
-                            {
-                                d[0] = s[0];
-                                s += srcH * srcH;
-                                d += dstH * dstW;
-                            }
+                            d[0] = s[0];
+                            s += srcH * srcH;
+                            d += dstH * dstW;
                         }
                     }
                 }
@@ -104,58 +129,40 @@ namespace Synet
         }
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-        template <> inline void InterpLayerForwardCpu<float>(size_t channels, const float * src, size_t srcH, size_t srcW, size_t cropB, size_t cropE, float * dst, size_t dstH, size_t dstW, InterpolationType type)
+        template <> inline void InterpLayerForwardCpuBilinear<float>(size_t channels, const float * src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, float * dst, size_t dstH, size_t dstW, int trans)
         {
-            size_t sizeH = srcH - cropB - cropE;
-            size_t sizeW = srcW - cropB - cropE;
-            src += cropB * srcW + cropB;
-            if (sizeH == dstH && sizeW == dstW)
+            if (trans)
             {
-                for (size_t c = 0; c < channels; ++c)
-                {
-                    for (size_t h = 0; h < dstH; ++h)
-                        memcpy(dst + h*dstW, src + h*srcW, sizeW * sizeof(float));
-                    src += srcH * srcW;
-                    dst += dstH * dstW;
-                }
+                assert(0);
             }
             else
             {
-                if (type == InterpolationTypeBilinear)
+                void * resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, 1, ::SimdResizeChannelFloat, ::SimdResizeMethodCaffeInterp);
+                for (size_t c = 0; c < channels; ++c)
                 {
-                    void * resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, 1, ::SimdResizeChannelFloat, ::SimdResizeMethodCaffeInterp);
-                    for (size_t c = 0; c < channels; ++c)
-                    {
-                        ::SimdResizerRun(resizer, (uint8_t*)src, srcW * sizeof(float), (uint8_t*)dst, dstW * sizeof(float));
-                        src += srcH * srcW;
-                        dst += dstH * dstW;
-                    }
-                    ::SimdRelease(resizer);
+                    ::SimdResizerRun(resizer, (uint8_t*)src, srcW * sizeof(float), (uint8_t*)dst, dstW * sizeof(float));
+                    src += srcH * srcW;
+                    dst += dstH * dstW;
                 }
-                else if (type == InterpolationTypeNearest)
-                {
-                    float ky = float(sizeH) / float(dstH);
-                    float kx = float(sizeW) / float(dstW);
-                    for (int dy = 0; dy < dstH; ++dy)
-                    {
-                        size_t sy = (size_t)(ky*(dy + 0.5f));
-                        for (int dx = 0; dx < dstW; ++dx)
-                        {
-                            size_t sx = (size_t)(kx*(dx + 0.5f));
-                            const float * s = src + sx * srcW + sy;
-                            float * d = dst + dx * dstW + dy;
-                            for (int c = 0; c < channels; ++c)
-                            {
-                                d[0] = s[0];
-                                s += srcH * srcH;
-                                d += dstH * dstW;
-                            }
-                        }
-                    }
-                }
+                ::SimdRelease(resizer);            
             }
         }
 #endif
+
+        template <typename T> void InterpLayerForwardCpu(size_t channels, const T * src, size_t srcH, size_t srcW, size_t cropB, size_t cropE, T * dst, size_t dstH, size_t dstW, InterpolationType type, int trans)
+        {
+            size_t sizeH = srcH - cropB - cropE;
+            size_t sizeW = srcW - cropB - cropE;
+            src += (cropB * srcW + cropB)*(trans ? channels : 1);
+            if (sizeH == dstH && sizeW == dstW)
+                InterpLayerForwardCpuCopy(channels, src, srcH, srcW, sizeH, sizeW, dst, dstH, dstW, trans);
+            else if (type == InterpolationTypeBilinear)
+                InterpLayerForwardCpuBilinear(channels, src, srcH, srcW, sizeH, sizeW, dst, dstH, dstW, trans);
+            else if (type == InterpolationTypeNearest)
+                InterpLayerForwardCpuNearest(channels, src, srcH, srcW, sizeH, sizeW, dst, dstH, dstW, trans);
+            else
+                assert(0);
+        }
     }
 
     template <class T> class InterpLayer : public Synet::Layer<T>
@@ -176,15 +183,16 @@ namespace Synet
             _cropBeg = param.cropBeg();
             _cropEnd = param.cropEnd();
             _type = param.interpolationType();
+            _trans = src[0]->Format() == TensorFormatNhwc;
             _num = src[0]->Axis(0);
-            _channels = src[0]->Axis(1);
-            _srcH = src[0]->Axis(2);
-            _srcW = src[0]->Axis(3);
+            _channels = _trans ? src[0]->Axis(3) : src[0]->Axis(1);
+            _srcH = _trans ? src[0]->Axis(1) : src[0]->Axis(2);
+            _srcW = _trans ? src[0]->Axis(2) : src[0]->Axis(3);
             size_t srcH = _srcH - _cropBeg - _cropEnd;
             size_t srcW = _srcW - _cropBeg - _cropEnd;
             if (param.useTensorSize())
             {
-                assert(src.size() > 1);
+                assert(src.size() > 1 && _trans == 0);
                 _dstH = src[0]->Axis(1);
                 _dstW = src[0]->Axis(0);
             }
@@ -216,7 +224,10 @@ namespace Synet
             }
             else
                 assert(0);
-            dst[0]->Reshape({ _num, _channels, _dstH, _dstW });
+            if(_trans)
+                dst[0]->Reshape({ _num, _dstH, _dstW, _channels }, Type(), TensorFormatNhwc);
+            else
+                dst[0]->Reshape({ _num, _channels, _dstH, _dstW }, Type(), TensorFormatNchw);
         }
 
     protected:
@@ -224,11 +235,19 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            Detail::InterpLayerForwardCpu(_num * _channels, src[0]->CpuData(), _srcH, _srcW, _cropBeg, _cropEnd, dst[0]->CpuData(), _dstH, _dstW, _type);
+            const Type * pSrc = src[0]->CpuData();
+            Type * pDst = dst[0]->CpuData();
+            for(size_t i = 0; i < _num; ++i)
+            {
+                Detail::InterpLayerForwardCpu(_channels, pSrc, _srcH, _srcW, _cropBeg, _cropEnd, pDst, _dstH, _dstW, _type, _trans);
+                pSrc += _channels*_srcH*_srcW;
+                pDst += _channels*_dstH*_dstW;
+            }
         }
 
     private:
         size_t _num, _channels, _srcH, _srcW, _dstH, _dstW, _cropBeg, _cropEnd;
         InterpolationType _type;
+        int _trans;
     };
 }
