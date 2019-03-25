@@ -309,12 +309,15 @@ namespace Synet
             }
 
             _trans = src[0]->Format() == TensorFormatNhwc;
-            _size = src[0]->Size() / _count;
-            assert(_size*_count == src[0]->Size());
+            _num = src[0]->Size(0, fused.axis());
+            _size = src[0]->Size() / _count / _num;
+            assert(_num*_size*_count == src[0]->Size());
             Shape shape = src[0]->Shape();
             if (_type == 4)
                 shape[_trans ? 3 : 1] *= 2;
             dst[0]->Reshape(shape, Type(), src[0]->Format());
+            _srcStride = src[0]->Size(fused.axis());
+            _dstStride = dst[0]->Size(fused.axis());
         }
 
     protected:
@@ -333,25 +336,30 @@ namespace Synet
 #else
             SYNET_PERF_FUNC();
 #endif
-            switch (_type)
+            for (size_t i = 0; i < _num; ++i)
             {
-            case 0:
-                Detail::FusedLayerForwardCpu0(src, _t0.bias.CpuData(), _t0.scale.CpuData(), _count, _size, dst, _trans);
-                break;
-            case 1:
-                Detail::FusedLayerForwardCpu1(src, _t1.bias0.CpuData(), _t1.scale1.CpuData(), _t1.bias1.CpuData(), _count, _size, dst, _trans);
-                break;
-            case 2:
-                Detail::FusedLayerForwardCpu2(src, _t2.scale.CpuData(), _t2.bias.CpuData(), _count, _size, _t2.slope, dst, _trans);
-                break;
-            case 3:
-                Detail::FusedLayerForwardCpu3(src, _t3.bias.CpuData(), _t3.scale.CpuData(), _count, _size, dst, _trans);
-                break;
-            case 4:
-                Detail::FusedLayerForwardCpu4(src, _t4.bias0.CpuData(), _t4.scale1.CpuData(), _t4.bias1.CpuData(), _count, _size, dst, _trans);
-                break;
-            default:
-                assert(0);
+                switch (_type)
+                {
+                case 0:
+                    Detail::FusedLayerForwardCpu0(src, _t0.bias.CpuData(), _t0.scale.CpuData(), _count, _size, dst, _trans);
+                    break;
+                case 1:
+                    Detail::FusedLayerForwardCpu1(src, _t1.bias0.CpuData(), _t1.scale1.CpuData(), _t1.bias1.CpuData(), _count, _size, dst, _trans);
+                    break;
+                case 2:
+                    Detail::FusedLayerForwardCpu2(src, _t2.scale.CpuData(), _t2.bias.CpuData(), _count, _size, _t2.slope, dst, _trans);
+                    break;
+                case 3:
+                    Detail::FusedLayerForwardCpu3(src, _t3.bias.CpuData(), _t3.scale.CpuData(), _count, _size, dst, _trans);
+                    break;
+                case 4:
+                    Detail::FusedLayerForwardCpu4(src, _t4.bias0.CpuData(), _t4.scale1.CpuData(), _t4.bias1.CpuData(), _count, _size, dst, _trans);
+                    break;
+                default:
+                    assert(0);
+                }
+                src += _srcStride;
+                dst += _dstStride;
             }
         }
 
@@ -360,7 +368,7 @@ namespace Synet
         typedef typename Base::Tensors Tensors;
 
         int _type, _trans;
-        size_t _count, _size;
+        size_t _count, _size, _num, _srcStride, _dstStride;
 
         struct T0
         {

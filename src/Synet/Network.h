@@ -329,11 +329,11 @@ namespace Synet
         void Forward()
         {
             SYNET_PERF_FUNC();
-            bool ftz = GetFlushToZero();
-            SetFlushToZero(true);
+            bool mode = GetFastMode();
+            SetFastMode(true);
             for (size_t i = 0; i < _stages.size(); ++i)
                 _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
-            SetFlushToZero(ftz);
+            SetFastMode(mode);
         }
 
 #ifdef SYNET_DEBUG_PRINT_ENABLE

@@ -70,7 +70,7 @@ namespace Synet
                 Shape shape;
                 for (size_t i = 0; i < src1.Size(); ++i)
                     shape.push_back(src1.CpuData()[i]);
-                if (!trans && shape.size() == 2)
+                if (!trans && shape.size() == 2 && shape[0] != -1)
                     shape = Shape({ shape[1], shape[0] });
                 if (!trans && shape.size() == 4)
                     shape = Shape({ shape[0], shape[3], shape[1], shape[2] });

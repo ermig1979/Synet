@@ -118,18 +118,21 @@ namespace Synet
 #else
             SYNET_PERF_FUNC();
 #endif
-            if (_Mdim == 1 && !_transposeB)
+            if (!_transposeB)
             {
-                Detail::InnerProductLayerForwardCpu(a, b, _biasTerm ? this->Weight()[1].CpuData() : NULL, _Ndim, _Kdim, c);
+                for (size_t i = 0; i < _Mdim; ++i)
+                    Detail::InnerProductLayerForwardCpu(a + i*_Kdim, b, _biasTerm ? this->Weight()[1].CpuData() : NULL, _Ndim, _Kdim, c + i*_Ndim);
             }
             else
             {
-                CpuGemm<Type>(_transposeA ? CblasNoTrans : CblasTrans, _transposeB ? CblasNoTrans : CblasTrans, _Mdim, _Ndim, _Kdim, Type(1), a, _Kdim, b, _Ndim, Type(0), c, _Ndim);
+                CpuGemm<Type>(_transposeA ? CblasTrans : CblasNoTrans, _transposeB ? CblasNoTrans : CblasTrans, _Mdim, _Ndim, _Kdim, Type(1), a, _Kdim, b, _Kdim, Type(0), c, _Ndim);
                 if (_biasTerm)
-                    CpuAddBias(this->Weight()[1].CpuData(), _Ndim, _Mdim, c);
+                {
+                    for(size_t i = 0; i < _Mdim; ++i)
+                        CpuAddBias(this->Weight()[1].CpuData(), _Ndim, 1, c + i*_Ndim);
+                }
             }
         }
-
 
     private:
         typedef typename Base::Tensor Tensor;

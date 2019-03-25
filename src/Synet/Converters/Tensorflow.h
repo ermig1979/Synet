@@ -580,7 +580,7 @@ namespace Synet
                 layer.innerProduct().transposeA() = node.attr().at("transpose_a").b();
             if (node.attr().find("transpose_b") != node.attr().end())
                 layer.innerProduct().transposeB() = node.attr().at("transpose_b").b();
-            layer.innerProduct().axis() = 0;
+            //layer.innerProduct().axis() = 0;
             if (haveConst)
             {
                 layer.weight().resize(1);
@@ -982,10 +982,10 @@ namespace Synet
             Ints axis = network.layers()[index].meta().alpha().i32();
             if (_trans && axis.size() == 1)
             {
-                if (axis[0] == 0)
-                    axis[0] = 1;
-                if (axis[0] == 1)
-                    axis[0] = 0;
+                //if (axis[0] == 0)
+                //    axis[0] = 1;
+                //if (axis[0] == 1)
+                //    axis[0] = 0;
                 if (axis[0] == 3)
                     axis[0] = 1;
             }

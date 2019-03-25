@@ -333,7 +333,7 @@ namespace Synet
                 {
                     Detail::PoolingForwardCpuMax(src, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, dst, _dstH, _dstW, _trans);
                     src += _channels*_srcW * _srcH;
-                    dst += _channels*_srcW * _srcH;
+                    dst += _channels*_dstW * _dstH;
                 }
                 break;
             case PoolingMethodTypeAverage:
@@ -341,7 +341,7 @@ namespace Synet
                 {
                     Detail::PoolingForwardCpuAverage(src, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, dst, _dstH, _dstW, _trans);
                     src += _channels*_srcW * _srcH;
-                    dst += _channels*_srcW * _srcH;
+                    dst += _channels*_dstW * _dstH;
                 }
                 break;
             case PoolingMethodTypeStochastic:

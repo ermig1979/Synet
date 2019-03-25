@@ -187,19 +187,19 @@ namespace Synet
 #endif
     }
 
-    inline bool GetFlushToZero()
+    inline bool GetFastMode()
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-        return ::SimdGetFlushToZero() == ::SimdTrue;
+        return ::SimdGetFastMode() == ::SimdTrue;
 #else
         return false;
 #endif
     }
 
-    inline void SetFlushToZero(bool value)
+    inline void SetFastMode(bool value)
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-        ::SimdSetFlushToZero(value ? ::SimdTrue : ::SimdFalse);
+        ::SimdSetFastMode(value ? ::SimdTrue : ::SimdFalse);
 #endif
     }
 
