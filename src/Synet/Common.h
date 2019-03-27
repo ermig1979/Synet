@@ -25,12 +25,8 @@
 #pragma once
 
 //#define SYNET_SIMD_LIBRARY_ENABLE
-//#define SYNET_OPEN_BLAS_ENABLE
-//#define SYNET_GEMM_SIMD_LIBRARY
 //#define SYNET_BLIS_ENABLE
-//#define SYNET_GEMM_DYNAMIC
 
-//#define SYNET_GEMM_COMPARE
 //#define SYNET_PROTOBUF_ENABLE
 //#define SYNET_SIZE_STATISTIC
 
@@ -76,16 +72,9 @@
 #include <set>
 #include <cmath>
 
-#if defined(SYNET_SIMD_LIBRARY_ENABLE) || defined(SYNET_SIMD_LIBRARY_GEMM_ENABLE)
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdLib.h"
 #include "Simd/SimdLib.hpp"
-#endif
-
-#ifdef SYNET_OPEN_BLAS_ENABLE
-extern "C" 
-{
-#include <cblas.h>
-}
 #endif
 
 #ifdef SYNET_BLIS_ENABLE
@@ -164,8 +153,6 @@ namespace Synet
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return SimdGetThreadNumber();
-#elif defined(SYNET_OPEN_BLAS_ENABLE)
-        return openblas_get_num_threads();
 #elif defined(SYNET_BLIS_ENABLE)
         return bli_thread_get_num_threads();
 #else
@@ -177,10 +164,6 @@ namespace Synet
     {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
         SimdSetThreadNumber(threadNumber);
-#endif
-#ifdef SYNET_OPEN_BLAS_ENABLE
-        openblas_set_num_threads((int)threadNumber);
-        goto_set_num_threads((int)threadNumber);
 #endif
 #ifdef SYNET_BLIS_ENABLE
         bli_thread_set_num_threads(threadNumber);

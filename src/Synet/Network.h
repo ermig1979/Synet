@@ -216,7 +216,7 @@ namespace Synet
             return true;
         }
 
-        bool Reshape(size_t width, size_t height)
+        bool Reshape(size_t width, size_t height, size_t batch = 1)
         {
             if (_input.size() != 1)
                 return false;
@@ -225,21 +225,28 @@ namespace Synet
                 return false;
             const TensorFormat & format = param.input().shape()[0].format();
             Shape shape = param.input().shape()[0].dim();
-            if (shape.size() != 4 || shape[0] != 1)
+            if (shape.size() != 4)
                 return false;
+            shape[0] = batch;
             if (format == TensorFormatNchw)
             {
-                if (shape[2] != -1 || shape[3] != -1)
+                if (shape[2] == -1 && shape[3] == -1)
+                {
+                    shape[2] = height;
+                    shape[3] = width;
+                }
+                else if (shape[2] != height || shape[3] != width)
                     return false;
-                shape[2] = height;
-                shape[3] = width;
             }
             else if (format == TensorFormatNhwc)
             {
-                if (shape[1] != -1 || shape[2] != -1)
+                if (shape[1] == -1 && shape[2] == -1)
+                {
+                    shape[1] = height;
+                    shape[2] = width;
+                }
+                else if (shape[1] != height || shape[2] != width)
                     return false;
-                shape[1] = height;
-                shape[2] = width;
             }
             else
                 return false;
@@ -292,6 +299,65 @@ namespace Synet
                 {
                     ::SimdUint8ToFloat32(src.Row<uint8_t>(y), size, &lower, &upper, dst);
                     dst += size;
+                }
+                return true;
+            }
+            else
+                return false;
+        }
+
+        typedef std::vector<View> Views;
+        bool SetInput(const Views & src, float lower, float upper)
+        {
+            if (_src.size() != 1 || src.empty())
+                return false;
+            for (size_t i = 0; i < src.size(); ++i)
+                if (src[i].format != View::Gray8 && src[i].format != View::Bgr24)
+                    return false;
+            const Shape & shape = _src[0]->Shape();
+            if (shape[0] != src.size())
+                return false;
+            float * dst = _src[0]->CpuData();
+            if (_src[0]->Format() == TensorFormatNchw)
+            {
+                for (size_t i = 0; i < src.size(); ++i)
+                {
+                    size_t channels = src[i].ChannelCount();
+                    if (src[i].width != shape[3] || src[i].height != shape[2] || channels != shape[1])
+                        return false;
+                    View tmp[3];
+                    if (channels == 3)
+                    {
+                        for (size_t c = 0; c < channels; ++c)
+                            tmp[c].Recreate(src[i].Size(), View::Gray8);
+                        Simd::DeinterleaveBgr(src[i], tmp[0], tmp[1], tmp[2]);
+                    }
+                    else
+                        tmp[0] = src[i];
+                    for (size_t c = 0; c < channels; ++c)
+                    {
+                        for (size_t y = 0; y < tmp[c].height; ++y)
+                        {
+                            ::SimdUint8ToFloat32(tmp[c].Row<uint8_t>(y), tmp[c].width, &lower, &upper, dst);
+                            dst += tmp[c].width;
+                        }
+                    }
+                }
+                return true;
+            }
+            else if (_src[0]->Format() == TensorFormatNhwc)
+            {
+                for (size_t i = 0; i < src.size(); ++i)
+                {
+                    size_t channels = src[i].ChannelCount();
+                    if (src[i].width != shape[2] || src[i].height != shape[1] || channels != shape[3])
+                        return false;
+                    size_t size = src[i].width*channels;
+                    for (size_t y = 0; y < src[i].height; ++y)
+                    {
+                        ::SimdUint8ToFloat32(src[i].Row<uint8_t>(y), size, &lower, &upper, dst);
+                        dst += size;
+                    }
                 }
                 return true;
             }

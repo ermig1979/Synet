@@ -173,9 +173,9 @@ namespace Synet
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);
 
-            _convolution.Init(_srcC, _srcH, _srcW, _trans, _dstC, _trans, _kernelY, _kernelX, 
+            _convolution.Init(_num, _srcC, _srcH, _srcW, _trans, _dstC, _trans, _kernelY, _kernelX, 
                 _dilationY, _dilationX, _strideY, _strideX, _padY, _padX, _padH, _padW, _group, _activation,
-#if defined(SYNET_BLIS_ENABLE) && defined(SYNET_GEMM_SIMD_LIBRARY)
+#if defined(SYNET_BLIS_ENABLE)
                 Synet::BlisGemm32fNN
 #else
                 NULL
@@ -200,15 +200,14 @@ namespace Synet
             SYNET_PERF_FUNC();
 
             for (int i = 0; i < src.size(); ++i)
-                for (int n = 0; n < this->_num; ++n)
-                    ForwardCpu(src[i]->CpuData() + _srcSize * n, buf[0]->CpuData(), dst[i]->CpuData() + _dstSize * n);
+                 ForwardCpu(src[i]->CpuData(), buf[0]->CpuData(), dst[i]->CpuData());
         }
 
         void ForwardCpu(const T * src, T * buf, T * dst)
         {
 #ifdef SYNET_SIZE_STATISTIC
             std::stringstream ss;
-            ss << "i=" << _srcC << "x" << _srcH << "x" << _srcW << " o=" << _dstC << " k=" << _kernelY << " s=" << _strideY << " g=" << _group;
+            ss << "i=" << _num << "x" << _srcC << "x" << _srcH << "x" << _srcW << " o=" << _dstC << " k=" << _kernelY << " s=" << _strideY << " g=" << _group;
             SYNET_PERF_BLOCK(ss.str().c_str());
 #else
             SYNET_PERF_FUNC();
@@ -218,45 +217,51 @@ namespace Synet
             else
             {
                 const Type * weight = this->Weight()[0].CpuData();
-                if (!_is1x1)
+                for (size_t n = 0; n < _num; ++n)
                 {
+                    const Type * tmp = src;
+                    if (!_is1x1)
+                    {
+                        if (_trans)
+                            Synet::ImgToRow(tmp, _srcH, _srcW, _srcC, _kernelY, _kernelX, _padY, _padX, _padH, _padW, _strideY, _strideX, _dilationY, _dilationX, _group, buf);
+                        else
+                            Synet::ImgToCol(tmp, _srcC, _srcH, _srcW, _kernelY, _kernelX, _padY, _padX, _padH, _padW, _strideY, _strideX, _dilationY, _dilationX, buf);
+                        tmp = buf;
+                    }
                     if (_trans)
-                        Synet::ImgToRow(src, _srcH, _srcW, _srcC, _kernelY, _kernelX, _padY, _padX, _padH, _padW, _strideY, _strideX, _dilationY, _dilationX, _group, buf);
+                    {
+                        assert(_group == 1 || _group == _srcC);
+                        for (size_t g = 0; g < _group; ++g)
+                            CpuGemm(CblasNoTrans, CblasNoTrans, _siS, _siD, _siW, Type(1), tmp + _grS * g, _ldS, weight + _grW * g, _ldW, Type(0), dst + _grD * g, _ldD);
+                    }
                     else
-                        Synet::ImgToCol(src, _srcC, _srcH, _srcW, _kernelY, _kernelX, _padY, _padX, _padH, _padW, _strideY, _strideX, _dilationY, _dilationX, buf);
-                    src = buf;
-                }
-                if (_trans)
-                {
-                    assert(_group == 1 || _group == _srcC);
-                    for (size_t g = 0; g < _group; ++g)
-                        CpuGemm(CblasNoTrans, CblasNoTrans, _siS, _siD, _siW, Type(1), src + _grS * g, _ldS, weight + _grW * g, _ldW, Type(0), dst + _grD * g, _ldD);
-                }
-                else
-                {
-                    for (size_t g = 0; g < _group; ++g)
-                        CpuGemm(CblasNoTrans, CblasNoTrans, _siD, _siS, _siW, Type(1), weight + _grW * g, _ldW, src + _grS * g, _ldS, Type(0), dst + _grD * g, _ldD);
-                }
-                if (_biasTerm)
-                    CpuAddBias(this->Weight()[1].CpuData(), _dstC, _dstH*_dstW, dst, _trans);
-                switch (_activation)
-                {
-                case ActivationFunctionTypeIdentity:
-                    break;
-                case ActivationFunctionTypeRelu:
-                    CpuRelu(dst, _dstSize, 0.0f, dst);
-                    break;
-                case ActivationFunctionTypeLeakyRelu:
-                    CpuRelu(dst, _dstSize, _params[0], dst);
-                    break;
-                case ActivationFunctionTypeRestrictRange:
-                    CpuRestrictRange(dst, _dstSize, _params[0], _params[1], dst);
-                    break;
-                case ActivationFunctionTypePrelu:
-                    Detail::PreluLayerForwardCpu(dst, this->Weight().back().CpuData(), _dstC, _dstH*_dstW, dst, _trans);
-                    break;
-                default:
-                    assert(0);
+                    {
+                        for (size_t g = 0; g < _group; ++g)
+                            CpuGemm(CblasNoTrans, CblasNoTrans, _siD, _siS, _siW, Type(1), weight + _grW * g, _ldW, tmp + _grS * g, _ldS, Type(0), dst + _grD * g, _ldD);
+                    }
+                    if (_biasTerm)
+                        CpuAddBias(this->Weight()[1].CpuData(), _dstC, _dstH*_dstW, dst, _trans);
+                    switch (_activation)
+                    {
+                    case ActivationFunctionTypeIdentity:
+                        break;
+                    case ActivationFunctionTypeRelu:
+                        CpuRelu(dst, _dstSize, 0.0f, dst);
+                        break;
+                    case ActivationFunctionTypeLeakyRelu:
+                        CpuRelu(dst, _dstSize, _params[0], dst);
+                        break;
+                    case ActivationFunctionTypeRestrictRange:
+                        CpuRestrictRange(dst, _dstSize, _params[0], _params[1], dst);
+                        break;
+                    case ActivationFunctionTypePrelu:
+                        Detail::PreluLayerForwardCpu(dst, this->Weight().back().CpuData(), _dstC, _dstH*_dstW, dst, _trans);
+                        break;
+                    default:
+                        assert(0);
+                    }
+                    src += _srcSize;
+                    dst += _dstSize;
                 }
             }
         }

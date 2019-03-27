@@ -118,7 +118,7 @@ namespace Synet
 #else
             SYNET_PERF_FUNC();
 #endif
-            if (!_transposeB)
+            if (!_transposeB && _Mdim == 1)
             {
                 for (size_t i = 0; i < _Mdim; ++i)
                     Detail::InnerProductLayerForwardCpu(a + i*_Kdim, b, _biasTerm ? this->Weight()[1].CpuData() : NULL, _Ndim, _Kdim, c + i*_Ndim);

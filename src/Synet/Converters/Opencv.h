@@ -912,15 +912,17 @@ namespace Synet
                 const XmlNode * pPort = pOutput->FirstNode("port");
                 if (pPort)
                 {
+                    Shape input = ConvertInputShape(pLayer);
                     Shape output = ConvertShape(pPort);
                     if (trans && output.size() == 4)
                     {
-                        Shape input = ConvertInputShape(pLayer);
                         if (output[1]*output[2] == input[1] && output[3] == input[2]*input[3])
                             output = Shape({ output[0], output[3] , output[1] , output[2] });
                         else
                             output = Shape({ output[0], output[2] , output[3] , output[1] });
                     }
+                    if (input.size() == 4)
+                        output[0] = -1;
                     //if (trans && output.size() == 3)
                     //{
                     //    output = Shape({ output[0], output[2] , output[1] });
