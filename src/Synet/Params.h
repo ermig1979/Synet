@@ -71,6 +71,7 @@ namespace Synet
         LayerTypeSqueeze,
         LayerTypeStub,
         LayerTypeSwitch,
+        LayerTypeTile,
         LayerTypeUnaryOperation,
         LayerTypeUnpack,
         LayerTypeUpsample,
@@ -427,6 +428,12 @@ namespace Synet
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
     };
 
+    struct TileParam
+    {
+        SYNET_PARAM_VALUE(uint32_t, axis, 1);
+        SYNET_PARAM_VALUE(uint32_t, tiles, 1);
+    };
+
     struct UnaryOperationParam
     {
         SYNET_PARAM_VALUE(UnaryOperationType, type, UnaryOperationTypeUnknown);
@@ -495,6 +502,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(ScaleParam, scale);
         SYNET_PARAM_STRUCT(SliceParam, slice);
         SYNET_PARAM_STRUCT(SoftmaxParam, softmax);
+        SYNET_PARAM_STRUCT(TileParam, tile);
         SYNET_PARAM_STRUCT(UnaryOperationParam, unaryOperation);
         SYNET_PARAM_STRUCT(UnpackParam, unpack);
         SYNET_PARAM_STRUCT(UpsampleParam, upsample);

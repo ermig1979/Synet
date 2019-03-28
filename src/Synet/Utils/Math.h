@@ -186,6 +186,11 @@ namespace Synet
     }
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
+    template <> void CpuSet<float>(size_t size, float value, float * dst)
+    {
+        ::SimdFill32f(dst, size, &value);
+    }
+
     template <> SYNET_INLINE void CpuAxpy<float>(const float * x, size_t size, const float & alpha, float * y)
     {
         ::SimdNeuralAddVectorMultipliedByValue(x, size, &alpha, y);

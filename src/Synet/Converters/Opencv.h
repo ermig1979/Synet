@@ -262,6 +262,8 @@ namespace Synet
                     return false;
                 if (type == "Split" && !ConvertSplitLayer(pLayer, trans, layer))
                     return false;
+                if (type == "Tile" && !ConvertTileLayer(pLayer, trans, layer))
+                    return false;
 
                 if (layer.type() == LayerTypeUnknown)
                     NotImplemented(pLayer, layer);
@@ -614,6 +616,10 @@ namespace Synet
                 layer.eltwise().operation() = EltwiseOperationTypeSum;
                 assert(pData->FirstAttribute("coeff") == NULL);
             }
+            else if (operation == "max")
+                layer.eltwise().operation() = EltwiseOperationTypeMax;
+            else if (operation == "min")
+                layer.eltwise().operation() = EltwiseOperationTypeMin;
             else
                 assert(0);
             return true;
@@ -1073,6 +1079,17 @@ namespace Synet
                     layer.unpack().axis() = (int32_t)nchw[layer.unpack().axis()];
                 }
             }
+            return true;
+        }
+
+        bool ConvertTileLayer(const XmlNode * pLayer, bool trans, LayerParam & layer)
+        {
+            layer.type() = Synet::LayerTypeTile;
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            StringToValue(pData->FirstAttribute("axis")->Value(), layer.tile().axis());
+            StringToValue(pData->FirstAttribute("tiles")->Value(), layer.tile().tiles());
             return true;
         }
 

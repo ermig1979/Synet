@@ -64,6 +64,7 @@
 #include "Synet/Layers/SqueezeLayer.h"
 #include "Synet/Layers/StubLayer.h"
 #include "Synet/Layers/SwitchLayer.h"
+#include "Synet/Layers/TileLayer.h"
 #include "Synet/Layers/UnaryOperationLayer.h"
 #include "Synet/Layers/UpsampleLayer.h"
 #include "Synet/Layers/UnpackLayer.h"
@@ -675,6 +676,7 @@ namespace Synet
             case LayerTypeSqueeze: return new SqueezeLayer<T>(param);
             case LayerTypeStub: return new StubLayer<T>(param);
             case LayerTypeSwitch: return new SwitchLayer<T>(param);
+            case LayerTypeTile: return new TileLayer<T>(param);
             case LayerTypeUnaryOperation: return new UnaryOperationLayer<T>(param);
             case LayerTypeUnpack: return new UnpackLayer<T>(param);
             case LayerTypeUpsample: return new UpsampleLayer<T>(param);
