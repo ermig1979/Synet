@@ -304,6 +304,19 @@ namespace Synet
                 _t4.bias1.Share(weight[2]);
                 break;
             }
+            case 5:
+                assert(weight.size() == 4);
+                assert(weight[0].Shape() == weight[1].Shape() && weight[0].Shape() == weight[2].Shape() && weight[0].Shape() == weight[3].Shape());
+                _t2.scale.Reshape(weight[0].Shape());
+                _t2.bias.Reshape(weight[0].Shape());
+                _count = _t2.scale.Size();
+                for (size_t i = 0; i < _count; ++i)
+                {
+                    _t2.scale.CpuData()[i] = weight[0].CpuData()[i] * weight[2].CpuData()[i];
+                    _t2.bias.CpuData()[i] = weight[1].CpuData()[i] * weight[2].CpuData()[i] + weight[3].CpuData()[i];
+                }
+                _t2.slope = Type(0);
+                break;
             default:
                 assert(0);
             }
@@ -347,6 +360,7 @@ namespace Synet
                     Detail::FusedLayerForwardCpu1(src, _t1.bias0.CpuData(), _t1.scale1.CpuData(), _t1.bias1.CpuData(), _count, _size, dst, _trans);
                     break;
                 case 2:
+                case 5:
                     Detail::FusedLayerForwardCpu2(src, _t2.scale.CpuData(), _t2.bias.CpuData(), _count, _size, _t2.slope, dst, _trans);
                     break;
                 case 3:

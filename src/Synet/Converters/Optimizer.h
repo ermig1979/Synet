@@ -66,6 +66,8 @@ namespace Synet
                     continue;
                 if (MergeFused4(src, i, dst, changes))
                     continue;
+                if (MergeFused5(src, i, dst, changes))
+                    continue;
                 dst.push_back(src[i]);
             }
             for (size_t k = 0; k < changes.size(); ++k)
@@ -349,6 +351,50 @@ namespace Synet
             layer.weight().push_back(src[index + 0].weight()[1]);
             dst.back().weight().resize(1);
             dst.back().convolution().biasTerm() = false;
+            dst.push_back(layer);
+            index += 2;
+            return true;
+        }
+
+        bool MergeFused5(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            if (index == 0 || src.size() < index + 3)
+                return false;
+            if (src[index - 1].type() != LayerTypeConvolution || src[index - 1].convolution().biasTerm() ||
+                src[index - 1].convolution().activationType() != ActivationFunctionTypeIdentity)
+                return false;
+            if (src[index + 0].type() != LayerTypeScale || !src[index + 0].scale().biasTerm() || src[index + 0].scale().axis() != 1 ||
+                src[index + 0].src()[0] != src[index - 1].name())
+                return false;
+            if (src[index + 1].type() != LayerTypeScale || !src[index + 1].scale().biasTerm() || src[index + 1].scale().axis() != 1 ||
+                src[index + 1].src()[0] != src[index - 0].name())
+                return false;
+            if (src[index + 2].type() != LayerTypeRelu ||
+                src[index + 2].src()[0] != src[index + 1].name())
+                return false;
+            for (size_t i = index + 3; i < src.size(); ++i)
+            {
+                for (size_t j = 0; j < src[i].src().size(); ++j)
+                {
+                    for (ptrdiff_t k = -1; k < 2; ++k)
+                    {
+                        if (src[i].src()[j] == src[index + k].name())
+                            return false;
+                    }
+                }
+            }
+            LayerParam layer;
+            layer.type() = LayerTypeFused;
+            layer.name() = src[index + 2].name();
+            layer.src().push_back(src[index - 1].name());
+            layer.dst() = src[index + 2].dst();
+            layer.fused().type() = 5;
+            layer.weight().push_back(src[index + 0].weight()[0]);
+            layer.weight().push_back(src[index + 0].weight()[1]);
+            layer.weight().push_back(src[index + 1].weight()[0]);
+            layer.weight().push_back(src[index + 1].weight()[1]);
+            changes.push_back(Change(layer.dst()[0], layer.src()[0]));
+            layer.dst()[0] = layer.src()[0];
             dst.push_back(layer);
             index += 2;
             return true;
