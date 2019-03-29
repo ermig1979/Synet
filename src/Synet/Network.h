@@ -478,6 +478,22 @@ namespace Synet
             return regions;
         }
 
+        size_t MemoryUsage() const
+        {
+            size_t memoryUsage = 0;
+            for (size_t i = 0; i < _layers.size(); ++i)
+                memoryUsage += _layers[i]->MemoryUsage();
+            for (size_t i = 0; i < _tensors.size(); ++i)
+                memoryUsage += _tensors[i]->Size() * sizeof(Type);
+            return memoryUsage;
+        }
+
+        void CompactWeight()
+        {
+            for (size_t i = 0; i < _layers.size(); ++i)
+                _layers[i]->CompactWeight();
+        }
+
     private:
         static const size_t BUFFER_COUNT = 1;
 

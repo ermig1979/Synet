@@ -306,6 +306,10 @@ namespace Test
 
         std::cout << "Tests are finished successfully!" << std::endl << std::endl;
 
+#ifdef SYNET_SYNET_RUN
+        options.synetMemoryUsage = synetNetwork.MemoryUsage();
+#endif
+
         return true;
     }
 }

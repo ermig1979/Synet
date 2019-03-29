@@ -214,6 +214,8 @@ namespace Synet
             layer.weight().push_back(src[index + 1].weight()[1]);
             layer.weight().push_back(src[index + 3].weight()[0]);
             layer.weight().push_back(src[index + 3].weight()[1]);
+            changes.push_back(Change(layer.dst()[0], layer.src()[0]));
+            layer.dst()[0] = layer.src()[0];
             dst.back().weight().resize(1);
             dst.back().convolution().biasTerm() = false;
             dst.push_back(layer);

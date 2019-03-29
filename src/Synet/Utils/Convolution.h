@@ -42,7 +42,7 @@ namespace Synet
 
         typedef void(*Gemm32fNNPtr)(size_t M, size_t N, size_t K, const T * alpha, const T * A, size_t lda, const T * B, size_t ldb, const T * beta, T * C, size_t ldc);
 
-        void Init(size_t batch, size_t srcC, size_t srcH, size_t srcW, int srcT, size_t dstC, int dstT,
+        void Init(int trans, size_t batch, size_t srcC, size_t srcH, size_t srcW, size_t dstC,
             size_t kernelY, size_t kernelX, size_t dilationY, size_t dilationX, size_t strideY, size_t strideX, 
             size_t padY, size_t padX, size_t padH, size_t padW, size_t group, ActivationFunctionType activation, Gemm32fNNPtr gemm)
         {
@@ -53,9 +53,14 @@ namespace Synet
             return _convolution != NULL;
         }
 
-        size_t BufferSize()
+        size_t ExternalBufferSize() const 
         {
             return 1;
+        }
+
+        size_t InternalBufferSize() const
+        {
+            return 0;
         }
 
         void SetParams(const T * weight, int trans, int * internal, const T * bias, const T * params)
@@ -77,17 +82,22 @@ namespace Synet
             ::SimdRelease(_convolution);
     }
 
-    template<> SYNET_INLINE void Convolution<float>::Init(size_t batch, size_t srcC, size_t srcH, size_t srcW, int srcT, size_t dstC, int dstT,
+    template<> SYNET_INLINE void Convolution<float>::Init(int trans, size_t batch, size_t srcC, size_t srcH, size_t srcW, size_t dstC,
         size_t kernelY, size_t kernelX, size_t dilationY, size_t dilationX, size_t strideY, size_t strideX,
         size_t padY, size_t padX, size_t padH, size_t padW, size_t group, ActivationFunctionType activation, ::SimdGemm32fNNPtr gemm)
     {
-        _convolution = ::SimdConvolutionInit(batch, srcC, srcH, srcW, (::SimdBool)srcT, dstC, (::SimdBool)dstT, kernelY, kernelX,
+        _convolution = ::SimdConvolutionInit((::SimdBool)trans, batch, srcC, srcH, srcW, dstC, kernelY, kernelX,
             dilationY, dilationX, strideY, strideX, padY, padX, padH, padW, group, (::SimdConvolutionActivationType)activation, gemm);
     }
 
-    template<> SYNET_INLINE size_t Convolution<float>::BufferSize()
+    template<> SYNET_INLINE size_t Convolution<float>::ExternalBufferSize() const
     {
-        return ::SimdConvolutionBufferSize(_convolution);
+        return ::SimdConvolutionExternalBufferSize(_convolution);
+    }
+
+    template<> SYNET_INLINE size_t Convolution<float>::InternalBufferSize() const
+    {
+        return ::SimdConvolutionInternalBufferSize(_convolution);
     }
 
     template<> SYNET_INLINE void Convolution<float>::SetParams(const float * weight, int trans, int * internal, const float * bias, const float * params)

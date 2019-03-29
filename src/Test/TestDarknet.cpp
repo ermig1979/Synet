@@ -32,9 +32,15 @@ namespace Test
 {
     struct DarknetNetwork : public Network
     {
+        DarknetNetwork()
+            : _net(0)
+        {
+        }
+
         virtual ~DarknetNetwork()
         {
-            ::free_network(_net);
+            if(_net)
+                ::free_network(_net);
         }
 
         virtual String Name() const
@@ -47,7 +53,7 @@ namespace Test
             TEST_PERF_FUNC();
             _net = ::parse_network_cfg((char*)model.c_str());
             ::load_weights(_net, (char*)weight.c_str());
-            ::set_batch_network(_net, 1);
+            //::set_batch_network(_net, 1);
             num = _net->batch;
             channels = _net->c;
             height = _net->h;

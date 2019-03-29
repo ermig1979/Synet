@@ -80,6 +80,7 @@ namespace Test
         virtual void DebugPrint(std::ostream & os) = 0;
 #endif
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const { return Regions(); }
+        virtual size_t MemoryUsage() const { return 0; }
     protected:
         Vector _output;
     };
@@ -107,6 +108,7 @@ namespace Test
                     if (!Reshape(param))
                         return false;
                 }
+                _net.CompactWeight();
                 const Net::Tensor * src = _net.Src()[0];
                 num = src->Shape()[0];
                 channels = _trans ? src->Shape()[3] : src->Shape()[1];
@@ -138,6 +140,11 @@ namespace Test
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
             return _net.GetRegions(size.x, size.y, threshold, overlap);
+        }
+
+        virtual size_t MemoryUsage() const
+        {
+            return _net.MemoryUsage();
         }
 
     private:
@@ -209,7 +216,7 @@ namespace Test
                                 for (size_t x = 0; x < dst[i]->Axis(1); ++x)
                                     *out++ = dst[i]->CpuData(Shape({ y, x, c }))[0];
                     }
-                    else if (trans && dst[i]->Count() == 2)
+                    else if (trans && dst[i]->Count() == 2 && num == 1)
                     {
                         float * out = _output.data() + offset;
                         for (size_t c = 0; c < dst[i]->Axis(1); ++c)
@@ -270,7 +277,19 @@ namespace Test
             for (size_t i = 0; i < param.output().size(); ++i)
                 dstNames.push_back(param.output()[i].name());
 
-            return _net.Reshape(srcNames, srcShapes, dstNames);
+            bool equal = false;
+            if (srcShapes.size() == _net.Src().size() && _net.Back().size() == dstNames.size())
+            {
+                equal = true;
+                for (size_t i = 0; i < srcShapes.size() && equal; ++i)
+                    if (srcShapes[i] != _net.Src()[i]->Shape())
+                        equal = false;
+                for (size_t i = 0; i < dstNames.size() && equal; ++i)
+                    if (dstNames[i] != _net.Back()[i]->Param().name())
+                        equal = false;
+            }
+
+            return equal || _net.Reshape(srcNames, srcShapes, dstNames);
         }
     };
 

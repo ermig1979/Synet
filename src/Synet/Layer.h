@@ -60,12 +60,24 @@ namespace Synet
             return _weight; 
         }
 
+        virtual size_t MemoryUsage() const
+        {
+            size_t memoryUsage = 0;
+            for (size_t i = 0; i < _weight.size(); ++i)
+                memoryUsage += _weight[i].Size() * sizeof(Type);
+            return memoryUsage;
+        }
+
+        virtual void CompactWeight()
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
+
         inline void Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             ForwardCpu(src, buf, dst);
         }
-
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
 
         bool Load(const void * & data, size_t & size)
         {

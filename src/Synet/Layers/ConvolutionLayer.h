@@ -48,6 +48,17 @@ namespace Synet
         {
         }
 
+        virtual size_t MemoryUsage() const
+        {
+            return Base::MemoryUsage() + _convolution.InternalBufferSize() * sizeof(Type);
+        }
+
+        virtual void CompactWeight()
+        {
+            if (_internal)
+                ((Tensor&)this->Weight()[0]).Reshape({ 0 });
+        }
+
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const ConvolutionParam & param = this->Param().convolution();
@@ -173,7 +184,7 @@ namespace Synet
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);
 
-            _convolution.Init(_num, _srcC, _srcH, _srcW, _trans, _dstC, _trans, _kernelY, _kernelX, 
+            _convolution.Init(_trans, _num, _srcC, _srcH, _srcW, _dstC, _kernelY, _kernelX, 
                 _dilationY, _dilationX, _strideY, _strideX, _padY, _padX, _padH, _padW, _group, _activation,
 #if defined(SYNET_BLIS_ENABLE)
                 Synet::BlisGemm32fNN
@@ -183,15 +194,15 @@ namespace Synet
             );
             if (_convolution.Enable())
             {
-                buf[0]->Extend({ _convolution.BufferSize() });
-                int internal;
-                _convolution.SetParams(weight[0].CpuData(), _trans, &internal, _biasTerm ? weight[1].CpuData() : NULL, 
+                buf[0]->Extend({ _convolution.ExternalBufferSize() });
+                _convolution.SetParams(weight[0].CpuData(), _trans, &_internal, _biasTerm ? weight[1].CpuData() : NULL, 
                     _activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : _params);
-                if (internal && 0)
-                    const_cast<Tensor&>(weight[0]).Clear();
             }
             else
+            {
+                _internal = 0;
                 buf[0]->Extend(Shape({ _kernelY*_kernelX*_srcC, _dstH*_dstW }));
+            }
         }
 
     protected:
@@ -268,7 +279,7 @@ namespace Synet
 
     private:
         bool _is1x1, _biasTerm;
-        int _trans;
+        int _trans, _internal;
         size_t _kernelY, _kernelX, _strideY, _strideX, _dilationY, _dilationX, _padY, _padX, _padH, _padW;
         size_t _axis, _group, _num, _srcC, _srcH, _srcW, _dstC, _dstH, _dstW, _srcSize, _dstSize;
         size_t _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;

@@ -44,12 +44,14 @@ namespace Test
         float threshold;
         String logName;
         int tensorFormat;
-        bool result;
+        bool result;        
+        mutable size_t synetMemoryUsage;
 
         Options(int argc, char* argv[])
             : _argc(argc)
             , _argv(argv)
             , result(false)
+            , synetMemoryUsage(0)
         {
             mode = GetArg("-m");
             otherModel = GetArg("-om", "./other.dsc");
@@ -72,6 +74,8 @@ namespace Test
             if (mode == "compare" && result)
             {
                 std::stringstream ss;
+                if (synetMemoryUsage)
+                    ss << "Synet memory usage: " << synetMemoryUsage / (1024 * 1024) << " MB." << std::endl;
                 PerformanceMeasurerStorage::s_storage.Print(ss);
                 std::cout << ss.str();
                 if (!logName.empty())
