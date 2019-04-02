@@ -59,7 +59,7 @@ namespace Synet
             
             if (src[0]->Count() >= 1)
                 assert(src[0]->Axis(1) == _channels);
-            dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
             if (_useGlobalStats)
             {
                 Type scaleFactor = Type(1);

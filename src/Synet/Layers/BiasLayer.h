@@ -90,7 +90,7 @@ namespace Synet
             }
             assert(src[0]->Size() == _num*_count*_size);
             if (src[0] != dst[0])
-                dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
+                dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
         }
 
     protected:

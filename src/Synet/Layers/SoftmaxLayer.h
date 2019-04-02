@@ -104,7 +104,7 @@ namespace Synet
             _outer = src[0]->Size(0, _axis);
             _count = src[0]->Axis(_axis);
             _inner = src[0]->Size(_axis + 1);
-            dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
         }
 
     protected:

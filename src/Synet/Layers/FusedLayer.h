@@ -317,6 +317,14 @@ namespace Synet
                 }
                 _t2.slope = Type(0);
                 break;
+            case 6:
+                assert(weight.size() == 2);
+                assert(weight[0].Shape() == weight[1].Shape());
+                _t2.scale.Share(weight[0]);
+                _t2.bias.Share(weight[1]);
+                _count = _t2.scale.Size();
+                _t2.slope = Type(0);
+                break;
             default:
                 assert(0);
             }
@@ -328,7 +336,7 @@ namespace Synet
             Shape shape = src[0]->Shape();
             if (_type == 4)
                 shape[_trans ? 3 : 1] *= 2;
-            dst[0]->Reshape(shape, Type(), src[0]->Format());
+            dst[0]->Reshape(shape, src[0]->Format());
             _srcStride = src[0]->Size(fused.axis());
             _dstStride = dst[0]->Size(fused.axis());
         }
@@ -361,6 +369,7 @@ namespace Synet
                     break;
                 case 2:
                 case 5:
+                case 6:
                     Detail::FusedLayerForwardCpu2(src, _t2.scale.CpuData(), _t2.bias.CpuData(), _count, _size, _t2.slope, dst, _trans);
                     break;
                 case 3:

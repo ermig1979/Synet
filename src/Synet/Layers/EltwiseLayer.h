@@ -101,7 +101,7 @@ namespace Synet
                 assert(src[i]->Shape() == src[0]->Shape());
                 _src[i] = src[i]->CpuData();
             }
-            dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
         }
 
     protected:

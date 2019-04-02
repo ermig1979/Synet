@@ -82,7 +82,7 @@ namespace Synet
         {
             if (_owner)
             {
-                Simd::Free(data);
+                Detail::Free(data);
                 _owner = false;
             }
         }
@@ -93,7 +93,7 @@ namespace Synet
             {
                 if (_owner)
                 {
-                    Simd::Free(data);
+                    Detail::Free(data);
                     _owner = false;
                 }
                 *(size_t*)&size = size_;
@@ -109,7 +109,7 @@ namespace Synet
         {
             if (_owner)
             {
-                Simd::Free(data);
+                Detail::Free(data);
                 _owner = false;
             }
             *(size_t*)&size = size_;

@@ -304,9 +304,9 @@ namespace Synet
             }
 
             if(_trans)
-                dst[0]->Reshape(Shape({ _num, _dstH, _dstW , _channels}), Type(), TensorFormatNhwc);
+                dst[0]->Reshape(Shape({ _num, _dstH, _dstW , _channels}), TensorFormatNhwc);
             else
-                dst[0]->Reshape(Shape({ _num, _channels, _dstH, _dstW }), Type(), TensorFormatNchw);
+                dst[0]->Reshape(Shape({ _num, _channels, _dstH, _dstW }), TensorFormatNchw);
         }
 
     protected:

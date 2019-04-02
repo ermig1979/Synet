@@ -179,7 +179,7 @@ namespace Synet
             }
 
             for (size_t i = 0; i < dst.size(); ++i)
-                dst[i]->Reshape(dstShape, Type(), src[0]->Format());
+                dst[i]->Reshape(dstShape, src[0]->Format());
 
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);

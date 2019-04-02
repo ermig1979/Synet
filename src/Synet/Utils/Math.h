@@ -185,8 +185,16 @@ namespace Synet
             dst[i] = std::min(std::max(lower, src[i]), upper);
     }
 
+    template <typename T> T CpuTouch(const T * data, size_t size)
+    {
+        volatile T touched = 0;
+        for (size_t i = 0; i < size; i += 1024)
+            touched += data[i];
+        return touched;
+    }
+
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-    template <> void CpuSet<float>(size_t size, float value, float * dst)
+    template <> SYNET_INLINE void CpuSet<float>(size_t size, float value, float * dst)
     {
         ::SimdFill32f(dst, size, &value);
     }

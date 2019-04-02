@@ -83,7 +83,7 @@ namespace Synet
             assert(_count == 1 || _count == src[0]->Axis(1));
             _size = src[0]->Size() / _count;
             assert(_size*_count == src[0]->Size());
-            dst[0]->Reshape(src[0]->Shape());
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
         }
 
     protected:

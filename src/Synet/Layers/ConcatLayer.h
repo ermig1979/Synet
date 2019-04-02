@@ -65,7 +65,7 @@ namespace Synet
                 _srcConcatAxis[i] = src[i]->Axis(_concatAxis);
                 dstShape[_concatAxis] += _srcConcatAxis[i];
             }
-            dst[0]->Reshape(dstShape, Type(), src[0]->Format());
+            dst[0]->Reshape(dstShape, src[0]->Format());
             assert(srcSizeSum == dst[0]->Size());
             if (src.size() == 1)
                 dst[0]->Share(*src[0]);

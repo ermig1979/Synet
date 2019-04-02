@@ -135,7 +135,7 @@ namespace Synet
                     shape[3] = shape[3] / _stride;
                 }
             }
-            dst[0]->Reshape(shape, Type(), src[0]->Format());
+            dst[0]->Reshape(shape, src[0]->Format());
         }
 
     protected:

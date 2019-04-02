@@ -99,7 +99,7 @@ namespace Synet
             Shape dstShape = src[0]->Shape();
             dstShape.resize(_axis + 1);
             dstShape[_axis] = _Ndim;
-            dst[0]->Reshape(dstShape, Type(), src[0]->Format());
+            dst[0]->Reshape(dstShape, src[0]->Format());
         }
 
     protected:

@@ -53,10 +53,10 @@ namespace Synet
                 switch (_dstType)
                 {
                 case TensorType32f:
-                    dst[0]->As32f().Reshape(src[0]->Shape());
+                    dst[0]->As32f().Reshape(src[0]->Shape(), src[0]->Format());
                     break;
                 case TensorType32i:
-                    dst[0]->As32i().Reshape(src[0]->Shape());
+                    dst[0]->As32i().Reshape(src[0]->Shape(), src[0]->Format());
                     break;
                 default:
                     assert(0);

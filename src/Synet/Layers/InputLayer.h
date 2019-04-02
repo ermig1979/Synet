@@ -49,7 +49,7 @@ namespace Synet
             if (size > 0)
             {
                 for (size_t i = 0; i < dst.size(); ++i)
-                    dst[i]->Reshape(size == 1 ? input.shape()[0].dim() : input.shape()[i].dim(), Type(), input.shape()[i].format());
+                    dst[i]->Reshape(size == 1 ? input.shape()[0].dim() : input.shape()[i].dim(), input.shape()[i].format());
             }
         }
 

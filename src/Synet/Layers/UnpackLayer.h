@@ -59,7 +59,7 @@ namespace Synet
             if (dst.size() > 1)
             {
                 for (size_t i = 0; i < _count; ++i)
-                    dst[i]->Reshape(shape, Type(), src[0]->Format());
+                    dst[i]->Reshape(shape, src[0]->Format());
             }
             else
                 dst[0]->ShareAs(*src[0], shape, src[0]->Format());

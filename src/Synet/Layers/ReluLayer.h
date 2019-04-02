@@ -45,7 +45,7 @@ namespace Synet
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _negativeSlope = this->Param().relu().negativeSlope();
-            dst[0]->Reshape(src[0]->Shape(), Type(), src[0]->Format());
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
         }
 
     protected:

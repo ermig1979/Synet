@@ -26,6 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Params.h"
+#include "Synet/Buffer.h"
 #include "Synet/Utils/Math.h"
 
 namespace Synet
@@ -43,16 +44,23 @@ namespace Synet
         typedef T Type;
 
         SYNET_INLINE Tensor()
-            : _size(0)
-            , _cpuData(std::make_shared<Vector>())
+            : _buffer(std::make_shared<Buffer>())
             , _type(TensorTypeUnknown)
             , _format(TensorFormatUnknown)
         {
         }
 
+        SYNET_INLINE Tensor(const Synet::Shape & shape, const TensorFormat & format)
+            : _shape(shape)
+            , _buffer(std::make_shared<Buffer>())
+            , _format(format)
+        {
+            Resize();
+        }
+
         SYNET_INLINE Tensor(const Synet::Shape & shape, const Type & value = Type(), const TensorFormat & format = TensorFormatUnknown, const String & name = String())
             : _shape(shape)
-            , _cpuData(std::make_shared<Vector>())
+            , _buffer(std::make_shared<Buffer>())
             , _format(format)
             , _name(name)
         {
@@ -61,7 +69,7 @@ namespace Synet
 
         SYNET_INLINE Tensor(std::initializer_list<size_t> shape, const Type & value = Type(), const TensorFormat & format = TensorFormatUnknown, const String & name = String())
             : _shape(shape.begin(), shape.end())
-            , _cpuData(std::make_shared<Vector>())
+            , _buffer(std::make_shared<Buffer>())
             , _format(format)
             , _name(name)
         {
@@ -70,6 +78,20 @@ namespace Synet
 
         SYNET_INLINE ~Tensor()
         {
+        }
+
+        SYNET_INLINE void Reshape(const Synet::Shape & shape, const TensorFormat & format)
+        {
+            _shape = shape;
+            _format = format;
+            Resize();
+        }
+
+        SYNET_INLINE void Reshape(std::initializer_list<size_t> shape, const TensorFormat & format)
+        {
+            _shape.assign(shape.begin(), shape.end());
+            _format = format;
+            Resize();
         }
 
         SYNET_INLINE void Reshape(const Synet::Shape & shape, const Type & value = Type(), const TensorFormat & format = TensorFormatUnknown, const String & name = String())
@@ -104,24 +126,24 @@ namespace Synet
 
         SYNET_INLINE void Clear()
         {
-#ifdef SYNET_MALLOC_DEBUG
-            if (_size * sizeof(T) > SYNET_MALLOC_TRIM_THRESHOLD)
-            {
-                std::cout << "Try to free " << _size * sizeof(T) / 1024 / 1024 << " MB :" << std::endl;
-                PrintMemoryUsage();
-            }
-#endif
-            _shape.clear();
-            _cpuData->clear();
-#ifdef SYNET_MALLOC_DEBUG
-            if (_size * sizeof(T) > SYNET_MALLOC_TRIM_THRESHOLD)
-            {
-                PrintMemoryUsage();
-            }
-#endif
-            _size = 0;
             _type = TensorTypeUnknown;
             _format = TensorFormatUnknown;
+            _shape.clear();
+#ifdef SYNET_MALLOC_DEBUG
+            size_t size = _buffer->size * sizeof(T);
+            if (size > SYNET_MALLOC_TRIM_THRESHOLD)
+            {
+                std::cout << "Try to free " << size / 1024 / 1024 << " MB :" << std::endl;
+                PrintMemoryUsage();
+            }
+#endif
+            _buffer->Resize(0);
+#ifdef SYNET_MALLOC_DEBUG
+            if (size > SYNET_MALLOC_TRIM_THRESHOLD)
+            {
+                PrintMemoryUsage();
+            }
+#endif
         }
 
         SYNET_INLINE Tensor<int32_t> & As32i()
@@ -213,7 +235,7 @@ namespace Synet
 
         SYNET_INLINE size_t Size() const
         {
-            return _size;
+            return _buffer->size;
         }
 
         SYNET_INLINE size_t Offset(const Synet::Index & index) const
@@ -251,13 +273,13 @@ namespace Synet
         SYNET_INLINE Type * CpuData()
         {
             assert(_type == Detail::GetTensorType<Type>());
-            return _cpuData->data();
+            return _buffer->data;
         }
 
         SYNET_INLINE const Type * CpuData() const
         {
             assert(_type == Detail::GetTensorType<Type>());
-            return _cpuData->data();
+            return _buffer->data;
         }
 
         SYNET_INLINE Type * CpuData(const Synet::Index & index)
@@ -286,20 +308,17 @@ namespace Synet
             _shape = tensor._shape;
             _format = tensor._format;
             _name = tensor._name;
-            _size = tensor._size;
-            _cpuData = tensor._cpuData;
-            SetDebugPtr();
+            _buffer = tensor._buffer;
         }
 
         SYNET_INLINE void ShareAs(const Tensor & tensor, const Synet::Shape & shape, const TensorFormat & format = TensorFormatUnknown)
         {
+            _buffer = tensor._buffer;
             _type = tensor._type;
+            _name = tensor._name;
             _shape = shape;
             _format = format;
-            _size = Size(0, _shape.size());
-            assert(_size == tensor._size);
-            _cpuData = tensor._cpuData;
-            SetDebugPtr();
+            assert(Size(0, _shape.size()) == _buffer->size);
         }
 
         SYNET_INLINE void Clone(const Tensor & tensor)
@@ -308,9 +327,7 @@ namespace Synet
             _shape = tensor._shape;
             _format = tensor._format;
             _name = tensor._name;
-            _size = tensor._size;
-            _cpuData(std::make_shared<Vector>(tensor._cpuData->begin(), tensor._cpuData->end()));
-            SetDebugPtr();
+            _buffer.reset(tensor._buffer.Clone());
         }
 
         SYNET_INLINE void Import(const TensorParam & param)
@@ -337,16 +354,16 @@ namespace Synet
             {
             case TensorType32f:
             {
-                param.f32().resize(_size);
                 const Synet::Tensor<float> & f32 = As32f();
-                CpuCopy(f32.CpuData(), _size, param.f32().data());
+                param.f32().resize(f32.Size());
+                CpuCopy(f32.CpuData(), f32.Size(), param.f32().data());
                 break;
             }
             case TensorType32i:
             {
-                param.i32().resize(_size);
                 const Synet::Tensor<int32_t> & i32 = As32i();
-                CpuCopy(i32.CpuData(), _size, param.i32().data());
+                param.i32().resize(i32.Size());
+                CpuCopy(i32.CpuData(), i32.Size(), param.i32().data());
                 break;
             }
             default:
@@ -378,7 +395,7 @@ namespace Synet
                 os << _shape[i] << " ";
             os << "} " << (_format == TensorFormatNchw ? "NCHW" : (_format == TensorFormatNhwc ? "NHWC" : "")) << std::endl;
 
-            if (_size == 0)
+            if (_buffer->size == 0)
                 return;
 
             size_t n = _shape.size();
@@ -450,9 +467,18 @@ namespace Synet
         SYNET_INLINE void Resize(const Type & value)
         {
             _type = Detail::GetTensorType<Type>();
-            _size = Size(0, _shape.size());
-            _cpuData->resize(_size, value);
-            SetDebugPtr();
+            size_t size = Size(0, _shape.size());
+            _buffer->Resize(size);
+            CpuSet(_buffer->size, value, _buffer->data);
+        }
+
+        SYNET_INLINE void Resize()
+        {
+            _type = Detail::GetTensorType<Type>();
+            size_t size = Size(0, _shape.size());
+            _buffer->Resize(size);
+            CpuSet(_buffer->size, Type(), _buffer->data);
+            //CpuTouch(_buffer->data, _buffer->size);
         }
 
         SYNET_INLINE void Extend()
@@ -460,37 +486,18 @@ namespace Synet
             if(_type == TensorTypeUnknown)
                 _type = Detail::GetTensorType<Type>();
             assert(_type == Detail::GetTensorType<Type>());
-            _size = Size(0, _shape.size());
-            if (_size > _cpuData->size())
-                _cpuData->resize(_size);
-            SetDebugPtr();
+            size_t size = Size(0, _shape.size());
+            if (size > _buffer->size)
+                _buffer->Resize(size);
         }
 
-#if defined(_DEBUG) && defined(_MSC_VER)
-        const Type * _ptr;
-
-        SYNET_INLINE void SetDebugPtr()
-        {
-            _ptr = _cpuData->data();
-        }
-#else
-        SYNET_INLINE void SetDebugPtr()
-        {
-        }
-#endif
-
-#if defined(SYNET_SIMD_LIBRARY_ENABLE)
-        typedef std::vector<Type, Simd::Allocator<Type>> Vector;
-#else
-        typedef std::vector<Type, std::allocator<Type>> Vector;
-#endif
-        typedef std::shared_ptr<Vector> VectorPtr;
+        typedef Synet::Buffer<Type> Buffer;
+        typedef std::shared_ptr<Buffer> BufferPtr;
 
         Synet::String _name;
         TensorType _type;
         TensorFormat _format;
         Synet::Shape _shape;
-        size_t _size;
-        VectorPtr _cpuData;
+        BufferPtr _buffer;
     };
 }

@@ -44,7 +44,7 @@ namespace Synet
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             assert(src.size() == 2 && src[1]->GetType() == TensorType32i);
-            dst[0]->Reshape(src[1]->Shape());
+            dst[0]->Reshape(src[1]->Shape(), src[0]->Format());
         }
 
     protected:
