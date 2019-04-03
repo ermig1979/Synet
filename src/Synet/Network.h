@@ -48,6 +48,7 @@
 #include "Synet/Layers/PadLayer.h"
 #include "Synet/Layers/PermuteLayer.h"
 #include "Synet/Layers/PoolingLayer.h"
+#include "Synet/Layers/PowerLayer.h"
 #include "Synet/Layers/PreluLayer.h"
 #include "Synet/Layers/PriorBoxLayer.h"
 #include "Synet/Layers/ReductionLayer.h"
@@ -117,7 +118,7 @@ namespace Synet
                 return false;
             for (size_t i = 0; i < _layers.size(); ++i)
             {
-                if (!_layers[i]->Load(ifs))
+                if (!_layers[i]->Load(ifs, _layers))
                 {
                     ifs.close();
                     return false;
@@ -480,11 +481,30 @@ namespace Synet
 
         size_t MemoryUsage() const
         {
+            std::set<const void*> unique;
             size_t memoryUsage = 0;
             for (size_t i = 0; i < _layers.size(); ++i)
+            {
+                for (size_t j = 0; j < _layers[i]->Weight().size(); ++j)
+                {
+                    const void * ptr = _layers[i]->Weight()[j].CpuData();
+                    if (unique.find(ptr) == unique.end())
+                    {
+                        memoryUsage += _layers[i]->Weight()[j].MemoryUsage();
+                        unique.insert(ptr);
+                    }
+                }
                 memoryUsage += _layers[i]->MemoryUsage();
+            }
             for (size_t i = 0; i < _tensors.size(); ++i)
-                memoryUsage += _tensors[i]->Size() * sizeof(Type);
+            {
+                const void * ptr = _tensors[i]->CpuData();
+                if (unique.find(ptr) == unique.end())
+                {
+                    memoryUsage += _tensors[i]->MemoryUsage();
+                    unique.insert(ptr);
+                }
+            }
             return memoryUsage;
         }
 
@@ -676,6 +696,7 @@ namespace Synet
             case LayerTypePad: return new PadLayer<T>(param);
             case LayerTypePermute: return new PermuteLayer<T>(param);
             case LayerTypePooling: return new PoolingLayer<T>(param);
+            case LayerTypePower: return new PowerLayer<T>(param);
             case LayerTypePrelu: return new PreluLayer<T>(param);
             case LayerTypePriorBox: return new PriorBoxLayer<T>(param);
             case LayerTypeReduction: return new ReductionLayer<T>(param);

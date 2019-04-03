@@ -55,6 +55,7 @@ namespace Synet
         LayerTypePad,
         LayerTypePermute,
         LayerTypePooling,
+        LayerTypePower,
         LayerTypePrelu,
         LayerTypePriorBox,
         LayerTypeReduction,
@@ -182,6 +183,14 @@ namespace Synet
         SYNET_PARAM_VALUE(Shape, shape, Shape());
         SYNET_PARAM_VALUE(Ints, i32, Ints());
         SYNET_PARAM_VALUE(Floats, f32, Floats());
+    };
+
+    struct WeightParam
+    {
+        SYNET_PARAM_VALUE(Shape, dim, Shape());
+        SYNET_PARAM_VALUE(TensorFormat, format, TensorFormatNchw);
+        SYNET_PARAM_VALUE(int64_t, offset, -1);
+        SYNET_PARAM_VALUE(int64_t, size, -1);
     };
 
     struct NonMaximumSuppressionParam
@@ -357,6 +366,13 @@ namespace Synet
         SYNET_PARAM_VALUE(RoundingType, roundingType, RoundingTypeCeil);
     };
 
+    struct PowerParam
+    {
+        SYNET_PARAM_VALUE(float, power, 1.0f);
+        SYNET_PARAM_VALUE(float, scale, 1.0f);
+        SYNET_PARAM_VALUE(float, shift, 0.0f);
+    };
+
     struct PriorBoxParam
     {
         SYNET_PARAM_VALUE(Floats, minSize, Floats());
@@ -469,7 +485,7 @@ namespace Synet
         SYNET_PARAM_VALUE(String, name, String());
         SYNET_PARAM_VALUE(Strings, src, Strings());
         SYNET_PARAM_VALUE(Strings, dst, Strings());
-        SYNET_PARAM_VECTOR(ShapeParam, weight);
+        SYNET_PARAM_VECTOR(WeightParam, weight);
 
         SYNET_PARAM_STRUCT(BatchNormParam, batchNorm);
         SYNET_PARAM_STRUCT(BiasParam, bias);
@@ -492,6 +508,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(NormalizeParam, normalize);
         SYNET_PARAM_STRUCT(PermuteParam, permute);
         SYNET_PARAM_STRUCT(PoolingParam, pooling);
+        SYNET_PARAM_STRUCT(PowerParam, power);
         SYNET_PARAM_STRUCT(PriorBoxParam, priorBox);
         SYNET_PARAM_STRUCT(ReductionParam, reduction);
         SYNET_PARAM_STRUCT(RegionParam, region);
@@ -513,6 +530,7 @@ namespace Synet
 
     struct NetworkParam
     {
+        SYNET_PARAM_VALUE(int32_t, version, 0);
         SYNET_PARAM_VALUE(String, name, String());
         SYNET_PARAM_VALUE(Strings, dst, Strings());
         SYNET_PARAM_VECTOR(LayerParam, layers);

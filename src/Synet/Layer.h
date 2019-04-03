@@ -37,13 +37,18 @@ namespace Synet
         typedef Synet::Tensor<T> Tensor;
         typedef std::vector<Tensor> Tensors;
         typedef std::vector<Tensor*> TensorPtrs;
+        typedef std::shared_ptr<Layer> LayerSharedPtr;
+        typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
 
         Layer(const LayerParam & param)
             : _param(param)
         {
-            _weight.resize(_param.weight().size());
-            for (size_t i = 0; i < _weight.size(); ++i)
-                _weight[i].Reshape(_param.weight()[i].dim(), Type(), _param.weight()[i].format());
+            //_weight.resize(_param.weight().size());
+            //for (size_t i = 0; i < _weight.size(); ++i)
+            //{
+            //    if(_param.weight()[i].offset() < 0 && _param.weight()[i].size() < 0)
+            //        _weight[i].Reshape(_param.weight()[i].dim(), Type(), _param.weight()[i].format());
+            //}
         }
 
         virtual ~Layer()
@@ -62,10 +67,7 @@ namespace Synet
 
         virtual size_t MemoryUsage() const
         {
-            size_t memoryUsage = 0;
-            for (size_t i = 0; i < _weight.size(); ++i)
-                memoryUsage += _weight[i].Size() * sizeof(Type);
-            return memoryUsage;
+            return 0;
         }
 
         virtual void CompactWeight()
@@ -79,24 +81,46 @@ namespace Synet
             ForwardCpu(src, buf, dst);
         }
 
-        bool Load(const void * & data, size_t & size)
+        bool Load(std::istream & is, const LayerSharedPtrs & layers)
         {
+            _weight.resize(_param.weight().size());
             for (size_t i = 0; i < _weight.size(); ++i)
             {
-                size_t requred = _weight[i].Size() * sizeof(Type);
-                if (requred > size)
-                    return false;
-                ::memcpy(_weight[i].CpuData(), data, requred);
-                (char*&)data += requred;
-                size -= requred;
+                const WeightParam & param = _param.weight()[i];
+                Tensor & tensor = _weight[i];
+                size_t offset = param.offset();
+                size_t size = param.size();
+                if (offset < 0 && size < 0)
+                {
+                    tensor.Reshape(param.dim(), Type(), param.format());
+                    if (!is.read((char*)tensor.CpuData(), tensor.Size() * sizeof(T)))
+                        return false;
+                }
+                else
+                {
+                    bool unique = true;
+                    for (size_t j = 0; j < layers.size() && unique; ++j)
+                    {
+                        if (layers[j].get() == this)
+                            break;
+                        for (size_t k = 0; k < layers[j]->Param().weight().size() && unique; ++k)
+                        {
+                            if (layers[j]->Param().weight()[k].offset() == offset)
+                            {
+                                tensor.Share(layers[j]->Weight()[k]);
+                                unique = false;
+                            }
+                        }
+                    }
+                    if (unique)
+                    {
+                        tensor.Reshape(param.dim(), Type(), param.format());
+                        is.seekg(offset, std::ios::beg);
+                        if (!is.read((char*)tensor.CpuData(), size))
+                            return false;
+                    }
+                }
             }
-            return true;
-        }
-
-        bool Load(std::istream & is)
-        {
-            for (size_t i = 0; i < _weight.size(); ++i)
-                is.read((char*)_weight[i].CpuData(), _weight[i].Size() * sizeof(T));
             return true;
         }
 

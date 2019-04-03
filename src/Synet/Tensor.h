@@ -76,6 +76,15 @@ namespace Synet
             Resize(value);
         }
 
+        SYNET_INLINE Tensor(const Type * data, size_t size, const Synet::Shape & shape, const TensorFormat & format = TensorFormatUnknown, const String & name = String())
+            : _shape(shape)
+            , _buffer(std::make_shared<Buffer>(data, size))
+            , _format(format)
+            , _name(name)
+        {
+            assert(Size(0, _shape.size()) == _buffer->size);
+        }
+
         SYNET_INLINE ~Tensor()
         {
         }
@@ -137,7 +146,7 @@ namespace Synet
                 PrintMemoryUsage();
             }
 #endif
-            _buffer->Resize(0);
+            _buffer = std::make_shared<Buffer>();
 #ifdef SYNET_MALLOC_DEBUG
             if (size > SYNET_MALLOC_TRIM_THRESHOLD)
             {
@@ -321,6 +330,15 @@ namespace Synet
             assert(Size(0, _shape.size()) == _buffer->size);
         }
 
+        SYNET_INLINE void ShareAs(const Type * data, size_t size, const Synet::Shape & shape, const TensorFormat & format = TensorFormatUnknown)
+        {
+            _type = Detail::GetTensorType<Type>();
+            _shape = shape;
+            _format = format;
+            _buffer->Share(data, size);
+            assert(Size(0, _shape.size()) == _buffer->size);
+        }
+
         SYNET_INLINE void Clone(const Tensor & tensor)
         {
             _type = tensor._type;
@@ -369,6 +387,16 @@ namespace Synet
             default:
                 assert(0);
             }
+        }
+
+        SYNET_INLINE size_t MemoryUsage() const
+        {
+            return _buffer->Owner() ? _buffer->size * sizeof(Type) : 0;
+        }
+
+        SYNET_INLINE void Capture()
+        {
+            _buffer->Capture();
         }
 
 #ifdef SYNET_DEBUG_PRINT_ENABLE

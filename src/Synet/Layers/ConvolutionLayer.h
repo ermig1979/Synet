@@ -56,7 +56,7 @@ namespace Synet
         virtual void CompactWeight()
         {
             if (_internal)
-                ((Tensor&)this->Weight()[0]).Reshape({ 0 });
+                ((Tensor&)this->Weight()[0]).Clear();
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)

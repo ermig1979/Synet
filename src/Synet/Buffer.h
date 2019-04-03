@@ -64,8 +64,8 @@ namespace Synet
             Resize(size_);
         }
 
-        SYNET_INLINE Buffer(const Type * const data_, size_t size_)
-            : data(data_)
+        SYNET_INLINE Buffer(const Type * data_, size_t size_)
+            : data((Type * const)data_)
             , size(size_)
             , _owner(false)
         {
@@ -105,7 +105,7 @@ namespace Synet
             }
         }
 
-        SYNET_INLINE void Share(const Type * const data_, size_t size_)
+        SYNET_INLINE void Share(const Type * data_, size_t size_)
         {
             if (_owner)
             {
@@ -113,7 +113,7 @@ namespace Synet
                 _owner = false;
             }
             *(size_t*)&size = size_;
-            *(Type**)&data = data_;
+            *(const Type**)&data = data_;
         }
 
         SYNET_INLINE void Share(const Buffer & other)
@@ -130,8 +130,8 @@ namespace Synet
 
         SYNET_INLINE Buffer * Clone() const 
         {
-            Buffer clone(size);
-            memcpy(clone.data, data, size*sizeof(Type));
+            Buffer * clone = new Buffer(size);
+            memcpy(clone->data, data, size*sizeof(Type));
             return clone;
         }
 
@@ -143,6 +143,21 @@ namespace Synet
         SYNET_INLINE const Type & operator[] (size_t i) const
         {
             return data[i];
+        }
+
+        SYNET_INLINE bool Owner() const
+        {
+            return _owner;
+        }
+
+        SYNET_INLINE void Capture()
+        {
+            if(!_owner)
+            {
+                Buffer clone(size);
+                memcpy(clone.data, data, size * sizeof(Type));
+                Swap(clone);
+            }
         }
 
     private:
