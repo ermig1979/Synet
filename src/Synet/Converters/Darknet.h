@@ -80,29 +80,22 @@ namespace Synet
                 return false;
             }
 
+            Synet::NetworkParamHolder holder;
+            Vector weight;
 #ifdef SYNET_DARKNET_CUSTOM
             ::network net = ::parse_network_cfg((char*)srcModelPath.c_str());
             ::load_weights(&net, (char*)srcWeightPath.c_str());
-            Synet::NetworkParamHolder holder;
-            Tensors weight;
             if (!ConvertNetwork(net, trans, holder(), weight))
-            {
-                ::free_network(net);
-                return false;
-            }
-            ::free_network(net);
 #else
             ::network * net = ::parse_network_cfg((char*)srcModelPath.c_str());
             ::load_weights(net, (char*)srcWeightPath.c_str());
-            Synet::NetworkParamHolder holder;
-            Tensors weight;
             if (!ConvertNetwork(*net, trans, holder(), weight))
+#endif
             {
                 ::free_network(net);
                 return false;
             }
             ::free_network(net);
-#endif
 
             Optimizer optimizer;
             if (!optimizer.Run(holder()))
@@ -122,23 +115,25 @@ namespace Synet
         typedef std::vector<Synet::LayerParam> LayerParams;
         typedef Synet::Tensor<float> Tensor;
         typedef std::vector<Tensor> Tensors;
+        typedef std::vector<float> Vector;
 
-        bool ConvertNetwork(const ::network & net, bool trans, Synet::NetworkParam & network, Tensors & weight)
+        bool ConvertNetwork(const ::network & net, bool trans, Synet::NetworkParam & network, Vector & weight)
         {
             _id = 0;
             _dst.clear();
             _dst.reserve(net.n);
 
-            network.layers().reserve(net.n*3);
-            weight.reserve(net.n * 2);
+            network.version() = 1;
             network.name() = String("darknet_unknown");
+            network.layers().reserve(net.n*3);
+            weight.resize(WeightSize(net));
 
             if (!ConvertInputLayer(net, trans, network.layers()))
                 return false;
 
-            for (int i = 0; i < net.n; ++i)
+            for (size_t i = 0, offset = 0; i < (size_t)net.n; ++i)
             {
-                if (!ConvertLayer(net.layers[i], trans, network.layers(), weight))
+                if (!ConvertLayer(net.layers[i], trans, network.layers(), weight, offset))
                     return false;
                 _dst.push_back(network.layers().back().dst()[0]);
             }
@@ -163,7 +158,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertLayer(const ::layer & src, bool trans, LayerParams & dst, Tensors & weight)
+        bool ConvertLayer(const ::layer & src, bool trans, LayerParams & dst, Vector & weight, size_t & offset)
         {
             switch (src.type)
             {
@@ -172,18 +167,18 @@ namespace Synet
                     return false;
                 break;
             case ::CONVOLUTIONAL:
-                if (!ConvertConvolitionLayer(src, trans, dst, weight))
+                if (!ConvertConvolitionLayer(src, trans, dst, weight, offset))
                     return false;
                 if (src.batch_normalize)
                 {
-                    if (!ConvertBatchNormLayer(src, dst, weight))
+                    if (!ConvertBatchNormLayer(src, dst, weight, offset))
                         return false;
-                    if (!ConvertScaleLayer(src, dst, weight))
+                    if (!ConvertScaleLayer(src, dst, weight, offset))
                         return false;
                 }
                 else
                 {
-                    if (!ConvertBiasLayer(src, trans, dst, weight))
+                    if (!ConvertBiasLayer(src, dst, weight, offset))
                         return false;
                 }
                 if (!ConvertActivationLayer(src, dst))
@@ -269,7 +264,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertBatchNormLayer(const ::layer & src, LayerParams & dst, Tensors & weight)
+        bool ConvertBatchNormLayer(const ::layer & src, LayerParams & dst, Vector & weight, size_t & offset)
         {
             Synet::LayerParam batchNorm;
             batchNorm.type() = Synet::LayerTypeBatchNorm;
@@ -279,19 +274,15 @@ namespace Synet
             batchNorm.batchNorm().eps() = 0.000001f;
             batchNorm.batchNorm().yoloCompatible() = true;
             batchNorm.weight().resize(2);
-            batchNorm.weight()[0].dim() = Shape({ (size_t)src.out_c });
-            batchNorm.weight()[1].dim() = Shape({ (size_t)src.out_c });
-            weight.push_back(Tensor());
-            weight.back().Reshape(batchNorm.weight()[0].dim());
-            memcpy(weight.back().CpuData(), src.rolling_mean, weight.back().Size() * sizeof(float));
-            weight.push_back(Tensor());
-            weight.back().Reshape(batchNorm.weight()[1].dim());
-            memcpy(weight.back().CpuData(), src.rolling_variance, weight.back().Size() * sizeof(float));
+            if (!ConvertWeight(src.rolling_mean, Shape({ (size_t)src.out_c }), false, batchNorm.weight()[0], weight, offset))
+                return false;
+            if (!ConvertWeight(src.rolling_variance, Shape({ (size_t)src.out_c }), false, batchNorm.weight()[1], weight, offset))
+                return false;
             dst.push_back(batchNorm);
             return true;
         }
 
-        bool ConvertBiasLayer(const ::layer & src, bool trans, LayerParams & dst, Tensors & weight)
+        bool ConvertBiasLayer(const ::layer & src, LayerParams & dst, Vector & weight, size_t & offset)
         {
             Synet::LayerParam bias;
             bias.type() = Synet::LayerTypeBias;
@@ -299,10 +290,8 @@ namespace Synet
             bias.src() = dst.back().dst();
             bias.dst() = dst.back().dst();
             bias.weight().resize(1);
-            bias.weight()[0].dim() = Shape({ (size_t)src.out_c});
-            weight.push_back(Tensor());
-            weight.back().Reshape(bias.weight()[0].dim());
-            memcpy(weight.back().CpuData(), src.biases, weight.back().Size() * sizeof(float));
+            if (!ConvertWeight(src.biases, Shape({ (size_t)src.out_c}), false, bias.weight()[0], weight, offset))
+                return false;
             dst.push_back(bias);
             return true;
         }
@@ -320,7 +309,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConvolitionLayer(const ::layer & src, bool trans, LayerParams & dst, Tensors & weight)
+        bool ConvertConvolitionLayer(const ::layer & src, bool trans, LayerParams & dst, Vector & weight, size_t & offset)
         {
             Synet::LayerParam convolution;
             convolution.type() = Synet::LayerTypeConvolution;
@@ -335,26 +324,9 @@ namespace Synet
                 convolution.convolution().pad().resize(1, src.pad);
             convolution.convolution().biasTerm() = false;
             convolution.weight().resize(1);
-            weight.push_back(Tensor());
-            if (trans)
-            {
-                Shape shape = Shape({ (size_t)src.size, (size_t)src.size, (size_t)src.c, (size_t)src.out_c });
-                weight.back().Reshape(shape);
-                const float * pSrc = src.weights;
-                for (size_t o = 0; o < shape[3]; ++o)
-                    for (size_t i = 0; i < shape[2]; ++i)
-                        for (size_t y = 0; y < shape[0]; ++y)
-                            for (size_t x = 0; x < shape[1]; ++x)
-                                weight.back().CpuData(Shape({ y, x, i, o }))[0] = *pSrc++;
-                convolution.weight()[0].dim() = shape;
-                convolution.weight()[0].format() = TensorFormatNhwc;
-            }
-            else
-            {
-                convolution.weight()[0].dim() = Shape({ (size_t)src.out_c, (size_t)src.c, (size_t)src.size, (size_t)src.size });
-                weight.back().Reshape(convolution.weight()[0].dim());
-                memcpy(weight.back().CpuData(), src.weights, weight.back().Size() * sizeof(float));
-            }
+            if (!ConvertWeight(src.weights, Shape({ (size_t)src.out_c, (size_t)src.c, (size_t)src.size, (size_t)src.size }), 
+                trans, convolution.weight()[0], weight, offset))
+                return false;
             dst.push_back(convolution);
             return true;
         }
@@ -432,7 +404,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertScaleLayer(const ::layer & src, LayerParams & dst, Tensors & weight)
+        bool ConvertScaleLayer(const ::layer & src, LayerParams & dst, Vector & weight, size_t & offset)
         {
             Synet::LayerParam scale;
             scale.type() = Synet::LayerTypeScale;
@@ -441,14 +413,10 @@ namespace Synet
             scale.dst() = dst.back().dst();
             scale.scale().biasTerm() = true;
             scale.weight().resize(2);
-            scale.weight()[0].dim() = Shape({ (size_t)src.out_c });
-            scale.weight()[1].dim() = Shape({ (size_t)src.out_c });
-            weight.push_back(Tensor());
-            weight.back().Reshape(scale.weight()[0].dim());
-            memcpy(weight.back().CpuData(), src.scales, weight.back().Size() * sizeof(float));
-            weight.push_back(Tensor());
-            weight.back().Reshape(scale.weight()[1].dim());
-            memcpy(weight.back().CpuData(), src.biases, weight.back().Size() * sizeof(float));
+            if (!ConvertWeight(src.scales, Shape({ (size_t)src.out_c }), false, scale.weight()[0], weight, offset))
+                return false;
+            if (!ConvertWeight(src.biases, Shape({ (size_t)src.out_c }), false, scale.weight()[1], weight, offset))
+                return false;
             dst.push_back(scale);
             return true;
         }
@@ -516,19 +484,60 @@ namespace Synet
             return true;
         }
 
-        bool SaveWeight(const Tensors & weight, const String & path)
+        bool ConvertWeight(const float * src, Shape shape, bool trans, WeightParam & param, Vector & weight, size_t & offset)
+        {
+            size_t size = 1;
+            for (size_t i = 0; i < shape.size(); ++i)
+                size *= shape[i];
+            if (offset + size > weight.size())
+            {
+                std::cout << "Can't convert weight: buffer overflow!" << std::endl;
+                return false;
+            }
+            if (shape.size() == 4 && trans)
+            {
+                shape = Shape({shape[2], shape[3], shape[1], shape[0]});
+                param.format() = TensorFormatNhwc;
+                Tensor dst(weight.data() + offset, size, shape, param.format());
+                for (size_t o = 0; o < shape[3]; ++o)
+                    for (size_t i = 0; i < shape[2]; ++i)
+                        for (size_t y = 0; y < shape[0]; ++y)
+                            for (size_t x = 0; x < shape[1]; ++x)
+                                dst.CpuData(Shape({ y, x, i, o }))[0] = *src++;
+            }
+            else
+                memcpy(weight.data() + offset, src, size * sizeof(float));
+            param.dim() = shape;
+            param.offset() = offset*sizeof(float);
+            param.size() = size * sizeof(float);
+            offset += size;
+            return true;
+        }
+
+        size_t WeightSize(const ::network & net) const
+        {
+            size_t size = 0;
+            for (size_t i = 0; i < net.n; ++i)
+            {
+                const ::layer & l = net.layers[i];
+                size += l.size*l.size*l.c*l.out_c;
+                if (l.batch_normalize)
+                    size += l.out_c*4;
+                else
+                    size += l.out_c;
+            }
+            return size;
+        }
+
+        bool SaveWeight(const Vector & bin, const String & path)
         {
             std::ofstream ofs(path.c_str(), std::ofstream::binary);
-            if (ofs.is_open())
-            {
-                for (size_t i = 0; i < weight.size(); ++i)
-                {
-                    ofs.write((const char*)weight[i].CpuData(), weight[i].Size()*sizeof(float));
-                }
-                ofs.close();
-                return true;
-            }
-            return false;
+            if (!ofs.is_open())
+                return false;
+            ofs.write((const char*)bin.data(), bin.size() * sizeof(float));
+            bool result = (bool)ofs;
+            ofs.close();
+            return result;
         }
 
         String UniqueName(const String & prefix)

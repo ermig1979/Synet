@@ -487,6 +487,8 @@ namespace Synet
             {
                 for (size_t j = 0; j < _layers[i]->Weight().size(); ++j)
                 {
+                    if (_layers[i]->Weight()[j].Size() == 0)
+                        continue;
                     const void * ptr = _layers[i]->Weight()[j].CpuData();
                     if (unique.find(ptr) == unique.end())
                     {

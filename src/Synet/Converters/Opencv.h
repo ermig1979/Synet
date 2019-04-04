@@ -1055,13 +1055,12 @@ namespace Synet
         bool SaveWeight(const Vector & bin, const String & path)
         {
             std::ofstream ofs(path.c_str(), std::ofstream::binary);
-            if (ofs.is_open())
-            {
-                ofs.write((const char*)bin.data(), bin.size() * sizeof(float));
-                ofs.close();
-                return true;
-            }
-            return false;
+            if (!ofs.is_open())
+                return false;
+            ofs.write((const char*)bin.data(), bin.size() * sizeof(float));
+            bool result = (bool)ofs;
+            ofs.close();
+            return result;
         }
     };
 
