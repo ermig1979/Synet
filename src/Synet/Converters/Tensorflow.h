@@ -103,7 +103,7 @@ namespace Synet
             _trans = trans;
 
             Synet::NetworkParamHolder holder;
-            Tensors weight;
+            Vector weight;
             if (!ConvertNetwork(holder(), weight))
                 return false;
 
@@ -124,6 +124,7 @@ namespace Synet
 
         typedef std::vector<Synet::LayerParam> LayerParams;
         typedef Synet::Tensor<float> Tensor;
+        typedef std::vector<float> Vector;
         typedef std::vector<Tensor> Tensors;
         typedef std::vector<std::pair<String, int>> NameIndexVector;
         typedef std::map<String, int> NameIndexMap;
@@ -153,7 +154,7 @@ namespace Synet
         FConstMap _fConst;
         ShapeMap _shape;
 
-        bool ConvertNetwork(Synet::NetworkParam & network, Tensors & weight)
+        bool ConvertNetwork(Synet::NetworkParam & network, Vector & weight)
         {
             RemoveUnused();
 
@@ -165,8 +166,9 @@ namespace Synet
 #endif //SYNET_TENSORFLOW_DEBUG
 
             NameNameMap shapes;
+            network.version() = 1;
             network.name() = "tensorflow_unknown";
-            for (int i = 0; i < _graph.node_size(); ++i)
+            for (size_t i = 0, offset = 0; i < (size_t)_graph.node_size(); ++i)
             {
                 const ::tensorflow::NodeDef & node = _graph.node(i);
                 google::protobuf::Map<String, tensorflow::AttrValue> attr = node.attr();
@@ -201,7 +203,7 @@ namespace Synet
                 }
                 else if (type == "Add" || type == "BiasAdd")
                 {
-                    if (!ConvertAddLayer(node, layer, weight))
+                    if (!ConvertAddLayer(node, layer, weight, offset))
                         return false;
                 }
                 else if (type == "Cast")
@@ -211,7 +213,7 @@ namespace Synet
                 }
                 else if (type == "Conv2D" || type == "DepthwiseConv2dNative")
                 {
-                    if (!ConvertConvolutionLayer(node, layer, weight))
+                    if (!ConvertConvolutionLayer(node, layer, weight, offset))
                         return false;
                 }
                 else if (type == "ExpandDims")
@@ -241,7 +243,7 @@ namespace Synet
                 }
                 else if (type == "MatMul")
                 {
-                    if (!ConvertInnerProductLayer(node, layer, weight))
+                    if (!ConvertInnerProductLayer(node, layer, weight, offset))
                         return false;
                 }
                 else if (type == "Maximum" || type == "Minimum")
@@ -251,7 +253,7 @@ namespace Synet
                 }
                 else if (type == "Mul")
                 {
-                    if (!ConvertMulLayer(node, layer, weight))
+                    if (!ConvertMulLayer(node, layer, weight, offset))
                         return false;
                 }
                 else if (type == "Pad")
@@ -264,7 +266,7 @@ namespace Synet
                 }
                 else if (type == "RealDiv")
                 {
-                    if (!ConvertRealDivLayer(node, layer, weight))
+                    if (!ConvertRealDivLayer(node, layer, weight, offset))
                         return false;
                 }
                 else if (type == "Max" || type == "Sum")
@@ -327,7 +329,7 @@ namespace Synet
                 }
                 else if (type == "Sub")
                 {
-                    if (!ConvertSubLayer(node, layer, weight))
+                    if (!ConvertSubLayer(node, layer, weight, offset))
                         return false;
                 }
                 else if (type == "Switch")
@@ -396,7 +398,7 @@ namespace Synet
                 layer.dst().push_back(layer.name() + ":" + ValueToString(i));
         }
 
-        bool ConvertAddLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Tensors & weight)
+        bool ConvertAddLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Vector & weight, size_t & offset)
         {
             bool haveConst = false;
             for (int j = 0; !haveConst && j < node.input_size(); ++j)
@@ -409,9 +411,8 @@ namespace Synet
                 layer.src().push_back(node.input(0));
                 layer.type() = LayerTypeBias;
                 layer.weight().resize(1);
-                weight.push_back(Tensor());
-                ConvertKernel(GetConst(_graph, node, _valueId), weight.back());
-                layer.weight()[0].dim() = weight.back().Shape();
+                if (!ConvertWeight(GetConst(_graph, node, _valueId), String(), layer.weight()[0], weight, offset))
+                    return false;
                 layer.dst() = layer.src();
             }
             else
@@ -436,25 +437,21 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConvolutionLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Tensors & weight)
+        bool ConvertConvolutionLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Vector & weight, size_t & offset)
         {
             layer.type() = LayerTypeConvolution;
             layer.convolution().biasTerm() = false;
             layer.weight().resize(1);
-            weight.push_back(Tensor());
-            ConvertKernel(GetConst(_graph, node, _valueId), weight.back());
-            layer.weight()[0].dim() = weight.back().Shape();
-            layer.weight()[0].format() = _trans ? TensorFormatNchw : TensorFormatNhwc;
-
+            if (!ConvertWeight(GetConst(_graph, node, _valueId), String(), layer.weight()[0], weight, offset))
+                return false;
             NameIndexVector nextLayers = NextLayers(node.name(), "BiasAdd");
             if (nextLayers.size() == 1)
             {
                 layer.convolution().biasTerm() = true;
                 layer.weight().resize(2);
-                weight.push_back(Tensor());
                 const ::tensorflow::NodeDef & bias = _graph.node(nextLayers[0].second);
-                ConvertKernel(GetConst(_graph, bias, _valueId), weight.back());
-                layer.weight()[1].dim() = weight.back().Shape();
+                if (!ConvertWeight(GetConst(_graph, bias, _valueId), String(), layer.weight()[1], weight, offset))
+                    return false;
                 _ignore.insert(nextLayers[0].first);
                 ExcludeLayer(nextLayers[0].second, 0, false);
                 for (size_t j = 0; j < _param().output().size(); ++j)
@@ -565,7 +562,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertInnerProductLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Tensors & weight)
+        bool ConvertInnerProductLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Vector & weight, size_t & offset)
         {
             assert(node.input_size() == 2);
             bool haveConst = false;
@@ -584,11 +581,8 @@ namespace Synet
             if (haveConst)
             {
                 layer.weight().resize(1);
-                weight.push_back(Tensor());
-                ConvertKernel(GetConst(_graph, node, _valueId), weight.back()); 
-                if (_trans && !ReorderWeightSpecial(layer.name(), weight.back()))
+                if (!ConvertWeight(GetConst(_graph, node, _valueId), layer.name(), layer.weight()[0], weight, offset))
                     return false;
-                layer.weight()[0].dim() = weight.back().Shape();
                 const Shape & shape = layer.weight()[0].dim();
                 layer.innerProduct().outputNum() = (uint32_t)(/*(!_trans) ^ */layer.innerProduct().transposeB() ? shape[1] : shape[0]);
                 NameIndexVector nextLayers = NextLayers(node.name(), "BiasAdd");
@@ -596,10 +590,9 @@ namespace Synet
                 {
                     layer.innerProduct().biasTerm() = true;
                     layer.weight().resize(2);
-                    weight.push_back(Tensor());
                     const ::tensorflow::NodeDef & bias = _graph.node(nextLayers[0].second);
-                    ConvertKernel(GetConst(_graph, bias, _valueId), weight.back());
-                    layer.weight()[1].dim() = weight.back().Shape();
+                    if (!ConvertWeight(GetConst(_graph, bias, _valueId), String(), layer.weight()[1], weight, offset))
+                        return false;
                     _ignore.insert(nextLayers[0].first);
                     ExcludeLayer(nextLayers[0].second, 0, false);
                     for (size_t j = 0; j < _param().output().size(); ++j)
@@ -860,7 +853,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertMulLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Tensors & weight)
+        bool ConvertMulLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Vector & weight, size_t & offset)
         {
             assert(node.input_size() == 2);
             ptrdiff_t constIndex = -1, constCount = 0;
@@ -885,13 +878,11 @@ namespace Synet
                 layer.type() = LayerTypeScale;
                 layer.src().push_back(node.input(1 - (int)constIndex));
                 layer.scale().biasTerm() = false;
-                Tensor scale;
-                ConvertKernel(GetConst(_graph, node, _valueId), scale);
-                if (scale.Size() == 1)
-                    layer.scale().axis() = 0;
                 layer.weight().resize(1);
-                layer.weight()[0].dim() = scale.Shape();
-                weight.push_back(scale);
+                if (!ConvertWeight(GetConst(_graph, node, _valueId), String(), layer.weight()[0], weight, offset))
+                    return false;
+                if (layer.weight()[0].dim()[0] == 1)
+                    layer.scale().axis() = 0;
                 layer.dst().push_back(layer.name());
             }
             return true;
@@ -926,7 +917,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertRealDivLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Tensors & weight)
+        bool ConvertRealDivLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Vector & weight, size_t & offset)
         {
             assert(node.input_size() == 2);
             ptrdiff_t constIndex = -1, constCount = 0;
@@ -944,14 +935,13 @@ namespace Synet
             {
                 layer.type() = LayerTypeScale;
                 layer.scale().biasTerm() = false;
+                layer.scale().axis() = 0;
+                layer.weight().resize(1);
                 Tensor divider;
                 ConvertKernel(GetConst(_graph, node, _valueId), divider);
                 assert(divider.Size() == 1);
-                Tensor scale(divider.Shape(), 1.0f / divider.CpuData()[0]);
-                layer.scale().axis() = 0;
-                layer.weight().resize(1);
-                layer.weight()[0].dim() = scale.Shape();
-                weight.push_back(scale);
+                divider.CpuData()[0] = 1.0f / divider.CpuData()[0];
+                UpdateWeight(divider, layer.weight()[0], weight, offset);
                 AddSrcDst(node, 1, 1, layer);
             }
             else
@@ -1031,7 +1021,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertSubLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Tensors & weight)
+        bool ConvertSubLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Vector & weight, size_t & offset)
         {
             assert(node.input_size() == 2);
             ptrdiff_t constIndex = -1, constCount = 0;
@@ -1070,10 +1060,8 @@ namespace Synet
                 if (bias.Size() == 1)
                     layer.scale().axis() = 0;
                 layer.weight().resize(2);
-                layer.weight()[0].dim() = scale.Shape();
-                layer.weight()[1].dim() = bias.Shape();
-                weight.push_back(scale);
-                weight.push_back(bias);
+                UpdateWeight(scale, layer.weight()[0], weight, offset);
+                UpdateWeight(bias, layer.weight()[1], weight, offset);
                 layer.dst() = layer.src();//?
             }
             return true;
@@ -1405,6 +1393,8 @@ namespace Synet
                 for (size_t i = 0; i < size; i++)
                     pDst[i] = (TD)pSrc[i];
             }
+
+            dst.SetFormat((!_trans && shape.size() == 4) ? TensorFormatNhwc : TensorFormatNchw);
         }
 
         void ConvertKernel(const tensorflow::TensorProto & src, Tensor & dst)
@@ -1704,19 +1694,37 @@ namespace Synet
         }
 #endif //SYNET_TENSORFLOW_DEBUG
 
-        bool SaveWeight(const Tensors & weight, const String & path)
+        bool UpdateWeight(const Tensor & src, WeightParam & param, Vector & weight, size_t & offset)
+        {
+            if (offset + src.Size() > weight.size())
+                weight.resize(offset + src.Size());
+            memcpy(weight.data() + offset, src.CpuData(), src.Size()*sizeof(float));
+            param.dim() = src.Shape();
+            param.format() = src.Format();
+            param.offset() = offset * sizeof(float);
+            param.size() = src.Size() * sizeof(float);
+            offset += src.Size();
+            return true;
+        }
+
+        bool ConvertWeight(const tensorflow::TensorProto & src, const String & name, WeightParam & param, Vector & weight, size_t & offset)
+        {
+            Tensor dst;
+            ConvertKernel(src, dst);
+            if (name.size() && _trans && !ReorderWeightSpecial(name, dst))
+                return false;
+            return UpdateWeight(dst, param, weight, offset);
+        }
+
+        bool SaveWeight(const Vector & bin, const String & path)
         {
             std::ofstream ofs(path.c_str(), std::ofstream::binary);
-            if (ofs.is_open())
-            {
-                for (size_t i = 0; i < weight.size(); ++i)
-                {
-                    ofs.write((const char*)weight[i].CpuData(), weight[i].Size()*sizeof(float));
-                }
-                ofs.close();
-                return true;
-            }
-            return false;
+            if (!ofs.is_open())
+                return false;
+            ofs.write((const char*)bin.data(), bin.size() * sizeof(float));
+            bool result = (bool)ofs;
+            ofs.close();
+            return result;
         }
     };
 

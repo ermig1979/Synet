@@ -88,8 +88,8 @@ namespace Synet
             {
                 const WeightParam & param = _param.weight()[i];
                 Tensor & tensor = _weight[i];
-                size_t offset = param.offset();
-                size_t size = param.size();
+                ptrdiff_t offset = param.offset();
+                ptrdiff_t size = param.size();
                 if (offset < 0 && size < 0)
                 {
                     tensor.Reshape(param.dim(), Type(), param.format());

@@ -56,6 +56,8 @@ namespace Synet
             {
                 if (MergeConvolutionAndActivation(src, i, dst, changes))
                     continue;
+                if (MergeSoftmax(src, i, dst, changes))
+                    continue;
                 if (MergeFused0(src, i, dst, changes))
                     continue;
                 if (MergeFused1(src, i, dst, changes))
@@ -125,6 +127,47 @@ namespace Synet
                 return true;
             }
             return false;
+        }
+
+        bool MergeSoftmax(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            if (index == 0 || src.size() < index + 5)
+                return false;
+            if (src[index + 0].type() != LayerTypeReduction || src[index + 0].reduction().type() != ReductionTypeMax ||
+                src[index + 0].reduction().axis().size() != 1)
+                return false;
+            if (src[index + 1].type() != LayerTypeBinaryOperation || src[index + 1].binaryOperation().type() != BinaryOperationTypeSub ||
+                src[index + 1].src()[0] != src[index + 0].src()[0] || src[index + 1].src()[1] != src[index + 0].name())
+                return false;
+            if (src[index + 2].type() != LayerTypeUnaryOperation || src[index + 2].unaryOperation().type() != UnaryOperationTypeExp ||
+                src[index + 2].src()[0] != src[index + 1].name())
+                return false;
+            if (src[index + 3].type() != LayerTypeReduction || src[index + 3].reduction().type() != ReductionTypeSum ||
+                src[index + 3].reduction().axis() != src[index + 0].reduction().axis() || src[index + 3].src()[0] != src[index + 2].name())
+                return false;
+            if (src[index + 4].type() != LayerTypeBinaryOperation || src[index + 4].binaryOperation().type() != BinaryOperationTypeDiv ||
+                src[index + 4].src()[0] != src[index + 2].name() || src[index + 4].src()[1] != src[index + 3].name())
+                return false;
+            for (size_t i = index + 5; i < src.size(); ++i)
+            {
+                for (size_t j = 0; j < src[i].src().size(); ++j)
+                {
+                    for (ptrdiff_t k = 0; k < 4; ++k)
+                    {
+                        if (src[i].src()[j] == src[index + k].name())
+                            return false;
+                    }
+                }
+            }
+            LayerParam layer;
+            layer.type() = LayerTypeSoftmax;
+            layer.name() = src[index + 4].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            layer.softmax().axis() = src[index + 0].reduction().axis()[0];
+            dst.push_back(layer);
+            index += 4;
+            return true;
         }
 
         bool MergeFused0(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
