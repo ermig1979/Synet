@@ -96,12 +96,15 @@ namespace Synet
                 return false;
             if (src[index].src().size() != 1 || src[index].src()[0] != src[index - 1].name())
                 return false;
-            for (size_t i = index + 1; i < src.size(); ++i)
+            if (src[index].dst()[0] != src[index - 1].name())
             {
-                for (size_t j = 0; j < src[i].src().size(); ++j)
+                for (size_t i = index + 1; i < src.size(); ++i)
                 {
-                    if (src[i].src()[j] == src[index - 1].name())
-                        return false;
+                    for (size_t j = 0; j < src[i].src().size(); ++j)
+                    {
+                        if (src[i].src()[j] == src[index - 1].name())
+                            return false;
+                    }
                 }
             }
             if (src[index].type() == LayerTypeRestrictRange)

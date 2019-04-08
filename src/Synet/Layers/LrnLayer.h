@@ -32,33 +32,60 @@ namespace Synet
 {
     namespace Detail
     {
-        template<class T> void LrnLayerCrossChannelsCpu(const T * src, size_t channels, size_t size, size_t inner, T alpha, T beta, T k, T * buffer, T * dst)
+        template<class T> void LrnLayerCrossChannelsCpu(const T * src, size_t channels, size_t size, size_t inner, T alpha, T beta, T k, T * buf, T * dst, int trans)
         {
             size_t prePad = (size - 1) / 2;
-            size_t paddedSize = (channels + size - 1)*inner;
-            size_t scaleSize = channels*inner;
-            T * padded = buffer;
-            T * scale = buffer + paddedSize;
-            CpuSet(scaleSize, k, scale);
-            CpuSet(paddedSize, T(0), padded);
-            CpuSqr(src, scaleSize, padded + inner*prePad);
-            for (size_t c = 0; c < size; ++c)
-                CpuAxpy(padded + c*inner, inner, alpha, scale);
-            for (size_t c = 1; c < channels; ++c)
+            if (trans)
             {
-                CpuCopy(scale + (c - 1)*inner, inner, scale + c*inner);
-                CpuAxpy(padded + (c + size - 1)*inner, inner, alpha, scale + c*inner);
-                CpuAxpy(padded + (c - 1)*inner, inner, -alpha, scale + c*inner);
+                size_t paddedSize = channels + size - 1;
+                T * padded = buf;
+                T * scale = buf + paddedSize;
+                for (size_t i = 0; i < inner; ++i)
+                {
+                    CpuSet(channels, k, scale);
+                    CpuSet(paddedSize, T(0), padded);
+                    CpuSqr(src, channels, padded + prePad);
+                    for (size_t c = 0; c < size; ++c)
+                        CpuAxpy(padded + c, 1, alpha, scale);
+                    for (size_t c = 1; c < channels; ++c)
+                    {
+                        CpuCopy(scale + c - 1, 1, scale + c);
+                        CpuAxpy(padded + c + size - 1, 1, alpha, scale + c);
+                        CpuAxpy(padded + c - 1, 1, -alpha, scale + c);
+                    }
+                    CpuPow(scale, channels, -beta, dst);
+                    CpuMul(src, dst, channels, dst);
+                    src += channels;
+                    dst += channels;
+                }
             }
-            CpuPow(scale, scaleSize, -beta, dst);
-            CpuMul(src, dst, scaleSize, dst);
+            else
+            {
+                size_t paddedSize = (channels + size - 1)*inner;
+                size_t scaleSize = channels*inner;
+                T * padded = buf;
+                T * scale = buf + paddedSize;
+                CpuSet(scaleSize, k, scale);
+                CpuSet(paddedSize, T(0), padded);
+                CpuSqr(src, scaleSize, padded + inner*prePad);
+                for (size_t c = 0; c < size; ++c)
+                    CpuAxpy(padded + c*inner, inner, alpha, scale);
+                for (size_t c = 1; c < channels; ++c)
+                {
+                    CpuCopy(scale + (c - 1)*inner, inner, scale + c*inner);
+                    CpuAxpy(padded + (c + size - 1)*inner, inner, alpha, scale + c*inner);
+                    CpuAxpy(padded + (c - 1)*inner, inner, -alpha, scale + c*inner);
+                }
+                CpuPow(scale, scaleSize, -beta, dst);
+                CpuMul(src, dst, scaleSize, dst);
+            }
         }
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-        template <> SYNET_INLINE void LrnLayerCrossChannelsCpu<float>(const float * src, size_t channels, size_t size, size_t inner, float alpha, float beta, float k, float * buffer, float * dst)
+        template <> SYNET_INLINE void LrnLayerCrossChannelsCpu<float>(const float * src, size_t channels, size_t size, size_t inner, float alpha, float beta, float k, float * buf, float * dst, int trans)
         {
             float _k[3] = { k, alpha, -beta };
-            ::SimdSynetLrnLayerCrossChannels(src, (size - 1)/2, channels, inner, _k, dst);
+            ::SimdSynetLrnLayerCrossChannels(src, (size - 1) / 2, channels, inner, _k, dst, (::SimdBool)trans);
         }
 #endif
     }
@@ -89,15 +116,29 @@ namespace Synet
                 assert(0);
             
             assert(src[0]->Count() == 4);
-            _num = src[0]->Axis(0);
-            _channels = src[0]->Axis(1);
-            _height = src[0]->Axis(2);
-            _width = src[0]->Axis(3);
+            _trans = src[0]->Format() == TensorFormatNhwc;
+            if (_trans)
+            {
+                _num = src[0]->Axis(0);
+                _height = src[0]->Axis(1);
+                _width = src[0]->Axis(2);
+                _channels = src[0]->Axis(3);
+            }
+            else
+            {
+                _num = src[0]->Axis(0);
+                _channels = src[0]->Axis(1);
+                _height = src[0]->Axis(2);
+                _width = src[0]->Axis(3);
+            }
             switch (_normRegion)
             {
             case NormRegionTypeAcrossChannels:
-                dst[0]->Reshape({ _num, _channels, _height, _width });
-                _buffer.Reshape({ 1, _channels*2 + _size - 1, _height, _width });
+                dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+                if(_trans)
+                    _buffer.Reshape({ _height, _width, _channels * 2 + _size - 1 });
+                else
+                    _buffer.Reshape({ _channels * 2 + _size - 1});
                 break;
             case NormRegionTypeWithinChannel:
                 assert(0);
@@ -108,10 +149,14 @@ namespace Synet
             }
         }
 
+        virtual size_t MemoryUsage() const
+        {
+            return Base::MemoryUsage() + _buffer.Size() * sizeof(Type);
+        }
+
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
             switch (_normRegion)
             {
             case NormRegionTypeAcrossChannels:
@@ -135,7 +180,7 @@ namespace Synet
             {
                 const Type * pSrc = src[0]->CpuData({ n, 0, 0, 0 });
                 Type * pDst = dst[0]->CpuData({ n, 0, 0, 0 });
-                Detail::LrnLayerCrossChannelsCpu(pSrc, _channels, _size, _width*_height, alpha, _beta, _k, _buffer.CpuData(), pDst);
+                Detail::LrnLayerCrossChannelsCpu(pSrc, _channels, _size, _width*_height, alpha, _beta, _k, _buffer.CpuData(), pDst, _trans);
             }
         }
     
@@ -144,6 +189,7 @@ namespace Synet
         NormRegionType _normRegion;
         size_t _size, _prePad, _num, _channels, _width, _height;
         Type _alpha, _beta, _k;
+        int _trans;
         Tensor _buffer;
     };
 }

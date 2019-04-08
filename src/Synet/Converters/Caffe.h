@@ -26,6 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Params.h"
+#include "Synet/Converters/Optimizer.h"
 
 #if defined(SYNET_CAFFE_ENABLE)
 
@@ -46,7 +47,7 @@ namespace Synet
     class CaffeToSynet
     {
     public:
-        bool Convert(const String & srcModelPath, const String & srcWeightPath, const String & dstModelPath, const String & dstWeightPath)
+        bool Convert(const String & srcModelPath, const String & srcWeightPath, bool trans, const String & dstModelPath, const String & dstWeightPath)
         {
             if (!Synet::FileExist(srcModelPath))
             {
@@ -64,17 +65,20 @@ namespace Synet
             if(!(caffe::ReadProtoFromTextFile(srcModelPath, &srcModel) || caffe::ReadProtoFromBinaryFile(srcModelPath, &srcModel)))
                 return false;
 
-            Synet::NetworkParamHolder holder;
-            if (!ConvertNetwork(srcModel, holder()))
-                return false;
-
             caffe::NetParameter srcWeight;
             if (!caffe::ReadProtoFromBinaryFile(srcWeightPath, &srcWeight))
                 return false;
 
-            Tensors weight;
-            weight.reserve(holder().layers().size() * 2);
-            if (!ConvertWeight(srcWeight, holder(), weight))
+            Synet::NetworkParamHolder holder;
+            if (!ConvertNetwork(srcModel, trans, holder()))
+                return false;
+
+            Vector weight;
+            if (!ConvertWeight(srcWeight, trans, holder(), weight))
+                return false;
+
+            Optimizer optimizer;
+            if (!optimizer.Run(holder()))
                 return false;
 
             if (!holder.Save(dstModelPath, false))
@@ -90,27 +94,31 @@ namespace Synet
 
         typedef Synet::Tensor<float> Tensor;
         typedef std::vector<Tensor> Tensors;
+        typedef std::vector<float> Vector;
 
-        bool ConvertNetwork(const caffe::NetParameter & src, Synet::NetworkParam & dst)
+        bool ConvertNetwork(const caffe::NetParameter & src, bool trans, Synet::NetworkParam & dst)
         {
+            dst.version() = 1;
             dst.name() = src.name();
             dst.layers().reserve(src.layers_size());
             for (int i = 0; i < src.layer_size(); ++i)
             {
                 Synet::LayerParam dstLayer;
-                if(ConvertLayer(src.layer(i), dstLayer))
+                if(ConvertLayer(src.layer(i), trans, dstLayer))
                     dst.layers().push_back(dstLayer);
             }
             return true;
         }
 
-        bool ConvertLayer(const caffe::LayerParameter & src, Synet::LayerParam & dst)
+        bool ConvertLayer(const caffe::LayerParameter & src, bool trans, Synet::LayerParam & dst)
         {
             for(int i = 0; i < src.exclude_size(); ++i)
             {
                 if (src.exclude(i).has_phase() && src.exclude(i).phase() == caffe::TEST)
                     return false;
             }
+            if (src.type() == "Dropout")
+                return false;
 
             dst.name() = src.name();
             Synet::StringToValue<LayerType>(src.type(), dst.type());
@@ -124,10 +132,7 @@ namespace Synet
                 ConvertBatchNorm(src.batch_norm_param(), dst.batchNorm()); 
                 break;
             case Synet::LayerTypeConcat:
-                if (src.concat_param().has_concat_dim())
-                    dst.concat().axis() = src.concat_param().concat_dim();
-                else
-                    dst.concat().axis() = src.concat_param().axis();
+                ConvertConcat(src.concat_param(), trans, dst.concat());
                 break;
             case Synet::LayerTypeConvolution: 
                 ConvertConvolution(src.convolution_param(), dst.convolution()); 
@@ -155,22 +160,11 @@ namespace Synet
                 dst.detectionOutput().confidenceThreshold() = src.detection_output_param().confidence_threshold();
                 dst.detectionOutput().keepMaxClassScoresOnly() = src.detection_output_param().keep_max_class_scores_only();
                 break;
-            case Synet::LayerTypeDropout:
-                break;
             case Synet::LayerTypeInnerProduct:
-                dst.innerProduct().outputNum() = src.inner_product_param().num_output();
-                dst.innerProduct().biasTerm() = src.inner_product_param().bias_term();
-                dst.innerProduct().transposeB() = src.inner_product_param().transpose();
-                dst.innerProduct().axis() = src.inner_product_param().axis();
+                ConvertInnerProduct(src.inner_product_param(), trans, dst.innerProduct());
                 break;
             case Synet::LayerTypeInput:
-                dst.input().shape().resize(src.input_param().shape_size());
-                for (int j = 0; j < src.top_size(); ++j)
-                {
-                    dst.input().shape()[j].dim().resize(src.input_param().shape(j).dim_size());
-                    for (int k = 0; k < src.input_param().shape(j).dim_size(); ++k)
-                        dst.input().shape()[j].dim()[k] = src.input_param().shape(j).dim(k);
-                }
+                ConvertInput(src.input_param(), trans, dst.input());
                 break;
             case Synet::LayerTypeInterp:
                 ConvertInterp(src.interp_param(), dst.interp());
@@ -282,6 +276,16 @@ namespace Synet
             dst.eps() = src.eps();
         }
 
+        void ConvertConcat(const caffe::ConcatParameter & src, bool trans, Synet::ConcatParam & dst)
+        {
+            if (src.has_concat_dim())
+                dst.axis() = src.concat_dim();
+            else
+                dst.axis() = src.axis();
+            if (trans && dst.axis() == 1)
+                dst.axis() = 3;
+        }
+
         void ConvertConvolution(const caffe::ConvolutionParameter & src, Synet::ConvolutionParam & dst)
         {
             dst.outputNum() = src.num_output();
@@ -302,6 +306,33 @@ namespace Synet
                 dst.dilation()[j] = src.dilation(j);
         }
 
+        void ConvertInput(const caffe::InputParameter & src, bool trans, Synet::InputParam & dst)
+        {
+            dst.shape().resize(src.shape_size());
+            for (int j = 0; j < src.shape_size(); ++j)
+            {
+                Shape shape(src.shape(j).dim_size());
+                for (int k = 0; k < src.shape(j).dim_size(); ++k)
+                    shape[k] = src.shape(j).dim(k);
+                if (trans & shape.size() == 4)
+                {
+                    shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
+                    dst.shape()[j].format() = TensorFormatNhwc;
+                }
+                dst.shape()[j].dim() = shape;
+            }
+        }
+
+        void ConvertInnerProduct(const caffe::InnerProductParameter & src, bool trans, Synet::InnerProductParam & dst)
+        {
+            dst.outputNum() = src.num_output();
+            dst.biasTerm() = src.bias_term();
+            dst.transposeB() = src.transpose();
+            dst.axis() = src.axis();
+            //if (trans && dst.axis() == 1)
+            //    dst.axis() = 3;
+        }
+
         void ConvertInterp(const caffe::InterpParameter & src, Synet::InterpParam & dst)
         {
             dst.height() = src.height();
@@ -313,24 +344,50 @@ namespace Synet
             dst.useTensorSize() = src.use_blob_size();
         }
 
-        bool ConvertWeight(const caffe::NetParameter & src, Synet::NetworkParam & dst, Tensors & weight)
+        bool ConvertWeight(const caffe::NetParameter & src, bool trans, Synet::NetworkParam & dst, Vector & weight)
         {
+            size_t offset = 0;
             for (int i = 0; i < src.layer_size(); ++i)
             {
                 for (int l = 0; l < dst.layers().size(); ++l)
                 {
                     if (src.layer(i).name() == dst.layers()[l].name())
                     {
-                        dst.layers()[l].weight().resize(src.layer(i).blobs_size());
-                        for (int j = 0; j < src.layer(i).blobs_size(); ++j)
+                        const caffe::LayerParameter & srcLayer = src.layer(i);
+                        Synet::LayerParam & dstLayer = dst.layers()[l];
+                        dstLayer.weight().resize(srcLayer.blobs_size());
+                        for (int j = 0; j < srcLayer.blobs_size(); ++j)
                         {
-                            dst.layers()[l].weight()[j].dim().resize(src.layer(i).blobs(j).shape().dim_size());
-                            for (int k = 0; k < src.layer(i).blobs(j).shape().dim_size(); ++k)
-                                dst.layers()[l].weight()[j].dim()[k] = src.layer(i).blobs(j).shape().dim(k);
-                            weight.push_back(Tensor());
-                            weight.back().Reshape(dst.layers()[l].weight()[j].dim(), 0);
-                            for (int k = 0; k < src.layer(i).blobs(j).data_size(); ++k)
-                                weight.back().CpuData()[k] = src.layer(i).blobs(j).data(k);
+                            const caffe::BlobProto & blob = srcLayer.blobs(j);
+                            Synet::WeightParam & param = dstLayer.weight()[j];
+                            Shape shape(blob.shape().dim_size());
+                            for (int k = 0; k < blob.shape().dim_size(); ++k)
+                                shape[k] = blob.shape().dim(k);
+                            Tensor tensor;
+                            if (trans && shape.size() == 4)
+                            {
+                                shape = Shape({ shape[2], shape[3], shape[1], shape[0] });
+                                tensor.Reshape(shape);
+                                for (size_t d = 0, o = 0; d < shape[3]; ++d)
+                                    for (size_t c = 0; c < shape[2]; ++c)
+                                        for (size_t y = 0; y < shape[0]; ++y)
+                                            for (size_t x = 0; x < shape[1]; ++x)
+                                                tensor.CpuData(Shape({ y, x, c, d }))[0] = blob.data(o++);
+                                param.format() = TensorFormatNhwc;
+                            }
+                            else
+                            {
+                                tensor.Reshape(shape);
+                                for (int k = 0; k < blob.data_size(); ++k)
+                                    tensor.CpuData()[k] = blob.data(k);
+                            }
+                            param.dim() = shape;
+                            param.offset() = offset * sizeof(float);
+                            param.size() = tensor.Size() * sizeof(float);
+                            if (offset + tensor.Size() > weight.size())
+                                weight.resize(offset + tensor.Size());
+                            memcpy(weight.data() + offset, tensor.CpuData(), param.size());
+                            offset += tensor.Size();
                         }
                     }
                 }
@@ -338,26 +395,22 @@ namespace Synet
             return true;
         }
 
-        bool SaveWeight(const Tensors & weight, const String & path)
+        bool SaveWeight(const Vector & weight, const String & path)
         {
             std::ofstream ofs(path.c_str(), std::ofstream::binary);
-            if (ofs.is_open())
-            {
-                for (size_t i = 0; i < weight.size(); ++i)
-                {
-                    ofs.write((const char*)weight[i].CpuData(), weight[i].Size()*sizeof(float));
-                }
-                ofs.close();
-                return true;
-            }
-            return false;
+            if (!ofs.is_open())
+                return false;
+            ofs.write((const char*)weight.data(), weight.size() * sizeof(float));
+            bool result = (bool)ofs;
+            ofs.close();
+            return result;
         }
     };
 
-    bool ConvertCaffeToSynet(const String & srcModel, const String & srcWeight, const String & dstXml, const String & dstBin)
+    bool ConvertCaffeToSynet(const String & srcModel, const String & srcWeight, bool trans, const String & dstXml, const String & dstBin)
     {
         CaffeToSynet caffeToSynet;
-        return caffeToSynet.Convert(srcModel, srcWeight, dstXml, dstBin);
+        return caffeToSynet.Convert(srcModel, srcWeight, trans, dstXml, dstBin);
     }
 }
 

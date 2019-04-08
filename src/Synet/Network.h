@@ -400,7 +400,16 @@ namespace Synet
             bool mode = GetFastMode();
             SetFastMode(true);
             for (size_t i = 0; i < _stages.size(); ++i)
+            {
+#if 0
+                std::cout << _stages[i].layer->Param().name() << " : { ";
+                const Shape & shape = _stages[i].src[0]->Shape();
+                for (size_t j = 0; j < shape.size(); ++j)
+                    std::cout << shape[j] << " ";
+                std::cout << "}" << std::endl;
+#endif
                 _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
+            }
             SetFastMode(mode);
         }
 
