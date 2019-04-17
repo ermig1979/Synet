@@ -33,6 +33,9 @@ namespace Synet
     public:
         Convolution()
             : _convolution(NULL)
+            , _batch(0)
+            , _srcH(0)
+            , _srcW(0)
         {
         }
 
@@ -73,6 +76,7 @@ namespace Synet
 
     private:
         void * _convolution;
+        size_t _batch, _srcH, _srcW;
     };
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
@@ -86,8 +90,14 @@ namespace Synet
         size_t kernelY, size_t kernelX, size_t dilationY, size_t dilationX, size_t strideY, size_t strideX,
         size_t padY, size_t padX, size_t padH, size_t padW, size_t group, ActivationFunctionType activation, ::SimdGemm32fNNPtr gemm)
     {
-        _convolution = ::SimdConvolutionInit((::SimdBool)trans, batch, srcC, srcH, srcW, dstC, kernelY, kernelX,
-            dilationY, dilationX, strideY, strideX, padY, padX, padH, padW, group, (::SimdConvolutionActivationType)activation, gemm);
+        if (_batch != batch || _srcH != srcH || _srcW != srcW)
+        {
+            _batch = batch, _srcH = srcH, _srcW = srcW;
+            if (_convolution)
+                ::SimdRelease(_convolution);
+            _convolution = ::SimdConvolutionInit((::SimdBool)trans, batch, srcC, srcH, srcW, dstC, kernelY, kernelX,
+                    dilationY, dilationX, strideY, strideX, padY, padX, padH, padW, group, (::SimdConvolutionActivationType)activation, gemm);
+        }
     }
 
     template<> SYNET_INLINE size_t Convolution<float>::ExternalBufferSize() const
