@@ -375,6 +375,7 @@ namespace Synet
 
     struct PriorBoxParam
     {
+        SYNET_PARAM_VALUE(int, version, 1);
         SYNET_PARAM_VALUE(Floats, minSize, Floats());
         SYNET_PARAM_VALUE(Floats, maxSize, Floats());
         SYNET_PARAM_VALUE(Floats, aspectRatio, Floats());
@@ -384,6 +385,7 @@ namespace Synet
         SYNET_PARAM_VALUE(Shape, imgSize, Shape());
         SYNET_PARAM_VALUE(Floats, step, Floats());
         SYNET_PARAM_VALUE(float, offset, 0.5f);
+        SYNET_PARAM_VALUE(bool, scaleAllSizes, true);
     };
 
     struct ReductionParam

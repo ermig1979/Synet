@@ -90,10 +90,10 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             if (_permute)
             {
+                SYNET_PERF_FUNC();
+
                 const Type * pSrc = src[0]->CpuData();
                 Type * pDst = dst[0]->CpuData();
                 switch (_count)

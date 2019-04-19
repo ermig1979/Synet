@@ -203,7 +203,7 @@ namespace Synet
                             }
                         }
                         if (!find)
-                            return false;
+                            return ErrorMessage(pLayer);
                         pPort = pPort->NextSibling("port");
                     }
                 }
@@ -219,7 +219,7 @@ namespace Synet
                         pPort = pPort->NextSibling("port");
                     }
                     if (portIds.empty())
-                        return false;
+                        return ErrorMessage(pLayer);
                     if (portIds.size() == 1)
                         layer.dst().push_back(layer.name());
                     else
@@ -231,48 +231,51 @@ namespace Synet
 
                 String type = pLayer->FirstAttribute("type")->Value();
                 if (type == "Activation" && !ConvertActivationLayer(pLayer, layer))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "Clamp" && !ConvertClampLayer(pLayer, layer))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "Const" && !ConvertConstLayer(pLayer, srcBin, trans, layer, dstBin))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "Concat" && !ConvertConcatLayer(pLayer, trans, layer))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "Convolution" && !ConvertConvolutionLayer(pLayer, srcBin, trans, layer, dstBin))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "DetectionOutput" && !ConvertDetectionOutputLayer(pLayer, layer))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "Eltwise" && !ConvertEltwiseLayer(pLayer, layer))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "FullyConnected" && !ConvertFullyConnectedLayer(pLayer, pPrevLayer, srcBin, trans, layer, dstBin))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "Input" && !ConvertInputLayer(pLayer, trans, layer))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "Permute" && !ConvertPermuteLayer(pLayer, pPrevLayer, trans, layer))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "Pooling" && !ConvertPoolingLayer(pLayer, layer))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "Power" && !ConvertPowerLayer(pLayer, layer))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "PReLU" && !ConvertPreluLayer(pLayer, srcBin, trans, layer, dstBin))
-                    return false;
+                    return ErrorMessage(pLayer);
+                if (type == "PriorBoxV2" && !ConvertPriorBoxV2Layer(pLayer, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "Resample" && !ConvertResampleLayer(pLayer, layer))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "Reshape" && !ConvertReshapeLayer(pLayer, trans, layer))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "ScaleShift" && !ConvertScaleShiftLayer(pLayer, srcBin, trans, layer, dstBin))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "SoftMax" && !ConvertSoftmaxLayer(pLayer, trans, layer))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "Split" && !ConvertSplitLayer(pLayer, trans, layer))
-                    return false;
+                    return ErrorMessage(pLayer);
                 if (type == "Tile" && !ConvertTileLayer(pLayer, trans, layer))
-                    return false;
+                    return ErrorMessage(pLayer);
 
                 if (layer.type() == LayerTypeUnknown)
-                    NotImplemented(pLayer, layer);
+                    return ErrorMessage(pLayer);
+                //    NotImplemented(pLayer, layer);
 
                 network.layers().push_back(layer);
                 pPrevLayer = pLayer;
@@ -364,7 +367,7 @@ namespace Synet
             StringToValue(pNode->FirstAttribute("size")->Value(), param.size());
             const float * pSrc = srcBin.data() + param.offset() / sizeof(float);
             float * pDst = dstBin.data() + param.offset() / sizeof(float);
-            Tensor dst(pDst, param.size(), shape, param.format());
+            Tensor dst(pDst, param.size() / sizeof(float), shape, param.format());
             switch (mode)
             {
             case 0:
@@ -618,7 +621,8 @@ namespace Synet
             StringToValue(pData->FirstAttribute("variance_encoded_in_target")->Value(), layer.detectionOutput().varianceEncodedInTarget());
             StringToValue(pData->FirstAttribute("top_k")->Value(), layer.detectionOutput().nms().topK());
             StringToValue(pData->FirstAttribute("share_location")->Value(), layer.detectionOutput().shareLocation());
-            StringToValue(pData->FirstAttribute("clip")->Value(), layer.detectionOutput().clip());
+            if(pData->FirstAttribute("clip"))
+                StringToValue(pData->FirstAttribute("clip")->Value(), layer.detectionOutput().clip());
 
             return true;
         }
@@ -827,6 +831,25 @@ namespace Synet
             }
             else
                 return false;
+            return true;
+        }
+
+        bool ConvertPriorBoxV2Layer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            layer.type() = Synet::LayerTypePriorBox;
+            layer.priorBox().version() = 2;
+            StringToValue(pData->FirstAttribute("clip")->Value(), layer.priorBox().clip());
+            StringToValue(pData->FirstAttribute("flip")->Value(), layer.priorBox().flip());
+            StringToValue(pData->FirstAttribute("offset")->Value(), layer.priorBox().offset());
+            if(pData->FirstAttribute("scale_all_sizes"))
+                StringToValue(pData->FirstAttribute("scale_all_sizes")->Value(), layer.priorBox().scaleAllSizes());
+            ConvertVector(pData->FirstAttribute("aspect_ratio"), layer.priorBox().aspectRatio());
+            ConvertVector(pData->FirstAttribute("max_size"), layer.priorBox().maxSize());
+            ConvertVector(pData->FirstAttribute("min_size"), layer.priorBox().minSize());
+            ConvertVector(pData->FirstAttribute("variance"), layer.priorBox().variance());
             return true;
         }
 
@@ -1050,6 +1073,12 @@ namespace Synet
             dst.debug().clear();
             dst.debug().push_back(NotImplementedMarker());
             dst.debug().push_back(src->FirstAttribute("type")->Value());
+        }
+
+        bool ErrorMessage(const XmlNode * pLayer)
+        {
+            std::cout << "Can't convert layer " << pLayer->FirstAttribute("type")->Value() << " '" << pLayer->FirstAttribute("name")->Value() << "' !" << std::endl;
+            return false;
         }
 
         bool SaveWeight(const Vector & bin, const String & path)

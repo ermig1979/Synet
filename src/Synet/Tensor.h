@@ -79,6 +79,7 @@ namespace Synet
         SYNET_INLINE Tensor(const Type * data, size_t size, const Synet::Shape & shape, const TensorFormat & format = TensorFormatUnknown, const String & name = String())
             : _shape(shape)
             , _buffer(std::make_shared<Buffer>(data, size))
+            , _type(Detail::GetTensorType<Type>())
             , _format(format)
             , _name(name)
         {
