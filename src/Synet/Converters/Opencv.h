@@ -170,7 +170,7 @@ namespace Synet
             const XmlNode * pLayers = pNet->FirstNode("layers");
             if (pLayers == NULL)
                 return false;
-            const XmlNode * pLayer = pLayers->FirstNode("layer"), * pPrevLayer = NULL;
+            const XmlNode * pLayer = pLayers->FirstNode("layer"), *pPrevLayer = NULL;
             while (pLayer)
             {
                 size_t layerId;
@@ -194,7 +194,7 @@ namespace Synet
                             if (edges[i].toLayer == layerId && edges[i].toPort == portId)
                             {
                                 const LayerParam & fromLayer = network.layers()[edges[i].fromLayer];
-                                if(fromLayer.dst().size() == 1)
+                                if (fromLayer.dst().size() == 1)
                                     layer.src().push_back(fromLayer.name());
                                 else
                                     layer.src().push_back(fromLayer.name() + ":" + ValueToString(edges[i].fromPort - 1));
@@ -224,7 +224,7 @@ namespace Synet
                         layer.dst().push_back(layer.name());
                     else
                     {
-                        for(size_t i = 0; i < portIds.size(); ++i)
+                        for (size_t i = 0; i < portIds.size(); ++i)
                             layer.dst().push_back(layer.name() + ":" + ValueToString(i));
                     }
                 }
@@ -262,7 +262,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Resample" && !ConvertResampleLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
-                if (type == "Reshape" && !ConvertReshapeLayer(pLayer, trans, layer))
+                if (type == "Reshape" && !ConvertReshapeLayer(pLayer, trans, layer, network.layers()))
                     return ErrorMessage(pLayer);
                 if (type == "ScaleShift" && !ConvertScaleShiftLayer(pLayer, srcBin, trans, layer, dstBin))
                     return ErrorMessage(pLayer);
@@ -280,6 +280,20 @@ namespace Synet
                 network.layers().push_back(layer);
                 pPrevLayer = pLayer;
                 pLayer = pLayer->NextSibling("layer");
+            }
+
+            for (size_t i = 0; i < network.layers().size(); ++i)
+            {
+                if (network.layers()[i].type() == LayerTypeConst)
+                {
+                    bool unused = true;
+                    for (size_t j = i + 1; j < network.layers().size() && unused; ++j)
+                        for (size_t k = 0; j < network.layers()[j].src().size() && unused; ++k)
+                            if (network.layers()[j].src()[k] == network.layers()[i].name())
+                                unused = false;
+                    if (unused)
+                        network.layers().erase(network.layers().begin() + i);
+                }
             }
 
             return true;
@@ -643,6 +657,8 @@ namespace Synet
                 layer.eltwise().operation() = EltwiseOperationTypeMax;
             else if (operation == "min")
                 layer.eltwise().operation() = EltwiseOperationTypeMin;
+            else if (operation == "mul")
+                layer.eltwise().operation() = EltwiseOperationTypeProduct;
             else
                 assert(0);
             return true;
@@ -893,7 +909,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertReshapeLayer(const XmlNode * pLayer, bool trans, LayerParam & layer)
+        bool ConvertReshapeLayer(const XmlNode * pLayer, bool trans, LayerParam & layer, LayerParams & layers)
         {
             layer.type() = Synet::LayerTypeReshape;
             const XmlNode * pOutput = pLayer->FirstNode("output");
@@ -911,12 +927,8 @@ namespace Synet
                         else
                             output = Shape({ output[0], output[2] , output[3] , output[1] });
                     }
-                    if (input.size() == 4)
+                    if (input.size() == 4 || output[0] == 1)
                         output[0] = -1;
-                    //if (trans && output.size() == 3)
-                    //{
-                    //    output = Shape({ output[0], output[2] , output[1] });
-                    //}
                     layer.reshape().shape() = output;
                 }
                 else
@@ -924,6 +936,13 @@ namespace Synet
             }
             else
                 return false;
+            if (layer.src().size() == 2)
+            {
+                const LayerParam & prev = layers.back();
+                if (layer.src()[1] != prev.name() || prev.type() != LayerTypeConst)
+                    return false;
+                layer.src().pop_back();
+            }
             return true;
         }
 
