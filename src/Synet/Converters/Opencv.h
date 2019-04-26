@@ -102,10 +102,7 @@ namespace Synet
             size_t fromLayer, fromPort, toLayer, toPort;
         };
         typedef std::vector<Edge> Edges;
-
-        typedef std::pair<ptrdiff_t, ptrdiff_t> Ids;
-        typedef std::vector<Ids> Index;
-        typedef std::map<String, Index> IndexMap;
+        typedef std::map<size_t, size_t> IndexMap;
 
         bool LoadModel(const String & path, XmlFile & file, XmlDoc & xml)
         {
@@ -166,6 +163,7 @@ namespace Synet
                 edges.push_back(edge);
                 pEdge = pEdge->NextSibling("edge");
             }
+            IndexMap index;
 
             const XmlNode * pLayers = pNet->FirstNode("layers");
             if (pLayers == NULL)
@@ -175,7 +173,8 @@ namespace Synet
             {
                 size_t layerId;
                 StringToValue(pLayer->FirstAttribute("id")->Value(), layerId);
-                assert(layerId == network.layers().size());
+                index[layerId] = network.layers().size();
+                //assert(layerId == network.layers().size());
 
                 LayerParam layer;
                 layer.name() = pLayer->FirstAttribute("name")->Value();
@@ -193,7 +192,7 @@ namespace Synet
                         {
                             if (edges[i].toLayer == layerId && edges[i].toPort == portId)
                             {
-                                const LayerParam & fromLayer = network.layers()[edges[i].fromLayer];
+                                const LayerParam & fromLayer = network.layers()[index[edges[i].fromLayer]];
                                 if (fromLayer.dst().size() == 1)
                                     layer.src().push_back(fromLayer.name());
                                 else

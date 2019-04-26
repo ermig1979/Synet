@@ -50,6 +50,7 @@ namespace Synet
         LayerTypeInterp,
         LayerTypeLog,
         LayerTypeLrn,
+        LayerTypeMergedConvolution,
         LayerTypeMeta,
         LayerTypeNormalize,
         LayerTypePad,
@@ -335,6 +336,12 @@ namespace Synet
         SYNET_PARAM_VALUE(float, k, 1.0f);
     };
 
+    struct MergedConvolutionParam
+    {
+        SYNET_PARAM_STRUCT(ConvolutionParam, conv0);
+        SYNET_PARAM_STRUCT(ConvolutionParam, conv1);
+    };
+
     struct MetaParam
     {
         SYNET_PARAM_VALUE(MetaType, type, MetaTypeUnknown);
@@ -506,6 +513,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(InterpParam, interp);
         SYNET_PARAM_STRUCT(LogParam, log);
         SYNET_PARAM_STRUCT(LrnParam, lrn);
+        SYNET_PARAM_STRUCT(MergedConvolutionParam, mergedConvolution);
         SYNET_PARAM_STRUCT(MetaParam, meta);
         SYNET_PARAM_STRUCT(NormalizeParam, normalize);
         SYNET_PARAM_STRUCT(PermuteParam, permute);

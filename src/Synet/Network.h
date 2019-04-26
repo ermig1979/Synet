@@ -43,6 +43,7 @@
 #include "Synet/Layers/InterpLayer.h"
 #include "Synet/Layers/LogLayer.h"
 #include "Synet/Layers/LrnLayer.h"
+#include "Synet/Layers/MergedConvolutionLayer.h"
 #include "Synet/Layers/MetaLayer.h"
 #include "Synet/Layers/NormalizeLayer.h"
 #include "Synet/Layers/PadLayer.h"
@@ -702,6 +703,7 @@ namespace Synet
             case LayerTypeInterp: return new InterpLayer<T>(param);
             case LayerTypeLog: return new LogLayer<T>(param);
             case LayerTypeLrn: return new LrnLayer<T>(param);
+            case LayerTypeMergedConvolution: return new MergedConvolutionLayer<T>(param);
             case LayerTypeMeta: return new MetaLayer<T>(param);
             case LayerTypeNormalize: return new NormalizeLayer<T>(param);
             case LayerTypePad: return new PadLayer<T>(param);

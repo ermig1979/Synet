@@ -38,7 +38,11 @@ namespace Synet
             LayerParams merged;
             if (!Merge(network.layers(), merged))
                 return false;
+            network.layers() = merged;
 
+            merged.clear();
+            if (!Merge(network.layers(), merged))
+                return false;
             network.layers() = merged;
 
             return true;
@@ -56,6 +60,8 @@ namespace Synet
             {
                 if (MergeConvolutionAndActivation(src, i, dst, changes))
                     continue;
+                //if (MergeTwoConvolutions(src, i, dst, changes))
+                //    continue;
                 if (MergeSoftmax(src, i, dst, changes))
                     continue;
                 if (MergeFused0(src, i, dst, changes))
@@ -130,6 +136,41 @@ namespace Synet
                 return true;
             }
             return false;
+        }
+
+        bool MergeTwoConvolutions(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            if (src.size() < index + 2)
+                return false;
+            const LayerParam & l0 = src[index + 0];
+            const LayerParam & l1 = src[index + 1];
+            if (l0.type() != LayerTypeConvolution || l1.type() != LayerTypeConvolution || l1.src()[0] != l0.name())
+                return false;
+            if (l0.weight()[0].format() != TensorFormatNhwc)
+                return false;
+            if (l0.convolution().outputNum() != l0.convolution().group())
+                return false;
+            if (l0.convolution().kernel().size() < 2 || l0.convolution().kernel()[0] != 3 || l0.convolution().kernel()[1] != 3)
+                return false;
+            if (l1.convolution().kernel().size() < 2 || l1.convolution().kernel()[0] != 1 || l1.convolution().kernel()[1] != 1)
+                return false;
+            if (l1.convolution().stride().size() < 2 || l1.convolution().stride()[0] != 1 || l1.convolution().stride()[1] != 1)
+                return false;
+            if (InsideLink(src, index, 2))
+                return false;
+            LayerParam layer;
+            layer.type() = LayerTypeMergedConvolution;
+            layer.name() = l1.name();
+            layer.src() = l0.src();
+            layer.dst().push_back(layer.name());
+            for (size_t l = 0; l < 2; ++l)
+                for(size_t i = 0; i < src[index + l].weight().size(); ++i)
+                    layer.weight().push_back(src[index + l].weight()[i]);
+            layer.mergedConvolution().conv0() = l0.convolution();
+            layer.mergedConvolution().conv1() = l1.convolution();
+            dst.push_back(layer);
+            index += 1;
+            return true;
         }
 
         bool MergeSoftmax(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
@@ -489,12 +530,28 @@ namespace Synet
             return true;
         }
 
-        bool IsSub(const LayerParam & layer)
+        bool IsSub(const LayerParam & layer) const
         {
             if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum && layer.eltwise().coefficients() == Floats({ 1.0f, -1.0f }))
                 return true;
             if (layer.type() == LayerTypeBinaryOperation && layer.binaryOperation().type() == BinaryOperationTypeSub)
                 return true;
+            return false;
+        }
+
+        bool InsideLink(const LayerParams & src, size_t start, size_t count) const
+        {
+            for (size_t i = start + count; i < src.size(); ++i)
+            {
+                for (size_t j = 0; j < src[i].src().size(); ++j)
+                {
+                    for (size_t k = 0; k < count - 1; ++k)
+                    {
+                        if (src[i].src()[j] == src[start + k].name())
+                            return true;
+                    }
+                }
+            }
             return false;
         }
     };
