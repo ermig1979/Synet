@@ -26,6 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
+#include "Synet/Utils/MergedConvolution.h"
 
 namespace Synet
 {
@@ -183,16 +184,16 @@ namespace Synet
             const Shape & dil0 = conv0.dilation();
             assert(dil0.size() == 0 || (dil0.size() == 1 && dil0[0] == 1) || (dil0.size() == 2 && dil0[0] == 1 && dil0[1] == 1));
 
-            _tmpC = conv0.outputNum();
-            assert(conv0.group() == _tmpC);
+            _srcC = conv0.outputNum();
+            assert(conv0.group() == _srcC);
             _index[0] = next++;
-            assert(weight[_index[0]].Shape() == Shape({ _kernelY, _kernelX, 1, _tmpC }) && weight[_index[0]].Format() == TensorFormatNhwc);
+            assert(weight[_index[0]].Shape() == Shape({ _kernelY, _kernelX, 1, _srcC }) && weight[_index[0]].Format() == TensorFormatNhwc);
             _weight[0] = weight[_index[0]].CpuData();
             _biasTerm0 = conv0.biasTerm();
             _index[1] = _biasTerm0 ? next++ : -1;
             if (_biasTerm0)
             {
-                assert(weight[_index[1]].Size() == _tmpC);
+                assert(weight[_index[1]].Size() == _srcC);
                 _bias[0] = weight[_index[1]].CpuData();
             }
             else
@@ -208,7 +209,7 @@ namespace Synet
                 if (params0.Size() == 1)
                     _activation0 = ActivationFunctionTypeLeakyRelu;
                 else
-                    assert(params0.Size() == _tmpC);
+                    assert(params0.Size() == _srcC);
                 _params[0] = params0.CpuData();
             }
             else
@@ -240,7 +241,7 @@ namespace Synet
             assert(conv1.group() == 1);
             _biasTerm1 = conv1.biasTerm();
             _index[3] = next++;
-            assert(weight[_index[3]].Shape() == Shape({ 1, 1, _tmpC, _dstC }) && weight[_index[3]].Format() == TensorFormatNhwc);
+            assert(weight[_index[3]].Shape() == Shape({ 1, 1, _srcC, _dstC }) && weight[_index[3]].Format() == TensorFormatNhwc);
             _weight[1] = weight[_index[3]].CpuData();
             _index[4] = _biasTerm1 ? next++ : -1;
             if (_biasTerm1)
@@ -283,7 +284,7 @@ namespace Synet
             _num = src[0]->Size(0, _axis);
             _srcH = src[0]->Axis(-3);
             _srcW = src[0]->Axis(-2);
-            _srcC = src[0]->Axis(-1);
+            assert(_srcC == src[0]->Axis(-1));
             _dstH = (_srcH + _padY + _padH - _kernelY) / _strideY + 1;
             _dstW = (_srcW + _padX + _padW - _kernelX) / _strideX + 1;
             Shape dstShape = src[0]->Shape();
@@ -297,9 +298,38 @@ namespace Synet
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);
 
-            _internal = 0;
-            buf[0]->Extend(Shape({ _dstH, _dstW, _tmpC }));
+            _mergedConvolution.Init(_num, _srcC, _srcH, _srcW, _dstC, _kernelY, _kernelX,
+                _strideY, _strideX, _padY, _padX, _padH, _padW, _activation0, _activation1,
+#if defined(SYNET_BLIS_ENABLE)
+                Synet::BlisGemm32fNN
+#else
+                NULL
+#endif
+            );
+            if (_mergedConvolution.Enable())
+            {
+                buf[0]->Extend({ _mergedConvolution.ExternalBufferSize() });
+                _mergedConvolution.SetParams(_weight[0], _weight[1], &_internal, _bias[0], _bias[1], _params[0], _params[1]);
+            }
+            else
+            {
+                _internal = 0;
+                buf[0]->Extend(Shape({ _dstH, _dstW, _srcC }));
+            }
+        }
 
+        virtual size_t MemoryUsage() const
+        {
+            return Base::MemoryUsage() + _mergedConvolution.InternalBufferSize() * sizeof(Type);
+        }
+
+        virtual void CompactWeight()
+        {
+            if (_internal)
+            {
+                ((Tensor&)this->Weight()[_index[0]]).Clear();
+                ((Tensor&)this->Weight()[_index[3]]).Clear();
+            }
         }
 
     protected:
@@ -314,19 +344,23 @@ namespace Synet
         {
 #ifdef SYNET_SIZE_STATISTIC
             std::stringstream ss;
-            ss << "i=" << _num << "x" << _srcC << "x" << _srcH << "x" << _srcW << " t=" << _tmpC << " o=" << _dstC << " k=" << _kernelY << " s=" << _strideY;
+            ss << "i=" << _num << "x" << _srcC << "x" << _srcH << "x" << _srcW << " o=" << _dstC << " k=" << _kernelY << " s=" << _strideY;
             SYNET_PERF_BLOCK(ss.str().c_str());
 #else
             SYNET_PERF_FUNC();
 #endif
-
-            for (size_t n = 0; n < _num; ++n)
+            if (_mergedConvolution.Enable())
+                _mergedConvolution.Forward(src, buf, dst);
+            else
             {
-                _preProcessor(src, _srcH, _srcW, _srcC, _dstH, _dstW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, _weight[0], _bias[0], _params[0], buf);
-                CpuGemm(CblasNoTrans, CblasNoTrans, _dstH * _dstW, _dstC, _tmpC, Type(1), buf, _tmpC, _weight[1], _dstC, Type(0), dst, _dstC);
-                _postProcessor(dst, _dstH * _dstW, _dstC, _bias[1], _params[1], dst);
-                src += _srcSize;
-                dst += _dstSize;
+                for (size_t n = 0; n < _num; ++n)
+                {
+                    _preProcessor(src, _srcH, _srcW, _srcC, _dstH, _dstW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, _weight[0], _bias[0], _params[0], buf);
+                    CpuGemm(CblasNoTrans, CblasNoTrans, _dstH * _dstW, _dstC, _srcC, Type(1), buf, _srcC, _weight[1], _dstC, Type(0), dst, _dstC);
+                    _postProcessor(dst, _dstH * _dstW, _dstC, _bias[1], _params[1], dst);
+                    src += _srcSize;
+                    dst += _dstSize;
+                }
             }
         }
 
@@ -335,7 +369,7 @@ namespace Synet
         int _internal;
         size_t _index[6];
         size_t _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, _padH, _padW;
-        size_t _axis, _num, _srcC, _srcH, _srcW, _tmpC, _dstC, _dstH, _dstW, _srcSize, _dstSize;
+        size_t _axis, _num, _srcC, _srcH, _srcW, _dstC, _dstH, _dstW, _srcSize, _dstSize;
         ActivationFunctionType _activation0, _activation1;
         float _params0[2], _params1[2];
         const Type * _weight[2], * _bias[2], * _params[2];
@@ -345,5 +379,7 @@ namespace Synet
         DepthwiseConvolutionBiasActivationPtr _preProcessor;
         typedef void(*BiasActivationPtr)(const T * src, size_t size, size_t count, const T * bias, const T * params, T * dst);
         BiasActivationPtr _postProcessor;
+
+        MergedConvolution<Type> _mergedConvolution;
     };
 }
