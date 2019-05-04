@@ -287,7 +287,7 @@ namespace Synet
                 {
                     bool unused = true;
                     for (size_t j = i + 1; j < network.layers().size() && unused; ++j)
-                        for (size_t k = 0; j < network.layers()[j].src().size() && unused; ++k)
+                        for (size_t k = 0; k < network.layers()[j].src().size() && unused; ++k)
                             if (network.layers()[j].src()[k] == network.layers()[i].name())
                                 unused = false;
                     if (unused)
@@ -1078,6 +1078,11 @@ namespace Synet
                 return false;
             StringToValue(pData->FirstAttribute("axis")->Value(), layer.tile().axis());
             StringToValue(pData->FirstAttribute("tiles")->Value(), layer.tile().tiles());
+            if (trans && ConvertInputShape(pLayer).size() == 4)
+            {
+                size_t order[4] = { 0, 3, 1, 2 };
+                layer.tile().axis() = order[layer.tile().axis()];
+            }
             return true;
         }
 

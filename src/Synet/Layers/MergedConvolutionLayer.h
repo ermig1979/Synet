@@ -326,10 +326,7 @@ namespace Synet
         virtual void CompactWeight()
         {
             if (_internal)
-            {
-                ((Tensor&)this->Weight()[_index[0]]).Clear();
                 ((Tensor&)this->Weight()[_index[3]]).Clear();
-            }
         }
 
     protected:
