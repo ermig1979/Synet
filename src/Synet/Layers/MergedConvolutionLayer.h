@@ -32,14 +32,14 @@ namespace Synet
 {
     namespace Detail
     {
-        template<class T, ActivationFunctionType type> struct Activation
+        template<class T, ActivationFunctionType activation> struct Activation
         {
-            static T Function(T value, const T * params, size_t offset);
+            static T Func(T value, const T * params, size_t offset);
         };
 
         template<class T> struct Activation<T, ActivationFunctionTypeIdentity>
         {
-            static SYNET_INLINE T Function(T value, const T * params, size_t offset)
+            static SYNET_INLINE T Func(T value, const T * params, size_t offset)
             {
                 return value;
             }
@@ -47,7 +47,7 @@ namespace Synet
 
         template<class T> struct Activation<T, ActivationFunctionTypeRelu>
         {
-            static SYNET_INLINE T Function(T value, const T * params, size_t offset)
+            static SYNET_INLINE T Func(T value, const T * params, size_t offset)
             {
                 return std::max(T(0), value);
             }
@@ -55,7 +55,7 @@ namespace Synet
 
         template<class T> struct Activation<T, ActivationFunctionTypeLeakyRelu>
         {
-            static SYNET_INLINE T Function(T value, const T * params, size_t offset)
+            static SYNET_INLINE T Func(T value, const T * params, size_t offset)
             {
                 return std::max(T(0), value) + params[0] * std::min(T(0), value);
             }
@@ -63,7 +63,7 @@ namespace Synet
 
         template<class T> struct Activation<T, ActivationFunctionTypeRestrictRange>
         {
-            static SYNET_INLINE T Function(T value, const T * params, size_t offset)
+            static SYNET_INLINE T Func(T value, const T * params, size_t offset)
             {
                 return std::min(std::max(params[0], value), params[1]);
             }
@@ -71,71 +71,110 @@ namespace Synet
 
         template<class T> struct Activation<T, ActivationFunctionTypePrelu>
         {
-            static SYNET_INLINE T Function(T value, const T * params, size_t offset)
+            static SYNET_INLINE T Func(T value, const T * params, size_t offset)
             {
                 return std::max(T(0), value) + params[offset] * std::min(T(0), value);
             }
         };
 
-        template<class T, ActivationFunctionType type> void MergedConvolutionLayerDepthwiseConvolutionBiasActivation(const T * src,
-            size_t srcH, size_t srcW, size_t srcC, size_t dstH, size_t dstW, 
-            size_t kernelY, size_t kernelX, size_t strideY, size_t strideX, size_t padY, size_t padX,
-            const T * weight, const T * bias, const T * params, T * dst)
+        template<class T, int update> struct Update
         {
-            for (size_t dy = 0; dy < dstH; ++dy)
+            static void Func(T * ptr, T val);
+        };
+
+        template<class T> struct Update<T, 0>
+        {
+            static SYNET_INLINE void Func(T * ptr, T val)
             {
-                for (size_t dx = 0; dx < dstW; ++dx)
+                *ptr = val;
+            }
+        };
+
+        template<class T> struct Update<T, 1>
+        {
+            static SYNET_INLINE void Func(T * ptr, T val)
+            {
+                *ptr += val;
+            }
+        };
+
+        template<class T, ActivationFunctionType activation, int update> void MergedConvolutionLayerDirect(
+            const T * src, const ConvParam & conv, const T * weight, const T * bias, const T * params, T * dst)
+        {
+            Tensor<T> buffer({ conv.dstC });
+            T * buf = buffer.CpuData();
+            for (size_t dy = 0; dy < conv.dstH; ++dy)
+            {
+                for (size_t dx = 0; dx < conv.dstW; ++dx)
                 {
-                    for (size_t c = 0; c < srcC; ++c)
+                    if (bias)
+                        memcpy(buf, bias, conv.dstC * sizeof(T));
+                    else
+                        memset(buf, 0, conv.dstC * sizeof(T));
+                    for (size_t ky = 0; ky < conv.kernelY; ++ky)
+                    {
+                        size_t sy = dy * conv.strideY + ky - conv.padY;
+                        if (sy < conv.srcH)
+                        {
+                            for (size_t kx = 0; kx < conv.kernelX; ++kx)
+                            {
+                                size_t sx = dx * conv.strideX + kx - conv.padX;
+                                if (sx < conv.srcW)
+                                {
+                                    const float * pw = weight + (ky*conv.kernelX + kx)*conv.srcC*conv.dstC;
+                                    const float * ps = src + (sy*conv.srcW + sx)*conv.srcC;
+                                    for (size_t sc = 0; sc < conv.srcC; ++sc)
+                                    {
+                                        for (size_t dc = 0; dc < conv.dstC; ++dc)
+                                            buf[dc] += ps[sc] * pw[dc];
+                                        pw += conv.dstC;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    for (size_t dc = 0; dc < conv.dstC; ++dc)
+                        Update<T, update>::Func(dst + dc, Activation<T, activation>::Func(buf[dc], params, dc));
+                    dst += conv.dstC;
+                }
+            }
+        }
+
+        template<class T, ActivationFunctionType activation> void MergedConvolutionLayerDepthwise(
+            const T * src, const ConvParam & conv, const T * weight, const T * bias, const T * params, T * dst)
+        {
+            for (size_t dy = 0; dy < conv.dstH; ++dy)
+            {
+                for (size_t dx = 0; dx < conv.dstW; ++dx)
+                {
+                    for (size_t c = 0; c < conv.srcC; ++c)
                     {
                         T sum = bias ? bias[c] : 0;
-                        for (size_t ky = 0; ky < kernelY; ++ky)
+                        for (size_t ky = 0; ky < conv.kernelY; ++ky)
                         {
-                            size_t sy = dy * strideY + ky - padY;
-                            if (sy < srcH)
+                            size_t sy = dy * conv.strideY + ky - conv.padY;
+                            if (sy < conv.srcH)
                             {
-                                for (size_t kx = 0; kx < kernelX; ++kx)
+                                for (size_t kx = 0; kx < conv.kernelX; ++kx)
                                 {
-                                    size_t sx = dx * strideX + kx - padX;
-                                    if (sx < srcW)
+                                    size_t sx = dx * conv.strideX + kx - conv.padX;
+                                    if (sx < conv.srcW)
                                     {
-                                        const T * pw = weight + (ky * kernelX + kx) * srcC + c;
-                                        const T * ps = src + (sy * srcW + sx) * srcC + c;
+                                        const T * pw = weight + (ky * conv.kernelX + kx) * conv.srcC + c;
+                                        const T * ps = src + (sy * conv.srcW + sx) * conv.srcC + c;
                                         sum += ps[0]*pw[0];
                                     }
                                 }
                             }
                         }
-                        dst[c] = Activation<T, type>::Function(sum, params, c);
+                        dst[c] = Activation<T, activation>::Func(sum, params, c);
                     }
-                    dst += srcC;
+                    dst += conv.srcC;
                 }
             }
         }
 
-        template<class T, ActivationFunctionType type> void MergedConvolutionLayerBiasActivation(const T * src, size_t size, size_t count, const T * bias, const T * params, T * dst)
-        {
-            if (bias)
-            {
-                for (size_t i = 0; i < size; ++i)
-                {
-                    for (size_t c = 0; c < count; ++c)
-                        dst[c] = Activation<T, type>::Function(src[c] + bias[c], params, c);
-                    src += count;
-                    dst += count;
-                }
-            }
-            else
-            {
-                for (size_t i = 0; i < size; ++i)
-                {
-                    for (size_t c = 0; c < count; ++c)
-                        dst[c] = Activation<T, type>::Function(src[c], params, c);
-                    src += count;
-                    dst += count;
-                }
-            }
-        }
+        const size_t MCC = 3;
     }
 
     template <class T> class MergedConvolutionLayer : public Synet::Layer<T>
@@ -155,142 +194,93 @@ namespace Synet
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             assert(src[0]->Format() == TensorFormatNhwc);
+            assert(this->Param().mergedConvolution().conv().size() == Detail::MCC);
 
-            const ConvolutionParam & conv0 = this->Param().mergedConvolution().conv0();
-            const ConvolutionParam & conv1 = this->Param().mergedConvolution().conv1();
+            const ConvolutionParam * conv = this->Param().mergedConvolution().conv().data();
             const Tensors & weight = this->Weight();
-            size_t next = 0;
 
-            const Shape & ker0 = conv0.kernel();
-            assert(ker0.size() == 1 || ker0.size() == 2);
-            _kernelY = ker0[0];
-            _kernelX = ker0.size() > 1 ? ker0[1] : _kernelY;
-            assert(_kernelY > 0 && _kernelX > 0);
-
-            const Shape & str0 = conv0.stride();
-            assert(str0.size() == 1 || str0.size() == 2);
-            _strideY = str0[0];
-            _strideX = str0.size() > 1 ? str0[1] : _strideY;
-            assert(_strideY > 0 && _strideX > 0);
-
-            const Shape & pad0 = conv0.pad();
-            assert(pad0.size() <= 4 && pad0.size() != 3);
-            _padY = pad0.size() > 0 ? pad0[0] : 0;
-            _padX = pad0.size() > 1 ? pad0[1] : _padY;
-            _padH = pad0.size() > 2 ? pad0[2] : _padY;
-            _padW = pad0.size() > 3 ? pad0[3] : _padX;
-            assert(_padY >= 0 && _padX >= 0 && _padH >= 0 && _padW >= 0);
-
-            const Shape & dil0 = conv0.dilation();
-            assert(dil0.size() == 0 || (dil0.size() == 1 && dil0[0] == 1) || (dil0.size() == 2 && dil0[0] == 1 && dil0[1] == 1));
-
-            _srcC = conv0.outputNum();
-            assert(conv0.group() == _srcC);
-            _index[0] = next++;
-            assert(weight[_index[0]].Shape() == Shape({ _kernelY, _kernelX, 1, _srcC }) && weight[_index[0]].Format() == TensorFormatNhwc);
-            _weight[0] = weight[_index[0]].CpuData();
-            _biasTerm0 = conv0.biasTerm();
-            _index[1] = _biasTerm0 ? next++ : -1;
-            if (_biasTerm0)
+            for (size_t i = 0, next = 0; i < Detail::MCC; ++i)
             {
-                assert(weight[_index[1]].Size() == _srcC);
-                _bias[0] = weight[_index[1]].CpuData();
-            }
-            else
-                _bias[0] = NULL;
-
-            _activation0 = conv0.activationType();
-            _params0[0] = conv0.activationParam0();
-            _params0[1] = conv0.activationParam1();
-            _index[2] = _activation0 == ActivationFunctionTypePrelu ? next++ : -1;
-            if (_activation0 == ActivationFunctionTypePrelu)
-            {
-                const Tensor & params0 = weight[_index[2]];
-                if (params0.Size() == 1)
-                    _activation0 = ActivationFunctionTypeLeakyRelu;
+                _conv[i].Set(conv[i]);
+                if(i)
+                    _conv[i].Set(_conv[i - 1]);
                 else
-                    assert(params0.Size() == _srcC);
-                _params[0] = params0.CpuData();
+                    _conv[i].Set(*src[0]);
+
+                _index[i] = next++;
+                const Tensor & w = weight[_index[i]];
+                assert(w.Shape() == _conv[i].WeightShape(true) && w.Format() == src[0]->Format());
+                _weight[i] = w.CpuData();
+
+                _biasTerm[i] = conv[i].biasTerm();
+                if (_biasTerm[i])
+                {
+                    const Tensor & b = weight[next++];
+                    assert(b.Size() == _conv[i].dstC);
+                    _bias[i] = b.CpuData();
+                }
+                else
+                    _bias[i] = NULL;
+
+                if (_conv[i].activation == ActivationFunctionTypePrelu)
+                {
+                    const Tensor & p = weight[next++];
+                    if (p.Size() == 1)
+                        _conv[i].activation = ActivationFunctionTypeLeakyRelu;
+                    else
+                        assert(p.Size() == _conv[i].dstC);
+                    _params[i] = p.CpuData();
+                }
+                else
+                {
+                    _actParam[i][0] = conv[i].activationParam0();
+                    _actParam[i][1] = conv[i].activationParam1();
+                    _params[i] = _actParam[i];
+                }
+                _internal[i] = 0;
             }
-            else
-                _params[0] = _params0;
-            switch (_activation0)
+
+            assert(_conv[0].group == 1);
+            switch (_conv[0].activation)
             {
-            case ActivationFunctionTypeIdentity: _preProcessor = Detail::MergedConvolutionLayerDepthwiseConvolutionBiasActivation<T, ActivationFunctionTypeIdentity>; break;
-            case ActivationFunctionTypeRelu: _preProcessor = Detail::MergedConvolutionLayerDepthwiseConvolutionBiasActivation<T, ActivationFunctionTypeRelu>; break;
-            case ActivationFunctionTypeLeakyRelu: _preProcessor = Detail::MergedConvolutionLayerDepthwiseConvolutionBiasActivation<T, ActivationFunctionTypeLeakyRelu>; break;
-            case ActivationFunctionTypeRestrictRange: _preProcessor = Detail::MergedConvolutionLayerDepthwiseConvolutionBiasActivation<T, ActivationFunctionTypeRestrictRange>; break;
-            case ActivationFunctionTypePrelu: _preProcessor = Detail::MergedConvolutionLayerDepthwiseConvolutionBiasActivation<T, ActivationFunctionTypePrelu>; break;
+            case ActivationFunctionTypeIdentity: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeIdentity, 0>; break;
+            case ActivationFunctionTypeRelu: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRelu, 0>; break;
+            case ActivationFunctionTypeLeakyRelu: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeLeakyRelu, 0>; break;
+            case ActivationFunctionTypeRestrictRange: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRestrictRange, 0>; break;
+            case ActivationFunctionTypePrelu: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypePrelu, 0>; break;
             default: assert(0);
             }
 
-            const Shape & ker1 = conv1.kernel();
-            assert((ker1.size() == 1 && ker1[0] == 1) || (ker1.size() == 2 && ker1[0] == 1 && ker1[1] == 1));
-
-            const Shape & str1 = conv1.stride();
-            assert(str1.size() == 0 || (str1.size() == 1 && str1[0] == 1) || (str1.size() == 2 && str1[0] == 1 && str1[1] == 1));
-
-            const Shape & pad1 = conv1.pad();
-            assert(pad1.size() == 0 || (pad1.size() == 1 && pad1[0] == 0) || (pad1.size() == 2 && pad1[0] == 0 && pad1[1] == 0) ||
-                (pad1.size() == 4 && pad1[0] == 0 && pad1[1] == 0 && pad1[2] == 0 && pad1[3] == 0));
-
-            const Shape & dil1 = conv1.dilation();
-            assert(dil1.size() == 0 || (dil1.size() == 1 && dil1[0] == 1) || (dil1.size() == 2 && dil1[0] == 1 && dil1[1] == 1));
-
-            _dstC = conv1.outputNum();
-            assert(conv1.group() == 1);
-            _biasTerm1 = conv1.biasTerm();
-            _index[3] = next++;
-            assert(weight[_index[3]].Shape() == Shape({ 1, 1, _srcC, _dstC }) && weight[_index[3]].Format() == TensorFormatNhwc);
-            _weight[1] = weight[_index[3]].CpuData();
-            _index[4] = _biasTerm1 ? next++ : -1;
-            if (_biasTerm1)
+            assert(_conv[1].IsDepthwise());
+            switch (_conv[1].activation)
             {
-                assert(weight[_index[4]].Size() == _dstC);
-                _bias[1] = weight[_index[4]].CpuData();
-            }
-            else
-                _bias[1] = NULL;
-
-            _activation1 = conv1.activationType();
-            _params1[0] = conv1.activationParam0();
-            _params1[1] = conv1.activationParam1();
-            _index[5] = _activation1 == ActivationFunctionTypePrelu ? next++ : -1;
-            if (_activation1 == ActivationFunctionTypePrelu)
-            {
-                const Tensor & params1 = weight[_index[5]];
-                if (params1.Size() == 1)
-                    _activation1 = ActivationFunctionTypeLeakyRelu;
-                else
-                    assert(params1.Size() == _dstC);
-                _params[1] = params1.CpuData();
-            }
-            else
-                _params[1] = _params1;
-            switch (_activation1)
-            {
-            case ActivationFunctionTypeIdentity: _postProcessor = Detail::MergedConvolutionLayerBiasActivation<T, ActivationFunctionTypeIdentity>; break;
-            case ActivationFunctionTypeRelu: _postProcessor = Detail::MergedConvolutionLayerBiasActivation<T, ActivationFunctionTypeRelu>; break;
-            case ActivationFunctionTypeLeakyRelu: _postProcessor = Detail::MergedConvolutionLayerBiasActivation<T, ActivationFunctionTypeLeakyRelu>; break;
-            case ActivationFunctionTypeRestrictRange: _postProcessor = Detail::MergedConvolutionLayerBiasActivation<T, ActivationFunctionTypeRestrictRange>; break;
-            case ActivationFunctionTypePrelu: _postProcessor = Detail::MergedConvolutionLayerBiasActivation<T, ActivationFunctionTypePrelu>; break;
+            case ActivationFunctionTypeIdentity: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeIdentity>; break;
+            case ActivationFunctionTypeRelu: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeRelu>; break;
+            case ActivationFunctionTypeLeakyRelu: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeLeakyRelu>; break;
+            case ActivationFunctionTypeRestrictRange: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeRestrictRange>; break;
+            case ActivationFunctionTypePrelu: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypePrelu>; break;
             default: assert(0);
             }
-            assert(weight.size() == next);
 
-            _axis = conv0.axis();
-            assert(_axis = conv1.axis() && src[0]->Count() == _axis + 3);
+            assert(_conv[2].group == 1);
+            switch (_conv[2].activation)
+            {
+            case ActivationFunctionTypeIdentity: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeIdentity, 0>; break;
+            case ActivationFunctionTypeRelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRelu, 0>; break;
+            case ActivationFunctionTypeLeakyRelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeLeakyRelu, 0>; break;
+            case ActivationFunctionTypeRestrictRange: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRestrictRange, 0>; break;
+            case ActivationFunctionTypePrelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypePrelu, 0>; break;
+            default: assert(0);
+            }
+
+            _axis = conv[0].axis();
+            assert(_axis == conv[1].axis() && _axis == conv[2].axis() && src[0]->Count() == _axis + 3);
 
             _num = src[0]->Size(0, _axis);
-            _srcH = src[0]->Axis(-3);
-            _srcW = src[0]->Axis(-2);
-            assert(_srcC == src[0]->Axis(-1));
-            _dstH = (_srcH + _padY + _padH - _kernelY) / _strideY + 1;
-            _dstW = (_srcW + _padX + _padW - _kernelX) / _strideX + 1;
             Shape dstShape = src[0]->Shape();
-            dstShape[_axis + 0] = _dstH;
-            dstShape[_axis + 1] = _dstW;
-            dstShape[_axis + 2] = _dstC;
+            dstShape[_axis + 0] = _conv[2].dstH;
+            dstShape[_axis + 1] = _conv[2].dstW;
+            dstShape[_axis + 2] = _conv[2].dstC;
 
             for (size_t i = 0; i < dst.size(); ++i)
                 dst[i]->Reshape(dstShape, src[0]->Format());
@@ -298,23 +288,15 @@ namespace Synet
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);
 
-            _mergedConvolution.Init(_num, _srcC, _srcH, _srcW, _dstC, _kernelY, _kernelX,
-                _strideY, _strideX, _padY, _padX, _padH, _padW, _activation0, _activation1,
-#if defined(SYNET_BLIS_ENABLE)
-                Synet::BlisGemm32fNN
-#else
-                NULL
-#endif
-            );
+            _mergedConvolution.Init(1, _num, _conv, Detail::MCC, 0);
             if (_mergedConvolution.Enable())
             {
                 buf[0]->Extend({ _mergedConvolution.ExternalBufferSize() });
-                _mergedConvolution.SetParams(_weight[0], _weight[1], &_internal, _bias[0], _bias[1], _params[0], _params[1]);
+                _mergedConvolution.SetParams(_weight, _internal, _bias, _params);
             }
             else
             {
-                _internal = 0;
-                buf[0]->Extend(Shape({ _dstH, _dstW, _srcC }));
+                buf[0]->Extend(Shape({ _conv[0].dstC*_conv[0].dstH*_conv[0].dstW + _conv[1].dstC *_conv[1].dstH *_conv[1].dstW }));
             }
         }
 
@@ -325,8 +307,9 @@ namespace Synet
 
         virtual void CompactWeight()
         {
-            if (_internal)
-                ((Tensor&)this->Weight()[_index[3]]).Clear();
+            for(size_t i = 0; i < Detail::MCC; ++i)
+                if (_internal[i])
+                    ((Tensor&)this->Weight()[_index[i]]).Clear();
         }
 
     protected:
@@ -341,7 +324,9 @@ namespace Synet
         {
 #ifdef SYNET_SIZE_STATISTIC
             std::stringstream ss;
-            ss << "i=" << _num << "x" << _srcC << "x" << _srcH << "x" << _srcW << " o=" << _dstC << " k=" << _kernelY << " s=" << _strideY;
+            ss << _num << "x" << _conv[0].srcC << "x" << _conv[0].srcH << "x" << _conv[0].srcW;
+            ss << "-" << _conv[0].dstC << "x" << _conv[0].kernelY << "x" << _conv[0].strideY;
+            ss << "-" << _conv[1].kernelY << "x" << _conv[1].strideY << "-" << _conv[2].dstC;
             SYNET_PERF_BLOCK(ss.str().c_str());
 #else
             SYNET_PERF_FUNC();
@@ -350,11 +335,12 @@ namespace Synet
                 _mergedConvolution.Forward(src, buf, dst);
             else
             {
+                T * buf1 = buf + _conv[0].dstC * _conv[0].dstH * _conv[0].dstW;
                 for (size_t n = 0; n < _num; ++n)
                 {
-                    _preProcessor(src, _srcH, _srcW, _srcC, _dstH, _dstW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, _weight[0], _bias[0], _params[0], buf);
-                    CpuGemm(CblasNoTrans, CblasNoTrans, _dstH * _dstW, _dstC, _srcC, Type(1), buf, _srcC, _weight[1], _dstC, Type(0), dst, _dstC);
-                    _postProcessor(dst, _dstH * _dstW, _dstC, _bias[1], _params[1], dst);
+                    _convolution[0](src, _conv[0], _weight[0], _bias[0], _params[0], buf);
+                    _convolution[1](buf, _conv[1], _weight[1], _bias[1], _params[1], buf1);
+                    _convolution[2](buf1, _conv[2], _weight[2], _bias[2], _params[2], dst);
                     src += _srcSize;
                     dst += _dstSize;
                 }
@@ -362,20 +348,16 @@ namespace Synet
         }
 
     private:
-        bool _biasTerm0, _biasTerm1;
-        int _internal;
-        size_t _index[6];
-        size_t _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, _padH, _padW;
-        size_t _axis, _num, _srcC, _srcH, _srcW, _dstC, _dstH, _dstW, _srcSize, _dstSize;
-        ActivationFunctionType _activation0, _activation1;
-        float _params0[2], _params1[2];
-        const Type * _weight[2], * _bias[2], * _params[2];
+        bool _biasTerm[Detail::MCC];
+        int _internal[Detail::MCC];
+        size_t _index[Detail::MCC];
+        ConvParam _conv[Detail::MCC];
+        size_t _axis, _srcSize, _dstSize, _num;
+        float _actParam[Detail::MCC][2];
+        const Type * _weight[Detail::MCC], * _bias[Detail::MCC], * _params[Detail::MCC];
 
-        typedef void(*DepthwiseConvolutionBiasActivationPtr)(const T * src, size_t srcH, size_t srcW, size_t srcC, size_t dstH, size_t dstW,
-            size_t kernelY, size_t kernelX, size_t strideY, size_t strideX, size_t padY, size_t padX, const T * weight, const T * bias, const T * params, T * dst);
-        DepthwiseConvolutionBiasActivationPtr _preProcessor;
-        typedef void(*BiasActivationPtr)(const T * src, size_t size, size_t count, const T * bias, const T * params, T * dst);
-        BiasActivationPtr _postProcessor;
+        typedef void(*ConvolutionBiasActivationPtr)(const T * src, const ConvParam & conv, const T * weight, const T * bias, const T * params, T * dst);
+        ConvolutionBiasActivationPtr _convolution[Detail::MCC];
 
         MergedConvolution<Type> _mergedConvolution;
     };

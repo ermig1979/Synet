@@ -1080,7 +1080,7 @@ namespace Synet
             StringToValue(pData->FirstAttribute("tiles")->Value(), layer.tile().tiles());
             if (trans && ConvertInputShape(pLayer).size() == 4)
             {
-                size_t order[4] = { 0, 3, 1, 2 };
+                uint32_t order[4] = { 0, 3, 1, 2 };
                 layer.tile().axis() = order[layer.tile().axis()];
             }
             return true;

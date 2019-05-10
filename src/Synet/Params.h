@@ -338,8 +338,7 @@ namespace Synet
 
     struct MergedConvolutionParam
     {
-        SYNET_PARAM_STRUCT(ConvolutionParam, conv0);
-        SYNET_PARAM_STRUCT(ConvolutionParam, conv1);
+        SYNET_PARAM_VECTOR(ConvolutionParam, conv);
     };
 
     struct MetaParam

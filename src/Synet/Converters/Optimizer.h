@@ -140,36 +140,42 @@ namespace Synet
 
         bool MergeTwoConvolutions(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
         {
-            if (src.size() < index + 2)
+            if (src.size() < index + 3)
                 return false;
             const LayerParam & l0 = src[index + 0];
+            const Shape & k0 = l0.convolution().kernel();
             const LayerParam & l1 = src[index + 1];
-            if (l0.type() != LayerTypeConvolution || l1.type() != LayerTypeConvolution || l1.src()[0] != l0.name())
+            const Shape & k1 = l1.convolution().kernel();
+            const LayerParam & l2 = src[index + 2];
+            const Shape & k2 = l2.convolution().kernel();
+            if (l0.type() != LayerTypeConvolution || l1.type() != LayerTypeConvolution || 
+                l2.type() != LayerTypeConvolution || l1.src()[0] != l0.name() || l2.src()[0] != l1.name())
                 return false;
             if (l0.weight()[0].format() != TensorFormatNhwc)
                 return false;
-            if (l0.convolution().outputNum() != l0.convolution().group())
+            if (k0.size() < 2 || (k0[0] != k0[1] || (k0[0] != 1 && k0[0] != 3)))
                 return false;
-            if (l0.convolution().kernel().size() < 2 || l0.convolution().kernel()[0] != 3 || l0.convolution().kernel()[1] != 3)
+            if (l1.convolution().outputNum() != l1.convolution().group())
                 return false;
-            if (l1.convolution().kernel().size() < 2 || l1.convolution().kernel()[0] != 1 || l1.convolution().kernel()[1] != 1)
+            if (k1.size() < 2 || k1[0] != 3 || k1[1] != 3)
                 return false;
-            if (l1.convolution().stride().size() < 2 || l1.convolution().stride()[0] != 1 || l1.convolution().stride()[1] != 1)
+            if (k2.size() < 2 || k2[0] != 1 || k2[1] != 1)
                 return false;
-            if (InsideLink(src, index, 2))
+            if (InsideLink(src, index, 3))
                 return false;
             LayerParam layer;
             layer.type() = LayerTypeMergedConvolution;
-            layer.name() = l1.name();
+            layer.name() = l2.name();
             layer.src() = l0.src();
             layer.dst().push_back(layer.name());
-            for (size_t l = 0; l < 2; ++l)
+            for (size_t l = 0; l < 3; ++l)
                 for(size_t i = 0; i < src[index + l].weight().size(); ++i)
                     layer.weight().push_back(src[index + l].weight()[i]);
-            layer.mergedConvolution().conv0() = l0.convolution();
-            layer.mergedConvolution().conv1() = l1.convolution();
+            layer.mergedConvolution().conv().push_back(l0.convolution());
+            layer.mergedConvolution().conv().push_back(l1.convolution());
+            layer.mergedConvolution().conv().push_back(l2.convolution());
             dst.push_back(layer);
-            index += 1;
+            index += 2;
             return true;
         }
 

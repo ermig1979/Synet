@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "Synet/Common.h"
+#include "Synet/Utils/ConvParam.h"
 
 namespace Synet
 {
@@ -45,8 +45,7 @@ namespace Synet
 
         typedef void(*Gemm32fNNPtr)(size_t M, size_t N, size_t K, const T * alpha, const T * A, size_t lda, const T * B, size_t ldb, const T * beta, T * C, size_t ldc);
 
-        void Init(size_t batch, size_t srcC, size_t srcH, size_t srcW, size_t dstC, size_t kernelY, size_t kernelX, size_t strideY, size_t strideX, 
-            size_t padY, size_t padX, size_t padH, size_t padW, ActivationFunctionType activation0, ActivationFunctionType activation1, Gemm32fNNPtr gemm)
+        void Init(int trans, size_t batch, const ConvParam * convs, size_t count, int add)
         {
         }
 
@@ -65,7 +64,7 @@ namespace Synet
             return 0;
         }
 
-        void SetParams(const T * weight0, const T * weight1, int * internal, const T * bias0, const T * bias1, const T * params0, const T * params1)
+        void SetParams(const T * const * weight, int * internal, const T * const * bias, const T * const * params)
         {
         }
 
@@ -85,17 +84,14 @@ namespace Synet
             ::SimdRelease(_context);
     }
 
-    template<> SYNET_INLINE void MergedConvolution<float>::Init(
-        size_t batch, size_t srcC, size_t srcH, size_t srcW, size_t dstC, size_t kernelY, size_t kernelX, size_t strideY, size_t strideX,
-        size_t padY, size_t padX, size_t padH, size_t padW, ActivationFunctionType activation0, ActivationFunctionType activation1, Gemm32fNNPtr gemm)
+    template<> SYNET_INLINE void MergedConvolution<float>::Init(int trans, size_t batch, const ConvParam * convs, size_t count, int add)
     {
-        if (_batch != batch || _srcH != srcH || _srcW != srcW)
+        if (_batch != batch || _srcH != convs[0].srcH || _srcW != convs[0].srcW)
         {
-            _batch = batch, _srcH = srcH, _srcW = srcW;
+            _batch = batch, _srcH = convs[0].srcH, _srcW = convs[0].srcW;
             if (_context)
                 ::SimdRelease(_context);
-            _context = ::SimdMergedConvolutionInit(batch, srcC, srcH, srcW, dstC, kernelY, kernelX, strideY, strideX, 
-                padY, padX, padH, padW, (::SimdConvolutionActivationType)activation0, (::SimdConvolutionActivationType)activation1, gemm);
+            _context = ::SimdMergedConvolutionInit((SimdBool)trans, batch, (const SimdConvolutionParameters *)convs, count, (SimdBool)add);
         }
     }
 
@@ -109,10 +105,9 @@ namespace Synet
         return ::SimdMergedConvolutionInternalBufferSize(_context);
     }
 
-    template<> SYNET_INLINE void MergedConvolution<float>::SetParams(const float * weight0, const float * weight1, int * internal, 
-        const float * bias0, const float * bias1, const float * params0, const float * params1)
+    template<> SYNET_INLINE void MergedConvolution<float>::SetParams(const float * const * weight, int * internal, const float * const * bias, const float * const * params)
     {
-        ::SimdMergedConvolutionSetParams(_context, weight0, weight1, (::SimdBool*)internal, bias0, bias1, params0, params1);
+        ::SimdMergedConvolutionSetParams(_context, weight, (::SimdBool*)internal, bias, params);
     }
 
     template<> SYNET_INLINE void MergedConvolution<float>::Forward(const float * src, float * buf, float * dst)

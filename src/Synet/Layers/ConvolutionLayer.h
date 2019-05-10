@@ -64,55 +64,27 @@ namespace Synet
             const ConvolutionParam & param = this->Param().convolution();
             const Tensors & weight = this->Weight();
 
-            const Shape & kernel = param.kernel();
-            assert(kernel.size() == 1 || kernel.size() == 2);
-            _kernelY = kernel[0];
-            _kernelX = kernel.size() > 1 ? kernel[1] : _kernelY;
-            assert(_kernelY > 0 && _kernelX > 0);
+            _conv.Set(param);
+            _conv.Set(*src[0]);
 
-            const Shape & stride = param.stride();
-            assert(stride.size() <= 2);
-            _strideY = stride.size() > 0 ? stride[0] : 1;
-            _strideX = stride.size() > 1 ? stride[1] : _strideY;
-            assert(_strideY > 0 && _strideX > 0);
-
-            const Shape & dilation = param.dilation();
-            assert(dilation.size() <= 2);
-            _dilationY = dilation.size() > 0 ? dilation[0] : 1;
-            _dilationX = dilation.size() > 1 ? dilation[1] : _dilationY;
-            assert(_dilationY > 0 && _dilationX > 0);
-
-            const Shape & pad = param.pad();
-            assert(pad.size() <= 4 && pad.size() != 3);
-            _padY = pad.size() > 0 ? pad[0] : 0;
-            _padX = pad.size() > 1 ? pad[1] : _padY;
-            _padH = pad.size() > 2 ? pad[2] : _padY;
-            _padW = pad.size() > 3 ? pad[3] : _padX;
-            assert(_padY >= 0 && _padX >= 0 && _padH >= 0 && _padW >= 0);
-
-            _is1x1 = _kernelY == 1 && _kernelX == 1 && _strideY == 1 && _strideX == 1 && _dilationY == 1 && _dilationX == 1 && _padY == 0 && _padX == 0 && _padH == 0 && _padW == 0;
-
-            _group = param.group();
-            _dstC = this->Param().convolution().outputNum();
-            assert(_dstC  > 0 && _dstC % _group == 0);
-
+            _is1x1 = _conv.Is1x1();
             _biasTerm = param.biasTerm();
             if (_biasTerm)
-                assert(weight[1].Size() == _dstC);
+                assert(weight[1].Size() == _conv.dstC);
 
-            _activation = param.activationType();
             _params[0] = param.activationParam0();
             _params[1] = param.activationParam1();
-            assert(weight.size() == 1 + _biasTerm + (_activation == ActivationFunctionTypePrelu));
-            if (_activation == ActivationFunctionTypePrelu)
+
+            assert(weight.size() == 1 + _biasTerm + (_conv.activation == ActivationFunctionTypePrelu));
+            if (_conv.activation == ActivationFunctionTypePrelu)
             {
                 if (weight.back().Size() == 1)
                 {
-                    _activation = ActivationFunctionTypeLeakyRelu;
+                    _conv.activation = ActivationFunctionTypeLeakyRelu;
                     _params[0] = weight.back().CpuData()[0];
                 }
                 else
-                    assert(weight.back().Size() == _dstC);
+                    assert(weight.back().Size() == _conv.dstC);
             }
 
             _axis = param.axis();
@@ -120,61 +92,43 @@ namespace Synet
 
             _num = src[0]->Size(0, _axis);
             _trans = src[0]->Format() == TensorFormatNhwc;
-            if (_trans)
-            {
-                _srcH = src[0]->Axis(-3);
-                _srcW = src[0]->Axis(-2);
-                _srcC = src[0]->Axis(-1);
-
-                assert(weight[0].Shape() == Shape({ _kernelY, _kernelX, _srcC / _group, _dstC }) && weight[0].Format() == TensorFormatNhwc);
-            }
-            else
-            {
-                _srcC = src[0]->Axis(-3);
-                _srcH = src[0]->Axis(-2);
-                _srcW = src[0]->Axis(-1);
-
-                assert(weight[0].Shape() == Shape({ _dstC, _srcC / _group, _kernelY, _kernelX }) && weight[0].Format() == TensorFormatNchw);
-            }
-
-            _dstH = (_srcH + _padY + _padH - (_dilationY * (_kernelY - 1) + 1)) / _strideY + 1;
-            _dstW = (_srcW + _padX + _padW - (_dilationX * (_kernelX - 1) + 1)) / _strideX + 1;
+            assert(weight[0].Shape() == _conv.WeightShape(_trans != 0) && weight[0].Format() == src[0]->Format());
 
             Shape dstShape(src[0]->Shape().begin(), src[0]->Shape().begin() + _axis);
             if (_trans)
             {
-                dstShape.push_back(_dstH);
-                dstShape.push_back(_dstW);
-                dstShape.push_back(_dstC);
+                dstShape.push_back(_conv.dstH);
+                dstShape.push_back(_conv.dstW);
+                dstShape.push_back(_conv.dstC);
 
-                _siW = _srcC * _kernelY * _kernelX / _group;
-                _ldW = _dstC;
-                _grW = _dstC / _group;
+                _siW = _conv.srcC * _conv.kernelY * _conv.kernelX / _conv.group;
+                _ldW = _conv.dstC;
+                _grW = _conv.dstC / _conv.group;
 
-                _siS = _dstH * _dstW;
+                _siS = _conv.dstH * _conv.dstW;
                 _ldS = _siW;
                 _grS = _siS * _siW;
 
-                _siD = _dstC / _group;
-                _ldD = _dstC;
+                _siD = _conv.dstC / _conv.group;
+                _ldD = _conv.dstC;
                 _grD = _siD;
             }
             else
             {
-                dstShape.push_back(_dstC);
-                dstShape.push_back(_dstH);
-                dstShape.push_back(_dstW);
+                dstShape.push_back(_conv.dstC);
+                dstShape.push_back(_conv.dstH);
+                dstShape.push_back(_conv.dstW);
 
-                _siW = _srcC * _kernelY * _kernelX / _group;
+                _siW = _conv.srcC * _conv.kernelY * _conv.kernelX / _conv.group;
                 _ldW = _siW;
-                _grW = _dstC * _siW / _group;
+                _grW = _conv.dstC * _siW / _conv.group;
 
-                _siS = _dstH * _dstW;
+                _siS = _conv.dstH * _conv.dstW;
                 _ldS = _siS;
                 _grS = _siS * _siW;
 
-                _siD = _dstC / _group;
-                _ldD = _dstH * _dstW;
+                _siD = _conv.dstC / _conv.group;
+                _ldD = _conv.dstH * _conv.dstW;
                 _grD = _siD * _siS;
             }
 
@@ -184,8 +138,7 @@ namespace Synet
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);
 
-            _convolution.Init(_trans, _num, _srcC, _srcH, _srcW, _dstC, _kernelY, _kernelX, 
-                _dilationY, _dilationX, _strideY, _strideX, _padY, _padX, _padH, _padW, _group, _activation,
+            _convolution.Init(_trans, _num, &_conv,
 #if defined(SYNET_BLIS_ENABLE)
                 Synet::BlisGemm32fNN
 #else
@@ -195,13 +148,13 @@ namespace Synet
             if (_convolution.Enable())
             {
                 buf[0]->Extend({ _convolution.ExternalBufferSize() });
-                _convolution.SetParams(weight[0].CpuData(), _trans, &_internal, _biasTerm ? weight[1].CpuData() : NULL, 
-                    _activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : _params);
+                _convolution.SetParams(weight[0].CpuData(), &_internal, _biasTerm ? weight[1].CpuData() : NULL, 
+                    _conv.activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : _params);
             }
             else
             {
                 _internal = 0;
-                buf[0]->Extend(Shape({ _kernelY*_kernelX*_srcC, _dstH*_dstW }));
+                buf[0]->Extend(Shape({ _conv.kernelY * _conv.kernelX * _conv.srcC, _conv.dstH * _conv.dstW }));
             }
         }
 
@@ -218,7 +171,8 @@ namespace Synet
         {
 #ifdef SYNET_SIZE_STATISTIC
             std::stringstream ss;
-            ss << "i=" << _num << "x" << _srcC << "x" << _srcH << "x" << _srcW << " o=" << _dstC << " k=" << _kernelY << " s=" << _strideY << " g=" << _group;
+            ss << "i=" << _num << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW << " o=" << _conv.dstC;
+            ss << " k=" << _conv.kernelY << " s=" << _conv.strideY << " g=" << _conv.group;
             SYNET_PERF_BLOCK(ss.str().c_str());
 #else
             SYNET_PERF_FUNC();
@@ -234,25 +188,27 @@ namespace Synet
                     if (!_is1x1)
                     {
                         if (_trans)
-                            Synet::ImgToRow(tmp, _srcH, _srcW, _srcC, _kernelY, _kernelX, _padY, _padX, _padH, _padW, _strideY, _strideX, _dilationY, _dilationX, _group, buf);
+                            Synet::ImgToRow(tmp, _conv.srcH, _conv.srcW, _conv.srcC, _conv.kernelY, _conv.kernelX, 
+                                _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, _conv.group, buf);
                         else
-                            Synet::ImgToCol(tmp, _srcC, _srcH, _srcW, _kernelY, _kernelX, _padY, _padX, _padH, _padW, _strideY, _strideX, _dilationY, _dilationX, buf);
+                            Synet::ImgToCol(tmp, _conv.srcC, _conv.srcH, _conv.srcW, _conv.kernelY, _conv.kernelX, 
+                                _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, buf);
                         tmp = buf;
                     }
                     if (_trans)
                     {
-                        assert(_group == 1 || _group == _srcC);
-                        for (size_t g = 0; g < _group; ++g)
+                        assert(_conv.group == 1 || _conv.group == _conv.srcC);
+                        for (size_t g = 0; g < _conv.group; ++g)
                             CpuGemm(CblasNoTrans, CblasNoTrans, _siS, _siD, _siW, Type(1), tmp + _grS * g, _ldS, weight + _grW * g, _ldW, Type(0), dst + _grD * g, _ldD);
                     }
                     else
                     {
-                        for (size_t g = 0; g < _group; ++g)
+                        for (size_t g = 0; g < _conv.group; ++g)
                             CpuGemm(CblasNoTrans, CblasNoTrans, _siD, _siS, _siW, Type(1), weight + _grW * g, _ldW, tmp + _grS * g, _ldS, Type(0), dst + _grD * g, _ldD);
                     }
                     if (_biasTerm)
-                        CpuAddBias(this->Weight()[1].CpuData(), _dstC, _dstH*_dstW, dst, _trans);
-                    switch (_activation)
+                        CpuAddBias(this->Weight()[1].CpuData(), _conv.dstC, _conv.dstH*_conv.dstW, dst, _trans);
+                    switch (_conv.activation)
                     {
                     case ActivationFunctionTypeIdentity:
                         break;
@@ -266,7 +222,7 @@ namespace Synet
                         CpuRestrictRange(dst, _dstSize, _params[0], _params[1], dst);
                         break;
                     case ActivationFunctionTypePrelu:
-                        Detail::PreluLayerForwardCpu(dst, this->Weight().back().CpuData(), _dstC, _dstH*_dstW, dst, _trans);
+                        Detail::PreluLayerForwardCpu(dst, this->Weight().back().CpuData(), _conv.dstC, _conv.dstH * _conv.dstW, dst, _trans);
                         break;
                     default:
                         assert(0);
@@ -280,10 +236,8 @@ namespace Synet
     private:
         bool _is1x1, _biasTerm;
         int _trans, _internal;
-        size_t _kernelY, _kernelX, _strideY, _strideX, _dilationY, _dilationX, _padY, _padX, _padH, _padW;
-        size_t _axis, _group, _num, _srcC, _srcH, _srcW, _dstC, _dstH, _dstW, _srcSize, _dstSize;
-        size_t _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
-        ActivationFunctionType _activation;
+        ConvParam _conv;
+        size_t _axis, _num, _srcSize, _dstSize, _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
         float _params[2];
 
         Convolution<Type> _convolution;
