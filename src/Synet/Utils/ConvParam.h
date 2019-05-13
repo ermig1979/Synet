@@ -58,14 +58,14 @@ namespace Synet
             assert(kernelY > 0 && kernelX > 0);
 
             const Shape & stride = conv.stride();
-            assert(stride.size() == 1 || stride.size() == 2);
-            strideY = stride[0];
+            assert(stride.size() <= 2);
+            strideY = stride.size() > 0 ? stride[0] : 1;
             strideX = stride.size() > 1 ? stride[1] : strideY;
             assert(strideY > 0 && strideX > 0);
 
             const Shape & dilation = conv.dilation();
-            assert(dilation.size() == 1 || dilation.size() == 2);
-            dilationY = dilation[0];
+            assert(dilation.size() <= 2);
+            dilationY = dilation.size() > 0 ? dilation[0] : 1;
             dilationX = dilation.size() > 1 ? dilation[1] : dilationY;
             assert(dilationY > 0 && dilationX > 0);
 

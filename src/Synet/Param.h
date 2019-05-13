@@ -93,19 +93,16 @@ namespace Synet
             return result;
         }
 
+        bool Load(const char * data, size_t size)
+        {
+            Xml::File<char> file(data, size);
+            return Load(file);
+        }
+
         bool Load(std::istream & is)
         {
             Xml::File<char> file(is);
-            Xml::XmlDocument<char> doc;
-            try
-            {
-                doc.Parse<0>(file.Data());
-            }
-            catch (std::exception e)
-            {
-                return false;
-            }
-            return this->Load(&doc);
+            return Load(file);
         }
 
         bool Load(const String & path)
@@ -157,6 +154,20 @@ namespace Synet
         SYNET_INLINE Unknown * VectorBegin() const { return (*(std::vector<Unknown>*)&_value).data(); }
         SYNET_INLINE Unknown * VectorNext(const Unknown * param) const { return (Unknown*)((char*)param + this->_item); }
         SYNET_INLINE Unknown * VectorEnd() const { return (*(std::vector<Unknown>*)&_value).data() + (*(std::vector<Unknown>*)&_value).size(); }
+
+        bool Load(Xml::File<char> & file)
+        {
+            Xml::XmlDocument<char> doc;
+            try
+            {
+                doc.Parse<0>(file.Data());
+            }
+            catch (std::exception e)
+            {
+                return false;
+            }
+            return this->Load(&doc);
+        }
 
         bool Load(Xml::XmlNode<char> * xmlParent)
         {
@@ -258,6 +269,16 @@ namespace Synet
     template<> SYNET_INLINE void StringToValue<size_t>(const String & string, size_t & value)
     {
         StringToValue(string, (ptrdiff_t&)value);
+    }
+
+    template<> SYNET_INLINE void StringToValue<bool>(const String & string, bool & value)
+    {
+        if (string == "0" || string == "false")
+            value = false;
+        else if (string == "1" || string == "true")
+            value = true;
+        else
+            assert(0);
     }
 
     template<class T> SYNET_INLINE void StringToValue(const String & string, std::vector<T> & values)

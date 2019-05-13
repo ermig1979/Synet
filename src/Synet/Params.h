@@ -370,6 +370,7 @@ namespace Synet
         SYNET_PARAM_VALUE(int, yoloCompatible, 0);
         SYNET_PARAM_VALUE(PoolingPadType, padType, PoolingPadTypeUnknown);
         SYNET_PARAM_VALUE(RoundingType, roundingType, RoundingTypeCeil);
+        SYNET_PARAM_VALUE(bool, excludePad, true);
     };
 
     struct PowerParam

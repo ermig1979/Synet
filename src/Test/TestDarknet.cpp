@@ -82,28 +82,28 @@ namespace Test
                 {
                     Synet::Tensor<float> weight({ (size_t)l.out_c, (size_t)l.c, (size_t)l.size, (size_t)l.size });
                     memcpy(weight.CpuData(), l.weights, weight.Size() * sizeof(float));
-                    weight.DebugPrint(os, String("weight"));
+                    weight.DebugPrint(os, String("weight"), true);
                     if (l.batch_normalize)
                     {
                         Synet::Tensor<float> mean({ (size_t)l.out_c });
                         memcpy(mean.CpuData(), l.rolling_mean, mean.Size() * sizeof(float));
-                        mean.DebugPrint(os, String("mean"));
+                        mean.DebugPrint(os, String("mean"), true);
 
                         Synet::Tensor<float> variance({ (size_t)l.out_c });
                         memcpy(variance.CpuData(), l.rolling_variance, variance.Size() * sizeof(float));
-                        variance.DebugPrint(os, String("variance"));
+                        variance.DebugPrint(os, String("variance"), true);
 
                         Synet::Tensor<float> scale({ (size_t)l.out_c });
                         memcpy(scale.CpuData(), l.scales, scale.Size() * sizeof(float));
-                        scale.DebugPrint(os, String("scale"));
+                        scale.DebugPrint(os, String("scale"), true);
                     }
                     Synet::Tensor<float> bias({ (size_t)l.out_c });
                     memcpy(bias.CpuData(), l.biases, bias.Size() * sizeof(float));
-                    bias.DebugPrint(os, String("bias"));
+                    bias.DebugPrint(os, String("bias"), true);
                 }
                 Synet::Tensor<float> dst({ size_t(1), (size_t)l.out_c, (size_t)l.out_h, (size_t)l.out_w });
                 memcpy(dst.CpuData(), l.output, dst.Size() * sizeof(float));
-                dst.DebugPrint(os, String("dst[0]"));
+                dst.DebugPrint(os, String("dst[0]"), false);
             }
         }
 #endif

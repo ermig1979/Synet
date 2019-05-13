@@ -101,9 +101,9 @@ namespace Synet
             return _param(); 
         }
 
-        bool Load(const String & param, const String & weight)
+        bool Load(const String & model, const String & weight)
         {
-            if (!_param.Load(param))
+            if (!_param.Load(model))
                 return false;
 
             _layers.clear();
@@ -126,6 +126,28 @@ namespace Synet
                 }
             }
             ifs.close();
+
+            return Init();
+        }
+
+        bool Load(const char * modelData, size_t modelSize, const char * weightData, size_t weightSize)
+        {
+            if (!_param.Load(modelData, modelSize))
+                return false;
+
+            _layers.clear();
+            for (size_t i = 0; i < _param().layers().size(); ++i)
+            {
+                LayerSharedPtr layer(Create(_param().layers()[i]));
+                if (layer)
+                    _layers.push_back(layer);
+            }
+
+            for (size_t i = 0; i < _layers.size(); ++i)
+            {
+                if (!_layers[i]->Load(weightData, weightSize, _layers))
+                    return false;
+            }
 
             return Init();
         }
@@ -425,7 +447,7 @@ namespace Synet
                     os << _input[i].layer->Param().src()[j] << " ";
                 os << ")." << std::endl;
                 for (size_t j = 0; j < _input[i].dst.size(); ++j)
-                    _input[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]");
+                    _input[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]", false);
             }
             for (size_t i = 0; i < _stages.size(); ++i)
             {
@@ -438,10 +460,10 @@ namespace Synet
                 if (weight)
                 {
                     for (size_t j = 0; j < _stages[i].layer->Weight().size(); ++j)
-                        _stages[i].layer->Weight()[j].DebugPrint(os, String("weight[") + ValueToString(j) + "]");
+                        _stages[i].layer->Weight()[j].DebugPrint(os, String("weight[") + ValueToString(j) + "]", true);
                 }
                 for (size_t j = 0; j < _stages[i].dst.size(); ++j)
-                    _stages[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]");
+                    _stages[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]", false);
             }
         }
 #endif

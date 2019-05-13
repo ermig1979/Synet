@@ -124,6 +124,53 @@ namespace Synet
             return true;
         }
 
+        bool Load(const char * & data, size_t & size, const LayerSharedPtrs & layers)
+        {
+            _weight.resize(_param.weight().size());
+            for (size_t i = 0; i < _weight.size(); ++i)
+            {
+                const WeightParam & param = _param.weight()[i];
+                Tensor & tensor = _weight[i];
+                ptrdiff_t offset = param.offset();
+                ptrdiff_t length = param.size();
+                if (offset < 0 && length < 0)
+                {
+                    tensor.Reshape(param.dim(), Type(), param.format());
+                    length = tensor.Size() * sizeof(T);
+                    if (length > size)
+                        return false;
+                    memcpy((char*)tensor.CpuData(), data, length);
+                    data += length;
+                    size -= length;
+                }
+                else
+                {
+                    bool unique = true;
+                    for (size_t j = 0; j < layers.size() && unique; ++j)
+                    {
+                        if (layers[j].get() == this)
+                            break;
+                        for (size_t k = 0; k < layers[j]->Param().weight().size() && unique; ++k)
+                        {
+                            if (layers[j]->Param().weight()[k].offset() == offset)
+                            {
+                                tensor.Share(layers[j]->Weight()[k]);
+                                unique = false;
+                            }
+                        }
+                    }
+                    if (unique)
+                    {
+                        if (offset + length > size)
+                            return false;
+                        tensor.Reshape(param.dim(), Type(), param.format());
+                        memcpy((char*)tensor.CpuData(), data + offset, length);
+                    }
+                }
+            }
+            return true;
+        }
+
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
 

@@ -813,6 +813,8 @@ namespace Synet
             const XmlAttr * pRoundingType = pData->FirstAttribute("rounding_type");
             if (pRoundingType && String(pRoundingType->Value()) == "floor")
                 layer.pooling().roundingType() = RoundingTypeFloor;
+            if (pData->FirstAttribute("exclude-pad"))
+                StringToValue(pData->FirstAttribute("exclude-pad")->Value(), layer.pooling().excludePad());
             return true;
         }
 
@@ -838,7 +840,11 @@ namespace Synet
                 if (pWeights)
                 {
                     layer.weight().resize(1);
-                    layer.weight()[0].dim() = Shape({ ConvertInputShape(pLayer)[1] });
+                    const XmlNode * pData = pLayer->FirstNode("data");
+                    bool channelShared = false;
+                    if (pData && pData->FirstAttribute("channel_shared"))
+                        StringToValue(pData->FirstAttribute("channel_shared")->Value(), channelShared);
+                    layer.weight()[0].dim() = Shape({ channelShared ? size_t{1} : ConvertInputShape(pLayer)[1] });
                     ConvertWeight(pWeights, srcBin, 0, Shape(), layer.weight()[0], dstBin);
                 }
                 else
@@ -908,6 +914,16 @@ namespace Synet
             return true;
         }
 
+        bool PermutedToNchw(const LayerParams & layers)
+        {
+            for (size_t i = 0; layers.size(); ++i)
+            {
+                if (layers[i].type() == LayerTypePermute && layers[i].permute().format() == TensorFormatNchw)
+                    return true;
+            }
+            return false;
+        }
+
         bool ConvertReshapeLayer(const XmlNode * pLayer, bool trans, LayerParam & layer, LayerParams & layers)
         {
             layer.type() = Synet::LayerTypeReshape;
@@ -919,7 +935,7 @@ namespace Synet
                 {
                     Shape input = ConvertInputShape(pLayer);
                     Shape output = ConvertShape(pPort);
-                    if (trans && output.size() == 4)
+                    if (trans && output.size() == 4 && !PermutedToNchw(layers))
                     {
                         if (input.size() > 3 && output[1]*output[2] == input[1] && output[3] == input[2]*input[3])
                             output = Shape({ output[0], output[3] , output[1] , output[2] });

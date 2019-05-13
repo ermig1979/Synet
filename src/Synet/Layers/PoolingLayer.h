@@ -90,7 +90,7 @@ namespace Synet
         }
 
         template <class T> void PoolingForwardCpuAverage(const T * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
-            size_t strideY, size_t strideX, size_t padY, size_t padX, T * dst, size_t dstH, size_t dstW, int trans)
+            size_t strideY, size_t strideX, size_t padY, size_t padX, T * dst, size_t dstH, size_t dstW, int excludePad, int trans)
         {
             if (trans)
             {
@@ -115,8 +115,12 @@ namespace Synet
                                     dst[c] += pc[c];
                             }
                         }
-                        for (size_t c = 0; c < channels; ++c)
-                            dst[c] = dst[c] / (hEnd - hStart) / (wEnd - wStart);
+                        if(excludePad)
+                            for (size_t c = 0; c < channels; ++c)
+                                dst[c] = dst[c] / (hEnd - hStart) / (wEnd - wStart);
+                        else
+                            for (size_t c = 0; c < channels; ++c)
+                                dst[c] = dst[c] / kernelY / kernelX;
                         dst += channels;
                     }
                 }
@@ -139,7 +143,10 @@ namespace Synet
                             for (size_t h = hStart; h < hEnd; ++h)
                                 for (size_t w = wStart; w < wEnd; ++w)
                                     sum += src[h * srcW + w];
-                            dst[ph*dstW + pw] = sum/(hEnd - hStart)/(wEnd - wStart);
+                            if (excludePad)
+                                dst[ph*dstW + pw] = sum / (hEnd - hStart) / (wEnd - wStart);
+                            else
+                                dst[ph*dstW + pw] = sum / kernelY / kernelX;
                         }
                     }
                     src += srcW * srcH;
@@ -148,7 +155,7 @@ namespace Synet
             }
         }
 
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         template <> SYNET_INLINE void PoolingForwardCpuMax<float>(const float * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
             size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, int trans)
         {
@@ -175,6 +182,7 @@ namespace Synet
             _method = param.method();
             _yoloCompatible = param.yoloCompatible();
             _roundingType = param.roundingType();
+            _excludePad = param.excludePad();
             assert(src[0]->Count() == 4);
 
             _trans = src[0]->Format() == TensorFormatNhwc;
@@ -331,7 +339,8 @@ namespace Synet
             case PoolingMethodTypeMax:
                 for (size_t n = 0; n < _num; ++n)
                 {
-                    Detail::PoolingForwardCpuMax(src, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, dst, _dstH, _dstW, _trans);
+                    Detail::PoolingForwardCpuMax(src, _channels, _srcH, _srcW, _kernelY, _kernelX, 
+                        _strideY, _strideX, _padY, _padX, dst, _dstH, _dstW, _trans);
                     src += _channels*_srcW * _srcH;
                     dst += _channels*_dstW * _dstH;
                 }
@@ -339,7 +348,8 @@ namespace Synet
             case PoolingMethodTypeAverage:
                 for (size_t n = 0; n < _num; ++n)
                 {
-                    Detail::PoolingForwardCpuAverage(src, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX, dst, _dstH, _dstW, _trans);
+                    Detail::PoolingForwardCpuAverage(src, _channels, _srcH, _srcW, _kernelY, _kernelX, 
+                        _strideY, _strideX, _padY, _padX, dst, _dstH, _dstW, _excludePad, _trans);
                     src += _channels*_srcW * _srcH;
                     dst += _channels*_dstW * _dstH;
                 }
@@ -355,7 +365,7 @@ namespace Synet
     private:
         PoolingMethodType _method;
         RoundingType _roundingType;
-        int _yoloCompatible, _trans;
+        int _yoloCompatible, _trans, _excludePad;
         size_t _num, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideX, _strideY, _padX, _padY, _padW, _padH, _dstH, _dstW;
     };
 }

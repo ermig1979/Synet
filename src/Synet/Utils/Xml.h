@@ -2154,7 +2154,12 @@ namespace Synet
             File(const char * fileName)
             {
                 if (!Open(fileName))
-                    throw std::runtime_error(std::string("cannot open file ") + fileName);
+                    throw std::runtime_error(std::string("Can't open file ") + fileName);
+            }
+
+            File(const Ch * data, size_t size)
+            {
+                _data.assign(data, data + size);
             }
 
             File(std::basic_istream<Ch> & is)
