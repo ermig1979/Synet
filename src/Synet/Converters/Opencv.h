@@ -916,7 +916,7 @@ namespace Synet
 
         bool PermutedToNchw(const LayerParams & layers)
         {
-            for (size_t i = 0; layers.size(); ++i)
+            for (size_t i = 0; i < layers.size(); ++i)
             {
                 if (layers[i].type() == LayerTypePermute && layers[i].permute().format() == TensorFormatNchw)
                     return true;

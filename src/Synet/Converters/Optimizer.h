@@ -60,8 +60,8 @@ namespace Synet
             {
                 if (MergeConvolutionAndActivation(src, i, dst, changes))
                     continue;
-                //if (MergeTwoConvolutions(src, i, dst, changes))
-                //    continue;
+                if (MergeThreeConvolutions(src, i, dst, changes))
+                    continue;
                 if (MergeSoftmax(src, i, dst, changes))
                     continue;
                 if (MergeFused0(src, i, dst, changes))
@@ -138,7 +138,7 @@ namespace Synet
             return false;
         }
 
-        bool MergeTwoConvolutions(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        bool MergeThreeConvolutions(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
         {
             if (src.size() < index + 3)
                 return false;
@@ -162,6 +162,8 @@ namespace Synet
             if (k2.size() < 2 || k2[0] != 1 || k2[1] != 1)
                 return false;
             if (InsideLink(src, index, 3))
+                return false;
+            if (l1.convolution().outputNum() < l2.convolution().outputNum() || k0[0] != 1)
                 return false;
             LayerParam layer;
             layer.type() = LayerTypeMergedConvolution;
