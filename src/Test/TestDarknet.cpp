@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "TestCompare.h"
+#include "Test/TestCompare.h"
 
 #define SYNET_DARKNET_ENABLE
 #define SYNET_DARKNET_PATH ../../../3rd/darknet/include

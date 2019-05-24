@@ -31,7 +31,7 @@
 
 #define SYNET_OTHER_RUN
 #define SYNET_SYNET_RUN
-#define SYNET_DEBUG_PRINT_ENABLE
+//#define SYNET_DEBUG_PRINT_ENABLE
 //#define SYNET_ANNOTATE_REGIONS
 #define SYNET_SIZE_STATISTIC
 
@@ -59,8 +59,8 @@
 #ifdef SYNET_BLIS_ENABLE
 extern "C"
 {
-#include <blis/blis.h>
-#include <blis/cblas.h>
+//#include <blis/blis.h>
+//#include <blis/cblas.h>
 }
 #endif
 

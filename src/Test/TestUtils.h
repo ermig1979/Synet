@@ -112,6 +112,27 @@ namespace Test
 #endif
     }
 
+    inline String DirectoryByPath(const String & path_)
+    {
+#ifdef WIN32
+        size_t pos = path_.find_last_of("\\");
+        if (pos == std::string::npos)
+            return path_;
+        else
+            return path_.substr(0, pos);
+#elif defined(__unix__)
+        size_t pos = path_.find_last_of("/");
+        if (pos == std::string::npos)
+            return path_;
+        else
+            return path_.substr(0, pos);
+#else
+        std::cerr << "GetNameByPath: Is not implemented yet!\n";
+        return "";
+#endif
+        return path_.substr(0, path_.find_last_of("/\\"));
+    }
+
     inline bool DirectoryExists(const String & path)
     {
 #ifdef _MSC_VER

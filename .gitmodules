@@ -7,3 +7,6 @@
 [submodule "3rd/blis"]
 	path = 3rd/blis
 	url = https://github.com/ermig1979/blis.git
+[submodule "3rd/dldt"]
+	path = 3rd/dldt
+	url = https://github.com/ermig1979/dldt.git

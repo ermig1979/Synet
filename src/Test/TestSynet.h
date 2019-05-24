@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "TestCommon.h"
-#include "TestPerformance.h"
+#include "Test/TestCommon.h"
+#include "Test/TestPerformance.h"
 
 #define SYNET_PERF_FUNC() TEST_PERF_FUNC()
 #define SYNET_PERF_BLOCK(name) TEST_PERF_BLOCK(name)
@@ -175,7 +175,7 @@ namespace Test
             Net::TensorPtrs dst = _net.Dst();
             for (size_t i = 0, offset = 0; i < dst.size(); ++i)
             {
-                if (dst[i]->Count() == 4 && dst[i]->Axis(3) == 7)
+                if (dst[i]->Count() == 4 && dst[i]->Axis(3) == 7 && _net.Back()[i]->Param().type() == Synet::LayerTypeDetectionOutput)
                 {
                     const float * pDst = dst[i]->CpuData();
                     for (size_t j = 0; j < dst[i]->Axis(2); ++j, pDst += 7)

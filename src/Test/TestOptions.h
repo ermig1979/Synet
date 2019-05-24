@@ -80,6 +80,12 @@ namespace Test
                 std::cout << ss.str();
                 if (!logName.empty())
                 {
+                    String dir = DirectoryByPath(logName);
+                    if (!DirectoryExists(dir) && !CreatePath(dir))
+                    {
+                        std::cout << "Can't create output directory '" << dir << "' !" << std::endl;
+                        return;
+                    }
                     std::ofstream log(logName.c_str());
                     if (log.is_open())
                     {

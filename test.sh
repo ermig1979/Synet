@@ -6,10 +6,10 @@ NUMBER=$3
 THREAD=$4
 FORMAT=$5
 VERSION=$6
-DIR=./data/"$FRAMEWORK"_"$NAME"
+DIR=./data/"$FRAMEWORK"/"$NAME"
 PATHES="-om=$DIR/other.dsc -ow=$DIR/other.dat -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$DIR/image -od=$DIR/output -tp=$DIR/param.xml"
 PREFIX="${FRAMEWORK:0:1}"
-LOG=./test/"$PREFIX"_"$NAME"_t"$THREAD"_f"$FORMAT"_v"$VERSION".txt
+LOG=./test/"$FRAMEWORK"/"$NAME"/"$PREFIX"_"$NAME"_t"$THREAD"_f"$FORMAT"_v"$VERSION".txt
 
 echo $LOG
 
@@ -28,8 +28,7 @@ if [ ! -d ./test ];then
 	mkdir ./test
 fi
 
-TEST darknet darknet 1 1 1 002
-#TEST darknet darknet19 1 1 0 000
-#TEST darknet yolov3 1 1 0 000
+#TEST darknet test_000 5 1 1 000
+TEST inference_engine test_000 500 1 1 000
 
 exit
