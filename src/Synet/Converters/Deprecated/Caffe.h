@@ -314,7 +314,7 @@ namespace Synet
                 Shape shape(src.shape(j).dim_size());
                 for (int k = 0; k < src.shape(j).dim_size(); ++k)
                     shape[k] = src.shape(j).dim(k);
-                if (trans & shape.size() == 4)
+                if (trans && shape.size() == 4)
                 {
                     shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
                     dst.shape()[j].format() = TensorFormatNhwc;
@@ -372,7 +372,7 @@ namespace Synet
                                     for (size_t c = 0; c < shape[2]; ++c)
                                         for (size_t y = 0; y < shape[0]; ++y)
                                             for (size_t x = 0; x < shape[1]; ++x)
-                                                tensor.CpuData(Shape({ y, x, c, d }))[0] = blob.data(o++);
+                                                tensor.CpuData(Shape({ y, x, c, d }))[0] = blob.data((int)(o++));
                                 param.format() = TensorFormatNhwc;
                             }
                             else

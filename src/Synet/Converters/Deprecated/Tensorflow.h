@@ -170,7 +170,7 @@ namespace Synet
             network.name() = "tensorflow_unknown";
             for (size_t i = 0, offset = 0; i < (size_t)_graph.node_size(); ++i)
             {
-                const ::tensorflow::NodeDef & node = _graph.node(i);
+                const ::tensorflow::NodeDef & node = _graph.node((int)i);
                 google::protobuf::Map<String, tensorflow::AttrValue> attr = node.attr();
 
                 if (_ignore.find(node.name()) != _ignore.end())

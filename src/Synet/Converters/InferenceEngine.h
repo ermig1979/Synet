@@ -808,6 +808,9 @@ namespace Synet
             const XmlAttr * pRoundingType = pData->FirstAttribute("rounding_type");
             if (pRoundingType && String(pRoundingType->Value()) == "floor")
                 layer.pooling().roundingType() = RoundingTypeFloor;
+            const XmlAttr * pAutoPad = pData->FirstAttribute("auto_pad");
+            if (pAutoPad && String(pAutoPad->Value()) == "valid")
+                layer.pooling().roundingType() = RoundingTypeFloor;
             if (pData->FirstAttribute("exclude-pad"))
                 StringToValue(pData->FirstAttribute("exclude-pad")->Value(), layer.pooling().excludePad());
             return true;

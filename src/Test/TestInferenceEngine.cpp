@@ -51,6 +51,7 @@ namespace Test
         virtual bool Init(const String & model, const String & weight, size_t threadNumber, const TestParam & param)
         {
             TEST_PERF_FUNC();
+
             try 
             {
                 _iePlugin = InferenceEngine::PluginDispatcher({ "" }).getPluginByDevice("CPU");
@@ -73,16 +74,27 @@ namespace Test
                 input->second->setPrecision(InferenceEngine::Precision::FP32);
                 _ieInput = _ieInferRequest.GetBlob(inputName);
 
-                InferenceEngine::OutputsDataMap outputsInfo = network.getOutputsInfo();
-                for (InferenceEngine::OutputsDataMap::iterator it = outputsInfo.begin(); it != outputsInfo.end(); ++it)
+                _outputNames.clear();
+                _ieOutput.clear();
+                if (param.output().size())
                 {
-                    //std::cout << "init " << it->first << std::endl;
-                    _names.push_back(it->first);
-                    it->second->setPrecision(InferenceEngine::Precision::FP32);
-                    _ieOutput.push_back(_ieInferRequest.GetBlob(it->first));
-                    //std::cout << "init " << it->first << std::endl;
+                    for (size_t i = 0; i < param.output().size(); ++i)
+                    {
+                        _outputNames.push_back(param.output()[i].name());
+                        _ieOutput.push_back(_ieInferRequest.GetBlob(_outputNames[i]));
+                    }
                 }
-             }
+                else
+                {
+                    InferenceEngine::OutputsDataMap outputsInfo = network.getOutputsInfo();
+                    for (InferenceEngine::OutputsDataMap::iterator it = outputsInfo.begin(); it != outputsInfo.end(); ++it)
+                    {
+                        _outputNames.push_back(it->first);
+                        //it->second->setPrecision(InferenceEngine::Precision::FP32);
+                        _ieOutput.push_back(_ieInferRequest.GetBlob(it->first));
+                    }               
+                }
+            }
             catch (std::exception & e) 
             {
                 std::cout << "Inference Engine init error: " << e.what() << std::endl;
@@ -94,29 +106,10 @@ namespace Test
             height = param.input()[0].shape()[2].size();
             width = param.input()[0].shape()[3].size();
 
-            if (param.output().size())
-            {
-                for (size_t i = 0; i < param.output().size(); ++i)
-                    _names.push_back(param.output()[i].name());
-            }
-            else
-            {
-                //std::vector<int> outLayers = _net.getUnconnectedOutLayers();
-                //for (size_t i = 0; i < outLayers.size(); ++i)
-                //    _names.push_back(_net.getLayer(outLayers[i])->name);
-            }
-
             {
                 Vector stub(num*channels*height*width);
                 SetInput(stub);
                 _ieInferRequest.Infer();
-                //Ints sizes{ int(num), int(channels), int(height), int(width) };
-                //cv::Mat ins(sizes, CV_32F, (void*)stub.data());
-                //_net.setInput(ins);
-                //if (_names.empty())
-                //    _net.forward(_out);
-                //else
-                //    _net.forward(_out, _names);
             }
 
             return true;
@@ -146,57 +139,45 @@ namespace Test
                     size *= dims[i];
                 Synet::Tensor<float> tensor(dims);
                 SetOutput(dims, strides, 0, _ieOutput[o]->buffer(), tensor.CpuData());
-                tensor.DebugPrint(os, _names.empty() ? String("???") : String(_names[o]), false);
+                tensor.DebugPrint(os, _outputNames.empty() ? String("???") : String(_outputNames[o]), false);
             }
         }
 #endif
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
-            //int nboxes = 0;
-            //float hier_thresh = 0.5;
-            //::layer l = _net->layers[_net->n - 1];
-            //::detection *dets = get_network_boxes((::network*)_net, (int)size.x, (int)size.y, threshold, hier_thresh, 0, 1, &nboxes);
-            //if (overlap)
-            //    do_nms_sort(dets, nboxes, l.classes, overlap);
-            //Regions regions;
-            //for (size_t i = 0; i < nboxes; ++i)
-            //{
-            //    box b = dets[i].bbox;
-            //    int const obj_id = max_index(dets[i].prob, l.classes);
-            //    float const prob = dets[i].prob[obj_id];
-
-            //    if (prob > threshold)
-            //    {
-            //        Region region;
-            //        region.x = b.x*size.x;
-            //        region.y = b.y*size.y;
-            //        region.w = b.w*size.x;
-            //        region.h = b.h*size.y;
-            //        region.id = obj_id;
-            //        region.prob = prob;
-            //        regions.push_back(region);
-            //    }
-            //}
-            //free_detections(dets, nboxes);
-            //return regions;
+            Regions regions;
+            for (size_t i = 0; i < _output.size(); i += 7)
+            {
+                if (_output[i + 2] > threshold)
+                {
+                    Region region;
+                    region.id = (size_t)_output[i + 1];
+                    region.prob = _output[i + 2];
+                    region.x = size.x*(_output[i + 3] + _output[i + 5]) / 2.0f;
+                    region.y = size.y*(_output[i + 4] + _output[i + 6]) / 2.0f;
+                    region.w = size.x*(_output[i + 5] - _output[i + 3]);
+                    region.h = size.y*(_output[i + 6] - _output[i + 4]);
+                    regions.push_back(region);
+                }
+            }
+            return regions;
         }
 
     private:
+        typedef InferenceEngine::SizeVector Sizes;
+
         InferenceEngine::InferencePlugin _iePlugin;
         InferenceEngine::InferRequest _ieInferRequest;
         InferenceEngine::Blob::Ptr _ieInput;
         std::vector<InferenceEngine::Blob::Ptr> _ieOutput;
         Vector _output;
-        Strings _names;
+        Strings _outputNames;
 
         void SetInput(const Vector & x)
         {
             assert(_ieInput->getTensorDesc().getLayout() == InferenceEngine::Layout::NCHW);
             const InferenceEngine::SizeVector & strides = _ieInput->getTensorDesc().getBlockingDesc().getStrides();
-            //for (size_t i = 0; i < strides.size(); ++i)
-            //    std::cout << "i strides[" << i << "]=" << strides[i] << std::endl;
-
             const float * src = x.data();
             float * dst = (float*)_ieInput->buffer();
             for (size_t i = 0; i < channels; ++i)
@@ -210,8 +191,6 @@ namespace Test
             }
         }
 
-        typedef InferenceEngine::SizeVector Sizes;
-
         void SetOutput()
         {
             size_t offset = 0;
@@ -224,10 +203,6 @@ namespace Test
                     size *= dims[i];
                 _output.resize(offset + size);
                 SetOutput(dims, strides, 0, _ieOutput[o]->buffer(), _output.data() + offset);
-                //for (size_t i = 0; i < strides.size(); ++i)
-                //    std::cout << "strides[" << i << "]=" << strides[i] << std::endl;
-                //for (size_t i = 0; i < dims.size(); ++i)
-                //    std::cout << "dims[" << i << "]=" << dims[i] << std::endl;
                 offset += size;
             }
          }
@@ -244,7 +219,6 @@ namespace Test
                 size_t dstStride = 1;
                 for (size_t i = current + 1; i < dims.size(); ++i)
                     dstStride *= dims[i];
-                //std::cout << "s " << srcStride << " d " << dstStride << std::endl;
                 for(size_t i = 0; i < dims[current]; ++i)
                     SetOutput(dims, strides, current + 1, src + i * srcStride, dst + i * dstStride);
             }
