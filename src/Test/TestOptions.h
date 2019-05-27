@@ -66,7 +66,7 @@ namespace Test
             threadNumber = FromString<size_t>(GetArg("-tn", "1"));
             threshold = FromString<float>(GetArg("-t", "0.001"));
             logName = GetArg("-ln", "", false);
-            tensorFormat = FromString<int>(GetArg("-tf", "0"));
+            tensorFormat = FromString<int>(GetArg("-tf", "1"));
         }
 
         ~Options()

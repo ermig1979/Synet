@@ -104,7 +104,10 @@ namespace Synet
         bool Load(const String & model, const String & weight)
         {
             if (!_param.Load(model))
+            {
+                std::cout << "Can't load model file '" << model << "' !" << std::endl;
                 return false;
+            }
 
             _layers.clear();
             for (size_t i = 0; i < _param().layers().size(); ++i)
@@ -116,11 +119,15 @@ namespace Synet
 
             std::ifstream ifs(weight.c_str(), std::ifstream::binary);
             if (!ifs.is_open())
+            {
+                std::cout << "Can't open weight file '" << weight << "' !" << std::endl;
                 return false;
+            }
             for (size_t i = 0; i < _layers.size(); ++i)
             {
                 if (!_layers[i]->Load(ifs, _layers))
                 {
+                    std::cout << "Can't load weight from file '" << weight << "' !" << std::endl;
                     ifs.close();
                     return false;
                 }
@@ -170,7 +177,10 @@ namespace Synet
         bool Reshape(const Strings & srcNames = Strings(), const Shapes & srcShapes = Shapes(), const Strings & dstNames = Strings())
         {
             if (srcNames.size() != srcShapes.size())
+            {
+                std::cout << "srcNames.size() != srcShapes.size() !" << std::endl;
                 return false;
+            }
 
             for (size_t i = 0; i < _tensors.size(); ++i)
                 _tensors[i]->Clear();
@@ -205,7 +215,10 @@ namespace Synet
                         }
                     }
                     if (!found)
+                    {
+                        std::cout << "Input layer '" << srcNames[i] << "' is not found!" << std::endl;
                         return false;
+                    }
                 }            
             }
             else
@@ -234,7 +247,10 @@ namespace Synet
                         }
                     }
                     if (!found)
+                    {
+                        std::cout << "Output layer '" << dstNames[i] << "' is not found!" << std::endl;
                         return false;
+                    }
                 }
             }
 
