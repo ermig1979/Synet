@@ -4,7 +4,7 @@ Darknet tests
 
 | Name | Description | Cfg | Weight |
 | --- | --- | --- | --- |
-| darknet | Darnet reference | [cfg](https://github.com/pjreddie/darknet/blob/master/cfg/darknet.cfg) | [80 MB](https://pjreddie.com/media/files/darknet.weights) |
+| darknet | Darknet reference | [cfg](https://github.com/pjreddie/darknet/blob/master/cfg/darknet.cfg) | [80 MB](https://pjreddie.com/media/files/darknet.weights) |
 
 ----------------------
 Inference Engine tests

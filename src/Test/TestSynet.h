@@ -109,11 +109,10 @@ namespace Test
                         return false;
                 }
                 _net.CompactWeight();
-                const Net::Tensor * src = _net.Src()[0];
-                num = src->Shape()[0];
-                channels = _trans ? src->Shape()[3] : src->Shape()[1];
-                height = _trans ? src->Shape()[1] : src->Shape()[2];
-                width = _trans ? src->Shape()[2] : src->Shape()[3];
+                num = _net.NchwShape()[0];
+                channels = _net.NchwShape()[1];
+                height = _net.NchwShape()[2];
+                width = _net.NchwShape()[3];
                 return true;
             }
             return false;

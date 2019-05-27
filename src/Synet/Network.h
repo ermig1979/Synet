@@ -297,6 +297,15 @@ namespace Synet
             return true;
         }
 
+        Shape NchwShape() const 
+        {
+            assert(_src.size() == 1 && _src[0]->Count() == 4);
+            Shape shape = _src[0]->Shape();
+            if (_src[0]->Format() == TensorFormatNhwc)
+                shape = Shape({ shape[0], shape[3] , shape[1] , shape[2] });
+            return shape;
+        }
+
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
         typedef Simd::View<Simd::Allocator> View;
         bool SetInput(const View & src, float lower, float upper)
