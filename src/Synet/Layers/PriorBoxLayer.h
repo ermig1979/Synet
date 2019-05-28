@@ -124,7 +124,7 @@ namespace Synet
             {
                 size_t dataH = _trans ? src[1]->Axis(1) : src[1]->Axis(2);
                 size_t dataW = _trans ? src[1]->Axis(2) : src[1]->Axis(3);
-                _stepH = float(dataW) / layerH;
+                _stepH = float(dataH) / layerH;
                 _stepW = float(dataW) / layerW;
             }
             else

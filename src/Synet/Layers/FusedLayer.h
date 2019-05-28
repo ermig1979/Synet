@@ -325,6 +325,15 @@ namespace Synet
                 _count = _t2.scale.Size();
                 _t2.slope = Type(0);
                 break;
+            case 7:
+            {
+                assert(weight.size() == 3);
+                _t1.bias0.Share(weight[0]);
+                _count = _t1.bias0.Size();
+                _t1.scale1.Share(weight[1]);
+                _t1.bias1.Share(weight[2]);
+                break;
+            }
             default:
                 assert(0);
             }
@@ -365,6 +374,7 @@ namespace Synet
                     Detail::FusedLayerForwardCpu0(src, _t0.bias.CpuData(), _t0.scale.CpuData(), _count, _size, dst, _trans);
                     break;
                 case 1:
+                case 7:
                     Detail::FusedLayerForwardCpu1(src, _t1.bias0.CpuData(), _t1.scale1.CpuData(), _t1.bias1.CpuData(), _count, _size, dst, _trans);
                     break;
                 case 2:

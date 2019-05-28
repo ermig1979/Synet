@@ -51,14 +51,14 @@ namespace Synet
             XmlFile file;
             if (!LoadModel(srcModelPath, file, xml))
             {
-                std::cout << "Can't load opencv::dnn model '" << srcModelPath << "' !" << std::endl;
+                std::cout << "Can't load Inference Engine model '" << srcModelPath << "' !" << std::endl;
                 return false;
             }
 
             Vector srcBin;
             if (!LoadWeight(srcWeightPath, srcBin))
             {
-                std::cout << "Can't load opencv::dnn weight '" << srcWeightPath << "' !" << std::endl;
+                std::cout << "Can't load Inference Engine weight '" << srcWeightPath << "' !" << std::endl;
                 return false;
             }
 
@@ -109,6 +109,7 @@ namespace Synet
                 }
                 catch (std::exception e)
                 {
+                    std::cout << "There is an exception: " << e.what() << std::endl;
                     return false;
                 }
             }

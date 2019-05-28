@@ -29,6 +29,7 @@
     <ClInclude Include="..\Synet\*.h" />
 	<ClInclude Include="..\Synet\Layers\*.h" />
 	<ClInclude Include="..\Synet\Converters\*.h" />
+	<ClInclude Include="..\Synet\Converters\Deprecated\*.h" />
 	<ClInclude Include="..\Synet\Utils\*.h" />
     <ClCompile Include="..\Synet\Synet.cpp">
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
