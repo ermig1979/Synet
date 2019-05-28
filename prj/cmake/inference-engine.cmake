@@ -13,9 +13,12 @@ set(IE_BUILD_OPTIONS
 	-DENABLE_SAMPLES_CORE=OFF
 	-DENABLE_SEGMENTATION_TESTS=OFF
 	-DENABLE_OBJECT_DETECTION_TESTS=OFF
+	-DENABLE_AVX512F=${AVX512}
 	)
 	
 set(IE_BIN_LIBS ${IE_BIN_DIR}/libinference_engine.so ${IE_BIN_DIR}/libcpu_extension.so ${IE_BIN_DIR}/libMKLDNNPlugin.so ${IE_3RD_DIR}/tbb/lib/libtbb.so.2)
+
+file(MAKE_DIRECTORY ${IE_ROOT_DIR}/build)
 
 add_custom_command(
 	OUTPUT ${IE_BIN_LIBS}

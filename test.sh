@@ -31,6 +31,6 @@ fi
 #TEST darknet test_000 5 1 1 000
 
 #TEST inference_engine test_000 500 1 1 000
-TEST inference_engine test_001 500 1 1 000
+TEST inference_engine test_001 500 1 1 000a
 
 exit
