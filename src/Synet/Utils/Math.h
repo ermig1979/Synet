@@ -28,6 +28,11 @@
 
 namespace Synet
 {
+    SYNET_INLINE int Round(float value)
+    {
+        return (int)(value + (value >= 0 ? 0.5f : -0.5f));
+    }
+
     template <typename T> void CpuSet(size_t size, T value, T * dst)
     {
         if (value == T(0))

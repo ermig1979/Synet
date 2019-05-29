@@ -97,10 +97,12 @@ namespace Synet
             {
                 for (int dy = 0; dy < dstH; ++dy)
                 {
-                    size_t sy = (size_t)(ky*(dy + 0.5f));
+                    //size_t sy = (size_t)(ky*(dy + 0.5f));
+                    size_t sy = Round(dy * ky + kx / 2.0f - 0.5f);
                     for (int dx = 0; dx < dstW; ++dx)
                     {
-                        size_t sx = (size_t)(kx*(dx + 0.5f));
+                        //size_t sx = (size_t)(kx*(dx + 0.5f));
+                        size_t sx = Round(dx * kx + ky / 2.0f - 0.5f);
                         const T * s = src + (sx * srcW + sy)*channels;
                         T * d = dst + (dx * dstW + dy)*channels;
                         memcpy(d, s, channels * sizeof(T));
@@ -111,10 +113,12 @@ namespace Synet
             {
                 for (int dy = 0; dy < dstH; ++dy)
                 {
-                    size_t sy = (size_t)(ky*(dy + 0.5f));
+                    //size_t sy = (size_t)(ky*(dy + 0.5f));
+                    size_t sy = Round(dy * ky + kx / 2.0f - 0.5f);
                     for (int dx = 0; dx < dstW; ++dx)
                     {
-                        size_t sx = (size_t)(kx*(dx + 0.5f));
+                        //size_t sx = (size_t)(kx*(dx + 0.5f));
+                        size_t sx = Round(dx * kx + ky / 2.0f - 0.5f);
                         const T * s = src + sx * srcW + sy;
                         T * d = dst + dx * dstW + dy;
                         for (int c = 0; c < channels; ++c)

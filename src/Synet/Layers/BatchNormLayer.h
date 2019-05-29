@@ -55,7 +55,7 @@ namespace Synet
             if (src[0]->Count() == 1)
                 _channels = 1;
             else
-                _channels = src[0]->Axis(1);            
+                _channels = src[0]->Format() == TensorFormatNhwc ? src[0]->Axis(3) : src[0]->Axis(1);
             
             if (src[0]->Count() >= 1)
                 assert(src[0]->Axis(1) == _channels);
