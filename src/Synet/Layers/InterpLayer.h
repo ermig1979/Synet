@@ -137,7 +137,9 @@ namespace Synet
         {
             if (trans)
             {
-                assert(0);
+                void * resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, channels, ::SimdResizeChannelFloat, ::SimdResizeMethodCaffeInterp);
+                ::SimdResizerRun(resizer, (uint8_t*)src, channels * srcW * sizeof(float), (uint8_t*)dst, channels * dstW * sizeof(float));
+                ::SimdRelease(resizer);
             }
             else
             {

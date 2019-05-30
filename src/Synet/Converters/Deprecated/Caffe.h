@@ -369,6 +369,46 @@ namespace Synet
             dst.order() = order;
         }
 
+        bool ConvertTransInnerProductWeight(const LayerParams & layers, size_t current, const caffe::BlobProto & blob, Tensor & tensor)
+        {
+            const LayerParam & layer = layers[current];
+            if (layer.type() != LayerTypeInnerProduct || layer.src().size() != 1 || blob.shape().dim_size() != 2)
+                return false;
+            ptrdiff_t curr = current, prev;
+            while (curr)
+            {
+                for (prev = curr - 1; prev >= 0; --prev)
+                    if (layers[prev].name() == layers[curr].src()[0])
+                        break;
+                if (prev < 0 || layers[prev].type() == LayerTypeInnerProduct || layers[prev].type() == LayerTypePermute)
+                    return false;
+                if (layers[prev].type() == LayerTypeConvolution)
+                {
+                    Shape shape;
+                    shape.push_back(blob.shape().dim(0));
+                    shape.push_back(blob.shape().dim(1));
+                    size_t channel = layers[prev].convolution().outputNum();
+                    size_t spatial = shape[1] / channel;
+                    tensor.Reshape(shape);
+                    for (size_t d = 0; d < shape[0]; d++)
+                    {
+                        for (size_t c = 0; c < channel; c++)
+                        {
+                            for (size_t s = 0; s < spatial; s++)
+                            {
+                                size_t srcOffset = d*shape[1] + spatial * c + s;
+                                size_t dstOffset = d*shape[1] + channel * s + c;
+                                tensor.CpuData()[dstOffset] = blob.data(srcOffset);
+                            }
+                        }
+                    }
+                    return true;
+                }
+                curr = prev;
+            }
+            return false;
+        }
+
         bool ConvertWeight(const caffe::NetParameter & src, bool trans, Synet::NetworkParam & dst, Vector & weight)
         {
             size_t offset = 0;
@@ -399,6 +439,10 @@ namespace Synet
                                             for (size_t x = 0; x < shape[1]; ++x)
                                                 tensor.CpuData(Shape({ y, x, c, d }))[0] = blob.data((int)(o++));
                                 param.format() = TensorFormatNhwc;
+                            }
+                            else if (trans && ConvertTransInnerProductWeight(dst.layers(), l, blob, tensor))
+                            {
+                                shape = tensor.Shape();
                             }
                             else
                             {
