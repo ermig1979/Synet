@@ -33,6 +33,11 @@ namespace Synet
         return (int)(value + (value >= 0 ? 0.5f : -0.5f));
     }
 
+    template <typename T> SYNET_INLINE T Square(T value)
+    {
+        return value*value;
+    }
+
     template <typename T> void CpuSet(size_t size, T value, T * dst)
     {
         if (value == T(0))

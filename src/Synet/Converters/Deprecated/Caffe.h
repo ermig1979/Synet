@@ -92,6 +92,7 @@ namespace Synet
 
     private:
 
+        typedef std::vector<Synet::LayerParam> LayerParams;
         typedef Synet::Tensor<float> Tensor;
         typedef std::vector<Tensor> Tensors;
         typedef std::vector<float> Vector;
@@ -104,13 +105,13 @@ namespace Synet
             for (int i = 0; i < src.layer_size(); ++i)
             {
                 Synet::LayerParam dstLayer;
-                if(ConvertLayer(src.layer(i), trans, dstLayer))
+                if(ConvertLayer(src.layer(i), trans, dstLayer, dst.layers()))
                     dst.layers().push_back(dstLayer);
             }
             return true;
         }
 
-        bool ConvertLayer(const caffe::LayerParameter & src, bool trans, Synet::LayerParam & dst)
+        bool ConvertLayer(const caffe::LayerParameter & src, bool trans, Synet::LayerParam & dst, const LayerParams & layers)
         {
             for(int i = 0; i < src.exclude_size(); ++i)
             {
@@ -132,7 +133,7 @@ namespace Synet
                 ConvertBatchNorm(src.batch_norm_param(), dst.batchNorm()); 
                 break;
             case Synet::LayerTypeConcat:
-                ConvertConcat(src.concat_param(), trans, dst.concat());
+                ConvertConcat(src.concat_param(), trans, dst.concat(), layers);
                 break;
             case Synet::LayerTypeConvolution: 
                 ConvertConvolution(src.convolution_param(), dst.convolution()); 
@@ -187,9 +188,7 @@ namespace Synet
                 dst.normalize().eps() = src.norm_param().eps();
                 break;
             case Synet::LayerTypePermute:
-                dst.permute().order().resize(src.permute_param().order_size());
-                for (int i = 0; i < src.permute_param().order_size(); ++i)
-                    dst.permute().order()[i] = src.permute_param().order(i);
+                ConvertPermute(src.permute_param(), trans, dst.permute());
                 break;
             case Synet::LayerTypePooling:
                 dst.pooling().method() = (Synet::PoolingMethodType)src.pooling_param().pool();
@@ -268,6 +267,16 @@ namespace Synet
             return true;
         }
 
+        bool PermutedToNchw(const LayerParams & layers)
+        {
+            for (size_t i = 0; i < layers.size(); ++i)
+            {
+                if (layers[i].type() == LayerTypePermute && layers[i].permute().format() == TensorFormatNchw)
+                    return true;
+            }
+            return false;
+        }
+
         void ConvertBatchNorm(const caffe::BatchNormParameter & src, Synet::BatchNormParam & dst)
         {
             if (src.has_use_global_stats())
@@ -276,13 +285,13 @@ namespace Synet
             dst.eps() = src.eps();
         }
 
-        void ConvertConcat(const caffe::ConcatParameter & src, bool trans, Synet::ConcatParam & dst)
+        void ConvertConcat(const caffe::ConcatParameter & src, bool trans, Synet::ConcatParam & dst, const LayerParams & layers)
         {
             if (src.has_concat_dim())
                 dst.axis() = src.concat_dim();
             else
                 dst.axis() = src.axis();
-            if (trans && dst.axis() == 1)
+            if (trans && dst.axis() == 1 && !PermutedToNchw(layers))
                 dst.axis() = 3;
         }
 
@@ -342,6 +351,22 @@ namespace Synet
             dst.cropBeg() = -src.pad_beg();
             dst.cropEnd() = -src.pad_end();
             dst.useTensorSize() = src.use_blob_size();
+        }
+
+        void ConvertPermute(const caffe::PermuteParameter & src, bool trans, Synet::PermuteParam & dst)
+        {
+            Shape order(src.order_size());
+            for (int i = 0; i < src.order_size(); ++i)
+                order[i] = src.order(i);
+            if (trans && order.size() == 4)
+            {
+                if (order == Shape({ 0, 2, 3, 1 }))
+                {
+                    order = Shape({ 0, 1, 2, 3 });
+                    dst.format() = TensorFormatNchw;
+                }
+            }
+            dst.order() = order;
         }
 
         bool ConvertWeight(const caffe::NetParameter & src, bool trans, Synet::NetworkParam & dst, Vector & weight)

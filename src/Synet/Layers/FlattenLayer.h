@@ -54,7 +54,7 @@ namespace Synet
             shape.push_back(flattenedDim);
             for (size_t i = endAxis + 1; i < src[0]->Count(); ++i) 
                 shape.push_back(src[0]->Axis(i));
-            dst[0]->ShareAs(*src[0], shape);
+            dst[0]->ShareAs(*src[0], shape, src[0]->Format());
         }
 
     protected:
