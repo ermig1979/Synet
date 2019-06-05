@@ -165,7 +165,7 @@ namespace Synet
                 return false;
             if (InsideLink(src, index, 3))
                 return false;
-            if (l1.convolution().outputNum() < l2.convolution().outputNum() || k0[0] != 1)
+            if (l1.convolution().outputNum() < l2.convolution().outputNum())
                 return false;
             LayerParam layer;
             layer.type() = LayerTypeMergedConvolution;
