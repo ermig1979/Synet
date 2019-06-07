@@ -376,7 +376,7 @@ enum type \
 \
 template<> inline Synet::String ValueToString<type>(const type & value) \
 {\
-    static Synet::Strings names;\
+    static thread_local Synet::Strings names;\
     Synet::ParseEnumNames(#__VA_ARGS__, names); \
     return (value > type##unknown && value < type##size) ? names[value].substr(sizeof(#type) - 1) : Synet::String();\
 }\
