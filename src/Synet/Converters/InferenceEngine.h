@@ -255,6 +255,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
+                if (type == "Elu" && !ConvertEluLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Resample" && !ConvertResampleLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Reshape" && !ConvertReshapeLayer(pLayer, trans, layer, network.layers()))
@@ -428,6 +430,8 @@ namespace Synet
             String type = pData->FirstAttribute("type")->Value();
             if (type == "sigmoid")
                 layer.type() = Synet::LayerTypeSigmoid;
+            else if (type == "elu")
+                layer.type() = Synet::LayerTypeElu;
             else
                 assert(0);
             return true;
@@ -876,6 +880,12 @@ namespace Synet
         bool ConvertReluLayer(const XmlNode * pLayer, LayerParam & layer)
         {
             layer.type() = Synet::LayerTypeRelu;
+            return true;
+        }
+
+        bool ConvertEluLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            layer.type() = Synet::LayerTypeElu;
             return true;
         }
 

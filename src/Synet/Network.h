@@ -55,6 +55,7 @@
 #include "Synet/Layers/ReductionLayer.h"
 #include "Synet/Layers/RegionLayer.h"
 #include "Synet/Layers/ReluLayer.h"
+#include "Synet/Layers/EluLayer.h"
 #include "Synet/Layers/ReorgLayer.h"
 #include "Synet/Layers/ReshapeLayer.h"
 #include "Synet/Layers/RestrictRangeLayer.h"
@@ -762,6 +763,7 @@ namespace Synet
             case LayerTypeReduction: return new ReductionLayer<T>(param);
             case LayerTypeRegion: return new RegionLayer<T>(param);
             case LayerTypeRelu: return new ReluLayer<T>(param);
+            case LayerTypeElu: return new EluLayer<T>(param);
             case LayerTypeReorg: return new ReorgLayer<T>(param);
             case LayerTypeReshape: return new ReshapeLayer<T>(param);
             case LayerTypeRestrictRange: return new RestrictRangeLayer<T>(param);

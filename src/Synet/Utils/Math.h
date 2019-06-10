@@ -138,6 +138,17 @@ namespace Synet
             dst[i] = CpuRelu(src[i], slope);
     }
 
+    template <typename T> SYNET_INLINE T CpuElu(T value, T alpha)
+    {
+        return value >= T(0) ? value : alpha * (exp(value) - T(1));
+    }
+
+    template <typename T> void CpuElu(const T * src, size_t size, const T & alpha, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = CpuElu(src[i], alpha);
+    }
+
     template <typename T> void CpuAdd(const T & value, T * dst, size_t size)
     {
         for (size_t i = 0; i < size; ++i)

@@ -62,6 +62,7 @@ namespace Synet
         LayerTypeReduction,
         LayerTypeRegion,
         LayerTypeRelu,
+        LayerTypeElu,
         LayerTypeReorg,
         LayerTypeReshape,
         LayerTypeRestrictRange,
@@ -416,6 +417,11 @@ namespace Synet
         SYNET_PARAM_VALUE(float, negativeSlope, 0.0f);
     };
 
+    struct EluParam
+    {
+        SYNET_PARAM_VALUE(float, alpha, 1.0f);
+    };
+
     struct ReorgParam
     {
         SYNET_PARAM_VALUE(bool, reverse, true);
@@ -523,6 +529,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(ReductionParam, reduction);
         SYNET_PARAM_STRUCT(RegionParam, region);
         SYNET_PARAM_STRUCT(ReluParam, relu);
+        SYNET_PARAM_STRUCT(EluParam, elu);
         SYNET_PARAM_STRUCT(ReorgParam, reorg);
         SYNET_PARAM_STRUCT(ReshapeParam, reshape);
         SYNET_PARAM_STRUCT(RestrictRangeParam, restrictRange);
