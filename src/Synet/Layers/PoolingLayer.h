@@ -311,16 +311,28 @@ namespace Synet
                 }
             }
 
-            if(_trans)
-                dst[0]->Reshape(Shape({ _num, _dstH, _dstW , _channels}), TensorFormatNhwc);
+            _skip = _kernelX == 1 && _kernelY == 1 && _strideY == 1 && _strideX == 1 && _padY == 0 && _padX == 0 && _padH == 0 && _padW == 0;
+
+            if (_skip)
+                dst[0]->Share(*src[0]);
             else
-                dst[0]->Reshape(Shape({ _num, _channels, _dstH, _dstW }), TensorFormatNchw);
+            {
+                if(_trans)
+                    dst[0]->Reshape(Shape({ _num, _dstH, _dstW , _channels}), TensorFormatNhwc);
+                else
+                    dst[0]->Reshape(Shape({ _num, _channels, _dstH, _dstW }), TensorFormatNchw);
+            }
         }
 
     protected:
 
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            if (_skip)
+                return;
+
+            SYNET_PERF_FUNC();
+
             ForwardCpu(src[0]->CpuData(), dst[0]->CpuData());
         }
 
@@ -365,6 +377,7 @@ namespace Synet
     private:
         PoolingMethodType _method;
         RoundingType _roundingType;
+        bool _skip;
         int _yoloCompatible, _trans, _excludePad;
         size_t _num, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideX, _strideY, _padX, _padY, _padW, _padH, _dstH, _dstW;
     };
