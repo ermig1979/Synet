@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2018 Yermalayeu Ihar.
+* Copyright (c) 2018-2019 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -237,6 +237,11 @@ namespace Synet
         template <> SYNET_INLINE void FusedLayerForwardCpu4<float>(const float * src, const float * bias0, const float * scale1, const float * bias1, size_t count, size_t size, float * dst, int trans)
         {
             ::SimdSynetFusedLayerForward4(src, bias0, scale1, bias1, count, size, dst, (::SimdBool)trans);
+        }
+
+        template <> SYNET_INLINE void FusedLayerForwardCpu8<float>(const float * src0, const float * src1, const float * src2, size_t count, size_t size, float * dst, int trans)
+        {
+            ::SimdSynetFusedLayerForward8(src0, src1, src2, count, size, dst, (::SimdBool)trans);
         }
 #endif
     }

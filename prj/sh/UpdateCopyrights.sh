@@ -20,4 +20,4 @@ cd ~-
 }
 
 UpdateCopyrights ../../src/Synet
-#UpdateCopyrights ../../src/Test
+UpdateCopyrights ../../src/Test
