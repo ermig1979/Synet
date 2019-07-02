@@ -182,6 +182,37 @@ namespace Synet
             }
         }
 
+        template <class T> SYNET_INLINE T FusedLayerForward8(T x0, T x1, T x2)
+        {
+            return x0 + x1*x2;
+        }
+
+        template <class T> void FusedLayerForwardCpu8(const T * src0, const T * src1, const T * src2, size_t count, size_t size, T * dst, int trans)
+        {
+            if ((trans || size == 1) && count != 1)
+            {
+                for (size_t j = 0; j < size; ++j)
+                {
+                    for (size_t i = 0; i < count; ++i)
+                        dst[i] = FusedLayerForward8(src0[i], src1[i], src2[i]);
+                    src0 += count;
+                    src1 += count;
+                    dst += count;
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i < count; ++i)
+                {
+                    for (size_t j = 0; j < size; ++j)
+                        dst[j] = FusedLayerForward8(src0[j], src1[j], src2[i]);
+                    src0 += size;
+                    src1 += size;
+                    dst += size;
+                }
+            }
+        }
+
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
         template <> SYNET_INLINE void FusedLayerForwardCpu0<float>(const float * src, const float * bias, const float * scale, size_t count, size_t size, float * dst, int trans)
         {
@@ -334,6 +365,13 @@ namespace Synet
                 _t1.bias1.Share(weight[2]);
                 break;
             }
+            case 8:
+            {
+                assert(src.size() == 3);
+                assert(src[0]->Shape() == src[1]->Shape());
+                _count = src[2]->Size();
+                break;
+            }
             default:
                 assert(0);
             }
@@ -354,10 +392,20 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            ForwardCpu(src[0]->CpuData(), dst[0]->CpuData());
+            switch (src.size())
+            {
+            case 1:
+                ForwardCpu1(src[0]->CpuData(), dst[0]->CpuData());
+                break;
+            case 3:
+                ForwardCpu3(src[0]->CpuData(), src[1]->CpuData(), src[2]->CpuData(), dst[0]->CpuData());
+                break;
+            default:
+                assert(0);
+            }
         }
 
-        void ForwardCpu(const Type * src, Type * dst)
+        void ForwardCpu1(const Type * src, Type * dst)
         {
 #ifdef SYNET_SIZE_STATISTIC
             std::stringstream ss;
@@ -392,6 +440,31 @@ namespace Synet
                     assert(0);
                 }
                 src += _srcStride;
+                dst += _dstStride;
+            }
+        }
+
+        void ForwardCpu3(const Type * src0, const Type * src1, const Type * src2, Type * dst)
+        {
+#ifdef SYNET_SIZE_STATISTIC
+            std::stringstream ss;
+            ss << " t=" << _type << " c=" << _count << " s=" << _size;
+            SYNET_PERF_BLOCK(ss.str().c_str());
+#else
+            SYNET_PERF_FUNC();
+#endif
+            for (size_t i = 0; i < _num; ++i)
+            {
+                switch (_type)
+                {
+                case 8:
+                    Detail::FusedLayerForwardCpu8(src0, src1, src2, _count, _size, dst, _trans);
+                    break;
+                default:
+                    assert(0);
+                }
+                src0 += _srcStride;
+                src1 += _srcStride;
                 dst += _dstStride;
             }
         }

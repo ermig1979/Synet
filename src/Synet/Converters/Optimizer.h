@@ -80,6 +80,8 @@ namespace Synet
                     continue;
                 if (MergeFused7(src, i, dst, changes))
                     continue;
+                if (MergeFused8(src, i, dst, changes))
+                    continue;
                 dst.push_back(src[i]);
             }
             for (size_t k = 0; k < changes.size(); ++k)
@@ -583,6 +585,39 @@ namespace Synet
             layer.dst()[0] = layer.src()[0];
             dst.back().weight().resize(1);
             dst.back().convolution().biasTerm() = false;
+            dst.push_back(layer);
+            index += 4;
+            return true;
+        }
+
+        bool MergeFused8(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            if (src.size() < index + 6)
+                return false;
+            if (src[index + 0].type() != LayerTypeTile)
+                return false;
+            if (src[index + 1].type() != LayerTypeTile || src[index + 1].src()[0] != src[index + 0].name())
+                return false;
+            if (src[index + 2].type() != LayerTypeEltwise || src[index + 2].eltwise().operation() != EltwiseOperationTypeProduct ||
+                src[index + 2].src().size() != 2 || src[index + 2].src()[1] != src[index + 1].name())
+                return false;
+            if (InsideLink(src, index, 3))
+                return false;
+            if (src[index + 3].type() != LayerTypePooling && src[index + 3].type() != LayerTypeConvolution)
+                return false;
+            if (src[index + 4].type() != LayerTypeEltwise || src[index + 4].eltwise().operation() != EltwiseOperationTypeSum ||
+                src[index + 4].src().size() != 2 || src[index + 4].src()[0] != src[index + 2].name() || src[index + 4].src()[1] != src[index + 3].name())
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeFused;
+            layer.name() = src[index + 4].name();
+            layer.src().push_back(src[index + 4].src()[1]);
+            layer.src().push_back(src[index + 2].src()[0]);
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            layer.fused().type() = 8;
+            dst.push_back(src[index + 3]);
             dst.push_back(layer);
             index += 4;
             return true;
