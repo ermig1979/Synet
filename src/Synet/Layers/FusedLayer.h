@@ -374,7 +374,7 @@ namespace Synet
             {
                 assert(src.size() == 3);
                 assert(src[0]->Shape() == src[1]->Shape());
-                _count = src[2]->Size();
+                _count = src[2]->Size(fused.axis());
                 break;
             }
             default:
@@ -470,6 +470,7 @@ namespace Synet
                 }
                 src0 += _srcStride;
                 src1 += _srcStride;
+                src2 += _count;
                 dst += _dstStride;
             }
         }
