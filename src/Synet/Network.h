@@ -558,6 +558,8 @@ namespace Synet
             }
             for (size_t i = 0; i < _tensors.size(); ++i)
             {
+                if (_tensors[i]->GetType() != TensorType32f)
+                    continue;
                 const void * ptr = _tensors[i]->CpuData();
                 if (unique.find(ptr) == unique.end())
                 {
