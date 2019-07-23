@@ -213,6 +213,66 @@ namespace Synet
             }
         }
 
+        template <class T> SYNET_INLINE T FusedLayerForward9(T src, T scale, T bias)
+        {
+            return std::max((T)0, src * scale + bias);
+        }
+
+        template <class T> void FusedLayerForwardCpu9(const T * src0, const T * src1, const T * scale0, const T * bias0, size_t count0, size_t count1, size_t size, T * dst0, T * dst1, int trans)
+        {
+            const T * scale1 = scale0 + count0;
+            const T * bias1 = bias0 + count0;
+            size_t count = count0 + count1;
+            if (trans || size == 1)
+            {
+                if (dst1)
+                {
+                    for (size_t j = 0; j < size; ++j)
+                    {
+                        for (size_t i = 0; i < count0; ++i)
+                            dst0[i] = FusedLayerForward9(src0[i], scale0[i], bias0[i]), dst1[i] = src0[i];
+                        src0 += count0, dst0 += count0, dst1 += count0;
+                        for (size_t i = 0; i < count1; ++i)
+                            dst0[i] = FusedLayerForward9(src1[i], scale1[i], bias1[i]), dst1[i] = src1[i];
+                        src1 += count1, dst0 += count1, dst1 += count1;
+                    }
+                }
+                else
+                {
+                    for (size_t j = 0; j < size; ++j)
+                    {
+                        for (size_t i = 0; i < count0; ++i)
+                            dst0[i] = FusedLayerForward9(src0[i], scale0[i], bias0[i]);
+                        src0 += count0, dst0 += count0;
+                        for (size_t i = 0; i < count1; ++i)
+                            dst0[i] = FusedLayerForward9(src1[i], scale1[i], bias1[i]);
+                        src1 += count1, dst0 += count1;
+                    }
+                }
+            }
+            else
+            {
+                if (dst1)
+                {
+                    for (size_t i = 0; i < count0; ++i, src0 += size, dst0 += size, dst1 += size)
+                        for (size_t j = 0; j < size; ++j)
+                            dst0[j] = FusedLayerForward9(src0[j], scale0[i], bias0[i]), dst1[j] = src0[j];
+                    for (size_t i = 0; i < count1; ++i, src1 += size, dst0 += size, dst1 += size)
+                        for (size_t j = 0; j < size; ++j)
+                            dst0[j] = FusedLayerForward9(src1[j], scale1[i], bias1[i]), dst1[j] = src1[j];
+                }
+                else
+                {
+                    for (size_t i = 0; i < count0; ++i, src0 += size, dst0 += size)
+                        for (size_t j = 0; j < size; ++j)
+                            dst0[j] = FusedLayerForward9(src0[j], scale0[i], bias0[i]);
+                    for (size_t i = 0; i < count1; ++i, src1 += size, dst0 += size)
+                        for (size_t j = 0; j < size; ++j)
+                            dst0[j] = FusedLayerForward9(src1[j], scale1[i], bias1[i]);
+                }
+            }
+        }
+
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
         template <> SYNET_INLINE void FusedLayerForwardCpu0<float>(const float * src, const float * bias, const float * scale, size_t count, size_t size, float * dst, int trans)
         {
@@ -263,6 +323,7 @@ namespace Synet
             const FusedParam & fused = this->Param().fused();
             _type = fused.type();
             const Tensors & weight = this->Weight();
+            _trans = src[0]->Format() == TensorFormatNhwc;
             switch (_type)
             {
             case 0:
@@ -377,18 +438,32 @@ namespace Synet
                 _count = src[2]->Size(fused.axis());
                 break;
             }
+            case 9:
+            {
+                assert(src.size() == 2 && (dst.size() == 1 || dst.size() == 2));
+                assert(weight.size() == 2);
+                _t5.scale.Share(weight[0]);
+                _t5.bias.Share(weight[1]);
+                _t5.count0 = src[0]->Axis(_trans ? 3 : 1);
+                _t5.count1 = src[1]->Axis(_trans ? 3 : 1);
+                _count = _t5.count0;
+                break;
+            }
             default:
                 assert(0);
             }
 
-            _trans = src[0]->Format() == TensorFormatNhwc;
             _num = src[0]->Size(0, fused.axis());
             _size = src[0]->Size() / _count / _num;
             assert(_num*_size*_count == src[0]->Size());
             Shape shape = src[0]->Shape();
             if (_type == 4)
                 shape[_trans ? 3 : 1] *= 2;
+            if (_type == 9)
+                shape[_trans ? 3 : 1] += src[1]->Shape()[_trans ? 3 : 1];
             dst[0]->Reshape(shape, src[0]->Format());
+            if (_type == 9 && dst.size() == 2)
+                dst[1]->Reshape(shape, src[0]->Format());
             _srcStride = src[0]->Size(fused.axis());
             _dstStride = dst[0]->Size(fused.axis());
         }
@@ -397,27 +472,22 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            switch (src.size())
-            {
-            case 1:
-                ForwardCpu1(src[0]->CpuData(), dst[0]->CpuData());
-                break;
-            case 3:
-                ForwardCpu3(src[0]->CpuData(), src[1]->CpuData(), src[2]->CpuData(), dst[0]->CpuData());
-                break;
-            default:
+            if (src.size() == 1 && dst.size() == 1)
+                ForwardCpu11(src[0]->CpuData(), dst[0]->CpuData());
+            if (src.size() == 2 && (dst.size() == 2 || dst.size() == 1))
+                ForwardCpu22(src[0]->CpuData(), src[1]->CpuData(), dst[0]->CpuData(), dst.size() == 2 ? dst[1]->CpuData() : NULL);
+            else if (src.size() == 3 && dst.size() == 1)
+                ForwardCpu31(src[0]->CpuData(), src[1]->CpuData(), src[2]->CpuData(), dst[0]->CpuData());
+            else
                 assert(0);
-            }
         }
 
-        void ForwardCpu1(const Type * src, Type * dst)
+        void ForwardCpu11(const Type * src, Type * dst)
         {
-#ifdef SYNET_SIZE_STATISTIC
+#if defined(SYNET_SIZE_STATISTIC)
             std::stringstream ss;
             ss << " t=" << _type << " c=" << _count << " s=" << _size;
             SYNET_PERF_BLOCK(ss.str().c_str());
-#else
-            SYNET_PERF_FUNC();
 #endif
             for (size_t i = 0; i < _num; ++i)
             {
@@ -449,14 +519,37 @@ namespace Synet
             }
         }
 
-        void ForwardCpu3(const Type * src0, const Type * src1, const Type * src2, Type * dst)
+        void ForwardCpu22(const Type * src0, const Type * src1, Type * dst0, Type * dst1)
         {
-#ifdef SYNET_SIZE_STATISTIC
+#if defined(SYNET_SIZE_STATISTIC) && 0
+            std::stringstream ss;
+            ss << " t=" << _type << " c=" << _t5.count0 + _t5.count1 << " s=" << _size;
+            SYNET_PERF_BLOCK(ss.str().c_str());
+#endif
+            for (size_t i = 0; i < _num; ++i)
+            {
+                switch (_type)
+                {
+                case 9:
+                    Detail::FusedLayerForwardCpu9(src0, src1, _t5.scale.CpuData(), _t5.bias.CpuData(), _t5.count0, _t5.count1, _size, dst0, dst1, _trans);
+                    break;
+                default:
+                    assert(0);
+                }
+                src0 += _t5.count0*_size;
+                src1 += _t5.count1*_size;
+                dst0 += _dstStride;
+                if(dst1)
+                    dst1 += _dstStride;
+            }
+        }
+
+        void ForwardCpu31(const Type * src0, const Type * src1, const Type * src2, Type * dst)
+        {
+#if defined(SYNET_SIZE_STATISTIC)
             std::stringstream ss;
             ss << " t=" << _type << " c=" << _count << " s=" << _size;
             SYNET_PERF_BLOCK(ss.str().c_str());
-#else
-            SYNET_PERF_FUNC();
 #endif
             for (size_t i = 0; i < _num; ++i)
             {
@@ -507,5 +600,11 @@ namespace Synet
         {
             Tensor bias0, scale1, bias1;
         } _t4;
+
+        struct T5
+        {
+            Tensor bias, scale;
+            size_t count0, count1;
+        } _t5;
     };
 }

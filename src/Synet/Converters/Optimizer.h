@@ -82,6 +82,8 @@ namespace Synet
                     continue;
                 if (MergeFused8(src, i, dst, changes))
                     continue;
+                if (MergeFused9(src, i, dst, changes))
+                    continue;
                 dst.push_back(src[i]);
             }
             for (size_t k = 0; k < changes.size(); ++k)
@@ -623,6 +625,35 @@ namespace Synet
             return true;
         }
 
+        bool MergeFused9(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            if (src.size() < index + 2)
+                return false;
+            if (src[index + 0].type() != LayerTypeConcat || src[index + 0].src().size() != 2)
+                return false;
+            if (src[index + 1].type() != LayerTypeScale || src[index + 1].src()[0] != src[index + 0].name())
+                return false;
+            if (src[index + 2].type() != LayerTypeRelu || src[index + 2].src()[0] != src[index + 1].name())
+                return false;
+            if (InsideLink(src, index + 1, 2))
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeFused;
+            layer.name() = src[index + 0].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.src().push_back(src[index + 0].src()[1]);
+            layer.dst().push_back(src[index + 2].name());
+            if (InsideLink(src, index + 0, 2, 2))
+                layer.dst().push_back(src[index + 0].name());
+            layer.weight().push_back(src[index + 1].weight()[0]);
+            layer.weight().push_back(src[index + 1].weight()[1]);
+            layer.fused().type() = 9;
+            dst.push_back(layer);
+            index += 2;
+            return true;
+        }
+
         bool IsSub(const LayerParam & layer) const
         {
             if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum && layer.eltwise().coefficients() == Floats({ 1.0f, -1.0f }))
@@ -632,9 +663,9 @@ namespace Synet
             return false;
         }
 
-        bool InsideLink(const LayerParams & src, size_t start, size_t count) const
+        bool InsideLink(const LayerParams & src, size_t start, size_t count, size_t skip = 0) const
         {
-            for (size_t i = start + count; i < src.size(); ++i)
+            for (size_t i = start + count + skip; i < src.size(); ++i)
             {
                 for (size_t j = 0; j < src[i].src().size(); ++j)
                 {
