@@ -222,7 +222,6 @@ namespace Synet
         {
             const T * scale1 = scale0 + count0;
             const T * bias1 = bias0 + count0;
-            size_t count = count0 + count1;
             if (trans || size == 1)
             {
                 if (dst1)
@@ -302,6 +301,11 @@ namespace Synet
         template <> SYNET_INLINE void FusedLayerForwardCpu8<float>(const float * src0, const float * src1, const float * src2, size_t count, size_t size, float * dst, int trans)
         {
             ::SimdSynetFusedLayerForward8(src0, src1, src2, count, size, dst, (::SimdBool)trans);
+        }
+
+        template <> SYNET_INLINE void FusedLayerForwardCpu9<float>(const float * src0, const float * src1, const float * scale0, const float * bias0, size_t count0, size_t count1, size_t size, float * dst0, float * dst1, int trans)
+        {
+            ::SimdSynetFusedLayerForward9(src0, src1, scale0, bias0, count0, count1, size, dst0, dst1, (::SimdBool)trans);
         }
 #endif
     }
