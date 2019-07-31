@@ -57,7 +57,7 @@ namespace Synet
                 assert(src[0]->Count() == src[i]->Count());
                 for (size_t j = 0; j < src[0]->Count(); ++j)
                 {
-                    if (_concatAxis)
+                    if (j == _concatAxis)
                         continue;
                     assert(dstShape[j] == src[i]->Axis(j));
                 }
