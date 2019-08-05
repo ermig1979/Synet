@@ -500,7 +500,7 @@ namespace Synet
             SYNET_PERF_FUNC();
             if (src.size() == 1 && dst.size() == 1)
                 ForwardCpu11(src[0]->CpuData(), dst[0]->CpuData());
-            if (src.size() == 2 && (dst.size() == 2 || dst.size() == 1))
+            else if (src.size() == 2 && (dst.size() == 2 || dst.size() == 1))
                 ForwardCpu22(src[0]->CpuData(), src[1]->CpuData(), dst[0]->CpuData(), dst.size() == 2 ? dst[1]->CpuData() : NULL);
             else if (src.size() == 3 && dst.size() == 1)
                 ForwardCpu31(src[0]->CpuData(), src[1]->CpuData(), src[2]->CpuData(), dst[0]->CpuData());
