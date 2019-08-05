@@ -26,6 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
+#include "Synet/Layers/ScaleLayer.h"
 
 namespace Synet
 {
@@ -453,6 +454,27 @@ namespace Synet
                 _count = _t5.count0;
                 break;
             }
+            case 10:
+            {
+                assert(weight.size() == 2);
+                assert(weight[0].Shape() == weight[1].Shape());
+                _t0.scale.Reshape(weight[0].Shape());
+                _t0.bias.Reshape(weight[0].Shape());
+                _count = _t0.scale.Size();
+                assert(fused.floats().size() == 4);
+                float preScale = fused.floats()[0];
+                float preBias = fused.floats()[1];
+                const float * scale = weight[0].CpuData();
+                const float * bias = weight[1].CpuData();
+                float postScale = fused.floats()[2];
+                float postBias = fused.floats()[3];
+                for (size_t i = 0; i < _count; ++i)
+                {
+                    _t0.scale.CpuData()[i] = preScale * scale[i] * postScale;
+                    _t0.bias.CpuData()[i] = (preBias * scale[i] + bias[i]) * postScale + postBias;
+                }
+                break;
+            }
             default:
                 assert(0);
             }
@@ -514,6 +536,9 @@ namespace Synet
                     break;
                 case 4:
                     Detail::FusedLayerForwardCpu4(src, _t4.bias0.CpuData(), _t4.scale1.CpuData(), _t4.bias1.CpuData(), _count, _size, dst, _trans);
+                    break;
+                case 10:
+                    Detail::ScaleLayerForwardCpu(src, _t0.scale.CpuData(), _t0.bias.CpuData(), _count, _size, dst, _trans);
                     break;
                 default:
                     assert(0);

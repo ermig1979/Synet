@@ -52,6 +52,7 @@ namespace Synet
         typedef std::vector<Synet::LayerParam> LayerParams;
         typedef std::pair<String, String> Change;
         typedef std::vector<Change> Changes;
+        typedef std::vector<LayerType> LayerTypes;
 
         bool Merge(const LayerParams & src, LayerParams & dst)
         {
@@ -83,6 +84,8 @@ namespace Synet
                 if (MergeFused8(src, i, dst, changes))
                     continue;
                 if (MergeFused9(src, i, dst, changes))
+                    continue;
+                if (MergeFused10(src, i, dst, changes))
                     continue;
                 dst.push_back(src[i]);
             }
@@ -654,6 +657,38 @@ namespace Synet
             return true;
         }
 
+        bool MergeFused10(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            bool pre = false, scale = false, post = false;
+            if (src.size() > index + 0 && src[index + 0].type() == LayerTypePower && src[index + 0].power().power() == 1.0f)
+                pre = true;
+            if (src.size() > index + 1 && src[index + 1].type() == LayerTypeScale && (pre ? src[index + 1].src()[0] == src[index + 0].name() : true))
+                scale = true;
+            if (src.size() > index + 2 && src[index + 2].type() == LayerTypePower && src[index + 2].power().power() == 1.0f && src[index + 2].src()[0] == src[index + 1].name())
+                post = true;
+            if (!(scale && (pre || post)))
+                return false;
+            if (InsideLink(src, index + (pre ? 0 : 1), 1 + (pre ? 1 : 0) + (post ? 1 : 0), 0, LayerTypes({LayerTypePriorBox, LayerTypePriorBoxClustered})))
+                return false;
+            LayerParam layer;
+            layer.type() = LayerTypeFused;
+            layer.name() = src[index + 1].name();
+            layer.src().push_back(pre ? src[index + 0].src()[0] : src[index + 1].src()[0]);
+            layer.dst().push_back(post ? src[index + 2].dst()[0] : src[index + 1].dst()[0]);
+            layer.weight().push_back(src[index + 1].weight()[0]);
+            layer.weight().push_back(src[index + 1].weight()[1]);
+            layer.fused().floats().push_back(pre ? src[index + 0].power().scale() : 1.0f);
+            layer.fused().floats().push_back(pre ? src[index + 0].power().shift() : 0.0f);
+            layer.fused().floats().push_back(post ? src[index + 2].power().scale() : 1.0f);
+            layer.fused().floats().push_back(post ? src[index + 2].power().shift() : 0.0f);
+            layer.fused().type() = 10;
+            if(pre)
+                changes.push_back(Change(src[index + 0].dst()[0], layer.dst()[0]));
+            index += (pre ? 1 : 0) + (post ? 1 : 0);
+            dst.push_back(layer);
+            return true;
+        }
+
         bool IsSub(const LayerParam & layer) const
         {
             if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum && layer.eltwise().coefficients() == Floats({ 1.0f, -1.0f }))
@@ -663,10 +698,16 @@ namespace Synet
             return false;
         }
 
-        bool InsideLink(const LayerParams & src, size_t start, size_t count, size_t skip = 0) const
+        bool InsideLink(const LayerParams & src, size_t start, size_t count, size_t skip = 0, const LayerTypes & ignored = LayerTypes()) const
         {
             for (size_t i = start + count + skip; i < src.size(); ++i)
             {
+                bool ignore = false;
+                for (size_t j = 0; j < ignored.size(); ++j)
+                    if (src[i].type() == ignored[j])
+                        ignore = true;
+                if (ignore)
+                    continue;
                 for (size_t j = 0; j < src[i].src().size(); ++j)
                 {
                     for (size_t k = 0; k < count - 1; ++k)

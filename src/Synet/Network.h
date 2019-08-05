@@ -52,6 +52,7 @@
 #include "Synet/Layers/PowerLayer.h"
 #include "Synet/Layers/PreluLayer.h"
 #include "Synet/Layers/PriorBoxLayer.h"
+#include "Synet/Layers/PriorBoxClusteredLayer.h"
 #include "Synet/Layers/ReductionLayer.h"
 #include "Synet/Layers/RegionLayer.h"
 #include "Synet/Layers/ReluLayer.h"
@@ -762,6 +763,7 @@ namespace Synet
             case LayerTypePower: return new PowerLayer<T>(param);
             case LayerTypePrelu: return new PreluLayer<T>(param);
             case LayerTypePriorBox: return new PriorBoxLayer<T>(param);
+            case LayerTypePriorBoxClustered: return new PriorBoxClusteredLayer<T>(param);
             case LayerTypeReduction: return new ReductionLayer<T>(param);
             case LayerTypeRegion: return new RegionLayer<T>(param);
             case LayerTypeRelu: return new ReluLayer<T>(param);

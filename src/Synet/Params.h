@@ -59,6 +59,7 @@ namespace Synet
         LayerTypePower,
         LayerTypePrelu,
         LayerTypePriorBox,
+        LayerTypePriorBoxClustered,
         LayerTypeReduction,
         LayerTypeRegion,
         LayerTypeRelu,
@@ -396,6 +397,20 @@ namespace Synet
         SYNET_PARAM_VALUE(bool, scaleAllSizes, true);
     };
 
+    struct PriorBoxClusteredParam
+    {
+        SYNET_PARAM_VALUE(Floats, widths, Floats());
+        SYNET_PARAM_VALUE(Floats, heights, Floats());
+        SYNET_PARAM_VALUE(bool, clip, false);
+        SYNET_PARAM_VALUE(Floats, variance, Floats());
+        SYNET_PARAM_VALUE(int, imgH, 0);
+        SYNET_PARAM_VALUE(int, imgW, 0);
+        SYNET_PARAM_VALUE(float, step, 0.0f);
+        SYNET_PARAM_VALUE(float, stepH, 0.0f);
+        SYNET_PARAM_VALUE(float, stepW, 0.0f);
+        SYNET_PARAM_VALUE(float, offset, 0.5f);
+    };
+
     struct ReductionParam
     {
         SYNET_PARAM_VALUE(ReductionType, type, ReductionTypeUnknown);
@@ -526,6 +541,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(PoolingParam, pooling);
         SYNET_PARAM_STRUCT(PowerParam, power);
         SYNET_PARAM_STRUCT(PriorBoxParam, priorBox);
+        SYNET_PARAM_STRUCT(PriorBoxClusteredParam, priorBoxClustered);
         SYNET_PARAM_STRUCT(ReductionParam, reduction);
         SYNET_PARAM_STRUCT(RegionParam, region);
         SYNET_PARAM_STRUCT(ReluParam, relu);

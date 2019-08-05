@@ -251,6 +251,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "PReLU" && !ConvertPreluLayer(pLayer, srcBin, trans, layer, dstBin))
                     return ErrorMessage(pLayer);
+                if (type == "PriorBoxClustered" && !ConvertPriorBoxClusteredLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "PriorBoxV2" && !ConvertPriorBoxV2Layer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
@@ -855,6 +857,25 @@ namespace Synet
             }
             else
                 return false;
+            return true;
+        }
+
+        bool ConvertPriorBoxClusteredLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            layer.type() = Synet::LayerTypePriorBoxClustered;
+            ConvertVector(pData->FirstAttribute("height"), layer.priorBoxClustered().heights());
+            ConvertVector(pData->FirstAttribute("width"), layer.priorBoxClustered().widths());
+            StringToValue(pData->FirstAttribute("clip")->Value(), layer.priorBox().clip());
+            ConvertVector(pData->FirstAttribute("variance"), layer.priorBoxClustered().variance());
+            StringToValue(pData->FirstAttribute("img_h")->Value(), layer.priorBoxClustered().imgH());
+            StringToValue(pData->FirstAttribute("img_w")->Value(), layer.priorBoxClustered().imgW());
+            StringToValue(pData->FirstAttribute("step")->Value(), layer.priorBoxClustered().step());
+            StringToValue(pData->FirstAttribute("step_h")->Value(), layer.priorBoxClustered().stepH());
+            StringToValue(pData->FirstAttribute("step_w")->Value(), layer.priorBoxClustered().stepW());
+            StringToValue(pData->FirstAttribute("offset")->Value(), layer.priorBoxClustered().offset());
             return true;
         }
 

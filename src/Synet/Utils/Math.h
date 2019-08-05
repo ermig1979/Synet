@@ -248,7 +248,7 @@ namespace Synet
 
     template <> SYNET_INLINE void CpuAddBias<float>(const float * bias, size_t count, size_t size, float * dst, int trans)
     {
-        ::SimdSynetAddBias(bias, count, size, dst, (::SimdBool)trans);
+        ::SimdSynetAddBias(bias, count, size, dst, (::SimdTensorFormatType)trans);
     }
 
     template <> SYNET_INLINE float CpuDotProduct<float>(const float * a, const float * b, size_t size)
