@@ -273,7 +273,7 @@ namespace Synet
             shape[0] = batch;
             if (format == TensorFormatNchw)
             {
-                if (shape[2] == -1 && shape[3] == -1)
+                if ((shape[2] == -1 && shape[3] == -1) || Resizable())
                 {
                     shape[2] = height;
                     shape[3] = width;
@@ -283,7 +283,7 @@ namespace Synet
             }
             else if (format == TensorFormatNhwc)
             {
-                if (shape[1] == -1 && shape[2] == -1)
+                if ((shape[1] == -1 && shape[2] == -1) || Resizable())
                 {
                     shape[1] = height;
                     shape[2] = width;
@@ -296,6 +296,17 @@ namespace Synet
             _input[0].dst[0]->Reshape(shape, Type(0), format);
             for (size_t i = 0; i < _stages.size(); ++i)
                 _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst);
+            return true;
+        }
+
+        bool Resizable() const
+        {
+            for (size_t i = 0; i < _param().layers().size(); ++i)
+            {
+                const LayerParam & layer = _param().layers()[i];
+                if (layer.type() == LayerTypeInnerProduct)
+                    return false;
+            }
             return true;
         }
 

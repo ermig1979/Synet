@@ -1,7 +1,8 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2019 Yermalayeu Ihar.
+* Copyright (c) 2018-2019 Yermalayeu Ihar,
+*               2019-2019 Artur Voronkov.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -53,9 +54,9 @@ namespace Synet
                     CpuMax(dst, src[i], size, dst);
                 break;
             case EltwiseOperationTypeMin:
-                CpuMax(src[0], src[1], size, dst);
+                CpuMin(src[0], src[1], size, dst);
                 for (size_t i = 2; i < count; ++i)
-                    CpuMax(dst, src[i], size, dst);
+                    CpuMin(dst, src[i], size, dst);
                 break;
             default:
                 assert(0);

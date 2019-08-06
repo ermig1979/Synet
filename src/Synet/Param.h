@@ -1,7 +1,8 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2019 Yermalayeu Ihar.
+* Copyright (c) 2018-2019 Yermalayeu Ihar,
+*               2019-2019 Artur Voronkov.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -162,7 +163,7 @@ namespace Synet
             {
                 doc.Parse<0>(file.Data());
             }
-            catch (std::exception e)
+            catch (std::exception & e)
             {
                 return false;
             }
