@@ -399,11 +399,11 @@ namespace Synet
             }
             case 4:
             {
-                assert(weight.size() == 3 && weight[1].Size() == 1 && weight[2].Size() == 1 && src[0]->Count() == 4);
+                assert(weight.size() == 1 && fused.floats().size() == 2);
                 _t4.bias0.Share(weight[0]);
                 _count = _t4.bias0.Size();
-                _t4.scale1.Share(weight[1]);
-                _t4.bias1.Share(weight[2]);
+                _t4.scale1 = fused.floats()[0];
+                _t4.bias1 = fused.floats()[1];
                 break;
             }
             case 5:
@@ -535,7 +535,7 @@ namespace Synet
                     Detail::FusedLayerForwardCpu3(src, _t3.bias.CpuData(), _t3.scale.CpuData(), _count, _size, dst, _trans);
                     break;
                 case 4:
-                    Detail::FusedLayerForwardCpu4(src, _t4.bias0.CpuData(), _t4.scale1.CpuData(), _t4.bias1.CpuData(), _count, _size, dst, _trans);
+                    Detail::FusedLayerForwardCpu4(src, _t4.bias0.CpuData(), &_t4.scale1, &_t4.bias1, _count, _size, dst, _trans);
                     break;
                 case 10:
                     Detail::ScaleLayerForwardCpu(src, _t0.scale.CpuData(), _t0.bias.CpuData(), _count, _size, dst, _trans);
@@ -627,7 +627,8 @@ namespace Synet
 
         struct T4
         {
-            Tensor bias0, scale1, bias1;
+            Tensor bias0;
+            T scale1, bias1;
         } _t4;
 
         struct T5

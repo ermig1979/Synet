@@ -429,8 +429,7 @@ namespace Synet
             if ((src[index - 1].type() != LayerTypeConvolution || !src[index - 1].convolution().biasTerm() ||
                 src[index - 1].convolution().activationType() != ActivationFunctionTypeIdentity))
                 return false;
-            if (src[index + 0].type() != LayerTypeScale || !src[index + 0].scale().biasTerm() || src[index + 0].src()[0] != src[index - 1].name() ||
-                src[index + 0].weight()[0].dim()[0] != 1 || src[index + 0].weight()[1].dim()[0] != 1)
+            if (src[index + 0].type() != LayerTypePower || src[index + 0].power().power() != 1.0f || src[index + 0].src()[0] != src[index - 1].name())
                 return false;
             if (src[index + 1].type() != LayerTypeConcat || src[index + 1].src().size() != 2 ||
                 src[index + 1].src()[0] != src[index - 1].name() || src[index + 1].src()[1] != src[index + 0].name())
@@ -455,8 +454,8 @@ namespace Synet
             layer.dst().push_back(layer.name());
             layer.fused().type() = 4;
             layer.weight().push_back(src[index - 1].weight()[1]);
-            layer.weight().push_back(src[index + 0].weight()[0]);
-            layer.weight().push_back(src[index + 0].weight()[1]);
+            layer.fused().floats().push_back(src[index + 0].power().scale());
+            layer.fused().floats().push_back(src[index + 0].power().shift());
             dst.back().weight().resize(1);
             dst.back().convolution().biasTerm() = false;
             dst.push_back(layer);
