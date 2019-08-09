@@ -13,7 +13,7 @@ Darknet Test project for Linux
 ==============================
 To build test to compare Synet and [Darknet](https://github.com/pjreddie/darknet) for Linux you can run folowing bash script:
 
-    ./test.sh darknet
+    ./build.sh darknet
 
 And application `darknet_test` will be created in directory `build_darknet`.
 In order to run this test use `./test.sh` bash script (in the file manually uncomment unit test that you need).
@@ -24,7 +24,7 @@ Inference Engine Test project for Linux
 =======================================
 To build test to compare Synet and [Inference Engine](https://github.com/opencv/dldt) for Linux you can run folowing bash script:
 
-    ./test.sh inference_engine
+    ./build.sh inference_engine
 
 And application `inference_engine_test` will be created in directory `build_inference_engine`.
 In order to run this test use `./test.sh` bash script (in the file manually uncomment unit test that you need).
