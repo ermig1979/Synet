@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test>
+	<lower>0</lower>
+	<upper>255</upper>
+	<input>
+		<item>
+			<name>data</name>
+			<shape>
+				<item>
+					<size>1</size>
+				</item>
+				<item>
+					<size>3</size>
+				</item>
+				<item>
+					<size>300</size>
+				</item>
+				<item>
+					<size>300</size>
+				</item>
+			</shape>
+		</item>
+	</input>
+</test>
+

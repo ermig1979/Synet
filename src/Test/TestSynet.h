@@ -191,6 +191,7 @@ namespace Test
                         _output[offset + 5] = pDst[5];
                         _output[offset + 6] = pDst[6];
                     }
+                    SortDetectionOutput(_output);
                 }
                 else
                 {

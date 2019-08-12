@@ -278,7 +278,8 @@ namespace Synet
 
                 if (layer.type() == LayerTypeUnknown)
                     return ErrorMessage(pLayer);
-                //    NotImplemented(pLayer, layer);
+                //NotImplemented(pLayer, layer);
+                //std::cout << "Add layer " << layer.name() << std::endl;
 
                 network.layers().push_back(layer);
                 pPrevLayer = pLayer;
@@ -905,11 +906,15 @@ namespace Synet
             ConvertVector(pData->FirstAttribute("width"), layer.priorBoxClustered().widths());
             StringToValue(pData->FirstAttribute("clip")->Value(), layer.priorBox().clip());
             ConvertVector(pData->FirstAttribute("variance"), layer.priorBoxClustered().variance());
-            StringToValue(pData->FirstAttribute("img_h")->Value(), layer.priorBoxClustered().imgH());
-            StringToValue(pData->FirstAttribute("img_w")->Value(), layer.priorBoxClustered().imgW());
+            if (pData->FirstAttribute("img_h"))
+                StringToValue(pData->FirstAttribute("img_h")->Value(), layer.priorBoxClustered().imgH());
+            if (pData->FirstAttribute("img_w"))
+                StringToValue(pData->FirstAttribute("img_w")->Value(), layer.priorBoxClustered().imgW());
             StringToValue(pData->FirstAttribute("step")->Value(), layer.priorBoxClustered().step());
-            StringToValue(pData->FirstAttribute("step_h")->Value(), layer.priorBoxClustered().stepH());
-            StringToValue(pData->FirstAttribute("step_w")->Value(), layer.priorBoxClustered().stepW());
+            if (pData->FirstAttribute("step_h"))
+                StringToValue(pData->FirstAttribute("step_h")->Value(), layer.priorBoxClustered().stepH());
+            if (pData->FirstAttribute("step_w"))
+                StringToValue(pData->FirstAttribute("step_w")->Value(), layer.priorBoxClustered().stepW());
             StringToValue(pData->FirstAttribute("offset")->Value(), layer.priorBoxClustered().offset());
             return true;
         }
