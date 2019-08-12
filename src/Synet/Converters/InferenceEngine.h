@@ -239,6 +239,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Eltwise" && !ConvertEltwiseLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
+                if (type == "Flatten" && !ConvertFlattenLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "FullyConnected" && !ConvertFullyConnectedLayer(pLayer, pPrevLayer, srcBin, trans, layer, dstBin))
                     return ErrorMessage(pLayer);
                 if (type == "Input" && !ConvertInputLayer(pLayer, trans, layer))
@@ -250,6 +252,8 @@ namespace Synet
                 if (type == "Power" && !ConvertPowerLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "PReLU" && !ConvertPreluLayer(pLayer, srcBin, trans, layer, dstBin))
+                    return ErrorMessage(pLayer);
+                if (type == "PriorBox" && !ConvertPriorBoxLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "PriorBoxClustered" && !ConvertPriorBoxClusteredLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
@@ -665,6 +669,17 @@ namespace Synet
             return true;
         }
 
+        bool ConvertFlattenLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            layer.type() = Synet::LayerTypeFlatten;
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            StringToValue(pData->FirstAttribute("axis")->Value(), layer.flatten().axis());
+            StringToValue(pData->FirstAttribute("end_axis")->Value(), layer.flatten().endAxis());
+            return true;
+        }
+
         bool ConvertFullyConnectedLayer(const XmlNode * pLayer, const XmlNode * pPrevLayer, const Vector & srcBin, bool trans, LayerParam & layer, Vector & dstBin)
         {
             layer.type() = Synet::LayerTypeInnerProduct;
@@ -857,6 +872,26 @@ namespace Synet
             }
             else
                 return false;
+            return true;
+        }
+
+        bool ConvertPriorBoxLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            layer.type() = Synet::LayerTypePriorBox;
+            layer.priorBox().version() = 1;
+            StringToValue(pData->FirstAttribute("clip")->Value(), layer.priorBox().clip());
+            StringToValue(pData->FirstAttribute("flip")->Value(), layer.priorBox().flip());
+            StringToValue(pData->FirstAttribute("offset")->Value(), layer.priorBox().offset());
+            ConvertVector(pData->FirstAttribute("step"), layer.priorBox().step());
+            if (pData->FirstAttribute("scale_all_sizes"))
+                StringToValue(pData->FirstAttribute("scale_all_sizes")->Value(), layer.priorBox().scaleAllSizes());
+            ConvertVector(pData->FirstAttribute("aspect_ratio"), layer.priorBox().aspectRatio());
+            ConvertVector(pData->FirstAttribute("max_size"), layer.priorBox().maxSize());
+            ConvertVector(pData->FirstAttribute("min_size"), layer.priorBox().minSize());
+            ConvertVector(pData->FirstAttribute("variance"), layer.priorBox().variance());
             return true;
         }
 

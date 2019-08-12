@@ -193,17 +193,40 @@ namespace Test
 
         void SetOutput()
         {
-            size_t offset = 0;
-            for (size_t o = 0; o < _ieOutput.size(); ++o)
+            if (_ieOutput.size() == 1 && _ieOutput[0]->getTensorDesc().getDims().size() == 4 && _ieOutput[0]->getTensorDesc().getDims()[3] == 7)
             {
-                const InferenceEngine::SizeVector & dims = _ieOutput[o]->getTensorDesc().getDims();
-                const InferenceEngine::SizeVector & strides = _ieOutput[o]->getTensorDesc().getBlockingDesc().getStrides();
-                size_t size = 1;
-                for (size_t i = 0; i < dims.size(); ++i)
-                    size *= dims[i];
-                _output.resize(offset + size);
-                SetOutput(dims, strides, 0, _ieOutput[o]->buffer(), _output.data() + offset);
-                offset += size;
+                const float * pOut = _ieOutput[0]->buffer();
+                const InferenceEngine::SizeVector & dims = _ieOutput[0]->getTensorDesc().getDims();
+                _output.clear();
+                for (size_t j = 0; j < dims[2]; ++j, pOut += 7)
+                {
+                    if (pOut[0] == -1)
+                        break;
+                    size_t size = _output.size();
+                    _output.resize(size + 7);
+                    _output[size + 0] = pOut[0];
+                    _output[size + 1] = pOut[1];
+                    _output[size + 2] = pOut[2];
+                    _output[size + 3] = pOut[3];
+                    _output[size + 4] = pOut[4];
+                    _output[size + 5] = pOut[5];
+                    _output[size + 6] = pOut[6];
+                }
+            }
+            else
+            {
+                size_t offset = 0;
+                for (size_t o = 0; o < _ieOutput.size(); ++o)
+                {
+                    const InferenceEngine::SizeVector & dims = _ieOutput[o]->getTensorDesc().getDims();
+                    const InferenceEngine::SizeVector & strides = _ieOutput[o]->getTensorDesc().getBlockingDesc().getStrides();
+                    size_t size = 1;
+                    for (size_t i = 0; i < dims.size(); ++i)
+                        size *= dims[i];
+                    _output.resize(offset + size);
+                    SetOutput(dims, strides, 0, _ieOutput[o]->buffer(), _output.data() + offset);
+                    offset += size;
+                }
             }
          }
 

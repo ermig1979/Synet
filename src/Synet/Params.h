@@ -384,7 +384,7 @@ namespace Synet
 
     struct PriorBoxParam
     {
-        SYNET_PARAM_VALUE(int, version, 1);
+        SYNET_PARAM_VALUE(int, version, 0);
         SYNET_PARAM_VALUE(Floats, minSize, Floats());
         SYNET_PARAM_VALUE(Floats, maxSize, Floats());
         SYNET_PARAM_VALUE(Floats, aspectRatio, Floats());

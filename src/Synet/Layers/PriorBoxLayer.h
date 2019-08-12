@@ -137,7 +137,14 @@ namespace Synet
             shape[1] = 2;
             shape[2] = layerW * layerH * _numPriors * 4;
             dst[0]->Reshape(shape);
-            CalculatePriorBox(src, dst);
+            switch (_version)
+            {
+            case 0: CalculatePriorBoxV0(src, dst); break;
+            case 1: CalculatePriorBoxV1(src, dst); break;
+            case 2: CalculatePriorBoxV2(src, dst); break;
+            default:
+                assert(0);
+            }
         }
 
     protected:
@@ -146,7 +153,8 @@ namespace Synet
         }
 
     private:
-        void CalculatePriorBox(const TensorPtrs & src, const TensorPtrs & dst)
+
+        void CalculatePriorBoxV0(const TensorPtrs & src, const TensorPtrs & dst)
         {
             size_t layerH = _trans ? src[0]->Axis(1) : src[0]->Axis(2);
             size_t layerW = _trans ? src[0]->Axis(2) : src[0]->Axis(3);
@@ -180,76 +188,231 @@ namespace Synet
                 for (size_t w = 0; w < layerW; ++w)
                 {
                     float centerX, centerY;
-                    if (_version == 2)
-                    {
-                        centerX = (w + 0.5f) * _stepW;
-                        centerY = (h + 0.5f) * _stepH;
-                    }
-                    else
-                    {
-                        centerX = (w + _offset) * stepW;
-                        centerY = (h + _offset) * stepH;
-                    }
+                    centerX = (w + _offset) * stepW;
+                    centerY = (h + _offset) * stepH;
                     float boxW, boxH;
                     for (size_t s = 0; s < _minSizes.size(); ++s)
                     {
                         int minS = (int)_minSizes[s];
-                        boxW = boxH = _version == 2 ? _minSizes[s] : (float)minS;
+                        boxW = boxH = (float)minS;
                         pDst[index++] = (centerX - boxW / 2.0f) / imgW;
                         pDst[index++] = (centerY - boxH / 2.0f) / imgH;
                         pDst[index++] = (centerX + boxW / 2.0f) / imgW;
                         pDst[index++] = (centerY + boxH / 2.0f) / imgH;
-                        if (_version == 2)
+                        if (_maxSizes.size() > 0)
                         {
+                            int maxS = (int)_maxSizes[s];
+                            boxW = boxH = (float)::sqrt(minS * maxS);
+                            pDst[index++] = (centerX - boxW / 2.0f) / imgW;
+                            pDst[index++] = (centerY - boxH / 2.0f) / imgH;
+                            pDst[index++] = (centerX + boxW / 2.0f) / imgW;
+                            pDst[index++] = (centerY + boxH / 2.0f) / imgH;
+                        }
+                        for (size_t r = 0; r < _aspectRatios.size(); ++r)
+                        {
+                            float ar = _aspectRatios[r];
+                            if (::fabs(ar - 1.) < 1e-6)
+                                continue;
+                            boxW = minS * sqrt(ar);
+                            boxH = minS / sqrt(ar);
+                            pDst[index++] = (centerX - boxW / 2.0f) / imgW;
+                            pDst[index++] = (centerY - boxH / 2.0f) / imgH;
+                            pDst[index++] = (centerX + boxW / 2.0f) / imgW;
+                            pDst[index++] = (centerY + boxH / 2.0f) / imgH;
+                        }
+                    }
+                }
+            }
+            if (_clip)
+            {
+                for (size_t d = 0; d < dim; ++d)
+                    pDst[d] = std::min<Type>(std::max<Type>(pDst[d], Type(0)), Type(1));
+            }
+            pDst += dst[0]->Size(2);
+            if (_variance.size() == 1)
+                CpuSet(dim, Type(_variance[0]), pDst);
+            else
+            {
+                size_t offset = 0;
+                for (size_t h = 0; h < layerH; ++h)
+                    for (size_t w = 0; w < layerW; ++w)
+                        for (size_t i = 0; i < _numPriors; ++i)
+                            for (size_t j = 0; j < 4; ++j)
+                                pDst[offset++] = _variance[j];
+            }
+        }
 
-                            if (_scaleAllSizes || (!_scaleAllSizes && (s == _minSizes.size() - 1)))
+        void CalculatePriorBoxV1(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            size_t layerH = _trans ? src[0]->Axis(1) : src[0]->Axis(2);
+            size_t layerW = _trans ? src[0]->Axis(2) : src[0]->Axis(3);
+            size_t imgW, imgH;
+            if (_imgH == 0 || _imgW == 0)
+            {
+                imgH = _trans ? src[1]->Axis(1) : src[1]->Axis(2);
+                imgW = _trans ? src[1]->Axis(2) : src[1]->Axis(3);
+            }
+            else
+            {
+                imgH = _imgH;
+                imgW = _imgW;
+            }
+            float stepW, stepH;
+            if (_stepW == 0 || _stepH == 0)
+            {
+                stepH = float(imgH) / layerH;
+                stepW = float(imgW) / layerW;
+            }
+            else
+            {
+                stepH = _stepH;
+                stepW = _stepW;
+            }
+            Type * pDst = dst[0]->CpuData();
+            size_t dim = layerH * layerW * _numPriors * 4;
+            size_t index = 0;
+            for (size_t h = 0; h < layerH; ++h)
+            {
+                for (size_t w = 0; w < layerW; ++w)
+                {
+                    for (size_t msIdx = 0; msIdx < _minSizes.size(); msIdx++)
+                    {
+                        float centerX, centerY;
+                        if (_stepW == 0 || _stepH == 0)
+                        {
+                            centerX = (w + 0.5f) * stepW;
+                            centerY = (h + 0.5f) * stepH;
+                        }
+                        else 
+                        {
+                            centerX = (_offset + w) * _stepW;
+                            centerY = (_offset + h) * _stepH;
+                        }
+
+                        float boxW = _minSizes[msIdx];
+                        float boxH = _minSizes[msIdx];
+
+                        pDst[index++] = (centerX - boxW / 2.0f) / imgW;
+                        pDst[index++] = (centerY - boxH / 2.0f) / imgH;
+                        pDst[index++] = (centerX + boxW / 2.0f) / imgW;
+                        pDst[index++] = (centerY + boxH / 2.0f) / imgH;
+
+                        if (_maxSizes.size() > msIdx)
+                        {
+                            boxW = boxH = sqrt(_minSizes[msIdx] * _maxSizes[msIdx]);
+
+                            pDst[index++] = (centerX - boxW / 2.0f) / imgW;
+                            pDst[index++] = (centerY - boxH / 2.0f) / imgH;
+                            pDst[index++] = (centerX + boxW / 2.0f) / imgW;
+                            pDst[index++] = (centerY + boxH / 2.0f) / imgH;
+                        }
+
+                        if (_scaleAllSizes || (!_scaleAllSizes && (msIdx == _minSizes.size() - 1)))
+                        {
+                            size_t sIdx = _scaleAllSizes ? msIdx : 0;
+                            for (float ar : _aspectRatios)
                             {
-                                size_t sm = _scaleAllSizes ? s : 0;
-                                for (size_t r = 0; r < _aspectRatios.size(); ++r)
-                                {
-                                    float ar = _aspectRatios[r];
-                                    if (::fabs(ar - 1.) < 1e-6)
-                                        continue;
-                                    boxW = _minSizes[sm] * sqrt(ar);
-                                    boxH = _minSizes[sm] / sqrt(ar);
-                                    pDst[index++] = (centerX - boxW / 2.0f) / imgW;
-                                    pDst[index++] = (centerY - boxH / 2.0f) / imgH;
-                                    pDst[index++] = (centerX + boxW / 2.0f) / imgW;
-                                    pDst[index++] = (centerY + boxH / 2.0f) / imgH;
-                                }
-                            }
-                            if (_maxSizes.size() > s)
-                            {
-                                boxW = boxH = (float)::sqrt(_minSizes[s] * _maxSizes[s]);
+                                if (fabs(ar - 1.0f) < 1e-6)
+                                    continue;
+
+                                boxW = _minSizes[sIdx] * sqrt(ar);
+                                boxH = _minSizes[sIdx] / sqrt(ar);
+
                                 pDst[index++] = (centerX - boxW / 2.0f) / imgW;
                                 pDst[index++] = (centerY - boxH / 2.0f) / imgH;
                                 pDst[index++] = (centerX + boxW / 2.0f) / imgW;
                                 pDst[index++] = (centerY + boxH / 2.0f) / imgH;
                             }
                         }
-                        else
+                    }
+                }
+            }
+            if (_clip)
+            {
+                for (size_t d = 0; d < dim; ++d)
+                    pDst[d] = std::min<Type>(std::max<Type>(pDst[d], Type(0)), Type(1));
+            }
+            pDst += dst[0]->Size(2);
+            if (_variance.size() == 1)
+                CpuSet(dim, Type(_variance[0]), pDst);
+            else
+            {
+                size_t offset = 0;
+                for (size_t h = 0; h < layerH; ++h)
+                    for (size_t w = 0; w < layerW; ++w)
+                        for (size_t i = 0; i < _numPriors; ++i)
+                            for (size_t j = 0; j < 4; ++j)
+                                pDst[offset++] = _variance[j];
+            }
+        }
+
+        void CalculatePriorBoxV2(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            size_t layerH = _trans ? src[0]->Axis(1) : src[0]->Axis(2);
+            size_t layerW = _trans ? src[0]->Axis(2) : src[0]->Axis(3);
+            size_t imgW, imgH;
+            if (_imgH == 0 || _imgW == 0)
+            {
+                imgH = _trans ? src[1]->Axis(1) : src[1]->Axis(2);
+                imgW = _trans ? src[1]->Axis(2) : src[1]->Axis(3);
+            }
+            else
+            {
+                imgH = _imgH;
+                imgW = _imgW;
+            }
+            float stepW, stepH;
+            if (_stepW == 0 || _stepH == 0)
+            {
+                stepH = float(imgH) / layerH;
+                stepW = float(imgW) / layerW;
+            }
+            else
+            {
+                stepH = _stepH;
+                stepW = _stepW;
+            }
+            Type * pDst = dst[0]->CpuData();
+            size_t dim = layerH * layerW * _numPriors * 4;
+            size_t index = 0;
+            for (size_t h = 0; h < layerH; ++h)
+            {
+                for (size_t w = 0; w < layerW; ++w)
+                {
+                    float centerX, centerY;
+                    centerX = (w + 0.5f) * _stepW;
+                    centerY = (h + 0.5f) * _stepH;
+                    float boxW, boxH;
+                    for (size_t s = 0; s < _minSizes.size(); ++s)
+                    {
+                        boxW = boxH = _minSizes[s];
+                        pDst[index++] = (centerX - boxW / 2.0f) / imgW;
+                        pDst[index++] = (centerY - boxH / 2.0f) / imgH;
+                        pDst[index++] = (centerX + boxW / 2.0f) / imgW;
+                        pDst[index++] = (centerY + boxH / 2.0f) / imgH;
+                        if (_scaleAllSizes || (!_scaleAllSizes && (s == _minSizes.size() - 1)))
                         {
-                            if (_maxSizes.size() > 0)
-                            {
-                                int maxS = (int)_maxSizes[s];
-                                boxW = boxH = (float)::sqrt(minS * maxS);
-                                pDst[index++] = (centerX - boxW / 2.0f) / imgW;
-                                pDst[index++] = (centerY - boxH / 2.0f) / imgH;
-                                pDst[index++] = (centerX + boxW / 2.0f) / imgW;
-                                pDst[index++] = (centerY + boxH / 2.0f) / imgH;
-                            }
+                            size_t sm = _scaleAllSizes ? s : 0;
                             for (size_t r = 0; r < _aspectRatios.size(); ++r)
                             {
                                 float ar = _aspectRatios[r];
                                 if (::fabs(ar - 1.) < 1e-6)
                                     continue;
-                                boxW = minS * sqrt(ar);
-                                boxH = minS / sqrt(ar);
+                                boxW = _minSizes[sm] * sqrt(ar);
+                                boxH = _minSizes[sm] / sqrt(ar);
                                 pDst[index++] = (centerX - boxW / 2.0f) / imgW;
                                 pDst[index++] = (centerY - boxH / 2.0f) / imgH;
                                 pDst[index++] = (centerX + boxW / 2.0f) / imgW;
                                 pDst[index++] = (centerY + boxH / 2.0f) / imgH;
                             }
+                        }
+                        if (_maxSizes.size() > s)
+                        {
+                            boxW = boxH = (float)::sqrt(_minSizes[s] * _maxSizes[s]);
+                            pDst[index++] = (centerX - boxW / 2.0f) / imgW;
+                            pDst[index++] = (centerY - boxH / 2.0f) / imgH;
+                            pDst[index++] = (centerX + boxW / 2.0f) / imgW;
+                            pDst[index++] = (centerY + boxH / 2.0f) / imgH;
                         }
                     }
                 }

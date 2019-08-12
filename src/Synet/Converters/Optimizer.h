@@ -172,7 +172,7 @@ namespace Synet
                 return false;
             if (InsideLink(src, index, 3))
                 return false;
-            if (l1.convolution().outputNum() < l2.convolution().outputNum())
+            if (l1.convolution().outputNum() < l2.convolution().outputNum()*0.75 && l2.convolution().outputNum() > 256)
                 return false;
             LayerParam layer;
             layer.type() = LayerTypeMergedConvolution;
