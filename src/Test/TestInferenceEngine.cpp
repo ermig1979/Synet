@@ -212,7 +212,7 @@ namespace Test
                     _output[size + 5] = pOut[5];
                     _output[size + 6] = pOut[6];
                 }
-                SortDetectionOutput(_output);
+                SortDetectionOutput(_output.data(), _output.size());
             }
             else
             {

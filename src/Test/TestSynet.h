@@ -176,6 +176,7 @@ namespace Test
             {
                 if (dst[i]->Count() == 4 && dst[i]->Axis(3) == 7 && _net.Back()[i]->Param().type() == Synet::LayerTypeDetectionOutput)
                 {
+                    size_t begin = _output.size();
                     const float * pDst = dst[i]->CpuData();
                     for (size_t j = 0; j < dst[i]->Axis(2); ++j, pDst += 7)
                     {
@@ -191,7 +192,7 @@ namespace Test
                         _output[offset + 5] = pDst[5];
                         _output[offset + 6] = pDst[6];
                     }
-                    SortDetectionOutput(_output);
+                    SortDetectionOutput(_output.data() + begin, _output.size() - begin);
                 }
                 else
                 {

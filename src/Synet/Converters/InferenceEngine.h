@@ -778,6 +778,11 @@ namespace Synet
                     order = Shape({ 0, 1, 2, 3 });
                     layer.permute().format() = TensorFormatNchw;
                 }
+                else if (order == Shape({ 3, 0, 1, 2 }))
+                {
+                    order = Shape({ 2, 3, 1, 0 });
+                    layer.permute().format() = TensorFormatNchw;
+                }
                 else
                 {
                     Shape nhwc = Shape({ 0, 2, 3, 1 });

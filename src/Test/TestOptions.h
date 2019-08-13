@@ -77,6 +77,9 @@ namespace Test
                 if (synetMemoryUsage)
                     ss << "Synet memory usage: " << synetMemoryUsage / (1024 * 1024) << " MB." << std::endl;
                 PerformanceMeasurerStorage::s_storage.Print(ss);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+                ss << SimdPerformanceStatistic();
+#endif
                 std::cout << ss.str();
                 if (!logName.empty())
                 {

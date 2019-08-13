@@ -192,29 +192,20 @@ namespace Test
         return names;
     }
 
-    void SortDetectionOutput(Vector & vec)
+    inline void SortDetectionOutput(float * data, size_t size)
     {
-        struct Tmp
-        {
-            float val[7];
-        };
-        std::vector<Tmp> tmp;
-        for(size_t i = 0; i < vec.size(); i += 7)
-        { 
-            Tmp t;
+        struct Tmp { float val[7]; };
+        std::vector<Tmp> tmp(size / 7);
+        for(size_t i = 0; i < tmp.size(); ++i)
             for (size_t j = 0; j < 7; ++j)
-                t.val[j] = vec[i + j];
-            tmp.push_back(t);
-        }
-
+                tmp[i].val[j] = data[i*7 + j];
         std::sort(tmp.begin(), tmp.end(), [](const Tmp & t1, const Tmp & t2) 
         {
             return abs(t1.val[2] - t2.val[2]) > 0.000001 ? t1.val[2] > t2.val[2] : (abs(t1.val[3] - t2.val[3]) > 0.000001 ? t1.val[3] > t2.val[3] : t1.val[4] > t2.val[4]);
         });
-
         for (size_t i = 0; i < tmp.size(); ++i)
             for (size_t j = 0; j < 7; ++j)
-                vec[i*7 + j] = tmp[i].val[j];
+                data[i*7 + j] = tmp[i].val[j];
     }
 }
 
