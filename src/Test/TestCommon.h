@@ -77,6 +77,7 @@ namespace Test
     typedef Point Size;
 
     typedef std::vector<float> Vector;
+    typedef std::vector<Vector> Vectors;
 }
 
 

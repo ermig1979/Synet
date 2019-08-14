@@ -48,7 +48,26 @@ namespace Test
             return "Inference Engine";
         }
 
-        virtual bool Init(const String & model, const String & weight, size_t threadNumber, const TestParam & param)
+        virtual size_t SrcCount() const
+        {
+            return _ieInput.size();
+        }
+
+        virtual Shape SrcShape(size_t index) const
+        {
+            return _ieInput[index]->getTensorDesc().getDims();
+        }
+
+        virtual size_t SrcSize(size_t index) const
+        {
+            Shape shape = SrcShape(index);
+            size_t size = 1;
+            for (size_t i = 0; i < shape.size(); ++i)
+                size *= shape[i];
+            return size;
+        }
+
+        virtual bool Init(const String & model, const String & weight, size_t threadNumber, size_t batchSize, const TestParam & param)
         {
             TEST_PERF_FUNC();
 
@@ -61,18 +80,27 @@ namespace Test
                 reader.ReadNetwork(model);
                 reader.ReadWeights(weight);
                 InferenceEngine::CNNNetwork network = reader.getNetwork();
+                if (batchSize > 1)
+                    network.setBatchSize(batchSize);
 
                 std::map<std::string, std::string> config;
                 config[InferenceEngine::PluginConfigParams::KEY_CPU_THREADS_NUM] = std::to_string(threadNumber);
+                if (batchSize > 1)
+                    config[InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED] = InferenceEngine::PluginConfigParams::YES;
                 InferenceEngine::ExecutableNetwork executableNet = _iePlugin.LoadNetwork(network, config);
                 _ieInferRequest = executableNet.CreateInferRequest();
+                if (batchSize > 1)
+                    _ieInferRequest.SetBatch(batchSize);
 
+                _ieInput.clear();
                 InferenceEngine::InputsDataMap inputsInfo = network.getInputsInfo();
                 assert(inputsInfo.size() == 1);
-                InferenceEngine::InputsDataMap::iterator input = inputsInfo.begin();
-                auto inputName = input->first;
-                input->second->setPrecision(InferenceEngine::Precision::FP32);
-                _ieInput = _ieInferRequest.GetBlob(inputName);
+                for (InferenceEngine::InputsDataMap::iterator it = inputsInfo.begin(); it != inputsInfo.end(); ++it)
+                {
+                    auto inputName = it->first;
+                    it->second->setPrecision(InferenceEngine::Precision::FP32);
+                    _ieInput.push_back(_ieInferRequest.GetBlob(inputName));
+                }
 
                 _outputNames.clear();
                 _ieOutput.clear();
@@ -101,13 +129,10 @@ namespace Test
                 return false;
             }
 
-            num = param.input()[0].shape()[0].size();
-            channels = param.input()[0].shape()[1].size();
-            height = param.input()[0].shape()[2].size();
-            width = param.input()[0].shape()[3].size();
-
             {
-                Vector stub(num*channels*height*width);
+                Vectors stub(SrcCount());
+                for (size_t i = 0; i < SrcCount(); ++i)
+                    stub[i].resize(SrcSize(i));
                 SetInput(stub);
                 _ieInferRequest.Infer();
             }
@@ -115,7 +140,7 @@ namespace Test
             return true;
         }
 
-        virtual const Vector & Predict(const Vector & src)
+        virtual const Vectors & Predict(const Vectors & src)
         {
             SetInput(src);
             {
@@ -147,17 +172,17 @@ namespace Test
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
             Regions regions;
-            for (size_t i = 0; i < _output.size(); i += 7)
+            for (size_t i = 0; i < _output[0].size(); i += 7)
             {
-                if (_output[i + 2] > threshold)
+                if (_output[0][i + 2] > threshold)
                 {
                     Region region;
-                    region.id = (size_t)_output[i + 1];
-                    region.prob = _output[i + 2];
-                    region.x = size.x*(_output[i + 3] + _output[i + 5]) / 2.0f;
-                    region.y = size.y*(_output[i + 4] + _output[i + 6]) / 2.0f;
-                    region.w = size.x*(_output[i + 5] - _output[i + 3]);
-                    region.h = size.y*(_output[i + 6] - _output[i + 4]);
+                    region.id = (size_t)_output[0][i + 1];
+                    region.prob = _output[0][i + 2];
+                    region.x = size.x*(_output[0][i + 3] + _output[0][i + 5]) / 2.0f;
+                    region.y = size.y*(_output[0][i + 4] + _output[0][i + 6]) / 2.0f;
+                    region.w = size.x*(_output[0][i + 5] - _output[0][i + 3]);
+                    region.h = size.y*(_output[0][i + 6] - _output[0][i + 4]);
                     regions.push_back(region);
                 }
             }
@@ -169,64 +194,76 @@ namespace Test
 
         InferenceEngine::InferencePlugin _iePlugin;
         InferenceEngine::InferRequest _ieInferRequest;
-        InferenceEngine::Blob::Ptr _ieInput;
+        std::vector<InferenceEngine::Blob::Ptr> _ieInput;
         std::vector<InferenceEngine::Blob::Ptr> _ieOutput;
-        Vector _output;
+        Vectors _output;
         Strings _outputNames;
 
-        void SetInput(const Vector & x)
+        void SetInput(const Vectors & x)
         {
-            assert(_ieInput->getTensorDesc().getLayout() == InferenceEngine::Layout::NCHW);
-            const InferenceEngine::SizeVector & strides = _ieInput->getTensorDesc().getBlockingDesc().getStrides();
-            const float * src = x.data();
-            float * dst = (float*)_ieInput->buffer();
-            for (size_t i = 0; i < channels; ++i)
+            assert(_ieInput.size() == x.size() && _ieInput[0]->getTensorDesc().getLayout() == InferenceEngine::Layout::NCHW);
+            for (size_t i = 0; i < x.size(); ++i)
             {
-                for (size_t row = 0; row < height; ++row)
-                {
-                    memcpy(dst + row*strides[2], src, sizeof(float)*width);
-                    src += width;
-                }
-                dst += strides[1];
+                const InferenceEngine::SizeVector & dims = _ieInput[i]->getTensorDesc().getDims();
+                const InferenceEngine::SizeVector & strides = _ieInput[i]->getTensorDesc().getBlockingDesc().getStrides();
+                const float * src = x[i].data();
+                float * dst = (float*)_ieInput[i]->buffer();
+                SetOutput(dims, strides, 0, src, dst);
+            }
+        }
+
+        void SetInput(const Sizes & dims, const Sizes & strides, size_t current, const float * src, float * dst)
+        {
+            if (current == dims.size() - 1)
+            {
+                memcpy(dst, src, dims[current] * sizeof(float));
+            }
+            else
+            {
+                size_t srcStride = 1;
+                for (size_t i = current + 1; i < dims.size(); ++i)
+                    srcStride *= dims[i];
+                size_t dstStride = strides[current];
+                for (size_t i = 0; i < dims[current]; ++i)
+                    SetInput(dims, strides, current + 1, src + i * srcStride, dst + i * dstStride);
             }
         }
 
         void SetOutput()
         {
-            if (_ieOutput.size() == 1 && _ieOutput[0]->getTensorDesc().getDims().size() == 4 && _ieOutput[0]->getTensorDesc().getDims()[3] == 7)
+            _output.resize(_ieOutput.size());
+            for (size_t o = 0; o < _ieOutput.size(); ++o)
             {
-                const float * pOut = _ieOutput[0]->buffer();
-                const InferenceEngine::SizeVector & dims = _ieOutput[0]->getTensorDesc().getDims();
-                _output.clear();
-                for (size_t j = 0; j < dims[2]; ++j, pOut += 7)
+                if (_ieOutput[o]->getTensorDesc().getDims().size() == 4 && _ieOutput[o]->getTensorDesc().getDims()[3] == 7)
                 {
-                    if (pOut[0] == -1)
-                        break;
-                    size_t size = _output.size();
-                    _output.resize(size + 7);
-                    _output[size + 0] = pOut[0];
-                    _output[size + 1] = pOut[1];
-                    _output[size + 2] = pOut[2];
-                    _output[size + 3] = pOut[3];
-                    _output[size + 4] = pOut[4];
-                    _output[size + 5] = pOut[5];
-                    _output[size + 6] = pOut[6];
+                    const float * pOut = _ieOutput[o]->buffer();
+                    const InferenceEngine::SizeVector & dims = _ieOutput[o]->getTensorDesc().getDims();
+                    _output[o].clear();
+                    for (size_t j = 0; j < dims[2]; ++j, pOut += 7)
+                    {
+                        if (pOut[0] == -1)
+                            break;
+                        size_t size = _output.size();
+                        _output[o].resize(size + 7);
+                        _output[o][size + 0] = pOut[0];
+                        _output[o][size + 1] = pOut[1];
+                        _output[o][size + 2] = pOut[2];
+                        _output[o][size + 3] = pOut[3];
+                        _output[o][size + 4] = pOut[4];
+                        _output[o][size + 5] = pOut[5];
+                        _output[o][size + 6] = pOut[6];
+                    }
+                    SortDetectionOutput(_output[o].data(), _output[o].size());
                 }
-                SortDetectionOutput(_output.data(), _output.size());
-            }
-            else
-            {
-                size_t offset = 0;
-                for (size_t o = 0; o < _ieOutput.size(); ++o)
+                else
                 {
                     const InferenceEngine::SizeVector & dims = _ieOutput[o]->getTensorDesc().getDims();
                     const InferenceEngine::SizeVector & strides = _ieOutput[o]->getTensorDesc().getBlockingDesc().getStrides();
                     size_t size = 1;
                     for (size_t i = 0; i < dims.size(); ++i)
                         size *= dims[i];
-                    _output.resize(offset + size);
-                    SetOutput(dims, strides, 0, _ieOutput[o]->buffer(), _output.data() + offset);
-                    offset += size;
+                    _output[o].resize(size);
+                    SetOutput(dims, strides, 0, _ieOutput[o]->buffer(), _output[o].data());
                 }
             }
          }

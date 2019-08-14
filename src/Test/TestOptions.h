@@ -44,6 +44,7 @@ namespace Test
         float threshold;
         String logName;
         int tensorFormat;
+        int batchSize;
         bool result;        
         mutable size_t synetMemoryUsage;
 
@@ -67,6 +68,7 @@ namespace Test
             threshold = FromString<float>(GetArg("-t", "0.001"));
             logName = GetArg("-ln", "", false);
             tensorFormat = FromString<int>(GetArg("-tf", "1"));
+            batchSize = FromString<int>(GetArg("-bs", "1"));
         }
 
         ~Options()

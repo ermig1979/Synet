@@ -85,7 +85,7 @@ namespace Synet
         template <> SYNET_INLINE void LrnLayerCrossChannelsCpu<float>(const float * src, size_t channels, size_t size, size_t inner, float alpha, float beta, float k, float * buf, float * dst, int trans)
         {
             float _k[3] = { k, alpha, -beta };
-            ::SimdSynetLrnLayerCrossChannels(src, (size - 1) / 2, channels, inner, _k, dst, (::SimdBool)trans);
+            ::SimdSynetLrnLayerCrossChannels(src, (size - 1) / 2, channels, inner, _k, dst, (::SimdTensorFormatType)trans);
         }
 #endif
     }

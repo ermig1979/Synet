@@ -46,15 +46,17 @@ namespace Test
             return false;
         }
 
-        if (!network.Init(model, weight, options.threadNumber, param))
+        if (!network.Init(model, weight, options.threadNumber, options.batchSize, param))
         {
             std::cout << "Can't load " << network.Name() << " from '" << model << "' and '" << weight << "' !" << std::endl;
             return false;
         }
 
-        if (!(network.channels == 1 || network.channels == 3))
+        Shape shape = network.SrcShape(0);
+
+        if (!(shape[1] == 1 || shape[1] == 3))
         {
-            std::cout << "Wrong " << network.Name() << " classifier channels count '" << network.channels << " !" << std::endl;
+            std::cout << "Wrong " << network.Name() << " classifier channels count '" << shape[1] << " !" << std::endl;
             return false;
         }
 
@@ -64,9 +66,9 @@ namespace Test
     struct TestData
     {
         Strings path;
-        Vector input;
-        Vector other;
-        Vector synet;
+        Vectors input;
+        Vectors other;
+        Vectors synet;
     };
     typedef std::shared_ptr<TestData> TestDataPtr;
     typedef std::vector<TestDataPtr> TestDataPtrs;
@@ -80,8 +82,10 @@ namespace Test
         }
         StringList images = GetFileList(options.imageDirectory, options.imageFilter, true, false);
         images.sort();
-        size_t count = images.size() / network.num;
-        if (count == 0)
+        Strings names(images.begin(), images.end());
+        size_t sN = network.SrcCount(), bN = options.batchSize;
+        size_t tN = images.size() / bN / sN;
+        if (tN == 0)
         {
             std::cout << "There is no one image in '" << options.imageDirectory << "' for '" << options.imageFilter << "' filter!" << std::endl;
             return false;
@@ -89,45 +93,57 @@ namespace Test
         StringList::const_iterator name = images.begin();
 
         tests.clear();
-        tests.reserve(count);
-        for (size_t i = 0; i < count; ++i)
+        tests.reserve(tN);
+        for (size_t t = 0; t < tN; ++t)
         {
             TestDataPtr test(new TestData());
-            test->path.resize(network.num);
-            test->input.resize(network.GetSize());
-            float * input = test->input.data();
-            for (size_t j = 0; j < network.num; ++j)
+            test->path.resize(bN * sN);
+            test->input.resize(sN);
+            for (size_t s = 0; s < sN; ++s)
             {
-                test->path[j] = MakePath(options.imageDirectory, *name++);
-                View original;
-                if (!original.Load(test->path[j]))
+                test->input[s].resize(network.SrcSize(s));
+                float * input = test->input[s].data();
+                for (size_t b = 0; b < bN; ++b)
                 {
-                    std::cout << "Can't read '" << test->path[j] << "' image!" << std::endl;
-                    return false;
-                }
-
-                View converted(original.Size(), network.channels == 1 ? View::Gray8 : View::Bgr24);
-                Simd::Convert(original, converted);
-                View resized(Size(network.width, network.height), converted.format);
-                Simd::ResizeBilinear(converted, resized);
-
-                Views channels(network.channels);
-                if (network.channels > 1)
-                {
-                    for (size_t i = 0; i <  network.channels; ++i)
-                        channels[i].Recreate(resized.Size(), View::Gray8);
-                    Simd::DeinterleaveBgr(resized, channels[0], channels[1], channels[2]);
-                }
-                else
-                    channels[0] = resized;
-
-                for (size_t c = 0; c < channels.size(); ++c)
-                {
-                    for (size_t y = 0; y < channels[c].height; ++y)
+                    size_t p = s*bN + b;
+                    test->path[p] = MakePath(options.imageDirectory, names[b*sN + s]);
+                    View original;
+                    if (!original.Load(test->path[p]))
                     {
-                        const uint8_t * row = channels[c].Row<uint8_t>(y);
-                        ::SimdUint8ToFloat32(row, channels[c].width, &param.lower(), &param.upper(), input);
-                        input += channels[c].width;
+                        std::cout << "Can't read '" << test->path[p] << "' image!" << std::endl;
+                        return false;
+                    }
+                    Shape shape = network.SrcShape(s);
+                    if (shape.size() == 4)
+                    {
+                        View converted(original.Size(), shape[1] == 1 ? View::Gray8 : View::Bgr24);
+                        Simd::Convert(original, converted);
+                        View resized(Size(shape[3], shape[2]), converted.format);
+                        Simd::ResizeBilinear(converted, resized);
+
+                        Views channels(shape[1]);
+                        if (shape[1] > 1)
+                        {
+                            for (size_t i = 0; i <  shape[1]; ++i)
+                                channels[i].Recreate(resized.Size(), View::Gray8);
+                            Simd::DeinterleaveBgr(resized, channels[0], channels[1], channels[2]);
+                        }
+                        else
+                            channels[0] = resized;
+
+                        for (size_t c = 0; c < channels.size(); ++c)
+                        {
+                            for (size_t y = 0; y < channels[c].height; ++y)
+                            {
+                                const uint8_t * row = channels[c].Row<uint8_t>(y);
+                                ::SimdUint8ToFloat32(row, channels[c].width, &param.lower(), &param.upper(), input);
+                                input += channels[c].width;
+                            }
+                        }
+                    }
+                    else
+                    {
+
                     }
                 }
             }
@@ -215,11 +231,28 @@ namespace Test
 #endif
 
 #if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
-        if (!(otherNetwork.num == synetNetwork.num && otherNetwork.channels == synetNetwork.channels &&
-            otherNetwork.height == synetNetwork.height && otherNetwork.width == synetNetwork.width))
+        if (otherNetwork.SrcCount() != synetNetwork.SrcCount())
         {
-            std::cout << "Networks are incompatible!" << std::endl;
+            std::cout << "Networks have difference source number: " << 
+                otherNetwork.SrcCount()  << " != " << synetNetwork.SrcCount() << std::endl;
             return false;
+        }
+        for (size_t s = 0; s < otherNetwork.SrcCount(); ++s)
+        {
+            const Shape & os = otherNetwork.SrcShape(s);
+            const Shape & ss = synetNetwork.SrcShape(s);
+            if (os != ss)
+            {
+                std::cout << "Networks have difference Src[" << s << "] size: ";
+                std::cout << otherNetwork.Name() << " {" << os[0];
+                for (size_t j = 1; j < os.size(); ++j)
+                    std::cout << ", " << os[j];
+                std::cout << "} != " << synetNetwork.Name() << " {" << ss[0];
+                for (size_t j = 1; j < ss.size(); ++j)
+                    std::cout << ", " << ss[j];
+                std::cout << "} ! " << std::endl;
+                return false;
+            }
         }
 #endif
 
@@ -285,21 +318,34 @@ namespace Test
                 for (size_t k = 1; k < test.path.size(); ++k)
                     std::cout << ", " << test.path[k];
                 std::cout << "' is failed!" << std::endl;
-                std::cout << "Size : " << test.other.size() << " != " << test.synet.size() << std::endl;
+                std::cout << "Dst count : " << test.other.size() << " != " << test.synet.size() << std::endl;
                 return false;
             }
 
-            for (size_t j = 0; j < test.synet.size(); ++j)
+            for (size_t d = 0; d < test.other.size(); ++d)
             {
-                if (!Compare(test.other[j], test.synet[j], options.threshold))
+                if (test.other[d].size() != test.synet[d].size())
                 {
                     std::cout << "Test " << i << " '" << test.path[0];
                     for (size_t k = 1; k < test.path.size(); ++k)
                         std::cout << ", " << test.path[k];
                     std::cout << "' is failed!" << std::endl;
-                    std::cout << j << " : " << test.other[j] << " != " << test.synet[j] << std::endl;
+                    std::cout << "Dst[" << d << "] size : " << test.other[d].size() << " != " << test.synet[d].size() << std::endl;
                     return false;
                 }
+
+                for (size_t j = 0; j < test.synet[d].size(); ++j)
+                {
+                    if (!Compare(test.other[d][j], test.synet[d][j], options.threshold))
+                    {
+                        std::cout << "Test " << i << " '" << test.path[0];
+                        for (size_t k = 1; k < test.path.size(); ++k)
+                            std::cout << ", " << test.path[k];
+                        std::cout << "' is failed!" << std::endl;
+                        std::cout << "Dst[" << d << "][" << j << "] : " << test.other[d][j] << " != " << test.synet[d][j] << std::endl;
+                        return false;
+                    }
+                }            
             }
 #endif        
         }

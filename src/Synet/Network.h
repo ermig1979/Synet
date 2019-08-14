@@ -166,6 +166,11 @@ namespace Synet
             return _src; 
         }
 
+        const TensorPtrs & Src() const
+        {
+            return _src;
+        }
+
         const TensorPtrs & Dst() const 
         { 
             return _dst; 

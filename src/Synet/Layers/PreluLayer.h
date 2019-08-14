@@ -59,7 +59,7 @@ namespace Synet
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
         template <> SYNET_INLINE void PreluLayerForwardCpu(const float * src, const float * slope, size_t count, size_t size, float * dst, int trans)
         {
-            ::SimdSynetPreluLayerForward(src, slope, count, size, dst, (::SimdBool)trans);
+            ::SimdSynetPreluLayerForward(src, slope, count, size, dst, (::SimdTensorFormatType)trans);
         }
 #endif
     }

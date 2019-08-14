@@ -48,24 +48,36 @@ namespace Test
             return "Darknet";
         }
 
-        virtual bool Init(const String & model, const String & weight, size_t threadNumber, const TestParam & param)
+        virtual size_t SrcCount() const
+        {
+            return 1;
+        }
+
+        virtual Shape SrcShape(size_t index) const
+        {
+            return Shape({ size_t(_net->batch), size_t(_net->c), size_t(_net->h), size_t(_net->w) });
+        }
+
+        virtual size_t SrcSize(size_t index) const
+        {
+            return size_t(_net->batch) * _net->c * _net->h * _net->w;
+        }
+
+        virtual bool Init(const String & model, const String & weight, size_t threadNumber, size_t batchSize, const TestParam & param)
         {
             TEST_PERF_FUNC();
-            _net = ::parse_network_cfg((char*)model.c_str());
+            _net = ::parse_network_cfg((char*)PatchCfg(model, batchSize).c_str());
             ::load_weights(_net, (char*)weight.c_str());
-            //::set_batch_network(_net, 1);
-            num = _net->batch;
-            channels = _net->c;
-            height = _net->h;
-            width = _net->w;
+            //::set_batch_network(_net, batchSize);
+            //::resize_network(_net, _net->w, _net->h);
             return true;
         }
 
-        virtual const Vector & Predict(const Vector & src)
+        virtual const Vectors & Predict(const Vectors & src)
         {
             {
                 TEST_PERF_FUNC();
-                ::network_predict(_net, (float*)src.data());
+                ::network_predict(_net, (float*)src[0].data());
             }
             SetOutput();
             return _output;
@@ -144,6 +156,7 @@ namespace Test
 
         void SetOutput()
         {
+            _output.resize(1);
             size_t offset = 0;
             for (size_t i = 0; i < _net->n; ++i)
             {
@@ -158,10 +171,28 @@ namespace Test
         void AddToOutput(const layer & l, size_t & offset)
         {
             size_t size = l.outputs*l.batch;
-            if (offset + size > _output.size())
-                _output.resize(offset + size);
-            memcpy(_output.data() + offset, l.output, size * sizeof(float));
+            if (offset + size > _output[0].size())
+                _output[0].resize(offset + size);
+            memcpy(_output[0].data() + offset, l.output, size * sizeof(float));
             offset += size;
+        }
+
+        String PatchCfg(const String & src, size_t batchSize)
+        {
+            String dst = src + ".patched.txt";
+            std::ifstream ifs(src.c_str());
+            std::ofstream ofs(dst.c_str());
+            String line;
+            while(std::getline(ifs, line))
+            {
+                if (line.substr(0, 6) == "batch=")
+                    ofs << "batch=" << batchSize << std::endl;
+                else
+                    ofs << line << std::endl;
+            }
+            ifs.close();
+            ofs.close();
+            return dst;
         }
     };
 }

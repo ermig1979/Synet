@@ -816,7 +816,7 @@
 				<biases offset="4871536" size="284"/>
 			</blobs>
 		</layer>
-		<layer id="40" name="p_result" precision="FP32" type="Permute">
+		<!--layer id="40" name="p_result" precision="FP32" type="Permute">
 			<data order="3,0,1,2"/>
 			<input>
 				<port id="0">
@@ -938,7 +938,7 @@
 		<edge from-layer="33" from-port="1" to-layer="38" to-port="0"/>
 		<edge from-layer="37" from-port="1" to-layer="38" to-port="1"/>
 		<edge from-layer="38" from-port="2" to-layer="39" to-port="0"/>
-		<edge from-layer="39" from-port="3" to-layer="40" to-port="0"/>
+		<!--edge from-layer="39" from-port="3" to-layer="40" to-port="0"/>
 		<edge from-layer="40" from-port="1" to-layer="42" to-port="0"/>
 		<edge from-layer="41" from-port="1" to-layer="42" to-port="1"/>
 		<!--edge from-layer="42" from-port="2" to-layer="44" to-port="0"/>

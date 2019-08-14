@@ -276,37 +276,37 @@ namespace Synet
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
         template <> SYNET_INLINE void FusedLayerForwardCpu0<float>(const float * src, const float * bias, const float * scale, size_t count, size_t size, float * dst, int trans)
         {
-            ::SimdSynetFusedLayerForward0(src, bias, scale, count, size, dst, (::SimdBool)trans);
+            ::SimdSynetFusedLayerForward0(src, bias, scale, count, size, dst, (::SimdTensorFormatType)trans);
         }
 
         template <> SYNET_INLINE void FusedLayerForwardCpu1<float>(const float * src, const float * bias0, const float * scale1, const float * bias1, size_t count, size_t size, float * dst, int trans)
         {
-            ::SimdSynetFusedLayerForward1(src, bias0, scale1, bias1, count, size, dst, (::SimdBool)trans);
+            ::SimdSynetFusedLayerForward1(src, bias0, scale1, bias1, count, size, dst, (::SimdTensorFormatType)trans);
         }
 
         template <> SYNET_INLINE void FusedLayerForwardCpu2<float>(const float * src, const float * scale, const float * bias, size_t count, size_t size, float slope, float * dst, int trans)
         {
-            ::SimdSynetFusedLayerForward2(src, scale, bias, count, size, &slope, dst, (::SimdBool)trans);
+            ::SimdSynetFusedLayerForward2(src, scale, bias, count, size, &slope, dst, (::SimdTensorFormatType)trans);
         }
 
         template <> SYNET_INLINE void FusedLayerForwardCpu3<float>(const float * src, const float * bias, const float * scale, size_t count, size_t size, float * dst, int trans)
         {
-            ::SimdSynetFusedLayerForward3(src, bias, scale, count, size, dst, (::SimdBool)trans);
+            ::SimdSynetFusedLayerForward3(src, bias, scale, count, size, dst, (::SimdTensorFormatType)trans);
         }
 
         template <> SYNET_INLINE void FusedLayerForwardCpu4<float>(const float * src, const float * bias0, const float * scale1, const float * bias1, size_t count, size_t size, float * dst, int trans)
         {
-            ::SimdSynetFusedLayerForward4(src, bias0, scale1, bias1, count, size, dst, (::SimdBool)trans);
+            ::SimdSynetFusedLayerForward4(src, bias0, scale1, bias1, count, size, dst, (::SimdTensorFormatType)trans);
         }
 
         template <> SYNET_INLINE void FusedLayerForwardCpu8<float>(const float * src0, const float * src1, const float * src2, size_t count, size_t size, float * dst, int trans)
         {
-            ::SimdSynetFusedLayerForward8(src0, src1, src2, count, size, dst, (::SimdBool)trans);
+            ::SimdSynetFusedLayerForward8(src0, src1, src2, count, size, dst, (::SimdTensorFormatType)trans);
         }
 
         template <> SYNET_INLINE void FusedLayerForwardCpu9<float>(const float * src0, const float * src1, const float * scale0, const float * bias0, size_t count0, size_t count1, size_t size, float * dst0, float * dst1, int trans)
         {
-            ::SimdSynetFusedLayerForward9(src0, src1, scale0, bias0, count0, count1, size, dst0, dst1, (::SimdBool)trans);
+            ::SimdSynetFusedLayerForward9(src0, src1, scale0, bias0, count0, count1, size, dst0, dst1, (::SimdTensorFormatType)trans);
         }
 #endif
     }
