@@ -37,6 +37,7 @@ namespace Synet
         LayerTypeConcat,
         LayerTypeConst,
         LayerTypeConvolution,
+        LayerTypeCtcGreedyDecoder,
         LayerTypeDetectionOutput,
         LayerTypeDropout,
         LayerTypeEltwise,

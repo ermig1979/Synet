@@ -141,9 +141,25 @@ namespace Test
                             }
                         }
                     }
+                    else if(shape.size() == 2)
+                    {
+                        if (shape[0] != original.height || shape[1] != original.width)
+                        {
+                            std::cout << "Incompatible size of '" << test->path[p] << "' image!" << std::endl;
+                            return false;
+                        }
+                        for (size_t y = 0; y < original.height; ++y)
+                        {
+                            const uint8_t * row = original.Row<uint8_t>(y);
+                            const float lo = 0.0f, hi = 255.0f;
+                            ::SimdUint8ToFloat32(row, original.width, &lo, &hi, input);
+                            input += original.width;
+                        }
+                    }
                     else
                     {
-
+                        std::cout << "Can't map to source '" << test->path[p] << "' image!" << std::endl;
+                        return false;
                     }
                 }
             }

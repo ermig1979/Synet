@@ -31,6 +31,7 @@
 #include "Synet/Layers/ConcatLayer.h"
 #include "Synet/Layers/ConstLayer.h"
 #include "Synet/Layers/ConvolutionLayer.h"
+#include "Synet/Layers/CtcGreedyDecoderLayer.h"
 #include "Synet/Layers/DetectionOutputLayer.h"
 #include "Synet/Layers/EltwiseLayer.h"
 #include "Synet/Layers/ExpandDimsLayer.h"
@@ -757,6 +758,7 @@ namespace Synet
             case LayerTypeConcat: return new ConcatLayer<T>(param);
             case LayerTypeConst: return new ConstLayer<T>(param);
             case LayerTypeConvolution: return new ConvolutionLayer<T>(param);
+            case LayerTypeCtcGreedyDecoder: return new CtcGreedyDecoderLayer<T>(param);
             case LayerTypeDetectionOutput: return new DetectionOutputLayer<T>(param);
             case LayerTypeDropout: return new StubLayer<T>(param);
             case LayerTypeEltwise: return new EltwiseLayer<T>(param);

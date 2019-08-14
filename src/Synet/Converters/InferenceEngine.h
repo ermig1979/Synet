@@ -235,6 +235,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Convolution" && !ConvertConvolutionLayer(pLayer, srcBin, trans, layer, dstBin))
                     return ErrorMessage(pLayer);
+                if (type == "CTCGreedyDecoder" && !ConvertCtcGreedyDecoderLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "DetectionOutput" && !ConvertDetectionOutputLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Eltwise" && !ConvertEltwiseLayer(pLayer, layer))
@@ -667,6 +669,12 @@ namespace Synet
                 layer.eltwise().operation() = EltwiseOperationTypeProduct;
             else
                 assert(0);
+            return true;
+        }
+
+        bool ConvertCtcGreedyDecoderLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            layer.type() = Synet::LayerTypeCtcGreedyDecoder;
             return true;
         }
 

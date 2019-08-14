@@ -816,7 +816,7 @@
 				<biases offset="4871536" size="284"/>
 			</blobs>
 		</layer>
-		<!--layer id="40" name="p_result" precision="FP32" type="Permute">
+		<layer id="40" name="p_result" precision="FP32" type="Permute">
 			<data order="3,0,1,2"/>
 			<input>
 				<port id="0">
@@ -866,7 +866,7 @@
 				</port>
 			</output>
 		</layer>
-		<!--layer id="43" name="seq_ind" precision="FP32" type="Input">
+		<layer id="43" name="seq_ind" precision="FP32" type="Input">
 			<output>
 				<port id="0">
 					<dim>88</dim>
@@ -895,7 +895,7 @@
 					<dim>1</dim>
 				</port>
 			</output>
-		</layer-->
+		</layer>
 	</layers>
 	<edges>
 		<edge from-layer="0" from-port="0" to-layer="1" to-port="0"/>
@@ -938,11 +938,11 @@
 		<edge from-layer="33" from-port="1" to-layer="38" to-port="0"/>
 		<edge from-layer="37" from-port="1" to-layer="38" to-port="1"/>
 		<edge from-layer="38" from-port="2" to-layer="39" to-port="0"/>
-		<!--edge from-layer="39" from-port="3" to-layer="40" to-port="0"/>
+		<edge from-layer="39" from-port="3" to-layer="40" to-port="0"/>
 		<edge from-layer="40" from-port="1" to-layer="42" to-port="0"/>
 		<edge from-layer="41" from-port="1" to-layer="42" to-port="1"/>
-		<!--edge from-layer="42" from-port="2" to-layer="44" to-port="0"/>
-		<edge from-layer="43" from-port="0" to-layer="44" to-port="1"/-->
+		<edge from-layer="42" from-port="2" to-layer="44" to-port="0"/>
+		<edge from-layer="43" from-port="0" to-layer="44" to-port="1"/>
 	</edges>
 	<meta_data>
 		<MO_version value="2019.1.0-178-ga427cda"/>
