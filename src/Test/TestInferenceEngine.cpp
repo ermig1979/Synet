@@ -234,16 +234,17 @@ namespace Test
             _output.resize(_ieOutput.size());
             for (size_t o = 0; o < _ieOutput.size(); ++o)
             {
-                if (_ieOutput[o]->getTensorDesc().getDims().size() == 4 && _ieOutput[o]->getTensorDesc().getDims()[3] == 7)
+                const InferenceEngine::SizeVector & dims = _ieOutput[o]->getTensorDesc().getDims();
+                const InferenceEngine::SizeVector & strides = _ieOutput[o]->getTensorDesc().getBlockingDesc().getStrides();
+                if (dims.size() == 4 && dims[3] == 7)
                 {
                     const float * pOut = _ieOutput[o]->buffer();
-                    const InferenceEngine::SizeVector & dims = _ieOutput[o]->getTensorDesc().getDims();
                     _output[o].clear();
                     for (size_t j = 0; j < dims[2]; ++j, pOut += 7)
                     {
                         if (pOut[0] == -1)
                             break;
-                        size_t size = _output.size();
+                        size_t size = _output[o].size();
                         _output[o].resize(size + 7);
                         _output[o][size + 0] = pOut[0];
                         _output[o][size + 1] = pOut[1];
@@ -257,8 +258,6 @@ namespace Test
                 }
                 else
                 {
-                    const InferenceEngine::SizeVector & dims = _ieOutput[o]->getTensorDesc().getDims();
-                    const InferenceEngine::SizeVector & strides = _ieOutput[o]->getTensorDesc().getBlockingDesc().getStrides();
                     size_t size = 1;
                     for (size_t i = 0; i < dims.size(); ++i)
                         size *= dims[i];

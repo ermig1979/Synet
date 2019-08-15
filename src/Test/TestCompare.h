@@ -84,7 +84,7 @@ namespace Test
         images.sort();
         Strings names(images.begin(), images.end());
         size_t sN = network.SrcCount(), bN = options.batchSize;
-        size_t tN = images.size() / bN / sN;
+        size_t tN = names.size() / bN / sN;
         if (tN == 0)
         {
             std::cout << "There is no one image in '" << options.imageDirectory << "' for '" << options.imageFilter << "' filter!" << std::endl;
@@ -106,7 +106,7 @@ namespace Test
                 for (size_t b = 0; b < bN; ++b)
                 {
                     size_t p = s*bN + b;
-                    test->path[p] = MakePath(options.imageDirectory, names[b*sN + s]);
+                    test->path[p] = MakePath(options.imageDirectory, names[(t*bN + b)*sN + s]);
                     View original;
                     if (!original.Load(test->path[p]))
                     {
