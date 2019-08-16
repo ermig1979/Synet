@@ -954,6 +954,12 @@ namespace Synet
         bool ConvertReluLayer(const XmlNode * pLayer, LayerParam & layer)
         {
             layer.type() = Synet::LayerTypeRelu;
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData)
+            {
+                if (pData->FirstAttribute("negative_slope"))
+                    StringToValue(pData->FirstAttribute("negative_slope")->Value(), layer.relu().negativeSlope());
+            }
             return true;
         }
 
