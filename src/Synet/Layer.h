@@ -27,6 +27,7 @@
 #include "Synet/Common.h"
 #include "Synet/Tensor.h"
 #include "Synet/Params.h"
+#include "Synet/Stage.h"
 
 namespace Synet
 {
@@ -34,21 +35,16 @@ namespace Synet
     {
     public:
         typedef T Type;
-        typedef Synet::Tensor<T> Tensor;
+        typedef Synet::Tensor<Type> Tensor;
         typedef std::vector<Tensor> Tensors;
         typedef std::vector<Tensor*> TensorPtrs;
         typedef std::shared_ptr<Layer> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
+        typedef Synet::Stage<Type> Stage;
 
         Layer(const LayerParam & param)
             : _param(param)
         {
-            //_weight.resize(_param.weight().size());
-            //for (size_t i = 0; i < _weight.size(); ++i)
-            //{
-            //    if(_param.weight()[i].offset() < 0 && _param.weight()[i].size() < 0)
-            //        _weight[i].Reshape(_param.weight()[i].dim(), Type(), _param.weight()[i].format());
-            //}
         }
 
         virtual ~Layer()
@@ -74,11 +70,16 @@ namespace Synet
         {
         }
 
+        inline void Reshape(const Stage & stage)
+        {
+            Reshape(stage.src, stage.buf, stage.dst);
+        }
+
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
 
-        inline void Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        inline void Forward(const Stage & stage)
         {
-            ForwardCpu(src, buf, dst);
+            ForwardCpu(stage.src, stage.buf, stage.dst);
         }
 
         bool Load(std::istream & is, const LayerSharedPtrs & layers)

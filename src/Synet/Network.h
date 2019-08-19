@@ -475,7 +475,7 @@ namespace Synet
                     std::cout << shape[j] << " ";
                 std::cout << "}" << std::endl;
 #endif
-                _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
+                _stages[i].layer->Forward(_stages[i]);
             }
             SetFastMode(mode);
         }
@@ -608,13 +608,7 @@ namespace Synet
         typedef std::map<size_t, String> IndexNameMap;
         typedef std::set<String> NameSet;
 
-        struct Stage
-        {
-            LayerPtr layer;
-            TensorPtrs src;
-            TensorPtrs buf;
-            TensorPtrs dst;
-        };
+        typedef Synet::Stage<Type> Stage;
         typedef std::vector<Stage> Stages;
 
         bool _empty;

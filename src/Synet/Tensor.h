@@ -31,11 +31,18 @@
 
 namespace Synet
 {
+    struct Unknown
+    {
+    };
+
     namespace Detail
     {
         template <class T> TensorType GetTensorType();
+        template <> SYNET_INLINE TensorType GetTensorType<Unknown>() { return TensorTypeUnknown; }
         template <> SYNET_INLINE TensorType GetTensorType<float>() { return TensorType32f; }
         template <> SYNET_INLINE TensorType GetTensorType<int32_t>() { return TensorType32i; }
+        template <> SYNET_INLINE TensorType GetTensorType<int8_t>() { return TensorType8i; }
+        template <> SYNET_INLINE TensorType GetTensorType<uint8_t>() { return TensorType8u; }
     }
 
     template<class T> class Tensor
@@ -156,6 +163,18 @@ namespace Synet
 #endif
         }
 
+        SYNET_INLINE Tensor<float> & As32f()
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType32f);
+            return *(Tensor<float>*)this;
+        }
+
+        SYNET_INLINE const Tensor<float> & As32f() const
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType32f);
+            return *(const Tensor<float>*)this;
+        }
+
         SYNET_INLINE Tensor<int32_t> & As32i()
         {
             assert(_type == TensorTypeUnknown || _type == TensorType32i);
@@ -168,16 +187,28 @@ namespace Synet
             return *(const Tensor<int32_t>*)this;
         }
 
-        SYNET_INLINE Tensor<float> & As32f()
+        SYNET_INLINE Tensor<int8_t> & As8i()
         {
-            assert(_type == TensorTypeUnknown || _type == TensorType32f);
-            return *(Tensor<float>*)this;
+            assert(_type == TensorTypeUnknown || _type == TensorType8i);
+            return *(Tensor<int8_t>*)this;
         }
 
-        SYNET_INLINE const Tensor<float> & As32f() const
+        SYNET_INLINE const Tensor<int8_t> & As8i() const
         {
-            assert(_type == TensorTypeUnknown || _type == TensorType32f);
-            return *(const Tensor<float>*)this;
+            assert(_type == TensorTypeUnknown || _type == TensorType8i);
+            return *(const Tensor<int8_t>*)this;
+        }
+
+        SYNET_INLINE Tensor<uint8_t> & As8u()
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType8u);
+            return *(Tensor<uint8_t>*)this;
+        }
+
+        SYNET_INLINE const Tensor<uint8_t> & As8u() const
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType8u);
+            return *(const Tensor<uint8_t>*)this;
         }
 
         SYNET_INLINE TensorType GetType() const
@@ -517,6 +548,7 @@ namespace Synet
         SYNET_INLINE void Resize(const Type & value)
         {
             _type = Detail::GetTensorType<Type>();
+            assert(_type != TensorTypeUnknown);
             size_t size = Size(0, _shape.size());
             _buffer->Resize(size);
             CpuSet(_buffer->size, value, _buffer->data);
@@ -525,6 +557,7 @@ namespace Synet
         SYNET_INLINE void Resize()
         {
             _type = Detail::GetTensorType<Type>();
+            assert(_type != TensorTypeUnknown);
             size_t size = Size(0, _shape.size());
             _buffer->Resize(size);
             CpuSet(_buffer->size, Type(), _buffer->data);
@@ -535,7 +568,7 @@ namespace Synet
         {
             if(_type == TensorTypeUnknown)
                 _type = Detail::GetTensorType<Type>();
-            assert(_type == Detail::GetTensorType<Type>());
+            assert(_type != TensorTypeUnknown && _type == Detail::GetTensorType<Type>());
             size_t size = Size(0, _shape.size());
             if (size > _buffer->size)
                 _buffer->Resize(size);
@@ -550,4 +583,10 @@ namespace Synet
         Synet::Shape _shape;
         BufferPtr _buffer;
     };
+
+    typedef Tensor<Unknown> TensorAny;
+    typedef Tensor<float> Tensor32f;
+    typedef Tensor<int32_t> Tensor32i;
+    typedef Tensor<int8_t> Tensor8i;
+    typedef Tensor<uint8_t> Tensor8u;
 }

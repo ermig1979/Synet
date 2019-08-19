@@ -161,13 +161,25 @@ namespace Synet
         RoundingTypeCeil,
         RoundingTypeFloor);
 
-    SYNET_PARAM_ENUM(TensorType,
-        TensorType32f,
-        TensorType32i);
-
     SYNET_PARAM_ENUM(TensorFormat,
         TensorFormatNchw,
-        TensorFormatNhwc);
+        TensorFormatNhwc,
+        TensorFormatNchw4c,
+        TensorFormatNchw8c,
+        TensorFormatNchw16c,
+        TensorFormatNchwXc,
+        TensorFormatOiyx,
+        TensorFormatYxio,
+        TensorFormatOyxi4o,
+        TensorFormatOyxi8o,
+        TensorFormatOyxi16o,
+        TensorFormatOyxiXo);
+
+    SYNET_PARAM_ENUM(TensorType,
+        TensorType32f,
+        TensorType32i,
+        TensorType8i,
+        TensorType8u);
 
     SYNET_PARAM_ENUM(UnaryOperationType,
         UnaryOperationTypeAbs,
@@ -252,6 +264,7 @@ namespace Synet
         SYNET_PARAM_VALUE(ActivationFunctionType, activationType, ActivationFunctionTypeIdentity);
         SYNET_PARAM_VALUE(float, activationParam0, 0.0f);
         SYNET_PARAM_VALUE(float, activationParam1, 6.0f);
+        SYNET_PARAM_VALUE(TensorType, quantizationLevel, TensorType32f);
     };
 
     struct DetectionOutputParam
@@ -304,6 +317,7 @@ namespace Synet
         SYNET_PARAM_VALUE(bool, transposeA, false);
         SYNET_PARAM_VALUE(bool, transposeB, false);
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
+        SYNET_PARAM_VALUE(TensorType, quantizationLevel, TensorType32f);
     };
 
     struct InputParam
@@ -517,6 +531,7 @@ namespace Synet
         SYNET_PARAM_VALUE(Strings, src, Strings());
         SYNET_PARAM_VALUE(Strings, dst, Strings());
         SYNET_PARAM_VECTOR(WeightParam, weight);
+        SYNET_PARAM_VALUE(Strings, origin, Strings());
 
         SYNET_PARAM_STRUCT(BatchNormParam, batchNorm);
         SYNET_PARAM_STRUCT(BiasParam, bias);
@@ -562,12 +577,20 @@ namespace Synet
         SYNET_PARAM_VALUE(Strings, debug, Strings());
     };
 
+    struct StatisticParam
+    {
+        SYNET_PARAM_VALUE(String, name, String());
+        SYNET_PARAM_VALUE(Floats, min, Floats());
+        SYNET_PARAM_VALUE(Floats, max, Floats());
+    };
+
     struct NetworkParam
     {
         SYNET_PARAM_VALUE(int32_t, version, 0);
         SYNET_PARAM_VALUE(String, name, String());
         SYNET_PARAM_VALUE(Strings, dst, Strings());
         SYNET_PARAM_VECTOR(LayerParam, layers);
+        SYNET_PARAM_VECTOR(StatisticParam, statistics);
     };
 
     SYNET_PARAM_HOLDER(NetworkParamHolder, NetworkParam, network);

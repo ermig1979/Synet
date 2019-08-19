@@ -88,6 +88,7 @@ namespace Synet
 
         typedef std::vector<float> Vector;
         typedef Xml::File<char> XmlFile;
+        typedef Xml::XmlBase<char> XmlBase;
         typedef Xml::XmlDocument<char> XmlDoc;
         typedef Xml::XmlNode<char> XmlNode;
         typedef Xml::XmlAttribute<char> XmlAttr;
@@ -302,10 +303,30 @@ namespace Synet
                 }
             }
 
+            const XmlNode * pStatistics = pNet->FirstNode("statistics");
+            if (pStatistics)
+            {
+                const XmlNode * pLayer = pStatistics->FirstNode("layer");
+                while (pLayer)
+                {
+                    StatisticParam statistic;
+                    const XmlNode * pName = pLayer->FirstNode("name");
+                    if(pName && ConvertVector(pLayer->FirstNode("min"), statistic.min()) && ConvertVector(pLayer->FirstNode("max"), statistic.max()))
+                        statistic.name() = pName->Value();
+                    else
+                    {
+                        std::cout << "Can't load statistics! " << std::endl;
+                        return false;
+                    }
+                    network.statistics().push_back(statistic);
+                    pLayer = pLayer->NextSibling("layer");
+                }
+            }
+
             return true;
         }
 
-        template<class T> static bool ConvertVector(const XmlAttr * pSrc, std::vector<T> & dst, const String & delimeter = ",")
+        template<class T> static bool ConvertVector(const XmlBase * pSrc, std::vector<T> & dst, const String & delimeter = ",")
         {
             if (pSrc == NULL)
                 return false;
@@ -522,6 +543,8 @@ namespace Synet
             const XmlNode * pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
+            if (pData->FirstAttribute("quantization_level") && pData->FirstAttribute("quantization_level")->Value() == String("I8"))
+                layer.convolution().quantizationLevel() = TensorType8i;
             if (pData->FirstAttribute("kernel-y") && pData->FirstAttribute("kernel-x"))
             {
                 layer.convolution().kernel().resize(2);
@@ -546,7 +569,6 @@ namespace Synet
             }
             else if (!ConvertVector(pData->FirstAttribute("dilations"), layer.convolution().dilation()))
                 return false;
-
             StringToValue(pData->FirstAttribute("group")->Value(), layer.convolution().group());
             if (pData->FirstAttribute("pad-y") && pData->FirstAttribute("pad-x") && pData->FirstAttribute("pad-b") && pData->FirstAttribute("pad-r"))
             {
@@ -695,6 +717,8 @@ namespace Synet
             const XmlNode * pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
+            if (pData->FirstAttribute("quantization_level") && pData->FirstAttribute("quantization_level")->Value() == String("I8"))
+                layer.convolution().quantizationLevel() = TensorType8i;
             StringToValue(pData->FirstAttribute("out-size")->Value(), layer.innerProduct().outputNum());
             Shape inputShape = ConvertInputShape(pLayer);
             size_t inputSize = 1;
