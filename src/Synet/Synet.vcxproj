@@ -12,14 +12,14 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PreprocessorDefinitions>WIN32;_LIB;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\3rd\yolo\src;..;$(SolutionDir)..;$(SolutionDir)..\3rd;$(SolutionDir)..\Common;$(SolutionDir)..\3rd\freetype\include;$(SolutionDir)..\3rd\ffmpeg\include;$(SolutionDir)..\3rd\ffmpeg\vc_include;$(UniversalCRT_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;$(SolutionDir)..;$(SolutionDir)..\3rd;$(SolutionDir)..\Common;$(UniversalCRT_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PreprocessorDefinitions>WIN32;_LIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\3rd\yolo\src;..;$(SolutionDir)..;$(SolutionDir)..\3rd;$(SolutionDir)..\Common;$(SolutionDir)..\3rd\freetype\include;$(SolutionDir)..\3rd\ffmpeg\include;$(SolutionDir)..\3rd\ffmpeg\vc_include;$(UniversalCRT_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;$(SolutionDir)..;$(SolutionDir)..\3rd;$(SolutionDir)..\Common;$(UniversalCRT_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

@@ -495,7 +495,7 @@ namespace Synet
             }
             for (size_t i = 0; i < _stages.size(); ++i)
             {
-                _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
+                _stages[i].layer->Forward(_stages[i]);
                 os << "Layer: " << _stages[i].layer->Param().name() << " : ";
                 os << ValueToString(_stages[i].layer->Param().type()) << " ( ";
                 for(size_t j = 0; j < _stages[i].layer->Param().src().size(); ++j)
@@ -615,6 +615,7 @@ namespace Synet
         NetworkParamHolder _param;
         LayerSharedPtrs _layers;
         TensorSharedPtrs _tensors;
+        StatSharedPtrs _stats;
 
         Stages _input, _stages;
         TensorPtrs _src, _dst;
@@ -625,17 +626,14 @@ namespace Synet
             _tensors.clear();
             _input.clear();
             _stages.clear();
+            _stats.clear();
             _src.clear();
             _dst.clear();
             _back.clear();
 
-            TensorPtrs buf;
-            for (size_t i = 0; i < BUFFER_COUNT; ++i)
-            {
-                TensorSharedPtr tensor(new Tensor());
-                _tensors.push_back(tensor);
-                buf.push_back(tensor.get());
-            }
+            TensorPtrs buf, f2i, i2f;
+            SetBuffers(buf, f2i, i2f);
+            SetStats();
 
             NameIndexMap tensorIndex, layerIndex;
             NameSet available;
@@ -682,7 +680,8 @@ namespace Synet
                         _src.push_back(_tensors.back().get());
                     }
                 }
-                stage.buf = buf;
+                SetBuffers(buf, f2i, i2f, stage);
+                SetStats(stage);
                 if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput))
                     _input.push_back(stage);
                 else
@@ -707,6 +706,77 @@ namespace Synet
                 Reshape();
             _empty = false;
             return true;
+        }
+
+        void SetBuffers(TensorPtrs & buf, TensorPtrs & f2i, TensorPtrs & i2f)
+        {
+            SetBuffers(BUFFER_COUNT, buf);
+            size_t max = 0;
+            for (size_t i = 0; i < _param().layers().size(); ++i)
+                max = std::max(max, _param().layers()[i].src().size());
+            SetBuffers(max, f2i);
+            SetBuffers(max, i2f);
+        }
+
+        void SetBuffers(size_t count, TensorPtrs & dst)
+        {
+            for (size_t i = 0; i < count; ++i)
+            {
+                TensorSharedPtr tensor(new Tensor());
+                _tensors.push_back(tensor);
+                dst.push_back(tensor.get());
+            }
+        }
+
+        void SetBuffers(const TensorPtrs & buf, const TensorPtrs & f2i, const TensorPtrs & i2f, Stage & stage)
+        {
+            stage.buf = buf;
+            stage.f2i.assign(f2i.begin(), f2i.begin() + stage.src.size());
+            stage.i2f.assign(i2f.begin(), i2f.begin() + stage.src.size());
+        }
+
+        void SetStats()
+        {
+            _stats.clear();
+            for (size_t i = 0; i < _param().statistics().size(); ++i)
+            {
+                const StatisticParam & src = _param().statistics()[i];
+                StatSharedPtr stat(new Stat());
+                stat->name = src.name();
+                stat->min = src.min();
+                stat->max = src.max();
+                _stats.push_back(stat);
+            }
+        }
+
+        void SetStats(Stage & stage)
+        {
+            const LayerParam & param = stage.layer->Param();
+            SetStats(param.src(), stage.stats);
+            SetStats(param.dst(), stage.stats);
+            SetStats(param.origin(), stage.stats);
+        }
+
+        void SetStats(const Strings & names, StatPtrs & stats)
+        {
+            for (size_t i = 0; i < names.size(); ++i)
+            {
+                const String & name = names[i];
+                bool added = false;
+                for (size_t j = 0; j < stats.size() && !added; ++j)
+                    if (name == stats[j]->name)
+                        added = true;
+                if (added)
+                    continue;
+                for (size_t j = 0; j < _stats.size(); ++j)
+                {
+                    if (name == _stats[j]->name)
+                    {
+                        stats.push_back(_stats[j].get());
+                        break;
+                    }
+                }
+            }
         }
 
         bool InsertDst(const String & name)

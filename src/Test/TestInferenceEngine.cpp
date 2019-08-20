@@ -118,9 +118,8 @@ namespace Test
                     for (InferenceEngine::OutputsDataMap::iterator it = outputsInfo.begin(); it != outputsInfo.end(); ++it)
                     {
                         _outputNames.push_back(it->first);
-                        //it->second->setPrecision(InferenceEngine::Precision::FP32);
                         _ieOutput.push_back(_ieInferRequest.GetBlob(it->first));
-                    }               
+                    } 
                 }
             }
             catch (std::exception & e) 

@@ -122,29 +122,36 @@ namespace Synet
                     }
                 }
             }
+            bool result = false;
             if (src[index].type() == LayerTypeRestrictRange)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypeRestrictRange;
                 dst.back().convolution().activationParam0() = src[index].restrictRange().lower();
                 dst.back().convolution().activationParam1() = src[index].restrictRange().upper();
-                changes.push_back(Change(src[index].name(), src[index - 1].name()));
-                return true;
+                result = true;
             }
             if (src[index].type() == LayerTypeRelu)
             {
                 dst.back().convolution().activationType() = src[index].relu().negativeSlope() == 0.0f ? ActivationFunctionTypeRelu : ActivationFunctionTypeLeakyRelu;
                 dst.back().convolution().activationParam0() = src[index].relu().negativeSlope();
-                changes.push_back(Change(src[index].name(), src[index - 1].name()));
-                return true;
+                result = true;
             }
             if (src[index].type() == LayerTypePrelu)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypePrelu;
                 dst.back().weight().push_back(src[index].weight()[0]);
-                changes.push_back(Change(src[index].name(), src[index - 1].name()));
-                return true;
+                result = true;
             }
-            return false;
+            if (result)
+            {
+                if (dst.back().convolution().quantizationLevel() == TensorType8i)
+                {
+                    dst.back().origin().push_back(src[index - 1].name());
+                    dst.back().origin().push_back(src[index - 0].name());
+                }
+                changes.push_back(Change(src[index].name(), src[index - 1].name()));
+            }
+            return result;
         }
 
         bool MergeThreeConvolutions(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)

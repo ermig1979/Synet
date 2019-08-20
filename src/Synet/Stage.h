@@ -43,5 +43,8 @@ namespace Synet
         TensorPtrs src;
         TensorPtrs buf;
         TensorPtrs dst;
+        TensorPtrs f2i;
+        TensorPtrs i2f;
+        StatPtrs stats;
     };
 }

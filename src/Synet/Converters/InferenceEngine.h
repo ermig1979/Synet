@@ -165,9 +165,10 @@ namespace Synet
             const XmlNode * pLayers = pNet->FirstNode("layers");
             if (pLayers == NULL)
                 return false;
-            const XmlNode * pLayer = pLayers->FirstNode("layer"), *pPrevLayer = NULL;
+            const XmlNode * pLayer = pLayers->FirstNode("layer"), * pPrevLayer = NULL, * pNextLayer = NULL;
             while (pLayer)
             {
+                pNextLayer = pLayer->NextSibling("layer");
                 size_t layerId;
                 StringToValue(pLayer->FirstAttribute("id")->Value(), layerId);
                 index[layerId] = network.layers().size();
@@ -281,12 +282,13 @@ namespace Synet
 
                 if (layer.type() == LayerTypeUnknown)
                     return ErrorMessage(pLayer);
+
                 //NotImplemented(pLayer, layer);
                 //std::cout << "Add layer " << layer.name() << std::endl;
 
                 network.layers().push_back(layer);
                 pPrevLayer = pLayer;
-                pLayer = pLayer->NextSibling("layer");
+                pLayer = pNextLayer;
             }
 
             for (size_t i = 0; i < network.layers().size(); ++i)
@@ -1055,7 +1057,7 @@ namespace Synet
                         else
                             output = Shape({ output[0], output[2] , output[3] , output[1] });
                     }
-                    if (input.size() > 1 && output[0] == 1)
+                    if (input.size() > 1 && input[0] == 1 && output.size() > 1 && output[0] == 1)
                     {
                         layer.reshape().axis() = 1;
                         output.erase(output.begin(), output.begin() + 1);

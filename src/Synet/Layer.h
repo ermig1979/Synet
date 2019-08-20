@@ -70,9 +70,22 @@ namespace Synet
         {
         }
 
+        virtual bool CanInt8() const
+        {
+            return false;
+        }
+
+        virtual bool IsInt8() const
+        {
+            return false;
+        }
+
         inline void Reshape(const Stage & stage)
         {
-            Reshape(stage.src, stage.buf, stage.dst);
+            if (this->IsInt8())
+                ;
+            else
+                Reshape(stage.src, stage.buf, stage.dst);
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;

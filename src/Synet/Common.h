@@ -213,4 +213,15 @@ namespace Synet
         T x, y, w, h, prob;
         size_t id;
     };
+
+    struct Stat
+    {
+        String name;
+        Floats min;
+        Floats max;
+    };
+    typedef Stat * StatPtr;
+    typedef std::vector<StatPtr> StatPtrs;
+    typedef std::shared_ptr<Stat> StatSharedPtr;
+    typedef std::vector<StatSharedPtr> StatSharedPtrs;
 }

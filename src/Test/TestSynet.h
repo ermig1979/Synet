@@ -197,61 +197,68 @@ namespace Test
 
         void SetOutput()
         {
-            Net::TensorPtrs dst = _net.Dst();
+            typedef std::map<String, Net::Tensor*> Dst;
+            Dst dst;
+            for (size_t i = 0; i < _net.Dst().size(); ++i)
+                dst[_net.Dst()[i]->Name()] = _net.Dst()[i];
             _output.resize(dst.size());
-            for (size_t i = 0; i < dst.size(); ++i)
+            size_t i = 0;
+            for (Dst::const_iterator it = dst.begin(); it != dst.end(); ++it, ++i)
+                SetOutput(*it->second, *_net.Back()[i], _output[i]);
+        }
+
+        void SetOutput(const Net::Tensor & src, const Net::Layer & back, Vector & dst)
+        {
+            dst.clear();
+            if (src.Count() == 4 && src.Axis(3) == 7 && back.Param().type() == Synet::LayerTypeDetectionOutput)
             {
-                _output[i].clear();
-                if (dst[i]->Count() == 4 && dst[i]->Axis(3) == 7 && _net.Back()[i]->Param().type() == Synet::LayerTypeDetectionOutput)
+                const float * pSrc = src.CpuData();
+                for (size_t j = 0; j < src.Axis(2); ++j, pSrc += 7)
                 {
-                    const float * pDst = dst[i]->CpuData();
-                    for (size_t j = 0; j < dst[i]->Axis(2); ++j, pDst += 7)
-                    {
-                        if (pDst[1] == -1)
-                            break;
-                        size_t offset = _output[i].size();
-                        _output[i].resize(offset + 7);
-                        _output[i][offset + 0] = pDst[0];
-                        _output[i][offset + 1] = pDst[1];
-                        _output[i][offset + 2] = pDst[2];
-                        _output[i][offset + 3] = pDst[3];
-                        _output[i][offset + 4] = pDst[4];
-                        _output[i][offset + 5] = pDst[5];
-                        _output[i][offset + 6] = pDst[6];
-                    }
-                    SortDetectionOutput(_output[i].data(), _output[i].size());
+                    if (pSrc[1] == -1)
+                        break;
+                    size_t offset = dst.size();
+                    dst.resize(offset + 7);
+                    dst[offset + 0] = pSrc[0];
+                    dst[offset + 1] = pSrc[1];
+                    dst[offset + 2] = pSrc[2];
+                    dst[offset + 3] = pSrc[3];
+                    dst[offset + 4] = pSrc[4];
+                    dst[offset + 5] = pSrc[5];
+                    dst[offset + 6] = pSrc[6];
+                }
+                SortDetectionOutput(dst.data(), dst.size());
+            }
+            else
+            {
+                bool trans = src.Format() == Synet::TensorFormatNhwc;
+                dst.resize(src.Size());
+                if (trans && src.Count() == 4)
+                {
+                    float * pDst = dst.data();
+                    for (size_t n = 0; n < src.Axis(0); ++n)
+                        for (size_t c = 0; c < src.Axis(3); ++c)
+                            for (size_t y = 0; y < src.Axis(1); ++y)
+                                for (size_t x = 0; x < src.Axis(2); ++x)
+                                    *pDst++ = src.CpuData(Shape({ n, y, x, c }))[0];
+                }
+                else if (trans && src.Count() == 3)
+                {
+                    float * pDst = dst.data();
+                    for (size_t c = 0; c < src.Axis(2); ++c)
+                        for (size_t y = 0; y < src.Axis(0); ++y)
+                            for (size_t x = 0; x < src.Axis(1); ++x)
+                                *pDst++ = src.CpuData(Shape({ y, x, c }))[0];
+                }
+                else if (trans && src.Count() == 2 && src.Axis(0) == 1)
+                {
+                    float * pDst = dst.data();
+                    for (size_t c = 0; c < src.Axis(1); ++c)
+                        for (size_t s = 0; s < src.Axis(0); ++s)
+                            *pDst++ = src.CpuData(Shape({ s, c }))[0];
                 }
                 else
-                {
-                    bool trans = dst[i]->Format() == Synet::TensorFormatNhwc;
-                    _output[i].resize(dst[i]->Size());
-                    if (trans && dst[i]->Count() == 4)
-                    {
-                        float * out = _output[i].data();
-                        for (size_t n = 0; n < dst[i]->Axis(0); ++n)
-                            for (size_t c = 0; c < dst[i]->Axis(3); ++c)
-                                for (size_t y = 0; y < dst[i]->Axis(1); ++y)
-                                    for (size_t x = 0; x < dst[i]->Axis(2); ++x)
-                                        *out++ = dst[i]->CpuData(Shape({ n, y, x, c }))[0];
-                    }
-                    else if (trans && dst[i]->Count() == 3)
-                    {
-                        float * out = _output[i].data();
-                        for (size_t c = 0; c < dst[i]->Axis(2); ++c)
-                            for (size_t y = 0; y < dst[i]->Axis(0); ++y)
-                                for (size_t x = 0; x < dst[i]->Axis(1); ++x)
-                                    *out++ = dst[i]->CpuData(Shape({ y, x, c }))[0];
-                    }
-                    else if (trans && dst[i]->Count() == 2 && dst[i]->Axis(0) == 1)
-                    {
-                        float * out = _output[i].data();
-                        for (size_t c = 0; c < dst[i]->Axis(1); ++c)
-                            for (size_t s = 0; s < dst[i]->Axis(0); ++s)
-                                *out++ = dst[i]->CpuData(Shape({ s, c }))[0];
-                    }
-                    else
-                        memcpy(_output[i].data(), dst[i]->CpuData(), dst[i]->Size() * sizeof(float));
-                }
+                    memcpy(dst.data(), src.CpuData(), src.Size() * sizeof(float));
             }
         }
 
