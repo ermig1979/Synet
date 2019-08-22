@@ -232,11 +232,11 @@ namespace Synet
             else
             {
                 for (size_t i = 0; i < _input.size(); ++i)
-                    _input[i].layer->Reshape(_input[i].src, _input[i].buf, _input[i].dst);
+                    _input[i].layer->Reshape(_input[i].src, _input[i].buf, _input[i].dst, _input[i].f2i, _input[i].i2f);
             }
 
             for (size_t i = 0; i < _stages.size(); ++i)
-                _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst);
+                _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst, _stages[i].f2i, _stages[i].i2f);
 
             if (dstNames.size())
             {
@@ -475,7 +475,7 @@ namespace Synet
                     std::cout << shape[j] << " ";
                 std::cout << "}" << std::endl;
 #endif
-                _stages[i].layer->Forward(_stages[i]);
+                _stages[i].layer->Forward();
             }
             SetFastMode(mode);
         }
@@ -495,7 +495,7 @@ namespace Synet
             }
             for (size_t i = 0; i < _stages.size(); ++i)
             {
-                _stages[i].layer->Forward(_stages[i]);
+                _stages[i].layer->Forward();
                 os << "Layer: " << _stages[i].layer->Param().name() << " : ";
                 os << ValueToString(_stages[i].layer->Param().type()) << " ( ";
                 for(size_t j = 0; j < _stages[i].layer->Param().src().size(); ++j)
@@ -608,7 +608,15 @@ namespace Synet
         typedef std::map<size_t, String> IndexNameMap;
         typedef std::set<String> NameSet;
 
-        typedef Synet::Stage<Type> Stage;
+        struct Stage
+        {
+            Layer * layer;
+            TensorPtrs src;
+            TensorPtrs buf;
+            TensorPtrs dst;
+            TensorPtrs f2i;
+            TensorPtrs i2f;
+        };
         typedef std::vector<Stage> Stages;
 
         bool _empty;
@@ -681,7 +689,7 @@ namespace Synet
                     }
                 }
                 SetBuffers(buf, f2i, i2f, stage);
-                SetStats(stage);
+                stage.layer->SetStats(_stats);
                 if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput))
                     _input.push_back(stage);
                 else
@@ -698,6 +706,7 @@ namespace Synet
                     if (layer->Param().type() != LayerTypeMeta)
                     {
                         _dst.push_back(_tensors[tensorIndex[it->second]].get());
+                        layer->_isBack = true;
                         _back.push_back(layer);
                     }
                 }
@@ -710,10 +719,13 @@ namespace Synet
 
         void SetBuffers(TensorPtrs & buf, TensorPtrs & f2i, TensorPtrs & i2f)
         {
-            SetBuffers(BUFFER_COUNT, buf);
+            SetBuffers(BUFFER_COUNT*((int)TensorType8u + 1), buf);
             size_t max = 0;
             for (size_t i = 0; i < _param().layers().size(); ++i)
-                max = std::max(max, _param().layers()[i].src().size());
+            {
+                const LayerParam & layer = _param().layers()[i];
+                max = std::max(max, std::max(layer.src().size(), layer.dst().size()));
+            }
             SetBuffers(max, f2i);
             SetBuffers(max, i2f);
         }
@@ -731,8 +743,9 @@ namespace Synet
         void SetBuffers(const TensorPtrs & buf, const TensorPtrs & f2i, const TensorPtrs & i2f, Stage & stage)
         {
             stage.buf = buf;
-            stage.f2i.assign(f2i.begin(), f2i.begin() + stage.src.size());
-            stage.i2f.assign(i2f.begin(), i2f.begin() + stage.src.size());
+            size_t size = std::max(stage.src.size(), stage.dst.size());
+            stage.f2i.assign(f2i.begin(), f2i.begin() + size);
+            stage.i2f.assign(i2f.begin(), i2f.begin() + size);
         }
 
         void SetStats()
@@ -746,36 +759,6 @@ namespace Synet
                 stat->min = src.min();
                 stat->max = src.max();
                 _stats.push_back(stat);
-            }
-        }
-
-        void SetStats(Stage & stage)
-        {
-            const LayerParam & param = stage.layer->Param();
-            SetStats(param.src(), stage.stats);
-            SetStats(param.dst(), stage.stats);
-            SetStats(param.origin(), stage.stats);
-        }
-
-        void SetStats(const Strings & names, StatPtrs & stats)
-        {
-            for (size_t i = 0; i < names.size(); ++i)
-            {
-                const String & name = names[i];
-                bool added = false;
-                for (size_t j = 0; j < stats.size() && !added; ++j)
-                    if (name == stats[j]->name)
-                        added = true;
-                if (added)
-                    continue;
-                for (size_t j = 0; j < _stats.size(); ++j)
-                {
-                    if (name == _stats[j]->name)
-                    {
-                        stats.push_back(_stats[j].get());
-                        break;
-                    }
-                }
             }
         }
 

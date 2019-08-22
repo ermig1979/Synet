@@ -380,7 +380,7 @@ namespace Synet
                 for (prev = curr - 1; prev >= 0; --prev)
                     if (layers[prev].name() == layers[curr].src()[0])
                         break;
-                if (prev < 0 || layers[prev].type() == LayerTypeInnerProduct || layers[prev].type() == LayerTypePermute)
+                if (prev < 0 || layers[prev].type() == LayerTypeInnerProduct || layers[prev].type() == LayerTypePermute || layers[prev].type() == LayerTypeConcat)
                     return false;
                 if (layers[prev].type() == LayerTypeConvolution)
                 {
@@ -389,6 +389,7 @@ namespace Synet
                     shape.push_back(blob.shape().dim(1));
                     size_t channel = layers[prev].convolution().outputNum();
                     size_t spatial = shape[1] / channel;
+                    std::cout << " c = " << channel << " s = " << spatial << std::endl;
                     tensor.Reshape(shape);
                     for (size_t d = 0; d < shape[0]; d++)
                     {

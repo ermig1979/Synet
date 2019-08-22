@@ -29,9 +29,17 @@
 namespace Synet
 {
     template <typename T> void ImgToCol(const T * src, size_t srcC, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
-        size_t padY, size_t padX, size_t padH, size_t padW, size_t strideY, size_t strideX, size_t dilationY, size_t dilationX, T * dst)
+        size_t padY, size_t padX, size_t padH, size_t padW, size_t strideY, size_t strideX, size_t dilationY, size_t dilationX, const T * zero, T * dst)
     {
         SYNET_PERF_FUNC();
+
+        Buffer<T> _zero;
+        if (zero == NULL)
+        {
+            _zero.Resize(srcC);
+            memset(_zero.data, 0, _zero.size * sizeof(T));
+            zero = _zero.data;
+        }
 
         size_t dstH = (srcH + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
         size_t dstW = (srcW + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
@@ -68,14 +76,14 @@ namespace Synet
                                     if (sx < srcW)
                                         *(dst++) = src[sy * srcW + sx];
                                     else
-                                        *(dst++) = 0;
+                                        *(dst++) = zero[channel];
                                     sx += strideX;
                                 }
                             }
                             else
                             {
                                 for (size_t dx = 0; dx < dstW; ++dx)
-                                    *(dst++) = 0;
+                                    *(dst++) = zero[channel];
                             }
                             sy += strideY;
                         }
@@ -105,7 +113,7 @@ namespace Synet
                                     if (sx < srcW)
                                         *(dst++) = psrc[sx];
                                     else
-                                        *(dst++) = 0;
+                                        *(dst++) = zero[channel];
                                 }
                                 if (bodySize > 0)
                                 {
@@ -119,13 +127,13 @@ namespace Synet
                                     if (sx < srcW)
                                         *(dst++) = psrc[sx];
                                     else
-                                        *(dst++) = 0;
+                                        *(dst++) = zero[channel];
                                 }
                             }
                             else
                             {
-                                memset(dst, 0, dstW * sizeof(T));
-                                dst += dstW;
+                                for (size_t dx = 0; dx < dstW; ++dx)
+                                    *(dst++) = zero[channel];
                             }
                         }
                     }
@@ -136,10 +144,18 @@ namespace Synet
     }
 
     template <typename T> void ImgToRow(const T * src, size_t srcH, size_t srcW, size_t srcC, size_t kernelY, size_t kernelX,
-        size_t padY, size_t padX, size_t padH, size_t padW, size_t strideY, size_t strideX, size_t dilationY, size_t dilationX, size_t group, T * dst)
+        size_t padY, size_t padX, size_t padH, size_t padW, size_t strideY, size_t strideX, size_t dilationY, size_t dilationX, size_t group, const T * zero, T * dst)
     {
         SYNET_PERF_FUNC();
 
+        Buffer<T> _zero;
+        if (zero == NULL)
+        {
+            _zero.Resize(srcC);
+            memset(_zero.data, 0, _zero.size * sizeof(T));
+            zero = _zero.data;
+        }       
+        
         size_t dstH = (srcH + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
         size_t dstW = (srcW + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
 
@@ -160,25 +176,26 @@ namespace Synet
                                 size_t sx = dx*strideX + kx * dilationX - padX;
                                 if (sx < srcW)
                                 {
-                                    memcpy(dst, src + (sy * srcW + sx)*srcC, size * sizeof(float));
+                                    memcpy(dst, src + (sy * srcW + sx)*srcC, size * sizeof(T));
                                     dst += size;
                                 }
                                 else
                                 {
-                                    memset(dst, 0, size * sizeof(float));
+                                    memcpy(dst, zero, size * sizeof(T));
                                     dst += size;
                                 }
                             }
                         }
                         else
                         {
-                            memset(dst, 0, kernelX * size * sizeof(float));
-                            dst += kernelX*size;
+                            memcpy(dst, zero, kernelX * size * sizeof(T));
+                            dst += kernelX * size;
                         }
                     }
                 }
             }
             src += size;
+            zero += size;
         }
     }
 }

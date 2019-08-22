@@ -91,6 +91,7 @@ namespace Synet
             assert(src[0]->Count() == _axis + 3);
 
             _num = src[0]->Size(0, _axis);
+            _is8i = param.quantizationLevel() == TensorType8i;
             _trans = src[0]->Format() == TensorFormatNhwc;
             assert(weight[0].Shape() == _conv.WeightShape(_trans != 0) && weight[0].Format() == src[0]->Format());
 
@@ -189,10 +190,10 @@ namespace Synet
                     {
                         if (_trans)
                             Synet::ImgToRow(tmp, _conv.srcH, _conv.srcW, _conv.srcC, _conv.kernelY, _conv.kernelX, 
-                                _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, _conv.group, buf);
+                                _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, _conv.group, (const Type*)NULL, buf);
                         else
                             Synet::ImgToCol(tmp, _conv.srcC, _conv.srcH, _conv.srcW, _conv.kernelY, _conv.kernelX, 
-                                _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, buf);
+                                _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, (const Type*)NULL, buf);
                         tmp = buf;
                     }
                     if (_trans)
@@ -234,7 +235,7 @@ namespace Synet
         }
 
     private:
-        bool _is1x1, _biasTerm;
+        bool _is1x1, _biasTerm, _is8i;
         int _trans, _internal;
         ConvParam _conv;
         size_t _axis, _num, _srcSize, _dstSize, _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
