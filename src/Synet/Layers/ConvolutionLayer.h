@@ -46,6 +46,13 @@ namespace Synet
         ConvolutionLayer(const LayerParam & param)
             : Base(param)
         {
+            const ConvolutionParam & p = this->Param().convolution();
+            _is8i = p.quantizationLevel() == TensorType8i;
+            _hasPad = false;
+            for (size_t i = 0; i < p.pad().size(); ++i)
+                if (p.pad()[i])
+                    _hasPad = true;
+            _internal = 0;
         }
 
         virtual size_t MemoryUsage() const
@@ -59,8 +66,25 @@ namespace Synet
                 ((Tensor&)this->Weight()[0]).Clear();
         }
 
+        virtual bool Can8i() const
+        {
+            return _is8i;
+        }
+
+        virtual bool Is8i() const
+        {
+            return _is8i;
+        }
+
+        virtual bool HasPad() const
+        {
+            return _hasPad;
+        }
+
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            assert(src.size() == 1);
+
             const ConvolutionParam & param = this->Param().convolution();
             const Tensors & weight = this->Weight();
 
@@ -91,7 +115,6 @@ namespace Synet
             assert(src[0]->Count() == _axis + 3);
 
             _num = src[0]->Size(0, _axis);
-            _is8i = param.quantizationLevel() == TensorType8i;
             _trans = src[0]->Format() == TensorFormatNhwc;
             assert(weight[0].Shape() == _conv.WeightShape(_trans != 0) && weight[0].Format() == src[0]->Format());
 
@@ -133,30 +156,29 @@ namespace Synet
                 _grD = _siD * _siS;
             }
 
-            for (size_t i = 0; i < dst.size(); ++i)
-                dst[i]->Reshape(dstShape, src[0]->Format());
-
-            _srcSize = src[0]->Size(_axis);
-            _dstSize = dst[0]->Size(_axis);
-
-            _convolution.Init(_trans, _num, &_conv,
-#if defined(SYNET_BLIS_ENABLE)
-                Synet::BlisGemm32fNN
-#else
-                NULL
-#endif
-            );
-            if (_convolution.Enable())
+            if (_is8i)
             {
-                buf[0]->Extend({ _convolution.ExternalBufferSize() });
-                _convolution.SetParams(weight[0].CpuData(), &_internal, _biasTerm ? weight[1].CpuData() : NULL, 
-                    _conv.activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : _params);
+                dst[0]->As8u().Reshape(dstShape, src[0]->Format());
+                buf[TensorType8u]->As8u().Extend(Shape({ _conv.kernelY * _conv.kernelX * _conv.srcC, _conv.dstH * _conv.dstW }));
+                buf[TensorType32i]->As8u().Extend(dstShape, src[0]->Format());
+                Init8i();
             }
             else
             {
-                _internal = 0;
-                buf[0]->Extend(Shape({ _conv.kernelY * _conv.kernelX * _conv.srcC, _conv.dstH * _conv.dstW }));
+                dst[0]->Reshape(dstShape, src[0]->Format());
+
+                _convolution.Init(_trans, _num, &_conv, SYNET_EXTERNAL_GEMM);
+                if (_convolution.Enable())
+                {
+                    buf[TensorType32f]->Extend({ _convolution.ExternalBufferSize() });
+                    _convolution.SetParams(weight[0].CpuData(), &_internal, _biasTerm ? weight[1].CpuData() : NULL,
+                        _conv.activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : _params);
+                }
+                else
+                    buf[TensorType32f]->Extend(Shape({ _conv.kernelY * _conv.kernelX * _conv.srcC, _conv.dstH * _conv.dstW }));
             }
+            _srcSize = src[0]->Size(_axis);
+            _dstSize = dst[0]->Size(_axis);
         }
 
     protected:
@@ -164,8 +186,10 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            for (int i = 0; i < src.size(); ++i)
-                 ForwardCpu(src[i]->CpuData(), buf[0]->CpuData(), dst[i]->CpuData());
+            if (_is8i)
+                 ForwardCpu8i(src[0]->As8u().CpuData(), buf[TensorType8u]->As8u().CpuData(), buf[TensorType32i]->As32i().CpuData(), dst[0]->As8u().CpuData());
+            else
+                 ForwardCpu(src[0]->CpuData(), buf[TensorType32f]->CpuData(), dst[0]->CpuData());
         }
 
         void ForwardCpu(const T * src, T * buf, T * dst)
@@ -234,13 +258,79 @@ namespace Synet
             }
         }
 
+        void Init8i()
+        {
+            const Stat & stat = *this->Stats(0)[0];
+            _zero8u.Reshape(Shape({ _conv.srcC }));
+            _weight8i.Reshape(Shape({ _conv.srcC*_conv.dstC*_conv.kernelX*_conv.kernelY }));
+            _bias32i.Reshape(Shape({ _conv.dstC }));
+        }
+
+        void ForwardCpu8i(const uint8_t * src, uint8_t * buf, int32_t * sum, uint8_t * dst)
+        {
+            const uint8_t * zero = _zero8u.CpuData();
+            const int8_t * weight = _weight8i.CpuData();
+            for (size_t n = 0; n < _num; ++n)
+            {
+                const uint8_t * tmp = src;
+                if (!_is1x1)
+                {
+                    if (_trans)
+                        Synet::ImgToRow(tmp, _conv.srcH, _conv.srcW, _conv.srcC, _conv.kernelY, _conv.kernelX,
+                            _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, _conv.group, zero, buf);
+                    else
+                        Synet::ImgToCol(tmp, _conv.srcC, _conv.srcH, _conv.srcW, _conv.kernelY, _conv.kernelX,
+                            _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, zero, buf);
+                    tmp = buf;
+                }
+                //if (_trans)
+                //{
+                //    assert(_conv.group == 1 || _conv.group == _conv.srcC);
+                //    for (size_t g = 0; g < _conv.group; ++g)
+                //        CpuGemm(CblasNoTrans, CblasNoTrans, _siS, _siD, _siW, Type(1), tmp + _grS * g, _ldS, weight + _grW * g, _ldW, Type(0), dst + _grD * g, _ldD);
+                //}
+                //else
+                //{
+                //    for (size_t g = 0; g < _conv.group; ++g)
+                //        CpuGemm(CblasNoTrans, CblasNoTrans, _siD, _siS, _siW, Type(1), weight + _grW * g, _ldW, tmp + _grS * g, _ldS, Type(0), dst + _grD * g, _ldD);
+                //}
+                //if (_biasTerm)
+                //    CpuAddBias(this->Weight()[1].CpuData(), _conv.dstC, _conv.dstH*_conv.dstW, dst, _trans);
+                //switch (_conv.activation)
+                //{
+                //case ActivationFunctionTypeIdentity:
+                //    break;
+                //case ActivationFunctionTypeRelu:
+                //    CpuRelu(dst, _dstSize, 0.0f, dst);
+                //    break;
+                //case ActivationFunctionTypeLeakyRelu:
+                //    CpuRelu(dst, _dstSize, _params[0], dst);
+                //    break;
+                //case ActivationFunctionTypeRestrictRange:
+                //    CpuRestrictRange(dst, _dstSize, _params[0], _params[1], dst);
+                //    break;
+                //case ActivationFunctionTypePrelu:
+                //    Detail::PreluLayerForwardCpu(dst, this->Weight().back().CpuData(), _conv.dstC, _conv.dstH * _conv.dstW, dst, _trans);
+                //    break;
+                //default:
+                //    assert(0);
+                //}
+                src += _srcSize;
+                dst += _dstSize;
+            }
+
+        }
+
     private:
-        bool _is1x1, _biasTerm, _is8i;
+        bool _is1x1, _biasTerm, _is8i, _hasPad;
         int _trans, _internal;
         ConvParam _conv;
         size_t _axis, _num, _srcSize, _dstSize, _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
         float _params[2];
-
         Convolution<Type> _convolution;
+
+        Tensor8u _zero8u;
+        Tensor8i _weight8i;
+        Tensor32i _bias32i;
     };
 }

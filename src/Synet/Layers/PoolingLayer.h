@@ -174,6 +174,16 @@ namespace Synet
         PoolingLayer(const LayerParam & param)
             : Base(param)
         {
+            const PoolingParam & p = this->Param().pooling();
+            _hasPad = false;
+            for (size_t i = 0; i < p.pad().size(); ++i)
+                if (p.pad()[i])
+                    _hasPad = true;
+        }
+
+        virtual bool HasPad() const
+        {
+            return _hasPad;
         }
         
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -377,7 +387,7 @@ namespace Synet
     private:
         PoolingMethodType _method;
         RoundingType _roundingType;
-        bool _skip;
+        bool _skip, _hasPad;
         int _yoloCompatible, _trans, _excludePad;
         size_t _num, _channels, _srcH, _srcW, _kernelY, _kernelX, _strideX, _strideY, _padX, _padY, _padW, _padH, _dstH, _dstW;
     };

@@ -177,5 +177,8 @@ SYNET_INLINE void BlisGemm32fNN(size_t M, size_t N, size_t K, const float * alph
 #endif
     bli_sgemm(BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE, M, N, K, (float*)alpha, (float*)A, lda, 1, (float*)B, ldb, 1, (float*)beta, C, ldc, 1);
 }
+#define SYNET_EXTERNAL_GEMM Synet::BlisGemm32fNN
+#else
+#define SYNET_EXTERNAL_GEMM NULL
 #endif
 }

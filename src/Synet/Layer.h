@@ -73,12 +73,17 @@ namespace Synet
         {
         }
 
-        virtual bool CanInt8() const
+        virtual bool Can8i() const
         {
             return false;
         }
 
-        virtual bool IsInt8() const
+        virtual bool Is8i() const
+        {
+            return false;
+        }
+
+        virtual bool HasPad() const
         {
             return false;
         }
@@ -92,9 +97,9 @@ namespace Synet
         bool SetStats(const StatSharedPtrs & stats)
         {
             bool result = true;
-            result = result && SetStats(stats, _param.src(), _stats[0]);
-            result = result && SetStats(stats, _param.origin(), _stats[1]);
-            result = result && SetStats(stats, _param.dst(), _stats[2]);
+            result = result && SetStats(stats, _param.src(), _stats[0], true);
+            result = result && SetStats(stats, _param.origin(), _stats[1], false);
+            result = result && SetStats(stats, _param.dst(), _stats[2], false);
             return result;
         }
 
@@ -104,7 +109,7 @@ namespace Synet
             _src8u = src.size() && src[0]->GetType() == TensorType8u;
             if (_isBack)
             {
-                if (IsInt8())
+                if (Is8i())
                 {
                     _cvtSrc = !_src8u;
                     _cvtDst = true;
@@ -117,7 +122,7 @@ namespace Synet
             }
             else
             {
-                _cvtSrc = _src8u ? !CanInt8() : IsInt8();
+                _cvtSrc = _src8u ? !Can8i() : Is8i();
                 _cvtDst = false;
             }
             if (_cvtDst)
@@ -308,7 +313,7 @@ namespace Synet
         TensorPtrs _src, _buf, _dst, _f2i, _i2f;
         CvtParams _f2iCvt, _i2fCvt;
 
-        bool SetStats(const StatSharedPtrs & src, const Strings & names, StatPtrs & dst)
+        bool SetStats(const StatSharedPtrs & src, const Strings & names, StatPtrs & dst, bool isSrc)
         {
             dst.clear();
             for (size_t i = 0; i < names.size(); ++i)
@@ -320,6 +325,15 @@ namespace Synet
                     if (name == src[j]->name)
                     {
                         dst.push_back(src[j].get());
+                        if (isSrc && HasPad())
+                        {
+                            Stat & stat = *dst.back();
+                            for (size_t i = 0; i < stat.min.size(); ++i)
+                            {
+                                stat.min[i] = std::min(0.0f, stat.min[i]);
+                                stat.max[i] = std::max(0.0f, stat.max[i]);
+                            }
+                        }
                         break;
                     }
                 }
@@ -354,7 +368,8 @@ namespace Synet
 
         static void Prepare32fTo8u(const TensorPtrs & src, const StatPtrs & stats, const TensorPtrs & dst, CvtParams & params)
         {
-            assert(src.size() == stats.size() && src.size() == dst.size() && src.size() == params.size());
+            assert(src.size() == stats.size() && src.size() == dst.size());
+            params.resize(src.size());
             for (size_t i = 0; i < src.size(); ++i)
             {
                 dst[i]->As8u().Reshape(src[i]->Shape(), src[i]->Format());
@@ -365,6 +380,8 @@ namespace Synet
 
         static void Convert32fTo8u(const TensorPtrs & src, const CvtParams & params, const TensorPtrs & dst)
         {
+            SYNET_PERF_FUNC();
+
             assert(src.size() == params.size() && src.size() == dst.size());
             for (size_t i = 0; i < src.size(); ++i)
             {
@@ -391,7 +408,8 @@ namespace Synet
 
         static void Prepare8uTo32f(const TensorPtrs & src, const StatPtrs & stats, const TensorPtrs & dst, CvtParams & params)
         {
-            assert(src.size() == stats.size() && src.size() == dst.size() && src.size() == params.size());
+            assert(src.size() == stats.size() && src.size() == dst.size());
+            params.resize(src.size());
             for (size_t i = 0; i < src.size(); ++i)
             {
                 dst[i]->As32f().Reshape(src[i]->Shape(), src[i]->Format());
@@ -402,6 +420,8 @@ namespace Synet
 
         static void Convert8uTo32f(const TensorPtrs & src, const CvtParams & params, const TensorPtrs & dst)
         {
+            SYNET_PERF_FUNC();
+
             assert(src.size() == params.size() && src.size() == dst.size());
             for (size_t i = 0; i < src.size(); ++i)
             {
