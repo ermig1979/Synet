@@ -77,6 +77,14 @@ namespace Synet
             }
         };
 
+        template<class T> struct Activation<T, ActivationFunctionTypeElu>
+        {
+            static SYNET_INLINE T Func(T value, const T * params, size_t offset)
+            {
+                return CpuElu(value, params[0]);
+            }
+        };
+
         template<class T, int update> struct Update
         {
             static void Func(T * ptr, T val);
@@ -248,6 +256,7 @@ namespace Synet
             case ActivationFunctionTypeLeakyRelu: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeLeakyRelu, 0>; break;
             case ActivationFunctionTypeRestrictRange: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRestrictRange, 0>; break;
             case ActivationFunctionTypePrelu: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypePrelu, 0>; break;
+            case ActivationFunctionTypeElu: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeElu, 0>; break;
             default: assert(0);
             }
 
@@ -259,6 +268,7 @@ namespace Synet
             case ActivationFunctionTypeLeakyRelu: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeLeakyRelu>; break;
             case ActivationFunctionTypeRestrictRange: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeRestrictRange>; break;
             case ActivationFunctionTypePrelu: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypePrelu>; break;
+            case ActivationFunctionTypeElu: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeElu>; break;
             default: assert(0);
             }
 
@@ -270,6 +280,7 @@ namespace Synet
             case ActivationFunctionTypeLeakyRelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeLeakyRelu, 0>; break;
             case ActivationFunctionTypeRestrictRange: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRestrictRange, 0>; break;
             case ActivationFunctionTypePrelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypePrelu, 0>; break;
+            case ActivationFunctionTypeElu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeElu, 0>; break;
             default: assert(0);
             }
 

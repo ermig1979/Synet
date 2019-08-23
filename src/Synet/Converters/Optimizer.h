@@ -142,6 +142,12 @@ namespace Synet
                 dst.back().weight().push_back(src[index].weight()[0]);
                 result = true;
             }
+            if (src[index].type() == LayerTypeElu)
+            {
+                dst.back().convolution().activationType() = ActivationFunctionTypeElu;
+                dst.back().convolution().activationParam0() = src[index].elu().alpha();
+                result = true;
+            }
             if (result)
             {
                 if (dst.back().convolution().quantizationLevel() == TensorType8i)

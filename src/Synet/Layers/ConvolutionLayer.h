@@ -249,6 +249,8 @@ namespace Synet
                     case ActivationFunctionTypePrelu:
                         Detail::PreluLayerForwardCpu(dst, this->Weight().back().CpuData(), _conv.dstC, _conv.dstH * _conv.dstW, dst, _trans);
                         break;
+                    case ActivationFunctionTypeElu:
+                        CpuElu(dst, _dstSize, _params[0], dst);
                     default:
                         assert(0);
                     }
@@ -327,6 +329,7 @@ namespace Synet
         ConvParam _conv;
         size_t _axis, _num, _srcSize, _dstSize, _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
         float _params[2];
+
         Convolution<Type> _convolution;
 
         Tensor8u _zero8u;

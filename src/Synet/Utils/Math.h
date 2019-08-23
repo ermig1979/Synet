@@ -262,5 +262,10 @@ namespace Synet
     {
         ::SimdSynetRestrictRange(src, size, &lower, &upper, dst);
     }
+
+    template <> SYNET_INLINE void CpuElu<float>(const float * src, size_t size, const float & alpha, float * dst)
+    {
+        ::SimdSynetElu32f(src, size, &alpha, dst);
+    }
 #endif
 }
