@@ -87,7 +87,8 @@ namespace Synet
         ActivationFunctionTypeRelu,
         ActivationFunctionTypeLeakyRelu,
         ActivationFunctionTypeRestrictRange,
-        ActivationFunctionTypePrelu);
+        ActivationFunctionTypePrelu,
+        ActivationFunctionTypeElu);
 
     SYNET_PARAM_ENUM(BinaryOperationType,
         BinaryOperationTypeDiv,
@@ -356,6 +357,7 @@ namespace Synet
     struct MergedConvolutionParam
     {
         SYNET_PARAM_VECTOR(ConvolutionParam, conv);
+        SYNET_PARAM_VALUE(bool, add, false);
     };
 
     struct MetaParam

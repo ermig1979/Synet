@@ -198,8 +198,59 @@ namespace Synet
             layer.mergedConvolution().conv().push_back(l0.convolution());
             layer.mergedConvolution().conv().push_back(l1.convolution());
             layer.mergedConvolution().conv().push_back(l2.convolution());
-            dst.push_back(layer);
             index += 2;
+            dst.push_back(layer);
+            if (src.size() > index + 1)
+            {
+                const LayerParam & l3 = src[index + 1];
+                if (l2.convolution().activationType() == ActivationFunctionTypeIdentity && l3.type() == LayerTypeEltwise && l3.eltwise().operation() == EltwiseOperationTypeSum &&
+                    l3.eltwise().coefficients().empty() && l3.src().size() == 2 && l3.src()[0] == l0.src()[0] && l3.src()[1] == l2.dst()[0] && !InsideLink(src, index - 2, 4))
+                {
+                    dst.back().mergedConvolution().add() = true;
+                    dst.back().name() = l3.name();
+                    dst.back().dst()[0] = dst.back().name();
+                    index += 1;
+                    if (src.size() > index + 1)
+                    {
+                        const LayerParam & l4 = src[index + 1];
+                        if (l4.src().size() == 1 && l4.src()[0] == l3.name() && !InsideLink(src, index - 3, 5))
+                        {
+                            bool result = false;
+                            if (l4.type() == LayerTypeRestrictRange)
+                            {
+                                dst.back().mergedConvolution().conv()[2].activationType() = ActivationFunctionTypeRestrictRange;
+                                dst.back().mergedConvolution().conv()[2].activationParam0() = l4.restrictRange().lower();
+                                dst.back().mergedConvolution().conv()[2].activationParam1() = l4.restrictRange().upper();
+                                result = true;
+                            }
+                            if (l4.type() == LayerTypeRelu)
+                            {
+                                dst.back().mergedConvolution().conv()[2].activationType() = l4.relu().negativeSlope() == 0.0f ? ActivationFunctionTypeRelu : ActivationFunctionTypeLeakyRelu;
+                                dst.back().mergedConvolution().conv()[2].activationParam0() = l4.relu().negativeSlope();
+                                result = true;
+                            }
+                            if (l4.type() == LayerTypePrelu)
+                            {
+                                dst.back().mergedConvolution().conv()[2].activationType() = ActivationFunctionTypePrelu;
+                                dst.back().weight().push_back(l4.weight()[0]);
+                                result = true;
+                            }
+                            if (l4.type() == LayerTypeElu)
+                            {
+                                dst.back().mergedConvolution().conv()[2].activationType() = ActivationFunctionTypeElu;
+                                dst.back().mergedConvolution().conv()[2].activationParam0() = l4.elu().alpha();
+                                result = true;
+                            }
+                            if (result)
+                            {
+                                dst.back().name() = l4.name();
+                                dst.back().dst()[0] = dst.back().name();
+                                index += 1;
+                            }
+                        }
+                    }
+                }
+            }
             return true;
         }
 

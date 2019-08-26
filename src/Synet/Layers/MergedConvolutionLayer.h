@@ -204,7 +204,8 @@ namespace Synet
             assert(src[0]->Format() == TensorFormatNhwc);
             assert(this->Param().mergedConvolution().conv().size() == Detail::MCC);
 
-            const ConvolutionParam * conv = this->Param().mergedConvolution().conv().data();
+            const MergedConvolutionParam & p = this->Param().mergedConvolution();
+            const ConvolutionParam * conv = p.conv().data();
             const Tensors & weight = this->Weight();
 
             for (size_t i = 0, next = 0; i < Detail::MCC; ++i)
@@ -272,16 +273,33 @@ namespace Synet
             default: assert(0);
             }
 
+            _add = p.add() ? 1 : 0;
             assert(_conv[2].group == 1);
-            switch (_conv[2].activation)
+            if (_add)
             {
-            case ActivationFunctionTypeIdentity: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeIdentity, 0>; break;
-            case ActivationFunctionTypeRelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRelu, 0>; break;
-            case ActivationFunctionTypeLeakyRelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeLeakyRelu, 0>; break;
-            case ActivationFunctionTypeRestrictRange: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRestrictRange, 0>; break;
-            case ActivationFunctionTypePrelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypePrelu, 0>; break;
-            case ActivationFunctionTypeElu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeElu, 0>; break;
-            default: assert(0);
+                switch (_conv[2].activation)
+                {
+                case ActivationFunctionTypeIdentity: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeIdentity, 1>; break;
+                case ActivationFunctionTypeRelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRelu, 1>; break;
+                case ActivationFunctionTypeLeakyRelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeLeakyRelu, 1>; break;
+                case ActivationFunctionTypeRestrictRange: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRestrictRange, 1>; break;
+                case ActivationFunctionTypePrelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypePrelu, 1>; break;
+                case ActivationFunctionTypeElu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeElu, 1>; break;
+                default: assert(0);
+                }
+            }
+            else
+            {
+                switch (_conv[2].activation)
+                {
+                case ActivationFunctionTypeIdentity: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeIdentity, 0>; break;
+                case ActivationFunctionTypeRelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRelu, 0>; break;
+                case ActivationFunctionTypeLeakyRelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeLeakyRelu, 0>; break;
+                case ActivationFunctionTypeRestrictRange: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRestrictRange, 0>; break;
+                case ActivationFunctionTypePrelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypePrelu, 0>; break;
+                case ActivationFunctionTypeElu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeElu, 0>; break;
+                default: assert(0);
+                }
             }
 
             _axis = conv[0].axis();
@@ -298,8 +316,10 @@ namespace Synet
 
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);
+            if(_add)
+                assert(_srcSize == _dstSize);
 
-            _mergedConvolution.Init(1, _num, _conv, Detail::MCC, 0);
+            _mergedConvolution.Init(1, _num, _conv, Detail::MCC, _add);
             if (_mergedConvolution.Enable())
             {
                 buf[0]->Extend({ _mergedConvolution.ExternalBufferSize() });
@@ -351,6 +371,8 @@ namespace Synet
                 {
                     _convolution[0](src, _conv[0], _weight[0], _bias[0], _params[0], buf);
                     _convolution[1](buf, _conv[1], _weight[1], _bias[1], _params[1], buf1);
+                    if (_add)
+                        memcpy(dst, src, sizeof(T) * _dstSize);
                     _convolution[2](buf1, _conv[2], _weight[2], _bias[2], _params[2], dst);
                     src += _srcSize;
                     dst += _dstSize;
@@ -360,7 +382,7 @@ namespace Synet
 
     private:
         bool _biasTerm[Detail::MCC];
-        int _internal[Detail::MCC];
+        int _internal[Detail::MCC], _add;
         size_t _index[Detail::MCC];
         ConvParam _conv[Detail::MCC];
         size_t _axis, _srcSize, _dstSize, _num;

@@ -683,7 +683,8 @@ namespace Synet
             if (operation == "sum")
             {
                 layer.eltwise().operation() = EltwiseOperationTypeSum;
-                assert(pData->FirstAttribute("coeff") == NULL);
+                if (pData->FirstAttribute("coeff") && pData->FirstAttribute("coeff")->Value() != String())
+                    ConvertVector(pData->FirstAttribute("coeff"), layer.eltwise().coefficients());
             }
             else if (operation == "max")
                 layer.eltwise().operation() = EltwiseOperationTypeMax;
