@@ -689,7 +689,8 @@ namespace Synet
                     }
                 }
                 SetBuffers(buf, f2i, i2f, stage);
-                stage.layer->SetStats(_stats);
+                if(_stats.size())
+                    stage.layer->SetStats(_stats);
                 if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput))
                     _input.push_back(stage);
                 else

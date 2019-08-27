@@ -47,7 +47,7 @@ namespace Synet
             Shape shape;
             for (size_t i = 0; i < src[0]->Count(); ++i)
             {
-                if(src[0]->Axis(i) != 1)
+                if(src[0]->Axis(i) != 1 || i == 0)
                     shape.push_back(src[0]->Axis(i));
             }
             dst[0]->ShareAs(*src[0], shape, src[0]->Format());

@@ -162,6 +162,8 @@ namespace Synet
                 else
                     Reshape(_src, _buf, _dst);
             }
+            if (_isBack)
+                _dst[0]->SetName(_param.name());
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;

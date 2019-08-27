@@ -277,7 +277,11 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Split" && !ConvertSplitLayer(pLayer, trans, layer))
                     return ErrorMessage(pLayer);
+                if (type == "Squeeze" && !ConvertSqueezeLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Tile" && !ConvertTileLayer(pLayer, trans, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "Unsqueeze" && !ConvertUnsqueezeLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
 
                 if (layer.type() == LayerTypeUnknown)
@@ -1219,6 +1223,12 @@ namespace Synet
             return true;
         }
 
+        bool ConvertSqueezeLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            layer.type() = Synet::LayerTypeSqueeze;
+            return true;
+        }
+
         bool ConvertTileLayer(const XmlNode * pLayer, bool trans, LayerParam & layer)
         {
             layer.type() = Synet::LayerTypeTile;
@@ -1232,6 +1242,19 @@ namespace Synet
                 uint32_t order[4] = { 0, 3, 1, 2 };
                 layer.tile().axis() = order[layer.tile().axis()];
             }
+            return true;
+        }
+
+        bool ConvertUnsqueezeLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            layer.type() = Synet::LayerTypeExpandDims;
+            Shape input = ConvertInputShape(pLayer);
+            Shape output = ConvertOutputShape(pLayer);
+            size_t axis = 0;
+            for (; axis < input.size(); ++axis)
+                if (input[axis] != 1 && output[axis] == 1)
+                    break;
+            layer.expandDims().axis() = (int32_t)axis;
             return true;
         }
 
