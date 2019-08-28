@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 option(SIMD "Use Simd Library" ON)
-option(AVX512 "Use AVX-512" OFF)
+option(SIMD_AVX512 "Use AVX-512" OFF)
 option(BLIS "Use Blis" OFF)
 
 if(MODE STREQUAL "")
