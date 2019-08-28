@@ -9,4 +9,5 @@
 	url = https://github.com/ermig1979/blis.git
 [submodule "3rd/dldt"]
 	path = 3rd/dldt
-	url = https://github.com/ermig1979/dldt.git
+	url = https://github.com/opencv/dldt.git
+	branch = 2019
