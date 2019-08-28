@@ -1062,7 +1062,7 @@ namespace Synet
                         else
                             output = Shape({ output[0], output[2] , output[3] , output[1] });
                     }
-                    if (input.size() > 1 && input[0] == 1 && output.size() > 1 && output[0] == 1)
+                    if (input.size() > 1 && input[0] == 1 && output.size() >= 1 && output[0] == 1)
                     {
                         layer.reshape().axis() = 1;
                         output.erase(output.begin(), output.begin() + 1);

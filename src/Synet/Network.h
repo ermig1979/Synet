@@ -301,7 +301,7 @@ namespace Synet
                 return false;
             _input[0].dst[0]->Reshape(shape, Type(0), format);
             for (size_t i = 0; i < _stages.size(); ++i)
-                _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst);
+                _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst, _stages[i].f2i, _stages[i].i2f);
             return true;
         }
 

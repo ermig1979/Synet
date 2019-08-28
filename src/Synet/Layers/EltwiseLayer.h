@@ -28,6 +28,7 @@
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
 #include "Synet/Utils/Math.h"
+#include "Synet/Layers/ScaleLayer.h"
 
 namespace Synet
 {
@@ -94,13 +95,31 @@ namespace Synet
             {
                 for (size_t i = 0; i < src.size(); ++i)
                     _coefficients[i] = param.coefficients()[i];
-            }            
-            
-            _src.resize(src.size());
-            for (size_t i = 0; i < src.size(); ++i)
+            } 
+
+            if (src.size() == 2 && src[0]->Shape() != src[1]->Shape())
             {
-                assert(src[i]->Shape() == src[0]->Shape());
-                _src[i] = src[i]->CpuData();
+                if (_operation == EltwiseOperationTypeProduct && src[0]->Count() == 4)
+                {
+                    _scale = true;
+                    _trans = src[0]->Format() == TensorFormatNhwc;
+                    _batch = src[0]->Axis(0);
+                    _channels = src[0]->Axis(_trans ? 3 : 1);
+                    _spatial = src[0]->Size() / _batch / _channels;
+                    assert(src[0]->Size() == _batch*_channels);
+                }
+                else
+                    assert(0);
+            }
+            else
+            {
+                _scale = false;
+                _src.resize(src.size());
+                for (size_t i = 0; i < src.size(); ++i)
+                {
+                    assert(src[i]->Shape() == src[0]->Shape());
+                    _src[i] = src[i]->CpuData();
+                }
             }
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
         }
@@ -110,7 +129,24 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            Detail::EltwiseLayerForwardCpu(_src.data(), _coefficients.data(), _src.size(), dst[0]->Size(), _operation, dst[0]->CpuData());
+            if (_scale)
+            {
+                const Type * pSrc = src[0]->CpuData();
+                const Type * pScale = src[1]->CpuData();
+                const Type * pBias = NULL;
+                Type * pDst = dst[0]->CpuData();
+                for (size_t b = 0; b < _batch; ++b)
+                {
+                    Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _channels, _spatial, pDst, _trans);
+                    pSrc += _channels*_spatial;
+                    pDst += _channels*_spatial;
+                    pScale += _channels;
+                }
+            }
+            else
+            {
+                Detail::EltwiseLayerForwardCpu(_src.data(), _coefficients.data(), _src.size(), dst[0]->Size(), _operation, dst[0]->CpuData());
+            }
         }
 
     private:
@@ -120,5 +156,7 @@ namespace Synet
         EltwiseOperationType _operation;
         Vector _coefficients;
         Pointers _src;
+        int _scale, _trans;
+        size_t _batch, _channels, _spatial;
     };
 }
