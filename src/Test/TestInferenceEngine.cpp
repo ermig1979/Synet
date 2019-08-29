@@ -26,6 +26,13 @@
 
 #include "Synet/Converters/InferenceEngine.h"
 
+#ifdef SYNET_OTHER_RUN
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #include <ie_blob.h>
 #include <ie_plugin_dispatcher.hpp>
 #include <ext_list.hpp>
@@ -284,6 +291,19 @@ namespace Test
         }
     };
 }
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+#else //SYNET_OTHER_RUN
+namespace Test
+{
+    struct InferenceEngineClassifier : public Classifier
+    {
+    };
+}
+#endif//SYNET_OTHER_RUN
 
 Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
 
