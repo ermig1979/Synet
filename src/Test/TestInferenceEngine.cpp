@@ -62,7 +62,13 @@ namespace Test
 
         virtual Shape SrcShape(size_t index) const
         {
-            return _ieInput[index]->getTensorDesc().getDims();
+            Shape shape = _ieInput[index]->getTensorDesc().getDims();
+            if (_batchSize > 1)
+            {
+                assert(shape.size() == 4);
+                shape[0] = _batchSize;
+            }
+            return shape;
         }
 
         virtual size_t SrcSize(size_t index) const
@@ -78,7 +84,7 @@ namespace Test
         {
             TEST_PERF_FUNC();
 
-            try 
+            try
             {
                 _iePlugin = InferenceEngine::PluginDispatcher({ "" }).getPluginByDevice("CPU");
                 _iePlugin.AddExtension(std::make_shared<InferenceEngine::Extensions::Cpu::CpuExtensions>());
@@ -87,21 +93,38 @@ namespace Test
                 reader.ReadNetwork(model);
                 reader.ReadWeights(weight);
                 InferenceEngine::CNNNetwork network = reader.getNetwork();
-                if (batchSize > 1)
-                    network.setBatchSize(batchSize);
 
                 std::map<std::string, std::string> config;
                 config[InferenceEngine::PluginConfigParams::KEY_CPU_THREADS_NUM] = std::to_string(threadNumber);
+                _batchSize = 1;
                 if (batchSize > 1)
-                    config[InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED] = InferenceEngine::PluginConfigParams::YES;
-                InferenceEngine::ExecutableNetwork executableNet = _iePlugin.LoadNetwork(network, config);
-                _ieInferRequest = executableNet.CreateInferRequest();
-                if (batchSize > 1)
-                    _ieInferRequest.SetBatch(batchSize);
+                {
+                    try
+                    {
+                        network.setBatchSize(batchSize);
+                        config[InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED] = InferenceEngine::PluginConfigParams::YES;
+                        InferenceEngine::ExecutableNetwork executableNet = _iePlugin.LoadNetwork(network, config);
+                        _ieInferRequest = executableNet.CreateInferRequest();
+                        _ieInferRequest.SetBatch(batchSize);
+                    }
+                    catch (std::exception & e)
+                    {
+                        std::cout << "Inference Engine init trouble: '" << e.what() << "', try to emulate batch > 1." << std::endl;
+                        _batchSize = batchSize;
+                        network.setBatchSize(1);
+                        config.erase(InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED);
+                        InferenceEngine::ExecutableNetwork executableNet = _iePlugin.LoadNetwork(network, config);
+                        _ieInferRequest = executableNet.CreateInferRequest();
+                    }
+                }
+                else
+                {
+                    InferenceEngine::ExecutableNetwork executableNet = _iePlugin.LoadNetwork(network, config);
+                    _ieInferRequest = executableNet.CreateInferRequest();
+                }
 
                 _ieInput.clear();
                 InferenceEngine::InputsDataMap inputsInfo = network.getInputsInfo();
-                assert(inputsInfo.size() == 1);
                 for (InferenceEngine::InputsDataMap::iterator it = inputsInfo.begin(); it != inputsInfo.end(); ++it)
                 {
                     auto inputName = it->first;
@@ -126,10 +149,10 @@ namespace Test
                     {
                         _outputNames.push_back(it->first);
                         _ieOutput.push_back(_ieInferRequest.GetBlob(it->first));
-                    } 
+                    }
                 }
             }
-            catch (std::exception & e) 
+            catch (std::exception & e)
             {
                 std::cout << "Inference Engine init error: " << e.what() << std::endl;
                 return false;
@@ -139,7 +162,7 @@ namespace Test
                 Vectors stub(SrcCount());
                 for (size_t i = 0; i < SrcCount(); ++i)
                     stub[i].resize(SrcSize(i));
-                SetInput(stub);
+                SetInput(stub, 0);
                 _ieInferRequest.Infer();
             }
 
@@ -148,28 +171,38 @@ namespace Test
 
         virtual const Vectors & Predict(const Vectors & src)
         {
-            SetInput(src);
+            if (_batchSize == 1)
             {
-                TEST_PERF_FUNC();
-                _ieInferRequest.Infer();
+                SetInput(src, 0);
+                {
+                    TEST_PERF_FUNC();
+                    _ieInferRequest.Infer();
+                }
+                SetOutput(0);
             }
-            SetOutput();
+            else
+            {
+                TEST_PERF_BLOCK("batch emulation");
+                for (size_t b = 0; b < _batchSize; ++b)
+                {
+                    SetInput(src, b);
+                    _ieInferRequest.Infer();
+                    SetOutput(b);
+                }
+            }
             return _output;
         }
 
 #ifdef SYNET_DEBUG_PRINT_ENABLE
         virtual void DebugPrint(std::ostream & os)
         {
-            _ieInferRequest.Infer();
             for (size_t o = 0; o < _ieOutput.size(); ++o)
             {
-                const InferenceEngine::SizeVector & dims = _ieOutput[o]->getTensorDesc().getDims();
+                InferenceEngine::SizeVector dims = _ieOutput[o]->getTensorDesc().getDims();
                 const InferenceEngine::SizeVector & strides = _ieOutput[o]->getTensorDesc().getBlockingDesc().getStrides();
-                size_t size = 1;
-                for (size_t i = 0; i < dims.size(); ++i)
-                    size *= dims[i];
+                dims[0] = _batchSize;
                 Synet::Tensor<float> tensor(dims);
-                SetOutput(dims, strides, 0, _ieOutput[o]->buffer(), tensor.CpuData());
+                SetOutput(dims, strides, 0, _output[o].data(), tensor.CpuData());
                 tensor.DebugPrint(os, _outputNames.empty() ? String("???") : String(_outputNames[o]), false);
             }
         }
@@ -204,17 +237,18 @@ namespace Test
         std::vector<InferenceEngine::Blob::Ptr> _ieOutput;
         Vectors _output;
         Strings _outputNames;
+        size_t _batchSize;
 
-        void SetInput(const Vectors & x)
+        void SetInput(const Vectors & x, size_t b)
         {
             assert(_ieInput.size() == x.size() && _ieInput[0]->getTensorDesc().getLayout() == InferenceEngine::Layout::NCHW);
             for (size_t i = 0; i < x.size(); ++i)
             {
                 const InferenceEngine::SizeVector & dims = _ieInput[i]->getTensorDesc().getDims();
                 const InferenceEngine::SizeVector & strides = _ieInput[i]->getTensorDesc().getBlockingDesc().getStrides();
-                const float * src = x[i].data();
+                const float * src = x[i].data() + b * x[i].size() / _batchSize;
                 float * dst = (float*)_ieInput[i]->buffer();
-                SetOutput(dims, strides, 0, src, dst);
+                SetInput(dims, strides, 0, src, dst);
             }
         }
 
@@ -235,7 +269,7 @@ namespace Test
             }
         }
 
-        void SetOutput()
+        void SetOutput(size_t b)
         {
             _output.resize(_ieOutput.size());
             for (size_t o = 0; o < _ieOutput.size(); ++o)
@@ -245,7 +279,8 @@ namespace Test
                 if (dims.size() == 4 && dims[3] == 7)
                 {
                     const float * pOut = _ieOutput[o]->buffer();
-                    _output[o].clear();
+                    if (b)
+                        _output[o].clear();
                     for (size_t j = 0; j < dims[2]; ++j, pOut += 7)
                     {
                         if (pOut[0] == -1)
@@ -267,11 +302,11 @@ namespace Test
                     size_t size = 1;
                     for (size_t i = 0; i < dims.size(); ++i)
                         size *= dims[i];
-                    _output[o].resize(size);
-                    SetOutput(dims, strides, 0, _ieOutput[o]->buffer(), _output[o].data());
+                    _output[o].resize(size*_batchSize);
+                    SetOutput(dims, strides, 0, _ieOutput[o]->buffer(), _output[o].data() + b * size);
                 }
             }
-         }
+        }
 
         void SetOutput(const Sizes & dims, const Sizes & strides, size_t current, const float * src, float * dst)
         {
@@ -299,7 +334,7 @@ namespace Test
 #else //SYNET_OTHER_RUN
 namespace Test
 {
-    struct InferenceEngineClassifier : public Classifier
+    struct InferenceEngineNetwork : public Network
     {
     };
 }

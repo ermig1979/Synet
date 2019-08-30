@@ -63,6 +63,7 @@
 #include "Synet/Layers/RestrictRangeLayer.h"
 #include "Synet/Layers/ScaleLayer.h"
 #include "Synet/Layers/ShortcutLayer.h"
+#include "Synet/Layers/ShuffleLayer.h"
 #include "Synet/Layers/SigmoidLayer.h"
 #include "Synet/Layers/SliceLayer.h"
 #include "Synet/Layers/SoftmaxLayer.h"
@@ -839,6 +840,7 @@ namespace Synet
             case LayerTypeRestrictRange: return new RestrictRangeLayer<T>(param);
             case LayerTypeScale: return new ScaleLayer<T>(param);
             case LayerTypeShortcut: return new ShortcutLayer<T>(param);
+            case LayerTypeShuffle: return new ShuffleLayer<T>(param);
             case LayerTypeSigmoid: return new SigmoidLayer<T>(param);
             case LayerTypeSlice: return new SliceLayer<T>(param);
             case LayerTypeSoftmax: return new SoftmaxLayer<T>(param);

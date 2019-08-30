@@ -71,14 +71,14 @@ namespace Test
     {
         Network() {}
         virtual ~Network() {}
-        virtual String Name() const = 0;
-        virtual size_t SrcCount() const = 0;
-        virtual Shape SrcShape(size_t index) const = 0;
-        virtual size_t SrcSize(size_t index) const = 0;
-        virtual bool Init(const String & model, const String & weight, size_t threadNumber, size_t batchSize, const TestParam & param) = 0;
-        virtual const Vectors & Predict(const Vectors & src) = 0;
+        virtual String Name() const { return String(); }
+        virtual size_t SrcCount() const { return 0; }
+        virtual Shape SrcShape(size_t index) const { return Shape(); }
+        virtual size_t SrcSize(size_t index) const { return 0; }
+        virtual bool Init(const String & model, const String & weight, size_t threadNumber, size_t batchSize, const TestParam & param) { return false; }
+        virtual const Vectors & Predict(const Vectors & src) { return _output; }
 #ifdef SYNET_DEBUG_PRINT_ENABLE
-        virtual void DebugPrint(std::ostream & os) = 0;
+        virtual void DebugPrint(std::ostream & os) { }
 #endif
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const { return Regions(); }
         virtual size_t MemoryUsage() const { return 0; }

@@ -70,6 +70,7 @@ namespace Synet
         LayerTypeRestrictRange,
         LayerTypeScale,
         LayerTypeShortcut,
+        LayerTypeShuffle,
         LayerTypeSigmoid,
         LayerTypeSlice,
         LayerTypeSoftmax,

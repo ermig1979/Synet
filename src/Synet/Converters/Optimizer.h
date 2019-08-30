@@ -63,6 +63,8 @@ namespace Synet
                     continue;
                 if (MergeThreeConvolutions(src, i, dst, changes))
                     continue;
+                if (MergeShuffle(src, i, dst, changes))
+                    continue;
                 if (MergeSoftmax(src, i, dst, changes))
                     continue;
                 if (MergeFused0(src, i, dst, changes))
@@ -292,6 +294,35 @@ namespace Synet
             layer.softmax().axis() = src[index + 0].reduction().axis()[0];
             dst.push_back(layer);
             index += 4;
+            return true;
+        }
+
+        bool MergeShuffle(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            if (src.size() < index + 5)
+                return false;
+            if (src[index + 0].type() != LayerTypeConcat || src[index + 0].src().size() != 2)
+                return false;
+            if (src[index + 1].type() != LayerTypeReshape || src[index + 1].reshape().shape().size() != 3)
+                return false;
+            if (src[index + 2].type() != LayerTypePermute)
+                return false;
+            if (src[index + 3].type() != LayerTypeUnpack || src[index + 3].dst().size() != 2)
+                return false;
+            if (src[index + 4].type() != LayerTypeReshape || src[index + 4].reshape().shape().size() != 4)
+                return false;
+            if (src[index + 5].type() != LayerTypeReshape || src[index + 5].reshape().shape().size() != 4)
+                return false;
+            if (InsideLink(src, index, 4, 1))
+                return false;
+            LayerParam layer;
+            layer.type() = LayerTypeShuffle;
+            layer.name() = src[index + 0].name();
+            layer.src() = src[index + 0].src();
+            layer.dst().push_back(src[index + 4].dst()[0]);
+            layer.dst().push_back(src[index + 5].dst()[0]);
+            index += 5;
+            dst.push_back(layer);
             return true;
         }
 
