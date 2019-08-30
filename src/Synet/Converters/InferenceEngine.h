@@ -100,6 +100,19 @@ namespace Synet
         typedef std::vector<Edge> Edges;
         typedef std::map<size_t, size_t> IndexMap;
 
+        struct TensorInfo
+        {
+            String name, desc;
+            Shape shape;
+            size_t id;// , batch, channels, spatial, unknown;
+        };
+        typedef std::vector<TensorInfo> TensorInfos;
+        typedef std::map<String, TensorInfo> TensorInfoMap;
+        TensorInfoMap _tensors;
+
+        typedef std::map<String, LayerParam> LayerParamMap;
+        LayerParamMap _layers;
+
         bool LoadModel(const String & path, XmlFile & file, XmlDoc & xml)
         {
             if (file.Open(path.c_str()))
@@ -207,22 +220,28 @@ namespace Synet
                 const XmlNode * pOutput = pLayer->FirstNode("output");
                 if (pOutput)
                 {
-                    Shape portIds;
+                    TensorInfos tensorInfos;
                     const XmlNode * pPort = pOutput->FirstNode("port");
                     while (pPort)
                     {
-                        portIds.push_back(-1);
-                        StringToValue(pPort->FirstAttribute("id")->Value(), portIds.back());
+                        tensorInfos.push_back(TensorInfo());
+                        StringToValue(pPort->FirstAttribute("id")->Value(), tensorInfos.back().id);
+                        tensorInfos.back().shape = ConvertShape(pPort);
                         pPort = pPort->NextSibling("port");
                     }
-                    if (portIds.empty())
+                    if (tensorInfos.empty())
                         return ErrorMessage(pLayer);
-                    if (portIds.size() == 1)
+                    if (tensorInfos.size() == 1)
                         layer.dst().push_back(layer.name());
                     else
                     {
-                        for (size_t i = 0; i < portIds.size(); ++i)
+                        for (size_t i = 0; i < tensorInfos.size(); ++i)
                             layer.dst().push_back(layer.name() + ":" + ValueToString(i));
+                    }
+                    for (size_t i = 0; i < layer.dst().size(); ++i)
+                    {
+                        tensorInfos[i].name = layer.dst()[i];
+                        _tensors[tensorInfos[i].name] = tensorInfos[i];
                     }
                 }
 
@@ -291,6 +310,8 @@ namespace Synet
                 //std::cout << "Add layer " << layer.name() << std::endl;
 
                 network.layers().push_back(layer);
+                _layers[layer.name()] = layer;
+
                 pPrevLayer = pLayer;
                 pLayer = pNextLayer;
             }
@@ -389,20 +410,30 @@ namespace Synet
             return shape;
         }
 
-        static Shape ConvertInputShape(const XmlNode * pLayer)
+        static Shape ConvertInputShape(const XmlNode * pLayer, String port = String())
         {
             const XmlNode * pInput = pLayer->FirstNode("input");
             assert(pInput);
             const XmlNode * pPort = pInput->FirstNode("port");
+            if (!port.empty())
+            {
+                while (pPort && port != pPort->FirstAttribute("id")->Value())
+                    pPort = pPort->NextSibling("port");
+            }
             assert(pPort);
             return ConvertShape(pPort);
         }
 
-        static Shape ConvertOutputShape(const XmlNode * pLayer)
+        static Shape ConvertOutputShape(const XmlNode * pLayer, String port = String())
         {
             const XmlNode * pOutput = pLayer->FirstNode("output");
             assert(pOutput);
             const XmlNode * pPort = pOutput->FirstNode("port");
+            if (!port.empty())
+            {
+                while (pPort && port != pPort->FirstAttribute("id")->Value())
+                    pPort = pPort->NextSibling("port");
+            }
             assert(pPort);
             return ConvertShape(pPort);
         }
@@ -829,6 +860,19 @@ namespace Synet
                     order = Shape({ nchw[order[nhwc[0]]], nchw[order[nhwc[1]]], nchw[order[nhwc[2]]], nchw[order[nhwc[3]]] });
                 }
             }
+            else if(trans && order.size() == 3)
+            {
+                bool reorderChannels = false;
+                if (pPrevLayer && String(pPrevLayer->FirstAttribute("type")->Value()) == "Reshape")
+                {
+                    Shape i = ConvertInputShape(pPrevLayer);
+                    Shape o = ConvertOutputShape(pPrevLayer);
+                    if (order == Shape({ 1, 0, 2 }) && i.size() == 4 && o.size() == 3 && o[0] * o[1] == i[1] && o[2] == i[2] * i[3])
+                        reorderChannels = true;
+                }
+                if (reorderChannels)
+                    order = Shape({ 0, 2, 1 });
+            }
             layer.permute().order() = order;
             return true;
         }
@@ -1044,6 +1088,19 @@ namespace Synet
             return false;
         }
 
+        String ClearLayerName(String name)
+        {
+            size_t delimiter = name.find_first_of(":");
+            if (delimiter != std::string::npos)
+                name = name.substr(0, delimiter);
+            return name;
+        }
+
+        const LayerParam & PrevLayer(const LayerParam & layer)
+        {
+            return _layers[ClearLayerName(layer.src()[0])];
+        }
+
         bool ConvertReshapeLayer(const XmlNode * pLayer, bool trans, LayerParam & layer, LayerParams & layers)
         {
             layer.type() = Synet::LayerTypeReshape;
@@ -1062,7 +1119,14 @@ namespace Synet
                         else
                             output = Shape({ output[0], output[2] , output[3] , output[1] });
                     }
-                    if (input.size() > 1 && input[0] == 1 && output.size() >= 1 && output[0] == 1)
+                    if (trans && output.size() == 3 && !PermutedToNchw(layers))
+                    {
+                        if (input.size() > 3 && output[0] * output[1] == input[1] && output[2] == input[2] * input[3])
+                            output = Shape({ output[2] , output[0] , output[1] });
+                        else
+                            output = Shape({ output[1] , output[2] , output[0] });
+                    }
+                    if (input.size() > 1 && input[0] == 1 && output.size() >= 1 && output[0] == 1 && PrevLayer(layer).type() != LayerTypeUnpack)
                     {
                         layer.reshape().axis() = 1;
                         output.erase(output.begin(), output.begin() + 1);
@@ -1218,6 +1282,18 @@ namespace Synet
                 {
                     Shape nchw = Shape({ 0, 3, 1, 2 });
                     layer.unpack().axis() = (int32_t)nchw[layer.unpack().axis()];
+                }
+                if (input.size() == 3)
+                {
+                    if (PrevLayer(layer).type() == LayerTypePermute)
+                    {
+                        layer.unpack().axis() = 1;
+                    }
+                    else
+                    {
+                        Shape nchw = Shape({ 2, 0, 1 });
+                        layer.unpack().axis() = (int32_t)nchw[layer.unpack().axis()];
+                    }
                 }
             }
             return true;
