@@ -56,14 +56,6 @@
 #include "Simd/SimdFont.hpp"
 #endif
 
-#ifdef SYNET_BLIS_ENABLE
-extern "C"
-{
-//#include <blis/blis.h>
-//#include <blis/cblas.h>
-}
-#endif
-
 namespace Test
 {
     typedef std::string String;

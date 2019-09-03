@@ -106,7 +106,7 @@ namespace Synet
                     _batch = src[0]->Axis(0);
                     _channels = src[0]->Axis(_trans ? 3 : 1);
                     _spatial = src[0]->Size() / _batch / _channels;
-                    assert(src[0]->Size() == _batch*_channels);
+                    assert(src[1]->Size() == _batch*_channels);
                 }
                 else
                     assert(0);
