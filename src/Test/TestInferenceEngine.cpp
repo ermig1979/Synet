@@ -279,7 +279,7 @@ namespace Test
                 if (dims.size() == 4 && dims[3] == 7)
                 {
                     const float * pOut = _ieOutput[o]->buffer();
-                    if (b)
+                    if (b == 0)
                         _output[o].clear();
                     for (size_t j = 0; j < dims[2]; ++j, pOut += 7)
                     {

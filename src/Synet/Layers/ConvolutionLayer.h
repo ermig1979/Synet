@@ -48,10 +48,6 @@ namespace Synet
         {
             const ConvolutionParam & p = this->Param().convolution();
             _is8i = p.quantizationLevel() == TensorType8i;
-            _hasPad = false;
-            for (size_t i = 0; i < p.pad().size(); ++i)
-                if (p.pad()[i])
-                    _hasPad = true;
             _internal = 0;
         }
 
@@ -74,11 +70,6 @@ namespace Synet
         virtual bool Is8i() const
         {
             return _is8i;
-        }
-
-        virtual bool HasPad() const
-        {
-            return _hasPad;
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -160,7 +151,7 @@ namespace Synet
             {
                 dst[0]->As8u().Reshape(dstShape, src[0]->Format());
                 buf[TensorType8u]->As8u().Extend(Shape({ _conv.kernelY * _conv.kernelX * _conv.srcC, _conv.dstH * _conv.dstW }));
-                buf[TensorType32i]->As8u().Extend(dstShape, src[0]->Format());
+                buf[TensorType32i]->As32i().Extend(dstShape, src[0]->Format());
                 Init8i();
             }
             else
@@ -262,16 +253,79 @@ namespace Synet
 
         void Init8i()
         {
-            const Stat & stat = *this->Stats(0)[0];
-            _zero8u.Reshape(Shape({ _conv.srcC }));
-            _weight8i.Reshape(Shape({ _conv.srcC*_conv.dstC*_conv.kernelX*_conv.kernelY }));
+            Stat & statS = *this->Stats(0)[0];
+            Stat & statD = *this->Stats(2)[0];
+            statS.Init8u(SYNET_INT8_SAFE_ZERO);
+            statD.Init8u(SYNET_INT8_SAFE_ZERO);
+            _weight8i.Reshape(this->Weight()[0].Shape());
             _bias32i.Reshape(Shape({ _conv.dstC }));
+            _norm32f.Reshape(Shape({ size_t(2), _conv.dstC }));
+            if (_trans)
+            {
+                assert(0);
+            }
+            else
+            {
+                size_t G = _conv.group, D = _conv.dstC / G, C = _conv.srcC / G, Y = _conv.kernelY, X = _conv.kernelX, K = C * Y * X;
+                Floats normW(K);
+                const float * pSrcW = this->Weight()[0].CpuData();
+                const float * pSrcB = _biasTerm ? this->Weight()[1].CpuData() : NULL;
+                const float * pSrcScale = statS.scale32fTo8u.data();
+                const float * pSrcShift = statS.shift32fTo8u.data();
+                const float * pDstScale = statD.scale8uTo32f.data();
+                const float * pDstShift = statD.shift8uTo32f.data();
+                float * pNormW = normW.data();
+                int8_t * pDstW = _weight8i.CpuData();
+                int32_t * pDstB = _bias32i.CpuData();
+                float * pNormScale = _norm32f.CpuData();
+                float * pNormShift = pNormScale + _conv.dstC;
+                for (size_t g = 0; g < G; ++g)
+                {
+                    for (size_t d = 0; d < D; ++d)
+                    {
+                        float normB = 0, minW = FLT_MAX, maxW = -FLT_MAX;
+                        if (pSrcB)
+                            normB = pSrcB[g*D + d];
+                        for (size_t c = 0, k = 0; c < C; ++c)
+                        {
+                            for (size_t y = 0; y < Y; ++y)
+                            {
+                                for (size_t x = 0; x < X; ++x, ++k)
+                                {
+                                    pNormW[k] = pSrcW[d*K + k] / pSrcScale[c];
+                                    normB -= pNormW[k] * pSrcShift[c];
+                                    minW = std::min(minW, pNormW[k]);
+                                    maxW = std::max(maxW, pNormW[k]);
+                                }
+                            }
+                        }
+                        float scale = 127.0f / std::max(abs(maxW), abs(minW));
+                        for (size_t k = 0; k < K; ++k)
+                            pDstW[d*K + k] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
+                        pDstB[d] = Synet::Quantize(normB * scale);
+                        pNormScale[d] = 1.0f / pDstScale[d] / scale;
+                        pNormShift[d] = -pDstShift[d] / pDstScale[d];
+                    }
+                    pSrcW += K*D;
+                    pSrcScale += C;
+                    pSrcShift += C;
+                    pDstScale += D;
+                    pDstShift += D;
+                    pDstW += K*D;
+                    pDstB += D;
+                    pNormScale += D;
+                    pNormShift += D;
+                }
+            }
         }
 
         void ForwardCpu8i(const uint8_t * src, uint8_t * buf, int32_t * sum, uint8_t * dst)
         {
-            const uint8_t * zero = _zero8u.CpuData();
+            const uint8_t * zero = this->Stats(0)[0]->zero8u.data();
             const int8_t * weight = _weight8i.CpuData();
+            const int32_t * bias = _bias32i.CpuData();
+            const float * scale = _norm32f.CpuData();
+            const float * shift = scale + _conv.dstC;
             for (size_t n = 0; n < _num; ++n)
             {
                 const uint8_t * tmp = src;
@@ -285,19 +339,21 @@ namespace Synet
                             _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, zero, buf);
                     tmp = buf;
                 }
-                //if (_trans)
-                //{
+                if (_trans)
+                {
                 //    assert(_conv.group == 1 || _conv.group == _conv.srcC);
                 //    for (size_t g = 0; g < _conv.group; ++g)
                 //        CpuGemm(CblasNoTrans, CblasNoTrans, _siS, _siD, _siW, Type(1), tmp + _grS * g, _ldS, weight + _grW * g, _ldW, Type(0), dst + _grD * g, _ldD);
-                //}
-                //else
-                //{
-                //    for (size_t g = 0; g < _conv.group; ++g)
-                //        CpuGemm(CblasNoTrans, CblasNoTrans, _siD, _siS, _siW, Type(1), weight + _grW * g, _ldW, tmp + _grS * g, _ldS, Type(0), dst + _grD * g, _ldD);
-                //}
-                //if (_biasTerm)
-                //    CpuAddBias(this->Weight()[1].CpuData(), _conv.dstC, _conv.dstH*_conv.dstW, dst, _trans);
+                }
+                else
+                {
+                    for (size_t g = 0; g < _conv.group; ++g)
+                        CpuGemmNN(_siD, _siS, _siW, weight + _grW * g, _ldW, tmp + _grS * g, _ldS, sum + _grD * g, _ldD);
+                }
+                CpuAddBias(bias, _conv.dstC, _conv.dstH*_conv.dstW, sum, _trans);
+
+                Convert32iTo8u(sum, _conv.dstC, _conv.dstH*_conv.dstW, (TensorFormat)_trans, scale, shift, dst);
+
                 //switch (_conv.activation)
                 //{
                 //case ActivationFunctionTypeIdentity:
@@ -324,7 +380,7 @@ namespace Synet
         }
 
     private:
-        bool _is1x1, _biasTerm, _is8i, _hasPad;
+        bool _is1x1, _biasTerm, _is8i;
         int _trans, _internal;
         ConvParam _conv;
         size_t _axis, _num, _srcSize, _dstSize, _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
@@ -332,8 +388,8 @@ namespace Synet
 
         Convolution<Type> _convolution;
 
-        Tensor8u _zero8u;
         Tensor8i _weight8i;
         Tensor32i _bias32i;
+        Tensor32f _norm32f;
     };
 }

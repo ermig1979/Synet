@@ -27,6 +27,7 @@
 #include "Synet/Common.h"
 #include "Synet/Tensor.h"
 #include "Synet/Params.h"
+#include "Synet/Stat.h"
 #include "Synet/Utils/Convert.h"
 
 namespace Synet
@@ -83,11 +84,6 @@ namespace Synet
             return false;
         }
 
-        virtual bool HasPad() const
-        {
-            return false;
-        }
-
         const StatPtrs & Stats(size_t index) const
         {
             assert(index < 3);
@@ -97,14 +93,15 @@ namespace Synet
         bool SetStats(const StatSharedPtrs & stats)
         {
             bool result = true;
-            result = result && SetStats(stats, _param.src(), _stats[0], true);
-            result = result && SetStats(stats, _param.origin(), _stats[1], false);
-            result = result && SetStats(stats, _param.dst(), _stats[2], false);
+            result = result && SetStats(stats, _param.src(), _stats[0]);
+            result = result && SetStats(stats, _param.origin(), _stats[1]);
+            result = result && SetStats(stats, _param.dst(), _stats[2]);
             return result;
         }
 
         inline void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, const TensorPtrs & f2i, const TensorPtrs & i2f)
         {
+            const bool safeZero = SYNET_INT8_SAFE_ZERO;
             _src = src, _buf = buf, _dst = dst, _f2i = f2i, _i2f = i2f;
             _src8u = src.size() && src[0]->GetType() == TensorType8u;
             if (_isBack)
@@ -131,15 +128,15 @@ namespace Synet
                 {
                     _f2i.resize(_src.size());
                     _i2f.resize(_dst.size());
-                    Prepare32fTo8u(_src, _stats[0], _f2i, _f2iCvt);
+                    Prepare32fTo8u(_src, _stats[0], _f2i, _f2iCvt, safeZero);
                     Reshape(_f2i, _buf, _i2f);
-                    Prepare8uTo32f(_i2f, _stats[2], _dst, _i2fCvt);
+                    Prepare8uTo32f(_i2f, _stats[2], _dst, _i2fCvt, safeZero);
                 }
                 else
                 {
                     _i2f.resize(_dst.size());
                     Reshape(_src, _buf, _i2f);
-                    Prepare8uTo32f(_i2f, _stats[2], _dst, _i2fCvt);
+                    Prepare8uTo32f(_i2f, _stats[2], _dst, _i2fCvt, safeZero);
                 }
             }
             else
@@ -149,13 +146,13 @@ namespace Synet
                     if (_src8u)
                     {
                         _i2f.resize(_src.size());
-                        Prepare8uTo32f(_src, _stats[0], _i2f, _i2fCvt);
+                        Prepare8uTo32f(_src, _stats[0], _i2f, _i2fCvt, safeZero);
                         Reshape(_i2f, _buf, _dst);
                     }
                     else
                     {
                         _f2i.resize(_src.size());
-                        Prepare32fTo8u(_src, _stats[0], _f2i, _f2iCvt);
+                        Prepare32fTo8u(_src, _stats[0], _f2i, _f2iCvt, safeZero);
                         Reshape(_f2i, _buf, _dst);
                     }
                 }
@@ -300,22 +297,14 @@ namespace Synet
     private:
         template<class U> friend class Network;
 
-        struct CvtParam
-        {
-            size_t batch, channels, spatial;
-            TensorFormat format;
-            Floats scale, shift;
-        };
-        typedef std::vector<CvtParam> CvtParams;
-
         const LayerParam & _param;
         Tensors _weight;
         StatPtrs _stats[3];
         bool _isBack, _cvtSrc, _cvtDst, _src8u;
         TensorPtrs _src, _buf, _dst, _f2i, _i2f;
-        CvtParams _f2iCvt, _i2fCvt;
+        ConvertParams _f2iCvt, _i2fCvt;
 
-        bool SetStats(const StatSharedPtrs & src, const Strings & names, StatPtrs & dst, bool isSrc)
+        bool SetStats(const StatSharedPtrs & src, const Strings & names, StatPtrs & dst)
         {
             dst.clear();
             for (size_t i = 0; i < names.size(); ++i)
@@ -327,15 +316,6 @@ namespace Synet
                     if (name == src[j]->name)
                     {
                         dst.push_back(src[j].get());
-                        if (isSrc && HasPad())
-                        {
-                            Stat & stat = *dst.back();
-                            for (size_t i = 0; i < stat.min.size(); ++i)
-                            {
-                                stat.min[i] = std::min(0.0f, stat.min[i]);
-                                stat.max[i] = std::max(0.0f, stat.max[i]);
-                            }
-                        }
                         break;
                     }
                 }
@@ -348,39 +328,29 @@ namespace Synet
             return true;
         }
 
-        static void InitCvtSize(const Tensor & src, const Stat & stat, CvtParam & param)
+        static void InitCvtSize(const Tensor & src, const Stat & stat, ConvertParam & param)
         {
-            assert(stat.min.size() == stat.max.size());
             param.batch = src.Count() > 1 ? src.Axis(0) : 1;
             param.channels = stat.min.size();
             param.spatial = src.Size() / param.batch / param.channels;
-            param.scale.resize(param.channels);
-            param.shift.resize(param.channels);
             param.format = src.Format();
         }
 
-        static void InitCvt32fTo8u(const Stat & stat, CvtParam & param)
-        {
-            for (int i = 0; i < param.channels; ++i)
-            {
-                param.scale[i] = 255.0f / (stat.max[i] - stat.min[i]);
-                param.shift[i] = - stat.min[i] * param.scale[i];
-            }
-        }
-
-        static void Prepare32fTo8u(const TensorPtrs & src, const StatPtrs & stats, const TensorPtrs & dst, CvtParams & params)
+        static void Prepare32fTo8u(const TensorPtrs & src, const StatPtrs & stats, const TensorPtrs & dst, ConvertParams & params, bool safeZero)
         {
             assert(src.size() == stats.size() && src.size() == dst.size());
-            params.resize(src.size());
+            params.resize(stats.size());
             for (size_t i = 0; i < src.size(); ++i)
             {
                 dst[i]->As8u().Reshape(src[i]->Shape(), src[i]->Format());
                 InitCvtSize(*src[i], *stats[i], params[i]);
-                InitCvt32fTo8u(*stats[i], params[i]);
+                stats[i]->Init8u(safeZero);
+                params[i].scale = stats[i]->scale32fTo8u.data();
+                params[i].shift = stats[i]->shift32fTo8u.data();
             }
         }
 
-        static void Convert32fTo8u(const TensorPtrs & src, const CvtParams & params, const TensorPtrs & dst)
+        static void Convert32fTo8u(const TensorPtrs & src, const ConvertParams & params, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
 
@@ -389,38 +359,31 @@ namespace Synet
             {
                 const float * pSrc = src[i]->As32f().CpuData();
                 uint8_t * pDst = dst[i]->As8u().CpuData();
-                const CvtParam & p = params[i];
+                const ConvertParam & p = params[i];
                 for (size_t b = 0; b < p.batch; ++b)
                 {
-                    Synet::Convert32fTo8u(pSrc, p.channels, p.spatial, p.format, p.scale.data(), p.shift.data(), pDst);
+                    Synet::Convert32fTo8u(pSrc, p.channels, p.spatial, p.format, p.scale, p.shift, pDst);
                     pSrc += p.channels*p.spatial;
                     pDst += p.channels*p.spatial;
                 }
             }
         }
 
-        static void InitCvt8uTo32f(const Stat & stat, CvtParam & param)
-        {
-            for (int i = 0; i < param.channels; ++i)
-            {
-                param.scale[i] = (stat.max[i] - stat.min[i]) / 255.0f;
-                param.shift[i] = stat.min[i];
-            }
-        }
-
-        static void Prepare8uTo32f(const TensorPtrs & src, const StatPtrs & stats, const TensorPtrs & dst, CvtParams & params)
+        static void Prepare8uTo32f(const TensorPtrs & src, const StatPtrs & stats, const TensorPtrs & dst, ConvertParams & params, bool safeZero)
         {
             assert(src.size() == stats.size() && src.size() == dst.size());
-            params.resize(src.size());
+            params.resize(stats.size());
             for (size_t i = 0; i < src.size(); ++i)
             {
                 dst[i]->As32f().Reshape(src[i]->Shape(), src[i]->Format());
                 InitCvtSize(*src[i], *stats[i], params[i]);
-                InitCvt8uTo32f(*stats[i], params[i]);
+                stats[i]->Init8u(safeZero);
+                params[i].scale = stats[i]->scale8uTo32f.data();
+                params[i].shift = stats[i]->shift8uTo32f.data();
             }
         }
 
-        static void Convert8uTo32f(const TensorPtrs & src, const CvtParams & params, const TensorPtrs & dst)
+        static void Convert8uTo32f(const TensorPtrs & src, const ConvertParams & params, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
 
@@ -429,10 +392,10 @@ namespace Synet
             {
                 const uint8_t * pSrc = src[i]->As8u().CpuData();
                 float * pDst = dst[i]->As32f().CpuData();
-                const CvtParam & p = params[i];
+                const ConvertParam & p = params[i];
                 for (size_t b = 0; b < p.batch; ++b)
                 {
-                    Synet::Convert8uTo32f(pSrc, p.channels, p.spatial, p.format, p.scale.data(), p.shift.data(), pDst);
+                    Synet::Convert8uTo32f(pSrc, p.channels, p.spatial, p.format, p.scale, p.shift, pDst);
                     pSrc += p.channels*p.spatial;
                     pDst += p.channels*p.spatial;
                 }

@@ -33,6 +33,11 @@ namespace Synet
         return (int)(value + (value >= 0 ? 0.5f : -0.5f));
     }
 
+    SYNET_INLINE int Quantize(float value)
+    {
+        return Round(value);
+    }
+
     template <typename T> SYNET_INLINE T Square(T value)
     {
         return value*value;

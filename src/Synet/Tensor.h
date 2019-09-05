@@ -511,10 +511,12 @@ namespace Synet
             if (order == _shape.size())
             {
                 std::cout << std::fixed << std::setprecision(4);
-                if (_type == TensorType32i)
-                    os << As32i().CpuData(index)[0];
-                else if (_type == TensorType32f)
+                if (_type == TensorType32f)
                     os << As32f().CpuData(index)[0];
+                else if (_type == TensorType32i)
+                    os << As32i().CpuData(index)[0];
+                else if (_type == TensorType8u)
+                    os << (int)As8u().CpuData(index)[0];
                 else
                     assert(0);
                 return;

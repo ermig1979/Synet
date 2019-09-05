@@ -95,22 +95,24 @@ namespace Synet
 
     template<> SYNET_INLINE size_t Convolution<float>::ExternalBufferSize() const
     {
-        return ::SimdConvolutionExternalBufferSize(_context);
+        return _context ? ::SimdConvolutionExternalBufferSize(_context) : 0;
     }
 
     template<> SYNET_INLINE size_t Convolution<float>::InternalBufferSize() const
     {
-        return ::SimdConvolutionInternalBufferSize(_context);
+        return _context ? ::SimdConvolutionInternalBufferSize(_context) : 0;
     }
 
     template<> SYNET_INLINE void Convolution<float>::SetParams(const float * weight, int * internal, const float * bias, const float * params)
     {
-        ::SimdConvolutionSetParams(_context, weight, (::SimdBool*)internal, bias, params);
+        if (_context)
+            ::SimdConvolutionSetParams(_context, weight, (::SimdBool*)internal, bias, params);
     }
 
     template<> SYNET_INLINE void Convolution<float>::Forward(const float * src, float * buf, float * dst)
     {
-        ::SimdConvolutionForward(_context, src, buf, dst);
+        if (_context)
+            ::SimdConvolutionForward(_context, src, buf, dst);
     }
 #endif
 }

@@ -142,6 +142,21 @@ namespace Synet
             Detail::CpuGemvT(N, M, alpha, A, x, y);
     }
 
+    template < class TA, class TB> inline void CpuGemmNN(size_t M, size_t N, size_t K, const TA * A, size_t lda, const TB * B, size_t ldb, int32_t * C, size_t ldc)
+    {
+        for (size_t i = 0; i < M; ++i)
+        {
+            for (size_t j = 0; j < N; ++j)
+                C[i*ldc + j] = 0;
+            for (size_t k = 0; k < K; ++k)
+            {
+                int32_t a = A[i*lda + k];
+                for (size_t j = 0; j < N; ++j)
+                    C[i*ldc + j] += a * B[k*ldb + j];
+            }
+        }
+    }
+
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
     template <> SYNET_INLINE void CpuGemm<float>(CblasTranspose transA, CblasTranspose transB,
         size_t M, size_t N, size_t K, float alpha, const float * A, size_t lda, const float * B, size_t ldb, float beta, float * C, size_t ldc)

@@ -40,6 +40,8 @@
 #define SYNET_MALLOC_TRIM_THRESHOLD 1024*1024
 //#define SYNET_MALLOC_DEBUG
 
+#define SYNET_INT8_SAFE_ZERO 0
+
 #include <stddef.h>
 #include <assert.h>
 #include <math.h>
@@ -122,6 +124,7 @@ namespace Synet
     typedef std::vector<size_t> Shape;
     typedef std::vector<Shape> Shapes;
     typedef std::vector<size_t> Index;
+    typedef std::vector<uint8_t> Bytes;
     typedef std::vector<int> Ints;
     typedef std::vector<float> Floats;
 
@@ -213,15 +216,4 @@ namespace Synet
         T x, y, w, h, prob;
         size_t id;
     };
-
-    struct Stat
-    {
-        String name;
-        Floats min;
-        Floats max;
-    };
-    typedef Stat * StatPtr;
-    typedef std::vector<StatPtr> StatPtrs;
-    typedef std::shared_ptr<Stat> StatSharedPtr;
-    typedef std::vector<StatSharedPtr> StatSharedPtrs;
 }
