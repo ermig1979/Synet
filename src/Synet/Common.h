@@ -119,6 +119,8 @@ extern "C"
 
 namespace Synet
 {
+    const int BUFFER_COUNT = 2;
+
     typedef std::string String;
     typedef std::vector<String> Strings;
     typedef std::vector<size_t> Shape;

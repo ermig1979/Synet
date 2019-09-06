@@ -216,6 +216,12 @@ namespace Synet
             return _type;
         }
 
+        SYNET_INLINE void SetType(TensorType type)
+        {
+            assert(_buffer->size == 0);
+            _type = type;
+        }
+
         SYNET_INLINE TensorFormat Format() const
         {
             return _format;

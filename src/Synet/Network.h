@@ -233,11 +233,10 @@ namespace Synet
             else
             {
                 for (size_t i = 0; i < _input.size(); ++i)
-                    _input[i].layer->Reshape(_input[i].src, _input[i].buf, _input[i].dst, _input[i].f2i, _input[i].i2f);
+                    _input[i].layer->Reshape(_input[i].src, _input[i].buf, _input[i].dst);
             }
 
-            for (size_t i = 0; i < _stages.size(); ++i)
-                _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst, _stages[i].f2i, _stages[i].i2f);
+            ReshapeStages();
 
             if (dstNames.size())
             {
@@ -301,8 +300,7 @@ namespace Synet
             else
                 return false;
             _input[0].dst[0]->Reshape(shape, Type(0), format);
-            for (size_t i = 0; i < _stages.size(); ++i)
-                _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst, _stages[i].f2i, _stages[i].i2f);
+            ReshapeStages();
             return true;
         }
 
@@ -476,7 +474,7 @@ namespace Synet
                     std::cout << shape[j] << " ";
                 std::cout << "}" << std::endl;
 #endif
-                _stages[i].layer->Forward();
+                _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
             }
             SetFastMode(mode);
         }
@@ -496,7 +494,7 @@ namespace Synet
             }
             for (size_t i = 0; i < _stages.size(); ++i)
             {
-                _stages[i].layer->Forward();
+                _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
                 os << "Layer: " << _stages[i].layer->Param().name() << " : ";
                 os << ValueToString(_stages[i].layer->Param().type()) << " ( ";
                 for(size_t j = 0; j < _stages[i].layer->Param().src().size(); ++j)
@@ -596,8 +594,6 @@ namespace Synet
         }
 
     private:
-        static const size_t BUFFER_COUNT = 1;
-
         typedef std::shared_ptr<Layer> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
 
@@ -605,9 +601,11 @@ namespace Synet
         typedef std::shared_ptr<Tensor> TensorSharedPtr;
         typedef std::vector<TensorSharedPtr> TensorSharedPtrs;
 
-        typedef std::map<String, size_t> NameIndexMap;
-        typedef std::map<size_t, String> IndexNameMap;
+        typedef std::map<String, size_t> NameIdMap;
+        typedef std::map<size_t, String> IdNameMap;
         typedef std::set<String> NameSet;
+        typedef std::set<size_t> IdSet;
+        typedef std::map<String, IdSet> NameIdSetMap;
 
         struct Stage
         {
@@ -615,8 +613,6 @@ namespace Synet
             TensorPtrs src;
             TensorPtrs buf;
             TensorPtrs dst;
-            TensorPtrs f2i;
-            TensorPtrs i2f;
         };
         typedef std::vector<Stage> Stages;
 
@@ -629,6 +625,8 @@ namespace Synet
         Stages _input, _stages;
         TensorPtrs _src, _dst;
         LayerPtrs _back;
+        NameIdMap _tensorId, _layerId;
+        NameIdSetMap _srcIds, _dstIds;
 
         bool Init()
         {
@@ -639,25 +637,28 @@ namespace Synet
             _src.clear();
             _dst.clear();
             _back.clear();
+            _tensorId.clear();
+            _layerId.clear();
+            _srcIds.clear();
+            _dstIds.clear();
 
-            TensorPtrs buf, f2i, i2f;
-            SetBuffers(buf, f2i, i2f);
+            TensorPtrs buf;
+            SetBuffers(buf);
             SetStats();
 
-            NameIndexMap tensorIndex, layerIndex;
             NameSet available;
             for (size_t i = 0; i < _layers.size(); ++i)
             {
                 Stage stage;
                 stage.layer = _layers[i].get();
                 const LayerParam & param = stage.layer->Param();
-                layerIndex[param.name()] = i;
+                _layerId[param.name()] = i;
                 for (size_t j = 0; j < param.src().size(); ++j)
                 {
                     const String & name = param.src()[j];
-                    if (tensorIndex.find(name) != tensorIndex.end())
+                    if (_tensorId.find(name) != _tensorId.end())
                     {
-                        stage.src.push_back(_tensors[tensorIndex[name]].get());
+                        stage.src.push_back(_tensors[_tensorId[name]].get());
                         if (available.find(name) != available.end())
                             available.erase(name);
                     }
@@ -669,9 +670,9 @@ namespace Synet
                     const String & name = param.dst()[j];
                     if (j < param.src().size() && name == param.src()[j])
                     {
-                        stage.dst.push_back(_tensors[tensorIndex[name]].get());
+                        stage.dst.push_back(_tensors[_tensorId[name]].get());
                     }
-                    else  if (tensorIndex.find(name) != tensorIndex.end())
+                    else  if (_tensorId.find(name) != _tensorId.end())
                     {
                         assert(0);
                     }
@@ -679,7 +680,7 @@ namespace Synet
                     {
                         TensorSharedPtr tensor(new Tensor());
                         tensor->SetName(name);
-                        tensorIndex[name] = _tensors.size();
+                        _tensorId[name] = _tensors.size();
                         _tensors.push_back(tensor);
                         stage.dst.push_back(tensor.get());
                     }
@@ -689,65 +690,127 @@ namespace Synet
                         _src.push_back(_tensors.back().get());
                     }
                 }
-                SetBuffers(buf, f2i, i2f, stage);
+                stage.buf = buf;
                 if(_stats.size())
                     stage.layer->SetStats(_stats);
                 if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput))
                     _input.push_back(stage);
                 else
+                {
+                    for (size_t j = 0; j < param.src().size(); ++j)
+                        _srcIds[param.src()[j]].insert(_stages.size());
+                    for (size_t j = 0; j < param.dst().size(); ++j)
+                        _dstIds[param.dst()[j]].insert(_stages.size());
                     _stages.push_back(stage);
+                }
             }
-            IndexNameMap sorted;
+            IdNameMap sorted;
             for (NameSet::const_iterator it = available.begin(); it != available.end(); ++it)
-                sorted[layerIndex[*it]] = *it;
-            for (IndexNameMap::const_iterator it = sorted.begin(); it != sorted.end(); ++it)
+                sorted[_layerId[*it]] = *it;
+            for (IdNameMap::const_iterator it = sorted.begin(); it != sorted.end(); ++it)
             {
                 if (InsertDst(it->second))
                 {
-                    LayerPtr layer = _layers[layerIndex[it->second]].get();
+                    LayerPtr layer = _layers[_layerId[it->second]].get();
                     if (layer->Param().type() != LayerTypeMeta)
                     {
-                        _dst.push_back(_tensors[tensorIndex[it->second]].get());
+                        _dst.push_back(_tensors[_tensorId[it->second]].get());
                         layer->_isBack = true;
                         _back.push_back(layer);
                     }
                 }
             }
+            SetTensorTypes();
             if (!Dynamic())
                 Reshape();
             _empty = false;
             return true;
         }
 
-        void SetBuffers(TensorPtrs & buf, TensorPtrs & f2i, TensorPtrs & i2f)
+        bool Is8i() const
         {
-            SetBuffers(BUFFER_COUNT*((int)TensorType8u + 1), buf);
-            size_t max = 0;
-            for (size_t i = 0; i < _param().layers().size(); ++i)
-            {
-                const LayerParam & layer = _param().layers()[i];
-                max = std::max(max, std::max(layer.src().size(), layer.dst().size()));
-            }
-            SetBuffers(max, f2i);
-            SetBuffers(max, i2f);
+            for (size_t i = 0; i < _stages.size(); ++i)
+                if (_stages[i].layer->Is8i())
+                    return true;
+            return false;
         }
 
-        void SetBuffers(size_t count, TensorPtrs & dst)
+        bool Is8iInSubGraph(const Stage & stage)
         {
-            for (size_t i = 0; i < count; ++i)
+            const Layer & layer = *stage.layer;
+            if (layer._isBack)
+                return false;
+            const LayerParam & param = layer.Param();
+            for (size_t d = 0; d < param.dst().size(); ++d)
             {
-                TensorSharedPtr tensor(new Tensor());
-                _tensors.push_back(tensor);
-                dst.push_back(tensor.get());
+                const String & name = param.dst()[d];
+                const IdSet & ids = _srcIds[name];
+                for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
+                {
+                    const Stage & dst = _stages[*id];
+                    if (dst.layer->Is8i())
+                        continue;
+                    if (dst.layer->Can8i() && Is8iInSubGraph(dst))
+                        continue;
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        void Set8iInSubGraph(const Stage & stage)
+        {
+            const LayerParam & param = stage.layer->Param();
+            for (size_t d = 0; d < param.dst().size(); ++d)
+            {
+                const String & name = param.dst()[d];
+                _tensors[_tensorId[name]]->SetType(TensorType8u);
+                const IdSet & ids = _srcIds[name];
+                for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
+                {
+                    const Stage & dst = _stages[*id];
+                    if (dst.layer->Is8i())
+                        continue;
+                    Set8iInSubGraph(dst);
+                }
             }
         }
 
-        void SetBuffers(const TensorPtrs & buf, const TensorPtrs & f2i, const TensorPtrs & i2f, Stage & stage)
+        void SetTensorTypes()
         {
-            stage.buf = buf;
-            size_t size = std::max(stage.src.size(), stage.dst.size());
-            stage.f2i.assign(f2i.begin(), f2i.begin() + size);
-            stage.i2f.assign(i2f.begin(), i2f.begin() + size);
+            if (!Is8i())
+                return;
+            for (size_t t = 0; t < _tensors.size(); ++t)
+                if (_tensors[t]->GetType() == TensorTypeUnknown)
+                    _tensors[t]->SetType(TensorType32f);
+            for (size_t s = 0; s < _stages.size(); ++s)
+            {
+                const Layer & layer = *_stages[s].layer;
+                if (!layer.Is8i())
+                    continue;
+                if (Is8iInSubGraph(_stages[s]))
+                    Set8iInSubGraph(_stages[s]);
+            }
+        }
+
+        void ReshapeStages()
+        {
+            for (size_t i = 0; i < _stages.size(); ++i)
+                _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst);
+        }
+
+        void SetBuffers(TensorPtrs & buf)
+        {
+            for (TensorType type = TensorType32f; type <= TensorType8u; type = TensorType((int)type + 1))
+            {
+                for (int i = 0; i < BUFFER_COUNT; ++i)
+                {
+                    TensorSharedPtr tensor(new Tensor());
+                    tensor->SetType(type);
+                    _tensors.push_back(tensor);
+                    buf.push_back(tensor.get());
+                }
+            }
         }
 
         void SetStats()
