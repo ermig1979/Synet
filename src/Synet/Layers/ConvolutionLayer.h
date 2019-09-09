@@ -315,25 +315,29 @@ namespace Synet
                     for (size_t d = 0; d < D; ++d)
                     {
                         float normB = 0, minW = FLT_MAX, maxW = -FLT_MAX;
-                        if (pSrcB)
-                            normB = pSrcB[g*D + d];
-                        for (size_t c = 0, k = 0; c < C; ++c)
+                        for (size_t y = 0, k = 0; y < Y; ++y)
                         {
-                            for (size_t y = 0; y < Y; ++y)
+                            for (size_t x = 0; x < X; ++x)
                             {
-                                for (size_t x = 0; x < X; ++x, ++k)
+                                for (size_t c = 0; c < C; ++c, ++k)
                                 {
                                     pNormW[k] = pSrcW[k*G*D + d] / pSrcScale[c];
-                                    normB -= pNormW[k] * pSrcShift[c];
                                     minW = std::min(minW, pNormW[k]);
                                     maxW = std::max(maxW, pNormW[k]);
                                 }
                             }
                         }
                         float scale = 127.0f / std::max(abs(maxW), abs(minW));
-                        for (size_t k = 0; k < K; ++k)
-                            pDstW[k*G*D + d] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
-                        pDstB[d] = Synet::Quantize(normB * scale);
+                        if (pSrcB)
+                            normB = pSrcB[g*D + d] * scale;
+                        for (size_t c = 0, k = 0; c < C; ++c)
+                            for (size_t y = 0; y < Y; ++y)
+                                for (size_t x = 0; x < X; ++x, ++k)
+                                {
+                                    pDstW[k*G*D + d] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
+                                    normB -= pDstW[k*G*D + d] * pSrcShift[c];
+                                }
+                        pDstB[d] = Synet::Quantize(normB);
                         if (_dst8u)
                         {
                             pNormScale[d] = 1.0f / pDstScale[d] / scale;
@@ -363,25 +367,25 @@ namespace Synet
                     for (size_t d = 0; d < D; ++d)
                     {
                         float normB = 0, minW = FLT_MAX, maxW = -FLT_MAX;
-                        if (pSrcB)
-                            normB = pSrcB[g*D + d];
                         for (size_t c = 0, k = 0; c < C; ++c)
-                        {
                             for (size_t y = 0; y < Y; ++y)
-                            {
                                 for (size_t x = 0; x < X; ++x, ++k)
                                 {
                                     pNormW[k] = pSrcW[d*K + k] / pSrcScale[c];
-                                    normB -= pNormW[k] * pSrcShift[c];
                                     minW = std::min(minW, pNormW[k]);
                                     maxW = std::max(maxW, pNormW[k]);
                                 }
-                            }
-                        }
                         float scale = 127.0f / std::max(abs(maxW), abs(minW));
-                        for (size_t k = 0; k < K; ++k)
-                            pDstW[d*K + k] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
-                        pDstB[d] = Synet::Quantize(normB * scale);
+                        if (pSrcB)
+                            normB = pSrcB[g*D + d]*scale;
+                        for (size_t c = 0, k = 0; c < C; ++c)
+                            for (size_t y = 0; y < Y; ++y)
+                                for (size_t x = 0; x < X; ++x, ++k)
+                                {
+                                    pDstW[d*K + k] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
+                                    normB -= pDstW[d*K + k]*pSrcShift[c];
+                                }
+                        pDstB[d] = Synet::Quantize(normB);
                         if (_dst8u)
                         {
                             pNormScale[d] = 1.0f / pDstScale[d] / scale;
@@ -429,13 +433,19 @@ namespace Synet
                 if (_trans)
                 {
                     assert(_conv.group == 1 || _conv.group == _conv.srcC);
-                    for (size_t g = 0; g < _conv.group; ++g)
-                        CpuGemmNN(_siS, _siD, _siW, tmp + _grS * g, _ldS, weight + _grW * g, _ldW, dst + _grD * g, _ldD);
+                    if(_conv.group == 1)
+                        CpuGemmNN(_siS, _siD, _conv.kernelY*_conv.kernelX, _conv.srcC, tmp, _ldS, weight, _ldW, dst, _ldD);
+                    else
+                        for (size_t g = 0; g < _conv.group; ++g)
+                            Synet::CpuGemmNN(_siS, _siD, _siW, tmp + _grS * g, _ldS, weight + _grW * g, _ldW, dst + _grD * g, _ldD);
                 }
                 else
                 {
-                    for (size_t g = 0; g < _conv.group; ++g)
-                        CpuGemmNN(_siD, _siS, _siW, weight + _grW * g, _ldW, tmp + _grS * g, _ldS, dst + _grD * g, _ldD);
+                    if (_conv.group == 1)
+                        CpuGemmNN(_siD, _siS, _conv.srcC, _conv.kernelY*_conv.kernelX, weight, _ldW, tmp, _ldS, dst, _ldD);
+                    else
+                        for (size_t g = 0; g < _conv.group; ++g)
+                            Synet::CpuGemmNN(_siD, _siS, _siW, weight + _grW * g, _ldW, tmp + _grS * g, _ldS, dst + _grD * g, _ldD);
                 }
                 CpuAddBias(bias, _conv.dstC, _conv.dstH*_conv.dstW, dst, _trans);
 
@@ -462,6 +472,85 @@ namespace Synet
                 dst += _dstSize;
             }
 
+        }
+
+        void CpuGemmNN(size_t S, size_t D, size_t K, size_t C, const uint8_t * src, size_t lda, const int8_t * weight, size_t ldb, int32_t * dst, size_t ldc)
+        {
+            const size_t C2 = C/2*2;
+            for (size_t i = 0; i < S; ++i)
+            {
+                for (size_t j = 0; j < D; ++j)
+                    dst[i*ldc + j] = 0;
+                for (size_t k = 0, o = 0; k < K; k++)
+                {
+                    size_t c = 0;
+                    for (; c < C2; c += 2, o += 2)
+                    {
+                        int32_t s0 = src[i*lda + o + 0];
+                        int32_t s1 = src[i*lda + o + 1];
+                        const int8_t * w0 = weight + (o + 0)*ldb;
+                        const int8_t * w1 = weight + (o + 1)*ldb; 
+                        int32_t * d = dst + i*ldc;
+                        for (size_t j = 0; j < D; ++j)
+                        {
+                            int sum = s0 * w0[j] + s1 * w1[j];
+#if defined(SYNET_INT8_INT16_OWERFLOW) && 1
+                            sum = std::min(std::max(SHRT_MIN, sum), SHRT_MAX);
+#endif
+                            d[j] += sum;
+                        }
+                    }
+                    for (; c < C; ++c, ++o)
+                    {
+                        int32_t s0 = src[i*lda + o];
+                        const int8_t * w0 = weight + o*ldb;
+                        int32_t * d = dst + i*ldc;
+                        for (size_t j = 0; j < D; ++j)
+                            d[j] += s0 * w0[j];
+                    }
+                }
+            }
+        }
+
+        void CpuGemmNN(size_t D, size_t S, size_t C, size_t K, const int8_t * weight, size_t lda, const uint8_t * src, size_t ldb, int32_t * dst, size_t ldc)
+        {
+            const size_t C2 = C / 2 * 2;
+            for (size_t i = 0; i < D; ++i)
+            {
+                for (size_t j = 0; j < S; ++j)
+                    dst[i*ldc + j] = 0;
+                size_t c = 0;
+                for (; c < C2; c += 2)
+                {
+                    for (size_t k = 0; k < K; k++)
+                    {
+                        int32_t w0 = weight[i*lda + (c + 0)*K + k];
+                        int32_t w1 = weight[i*lda + (c + 1)*K + k];
+                        const uint8_t * s0 = src + ((c + 0)*K + k)*ldb;
+                        const uint8_t * s1 = src + ((c + 1)*K + k)*ldb;
+                        int32_t * d = dst + i*ldc;
+                        for (size_t j = 0; j < S; ++j)
+                        {
+                            int sum = s0[j] * w0 + s1[j] * w1;
+#if defined(SYNET_INT8_INT16_OWERFLOW) && 1
+                            sum = std::min(std::max(SHRT_MIN, sum), SHRT_MAX);
+#endif
+                            d[j] += sum;
+                        }
+                    }
+                }
+                for (; c < C; ++c)
+                {
+                    for (size_t k = 0; k < K; k++)
+                    {
+                        int32_t w0 = weight[i*lda + (c + 0)*K + k];
+                        const uint8_t * s0 = src + ((c + 0)*K + k)*ldb;
+                        int32_t * d = dst + i*ldc;
+                        for (size_t j = 0; j < S; ++j)
+                            d[j] += s0[j] * w0;
+                    }
+                }
+            }
         }
 
     private:

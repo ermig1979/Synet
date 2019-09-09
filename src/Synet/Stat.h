@@ -49,12 +49,18 @@ namespace Synet
             scale8uTo32f.resize(n);
             shift8uTo32f.resize(n);
             zero8u.resize(n);
+            bool sign = false;
+            for (size_t i = 0; i < n; ++i)
+                if (min[i] < 0.0f)
+                    sign = true;
             for (size_t i = 0; i < n; ++i)
             {
-                float _min = std::min(0.0f, min[i]);
+                float _abs = std::max(abs(min[i]), abs(max[i]));
+                float _min = min[i] >= 0.0f ? 0.0f : -_abs;//std::min(0.0f, min[i]);
+                //float _min = std::min(0.0f, min[i]);
                 float _max = std::max(0.0f, max[i]);
-                float scale = 255.0f / (_max - _min);
-                zero8u[i] = (uint8_t)Quantize(0.0f - _min * scale);
+                float scale = (sign ? 127.0f / _abs : 255.0f / _abs);// / (_max - _min);
+                zero8u[i] = sign ? 128 : 0;// (uint8_t)Quantize(0.0f - _min * scale);
                 scale32fTo8u[i] = scale;
                 scale8uTo32f[i] = 1.0f / scale;
                 if (safeZero)

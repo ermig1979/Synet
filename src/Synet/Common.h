@@ -40,7 +40,8 @@
 #define SYNET_MALLOC_TRIM_THRESHOLD 1024*1024
 //#define SYNET_MALLOC_DEBUG
 
-#define SYNET_INT8_SAFE_ZERO 0
+#define SYNET_INT8_SAFE_ZERO 1
+//#define SYNET_INT8_INT16_OWERFLOW
 
 #include <stddef.h>
 #include <assert.h>
