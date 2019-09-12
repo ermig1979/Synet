@@ -78,7 +78,7 @@ namespace Test
         virtual bool Init(const String & model, const String & weight, size_t threadNumber, size_t batchSize, const TestParam & param) { return false; }
         virtual const Vectors & Predict(const Vectors & src) { return _output; }
 #ifdef SYNET_DEBUG_PRINT_ENABLE
-        virtual void DebugPrint(std::ostream & os) { }
+        virtual void DebugPrint(std::ostream & os, int flag, int first, int last) { }
 #endif
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const { return Regions(); }
         virtual size_t MemoryUsage() const { return 0; }
@@ -153,9 +153,10 @@ namespace Test
         }
 
 #ifdef SYNET_DEBUG_PRINT_ENABLE
-        virtual void DebugPrint(std::ostream & os)
+        virtual void DebugPrint(std::ostream & os, int flag, int first, int last)
         {
-            _net.DebugPrint(os, true);
+            if (flag)
+                _net.DebugPrint(os, (flag&DEBUG_PRINT_WEIGHT) != 0, (flag&DEBUG_PRINT_INTERIM) != 0, first, last);
         };
 #endif
 

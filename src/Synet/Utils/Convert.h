@@ -33,7 +33,19 @@ namespace Synet
     {
         inline uint8_t Convert32fTo8u(float value, float scale, float shift)
         {
+#if 1
             return (uint8_t)std::min(std::max(0, Synet::Quantize(value * scale + shift)), 255);
+#else
+            if (shift != 0)
+            {
+                float i8f32 = std::min(std::max(-128.0f, value*scale), 127.0f);
+                int8_t i8 = (int8_t)Synet::Quantize(i8f32);
+                uint8_t u8 = (uint8_t)Synet::Quantize(i8 + shift);
+                return u8;
+            }
+            else
+                return (uint8_t)std::min(std::max(0, Synet::Quantize(value * scale)), 255);
+#endif
         }
 
         inline void Convert32fTo8uNchw(const float * src, size_t channels, size_t spatial, const float * scale, const float * shift, uint8_t * dst)

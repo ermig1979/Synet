@@ -204,7 +204,7 @@ namespace Test
         std::ofstream log(path);
         if (log.is_open())
         {
-            network.DebugPrint(log);
+            network.DebugPrint(log, options.debugPrint, options.debugPrintFirst, options.debugPrintLast);
             log.close();
             return true;
         }
@@ -272,8 +272,8 @@ namespace Test
         }
 #endif
 
-#if defined(SYNET_ANNOTATE_REGIONS) || defined(SYNET_DEBUG_PRINT_ENABLE) || defined(SYNET_CONVERT_IMAGE)
-        if (!DirectoryExists(options.outputDirectory) && !CreatePath(options.outputDirectory))
+#if defined(SYNET_ANNOTATE_REGIONS) || defined(SYNET_DEBUG_PRINT_ENABLE)
+        if (options.NeedOutputDirectory() && !DirectoryExists(options.outputDirectory) && !CreatePath(options.outputDirectory))
         {
             std::cout << "Can't create output directory '" << options.outputDirectory << "' !" << std::endl;
             return false;

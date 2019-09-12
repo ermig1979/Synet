@@ -165,6 +165,7 @@ namespace Synet
             }
             catch (std::exception & e)
             {
+                std::cout << "Can't parse xml! There is an exception: " << e.what() << std::endl;
                 return false;
             }
             return this->Load(&doc);

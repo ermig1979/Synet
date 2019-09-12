@@ -194,7 +194,7 @@ namespace Test
         }
 
 #ifdef SYNET_DEBUG_PRINT_ENABLE
-        virtual void DebugPrint(std::ostream & os)
+        virtual void DebugPrint(std::ostream & os, int flag, int first, int last)
         {
             for (size_t o = 0; o < _ieOutput.size(); ++o)
             {
@@ -203,7 +203,7 @@ namespace Test
                 dims[0] = _batchSize;
                 Synet::Tensor<float> tensor(dims);
                 SetOutput(dims, strides, 0, _output[o].data(), tensor.CpuData());
-                tensor.DebugPrint(os, _outputNames.empty() ? String("???") : String(_outputNames[o]), false);
+                tensor.DebugPrint(os, _outputNames.empty() ? String("???") : String(_outputNames[o]), false, first, last);
             }
         }
 #endif

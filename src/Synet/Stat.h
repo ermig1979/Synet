@@ -37,8 +37,15 @@ namespace Synet
 
         Floats scale32fTo8u, shift32fTo8u, scale8uTo32f, shift8uTo32f;
         Bytes zero8u;
+        bool negative, channels;
 
-        void Init8u(bool safeZero)
+        Stat()
+            : negative(true)
+            , channels(true)
+        {
+        }
+
+        void Init8u()
         {
             assert(min.size() == max.size());
             size_t n = min.size();
@@ -49,29 +56,51 @@ namespace Synet
             scale8uTo32f.resize(n);
             shift8uTo32f.resize(n);
             zero8u.resize(n);
-            bool sign = false;
-            for (size_t i = 0; i < n; ++i)
+
+            negative = false;
+            for (size_t i = 0; i < n && !negative; ++i)
                 if (min[i] < 0.0f)
-                    sign = true;
-            for (size_t i = 0; i < n; ++i)
+                    negative = true;
+
+            if (SYNET_INT8_IE_COMPATIBLE)
             {
-                float _abs = std::max(abs(min[i]), abs(max[i]));
-                float _min = min[i] >= 0.0f ? 0.0f : -_abs;//std::min(0.0f, min[i]);
-                //float _min = std::min(0.0f, min[i]);
-                float _max = std::max(0.0f, max[i]);
-                float scale = (sign ? 127.0f / _abs : 255.0f / _abs);// / (_max - _min);
-                zero8u[i] = sign ? 128 : 0;// (uint8_t)Quantize(0.0f - _min * scale);
-                scale32fTo8u[i] = scale;
-                scale8uTo32f[i] = 1.0f / scale;
-                if (safeZero)
+                float absMax = 0;
+                if (!channels)
                 {
+                    for (size_t i = 0; i < n; ++i)
+                        absMax = std::max(absMax, std::max(::abs(min[i]), ::abs(max[i])));
+                }
+                for (size_t i = 0; i < n; ++i)
+                {
+                    float _abs = channels ? std::max(::abs(min[i]), ::abs(max[i])) : absMax;
+                    float scale = (negative ? 127.0f : 255.0f) / _abs;
+                    zero8u[i] = (negative ? 128 : 0);
+                    scale32fTo8u[i] = scale;
+                    scale8uTo32f[i] = 1.0f / scale;
                     shift32fTo8u[i] = float(zero8u[i]);
                     shift8uTo32f[i] = -float(zero8u[i]) * scale;
                 }
-                else
+            }
+            else
+            {
+                for (size_t i = 0; i < n; ++i)
                 {
-                    shift32fTo8u[i] = -_min * scale;
-                    shift8uTo32f[i] = _min;
+                    float _min = std::min(0.0f, min[i]);
+                    float _max = std::max(0.0f, max[i]);
+                    float scale = 255.0f / (_max - _min);
+                    zero8u[i] = (uint8_t)Quantize(0.0f - _min * scale);
+                    scale32fTo8u[i] = scale;
+                    scale8uTo32f[i] = 1.0f / scale;
+                    if (SYNET_INT8_SAFE_ZERO)
+                    {
+                        shift32fTo8u[i] = float(zero8u[i]);
+                        shift8uTo32f[i] = -float(zero8u[i]) * scale;
+                    }
+                    else
+                    {
+                        shift32fTo8u[i] = -_min * scale;
+                        shift8uTo32f[i] = _min;
+                    }
                 }
             }
         }

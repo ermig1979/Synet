@@ -521,6 +521,8 @@ namespace Synet
                     os << As32f().CpuData(index)[0];
                 else if (_type == TensorType32i)
                     os << As32i().CpuData(index)[0];
+                else if (_type == TensorType8i)
+                    os << (int)As8i().CpuData(index)[0];
                 else if (_type == TensorType8u)
                     os << (int)As8u().CpuData(index)[0];
                 else

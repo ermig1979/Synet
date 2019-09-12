@@ -480,9 +480,9 @@ namespace Synet
         }
 
 #ifdef SYNET_DEBUG_PRINT_ENABLE
-        void DebugPrint(std::ostream & os, bool weight)
+        void DebugPrint(std::ostream & os, bool weight, bool interim, int first, int last)
         {
-            for (size_t i = 0; i < _input.size(); ++i)
+            for (size_t i = 0; i < _input.size() && interim; ++i)
             {
                 os << "Layer: " << _input[i].layer->Param().name() << " : ";
                 os << ValueToString(_input[i].layer->Param().type()) << " ( ";
@@ -490,23 +490,26 @@ namespace Synet
                     os << _input[i].layer->Param().src()[j] << " ";
                 os << ")." << std::endl;
                 for (size_t j = 0; j < _input[i].dst.size(); ++j)
-                    _input[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]", false);
+                    _input[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]", false, first, last);
             }
             for (size_t i = 0; i < _stages.size(); ++i)
             {
-                _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
-                os << "Layer: " << _stages[i].layer->Param().name() << " : ";
-                os << ValueToString(_stages[i].layer->Param().type()) << " ( ";
-                for(size_t j = 0; j < _stages[i].layer->Param().src().size(); ++j)
-                    os << _stages[i].layer->Param().src()[j] << " ";
-                os << ")." << std::endl;
-                if (weight)
+                if (interim || _stages[i].layer->_isBack)
                 {
-                    for (size_t j = 0; j < _stages[i].layer->Weight().size(); ++j)
-                        _stages[i].layer->Weight()[j].DebugPrint(os, String("weight[") + ValueToString(j) + "]", true);
+                    _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
+                    os << "Layer: " << _stages[i].layer->Param().name() << " : ";
+                    os << ValueToString(_stages[i].layer->Param().type()) << " ( ";
+                    for (size_t j = 0; j < _stages[i].layer->Param().src().size(); ++j)
+                        os << _stages[i].layer->Param().src()[j] << " ";
+                    os << ")." << std::endl;
+                    if (weight)
+                    {
+                        for (size_t j = 0; j < _stages[i].layer->Weight().size(); ++j)
+                            _stages[i].layer->Weight()[j].DebugPrint(os, String("weight[") + ValueToString(j) + "]", true, first, last);
+                    }
+                    for (size_t j = 0; j < _stages[i].dst.size(); ++j)
+                        _stages[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]", false, first, last);
                 }
-                for (size_t j = 0; j < _stages[i].dst.size(); ++j)
-                    _stages[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]", false);
             }
         }
 #endif
@@ -625,7 +628,7 @@ namespace Synet
         Stages _input, _stages;
         TensorPtrs _src, _dst;
         LayerPtrs _back;
-        NameIdMap _tensorId, _layerId;
+        NameIdMap _tensorId, _layerId, _statId;
         NameIdSetMap _srcIds, _dstIds;
 
         bool Init()
@@ -721,6 +724,7 @@ namespace Synet
                 }
             }
             SetTensorTypes();
+            SetStatProps();
             if (!Dynamic())
                 Reshape();
             _empty = false;
@@ -793,6 +797,45 @@ namespace Synet
             }
         }
 
+        bool IsSubGraphEndConv(const Stage & stage)
+        {
+            const Layer & layer = *stage.layer;
+            if (layer._isBack)
+                return false;
+            const LayerParam & param = layer.Param();
+            for (size_t d = 0; d < param.dst().size(); ++d)
+            {
+                const String & name = param.dst()[d];
+                const IdSet & ids = _srcIds[name];
+                for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
+                {
+                    const Stage & dst = _stages[*id];
+                    const LayerParam & param = dst.layer->Param();
+                    if (param.type() == LayerTypeConvolution && param.convolution().group() != param.convolution().outputNum())
+                        continue;
+                    if (param.type() == LayerTypeMergedConvolution)
+                        continue;
+                    if (IsSubGraphEndConv(dst))
+                        continue;
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        void SetStatProps()
+        {
+            if (!Is8i() || !(SYNET_INT8_IE_COMPATIBLE))
+                return;
+            for (size_t i = 0; i < _input.size(); ++i)
+                _stats[_statId[_input[i].layer->Param().name()]]->channels = false;
+            for (size_t s = 0; s < _stages.size(); ++s)
+            {
+                if (IsSubGraphEndConv(_stages[s]))
+                    _stats[_statId[_stages[s].layer->Param().name()]]->channels = false;
+            }
+        }
+
         void ReshapeStages()
         {
             for (size_t i = 0; i < _stages.size(); ++i)
@@ -823,6 +866,7 @@ namespace Synet
                 stat->name = src.name();
                 stat->min = src.min();
                 stat->max = src.max();
+                _statId[src.name()] = _stats.size();
                 _stats.push_back(stat);
             }
         }

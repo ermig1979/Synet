@@ -41,13 +41,15 @@
 //#define SYNET_MALLOC_DEBUG
 
 #define SYNET_INT8_SAFE_ZERO 1
-//#define SYNET_INT8_INT16_OWERFLOW
+#define SYNET_INT8_INT16_OWERFLOW
+#define SYNET_INT8_IE_COMPATIBLE 1
 
 #include <stddef.h>
 #include <assert.h>
 #include <math.h>
 #include <memory.h>
 #include <float.h>
+#include <limits.h>
 #ifdef __linux__
 #include <malloc.h>
 #include <unistd.h>
