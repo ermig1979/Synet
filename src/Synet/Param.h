@@ -254,6 +254,14 @@ namespace Synet
         return ValueToString((ptrdiff_t)value);
     }
 
+    template<> SYNET_INLINE String ValueToString<float>(const float & value)
+    {
+        std::stringstream ss;
+        ss << std::setprecision(std::numeric_limits<float>::digits10 + 3);
+        ss << value;
+        return ss.str();
+    }
+
     template<class T> SYNET_INLINE String ValueToString(const std::vector<T> & values)
     {
         std::stringstream ss;

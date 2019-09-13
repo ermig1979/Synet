@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Synet/Common.h"
+#include "Synet/Params.h"
 #include "Synet/Utils/Math.h"
 
 namespace Synet
@@ -39,15 +40,53 @@ namespace Synet
         Bytes zero8u;
         bool negative, channels;
 
-        Stat()
-            : negative(true)
+        Stat(const StatisticParam & param)
+            : negative(false)
             , channels(true)
         {
+            name = param.name();
+            min = param.min();
+            max = param.max();
+            assert(min.size() == max.size());
+            for (size_t i = 0; i < min.size(); ++i)
+            {
+                assert(min[i] <= max[i]);
+                if (min[i] < 0.0f)
+                    negative = true;
+            }
+        }
+
+        void Unify()
+        {
+            float _max = max[0], _min = min[0];
+            for (size_t i = 1; i < min.size(); ++i)
+            {
+                _min = std::min(_min, min[i]);
+                _max = std::max(_max, max[i]);
+            }
+            for (size_t i = 0; i < min.size(); ++i)
+            {
+                min[i] = _min;
+                max[i] = _max;
+            }
+            channels = false;
+        }
+
+        void UnifyAs(const Stat & stat)
+        {
+            assert(min.size() == stat.min.size() && !stat.channels);
+            for (size_t i = 0; i < min.size(); ++i)
+            {
+                assert(min[i] >= stat.min[0] && max[i] <= stat.max[0]);
+                min[i] = stat.min[0];
+                max[i] = stat.max[0];
+            }
+            //negative = stat.negative;
+            channels = false;
         }
 
         void Init8u()
         {
-            assert(min.size() == max.size());
             size_t n = min.size();
             if (zero8u.size() == n)
                 return;
@@ -57,28 +96,19 @@ namespace Synet
             shift8uTo32f.resize(n);
             zero8u.resize(n);
 
-            negative = false;
-            for (size_t i = 0; i < n && !negative; ++i)
-                if (min[i] < 0.0f)
-                    negative = true;
-
             if (SYNET_INT8_IE_COMPATIBLE)
             {
-                float absMax = 0;
-                if (!channels)
-                {
-                    for (size_t i = 0; i < n; ++i)
-                        absMax = std::max(absMax, std::max(::abs(min[i]), ::abs(max[i])));
-                }
                 for (size_t i = 0; i < n; ++i)
                 {
-                    float _abs = channels ? std::max(::abs(min[i]), ::abs(max[i])) : absMax;
-                    float scale = (negative ? 127.0f : 255.0f) / _abs;
+                    float absMax = ::fmax(::fabs(min[i]), ::fabs(max[i]));
+                    float invScale = absMax / (negative ? 127.0f : 255.0f);
+                    if (fabs(invScale) < 1e-7)
+                        invScale = 1.0f;
                     zero8u[i] = (negative ? 128 : 0);
-                    scale32fTo8u[i] = scale;
-                    scale8uTo32f[i] = 1.0f / scale;
+                    scale32fTo8u[i] = 1.0f / invScale;
+                    scale8uTo32f[i] = invScale;
                     shift32fTo8u[i] = float(zero8u[i]);
-                    shift8uTo32f[i] = -float(zero8u[i]) * scale;
+                    shift8uTo32f[i] = -float(zero8u[i]) / invScale;
                 }
             }
             else

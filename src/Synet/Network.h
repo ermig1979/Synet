@@ -828,11 +828,19 @@ namespace Synet
             if (!Is8i() || !(SYNET_INT8_IE_COMPATIBLE))
                 return;
             for (size_t i = 0; i < _input.size(); ++i)
-                _stats[_statId[_input[i].layer->Param().name()]]->channels = false;
+                _stats[_statId[_input[i].layer->Param().name()]]->Unify();
             for (size_t s = 0; s < _stages.size(); ++s)
             {
                 if (IsSubGraphEndConv(_stages[s]))
-                    _stats[_statId[_stages[s].layer->Param().name()]]->channels = false;
+                {
+                    const LayerParam & param = _stages[s].layer->Param();
+                    if (param.type() == LayerTypeConvolution || param.type() == LayerTypeMergedConvolution)
+                        _stats[_statId[param.dst()[0]]]->Unify();
+                    if (param.type() == LayerTypePooling)
+                        _stats[_statId[param.dst()[0]]]->UnifyAs(*_stats[_statId[param.src()[0]]]);
+                    if (param.type() == LayerTypeRelu && param.relu().negativeSlope() == 0.0f)
+                        _stats[_statId[param.dst()[0]]]->UnifyAs(*_stats[_statId[param.src()[0]]]);
+                }
             }
         }
 
@@ -862,10 +870,7 @@ namespace Synet
             for (size_t i = 0; i < _param().statistics().size(); ++i)
             {
                 const StatisticParam & src = _param().statistics()[i];
-                StatSharedPtr stat(new Stat());
-                stat->name = src.name();
-                stat->min = src.min();
-                stat->max = src.max();
+                StatSharedPtr stat(new Stat(src));
                 _statId[src.name()] = _stats.size();
                 _stats.push_back(stat);
             }

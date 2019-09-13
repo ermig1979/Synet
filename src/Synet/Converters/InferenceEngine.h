@@ -1154,10 +1154,20 @@ namespace Synet
                 return false;
             if (layer.src().size() == 2)
             {
-                const LayerParam & prev = layers.back();
-                if (layer.src()[1] != prev.name() || prev.type() != LayerTypeConst)
+                bool found = false;
+                for (size_t i = 0; i < layers.size(); ++i)
+                {
+                    if (layer.src()[1] == layers[i].name())
+                    {
+                        if (layers[i].type() != LayerTypeConst)
+                            return false;
+                        layer.src().pop_back();
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
                     return false;
-                layer.src().pop_back();
             }
             return true;
         }

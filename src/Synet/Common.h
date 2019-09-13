@@ -76,6 +76,7 @@
 #include <map>
 #include <set>
 #include <cmath>
+#include <iomanip>
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdLib.h"

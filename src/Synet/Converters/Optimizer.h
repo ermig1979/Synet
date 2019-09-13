@@ -111,6 +111,8 @@ namespace Synet
                 return false;
             if (src[index - 1].type() != LayerTypeConvolution)
                 return false;
+            if (src[index - 1].convolution().quantizationLevel() != TensorType32f)
+                return false;
             if (src[index].src().size() != 1 || src[index].src()[0] != src[index - 1].name())
                 return false;
             if (src[index].dst()[0] != src[index - 1].name())
