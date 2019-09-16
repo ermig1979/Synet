@@ -42,6 +42,11 @@ namespace Synet
         {
         }
 
+        virtual bool Can8i() const
+        {
+            return true;
+        }
+
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _concatAxis = this->Param().concat().axis();
@@ -51,7 +56,6 @@ namespace Synet
             Shape dstShape = src[0]->Shape();
             _srcConcatAxis.resize(src.size());
             _srcConcatAxis[0] = src[0]->Axis(_concatAxis);
-            _src.resize(src.size());
             for (size_t i = 1; i < src.size(); ++i)
             {
                 assert(src[0]->Count() == src[i]->Count());
@@ -69,9 +73,18 @@ namespace Synet
                 dst[0]->Share(*src[0]);
             else
             {
-                dst[0]->Reshape(dstShape, src[0]->Format());
+                _type = src[0]->GetType();
+                switch (_type)
+                {
+                case TensorType32f: dst[0]->As32f().Reshape(dstShape, src[0]->Format()); break;
+                case TensorType8u: dst[0]->As8u().Reshape(dstShape, src[0]->Format()); break;
+                case TensorType8i: dst[0]->As8i().Reshape(dstShape, src[0]->Format()); break;
+                default:
+                    assert(0);
+                }
                 assert(srcSizeSum == dst[0]->Size());
             }
+            size_t _dstConcatAxis = dst[0]->Axis(_concatAxis);
         }
 
     protected:
@@ -82,20 +95,49 @@ namespace Synet
             if (src.size() == 1)
                 return;
 
-            Type * pDst = dst[0]->CpuData();
-            size_t dstConcatAxis = dst[0]->Axis(_concatAxis);
+            switch (_type)
+            {
+            case TensorType32f: 
+            {
+                std::vector<float*> pSrc(src.size());
+                for (size_t i = 0; i < src.size(); ++i)
+                    pSrc[i] = src[i]->As32f().CpuData();
+                ForwardCpu(pSrc, dst[0]->As32f().CpuData());
+                break;
+            }
+            case TensorType8u:
+            {
+                std::vector<uint8_t*> pSrc(src.size());
+                for (size_t i = 0; i < src.size(); ++i)
+                    pSrc[i] = src[i]->As8u().CpuData();
+                ForwardCpu(pSrc, dst[0]->As8u().CpuData());
+                break;
+            }
+            case TensorType8i:
+            {
+                std::vector<int8_t*> pSrc(src.size());
+                for (size_t i = 0; i < src.size(); ++i)
+                    pSrc[i] = src[i]->As8i().CpuData();
+                ForwardCpu(pSrc, dst[0]->As8i().CpuData());
+                break;
+            }
+            default:
+                assert(0);
+            }
+        }
+
+        template <class TT> void ForwardCpu(std::vector<TT*> src, TT * dst)
+        {
             if (_concatInputSize == 1)
             {
-                for (size_t i = 0; i < src.size(); ++i)
-                    _src[i] = src[i]->CpuData();
                 for (size_t n = 0; n < _concatNum; ++n)
                 {
                     for (size_t i = 0; i < src.size(); ++i)
                     {
                         size_t size = _srcConcatAxis[i];
-                        CpuCopy(_src[i], size, pDst);
-                        _src[i] += size;
-                        pDst += size;
+                        CpuCopy(src[i], size, dst);
+                        src[i] += size;
+                        dst += size;
                     }
                 }
             }
@@ -104,10 +146,9 @@ namespace Synet
                 size_t concatAxisOffset = 0;
                 for (size_t i = 0; i < src.size(); ++i)
                 {
-                    const Type * pSrc = src[i]->CpuData();
                     for (size_t n = 0; n < _concatNum; ++n)
-                        CpuCopy(pSrc + n * _srcConcatAxis[i] * _concatInputSize, _srcConcatAxis[i] * _concatInputSize,
-                            pDst + (n * dstConcatAxis + concatAxisOffset) * _concatInputSize);
+                        CpuCopy(src[i] + n * _srcConcatAxis[i] * _concatInputSize, _srcConcatAxis[i] * _concatInputSize,
+                            dst + (n * _dstConcatAxis + concatAxisOffset) * _concatInputSize);
                     concatAxisOffset += _srcConcatAxis[i];
                 }
             }
@@ -115,8 +156,9 @@ namespace Synet
 
     private:
         typedef std::vector<Type*> Ptrs;
-        size_t _concatNum, _concatInputSize, _concatAxis;
+        size_t _concatNum, _concatInputSize, _concatAxis, _dstConcatAxis;
         Index _srcConcatAxis;
-        Ptrs _src;
+        TensorType _type;
+        //Ptrs _src;
     };
 }

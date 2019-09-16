@@ -216,7 +216,7 @@ namespace Test
                 const float * pSrc = src.CpuData();
                 for (size_t j = 0; j < src.Axis(2); ++j, pSrc += 7)
                 {
-                    if (pSrc[1] == -1)
+                    if (pSrc[1] == -1 || pSrc[2] < 0.3f)
                         break;
                     size_t offset = dst.size();
                     dst.resize(offset + 7);

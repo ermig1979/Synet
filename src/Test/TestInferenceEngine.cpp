@@ -283,7 +283,7 @@ namespace Test
                         _output[o].clear();
                     for (size_t j = 0; j < dims[2]; ++j, pOut += 7)
                     {
-                        if (pOut[0] == -1)
+                        if (pOut[0] == -1 || pOut[2] <= 0.3f)
                             break;
                         size_t size = _output[o].size();
                         _output[o].resize(size + 7);

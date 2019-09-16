@@ -836,10 +836,18 @@ namespace Synet
                     const LayerParam & param = _stages[s].layer->Param();
                     if (param.type() == LayerTypeConvolution || param.type() == LayerTypeMergedConvolution || param.type() == LayerTypeScale)
                         _stats[_statId[param.dst()[0]]]->Unify();
+
                     if (param.type() == LayerTypePooling)
                         _stats[_statId[param.dst()[0]]]->UnifyAs(*_stats[_statId[param.src()[0]]]);
                     if (param.type() == LayerTypeRelu && param.relu().negativeSlope() == 0.0f)
                         _stats[_statId[param.dst()[0]]]->UnifyAs(*_stats[_statId[param.src()[0]]]);
+                    if (param.type() == LayerTypeConcat)
+                    {
+                        StatPtrs stats;
+                        for (size_t c = 0; c < param.src().size(); ++c)
+                            stats.push_back(_stats[_statId[param.src()[c]]].get());
+                        _stats[_statId[param.dst()[0]]]->UnifyAs(stats.data(), stats.size());
+                    }
                 }
             }
         }

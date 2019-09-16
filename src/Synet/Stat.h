@@ -81,7 +81,27 @@ namespace Synet
                 min[i] = stat.min[0];
                 max[i] = stat.max[0];
             }
-            //negative = stat.negative;
+            channels = false;
+        }
+
+        void UnifyAs(const Stat * const * stats, size_t size)
+        {
+            size_t total = 0;
+            for (size_t s = 0; s < size; ++s)
+            {
+                total += stats[s]->min.size();
+                assert(!stats[s]->channels);
+            }
+            assert(min.size() == total);
+            for (size_t s = 0, o = 0; s < size; ++s)
+            {
+                for (size_t i = 0; i < stats[s]->min.size(); ++i, ++o)
+                {
+                    assert(min[o] >= stats[s]->min[0] && max[o] <= stats[s]->max[0]);
+                    min[o] = stats[s]->min[0];
+                    max[o] = stats[s]->max[0];
+                }
+            }
             channels = false;
         }
 
@@ -105,7 +125,7 @@ namespace Synet
                     if (fabs(invScale) < 1e-7)
                         invScale = 1.0f;
                     zero8u[i] = (negative ? 128 : 0);
-                    scale32fTo8u[i] = (negative ? 127.0f : 255.0f) / absMax; //  1.0f / invScale;/
+                    scale32fTo8u[i] = (negative ? 127.0f : 255.0f) / absMax; 
                     scale8uTo32f[i] = invScale;
                     shift32fTo8u[i] = float(zero8u[i]);
                     shift8uTo32f[i] = -float(zero8u[i]) / invScale;

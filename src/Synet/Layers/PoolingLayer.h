@@ -333,6 +333,8 @@ namespace Synet
                 case TensorType32f: dst[0]->As32f().Reshape(shape, format); break;
                 case TensorType8u: dst[0]->As8u().Reshape(shape, format); break;
                 case TensorType8i: dst[0]->As8i().Reshape(shape, format); break;
+                default:
+                    assert(0);
                 }
             }
         }
