@@ -457,13 +457,13 @@ namespace Synet
                 }
                 CpuAddBias(bias, _conv.dstC, _conv.dstH*_conv.dstW, dst, _trans);
 
-                //switch (_conv.activation)
-                //{
-                //case ActivationFunctionTypeIdentity:
-                //    break;
-                //case ActivationFunctionTypeRelu:
-                //    CpuRelu(dst, _dstSize, 0.0f, dst);
-                //    break;
+                switch (_conv.activation)
+                {
+                case ActivationFunctionTypeIdentity:
+                    break;
+                case ActivationFunctionTypeRelu:
+                    CpuRelu(dst, _dstSize, 0, dst);
+                    break;
                 //case ActivationFunctionTypeLeakyRelu:
                 //    CpuRelu(dst, _dstSize, _params[0], dst);
                 //    break;
@@ -473,9 +473,9 @@ namespace Synet
                 //case ActivationFunctionTypePrelu:
                 //    Detail::PreluLayerForwardCpu(dst, this->Weight().back().CpuData(), _conv.dstC, _conv.dstH * _conv.dstW, dst, _trans);
                 //    break;
-                //default:
-                //    assert(0);
-                //}
+                default:
+                    assert(0);
+                }
                 src += _srcSize;
                 dst += _dstSize;
             }

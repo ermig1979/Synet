@@ -111,8 +111,8 @@ namespace Synet
                 return false;
             if (src[index - 1].type() != LayerTypeConvolution)
                 return false;
-            if (src[index - 1].convolution().quantizationLevel() != TensorType32f)
-                return false;
+            //if (src[index - 1].convolution().quantizationLevel() != TensorType32f) 
+            //    return false;
             if (src[index].src().size() != 1 || src[index].src()[0] != src[index - 1].name())
                 return false;
             if (src[index].dst()[0] != src[index - 1].name())
@@ -157,9 +157,11 @@ namespace Synet
                 if (dst.back().convolution().quantizationLevel() == TensorType8i)
                 {
                     dst.back().origin().push_back(src[index - 1].name());
-                    dst.back().origin().push_back(src[index - 0].name());
+                    dst.back().name() = src[index].name();
+                    dst.back().dst()[0] = src[index].name();
                 }
-                changes.push_back(Change(src[index].name(), src[index - 1].name()));
+                else
+                    changes.push_back(Change(src[index].name(), src[index - 1].name()));
             }
             return result;
         }

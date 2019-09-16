@@ -105,7 +105,7 @@ namespace Synet
                     if (fabs(invScale) < 1e-7)
                         invScale = 1.0f;
                     zero8u[i] = (negative ? 128 : 0);
-                    scale32fTo8u[i] = 1.0f / invScale;
+                    scale32fTo8u[i] = (negative ? 127.0f : 255.0f) / absMax; //  1.0f / invScale;/
                     scale8uTo32f[i] = invScale;
                     shift32fTo8u[i] = float(zero8u[i]);
                     shift8uTo32f[i] = -float(zero8u[i]) / invScale;

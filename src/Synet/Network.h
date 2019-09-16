@@ -834,7 +834,7 @@ namespace Synet
                 if (IsSubGraphEndConv(_stages[s]))
                 {
                     const LayerParam & param = _stages[s].layer->Param();
-                    if (param.type() == LayerTypeConvolution || param.type() == LayerTypeMergedConvolution)
+                    if (param.type() == LayerTypeConvolution || param.type() == LayerTypeMergedConvolution || param.type() == LayerTypeScale)
                         _stats[_statId[param.dst()[0]]]->Unify();
                     if (param.type() == LayerTypePooling)
                         _stats[_statId[param.dst()[0]]]->UnifyAs(*_stats[_statId[param.src()[0]]]);
