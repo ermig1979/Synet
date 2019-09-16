@@ -48,7 +48,7 @@ namespace Synet
                         size_t wEnd = std::min(wStart + kernelX, srcW);
                         wStart = std::max<ptrdiff_t>(0, wStart);
                         for (size_t c = 0; c < channels; ++c)
-                            dst[c] = T(-FLT_MAX);
+                            dst[c] = std::numeric_limits<T>::lowest();
                         for (size_t h = hStart; h < hEnd; ++h)
                         {
                             for (size_t w = wStart; w < wEnd; ++w)
@@ -76,7 +76,7 @@ namespace Synet
                             size_t wStart = pw * strideX - padX;
                             size_t wEnd = std::min(wStart + kernelX, srcW);
                             wStart = std::max<ptrdiff_t>(0, wStart);
-                            T max = T(-FLT_MAX);
+                            T max = std::numeric_limits<T>::lowest();
                             for (size_t h = hStart; h < hEnd; ++h)
                                 for (size_t w = wStart; w < wEnd; ++w)
                                     max = std::max(max, src[h * srcW + w]);
@@ -174,17 +174,24 @@ namespace Synet
         PoolingLayer(const LayerParam & param)
             : Base(param)
         {
+            _method = this->Param().pooling().method();
+        }
+
+        virtual bool Can8i() const
+        {
+            return _method == PoolingMethodTypeMax;
         }
         
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const PoolingParam & param = this->Param().pooling();
-            _method = param.method();
+
             _yoloCompatible = param.yoloCompatible();
             _roundingType = param.roundingType();
             _excludePad = param.excludePad();
             assert(src[0]->Count() == 4);
 
+            _type = src[0]->GetType();
             _trans = src[0]->Format() == TensorFormatNhwc;
 
             _num = src[0]->Axis(0);
@@ -317,10 +324,16 @@ namespace Synet
                 dst[0]->Share(*src[0]);
             else
             {
-                if(_trans)
-                    dst[0]->Reshape(Shape({ _num, _dstH, _dstW , _channels}), TensorFormatNhwc);
-                else
-                    dst[0]->Reshape(Shape({ _num, _channels, _dstH, _dstW }), TensorFormatNchw);
+                assert(_type == TensorType32f || _method == PoolingMethodTypeMax);
+
+                TensorFormat format = src[0]->Format();
+                Shape shape = _trans ? Shape({ _num, _dstH, _dstW , _channels }) : Shape({ _num, _channels, _dstH, _dstW });
+                switch (_type)
+                {
+                case TensorType32f: dst[0]->As32f().Reshape(shape, format); break;
+                case TensorType8u: dst[0]->As8u().Reshape(shape, format); break;
+                case TensorType8i: dst[0]->As8i().Reshape(shape, format); break;
+                }
             }
         }
 
@@ -333,10 +346,15 @@ namespace Synet
 
             SYNET_PERF_FUNC();
 
-            ForwardCpu(src[0]->CpuData(), dst[0]->CpuData());
+            switch (_type)
+            {
+            case TensorType32f: ForwardCpu(src[0]->As32f().CpuData(), dst[0]->As32f().CpuData()); break;
+            case TensorType8u: ForwardCpu(src[0]->As8u().CpuData(), dst[0]->As8u().CpuData()); break;
+            case TensorType8i: ForwardCpu(src[0]->As8i().CpuData(), dst[0]->As8i().CpuData()); break;
+            }
         }
 
-        void ForwardCpu(const T * src, T * dst)
+        template <class TT> void ForwardCpu(const TT * src, TT * dst)
         {
 #ifdef SYNET_SIZE_STATISTIC
             std::stringstream ss;
@@ -375,6 +393,7 @@ namespace Synet
         }
 
     private:
+        TensorType _type;
         PoolingMethodType _method;
         RoundingType _roundingType;
         bool _skip;

@@ -141,9 +141,10 @@ namespace Synet
             Extend();
         }
 
-        SYNET_INLINE void Clear()
+        SYNET_INLINE void Clear(bool saveType = false)
         {
-            _type = TensorTypeUnknown;
+            if(!saveType)
+                _type = TensorTypeUnknown;
             _format = TensorFormatUnknown;
             _shape.clear();
 #ifdef SYNET_MALLOC_DEBUG

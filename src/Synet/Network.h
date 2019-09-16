@@ -192,7 +192,7 @@ namespace Synet
             }
 
             for (size_t i = 0; i < _tensors.size(); ++i)
-                _tensors[i]->Clear();
+                _tensors[i]->Clear(true);
 
             if (srcNames.size())
             {
