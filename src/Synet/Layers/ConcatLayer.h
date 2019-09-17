@@ -159,6 +159,5 @@ namespace Synet
         size_t _concatNum, _concatInputSize, _concatAxis, _dstConcatAxis;
         Index _srcConcatAxis;
         TensorType _type;
-        //Ptrs _src;
     };
 }

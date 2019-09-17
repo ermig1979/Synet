@@ -331,12 +331,19 @@ namespace Synet
                         float scale = 127.0f / std::max(abs(maxW), abs(minW));
                         if (pSrcB)
                             normB = pSrcB[g*D + d] * scale;
-                        for (size_t c = 0, k = 0; c < C; ++c)
-                            for (size_t y = 0; y < Y; ++y)
-                                for (size_t x = 0; x < X; ++x, ++k)
+                        for (size_t y = 0, k = 0; y < Y; ++y)
+                            for (size_t x = 0; x < X; ++x)
+                                for (size_t c = 0; c < C; ++c, ++k)
                                 {
-                                    pDstW[k*G*D + d] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
-                                    normB -= pDstW[k*G*D + d] * pSrcShift[c];
+                                    if (_negSrc)
+                                    {
+                                        pDstW[k*G*D + d] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
+                                    }
+                                    else
+                                    {
+                                        pDstW[k*G*D + d] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
+                                        normB -= pDstW[k*G*D + d] * pSrcShift[c];
+                                    }
                                 }
                         pDstB[d] = Synet::Quantize(normB);
                         if (_dst8u)
@@ -376,7 +383,7 @@ namespace Synet
                                     minW = std::min(minW, pNormW[k]);
                                     maxW = std::max(maxW, pNormW[k]);
                                 }
-                        float scale = 127.000f / std::max(abs(maxW), abs(minW));
+                        float scale = 127.0f / std::max(abs(maxW), abs(minW));
                         if (pSrcB)
                             normB = pSrcB[g*D + d]*scale;
                         for (size_t c = 0, k = 0; c < C; ++c)
@@ -516,7 +523,12 @@ namespace Synet
                         if (_negSrc)
                             for (size_t j = 0; j < D; ++j)
                             {
-                                d[j] += s0 * w0[j];
+                                int _w0 = w0[j];
+                                if (_w0 & 1)
+                                    _w0 = Round(_w0*0.25f) * 4;
+                                int _s0 = int(s0) - 128;
+                                int dp = _w0*_s0;
+                                d[j] += dp;
                             }
                         else
                             for (size_t j = 0; j < D; ++j)

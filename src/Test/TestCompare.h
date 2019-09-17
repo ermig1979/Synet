@@ -171,47 +171,53 @@ namespace Test
 
     inline bool AnnotateRegions(const Options & options, const Network & network, const String & inputPath)
     {
-        View image;
-        if (!image.Load(inputPath))
+        if (options.annotateRegions)
         {
-            std::cout << "Can't read '" << inputPath << "' image!" << std::endl;
-            return false;
-        }
-        Regions regions = network.GetRegions(image.Size(), options.regionThreshold, options.regionOverlap);
-        uint32_t white = 0xFFFFFFFF;
-        for (size_t i = 0; i < regions.size(); ++i)
-        {
-            const Region & region = regions[i];
-            ptrdiff_t l = ptrdiff_t(region.x - region.w / 2);
-            ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
-            ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
-            ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
-            Simd::DrawRectangle(image, l, t, r, b, white);
-        }
-        String outputPath = MakePath(options.outputDirectory, network.Name() + "_" + GetNameByPath(inputPath));
-        if (!image.Save(outputPath))
-        {
-            std::cout << "Can't write '" << outputPath << "' image!" << std::endl;
-            return false;
+            View image;
+            if (!image.Load(inputPath))
+            {
+                std::cout << "Can't read '" << inputPath << "' image!" << std::endl;
+                return false;
+            }
+            Regions regions = network.GetRegions(image.Size(), options.regionThreshold, options.regionOverlap);
+            uint32_t white = 0xFFFFFFFF;
+            for (size_t i = 0; i < regions.size(); ++i)
+            {
+                const Region & region = regions[i];
+                ptrdiff_t l = ptrdiff_t(region.x - region.w / 2);
+                ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
+                ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
+                ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
+                Simd::DrawRectangle(image, l, t, r, b, white);
+            }
+            String outputPath = MakePath(options.outputDirectory, network.Name() + "_" + GetNameByPath(inputPath));
+            if (!image.Save(outputPath))
+            {
+                std::cout << "Can't write '" << outputPath << "' image!" << std::endl;
+                return false;
+            }
         }
         return true;
     }
 
     inline bool DebugPrint(Network & network, const Options & options, size_t i)
     {
-        String path = MakePath(options.outputDirectory, network.Name() + "_t" + Synet::ValueToString(options.threadNumber) + "_i" + Synet::ValueToString(i) + ".log");
-        std::ofstream log(path);
-        if (log.is_open())
+        if (options.debugPrint)
         {
-            network.DebugPrint(log, options.debugPrint, options.debugPrintFirst, options.debugPrintLast);
-            log.close();
-            return true;
+            String path = MakePath(options.outputDirectory, network.Name() + "_t" + Synet::ValueToString(options.threadNumber) + "_i" + Synet::ValueToString(i) + ".log");
+            std::ofstream log(path);
+            if (log.is_open())
+            {
+                network.DebugPrint(log, options.debugPrint, options.debugPrintFirst, options.debugPrintLast);
+                log.close();
+            }
+            else
+            {
+                std::cout << "Can't open '" << path << "' file!" << std::endl;
+                return false;
+            }
         }
-        else
-        {
-            std::cout << "Can't open '" << path << "' file!" << std::endl;
-            return false;
-        }
+        return true;
     }
 
     inline bool Compare(float a, float b, float t)

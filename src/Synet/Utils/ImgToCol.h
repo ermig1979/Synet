@@ -188,8 +188,11 @@ namespace Synet
                         }
                         else
                         {
-                            memcpy(dst, zero, kernelX * size * sizeof(T));
-                            dst += kernelX * size;
+                            for (size_t kx = 0; kx < kernelX; kx++)
+                            {
+                                memcpy(dst, zero, size * sizeof(T));
+                                dst += size;
+                            }
                         }
                     }
                 }

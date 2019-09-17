@@ -201,7 +201,13 @@ namespace Test
                 tmp[i].val[j] = data[i*7 + j];
         std::sort(tmp.begin(), tmp.end(), [](const Tmp & t1, const Tmp & t2) 
         {
-            return abs(t1.val[2] - t2.val[2]) > 0.000001 ? t1.val[2] > t2.val[2] : (abs(t1.val[3] - t2.val[3]) > 0.000001 ? t1.val[3] > t2.val[3] : t1.val[4] > t2.val[4]);
+            const float thr = 0.01f;
+            if (abs(t1.val[2] - t2.val[2]) > thr)
+                return t1.val[2] > t2.val[2];
+            else if (abs(t1.val[3] - t2.val[3]) > thr)
+                return t1.val[3] > t2.val[3];
+            else
+                return t1.val[4] > t2.val[4];
         });
         for (size_t i = 0; i < tmp.size(); ++i)
             for (size_t j = 0; j < 7; ++j)
