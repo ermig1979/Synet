@@ -479,7 +479,6 @@ namespace Synet
             SetFastMode(mode);
         }
 
-#ifdef SYNET_DEBUG_PRINT_ENABLE
         void DebugPrint(std::ostream & os, bool weight, bool interim, int first, int last)
         {
             for (size_t i = 0; i < _input.size() && interim; ++i)
@@ -512,7 +511,6 @@ namespace Synet
                 }
             }
         }
-#endif
 
         Regions GetRegions(size_t imageW, size_t imageH, Type threshold, Type overlap) const
         {

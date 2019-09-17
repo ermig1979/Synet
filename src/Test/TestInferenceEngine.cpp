@@ -80,10 +80,11 @@ namespace Test
             return size;
         }
 
-        virtual bool Init(const String & model, const String & weight, size_t threadNumber, size_t batchSize, const TestParam & param)
+        virtual bool Init(const String & model, const String & weight, const Options & options, const TestParam & param)
         {
             TEST_PERF_FUNC();
 
+            _regionThreshold = options.regionThreshold;
             try
             {
                 _iePlugin = InferenceEngine::PluginDispatcher({ "" }).getPluginByDevice("CPU");
@@ -95,22 +96,22 @@ namespace Test
                 InferenceEngine::CNNNetwork network = reader.getNetwork();
 
                 std::map<std::string, std::string> config;
-                config[InferenceEngine::PluginConfigParams::KEY_CPU_THREADS_NUM] = std::to_string(threadNumber);
+                config[InferenceEngine::PluginConfigParams::KEY_CPU_THREADS_NUM] = std::to_string(options.threadNumber);
                 _batchSize = 1;
-                if (batchSize > 1)
+                if (options.batchSize > 1)
                 {
                     try
                     {
-                        network.setBatchSize(batchSize);
+                        network.setBatchSize(options.batchSize);
                         config[InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED] = InferenceEngine::PluginConfigParams::YES;
                         InferenceEngine::ExecutableNetwork executableNet = _iePlugin.LoadNetwork(network, config);
                         _ieInferRequest = executableNet.CreateInferRequest();
-                        _ieInferRequest.SetBatch(batchSize);
+                        _ieInferRequest.SetBatch(options.batchSize);
                     }
                     catch (std::exception & e)
                     {
                         std::cout << "Inference Engine init trouble: '" << e.what() << "', try to emulate batch > 1." << std::endl;
-                        _batchSize = batchSize;
+                        _batchSize = options.batchSize;
                         network.setBatchSize(1);
                         config.erase(InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED);
                         InferenceEngine::ExecutableNetwork executableNet = _iePlugin.LoadNetwork(network, config);
@@ -193,7 +194,6 @@ namespace Test
             return _output;
         }
 
-#ifdef SYNET_DEBUG_PRINT_ENABLE
         virtual void DebugPrint(std::ostream & os, int flag, int first, int last)
         {
             for (size_t o = 0; o < _ieOutput.size(); ++o)
@@ -206,7 +206,6 @@ namespace Test
                 tensor.DebugPrint(os, _outputNames.empty() ? String("???") : String(_outputNames[o]), false, first, last);
             }
         }
-#endif
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
@@ -283,7 +282,7 @@ namespace Test
                         _output[o].clear();
                     for (size_t j = 0; j < dims[2]; ++j, pOut += 7)
                     {
-                        if (pOut[0] == -1 || pOut[2] <= 0.3f)
+                        if (pOut[0] == -1 || pOut[2] <= _regionThreshold)
                             break;
                         size_t size = _output[o].size();
                         _output[o].resize(size + 7);

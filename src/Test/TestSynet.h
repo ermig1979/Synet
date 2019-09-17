@@ -75,15 +75,14 @@ namespace Test
         virtual size_t SrcCount() const { return 0; }
         virtual Shape SrcShape(size_t index) const { return Shape(); }
         virtual size_t SrcSize(size_t index) const { return 0; }
-        virtual bool Init(const String & model, const String & weight, size_t threadNumber, size_t batchSize, const TestParam & param) { return false; }
+        virtual bool Init(const String & model, const String & weight, const Options & options, const TestParam & param) { return false; }
         virtual const Vectors & Predict(const Vectors & src) { return _output; }
-#ifdef SYNET_DEBUG_PRINT_ENABLE
         virtual void DebugPrint(std::ostream & os, int flag, int first, int last) { }
-#endif
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const { return Regions(); }
         virtual size_t MemoryUsage() const { return 0; }
     protected:
         Vectors _output;
+        float _regionThreshold;
     };
     typedef std::shared_ptr<Network> NetworkPtr;
 }
@@ -114,24 +113,25 @@ namespace Test
             return _net.Src()[index]->Size();
         }
 
-        virtual bool Init(const String & model, const String & weight, size_t threadNumber, size_t batchSize, const TestParam & param)
+        virtual bool Init(const String & model, const String & weight, const Options & options, const TestParam & param)
         {
             TEST_PERF_FUNC();
-            Synet::SetThreadNumber(threadNumber);
+            _regionThreshold = options.regionThreshold;
+            Synet::SetThreadNumber(options.threadNumber);
             if (_net.Load(model, weight))
             {
                 _trans = _net.Format() == Synet::TensorFormatNhwc;
                 if (param.input().size() || param.output().size())
                 {
-                    if (!Reshape(param, batchSize))
+                    if (!Reshape(param, options.batchSize))
                         return false;
                 }
                 else if (_net.Src().size() == 1)
                 {
                     const Shape & shape = _net.NchwShape();
-                    if (shape.size() == 4 && shape[0] != batchSize)
+                    if (shape.size() == 4 && shape[0] != options.batchSize)
                     {
-                        if (!_net.Reshape(shape[3], shape[2], batchSize))
+                        if (!_net.Reshape(shape[3], shape[2], options.batchSize))
                             return false;
                     }
                 }
@@ -152,13 +152,11 @@ namespace Test
             return _output;
         }
 
-#ifdef SYNET_DEBUG_PRINT_ENABLE
         virtual void DebugPrint(std::ostream & os, int flag, int first, int last)
         {
             if (flag)
                 _net.DebugPrint(os, (flag&DEBUG_PRINT_WEIGHT) != 0, (flag&DEBUG_PRINT_INTERIM) != 0, first, last);
         };
-#endif
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
@@ -216,7 +214,7 @@ namespace Test
                 const float * pSrc = src.CpuData();
                 for (size_t j = 0; j < src.Axis(2); ++j, pSrc += 7)
                 {
-                    if (pSrc[1] == -1 || pSrc[2] < 0.3f)
+                    if (pSrc[1] == -1 || pSrc[2] < _regionThreshold)
                         break;
                     size_t offset = dst.size();
                     dst.resize(offset + 7);

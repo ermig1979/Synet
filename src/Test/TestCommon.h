@@ -31,8 +31,6 @@
 
 #define SYNET_OTHER_RUN
 #define SYNET_SYNET_RUN
-#define SYNET_DEBUG_PRINT_ENABLE
-#define SYNET_ANNOTATE_REGIONS 0.3f 
 #define SYNET_SIZE_STATISTIC
 
 #include <string>

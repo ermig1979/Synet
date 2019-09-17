@@ -52,6 +52,9 @@ namespace Test
         int debugPrint;
         int debugPrintFirst;
         int debugPrintLast;
+        int annotateRegions;
+        float regionThreshold;
+        float regionOverlap;
         bool result;
         mutable size_t synetMemoryUsage;
 
@@ -79,6 +82,9 @@ namespace Test
             debugPrint = FromString<int>(GetArg("-dp", "0"));
             debugPrintFirst = FromString<int>(GetArg("-dpf", "5"));
             debugPrintLast = FromString<int>(GetArg("-dpl", "2"));
+            annotateRegions = FromString<int>(GetArg("-ar", "0"));
+            regionThreshold = FromString<float>(GetArg("-rt", "0.3"));
+            regionOverlap = FromString<float>(GetArg("-ro", "0.5"));
         }
 
         ~Options()
@@ -113,14 +119,7 @@ namespace Test
 
         bool NeedOutputDirectory() const
         {
-            bool need = false;
-#ifdef SYNET_DEBUG_PRINT_ENABLE
-            need = need || debugPrint;
-#endif
-#ifdef SYNET_ANNOTATE_REGIONS
-            need = need || true;
-#endif
-            return need;
+            return debugPrint || annotateRegions;
         }
 
     private:

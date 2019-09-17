@@ -35,8 +35,6 @@
 //#define SYNET_TENSORFLOW_ENABLE
 //#define SYNET_OPENCV_ENABLE
 
-//#define SYNET_DEBUG_PRINT_ENABLE
-
 #define SYNET_MALLOC_TRIM_THRESHOLD 1024*1024
 //#define SYNET_MALLOC_DEBUG
 
@@ -77,6 +75,7 @@
 #include <set>
 #include <cmath>
 #include <iomanip>
+#include <type_traits>
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdLib.h"

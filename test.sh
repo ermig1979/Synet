@@ -21,7 +21,7 @@ fi
 
 ./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=convert $PATHES -tf=$FORMAT
 
-./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=compare $PATHES -if=*.ppm -rn=$NUMBER -tn=$THREAD -bs=$BATCH -t=0.06 -dp=7 -dpf=5 -dpl=2 -ln=$LOG
+./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=compare $PATHES -if=*.ppm -rn=$NUMBER -tn=$THREAD -bs=$BATCH -t=0.06 -dp=7 -dpf=5 -dpl=2 -ar=0 -rt=0.3 -ln=$LOG
 
 }
 
@@ -33,12 +33,12 @@ fi
 
 #TEST inference_engine test_000 500 1 1 1 001a
 #TEST inference_engine test_001 500 1 0 1 003a
-TEST inference_engine test_003i 1 1 0 1 000a
 #TEST inference_engine test_002 20 1 1 1 002a
-#TEST inference_engine test_003 50 1 1 1 001a
+#TEST inference_engine test_003f 50 1 1 1 001a
+#TEST inference_engine test_003i 1 1 0 1 000a
 #TEST inference_engine test_004 200 1 1 1 001a
 #TEST inference_engine test_005 2000 1 1 1 000a
 #TEST inference_engine test_006 100 1 1 1 000a
-#TEST inference_engine test_007 200 1 1 1 000a
+TEST inference_engine test_007 200 1 1 1 000a
 
 exit

@@ -92,6 +92,8 @@ namespace Synet
         template <class T> void PoolingForwardCpuAverage(const T * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
             size_t strideY, size_t strideX, size_t padY, size_t padX, T * dst, size_t dstH, size_t dstW, int excludePad, int trans)
         {
+            typedef T Type;
+            assert((std::is_same<Type, float>::value));
             if (trans)
             {
                 for (size_t ph = 0; ph < dstH; ++ph)
@@ -105,22 +107,22 @@ namespace Synet
                         size_t wEnd = std::min(wStart + kernelX, srcW);
                         wStart = std::max<ptrdiff_t>(0, wStart);
                         for (size_t c = 0; c < channels; ++c)
-                            dst[c] = T(0);
+                            dst[c] = Type(0);
                         for (size_t h = hStart; h < hEnd; ++h)
                         {
                             for (size_t w = wStart; w < wEnd; ++w)
                             {
-                                const T * pc = src + (h * srcW + w)*channels;
+                                const Type * pc = src + (h * srcW + w)*channels;
                                 for (size_t c = 0; c < channels; ++c)
                                     dst[c] += pc[c];
                             }
                         }
                         if(excludePad)
                             for (size_t c = 0; c < channels; ++c)
-                                dst[c] = dst[c] / (hEnd - hStart) / (wEnd - wStart);
+                                dst[c] = dst[c] / Type((hEnd - hStart) * (wEnd - wStart));
                         else
                             for (size_t c = 0; c < channels; ++c)
-                                dst[c] = dst[c] / kernelY / kernelX;
+                                dst[c] = dst[c] / Type(kernelY * kernelX);
                         dst += channels;
                     }
                 }
@@ -139,14 +141,14 @@ namespace Synet
                             size_t wStart = pw * strideX - padX;
                             size_t wEnd = std::min(wStart + kernelX, srcW);
                             wStart = std::max<ptrdiff_t>(0, wStart);
-                            T sum = T(0);
+                            Type sum = Type(0);
                             for (size_t h = hStart; h < hEnd; ++h)
                                 for (size_t w = wStart; w < wEnd; ++w)
                                     sum += src[h * srcW + w];
                             if (excludePad)
-                                dst[ph*dstW + pw] = sum / (hEnd - hStart) / (wEnd - wStart);
+                                dst[ph*dstW + pw] = sum / Type((hEnd - hStart) * (wEnd - wStart));
                             else
-                                dst[ph*dstW + pw] = sum / kernelY / kernelX;
+                                dst[ph*dstW + pw] = sum / Type(kernelY * kernelX);
                         }
                     }
                     src += srcW * srcH;

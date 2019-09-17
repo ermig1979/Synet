@@ -438,7 +438,6 @@ namespace Synet
             _buffer->Capture();
         }
 
-#ifdef SYNET_DEBUG_PRINT_ENABLE
         void DebugPrint(std::ostream & os, const String & name, bool weight, size_t first = 5, size_t last = 2) const
         {
             if (_shape.size() == 4 && _format == TensorFormatNhwc)
@@ -508,11 +507,9 @@ namespace Synet
             if (n == 1 || n == 0)
                 os << "\n";
         }
-#endif
 
     private:
 
-#ifdef SYNET_DEBUG_PRINT_ENABLE
         void DebugPrint(std::ostream & os, const Synet::Shape & firsts, const Synet::Shape & lasts, const Strings & separators, Synet::Shape index, size_t order) const
         {
             if (order == _shape.size())
@@ -554,7 +551,6 @@ namespace Synet
                 }
             }  
         }
-#endif
 
         SYNET_INLINE void Resize(const Type & value)
         {

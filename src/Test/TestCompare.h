@@ -46,7 +46,7 @@ namespace Test
             return false;
         }
 
-        if (!network.Init(model, weight, options.threadNumber, options.batchSize, param))
+        if (!network.Init(model, weight, options, param))
         {
             std::cout << "Can't load " << network.Name() << " from '" << model << "' and '" << weight << "' !" << std::endl;
             return false;
@@ -177,7 +177,7 @@ namespace Test
             std::cout << "Can't read '" << inputPath << "' image!" << std::endl;
             return false;
         }
-        Regions regions = network.GetRegions(image.Size(), 0.5f, 0.5f);
+        Regions regions = network.GetRegions(image.Size(), options.regionThreshold, options.regionOverlap);
         uint32_t white = 0xFFFFFFFF;
         for (size_t i = 0; i < regions.size(); ++i)
         {
@@ -197,7 +197,6 @@ namespace Test
         return true;
     }
 
-#ifdef SYNET_DEBUG_PRINT_ENABLE
     inline bool DebugPrint(Network & network, const Options & options, size_t i)
     {
         String path = MakePath(options.outputDirectory, network.Name() + "_t" + Synet::ValueToString(options.threadNumber) + "_i" + Synet::ValueToString(i) + ".log");
@@ -214,7 +213,6 @@ namespace Test
             return false;
         }
     }
-#endif
 
     inline bool Compare(float a, float b, float t)
     {
@@ -272,13 +270,11 @@ namespace Test
         }
 #endif
 
-#if defined(SYNET_ANNOTATE_REGIONS) || defined(SYNET_DEBUG_PRINT_ENABLE)
         if (options.NeedOutputDirectory() && !DirectoryExists(options.outputDirectory) && !CreatePath(options.outputDirectory))
         {
             std::cout << "Can't create output directory '" << options.outputDirectory << "' !" << std::endl;
             return false;
         }
-#endif
 
         TestDataPtrs tests;
 #ifdef SYNET_OTHER_RUN 
@@ -305,7 +301,6 @@ namespace Test
                 std::cout << " \r" << std::flush;
             }
 
-#ifdef SYNET_DEBUG_PRINT_ENABLE
 #ifdef SYNET_OTHER_RUN
             if (!DebugPrint(otherNetwork, options, i))
                 return false;
@@ -314,9 +309,7 @@ namespace Test
             if (!DebugPrint(synetNetwork, options, i))
                 return false;
 #endif
-#endif
 
-#ifdef SYNET_ANNOTATE_REGIONS
 #ifdef SYNET_OTHER_RUN
             if (!AnnotateRegions(options, otherNetwork, test.path[0]))
                 return false;
@@ -324,7 +317,6 @@ namespace Test
 #ifdef SYNET_SYNET_RUN
             if (!AnnotateRegions(options, synetNetwork, test.path[0]))
                 return false;
-#endif
 #endif
 
 #if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)

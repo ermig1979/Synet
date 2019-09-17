@@ -63,13 +63,12 @@ namespace Test
             return size_t(_net->batch) * _net->c * _net->h * _net->w;
         }
 
-        virtual bool Init(const String & model, const String & weight, size_t threadNumber, size_t batchSize, const TestParam & param)
+        virtual bool Init(const String & model, const String & weight, const Options & options, const TestParam & param)
         {
             TEST_PERF_FUNC();
-            _net = ::parse_network_cfg((char*)PatchCfg(model, batchSize).c_str());
+            _regionThreshold = options.regionThreshold;
+            _net = ::parse_network_cfg((char*)PatchCfg(model, options.batchSize).c_str());
             ::load_weights(_net, (char*)weight.c_str());
-            //::set_batch_network(_net, batchSize);
-            //::resize_network(_net, _net->w, _net->h);
             return true;
         }
 
@@ -83,7 +82,6 @@ namespace Test
             return _output;
         }
 
-#ifdef SYNET_DEBUG_PRINT_ENABLE
         virtual void DebugPrint(std::ostream & os, int flag, int first, int last)
         {
             if (!flag)
@@ -124,7 +122,6 @@ namespace Test
                 }
             }
         }
-#endif
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
