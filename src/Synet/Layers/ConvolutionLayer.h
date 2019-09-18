@@ -31,6 +31,7 @@
 #include "Synet/Utils/Winograd.h"
 #include "Synet/Utils/Convolution.h"
 #include "Synet/Layers/PreluLayer.h"
+#include "Synet/Layers/ScaleLayer.h"
 
 namespace Synet
 {
@@ -279,7 +280,7 @@ namespace Synet
             statD.Init8u();
             _negSrc = statS.negative;
             _weight8i.Reshape(this->Weight()[0].Shape());
-            _bias32i.Reshape(Shape({ _conv.dstC }));
+            _norm32i.Reshape(Shape({ size_t(2), _conv.dstC }));
             _norm32f.Reshape(Shape({ size_t(2), _conv.dstC }));
             if (!_src8u)
             {
@@ -290,8 +291,8 @@ namespace Synet
                 _srcCvt.scale = statS.scale32fTo8u.data();
                 _srcCvt.shift = statS.shift32fTo8u.data();
             }
-            size_t G = _conv.group, D = _conv.dstC / G, C = _conv.srcC / G, Y = _conv.kernelY, X = _conv.kernelX, K = C * Y * X;
-            Floats normW(K);
+            size_t G = _conv.group, D = _conv.dstC / G, C = _conv.srcC / G, K = _conv.kernelY*_conv.kernelX, CK = C * K, GD = G*D;
+            Floats normW(CK);
             const float * pSrcW = this->Weight()[0].CpuData();
             const float * pSrcB = _biasTerm ? this->Weight()[1].CpuData() : NULL;
             const float * pSrcScale = statS.scale32fTo8u.data();
@@ -300,7 +301,8 @@ namespace Synet
             const float * pDstShift = statD.shift8uTo32f.data();
             float * pNormW = normW.data();
             int8_t * pDstW = _weight8i.CpuData();
-            int32_t * pDstB = _bias32i.CpuData();
+            int32_t * pDstS = _norm32i.CpuData();
+            int32_t * pDstB = pDstS + _conv.dstC;
             float * pNormScale = _norm32f.CpuData();
             float * pNormShift = pNormScale + _conv.dstC;
             _dstCvt.batch = _num;
@@ -309,119 +311,109 @@ namespace Synet
             _dstCvt.format = (TensorFormat)_trans;
             _dstCvt.scale = pNormScale;
             _dstCvt.shift = pNormShift;
-            if (_trans)
+            for (size_t g = 0; g < G; ++g)
             {
-                for (size_t g = 0; g < G; ++g)
+                for (size_t d = 0; d < D; ++d)
                 {
-                    for (size_t d = 0; d < D; ++d)
+                    float normB = 0, minW = FLT_MAX, maxW = -FLT_MAX, scale = 1.0f;
+                    if (_trans)
                     {
-                        float normB = 0, minW = FLT_MAX, maxW = -FLT_MAX;
-                        for (size_t y = 0, k = 0; y < Y; ++y)
-                        {
-                            for (size_t x = 0; x < X; ++x)
+                        for (size_t k = 0, kc = 0; k < K; ++k)
+                            for (size_t c = 0; c < C; ++c, ++kc)
                             {
-                                for (size_t c = 0; c < C; ++c, ++k)
-                                {
-                                    pNormW[k] = pSrcW[k*G*D + d] / pSrcScale[c];
-                                    minW = std::min(minW, pNormW[k]);
-                                    maxW = std::max(maxW, pNormW[k]);
-                                }
+                                pNormW[kc] = pSrcW[kc*GD + d] / pSrcScale[c];
+                                minW = std::min(minW, pNormW[kc]);
+                                maxW = std::max(maxW, pNormW[kc]);
                             }
-                        }
-                        float scale = 127.0f / std::max(abs(maxW), abs(minW));
-                        if (pSrcB)
-                            normB = pSrcB[g*D + d] * scale;
-                        for (size_t y = 0, k = 0; y < Y; ++y)
-                            for (size_t x = 0; x < X; ++x)
-                                for (size_t c = 0; c < C; ++c, ++k)
+                        scale = 127.0f / std::max(abs(maxW), abs(minW));
+                        for (size_t k = 0, kc = 0; k < K; ++k)
+                            for (size_t c = 0; c < C; ++c, ++kc)
+                                if (_negSrc)
                                 {
-                                    if (_negSrc)
-                                    {
-                                        pDstW[k*G*D + d] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
-                                    }
-                                    else
-                                    {
-                                        pDstW[k*G*D + d] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
-                                        normB -= pDstW[k*G*D + d] * pSrcShift[c];
-                                    }
+#ifdef SYNET_INT8_INT8_DISABLE
+                                    int w = Detail::Convert32fTo8i(pNormW[kc], scale, 0.0f);
+                                    if (w & 1)
+                                        w = Round(w*0.25f) * 4;
+                                    pDstW[kc*GD + d] = w / 2;
+                                    normB -= w * pSrcShift[c];
+#else
+                                    pDstW[k*G*D + d] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
+#endif
                                 }
-                        pDstB[d] = Synet::Quantize(normB);
-                        if (_dst8u)
-                        {
-                            pNormScale[d] = 1.0f / pDstScale[d] / scale;
-                            pNormShift[d] = -pDstShift[d] / pDstScale[d];
-                        }
-                        else
-                        {
-                            pNormScale[d] = 1.0f / scale;
-                            pNormShift[d] = 0;
-                        }
+                                else
+                                {
+                                    pDstW[kc*GD + d] = Detail::Convert32fTo8i(pNormW[kc], scale, 0.0f);
+                                    normB -= pDstW[kc*GD + d] * pSrcShift[c];
+                                }
                     }
-                    pSrcW += D;
-                    pSrcScale += C;
-                    pSrcShift += C;
-                    pDstScale += D;
-                    pDstShift += D;
-                    pDstW += D;
-                    pDstB += D;
-                    pNormScale += D;
-                    pNormShift += D;
-                }
-            }
-            else
-            {
-                for (size_t g = 0; g < G; ++g)
-                {
-                    for (size_t d = 0; d < D; ++d)
+                    else
                     {
-                        float normB = 0, minW = FLT_MAX, maxW = -FLT_MAX;
-                        for (size_t c = 0, k = 0; c < C; ++c)
-                            for (size_t y = 0; y < Y; ++y)
-                                for (size_t x = 0; x < X; ++x, ++k)
+                        for (size_t c = 0, ck = 0; c < C; ++c)
+                            for (size_t k = 0; k < K; ++k)
+                            {
+                                pNormW[ck] = pSrcW[d*CK + ck] / pSrcScale[c];
+                                minW = std::min(minW, pNormW[ck]);
+                                maxW = std::max(maxW, pNormW[ck]);
+                            }
+                        scale = 127.0f / std::max(abs(maxW), abs(minW));
+                        for (size_t c = 0, ck = 0; c < C; ++c)
+                            for (size_t k = 0; k < K; ++k, ++ck)
+                                if (_negSrc)
                                 {
-                                    pNormW[k] = pSrcW[d*K + k] / pSrcScale[c];
-                                    minW = std::min(minW, pNormW[k]);
-                                    maxW = std::max(maxW, pNormW[k]);
+#ifdef SYNET_INT8_INT8_DISABLE
+                                    int w = Detail::Convert32fTo8i(pNormW[ck], scale, 0.0f);
+                                    if (w & 1)
+                                        w = Round(w*0.25f) * 4;
+                                    pDstW[d*CK + ck] = w / 2;
+                                    normB -= w * pSrcShift[c];
+#else
+                                    pDstW[d*K + k] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
+#endif
                                 }
-                        float scale = 127.0f / std::max(abs(maxW), abs(minW));
-                        if (pSrcB)
-                            normB = pSrcB[g*D + d]*scale;
-                        for (size_t c = 0, k = 0; c < C; ++c)
-                            for (size_t y = 0; y < Y; ++y)
-                                for (size_t x = 0; x < X; ++x, ++k)
+                                else
                                 {
-                                    if (_negSrc)
-                                    {
-                                        pDstW[d*K + k] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
-                                    }
-                                    else
-                                    {
-                                        pDstW[d*K + k] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
-                                        normB -= pDstW[d*K + k] * pSrcShift[c];
-                                    }
+                                    pDstW[d*CK + ck] = Detail::Convert32fTo8i(pNormW[ck], scale, 0.0f);
+                                    normB -= pDstW[d*CK + ck] * pSrcShift[c];
                                 }
-                        pDstB[d] = Synet::Quantize(normB);
-                        if (_dst8u)
-                        {
-                            pNormScale[d] = 1.0f / pDstScale[d] / scale;
-                            pNormShift[d] = -pDstShift[d] / pDstScale[d];
-                        }
-                        else
-                        {
-                            pNormScale[d] = 1.0f / scale;
-                            pNormShift[d] = 0;
-                        }
                     }
-                    pSrcW += K*D;
-                    pSrcScale += C;
-                    pSrcShift += C;
-                    pDstScale += D;
-                    pDstShift += D;
-                    pDstW += K*D;
-                    pDstB += D;
-                    pNormScale += D;
-                    pNormShift += D;
+#ifdef SYNET_INT8_INT8_DISABLE
+                    pDstS[d] = _negSrc ? 2 : 1;
+#else
+                    pDstS[d] = 1;
+#endif
+                    if (pSrcB)
+                        normB += pSrcB[d] * scale;
+                    pDstB[d] = Synet::Quantize(normB);
+                    if (_dst8u)
+                    {
+                        pNormScale[d] = 1.0f / pDstScale[d] / scale;
+                        pNormShift[d] = -pDstShift[d] / pDstScale[d];
+                    }
+                    else
+                    {
+                        pNormScale[d] = 1.0f / scale;
+                        pNormShift[d] = 0;
+                    }
                 }
+                if (_trans)
+                {
+                    pSrcW += D;
+                    pDstW += D;
+                }
+                else
+                {
+                    pSrcW += CK*D;
+                    pDstW += CK*D;
+                }
+                pSrcB += D;
+                pDstB += D;
+                pDstS += D;
+                pSrcScale += C;
+                pSrcShift += C;
+                pDstScale += D;
+                pDstShift += D;
+                pNormScale += D;
+                pNormShift += D;           
             }
         }
 
@@ -429,9 +421,8 @@ namespace Synet
         {
             const uint8_t * zero = this->Stats(0)[0]->zero8u.data();
             const int8_t * weight = _weight8i.CpuData();
-            const int32_t * bias = _bias32i.CpuData();
-            const float * scale = _norm32f.CpuData();
-            const float * shift = scale + _conv.dstC;
+            const int32_t * scale = _norm32i.CpuData();
+            const int32_t * shift = scale + _conv.dstC;
             for (size_t n = 0; n < _num; ++n)
             {
                 const uint8_t * tmp = src;
@@ -462,7 +453,7 @@ namespace Synet
                         for (size_t g = 0; g < _conv.group; ++g)
                             Synet::CpuGemmNN(_siD, _siS, _siW, weight + _grW * g, _ldW, tmp + _grS * g, _ldS, dst + _grD * g, _ldD);
                 }
-                CpuAddBias(bias, _conv.dstC, _conv.dstH*_conv.dstW, dst, _trans);
+                Detail::ScaleLayerForwardCpu(dst, scale, shift, _conv.dstC, _conv.dstH*_conv.dstW, dst, _trans);
 
                 switch (_conv.activation)
                 {
@@ -491,7 +482,11 @@ namespace Synet
 
         void CpuGemmNN(size_t S, size_t D, size_t K, size_t C, const uint8_t * src, size_t lda, const int8_t * weight, size_t ldb, int32_t * dst, size_t ldc)
         {
+#ifdef SYNET_INT8_INT8_DISABLE 
+            const size_t C2 = C / 2 * 2;
+#else
             const size_t C2 = _negSrc ? 0 : C / 2 * 2;
+#endif
             for (size_t i = 0; i < S; ++i)
             {
                 for (size_t j = 0; j < D; ++j)
@@ -524,9 +519,13 @@ namespace Synet
                             for (size_t j = 0; j < D; ++j)
                             {
                                 int _w0 = w0[j];
+#ifdef SYNET_INT8_INT8_DISABLE
+                                int _s0 = int(s0);
+#else
                                 if (_w0 & 1)
                                     _w0 = Round(_w0*0.25f) * 4;
-                                int _s0 = int(s0) - 128;
+                                int _s0 = int(s0) - 128;                                
+#endif
                                 int dp = _w0*_s0;
                                 d[j] += dp;
                             }
@@ -540,7 +539,11 @@ namespace Synet
 
         void CpuGemmNN(size_t D, size_t S, size_t C, size_t K, const int8_t * weight, size_t lda, const uint8_t * src, size_t ldb, int32_t * dst, size_t ldc)
         {
+#ifdef SYNET_INT8_INT8_DISABLE 
+            const size_t C2 = C / 2 * 2;
+#else
             const size_t C2 = _negSrc ? 0 : C / 2 * 2;
+#endif
             for (size_t i = 0; i < D; ++i)
             {
                 for (size_t j = 0; j < S; ++j)
@@ -576,9 +579,13 @@ namespace Synet
                             for (size_t j = 0; j < S; ++j)
                             {
                                 int _w0 = w0;
+#ifdef SYNET_INT8_INT8_DISABLE
+                                int _s0 = int(s0[j]);
+#else
                                 if(_w0&1)
                                     _w0 = Round(_w0*0.25f)*4;
                                 int _s0 = int(s0[j]) - 128;
+#endif
                                 int dp = _w0*_s0;
                                 d[j] += dp;
                             }
@@ -601,7 +608,7 @@ namespace Synet
         Convolution<Type> _convolution;
 
         Tensor8i _weight8i;
-        Tensor32i _bias32i;
+        Tensor32i _norm32i;
         Tensor32f _norm32f;
     };
 }
