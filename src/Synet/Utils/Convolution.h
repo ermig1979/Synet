@@ -28,22 +28,22 @@
 
 namespace Synet
 {
-    template <class T>  class Convolution
+    template <class T>  class Convolution32f
     {
     public:
-        Convolution()
+        Convolution32f()
             : _context(NULL)
             , _batch(0)
         {
         }
 
-        virtual ~Convolution()
+        virtual ~Convolution32f()
         {
         }
 
         typedef void(*Gemm32fNNPtr)(size_t M, size_t N, size_t K, const T * alpha, const T * A, size_t lda, const T * B, size_t ldb, const T * beta, T * C, size_t ldc);
 
-        void Init(int trans, size_t batch, const ConvParam * conv, Gemm32fNNPtr gemm)
+        void Init(size_t batch, const ConvParam * conv, Gemm32fNNPtr gemm)
         {
         }
 
@@ -76,43 +76,43 @@ namespace Synet
     };
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-    template<> SYNET_INLINE Convolution<float>::~Convolution()
+    template<> SYNET_INLINE Convolution32f<float>::~Convolution32f()
     {
         if (_context)
             ::SimdRelease(_context);
     }
 
-    template<> SYNET_INLINE void Convolution<float>::Init(int trans, size_t batch, const ConvParam * conv, ::SimdGemm32fNNPtr gemm)
+    template<> SYNET_INLINE void Convolution32f<float>::Init(size_t batch, const ConvParam * conv, ::SimdGemm32fNNPtr gemm)
     {
         if (_batch != batch || _srcH != conv->srcH || _srcW != conv->srcW)
         {
             _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
             if (_context)
                 ::SimdRelease(_context);
-            _context = ::SimdConvolutionInit((::SimdBool)trans, batch, (const SimdConvolutionParameters *)conv, gemm);
+            _context = ::SimdSynetConvolution32fInit(batch, (const SimdConvolutionParameters *)conv, gemm);
         }
     }
 
-    template<> SYNET_INLINE size_t Convolution<float>::ExternalBufferSize() const
+    template<> SYNET_INLINE size_t Convolution32f<float>::ExternalBufferSize() const
     {
-        return _context ? ::SimdConvolutionExternalBufferSize(_context) : 0;
+        return _context ? ::SimdSynetConvolution32fExternalBufferSize(_context) : 0;
     }
 
-    template<> SYNET_INLINE size_t Convolution<float>::InternalBufferSize() const
+    template<> SYNET_INLINE size_t Convolution32f<float>::InternalBufferSize() const
     {
-        return _context ? ::SimdConvolutionInternalBufferSize(_context) : 0;
+        return _context ? ::SimdSynetConvolution32fInternalBufferSize(_context) : 0;
     }
 
-    template<> SYNET_INLINE void Convolution<float>::SetParams(const float * weight, int * internal, const float * bias, const float * params)
+    template<> SYNET_INLINE void Convolution32f<float>::SetParams(const float * weight, int * internal, const float * bias, const float * params)
     {
         if (_context)
-            ::SimdConvolutionSetParams(_context, weight, (::SimdBool*)internal, bias, params);
+            ::SimdSynetConvolution32fSetParams(_context, weight, (::SimdBool*)internal, bias, params);
     }
 
-    template<> SYNET_INLINE void Convolution<float>::Forward(const float * src, float * buf, float * dst)
+    template<> SYNET_INLINE void Convolution32f<float>::Forward(const float * src, float * buf, float * dst)
     {
         if (_context)
-            ::SimdConvolutionForward(_context, src, buf, dst);
+            ::SimdSynetConvolution32fForward(_context, src, buf, dst);
     }
 #endif
 }

@@ -319,11 +319,11 @@ namespace Synet
             if(_add)
                 assert(_srcSize == _dstSize);
 
-            _mergedConvolution.Init(1, _num, _conv, Detail::MCC, _add);
-            if (_mergedConvolution.Enable())
+            _mergedConvolution32f.Init(_num, _conv, Detail::MCC, _add);
+            if (_mergedConvolution32f.Enable())
             {
-                buf[0]->Extend({ _mergedConvolution.ExternalBufferSize() });
-                _mergedConvolution.SetParams(_weight, _internal, _bias, _params);
+                buf[0]->Extend({ _mergedConvolution32f.ExternalBufferSize() });
+                _mergedConvolution32f.SetParams(_weight, _internal, _bias, _params);
             }
             else
             {
@@ -333,7 +333,7 @@ namespace Synet
 
         virtual size_t MemoryUsage() const
         {
-            return Base::MemoryUsage() + _mergedConvolution.InternalBufferSize() * sizeof(Type);
+            return Base::MemoryUsage() + _mergedConvolution32f.InternalBufferSize() * sizeof(Type);
         }
 
         virtual void CompactWeight()
@@ -362,8 +362,8 @@ namespace Synet
 #else
             SYNET_PERF_FUNC();
 #endif
-            if (_mergedConvolution.Enable())
-                _mergedConvolution.Forward(src, buf, dst);
+            if (_mergedConvolution32f.Enable())
+                _mergedConvolution32f.Forward(src, buf, dst);
             else
             {
                 T * buf1 = buf + _conv[0].dstC * _conv[0].dstH * _conv[0].dstW;
@@ -392,6 +392,6 @@ namespace Synet
         typedef void(*ConvolutionBiasActivationPtr)(const T * src, const ConvParam & conv, const T * weight, const T * bias, const T * params, T * dst);
         ConvolutionBiasActivationPtr _convolution[Detail::MCC];
 
-        MergedConvolution<Type> _mergedConvolution;
+        MergedConvolution32f<Type> _mergedConvolution32f;
     };
 }

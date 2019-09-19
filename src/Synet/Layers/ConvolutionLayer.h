@@ -56,7 +56,7 @@ namespace Synet
 
         virtual size_t MemoryUsage() const
         {
-            return Base::MemoryUsage() + _convolution.InternalBufferSize() * sizeof(Type);
+            return Base::MemoryUsage() + _convolution32f.InternalBufferSize() * sizeof(Type);
         }
 
         virtual void CompactWeight()
@@ -168,11 +168,11 @@ namespace Synet
             {
                 dst[0]->Reshape(dstShape, src[0]->Format());
 
-                _convolution.Init(_trans, _num, &_conv, SYNET_EXTERNAL_GEMM);
-                if (_convolution.Enable())
+                _convolution32f.Init(_num, &_conv, SYNET_EXTERNAL_GEMM);
+                if (_convolution32f.Enable())
                 {
-                    buf[TensorType32f*BUFFER_COUNT]->Extend({ _convolution.ExternalBufferSize() });
-                    _convolution.SetParams(weight[0].CpuData(), &_internal, _biasTerm ? weight[1].CpuData() : NULL,
+                    buf[TensorType32f*BUFFER_COUNT]->Extend({ _convolution32f.ExternalBufferSize() });
+                    _convolution32f.SetParams(weight[0].CpuData(), &_internal, _biasTerm ? weight[1].CpuData() : NULL,
                         _conv.activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : _params);
                 }
                 else
@@ -214,8 +214,8 @@ namespace Synet
 #else
             SYNET_PERF_FUNC();
 #endif
-            if (_convolution.Enable())
-                _convolution.Forward(src, buf, dst);
+            if (_convolution32f.Enable())
+                _convolution32f.Forward(src, buf, dst);
             else
             {
                 const Type * weight = this->Weight()[0].CpuData();
@@ -605,7 +605,7 @@ namespace Synet
         size_t _axis, _num, _srcSize, _dstSize, _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
         float _params[2];
 
-        Convolution<Type> _convolution;
+        Convolution32f<Type> _convolution32f;
 
         Tensor8i _weight8i;
         Tensor32i _norm32i;

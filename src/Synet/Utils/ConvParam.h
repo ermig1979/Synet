@@ -33,9 +33,13 @@ namespace Synet
         size_t srcC;
         size_t srcH;
         size_t srcW;
+        TensorType srcT;
+        TensorFormat srcF;
         size_t dstC;
         size_t dstH;
         size_t dstW;
+        TensorType dstT;
+        TensorFormat dstF;
         size_t kernelY;
         size_t kernelX;
         size_t dilationY;
@@ -97,8 +101,12 @@ namespace Synet
                 srcH = src.Axis(-2);
                 srcW = src.Axis(-1);
             }
+            srcT = src.GetType();
+            srcF = src.Format();
             dstH = (srcH + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
             dstW = (srcW + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
+            dstT = srcT;
+            dstF = srcF;
         }
 
         void Set(const ConvParam & src)
@@ -106,8 +114,12 @@ namespace Synet
             srcC = src.dstC;
             srcH = src.dstH;
             srcW = src.dstW;
+            srcT = src.srcT;
+            srcF = src.srcF;
             dstH = (srcH + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
             dstW = (srcW + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
+            dstT = srcT;
+            dstF = srcF;
         }
 
         bool Is1x1() const
