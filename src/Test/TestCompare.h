@@ -32,346 +32,415 @@
 
 namespace Test
 {
-    inline bool InitNetwork(const String & model, const String & weight, const Options & options, const TestParam & param, Network & network)
+    template<class OtherNetwork> class Comparer
     {
-        if (!FileExists(model))
+    public:
+        Comparer(const Options & options)
+            : _options(options)
         {
-            std::cout << "File '" << model << "' is not exist!" << std::endl;
-            return false;
+            assert(_options.testThreads >= 1);
+            _others.resize(_options.testThreads);
+            _synets.resize(_options.testThreads);
         }
 
-        if (!FileExists(weight))
+        bool Run()
         {
-            std::cout << "File '" << weight << "' is not exist!" << std::endl;
-            return false;
-        }
-
-        if (!network.Init(model, weight, options, param))
-        {
-            std::cout << "Can't load " << network.Name() << " from '" << model << "' and '" << weight << "' !" << std::endl;
-            return false;
-        }
-
-        Shape shape = network.SrcShape(0);
-
-        if (!(shape[1] == 1 || shape[1] == 3))
-        {
-            std::cout << "Wrong " << network.Name() << " classifier channels count '" << shape[1] << " !" << std::endl;
-            return false;
-        }
-
-        return true;
-    }
-
-    struct TestData
-    {
-        Strings path;
-        Vectors input;
-        Vectors other;
-        Vectors synet;
-    };
-    typedef std::shared_ptr<TestData> TestDataPtr;
-    typedef std::vector<TestDataPtr> TestDataPtrs;
-
-    inline bool CreateTestList(const Options & options, const TestParam & param, const Network & network, TestDataPtrs & tests)
-    {
-        if (!DirectoryExists(options.imageDirectory))
-        {
-            std::cout << "Test image directory '" << options.imageDirectory << "' is not exists!" << std::endl;
-            return false;
-        }
-        StringList images = GetFileList(options.imageDirectory, options.imageFilter, true, false);
-        images.sort();
-        Strings names(images.begin(), images.end());
-        size_t sN = network.SrcCount(), bN = options.batchSize;
-        size_t tN = names.size() / bN / sN;
-        if (tN == 0)
-        {
-            std::cout << "There is no one image in '" << options.imageDirectory << "' for '" << options.imageFilter << "' filter!" << std::endl;
-            return false;
-        }
-        StringList::const_iterator name = images.begin();
-
-        tests.clear();
-        tests.reserve(tN);
-        for (size_t t = 0; t < tN; ++t)
-        {
-            TestDataPtr test(new TestData());
-            test->path.resize(bN * sN);
-            test->input.resize(sN);
-            for (size_t s = 0; s < sN; ++s)
-            {
-                test->input[s].resize(network.SrcSize(s));
-                float * input = test->input[s].data();
-                for (size_t b = 0; b < bN; ++b)
-                {
-                    size_t p = s*bN + b;
-                    test->path[p] = MakePath(options.imageDirectory, names[(t*bN + b)*sN + s]);
-                    View original;
-                    if (!original.Load(test->path[p]))
-                    {
-                        std::cout << "Can't read '" << test->path[p] << "' image!" << std::endl;
-                        return false;
-                    }
-                    Shape shape = network.SrcShape(s);
-                    if (shape.size() == 4)
-                    {
-                        View converted(original.Size(), shape[1] == 1 ? View::Gray8 : View::Bgr24);
-                        Simd::Convert(original, converted);
-                        View resized(Size(shape[3], shape[2]), converted.format);
-                        Simd::ResizeBilinear(converted, resized);
-
-                        Views channels(shape[1]);
-                        if (shape[1] > 1)
-                        {
-                            for (size_t i = 0; i <  shape[1]; ++i)
-                                channels[i].Recreate(resized.Size(), View::Gray8);
-                            Simd::DeinterleaveBgr(resized, channels[0], channels[1], channels[2]);
-                        }
-                        else
-                            channels[0] = resized;
-
-                        for (size_t c = 0; c < channels.size(); ++c)
-                        {
-                            for (size_t y = 0; y < channels[c].height; ++y)
-                            {
-                                const uint8_t * row = channels[c].Row<uint8_t>(y);
-                                ::SimdUint8ToFloat32(row, channels[c].width, &param.lower(), &param.upper(), input);
-                                input += channels[c].width;
-                            }
-                        }
-                    }
-                    else if(shape.size() == 2)
-                    {
-                        if (shape[0] != original.height || shape[1] != original.width)
-                        {
-                            std::cout << "Incompatible size of '" << test->path[p] << "' image!" << std::endl;
-                            return false;
-                        }
-                        for (size_t y = 0; y < original.height; ++y)
-                        {
-                            const uint8_t * row = original.Row<uint8_t>(y);
-                            const float lo = 0.0f, hi = 255.0f;
-                            ::SimdUint8ToFloat32(row, original.width, &lo, &hi, input);
-                            input += original.width;
-                        }
-                    }
-                    else
-                    {
-                        std::cout << "Can't map to source '" << test->path[p] << "' image!" << std::endl;
-                        return false;
-                    }
-                }
-            }
-            tests.push_back(test);
-        }
-
-        return true;
-    }
-
-    inline bool AnnotateRegions(const Options & options, const Network & network, const String & inputPath)
-    {
-        if (options.annotateRegions)
-        {
-            View image;
-            if (!image.Load(inputPath))
-            {
-                std::cout << "Can't read '" << inputPath << "' image!" << std::endl;
+            PrintStartMessage();
+            if (!LoadTestParam())
                 return false;
-            }
-            Regions regions = network.GetRegions(image.Size(), options.regionThreshold, options.regionOverlap);
-            uint32_t white = 0xFFFFFFFF;
-            for (size_t i = 0; i < regions.size(); ++i)
-            {
-                const Region & region = regions[i];
-                ptrdiff_t l = ptrdiff_t(region.x - region.w / 2);
-                ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
-                ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
-                ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
-                Simd::DrawRectangle(image, l, t, r, b, white);
-            }
-            String outputPath = MakePath(options.outputDirectory, network.Name() + "_" + GetNameByPath(inputPath));
-            if (!image.Save(outputPath))
-            {
-                std::cout << "Can't write '" << outputPath << "' image!" << std::endl;
+            if (!InitNetworks())
                 return false;
-            }
-        }
-        return true;
-    }
-
-    inline bool DebugPrint(Network & network, const Options & options, size_t i)
-    {
-        if (options.debugPrint)
-        {
-            String path = MakePath(options.outputDirectory, network.Name() + "_t" + Synet::ValueToString(options.threadNumber) + "_i" + Synet::ValueToString(i) + ".log");
-            std::ofstream log(path);
-            if (log.is_open())
+            if (!CreateDirectories())
+                return false;
+            if (!CreateTestList())
+                return false;
+            if (_options.testThreads == 1)
             {
-                network.DebugPrint(log, options.debugPrint, options.debugPrintFirst, options.debugPrintLast);
-                log.close();
+                if (!SingleThreadComparison())
+                    return false;
             }
             else
             {
-                std::cout << "Can't open '" << path << "' file!" << std::endl;
+                if (!MultiThreadsComparison())
+                    return false;
+            }
+            return true;
+        }
+
+    private:
+        Options _options;
+        TestParamHolder _param;
+        std::vector<OtherNetwork> _others;
+        std::vector<SynetNetwork> _synets;
+
+        struct Output
+        {
+            Vectors other;
+            Vectors synet;
+        };
+        typedef std::vector<Output> Outputs;
+        struct TestData
+        {
+            Strings path;
+            Vectors input;
+            Outputs output;
+        };
+        typedef std::shared_ptr<TestData> TestDataPtr;
+        typedef std::vector<TestDataPtr> TestDataPtrs;
+        TestDataPtrs _tests;
+
+        void PrintStartMessage() const
+        {
+            std::cout << "Start " << _others[0].Name() << " and " << _synets[0].Name() << " ";
+            if (_options.testThreads > 1)
+                std::cout << _options.testThreads << "-threads comparison tests :" << std::endl;
+            else
+                std::cout << "single-thread comparison tests :" << std::endl;
+        }
+
+        bool LoadTestParam()
+        {
+            if (!_param.Load(_options.testParam))
+            {
+                std::cout << "Can't load file '" << _options.testParam << "' !" << std::endl;
                 return false;
             }
+            return true;
         }
-        return true;
-    }
 
-    inline bool Compare(float a, float b, float t)
-    {
-        float d = ::fabs(a - b);
-        return d <= t || d / std::max(::fabs(a), ::fabs(b)) <= t;
-    }
-
-    template<class OtherNetwork> bool CompareOtherAndSynet(const Options & options)
-    {
-        OtherNetwork otherNetwork;
-        SynetNetwork synetNetwork;
-        TestParamHolder testParam;
-
-        std::cout << "Start " << otherNetwork.Name() << " and " << synetNetwork.Name() << " comparison tests :" << std::endl;
-
-        if (!testParam.Load(options.testParam))
+        bool InitNetwork(const String & model, const String & weight, Network & network) const
         {
-            std::cout << "Can't load file '" << options.testParam << "' !" << std::endl;
-            return false;
+            if (!FileExists(model))
+            {
+                std::cout << "File '" << model << "' is not exist!" << std::endl;
+                return false;
+            }
+            if (!FileExists(weight))
+            {
+                std::cout << "File '" << weight << "' is not exist!" << std::endl;
+                return false;
+            }
+            if (!network.Init(model, weight, _options, _param()))
+            {
+                std::cout << "Can't load " << network.Name() << " from '" << model << "' and '" << weight << "' !" << std::endl;
+                return false;
+            }
+            Shape shape = network.SrcShape(0);
+            if (!(shape[1] == 1 || shape[1] == 3))
+            {
+                std::cout << "Wrong " << network.Name() << " classifier channels count '" << shape[1] << " !" << std::endl;
+                return false;
+            }
+            return true;
         }
 
+        bool InitNetworks()
+        {
+            for (size_t t = 0; t < _options.testThreads; ++t)
+            {
 #ifdef SYNET_OTHER_RUN        
-        if (!InitNetwork(options.otherModel, options.otherWeight, options, testParam(), otherNetwork))
-            return false;
+                if (!InitNetwork(_options.otherModel, _options.otherWeight, _others[t]))
+                    return false;
 #endif
-
 #ifdef SYNET_SYNET_RUN
-        if (!InitNetwork(options.synetModel, options.synetWeight, options, testParam(), synetNetwork))
-            return false;
+                if (!InitNetwork(_options.synetModel, _options.synetWeight, _synets[t]))
+                    return false;
 #endif
-
+            }
 #if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
-        if (otherNetwork.SrcCount() != synetNetwork.SrcCount())
-        {
-            std::cout << "Networks have difference source number: " << 
-                otherNetwork.SrcCount()  << " != " << synetNetwork.SrcCount() << std::endl;
-            return false;
-        }
-        for (size_t s = 0; s < otherNetwork.SrcCount(); ++s)
-        {
-            const Shape & os = otherNetwork.SrcShape(s);
-            const Shape & ss = synetNetwork.SrcShape(s);
-            if (os != ss)
+            if (_others[0].SrcCount() != _synets[0].SrcCount())
             {
-                std::cout << "Networks have difference Src[" << s << "] size: ";
-                std::cout << otherNetwork.Name() << " {" << os[0];
-                for (size_t j = 1; j < os.size(); ++j)
-                    std::cout << ", " << os[j];
-                std::cout << "} != " << synetNetwork.Name() << " {" << ss[0];
-                for (size_t j = 1; j < ss.size(); ++j)
-                    std::cout << ", " << ss[j];
-                std::cout << "} ! " << std::endl;
+                std::cout << "Networks have difference source number: " <<
+                    _others[0].SrcCount() << " != " << _synets[0].SrcCount() << std::endl;
                 return false;
             }
-        }
+            for (size_t s = 0; s < _others[0].SrcCount(); ++s)
+            {
+                const Shape & os = _others[0].SrcShape(s);
+                const Shape & ss = _synets[0].SrcShape(s);
+                if (os != ss)
+                {
+                    std::cout << "Networks have difference Src[" << s << "] size: ";
+                    std::cout << _others[0].Name() << " {" << os[0];
+                    for (size_t j = 1; j < os.size(); ++j)
+                        std::cout << ", " << os[j];
+                    std::cout << "} != " << _synets[0].Name() << " {" << ss[0];
+                    for (size_t j = 1; j < ss.size(); ++j)
+                        std::cout << ", " << ss[j];
+                    std::cout << "} ! " << std::endl;
+                    return false;
+                }
+            }
 #endif
-
-        if (options.NeedOutputDirectory() && !DirectoryExists(options.outputDirectory) && !CreatePath(options.outputDirectory))
-        {
-            std::cout << "Can't create output directory '" << options.outputDirectory << "' !" << std::endl;
-            return false;
+            return true;
         }
 
-        TestDataPtrs tests;
+        bool CreateDirectories()
+        {
+            if (_options.NeedOutputDirectory() && !DirectoryExists(_options.outputDirectory) && !CreatePath(_options.outputDirectory))
+            {
+                std::cout << "Can't create output directory '" << _options.outputDirectory << "' !" << std::endl;
+                return false;
+            }
+            return true;
+        }
+
+        bool CreateTestList(const Network & network)
+        {
+            if (!DirectoryExists(_options.imageDirectory))
+            {
+                std::cout << "Test image directory '" << _options.imageDirectory << "' is not exists!" << std::endl;
+                return false;
+            }
+            StringList images = GetFileList(_options.imageDirectory, _options.imageFilter, true, false);
+            images.sort();
+            Strings names(images.begin(), images.end());
+            size_t sN = network.SrcCount(), bN = _options.batchSize;
+            size_t tN = names.size() / bN / sN;
+            if (tN == 0)
+            {
+                std::cout << "There is no one image in '" << _options.imageDirectory << "' for '" << _options.imageFilter << "' filter!" << std::endl;
+                return false;
+            }
+            StringList::const_iterator name = images.begin();
+
+            _tests.clear();
+            _tests.reserve(tN);
+            for (size_t t = 0; t < tN; ++t)
+            {
+                TestDataPtr test(new TestData());
+                test->path.resize(bN * sN);
+                test->input.resize(sN);
+                test->output.resize(_options.testThreads);
+                for (size_t s = 0; s < sN; ++s)
+                {
+                    test->input[s].resize(network.SrcSize(s));
+                    float * input = test->input[s].data();
+                    for (size_t b = 0; b < bN; ++b)
+                    {
+                        size_t p = s * bN + b;
+                        test->path[p] = MakePath(_options.imageDirectory, names[(t*bN + b)*sN + s]);
+                        View original;
+                        if (!original.Load(test->path[p]))
+                        {
+                            std::cout << "Can't read '" << test->path[p] << "' image!" << std::endl;
+                            return false;
+                        }
+                        Shape shape = network.SrcShape(s);
+                        if (shape.size() == 4)
+                        {
+                            View converted(original.Size(), shape[1] == 1 ? View::Gray8 : View::Bgr24);
+                            Simd::Convert(original, converted);
+                            View resized(Size(shape[3], shape[2]), converted.format);
+                            Simd::ResizeBilinear(converted, resized);
+
+                            Views channels(shape[1]);
+                            if (shape[1] > 1)
+                            {
+                                for (size_t i = 0; i < shape[1]; ++i)
+                                    channels[i].Recreate(resized.Size(), View::Gray8);
+                                Simd::DeinterleaveBgr(resized, channels[0], channels[1], channels[2]);
+                            }
+                            else
+                                channels[0] = resized;
+
+                            for (size_t c = 0; c < channels.size(); ++c)
+                            {
+                                for (size_t y = 0; y < channels[c].height; ++y)
+                                {
+                                    const uint8_t * row = channels[c].Row<uint8_t>(y);
+                                    ::SimdUint8ToFloat32(row, channels[c].width, &_param().lower(), &_param().upper(), input);
+                                    input += channels[c].width;
+                                }
+                            }
+                        }
+                        else if (shape.size() == 2)
+                        {
+                            if (shape[0] != original.height || shape[1] != original.width)
+                            {
+                                std::cout << "Incompatible size of '" << test->path[p] << "' image!" << std::endl;
+                                return false;
+                            }
+                            for (size_t y = 0; y < original.height; ++y)
+                            {
+                                const uint8_t * row = original.Row<uint8_t>(y);
+                                const float lo = 0.0f, hi = 255.0f;
+                                ::SimdUint8ToFloat32(row, original.width, &lo, &hi, input);
+                                input += original.width;
+                            }
+                        }
+                        else
+                        {
+                            std::cout << "Can't map to source '" << test->path[p] << "' image!" << std::endl;
+                            return false;
+                        }
+                    }
+                }
+                _tests.push_back(test);
+            }
+            return true;
+        }
+
+        bool CreateTestList()
+        {
 #ifdef SYNET_OTHER_RUN 
-        if (!CreateTestList(options, testParam(), otherNetwork, tests))
-            return false;
+            if (!CreateTestList(_others[0]))
+                return false;
 #else
-        if (!CreateTestList(options, testParam(), synetNetwork, tests))
-            return false;
+            if (!CreateTestList(_synets[0]))
+                return false;
 #endif
+            return true;
+        }
 
-        size_t total = tests.size()*options.repeatNumber, current = 0;
-        for (size_t i = 0; i < tests.size(); ++i)
+        bool DebugPrint(Network & network, size_t i) const
         {
-            TestData & test = *tests[i];
-            for (size_t j = 0; j < options.repeatNumber; ++j, ++current)
+            if (_options.debugPrint)
             {
-                std::cout << "Test progress : " << ToString(100.0*current / total, 1) << "% " << std::flush;
-#ifdef SYNET_OTHER_RUN
-                test.other = otherNetwork.Predict(tests[i]->input);
-#endif
-#ifdef SYNET_SYNET_RUN
-                test.synet = synetNetwork.Predict(tests[i]->input);
-#endif
-                std::cout << " \r" << std::flush;
+                String path = MakePath(_options.outputDirectory, network.Name() + "_i" + Synet::ValueToString(i) + ".log");
+                std::ofstream log(path);
+                if (log.is_open())
+                {
+                    network.DebugPrint(log, _options.debugPrint, _options.debugPrintFirst, _options.debugPrintLast);
+                    log.close();
+                }
+                else
+                {
+                    std::cout << "Can't open '" << path << "' file!" << std::endl;
+                    return false;
+                }
             }
+            return true;
+        }
 
-#ifdef SYNET_OTHER_RUN
-            if (!DebugPrint(otherNetwork, options, i))
-                return false;
-#endif
-#ifdef SYNET_SYNET_RUN                
-            if (!DebugPrint(synetNetwork, options, i))
-                return false;
-#endif
-
-#ifdef SYNET_OTHER_RUN
-            if (!AnnotateRegions(options, otherNetwork, test.path[0]))
-                return false;
-#endif
-#ifdef SYNET_SYNET_RUN
-            if (!AnnotateRegions(options, synetNetwork, test.path[0]))
-                return false;
-#endif
-
-#if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
-            if (test.other.size() != test.synet.size())
+        bool AnnotateRegions(const Network & network, const String & inputPath) const
+        {
+            if (_options.annotateRegions)
             {
-                std::cout << "Test " << i << " '" << test.path[0];
+                View image;
+                if (!image.Load(inputPath))
+                {
+                    std::cout << "Can't read '" << inputPath << "' image!" << std::endl;
+                    return false;
+                }
+                Regions regions = network.GetRegions(image.Size(), _options.regionThreshold, _options.regionOverlap);
+                uint32_t white = 0xFFFFFFFF;
+                for (size_t i = 0; i < regions.size(); ++i)
+                {
+                    const Region & region = regions[i];
+                    ptrdiff_t l = ptrdiff_t(region.x - region.w / 2);
+                    ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
+                    ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
+                    ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
+                    Simd::DrawRectangle(image, l, t, r, b, white);
+                }
+                String outputPath = MakePath(_options.outputDirectory, network.Name() + "_" + GetNameByPath(inputPath));
+                if (!image.Save(outputPath))
+                {
+                    std::cout << "Can't write '" << outputPath << "' image!" << std::endl;
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        bool Compare(float a, float b, float t) const
+        {
+            float d = ::fabs(a - b);
+            return d <= t || d / std::max(::fabs(a), ::fabs(b)) <= t;
+        }
+
+        bool CompareResults(const TestData & test, size_t index, size_t thread)
+        {
+            const Output & output = test.output[thread];
+            if (output.other.size() != output.synet.size())
+            {
+                std::cout << "Test " << index << " '" << test.path[0];
                 for (size_t k = 1; k < test.path.size(); ++k)
                     std::cout << ", " << test.path[k];
                 std::cout << "' is failed!" << std::endl;
-                std::cout << "Dst count : " << test.other.size() << " != " << test.synet.size() << std::endl;
+                std::cout << "Dst count : " << output.other.size() << " != " << output.synet.size() << std::endl;
                 return false;
             }
-
-            for (size_t d = 0; d < test.other.size(); ++d)
+            for (size_t d = 0; d < output.other.size(); ++d)
             {
-                if (test.other[d].size() != test.synet[d].size())
+                if (output.other[d].size() != output.synet[d].size())
                 {
-                    std::cout << "Test " << i << " '" << test.path[0];
+                    std::cout << "Test " << index << " '" << test.path[0];
                     for (size_t k = 1; k < test.path.size(); ++k)
                         std::cout << ", " << test.path[k];
                     std::cout << "' is failed!" << std::endl;
-                    std::cout << "Dst[" << d << "] size : " << test.other[d].size() << " != " << test.synet[d].size() << std::endl;
+                    std::cout << "Dst[" << d << "] size : " << output.other[d].size() << " != " << output.synet[d].size() << std::endl;
                     return false;
                 }
 
-                for (size_t j = 0; j < test.synet[d].size(); ++j)
+                for (size_t j = 0; j < output.synet[d].size(); ++j)
                 {
-                    if (!Compare(test.other[d][j], test.synet[d][j], options.threshold))
+                    if (!Compare(output.other[d][j], output.synet[d][j], _options.threshold))
                     {
-                        std::cout << "Test " << i << " '" << test.path[0];
+                        std::cout << "Test " << index << " '" << test.path[0];
                         for (size_t k = 1; k < test.path.size(); ++k)
                             std::cout << ", " << test.path[k];
                         std::cout << "' is failed!" << std::endl;
-                        std::cout << "Dst[" << d << "][" << j << "] : " << test.other[d][j] << " != " << test.synet[d][j] << std::endl;
+                        std::cout << "Dst[" << d << "][" << j << "] : " << output.other[d][j] << " != " << output.synet[d][j] << std::endl;
                         return false;
                     }
-                }            
+                }
             }
-#endif        
+            return true;
         }
 
-        std::cout << "Tests are finished successfully!" << std::endl << std::endl;
-
-#ifdef SYNET_SYNET_RUN
-        options.synetMemoryUsage = synetNetwork.MemoryUsage();
+        bool SingleThreadComparison()
+        {
+            size_t total = _tests.size()*_options.repeatNumber, current = 0;
+            for (size_t i = 0; i < _tests.size(); ++i)
+            {
+                TestData & test = *_tests[i];
+                for (size_t r = 0; r < _options.repeatNumber; ++r, ++current)
+                {
+                    std::cout << "Test progress : " << ToString(100.0*current / total, 1) << "% " << std::flush;
+#ifdef SYNET_OTHER_RUN
+                    test.output[0].other = _others[0].Predict(test.input);
 #endif
+#ifdef SYNET_SYNET_RUN
+                    test.output[0].synet = _synets[0].Predict(test.input);
+#endif
+                    std::cout << " \r" << std::flush;
+                }
+#ifdef SYNET_OTHER_RUN
+                if (!DebugPrint(_others[0], i))
+                    return false;
+#endif
+#ifdef SYNET_SYNET_RUN                
+                if (!DebugPrint(_synets[0], i))
+                    return false;
+#endif
+#ifdef SYNET_OTHER_RUN
+                if (!AnnotateRegions(_others[0], test.path[0]))
+                    return false;
+#endif
+#ifdef SYNET_SYNET_RUN
+                if (!AnnotateRegions(_synets[0], test.path[0]))
+                    return false;
+#endif
+#if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
+                if (!CompareResults(test, i, 0))
+                    return false;
+#endif        
+            }
+            std::cout << "Tests are finished successfully!" << std::endl << std::endl;
+#ifdef SYNET_SYNET_RUN
+            _options.synetMemoryUsage = _synets[0].MemoryUsage();
+#endif
+            return true;
+        }
 
-        return true;
-    }
+        bool MultiThreadsComparison()
+        {
+            std::cout << "MultiThreadsComparison() is not implmented!" << std::endl;
+            return false;
+        }
+    };
 }
 
 

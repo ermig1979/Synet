@@ -117,7 +117,7 @@ namespace Test
         {
             TEST_PERF_FUNC();
             _regionThreshold = options.regionThreshold;
-            Synet::SetThreadNumber(options.threadNumber);
+            Synet::SetThreadNumber(options.workThreads);
             if (_net.Load(model, weight))
             {
                 _trans = _net.Format() == Synet::TensorFormatNhwc;

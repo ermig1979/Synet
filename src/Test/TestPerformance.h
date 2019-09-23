@@ -232,26 +232,8 @@ namespace Test
             }
 
             os << "----- Performance -----" << std::endl;
-#ifdef __SimdLib_h__
-            os << "Simd Library: " << SimdVersion();
-            os << "; System Sockets: " << SimdCpuInfo(SimdCpuInfoSockets);
-            os << ", Cores: " << SimdCpuInfo(SimdCpuInfoCores);
-            os << ", Threads: " << SimdCpuInfo(SimdCpuInfoThreads);
-            os << "; Cache L1D: " << SimdCpuInfo(SimdCpuInfoCacheL1) / 1024 << " KB";
-            os << ", L2: " << SimdCpuInfo(SimdCpuInfoCacheL2) / 1024 << " KB";
-            os << ", L3: " << SimdCpuInfo(SimdCpuInfoCacheL3) / 1024 << " KB";
-            os << "; Available SIMD:";
-            os << (SimdCpuInfo(SimdCpuInfoAvx512bw) ? " AVX-512BW" : "");
-            os << (SimdCpuInfo(SimdCpuInfoAvx512f) ? " AVX-512F" : "");
-            os << (SimdCpuInfo(SimdCpuInfoAvx2) ? " AVX2 FMA" : "");
-            os << (SimdCpuInfo(SimdCpuInfoAvx) ? " AVX" : "");
-            os << (SimdCpuInfo(SimdCpuInfoSse41) ? " SSE4.1" : "");
-            os << (SimdCpuInfo(SimdCpuInfoSsse3) ? " SSSE3" : "");
-            os << (SimdCpuInfo(SimdCpuInfoSse3) ? " SSE3" : "");
-            os << (SimdCpuInfo(SimdCpuInfoSse2) ? " SSE2" : "");
-            os << (SimdCpuInfo(SimdCpuInfoSse) ? " SSE" : "");
-            os << (SimdCpuInfo(SimdCpuInfoNeon) ? " NEON" : "");
-            os << std::endl;
+#ifdef __SimdLib_hpp__
+            Simd::PrintInfo(os);
 #endif
 #ifdef BLIS_H        
             os << "Blis arch: " << bli_arch_string(bli_arch_query_id()) << std::endl;

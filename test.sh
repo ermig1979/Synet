@@ -21,7 +21,7 @@ fi
 
 ./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=convert $PATHES -tf=$FORMAT
 
-./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=compare $PATHES -if=*.ppm -rn=$NUMBER -tn=$THREAD -bs=$BATCH -t=0.01 -dp=0 -dpf=5 -dpl=2 -ar=0 -rt=0.3 -ln=$LOG
+./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=compare $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -bs=$BATCH -t=0.01 -dp=0 -dpf=5 -dpl=2 -ar=0 -rt=0.3 -ln=$LOG
 
 }
 

@@ -96,7 +96,7 @@ namespace Test
                 InferenceEngine::CNNNetwork network = reader.getNetwork();
 
                 std::map<std::string, std::string> config;
-                config[InferenceEngine::PluginConfigParams::KEY_CPU_THREADS_NUM] = std::to_string(options.threadNumber);
+                config[InferenceEngine::PluginConfigParams::KEY_CPU_THREADS_NUM] = std::to_string(options.workThreads);
                 _batchSize = 1;
                 if (options.batchSize > 1)
                 {
@@ -353,7 +353,10 @@ int main(int argc, char* argv[])
         std::cout << "Conversion is finished " << (options.result ? "successfully." : "with errors.") << std::endl;
     }
     else if (options.mode == "compare")
-        options.result = Test::CompareOtherAndSynet<Test::InferenceEngineNetwork>(options);
+    {
+        Test::Comparer<Test::InferenceEngineNetwork> comparer(options);
+        options.result = comparer.Run();
+    }
     else
         std::cout << "Unknown mode : " << options.mode << std::endl;
 

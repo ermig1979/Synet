@@ -214,7 +214,10 @@ int main(int argc, char* argv[])
         std::cout << "Conversion is finished " << (options.result ? "successfully." : "with errors.") << std::endl;
     }
     else if (options.mode == "compare")
-        options.result = Test::CompareOtherAndSynet<Test::DarknetNetwork>(options);
+    {
+        Test::Comparer<Test::DarknetNetwork> comparer(options);
+        options.result = comparer.Run();
+    }
     else
         std::cout << "Unknown mode : " << options.mode << std::endl;
 

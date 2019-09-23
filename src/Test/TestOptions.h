@@ -44,7 +44,8 @@ namespace Test
         String imageFilter;
         String outputDirectory;
         size_t repeatNumber;
-        size_t threadNumber;
+        size_t workThreads;
+        size_t testThreads;
         float threshold;
         String logName;
         int tensorFormat;
@@ -55,7 +56,7 @@ namespace Test
         int annotateRegions;
         float regionThreshold;
         float regionOverlap;
-        bool result;
+        mutable bool result;
         mutable size_t synetMemoryUsage;
 
         Options(int argc, char* argv[])
@@ -74,7 +75,8 @@ namespace Test
             imageFilter = GetArg("-if", "*.ppm");
             outputDirectory = GetArg("-od", "./output");
             repeatNumber = FromString<size_t>(GetArg("-rn", "1"));
-            threadNumber = FromString<size_t>(GetArg("-tn", "1"));
+            workThreads = FromString<size_t>(GetArg("-wt", "1"));
+            testThreads = FromString<size_t>(GetArg("-tt", "1"));
             threshold = FromString<float>(GetArg("-t", "0.001"));
             logName = GetArg("-ln", "", false);
             tensorFormat = FromString<int>(GetArg("-tf", "1"));
