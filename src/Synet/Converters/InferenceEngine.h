@@ -254,7 +254,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Concat" && !ConvertConcatLayer(pLayer, trans, layer))
                     return ErrorMessage(pLayer);
-                if (type == "Convolution" && !ConvertConvolutionLayer(pLayer, srcBin, trans, layer, dstBin))
+                if ((type == "Convolution" || type == "Deconvolution" ) && !ConvertConvolutionOrDeconvolutionLayer(pLayer, srcBin, trans, layer, dstBin))
                     return ErrorMessage(pLayer);
                 if (type == "CTCGreedyDecoder" && !ConvertCtcGreedyDecoderLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
@@ -574,9 +574,15 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConvolutionLayer(const XmlNode * pLayer, const Vector & srcBin, bool trans, LayerParam & layer, Vector & dstBin)
+        bool ConvertConvolutionOrDeconvolutionLayer(const XmlNode * pLayer, const Vector & srcBin, bool trans, LayerParam & layer, Vector & dstBin)
         {
-            layer.type() = Synet::LayerTypeConvolution;
+            String type = pLayer->FirstAttribute("type")->Value();
+            if (type == "Convolution")
+                layer.type() = Synet::LayerTypeConvolution;
+            else if (type == "Deconvolution")
+                layer.type() = Synet::LayerTypeDeconvolution;
+            else
+                return false;
             const XmlNode * pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;

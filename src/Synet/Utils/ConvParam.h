@@ -87,7 +87,7 @@ namespace Synet
             assert(dstC > 0 && dstC % group == 0);
         }
 
-        template<class T> void Set(const Tensor<T> & src)
+        template<class T> void Set(const Tensor<T> & src, bool conv)
         {
             if (src.Format() == TensorFormatNhwc)
             {
@@ -103,21 +103,31 @@ namespace Synet
             }
             srcT = src.GetType();
             srcF = src.Format();
-            dstH = (srcH + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
-            dstW = (srcW + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
-            dstT = srcT;
-            dstF = srcF;
+            SetDst(conv);
         }
 
-        void Set(const ConvParam & src)
+        void Set(const ConvParam & src, bool conv)
         {
             srcC = src.dstC;
             srcH = src.dstH;
             srcW = src.dstW;
             srcT = src.srcT;
             srcF = src.srcF;
-            dstH = (srcH + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
-            dstW = (srcW + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
+            SetDst(conv);
+        }
+
+        void SetDst(bool conv)
+        {
+            if (conv)
+            {
+                dstH = (srcH + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
+                dstW = (srcW + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
+            }
+            else
+            {
+                dstH = strideY * (srcH - 1) + dilationY * (kernelY - 1) + 1 - padY - padH;
+                dstW = strideX * (srcW - 1) + dilationX * (kernelX - 1) + 1 - padX - padW;
+            }
             dstT = srcT;
             dstF = srcF;
         }

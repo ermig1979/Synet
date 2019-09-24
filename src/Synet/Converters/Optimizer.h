@@ -59,7 +59,7 @@ namespace Synet
             Changes changes;
             for (size_t i = 0; i < src.size(); ++i)
             {
-                if (MergeConvolutionAndActivation(src, i, dst, changes))
+                if (MergeConvolutionOrDeconvolutionAndActivation(src, i, dst, changes))
                     continue;
                 if (MergeThreeConvolutions(src, i, dst, changes))
                     continue;
@@ -105,14 +105,12 @@ namespace Synet
             return true;
         }
 
-        bool MergeConvolutionAndActivation(const LayerParams & src, size_t index, LayerParams & dst, Changes & changes)
+        bool MergeConvolutionOrDeconvolutionAndActivation(const LayerParams & src, size_t index, LayerParams & dst, Changes & changes)
         {
             if (index == 0)
                 return false;
-            if (src[index - 1].type() != LayerTypeConvolution)
+            if (src[index - 1].type() != LayerTypeConvolution && src[index - 1].type() != LayerTypeDeconvolution)
                 return false;
-            //if (src[index - 1].convolution().quantizationLevel() != TensorType32f) 
-            //    return false;
             if (src[index].src().size() != 1 || src[index].src()[0] != src[index - 1].name())
                 return false;
             if (src[index].dst()[0] != src[index - 1].name())

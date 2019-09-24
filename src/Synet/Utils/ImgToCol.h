@@ -201,4 +201,49 @@ namespace Synet
             zero += size;
         }
     }
+
+    template <typename T> void ColToImg(const T * src, size_t dstC, size_t dstH, size_t dstW, size_t kernelY, size_t kernelX,
+        size_t padY, size_t padX, size_t padH, size_t padW, size_t strideY, size_t strideX, size_t dilationY, size_t dilationX, const T * zero, T * dst)
+    {
+        SYNET_PERF_FUNC();
+
+        Buffer<T> _zero;
+        if (zero == NULL)
+        {
+            _zero.Resize(dstC);
+            memset(_zero.data, 0, _zero.size * sizeof(T));
+            zero = _zero.data;
+        }
+
+        size_t srcH = (dstH + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
+        size_t srcW = (dstW + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
+        size_t dstSize = dstW * dstH;
+        for (size_t cd = 0; cd < dstC; ++cd)
+        {
+            CpuSet(dstSize, zero[cd], dst);
+            for (size_t ky = 0; ky < kernelY; ++ky) 
+            {
+                for (size_t kx = 0; kx < kernelX; ++kx)
+                {
+                    size_t dy = ky * dilationY - padY;
+                    for (size_t sy = 0; sy < srcH; ++sy, dy += strideY) 
+                    {
+                        if (dy < dstH) 
+                        {
+                            size_t dx = kx * dilationX - padX;
+                            for (size_t sx = 0; sx < srcW; ++sx, dx += strideX) 
+                            {
+                                if (dx < dstW) 
+                                    dst[dy * dstW + dx] += *src;
+                                src++;
+                            }                            
+                        }
+                        else
+                            src += srcW;
+                    }
+                }
+            }
+            dst += dstSize;
+        }
+    }
 }
