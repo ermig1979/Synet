@@ -143,12 +143,22 @@ namespace Synet
             return group == srcC && group == dstC;
         }
 
-        Shape WeightShape(bool trans) const 
+        Shape WeightShape(bool trans, bool conv) const 
         {
-            if (trans)
-                return Shape({ kernelY, kernelX, srcC / group, dstC });
+            if (conv)
+            {
+                if (trans)
+                    return Shape({ kernelY, kernelX, srcC / group, dstC });
+                else
+                    return Shape({ dstC, srcC / group, kernelY, kernelX });
+            }
             else
-                return Shape({ dstC, srcC / group, kernelY, kernelX });
+            {
+                if (trans)
+                    return Shape({ srcC, kernelY, kernelX, dstC / group });
+                else
+                    return Shape({ srcC, dstC / group, kernelY, kernelX });
+            }
         }
     };
 }

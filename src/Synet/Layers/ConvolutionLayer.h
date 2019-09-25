@@ -110,7 +110,7 @@ namespace Synet
 
             _num = src[0]->Size(0, _axis);
             _trans = src[0]->Format() == TensorFormatNhwc;
-            assert(weight[0].Shape() == _conv.WeightShape(_trans != 0) && weight[0].Format() == src[0]->Format());
+            assert(weight[0].Shape() == _conv.WeightShape(_trans != 0, true) && weight[0].Format() == src[0]->Format());
 
             Shape dstShape(src[0]->Shape().begin(), src[0]->Shape().begin() + _axis);
             if (_trans)

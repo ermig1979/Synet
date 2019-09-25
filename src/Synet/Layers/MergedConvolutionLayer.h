@@ -218,7 +218,7 @@ namespace Synet
 
                 _index[i] = next++;
                 const Tensor & w = weight[_index[i]];
-                assert(w.Shape() == _conv[i].WeightShape(true) && w.Format() == src[0]->Format());
+                assert(w.Shape() == _conv[i].WeightShape(true, true) && w.Format() == src[0]->Format());
                 _weight[i] = w.CpuData();
 
                 _biasTerm[i] = conv[i].biasTerm();

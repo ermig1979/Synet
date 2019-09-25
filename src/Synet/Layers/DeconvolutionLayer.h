@@ -79,7 +79,7 @@ namespace Synet
 
             _num = src[0]->Size(0, _axis);
             _trans = src[0]->Format() == TensorFormatNhwc;
-            assert(weight[0].Shape() == _conv.WeightShape(_trans != 0) && weight[0].Format() == src[0]->Format());
+            assert(weight[0].Shape() == _conv.WeightShape(_trans != 0, false) && weight[0].Format() == src[0]->Format());
 
             Shape dstShape(src[0]->Shape().begin(), src[0]->Shape().begin() + _axis);
             if (_trans)
@@ -88,6 +88,17 @@ namespace Synet
                 dstShape.push_back(_conv.dstW);
                 dstShape.push_back(_conv.dstC);
 
+                _siW = _conv.srcC / _conv.group;
+                _ldW = _conv.kernelY * _conv.kernelX * _conv.dstC / _conv.group;
+                _grW = 1;// _conv.dstC / _conv.group;
+
+                _siS = _conv.srcH * _conv.srcW;
+                _ldS = _siW;
+                _grS = 1;//_siS * _siW;
+
+                _siD = _conv.kernelY * _conv.kernelX * _conv.dstC / _conv.group;
+                _ldD = _siD;
+                _grD = 1;//_siD;
             }
             else
             {
@@ -155,9 +166,9 @@ namespace Synet
                 Type * tmp = _is1x1 ? dst : buf;
                 if (_trans)
                 {
-                    //assert(_conv.group == 1 || _conv.group == _conv.srcC);
-                    //for (size_t g = 0; g < _conv.group; ++g)
-                    //    CpuGemm(CblasNoTrans, CblasNoTrans, _siS, _siD, _siW, Type(1), tmp + _grS * g, _ldS, weight + _grW * g, _ldW, Type(0), dst + _grD * g, _ldD);
+                    assert(_conv.group == 1);// || _conv.group == _conv.srcC);
+                    for (size_t g = 0; g < _conv.group; ++g)
+                        CpuGemm(CblasNoTrans, CblasNoTrans, _siS, _siD, _siW, Type(1), src + _grS * g, _ldS, weight + _grW * g, _ldW, Type(0), tmp + _grD * g, _ldD);
                 }
                 else
                 {
@@ -169,8 +180,8 @@ namespace Synet
                 {
                     if (_trans)
                     {
-                        //Synet::ImgToRow(tmp, _conv.srcH, _conv.srcW, _conv.srcC, _conv.kernelY, _conv.kernelX,
-                        //    _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, _conv.group, (const Type*)NULL, buf);
+                        Synet::RowToImg(tmp, _conv.dstH, _conv.dstW, _conv.dstC, _conv.kernelY, _conv.kernelX,
+                            _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, _conv.group, (const Type*)NULL, dst);
                     }
                     else
                         Synet::ColToImg(tmp, _conv.dstC, _conv.dstH, _conv.dstW, _conv.kernelY, _conv.kernelX,

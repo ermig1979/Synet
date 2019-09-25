@@ -246,4 +246,55 @@ namespace Synet
             dst += dstSize;
         }
     }
+
+    template <typename T> void RowToImg(const T * src, size_t dstH, size_t dstW, size_t dstC, size_t kernelY, size_t kernelX,
+        size_t padY, size_t padX, size_t padH, size_t padW, size_t strideY, size_t strideX, size_t dilationY, size_t dilationX, size_t group, const T * zero, T * dst)
+    {
+        assert(group == 1);
+        SYNET_PERF_FUNC();
+
+        Buffer<T> _zero;
+        if (zero == NULL)
+        {
+            _zero.Resize(dstC);
+            memset(_zero.data, 0, _zero.size * sizeof(T));
+            zero = _zero.data;
+        }
+
+        size_t srcH = (dstH + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
+        size_t srcW = (dstW + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
+        size_t size = dstC / group;
+        for (size_t g = 0; g < group; ++g)
+        {
+            for (size_t dy = 0; dy < dstH; ++dy)
+                for (size_t dx = 0; dx < dstW; ++dx)
+                    memcpy(dst + (dy*dstW + dx)*size, zero, size * sizeof(T));
+            for (size_t sy = 0; sy < srcH; ++sy)
+            {
+                for (size_t sx = 0; sx < srcW; ++sx)
+                {
+                    size_t dy = sy * strideY - padY;
+                    for (size_t ky = 0; ky < kernelY; ky++, dy += dilationY)
+                    {
+                        if (dy < dstH)
+                        {
+                            size_t dx = sx * strideX - padX;
+                            for (size_t kx = 0; kx < kernelX; kx++, dx += dilationX)
+                            {
+                                if (dx < dstW)
+                                {
+                                    T * d = dst + (dy * dstW + dx)*dstC;
+                                    for (size_t dc = 0; dc < dstC; ++dc)
+                                        d[dc] += src[dc];
+                                }
+                                src += dstC;
+                            }
+                        }
+                        else
+                            src += kernelX*dstC;
+                    }
+                }
+            }
+        }
+    }
 }
