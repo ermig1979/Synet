@@ -41,6 +41,7 @@ namespace Synet
         DeconvolutionLayer(const LayerParam & param)
             : Base(param)
         {
+            _transW = false;
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -94,9 +95,34 @@ namespace Synet
                 dstShape.push_back(_conv.dstH);
                 dstShape.push_back(_conv.dstW);
 
+                _transW = true;
+
+                _siW = _conv.srcC / _conv.group;
+                _ldW = _transW ? _siW : _conv.dstC * _conv.kernelY * _conv.kernelX / _conv.group;
+                _grW = _siW * _conv.dstC * _conv.kernelY * _conv.kernelX / _conv.group;
+
+                _siS = _conv.srcH * _conv.srcW;
+                _ldS = _siS;
+                _grS = _siS * _siW;
+
+                _siD = _conv.dstC * _conv.kernelY * _conv.kernelX / _conv.group;
+                _ldD = _conv.srcH * _conv.srcW;
+                _grD = _siD * _siS;
+
+                if (_transW)
+                {
+                    const Shape & shape = weight[0].Shape();
+                    _weightT.Reshape({ shape[1], shape[2], shape[3], shape[0] });
+                    size_t m = shape[0], n = shape[1] * shape[2] * shape[3];
+                    const T * s = weight[0].CpuData();
+                    T * d = _weightT.CpuData();
+                    for (size_t i = 0; i < m; ++i)
+                        for (size_t j = 0; j < n; ++j)
+                            d[j*m + i] = s[i * n + j];
+                }
             }
 
-            buf[TensorType32f*BUFFER_COUNT]->Extend(Shape({ _conv.kernelY * _conv.kernelX * _conv.srcC, _conv.dstH * _conv.dstW }));
+            buf[TensorType32f*BUFFER_COUNT]->Extend(Shape({ _conv.dstC * _conv.kernelY * _conv.kernelX * _conv.srcH * _conv.srcW }));
 
             dst[0]->Reshape(dstShape, src[0]->Format());
 
@@ -107,13 +133,84 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            SYNET_PERF_FUNC();
+
+            ForwardCpu(src[0]->CpuData(), buf[TensorType32f*BUFFER_COUNT]->CpuData(), dst[0]->CpuData());
+        }
+
+        void ForwardCpu(const T * src, T * buf, T * dst)
+        {
+#ifdef SYNET_SIZE_STATISTIC
+            std::stringstream ss;
+            ss << "i=" << _num << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW << " o=" << _conv.dstC;
+            ss << " k=" << _conv.kernelY << " s=" << _conv.strideY << " g=" << _conv.group;
+            SYNET_PERF_BLOCK(ss.str().c_str());
+#else
+            SYNET_PERF_FUNC();
+#endif
+
+            const Type * weight = _transW ? _weightT.CpuData() : this->Weight()[0].CpuData();
+            for (size_t n = 0; n < _num; ++n)
+            {
+                Type * tmp = _is1x1 ? dst : buf;
+                if (_trans)
+                {
+                    //assert(_conv.group == 1 || _conv.group == _conv.srcC);
+                    //for (size_t g = 0; g < _conv.group; ++g)
+                    //    CpuGemm(CblasNoTrans, CblasNoTrans, _siS, _siD, _siW, Type(1), tmp + _grS * g, _ldS, weight + _grW * g, _ldW, Type(0), dst + _grD * g, _ldD);
+                }
+                else
+                {
+                    for (size_t g = 0; g < _conv.group; ++g)
+                        CpuGemm(_transW ? CblasNoTrans : CblasTrans, CblasNoTrans, _siD, _siS, _siW, 
+                            Type(1), weight + _grW * g, _ldW, src + _grS * g, _ldS, Type(0), tmp + _grD * g, _ldD);
+                }                
+                if (!_is1x1)
+                {
+                    if (_trans)
+                    {
+                        //Synet::ImgToRow(tmp, _conv.srcH, _conv.srcW, _conv.srcC, _conv.kernelY, _conv.kernelX,
+                        //    _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, _conv.group, (const Type*)NULL, buf);
+                    }
+                    else
+                        Synet::ColToImg(tmp, _conv.dstC, _conv.dstH, _conv.dstW, _conv.kernelY, _conv.kernelX,
+                            _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, (const Type*)NULL, dst);
+                }
+                if (_biasTerm)
+                    CpuAddBias(this->Weight()[1].CpuData(), _conv.dstC, _conv.dstH*_conv.dstW, dst, _trans);
+                switch (_conv.activation)
+                {
+                case ActivationFunctionTypeIdentity:
+                    break;
+                case ActivationFunctionTypeRelu:
+                    CpuRelu(dst, _dstSize, 0.0f, dst);
+                    break;
+                case ActivationFunctionTypeLeakyRelu:
+                    CpuRelu(dst, _dstSize, _params[0], dst);
+                    break;
+                case ActivationFunctionTypeRestrictRange:
+                    CpuRestrictRange(dst, _dstSize, _params[0], _params[1], dst);
+                    break;
+                case ActivationFunctionTypePrelu:
+                    Detail::PreluLayerForwardCpu(dst, this->Weight().back().CpuData(), _conv.dstC, _conv.dstH * _conv.dstW, dst, _trans);
+                    break;
+                case ActivationFunctionTypeElu:
+                    CpuElu(dst, _dstSize, _params[0], dst);
+                default:
+                    assert(0);
+                }
+                src += _srcSize;
+                dst += _dstSize;
+            }
         }
 
     private:
-        bool _is1x1, _biasTerm;
+        bool _is1x1, _biasTerm, _transW;
         int _trans;
         ConvParam _conv;
         size_t _axis, _num, _srcSize, _dstSize, _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
         float _params[2];
+
+        Tensor _weightT;
     };
 }

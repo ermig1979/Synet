@@ -660,16 +660,31 @@ namespace Synet
                 const XmlNode * pWeights = pBlobs->FirstNode("weights");
                 if (pWeights)
                 {
-                    Shape shape = Shape({ (size_t)layer.convolution().outputNum(), inputNum / layer.convolution().group(),  
-                        (size_t)layer.convolution().kernel()[0],  (size_t)layer.convolution().kernel()[1] });
+                    size_t outputNum = layer.convolution().outputNum(), group = layer.convolution().group();
+                    size_t kernelY = layer.convolution().kernel()[0], kernelX = layer.convolution().kernel()[1];
                     layer.weight().resize(1);
-                    if (trans)
-                    {
-                        shape = Shape({ shape[2], shape[3], shape[1], shape[0] });
-                        layer.weight()[0].format() = TensorFormatNhwc;
+                    if(layer.type() == Synet::LayerTypeConvolution)
+                    { 
+                        Shape shape = Shape({ outputNum, inputNum / group, kernelY,  kernelX});
+                        if (trans)
+                        {
+                            shape = Shape({ shape[2], shape[3], shape[1], shape[0] });
+                            layer.weight()[0].format() = TensorFormatNhwc;
+                        }
+                        layer.weight()[0].dim() = shape;
+                        ConvertWeight(pWeights, srcBin, trans ? 2 : 0, Shape(), layer.weight()[0], dstBin);                    
                     }
-                    layer.weight()[0].dim() = shape;
-                    ConvertWeight(pWeights, srcBin, trans ? 2 : 0, Shape(), layer.weight()[0], dstBin);
+                    else
+                    {
+                        Shape shape = Shape({ inputNum, outputNum / group, kernelY,  kernelX });
+                        if (trans)
+                        {
+                            shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
+                            layer.weight()[0].format() = TensorFormatNhwc;
+                        }
+                        layer.weight()[0].dim() = shape;
+                        ConvertWeight(pWeights, srcBin, trans ? 1 : 0, Shape(), layer.weight()[0], dstBin);
+                    }
                 }
                 else
                     return false;
