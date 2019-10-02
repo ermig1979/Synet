@@ -68,7 +68,7 @@ namespace Test
         }
 
     private:
-        Options _options;
+        const Options & _options;
         TestParamHolder _param;
         std::vector<OtherNetwork> _others;
         std::vector<SynetNetwork> _synets;
@@ -88,6 +88,8 @@ namespace Test
         typedef std::shared_ptr<TestData> TestDataPtr;
         typedef std::vector<TestDataPtr> TestDataPtrs;
         TestDataPtrs _tests;
+        Shape _currents;
+        std::vector<std::thread> _threads;
 
         void PrintStartMessage() const
         {
@@ -96,6 +98,12 @@ namespace Test
                 std::cout << _options.testThreads << "-threads comparison tests :" << std::endl;
             else
                 std::cout << "single-thread comparison tests :" << std::endl;
+        }
+
+        bool PrintFinishMessage() const
+        {
+            std::cout << "Tests are finished successfully!" << std::endl << std::endl;
+            return true;
         }
 
         bool LoadTestParam()
@@ -428,17 +436,84 @@ namespace Test
                     return false;
 #endif        
             }
-            std::cout << "Tests are finished successfully!" << std::endl << std::endl;
 #ifdef SYNET_SYNET_RUN
             _options.synetMemoryUsage = _synets[0].MemoryUsage();
 #endif
-            return true;
+            return PrintFinishMessage();
         }
 
         bool MultiThreadsComparison()
         {
-            std::cout << "MultiThreadsComparison() is not implmented!" << std::endl;
-            return false;
+            size_t total = _tests.size()*_options.repeatNumber, current = 0;
+            _currents.resize(_options.testThreads, 0);
+            _threads.resize(_options.testThreads);
+            for (size_t t = 0; t < _threads.size(); ++t)
+                _threads[t] = std::thread(TestThread, this, t);
+
+            while (current < total)
+            {
+                current = total;
+                for (size_t t = 0; t < _currents.size(); ++t)
+                    current = std::min(current, _currents[t]);
+                std::cout << "Test progress : " << ToString(100.0*current / total, 1) << "% " << std::flush;
+                Sleep(1);
+                std::cout << " \r" << std::flush;
+            }
+
+            _options.synetMemoryUsage = 0;
+            for (size_t t = 0; t < _threads.size(); ++t)
+            {
+                if (_threads[t].joinable())
+                    _threads[t].join();
+                for (size_t i = 0; i < _tests.size(); ++i)
+                {
+                    TestData & test = *_tests[i];
+#if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
+                    if (!CompareResults(test, i, t))
+                        return false;
+#endif 
+                }
+#ifdef SYNET_SYNET_RUN
+                _options.synetMemoryUsage += _synets[t].MemoryUsage();
+#endif            
+            }
+            return PrintFinishMessage();
+        }
+
+        static void TestThread(Comparer * comparer, size_t thread)
+        {
+            size_t current = 0, networks = 1, repeats = comparer->_options.repeatNumber;
+#if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
+            networks = 2;
+#endif 
+#ifdef SYNET_OTHER_RUN            
+            for (size_t i = 0; i < comparer->_tests.size(); ++i)
+            {
+                TestData & test = *comparer->_tests[i];
+                for (size_t r = 0; r < repeats; ++r, ++current)
+                {
+                    test.output[thread].other = comparer->_others[thread].Predict(test.input);
+                    comparer->_currents[thread] = current / networks;
+                }
+            }
+#endif
+#ifdef SYNET_SYNET_RUN            
+            for (size_t i = 0; i < comparer->_tests.size(); ++i)
+            {
+                TestData & test = *comparer->_tests[i];
+                for (size_t r = 0; r < repeats; ++r, ++current)
+                {
+                    test.output[thread].synet = comparer->_synets[thread].Predict(test.input);
+                    comparer->_currents[thread] = current / networks;
+                }
+            }
+#endif           
+            comparer->_currents[thread] = current / networks;
+        }
+
+        inline void Sleep(unsigned int miliseconds)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(miliseconds));
         }
     };
 }
