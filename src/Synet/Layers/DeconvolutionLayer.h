@@ -26,6 +26,9 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
+#include "Synet/Utils/Gemm.h"
+#include "Synet/Utils/ImgToCol.h"
+#include "Synet/Utils/Deconvolution.h"
 
 namespace Synet
 {
@@ -42,6 +45,18 @@ namespace Synet
             : Base(param)
         {
             _transW = false;
+            _internal = 0;
+        }
+
+        virtual size_t MemoryUsage() const
+        {
+            return Base::MemoryUsage() + (_deconvolution32f.InternalBufferSize() + _weightT.Size())*sizeof(Type);
+        }
+
+        virtual void CompactWeight()
+        {
+            if (_internal || _transW)
+                ((Tensor&)this->Weight()[0]).Clear();
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -84,21 +99,23 @@ namespace Synet
             Shape dstShape(src[0]->Shape().begin(), src[0]->Shape().begin() + _axis);
             if (_trans)
             {
+                assert(_conv.group == 1);
+
                 dstShape.push_back(_conv.dstH);
                 dstShape.push_back(_conv.dstW);
                 dstShape.push_back(_conv.dstC);
 
                 _siW = _conv.srcC / _conv.group;
                 _ldW = _conv.kernelY * _conv.kernelX * _conv.dstC / _conv.group;
-                _grW = 1;// _conv.dstC / _conv.group;
+                _grW = 0;// _conv.dstC / _conv.group;
 
                 _siS = _conv.srcH * _conv.srcW;
                 _ldS = _siW;
-                _grS = 1;//_siS * _siW;
+                _grS = 0;//_siS * _siW;
 
                 _siD = _conv.kernelY * _conv.kernelX * _conv.dstC / _conv.group;
                 _ldD = _siD;
-                _grD = 1;//_siD;
+                _grD = 0;//_siD;
             }
             else
             {
@@ -119,7 +136,18 @@ namespace Synet
                 _siD = _conv.dstC * _conv.kernelY * _conv.kernelX / _conv.group;
                 _ldD = _conv.srcH * _conv.srcW;
                 _grD = _siD * _siS;
+            }
 
+            _deconvolution32f.Init(_num, &_conv, SYNET_EXTERNAL_GEMM);
+            if (_deconvolution32f.Enable())
+            {
+                buf[TensorType32f*BUFFER_COUNT]->Extend({ _deconvolution32f.ExternalBufferSize() });
+                _deconvolution32f.SetParams(weight[0].CpuData(), &_internal, _biasTerm ? weight[1].CpuData() : NULL,
+                    _conv.activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : _params);
+            }
+            else
+            {
+                buf[TensorType32f*BUFFER_COUNT]->Extend(Shape({ _conv.dstC * _conv.kernelY * _conv.kernelX * _conv.srcH * _conv.srcW }));
                 if (_transW)
                 {
                     const Shape & shape = weight[0].Shape();
@@ -132,8 +160,6 @@ namespace Synet
                             d[j*m + i] = s[i * n + j];
                 }
             }
-
-            buf[TensorType32f*BUFFER_COUNT]->Extend(Shape({ _conv.dstC * _conv.kernelY * _conv.kernelX * _conv.srcH * _conv.srcW }));
 
             dst[0]->Reshape(dstShape, src[0]->Format());
 
@@ -159,68 +185,74 @@ namespace Synet
 #else
             SYNET_PERF_FUNC();
 #endif
-
-            const Type * weight = _transW ? _weightT.CpuData() : this->Weight()[0].CpuData();
-            for (size_t n = 0; n < _num; ++n)
+            if (_deconvolution32f.Enable())
+                _deconvolution32f.Forward(src, buf, dst);
+            else
             {
-                Type * tmp = _is1x1 ? dst : buf;
-                if (_trans)
+                const Type * weight = _transW ? _weightT.CpuData() : this->Weight()[0].CpuData();
+                for (size_t n = 0; n < _num; ++n)
                 {
-                    assert(_conv.group == 1);// || _conv.group == _conv.srcC);
-                    for (size_t g = 0; g < _conv.group; ++g)
-                        CpuGemm(CblasNoTrans, CblasNoTrans, _siS, _siD, _siW, Type(1), src + _grS * g, _ldS, weight + _grW * g, _ldW, Type(0), tmp + _grD * g, _ldD);
-                }
-                else
-                {
-                    for (size_t g = 0; g < _conv.group; ++g)
-                        CpuGemm(_transW ? CblasNoTrans : CblasTrans, CblasNoTrans, _siD, _siS, _siW, 
-                            Type(1), weight + _grW * g, _ldW, src + _grS * g, _ldS, Type(0), tmp + _grD * g, _ldD);
-                }                
-                if (!_is1x1)
-                {
+                    Type * tmp = _is1x1 ? dst : buf;
                     if (_trans)
                     {
-                        Synet::RowToImg(tmp, _conv.dstH, _conv.dstW, _conv.dstC, _conv.kernelY, _conv.kernelX,
-                            _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, _conv.group, (const Type*)NULL, dst);
+                        assert(_conv.group == 1);// || _conv.group == _conv.srcC);
+                        for (size_t g = 0; g < _conv.group; ++g)
+                            CpuGemm(CblasNoTrans, CblasNoTrans, _siS, _siD, _siW, Type(1), src + _grS * g, _ldS, weight + _grW * g, _ldW, Type(0), tmp + _grD * g, _ldD);
                     }
                     else
-                        Synet::ColToImg(tmp, _conv.dstC, _conv.dstH, _conv.dstW, _conv.kernelY, _conv.kernelX,
-                            _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, (const Type*)NULL, dst);
+                    {
+                        for (size_t g = 0; g < _conv.group; ++g)
+                            CpuGemm(_transW ? CblasNoTrans : CblasTrans, CblasNoTrans, _siD, _siS, _siW,
+                                Type(1), weight + _grW * g, _ldW, src + _grS * g, _ldS, Type(0), tmp + _grD * g, _ldD);
+                    }
+                    if (!_is1x1)
+                    {
+                        if (_trans)
+                        {
+                            Synet::RowToImg(tmp, _conv.dstH, _conv.dstW, _conv.dstC, _conv.kernelY, _conv.kernelX,
+                                _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, _conv.group, (const Type*)NULL, dst);
+                        }
+                        else
+                            Synet::ColToImg(tmp, _conv.dstC, _conv.dstH, _conv.dstW, _conv.kernelY, _conv.kernelX,
+                                _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, (const Type*)NULL, dst);
+                    }
+                    if (_biasTerm)
+                        CpuAddBias(this->Weight()[1].CpuData(), _conv.dstC, _conv.dstH*_conv.dstW, dst, _trans);
+                    switch (_conv.activation)
+                    {
+                    case ActivationFunctionTypeIdentity:
+                        break;
+                    case ActivationFunctionTypeRelu:
+                        CpuRelu(dst, _dstSize, 0.0f, dst);
+                        break;
+                    case ActivationFunctionTypeLeakyRelu:
+                        CpuRelu(dst, _dstSize, _params[0], dst);
+                        break;
+                    case ActivationFunctionTypeRestrictRange:
+                        CpuRestrictRange(dst, _dstSize, _params[0], _params[1], dst);
+                        break;
+                    case ActivationFunctionTypePrelu:
+                        Detail::PreluLayerForwardCpu(dst, this->Weight().back().CpuData(), _conv.dstC, _conv.dstH * _conv.dstW, dst, _trans);
+                        break;
+                    case ActivationFunctionTypeElu:
+                        CpuElu(dst, _dstSize, _params[0], dst);
+                    default:
+                        assert(0);
+                    }
+                    src += _srcSize;
+                    dst += _dstSize;
                 }
-                if (_biasTerm)
-                    CpuAddBias(this->Weight()[1].CpuData(), _conv.dstC, _conv.dstH*_conv.dstW, dst, _trans);
-                switch (_conv.activation)
-                {
-                case ActivationFunctionTypeIdentity:
-                    break;
-                case ActivationFunctionTypeRelu:
-                    CpuRelu(dst, _dstSize, 0.0f, dst);
-                    break;
-                case ActivationFunctionTypeLeakyRelu:
-                    CpuRelu(dst, _dstSize, _params[0], dst);
-                    break;
-                case ActivationFunctionTypeRestrictRange:
-                    CpuRestrictRange(dst, _dstSize, _params[0], _params[1], dst);
-                    break;
-                case ActivationFunctionTypePrelu:
-                    Detail::PreluLayerForwardCpu(dst, this->Weight().back().CpuData(), _conv.dstC, _conv.dstH * _conv.dstW, dst, _trans);
-                    break;
-                case ActivationFunctionTypeElu:
-                    CpuElu(dst, _dstSize, _params[0], dst);
-                default:
-                    assert(0);
-                }
-                src += _srcSize;
-                dst += _dstSize;
             }
         }
 
     private:
         bool _is1x1, _biasTerm, _transW;
-        int _trans;
+        int _trans, _internal;
         ConvParam _conv;
         size_t _axis, _num, _srcSize, _dstSize, _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
         float _params[2];
+
+        Deconvolution32f<Type> _deconvolution32f;
 
         Tensor _weightT;
     };

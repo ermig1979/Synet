@@ -27,9 +27,11 @@
 #include "Test/TestCommon.h"
 #include "Test/TestPerformance.h"
 
+#ifdef SYNET_LAYER_STATISTIC
 #define SYNET_PERF_FUNC() TEST_PERF_FUNC()
 #define SYNET_PERF_BLOCK(name) TEST_PERF_BLOCK(name)
 #define SYNET_PERF_BLOCK_END(name) TEST_PERF_BLOCK_END(name)
+#endif //SYNET_LAYER_STATISTIC
 #include "Synet/Synet.h"
 
 namespace Test

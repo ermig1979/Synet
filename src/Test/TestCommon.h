@@ -31,7 +31,8 @@
 
 #define SYNET_OTHER_RUN
 #define SYNET_SYNET_RUN
-#define SYNET_SIZE_STATISTIC
+//#define SYNET_LAYER_STATISTIC
+//#define SYNET_SIZE_STATISTIC
 
 #include <string>
 #include <vector>
