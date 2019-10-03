@@ -77,6 +77,8 @@
 #include "Synet/Layers/UnpackLayer.h"
 #include "Synet/Layers/YoloLayer.h"
 
+#include "Synet/Utils/SetInput.h"
+
 namespace Synet
 {
     template <class T> class Network
@@ -326,112 +328,24 @@ namespace Synet
         }
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-        typedef Simd::View<Simd::Allocator> View;
-        bool SetInput(const View & src, float lower, float upper)
+        bool SetInput(const View & view, float lower, float upper)
         {
-            if (_src.size() != 1 || !(src.format != View::Gray8 || src.format != View::Bgr24))
-                return false;
-            const Shape & shape = _src[0]->Shape();
-            if (shape[0] != 1)
-                return false;
-            size_t channels = src.ChannelCount();
-            float * dst = _src[0]->CpuData();
-            if (_src[0]->Format() == TensorFormatNchw)
-            {
-                if (src.width != shape[3] || src.height != shape[2] || channels != shape[1])
-                    return false;
-                View tmp[3];
-                if (channels == 3)
-                {
-                    for (size_t i = 0; i < channels; ++i)
-                        tmp[i].Recreate(src.Size(), View::Gray8);
-                    Simd::DeinterleaveBgr(src, tmp[0], tmp[1], tmp[2]);
-                }
-                else
-                    tmp[0] = src;
-                for (size_t c = 0; c < channels; ++c)
-                {
-                    for (size_t y = 0; y < tmp[c].height; ++y)
-                    {
-                        ::SimdUint8ToFloat32(tmp[c].Row<uint8_t>(y), tmp[c].width, &lower, &upper, dst);
-                        dst += tmp[c].width;
-                    }
-                }
-                return true;
-            }
-            else if (_src[0]->Format() == TensorFormatNhwc)
-            {
-                if (src.width != shape[2] || src.height != shape[1] || channels != shape[3])
-                    return false;
-                size_t size = src.width*channels;
-                for (size_t y = 0; y < src.height; ++y)
-                {
-                    ::SimdUint8ToFloat32(src.Row<uint8_t>(y), size, &lower, &upper, dst);
-                    dst += size;
-                }
-                return true;
-            }
-            else
-                return false;
+            return Synet::SetInput(*this, Views({ view }), Floats({ lower }), Floats({ upper }));
         }
 
-        typedef std::vector<View> Views;
-        bool SetInput(const Views & src, float lower, float upper)
+        bool SetInput(const View & view, const Floats & lower, const Floats & upper)
         {
-            if (_src.size() != 1 || src.empty())
-                return false;
-            for (size_t i = 0; i < src.size(); ++i)
-                if (src[i].format != View::Gray8 && src[i].format != View::Bgr24)
-                    return false;
-            const Shape & shape = _src[0]->Shape();
-            if (shape[0] != src.size())
-                return false;
-            float * dst = _src[0]->CpuData();
-            if (_src[0]->Format() == TensorFormatNchw)
-            {
-                for (size_t i = 0; i < src.size(); ++i)
-                {
-                    size_t channels = src[i].ChannelCount();
-                    if (src[i].width != shape[3] || src[i].height != shape[2] || channels != shape[1])
-                        return false;
-                    View tmp[3];
-                    if (channels == 3)
-                    {
-                        for (size_t c = 0; c < channels; ++c)
-                            tmp[c].Recreate(src[i].Size(), View::Gray8);
-                        Simd::DeinterleaveBgr(src[i], tmp[0], tmp[1], tmp[2]);
-                    }
-                    else
-                        tmp[0] = src[i];
-                    for (size_t c = 0; c < channels; ++c)
-                    {
-                        for (size_t y = 0; y < tmp[c].height; ++y)
-                        {
-                            ::SimdUint8ToFloat32(tmp[c].Row<uint8_t>(y), tmp[c].width, &lower, &upper, dst);
-                            dst += tmp[c].width;
-                        }
-                    }
-                }
-                return true;
-            }
-            else if (_src[0]->Format() == TensorFormatNhwc)
-            {
-                for (size_t i = 0; i < src.size(); ++i)
-                {
-                    size_t channels = src[i].ChannelCount();
-                    if (src[i].width != shape[2] || src[i].height != shape[1] || channels != shape[3])
-                        return false;
-                    size_t size = src[i].width*channels;
-                    for (size_t y = 0; y < src[i].height; ++y)
-                    {
-                        ::SimdUint8ToFloat32(src[i].Row<uint8_t>(y), size, &lower, &upper, dst);
-                        dst += size;
-                    }
-                }
-                return true;
-            }
-            else
-                return false;
+            return Synet::SetInput(*this, Views({ view }), lower, upper);
+        }
+
+        bool SetInput(const Views & views, float lower, float upper)
+        {
+            return Synet::SetInput(*this, views, Floats({ lower }), Floats({ upper }));
+        }
+
+        bool SetInput(const Views & views, const Floats & lower, const Floats & upper)
+        {
+            return Synet::SetInput(*this, views, lower, upper);
         }
 #endif
 

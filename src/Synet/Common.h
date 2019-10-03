@@ -133,6 +133,10 @@ namespace Synet
     typedef std::vector<uint8_t> Bytes;
     typedef std::vector<int> Ints;
     typedef std::vector<float> Floats;
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+    typedef Simd::View<Simd::Allocator> View;
+    typedef std::vector<View> Views;
+#endif
 
     SYNET_INLINE bool FileExist(const String & path)
     {

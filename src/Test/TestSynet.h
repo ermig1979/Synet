@@ -38,6 +38,7 @@ namespace Test
 {
     typedef Synet::Shape Shape;
     typedef Synet::Shapes Shapes;
+    typedef Synet::Floats Floats;
 
     struct SizeParam
     {
@@ -55,8 +56,8 @@ namespace Test
     struct TestParam
     {
         SYNET_PARAM_VALUE(String, origin, String());
-        SYNET_PARAM_VALUE(float, lower, 0.0f);
-        SYNET_PARAM_VALUE(float, upper, 1.0f);
+        SYNET_PARAM_VALUE(Floats, lower, Floats(1, 0.0f));
+        SYNET_PARAM_VALUE(Floats, upper, Floats(1, 1.0f));
         SYNET_PARAM_VECTOR(ShapeParam, input);
         SYNET_PARAM_VECTOR(ShapeParam, output);
     };
@@ -68,6 +69,7 @@ namespace Test
 {
     typedef Synet::Region<float> Region;
     typedef std::vector<Region> Regions;
+    typedef Synet::Floats Floats;
 
     struct Network
     {
@@ -120,7 +122,7 @@ namespace Test
             TEST_PERF_FUNC();
             _regionThreshold = options.regionThreshold;
             Synet::SetThreadNumber(options.workThreads);
-            if (_net.Load(model, weight))
+            if (Load(model, weight))
             {
                 _trans = _net.Format() == Synet::TensorFormatNhwc;
                 if (param.input().size() || param.output().size())
@@ -138,6 +140,8 @@ namespace Test
                     }
                 }
                 _net.CompactWeight();
+                _lower = param.lower();
+                _upper = param.upper();
                 return true;
             }
             return false;
@@ -174,10 +178,51 @@ namespace Test
         typedef Synet::Network<float> Net;
         Net _net;
         bool _trans;
+        Floats _lower, _upper;
+
+        bool Load(const String & model, const String & weight)
+        {
+#ifdef SYNET_TEST_MEMORY_LOAD
+            std::ifstream mifs(model, std::ios::binary);
+            if (!mifs)
+                return false;
+            mifs.unsetf(std::ios::skipws);
+            mifs.seekg(0, std::ios::end);
+            size_t msize = mifs.tellg();
+            mifs.seekg(0);
+            std::vector<char> mdata(msize + 1, 0);
+            mifs.read(mdata.data(), (std::streamsize)msize);
+            mifs.close();
+
+            std::ifstream wifs(weight, std::ios::binary);
+            if (!wifs)
+                return false;
+            wifs.unsetf(std::ios::skipws);
+            wifs.seekg(0, std::ios::end);
+            size_t wsize = wifs.tellg();
+            wifs.seekg(0);
+            std::vector<char> wdata(wsize + 1, 0);
+            wifs.read(wdata.data(), (std::streamsize)wsize);
+            wifs.close();
+
+            return _net.Load(mdata.data(), msize, wdata.data(), wsize);
+#else
+            return _net.Load(model, weight);
+#endif
+        }
 
         void SetInput(const Vectors & x)
         {
             assert(x.size() == _net.Src().size());
+#ifdef SYNET_TEST_SET_INPUT
+            if (_net.Src().size() == 1 && _net.Src()[0]->Count() == 4)
+            {
+                Views views;
+                InputToViews(x[0], views);
+                _net.SetInput(views, _lower, _upper);
+                return;
+            }
+#endif
             for (size_t i = 0; i < x.size(); ++i)
             {
                 Net::Tensor & src = *_net.Src()[i];
@@ -195,6 +240,32 @@ namespace Test
                     memcpy(src.CpuData(), x[i].data(), x[i].size() * sizeof(float));
             }
         }
+
+#ifdef SYNET_TEST_SET_INPUT
+        void InputToViews(const Vector & src, Views & dst)
+        {
+            Shape shape = _net.NchwShape();
+            assert(shape[1] == 1 || shape[1] == 3);
+            if (_lower.size() == 1)
+                _lower.resize(shape[1], _lower[0]);
+            if (_upper.size() == 1)
+                _upper.resize(shape[1], _upper[0]);
+            dst.resize(shape[0]);
+            for (size_t b = 0; b < shape[0]; ++b)
+            {
+                dst[b].Recreate(Size(shape[3], shape[2]), shape[1] == 1 ? View::Gray8 : View::Bgr24);
+                for (size_t c = 0; c < shape[1]; ++c)
+                    for (size_t y = 0; y < shape[2]; ++y)
+                        for (size_t x = 0; x < shape[3]; ++x)
+                            dst[b].data[dst[b].stride*y + x * shape[1] + c] = Float32ToUint8(src[((b*shape[1] + c)*shape[2] + y)*shape[3] + x], _lower[c], _upper[c]);
+            }
+        }
+
+        uint8_t Float32ToUint8(const float value, float lower, float upper)
+        {
+            return (uint8_t)Synet::Round((std::min(std::max(value, lower), upper) - lower) * 255.0f / (upper - lower));
+        }
+#endif
 
         void SetOutput()
         {
@@ -325,7 +396,12 @@ namespace Test
                     if (dstNames[i] != _net.Back()[i]->Param().name())
                         equal = false;
             }
-
+#ifdef SYNET_TEST_NET_RESHAPE
+            if (_trans)
+                return _net.Reshape(srcShapes[0][2], srcShapes[0][1], srcShapes[0][0]);
+            else
+                return _net.Reshape(srcShapes[0][3], srcShapes[0][2], srcShapes[0][0]);
+#endif
             return equal || _net.Reshape(srcNames, srcShapes, dstNames);
         }
     };

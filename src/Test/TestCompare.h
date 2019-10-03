@@ -222,6 +222,7 @@ namespace Test
             }
             StringList::const_iterator name = images.begin();
 
+            Floats lower = _param().lower(), upper = _param().upper();
             _tests.clear();
             _tests.reserve(tN);
             for (size_t t = 0; t < tN; ++t)
@@ -247,6 +248,11 @@ namespace Test
                         Shape shape = network.SrcShape(s);
                         if (shape.size() == 4)
                         {
+                            if (lower.size() == 1)
+                                lower.resize(shape[1], lower[0]);
+                            if (upper.size() == 1)
+                                upper.resize(shape[1], upper[0]);
+
                             View converted(original.Size(), shape[1] == 1 ? View::Gray8 : View::Bgr24);
                             Simd::Convert(original, converted);
                             View resized(Size(shape[3], shape[2]), converted.format);
@@ -267,7 +273,7 @@ namespace Test
                                 for (size_t y = 0; y < channels[c].height; ++y)
                                 {
                                     const uint8_t * row = channels[c].Row<uint8_t>(y);
-                                    ::SimdUint8ToFloat32(row, channels[c].width, &_param().lower(), &_param().upper(), input);
+                                    ::SimdUint8ToFloat32(row, channels[c].width, &lower[c], &upper[c], input);
                                     input += channels[c].width;
                                 }
                             }
