@@ -34,6 +34,10 @@
 //#define SYNET_LAYER_STATISTIC
 //#define SYNET_SIZE_STATISTIC
 
+#if !defined(SYNET_OTHER_RUN) && !defined(SYNET_SYNET_RUN)
+#error SYNET_OTHER_RUN and SYNET_SYNET_RUN are undefined!
+#endif
+
 #include <string>
 #include <vector>
 #include <list>

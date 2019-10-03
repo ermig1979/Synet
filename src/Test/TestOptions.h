@@ -28,6 +28,8 @@
 
 namespace Test
 {
+    const int ENABLE_OTHER = 1;
+    const int ENABLE_SYNET = 2;
     const int DEBUG_PRINT_BACK = 1;
     const int DEBUG_PRINT_INTERIM = 2;
     const int DEBUG_PRINT_WEIGHT = 4;
@@ -35,6 +37,7 @@ namespace Test
     struct Options
     {
         String mode;
+        int enable;
         String otherModel;
         String otherWeight;
         String synetModel;
@@ -66,6 +69,7 @@ namespace Test
             , synetMemoryUsage(0)
         {
             mode = GetArg("-m");
+            enable = FromString<int>(GetArg("-e", "3"));
             otherModel = GetArg("-om", "./other.dsc");
             otherWeight = GetArg("-ow", "./other.dat");
             synetModel = GetArg("-sm", "./synet.xml");
@@ -87,6 +91,11 @@ namespace Test
             annotateRegions = FromString<int>(GetArg("-ar", "0"));
             regionThreshold = FromString<float>(GetArg("-rt", "0.3"));
             regionOverlap = FromString<float>(GetArg("-ro", "0.5"));
+            if (enable < 1 || enable > 3)
+            {
+                std::cout << "Parameter '-e' (enable) must be only 1, 2, 3!" << std::endl;
+                ::exit(1);
+            }
         }
 
         ~Options()
@@ -98,7 +107,8 @@ namespace Test
                     ss << "Synet memory usage: " << synetMemoryUsage / (1024 * 1024) << " MB." << std::endl;
                 PerformanceMeasurerStorage::s_storage.Print(ss);
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-                ss << SimdPerformanceStatistic();
+                if (enable & ENABLE_SYNET)
+                    ss << SimdPerformanceStatistic();
 #endif
                 std::cout << ss.str();
                 if (!logName.empty())
