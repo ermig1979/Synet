@@ -31,33 +31,33 @@ namespace Synet
 {
     namespace Detail
     {
-        template <class T> void ShuffleLayerForwardCpu(const T * src0, const T * src1, size_t channels, size_t spatial, T * dst0, T * dst1, TensorFormat format)
+        template <class T> void ShuffleLayerForwardCpu(const T * src0, size_t srcC0, const T * src1, size_t srcC1, size_t spatial, T * dst0, T * dst1, size_t dstC, TensorFormat format)
         {
             if (format == TensorFormatNhwc)
             {
                 for (size_t s = 0; s < spatial; ++s)
                 {
                     size_t cd = 0;
-                    for (size_t cs = 0; cs < channels; cs += 2, cd += 1)
+                    for (size_t cs = 0; cs < srcC0; cs += 2, cd += 1)
                     {
                         dst0[cd] = src0[cs + 0];
                         dst1[cd] = src0[cs + 1];
                     }
-                    for (size_t cs = 0; cs < channels; cs += 2, cd += 1)
+                    for (size_t cs = 0; cs < srcC1; cs += 2, cd += 1)
                     {
                         dst0[cd] = src1[cs + 0];
                         dst1[cd] = src1[cs + 1];
                     }
-                    src0 += channels;
-                    src1 += channels;
-                    dst0 += channels;
-                    dst1 += channels;
+                    src0 += srcC0;
+                    src1 += srcC1;
+                    dst0 += dstC;
+                    dst1 += dstC;
                 }
             }
             else
             {
                 size_t cd = 0;
-                for (size_t cs = 0; cs < channels; cs += 2, cd += 1)
+                for (size_t cs = 0; cs < srcC0; cs += 2, cd += 1)
                 {
                     memcpy(dst0, src0 + 0 * spatial, sizeof(T) * spatial);
                     memcpy(dst1, src0 + 1 * spatial, sizeof(T) * spatial);
@@ -65,7 +65,7 @@ namespace Synet
                     dst0 += spatial;
                     dst1 += spatial;
                 }
-                for (size_t cs = 0; cs < channels; cs += 2, cd += 1)
+                for (size_t cs = 0; cs < srcC1; cs += 2, cd += 1)
                 {
                     memcpy(dst0, src1 + 0 * spatial, sizeof(T) * spatial);
                     memcpy(dst1, src1 + 1 * spatial, sizeof(T) * spatial);
@@ -91,24 +91,35 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape() && src[0]->Count() == 4);
+            assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape() && src[0]->Count() == 4 && );
             _format = src[0]->Format();
-            const Shape & shape = src[0]->Shape();
-            _batch = shape[0];
+            const Shape & srcShape0 = src[0]->Shape();
+            const Shape & srcShape1 = src[1]->Shape();
+            _batch = srcShape0[0];
+            assert(srcShape0[0] == srcShape1[0]);
+            Shape dstShape = srcShape0;
             if (_format == TensorFormatNhwc)
             {
-                _channels = shape[3];
-                _spatial = shape[1] * shape[2];
+                _srcC0 = srcShape0[3];
+                _srcC1 = srcShape1[3];
+                _dstC = (_srcC0 + _srcC1) / 2;
+                assert(_srcC0  + _srcC1 == _dstC*2);
+                dstShape[3] = _dstC;
+                _spatial = srcShape0[1] * srcShape0[2];
+                assert(srcShape0[1] == srcShape1[1] && srcShape0[2] == srcShape1[2]);
             }
             else
             {
-                _channels = shape[1];
-                _spatial = shape[2] * shape[3];
+                _srcC0 = srcShape0[1];
+                _srcC1 = srcShape1[1];
+                _dstC = (_srcC0 + _srcC1) / 2;
+                assert(_srcC0 + _srcC1 == _dstC * 2);
+                dstShape[1] = _dstC;
+                _spatial = srcShape0[2] * srcShape0[3];
+                assert(srcShape0[2] == srcShape1[2] && srcShape0[3] == srcShape1[3]);
             }
-            assert(_channels%2 == 0);
-            _size = src[0]->Size(1);
-            dst[0]->Reshape(shape, _format);
-            dst[1]->Reshape(shape, _format);
+            dst[0]->Reshape(dstShape, _format);
+            dst[1]->Reshape(dstShape, _format);
         }
 
     protected:
@@ -122,15 +133,15 @@ namespace Synet
             Type * dst1 = dst[1]->CpuData();
             for(size_t b = 0; b < _batch; ++b)
             {
-                Detail::ShuffleLayerForwardCpu(src0, src1, _channels, _spatial, dst0, dst1, _format);
-                src0 += _size;
-                src1 += _size;
-                dst0 += _size;
-                dst1 += _size;
+                Detail::ShuffleLayerForwardCpu(src0, _srcC0, src1, _srcC1, _spatial, dst0, dst1, _dstC, _format);
+                src0 += _srcC0*_spatial;
+                src1 += _srcC1*_spatial;
+                dst0 += _dstC*_spatial;
+                dst1 += _dstC*_spatial;
             }
         }
     private:
         TensorFormat _format;
-        size_t _batch, _channels, _spatial, _size;
+        size_t _batch, _srcC0, _srcC1, _dstC, _spatial;
     };
 }
