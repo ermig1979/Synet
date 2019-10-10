@@ -89,6 +89,8 @@ namespace Synet
                     continue;
                 if (MergeFused10(src, i, dst, changes))
                     continue;
+                if (MergeFused11(src, i, dst, changes))
+                    continue;
                 dst.push_back(src[i]);
             }
             for (size_t k = 0; k < changes.size(); ++k)
@@ -693,7 +695,7 @@ namespace Synet
 
         bool MergeFused8(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
         {
-            if (src.size() < index + 6)
+            if (src.size() < index + 5)
                 return false;
             if (src[index + 0].type() != LayerTypeTile)
                 return false;
@@ -726,7 +728,7 @@ namespace Synet
 
         bool MergeFused9(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
         {
-            if (src.size() < index + 2)
+            if (src.size() < index + 3)
                 return false;
             if (src[index + 0].type() != LayerTypeConcat || src[index + 0].src().size() != 2)
                 return false;
@@ -782,6 +784,40 @@ namespace Synet
                 changes.push_back(Change(src[index + 0].dst()[0], layer.dst()[0]));
             index += (pre ? 1 : 0) + (post ? 1 : 0);
             dst.push_back(layer);
+            return true;
+        }
+
+        bool MergeFused11(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            if (src.size() < index + 4)
+                return false;
+            if (src[index + 0].type() != LayerTypePower || src[index + 0].power().power() != 1.0f || 
+                src[index + 0].power().scale() != 1.0f)
+                return false;
+            if (src[index + 1].type() != LayerTypeRestrictRange || src[index + 1].src()[0] != src[index + 0].name())
+                return false;
+            if (src[index + 2].type() != LayerTypePower || src[index + 2].power().power() != 1.0f || 
+                src[index + 2].power().shift() != 0.0f || src[index + 2].src()[0] != src[index + 1].name())
+                return false;
+            if (src[index + 3].type() != LayerTypeEltwise || src[index + 3].src().size() != 2 ||
+                src[index + 3].src()[0] != src[index + 0].src()[0] || src[index + 3].src()[1] != src[index + 2].name() ||
+                src[index + 3].eltwise().operation() != EltwiseOperationTypeProduct)
+                return false;
+            if (InsideLink(src, index + 1, 3))
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeFused;
+            layer.name() = src[index + 3].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            layer.fused().type() = 11;
+            layer.fused().floats().push_back(src[index + 0].power().shift());
+            layer.fused().floats().push_back(src[index + 1].restrictRange().lower());
+            layer.fused().floats().push_back(src[index + 1].restrictRange().upper());
+            layer.fused().floats().push_back(src[index + 2].power().scale());
+            dst.push_back(layer);
+            index += 3;
             return true;
         }
 

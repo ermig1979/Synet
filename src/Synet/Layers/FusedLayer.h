@@ -273,6 +273,17 @@ namespace Synet
             }
         }
 
+        template <class T> SYNET_INLINE T FusedLayerForward11(T src, T shift, T lower, T upper, T scale)
+        {
+            return std::max(lower, std::min(src + shift, upper))*scale*src;
+        }
+
+        template <class T> void FusedLayerForwardCpu11(const T * src, size_t size, const T * params, T * dst)
+        {
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = FusedLayerForward11(src[i], params[0], params[1], params[2], params[3]);
+        }
+
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
         template <> SYNET_INLINE void FusedLayerForwardCpu0<float>(const float * src, const float * bias, const float * scale, size_t count, size_t size, float * dst, int trans)
         {
@@ -475,6 +486,14 @@ namespace Synet
                 }
                 break;
             }
+            case 11:
+            {
+                assert(fused.floats().size() == 4);
+                for(size_t i = 0; i < 4; ++i)
+                    _t11.params[i] = fused.floats()[i];
+                _count = 1;
+                break;
+            }
             default:
                 assert(0);
             }
@@ -539,6 +558,9 @@ namespace Synet
                     break;
                 case 10:
                     Detail::ScaleLayerForwardCpu(src, _t0.scale.CpuData(), _t0.bias.CpuData(), _count, _size, dst, _trans);
+                    break;
+                case 11:
+                    Detail::FusedLayerForwardCpu11(src, _count*_size, _t11.params, dst);
                     break;
                 default:
                     assert(0);
@@ -628,7 +650,7 @@ namespace Synet
         struct T4
         {
             Tensor bias0;
-            T scale1, bias1;
+            Type scale1, bias1;
         } _t4;
 
         struct T5
@@ -636,5 +658,10 @@ namespace Synet
             Tensor bias, scale;
             size_t count0, count1;
         } _t5;
+
+        struct T11
+        {
+            Type params[4];
+        } _t11;
     };
 }
