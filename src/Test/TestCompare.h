@@ -38,11 +38,11 @@ namespace Test
         Comparer(const Options & options)
             : _options(options)
         {
-            assert(_options.testThreads >= 1);
+            assert(_options.testThreads >= 0);
             if (_options.enable & ENABLE_OTHER)
-                _others.resize(_options.testThreads);
+                _others.resize(_options.TestThreads());
             if (_options.enable & ENABLE_SYNET)
-                _synets.resize(_options.testThreads);
+                _synets.resize(_options.TestThreads());
         }
 
         bool Run()
@@ -56,7 +56,7 @@ namespace Test
                 return false;
             if (!CreateTestList())
                 return false;
-            if (_options.testThreads == 1)
+            if (_options.testThreads == 0)
             {
                 if (!SingleThreadComparison())
                     return false;
@@ -102,7 +102,7 @@ namespace Test
                 std::cout << "and ";
             if (_options.enable & ENABLE_SYNET)
                 std::cout << _synets[0].Name() << " ";
-            if (_options.testThreads > 1)
+            if (_options.testThreads > 0)
                 std::cout << _options.testThreads << "-threads ";
             else
                 std::cout << "single-thread ";
@@ -230,7 +230,7 @@ namespace Test
                 TestDataPtr test(new TestData());
                 test->path.resize(bN * sN);
                 test->input.resize(sN);
-                test->output.resize(_options.testThreads);
+                test->output.resize(_options.TestThreads());
                 for (size_t s = 0; s < sN; ++s)
                 {
                     test->input[s].resize(network.SrcSize(s));
@@ -467,8 +467,8 @@ namespace Test
         bool MultiThreadsComparison()
         {
             size_t total = _tests.size()*_options.repeatNumber, current = 0;
-            _currents.resize(_options.testThreads, 0);
-            _threads.resize(_options.testThreads);
+            _currents.resize(_options.TestThreads(), 0);
+            _threads.resize(_options.TestThreads());
             for (size_t t = 0; t < _threads.size(); ++t)
                 _threads[t] = std::thread(TestThread, this, t);
 

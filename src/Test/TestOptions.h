@@ -80,7 +80,7 @@ namespace Test
             outputDirectory = GetArg("-od", "./output");
             repeatNumber = FromString<size_t>(GetArg("-rn", "1"));
             workThreads = FromString<size_t>(GetArg("-wt", "1"));
-            testThreads = FromString<size_t>(GetArg("-tt", "1"));
+            testThreads = FromString<size_t>(GetArg("-tt", "0"));
             threshold = FromString<float>(GetArg("-t", "0.001"));
             logName = GetArg("-ln", "", false);
             tensorFormat = FromString<int>(GetArg("-tf", "1"));
@@ -132,6 +132,11 @@ namespace Test
         bool NeedOutputDirectory() const
         {
             return debugPrint || annotateRegions;
+        }
+
+        size_t TestThreads() const
+        {
+            return std::max<size_t>(1, testThreads);
         }
 
     private:
