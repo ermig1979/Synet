@@ -31,6 +31,8 @@ namespace Synet
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
     template <template<class> class Network> bool SetInput(Network<float> & network, const Views & views, Floats lower, Floats upper)
     {
+        SYNET_PERF_FUNC();
+
         if (network.Src().size() != 1 || views.empty() || lower.size() != upper.size())
             return false;
         const Shape & shape = network.NchwShape();
@@ -39,52 +41,21 @@ namespace Synet
         if (lower.size() != 1 && lower.size() != shape[1])
             return false;
         for (size_t i = 0; i < views.size(); ++i)
-            if (views[i].width != shape[3] || views[i].height != shape[2] || views[i].ChannelCount() != shape[1] || views[i].ChannelSize() != 1)
+            if (views[i].width != shape[3] || views[i].height != shape[2] || 
+                views[i].ChannelCount() != shape[1] || views[i].ChannelSize() != 1 || views[i].format != views[0].format)
                 return false;
         if (lower.size() == 1)
             lower.resize(shape[1], lower[0]);
         if (upper.size() == 1)
             upper.resize(shape[1], upper[0]);
         float * dst = network.Src()[0]->CpuData();
-        if (network.Src()[0]->Format() == TensorFormatNchw)
-        {
-            for (size_t i = 0; i < views.size(); ++i)
-            {
-                View tmp[3];
-                if (shape[1] == 3)
-                {
-                    for (size_t c = 0; c < shape[1]; ++c)
-                        tmp[c].Recreate(views[i].Size(), View::Gray8);
-                    Simd::DeinterleaveBgr(views[i], tmp[0], tmp[1], tmp[2]);
-                }
-                else
-                    tmp[0] = views[i];
-                for (size_t c = 0, e = 0; c < shape[1]; ++c)
-                {
-                    for (size_t y = 0; y < tmp[c].height; ++y)
-                    {
-                        ::SimdUint8ToFloat32(tmp[c].Row<uint8_t>(y), tmp[c].width, &lower[c], &upper[c], dst);
-                        dst += tmp[c].width;
-                    }
-                }
-            }
-            return true;
+        for (size_t i = 0; i < views.size(); ++i)
+        { 
+            SimdSynetSetInput(views[i].data, views[i].width, views[i].height, views[i].stride, (SimdPixelFormatType)views[i].format,
+                lower.data(), upper.data(), dst, shape[1], (SimdTensorFormatType)network.Format());
+            dst += shape[1] * shape[2] * shape[3];
         }
-        else if (network.Src()[0]->Format() == TensorFormatNhwc)
-        {
-            for (size_t i = 0; i < views.size(); ++i)
-            {
-                for (size_t y = 0; y < views[i].height; ++y)
-                {
-                    ::SimdUint8ToFloat32(views[i].Row<uint8_t>(y), shape[1] * shape[3], &lower[0], &upper[0], dst);
-                    dst += shape[1] * shape[3];
-                }
-            }
-            return true;
-        }
-        else
-            return false;
-
+        return true;
     }
 #endif
 }

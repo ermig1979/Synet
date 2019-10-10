@@ -91,7 +91,7 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape() && src[0]->Count() == 4 && );
+            assert(src.size() == 2 && src[0]->Count() == 4 && src[1]->Count() == 4 && src[0]->Format() == src[1]->Format());
             _format = src[0]->Format();
             const Shape & srcShape0 = src[0]->Shape();
             const Shape & srcShape1 = src[1]->Shape();
