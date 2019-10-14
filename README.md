@@ -29,12 +29,19 @@ To build test to compare Synet and [Inference Engine](https://github.com/opencv/
 And application `inference_engine_test` will be created in directory `build_inference_engine`.
 In order to run this test use `./test.sh` bash script (in the file manually uncomment unit test that you need).
 
+Use samples for Linux
+=======================================
+To build use samples for Linux you can run folowing bash script:
+
+    ./build.sh use_samples
+
+And application `use_face_detection` will be created in directory `build_use_samples`.
+
 Darknet model conversion
 ========================
 In order to convert [Darknet](https://github.com/pjreddie/darknet) trained model to Synet model you can use `darknet_test` application:
 
 	./build_darknet/darknet_test -m convert -om darknet_model.cfg -ow darknet_weigths.dat -sm synet_model.xml -sw synet_weigths.bin
-
 
 Other model conversion
 ======================

@@ -253,11 +253,12 @@ namespace Test
             dst.resize(shape[0]);
             for (size_t b = 0; b < shape[0]; ++b)
             {
-                dst[b].Recreate(Size(shape[3], shape[2]), shape[1] == 1 ? View::Gray8 : View::Bgr24);
+                dst[b].Recreate(Size(shape[3], shape[2]), shape[1] == 1 ? View::Gray8 : View::Bgra32);
                 for (size_t c = 0; c < shape[1]; ++c)
                     for (size_t y = 0; y < shape[2]; ++y)
                         for (size_t x = 0; x < shape[3]; ++x)
-                            dst[b].data[dst[b].stride*y + x * shape[1] + c] = Float32ToUint8(src[((b*shape[1] + c)*shape[2] + y)*shape[3] + x], _lower[c], _upper[c]);
+                            dst[b].data[dst[b].stride*y + x * (shape[1] == 1 ? 1 : 4) + c] = 
+                            Float32ToUint8(src[((b*shape[1] + c)*shape[2] + y)*shape[3] + x], _lower[c], _upper[c]);
             }
         }
 

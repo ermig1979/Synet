@@ -38,19 +38,25 @@ namespace Synet
         const Shape & shape = network.NchwShape();
         if (shape.size() != 4 || shape[0] != views.size())
             return false;
+        if (shape[1] != 1 && shape[1] != 3)
+            return false;
         if (lower.size() != 1 && lower.size() != shape[1])
             return false;
         for (size_t i = 0; i < views.size(); ++i)
-            if (views[i].width != shape[3] || views[i].height != shape[2] || 
-                views[i].ChannelCount() != shape[1] || views[i].ChannelSize() != 1 || views[i].format != views[0].format)
+        {
+            if (views[i].width != shape[3] || views[i].height != shape[2] || views[i].format != views[0].format)
                 return false;
+            if (views[i].format != View::Gray8 && views[i].format != View::Bgr24 &&
+                views[i].format != View::Bgra32 && views[i].format != View::Rgb24)
+                return false;
+        }
         if (lower.size() == 1)
             lower.resize(shape[1], lower[0]);
         if (upper.size() == 1)
             upper.resize(shape[1], upper[0]);
         float * dst = network.Src()[0]->CpuData();
         for (size_t i = 0; i < views.size(); ++i)
-        { 
+        {
             SimdSynetSetInput(views[i].data, views[i].width, views[i].height, views[i].stride, (SimdPixelFormatType)views[i].format,
                 lower.data(), upper.data(), dst, shape[1], (SimdTensorFormatType)network.Format());
             dst += shape[1] * shape[2] * shape[3];
