@@ -40,6 +40,7 @@
 #include "Synet/Layers/FlattenLayer.h"
 #include "Synet/Layers/FusedLayer.h"
 #include "Synet/Layers/GatherLayer.h"
+#include "Synet/Layers/HswishLayer.h"
 #include "Synet/Layers/InnerProductLayer.h"
 #include "Synet/Layers/InputLayer.h"
 #include "Synet/Layers/InterpLayer.h"
@@ -854,6 +855,7 @@ namespace Synet
             case LayerTypeFlatten: return new FlattenLayer<T>(param);
             case LayerTypeFused: return new FusedLayer<T>(param);
             case LayerTypeGather: return new GatherLayer<T>(param);
+            case LayerTypeHswish: return new HswishLayer<T>(param);
             case LayerTypeInnerProduct: return new InnerProductLayer<T>(param);
             case LayerTypeInput: return new InputLayer<T>(param);
             case LayerTypeInterp: return new InterpLayer<T>(param);

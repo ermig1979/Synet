@@ -47,6 +47,7 @@ namespace Synet
         LayerTypeFlatten,
         LayerTypeFused,
         LayerTypeGather,
+        LayerTypeHswish,
         LayerTypeInnerProduct,
         LayerTypeInput,
         LayerTypeInterp,
@@ -312,6 +313,12 @@ namespace Synet
         SYNET_PARAM_VALUE(int32_t, axis, 1);
         SYNET_PARAM_VALUE(Floats, floats, Floats());
     };
+
+    struct HswishParam
+    {
+        SYNET_PARAM_VALUE(float, shift, 3.0f);
+        SYNET_PARAM_VALUE(float, scale, 1.0f / 6.0f);
+    };
     
     struct InnerProductParam
     {
@@ -549,6 +556,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(FillParam, fill);
         SYNET_PARAM_STRUCT(FlattenParam, flatten);
         SYNET_PARAM_STRUCT(FusedParam, fused);
+        SYNET_PARAM_STRUCT(HswishParam, hswish);
         SYNET_PARAM_STRUCT(InnerProductParam, innerProduct);
         SYNET_PARAM_STRUCT(InputParam, input);
         SYNET_PARAM_STRUCT(InterpParam, interp);
