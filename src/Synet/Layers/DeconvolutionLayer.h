@@ -29,6 +29,7 @@
 #include "Synet/Utils/Gemm.h"
 #include "Synet/Utils/ImgToCol.h"
 #include "Synet/Utils/Deconvolution.h"
+#include "Synet/Layers/HswishLayer.h"
 
 namespace Synet
 {
@@ -236,6 +237,10 @@ namespace Synet
                         break;
                     case ActivationFunctionTypeElu:
                         CpuElu(dst, _dstSize, _params[0], dst);
+                        break;
+                    case ActivationFunctionTypeHswish:
+                        Detail::HswishLayerForwardCpu(dst, _dstSize, _params[0], _params[1], dst);
+                        break;
                     default:
                         assert(0);
                     }

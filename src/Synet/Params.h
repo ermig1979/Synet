@@ -91,7 +91,8 @@ namespace Synet
         ActivationFunctionTypeLeakyRelu,
         ActivationFunctionTypeRestrictRange,
         ActivationFunctionTypePrelu,
-        ActivationFunctionTypeElu);
+        ActivationFunctionTypeElu,
+        ActivationFunctionTypeHswish);
 
     SYNET_PARAM_ENUM(BinaryOperationType,
         BinaryOperationTypeDiv,

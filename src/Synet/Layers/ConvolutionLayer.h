@@ -32,6 +32,7 @@
 #include "Synet/Utils/Convolution.h"
 #include "Synet/Layers/PreluLayer.h"
 #include "Synet/Layers/ScaleLayer.h"
+#include "Synet/Layers/HswishLayer.h"
 
 namespace Synet
 {
@@ -263,6 +264,10 @@ namespace Synet
                         break;
                     case ActivationFunctionTypeElu:
                         CpuElu(dst, _dstSize, _params[0], dst);
+                        break;
+                    case ActivationFunctionTypeHswish:
+                        Detail::HswishLayerForwardCpu(dst, _dstSize, _params[0], _params[1], dst);
+                        break;
                     default:
                         assert(0);
                     }

@@ -37,11 +37,18 @@ namespace Synet
             return std::max(std::min(value, shift) + shift, T(0))*scale*value;
         }
 
-        template <class T> void HswishLayerForwardCpu(const T * src, size_t size, const T * shift, const T * scale, T * dst)
+        template <class T> void HswishLayerForwardCpu(const T * src, size_t size, T shift, T scale, T * dst)
         {
             for (size_t i = 0; i < size; ++i)
-                dst[i] = HswishCpu(src[i], shift[0], scale[0]);
+                dst[i] = HswishCpu(src[i], shift, scale);
         }
+
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        template <> SYNET_INLINE void HswishLayerForwardCpu(const float * src, size_t size, float shift, float scale, float * dst)
+        {
+            ::SimdSynetHswish32f(src, size, &shift, &scale, dst);
+        }
+#endif
     }
 
     template <class T> class HswishLayer : public Synet::Layer<T>
@@ -69,7 +76,7 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            Detail::HswishLayerForwardCpu(src[0]->CpuData(), src[0]->Size(), &_shift, &_scale, dst[0]->CpuData());
+            Detail::HswishLayerForwardCpu(src[0]->CpuData(), src[0]->Size(), _shift, _scale, dst[0]->CpuData());
         }
 
     private:

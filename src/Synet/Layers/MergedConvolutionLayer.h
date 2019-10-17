@@ -27,6 +27,7 @@
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
 #include "Synet/Utils/MergedConvolution.h"
+#include "Synet/Layers/HswishLayer.h"
 
 namespace Synet
 {
@@ -82,6 +83,14 @@ namespace Synet
             static SYNET_INLINE T Func(T value, const T * params, size_t offset)
             {
                 return CpuElu(value, params[0]);
+            }
+        };
+
+        template<class T> struct Activation<T, ActivationFunctionTypeHswish>
+        {
+            static SYNET_INLINE T Func(T value, const T * params, size_t offset)
+            {
+                return Detail::HswishCpu(value, params[0], params[1]);
             }
         };
 
@@ -258,6 +267,7 @@ namespace Synet
             case ActivationFunctionTypeRestrictRange: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRestrictRange, 0>; break;
             case ActivationFunctionTypePrelu: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypePrelu, 0>; break;
             case ActivationFunctionTypeElu: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeElu, 0>; break;
+            case ActivationFunctionTypeHswish: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeHswish, 0>; break;
             default: assert(0);
             }
 
@@ -270,6 +280,7 @@ namespace Synet
             case ActivationFunctionTypeRestrictRange: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeRestrictRange>; break;
             case ActivationFunctionTypePrelu: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypePrelu>; break;
             case ActivationFunctionTypeElu: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeElu>; break;
+            case ActivationFunctionTypeHswish: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeHswish>; break;
             default: assert(0);
             }
 
@@ -285,6 +296,7 @@ namespace Synet
                 case ActivationFunctionTypeRestrictRange: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRestrictRange, 1>; break;
                 case ActivationFunctionTypePrelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypePrelu, 1>; break;
                 case ActivationFunctionTypeElu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeElu, 1>; break;
+                case ActivationFunctionTypeHswish: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeHswish, 1>; break;
                 default: assert(0);
                 }
             }
@@ -298,6 +310,7 @@ namespace Synet
                 case ActivationFunctionTypeRestrictRange: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRestrictRange, 0>; break;
                 case ActivationFunctionTypePrelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypePrelu, 0>; break;
                 case ActivationFunctionTypeElu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeElu, 0>; break;
+                case ActivationFunctionTypeHswish: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeHswish, 0>; break;
                 default: assert(0);
                 }
             }

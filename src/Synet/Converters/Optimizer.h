@@ -188,6 +188,13 @@ namespace Synet
                 dst.back().convolution().activationParam0() = src[index].elu().alpha();
                 result = true;
             }
+            if (src[index].type() == LayerTypeHswish)
+            {
+                dst.back().convolution().activationType() = ActivationFunctionTypeHswish;
+                dst.back().convolution().activationParam0() = src[index].hswish().shift();
+                dst.back().convolution().activationParam1() = src[index].hswish().scale();
+                result = true;
+            }
             if (result)
             {
                 if (dst.back().convolution().quantizationLevel() == TensorType8i)
@@ -281,6 +288,13 @@ namespace Synet
                             {
                                 dst.back().mergedConvolution().conv()[2].activationType() = ActivationFunctionTypeElu;
                                 dst.back().mergedConvolution().conv()[2].activationParam0() = l4.elu().alpha();
+                                result = true;
+                            }
+                            if (l4.type() == LayerTypeHswish)
+                            {
+                                dst.back().mergedConvolution().conv()[2].activationType() = ActivationFunctionTypeHswish;
+                                dst.back().mergedConvolution().conv()[2].activationParam0() = l4.hswish().shift();
+                                dst.back().mergedConvolution().conv()[2].activationParam1() = l4.hswish().scale();
                                 result = true;
                             }
                             if (result)
