@@ -29,7 +29,9 @@
 #endif
 #define SYNET_GEMM_SIMD_LIBRARY
 
+#ifndef WIN32
 #define SYNET_OTHER_RUN
+#endif
 #define SYNET_SYNET_RUN
 //#define SYNET_LAYER_STATISTIC
 //#define SYNET_SIZE_STATISTIC

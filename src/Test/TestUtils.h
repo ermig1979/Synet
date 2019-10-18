@@ -72,7 +72,7 @@ namespace Test
 
     bool CreatePath(const String & path)
     {
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && _MSC_VER < 1900
         return std::tr2::sys::create_directories(std::tr2::sys::path(path));
 #else
         return std::system((String("mkdir -p ") + path).c_str()) == 0;
@@ -92,14 +92,13 @@ namespace Test
     inline String GetNameByPath(const String & path_)
     {
 #ifdef _MSC_VER
+#if _MSC_VER < 1900
         std::tr2::sys::path path(path_);
-
-#if _MSC_VER >= 1900
         return path.filename().string();
 #else
-        return path.filename();
-#endif	//_MSC_VER >= 1900
-
+        std::filesystem::path path(path_);
+        return path.filename().string();
+#endif
 #elif defined(__unix__)
         size_t pos = path_.find_last_of("/");
         if (pos == std::string::npos)

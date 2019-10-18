@@ -22,7 +22,9 @@
 * SOFTWARE.
 */
 
-#include "Test/TestCompare.h"
+#include "TestCompare.h"
+
+#ifdef SYNET_OTHER_RUN
 
 #define SYNET_DARKNET_ENABLE
 #define SYNET_DARKNET_PATH ../../../3rd/darknet/include
@@ -199,6 +201,14 @@ namespace Test
         }
     };
 }
+#else //SYNET_OTHER_RUN
+namespace Test
+{
+    struct DarknetNetwork : public Network
+    {
+    };
+}
+#endif//SYNET_OTHER_RUN
 
 Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
 
@@ -209,9 +219,14 @@ int main(int argc, char* argv[])
     if (options.mode == "convert")
     {
         SYNET_PERF_FUNC();
-        std::cout << "Convert network from Yolo to Synet :" << std::endl;
+#ifdef SYNET_OTHER_RUN
+        std::cout << "Convert network from Darkent to Synet :" << std::endl;
         options.result = Synet::ConvertDarknetToSynet(options.otherModel, options.otherWeight, options.tensorFormat == 1, options.synetModel, options.synetWeight);
         std::cout << "Conversion is finished " << (options.result ? "successfully." : "with errors.") << std::endl;
+#else
+        std::cout << "Conversion of Darkent to Synet is not available!" << std::endl;
+        options.result = false;
+#endif
     }
     else if (options.mode == "compare")
     {

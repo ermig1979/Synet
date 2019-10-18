@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "Test/TestCommon.h"
-#include "Test/TestPerformance.h"
+#include "TestCommon.h"
+#include "TestPerformance.h"
 
 #ifdef SYNET_LAYER_STATISTIC
 #define SYNET_PERF_FUNC() TEST_PERF_FUNC()
@@ -406,6 +406,5 @@ namespace Test
             return equal || _net.Reshape(srcNames, srcShapes, dstNames);
         }
     };
-
 }
 

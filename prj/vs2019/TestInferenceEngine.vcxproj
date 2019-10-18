@@ -2,9 +2,9 @@
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="Prop.props" />
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{423128F2-9D4E-408D-9123-49CE57A32B0A}</ProjectGuid>
+    <ProjectGuid>{F4F0DBBD-994A-41B1-8F5D-60AD8F8E4C8A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>TestDarknet</RootNamespace>
+    <RootNamespace>TestInferenceEngine</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
@@ -14,6 +14,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\3rd\Simd\src;$(SolutionDir)..\..\3rd\dldt\inference-engine\include;$(SolutionDir)..\..\3rd\dldt\inference-engine\src\extension;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -21,9 +22,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Test\*.h" />
-    <ClCompile Include="..\..\src\Test\TestDarknet.cpp" />
+    <ClCompile Include="..\..\src\Test\TestInferenceEngine.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="Simd.vcxproj">
+      <Project>{fc4ceece-ac57-44d7-9f29-d387ee8910ef}</Project>
+    </ProjectReference>
     <ProjectReference Include="Synet.vcxproj">
       <Project>{c809d7a3-6c52-4e36-8582-00ced929317d}</Project>
     </ProjectReference>

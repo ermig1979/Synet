@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.24720.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29411.138
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestDarknet", "TestDarknet.vcxproj", "{423128F2-9D4E-408D-9123-49CE57A32B0A}"
 EndProject
@@ -11,7 +11,15 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestInferenceEngine", "Test
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3rd", "3rd", "{A7AA50AB-F5B8-47DF-BA9E-07301E27B46D}"
 EndProject
-Project("{FC4CEECE-AC57-44D7-9F29-D387EE8910EF}") = "Simd", "Simd.vcxproj", "{FC4CEECE-AC57-44D7-9F29-D387EE8910EF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Simd", "Simd.vcxproj", "{FC4CEECE-AC57-44D7-9F29-D387EE8910EF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{302014D6-E119-4F87-89FE-58B605B21254}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{AFFDA6C0-D2CE-421C-8B55-7A55284D9427}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "use", "use", "{6DC1E51E-CC0D-4775-8A78-E94B83B25381}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UseFaceDetection", "UseFaceDetection.vcxproj", "{C26833B7-8721-41F0-BA67-CBC4D5ADCD23}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,12 +61,24 @@ Global
 		{FC4CEECE-AC57-44D7-9F29-D387EE8910EF}.Release|Win32.Build.0 = Release|Win32
 		{FC4CEECE-AC57-44D7-9F29-D387EE8910EF}.Release|x64.ActiveCfg = Release|x64
 		{FC4CEECE-AC57-44D7-9F29-D387EE8910EF}.Release|x64.Build.0 = Release|x64
+		{C26833B7-8721-41F0-BA67-CBC4D5ADCD23}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C26833B7-8721-41F0-BA67-CBC4D5ADCD23}.Debug|Win32.Build.0 = Debug|Win32
+		{C26833B7-8721-41F0-BA67-CBC4D5ADCD23}.Debug|x64.ActiveCfg = Debug|x64
+		{C26833B7-8721-41F0-BA67-CBC4D5ADCD23}.Debug|x64.Build.0 = Debug|x64
+		{C26833B7-8721-41F0-BA67-CBC4D5ADCD23}.Release|Win32.ActiveCfg = Release|Win32
+		{C26833B7-8721-41F0-BA67-CBC4D5ADCD23}.Release|Win32.Build.0 = Release|Win32
+		{C26833B7-8721-41F0-BA67-CBC4D5ADCD23}.Release|x64.ActiveCfg = Release|x64
+		{C26833B7-8721-41F0-BA67-CBC4D5ADCD23}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{423128F2-9D4E-408D-9123-49CE57A32B0A} = {AFFDA6C0-D2CE-421C-8B55-7A55284D9427}
+		{C809D7A3-6C52-4E36-8582-00CED929317D} = {302014D6-E119-4F87-89FE-58B605B21254}
+		{F4F0DBBD-994A-41B1-8F5D-60AD8F8E4C8A} = {AFFDA6C0-D2CE-421C-8B55-7A55284D9427}
 		{FC4CEECE-AC57-44D7-9F29-D387EE8910EF} = {A7AA50AB-F5B8-47DF-BA9E-07301E27B46D}
+		{C26833B7-8721-41F0-BA67-CBC4D5ADCD23} = {6DC1E51E-CC0D-4775-8A78-E94B83B25381}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8D0544B9-1F3D-447C-B071-0078E50D9328}
