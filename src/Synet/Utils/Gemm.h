@@ -36,7 +36,7 @@ namespace Synet
             {
                 for (size_t k = 0; k < K; ++k)
                 {
-                    T a = alpha * A[i*lda + k];
+                    register T a = alpha * A[i*lda + k];
                     for (size_t j = 0; j < N; ++j)
                         C[i*ldc + j] += a * B[k*ldb + j];
                 }
@@ -49,7 +49,7 @@ namespace Synet
             {
                 for (size_t j = 0; j < N; ++j)
                 {
-                    T sum = 0;
+                    register T sum = 0;
                     for (size_t k = 0; k < K; ++k)
                         sum += alpha * A[i*lda + k] * B[j*ldb + k];
                     C[i*ldc + j] += sum;
@@ -63,7 +63,7 @@ namespace Synet
             {
                 for (size_t k = 0; k < K; ++k)
                 {
-                    T a = alpha * A[k*lda + i];
+                    register T a = alpha * A[k*lda + i];
                     for (size_t j = 0; j < N; ++j)
                         C[i*ldc + j] += a * B[k*ldb + j];
                 }
@@ -76,7 +76,7 @@ namespace Synet
             {
                 for (size_t j = 0; j < N; ++j)
                 {
-                    T sum = 0;
+                    register T sum = 0;
                     for (size_t k = 0; k < K; ++k)
                         sum += alpha * A[i + k * lda] * B[k + j * ldb];
                     C[i*ldc + j] += sum;
@@ -88,7 +88,7 @@ namespace Synet
         {
             for (size_t i = 0; i < M; ++i)
             {
-                T sum = 0;
+                register T sum = 0;
                 for (size_t j = 0; j < N; ++j)
                     sum += x[j] * A[i*N + j];
                 y[i] += alpha*sum;
@@ -99,7 +99,7 @@ namespace Synet
         {
             for (size_t j = 0; j < N; ++j)
             {
-                T ax = alpha*x[j];
+                register T ax = alpha*x[j];
                 for (size_t i = 0; i < M; ++i)
                     y[i] += ax * A[j*M + i];
             }

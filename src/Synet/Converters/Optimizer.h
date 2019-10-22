@@ -45,6 +45,11 @@ namespace Synet
                 return false;
             network.layers() = merged;
 
+            merged.clear();
+            if (!Merge(network.layers(), merged))
+                return false;
+            network.layers() = merged;
+
             return true;
         }
 
@@ -220,7 +225,7 @@ namespace Synet
             const LayerParam & l2 = src[index + 2];
             const Shape & k2 = l2.convolution().kernel();
             if (l0.type() != LayerTypeConvolution || l1.type() != LayerTypeConvolution || 
-                l2.type() != LayerTypeConvolution || l1.src()[0] != l0.name() || l2.src()[0] != l1.name())
+                l2.type() != LayerTypeConvolution || l1.src()[0] != l0.dst()[0] || l2.src()[0] != l1.dst()[0])
                 return false;
             if (l0.weight()[0].format() != TensorFormatNhwc)
                 return false;
@@ -228,7 +233,7 @@ namespace Synet
                 return false;
             if (l1.convolution().outputNum() != l1.convolution().group())
                 return false;
-            if (k1.size() < 2 || k1[0] != 3 || k1[1] != 3)
+            if (k1.size() < 2 || (k1[0] != k1[1] || (k1[0] != 3 && k1[0] != 5 && k1[0] != 7)))
                 return false;
             if (k2.size() < 2 || k2[0] != 1 || k2[1] != 1)
                 return false;

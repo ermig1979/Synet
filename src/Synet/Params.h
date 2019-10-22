@@ -77,6 +77,7 @@ namespace Synet
         LayerTypeSlice,
         LayerTypeSoftmax,
         LayerTypeSqueeze,
+        LayerTypeStridedSlice,
         LayerTypeStub,
         LayerTypeSwitch,
         LayerTypeTile,
@@ -501,6 +502,18 @@ namespace Synet
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
     };
 
+    struct StridedSliceParam
+    {
+        SYNET_PARAM_VALUE(Shape, beginMask, Shape());
+        SYNET_PARAM_VALUE(Shape, ellipsisMask, Shape());
+        SYNET_PARAM_VALUE(Shape, endMask, Shape());
+        SYNET_PARAM_VALUE(Shape, newAxisMask, Shape());
+        SYNET_PARAM_VALUE(Shape, shrinkAxisMask, Shape());
+        SYNET_PARAM_VALUE(Shape, beginDims, Shape());
+        SYNET_PARAM_VALUE(Shape, endDims, Shape());
+        SYNET_PARAM_VALUE(Shape, strideDims, Shape());
+    };
+
     struct TileParam
     {
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
@@ -581,6 +594,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(ScaleParam, scale);
         SYNET_PARAM_STRUCT(SliceParam, slice);
         SYNET_PARAM_STRUCT(SoftmaxParam, softmax);
+        SYNET_PARAM_STRUCT(StridedSliceParam, stridedSlice);
         SYNET_PARAM_STRUCT(TileParam, tile);
         SYNET_PARAM_STRUCT(UnaryOperationParam, unaryOperation);
         SYNET_PARAM_STRUCT(UnpackParam, unpack);

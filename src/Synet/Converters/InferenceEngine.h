@@ -294,9 +294,11 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "SoftMax" && !ConvertSoftmaxLayer(pLayer, trans, layer))
                     return ErrorMessage(pLayer);
-                if (type == "Split" && !ConvertSplitLayer(pLayer, trans, layer))
+                if (type == "Split" && !ConvertSplitLayer(pLayer, trans, layer, network.layers()))
                     return ErrorMessage(pLayer);
                 if (type == "Squeeze" && !ConvertSqueezeLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "StridedSlice" && !ConvertStridedSliceLayer(pLayer, layer, network.layers(), dstBin))
                     return ErrorMessage(pLayer);
                 if (type == "Tile" && !ConvertTileLayer(pLayer, trans, layer))
                     return ErrorMessage(pLayer);
@@ -316,19 +318,8 @@ namespace Synet
                 pLayer = pNextLayer;
             }
 
-            for (size_t i = 0; i < network.layers().size(); ++i)
-            {
-                if (network.layers()[i].type() == LayerTypeConst)
-                {
-                    bool unused = true;
-                    for (size_t j = i + 1; j < network.layers().size() && unused; ++j)
-                        for (size_t k = 0; k < network.layers()[j].src().size() && unused; ++k)
-                            if (network.layers()[j].src()[k] == network.layers()[i].name())
-                                unused = false;
-                    if (unused)
-                        network.layers().erase(network.layers().begin() + i);
-                }
-            }
+            if (!RemoveUnusedConst(network.layers()))
+                return false;
 
             const XmlNode * pStatistics = pNet->FirstNode("statistics");
             if (pStatistics)
@@ -489,6 +480,25 @@ namespace Synet
             }
         }
 
+        bool RemoveUnusedConst(LayerParams & layers)
+        {
+            for (size_t i = 0; i < layers.size(); ++i)
+            {
+                if (layers[i].type() == LayerTypeConst)
+                {
+                    const String & name = layers[i].name();
+                    bool unused = true;
+                    for (size_t j = i + 1; j < layers.size() && unused; ++j)
+                        for (size_t k = 0; k < layers[j].src().size() && unused; ++k)
+                            if (layers[j].src()[k] == name)
+                                unused = false;
+                    if (unused)
+                        layers.erase(layers.begin() + i), i--;
+                }
+            }
+            return true;
+        }
+
         bool ConvertActivationLayer(const XmlNode * pLayer, LayerParam & layer)
         {
             const XmlNode * pData = pLayer->FirstNode("data");
@@ -499,8 +509,14 @@ namespace Synet
                 layer.type() = Synet::LayerTypeSigmoid;
             else if (type == "elu")
                 layer.type() = Synet::LayerTypeElu;
+            else if (type == "exp")
+            {
+                layer.type() = Synet::LayerTypeUnaryOperation;
+                layer.unaryOperation().type() = UnaryOperationTypeExp;
+                return true;
+            }
             else
-                assert(0);
+                return false;
             return true;
         }
 
@@ -1288,14 +1304,14 @@ namespace Synet
             return true;
         }
 
-        bool ConvertSplitLayer(const XmlNode * pLayer, bool trans, LayerParam & layer)
+        bool ConvertSplitLayer(const XmlNode * pLayer, bool trans, LayerParam & layer, const LayerParams & layers)
         {
             layer.type() = Synet::LayerTypeUnpack;
             const XmlNode * pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
             StringToValue(pData->FirstAttribute("axis")->Value(), layer.unpack().axis());
-            if (trans)
+            if (trans && !PermutedToNchw(layers))
             {
                 Shape input;
                 const XmlNode * pInput = pLayer->FirstNode("input");
@@ -1333,6 +1349,70 @@ namespace Synet
         bool ConvertSqueezeLayer(const XmlNode * pLayer, LayerParam & layer)
         {
             layer.type() = Synet::LayerTypeSqueeze;
+            return true;
+        }
+
+        bool GetShapeFromConst(const LayerParam & layer, const Vector & bin, Shape & shape)
+        {
+            if (layer.type() != LayerTypeConst)
+                return false;
+            if (layer.weight().size() != 1)
+                return false;
+            const WeightParam & weight = layer.weight()[0];
+            if (weight.dim().size() != 1)
+                return false;
+            size_t size = weight.dim()[0];
+            if (size != weight.size() / 4)
+                return false;
+            int32_t * data = (int32_t*)((uint8_t*)bin.data() + weight.offset());
+            shape.resize(size);
+            for (size_t i = 0; i < size; ++i)
+                shape[i] = data[i];
+            return true;
+        }
+
+        bool ConvertStridedSliceLayer(const XmlNode * pLayer, LayerParam & layer, LayerParams & layers, const Vector & bin)
+        {
+            layer.type() = Synet::LayerTypeStridedSlice;
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            if (!ConvertVector(pData->FirstAttribute("begin_mask"), layer.stridedSlice().beginMask()))
+                return false;
+            if (!ConvertVector(pData->FirstAttribute("ellipsis_mask"), layer.stridedSlice().ellipsisMask()))
+                return false;
+            if (!ConvertVector(pData->FirstAttribute("end_mask"), layer.stridedSlice().endMask()))
+                return false;
+            if (!ConvertVector(pData->FirstAttribute("new_axis_mask"), layer.stridedSlice().newAxisMask()))
+                return false;
+            if (!ConvertVector(pData->FirstAttribute("shrink_axis_mask"), layer.stridedSlice().shrinkAxisMask()))
+                return false;
+            for (size_t l = layer.src().size() - 1; l > 0; --l)
+            {
+                bool found = false;
+                for (size_t i = 0; i < layers.size(); ++i)
+                {
+                    if (layer.src()[l] == layers[i].name())
+                    {
+                        switch (l)
+                        {
+                        case 1:
+                            found = GetShapeFromConst(layers[i], bin, layer.stridedSlice().beginDims());
+                            break;
+                        case 2:
+                            found = GetShapeFromConst(layers[i], bin, layer.stridedSlice().endDims());
+                            break;
+                        case 3:
+                            found = GetShapeFromConst(layers[i], bin, layer.stridedSlice().strideDims());
+                            break;
+                        }
+                        layer.src().pop_back();
+                        break;
+                    }
+                }
+                if (!found)
+                    return false;
+            }
             return true;
         }
 
@@ -1379,7 +1459,11 @@ namespace Synet
 
         bool ErrorMessage(const XmlNode * pLayer)
         {
-            std::cout << "Can't convert layer " << pLayer->FirstAttribute("type")->Value() << " '" << pLayer->FirstAttribute("name")->Value() << "' !" << std::endl;
+            std::cout << "Can't convert layer :";
+            std::cout << " type = " << pLayer->FirstAttribute("type")->Value();
+            std::cout << ", name = " << pLayer->FirstAttribute("name")->Value();
+            std::cout << ", id = " << pLayer->FirstAttribute("id")->Value();
+            std::cout << " !" << std::endl;
             return false;
         }
 
