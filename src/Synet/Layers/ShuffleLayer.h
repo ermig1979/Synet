@@ -75,6 +75,13 @@ namespace Synet
                 }
             }
         }
+
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        template <> SYNET_INLINE void ShuffleLayerForwardCpu<float>(const float * src0, size_t srcC0, const float * src1, size_t srcC1, size_t spatial, float * dst0, float * dst1, size_t dstC, TensorFormat format)
+        {
+            ::SimdSynetShuffleLayerForward(src0, srcC0, src1, srcC1, spatial, dst0, dst1, dstC, (::SimdTensorFormatType)format);
+        }
+#endif
     }
 
     template <class T> class ShuffleLayer : public Synet::Layer<T>
