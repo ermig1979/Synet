@@ -50,6 +50,8 @@ namespace Synet
                 return false;
             network.layers() = merged;
 
+            ReuseLayers(network.layers());
+
             return true;
         }
 
@@ -100,17 +102,7 @@ namespace Synet
                     continue;
                 dst.push_back(src[i]);
             }
-            for (size_t k = 0; k < changes.size(); ++k)
-            {
-                for (size_t i = 0; i < dst.size(); ++i)
-                {
-                    for (size_t j = 0; j < dst[i].src().size(); ++j)
-                    {
-                        if (dst[i].src()[j] == changes[k].first)
-                            dst[i].src()[j] = changes[k].second;
-                    }
-                }            
-            }   
+            Rename(changes, dst);
             return true;
         }
 
@@ -910,6 +902,68 @@ namespace Synet
         bool Equal(float a, float b, float e = 0.000001f)
         {
             return abs(a - b) < e;
+        }
+
+        bool Rename(const Changes & changes, LayerParams & layers)
+        {
+            for (size_t k = 0; k < changes.size(); ++k)
+            {
+                for (size_t i = 0; i < layers.size(); ++i)
+                {
+                    for (size_t j = 0; j < layers[i].src().size(); ++j)
+                    {
+                        if (layers[i].src()[j] == changes[k].first)
+                            layers[i].src()[j] = changes[k].second;
+                    }
+                }
+            }
+            return true;
+        }
+
+        bool IsUsed(const String & name, const LayerParams & layers, size_t start) const
+        {
+            for (size_t i = start; i < layers.size(); ++i)
+            {
+                for (size_t j = 0; j < layers[i].src().size(); ++j)
+                {
+                    if (layers[i].src()[j] == name)
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        bool CanReuse(const LayerParam & layer)
+        {
+            if (layer.type() == LayerTypeSigmoid)
+                return true;
+            if (layer.type() == LayerTypeScale)
+                return true;
+            if (layer.type() == LayerTypeEltwise)
+                return true;
+            return false;
+        }
+
+        bool ReuseLayers(LayerParams & layers)
+        {
+            Changes changes;
+            for (size_t i = 0; i < layers.size(); ++i)
+            {
+                LayerParam & layer = layers[i];
+                if (layer.src().empty())
+                    continue;
+                if (IsUsed(layer.src()[0], layers, i + 1))
+                    continue;
+                if (!IsUsed(layer.dst()[0], layers, i + 1))
+                    continue;
+                if (!CanReuse(layer))
+                    continue;
+                changes.push_back(Change(layer.dst()[0], layer.src()[0]));
+                layer.dst()[0] = layer.src()[0];
+            }
+            if(changes.size())
+                Rename(changes, layers);
+            return true;
         }
     };
 }

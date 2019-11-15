@@ -1121,6 +1121,8 @@ namespace Synet
             {
                 if (layers[i].type() == LayerTypePermute && layers[i].permute().format() == TensorFormatNchw)
                     return true;
+                if (layers[i].type() == LayerTypeInnerProduct)
+                    return true;
             }
             return false;
         }
