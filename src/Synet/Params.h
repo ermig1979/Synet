@@ -211,8 +211,8 @@ namespace Synet
     {
         SYNET_PARAM_VALUE(Shape, dim, Shape());
         SYNET_PARAM_VALUE(TensorFormat, format, TensorFormatNchw);
-        SYNET_PARAM_VALUE(int64_t, offset, -1);
-        SYNET_PARAM_VALUE(int64_t, size, -1);
+        SYNET_PARAM_VALUE(size_t, offset, -1);
+        SYNET_PARAM_VALUE(size_t, size, -1);
     };
 
     struct NonMaximumSuppressionParam
