@@ -199,8 +199,8 @@ namespace Synet
             if (param.useTensorSize())
             {
                 assert(src.size() > 1 && _trans == 0);
-                _dstH = src[0]->Axis(1);
-                _dstW = src[0]->Axis(0);
+                _dstH = _trans ? src[1]->Axis(1) : src[1]->Axis(2);
+                _dstW = _trans ? src[1]->Axis(2) : src[1]->Axis(3);
             }
             else if (param.shrinkFactor() != 1 && param.zoomFactor() == 1)
             {

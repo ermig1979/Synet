@@ -268,6 +268,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Input" && !ConvertInputLayer(pLayer, trans, layer))
                     return ErrorMessage(pLayer);
+                if (type == "Interp" && !ConvertInterpLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Permute" && !ConvertPermuteLayer(pLayer, pPrevLayer, trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Pooling" && !ConvertPoolingLayer(pLayer, layer))
@@ -855,6 +857,34 @@ namespace Synet
                     layer.input().shape()[0].dim() = shape;
                 }
             }
+            return true;
+        }
+
+        bool ConvertInterpLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            layer.type() = LayerTypeInterp2;
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            const XmlAttr * pFactor = pData->FirstAttribute("factor");
+            if (pFactor == NULL)
+                return false;
+            StringToValue(pFactor->Value(), layer.interp2().factor());
+            const XmlAttr * pPadBeg = pData->FirstAttribute("pad_beg");
+            const XmlAttr * pPadEnd = pData->FirstAttribute("pad_end");
+            if (pPadBeg && pPadEnd)
+            {
+                size_t padBeg, padEnd;
+                StringToValue(pPadBeg->Value(), padBeg);
+                StringToValue(pPadEnd->Value(), padEnd);
+                layer.interp2().pad() = Shape({padBeg, padBeg, padEnd, padEnd});
+            }
+            if (pData->FirstAttribute("height"))
+                StringToValue(pData->FirstAttribute("height")->Value(), layer.interp2().height());
+            if (pData->FirstAttribute("width"))
+                StringToValue(pData->FirstAttribute("width")->Value(), layer.interp2().width());
+            if (pData->FirstAttribute("align_corners"))
+                StringToValue(pData->FirstAttribute("align_corners")->Value(), layer.interp2().alignCorners());
             return true;
         }
 

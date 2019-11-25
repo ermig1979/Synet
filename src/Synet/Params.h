@@ -51,6 +51,7 @@ namespace Synet
         LayerTypeInnerProduct,
         LayerTypeInput,
         LayerTypeInterp,
+        LayerTypeInterp2,
         LayerTypeLog,
         LayerTypeLrn,
         LayerTypeMergedConvolution,
@@ -349,6 +350,15 @@ namespace Synet
         SYNET_PARAM_VALUE(InterpolationType, interpolationType, InterpolationTypeBilinear);
     };
 
+    struct Interp2Param
+    {
+        SYNET_PARAM_VALUE(float, factor, 1.0f);
+        SYNET_PARAM_VALUE(int32_t, height, 0);
+        SYNET_PARAM_VALUE(int32_t, width, 0);
+        SYNET_PARAM_VALUE(Shape, pad, Shape());
+        SYNET_PARAM_VALUE(bool, alignCorners, false);
+    };
+
     struct LogParam
     {
         SYNET_PARAM_VALUE(float, base, -1.0f);
@@ -574,6 +584,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(InnerProductParam, innerProduct);
         SYNET_PARAM_STRUCT(InputParam, input);
         SYNET_PARAM_STRUCT(InterpParam, interp);
+        SYNET_PARAM_STRUCT(Interp2Param, interp2);
         SYNET_PARAM_STRUCT(LogParam, log);
         SYNET_PARAM_STRUCT(LrnParam, lrn);
         SYNET_PARAM_STRUCT(MergedConvolutionParam, mergedConvolution);
