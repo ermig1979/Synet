@@ -904,18 +904,25 @@ namespace Synet
             return abs(a - b) < e;
         }
 
+        bool Rename(const Change & change, LayerParams & layers)
+        {
+            for (size_t i = 0; i < layers.size(); ++i)
+            {
+                for (size_t j = 0; j < layers[i].src().size(); ++j)
+                {
+                    if (layers[i].src()[j] == change.first)
+                        layers[i].src()[j] = change.second;
+                }
+            }
+            return true;
+        }
+
         bool Rename(const Changes & changes, LayerParams & layers)
         {
             for (size_t k = 0; k < changes.size(); ++k)
             {
-                for (size_t i = 0; i < layers.size(); ++i)
-                {
-                    for (size_t j = 0; j < layers[i].src().size(); ++j)
-                    {
-                        if (layers[i].src()[j] == changes[k].first)
-                            layers[i].src()[j] = changes[k].second;
-                    }
-                }
+                if (!Rename(changes[k], layers))
+                    return false;
             }
             return true;
         }
@@ -941,12 +948,14 @@ namespace Synet
                 return true;
             if (layer.type() == LayerTypeEltwise)
                 return true;
+            if (layer.type() == LayerTypeRelu)
+                return true;
             return false;
         }
 
         bool ReuseLayers(LayerParams & layers)
         {
-            Changes changes;
+            //Changes changes;
             for (size_t i = 0; i < layers.size(); ++i)
             {
                 LayerParam & layer = layers[i];
@@ -958,11 +967,12 @@ namespace Synet
                     continue;
                 if (!CanReuse(layer))
                     continue;
-                changes.push_back(Change(layer.dst()[0], layer.src()[0]));
+                Rename(Change(layer.dst()[0], layer.src()[0]), layers);
                 layer.dst()[0] = layer.src()[0];
+                //changes.push_back(Change(layer.dst()[0], layer.src()[0]));
             }
-            if(changes.size())
-                Rename(changes, layers);
+            //if(changes.size())
+                //Rename(changes, layers);
             return true;
         }
     };
