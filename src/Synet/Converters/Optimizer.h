@@ -955,7 +955,6 @@ namespace Synet
 
         bool ReuseLayers(LayerParams & layers)
         {
-            //Changes changes;
             for (size_t i = 0; i < layers.size(); ++i)
             {
                 LayerParam & layer = layers[i];
@@ -967,12 +966,10 @@ namespace Synet
                     continue;
                 if (!CanReuse(layer))
                     continue;
-                Rename(Change(layer.dst()[0], layer.src()[0]), layers);
+                if (!Rename(Change(layer.dst()[0], layer.src()[0]), layers))
+                    return false;
                 layer.dst()[0] = layer.src()[0];
-                //changes.push_back(Change(layer.dst()[0], layer.src()[0]));
             }
-            //if(changes.size())
-                //Rename(changes, layers);
             return true;
         }
     };

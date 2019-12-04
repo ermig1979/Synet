@@ -270,6 +270,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Interp" && !ConvertInterpLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
+                if (type == "Log" && !ConvertLogLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Permute" && !ConvertPermuteLayer(pLayer, pPrevLayer, trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Pooling" && !ConvertPoolingLayer(pLayer, layer))
@@ -515,6 +517,12 @@ namespace Synet
             {
                 layer.type() = Synet::LayerTypeUnaryOperation;
                 layer.unaryOperation().type() = UnaryOperationTypeExp;
+                return true;
+            }
+            else if (type == "tanh")
+            {
+                layer.type() = Synet::LayerTypeUnaryOperation;
+                layer.unaryOperation().type() = UnaryOperationTypeTanh;
                 return true;
             }
             else
@@ -885,6 +893,12 @@ namespace Synet
                 StringToValue(pData->FirstAttribute("width")->Value(), layer.interp2().width());
             if (pData->FirstAttribute("align_corners"))
                 StringToValue(pData->FirstAttribute("align_corners")->Value(), layer.interp2().alignCorners());
+            return true;
+        }
+
+        bool ConvertLogLayer(const XmlNode * pLayer, LayerParam & layer)
+        {
+            layer.type() = LayerTypeLog;
             return true;
         }
 
