@@ -64,7 +64,7 @@ namespace Synet
             _inputScale = param.scale();
             _inputShift = param.shift();            
             
-            dst[0]->Reshape(src[0]->Shape());
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
         }
 
     protected:
