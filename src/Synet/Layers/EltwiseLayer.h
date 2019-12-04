@@ -101,19 +101,25 @@ namespace Synet
             {
                 if (_operation == EltwiseOperationTypeProduct && src[0]->Count() == 4)
                 {
-                    _scale = true;
+                    _scale = 1;
                     _trans = src[0]->Format() == TensorFormatNhwc;
                     _batch = src[0]->Axis(0);
                     _channels = src[0]->Axis(_trans ? 3 : 1);
                     _spatial = src[0]->Size() / _batch / _channels;
-                    assert(src[1]->Size() == _batch*_channels);
+                    size_t size = src[1]->Size(1);
+                    if (size == _channels)
+                        _scale = 1;
+                    else if (size == _spatial)
+                        _scale = 2;
+                    else
+                        assert(0);
                 }
                 else
                     assert(0);
             }
             else
             {
-                _scale = false;
+                _scale = 0;
                 _src.resize(src.size());
                 for (size_t i = 0; i < src.size(); ++i)
                 {
@@ -137,7 +143,10 @@ namespace Synet
                 Type * pDst = dst[0]->CpuData();
                 for (size_t b = 0; b < _batch; ++b)
                 {
-                    Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _channels, _spatial, pDst, _trans);
+                    if(_scale == 1)
+                        Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _channels, _spatial, pDst, _trans);
+                    else
+                        Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _spatial, _channels, pDst, 1 - _trans);
                     pSrc += _channels*_spatial;
                     pDst += _channels*_spatial;
                     pScale += _channels;
