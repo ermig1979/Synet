@@ -31,52 +31,50 @@ namespace Synet
 {
     namespace Detail
     {
-        template <class T> void CpuAbs(const T * src, size_t size, T * dst)
+        template <class T> void UnaryOperationLayerForward(const T * src, size_t size, UnaryOperationType type, T * dst)
         {
-            for (size_t i = 0; i < size; ++i)
-                dst[i] = ::abs(src[i]);
-        }
-
-        template <typename T> void CpuExp(const T * src, size_t size, T * dst)
-        {
-            for (size_t i = 0; i < size; ++i)
-                dst[i] = ::exp(src[i]);
-        }
-
-        template <typename T> void CpuNeg(const T * src, size_t size, T * dst)
-        {
-            for (size_t i = 0; i < size; ++i)
-                dst[i] = -src[i];
-        }
-
-        template<class T> void CpuRsqrt(const T * src, size_t size, T * dst)
-        {
-            for (size_t i = 0; i < size; ++i)
-                dst[i] = 1.0f / ::sqrt(src[i]);
-        }
-
-        template<class T> void CpuSqrt(const T * src, size_t size, T * dst)
-        {
-            for (size_t i = 0; i < size; ++i)
-                dst[i] = ::sqrt(src[i]);
-        }
-
-        template <typename T> void CpuTanh(const T * src, size_t size, T * dst)
-        {
-            for (size_t i = 0; i < size; ++i)
-                dst[i] = ::tanh(src[i]);
-        }
-
-        template <typename T> void CpuZero(const T * src, size_t size, T * dst)
-        {
-            ::memset(dst, 0, size * sizeof(T));
+            switch (type)
+            {
+            case UnaryOperationTypeAbs:
+                for (size_t i = 0; i < size; ++i)
+                    dst[i] = ::abs(src[i]);
+                break;
+            case UnaryOperationTypeExp:
+                for (size_t i = 0; i < size; ++i)
+                    dst[i] = ::exp(src[i]);
+                break;
+            case UnaryOperationTypeLog:
+                for (size_t i = 0; i < size; ++i)
+                    dst[i] = ::log(src[i]);
+                break;
+            case UnaryOperationTypeNeg:
+                for (size_t i = 0; i < size; ++i)
+                    dst[i] = -src[i];
+                break;
+            case UnaryOperationTypeRsqrt:
+                for (size_t i = 0; i < size; ++i)
+                    dst[i] = 1.0f / ::sqrt(src[i]);
+                break;
+            case UnaryOperationTypeSqrt:
+                for (size_t i = 0; i < size; ++i)
+                    dst[i] = ::sqrt(src[i]);
+                break;
+            case UnaryOperationTypeTanh:
+                for (size_t i = 0; i < size; ++i)
+                    dst[i] = ::tanh(src[i]);
+                break;
+            case UnaryOperationTypeZero:
+                ::memset(dst, 0, size * sizeof(T));
+                break;
+            default:
+                assert(0);
+            }
         }
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-        template <> SYNET_INLINE void CpuTanh<float>(const float * src, size_t size, float * dst)
+        template <> SYNET_INLINE void UnaryOperationLayerForward<float>(const float * src, size_t size, UnaryOperationType type, float * dst)
         {
-            float slope = 1.0f;
-            ::SimdNeuralTanh(src, size, &slope, dst);
+            ::SimdSynetUnaryOperation32fLayerForward(src, size, (::SimdSynetUnaryOperation32fType)type, dst);
         }
 #endif
     }
@@ -96,33 +94,7 @@ namespace Synet
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _type = this->Param().unaryOperation().type();
-            switch (_type)
-            {
-            case UnaryOperationTypeAbs:
-                _func = Detail::CpuAbs;
-                break;
-            case UnaryOperationTypeExp:
-                _func = Detail::CpuExp;
-                break;
-            case UnaryOperationTypeNeg:
-                _func = Detail::CpuNeg;
-                break;
-            case UnaryOperationTypeRsqrt:
-                _func = Detail::CpuRsqrt;
-                break;
-            case UnaryOperationTypeSqrt:
-                _func = Detail::CpuSqrt;
-                break;
-            case UnaryOperationTypeTanh:
-                _func = Detail::CpuTanh;
-                break;
-            case UnaryOperationTypeZero:
-                _func = Detail::CpuZero;
-                break;
-            default:
-                assert(0);
-            }            
-            
+            assert(_type >= UnaryOperationTypeAbs && _type <= UnaryOperationTypeZero);
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
         }
 
@@ -131,13 +103,10 @@ namespace Synet
         {
             SYNET_PERF_FUNC();
 
-            _func(src[0]->CpuData(), src[0]->Size(), dst[0]->CpuData());
+            Detail::UnaryOperationLayerForward(src[0]->CpuData(), src[0]->Size(), _type, dst[0]->CpuData());
         }
 
     private:
-        typedef void (*FuncPtr)(const Type * src, size_t size, Type * dst);
-
         UnaryOperationType _type;
-        FuncPtr _func;
     };
 }

@@ -19,9 +19,11 @@ then
 	rm $DIR/image/descript.ion
 fi
 
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/build_"$FRAMEWORK"
+
 ./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=convert $PATHES -tf=$FORMAT
 
-./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=compare -e=2 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -bs=$BATCH -t=0.001 -dp=0 -dpf=5 -dpl=2 -ar=0 -rt=0.3 -ln=$LOG
+./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=compare -e=3 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -bs=$BATCH -t=0.001 -dp=0 -dpf=5 -dpl=2 -ar=0 -rt=0.3 -ln=$LOG
 
 }
 
@@ -31,7 +33,7 @@ fi
 
 #TEST darknet test_000 5 1 1 1 001a
 
-#TEST inference_engine test_000 500 1 1 1 003a
+TEST inference_engine test_000 1000 1 1 1 003a
 #TEST inference_engine test_001 500 1 1 1 004a
 #TEST inference_engine test_002 20 1 1 1 003a
 #TEST inference_engine test_003f 50 1 1 1 002a
@@ -40,8 +42,9 @@ fi
 #TEST inference_engine test_005 2000 1 1 1 001a
 #TEST inference_engine test_006 100 1 1 1 001a
 #TEST inference_engine test_007 200 1 1 1 002a
-TEST inference_engine test_008 5 1 1 1 000a
+#TEST inference_engine test_008 5 1 1 1 000a
 
-#TEST inference_engine sva_sq_90 1000 0 1 1 000a
+#TEST inference_engine test_009 1 1 1 1 000a #error
+
 
 exit

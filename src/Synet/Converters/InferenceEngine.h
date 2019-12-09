@@ -898,7 +898,8 @@ namespace Synet
 
         bool ConvertLogLayer(const XmlNode * pLayer, LayerParam & layer)
         {
-            layer.type() = LayerTypeLog;
+            layer.type() = Synet::LayerTypeUnaryOperation;
+            layer.unaryOperation().type() = UnaryOperationTypeLog;
             return true;
         }
 
