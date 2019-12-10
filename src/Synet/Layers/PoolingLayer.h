@@ -292,7 +292,7 @@ namespace Synet
             }
             else
                 assert(0);
-            assert(_padY + _padH < _kernelY && _padX + _padW < _kernelX);
+            //assert(_padY + _padH < _kernelY && _padX + _padW < _kernelX);
 
             if (_yoloCompatible == 2)
             {
