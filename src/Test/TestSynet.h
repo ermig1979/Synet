@@ -305,6 +305,7 @@ namespace Test
             else
             {
                 bool trans = src.Format() == Synet::TensorFormatNhwc;
+                bool batch = _net.Src()[0]->Axis(0) != 1;
                 dst.resize(src.Size());
                 if (trans && src.Count() == 4)
                 {
@@ -318,10 +319,20 @@ namespace Test
                 else if (trans && src.Count() == 3)
                 {
                     float * pDst = dst.data();
-                    for (size_t c = 0; c < src.Axis(2); ++c)
-                        for (size_t y = 0; y < src.Axis(0); ++y)
-                            for (size_t x = 0; x < src.Axis(1); ++x)
-                                *pDst++ = src.CpuData(Shape({ y, x, c }))[0];
+                    if (batch)
+                    {
+                        for (size_t n = 0; n < src.Axis(0); ++n)
+                            for (size_t c = 0; c < src.Axis(2); ++c)
+                                for (size_t s = 0; s < src.Axis(1); ++s)
+                                    *pDst++ = src.CpuData(Shape({ n, s, c }))[0];
+                    }
+                    else
+                    {
+                        for (size_t c = 0; c < src.Axis(2); ++c)
+                            for (size_t y = 0; y < src.Axis(0); ++y)
+                                for (size_t x = 0; x < src.Axis(1); ++x)
+                                    *pDst++ = src.CpuData(Shape({ y, x, c }))[0];
+                    }
                 }
                 else if (trans && src.Count() == 2 && src.Axis(0) == 1)
                 {
