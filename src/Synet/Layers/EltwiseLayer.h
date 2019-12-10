@@ -149,7 +149,7 @@ namespace Synet
                         Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _spatial, _channels, pDst, 1 - _trans);
                     pSrc += _channels*_spatial;
                     pDst += _channels*_spatial;
-                    pScale += _channels;
+                    pScale += (_scale == 1 ? _channels : _spatial);
                 }
             }
             else
