@@ -84,7 +84,7 @@ namespace Synet
                 }
                 assert(srcSizeSum == dst[0]->Size());
             }
-            size_t _dstConcatAxis = dst[0]->Axis(_concatAxis);
+            _dstConcatAxis = dst[0]->Axis(_concatAxis);
         }
 
     protected:
