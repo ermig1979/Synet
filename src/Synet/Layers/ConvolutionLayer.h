@@ -30,6 +30,7 @@
 #include "Synet/Utils/ImgToCol.h"
 #include "Synet/Utils/Winograd.h"
 #include "Synet/Utils/Convolution.h"
+#include "Synet/Utils/Activation.h"
 #include "Synet/Layers/PreluLayer.h"
 #include "Synet/Layers/ScaleLayer.h"
 #include "Synet/Layers/HswishLayer.h"

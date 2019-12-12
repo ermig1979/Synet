@@ -121,39 +121,6 @@ namespace Synet
             dst[i] = ::pow(src[i], exp);
     }
 
-    template <typename T> void CpuSigmoid(const T * src, size_t size, T * dst)
-    {
-        for (size_t i = 0; i < size; ++i)
-            dst[i] = T(1) / (T(1) + ::exp(-src[i]));
-    }
-
-    template <typename T> T CpuSigmoid(T value)
-    {
-        return T(1) / (T(1) + ::exp(-value));
-    }
-
-    template <typename T> SYNET_INLINE T CpuRelu(T value, T slope)
-    {
-        return std::max(value, T(0)) + slope * std::min(value, T(0));
-    }
-
-    template <typename T> void CpuRelu(const T * src, size_t size, const T & slope, T * dst)
-    {
-        for (size_t i = 0; i < size; ++i)
-            dst[i] = CpuRelu(src[i], slope);
-    }
-
-    template <typename T> SYNET_INLINE T CpuElu(T value, T alpha)
-    {
-        return value >= T(0) ? value : alpha * (exp(value) - T(1));
-    }
-
-    template <typename T> void CpuElu(const T * src, size_t size, const T & alpha, T * dst)
-    {
-        for (size_t i = 0; i < size; ++i)
-            dst[i] = CpuElu(src[i], alpha);
-    }
-
     template <typename T> void CpuAdd(const T & value, T * dst, size_t size)
     {
         for (size_t i = 0; i < size; ++i)
@@ -205,12 +172,6 @@ namespace Synet
         return sum;
     }
 
-    template<class T> void CpuRestrictRange(const T * src, size_t size, T lower, T upper, T * dst)
-    {
-        for (size_t i = 0; i < size; ++i)
-            dst[i] = std::min(std::max(lower, src[i]), upper);
-    }
-
     template <typename T> T CpuTouch(const T * data, size_t size)
     {
         volatile T touched = 0;
@@ -235,17 +196,6 @@ namespace Synet
         ::SimdNeuralPow(src, size, &exp, dst);
     }
 
-    template <> SYNET_INLINE void CpuSigmoid<float>(const float * src, size_t size, float * dst)
-    {
-        float slope = 1.0f;
-        ::SimdNeuralSigmoid(src, size, &slope, dst);
-    }
-
-    template <> SYNET_INLINE void CpuRelu<float>(const float * src, size_t size, const float & negativeSlope, float * dst)
-    {
-        ::SimdNeuralRelu(src, size, &negativeSlope, dst);
-    }
-
     template <> SYNET_INLINE void CpuAdd<float>(const float & value, float * dst, size_t size)
     {
         ::SimdNeuralAddValue( &value, dst, size);
@@ -261,16 +211,6 @@ namespace Synet
         float sum = 0;
         ::SimdNeuralProductSum(a, b, size, &sum);
         return sum;
-    }
-
-    template<> SYNET_INLINE void CpuRestrictRange<float>(const float * src, size_t size, float lower, float upper, float * dst)
-    {
-        ::SimdSynetRestrictRange32f(src, size, &lower, &upper, dst);
-    }
-
-    template <> SYNET_INLINE void CpuElu<float>(const float * src, size_t size, const float & alpha, float * dst)
-    {
-        ::SimdSynetElu32f(src, size, &alpha, dst);
     }
 #endif
 }

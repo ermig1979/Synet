@@ -77,6 +77,7 @@ namespace Synet
         LayerTypeSigmoid,
         LayerTypeSlice,
         LayerTypeSoftmax,
+        LayerTypeSoftplus,
         LayerTypeSqueeze,
         LayerTypeStridedSlice,
         LayerTypeStub,
@@ -513,6 +514,11 @@ namespace Synet
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
     };
 
+    struct SoftplusParam
+    {
+        SYNET_PARAM_VALUE(float, beta, 1.0f);
+    };
+
     struct StridedSliceParam
     {
         SYNET_PARAM_VALUE(Shape, beginMask, Shape());
@@ -606,6 +612,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(ScaleParam, scale);
         SYNET_PARAM_STRUCT(SliceParam, slice);
         SYNET_PARAM_STRUCT(SoftmaxParam, softmax);
+        SYNET_PARAM_STRUCT(SoftplusParam, softplus);
         SYNET_PARAM_STRUCT(StridedSliceParam, stridedSlice);
         SYNET_PARAM_STRUCT(TileParam, tile);
         SYNET_PARAM_STRUCT(UnaryOperationParam, unaryOperation);

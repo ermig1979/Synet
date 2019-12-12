@@ -26,7 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/Utils/Math.h"
+#include "Synet/Utils/Activation.h"
 
 namespace Synet
 {

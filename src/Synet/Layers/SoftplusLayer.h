@@ -30,21 +30,21 @@
 
 namespace Synet
 {
-    template <class T> class ReluLayer : public Synet::Layer<T>
+    template <class T> class SoftplusLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ReluLayer(const LayerParam & param)
+        SoftplusLayer(const LayerParam & param)
             : Base(param)
         {
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            _negativeSlope = this->Param().relu().negativeSlope();
+            _beta = this->Param().softplus().beta();
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
         }
 
@@ -52,10 +52,10 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             SYNET_PERF_FUNC();
-            CpuRelu<Type>(src[0]->CpuData(), src[0]->Size(), _negativeSlope, dst[0]->CpuData());
+            CpuSoftplus<Type>(src[0]->CpuData(), src[0]->Size(), _beta, dst[0]->CpuData());
         }
 
     private:
-        Type _negativeSlope;
+        Type _beta;
     };
 }
