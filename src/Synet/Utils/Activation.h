@@ -33,7 +33,7 @@ namespace Synet
         return value >= T(0) ? value : alpha * (exp(value) - T(1));
     }
 
-    template <typename T> void CpuElu(const T * src, size_t size, const T & alpha, T * dst)
+    template <typename T> void CpuElu(const T * src, size_t size, T alpha, T * dst)
     {
         for (size_t i = 0; i < size; ++i)
             dst[i] = CpuElu(src[i], alpha);
@@ -59,7 +59,7 @@ namespace Synet
         return std::max(value, T(0)) + slope * std::min(value, T(0));
     }
 
-    template <typename T> void CpuRelu(const T * src, size_t size, const T & slope, T * dst)
+    template <typename T> void CpuRelu(const T * src, size_t size, T slope, T * dst)
     {
         for (size_t i = 0; i < size; ++i)
             dst[i] = CpuRelu(src[i], slope);
@@ -80,28 +80,28 @@ namespace Synet
     
     //-------------------------------------------------------------------------
 
-    template <typename T> SYNET_INLINE T CpuSoftplus(T value, T beta, T threshold = 50)
+    template <typename T> SYNET_INLINE T CpuSoftplus(T value, T beta, T threshold)
     {
         return value > threshold ? value : ::log(T(1) + ::exp(value * beta)) / beta;
     }
 
-    template <typename T> void CpuSoftplus(const T * src, size_t size, const T & beta, T * dst)
+    template <typename T> void CpuSoftplus(const T * src, size_t size, T beta, T threshold, T * dst)
     {
         for (size_t i = 0; i < size; ++i)
-            dst[i] = CpuSoftplus(src[i], beta);
+            dst[i] = CpuSoftplus(src[i], beta, threshold);
     }
 
     //-------------------------------------------------------------------------
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-    template <> SYNET_INLINE void CpuElu<float>(const float * src, size_t size, const float & alpha, float * dst)
+    template <> SYNET_INLINE void CpuElu<float>(const float * src, size_t size, float alpha, float * dst)
     {
         ::SimdSynetElu32f(src, size, &alpha, dst);
     }    
 
-    template <> SYNET_INLINE void CpuRelu<float>(const float * src, size_t size, const float & negativeSlope, float * dst)
+    template <> SYNET_INLINE void CpuRelu<float>(const float * src, size_t size, float negativeSlope, float * dst)
     {
-        ::SimdNeuralRelu(src, size, &negativeSlope, dst);
+        ::SimdSynetRelu32f(src, size, &negativeSlope, dst);
     }
 
     template<> SYNET_INLINE void CpuRestrictRange<float>(const float * src, size_t size, float lower, float upper, float * dst)
@@ -112,7 +112,12 @@ namespace Synet
     template <> SYNET_INLINE void CpuSigmoid<float>(const float * src, size_t size, float * dst)
     {
         float slope = 1.0f;
-        ::SimdNeuralSigmoid(src, size, &slope, dst);
+        ::SimdSynetSigmoid32f(src, size, &slope, dst);
+    }
+
+    template<> SYNET_INLINE void CpuSoftplus<float>(const float* src, size_t size, float beta, float threshold, float* dst)
+    {
+        ::SimdSynetSoftplus32f(src, size, &beta, &threshold, dst);
     }
 #endif
 }

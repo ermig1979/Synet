@@ -517,6 +517,7 @@ namespace Synet
     struct SoftplusParam
     {
         SYNET_PARAM_VALUE(float, beta, 1.0f);
+        SYNET_PARAM_VALUE(float, threshold, 20.0f);
     };
 
     struct StridedSliceParam
