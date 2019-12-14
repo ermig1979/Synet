@@ -11,7 +11,7 @@ The main advantages  of Synet are:
 
 Darknet Test project for Linux
 ==============================
-To build test to compare Synet and [Darknet](https://github.com/pjreddie/darknet) for Linux you can run folowing bash script:
+To build test to compare Synet and [Darknet](https://github.com/pjreddie/darknet) for Linux you can run following bash script:
 
     ./build.sh darknet
 
@@ -22,7 +22,7 @@ In order to run this test use `./test.sh` bash script (in the file manually unco
 
 Inference Engine Test project for Linux
 =======================================
-To build test to compare Synet and [Inference Engine](https://github.com/opencv/dldt) for Linux you can run folowing bash script:
+To build test to compare Synet and [Inference Engine](https://github.com/opencv/dldt) for Linux you can run following bash script:
 
     ./build.sh inference_engine
 
@@ -31,7 +31,7 @@ In order to run this test use `./test.sh` bash script (in the file manually unco
 
 Use samples for Linux
 =======================================
-To build use samples for Linux you can run folowing bash script:
+To build use samples for Linux you can run following bash script:
 
     ./build.sh use_samples
 
