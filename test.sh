@@ -22,9 +22,18 @@ fi
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/build_"$FRAMEWORK"
 
 ./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=convert $PATHES -tf=$FORMAT
+if [ $? -ne 0 ]
+then
+  echo "Test $DIR is failed!"
+  exit
+fi
 
-./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=compare -e=3 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -bs=$BATCH -t=0.001 -dp=0 -dpf=5 -dpl=2 -ar=0 -rt=0.3 -ln=$LOG
-
+./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=compare -e=3 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=0.001 -dp=0 -dpf=5 -dpl=2 -ar=0 -rt=0.3 -ln=$LOG
+if [ $? -ne 0 ]
+then
+  echo "Test $DIR is failed!"
+  exit
+fi
 }
 
 if [ ! -d ./test ];then

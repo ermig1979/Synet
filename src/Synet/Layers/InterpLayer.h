@@ -124,7 +124,7 @@ namespace Synet
                         for (int c = 0; c < channels; ++c)
                         {
                             d[0] = s[0];
-                            s += srcH * srcH;
+                            s += srcH * srcW;
                             d += dstH * dstW;
                         }
                     }

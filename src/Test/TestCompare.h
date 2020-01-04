@@ -322,7 +322,9 @@ namespace Test
         {
             if (_options.debugPrint)
             {
-                String path = MakePath(_options.outputDirectory, network.Name() + "_i" + Synet::ValueToString(i) + ".log");
+                String name = network.Name() + "_f" + std::to_string(_options.tensorFormat) +
+                    "_b" + std::to_string(_options.batchSize) + "_i" + std::to_string(i) + ".log";
+                String path = MakePath(_options.outputDirectory, name);
                 std::ofstream log(path);
                 if (log.is_open())
                 {
