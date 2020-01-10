@@ -48,6 +48,11 @@ else()
 	set(SIMD_LIB "")
 endif()
 
+if(SIMD_PERF)
+	add_definitions(-DSYNET_LAYER_STATISTIC)
+	add_definitions(-DSYNET_SIZE_STATISTIC)
+endif()
+
 if(BLIS)
 	set(BLIS_LIB ${CMAKE_BINARY_DIR}/blis/lib/libblis.a)
 	set(BLIS_DEP make_blis)

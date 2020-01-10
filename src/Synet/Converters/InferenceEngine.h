@@ -1160,13 +1160,13 @@ namespace Synet
             return true;
         }
 
-        bool PermutedToNchw(const LayerParams & layers)
+        bool PermutedToNchw(const LayerParams & layers, bool checkInnerProduct = true)
         {
             for (size_t i = 0; i < layers.size(); ++i)
             {
                 if (layers[i].type() == LayerTypePermute && layers[i].permute().format() == TensorFormatNchw)
                     return true;
-                if (layers[i].type() == LayerTypeInnerProduct)
+                if (checkInnerProduct && layers[i].type() == LayerTypeInnerProduct)
                     return true;
             }
             return false;
@@ -1196,7 +1196,7 @@ namespace Synet
                 {
                     Shape input = ConvertInputShape(pLayer);
                     Shape output = ConvertShape(pPort);
-                    if (trans && output.size() == 4 && !PermutedToNchw(layers))
+                    if (trans && output.size() == 4 && !PermutedToNchw(layers, false))
                     {
                         if (input.size() > 3 && output[1]*output[2] == input[1] && output[3] == input[2]*input[3])
                             output = Shape({ output[0], output[3] , output[1] , output[2] });

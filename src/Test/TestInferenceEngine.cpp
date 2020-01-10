@@ -202,7 +202,7 @@ namespace Test
                 const InferenceEngine::SizeVector & strides = _ieOutput[o]->getTensorDesc().getBlockingDesc().getStrides();
                 dims[0] = _batchSize;
                 Synet::Tensor<float> tensor(dims);
-                SetOutput(dims, strides, 0, _output[o].data(), tensor.CpuData());
+                SetOutput(dims, strides, 0, _ieOutput[o]->buffer(), tensor.CpuData());
                 tensor.DebugPrint(os, _outputNames.empty() ? String("???") : String(_outputNames[o]), false, first, last);
             }
         }
@@ -310,9 +310,7 @@ namespace Test
         void SetOutput(const Sizes & dims, const Sizes & strides, size_t current, const float * src, float * dst)
         {
             if (current == dims.size() - 1)
-            {
                 memcpy(dst, src, dims[current] * sizeof(float));
-            }
             else
             {
                 size_t srcStride = strides[current];
