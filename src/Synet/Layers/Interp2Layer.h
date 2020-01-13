@@ -36,7 +36,43 @@ namespace Synet
         {
             if (trans)
             {
-                assert(0);
+                float rh, rw;
+                if (alignCorners)
+                {
+                    rh = (dstH > 1) ? static_cast<float>(sizeH - 1) / (dstH - 1) : 0.f;
+                    rw = (dstW > 1) ? static_cast<float>(sizeW - 1) / (dstW - 1) : 0.f;
+                }
+                else
+                {
+                    rh = static_cast<float>(sizeH) / dstH;
+                    rw = static_cast<float>(sizeW) / dstW;
+                }
+                for (int h2 = 0; h2 < dstH; ++h2)
+                {
+                    const float h1r = rh * h2;
+                    const int h1 = (int)h1r;
+                    const int h1p = (h1 < sizeH - 1) ? channels : 0;
+                    const T h1lambda = h1r - h1;
+                    const T h0lambda = T(1.) - h1lambda;
+                    for (int w2 = 0; w2 < dstW; ++w2)
+                    {
+                        const float w1r = rw * w2;
+                        const int w1 = (int)w1r;
+                        const int w1p = (w1 < sizeW - 1) ? channels : 0;
+                        const T w1lambda = w1r - w1;
+                        const T w0lambda = T(1.) - w1lambda;
+                        const T* pos1 = &src[(h1 * srcW + w1) * channels];
+                        T* pos2 = &dst[(h2 * dstW + w2) * channels];
+                        for (int c = 0; c < channels; ++c)
+                        {
+                            pos2[0] =
+                                h0lambda * (w0lambda * pos1[0] + w1lambda * pos1[w1p]) +
+                                h1lambda * (w0lambda * pos1[h1p * srcW] + w1lambda * pos1[h1p * srcW + w1p]);
+                            pos1 += 1;
+                            pos2 += 1;
+                        }
+                    }
+                }
             }
             else
             {
@@ -72,7 +108,7 @@ namespace Synet
                             pos2[0] =
                                 h0lambda * (w0lambda * pos1[0] + w1lambda * pos1[w1p]) +
                                 h1lambda * (w0lambda * pos1[h1p * srcW] + w1lambda * pos1[h1p * srcW + w1p]);
-                            pos1 += srcH * srcH;
+                            pos1 += srcH * srcW;
                             pos2 += dstH * dstW;
                         }
                     }
@@ -81,7 +117,7 @@ namespace Synet
         }
 
 
-#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && 0
         template <> inline void Interp2LayerForwardCpuBilinear<float>(size_t channels, const float * src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, float * dst, size_t dstH, size_t dstW, int alignCorners, int trans)
         {
             SimdResizeMethodType method = alignCorners ? ::SimdResizeMethodCaffeInterp : SimdResizeMethodBilinear;

@@ -28,7 +28,7 @@ then
   exit
 fi
 
-./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=compare -e=3 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=0.001 -dp=0 -dpf=5 -dpl=2 -ar=0 -rt=0.3 -ln=$LOG
+./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=compare -e=3 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=0.001 -dp=0 -dpf=6 -dpl=2 -ar=0 -rt=0.3 -ln=$LOG
 if [ $? -ne 0 ]
 then
   echo "Test $DIR is failed!"
@@ -42,16 +42,16 @@ fi
 
 #TEST darknet test_000 5 1 1 1 001a
 
-TEST inference_engine test_000 1000 1 1 1 003a
-#TEST inference_engine test_001 500 1 1 1 004a
-#TEST inference_engine test_002 20 1 1 1 003a
-#TEST inference_engine test_003f 50 1 1 1 002a
+#TEST inference_engine test_000 1000 1 1 1 004a
+#TEST inference_engine test_001 500 1 1 1 005a
+#TEST inference_engine test_002 20 1 1 1 004a
+#TEST inference_engine test_003f 50 1 1 1 003a
 #TEST inference_engine test_003i 5 1 1 1 002a
-#TEST inference_engine test_004 200 1 1 1 002a
-#TEST inference_engine test_005 2000 1 1 1 001a
-#TEST inference_engine test_006 100 1 1 1 001a
-#TEST inference_engine test_007 200 1 1 1 002a
-#TEST inference_engine test_008 5 1 1 1 000a
+#TEST inference_engine test_004 200 1 1 1 003a
+#TEST inference_engine test_005 2000 1 1 1 002a
+#TEST inference_engine test_006 100 1 1 1 002a
+#TEST inference_engine test_007 200 1 1 1 003a
+TEST inference_engine test_008 5 1 1 1 001a
 
 #TEST inference_engine test_009 1 1 1 1 000a #error
 
