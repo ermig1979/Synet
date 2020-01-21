@@ -45,6 +45,7 @@ namespace Synet
         {
             _value = this->Param().fill().value();
             dst[0]->Share(*src[0]);
+            this->UsePerfStat();
         }
 
     protected:

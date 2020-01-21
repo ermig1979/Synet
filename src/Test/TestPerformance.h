@@ -62,20 +62,21 @@ namespace Test
     {
         String	_description;
         double _start;
-        int _count;
+        int64_t _count, _flop;
         double _total;
         double _min;
         double _max;
         bool _entered;
 
     public:
-        PerformanceMeasurer(const String & description = "Unnamed")
+        PerformanceMeasurer(const String & description = "Unnamed", int64_t flop = 0)
             : _description(description)
             , _count(0)
             , _total(0)
             , _min(std::numeric_limits<double>::max())
             , _max(std::numeric_limits<double>::min())
             , _entered(false)
+            , _flop(flop)
         {
         }
 
@@ -86,6 +87,7 @@ namespace Test
             , _min(pm._min)
             , _max(pm._max)
             , _entered(pm._entered)
+            , _flop(pm._flop)
         {
         }
 
@@ -116,6 +118,11 @@ namespace Test
             return _count ? (_total / _count) : 0;
         }
 
+        double GFlops() const
+        {
+            return _count && _flop && _total > 0 ? (double(_flop) * _count / _total / 1000000000.0) : 0;
+        }
+
         String Statistic() const
         {
             std::stringstream ss;
@@ -124,6 +131,8 @@ namespace Test
             ss << " / " << _count << " = ";
             ss << std::setprecision(3) << std::fixed << Average()*1000.0 << " ms";
             ss << std::setprecision(3) << " { min = " << _min * 1000.0 << " ; max = " << _max * 1000.0 << " } ";
+            if (_flop)
+                ss << " " << std::setprecision(1) << GFlops() << " GFlops";
             return ss.str();
         }
 
@@ -171,12 +180,17 @@ namespace Test
         typedef std::map<std::thread::id, FunctionMap> ThreadMap;
 
         ThreadMap _map;
-        mutable std::recursive_mutex _mutex;
+        mutable std::mutex _mutex;
 
         FunctionMap & ThisThread()
         {
-            std::lock_guard<std::recursive_mutex> lock(_mutex);
-            return _map[std::this_thread::get_id()];
+            static thread_local FunctionMap* thread = NULL;
+            if (thread == NULL)
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                thread = &_map[std::this_thread::get_id()];
+            }
+            return *thread;
         }
 
     public:
@@ -190,14 +204,14 @@ namespace Test
         {
         }
 
-        PerformanceMeasurer * Get(const String & name)
+        PerformanceMeasurer * Get(const String & name, int64_t flop = 0)
         {
-            FunctionMap & thread = ThisThread();
-            PerformanceMeasurer * pm = NULL;
+            FunctionMap& thread = ThisThread();
+            PerformanceMeasurer* pm = NULL;
             FunctionMap::iterator it = thread.find(name);
             if (it == thread.end())
             {
-                pm = new PerformanceMeasurer(name);
+                pm = new PerformanceMeasurer(name, flop);
                 thread[name].reset(pm);
             }
             else
@@ -205,9 +219,9 @@ namespace Test
             return pm;
         }
 
-        PerformanceMeasurer * Get(const String & function, const String & block)
+        PerformanceMeasurer * Get(const String & function, const String & block, int64_t flop = 0)
         {
-            return Get(function + " { " + block + " } ");
+            return Get(function + " { " + block + " } ", flop);
         }
 
         void Clear()
@@ -219,15 +233,16 @@ namespace Test
         {
             if (this == 0)
                 return;
-            std::lock_guard<std::recursive_mutex> lock(_mutex);
+            std::lock_guard<std::mutex> lock(_mutex);
             FunctionMap total;
             for (ThreadMap::const_iterator i = _map.begin(); i != _map.end(); i++)
             {
                 for (FunctionMap::const_iterator j = i->second.begin(); j != i->second.end(); j++)
                 {
                     if (total.find(j->first) == total.end())
-                        total[j->first].reset(new PerformanceMeasurer(j->first));
-                    total[j->first]->Combine(*j->second);
+                        total[j->first].reset(new PerformanceMeasurer(*j->second));
+                    else
+                        total[j->first]->Combine(*j->second);
                 }
             }
 

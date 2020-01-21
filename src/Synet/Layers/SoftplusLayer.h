@@ -47,12 +47,12 @@ namespace Synet
             _beta = this->Param().softplus().beta();
             _threshold = this->Param().softplus().threshold();
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
             CpuSoftplus<Type>(src[0]->CpuData(), src[0]->Size(), _beta, _threshold, dst[0]->CpuData());
         }
 

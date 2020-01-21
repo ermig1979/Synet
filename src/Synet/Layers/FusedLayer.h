@@ -511,12 +511,14 @@ namespace Synet
                 dst[1]->Reshape(shape, src[0]->Format());
             _srcStride = src[0]->Size(fused.axis());
             _dstStride = dst[0]->Size(fused.axis());
+            std::stringstream desc;
+            desc << src.size() << "->" << dst.size() << " t=" << _type << " c=" << _count << " s=" << _size;
+            this->UsePerfStat(desc.str());
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
             if (src.size() == 1 && dst.size() == 1)
                 ForwardCpu11(src[0]->CpuData(), dst[0]->CpuData());
             else if (src.size() == 2 && (dst.size() == 2 || dst.size() == 1))
@@ -529,11 +531,6 @@ namespace Synet
 
         void ForwardCpu11(const Type * src, Type * dst)
         {
-#if defined(SYNET_SIZE_STATISTIC)
-            std::stringstream ss;
-            ss << " t=" << _type << " c=" << _count << " s=" << _size;
-            SYNET_PERF_BLOCK(ss.str().c_str());
-#endif
             for (size_t i = 0; i < _num; ++i)
             {
                 switch (_type)
@@ -572,11 +569,6 @@ namespace Synet
 
         void ForwardCpu22(const Type * src0, const Type * src1, Type * dst0, Type * dst1)
         {
-#if defined(SYNET_SIZE_STATISTIC) && 0
-            std::stringstream ss;
-            ss << " t=" << _type << " c=" << _t5.count0 + _t5.count1 << " s=" << _size;
-            SYNET_PERF_BLOCK(ss.str().c_str());
-#endif
             for (size_t i = 0; i < _num; ++i)
             {
                 switch (_type)
@@ -597,11 +589,6 @@ namespace Synet
 
         void ForwardCpu31(const Type * src0, const Type * src1, const Type * src2, Type * dst)
         {
-#if defined(SYNET_SIZE_STATISTIC)
-            std::stringstream ss;
-            ss << " t=" << _type << " c=" << _count << " s=" << _size;
-            SYNET_PERF_BLOCK(ss.str().c_str());
-#endif
             for (size_t i = 0; i < _num; ++i)
             {
                 switch (_type)

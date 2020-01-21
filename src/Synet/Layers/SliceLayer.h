@@ -85,12 +85,12 @@ namespace Synet
             assert(size == src[0]->Size());
             if (dst.size() == 1) 
                 dst[0]->Share(*src[0]);
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
             if (dst.size() == 1) 
                 return;
             size_t offsetSliceAxis = 0;

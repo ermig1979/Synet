@@ -59,6 +59,7 @@ namespace Synet
             Shape dstShape = src[0]->Shape();
             dstShape[1] = _num*(_classes + 4 + 1);
             dst[0]->Reshape(dstShape);
+            this->UsePerfStat();
         }
 
         void GetRegions(const TensorPtrs & src, size_t netW, size_t netH, Type threshold, Regions & dst) const
@@ -98,7 +99,6 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
             size_t batch = src[0]->Axis(0);
             size_t area = src[0]->Axis(2)*src[0]->Axis(3);
             Index index(4, 0);

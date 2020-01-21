@@ -105,13 +105,12 @@ namespace Synet
             _count = src[0]->Axis(_axis);
             _inner = src[0]->Size(_axis + 1);
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             Detail::SoftmaxLayerForwardCpu(src[0]->CpuData(), _outer, _count, _inner, dst[0]->CpuData());
         }
 

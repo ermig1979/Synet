@@ -72,6 +72,7 @@ namespace Synet
             shape.push_back(1);
             shape.push_back(7);
             dst[0]->Reshape(shape);
+            this->UsePerfStat();
         }
 
         struct NormalizedBBox
@@ -118,8 +119,6 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             const Type * pLoc = src[0]->CpuData();
             const Type * pConf = src[1]->CpuData();
             const Type * pPrior = src[2]->CpuData();

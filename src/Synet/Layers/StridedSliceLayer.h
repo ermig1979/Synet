@@ -93,13 +93,12 @@ namespace Synet
             _dstStrides.resize(_dstDims.size(), 1);
             for (size_t i = 0; i < _dstDims.size(); ++i)
                 _dstStrides[i] = dst[0]->Size(i);
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             const Type * pSrc0 = src[0]->CpuData();
             Type * pDst0 = dst[0]->CpuData();
             switch (_srcDims.size())

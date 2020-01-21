@@ -84,13 +84,12 @@ namespace Synet
             _size = src[0]->Size() / _count;
             assert(_size*_count == src[0]->Size());
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             Detail::PreluLayerForwardCpu(src[0]->CpuData(), this->Weight()[0].CpuData(), _count, _size, dst[0]->CpuData(), 0);
         }
 

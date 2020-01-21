@@ -128,13 +128,12 @@ namespace Synet
                 }
             }
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             if (_scale)
             {
                 const Type * pSrc = src[0]->CpuData();

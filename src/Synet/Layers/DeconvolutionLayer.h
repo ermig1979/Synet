@@ -161,31 +161,24 @@ namespace Synet
                             d[j*m + i] = s[i * n + j];
                 }
             }
-
             dst[0]->Reshape(dstShape, src[0]->Format());
-
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);
+            std::stringstream desc;
+            desc << "i=" << _num << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW << " o=" << _conv.dstC;
+            desc << " k=" << _conv.kernelY << " s=" << _conv.strideY << " g=" << _conv.group;
+            int64_t flop = _num * _conv.kernelY * _conv.kernelX * _conv.srcC * _conv.srcH * _conv.srcW * _conv.dstC / _conv.group * 2;
+            this->UsePerfStat(desc.str(), flop);
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             ForwardCpu(src[0]->CpuData(), buf[TensorType32f*BUFFER_COUNT]->CpuData(), dst[0]->CpuData());
         }
 
         void ForwardCpu(const T * src, T * buf, T * dst)
         {
-#ifdef SYNET_SIZE_STATISTIC
-            std::stringstream ss;
-            ss << "i=" << _num << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW << " o=" << _conv.dstC;
-            ss << " k=" << _conv.kernelY << " s=" << _conv.strideY << " g=" << _conv.group;
-            SYNET_PERF_BLOCK(ss.str().c_str());
-#else
-            SYNET_PERF_FUNC();
-#endif
             if (_deconvolution32f.Enable())
                 _deconvolution32f.Forward(src, buf, dst);
             else

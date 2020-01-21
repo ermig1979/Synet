@@ -93,7 +93,6 @@ namespace Synet
             if (_permute)
             {
                 SYNET_PERF_FUNC();
-
                 const Type * pSrc = src[0]->CpuData();
                 Type * pDst = dst[0]->CpuData();
                 switch (_count)

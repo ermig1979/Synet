@@ -69,13 +69,12 @@ namespace Synet
             _shift = hswish.shift();
             _scale = hswish.scale();
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             Detail::HswishLayerForwardCpu(src[0]->CpuData(), src[0]->Size(), _shift, _scale, dst[0]->CpuData());
         }
 

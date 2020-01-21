@@ -46,6 +46,8 @@ namespace Synet
             : _param(param)
             , _isBack(false)
         {
+            SYNET_PERF_SET(_perfComm, NULL);
+            SYNET_PERF_SET(_perfSpec, NULL);
         }
 
         virtual ~Layer()
@@ -100,6 +102,8 @@ namespace Synet
 
         inline void Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            SYNET_PERF_TEST(_perfComm);
+            SYNET_PERF_TEST(_perfSpec);
             ForwardCpu(src, buf, dst);
         }
 
@@ -196,6 +200,18 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
 
+        void UsePerfStat(const String & desc = "", int64_t flop = 0)
+        {
+#ifdef SYNET_LAYER_STATISTIC 
+            String type = ValueToString(_param.type());
+            SYNET_PERF_INIT(_perfComm, "void Synet::" + type + "Layer::Forward()", 0);
+#ifdef SYNET_SIZE_STATISTIC            
+            if(desc.size())
+                SYNET_PERF_INIT(_perfSpec, "void Synet::" + type + "Layer::Forward() { " + desc + " }", flop);
+#endif//SYNET_SIZE_STATISTIC
+#endif//SYNET_LAYER_STATISTIC
+        }
+
     private:
         template<class U> friend class Network;
 
@@ -203,6 +219,9 @@ namespace Synet
         Tensors _weight;
         StatPtrs _stats[3];
         bool _isBack;
+
+        SYNET_PERF_DECL(_perfComm);
+        SYNET_PERF_DECL(_perfSpec);
 
         bool SetStats(const StatSharedPtrs & src, const Strings & names, StatPtrs & dst)
         {

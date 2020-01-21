@@ -147,6 +147,7 @@ namespace Synet
                 assert(0);
                 break;
             }
+            this->UsePerfStat();
         }
 
         virtual size_t MemoryUsage() const
@@ -173,8 +174,6 @@ namespace Synet
 
         virtual void CrossChannelsCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             Type alpha = _alpha / _size;
             for (size_t n = 0; n < _num; ++n)
             {

@@ -77,6 +77,7 @@ namespace Synet
             _classfix = 0;
             assert(src[0]->Axis(1) == _num*(_coords + _classes + 1));
             dst[0]->Reshape(src[0]->Shape());
+            this->UsePerfStat();
         }
 
         void GetRegions(const TensorPtrs & src, Type threshold, Regions & dst)
@@ -122,8 +123,6 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             size_t size = _coords + _classes + 1;
             size_t batch = src[0]->Axis(0);
             size_t height = src[0]->Axis(2);

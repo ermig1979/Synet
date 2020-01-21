@@ -47,14 +47,13 @@ namespace Synet
             const RestrictRangeParam & param = this->Param().restrictRange();
             _lower = param.lower();
             _upper = param.upper();
-
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
             CpuRestrictRange<Type>(src[0]->CpuData(), src[0]->Size(), _lower, _upper, dst[0]->CpuData());
         }
 

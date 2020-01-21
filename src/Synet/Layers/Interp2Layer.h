@@ -116,7 +116,6 @@ namespace Synet
             }
         }
 
-
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
         template <> inline void Interp2LayerForwardCpuBilinear<float>(size_t channels, const float * src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, float * dst, size_t dstH, size_t dstW, int alignCorners, int trans)
         {
@@ -217,13 +216,12 @@ namespace Synet
                 dst[0]->Reshape({ _num, _dstH, _dstW, _channels }, TensorFormatNhwc);
             else
                 dst[0]->Reshape({ _num, _channels, _dstH, _dstW }, TensorFormatNchw);
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             const Type * pSrc = src[0]->CpuData();
             Type * pDst = dst[0]->CpuData();
             for(size_t i = 0; i < _num; ++i)

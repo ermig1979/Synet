@@ -28,6 +28,7 @@
 //#define SYNET_BLIS_ENABLE
 
 //#define SYNET_PROTOBUF_ENABLE
+//#define SYNET_LAYER_STATISTIC
 //#define SYNET_SIZE_STATISTIC
 
 //#define SYNET_CAFFE_ENABLE
@@ -108,6 +109,22 @@ extern "C"
 
 #ifndef SYNET_PERF_BLOCK_END
 #define SYNET_PERF_BLOCK_END(name)
+#endif
+
+#ifndef SYNET_PERF_DECL
+#define SYNET_PERF_DECL(name)
+#endif
+
+#ifndef SYNET_PERF_SET
+#define SYNET_PERF_SET(name, value)
+#endif
+
+#ifndef SYNET_PERF_INIT
+#define SYNET_PERF_INIT(name, desc, flop)
+#endif
+
+#ifndef SYNET_PERF_TEST
+#define SYNET_PERF_TEST(name)
 #endif
 
 #define SYNET_CLASS_INSTANCE(name) \

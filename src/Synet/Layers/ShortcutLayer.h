@@ -51,12 +51,12 @@ namespace Synet
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
             _src[0] = src[0]->CpuData();
             _src[1] = src[1]->CpuData();
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
             Detail::EltwiseLayerForwardCpu(_src, _coeff, 2, dst[0]->Size(), EltwiseOperationTypeSum, dst[0]->CpuData());
         }
     private:

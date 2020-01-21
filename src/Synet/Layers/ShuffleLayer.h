@@ -127,13 +127,12 @@ namespace Synet
             }
             dst[0]->Reshape(dstShape, _format);
             dst[1]->Reshape(dstShape, _format);
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             const Type * src0 = src[0]->CpuData();
             const Type * src1 = src[1]->CpuData();
             Type * dst0 = dst[0]->CpuData();

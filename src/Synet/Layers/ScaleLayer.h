@@ -120,12 +120,12 @@ namespace Synet
             assert(src[0]->Size() == _num*_count*_size);
             if (src[0] != dst[0])
                 dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
             const Type* pSrc = src[0]->CpuData();
             const Type * pScale = this->Weight()[0].CpuData();
             const Type * pBias = _biasTerm ? this->Weight()[1].CpuData() : NULL;

@@ -46,13 +46,12 @@ namespace Synet
             assert(src.size() == 2 && src[1]->GetType() == TensorType32i && dst.size() == 2);
             dst[0]->Reshape(src[0]->Shape());
             dst[1]->Reshape(src[0]->Shape());
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             int pred = src[1]->As32i().CpuData()[0];
             if (pred)
                 CpuCopy(src[0]->CpuData(), src[0]->Size(), dst[1]->CpuData());

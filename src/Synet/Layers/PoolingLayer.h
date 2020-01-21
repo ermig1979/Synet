@@ -348,6 +348,9 @@ namespace Synet
                     assert(0);
                 }
             }
+            std::stringstream desc;
+            desc << "i=" << _channels << "x" << _srcH << "x" << _srcW << " k=" << _kernelY << " s=" << _strideY << (_method ? " avg" : " max");
+            this->UsePerfStat(desc.str());
         }
 
     protected:
@@ -356,8 +359,6 @@ namespace Synet
         {
             if (_skip)
                 return;
-
-            SYNET_PERF_FUNC();
 
             switch (_type)
             {
@@ -369,14 +370,6 @@ namespace Synet
 
         template <class TT> void ForwardCpu(const TT * src, TT * dst)
         {
-#ifdef SYNET_SIZE_STATISTIC
-            std::stringstream ss;
-            ss << "i=" << _channels << "x" << _srcH << "x" << _srcW << " k=" << _kernelY << " s=" << _strideY << (_method ? " avg" : " max");
-            SYNET_PERF_BLOCK(ss.str().c_str());
-#else
-            SYNET_PERF_FUNC();
-#endif
-
             switch (_method)
             {
             case PoolingMethodTypeMax:

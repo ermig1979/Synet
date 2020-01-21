@@ -56,13 +56,12 @@ namespace Synet
             _n = src[0]->Axis(1);
             _c = src[0]->Axis(2);
             dst[0]->Reshape({ size_t(1), _t, _n, size_t(1) });
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             const T * pProbabilities = src[0]->CpuData();
             const T * pSequenceIndicators = src[1]->CpuData();
             T * pOutputSequences = dst[0]->CpuData();

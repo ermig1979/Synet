@@ -342,6 +342,14 @@ namespace Synet
             {
                 buf[0]->Extend(Shape({ _conv[0].dstC*_conv[0].dstH*_conv[0].dstW + _conv[1].dstC *_conv[1].dstH *_conv[1].dstW }));
             }
+            std::stringstream desc;
+            desc << _num << "x" << _conv[0].srcC << "x" << _conv[0].srcH << "x" << _conv[0].srcW;
+            desc << "-" << _conv[0].dstC << "x" << _conv[0].kernelY << "x" << _conv[0].strideY;
+            desc << "-" << _conv[1].kernelY << "x" << _conv[1].strideY << "-" << _conv[2].dstC;
+            int64_t flop = 0;
+            for(size_t i = 0; i < Detail::MCC; ++i)
+                flop += _num * _conv[i].kernelY * _conv[i].kernelX * _conv[i].srcC * _conv[i].dstH * _conv[i].dstW * _conv[i].dstC / _conv[i].group * 2;
+            this->UsePerfStat(desc.str(), flop);
         }
 
         virtual size_t MemoryUsage() const
@@ -359,22 +367,12 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
             for (int i = 0; i < src.size(); ++i)
                 ForwardCpu(src[i]->CpuData(), buf[0]->CpuData(), dst[i]->CpuData());
         }
 
         void ForwardCpu(const T * src, T * buf, T * dst)
         {
-#ifdef SYNET_SIZE_STATISTIC
-            std::stringstream ss;
-            ss << _num << "x" << _conv[0].srcC << "x" << _conv[0].srcH << "x" << _conv[0].srcW;
-            ss << "-" << _conv[0].dstC << "x" << _conv[0].kernelY << "x" << _conv[0].strideY;
-            ss << "-" << _conv[1].kernelY << "x" << _conv[1].strideY << "-" << _conv[2].dstC;
-            SYNET_PERF_BLOCK(ss.str().c_str());
-#else
-            SYNET_PERF_FUNC();
-#endif
             if (_mergedConvolution32f.Enable())
                 _mergedConvolution32f.Forward(src, buf, dst);
             else

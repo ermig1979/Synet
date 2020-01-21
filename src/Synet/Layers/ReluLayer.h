@@ -46,12 +46,12 @@ namespace Synet
         {
             _negativeSlope = this->Param().relu().negativeSlope();
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
             CpuRelu<Type>(src[0]->CpuData(), src[0]->Size(), _negativeSlope, dst[0]->CpuData());
         }
 

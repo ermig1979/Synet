@@ -50,12 +50,12 @@ namespace Synet
             _scale = param.scale();
             _shift = param.shift();
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
             Detail::ScaleLayerForwardCpu(src[0]->CpuData(), &_scale, &_shift, 1, src[0]->Size(), dst[0]->CpuData(), 0);
         }
 

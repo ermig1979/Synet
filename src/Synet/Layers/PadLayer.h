@@ -62,6 +62,7 @@ namespace Synet
             for (size_t i = 0; i < n; ++i)
                 dstShape[i] += _padB[i] + _padE[i];
             dst[0]->Reshape(dstShape, 0);
+            this->UsePerfStat();
         }
 
     protected:

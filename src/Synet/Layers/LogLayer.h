@@ -63,15 +63,13 @@ namespace Synet
             assert(!(std::isnan(_baseScale) || std::isinf(_baseScale)));
             _inputScale = param.scale();
             _inputShift = param.shift();            
-            
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             Detail::LogLayerForwardCpu(src[0]->CpuData(), src[0]->Size(), _inputScale, _inputShift, _baseScale, dst[0]->CpuData());
         }
 

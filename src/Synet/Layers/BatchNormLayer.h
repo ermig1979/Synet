@@ -96,13 +96,12 @@ namespace Synet
                     CpuSet(_batchSumMultiplier.Size(), Type(1), _batchSumMultiplier.CpuData());
                 }
             }
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             const Type * pSrc = src[0]->CpuData();
             Type * pDst = dst[0]->CpuData();
             size_t num = src[0]->Axis(0);

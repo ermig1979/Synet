@@ -100,24 +100,20 @@ namespace Synet
             dstShape.resize(_axis + 1);
             dstShape[_axis] = _Ndim;
             dst[0]->Reshape(dstShape, src[0]->Format());
+            std::stringstream desc;
+            desc << " M=" << _Mdim << " N=" << _Ndim << " K=" << _Kdim;
+            int64_t flop = _Mdim * _Ndim * _Kdim * 2;
+            this->UsePerfStat(desc.str(), flop);
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
             ForwardCpu(src[0]->CpuData(), src.size() > 1 ? src[1]->CpuData() : this->Weight()[0].CpuData(), dst[0]->CpuData());
         }
 
         void ForwardCpu(const T * a, const T * b, T * c)
         {
-#ifdef SYNET_SIZE_STATISTIC
-            std::stringstream ss;
-            ss << " M=" << _Mdim << " N=" << _Ndim << " K=" << _Kdim;
-            SYNET_PERF_BLOCK(ss.str().c_str());
-#else
-            SYNET_PERF_FUNC();
-#endif
             if (!_transposeB && _Mdim == 1)
             {
                 for (size_t i = 0; i < _Mdim; ++i)

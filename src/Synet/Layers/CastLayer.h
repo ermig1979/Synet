@@ -62,12 +62,12 @@ namespace Synet
                     assert(0);
                 }
             }
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
             if (_srcType != _dstType)
             {
                 if (_srcType == TensorType32f && _dstType == TensorType32i)

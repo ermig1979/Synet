@@ -85,13 +85,12 @@ namespace Synet
                 assert(srcSizeSum == dst[0]->Size());
             }
             _dstConcatAxis = dst[0]->Axis(_concatAxis);
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             if (src.size() == 1)
                 return;
 

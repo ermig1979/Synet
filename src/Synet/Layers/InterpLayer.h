@@ -234,13 +234,12 @@ namespace Synet
                 dst[0]->Reshape({ _num, _dstH, _dstW, _channels }, TensorFormatNhwc);
             else
                 dst[0]->Reshape({ _num, _channels, _dstH, _dstW }, TensorFormatNchw);
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             const Type * pSrc = src[0]->CpuData();
             Type * pDst = dst[0]->CpuData();
             for(size_t i = 0; i < _num; ++i)

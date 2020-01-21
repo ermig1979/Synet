@@ -63,13 +63,12 @@ namespace Synet
             }
             else
                 dst[0]->ShareAs(*src[0], shape, src[0]->Format());
+            this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             if (dst.size() > 1)
             {
                 for (size_t o = 0; o < _outer; ++o)
