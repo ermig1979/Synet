@@ -98,7 +98,7 @@ namespace Synet
             ::free_network(net);
 
             Optimizer optimizer;
-            if (!optimizer.Run(holder()))
+            if (!optimizer.Run(holder(), weight))
                 return false;
 
             if (!holder.Save(dstModelPath, false))

@@ -68,7 +68,7 @@ namespace Synet
                 return false;
 
             Optimizer optimizer;
-            if (!optimizer.Run(holder()))
+            if (!optimizer.Run(holder(), dstBin))
                 return false;
 
             if (!holder.Save(dstModelPath, false))

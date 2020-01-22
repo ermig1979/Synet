@@ -381,7 +381,7 @@ namespace Synet
 
         void Forward()
         {
-            SYNET_PERF_FUNC();
+            //SYNET_PERF_FUNC();
             bool mode = GetFastMode();
             SetFastMode(true);
             for (size_t i = 0; i < _stages.size(); ++i)

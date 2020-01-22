@@ -239,10 +239,13 @@ namespace Test
             {
                 for (FunctionMap::const_iterator j = i->second.begin(); j != i->second.end(); j++)
                 {
-                    if (total.find(j->first) == total.end())
-                        total[j->first].reset(new PerformanceMeasurer(*j->second));
-                    else
-                        total[j->first]->Combine(*j->second);
+                    if (j->second->Average() != 0)
+                    {
+                        if (total.find(j->first) == total.end())
+                            total[j->first].reset(new PerformanceMeasurer(*j->second));
+                        else
+                            total[j->first]->Combine(*j->second);
+                    }
                 }
             }
 

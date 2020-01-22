@@ -33,20 +33,20 @@ namespace Synet
     {
     public:
 
-        bool Run(Synet::NetworkParam & network)
+        bool Run(Synet::NetworkParam & network, const Floats & bin)
         {
             LayerParams merged;
-            if (!Merge(network.layers(), merged))
+            if (!Merge(network.layers(), bin, merged))
                 return false;
             network.layers() = merged;
 
             merged.clear();
-            if (!Merge(network.layers(), merged))
+            if (!Merge(network.layers(), bin, merged))
                 return false;
             network.layers() = merged;
 
             merged.clear();
-            if (!Merge(network.layers(), merged))
+            if (!Merge(network.layers(), bin, merged))
                 return false;
             network.layers() = merged;
 
@@ -61,12 +61,14 @@ namespace Synet
         typedef std::vector<Change> Changes;
         typedef std::vector<LayerType> LayerTypes;
 
-        bool Merge(const LayerParams & src, LayerParams & dst)
+        bool Merge(const LayerParams & src, const Floats & bin, LayerParams & dst)
         {
             Changes changes;
             for (size_t i = 0; i < src.size(); ++i)
             {
                 if (MergeHswish(src, i, dst, changes))
+                    continue;
+                if (MergePrelu(src, i, bin, dst, changes))
                     continue;
                 if (MergeConvolutionOrDeconvolutionAndActivation(src, i, dst, changes))
                     continue;
@@ -137,6 +139,40 @@ namespace Synet
             layer.hswish().scale() = src[index + 2].power().scale();
             dst.push_back(layer);
             index += 3;
+            return true;
+        }
+
+        bool MergePrelu(const LayerParams & src, size_t & index, const Floats & bin, LayerParams & dst, Changes & changes)
+        {
+            if (src.size() < index + 2)
+                return false;
+            if (src[index + 0].type() != LayerTypeScale)
+                return false;
+            if (src[index + 1].type() != LayerTypeEltwise || src[index + 1].src().size() != 2 ||
+                src[index + 1].src()[1] != src[index + 0].src()[0] || src[index + 1].src()[0] != src[index + 0].name() ||
+                src[index + 1].eltwise().operation() != EltwiseOperationTypeMax)
+                return false;
+            if (InsideLink(src, index + 1, 1))
+                return false;
+            const float * scale = bin.data() + src[index].weight()[0].offset() / 4;
+            for (size_t i = 0, n = src[index].weight()[0].size() / 4; i < n; ++i)
+                if (scale[i] < -1.0f || scale[i] > 1.0f)
+                    return false;
+            if (src[index + 0].weight().size() > 1)
+            {
+                const float * shift = bin.data() + src[index].weight()[1].offset() / 4;
+                for (size_t i = 0, n = src[index].weight()[1].size() / 4; i < n; ++i)
+                    if (shift[i] != 0.0f)
+                        return false;
+            }
+            LayerParam layer;
+            layer.type() = LayerTypePrelu;
+            layer.name() = src[index + 1].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            layer.weight().push_back(src[index + 0].weight()[0]);
+            dst.push_back(layer);
+            index += 1;
             return true;
         }
 
