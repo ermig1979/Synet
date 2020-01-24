@@ -301,6 +301,11 @@ namespace Synet
         SYNET_PARAM_VALUE(Floats, coefficients, Floats());
     };
 
+    struct EluParam
+    {
+        SYNET_PARAM_VALUE(float, alpha, 1.0f);
+    };
+
     struct FillParam
     {
         SYNET_PARAM_VALUE(float, value, 0.0f);
@@ -422,6 +427,11 @@ namespace Synet
         SYNET_PARAM_VALUE(float, shift, 0.0f);
     };
 
+    struct PreluParam
+    {
+        SYNET_PARAM_VALUE(uint32_t, axis, 1);
+    };
+
     struct PriorBoxParam
     {
         SYNET_PARAM_VALUE(int, version, 0);
@@ -470,11 +480,6 @@ namespace Synet
     struct ReluParam
     {
         SYNET_PARAM_VALUE(float, negativeSlope, 0.0f);
-    };
-
-    struct EluParam
-    {
-        SYNET_PARAM_VALUE(float, alpha, 1.0f);
     };
 
     struct ReorgParam
@@ -584,6 +589,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(ConvolutionParam, convolution);
         SYNET_PARAM_STRUCT(DetectionOutputParam, detectionOutput);
         SYNET_PARAM_STRUCT(EltwiseParam, eltwise);
+        SYNET_PARAM_STRUCT(EluParam, elu);
         SYNET_PARAM_STRUCT(ExpandDimsParam, expandDims);
         SYNET_PARAM_STRUCT(FillParam, fill);
         SYNET_PARAM_STRUCT(FlattenParam, flatten);
@@ -601,12 +607,12 @@ namespace Synet
         SYNET_PARAM_STRUCT(PermuteParam, permute);
         SYNET_PARAM_STRUCT(PoolingParam, pooling);
         SYNET_PARAM_STRUCT(PowerParam, power);
+        SYNET_PARAM_STRUCT(PreluParam, prelu);
         SYNET_PARAM_STRUCT(PriorBoxParam, priorBox);
         SYNET_PARAM_STRUCT(PriorBoxClusteredParam, priorBoxClustered);
         SYNET_PARAM_STRUCT(ReductionParam, reduction);
         SYNET_PARAM_STRUCT(RegionParam, region);
         SYNET_PARAM_STRUCT(ReluParam, relu);
-        SYNET_PARAM_STRUCT(EluParam, elu);
         SYNET_PARAM_STRUCT(ReorgParam, reorg);
         SYNET_PARAM_STRUCT(ReshapeParam, reshape);
         SYNET_PARAM_STRUCT(RestrictRangeParam, restrictRange);

@@ -170,6 +170,7 @@ namespace Synet
             layer.name() = src[index + 1].name();
             layer.src().push_back(src[index + 0].src()[0]);
             layer.dst().push_back(layer.name());
+            layer.prelu().axis() = src[index + 0].scale().axis();
             layer.weight().push_back(src[index + 0].weight()[0]);
             dst.push_back(layer);
             index += 1;
