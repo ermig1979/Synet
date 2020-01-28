@@ -714,8 +714,9 @@ namespace Synet
             }
         }
 
-        bool IsSubGraphEndConv(const Stage & stage)
+        bool IsSubGraphEndConv(size_t s)
         {
+            const Stage& stage = _stages[s];
             const Layer & layer = *stage.layer;
             if (layer._isBack)
                 return false;
@@ -726,13 +727,15 @@ namespace Synet
                 const IdSet & ids = _srcIds[name];
                 for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
                 {
+                    if (*id <= s)
+                        continue;
                     const Stage & dst = _stages[*id];
                     const LayerParam & param = dst.layer->Param();
                     if (param.type() == LayerTypeConvolution && param.convolution().group() != param.convolution().outputNum())
                         continue;
                     if (param.type() == LayerTypeMergedConvolution)
                         continue;
-                    if (IsSubGraphEndConv(dst))
+                    if (IsSubGraphEndConv(*id))
                         continue;
                     return false;
                 }
@@ -748,7 +751,7 @@ namespace Synet
                 _stats[_statId[_input[i].layer->Param().name()]]->Unify();
             for (size_t s = 0; s < _stages.size(); ++s)
             {
-                if (IsSubGraphEndConv(_stages[s]))
+                if (IsSubGraphEndConv(s))
                 {
                     const LayerParam & param = _stages[s].layer->Param();
                     if (param.type() == LayerTypeConvolution || param.type() == LayerTypeMergedConvolution || param.type() == LayerTypeScale)
