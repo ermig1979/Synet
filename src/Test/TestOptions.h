@@ -38,6 +38,7 @@ namespace Test
     {
         String mode;
         int enable;
+        String textWeight;
         String otherModel;
         String otherWeight;
         String synetModel;
@@ -70,6 +71,7 @@ namespace Test
         {
             mode = GetArg("-m");
             enable = FromString<int>(GetArg("-e", "3"));
+            textWeight = GetArg("-tw", "./other.txt");
             otherModel = GetArg("-om", "./other.dsc");
             otherWeight = GetArg("-ow", "./other.dat");
             synetModel = GetArg("-sm", "./synet.xml");

@@ -51,9 +51,6 @@ fi
 #TEST inference_engine test_005 2000 1 1 1 002a
 #TEST inference_engine test_006 100 1 1 1 002a
 #TEST inference_engine test_007 200 1 1 1 003a
-TEST inference_engine test_008 5 1 1 1 001a
-
-#TEST inference_engine test_009 1 1 1 1 000a #error
-
+#TEST inference_engine test_008 5 1 1 1 001a
 
 exit

@@ -337,6 +337,36 @@ namespace Test
 }
 #endif//SYNET_OTHER_RUN
 
+namespace Test
+{
+    bool ConvertTextWeightToBinary(const String & src, const String & dst)
+    {
+        std::ifstream ifs(src.c_str());
+        if (!ifs.is_open())
+        {
+            std::cout << "Can't open input text file '" << src << "' with weight!" << std::endl;
+            return false;
+        }
+        std::ofstream ofs(dst.c_str(), std::ofstream::binary);
+        if (!ofs.is_open())
+        {
+            std::cout << "Can't open output binary file '" << dst << "' with weight!" << std::endl;
+            ifs.close();
+            return false;
+        }
+        while (!ifs.eof())
+        {
+            std::string str;
+            ifs >> str;
+            float val = std::stof(str);
+            ofs.write((char*)&val, 4);
+        }
+        ifs.close();
+        ofs.close();
+        return true;
+    }
+}
+
 Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
 
 int main(int argc, char* argv[])
@@ -346,14 +376,20 @@ int main(int argc, char* argv[])
     if (options.mode == "convert")
     {
         SYNET_PERF_FUNC();
-        std::cout << "Convert network from Inference Engine to Synet :" << std::endl;
+        std::cout << "Convert network from Inference Engine to Synet : ";
         options.result = Synet::ConvertInferenceEngineToSynet(options.otherModel, options.otherWeight, options.tensorFormat == 1, options.synetModel, options.synetWeight);
-        std::cout << "Conversion is finished " << (options.result ? "successfully." : "with errors.") << std::endl;
+        std::cout << (options.result ? "OK." : " Conversion finished with errors!") << std::endl;
     }
     else if (options.mode == "compare")
     {
         Test::Comparer<Test::InferenceEngineNetwork> comparer(options);
         options.result = comparer.Run();
+    }
+    else if (options.mode == "txt2bin")
+    {
+        std::cout << "Convert text weight to binary : ";
+        options.result = Test::ConvertTextWeightToBinary(options.textWeight, options.otherWeight);
+        std::cout << (options.result ? "OK." : " Conversion finished with errors!") << std::endl;
     }
     else
         std::cout << "Unknown mode : " << options.mode << std::endl;
