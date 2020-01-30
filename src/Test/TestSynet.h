@@ -85,7 +85,7 @@ namespace Test
         virtual size_t SrcSize(size_t index) const { return 0; }
         virtual bool Init(const String & model, const String & weight, const Options & options, const TestParam & param) { return false; }
         virtual const Vectors & Predict(const Vectors & src) { return _output; }
-        virtual void DebugPrint(std::ostream & os, int flag, int first, int last) { }
+        virtual void DebugPrint(std::ostream & os, int flag, int first, int last, int precision) { }
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const { return Regions(); }
         virtual size_t MemoryUsage() const { return 0; }
     protected:
@@ -162,10 +162,10 @@ namespace Test
             return _output;
         }
 
-        virtual void DebugPrint(std::ostream & os, int flag, int first, int last)
+        virtual void DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
         {
             if (flag)
-                _net.DebugPrint(os, (flag&DEBUG_PRINT_WEIGHT) != 0, (flag&DEBUG_PRINT_INTERIM) != 0, first, last);
+                _net.DebugPrint(os, flag, first, last, precision);
         };
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const

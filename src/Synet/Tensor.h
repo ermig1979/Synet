@@ -438,7 +438,7 @@ namespace Synet
             _buffer->Capture();
         }
 
-        void DebugPrint(std::ostream & os, const String & name, bool weight, size_t first = 5, size_t last = 2) const
+        void DebugPrint(std::ostream & os, const String & name, bool weight, size_t first = 5, size_t last = 2, size_t precision = 4) const
         {
             if (_shape.size() == 4 && _format == TensorFormatNhwc)
             {
@@ -477,10 +477,18 @@ namespace Synet
             os << name << " { ";
             for (size_t i = 0; i < _shape.size(); ++i)
                 os << _shape[i] << " ";
+            if (_type == TensorType32f)
+                os << " } 32f ";
+            else if (_type == TensorType32i)
+                os << " } 32i ";
+            else if (_type == TensorType8i)
+                os << " } 8i ";
+            else if (_type == TensorType8u)
+                os << " } 8u ";
             if(weight)
-                os << "} " << (_format == TensorFormatNchw && _shape.size() == 4 ? "OIHW" : (_format == TensorFormatNhwc && _shape.size() == 4 ? "HWIO" : "")) << std::endl;
+                os << (_format == TensorFormatNchw && _shape.size() == 4 ? "OIHW" : (_format == TensorFormatNhwc && _shape.size() == 4 ? "HWIO" : "")) << std::endl;
             else
-                os << "} " << (_format == TensorFormatNchw ? "NCHW" : (_format == TensorFormatNhwc ? "NHWC" : "")) << std::endl;
+                os << (_format == TensorFormatNchw ? "NCHW" : (_format == TensorFormatNhwc ? "NHWC" : "")) << std::endl;
 
             if (_buffer->size == 0)
                 return;
@@ -503,20 +511,19 @@ namespace Synet
                     separators[i] = separators[i + 1] + "\n";
                 }
             }
-            DebugPrint(os, firsts, lasts, separators, index, 0);
+            DebugPrint(os, firsts, lasts, separators, index, 0, precision);
             if (n == 1 || n == 0)
                 os << "\n";
         }
 
     private:
 
-        void DebugPrint(std::ostream & os, const Synet::Shape & firsts, const Synet::Shape & lasts, const Strings & separators, Synet::Shape index, size_t order) const
+        void DebugPrint(std::ostream & os, const Synet::Shape & firsts, const Synet::Shape & lasts, const Strings & separators, Synet::Shape index, size_t order, size_t precision) const
         {
             if (order == _shape.size())
             {
-                std::cout << std::fixed << std::setprecision(4);
                 if (_type == TensorType32f)
-                    os << As32f().CpuData(index)[0];
+                    Synet::DebugPrint(os, As32f().CpuData(index)[0], precision);
                 else if (_type == TensorType32i)
                     os << As32i().CpuData(index)[0];
                 else if (_type == TensorType8i)
@@ -532,13 +539,13 @@ namespace Synet
                 size_t lo = firsts[order], hi = _shape[order] - lasts[order];
                 for (index[order] = 0; index[order] < lo; ++index[order])
                 {
-                    DebugPrint(os, firsts, lasts, separators, index, order + 1);
+                    DebugPrint(os, firsts, lasts, separators, index, order + 1, precision);
                     os << separators[order];
                 }
                 os << "..." << separators[order];
                 for (index[order] = hi; index[order] < _shape[order]; ++index[order])
                 {
-                    DebugPrint(os, firsts, lasts, separators, index, order + 1);
+                    DebugPrint(os, firsts, lasts, separators, index, order + 1, precision);
                     os << separators[order];
                 }
             }
@@ -546,7 +553,7 @@ namespace Synet
             {
                 for (index[order] = 0; index[order] < _shape[order]; ++index[order])
                 {
-                    DebugPrint(os, firsts, lasts, separators, index, order + 1);
+                    DebugPrint(os, firsts, lasts, separators, index, order + 1, precision);
                     os << separators[order];
                 }
             }  

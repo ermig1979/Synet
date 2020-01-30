@@ -328,7 +328,7 @@ namespace Test
                 std::ofstream log(path);
                 if (log.is_open())
                 {
-                    network.DebugPrint(log, _options.debugPrint, _options.debugPrintFirst, _options.debugPrintLast);
+                    network.DebugPrint(log, _options.debugPrint, _options.debugPrintFirst, _options.debugPrintLast, _options.debugPrintPrecision);
                     log.close();
                 }
                 else

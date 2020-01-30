@@ -83,6 +83,10 @@ namespace Synet
             return false;
         }
 
+        virtual void DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
+        {
+        }
+
         const StatPtrs & Stats(size_t index) const
         {
             assert(index < 3);

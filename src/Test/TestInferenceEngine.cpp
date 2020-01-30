@@ -194,7 +194,7 @@ namespace Test
             return _output;
         }
 
-        virtual void DebugPrint(std::ostream & os, int flag, int first, int last)
+        virtual void DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
         {
             for (size_t o = 0; o < _ieOutput.size(); ++o)
             {
@@ -203,7 +203,7 @@ namespace Test
                 dims[0] = _batchSize;
                 Synet::Tensor<float> tensor(dims);
                 SetOutput(dims, strides, 0, _ieOutput[o]->buffer(), tensor.CpuData());
-                tensor.DebugPrint(os, _outputNames.empty() ? String("???") : String(_outputNames[o]), false, first, last);
+                tensor.DebugPrint(os, _outputNames.empty() ? String("???") : String(_outputNames[o]), false, first, last, precision);
             }
         }
 

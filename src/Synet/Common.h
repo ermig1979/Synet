@@ -243,4 +243,42 @@ namespace Synet
         T x, y, w, h, prob;
         size_t id;
     };
+
+    enum DebugPrinType
+    {
+        DebugPrintOutput = 0,
+        DebugPrintLayerDst,
+        DebugPrintLayerWeight,
+        DebugPrintInt8Buffers,
+        DebugPrintLayerInternal,
+    };
+
+    inline void DebugPrint(std::ostream& os, float value, size_t precision)
+    {
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(precision) << value;
+        size_t pad = precision > 5 ? 12 : 8;
+        for (size_t i = ss.str().size(); i < pad; ++i)
+            os << " ";
+        os << ss.str() << "\t";
+    }
+
+    inline void DebugPrint(std::ostream& os, const Floats& src, const String& name, size_t first, size_t last, size_t precision)
+    {
+        os << name << " { " << src.size() << " } 32f" << std::endl << std::fixed << std::setprecision(precision);
+        if (first + last < src.size())
+        {
+            for (size_t i = 0; i < first; ++i)
+                DebugPrint(os, src[i], precision);
+            os << "...\t";
+            for (size_t i = src.size() - last; i < src.size(); ++i)
+                DebugPrint(os, src[i], precision);
+        }
+        else
+        {
+            for (size_t i = 0; i < src.size(); ++i)
+                DebugPrint(os, src[i], precision);
+        }
+        os << std::endl;
+    }
 }

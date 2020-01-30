@@ -189,6 +189,19 @@ namespace Synet
             this->UsePerfStat(desc.str(), flop);
         }
 
+        virtual void DebugPrint(std::ostream& os, int flag, int first, int last, int precision)
+        {
+            const Stat& statS = *this->Stats(0)[0];
+            Synet::DebugPrint(os, statS.scale32fTo8u, "pSrcScale", first, last, precision);
+            Synet::DebugPrint(os, statS.shift32fTo8u, "pSrcShift", first, last, precision);
+            const Stat& statD = *this->Stats(2)[0];
+            Synet::DebugPrint(os, statD.scale8uTo32f, "pDstScale", first, last, precision);
+            Synet::DebugPrint(os, statD.shift8uTo32f, "pDstShift", first, last, precision);
+            _weight8i.DebugPrint(os, "_weight8i", true, first, last, precision);
+            _norm32i.DebugPrint(os, "_norm32i", false, first, last, precision);
+            _norm32f.DebugPrint(os, "_norm32f", false, first, last, precision);
+        }
+
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {

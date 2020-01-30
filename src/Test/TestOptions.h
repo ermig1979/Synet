@@ -30,9 +30,6 @@ namespace Test
 {
     const int ENABLE_OTHER = 1;
     const int ENABLE_SYNET = 2;
-    const int DEBUG_PRINT_BACK = 1;
-    const int DEBUG_PRINT_INTERIM = 2;
-    const int DEBUG_PRINT_WEIGHT = 4;
 
     struct Options
     {
@@ -57,6 +54,7 @@ namespace Test
         int debugPrint;
         int debugPrintFirst;
         int debugPrintLast;
+        int debugPrintPrecision;
         int annotateRegions;
         float regionThreshold;
         float regionOverlap;
@@ -90,6 +88,7 @@ namespace Test
             debugPrint = FromString<int>(GetArg("-dp", "0"));
             debugPrintFirst = FromString<int>(GetArg("-dpf", "5"));
             debugPrintLast = FromString<int>(GetArg("-dpl", "2"));
+            debugPrintPrecision = FromString<int>(GetArg("-dpp", "4"));
             annotateRegions = FromString<int>(GetArg("-ar", "0"));
             regionThreshold = FromString<float>(GetArg("-rt", "0.3"));
             regionOverlap = FromString<float>(GetArg("-ro", "0.5"));

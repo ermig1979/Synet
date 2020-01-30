@@ -398,9 +398,14 @@ namespace Synet
             SetFastMode(mode);
         }
 
-        void DebugPrint(std::ostream & os, bool weight, bool interim, int first, int last)
+        void DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
         {
-            for (size_t i = 0; i < _input.size() && interim; ++i)
+            bool printOutput = (flag & (1 << DebugPrintOutput)) != 0;
+            bool printLayerDst = (flag & (1 << DebugPrintLayerDst)) != 0;
+            bool printLayerWeight = (flag & (1 << DebugPrintLayerWeight)) != 0;
+            bool printInt8Buffers = (flag & (1 << DebugPrintInt8Buffers)) != 0;
+            bool printLayerInternal = (flag & (1 << DebugPrintLayerInternal)) != 0;
+            for (size_t i = 0; i < _input.size() && printLayerDst; ++i)
             {
                 os << "Layer: " << _input[i].layer->Param().name() << " : ";
                 os << ValueToString(_input[i].layer->Param().type()) << " ( ";
@@ -408,11 +413,11 @@ namespace Synet
                     os << _input[i].layer->Param().src()[j] << " ";
                 os << ")." << std::endl;
                 for (size_t j = 0; j < _input[i].dst.size(); ++j)
-                    _input[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]", false, first, last);
+                    _input[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]", false, first, last, precision);
             }
             for (size_t i = 0; i < _stages.size(); ++i)
             {
-                if (interim || _stages[i].layer->_isBack)
+                if ((_stages[i].layer->_isBack && printOutput) || printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
                 {
                     _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
                     os << "Layer: " << _stages[i].layer->Param().name() << " : ";
@@ -420,13 +425,32 @@ namespace Synet
                     for (size_t j = 0; j < _stages[i].layer->Param().src().size(); ++j)
                         os << _stages[i].layer->Param().src()[j] << " ";
                     os << ")." << std::endl;
-                    if (weight)
+                    if (printLayerWeight)
                     {
                         for (size_t j = 0; j < _stages[i].layer->Weight().size(); ++j)
-                            _stages[i].layer->Weight()[j].DebugPrint(os, String("weight[") + ValueToString(j) + "]", true, first, last);
+                            _stages[i].layer->Weight()[j].DebugPrint(os, String("weight[") + ValueToString(j) + "]", true, first, last, precision);
                     }
-                    for (size_t j = 0; j < _stages[i].dst.size(); ++j)
-                        _stages[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]", false, first, last);
+                    if (printInt8Buffers && _stages[i].layer->Is8i())
+                    {
+                        if (_stages[i].src[0]->GetType() == TensorType32f)
+                        {
+                            Tensor8u src8u;
+                            src8u.ShareAs(_stages[i].buf[TensorType8u * BUFFER_COUNT + 1]->As8u(), _stages[i].src[0]->Shape(), _stages[i].src[0]->Format());
+                            src8u.DebugPrint(os, String("src"), false, first, last, precision);
+                        }
+                        Tensor32i sum32i;
+                        sum32i.ShareAs(_stages[i].buf[TensorType32i * BUFFER_COUNT + 0]->As32i(), _stages[i].dst[0]->Shape(), _stages[i].dst[0]->Format());
+                        sum32i.DebugPrint(os, String("sum"), false, first, last, precision);
+                    }
+                    if (printLayerInternal)
+                    {
+                        _stages[i].layer->DebugPrint(os, flag, first, last, precision);
+                    }
+                    if ((_stages[i].layer->_isBack && printOutput) || printLayerDst)
+                    {
+                        for (size_t j = 0; j < _stages[i].dst.size(); ++j)
+                            _stages[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]", false, first, last, precision);
+                    }
                 }
             }
         }
