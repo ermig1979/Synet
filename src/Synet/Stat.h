@@ -128,7 +128,7 @@ namespace Synet
                     scale32fTo8u[i] = (negative ? 127.0f : 255.0f) / absMax; 
                     scale8uTo32f[i] = invScale;
                     shift32fTo8u[i] = float(zero8u[i]);
-                    shift8uTo32f[i] = -float(zero8u[i]) / invScale;
+                    shift8uTo32f[i] = -float(zero8u[i]) * invScale;
                 }
             }
             else
