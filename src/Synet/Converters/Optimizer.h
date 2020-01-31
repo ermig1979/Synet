@@ -35,23 +35,14 @@ namespace Synet
 
         bool Run(Synet::NetworkParam & network, const Floats & bin)
         {
-            LayerParams merged;
-            if (!Merge(network.layers(), bin, merged))
+            if (!MergeLayers(network, bin, 0))
                 return false;
-            network.layers() = merged;
-
-            merged.clear();
-            if (!Merge(network.layers(), bin, merged))
+            if (!MergeLayers(network, bin, 1))
                 return false;
-            network.layers() = merged;
-
-            merged.clear();
-            if (!Merge(network.layers(), bin, merged))
+            if (!MergeLayers(network, bin, 2))
                 return false;
-            network.layers() = merged;
-
-            ReuseLayers(network.layers());
-
+            if (!ReuseLayers(network))
+                return false;
             return true;
         }
 
@@ -61,47 +52,74 @@ namespace Synet
         typedef std::vector<Change> Changes;
         typedef std::vector<LayerType> LayerTypes;
 
-        bool Merge(const LayerParams & src, const Floats & bin, LayerParams & dst)
+        bool MergeLayers(Synet::NetworkParam& network, const Floats& bin, int stage)
+        {
+            LayerParams merged;
+            if (!MergeLayers(network.layers(), bin, merged, stage))
+                return false;
+            network.layers() = merged;
+            return true;
+        }
+
+        bool MergeLayers(const LayerParams & src, const Floats & bin, LayerParams & dst, int stage)
         {
             Changes changes;
             for (size_t i = 0; i < src.size(); ++i)
             {
-                if (MergeHswish(src, i, dst, changes))
-                    continue;
-                if (MergePrelu(src, i, bin, dst, changes))
-                    continue;
-                if (MergeConvolutionOrDeconvolutionAndActivation(src, i, dst, changes))
-                    continue;
-                if (MergeThreeConvolutions(src, i, dst, changes))
-                    continue;
-                if (MergeShuffle(src, i, dst, changes))
-                    continue;
-                if (MergeSoftmax(src, i, dst, changes))
-                    continue;
-                if (MergeFused0(src, i, dst, changes))
-                    continue;
-                if (MergeFused1(src, i, dst, changes))
-                    continue;
-                if (MergeFused2(src, i, dst, changes))
-                    continue;
-                if (MergeFused3(src, i, dst, changes))
-                    continue;
-                if (MergeFused4(src, i, dst, changes))
-                    continue;
-                if (MergeFused5(src, i, dst, changes))
-                    continue;
-                if (MergeFused6(src, i, dst, changes))
-                    continue;
-                if (MergeFused7(src, i, dst, changes))
-                    continue;
-                if (MergeFused8(src, i, dst, changes))
-                    continue;
-                if (MergeFused9(src, i, dst, changes))
-                    continue;
-                if (MergeFused10(src, i, dst, changes))
-                    continue;
-                if (MergeFused11(src, i, dst, changes))
-                    continue;
+                switch (stage)
+                {
+                case 0:
+                {
+                    if (MergeHswish(src, i, dst, changes))
+                        continue;
+                    if (MergePrelu(src, i, bin, dst, changes))
+                        continue;
+                    if (MergeShuffle(src, i, dst, changes))
+                        continue;
+                    if (MergeSoftmax(src, i, dst, changes))
+                        continue;
+                    if (MergeFused0(src, i, dst, changes))
+                        continue;
+                    if (MergeFused1(src, i, dst, changes))
+                        continue;
+                    if (MergeFused2(src, i, dst, changes))
+                        continue;
+                    if (MergeFused3(src, i, dst, changes))
+                        continue;
+                    if (MergeFused4(src, i, dst, changes))
+                        continue;
+                    if (MergeFused5(src, i, dst, changes))
+                        continue;
+                    if (MergeFused6(src, i, dst, changes))
+                        continue;
+                    if (MergeFused7(src, i, dst, changes))
+                        continue;
+                    if (MergeFused8(src, i, dst, changes))
+                        continue;
+                    if (MergeFused9(src, i, dst, changes))
+                        continue;
+                    if (MergeFused10(src, i, dst, changes))
+                        continue;
+                    if (MergeFused11(src, i, dst, changes))
+                        continue;
+                    break;
+                }
+                case 1:
+                {
+                    if (MergeConvolutionOrDeconvolutionAndActivation(src, i, dst, changes))
+                        continue;
+                    break;
+                }
+                case 2:
+                {
+                    if (MergeThreeConvolutions(src, i, dst, changes))
+                        continue;
+                    break;
+                }
+                default:
+                    assert(0);
+                    return false;
+                }
                 dst.push_back(src[i]);
             }
             Rename(changes, dst);
@@ -990,8 +1008,11 @@ namespace Synet
             return false;
         }
 
-        bool ReuseLayers(LayerParams & layers)
+        bool ReuseLayers(Synet::NetworkParam& network)
         {
+            if (network.statistics().size())
+                return true;
+            LayerParams & layers = network.layers();
             for (size_t i = 0; i < layers.size(); ++i)
             {
                 LayerParam & layer = layers[i];

@@ -482,7 +482,7 @@ namespace Synet
                 os << (_format == TensorFormatNchw && _shape.size() == 4 ? "OIHW " : (_format == TensorFormatNhwc && _shape.size() == 4 ? "HWIO " : ""));
             else
                 os << (_format == TensorFormatNchw ? "NCHW " : (_format == TensorFormatNhwc ? "NHWC " : ""));
-            if (_buffer.data == NULL)
+            if (_buffer->data == NULL)
                 return;
             os << ValueToString(_type) << std::endl;
             switch (_type)
