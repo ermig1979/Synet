@@ -438,7 +438,7 @@ namespace Synet
             _buffer->Capture();
         }
 
-        void DebugPrint(std::ostream & os, const String & name, bool weight, size_t first = 5, size_t last = 2, size_t precision = 4) const
+        void DebugPrint(std::ostream & os, const String & name, bool weight = false, size_t first = 5, size_t last = 2, size_t precision = 4) const
         {
             if (_shape.size() == 4 && _format == TensorFormatNhwc)
             {
@@ -455,7 +455,7 @@ namespace Synet
                     for (size_t i = 0; i < _shape.size(); ++i)
                         ss << _shape[i] << " ";
                     ss << "} HWIO -> ";
-                    trans.DebugPrint(os, ss.str(), weight, first, last);
+                    trans.DebugPrint(os, ss.str(), weight, first, last, precision);
                 }
                 else
                 {
@@ -470,30 +470,43 @@ namespace Synet
                     for (size_t i = 0; i < _shape.size(); ++i)
                         ss << _shape[i] << " ";
                     ss << "} NHWC -> ";
-                    trans.DebugPrint(os, ss.str(), weight, first, last);
+                    trans.DebugPrint(os, ss.str(), weight, first, last, precision);
                 }
                 return;
             }
             os << name << " { ";
             for (size_t i = 0; i < _shape.size(); ++i)
                 os << _shape[i] << " ";
-            if (_type == TensorType32f)
-                os << " } 32f ";
-            else if (_type == TensorType32i)
-                os << " } 32i ";
-            else if (_type == TensorType8i)
-                os << " } 8i ";
-            else if (_type == TensorType8u)
-                os << " } 8u ";
+            os << "} ";
             if(weight)
-                os << (_format == TensorFormatNchw && _shape.size() == 4 ? "OIHW" : (_format == TensorFormatNhwc && _shape.size() == 4 ? "HWIO" : "")) << std::endl;
+                os << (_format == TensorFormatNchw && _shape.size() == 4 ? "OIHW " : (_format == TensorFormatNhwc && _shape.size() == 4 ? "HWIO " : ""));
             else
-                os << (_format == TensorFormatNchw ? "NCHW" : (_format == TensorFormatNhwc ? "NHWC" : "")) << std::endl;
-
-            if (_buffer->size == 0)
+                os << (_format == TensorFormatNchw ? "NCHW " : (_format == TensorFormatNhwc ? "NHWC " : ""));
+            if (_buffer.data == NULL)
                 return;
+            os << ValueToString(_type) << std::endl;
+            switch (_type)
+            {
+            case TensorType32f: DebugPrint(os, As32f(), first, last, precision); break;
+            case TensorType32i: DebugPrint(os, As32i(), first, last, precision); break;
+            case TensorType8i: DebugPrint(os, As8i(), first, last, precision); break;
+            case TensorType8u: DebugPrint(os, As8u(), first, last, precision); break;
+            }        
+        }
 
-            size_t n = _shape.size();
+        void DebugPrint(std::ostream& os, const Synet::Shape& shape, const TensorFormat& format, const String& name, 
+            bool weight = false, size_t first = 5, size_t last = 2, size_t precision = 4) const
+        {
+            Tensor<T> tensor;
+            tensor.ShareAs(*this, shape, format);
+            tensor.DebugPrint(os, name, weight, first, last, precision);
+        }
+
+    private:
+
+        template <class U> static void DebugPrint(std::ostream& os, const Tensor<U> & tensor, size_t first, size_t last, size_t precision)
+        {
+            size_t n = tensor.Count();
             Synet::Shape firsts(n), lasts(n), index(n, 0);
             Strings separators(n);
             for (ptrdiff_t i = n - 1; i >= 0; --i)
@@ -511,49 +524,39 @@ namespace Synet
                     separators[i] = separators[i + 1] + "\n";
                 }
             }
-            DebugPrint(os, firsts, lasts, separators, index, 0, precision);
+            DebugPrint(os, tensor, firsts, lasts, separators, index, 0, precision, DebugPrintPadding(tensor.CpuData(), tensor.Size(), precision));
             if (n == 1 || n == 0)
                 os << "\n";
         }
 
-    private:
-
-        void DebugPrint(std::ostream & os, const Synet::Shape & firsts, const Synet::Shape & lasts, const Strings & separators, Synet::Shape index, size_t order, size_t precision) const
+        template <class U> static void DebugPrint(std::ostream & os, const Tensor<U> & tensor, 
+            const Synet::Shape & firsts, const Synet::Shape & lasts, const Strings & separators, Synet::Shape index, size_t order, size_t precision, size_t padding)
         {
-            if (order == _shape.size())
+            if (order == tensor.Count())
             {
-                if (_type == TensorType32f)
-                    Synet::DebugPrint(os, As32f().CpuData(index)[0], precision);
-                else if (_type == TensorType32i)
-                    os << As32i().CpuData(index)[0];
-                else if (_type == TensorType8i)
-                    os << (int)As8i().CpuData(index)[0];
-                else if (_type == TensorType8u)
-                    os << (int)As8u().CpuData(index)[0];
-                else
-                    assert(0);
+                Synet::DebugPrint(os, tensor.CpuData(index)[0], precision, padding);
                 return;
             }
-            if (firsts[order] + lasts[order] < _shape[order])
+            if (firsts[order] + lasts[order] < tensor.Axis(order))
             {
-                size_t lo = firsts[order], hi = _shape[order] - lasts[order];
+                size_t lo = firsts[order], hi = tensor.Axis(order) - lasts[order];
                 for (index[order] = 0; index[order] < lo; ++index[order])
                 {
-                    DebugPrint(os, firsts, lasts, separators, index, order + 1, precision);
+                    DebugPrint(os, tensor, firsts, lasts, separators, index, order + 1, precision, padding);
                     os << separators[order];
                 }
                 os << "..." << separators[order];
-                for (index[order] = hi; index[order] < _shape[order]; ++index[order])
+                for (index[order] = hi; index[order] < tensor.Axis(order); ++index[order])
                 {
-                    DebugPrint(os, firsts, lasts, separators, index, order + 1, precision);
+                    DebugPrint(os, tensor, firsts, lasts, separators, index, order + 1, precision, padding);
                     os << separators[order];
                 }
             }
             else
             {
-                for (index[order] = 0; index[order] < _shape[order]; ++index[order])
+                for (index[order] = 0; index[order] < tensor.Axis(order); ++index[order])
                 {
-                    DebugPrint(os, firsts, lasts, separators, index, order + 1, precision);
+                    DebugPrint(os, tensor, firsts, lasts, separators, index, order + 1, precision, padding);
                     os << separators[order];
                 }
             }  
@@ -597,6 +600,13 @@ namespace Synet
         Synet::Shape _shape;
         BufferPtr _buffer;
     };
+
+    template<class T> void DebugPrint(std::ostream& os, const std::vector<T>& src, const String& name, size_t first, size_t last, size_t precision)
+    {
+        Tensor<T> tensor;
+        tensor.ShareAs(src.data(), src.size(), Shape({ src.size() }));
+        tensor.DebugPrint(os, name, false, first, last, precision);
+    }
 
     typedef Tensor<Unknown> TensorAny;
     typedef Tensor<float> Tensor32f;

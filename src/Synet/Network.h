@@ -417,36 +417,33 @@ namespace Synet
             }
             for (size_t i = 0; i < _stages.size(); ++i)
             {
-                if ((_stages[i].layer->_isBack && printOutput) || printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
+                Layer & layer = *_stages[i].layer;
+                if ((layer._isBack && printOutput) || printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
                 {
-                    _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
-                    os << "Layer: " << _stages[i].layer->Param().name() << " : ";
-                    os << ValueToString(_stages[i].layer->Param().type()) << " ( ";
-                    for (size_t j = 0; j < _stages[i].layer->Param().src().size(); ++j)
-                        os << _stages[i].layer->Param().src()[j] << " ";
+                    layer.Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
+                    os << "Layer: " << layer.Param().name() << " : ";
+                    os << ValueToString(layer.Param().type()) << " ( ";
+                    for (size_t j = 0; j < layer.Param().src().size(); ++j)
+                        os << layer.Param().src()[j] << " ";
                     os << ")." << std::endl;
                     if (printLayerWeight)
                     {
-                        for (size_t j = 0; j < _stages[i].layer->Weight().size(); ++j)
-                            _stages[i].layer->Weight()[j].DebugPrint(os, String("weight[") + ValueToString(j) + "]", true, first, last, precision);
+                        for (size_t j = 0; j < layer.Weight().size(); ++j)
+                            layer.Weight()[j].DebugPrint(os, String("weight[") + ValueToString(j) + "]", true, first, last, precision);
                     }
-                    if (printInt8Buffers && _stages[i].layer->Is8i())
+                    if (printInt8Buffers && layer.Is8i())
                     {
-                        if (_stages[i].src[0]->GetType() == TensorType32f)
-                        {
-                            Tensor8u src8u;
-                            src8u.ShareAs(_stages[i].buf[TensorType8u * BUFFER_COUNT + 1]->As8u(), _stages[i].src[0]->Shape(), _stages[i].src[0]->Format());
-                            src8u.DebugPrint(os, String("src"), false, first, last, precision);
-                        }
-                        Tensor32i sum32i;
-                        sum32i.ShareAs(_stages[i].buf[TensorType32i * BUFFER_COUNT + 0]->As32i(), _stages[i].dst[0]->Shape(), _stages[i].dst[0]->Format());
-                        sum32i.DebugPrint(os, String("sum"), false, first, last, precision);
+                        const Tensor& src = *_stages[i].src[0];
+                        if (src.GetType() == TensorType32f)
+                            _stages[i].buf[TensorType8u * BUFFER_COUNT + 1]->As8u().DebugPrint(os, src.Shape(), src.Format(), String("src"), false, first, last, precision);
+                        const Tensor& dst = *_stages[i].dst[0];
+                        _stages[i].buf[TensorType32i * BUFFER_COUNT + 0]->As32i().DebugPrint(os, dst.Shape(), dst.Format(), String("sum"), false, first, last, precision);
                     }
                     if (printLayerInternal)
                     {
-                        _stages[i].layer->DebugPrint(os, flag, first, last, precision);
+                        layer.DebugPrint(os, flag, first, last, precision);
                     }
-                    if ((_stages[i].layer->_isBack && printOutput) || printLayerDst)
+                    if ((layer._isBack && printOutput) || printLayerDst)
                     {
                         for (size_t j = 0; j < _stages[i].dst.size(); ++j)
                             _stages[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]", false, first, last, precision);

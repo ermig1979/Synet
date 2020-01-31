@@ -253,32 +253,42 @@ namespace Synet
         DebugPrintLayerInternal,
     };
 
-    inline void DebugPrint(std::ostream& os, float value, size_t precision)
+    template<class T> void DebugPrint(std::ostream& os, T value, size_t precision)
     {
-        std::stringstream ss;
-        ss << std::fixed << std::setprecision(precision) << value;
-        size_t pad = precision > 5 ? 12 : 8;
-        for (size_t i = ss.str().size(); i < pad; ++i)
-            os << " ";
-        os << ss.str() << "\t";
+        os << (int)value;
     }
 
-    inline void DebugPrint(std::ostream& os, const Floats& src, const String& name, size_t first, size_t last, size_t precision)
+    template<> SYNET_INLINE void DebugPrint(std::ostream& os, float value, size_t precision)
     {
-        os << name << " { " << src.size() << " } 32f" << std::endl << std::fixed << std::setprecision(precision);
-        if (first + last < src.size())
+        os << std::fixed << std::setprecision(precision) << value;
+    }
+
+    template<class T> std::ostream & DebugPrint(std::ostream& os, T value, size_t precision, size_t padding)
+    {
+        std::stringstream ss;
+        DebugPrint(ss, value, precision);
+        for (size_t i = ss.str().size(); i < padding; ++i)
+            os << " ";
+        os << ss.str();
+        return os;
+    }
+
+    template<class T> size_t DebugPrintPadding(const T * data, size_t size, size_t precision)
+    {
+        if (size)
         {
-            for (size_t i = 0; i < first; ++i)
-                DebugPrint(os, src[i], precision);
-            os << "...\t";
-            for (size_t i = src.size() - last; i < src.size(); ++i)
-                DebugPrint(os, src[i], precision);
+            T min = data[0];
+            T max = data[0];
+            for (size_t i = 1; i < size; ++i)
+            {
+                min = std::min(min, data[i]);
+                max = std::max(max, data[i]);
+            }
+            std::stringstream ssMin, ssMax;
+            DebugPrint(ssMin, min, precision);
+            DebugPrint(ssMax, max, precision);
+            return std::max(ssMin.str().size(), ssMax.str().size());
         }
-        else
-        {
-            for (size_t i = 0; i < src.size(); ++i)
-                DebugPrint(os, src[i], precision);
-        }
-        os << std::endl;
+        return 0;
     }
 }
