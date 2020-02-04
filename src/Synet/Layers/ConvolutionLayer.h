@@ -293,7 +293,7 @@ namespace Synet
             statS.Init8u();
             statD.Init8u();
             _negSrc = statS.negative;
-            _weight8i.Reshape(this->Weight()[0].Shape());
+            _weight8i.Reshape(this->Weight()[0].Shape(), _trans ? TensorFormatNhwc : TensorFormatNchw);
             _norm32i.Reshape(Shape({ size_t(2), _conv.dstC }));
             _norm32f.Reshape(Shape({ size_t(2), _conv.dstC }));
             if (!_src8u)
@@ -363,7 +363,7 @@ namespace Synet
                     else
                     {
                         for (size_t c = 0, ck = 0; c < C; ++c)
-                            for (size_t k = 0; k < K; ++k)
+                            for (size_t k = 0; k < K; ++k, ++ck)
                             {
                                 pNormW[ck] = pSrcW[d*CK + ck] / pSrcScale[c];
                                 minW = std::min(minW, pNormW[ck]);
