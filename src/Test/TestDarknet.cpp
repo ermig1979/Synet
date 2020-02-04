@@ -84,14 +84,16 @@ namespace Test
             return _output;
         }
 
-        virtual void DebugPrint(std::ostream & os, int flag, int first, int last)
+        virtual void DebugPrint(std::ostream& os, int flag, int first, int last, int precision)
         {
             if (!flag)
                 return;
-            bool weight = flag & DEBUG_PRINT_WEIGHT, interim = flag & DEBUG_PRINT_INTERIM;
+            bool output = flag & (1 << Synet::DebugPrintOutput);
+            bool weight = flag & (1 << Synet::DebugPrintLayerWeight);
+            bool interim = flag & (1 << Synet::DebugPrintLayerDst);
             for (int i = 0; i < _net->n; ++i)
             {
-                if (interim || i == _net->n - 1)
+                if ((i == _net->n - 1 && output) || interim || weight)
                 {
                     os << "Layer: " << i << " : " << std::endl;
                     const ::layer & l = _net->layers[i];
@@ -99,28 +101,31 @@ namespace Test
                     {
                         Synet::Tensor<float> weight({ (size_t)l.out_c, (size_t)l.c, (size_t)l.size, (size_t)l.size });
                         memcpy(weight.CpuData(), l.weights, weight.Size() * sizeof(float));
-                        weight.DebugPrint(os, String("weight"), true, first, last);
+                        weight.DebugPrint(os, String("weight"), true, first, last, precision);
                         if (l.batch_normalize)
                         {
                             Synet::Tensor<float> mean({ (size_t)l.out_c });
                             memcpy(mean.CpuData(), l.rolling_mean, mean.Size() * sizeof(float));
-                            mean.DebugPrint(os, String("mean"), true, first, last);
+                            mean.DebugPrint(os, String("mean"), true, first, last, precision);
 
                             Synet::Tensor<float> variance({ (size_t)l.out_c });
                             memcpy(variance.CpuData(), l.rolling_variance, variance.Size() * sizeof(float));
-                            variance.DebugPrint(os, String("variance"), true, first, last);
+                            variance.DebugPrint(os, String("variance"), true, first, last, precision);
 
                             Synet::Tensor<float> scale({ (size_t)l.out_c });
                             memcpy(scale.CpuData(), l.scales, scale.Size() * sizeof(float));
-                            scale.DebugPrint(os, String("scale"), true, first, last);
+                            scale.DebugPrint(os, String("scale"), true, first, last, precision);
                         }
                         Synet::Tensor<float> bias({ (size_t)l.out_c });
                         memcpy(bias.CpuData(), l.biases, bias.Size() * sizeof(float));
-                        bias.DebugPrint(os, String("bias"), true, first, last);
+                        bias.DebugPrint(os, String("bias"), true, first, last, precision);
                     }
-                    Synet::Tensor<float> dst({ size_t(1), (size_t)l.out_c, (size_t)l.out_h, (size_t)l.out_w });
-                    memcpy(dst.CpuData(), l.output, dst.Size() * sizeof(float));
-                    dst.DebugPrint(os, String("dst[0]"), false, first, last);
+                    if ((i == _net->n - 1 && output) || interim)
+                    {
+                        Synet::Tensor<float> dst({ size_t(1), (size_t)l.out_c, (size_t)l.out_h, (size_t)l.out_w });
+                        memcpy(dst.CpuData(), l.output, dst.Size() * sizeof(float));
+                        dst.DebugPrint(os, String("dst[0]"), false, first, last, precision);
+                    }
                 }
             }
         }

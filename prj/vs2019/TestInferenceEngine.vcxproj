@@ -15,6 +15,7 @@
     <ClCompile>
       <PreprocessorDefinitions>_CONSOLE;SYNET_SIZE_STATISTIC;SYNET_LAYER_STATISTIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)..\..\3rd\Simd\src;$(SolutionDir)..\..\3rd\dldt\inference-engine\include;$(SolutionDir)..\..\3rd\dldt\inference-engine\src\extension;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -93,65 +93,72 @@ namespace Test
                 InferenceEngine::CNNNetReader reader;
                 reader.ReadNetwork(model);
                 reader.ReadWeights(weight);
-                InferenceEngine::CNNNetwork network = reader.getNetwork();
+                _ieNetwork = reader.getNetwork();
 
-                std::map<std::string, std::string> config;
+                _inputNames.clear();
+                InferenceEngine::InputsDataMap inputsInfo = _ieNetwork.getInputsInfo();
+                for (InferenceEngine::InputsDataMap::iterator it = inputsInfo.begin(); it != inputsInfo.end(); ++it)
+                    _inputNames.push_back(it->first);
+
+                _outputNames.clear();
+                if (param.output().size())
+                {
+                    for (size_t i = 0; i < param.output().size(); ++i)
+                        _outputNames.push_back(param.output()[i].name());
+                }
+                else
+                {
+                    InferenceEngine::OutputsDataMap outputsInfo = _ieNetwork.getOutputsInfo();
+                    for (InferenceEngine::OutputsDataMap::iterator it = outputsInfo.begin(); it != outputsInfo.end(); ++it)
+                        _outputNames.push_back(it->first);
+                }
+
+                _interimNames.clear();
+                if (options.debugPrint & (1 << Synet::DebugPrintLayerDst))
+                    AddInterimOutput();
+
+                //_ieNetwork.serialize("ie_orig.xml");
+
+                StringMap config;
                 config[InferenceEngine::PluginConfigParams::KEY_CPU_THREADS_NUM] = std::to_string(options.workThreads);
                 _batchSize = 1;
                 if (options.batchSize > 1)
                 {
                     try
                     {
-                        network.setBatchSize(options.batchSize);
+                        _ieNetwork.setBatchSize(options.batchSize);
                         config[InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED] = InferenceEngine::PluginConfigParams::YES;
-                        InferenceEngine::ExecutableNetwork executableNet = _iePlugin.LoadNetwork(network, config);
-                        _ieInferRequest = executableNet.CreateInferRequest();
+                        _ieExecutableNetwork = _iePlugin.LoadNetwork(_ieNetwork, config);
+                        _ieInferRequest = _ieExecutableNetwork.CreateInferRequest();
                         _ieInferRequest.SetBatch(options.batchSize);
                     }
                     catch (std::exception & e)
                     {
                         std::cout << "Inference Engine init trouble: '" << e.what() << "', try to emulate batch > 1." << std::endl;
                         _batchSize = options.batchSize;
-                        network.setBatchSize(1);
+                        _ieNetwork.setBatchSize(1);
                         config.erase(InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED);
-                        InferenceEngine::ExecutableNetwork executableNet = _iePlugin.LoadNetwork(network, config);
-                        _ieInferRequest = executableNet.CreateInferRequest();
+                        _ieExecutableNetwork = _iePlugin.LoadNetwork(_ieNetwork, config);
+                        _ieInferRequest = _ieExecutableNetwork.CreateInferRequest();
                     }
                 }
                 else
                 {
-                    InferenceEngine::ExecutableNetwork executableNet = _iePlugin.LoadNetwork(network, config);
-                    _ieInferRequest = executableNet.CreateInferRequest();
+                    _ieExecutableNetwork = _iePlugin.LoadNetwork(_ieNetwork, config);
+                    _ieInferRequest = _ieExecutableNetwork.CreateInferRequest();
                 }
 
                 _ieInput.clear();
-                InferenceEngine::InputsDataMap inputsInfo = network.getInputsInfo();
-                for (InferenceEngine::InputsDataMap::iterator it = inputsInfo.begin(); it != inputsInfo.end(); ++it)
-                {
-                    auto inputName = it->first;
-                    it->second->setPrecision(InferenceEngine::Precision::FP32);
-                    _ieInput.push_back(_ieInferRequest.GetBlob(inputName));
-                }
+                for (size_t i = 0; i < _inputNames.size(); ++i)
+                    _ieInput.push_back(_ieInferRequest.GetBlob(_inputNames[i]));
 
-                _outputNames.clear();
                 _ieOutput.clear();
-                if (param.output().size())
-                {
-                    for (size_t i = 0; i < param.output().size(); ++i)
-                    {
-                        _outputNames.push_back(param.output()[i].name());
-                        _ieOutput.push_back(_ieInferRequest.GetBlob(_outputNames[i]));
-                    }
-                }
-                else
-                {
-                    InferenceEngine::OutputsDataMap outputsInfo = network.getOutputsInfo();
-                    for (InferenceEngine::OutputsDataMap::iterator it = outputsInfo.begin(); it != outputsInfo.end(); ++it)
-                    {
-                        _outputNames.push_back(it->first);
-                        _ieOutput.push_back(_ieInferRequest.GetBlob(it->first));
-                    }
-                }
+                for (size_t i = 0; i < _outputNames.size(); ++i)
+                    _ieOutput.push_back(_ieInferRequest.GetBlob(_outputNames[i]));
+
+                _ieInterim.clear();
+                for (size_t i = 0; i < _interimNames.size(); ++i)
+                    _ieInterim.push_back(_ieInferRequest.GetBlob(_interimNames[i]));
             }
             catch (std::exception & e)
             {
@@ -166,6 +173,8 @@ namespace Test
                 SetInput(stub, 0);
                 _ieInferRequest.Infer();
             }
+
+            //_ieExecutableNetwork.GetExecGraphInfo().serialize("ie_exec_out.xml");
 
             return true;
         }
@@ -196,15 +205,11 @@ namespace Test
 
         virtual void DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
         {
+            for (size_t i = 0; i < _ieInterim.size(); ++i)
+                DebugPrint(os, *_ieInterim[i], _interimNames[i], flag, first, last, precision);
+
             for (size_t o = 0; o < _ieOutput.size(); ++o)
-            {
-                InferenceEngine::SizeVector dims = _ieOutput[o]->getTensorDesc().getDims();
-                const InferenceEngine::SizeVector & strides = _ieOutput[o]->getTensorDesc().getBlockingDesc().getStrides();
-                dims[0] = _batchSize;
-                Synet::Tensor<float> tensor(dims);
-                SetOutput(dims, strides, 0, _ieOutput[o]->buffer(), tensor.CpuData());
-                tensor.DebugPrint(os, _outputNames.empty() ? String("???") : String(_outputNames[o]), false, first, last, precision);
-            }
+                DebugPrint(os, *_ieOutput[o], _outputNames[o], flag, first, last, precision);
         }
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
@@ -229,13 +234,15 @@ namespace Test
 
     private:
         typedef InferenceEngine::SizeVector Sizes;
+        typedef std::map<std::string, std::string> StringMap;
 
         InferenceEngine::InferencePlugin _iePlugin;
+        InferenceEngine::CNNNetwork _ieNetwork;
+        InferenceEngine::ExecutableNetwork _ieExecutableNetwork;
         InferenceEngine::InferRequest _ieInferRequest;
-        std::vector<InferenceEngine::Blob::Ptr> _ieInput;
-        std::vector<InferenceEngine::Blob::Ptr> _ieOutput;
+        std::vector<InferenceEngine::Blob::Ptr> _ieInput, _ieOutput, _ieInterim;
         Vectors _output;
-        Strings _outputNames;
+        Strings _inputNames, _outputNames, _interimNames;
         size_t _batchSize;
 
         void SetInput(const Vectors & x, size_t b)
@@ -302,15 +309,16 @@ namespace Test
                     for (size_t i = 0; i < dims.size(); ++i)
                         size *= dims[i];
                     _output[o].resize(size*_batchSize);
-                    SetOutput(dims, strides, 0, _ieOutput[o]->buffer(), _output[o].data() + b * size);
+                    const float * pOut = _ieOutput[o]->buffer();
+                    SetOutput(dims, strides, 0, pOut, _output[o].data() + b * size);
                 }
             }
         }
 
-        void SetOutput(const Sizes & dims, const Sizes & strides, size_t current, const float * src, float * dst)
+        template<class T> void SetOutput(const Sizes & dims, const Sizes & strides, size_t current, const T * src, T * dst)
         {
             if (current == dims.size() - 1)
-                memcpy(dst, src, dims[current] * sizeof(float));
+                memcpy(dst, src, dims[current] * sizeof(T));
             else
             {
                 size_t srcStride = strides[current];
@@ -320,6 +328,80 @@ namespace Test
                 for(size_t i = 0; i < dims[current]; ++i)
                     SetOutput(dims, strides, current + 1, src + i * srcStride, dst + i * dstStride);
             }
+        }
+
+        void AddInterimOutput()
+        {
+            StringMap config, interim;
+            InferenceEngine::ExecutableNetwork exec = _iePlugin.LoadNetwork(_ieNetwork, config);
+            InferenceEngine::CNNNetwork net = exec.GetExecGraphInfo();
+            //net.serialize("ie_exec_tmp.xml");
+            for (InferenceEngine::details::CNNNetworkIterator it = net.begin(); it != net.end(); ++it)
+            {
+                const InferenceEngine::CNNLayer& layer = **it;
+                StringMap::const_iterator names = layer.params.find("originalLayersNames");
+                StringMap::const_iterator order = layer.params.find("execOrder");
+                if (names != layer.params.end() && names->second.size() && order != layer.params.end())
+                {
+                    String name = Synet::Separate(names->second, ",").back();
+                    bool unique = true;
+                    for (size_t o = 0; unique && o < _outputNames.size(); ++o)
+                        if (_outputNames[o] == name)
+                            unique = false;
+                    if(unique)
+                        interim[order->second] = name;
+                }
+            }
+            for (StringMap::const_iterator it = interim.begin(); it != interim.end(); ++it)
+            {
+                String name = it->second;
+                _ieNetwork.addOutput(name);
+                _interimNames.push_back(name);
+            }
+        }
+
+        void DebugPrint(std::ostream& os, InferenceEngine::Blob & blob, const String & name, int flag, int first, int last, int precision)
+        {
+            os << "Layer: " << name << " : " << GetLayerType(name) << std::endl;
+            Sizes dims = blob.getTensorDesc().getDims();
+            const Sizes & strides = blob.getTensorDesc().getBlockingDesc().getStrides();
+            Synet::TensorFormat format = Synet::TensorFormatUnknown;
+            if (blob.getTensorDesc().getLayout() == InferenceEngine::Layout::NHWC)
+                format = Synet::TensorFormatNhwc;
+            dims[0] = _batchSize;
+            switch (blob.getTensorDesc().getPrecision())
+            {
+            case InferenceEngine::Precision::FP32:
+            {
+                Synet::Tensor<float> tensor(dims, format);
+                const float* pOut = blob.buffer();
+                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
+                break;
+            }
+            case InferenceEngine::Precision::U8:
+            {
+                Synet::Tensor<uint8_t> tensor(dims, format);
+                const uint8_t* pOut = blob.buffer();
+                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
+                break;
+            }
+            default:
+                std::cout << "Can't debug print for layer '" << name << "' , unknown precision: " << blob.getTensorDesc().getPrecision() << std::endl;
+                break;
+            }
+        }
+
+        String GetLayerType(const String& name)
+        {
+            for (InferenceEngine::details::CNNNetworkIterator it = _ieNetwork.begin(); it != _ieNetwork.end(); ++it)
+            {
+                const InferenceEngine::CNNLayer& layer = **it;
+                if (layer.name == name)
+                    return layer.type;
+            }
+            return String();
         }
     };
 }

@@ -129,6 +129,7 @@ namespace Test
             if (Load(model, weight))
             {
                 _trans = _net.Format() == Synet::TensorFormatNhwc;
+                _sort = param.output().empty();
                 if (param.input().size() || param.output().size())
                 {
                     if (!Reshape(param, options.batchSize))
@@ -181,7 +182,7 @@ namespace Test
     private:
         typedef Synet::Network<float> Net;
         Net _net;
-        bool _trans;
+        bool _trans, _sort;
         Floats _lower, _upper;
 
         bool Load(const String & model, const String & weight)
@@ -274,14 +275,23 @@ namespace Test
 
         void SetOutput()
         {
-            typedef std::map<String, Net::Tensor*> Dst;
-            Dst dst;
-            for (size_t i = 0; i < _net.Dst().size(); ++i)
-                dst[_net.Dst()[i]->Name()] = _net.Dst()[i];
-            _output.resize(dst.size());
-            size_t i = 0;
-            for (Dst::const_iterator it = dst.begin(); it != dst.end(); ++it, ++i)
-                SetOutput(*it->second, *_net.Back()[i], _output[i]);
+            if (_sort)
+            {
+                typedef std::map<String, Net::Tensor*> Dst;
+                Dst dst;
+                for (size_t i = 0; i < _net.Dst().size(); ++i)
+                    dst[_net.Dst()[i]->Name()] = _net.Dst()[i];
+                _output.resize(dst.size());
+                size_t i = 0;
+                for (Dst::const_iterator it = dst.begin(); it != dst.end(); ++it, ++i)
+                    SetOutput(*it->second, *_net.Back()[i], _output[i]);
+            }
+            else
+            {
+                _output.resize(_net.Dst().size());
+                for (size_t i = 0; i < _net.Dst().size(); ++i)
+                    SetOutput(*_net.Dst()[i], *_net.Back()[i], _output[i]);
+            }
         }
 
         void SetOutput(const Net::Tensor & src, const Net::Layer & back, Vector & dst)

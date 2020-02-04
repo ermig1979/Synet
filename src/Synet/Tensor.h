@@ -366,7 +366,7 @@ namespace Synet
             _name = tensor._name;
             _shape = shape;
             _format = format;
-            assert(Size(0, _shape.size()) == _buffer->size);
+            assert(Size(0, _shape.size()) <= _buffer->size);
         }
 
         SYNET_INLINE void ShareAs(const Type * data, size_t size, const Synet::Shape & shape, const TensorFormat & format = TensorFormatUnknown)
@@ -375,7 +375,7 @@ namespace Synet
             _shape = shape;
             _format = format;
             _buffer->Share(data, size);
-            assert(Size(0, _shape.size()) == _buffer->size);
+            assert(Size(0, _shape.size()) <= _buffer->size);
         }
 
         SYNET_INLINE void Clone(const Tensor & tensor)
@@ -440,57 +440,12 @@ namespace Synet
 
         void DebugPrint(std::ostream & os, const String & name, bool weight = false, size_t first = 5, size_t last = 2, size_t precision = 4) const
         {
-            if (_shape.size() == 4 && _format == TensorFormatNhwc)
-            {
-                if (weight)
-                {
-                    Tensor trans({ _shape[3], _shape[2], _shape[0], _shape[1] }, 0, TensorFormatNchw);
-                    for (size_t y = 0; y < Axis(0); ++y)
-                        for (size_t x = 0; x < Axis(1); ++x)
-                            for (size_t i = 0; i < Axis(2); ++i)
-                                for (size_t o = 0; o < Axis(3); ++o)
-                                    trans.CpuData({ o, i, y, x })[0] = CpuData({ y, x, i, o })[0];
-                    std::stringstream ss;
-                    ss << name << " { ";
-                    for (size_t i = 0; i < _shape.size(); ++i)
-                        ss << _shape[i] << " ";
-                    ss << "} HWIO -> ";
-                    trans.DebugPrint(os, ss.str(), weight, first, last, precision);
-                }
-                else
-                {
-                    Tensor trans({ _shape[0], _shape[3], _shape[1], _shape[2] }, 0, TensorFormatNchw);
-                    for (size_t n = 0; n < Axis(0); ++n)
-                        for (size_t c = 0; c < Axis(3); ++c)
-                            for (size_t y = 0; y < Axis(1); ++y)
-                                for (size_t x = 0; x < Axis(2); ++x)
-                                    trans.CpuData({ n, c, y, x })[0] = CpuData({ n, y, x, c })[0];
-                    std::stringstream ss;
-                    ss << name << " { ";
-                    for (size_t i = 0; i < _shape.size(); ++i)
-                        ss << _shape[i] << " ";
-                    ss << "} NHWC -> ";
-                    trans.DebugPrint(os, ss.str(), weight, first, last, precision);
-                }
-                return;
-            }
-            os << name << " { ";
-            for (size_t i = 0; i < _shape.size(); ++i)
-                os << _shape[i] << " ";
-            os << "} ";
-            if(weight)
-                os << (_format == TensorFormatNchw && _shape.size() == 4 ? "OIHW " : (_format == TensorFormatNhwc && _shape.size() == 4 ? "HWIO " : ""));
-            else
-                os << (_format == TensorFormatNchw ? "NCHW " : (_format == TensorFormatNhwc ? "NHWC " : ""));
-            if (_buffer->data == NULL)
-                return;
-            os << ValueToString(_type) << std::endl;
             switch (_type)
             {
-            case TensorType32f: DebugPrint(os, As32f(), first, last, precision); break;
-            case TensorType32i: DebugPrint(os, As32i(), first, last, precision); break;
-            case TensorType8i: DebugPrint(os, As8i(), first, last, precision); break;
-            case TensorType8u: DebugPrint(os, As8u(), first, last, precision); break;
+            case TensorType32f: DebugPrint(os, As32f(), name, weight, first, last, precision); break;
+            case TensorType32i: DebugPrint(os, As32i(), name, weight, first, last, precision); break;
+            case TensorType8i: DebugPrint(os, As8i(), name, weight, first, last, precision); break;
+            case TensorType8u: DebugPrint(os, As8u(), name, weight, first, last, precision); break;
             }        
         }
 
@@ -504,8 +459,56 @@ namespace Synet
 
     private:
 
-        template <class U> static void DebugPrint(std::ostream& os, const Tensor<U> & tensor, size_t first, size_t last, size_t precision)
+        template <class U> static void DebugPrint(std::ostream& os, const Tensor<U> & tensor, const String& name, bool weight, size_t first, size_t last, size_t precision)
         {
+            const Synet::Shape& shape = tensor.Shape();
+            TensorFormat format = tensor.Format();
+            if (shape.size() == 4 && format == TensorFormatNhwc)
+            {
+                if (weight)
+                {
+                    Tensor<U> trans({ shape[3], shape[2], shape[0], shape[1] }, 0, TensorFormatNchw);
+                    for (size_t y = 0; y < shape[0]; ++y)
+                        for (size_t x = 0; x < shape[1]; ++x)
+                            for (size_t i = 0; i < shape[2]; ++i)
+                                for (size_t o = 0; o < shape[3]; ++o)
+                                    trans.CpuData({ o, i, y, x })[0] = tensor.CpuData({ y, x, i, o })[0];
+                    std::stringstream ss;
+                    ss << name << " { ";
+                    for (size_t i = 0; i < shape.size(); ++i)
+                        ss << shape[i] << " ";
+                    ss << "} HWIO -> ";
+                    trans.DebugPrint(os, ss.str(), weight, first, last, precision);
+                }
+                else
+                {
+                    Tensor<U> trans({ shape[0], shape[3], shape[1], shape[2] }, 0, TensorFormatNchw);
+                    for (size_t n = 0; n < shape[0]; ++n)
+                        for (size_t c = 0; c < shape[3]; ++c)
+                            for (size_t y = 0; y < shape[1]; ++y)
+                                for (size_t x = 0; x < shape[2]; ++x)
+                                    trans.CpuData({ n, c, y, x })[0] = tensor.CpuData({ n, y, x, c })[0];
+                    std::stringstream ss;
+                    ss << name << " { ";
+                    for (size_t i = 0; i < shape.size(); ++i)
+                        ss << shape[i] << " ";
+                    ss << "} NHWC -> ";
+                    trans.DebugPrint(os, ss.str(), weight, first, last, precision);
+                }
+                return;
+            }
+            os << name << " { ";
+            for (size_t i = 0; i < shape.size(); ++i)
+                os << shape[i] << " ";
+            os << "} ";
+            if (weight)
+                os << (format == TensorFormatNchw && shape.size() == 4 ? "OIHW " : (format == TensorFormatNhwc && shape.size() == 4 ? "HWIO " : ""));
+            else
+                os << (format == TensorFormatNchw ? "NCHW " : (format == TensorFormatNhwc ? "NHWC " : ""));
+            if (tensor.CpuData() == NULL)
+                return;
+            os << ValueToString(tensor.GetType()) << std::endl;
+
             size_t n = tensor.Count();
             Synet::Shape firsts(n), lasts(n), index(n, 0);
             Strings separators(n);
