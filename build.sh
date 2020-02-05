@@ -10,5 +10,13 @@ fi
 cd $BUILD_DIR
 
 cmake ../prj/cmake -DMODE=$TEST_MODE -DSIMD_AVX512=1 -DBLIS=0 -DPERF_STAT=3
-make -j8 
+if [ $? -ne 0 ]
+then
+  exit
+fi
 
+make -j8 
+if [ $? -ne 0 ]
+then
+  exit
+fi

@@ -257,7 +257,7 @@ namespace Synet
     template<> SYNET_INLINE String ValueToString<float>(const float & value)
     {
         std::stringstream ss;
-        ss << std::setprecision(std::numeric_limits<float>::digits10 + 3);
+        ss << std::fixed << std::setprecision(std::numeric_limits<float>::digits10);
         ss << value;
         return ss.str();
     }
