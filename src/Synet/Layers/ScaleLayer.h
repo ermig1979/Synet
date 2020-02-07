@@ -32,49 +32,60 @@ namespace Synet
 {
     namespace Detail
     {
-        template <typename T> void ScaleLayerForwardCpu(const T * src, const T * scale, const T * bias, size_t count, size_t size, T * dst, int trans)
+        template <typename T> void ScaleLayerForwardCpu(const T * src, const T * scale, const T * bias, size_t channels, size_t height, size_t width, T * dst, int trans, int compatible)
         {
             if (trans)
             {
                 if (bias)
                 {
-                    for (size_t j = 0; j < size; ++j)
+                    for (size_t h = 0; h < height; ++h)
                     {
-                        for (size_t i = 0; i < count; ++i)
-                            dst[i] = src[i] * scale[i] + bias[i];
-                        src += count;
-                        dst += count;
+                        for (size_t w = 0; w < width; ++w)
+                        {
+                            for (size_t c = 0; c < channels; ++c)
+                                dst[c] = src[c] * scale[c] + bias[c];
+                            src += channels;
+                            dst += channels;
+                        }
                     }
                 }
                 else
                 {
-                    for (size_t j = 0; j < size; ++j)
+                    for (size_t h = 0; h < height; ++h)
                     {
-                        for (size_t i = 0; i < count; ++i)
-                            dst[i] = src[i] * scale[i];
-                        src += count;
-                        dst += count;
+                        for (size_t w = 0; w < width; ++w)
+                        {
+                            for (size_t c = 0; c < channels; ++c)
+                                dst[c] = src[c] * scale[c];
+                            src += channels;
+                            dst += channels;
+                        }
                     }
                 }
             }
             else
             {
-                for (size_t i = 0; i < count; ++i)
+                for (size_t c = 0; c < channels; ++c)
                 {
-                    const T s = scale[i];
-                    const T b = bias ? bias[i] : 0;
-                    for (size_t j = 0; j < size; ++j)
-                        dst[j] = src[j] * s + b;
-                    src += size;
-                    dst += size;
+                    const T s = scale[c];
+                    const T b = bias ? bias[c] : 0;
+                    for (size_t h = 0; h < height; ++h)
+                    {
+                        for (size_t w = 0; w < width; ++w)
+                        {
+                            dst[w] = src[w] * s + b;
+                        }
+                        src += width;
+                        dst += width;
+                    }
                 }
             }
         }
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-        template <> SYNET_INLINE void ScaleLayerForwardCpu<float>(const float * src, const float * scale, const float * bias, size_t count, size_t size, float * dst, int trans)
+        template <> SYNET_INLINE void ScaleLayerForwardCpu<float>(const float * src, const float * scale, const float * bias, size_t channels, size_t height, size_t width, float* dst, int trans, int compatible)
         {
-            ::SimdSynetScaleLayerForward(src, scale, bias, count, size, dst, (::SimdTensorFormatType)trans);
+            ::SimdSynetScaleLayerForward(src, scale, bias, channels, height, width, dst, (::SimdTensorFormatType)trans, (::SimdBool)compatible);
         }
 #endif
     }
@@ -105,22 +116,33 @@ namespace Synet
                 assert(this->Weight()[0].Shape() == this->Weight()[1].Shape());
             }
             const Tensor & scale = this->Weight()[0];
-            _count = scale.Size();
+            _channels = scale.Size();
             _trans = src[0]->Format() == TensorFormatNhwc;
             if (scale.Size() == src[0]->Size())
             {
-                _num = 1;
-                _size = 1;
+                _batch = 1;
+                _height = 1;
+                _width = 1;
             }
             else
             {
-                _num = src[0]->Size(0, _axis);
-                _size = src[0]->Size() / _num / _count;
+                _batch = src[0]->Size(0, _axis);
+                if (src[0]->Count() < 4)
+                {
+                    _height = 1;
+                    _width = src[0]->Size() / _batch / _channels;
+                }
+                else
+                {
+                    _height = _trans ? src[0]->Axis(1) : src[0]->Axis(2);
+                    _width = _trans ? src[0]->Axis(2) : src[0]->Axis(3);
+                }
             }
-            assert(src[0]->Size() == _num*_count*_size);
+            assert(src[0]->Size() == _batch*_channels*_height*_width);
             if (src[0] != dst[0])
                 dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
             this->UsePerfStat();
+            _compatible = 1;
         }
 
     protected:
@@ -130,17 +152,17 @@ namespace Synet
             const Type * pScale = this->Weight()[0].CpuData();
             const Type * pBias = _biasTerm ? this->Weight()[1].CpuData() : NULL;
             Type * pDst = dst[0]->CpuData();
-            for (size_t n = 0; n < _num; ++n)
+            for (size_t b = 0; b < _batch; ++b)
             {
-                Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _count, _size, pDst, _trans);
-                pSrc += _count*_size;
-                pDst += _count*_size;
+                Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _channels, _height, _width, pDst, _trans, _compatible);
+                pSrc += _channels * _height * _width;
+                pDst += _channels * _height * _width;
             }
         }
 
     private:
-        size_t _axis, _num, _count, _size;
-        int _trans;
+        size_t _axis, _batch, _channels, _height, _width;
+        int _trans, _compatible;
         bool _biasTerm;
     };
 }

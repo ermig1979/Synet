@@ -113,11 +113,7 @@ namespace Test
                         _outputNames.push_back(it->first);
                 }
 
-                _interimNames.clear();
-                if (options.debugPrint & (1 << Synet::DebugPrintLayerDst))
-                    AddInterimOutput();
-
-                //_ieNetwork.serialize("ie_orig.xml");
+                AddInterimOutput(options);
 
                 StringMap config;
                 config[InferenceEngine::PluginConfigParams::KEY_CPU_THREADS_NUM] = std::to_string(options.workThreads);
@@ -174,7 +170,8 @@ namespace Test
                 _ieInferRequest.Infer();
             }
 
-            //_ieExecutableNetwork.GetExecGraphInfo().serialize("ie_exec_out.xml");
+            if(options.debugPrint & (1 << Synet::DebugPrintLayerDst))
+                _ieExecutableNetwork.GetExecGraphInfo().serialize(MakePath(options.outputDirectory, "ie_exec_outs.xml"));
 
             return true;
         }
@@ -330,12 +327,16 @@ namespace Test
             }
         }
 
-        void AddInterimOutput()
+        void AddInterimOutput(const Options& options)
         {
+            _interimNames.clear();
+            if ((options.debugPrint & (1 << Synet::DebugPrintLayerDst)) == 0)
+                return;
+
             StringMap config, interim;
             InferenceEngine::ExecutableNetwork exec = _iePlugin.LoadNetwork(_ieNetwork, config);
             InferenceEngine::CNNNetwork net = exec.GetExecGraphInfo();
-            //net.serialize("ie_exec_tmp.xml");
+            net.serialize(MakePath(options.outputDirectory, "ie_exec_orig.xml"));
             for (InferenceEngine::details::CNNNetworkIterator it = net.begin(); it != net.end(); ++it)
             {
                 const InferenceEngine::CNNLayer& layer = **it;
@@ -383,6 +384,14 @@ namespace Test
             {
                 Synet::Tensor<uint8_t> tensor(dims, format);
                 const uint8_t* pOut = blob.buffer();
+                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
+                break;
+            }
+            case InferenceEngine::Precision::I8:
+            {
+                Synet::Tensor<int8_t> tensor(dims, format);
+                const int8_t* pOut = blob.buffer();
                 SetOutput(dims, strides, 0, pOut, tensor.CpuData());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;

@@ -467,7 +467,7 @@ namespace Synet
                         for (size_t g = 0; g < _conv.group; ++g)
                             Synet::CpuGemmNN(_siD, _siS, _siW, weight + _grW * g, _ldW, tmp + _grS * g, _ldS, dst + _grD * g, _ldD);
                 }
-                Detail::ScaleLayerForwardCpu(dst, scale, shift, _conv.dstC, _conv.dstH*_conv.dstW, dst, _trans);
+                Detail::ScaleLayerForwardCpu(dst, scale, shift, _conv.dstC, _conv.dstH, _conv.dstW, dst, _trans, 1);
 
                 switch (_conv.activation)
                 {

@@ -56,7 +56,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            Detail::ScaleLayerForwardCpu(src[0]->CpuData(), &_scale, &_shift, 1, src[0]->Size(), dst[0]->CpuData(), 0);
+            Detail::ScaleLayerForwardCpu(src[0]->CpuData(), &_scale, &_shift, 1, 1, src[0]->Size(), dst[0]->CpuData(), 0, 0);
         }
 
     private:

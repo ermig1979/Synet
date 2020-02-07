@@ -34,6 +34,8 @@ namespace Synet
         inline uint8_t Convert32fTo8u(float value, float scale, float shift)
         {
 #if 1
+            return (uint8_t)std::min(std::max(0, Synet::Quantize(double(value) * double(scale) + double(shift))), 255);
+#elif 1
             return (uint8_t)std::min(std::max(0, Synet::Quantize(value * scale + shift)), 255);
 #else
             if (shift != 0)
@@ -76,7 +78,11 @@ namespace Synet
 
         inline int8_t Convert32fTo8i(float value, float scale, float shift)
         {
+#if 1
+            return (int8_t)std::min(std::max(-128, Synet::Quantize(double(value) * double(scale) + double(shift))), 127);
+#else
             return (int8_t)std::min(std::max(-128, Synet::Quantize(value * scale + shift)), 127);
+#endif
         }
 
         //---------------------------------------------------------------------
@@ -114,7 +120,11 @@ namespace Synet
 
         inline float Convert32iTo32f(int32_t value, float scale, float shift)
         {
+#if 1
+            return double(value) * double(scale) + double(shift);
+#else
             return value * scale + shift;
+#endif
         }
 
         inline void Convert32iTo32fNchw(const int32_t * src, size_t channels, size_t spatial, const float * scale, const float * shift, float * dst)
@@ -145,7 +155,11 @@ namespace Synet
 
         inline float Convert8uTo32f(uint8_t value, float scale, float shift)
         {
+#if 1
+            return double(value) * double(scale) + double(shift);
+#else
             return value * scale + shift;
+#endif
         }
 
         inline void Convert8uTo32fNchw(const uint8_t * src, size_t channels, size_t spatial, const float * scale, const float * shift, float * dst)
