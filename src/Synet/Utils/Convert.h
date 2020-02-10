@@ -27,13 +27,15 @@
 #include "Synet/Utils/Math.h"
 #include "Synet/Params.h"
 
+//#define SYNET_CVT_DOUBLE
+
 namespace Synet
 {
     namespace Detail
     {
         inline uint8_t Convert32fTo8u(float value, float scale, float shift)
         {
-#if 1
+#ifdef SYNET_CVT_DOUBLE
             return (uint8_t)std::min(std::max(0, Synet::Quantize(double(value) * double(scale) + double(shift))), 255);
 #elif 1
             return (uint8_t)std::min(std::max(0, Synet::Quantize(value * scale + shift)), 255);
@@ -78,7 +80,7 @@ namespace Synet
 
         inline int8_t Convert32fTo8i(float value, float scale, float shift)
         {
-#if 1
+#ifdef SYNET_CVT_DOUBLE
             return (int8_t)std::min(std::max(-128, Synet::Quantize(double(value) * double(scale) + double(shift))), 127);
 #else
             return (int8_t)std::min(std::max(-128, Synet::Quantize(value * scale + shift)), 127);
@@ -120,7 +122,7 @@ namespace Synet
 
         inline float Convert32iTo32f(int32_t value, float scale, float shift)
         {
-#if 1
+#ifdef SYNET_CVT_DOUBLE
             return double(value) * double(scale) + double(shift);
 #else
             return value * scale + shift;
@@ -155,7 +157,7 @@ namespace Synet
 
         inline float Convert8uTo32f(uint8_t value, float scale, float shift)
         {
-#if 1
+#ifdef SYNET_CVT_DOUBLE
             return double(value) * double(scale) + double(shift);
 #else
             return value * scale + shift;

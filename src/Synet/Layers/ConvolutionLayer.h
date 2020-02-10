@@ -351,7 +351,7 @@ namespace Synet
                                     pDstW[kc*GD + d] = w / 2;
                                     normB -= w * pSrcShift[c];
 #else
-                                    pDstW[k*G*D + d] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
+                                    pDstW[kc*GD + d] = Detail::Convert32fTo8i(pNormW[kc], scale, 0.0f);
 #endif
                                 }
                                 else
@@ -381,7 +381,7 @@ namespace Synet
                                     pDstW[d*CK + ck] = w / 2;
                                     normB -= w * pSrcShift[c];
 #else
-                                    pDstW[d*K + k] = Detail::Convert32fTo8i(pNormW[k], scale, 0.0f);
+                                    pDstW[d*CK + ck] = Detail::Convert32fTo8i(pNormW[ck], scale, 0.0f);
 #endif
                                 }
                                 else
@@ -408,6 +408,8 @@ namespace Synet
                         pNormScale[d] = 1.0f / scale;
                         pNormShift[d] = 0;
                     }
+                    //if(g*D + d == 3)
+                    //    std::cout << std::fixed << std::setprecision(12) << (double)std::max(abs(maxW), abs(minW)) << " " << scale << " ; Synet" << std::endl;
                 }
                 if (_trans)
                 {

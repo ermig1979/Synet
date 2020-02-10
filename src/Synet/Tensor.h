@@ -28,6 +28,7 @@
 #include "Synet/Params.h"
 #include "Synet/Buffer.h"
 #include "Synet/Utils/Math.h"
+#include "Synet/Utils/DebugPrint.h"
 
 namespace Synet
 {
@@ -438,7 +439,7 @@ namespace Synet
             _buffer->Capture();
         }
 
-        void DebugPrint(std::ostream & os, const String & name, bool weight = false, size_t first = 5, size_t last = 2, size_t precision = 4) const
+        void DebugPrint(std::ostream & os, const String & name, bool weight, size_t first, size_t last, size_t precision) const
         {
             switch (_type)
             {
@@ -450,7 +451,7 @@ namespace Synet
         }
 
         void DebugPrint(std::ostream& os, const Synet::Shape& shape, const TensorFormat& format, const String& name, 
-            bool weight = false, size_t first = 5, size_t last = 2, size_t precision = 4) const
+            bool weight, size_t first, size_t last, size_t precision) const
         {
             Tensor<T> tensor;
             tensor.ShareAs(*this, shape, format);
@@ -474,10 +475,10 @@ namespace Synet
                                 for (size_t o = 0; o < shape[3]; ++o)
                                     trans.CpuData({ o, i, y, x })[0] = tensor.CpuData({ y, x, i, o })[0];
                     std::stringstream ss;
-                    ss << name << " { ";
+                    ss << name << " HWIO { ";
                     for (size_t i = 0; i < shape.size(); ++i)
                         ss << shape[i] << " ";
-                    ss << "} HWIO -> ";
+                    ss << "} -> ";
                     trans.DebugPrint(os, ss.str(), weight, first, last, precision);
                 }
                 else
@@ -489,80 +490,20 @@ namespace Synet
                                 for (size_t x = 0; x < shape[2]; ++x)
                                     trans.CpuData({ n, c, y, x })[0] = tensor.CpuData({ n, y, x, c })[0];
                     std::stringstream ss;
-                    ss << name << " { ";
+                    ss << name << " NHWC { ";
                     for (size_t i = 0; i < shape.size(); ++i)
                         ss << shape[i] << " ";
-                    ss << "} NHWC -> ";
+                    ss << "} -> ";
                     trans.DebugPrint(os, ss.str(), weight, first, last, precision);
                 }
                 return;
             }
-            os << name << " { ";
-            for (size_t i = 0; i < shape.size(); ++i)
-                os << shape[i] << " ";
-            os << "} ";
+            os << name;
             if (weight)
-                os << (format == TensorFormatNchw && shape.size() == 4 ? "OIHW " : (format == TensorFormatNhwc && shape.size() == 4 ? "HWIO " : ""));
+                os << (format == TensorFormatNchw && shape.size() == 4 ? " OIHW" : (format == TensorFormatNhwc && shape.size() == 4 ? " HWIO" : ""));
             else
-                os << (format == TensorFormatNchw ? "NCHW " : (format == TensorFormatNhwc ? "NHWC " : ""));
-            if (tensor.CpuData() == NULL)
-                return;
-            os << ValueToString(tensor.GetType()) << std::endl;
-
-            size_t n = tensor.Count();
-            Synet::Shape firsts(n), lasts(n), index(n, 0);
-            Strings separators(n);
-            for (ptrdiff_t i = n - 1; i >= 0; --i)
-            {
-                if (i == n - 1)
-                {
-                    firsts[i] = first;
-                    lasts[i] = last;
-                    separators[i] = "\t";
-                }
-                else
-                {
-                    firsts[i] = std::max<size_t>(firsts[i + 1] - 1, 1);
-                    lasts[i] = std::max<size_t>(lasts[i + 1] - 1, 1);
-                    separators[i] = separators[i + 1] + "\n";
-                }
-            }
-            DebugPrint(os, tensor, firsts, lasts, separators, index, 0, precision, DebugPrintPadding(tensor.CpuData(), tensor.Size(), precision));
-            if (n == 1 || n == 0)
-                os << "\n";
-        }
-
-        template <class U> static void DebugPrint(std::ostream & os, const Tensor<U> & tensor, 
-            const Synet::Shape & firsts, const Synet::Shape & lasts, const Strings & separators, Synet::Shape index, size_t order, size_t precision, size_t padding)
-        {
-            if (order == tensor.Count())
-            {
-                Synet::DebugPrint(os, tensor.CpuData(index)[0], precision, padding);
-                return;
-            }
-            if (firsts[order] + lasts[order] < tensor.Axis(order))
-            {
-                size_t lo = firsts[order], hi = tensor.Axis(order) - lasts[order];
-                for (index[order] = 0; index[order] < lo; ++index[order])
-                {
-                    DebugPrint(os, tensor, firsts, lasts, separators, index, order + 1, precision, padding);
-                    os << separators[order];
-                }
-                os << "..." << separators[order];
-                for (index[order] = hi; index[order] < tensor.Axis(order); ++index[order])
-                {
-                    DebugPrint(os, tensor, firsts, lasts, separators, index, order + 1, precision, padding);
-                    os << separators[order];
-                }
-            }
-            else
-            {
-                for (index[order] = 0; index[order] < tensor.Axis(order); ++index[order])
-                {
-                    DebugPrint(os, tensor, firsts, lasts, separators, index, order + 1, precision, padding);
-                    os << separators[order];
-                }
-            }  
+                os << (format == TensorFormatNchw ? " NCHW" : (format == TensorFormatNhwc ? " NHWC" : ""));
+            Synet::DebugPrint(os, tensor.CpuData(), tensor.Shape(), String(), first, last, precision);
         }
 
         SYNET_INLINE void Resize(const Type & value)
@@ -603,13 +544,6 @@ namespace Synet
         Synet::Shape _shape;
         BufferPtr _buffer;
     };
-
-    template<class T> void DebugPrint(std::ostream& os, const std::vector<T>& src, const String& name, size_t first, size_t last, size_t precision)
-    {
-        Tensor<T> tensor;
-        tensor.ShareAs(src.data(), src.size(), Shape({ src.size() }));
-        tensor.DebugPrint(os, name, false, first, last, precision);
-    }
 
     typedef Tensor<Unknown> TensorAny;
     typedef Tensor<float> Tensor32f;

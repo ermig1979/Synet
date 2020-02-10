@@ -42,7 +42,8 @@
 #define SYNET_INT8_SAFE_ZERO 1
 #define SYNET_INT8_INT16_OWERFLOW
 #define SYNET_INT8_IE_COMPATIBLE 1
-#define SYNET_INT8_INT8_DISABLE
+//#define SYNET_INT8_INT8_DISABLE
+#define SYNET_INT8_INPUT_ROUND_BUGFIX
 
 #include <stddef.h>
 #include <assert.h>
@@ -252,43 +253,4 @@ namespace Synet
         DebugPrintInt8Buffers,
         DebugPrintLayerInternal,
     };
-
-    template<class T> void DebugPrint(std::ostream& os, T value, size_t precision)
-    {
-        os << (int)value;
-    }
-
-    template<> SYNET_INLINE void DebugPrint(std::ostream& os, float value, size_t precision)
-    {
-        os << std::fixed << std::setprecision(precision) << value;
-    }
-
-    template<class T> std::ostream & DebugPrint(std::ostream& os, T value, size_t precision, size_t padding)
-    {
-        std::stringstream ss;
-        DebugPrint(ss, value, precision);
-        for (size_t i = ss.str().size(); i < padding; ++i)
-            os << " ";
-        os << ss.str();
-        return os;
-    }
-
-    template<class T> size_t DebugPrintPadding(const T * data, size_t size, size_t precision)
-    {
-        if (size)
-        {
-            T min = data[0];
-            T max = data[0];
-            for (size_t i = 1; i < size; ++i)
-            {
-                min = std::min(min, data[i]);
-                max = std::max(max, data[i]);
-            }
-            std::stringstream ssMin, ssMax;
-            DebugPrint(ssMin, min, precision);
-            DebugPrint(ssMax, max, precision);
-            return std::max(ssMin.str().size(), ssMax.str().size());
-        }
-        return 0;
-    }
 }
