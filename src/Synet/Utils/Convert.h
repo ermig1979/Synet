@@ -91,7 +91,11 @@ namespace Synet
 
         inline uint8_t Convert32iTo8u(int32_t value, float scale, float shift)
         {
+#ifdef SYNET_CVT_DOUBLE
+            return (uint8_t)std::min(std::max(0, Synet::Quantize(double(value) * double(scale) + double(shift))), 255);
+#else
             return (uint8_t)std::min(std::max(0, Synet::Quantize(value * scale + shift)), 255);
+#endif
         }
 
         inline void Convert32iTo8uNchw(const int32_t * src, size_t channels, size_t spatial, const float * scale, const float * shift, uint8_t * dst)

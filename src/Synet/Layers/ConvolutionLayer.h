@@ -192,6 +192,7 @@ namespace Synet
         virtual void DebugPrint(std::ostream& os, int flag, int first, int last, int precision)
         {
             const Stat& statS = *this->Stats(0)[0];
+            Synet::DebugPrint(os, statS.scale8uTo32f, "pSrcScaleInv", first, last, precision);
             Synet::DebugPrint(os, statS.scale32fTo8u, "pSrcScale", first, last, precision);
             Synet::DebugPrint(os, statS.shift32fTo8u, "pSrcShift", first, last, precision);
             const Stat& statD = *this->Stats(2)[0];
@@ -199,7 +200,12 @@ namespace Synet
             Synet::DebugPrint(os, statD.shift8uTo32f, "pDstShift", first, last, precision);
             _weight8i.DebugPrint(os, "_weight8i", true, first, last, precision);
             _norm32i.DebugPrint(os, "_norm32i", false, first, last, precision);
-            _norm32f.DebugPrint(os, "_norm32f", false, first, last, precision);
+            Synet::DebugPrint(os, _dstCvt.scale, _dstCvt.channels, "_dstCvt.scale", first, last, precision);
+            Synet::DebugPrint(os, _dstCvt.shift, _dstCvt.channels, "_dstCvt.shift", first, last, precision);
+
+            Synet::DebugPrint(_weight8i.CpuData(), Shape({ _weight8i.Size() }), "sy_weight8i");
+            Synet::DebugPrint(_norm32i.CpuData(Shape{ 1u, 0u }), Shape({ _norm32i.Size()/2 }), "sy_norm32i");
+
         }
 
     protected:
@@ -309,9 +315,11 @@ namespace Synet
             Floats normW(CK);
             const float * pSrcW = this->Weight()[0].CpuData();
             const float * pSrcB = _biasTerm ? this->Weight()[1].CpuData() : NULL;
+            const float * pSrcScaleInv = statS.scale8uTo32f.data();
             const float * pSrcScale = statS.scale32fTo8u.data();
             const float * pSrcShift = statS.shift32fTo8u.data();
             const float * pDstScale = statD.scale8uTo32f.data();
+            const float * pDstScaleInv = statD.scale32fTo8u.data();
             const float * pDstShift = statD.shift8uTo32f.data();
             float * pNormW = normW.data();
             int8_t * pDstW = _weight8i.CpuData();
@@ -335,7 +343,11 @@ namespace Synet
                         for (size_t k = 0, kc = 0; k < K; ++k)
                             for (size_t c = 0; c < C; ++c, ++kc)
                             {
-                                pNormW[kc] = pSrcW[kc*GD + d] / pSrcScale[c];
+#ifdef SYNET_INT8_INPUT_ROUND_BUGFIX
+                                pNormW[kc] = pSrcW[kc * GD + d] * pSrcScaleInv[c];
+#else
+                                pNormW[kc] = pSrcW[kc * GD + d] / pSrcScale[c];
+#endif
                                 minW = std::min(minW, pNormW[kc]);
                                 maxW = std::max(maxW, pNormW[kc]);
                             }
@@ -365,7 +377,11 @@ namespace Synet
                         for (size_t c = 0, ck = 0; c < C; ++c)
                             for (size_t k = 0; k < K; ++k, ++ck)
                             {
-                                pNormW[ck] = pSrcW[d*CK + ck] / pSrcScale[c];
+#ifdef SYNET_INT8_INPUT_ROUND_BUGFIX
+                                pNormW[ck] = pSrcW[d * CK + ck] * pSrcScaleInv[c];
+#else
+                                pNormW[ck] = pSrcW[d * CK + ck] / pSrcScale[c];
+#endif
                                 minW = std::min(minW, pNormW[ck]);
                                 maxW = std::max(maxW, pNormW[ck]);
                             }
@@ -400,7 +416,7 @@ namespace Synet
                     pDstB[d] = Synet::Quantize(normB);
                     if (_dst8u)
                     {
-                        pNormScale[d] = 1.0f / pDstScale[d] / scale;
+                        pNormScale[d] = (1.0f / scale) * pDstScaleInv[d];
                         pNormShift[d] = -pDstShift[d] / pDstScale[d];
                     }
                     else
@@ -408,8 +424,8 @@ namespace Synet
                         pNormScale[d] = 1.0f / scale;
                         pNormShift[d] = 0;
                     }
-                    //if(g*D + d == 3)
-                    //    std::cout << std::fixed << std::setprecision(12) << (double)std::max(abs(maxW), abs(minW)) << " " << scale << " ; Synet" << std::endl;
+                    //if (g * D + d == 3)
+                    //    std::cout << std::fixed << std::setprecision(10) << " Synet : " << scale << " , " << pDstScaleInv[d] << " , " << pDstScale[d] << std::endl;
                 }
                 if (_trans)
                 {

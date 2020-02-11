@@ -161,4 +161,19 @@ namespace Synet
     {
         DebugPrint(os, vector.data(), Shape({ vector.size() }), name, first, last, precision);
     }
+
+    template<class T> inline void DebugPrint(const T* data, const Shape& shape, const std::string& name, size_t first = 999, size_t last = 999, size_t precision = 8)
+    {
+        std::stringstream ss;
+        ss << name;
+        for (size_t i = 0; i < shape.size(); ++i)
+            ss << "_" << shape[i];
+        ss << ".txt";
+        std::ofstream ofs(ss.str().c_str());
+        if (ofs.is_open())
+        {
+            DebugPrint(ofs, data, shape, name, first, last, precision);
+            ofs.close();
+        }
+    }
 }
