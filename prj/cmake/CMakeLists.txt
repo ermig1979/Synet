@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.7)
 
 option(SIMD "Use Simd Library" ON)
 option(SIMD_AVX512 "Use AVX-512" OFF)
