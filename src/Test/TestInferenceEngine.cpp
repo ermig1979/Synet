@@ -84,6 +84,9 @@ namespace Test
         {
             TEST_PERF_FUNC();
 
+            ::setenv("OMP_NUM_THREADS", std::to_string(options.workThreads).c_str(), 1);
+            ::setenv("OMP_WAIT_POLICY", "PASSIVE", 1);
+
             _regionThreshold = options.regionThreshold;
             try
             {
@@ -345,12 +348,18 @@ namespace Test
                 if (names != layer.params.end() && names->second.size() && order != layer.params.end())
                 {
                     String name = Synet::Separate(names->second, ",").back();
+
                     bool unique = true;
                     for (size_t o = 0; unique && o < _outputNames.size(); ++o)
                         if (_outputNames[o] == name)
                             unique = false;
-                    if(unique)
-                        interim[order->second] = name;
+                    if (unique)
+                    {
+                        String number = order->second;
+                        while (number.size() < 6)
+                            number = String("0") + number;
+                        interim[number] = name;
+                    }
                 }
             }
             for (StringMap::const_iterator it = interim.begin(); it != interim.end(); ++it)

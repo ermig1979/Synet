@@ -126,7 +126,7 @@ namespace Synet
                         invScale = 1.0f;
                     zero8u[i] = (negative ? 128 : 0);
 #ifdef SYNET_INT8_INPUT_ROUND_BUGFIX
-                    scale32fTo8u[i] = 1.0 / invScale;
+                    scale32fTo8u[i] = float(1.0 / invScale);
 #else
                     scale32fTo8u[i] = (negative ? 127.0f : 255.0f) / absMax; 
 #endif

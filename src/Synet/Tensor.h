@@ -319,6 +319,16 @@ namespace Synet
             return offset;
         }
 
+        SYNET_INLINE uint8_t* RawCpuData()
+        {
+            return (uint8_t*)_buffer->data;
+        }
+
+        SYNET_INLINE const uint8_t * RawCpuData() const
+        {
+            return (const uint8_t*)_buffer->data;
+        }
+
         SYNET_INLINE Type * CpuData()
         {
             assert(_type == Detail::GetTensorType<Type>());
@@ -453,9 +463,12 @@ namespace Synet
         void DebugPrint(std::ostream& os, const Synet::Shape& shape, const TensorFormat& format, const String& name, 
             bool weight, size_t first, size_t last, size_t precision) const
         {
-            Tensor<T> tensor;
-            tensor.ShareAs(*this, shape, format);
-            tensor.DebugPrint(os, name, weight, first, last, precision);
+            if (_buffer->size)
+            {
+                Tensor<T> tensor;
+                tensor.ShareAs(*this, shape, format);
+                tensor.DebugPrint(os, name, weight, first, last, precision);
+            }
         }
 
     private:

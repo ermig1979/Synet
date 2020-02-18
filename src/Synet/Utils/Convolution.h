@@ -28,46 +28,78 @@
 
 namespace Synet
 {
-    template <class T>  class Convolution32f
+    class Convolution32f
     {
     public:
         Convolution32f()
             : _context(NULL)
             , _batch(0)
+            , _srcH(0)
+            , _srcW(0)
         {
         }
 
         virtual ~Convolution32f()
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdRelease(_context);
+#endif
         }
 
-        typedef void(*Gemm32fNNPtr)(size_t M, size_t N, size_t K, const T * alpha, const T * A, size_t lda, const T * B, size_t ldb, const T * beta, T * C, size_t ldc);
+        typedef void(*Gemm32fNNPtr)(size_t M, size_t N, size_t K, const float* alpha, const float* A, size_t lda, const float* B, size_t ldb, const float* beta, float* C, size_t ldc);
 
-        void Init(size_t batch, const ConvParam * conv, Gemm32fNNPtr gemm)
+        SYNET_INLINE void Init(size_t batch, const ConvParam * conv, Gemm32fNNPtr gemm)
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_batch != batch || _srcH != conv->srcH || _srcW != conv->srcW)
+            {
+                _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
+                if (_context)
+                    ::SimdRelease(_context);
+                _context = ::SimdSynetConvolution32fInit(batch, (const SimdConvolutionParameters*)conv, gemm);
+            }
+#endif
         }
 
-        bool Enable()
+        SYNET_INLINE bool Enable() const
         {
             return _context != NULL;
         }
 
-        size_t ExternalBufferSize() const 
+        SYNET_INLINE size_t ExternalBufferSize() const
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            return _context ? ::SimdSynetConvolution32fExternalBufferSize(_context) : 0;
+#else
             return 1;
+#endif
         }
 
-        size_t InternalBufferSize() const
+        SYNET_INLINE size_t InternalBufferSize() const
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            return _context ? ::SimdSynetConvolution32fInternalBufferSize(_context) : 0;
+#else
+            return 0;
+#endif
             return 0;
         }
 
-        void SetParams(const T * weight, int * internal, const T * bias, const T * params)
+        SYNET_INLINE void SetParams(const float* weight, int* internal, const float* bias, const float* params)
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdSynetConvolution32fSetParams(_context, weight, (::SimdBool*)internal, bias, params);
+#endif
         }
 
-        void Forward(const T * src, T * buf, T * dst)
+        SYNET_INLINE void Forward(const float* src, float* buf, float* dst)
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        if (_context)
+            ::SimdSynetConvolution32fForward(_context, src, buf, dst);
+#endif
         }
 
     private:
@@ -75,44 +107,81 @@ namespace Synet
         size_t _batch, _srcH, _srcW;
     };
 
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-    template<> SYNET_INLINE Convolution32f<float>::~Convolution32f()
-    {
-        if (_context)
-            ::SimdRelease(_context);
-    }
+    //-------------------------------------------------------------------------
 
-    template<> SYNET_INLINE void Convolution32f<float>::Init(size_t batch, const ConvParam * conv, ::SimdGemm32fNNPtr gemm)
+    class Convolution8i
     {
-        if (_batch != batch || _srcH != conv->srcH || _srcW != conv->srcW)
+    public:
+        Convolution8i()
+            : _context(NULL)
+            , _batch(0)
+            , _srcH(0)
+            , _srcW(0)
         {
-            _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
+        }
+
+        virtual ~Convolution8i()
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
             if (_context)
                 ::SimdRelease(_context);
-            _context = ::SimdSynetConvolution32fInit(batch, (const SimdConvolutionParameters *)conv, gemm);
-        }
-    }
-
-    template<> SYNET_INLINE size_t Convolution32f<float>::ExternalBufferSize() const
-    {
-        return _context ? ::SimdSynetConvolution32fExternalBufferSize(_context) : 0;
-    }
-
-    template<> SYNET_INLINE size_t Convolution32f<float>::InternalBufferSize() const
-    {
-        return _context ? ::SimdSynetConvolution32fInternalBufferSize(_context) : 0;
-    }
-
-    template<> SYNET_INLINE void Convolution32f<float>::SetParams(const float * weight, int * internal, const float * bias, const float * params)
-    {
-        if (_context)
-            ::SimdSynetConvolution32fSetParams(_context, weight, (::SimdBool*)internal, bias, params);
-    }
-
-    template<> SYNET_INLINE void Convolution32f<float>::Forward(const float * src, float * buf, float * dst)
-    {
-        if (_context)
-            ::SimdSynetConvolution32fForward(_context, src, buf, dst);
-    }
 #endif
+        }
+
+        SYNET_INLINE void Init(size_t batch, const ConvParam* conv)
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_batch != batch || _srcH != conv->srcH || _srcW != conv->srcW)
+            {
+                _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
+                if (_context)
+                    ::SimdRelease(_context);
+                _context = ::SimdSynetConvolution8iInit(batch, (const SimdConvolutionParameters*)conv);
+            }
+#endif
+        }
+
+        SYNET_INLINE bool Enable() const
+        {
+            return _context != NULL;
+        }
+
+        SYNET_INLINE size_t ExternalBufferSize() const
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            return _context ? ::SimdSynetConvolution8iExternalBufferSize(_context) : 0;
+#else
+            return 1;
+#endif
+        }
+
+        SYNET_INLINE size_t InternalBufferSize() const
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            return _context ? ::SimdSynetConvolution8iInternalBufferSize(_context) : 0;
+#else
+            return 0;
+#endif
+        }
+
+        SYNET_INLINE void SetParams(const float* weight, const float* bias, const float* params, const float* const *stats)
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdSynetConvolution8iSetParams(_context, weight, bias, params, stats);
+#endif
+        }
+
+        SYNET_INLINE void Forward(const uint8_t* src, uint8_t* buf, uint8_t* dst)
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdSynetConvolution8iForward(_context, src, buf, dst);
+#endif
+        }
+
+    private:
+        void * _context;
+        size_t _batch, _srcH, _srcW;
+    };
 }

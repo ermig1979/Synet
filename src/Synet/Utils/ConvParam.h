@@ -87,7 +87,7 @@ namespace Synet
             assert(dstC > 0 && dstC % group == 0);
         }
 
-        template<class T> void Set(const Tensor<T> & src, bool conv)
+        template<class T> void Set(const Tensor<T> & src, const Tensor<T>& dst, bool conv)
         {
             if (src.Format() == TensorFormatNhwc)
             {
@@ -103,6 +103,8 @@ namespace Synet
             }
             srcT = src.GetType();
             srcF = src.Format();
+            dstT = dst.GetType();
+            dstF = dst.Format() == TensorFormatUnknown ? src.Format() : dst.Format();
             SetDst(conv);
         }
 
@@ -113,6 +115,8 @@ namespace Synet
             srcW = src.dstW;
             srcT = src.srcT;
             srcF = src.srcF;
+            dstT = src.dstT;
+            dstF = src.dstF;
             SetDst(conv);
         }
 
@@ -128,8 +132,6 @@ namespace Synet
                 dstH = strideY * (srcH - 1) + dilationY * (kernelY - 1) + 1 - padY - padH;
                 dstW = strideX * (srcW - 1) + dilationX * (kernelX - 1) + 1 - padX - padW;
             }
-            dstT = srcT;
-            dstF = srcF;
         }
 
         bool Is1x1() const

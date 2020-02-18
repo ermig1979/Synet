@@ -54,65 +54,58 @@ namespace Synet
 
         bool MergeLayers(Synet::NetworkParam& network, const Floats& bin, int stage)
         {
-            LayerParams merged;
-            if (!MergeLayers(network.layers(), bin, merged, stage))
-                return false;
-            network.layers() = merged;
-            return true;
-        }
-
-        bool MergeLayers(const LayerParams & src, const Floats & bin, LayerParams & dst, int stage)
-        {
+            const bool is8i = network.statistics().size() > 0;
             Changes changes;
-            for (size_t i = 0; i < src.size(); ++i)
+            LayerParams merged;
+            for (size_t i = 0; i < network.layers().size(); ++i)
             {
                 switch (stage)
                 {
                 case 0:
                 {
-                    if (MergeHswish(src, i, dst, changes))
+                    if (MergeHswish(network.layers(), i, merged, changes))
                         continue;
-                    if (MergePrelu(src, i, bin, dst, changes))
+                    if (MergePrelu(network.layers(), i, bin, merged, changes))
                         continue;
-                    if (MergeShuffle(src, i, dst, changes))
+                    if (MergeShuffle(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeSoftmax(src, i, dst, changes))
+                    if (MergeSoftmax(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeFused0(src, i, dst, changes))
+                    if (MergeFused0(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeFused1(src, i, dst, changes))
+                    if (MergeFused1(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeFused2(src, i, dst, changes))
+                    if (MergeFused2(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeFused3(src, i, dst, changes))
+                    if (MergeFused3(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeFused4(src, i, dst, changes))
+                    if (MergeFused4(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeFused5(src, i, dst, changes))
+                    if (MergeFused5(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeFused6(src, i, dst, changes))
+                    if (MergeFused6(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeFused7(src, i, dst, changes))
+                    if (MergeFused7(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeFused8(src, i, dst, changes))
+                    if (MergeFused8(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeFused9(src, i, dst, changes))
+                    if (MergeFused9(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeFused10(src, i, dst, changes))
+                    if (MergeFused10(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeFused11(src, i, dst, changes))
+                    if (MergeFused11(network.layers(), i, merged, changes))
                         continue;
                     break;
                 }
                 case 1:
                 {
-                    if (MergeConvolutionOrDeconvolutionAndActivation(src, i, dst, changes))
+                    if (MergeConvolutionOrDeconvolutionAndActivation(network.layers(), i, is8i, merged, changes))
                         continue;
                     break;
                 }
                 case 2:
                 {
-                    if (MergeThreeConvolutions(src, i, dst, changes))
+                    if (MergeThreeConvolutions(network.layers(), i, is8i, merged, changes))
                         continue;
                     break;
                 }
@@ -120,9 +113,10 @@ namespace Synet
                     assert(0);
                     return false;
                 }
-                dst.push_back(src[i]);
+                merged.push_back(network.layers()[i]);
             }
-            Rename(changes, dst);
+            Rename(changes, merged);
+            network.layers() = merged;
             return true;
         }
 
@@ -195,7 +189,7 @@ namespace Synet
             return true;
         }
 
-        bool MergeConvolutionOrDeconvolutionAndActivation(const LayerParams & src, size_t index, LayerParams & dst, Changes & changes)
+        bool MergeConvolutionOrDeconvolutionAndActivation(const LayerParams & src, size_t index, bool is8i, LayerParams & dst, Changes & changes)
         {
             if (index == 0)
                 return false;
@@ -215,7 +209,7 @@ namespace Synet
                 }
             }
             bool result = false;
-            if (src[index].type() == LayerTypeRestrictRange)
+            if (src[index].type() == LayerTypeRestrictRange && !is8i)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypeRestrictRange;
                 dst.back().convolution().activationParam0() = src[index].restrictRange().lower();
@@ -228,19 +222,19 @@ namespace Synet
                 dst.back().convolution().activationParam0() = src[index].relu().negativeSlope();
                 result = true;
             }
-            if (src[index].type() == LayerTypePrelu)
+            if (src[index].type() == LayerTypePrelu && !is8i)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypePrelu;
                 dst.back().weight().push_back(src[index].weight()[0]);
                 result = true;
             }
-            if (src[index].type() == LayerTypeElu)
+            if (src[index].type() == LayerTypeElu && !is8i)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypeElu;
                 dst.back().convolution().activationParam0() = src[index].elu().alpha();
                 result = true;
             }
-            if (src[index].type() == LayerTypeHswish)
+            if (src[index].type() == LayerTypeHswish && !is8i)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypeHswish;
                 dst.back().convolution().activationParam0() = src[index].hswish().shift();
@@ -261,9 +255,9 @@ namespace Synet
             return result;
         }
 
-        bool MergeThreeConvolutions(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        bool MergeThreeConvolutions(const LayerParams & src, size_t & index, bool is8i, LayerParams & dst, Changes & changes)
         {
-            if (src.size() < index + 3)
+            if (src.size() < index + 3 || is8i)
                 return false;
             const LayerParam & l0 = src[index + 0];
             const Shape & k0 = l0.convolution().kernel();

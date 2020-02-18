@@ -85,7 +85,7 @@ namespace Synet
             const Tensors & weight = this->Weight();
 
             _conv.Set(param);
-            _conv.Set(*src[0], true);
+            _conv.Set(*src[0], *dst[0], true);
 
             _is1x1 = _conv.Is1x1();
             _biasTerm = param.biasTerm();
@@ -156,20 +156,35 @@ namespace Synet
             {
                 _src8u = src[0]->GetType() == TensorType8u;
                 _dst8u = dst[0]->GetType() == TensorType8u;
-                if (!_src8u)
-                    buf[TensorType8u*BUFFER_COUNT + 1]->As8u().Extend(src[0]->Shape());
-                buf[TensorType8u*BUFFER_COUNT]->As8u().Extend(Shape({ _conv.kernelY * _conv.kernelX * _conv.srcC * _conv.dstH * _conv.dstW }));
-                buf[TensorType32i*BUFFER_COUNT]->As32i().Extend(dstShape, src[0]->Format());
                 if(_dst8u)
                     dst[0]->As8u().Reshape(dstShape, src[0]->Format());
                 else
                     dst[0]->As32f().Reshape(dstShape, src[0]->Format());
-                Init8i();
+                _convolution8i.Init(_num, &_conv);
+                if (_convolution8i.Enable())
+                {
+                    buf[TensorType8u * BUFFER_COUNT]->As8u().Extend({ _convolution8i.ExternalBufferSize() });
+                    const float* bias = _biasTerm ? weight[1].CpuData() : NULL;
+                    const float* params = _conv.activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : _params;
+                    const float* stats[4] = {
+                        this->Stats(0).empty() ? NULL : this->Stats(0)[0]->min.data(),
+                        this->Stats(0).empty() ? NULL : this->Stats(0)[0]->max.data(),
+                        this->Stats(2).empty() ? NULL : this->Stats(2)[0]->min.data(),
+                        this->Stats(2).empty() ? NULL : this->Stats(2)[0]->max.data() };
+                    _convolution8i.SetParams(weight[0].CpuData(), bias, params, stats);
+                }
+                else
+                {
+                    if (!_src8u)
+                        buf[TensorType8u * BUFFER_COUNT + 1]->As8u().Extend(src[0]->Shape());
+                    buf[TensorType8u * BUFFER_COUNT]->As8u().Extend(Shape({ _conv.kernelY * _conv.kernelX * _conv.srcC * _conv.dstH * _conv.dstW }));
+                    buf[TensorType32i * BUFFER_COUNT]->As32i().Extend(dstShape, src[0]->Format());
+                    Init8i();
+                }
             }
             else
             {
                 dst[0]->Reshape(dstShape, src[0]->Format());
-
                 _convolution32f.Init(_num, &_conv, SYNET_EXTERNAL_GEMM);
                 if (_convolution32f.Enable())
                 {
@@ -205,7 +220,6 @@ namespace Synet
 
             Synet::DebugPrint(_weight8i.CpuData(), Shape({ _weight8i.Size() }), "sy_weight8i");
             Synet::DebugPrint(_norm32i.CpuData(Shape{ 1u, 0u }), Shape({ _norm32i.Size()/2 }), "sy_norm32i");
-
         }
 
     protected:
@@ -213,16 +227,21 @@ namespace Synet
         {
             if (_is8i)
             {
-                uint8_t * buf0 = buf[TensorType8u*BUFFER_COUNT]->As8u().CpuData();
-                uint8_t * tmp = _src8u ? src[0]->As8u().CpuData() : buf[TensorType8u*BUFFER_COUNT + 1]->As8u().CpuData();
-                int32_t * sum = buf[TensorType32i*BUFFER_COUNT]->As32i().CpuData();
-                if (!_src8u)
-                    Convert32fTo8u(src[0]->As32f().CpuData(), _srcCvt, tmp);
-                ForwardCpu8i(tmp, buf0, sum);
-                if(_dst8u)
-                    Convert32iTo8u(sum, _dstCvt, dst[0]->As8u().CpuData());
+                if (_convolution8i.Enable())
+                    _convolution8i.Forward(src[0]->RawCpuData(), buf[TensorType8u * BUFFER_COUNT]->RawCpuData(), dst[0]->RawCpuData());
                 else
-                    Convert32iTo32f(sum, _dstCvt, dst[0]->As32f().CpuData());
+                {
+                    uint8_t* buf0 = buf[TensorType8u * BUFFER_COUNT]->As8u().CpuData();
+                    uint8_t* tmp = _src8u ? src[0]->As8u().CpuData() : buf[TensorType8u * BUFFER_COUNT + 1]->As8u().CpuData();
+                    int32_t* sum = buf[TensorType32i * BUFFER_COUNT]->As32i().CpuData();
+                    if (!_src8u)
+                        Convert32fTo8u(src[0]->As32f().CpuData(), _srcCvt, tmp);
+                    ForwardCpu8i(tmp, buf0, sum);
+                    if (_dst8u)
+                        Convert32iTo8u(sum, _dstCvt, dst[0]->As8u().CpuData());
+                    else
+                        Convert32iTo32f(sum, _dstCvt, dst[0]->As32f().CpuData());
+                }
             }
             else
                 ForwardCpu(src[0]->CpuData(), buf[TensorType32f*BUFFER_COUNT]->CpuData(), dst[0]->CpuData());
@@ -472,7 +491,7 @@ namespace Synet
                 {
                     assert(_conv.group == 1 || _conv.group == _conv.srcC);
                     if(_conv.group == 1)
-                        CpuGemmNN(_siS, _siD, _conv.kernelY*_conv.kernelX, _conv.srcC, tmp, _ldS, weight, _ldW, dst, _ldD);
+                        Synet::CpuGemm8iNN(_siS, _siD, _conv.kernelY*_conv.kernelX, _conv.srcC, tmp, _ldS, weight, _ldW, dst, _ldD, _negSrc);
                     else
                         for (size_t g = 0; g < _conv.group; ++g)
                             Synet::CpuGemmNN(_siS, _siD, _siW, tmp + _grS * g, _ldS, weight + _grW * g, _ldW, dst + _grD * g, _ldD);
@@ -480,7 +499,7 @@ namespace Synet
                 else
                 {
                     if (_conv.group == 1)
-                        CpuGemmNN(_siD, _siS, _conv.srcC, _conv.kernelY*_conv.kernelX, weight, _ldW, tmp, _ldS, dst, _ldD);
+                        Synet::CpuGemm8iNN(_siD, _siS, _conv.srcC, _conv.kernelY*_conv.kernelX, weight, _ldW, tmp, _ldS, dst, _ldD, _negSrc);
                     else
                         for (size_t g = 0; g < _conv.group; ++g)
                             Synet::CpuGemmNN(_siD, _siS, _siW, weight + _grW * g, _ldW, tmp + _grS * g, _ldS, dst + _grD * g, _ldD);
@@ -512,123 +531,6 @@ namespace Synet
 
         }
 
-        void CpuGemmNN(size_t S, size_t D, size_t K, size_t C, const uint8_t * src, size_t lda, const int8_t * weight, size_t ldb, int32_t * dst, size_t ldc)
-        {
-#ifdef SYNET_INT8_INT8_DISABLE 
-            const size_t C2 = C / 2 * 2;
-#else
-            const size_t C2 = _negSrc ? 0 : C / 2 * 2;
-#endif
-            for (size_t i = 0; i < S; ++i)
-            {
-                for (size_t j = 0; j < D; ++j)
-                    dst[i*ldc + j] = 0;
-                for (size_t k = 0, o = 0; k < K; k++)
-                {
-                    size_t c = 0;
-                    for (; c < C2; c += 2, o += 2)
-                    {
-                        int32_t s0 = src[i*lda + o + 0];
-                        int32_t s1 = src[i*lda + o + 1];
-                        const int8_t * w0 = weight + (o + 0)*ldb;
-                        const int8_t * w1 = weight + (o + 1)*ldb; 
-                        int32_t * d = dst + i*ldc;
-                        for (size_t j = 0; j < D; ++j)
-                        {
-                            int sum = s0 * w0[j] + s1 * w1[j];
-#if defined(SYNET_INT8_INT16_OWERFLOW)
-                            sum = std::min(std::max(SHRT_MIN, sum), SHRT_MAX);
-#endif
-                            d[j] += sum;
-                        }
-                    }
-                    for (; c < C; ++c, ++o)
-                    {
-                        int32_t s0 = src[i*lda + o];
-                        const int8_t * w0 = weight + o*ldb;
-                        int32_t * d = dst + i*ldc;
-                        if (_negSrc)
-                            for (size_t j = 0; j < D; ++j)
-                            {
-                                int _w0 = w0[j];
-#ifdef SYNET_INT8_INT8_DISABLE
-                                int _s0 = int(s0);
-#else
-                                if (_w0 & 1)
-                                    _w0 = Round(_w0*0.25f) * 4;
-                                int _s0 = int(s0) - 128;                                
-#endif
-                                int dp = _w0*_s0;
-                                d[j] += dp;
-                            }
-                        else
-                            for (size_t j = 0; j < D; ++j)
-                                d[j] += s0 * w0[j];
-                    }
-                }
-            }
-        }
-
-        void CpuGemmNN(size_t D, size_t S, size_t C, size_t K, const int8_t * weight, size_t lda, const uint8_t * src, size_t ldb, int32_t * dst, size_t ldc)
-        {
-#ifdef SYNET_INT8_INT8_DISABLE 
-            const size_t C2 = C / 2 * 2;
-#else
-            const size_t C2 = _negSrc ? 0 : C / 2 * 2;
-#endif
-            for (size_t i = 0; i < D; ++i)
-            {
-                for (size_t j = 0; j < S; ++j)
-                    dst[i*ldc + j] = 0;
-                size_t c = 0;
-                for (; c < C2; c += 2)
-                {
-                    for (size_t k = 0; k < K; k++)
-                    {
-                        int32_t w0 = weight[i*lda + (c + 0)*K + k];
-                        int32_t w1 = weight[i*lda + (c + 1)*K + k];
-                        const uint8_t * s0 = src + ((c + 0)*K + k)*ldb;
-                        const uint8_t * s1 = src + ((c + 1)*K + k)*ldb;
-                        int32_t * d = dst + i*ldc;
-                        for (size_t j = 0; j < S; ++j)
-                        {
-                            int sum = s0[j] * w0 + s1[j] * w1;
-#if defined(SYNET_INT8_INT16_OWERFLOW)
-                            sum = std::min(std::max(SHRT_MIN, sum), SHRT_MAX);
-#endif
-                            d[j] += sum;
-                        }
-                    }
-                }
-                for (; c < C; ++c)
-                {
-                    for (size_t k = 0; k < K; k++)
-                    {
-                        int32_t w0 = weight[i*lda + (c + 0)*K + k];
-                        const uint8_t * s0 = src + ((c + 0)*K + k)*ldb;
-                        int32_t * d = dst + i*ldc;
-                        if(_negSrc)
-                            for (size_t j = 0; j < S; ++j)
-                            {
-                                int _w0 = w0;
-#ifdef SYNET_INT8_INT8_DISABLE
-                                int _s0 = int(s0[j]);
-#else
-                                if(_w0&1)
-                                    _w0 = Round(_w0*0.25f)*4;
-                                int _s0 = int(s0[j]) - 128;
-#endif
-                                int dp = _w0*_s0;
-                                d[j] += dp;
-                            }
-                        else
-                            for (size_t j = 0; j < S; ++j)
-                                d[j] += s0[j] * w0;
-                    }
-                }
-            }
-        }
-
     private:
         bool _is1x1, _biasTerm, _is8i, _src8u, _dst8u, _negSrc;
         ConvertParam _srcCvt, _dstCvt;
@@ -637,7 +539,8 @@ namespace Synet
         size_t _axis, _num, _srcSize, _dstSize, _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
         float _params[2];
 
-        Convolution32f<Type> _convolution32f;
+        Convolution32f _convolution32f;
+        Convolution8i _convolution8i;
 
         Tensor8i _weight8i;
         Tensor32i _norm32i;

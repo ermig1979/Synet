@@ -2,6 +2,17 @@
 set(IE_ROOT_DIR ${ROOT_DIR}/3rd/dldt/inference-engine)
 set(IE_BIN_DIR ${IE_ROOT_DIR}/bin/intel64/Release/lib)
 set(IE_3RD_DIR ${IE_ROOT_DIR}/temp)
+set(IE_THREADING "OMP" CACHE STRING "Set threading mode for IE: TBB / OMP / SEQ")
+
+set(IE_BIN_LIBS ${IE_BIN_DIR}/libinference_engine.so ${IE_BIN_DIR}/libcpu_extension.so ${IE_BIN_DIR}/libMKLDNNPlugin.so)
+if(IE_THREADING STREQUAL "TBB")	
+	list(APPEND IE_BIN_LIBS ${IE_3RD_DIR}/tbb/lib/libtbb.so.2)
+	set(IE_SAMPLES ON)
+elseif(IE_THREADING STREQUAL "OMP")
+	list(APPEND IE_BIN_LIBS ${IE_3RD_DIR}/omp/lib/libiomp5.so)
+	set(IE_SAMPLES OFF)
+endif()
+
 set(IE_BUILD_OPTIONS 
 	-DCMAKE_BUILD_TYPE="Release"
 	-DCMAKE_CXX_FLAGS="-Wno-attributes"
@@ -13,17 +24,16 @@ set(IE_BUILD_OPTIONS
 	-DENABLE_PROFILING_ITT=OFF
 	-DENABLE_CLDNN=OFF
 	-DENABLE_PLUGIN_RPATH=ON
-	-DENABLE_SAMPLES=ON
+	-DENABLE_SAMPLES=${IE_SAMPLES}
 	-DENABLE_SEGMENTATION_TESTS=OFF
 	-DENABLE_OBJECT_DETECTION_TESTS=OFF
-	-DENABLE_OPENCV=ON
+	-DENABLE_OPENCV=${IE_SAMPLES}
 	-DHAVE_CPUID_INFO=OFF
 	-DENABLE_AVX512F=${SIMD_AVX512}
 	-DENABLE_AVX2=ON
 	-DENABLE_SSE42=ON
+	-DTHREADING=${IE_THREADING}
 	)
-	
-set(IE_BIN_LIBS ${IE_BIN_DIR}/libinference_engine.so ${IE_BIN_DIR}/libcpu_extension.so ${IE_BIN_DIR}/libMKLDNNPlugin.so ${IE_3RD_DIR}/tbb/lib/libtbb.so.2)
 
 add_custom_command(
 	OUTPUT ${IE_BIN_LIBS}

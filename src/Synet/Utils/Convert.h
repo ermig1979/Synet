@@ -228,6 +228,16 @@ namespace Synet
         size_t batch, channels, spatial;
         TensorFormat format;
         const float * scale, * shift;
+
+        ConvertParam()
+            : batch(0) 
+            , channels(0) 
+            , spatial(0) 
+            , format(TensorFormatUnknown) 
+            , scale(NULL) 
+            , shift(NULL) 
+        {
+        }
     };
 
     inline void Convert32fTo8u(const float * src, const ConvertParam & p, uint8_t * dst)

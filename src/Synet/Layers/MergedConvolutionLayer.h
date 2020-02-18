@@ -223,7 +223,7 @@ namespace Synet
                 if(i)
                     _conv[i].Set(_conv[i - 1], true);
                 else
-                    _conv[i].Set(*src[0], true);
+                    _conv[i].Set(*src[0], *dst[0], true);
 
                 _index[i] = next++;
                 const Tensor & w = weight[_index[i]];
