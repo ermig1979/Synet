@@ -67,7 +67,9 @@ namespace Synet
                         continue;
                     if (MergePrelu(network.layers(), i, bin, merged, changes))
                         continue;
-                    if (MergeShuffle(network.layers(), i, merged, changes))
+                    if (MergeShuffle0(network.layers(), i, merged, changes))
+                        continue;
+                    if (MergeShuffle1(network.layers(), i, merged, changes))
                         continue;
                     if (MergeSoftmax(network.layers(), i, merged, changes))
                         continue;
@@ -397,7 +399,7 @@ namespace Synet
             return true;
         }
 
-        bool MergeShuffle(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        bool MergeShuffle0(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
         {
             if (src.size() < index + 5)
                 return false;
@@ -419,9 +421,38 @@ namespace Synet
             layer.type() = LayerTypeShuffle;
             layer.name() = src[index + 0].name();
             layer.src() = src[index + 0].src();
+            layer.shuffle().type() = 0;
             layer.dst().push_back(src[index + 4].dst()[0]);
             layer.dst().push_back(src[index + 5].dst()[0]);
             index += 5;
+            dst.push_back(layer);
+            return true;
+        }
+
+        bool MergeShuffle1(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            if (src.size() < index + 4)
+                return false;
+            if (src[index + 0].type() != LayerTypeConcat || src[index + 0].src().size() != 2)
+                return false;
+            if (src[index + 1].type() != LayerTypeReshape || src[index + 1].reshape().shape().size() != 4)
+                return false;
+            if (src[index + 2].type() != LayerTypePermute)
+                return false;
+            if (src[index + 3].type() != LayerTypeReshape || src[index + 3].reshape().shape().size() != 3)
+                return false;
+            if (src[index + 4].type() != LayerTypeUnpack || src[index + 4].dst().size() != 2)
+                return false;
+            if (InsideLink(src, index, 4, 0))
+                return false;
+            LayerParam layer;
+            layer.type() = LayerTypeShuffle;
+            layer.name() = src[index + 0].name();
+            layer.src() = src[index + 0].src();
+            layer.shuffle().type() = 1;
+            layer.dst().push_back(src[index + 4].dst()[0]);
+            layer.dst().push_back(src[index + 4].dst()[1]);
+            index += 4;
             dst.push_back(layer);
             return true;
         }

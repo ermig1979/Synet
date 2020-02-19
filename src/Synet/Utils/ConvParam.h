@@ -103,8 +103,8 @@ namespace Synet
             }
             srcT = src.GetType();
             srcF = src.Format();
-            dstT = dst.GetType();
-            dstF = dst.Format() == TensorFormatUnknown ? src.Format() : dst.Format();
+            dstT = dst.GetType() == TensorTypeUnknown ? srcT : dst.GetType();
+            dstF = dst.Format() == TensorFormatUnknown ? srcF : dst.Format();
             SetDst(conv);
         }
 

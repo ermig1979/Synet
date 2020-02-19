@@ -508,6 +508,11 @@ namespace Synet
         SYNET_PARAM_VALUE(bool, biasTerm, false);
     };
 
+    struct ShuffleParam
+    {
+        SYNET_PARAM_VALUE(int, type, 0);
+    };
+
     struct SliceParam
     {
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
@@ -617,6 +622,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(ReshapeParam, reshape);
         SYNET_PARAM_STRUCT(RestrictRangeParam, restrictRange);
         SYNET_PARAM_STRUCT(ScaleParam, scale);
+        SYNET_PARAM_STRUCT(ShuffleParam, shuffle);
         SYNET_PARAM_STRUCT(SliceParam, slice);
         SYNET_PARAM_STRUCT(SoftmaxParam, softmax);
         SYNET_PARAM_STRUCT(SoftplusParam, softplus);

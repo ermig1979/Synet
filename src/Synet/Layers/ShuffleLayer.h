@@ -31,55 +31,104 @@ namespace Synet
 {
     namespace Detail
     {
-        template <class T> void ShuffleLayerForwardCpu(const T * src0, size_t srcC0, const T * src1, size_t srcC1, size_t spatial, T * dst0, T * dst1, size_t dstC, TensorFormat format)
+        template <class T> void ShuffleLayerForwardCpu(const T * src0, const T * src1, size_t channels0, size_t channels1, size_t spatial, T * dst0, T * dst1, TensorFormat format, int type)
         {
-            if (format == TensorFormatNhwc)
+            size_t channels = (channels0 + channels1) / 2, size = sizeof(T) * spatial;
+            switch (type)
             {
-                for (size_t s = 0; s < spatial; ++s)
+            case 0:
+                if (format == TensorFormatNhwc)
+                {
+                    for (size_t s = 0; s < spatial; ++s)
+                    {
+                        size_t cd = 0;
+                        for (size_t cs = 0; cs < channels0; cs += 2, cd += 1)
+                        {
+                            dst0[cd] = src0[cs + 0];
+                            dst1[cd] = src0[cs + 1];
+                        }
+                        for (size_t cs = 0; cs < channels1; cs += 2, cd += 1)
+                        {
+                            dst0[cd] = src1[cs + 0];
+                            dst1[cd] = src1[cs + 1];
+                        }
+                        src0 += channels0;
+                        src1 += channels1;
+                        dst0 += channels;
+                        dst1 += channels;
+                    }
+                }
+                else
                 {
                     size_t cd = 0;
-                    for (size_t cs = 0; cs < srcC0; cs += 2, cd += 1)
+                    for (size_t cs = 0; cs < channels0; cs += 2, cd += 1)
                     {
-                        dst0[cd] = src0[cs + 0];
-                        dst1[cd] = src0[cs + 1];
+                        memcpy(dst0, src0 + 0 * spatial, size);
+                        memcpy(dst1, src0 + 1 * spatial, size);
+                        src0 += 2 * spatial;
+                        dst0 += spatial;
+                        dst1 += spatial;
                     }
-                    for (size_t cs = 0; cs < srcC1; cs += 2, cd += 1)
+                    for (size_t cs = 0; cs < channels1; cs += 2, cd += 1)
                     {
-                        dst0[cd] = src1[cs + 0];
-                        dst1[cd] = src1[cs + 1];
+                        memcpy(dst0, src1 + 0 * spatial, size);
+                        memcpy(dst1, src1 + 1 * spatial, size);
+                        src1 += 2 * spatial;
+                        dst0 += spatial;
+                        dst1 += spatial;
                     }
-                    src0 += srcC0;
-                    src1 += srcC1;
-                    dst0 += dstC;
-                    dst1 += dstC;
                 }
-            }
-            else
-            {
-                size_t cd = 0;
-                for (size_t cs = 0; cs < srcC0; cs += 2, cd += 1)
+                break;
+            case 1:
+                if (format == TensorFormatNhwc)
                 {
-                    memcpy(dst0, src0 + 0 * spatial, sizeof(T) * spatial);
-                    memcpy(dst1, src0 + 1 * spatial, sizeof(T) * spatial);
-                    src0 += 2 * spatial;
-                    dst0 += spatial;
-                    dst1 += spatial;
+                    for (size_t s = 0; s < spatial; ++s)
+                    {
+                        size_t cs = 0;
+                        for (size_t cd = 0; cd < channels0; cd += 2, cs += 1)
+                        {
+                            dst0[cd + 0] = src0[cs];
+                            dst0[cd + 1] = src1[cs];
+                        }
+                        for (size_t cd = 0; cd < channels1; cd += 2, cs += 1)
+                        {
+                            dst1[cd + 0] = src0[cs];
+                            dst1[cd + 1] = src1[cs];
+                        }
+                        src0 += channels;
+                        src1 += channels;
+                        dst0 += channels0;
+                        dst1 += channels1;
+                    }
                 }
-                for (size_t cs = 0; cs < srcC1; cs += 2, cd += 1)
+                else
                 {
-                    memcpy(dst0, src1 + 0 * spatial, sizeof(T) * spatial);
-                    memcpy(dst1, src1 + 1 * spatial, sizeof(T) * spatial);
-                    src1 += 2 * spatial;
-                    dst0 += spatial;
-                    dst1 += spatial;
+                    size_t cs = 0;
+                    for (size_t cd = 0; cd < channels0; cs += 1, cd += 2)
+                    {
+                        memcpy(dst0 + 0 * spatial, src0, size);
+                        memcpy(dst0 + 1 * spatial, src1, size);
+                        src0 += spatial;
+                        src1 += spatial;
+                        dst0 += 2 * spatial;
+                    }
+                    for (size_t cd = 0; cd < channels1; cs += 1, cd += 2)
+                    {
+                        memcpy(dst1 + 0 * spatial, src0, size);
+                        memcpy(dst1 + 1 * spatial, src1, size);
+                        src0 += spatial;
+                        src1 += spatial;
+                        dst1 += 2 * spatial;
+                    }
                 }
+                break;
             }
         }
 
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-        template <> SYNET_INLINE void ShuffleLayerForwardCpu<float>(const float * src0, size_t srcC0, const float * src1, size_t srcC1, size_t spatial, float * dst0, float * dst1, size_t dstC, TensorFormat format)
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        template <> SYNET_INLINE void ShuffleLayerForwardCpu<float>(const float * src0, const float * src1, size_t channels0, size_t channels1, size_t spatial, float * dst0, float * dst1, TensorFormat format, int type)
         {
-            ::SimdSynetShuffleLayerForward(src0, srcC0, src1, srcC1, spatial, dst0, dst1, dstC, (::SimdTensorFormatType)format);
+            ::SimdSynetShuffleLayerForward(src0, src1, channels0, channels1, spatial, dst0, dst1, (::SimdTensorFormatType)format, type);
         }
 #endif
     }
@@ -105,6 +154,8 @@ namespace Synet
             _batch = srcShape0[0];
             assert(srcShape0[0] == srcShape1[0]);
             Shape dstShape = srcShape0;
+            _type = this->Param().shuffle().type();
+            assert(_type == 0 || _type == 1);
             if (_format == TensorFormatNhwc)
             {
                 _srcC0 = srcShape0[3];
@@ -139,7 +190,7 @@ namespace Synet
             Type * dst1 = dst[1]->CpuData();
             for(size_t b = 0; b < _batch; ++b)
             {
-                Detail::ShuffleLayerForwardCpu(src0, _srcC0, src1, _srcC1, _spatial, dst0, dst1, _dstC, _format);
+                Detail::ShuffleLayerForwardCpu(src0, src1, _srcC0, _srcC1, _spatial, dst0, dst1, _format, _type);
                 src0 += _srcC0*_spatial;
                 src1 += _srcC1*_spatial;
                 dst0 += _dstC*_spatial;
@@ -148,6 +199,7 @@ namespace Synet
         }
     private:
         TensorFormat _format;
+        int _type;
         size_t _batch, _srcC0, _srcC1, _dstC, _spatial;
     };
 }

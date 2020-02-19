@@ -913,7 +913,13 @@ namespace Synet
             if (pOrder == NULL)
                 return false;
             Shape order = ConvertShape(pOrder->Value());
-            if (trans && order.size() == 4)
+            if (trans && order.size() == 5)
+            {
+                Shape nhwcc = Shape({ 0, 3, 4, 1, 2 });
+                Shape ncchw = Shape({ 0, 3, 4, 1, 2 });
+                order = Shape({ ncchw[order[nhwcc[0]]], ncchw[order[nhwcc[1]]], ncchw[order[nhwcc[2]]], ncchw[order[nhwcc[3]]], ncchw[order[nhwcc[4]]] });
+            }
+            else if (trans && order.size() == 4)
             {
                 bool reorderChannels = false;
                 if (pPrevLayer && String(pPrevLayer->FirstAttribute("type")->Value()) == "Reshape")
@@ -1196,7 +1202,15 @@ namespace Synet
                 {
                     Shape input = ConvertInputShape(pLayer);
                     Shape output = ConvertShape(pPort);
-                    if (trans && output.size() == 4 && !PermutedToNchw(layers, false))
+                    if (trans && input.size() == 4 && output.size() == 5)// && !PermutedToNchw(layers, false))
+                    {
+                        output = Shape({ output[0], output[3] , output[4] , output[1], output[2] });
+                    }
+                    if (trans && input.size() == 5 && output.size() == 4)// && !PermutedToNchw(layers, false))
+                    {
+                        output = Shape({ output[0], output[2] , output[3], output[1] });
+                    }
+                    else if (trans && output.size() == 4 && !PermutedToNchw(layers, false))
                     {
                         if (input.size() > 3 && output[1]*output[2] == input[1] && output[3] == input[2]*input[3])
                             output = Shape({ output[0], output[3] , output[1] , output[2] });

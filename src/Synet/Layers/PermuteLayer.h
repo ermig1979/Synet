@@ -52,7 +52,7 @@ namespace Synet
             _permute = false;
             _order = param.order();
             _count = _order.size();
-            assert(_count >= 2 && _count <= 4);
+            assert(_count >= 2 && _count <= 5);
             size_t is = 0, os = 0;
             for (size_t i = 0; i < _order.size(); ++i)
             {
@@ -134,6 +134,26 @@ namespace Synet
                                     size_t srcOffset = i*_srcStride[0] + j*_srcStride[1] + k*_srcStride[2] + l*_srcStride[3];
                                     size_t dstOffset = i*_dstStride[0] + j*_dstStride[1] + k*_dstStride[2] + l*_dstStride[3];
                                     pDst[dstOffset] = pSrc[srcOffset];
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case 5:
+                    for (size_t i = 0; i < _srcShape[0]; ++i)
+                    {
+                        for (size_t j = 0; j < _srcShape[1]; ++j)
+                        {
+                            for (size_t k = 0; k < _srcShape[2]; ++k)
+                            {
+                                for (size_t l = 0; l < _srcShape[3]; ++l)
+                                {
+                                    for (size_t m = 0; m < _srcShape[4]; ++m)
+                                    {
+                                        size_t srcOffset = i*_srcStride[0] + j*_srcStride[1] + k*_srcStride[2] + l*_srcStride[3] + m*_srcStride[4];
+                                        size_t dstOffset = i*_dstStride[0] + j*_dstStride[1] + k*_dstStride[2] + l*_dstStride[3] + m*_dstStride[4];
+                                        pDst[dstOffset] = pSrc[srcOffset];
+                                    }
                                 }
                             }
                         }

@@ -339,7 +339,8 @@ namespace Test
             StringMap config, interim;
             InferenceEngine::ExecutableNetwork exec = _iePlugin.LoadNetwork(_ieNetwork, config);
             InferenceEngine::CNNNetwork net = exec.GetExecGraphInfo();
-            net.serialize(MakePath(options.outputDirectory, "ie_exec_orig.xml"));
+            if (options.debugPrint & (1 << Synet::DebugPrintLayerDst))
+                net.serialize(MakePath(options.outputDirectory, "ie_exec_orig.xml"));
             for (InferenceEngine::details::CNNNetworkIterator it = net.begin(); it != net.end(); ++it)
             {
                 const InferenceEngine::CNNLayer& layer = **it;

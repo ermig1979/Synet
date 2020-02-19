@@ -50,9 +50,9 @@ namespace Test
             PrintStartMessage();
             if (!LoadTestParam())
                 return false;
-            if (!InitNetworks())
-                return false;
             if (!CreateDirectories())
+                return false;
+            if (!InitNetworks())
                 return false;
             if (!CreateTestList())
                 return false;
