@@ -33,9 +33,6 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-#include <ie_blob.h>
-#include <ie_plugin_dispatcher.hpp>
-#include <ext_list.hpp>
 #include <inference_engine.hpp>
 
 namespace Test
@@ -91,7 +88,6 @@ namespace Test
             try
             {
                 _iePlugin = InferenceEngine::PluginDispatcher({ "" }).getPluginByDevice("CPU");
-                _iePlugin.AddExtension(std::make_shared<InferenceEngine::Extensions::Cpu::CpuExtensions>());
 
                 InferenceEngine::CNNNetReader reader;
                 reader.ReadNetwork(model);

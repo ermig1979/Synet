@@ -1,12 +1,12 @@
 
-set(IE_ROOT_DIR ${ROOT_DIR}/3rd/dldt/inference-engine)
+set(IE_ROOT_DIR ${ROOT_DIR}/3rd/dldt)
 set(IE_BIN_DIR ${IE_ROOT_DIR}/bin/intel64/Release/lib)
-set(IE_3RD_DIR ${IE_ROOT_DIR}/temp)
+set(IE_3RD_DIR ${IE_ROOT_DIR}/inference-engine/temp)
 set(IE_THREADING "OMP" CACHE STRING "Set threading mode for IE: TBB / OMP / SEQ")
 
-set(IE_BIN_LIBS ${IE_BIN_DIR}/libinference_engine.so ${IE_BIN_DIR}/libcpu_extension.so ${IE_BIN_DIR}/libMKLDNNPlugin.so)
+set(IE_BIN_LIBS ${IE_BIN_DIR}/libinference_engine.so ${IE_BIN_DIR}/libMKLDNNPlugin.so)
 if(IE_THREADING STREQUAL "TBB")	
-	list(APPEND IE_BIN_LIBS ${IE_3RD_DIR}/tbb/lib/libtbb.so.2)
+	list(APPEND DLDT_BIN_LIBS ${IE_3RD_DIR}/tbb/lib/libtbb.so.2)
 	set(IE_SAMPLES ON)
 elseif(IE_THREADING STREQUAL "OMP")
 	list(APPEND IE_BIN_LIBS ${IE_3RD_DIR}/omp/lib/libiomp5.so)
@@ -17,11 +17,13 @@ set(IE_BUILD_OPTIONS
 	-DCMAKE_BUILD_TYPE="Release"
 	-DCMAKE_CXX_FLAGS="-Wno-attributes"
 	-DTREAT_WARNING_AS_ERROR=OFF
+	-DENABLE_INFERENCE_ENGINE=ON
 	-DENABLE_GNA=OFF
 	-DENABLE_VPU=OFF
 	-DENABLE_MYRIAD=OFF
 	-DENABLE_CPPLINT=OFF
 	-DENABLE_PROFILING_ITT=OFF
+	-DENABLE_NGRAPH=ON
 	-DENABLE_CLDNN=OFF
 	-DENABLE_PLUGIN_RPATH=ON
 	-DENABLE_SAMPLES=${IE_SAMPLES}
@@ -35,17 +37,15 @@ set(IE_BUILD_OPTIONS
 	-DTHREADING=${IE_THREADING}
 	)
 
+file(MAKE_DIRECTORY ${IE_ROOT_DIR}/build)
 add_custom_command(
 	OUTPUT ${IE_BIN_LIBS}
-	COMMAND cmake . ${IE_BUILD_OPTIONS} && make -j8
+	COMMAND cmake .. ${IE_BUILD_OPTIONS} && make -j8
 	POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${IE_BIN_LIBS} ${CMAKE_BINARY_DIR}
-	WORKING_DIRECTORY ${IE_ROOT_DIR})
+	WORKING_DIRECTORY ${IE_ROOT_DIR}/build)
 	
 
 add_custom_target(make_inference_engine DEPENDS ${IE_BIN_LIBS})
 
-include_directories(${IE_ROOT_DIR}/include)
-include_directories(${IE_ROOT_DIR}/src/extension)
-
-#file(COPY ${IE_BIN_LIBS} DESTINATION ${CMAKE_BINARY_DIR})
+include_directories(${IE_ROOT_DIR}/inference-engine/include)
 

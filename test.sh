@@ -45,8 +45,8 @@ fi
 #TEST inference_engine test_000 1000 1 1 1 004a
 #TEST inference_engine test_001 500 1 1 1 005a
 #TEST inference_engine test_002 20 1 1 1 004a
-#TEST inference_engine test_003f 50 1 1 1 003a
-TEST inference_engine test_003i 5 0 1 1 004a
+TEST inference_engine test_003f 50 1 1 1 004a
+#TEST inference_engine test_003i 5 0 1 1 004a
 #TEST inference_engine test_004 200 1 1 1 003a
 #TEST inference_engine test_005 2000 1 1 1 002a
 #TEST inference_engine test_006 100 1 1 1 002a
