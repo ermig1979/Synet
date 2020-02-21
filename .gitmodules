@@ -13,5 +13,5 @@
 [submodule "3rd/dldt"]
 	path = 3rd/dldt
 	url = https://github.com/opencv/dldt.git
-	branch = 2019
+	branch = 2020
 	ignore = dirty
