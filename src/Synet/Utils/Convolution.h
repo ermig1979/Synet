@@ -128,7 +128,7 @@ namespace Synet
 #endif
         }
 
-        SYNET_INLINE void Init(size_t batch, const ConvParam* conv)
+        SYNET_INLINE void Init(size_t batch, const ConvParam* conv, int compatibility)
         {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
             if (_batch != batch || _srcH != conv->srcH || _srcW != conv->srcW)
@@ -136,7 +136,7 @@ namespace Synet
                 _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
                 if (_context)
                     ::SimdRelease(_context);
-                _context = ::SimdSynetConvolution8iInit(batch, (const SimdConvolutionParameters*)conv);
+                _context = ::SimdSynetConvolution8iInit(batch, (const SimdConvolutionParameters*)conv, (::SimdSynetCompatibilityType)compatibility);
             }
 #endif
         }

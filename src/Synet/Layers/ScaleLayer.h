@@ -32,7 +32,7 @@ namespace Synet
 {
     namespace Detail
     {
-        template <typename T> void ScaleLayerForwardCpu(const T * src, const T * scale, const T * bias, size_t channels, size_t height, size_t width, T * dst, int trans, int compatible)
+        template <typename T> void ScaleLayerForwardCpu(const T * src, const T * scale, const T * bias, size_t channels, size_t height, size_t width, T * dst, int trans, int compatibility)
         {
             if (trans)
             {
@@ -83,9 +83,9 @@ namespace Synet
         }
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-        template <> SYNET_INLINE void ScaleLayerForwardCpu<float>(const float * src, const float * scale, const float * bias, size_t channels, size_t height, size_t width, float* dst, int trans, int compatible)
+        template <> SYNET_INLINE void ScaleLayerForwardCpu<float>(const float * src, const float * scale, const float * bias, size_t channels, size_t height, size_t width, float* dst, int trans, int compatibility)
         {
-            ::SimdSynetScaleLayerForward(src, scale, bias, channels, height, width, dst, (::SimdTensorFormatType)trans, (::SimdBool)compatible);
+            ::SimdSynetScaleLayerForward(src, scale, bias, channels, height, width, dst, (::SimdTensorFormatType)trans, (::SimdSynetCompatibilityType)compatibility);
         }
 #endif
     }
@@ -142,7 +142,7 @@ namespace Synet
             if (src[0] != dst[0])
                 dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
             this->UsePerfStat();
-            _compatible = 1;
+            _compatibility = 1;
         }
 
     protected:
@@ -154,7 +154,7 @@ namespace Synet
             Type * pDst = dst[0]->CpuData();
             for (size_t b = 0; b < _batch; ++b)
             {
-                Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _channels, _height, _width, pDst, _trans, _compatible);
+                Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _channels, _height, _width, pDst, _trans, _compatibility);
                 pSrc += _channels * _height * _width;
                 pDst += _channels * _height * _width;
             }
@@ -162,7 +162,7 @@ namespace Synet
 
     private:
         size_t _axis, _batch, _channels, _height, _width;
-        int _trans, _compatible;
+        int _trans, _compatibility;
         bool _biasTerm;
     };
 }
