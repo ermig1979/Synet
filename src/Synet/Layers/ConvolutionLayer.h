@@ -160,7 +160,7 @@ namespace Synet
                     dst[0]->As8u().Reshape(dstShape, src[0]->Format());
                 else
                     dst[0]->As32f().Reshape(dstShape, src[0]->Format());
-                _convolution8i.Init(_num, &_conv, 5);
+                _convolution8i.Init(_num, &_conv);
                 if (_convolution8i.Enable())
                 {
                     buf[TensorType8u * BUFFER_COUNT]->As8u().Extend({ _convolution8i.ExternalBufferSize() });

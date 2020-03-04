@@ -4,7 +4,7 @@ set(IE_BIN_DIR ${IE_ROOT_DIR}/bin/intel64/Release/lib)
 set(IE_3RD_DIR ${IE_ROOT_DIR}/inference-engine/temp)
 set(IE_THREADING "OMP" CACHE STRING "Set threading mode for IE: TBB / OMP / SEQ")
 
-set(IE_BIN_LIBS ${IE_BIN_DIR}/libinference_engine.so ${IE_BIN_DIR}/libMKLDNNPlugin.so)
+set(IE_BIN_LIBS ${IE_BIN_DIR}/libinference_engine.so ${IE_BIN_DIR}/libMKLDNNPlugin.so ${IE_BIN_DIR}/libngraph.so)
 if(IE_THREADING STREQUAL "TBB")	
 	list(APPEND DLDT_BIN_LIBS ${IE_3RD_DIR}/tbb/lib/libtbb.so.2)
 	set(IE_SAMPLES ON)

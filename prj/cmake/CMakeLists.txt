@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.7)
 
 option(SIMD "Use Simd Library" ON)
-option(SIMD_AVX512 "Use AVX-512" OFF)
+option(SIMD_AVX512 "Use AVX-512F and AVX512BW" OFF)
+option(SIMD_AVX512VNNI "Use AVX-512VNNI" OFF)
 option(BLIS "Use Blis" OFF)
 option(PERF_STAT "Performance statistic level: 0 - no statistic, 1 - Synet layer statistic, 2 - Synet size statistic, 3 - Simd internal statistic" 0)
 

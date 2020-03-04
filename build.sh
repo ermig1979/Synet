@@ -9,7 +9,7 @@ fi
 
 cd $BUILD_DIR
 
-cmake ../prj/cmake -DMODE=$TEST_MODE -DSIMD_AVX512=1 -DBLIS=0 -DPERF_STAT=3
+cmake ../prj/cmake -DMODE=$TEST_MODE -DTOOLCHAIN="g++-8" -DSIMD_AVX512=1 -DSIMD_AVX512VNNI=1 -DBLIS=0 -DPERF_STAT=0
 if [ $? -ne 0 ]
 then
   exit
