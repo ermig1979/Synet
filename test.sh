@@ -34,7 +34,7 @@ if [ $? -ne 0 ];then
   exit
 fi
 
-./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=compare -e=3 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -dp=0 -dpf=6 -dpl=2 -dpp=8 -ar=1 -rt=0.3 -ln=$LOG
+./build_"$FRAMEWORK"/test_"$FRAMEWORK" -m=compare -e=1 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -dp=0 -dpf=6 -dpl=2 -dpp=8 -ar=0 -rt=0.3 -ln=$LOG
 if [ $? -ne 0 ];then
   echo "Test $DIR is failed!"
   exit

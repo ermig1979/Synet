@@ -33,9 +33,9 @@ namespace Synet
     namespace Detail
     {
         template <class T> void PoolingForwardCpuMax(const T * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
-            size_t strideY, size_t strideX, size_t padY, size_t padX, T * dst, size_t dstH, size_t dstW, int trans)
+            size_t strideY, size_t strideX, size_t padY, size_t padX, T * dst, size_t dstH, size_t dstW, TensorFormat format)
         {
-            if (trans)
+            if (format == TensorFormatNhwc)
             {
                 for (size_t ph = 0; ph < dstH; ++ph)
                 {
@@ -53,7 +53,7 @@ namespace Synet
                         {
                             for (size_t w = wStart; w < wEnd; ++w)
                             {
-                                const T * pc = src + (h * srcW + w)*channels;
+                                const T* pc = src + (h * srcW + w) * channels;
                                 for (size_t c = 0; c < channels; ++c)
                                     dst[c] = std::max(dst[c], pc[c]);
                             }
@@ -62,7 +62,7 @@ namespace Synet
                     }
                 }
             }
-            else
+            else if (format == TensorFormatNchw)
             {
                 for (size_t c = 0; c < channels; ++c)
                 {
@@ -80,13 +80,15 @@ namespace Synet
                             for (size_t h = hStart; h < hEnd; ++h)
                                 for (size_t w = wStart; w < wEnd; ++w)
                                     max = std::max(max, src[h * srcW + w]);
-                            dst[ph*dstW + pw] = max;
+                            dst[ph * dstW + pw] = max;
                         }
                     }
                     src += srcW * srcH;
                     dst += dstW * dstH;
-                }            
+                }
             }
+            else
+                assert(0);
         }
 
         template <class T> void PoolingForwardCpuAverage(const T * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
@@ -161,9 +163,9 @@ namespace Synet
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
         template <> SYNET_INLINE void PoolingForwardCpuMax<float>(const float * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
-            size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, int trans)
+            size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, TensorFormat format)
         {
-            ::SimdSynetPoolingForwardMax(src, channels, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dst, dstH, dstW, (::SimdBool)trans);
+            ::SimdSynetPoolingForwardMax32f(src, channels, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dst, dstH, dstW, (::SimdTensorFormatType)format);
         }
 
         template <> SYNET_INLINE void PoolingForwardCpuAverage<float>(const float * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
@@ -376,7 +378,7 @@ namespace Synet
                 for (size_t n = 0; n < _num; ++n)
                 {
                     Detail::PoolingForwardCpuMax(src, _channels, _srcH, _srcW, _kernelY, _kernelX, 
-                        _strideY, _strideX, _padY, _padX, dst, _dstH, _dstW, _trans);
+                        _strideY, _strideX, _padY, _padX, dst, _dstH, _dstW, _format);
                     src += _channels*_srcW * _srcH;
                     dst += _channels*_dstW * _dstH;
                 }
