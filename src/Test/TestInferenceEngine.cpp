@@ -87,12 +87,8 @@ namespace Test
             _regionThreshold = options.regionThreshold;
             try
             {
-                _iePlugin = InferenceEngine::PluginDispatcher({ "" }).getPluginByDevice("CPU");
-
-                InferenceEngine::CNNNetReader reader;
-                reader.ReadNetwork(model);
-                reader.ReadWeights(weight);
-                _ieNetwork = reader.getNetwork();
+                _ieCorePtr = std::make_shared<InferenceEngine::Core>();
+                _ieNetwork = _ieCorePtr->ReadNetwork(model, weight);
 
                 _inputNames.clear();
                 InferenceEngine::InputsDataMap inputsInfo = _ieNetwork.getInputsInfo();
@@ -123,7 +119,7 @@ namespace Test
                     {
                         _ieNetwork.setBatchSize(options.batchSize);
                         config[InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED] = InferenceEngine::PluginConfigParams::YES;
-                        _ieExecutableNetwork = _iePlugin.LoadNetwork(_ieNetwork, config);
+                        _ieExecutableNetwork = _ieCorePtr->LoadNetwork(_ieNetwork, _ieDeviceName, config);
                         _ieInferRequest = _ieExecutableNetwork.CreateInferRequest();
                         _ieInferRequest.SetBatch(options.batchSize);
                     }
@@ -133,13 +129,13 @@ namespace Test
                         _batchSize = options.batchSize;
                         _ieNetwork.setBatchSize(1);
                         config.erase(InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED);
-                        _ieExecutableNetwork = _iePlugin.LoadNetwork(_ieNetwork, config);
+                        _ieExecutableNetwork = _ieCorePtr->LoadNetwork(_ieNetwork, _ieDeviceName, config);
                         _ieInferRequest = _ieExecutableNetwork.CreateInferRequest();
                     }
                 }
                 else
                 {
-                    _ieExecutableNetwork = _iePlugin.LoadNetwork(_ieNetwork, config);
+                    _ieExecutableNetwork = _ieCorePtr->LoadNetwork(_ieNetwork, _ieDeviceName, config);
                     _ieInferRequest = _ieExecutableNetwork.CreateInferRequest();
                 }
 
@@ -232,7 +228,8 @@ namespace Test
         typedef InferenceEngine::SizeVector Sizes;
         typedef std::map<std::string, std::string> StringMap;
 
-        InferenceEngine::InferencePlugin _iePlugin;
+        const std::string _ieDeviceName = "CPU";
+        std::shared_ptr<InferenceEngine::Core> _ieCorePtr;
         InferenceEngine::CNNNetwork _ieNetwork;
         InferenceEngine::ExecutableNetwork _ieExecutableNetwork;
         InferenceEngine::InferRequest _ieInferRequest;
@@ -333,7 +330,7 @@ namespace Test
                 return;
 
             StringMap config, interim;
-            InferenceEngine::ExecutableNetwork exec = _iePlugin.LoadNetwork(_ieNetwork, config);
+            InferenceEngine::ExecutableNetwork exec = _ieCorePtr->LoadNetwork(_ieNetwork, _ieDeviceName, config);
             InferenceEngine::CNNNetwork net = exec.GetExecGraphInfo();
             if (options.debugPrint & (1 << Synet::DebugPrintLayerDst))
                 net.serialize(MakePath(options.outputDirectory, "ie_exec_orig.xml"));

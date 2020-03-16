@@ -168,6 +168,12 @@ namespace Synet
             ::SimdSynetPoolingForwardMax32f(src, channels, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dst, dstH, dstW, (::SimdTensorFormatType)format);
         }
 
+        template <> SYNET_INLINE void PoolingForwardCpuMax<uint8_t>(const uint8_t* src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
+            size_t strideY, size_t strideX, size_t padY, size_t padX, uint8_t* dst, size_t dstH, size_t dstW, TensorFormat format)
+        {
+            ::SimdSynetPoolingForwardMax8u(src, channels, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dst, dstH, dstW, (::SimdTensorFormatType)format);
+        }
+
         template <> SYNET_INLINE void PoolingForwardCpuAverage<float>(const float * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
             size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, int excludePad, TensorFormat format)
         {
