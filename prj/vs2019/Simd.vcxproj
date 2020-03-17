@@ -63,10 +63,13 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdAvx512f*.cpp">
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
     </ClCompile>
     <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdAvx512bw*.cpp">
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdAvx512vnni*.cpp">
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
     </ClCompile>
     <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdVmx*.cpp">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">NoExtensions</EnableEnhancedInstructionSet>
