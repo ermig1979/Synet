@@ -47,7 +47,7 @@ fi
 
 #TEST darknet test_000 5 1 1 1 001a
 
-#TEST inference_engine test_000 1000 1 1 1 004a
+TEST inference_engine test_000 1000 1 1 1 005
 #TEST inference_engine test_001 500 1 1 1 005a
 #TEST inference_engine test_002 20 1 1 1 004a
 #TEST inference_engine test_003f 50 1 1 1 004a
