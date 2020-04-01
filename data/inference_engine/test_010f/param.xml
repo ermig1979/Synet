@@ -4,7 +4,7 @@
 	<upper>255</upper>
 	<input>
 		<item>
-			<name>data</name>
+			<name>input.1</name>
 			<shape>
 				<item>
 					<size>1</size>

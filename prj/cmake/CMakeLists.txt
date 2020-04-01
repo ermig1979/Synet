@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.7)
 
+option(SYNET_INFO "Print build information" ON)
 option(SIMD "Use Simd Library" ON)
 option(SIMD_AVX512 "Use AVX-512F and AVX512BW" OFF)
 option(SIMD_AVX512VNNI "Use AVX-512VNNI" OFF)
 option(BLIS "Use Blis" OFF)
-option(PERF_STAT "Performance statistic level: 0 - no statistic, 1 - Synet layer statistic, 2 - Synet size statistic, 3 - Simd internal statistic" 0)
+option(PERF_STAT "Performance statistic level: 0 - no statistic, 1 - Synet layer statistic, 2 - Synet size statistic, 3 - Simd internal statistic" OFF)
 
 
 if(NOT((MODE STREQUAL "inference_engine") OR (MODE STREQUAL "darknet") OR (MODE STREQUAL "use_samples")))
@@ -23,10 +24,13 @@ if(NOT TOOLCHAIN STREQUAL "")
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE CMAKE_CXX_COMPILER_VERSION)
 	string(REGEX REPLACE "\n$" "" CMAKE_CXX_COMPILER_VERSION "${CMAKE_CXX_COMPILER_VERSION}")
 endif()
-message("Build type: ${CMAKE_BUILD_TYPE}")
-message("Toolchain: ${CMAKE_CXX_COMPILER}")
-message("ID: ${CMAKE_CXX_COMPILER_ID}")
-message("Version: ${CMAKE_CXX_COMPILER_VERSION}")
+
+if(SYNET_INFO)
+	message("Build type: ${CMAKE_BUILD_TYPE}")
+	message("Toolchain: ${CMAKE_CXX_COMPILER}")
+	message("ID: ${CMAKE_CXX_COMPILER_ID}")
+	message("Version: ${CMAKE_CXX_COMPILER_VERSION}")
+endif()
 
 include_directories(${ROOT_DIR}/src)
 
@@ -47,7 +51,7 @@ endif()
 
 if(SIMD)
 	option(SIMD_TEST "" OFF)
-	option(PRINT_INFO "" OFF)
+	set(SIMD_INFO ${SYNET_INFO})
 	set(SIMD_LIB "Simd")	
 	set(CHECK_VERSION "0")
 	if(PERF_STAT GREATER_EQUAL 3)
