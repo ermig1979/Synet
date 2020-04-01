@@ -21,7 +21,7 @@ namespace Synet
         template<> inline String TypeID<int32_t>() { return "32i"; }
         template<> inline String TypeID<uint8_t>() { return "8u"; }
         template<> inline String TypeID<int8_t>() { return "8i"; }
-
+        template<> inline String TypeID<int64_t>() { return "64i"; }
 
         template<class T> void DebugPrint(std::ostream& os, T value, size_t precision)
         {

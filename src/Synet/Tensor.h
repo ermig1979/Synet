@@ -44,6 +44,7 @@ namespace Synet
         template <> SYNET_INLINE TensorType GetTensorType<int32_t>() { return TensorType32i; }
         template <> SYNET_INLINE TensorType GetTensorType<int8_t>() { return TensorType8i; }
         template <> SYNET_INLINE TensorType GetTensorType<uint8_t>() { return TensorType8u; }
+        template <> SYNET_INLINE TensorType GetTensorType<int64_t>() { return TensorType64i; }
     }
 
     template<class T> class Tensor
@@ -211,6 +212,18 @@ namespace Synet
         {
             assert(_type == TensorTypeUnknown || _type == TensorType8u);
             return *(const Tensor<uint8_t>*)this;
+        }
+
+        SYNET_INLINE Tensor<int64_t>& As64i()
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType64i);
+            return *(Tensor<int64_t>*)this;
+        }
+
+        SYNET_INLINE const Tensor<int64_t>& As64i() const
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType64i);
+            return *(const Tensor<int64_t>*)this;
         }
 
         SYNET_INLINE TensorType GetType() const
@@ -457,7 +470,8 @@ namespace Synet
             case TensorType32i: DebugPrint(os, As32i(), name, weight, first, last, precision); break;
             case TensorType8i: DebugPrint(os, As8i(), name, weight, first, last, precision); break;
             case TensorType8u: DebugPrint(os, As8u(), name, weight, first, last, precision); break;
-            }        
+            case TensorType64i: DebugPrint(os, As64i(), name, weight, first, last, precision); break;
+            }
         }
 
         void DebugPrint(std::ostream& os, const Synet::Shape& shape, const TensorFormat& format, const String& name, 
@@ -563,4 +577,5 @@ namespace Synet
     typedef Tensor<int32_t> Tensor32i;
     typedef Tensor<int8_t> Tensor8i;
     typedef Tensor<uint8_t> Tensor8u;
+    typedef Tensor<int64_t> Tensor64i;
 }

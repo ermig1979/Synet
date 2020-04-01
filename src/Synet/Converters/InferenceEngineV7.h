@@ -106,7 +106,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Reshape" && !ConvertReshapeLayer(pLayer, trans, layer, dstXml.layers()))
                     return ErrorMessage(pLayer);
-                if (type == "ScaleShift" && !ConvertScaleShiftLayer(pLayer, srcBin, trans, layer, dstBin))
+                if (type == "ScaleShift" && !ConvertScaleShiftLayer(pLayer, srcBin, layer, dstBin))
                     return ErrorMessage(pLayer);
                 if (type == "SoftMax" && !ConvertSoftmaxLayer(pLayer, trans, layer))
                     return ErrorMessage(pLayer);
@@ -121,11 +121,16 @@ namespace Synet
                 if (type == "Unsqueeze" && !ConvertUnsqueezeLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
 
+#if 1
                 if (layer.type() == LayerTypeUnknown)
                     return ErrorMessage(pLayer);
-
-                //NotImplemented(pLayer, layer);
-                //std::cout << "Add layer " << layer.name() << std::endl;
+#else
+                if (layer.type() == LayerTypeUnknown)
+                {
+                    NotImplemented(pLayer, layer);
+                    std::cout << "Not implemented layer : name = " << layer.name() << " ; type = " << type << std::endl;
+                }
+#endif
 
                 dstXml.layers().push_back(layer);
                 _layers[layer.name()] = layer;
@@ -983,7 +988,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertScaleShiftLayer(const XmlNode * pLayer, const Vector & srcBin, bool trans, LayerParam & layer, Vector & dstBin)
+        bool ConvertScaleShiftLayer(const XmlNode * pLayer, const Vector & srcBin, LayerParam & layer, Vector & dstBin)
         {
             layer.type() = Synet::LayerTypeScale;
             size_t channels;

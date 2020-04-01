@@ -187,7 +187,8 @@ namespace Synet
         TensorType32f,
         TensorType32i,
         TensorType8i,
-        TensorType8u);
+        TensorType8u,
+        TensorType64i);
 
     SYNET_PARAM_ENUM(UnaryOperationType,
         UnaryOperationTypeAbs,
@@ -213,6 +214,7 @@ namespace Synet
     struct WeightParam
     {
         SYNET_PARAM_VALUE(Shape, dim, Shape());
+        SYNET_PARAM_VALUE(TensorType, type, TensorType32f);
         SYNET_PARAM_VALUE(TensorFormat, format, TensorFormatNchw);
         SYNET_PARAM_VALUE(size_t, offset, -1);
         SYNET_PARAM_VALUE(size_t, size, -1);
