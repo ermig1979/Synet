@@ -144,6 +144,11 @@ namespace Synet
                 return false;
             switch (current.type())
             {
+            case LayerTypeConvolution:
+                if (current.convolution().biasTerm())
+                    return false;
+                dst.back().convolution().biasTerm() = true;
+                break;
             case LayerTypeScale:
                 if (current.scale().biasTerm())
                     return false;

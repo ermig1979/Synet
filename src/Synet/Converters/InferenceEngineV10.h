@@ -102,6 +102,13 @@ namespace Synet
         TensorInfoMap _tensors;
         LayerParamMap _layers;
 
+        struct Pin
+        {
+            String name;
+            int index;
+            Pin(const String& n = String(), int i = 0) : name(n), index(i) {}
+        };
+
         bool ConvertAddLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
         {
             if (layer.src().size() != 2)
@@ -109,10 +116,13 @@ namespace Synet
                 std::cout << "Wrong number of sources = " << layer.src().size() << " !" << std::endl;
                 return false;
             }
-            if (layer.src()[1] == layers.back().name() && layers.back().type() == LayerTypeConst)
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL)
+                return false;
+            if (second->type() == LayerTypeConst)
             {
                 layer.type() = Synet::LayerTypeBias;
-                layer.weight() = layers.back().weight();
+                layer.weight() = second->weight();
                 layer.src().resize(1);
                 if (!CompactShape(layer.weight()[0].dim()))
                     return false;
@@ -170,7 +180,6 @@ namespace Synet
         {
             layer.type() = Synet::LayerTypeConvolution;
             layer.convolution().biasTerm() = false;
-
             const XmlNode* pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
@@ -180,86 +189,26 @@ namespace Synet
                 return false;
             if (!ConvertVectors(pData->FirstAttribute("pads_begin"), pData->FirstAttribute("pads_end"), layer.convolution().pad()))
                 return false;
-
-            //size_t inputNum;
-            //const XmlNode* pInput = pLayer->FirstNode("input");
-            //if (pInput)
-            //{
-            //    const XmlNode* pPort = pInput->FirstNode("port");
-            //    if (pPort)
-            //    {
-            //        Shape input = ConvertShape(pPort);
-            //        assert(input.size() == 4);
-            //        inputNum = input[1];
-            //    }
-            //    else
-            //        return false;
-            //}
-            //else
-            //    return false;
-            //const XmlNode* pOutput = pLayer->FirstNode("output");
-            //if (pOutput)
-            //{
-            //    const XmlNode* pPort = pOutput->FirstNode("port");
-            //    if (pPort)
-            //    {
-            //        Shape output = ConvertShape(pPort);
-            //        assert(output.size() == 4);
-            //        layer.convolution().outputNum() = (uint32_t)output[1];
-            //    }
-            //    else
-            //        return false;
-            //}
-            //else
-            //    return false;
-            //const XmlNode* pBlobs = pLayer->FirstNode("blobs");
-            //if (pBlobs)
-            //{
-            //    const XmlNode* pWeights = pBlobs->FirstNode("weights");
-            //    if (pWeights)
-            //    {
-            //        size_t outputNum = layer.convolution().outputNum(), group = layer.convolution().group();
-            //        size_t kernelY = layer.convolution().kernel()[0], kernelX = layer.convolution().kernel()[1];
-            //        layer.weight().resize(1);
-            //        if (layer.type() == Synet::LayerTypeConvolution)
-            //        {
-            //            Shape shape = Shape({ outputNum, inputNum / group, kernelY,  kernelX });
-            //            if (trans)
-            //            {
-            //                shape = Shape({ shape[2], shape[3], shape[1], shape[0] });
-            //                layer.weight()[0].format() = TensorFormatNhwc;
-            //            }
-            //            layer.weight()[0].dim() = shape;
-            //            ConvertWeight(pWeights, srcBin, trans ? 2 : 0, Shape(), layer.weight()[0], dstBin);
-            //        }
-            //        else
-            //        {
-            //            Shape shape = Shape({ inputNum, outputNum / group, kernelY,  kernelX });
-            //            if (trans)
-            //            {
-            //                shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
-            //                layer.weight()[0].format() = TensorFormatNhwc;
-            //            }
-            //            layer.weight()[0].dim() = shape;
-            //            ConvertWeight(pWeights, srcBin, trans ? 1 : 0, Shape(), layer.weight()[0], dstBin);
-            //        }
-            //    }
-            //    else
-            //        return false;
-            //    const XmlNode* pBiases = pBlobs->FirstNode("biases");
-            //    if (pBiases)
-            //    {
-            //        layer.weight().resize(2);
-            //        layer.weight()[1].dim() = Shape({ (size_t)layer.convolution().outputNum() });
-            //        ConvertWeight(pBiases, srcBin, 0, Shape(), layer.weight()[1], dstBin);
-            //        layer.convolution().biasTerm() = true;
-            //    }
-            //    else
-            //        layer.convolution().biasTerm() = false;
-            //}
-            //else
-            //    return false;
-
+            if (layer.src().size() != 2)
+            {
+                std::cout << "Wrong number of sources = " << layer.src().size() << " !" << std::endl;
+                return false;
+            }
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeConst)
+                return false;
+            const Shape& shape = second->weight()[0].dim();
+            if (shape.size() != 4)
+            {
+                std::cout << "Wrong convolution weight shape " << ShapeToStr(shape) << " !" << std::endl;
+                return false;
+            }
+            layer.convolution().kernel() = Shape({ shape[2], shape[3] });
+            layer.convolution().outputNum() = shape[0];
+            layer.weight() = second->weight();
+            layer.src().resize(1);
+            if (trans)
+                return ReorderWeight(Shape(), layer, dstBin);
             return true;
         }
 
@@ -270,20 +219,23 @@ namespace Synet
                 std::cout << "Wrong number of sources = " << layer.src().size() << " !" << std::endl;
                 return false;
             }
-            if (layer.src()[1] == layers.back().name() && layers.back().type() == LayerTypeConst)
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL)
+                return false;
+            if (second->type() == LayerTypeConst)
             {
                 if (TensorSize(layers.back().weight()[0].dim()) == 1)
                 {
                     layer.type() = Synet::LayerTypePower;
                     layer.power().power() = 1.0f;
-                    layer.power().scale() = GetWeight<float>(layers.back().weight()[0], srcBin)[0];
+                    layer.power().scale() = GetWeight<float>(second->weight()[0], srcBin)[0];
                     layer.power().shift() = 0.0f;
                 }
                 else
                 {
                     layer.type() = Synet::LayerTypeScale;
                     layer.scale().biasTerm() = false;
-                    layer.weight() = layers.back().weight();
+                    layer.weight() = second->weight();
                     if (!CompactShape(layer.weight()[0].dim()))
                         return false;
                 }
@@ -340,6 +292,16 @@ namespace Synet
 
         //---------------------------------------------------------------------
 
+        static String ShapeToStr(const Shape& shape)
+        {
+            std::stringstream ss;
+            ss << "{";
+            for (size_t i = 0; i < shape.size(); ++i)
+                ss << " " << shape[i];
+            ss << " }";
+            return ss.str();
+        }
+
         static bool CompactShape(Shape& shape)
         {
             size_t count = 0, value = 1;
@@ -353,10 +315,7 @@ namespace Synet
             }
             if (count > 1)
             {
-                std::cout << "Can't compact shape {";
-                for (size_t i = 0; i < shape.size(); ++i)
-                    std::cout << " " << shape[i];
-                std::cout << " } !" << std::endl;
+                std::cout << "Can't compact shape " << ShapeToStr(shape) << " !" << std::endl;
                 return false;
             }
             shape = Shape( { value } );
@@ -379,6 +338,61 @@ namespace Synet
         template<class T> static const T * GetWeight(const WeightParam & param, const Vector & bin)
         {
             return (const T*)((const uint8_t*)bin.data() + param.offset());
+        }
+
+        static Pin ParsePin(const String& name)
+        {
+            Pin pin(name);
+            size_t delimiter = name.find_first_of(":");
+            if (delimiter != std::string::npos)
+            {
+                pin.name = name.substr(0, delimiter);
+                std::istringstream(name.substr(delimiter + 1)) >> pin.index;
+            }
+            return pin;
+        }
+
+        static const LayerParam* GetLayer(const LayerParams& layers, const String& name)
+        {
+            Pin pin = ParsePin(name);
+            for (size_t i = 0; i < layers.size(); ++i)
+                if (pin.name == layers[i].name())
+                    return &layers[i];
+            std::cout << "Can't found layer " << pin.name << " !" << std::endl;
+            return NULL;
+        }
+
+        static bool ReorderWeight(const Shape & input, LayerParam & layer, Vector& bin)
+        {
+            if (layer.weight().size() < 1)
+            {
+                std::cout << "There is no weight to reorder!" << std::endl;
+                return false;
+            }
+            WeightParam& weight = layer.weight()[0];
+            float * pDst = bin.data() + weight.offset() / sizeof(float);
+            Vector buf(pDst, pDst + weight.size() / sizeof(float));
+            const float * pSrc = buf.data();
+            Shape & shape = weight.dim();
+            weight.format() = TensorFormatNhwc;
+            switch (layer.type())
+            {
+            case LayerTypeConvolution:
+            {
+                shape = Shape({ shape[2], shape[3], shape[1], shape[0] });
+                Tensor dst(pDst, weight.size() / sizeof(float), shape, weight.format());
+                for (size_t o = 0; o < shape[3]; ++o)
+                    for (size_t i = 0; i < shape[2]; ++i)
+                        for (size_t y = 0; y < shape[0]; ++y)
+                            for (size_t x = 0; x < shape[1]; ++x)
+                                dst.CpuData(Shape({ y, x, i, o }))[0] = *pSrc++;
+                break;
+            }
+            default:
+                std::cout << "Unknsupported layer type " << ValueToString(layer.type())  << " to convert weight !" << std::endl;
+                return false;
+            }
+            return true;
         }
     };
 }
