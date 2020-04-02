@@ -41,6 +41,8 @@ namespace Synet
                 return false;
             if (!MergeLayers(network, bin, 2))
                 return false;
+            if (!MergeLayers(network, bin, 3))
+                return false;
             if (!ReuseLayers(network))
                 return false;
             return true;
@@ -62,6 +64,12 @@ namespace Synet
                 switch (stage)
                 {
                 case 0:
+                {
+                    if (MergeCurrentAndBias(network.layers(), i, merged, changes))
+                        continue;
+                    break;
+                }
+                case 1:
                 {
                     if (MergeHswish(network.layers(), i, merged, changes))
                         continue;
@@ -101,13 +109,13 @@ namespace Synet
                         continue;
                     break;
                 }
-                case 1:
+                case 2:
                 {
                     if (MergeConvolutionOrDeconvolutionAndActivation(network.layers(), i, is8i, merged, changes))
                         continue;
                     break;
                 }
-                case 2:
+                case 3:
                 {
                     if (MergeThreeConvolutions(network.layers(), i, is8i, merged, changes))
                         continue;
@@ -121,6 +129,32 @@ namespace Synet
             }
             Rename(changes, merged);
             network.layers() = merged;
+            return true;
+        }
+
+        bool MergeCurrentAndBias(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (index == 0)
+                return false;
+            const LayerParam & current = src[index - 1];
+            const LayerParam & bias = src[index + 0];
+            if (bias.type() != LayerTypeBias || bias.src()[0] != current.name())
+                return false;
+            if (InsideLink(src, index + 1, 1))
+                return false;
+            switch (current.type())
+            {
+            case LayerTypeScale:
+                if (current.scale().biasTerm())
+                    return false;
+                dst.back().scale().biasTerm() = true;
+                break;
+                default:
+                    return false;
+            }
+            dst.back().name() = bias.name();
+            dst.back().dst() = bias.dst();
+            dst.back().weight().push_back(src[index].weight()[0]);
             return true;
         }
 
@@ -889,7 +923,7 @@ namespace Synet
             bool pre = false, scale = false, post = false;
             if (src.size() > index + 0 && src[index + 0].type() == LayerTypePower && src[index + 0].power().power() == 1.0f)
                 pre = true;
-            if (src.size() > index + 1 && src[index + 1].type() == LayerTypeScale && (pre ? src[index + 1].src()[0] == src[index + 0].name() : true))
+            if (src.size() > index + 1 && src[index + 1].type() == LayerTypeScale && (pre ? src[index + 1].src()[0] == src[index + 0].name() : true) && src[index + 1].scale().biasTerm())
                 scale = true;
             if (src.size() > index + 2 && src[index + 2].type() == LayerTypePower && src[index + 2].power().power() == 1.0f && src[index + 2].src()[0] == src[index + 1].name())
                 post = true;

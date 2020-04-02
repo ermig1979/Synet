@@ -62,11 +62,15 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Const" && !ConvertConstLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
-                if (type == "Multiply" && !ConvertMultiplyLayer(pLayer, dstXml.layers(), layer))
+                if (type == "Convolution" && !ConvertConvolutionLayer(pLayer, srcBin, trans, dstXml.layers(), layer, dstBin))
+                    return ErrorMessage(pLayer);
+                if (type == "Multiply" && !ConvertMultiplyLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "Parameter" && !ConvertParameterLayer(pLayer, trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "Result" && !ConvertResultLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
 
 #if 0
@@ -110,11 +114,13 @@ namespace Synet
                 layer.type() = Synet::LayerTypeBias;
                 layer.weight() = layers.back().weight();
                 layer.src().resize(1);
+                if (!CompactShape(layer.weight()[0].dim()))
+                    return false;
             }
             else
             {
                 layer.type() = Synet::LayerTypeEltwise;
-                layer.eltwise().operation() == EltwiseOperationTypeSum;
+                layer.eltwise().operation() = EltwiseOperationTypeSum;
             }
             return true;
         }
@@ -160,7 +166,104 @@ namespace Synet
             return true;
         }
 
-        bool ConvertMultiplyLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
+        bool ConvertConvolutionLayer(const XmlNode* pLayer, const Vector& srcBin, bool trans, const LayerParams& layers, LayerParam& layer, Vector& dstBin)
+        {
+            layer.type() = Synet::LayerTypeConvolution;
+            layer.convolution().biasTerm() = false;
+
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            if (!ConvertVector(pData->FirstAttribute("strides"), layer.convolution().stride()))
+                return false;
+            if (!ConvertVector(pData->FirstAttribute("dilations"), layer.convolution().dilation()))
+                return false;
+            if (!ConvertVectors(pData->FirstAttribute("pads_begin"), pData->FirstAttribute("pads_end"), layer.convolution().pad()))
+                return false;
+
+            //size_t inputNum;
+            //const XmlNode* pInput = pLayer->FirstNode("input");
+            //if (pInput)
+            //{
+            //    const XmlNode* pPort = pInput->FirstNode("port");
+            //    if (pPort)
+            //    {
+            //        Shape input = ConvertShape(pPort);
+            //        assert(input.size() == 4);
+            //        inputNum = input[1];
+            //    }
+            //    else
+            //        return false;
+            //}
+            //else
+            //    return false;
+            //const XmlNode* pOutput = pLayer->FirstNode("output");
+            //if (pOutput)
+            //{
+            //    const XmlNode* pPort = pOutput->FirstNode("port");
+            //    if (pPort)
+            //    {
+            //        Shape output = ConvertShape(pPort);
+            //        assert(output.size() == 4);
+            //        layer.convolution().outputNum() = (uint32_t)output[1];
+            //    }
+            //    else
+            //        return false;
+            //}
+            //else
+            //    return false;
+            //const XmlNode* pBlobs = pLayer->FirstNode("blobs");
+            //if (pBlobs)
+            //{
+            //    const XmlNode* pWeights = pBlobs->FirstNode("weights");
+            //    if (pWeights)
+            //    {
+            //        size_t outputNum = layer.convolution().outputNum(), group = layer.convolution().group();
+            //        size_t kernelY = layer.convolution().kernel()[0], kernelX = layer.convolution().kernel()[1];
+            //        layer.weight().resize(1);
+            //        if (layer.type() == Synet::LayerTypeConvolution)
+            //        {
+            //            Shape shape = Shape({ outputNum, inputNum / group, kernelY,  kernelX });
+            //            if (trans)
+            //            {
+            //                shape = Shape({ shape[2], shape[3], shape[1], shape[0] });
+            //                layer.weight()[0].format() = TensorFormatNhwc;
+            //            }
+            //            layer.weight()[0].dim() = shape;
+            //            ConvertWeight(pWeights, srcBin, trans ? 2 : 0, Shape(), layer.weight()[0], dstBin);
+            //        }
+            //        else
+            //        {
+            //            Shape shape = Shape({ inputNum, outputNum / group, kernelY,  kernelX });
+            //            if (trans)
+            //            {
+            //                shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
+            //                layer.weight()[0].format() = TensorFormatNhwc;
+            //            }
+            //            layer.weight()[0].dim() = shape;
+            //            ConvertWeight(pWeights, srcBin, trans ? 1 : 0, Shape(), layer.weight()[0], dstBin);
+            //        }
+            //    }
+            //    else
+            //        return false;
+            //    const XmlNode* pBiases = pBlobs->FirstNode("biases");
+            //    if (pBiases)
+            //    {
+            //        layer.weight().resize(2);
+            //        layer.weight()[1].dim() = Shape({ (size_t)layer.convolution().outputNum() });
+            //        ConvertWeight(pBiases, srcBin, 0, Shape(), layer.weight()[1], dstBin);
+            //        layer.convolution().biasTerm() = true;
+            //    }
+            //    else
+            //        layer.convolution().biasTerm() = false;
+            //}
+            //else
+            //    return false;
+
+            return true;
+        }
+
+        bool ConvertMultiplyLayer(const XmlNode* pLayer, const std::vector<float>& srcBin, const LayerParams& layers, LayerParam& layer)
         {
             if (layer.src().size() != 2)
             {
@@ -169,9 +272,21 @@ namespace Synet
             }
             if (layer.src()[1] == layers.back().name() && layers.back().type() == LayerTypeConst)
             {
-                layer.type() = Synet::LayerTypeScale;
-                layer.scale().biasTerm() = false;
-                layer.weight() = layers.back().weight();
+                if (TensorSize(layers.back().weight()[0].dim()) == 1)
+                {
+                    layer.type() = Synet::LayerTypePower;
+                    layer.power().power() = 1.0f;
+                    layer.power().scale() = GetWeight<float>(layers.back().weight()[0], srcBin)[0];
+                    layer.power().shift() = 0.0f;
+                }
+                else
+                {
+                    layer.type() = Synet::LayerTypeScale;
+                    layer.scale().biasTerm() = false;
+                    layer.weight() = layers.back().weight();
+                    if (!CompactShape(layer.weight()[0].dim()))
+                        return false;
+                }
                 layer.src().resize(1);
             }
             else
@@ -213,6 +328,57 @@ namespace Synet
         {
             layer.type() = Synet::LayerTypeRelu;
             return true;
+        }
+
+        bool ConvertResultLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeStub;
+            if (layer.dst().empty())
+                layer.dst().push_back(layer.name());
+            return true;
+        }
+
+        //---------------------------------------------------------------------
+
+        static bool CompactShape(Shape& shape)
+        {
+            size_t count = 0, value = 1;
+            for (size_t i = 0; i < shape.size(); ++i)
+            {
+                if (shape[i] != 1)
+                {
+                    value = shape[i];
+                    count++;
+                }
+            }
+            if (count > 1)
+            {
+                std::cout << "Can't compact shape {";
+                for (size_t i = 0; i < shape.size(); ++i)
+                    std::cout << " " << shape[i];
+                std::cout << " } !" << std::endl;
+                return false;
+            }
+            shape = Shape( { value } );
+            return true;
+        }
+
+        static size_t TensorSize(const Shape & shape)
+        {
+            if (shape.empty())
+                return 0;
+            else
+            {
+                size_t size = 1;
+                for (size_t i = 0; i < shape.size(); ++i)
+                    size *= shape[i];
+                return size;
+            }
+        }
+
+        template<class T> static const T * GetWeight(const WeightParam & param, const Vector & bin)
+        {
+            return (const T*)((const uint8_t*)bin.data() + param.offset());
         }
     };
 }
