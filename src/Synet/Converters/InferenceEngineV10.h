@@ -62,7 +62,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Const" && !ConvertConstLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
-                if (type == "Convolution" && !ConvertConvolutionLayer(pLayer, srcBin, trans, dstXml.layers(), layer, dstBin))
+                if ((type == "Convolution" || type == "GroupConvolution") && !ConvertConvolutionLayer(pLayer, trans, dstXml.layers(), layer, dstBin))
                     return ErrorMessage(pLayer);
                 if (type == "Multiply" && !ConvertMultiplyLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
@@ -71,6 +71,8 @@ namespace Synet
                 if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Result" && !ConvertResultLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "Transpose" && !ConvertTransposeLayer(pLayer, srcBin, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
 
 #if 0
@@ -111,11 +113,8 @@ namespace Synet
 
         bool ConvertAddLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
         {
-            if (layer.src().size() != 2)
-            {
-                std::cout << "Wrong number of sources = " << layer.src().size() << " !" << std::endl;
+            if (!CheckSourceNumber(layer, 2))
                 return false;
-            }
             const LayerParam* second = GetLayer(layers, layer.src()[1]);
             if (second == NULL)
                 return false;
@@ -176,7 +175,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConvolutionLayer(const XmlNode* pLayer, const Vector& srcBin, bool trans, const LayerParams& layers, LayerParam& layer, Vector& dstBin)
+        bool ConvertConvolutionLayer(const XmlNode* pLayer, bool trans, const LayerParams& layers, LayerParam& layer, Vector& dstBin)
         {
             layer.type() = Synet::LayerTypeConvolution;
             layer.convolution().biasTerm() = false;
@@ -189,23 +188,29 @@ namespace Synet
                 return false;
             if (!ConvertVectors(pData->FirstAttribute("pads_begin"), pData->FirstAttribute("pads_end"), layer.convolution().pad()))
                 return false;
-            if (layer.src().size() != 2)
-            {
-                std::cout << "Wrong number of sources = " << layer.src().size() << " !" << std::endl;
+            if (!CheckSourceNumber(layer, 2))
                 return false;
-            }
             const LayerParam* second = GetLayer(layers, layer.src()[1]);
             if (second == NULL || second->type() != LayerTypeConst)
                 return false;
-            const Shape& shape = second->weight()[0].dim();
-            if (shape.size() != 4)
-            {
-                std::cout << "Wrong convolution weight shape " << ShapeToStr(shape) << " !" << std::endl;
-                return false;
-            }
-            layer.convolution().kernel() = Shape({ shape[2], shape[3] });
-            layer.convolution().outputNum() = shape[0];
+            const Shape & shape = second->weight()[0].dim();
             layer.weight() = second->weight();
+            if(String(pLayer->FirstAttribute("type")->Value()) == "Convolution")
+            { 
+                if (!CheckDims(shape, 4, "convolution weight"))
+                    return false;
+                layer.convolution().kernel() = Shape({ shape[2], shape[3] });
+                layer.convolution().outputNum() = shape[0];
+            }
+            else
+            {
+                if (!CheckDims(shape, 5, "convolution weight"))
+                    return false;
+                layer.convolution().kernel() = Shape({ shape[3], shape[4] });
+                layer.convolution().group() = shape[0];
+                layer.convolution().outputNum() = shape[0] * shape[1];
+                layer.weight()[0].dim() = Shape({ shape[0] * shape[1] , shape[2], shape[3], shape[4] });
+            }
             layer.src().resize(1);
             if (trans)
                 return ReorderWeight(Shape(), layer, dstBin);
@@ -214,11 +219,8 @@ namespace Synet
 
         bool ConvertMultiplyLayer(const XmlNode* pLayer, const std::vector<float>& srcBin, const LayerParams& layers, LayerParam& layer)
         {
-            if (layer.src().size() != 2)
-            {
-                std::cout << "Wrong number of sources = " << layer.src().size() << " !" << std::endl;
+            if (!CheckSourceNumber(layer, 2))
                 return false;
-            }
             const LayerParam* second = GetLayer(layers, layer.src()[1]);
             if (second == NULL)
                 return false;
@@ -290,6 +292,43 @@ namespace Synet
             return true;
         }
 
+        bool ConvertTransposeLayer(const XmlNode* pLayer, const std::vector<float>& srcBin, const LayerParams& layers, bool trans, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam * second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeConst || second->weight()[0].dim().size() != 1)
+                return false;
+            Shape input = ConvertInputShape(pLayer);
+            if (!CheckDims(input, second->weight()[0].dim()[0], "order size"))
+                return false;
+            Shape& order = layer.permute().order();
+            const int64_t * weight = GetWeight<int64_t>(second->weight()[0], srcBin);
+            layer.type() = LayerTypePermute;
+            order.resize(input.size());
+            for (size_t i = 0; i < order.size(); ++i)
+                order[i] = (size_t)weight[i];
+            layer.src().resize(1);
+            if (trans)
+            {
+                if (order.size() == 4)
+                {
+                    if (order == Shape({ 0, 2, 3, 1 }))
+                    {
+                        order = Shape({ 0, 1, 2, 3 });
+                        layer.permute().format() = TensorFormatNchw;
+                    }
+                    else
+                    {
+                        Shape nhwc = Shape({ 0, 2, 3, 1 });
+                        Shape nchw = Shape({ 0, 3, 1, 2 });
+                        order = Shape({ nchw[order[nhwc[0]]], nchw[order[nhwc[1]]], nchw[order[nhwc[2]]], nchw[order[nhwc[3]]] });
+                    }
+                }
+            }
+            return true;
+        }
+
         //---------------------------------------------------------------------
 
         static String ShapeToStr(const Shape& shape)
@@ -333,6 +372,26 @@ namespace Synet
                     size *= shape[i];
                 return size;
             }
+        }
+
+        static bool CheckSourceNumber(const LayerParam& layer, size_t size)
+        {
+            if (layer.src().size() != size)
+            {
+                std::cout << "Wrong number of sources (" << layer.src().size() << " instead of " << size << ") !" << std::endl;
+                return false;
+            }
+            return true;
+        }
+
+        static bool CheckDims(const Shape& shape, size_t dims, const String& desc)
+        {
+            if (shape.size() != dims)
+            {
+                std::cout << "Wrong " << desc << " shape " << ShapeToStr(shape) << " !" << std::endl;
+                return false;
+            }
+            return true;
         }
 
         template<class T> static const T * GetWeight(const WeightParam & param, const Vector & bin)
