@@ -70,6 +70,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
+                if (type == "Reshape" && !ConvertReshapeLayer(pLayer, srcBin, dstXml.layers(), trans, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Result" && !ConvertResultLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Transpose" && !ConvertTransposeLayer(pLayer, srcBin, dstXml.layers(), trans, layer))
@@ -284,6 +286,39 @@ namespace Synet
             return true;
         }
 
+        bool ConvertReshapeLayer(const XmlNode* pLayer, const std::vector<float>& srcBin, const LayerParams& layers, bool trans, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeConst || second->weight()[0].dim().size() != 1)
+                return false;
+            Shape input = ConvertInputShape(pLayer);
+            Shape output = ConvertOutputShape(pLayer);
+            if (!CheckDims(output, second->weight()[0].dim()[0], "output shape"))
+                return false;
+            Shape& shape = layer.reshape().shape();
+            const int64_t* weight = GetWeight<int64_t>(second->weight()[0], srcBin);
+            layer.type() = LayerTypeReshape;
+            shape.resize(output.size());
+            for (size_t i = 0; i < shape.size(); ++i)
+                shape[i] = (size_t)weight[i];
+            layer.src().resize(1);
+            if (input.size() > 1 && output.size() > 1 && input[0] == 1 && output[0] == 1)
+            {
+                layer.reshape().axis() = 1;
+                shape.erase(shape.begin(), shape.begin() + 1);
+            }
+            if (trans && !PermutedToNchw(layers, layers.size() - 1, false))
+            {
+                if (shape.size() == 4)
+                {
+                    shape = Shape({ shape[0], shape[2] , shape[3], shape[1] });
+                }
+            }
+            return true;
+        }
+
         bool ConvertResultLayer(const XmlNode* pLayer, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeStub;
@@ -452,6 +487,25 @@ namespace Synet
                 return false;
             }
             return true;
+        }
+
+        static bool PermutedToNchw(const LayerParams & layers, size_t current, bool checkInnerProduct = true)
+        {
+            const LayerParam& layer = layers[current];
+            if (layer.type() == LayerTypePermute && layer.permute().format() == TensorFormatNchw)
+                return true;
+            if (checkInnerProduct && layer.type() == LayerTypeInnerProduct)
+                return true;
+            for (size_t s = 0; s < layer.src().size(); ++s)
+            {
+                Pin src = ParsePin(layer.src()[s]);
+                for (size_t l = 0; l < current; ++l)
+                {
+                    if (src.name == layers[l].name() && PermutedToNchw(layers, l, checkInnerProduct))
+                        return true;
+                }
+            }
+            return false;
         }
     };
 }
