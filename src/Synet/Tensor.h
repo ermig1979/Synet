@@ -415,11 +415,22 @@ namespace Synet
         {
             switch (param.type())
             {
+            case TensorType32f:
+            {
+                As32f().Reshape(param.shape(), param.format());
+                CpuCopy(param.f32().data(), param.f32().size(), As32f().CpuData());
+                break;
+            }
             case TensorType32i:
             {
-                Synet::Tensor<int32_t> & i32 = As32i();
-                i32.Reshape(param.shape());
-                CpuCopy(param.i32().data(), param.i32().size(), i32.CpuData());
+                As32i().Reshape(param.shape(), param.format());
+                CpuCopy(param.i32().data(), param.i32().size(), As32i().CpuData());
+                break;
+            }
+            case TensorType64i:
+            {
+                As64i().Reshape(param.shape(), param.format());
+                CpuCopy(param.i64().data(), param.i64().size(), As64i().CpuData());
                 break;
             }
             default:

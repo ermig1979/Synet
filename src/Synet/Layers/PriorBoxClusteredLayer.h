@@ -54,21 +54,32 @@ namespace Synet
             if (_variance.empty())
                 _variance.push_back(0.1f);
 
-            _trans = src[0]->Format() == TensorFormatNhwc;
             size_t layerH, layerW;
-            if (_trans)
+            if (src[0]->GetType() == TensorType64i)
             {
-                layerH = src[0]->Axis(-3);
-                layerW = src[0]->Axis(-2);
-                _imgH = param.imgH() ? param.imgH() : src[1]->Axis(-3);
-                _imgW = param.imgW() ? param.imgW() : src[1]->Axis(-2);
+                const int64_t* src0 = src[0]->As64i().CpuData();
+                const int64_t* src1 = src[1]->As64i().CpuData();
+                layerH = src0[0];
+                layerW = src0[1];
+                _imgH = param.imgH() ? param.imgH() : src1[0];
+                _imgW = param.imgW() ? param.imgW() : src1[1];
             }
             else
             {
-                layerH = src[0]->Axis(-2);
-                layerW = src[0]->Axis(-1);
-                _imgH = param.imgH() ? param.imgH() : src[1]->Axis(-2);
-                _imgW = param.imgW() ? param.imgW() : src[1]->Axis(-1);
+                if (src[0]->Format() == TensorFormatNhwc)
+                {
+                    layerH = src[0]->Axis(-3);
+                    layerW = src[0]->Axis(-2);
+                    _imgH = param.imgH() ? param.imgH() : src[1]->Axis(-3);
+                    _imgW = param.imgW() ? param.imgW() : src[1]->Axis(-2);
+                }
+                else
+                {
+                    layerH = src[0]->Axis(-2);
+                    layerW = src[0]->Axis(-1);
+                    _imgH = param.imgH() ? param.imgH() : src[1]->Axis(-2);
+                    _imgW = param.imgW() ? param.imgW() : src[1]->Axis(-1);
+                }
             }
 
             _stepH = param.stepH() == 0 ? param.step() : param.stepH();
@@ -131,7 +142,7 @@ namespace Synet
     private:
 
         Floats _heights, _widths, _variance;
-        bool _clip, _trans;
+        bool _clip;
         size_t _numPriors, _imgW, _imgH;
         float _stepW, _stepH, _offset;
     };

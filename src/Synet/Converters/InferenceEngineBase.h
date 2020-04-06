@@ -242,9 +242,10 @@ namespace Synet
         {
             for (size_t i = 0; i < layers.size(); ++i)
             {
-                if (layers[i].type() == LayerTypeConst)
+                const LayerParam& layer = layers[i];
+                if (layer.type() == LayerTypeConst || (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeConst))
                 {
-                    const String& name = layers[i].name();
+                    const String& name = layer.name();
                     bool unused = true;
                     for (size_t j = i + 1; j < layers.size() && unused; ++j)
                         for (size_t k = 0; k < layers[j].src().size() && unused; ++k)
@@ -264,6 +265,7 @@ namespace Synet
 
         static void NotImplemented(const XmlNode * src, LayerParam & dst)
         {
+            //dst.type() = LayerTypeStub;
             dst.debug().clear();
             dst.debug().push_back(NotImplementedMarker());
             dst.debug().push_back(src->FirstAttribute("type")->Value());

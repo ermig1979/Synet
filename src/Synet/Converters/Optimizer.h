@@ -45,6 +45,8 @@ namespace Synet
                 return false;
             if (!ReuseLayers(network))
                 return false;
+            if (!RemoveStub(network))
+                return false;
             return true;
         }
 
@@ -1125,6 +1127,28 @@ namespace Synet
                 if (!Rename(Change(layer.dst()[0], layer.src()[0]), layers))
                     return false;
                 layer.dst()[0] = layer.src()[0];
+            }
+            return true;
+        }
+
+        bool RemoveStub(Synet::NetworkParam& network)
+        {
+            LayerParams& layers = network.layers();
+            for (size_t i = 1; i < layers.size(); ++i)
+            {
+                LayerParam & prev = layers[i - 1];
+                LayerParam & curr = layers[i];
+                if (curr.type() != LayerTypeStub)
+                    continue;
+                if (IsUsed(curr.src()[0], layers, i + 1))
+                    continue;
+                if (curr.src().size() != 1 || curr.dst().size() != 1)
+                    continue;
+                if (prev.dst().size() != 1 || prev.dst()[0] != curr.src()[0])
+                    continue;
+                prev.name() = curr.name();
+                prev.dst()[0] = curr.dst()[0];
+                layers.erase(layers.begin() + i);
             }
             return true;
         }

@@ -209,6 +209,7 @@ namespace Synet
         SYNET_PARAM_VALUE(Shape, shape, Shape());
         SYNET_PARAM_VALUE(Ints, i32, Ints());
         SYNET_PARAM_VALUE(Floats, f32, Floats());
+        SYNET_PARAM_VALUE(Longs, i64, Longs());
     };
 
     struct WeightParam
@@ -393,6 +394,7 @@ namespace Synet
     struct MetaParam
     {
         SYNET_PARAM_VALUE(MetaType, type, MetaTypeUnknown);
+        SYNET_PARAM_VALUE(int32_t, version, 0);
         SYNET_PARAM_STRUCT(TensorParam, alpha);
     };
 

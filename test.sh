@@ -17,7 +17,7 @@ if [ "$TYPE" = "i" ]; then
   THRESHOLD=0.01
   echo "Use increased accuracy threshold : $THRESHOLD for INT8."
 else
-  THRESHOLD=0.001
+  THRESHOLD=0.002
 fi
 
 echo $LOG
@@ -47,7 +47,7 @@ fi
 
 #TEST darknet test_000 5 1 1 1 001a
 
-TEST inference_engine test_000 1000 1 1 1 005
+#TEST inference_engine test_000 1000 1 1 1 005
 #TEST inference_engine test_001 500 1 1 1 005a
 #TEST inference_engine test_002 20 1 1 1 004a
 #TEST inference_engine test_003f 50 1 1 1 004a
@@ -59,5 +59,6 @@ TEST inference_engine test_000 1000 1 1 1 005
 #TEST inference_engine test_008 5 1 1 1 002a
 #TEST inference_engine test_009f 40 1 1 1 000a
 #TEST inference_engine test_009i 1 0 0 1 000a
+TEST inference_engine test_010f 100 1 1 1 000a
 
 exit

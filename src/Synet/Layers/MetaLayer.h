@@ -63,7 +63,7 @@ namespace Synet
             case MetaTypeRealDiv: ReshapeRealDiv(src, dst); break;
             case MetaTypeReshape: ReshapeReshape(src, dst); break;
             case MetaTypeRsqrt: ReshapeRsqrt(src, dst); break;
-            case MetaTypeShape: ReshapeShape(src, dst); break;
+            case MetaTypeShape: ReshapeShape(src, param.version(), dst); break;
             case MetaTypeSlice: ReshapeSlice(src, dst); break;
             case MetaTypeSqrt: ReshapeSqrt(src, dst); break;
             case MetaTypeStridedSlice: ReshapeStridedSlice(src, dst); break;
@@ -87,6 +87,23 @@ namespace Synet
 
     private:
 
+        template<class S, class D> static void Convert(const Synet::Tensor<S>& src, Synet::Tensor<D>& dst)
+        {
+            dst.Reshape(src.Shape(), src.Format());
+            for (size_t i = 0, n = src.Size(); i < n; ++i)
+                dst.CpuData()[i] = (D)src.CpuData()[i];
+        }
+
+        template<class D> static D GetAs(const Synet::Tensor<T> & tensor, size_t offset)
+        {
+            switch (tensor.GetType())
+            {
+            case TensorType32i: return (D)tensor.As32i().CpuData()[offset];
+            case TensorType64i: return (D)tensor.As64i().CpuData()[offset];
+            default: assert(0); return D(0);
+            }
+        }
+
         void ReshapeAdd(const TensorPtrs & src, const TensorPtrs & dst)
         {
             assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape() && src[0]->GetType() == src[1]->GetType());
@@ -105,48 +122,43 @@ namespace Synet
 
         void ReshapeCast(const TensorPtrs & src, const TensorParam & alpha, const TensorPtrs & dst)
         {
-            assert(src.size() == 1);
-            if (alpha.type() == TensorType32i)
+            assert(src.size() == 1 && dst.size() == 1);
+            switch (src[0]->GetType())
             {
-                Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
-                dst0.Reshape(src[0]->Shape());
-                if (src[0]->GetType() == TensorType32i)
+            case TensorType32f:
+                switch (alpha.type())
                 {
-                    const Synet::Tensor<int32_t> & src0 = src[0]->As32i();
-                    for (size_t i = 0; i < src0.Size(); ++i)
-                        dst0.CpuData()[i] = src0.CpuData()[i];
-
+                case TensorType32i: Convert(src[0]->As32f(), dst[0]->As32i()); break;
+                case TensorType32f: Convert(src[0]->As32f(), dst[0]->As32f()); break;
+                case TensorType64i: Convert(src[0]->As32f(), dst[0]->As64i()); break;
+                default: assert(0);
                 }
-                else if (src[0]->GetType() == TensorType32f)
+                break;
+            case TensorType32i:
+                switch (alpha.type())
                 {
-                    const Synet::Tensor<float> & src0 = src[0]->As32f();
-                    for (size_t i = 0; i < src0.Size(); ++i)
-                        dst0.CpuData()[i] = (int32_t)src0.CpuData()[i];
+                case TensorType32i: Convert(src[0]->As32i(), dst[0]->As32i()); break;
+                case TensorType32f: Convert(src[0]->As32i(), dst[0]->As32f()); break;
+                case TensorType64i: Convert(src[0]->As32i(), dst[0]->As64i()); break;
+                default: assert(0);
                 }
-                else
-                    assert(0);
+                break;
+            case TensorType64i:
+                switch (alpha.type())
+                {
+                case TensorType32i: Convert(src[0]->As64i(), dst[0]->As32i()); break;
+                case TensorType32f: Convert(src[0]->As64i(), dst[0]->As32f()); break;
+                case TensorType64i: Convert(src[0]->As64i(), dst[0]->As64i()); break;
+                default: assert(0);
+                }
+                break;
+            default: assert(0);
             }
-            else if (alpha.type() == TensorType32f)
-            {
-                assert(src[0]->GetType() == TensorType32i);
-                const Synet::Tensor<int32_t> & src0 = src[0]->As32i();
-                Synet::Tensor<float> & dst0 = dst[0]->As32f();
-                dst0.Reshape(src0.Shape());
-                for (size_t i = 0; i < src0.Size(); ++i)
-                    dst0.CpuData()[i] = (float)src0.CpuData()[i];
-            }
-            else
-                assert(0);
         }
 
         void ReshapeConst(const TensorParam & alpha, const TensorPtrs & dst)
         {
-            if (alpha.type() == TensorType32i)
-            {
-                dst[0]->Import(alpha);
-            }
-            else
-                assert(0);
+            dst[0]->Import(alpha);
         }
 
         void ReshapeExpandDims(const TensorPtrs & src, const TensorPtrs & dst)
@@ -401,19 +413,31 @@ namespace Synet
                 assert(0);
         }
 
-        void ReshapeShape(const TensorPtrs & src, const TensorPtrs & dst)
+        void ReshapeShape(const TensorPtrs & src, int version, const TensorPtrs & dst)
         {
             assert(src.size() == 1);
             Shape shape = src[0]->Shape();
             bool trans = src[0]->Format() == TensorFormatNhwc;
-            if (!trans && shape.size() == 4)
-                shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
-            if (!trans && shape.size() == 2)
-                shape = Shape({ shape[1], shape[0] });
-            Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
-            dst0.Reshape({ shape.size() });
-            for (size_t i = 0; i < shape.size(); ++i)
-                dst0.CpuData()[i] = (int32_t)shape[i];
+            if (version == 0)
+            {
+                if (!trans && shape.size() == 4)
+                    shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
+                if (!trans && shape.size() == 2)
+                    shape = Shape({ shape[1], shape[0] });
+                Synet::Tensor<int32_t>& dst0 = dst[0]->As32i();
+                dst0.Reshape({ shape.size() });
+                for (size_t i = 0; i < shape.size(); ++i)
+                    dst0.CpuData()[i] = (int32_t)shape[i];
+            }
+            else
+            {
+                if (trans && shape.size() == 4)
+                    shape = Shape({ shape[0], shape[3], shape[1], shape[2]});
+                Synet::Tensor<int64_t>& dst0 = dst[0]->As64i();
+                dst0.Reshape({ shape.size() }, src[0]->Format());
+                for (size_t i = 0; i < shape.size(); ++i)
+                    dst0.CpuData()[i] = (int64_t)shape[i];
+            }
         }
 
         void ReshapeSlice(const TensorPtrs & src, const TensorPtrs & dst)
@@ -454,14 +478,14 @@ namespace Synet
             if (src[0]->GetType() == TensorType32i)
             {
                 const Synet::Tensor<int32_t> & src0 = src[0]->As32i();
-                size_t begin = src[1]->As32i().CpuData()[0];
-                size_t end = src[2]->As32i().CpuData()[0];
-                size_t step = src.size() > 3 ? src[3]->As32i().CpuData()[0] : 1;
+                size_t begin = GetAs<size_t>(*src[1], 0);
+                size_t end = GetAs<size_t>(*src[2], 0);
+                size_t step = src.size() > 3 ? GetAs<size_t>(*src[3], 0) : size_t(1);
                 Shape result;
                 for (size_t i = begin; i < end; i += step)
                     result.push_back(src0.CpuData()[i]);
                 Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
-                dst0.Reshape({ result.size() });
+                dst0.Reshape({ result.size() }, src0.Format());
                 for (size_t i = 0; i < result.size(); ++i)
                     dst0.CpuData()[i] = (int32_t)result[i];
             }

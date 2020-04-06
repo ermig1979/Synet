@@ -150,6 +150,7 @@ namespace Synet
     typedef std::vector<size_t> Index;
     typedef std::vector<uint8_t> Bytes;
     typedef std::vector<int> Ints;
+    typedef std::vector<int64_t> Longs;
     typedef std::vector<float> Floats;
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
     typedef Simd::View<Simd::Allocator> View;
