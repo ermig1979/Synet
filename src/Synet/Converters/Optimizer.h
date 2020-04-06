@@ -151,6 +151,11 @@ namespace Synet
                     return false;
                 dst.back().convolution().biasTerm() = true;
                 break;
+            case LayerTypeInnerProduct:
+                if (current.innerProduct().biasTerm())
+                    return false;
+                dst.back().innerProduct().biasTerm() = true;
+                break;
             case LayerTypeScale:
                 if (current.scale().biasTerm())
                     return false;

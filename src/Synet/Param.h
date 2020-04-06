@@ -283,9 +283,9 @@ namespace Synet
 
     template<> SYNET_INLINE void StringToValue<bool>(const String & string, bool & value)
     {
-        if (string == "0" || string == "false")
+        if (string == "0" || string == "false" || string == "False")
             value = false;
-        else if (string == "1" || string == "true")
+        else if (string == "1" || string == "true" || string == "True")
             value = true;
         else
             assert(0);

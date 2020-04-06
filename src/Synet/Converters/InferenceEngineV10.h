@@ -68,19 +68,29 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "DetectionOutput" && !ConvertDetectionOutputLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
+                if ((type == "MatMul") && !ConvertMatMulLayer(pLayer, trans, dstXml.layers(), layer, dstBin))
+                    return ErrorMessage(pLayer);
+                if (type == "MaxPool" && !ConvertMaxPoolLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Multiply" && !ConvertMultiplyLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "Parameter" && !ConvertParameterLayer(pLayer, trans, layer))
                     return ErrorMessage(pLayer);
-                if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
+                if (type == "PReLU" && !ConvertPreluLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "PriorBoxClustered" && !ConvertPriorBoxClusteredLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "ReduceMean" && !ConvertReduceMeanLayer(pLayer, srcBin, dstXml.layers(), layer))
+                    return ErrorMessage(pLayer);
+                if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Reshape" && !ConvertReshapeLayer(pLayer, srcBin, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Result" && !ConvertResultLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "ShapeOf" && !ConvertShapeOfLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "Sigmoid" && !ConvertSigmoidLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "SoftMax" && !ConvertSoftmaxLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
@@ -284,6 +294,66 @@ namespace Synet
             return true;
         }
 
+        bool ConvertMatMulLayer(const XmlNode* pLayer, bool trans, const LayerParams& layers, LayerParam& layer, Vector& dstBin)
+        {
+            layer.type() = Synet::LayerTypeInnerProduct;
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL || pData->FirstAttribute("transpose_a") == NULL || pData->FirstAttribute("transpose_b") == NULL)
+                return false;
+            bool transposeA, transposeB;
+            StringToValue(pData->FirstAttribute("transpose_a")->Value(), transposeA);
+            StringToValue(pData->FirstAttribute("transpose_b")->Value(), transposeB);
+            layer.innerProduct().biasTerm() = false;
+            layer.innerProduct().transposeA() = transposeA;
+            layer.innerProduct().transposeB() = !transposeB;
+
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeConst)
+                return false;
+            Shape input = ConvertInputShape(pLayer);
+            if (!CheckDims(input, 2, "inner product input"))
+                return false;
+            const Shape & weight = second->weight()[0].dim();
+            if (!CheckDims(weight, 2, "inner product weight"))
+                return false;
+            Shape output = ConvertOutputShape(pLayer);
+            if (!CheckDims(output, 2, "output product weight"))
+                return false;
+            layer.weight() = second->weight();
+            layer.innerProduct().outputNum() = (uint32_t)output[1];
+            layer.src().resize(1);
+            if (trans && !PermutedToNchw(layers, false))
+            {
+                const LayerParam * first = GetLayer(layers, layer.src()[0]);
+                if (first == NULL || first->type() != LayerTypeReshape)
+                    return false;
+                Shape origin = _tensors[first->src()[0]].shape;
+                return ReorderWeight(origin, layer, dstBin);
+            }
+            return true;
+        }
+
+        bool ConvertMaxPoolLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            const XmlNode * pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            layer.type() = Synet::LayerTypePooling;
+            layer.pooling().method() = PoolingMethodTypeMax;
+            if (!ConvertVector(pData->FirstAttribute("kernel"), layer.pooling().kernel()))
+                return false;
+            if (!ConvertVector(pData->FirstAttribute("strides"), layer.pooling().stride()))
+                return false;
+            if (!ConvertVectors(pData->FirstAttribute("pads_begin"), pData->FirstAttribute("pads_end"), layer.pooling().pad()))
+                return false;
+            const XmlAttr * pRoundingType = pData->FirstAttribute("rounding_type");
+            if (pRoundingType && String(pRoundingType->Value()) == "floor")
+                layer.pooling().roundingType() = RoundingTypeFloor;
+            return true;
+        }
+
         bool ConvertMultiplyLayer(const XmlNode* pLayer, const Vector & srcBin, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
@@ -311,7 +381,10 @@ namespace Synet
                 layer.src().resize(1);
             }
             else
-                return false;
+            {
+                layer.type() = Synet::LayerTypeEltwise;
+                layer.eltwise().operation() = EltwiseOperationTypeProduct;
+            }
             return true;
         }
 
@@ -345,6 +418,21 @@ namespace Synet
             return true;
         }
 
+        bool ConvertPreluLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeConst)
+                return false;
+            layer.type() = Synet::LayerTypePrelu;
+            layer.weight() = second->weight();
+            layer.src().resize(1);
+            if (!CompactShape(layer.weight()[0].dim()))
+                return false;
+            return true;
+        }
+
         bool ConvertPriorBoxClusteredLayer(const XmlNode* pLayer, LayerParam& layer)
         {
             const XmlNode* pData = pLayer->FirstNode("data");
@@ -365,6 +453,26 @@ namespace Synet
             if (pData->FirstAttribute("step_w"))
                 StringToValue(pData->FirstAttribute("step_w")->Value(), layer.priorBoxClustered().stepW());
             StringToValue(pData->FirstAttribute("offset")->Value(), layer.priorBoxClustered().offset());
+            return true;
+        }
+
+        bool ConvertReduceMeanLayer(const XmlNode* pLayer, const Vector & srcBin, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeMeta || second->meta().type() != MetaTypeConst)
+                return false;
+            const Longs & alpha = second->meta().alpha().i64();
+            if (alpha.size() != 2 || alpha[0] != 2 || alpha[1] != 3)
+                return false;
+            Shape input = ConvertInputShape(pLayer);
+            if (input.size() != 4)
+                return false;
+            layer.type() = Synet::LayerTypePooling;
+            layer.pooling().method() = PoolingMethodTypeAverage;
+            layer.pooling().globalPooling() = true;
+            layer.src().resize(1);
             return true;
         }
 
@@ -427,6 +535,12 @@ namespace Synet
             layer.type() = LayerTypeMeta;
             layer.meta().type() = MetaTypeShape;
             layer.meta().version() = 1;
+            return true;
+        }
+
+        bool ConvertSigmoidLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeSigmoid;
             return true;
         }
 
@@ -649,6 +763,27 @@ namespace Synet
                         for (size_t y = 0; y < shape[0]; ++y)
                             for (size_t x = 0; x < shape[1]; ++x)
                                 dst.CpuData(Shape({ y, x, i, o }))[0] = *pSrc++;
+                break;
+            }
+            case LayerTypeInnerProduct:
+            {
+                for (size_t n = 0; n < shape[0]; n++)
+                {
+                    for (size_t c = 0; c < input[1]; c++)
+                    {
+                        for (size_t y = 0; y < input[2]; y++)
+                        {
+                            for (size_t x = 0; x < input[3]; x++)
+                            {
+                                size_t srcOffset = input[2] * input[3] * c + input[3] * y + x;
+                                size_t dstOffset = input[3] * input[1] * y + input[1] * x + c;
+                                pDst[dstOffset] = pSrc[srcOffset];
+                            }
+                        }
+                    }
+                    pSrc += input[1] * input[2] * input[3];
+                    pDst += input[1] * input[2] * input[3];
+                }
                 break;
             }
             default:
