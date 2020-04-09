@@ -13,6 +13,8 @@ Darknet Test project for Linux
 ==============================
 To build test to compare Synet and [Darknet](https://github.com/pjreddie/darknet) for Linux you can run following bash script:
 
+    git clone -b master --recurse-submodules -v https://github.com/ermig1979/Synet.git clone
+    cd clone
     ./build.sh darknet
 
 And application `darknet_test` will be created in directory `build_darknet`.
@@ -24,6 +26,8 @@ Inference Engine Test project for Linux
 =======================================
 To build test to compare Synet and [Inference Engine](https://github.com/opencv/dldt) for Linux you can run following bash script:
 
+    git clone -b master --recurse-submodules -v https://github.com/ermig1979/Synet.git clone
+    cd clone
     ./build.sh inference_engine
 
 And application `inference_engine_test` will be created in directory `build_inference_engine`.

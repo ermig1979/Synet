@@ -20,11 +20,11 @@ cd $BUILD_DIR
 cmake ../prj/cmake -DMODE=$TEST_MODE -DTOOLCHAIN="g++-8" -DSYNET_INFO=$ECHO -DSIMD_AVX512=1 -DSIMD_AVX512VNNI=0 -DBLIS=0 -DPERF_STAT=0
 if [ $? -ne 0 ]
 then
-  exit
+	exit
 fi
 
-make -j8 
+make "-j$(grep "^core id" /proc/cpuinfo | sort -u | wc -l)" 
 if [ $? -ne 0 ]
 then
-  exit
+	exit
 fi
