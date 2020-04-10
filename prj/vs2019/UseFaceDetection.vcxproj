@@ -5,7 +5,6 @@
     <ProjectGuid>{C26833B7-8721-41F0-BA67-CBC4D5ADCD23}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>TestInferenceEngine</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>

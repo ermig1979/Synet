@@ -53,12 +53,12 @@ fi
 #TEST inference_engine test_003f 50 1 1 1 005
 #TEST inference_engine test_003i 100 1 1 1 013
 #TEST inference_engine test_004 200 1 1 1 004
-TEST inference_engine test_005 2000 1 1 1 003t
-#TEST inference_engine test_006 100 1 1 1 002a
-#TEST inference_engine test_007 200 1 1 1 003a
-#TEST inference_engine test_008 5 1 1 1 002a
-#TEST inference_engine test_009f 40 1 1 1 000a
-#TEST inference_engine test_009i 1 0 0 1 000a
-#TEST inference_engine test_010f 100 1 1 1 000a
+#TEST inference_engine test_005 2000 1 1 1 003
+#TEST inference_engine test_006 100 1 1 1 003
+#TEST inference_engine test_007 200 1 1 1 004
+#TEST inference_engine test_008 5 1 1 1 003
+#TEST inference_engine test_009f 40 1 1 1 001
+#TEST inference_engine test_009i 40 1 0 1 000
+TEST inference_engine test_010f 100 1 1 1 001t
 
 exit

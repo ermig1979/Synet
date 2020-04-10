@@ -5,7 +5,6 @@
     <ProjectGuid>{423128F2-9D4E-408D-9123-49CE57A32B0A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>TestDarknet</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -20,7 +19,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\Test\*.h" />
     <ClCompile Include="..\..\src\Test\TestDarknet.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -30,6 +28,14 @@
     <ProjectReference Include="Synet.vcxproj">
       <Project>{c809d7a3-6c52-4e36-8582-00ced929317d}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\Test\TestCommon.h" />
+    <ClInclude Include="..\..\src\Test\TestCompare.h" />
+    <ClInclude Include="..\..\src\Test\TestOptions.h" />
+    <ClInclude Include="..\..\src\Test\TestPerformance.h" />
+    <ClInclude Include="..\..\src\Test\TestSynet.h" />
+    <ClInclude Include="..\..\src\Test\TestUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

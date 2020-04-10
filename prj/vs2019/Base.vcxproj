@@ -1,0 +1,150 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="Prop.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{1622C4EF-06A4-4DAA-9631-5D71B32858A2}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectName>Base</ProjectName>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">NoExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdAllocator.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdArray.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdBase.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdBayer.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdCompare.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdConfig.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdConst.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdConversion.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdCpu.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdDefs.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdDetection.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdEnable.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdExp.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdGemm.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdInit.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdIntegral.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdLib.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdLoad.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdLog.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdMath.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdMemory.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdParallel.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdPerformance.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdPoint.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdPow.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdRectangle.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdResizer.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdRuntime.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdStore.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynet.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetConvolution32f.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetConvolution32fCommon.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetConvolution8i.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetDeconvolution32f.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetMergedConvolution32f.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdTime.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdUpdate.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdView.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdWinograd.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdXml.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseAbsDifference.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseAbsDifferenceSum.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseAbsGradientSaturatedSum.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseAddFeatureDifference.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseAlphaBlending.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseBackground.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseBayerToBgr.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseBayerToBgra.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseBgraToBayer.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseBgraToBgr.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseBgraToGray.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseBgraToYuv.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseBgrToBayer.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseBgrToBgra.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseBgrToGray.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseBgrToHsl.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseBgrToHsv.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseBgrToRgb.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseBgrToYuv.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseBinarization.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseConditional.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseCopy.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseCpu.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseCrc32.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseDeinterleave.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseDetection.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseEdgeBackground.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseFill.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseFloat16.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseFloat32.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseGaussianBlur3x3.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseGemm32f.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseGrayToBgr.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseGrayToBgra.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseHistogram.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseHog.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseHogLite.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseInt16ToGray.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseIntegral.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseInterference.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseInterleave.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseLaplace.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseLbp.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseMeanFilter3x3.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseMedianFilter.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseNeural.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseOperation.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBasePerformance.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseReduce.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseReduceGray2x2.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseReduceGray3x3.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseReduceGray4x4.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseReduceGray5x5.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseReorder.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseResizeBilinear.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseResizer.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSegmentation.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseShiftBilinear.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSobel.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSquaredDifferenceSum.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseStatistic.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseStatisticMoments.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseStretchGray2x2.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSvm.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSynet.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSynetActivation.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSynetConversion.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSynetConvolution32f.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSynetConvolution8i.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSynetDeconvolution32f.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSynetFused.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSynetMergedConvolution32f.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSynetPooling.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseTexture.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseThread.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseTransform.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseWinograd.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseYuvToBgr.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseYuvToBgra.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseYuvToHsl.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseYuvToHsv.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseYuvToHue.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

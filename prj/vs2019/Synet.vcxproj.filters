@@ -1,0 +1,265 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\src\Synet\Synet.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\Synet\Layer.h" />
+    <ClInclude Include="..\..\src\Synet\Network.h" />
+    <ClInclude Include="..\..\src\Synet\Param.h" />
+    <ClInclude Include="..\..\src\Synet\Params.h" />
+    <ClInclude Include="..\..\src\Synet\Stat.h" />
+    <ClInclude Include="..\..\src\Synet\Synet.h" />
+    <ClInclude Include="..\..\src\Synet\Tensor.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\Activation.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\BatchNormLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\BiasLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\BinaryOperationLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\CastLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ConcatLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ConstLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ConvolutionLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\CtcGreedyDecoderLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\DeconvolutionLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\DetectionOutputLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\EltwiseLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\EluLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ExpandDimsLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\FlattenLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\FillLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\FusedLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\GatherLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\HswishLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\InputLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Interp2Layer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\InterpLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Convert.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\ConvParam.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Convolution.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\DebugPrint.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Deconvolution.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Gemm.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Converters\Darknet.h">
+      <Filter>Converters</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Converters\InferenceEngine.h">
+      <Filter>Converters</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineBase.h">
+      <Filter>Converters</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineV10.h">
+      <Filter>Converters</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineV7.h">
+      <Filter>Converters</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Caffe.h">
+      <Filter>Converters\Depricated</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolutionLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\LrnLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\LogLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\InnerProductLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\MetaLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\NormalizeLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\PadLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\PermuteLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\PoolingLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\PowerLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\PriorBoxClusteredLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\PreluLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\PriorBoxLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\RegionLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ReluLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ReorgLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ReshapeLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\RestrictRangeLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ScaleLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ShortcutLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ShuffleLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\SigmoidLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\SliceLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\SoftplusLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\SqueezeLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\StridedSliceLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\StubLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\SwitchLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\UnaryOperationLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\UnpackLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\UpsampleLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\YoloLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Tensorflow.h">
+      <Filter>Converters\Depricated</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Protobuf.h">
+      <Filter>Converters\Depricated</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\TileLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\SetInput.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Math.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\MergedConvolution.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Converters\Optimizer.h">
+      <Filter>Converters</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Winograd.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Xml.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Common.h" />
+    <ClInclude Include="..\..\src\Synet\Buffer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Layers">
+      <UniqueIdentifier>{2b236438-b274-4f2f-a02b-72175df7cd1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Converters">
+      <UniqueIdentifier>{3b086818-329c-4b6e-81ca-035978ca699d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{36aa89bf-afc4-4b67-8db6-28ef952a4fc5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Converters\Depricated">
+      <UniqueIdentifier>{22ba054b-220b-4b3d-9978-01844a07aae3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

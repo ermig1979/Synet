@@ -13,6 +13,8 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">NoExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -22,71 +24,112 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\Simd*.hpp" />
-    <ClInclude Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdLib.h" />
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdLib.cpp">
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">NoExtensions</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
-    </ClCompile>
-	<ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdBase*.cpp">
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">NoExtensions</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
-    </ClCompile>
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdSse1*.cpp">
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
-    </ClCompile>
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdSse2*.cpp">
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
-    </ClCompile>
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdSse3*.cpp">
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
-    </ClCompile>
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdSsse3*.cpp">
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
-    </ClCompile>
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdSse41*.cpp">
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
-    </ClCompile>
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdSse42*.cpp">
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
-    </ClCompile>
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdAvx1*.cpp">
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
-    </ClCompile>
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdAvx2*.cpp">
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-    </ClCompile>
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdAvx512f*.cpp">
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
-    </ClCompile>
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdAvx512bw*.cpp">
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
-    </ClCompile>
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdAvx512vnni*.cpp">
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
-    </ClCompile>
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdVmx*.cpp">
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">NoExtensions</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
-    </ClCompile>
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdVsx*.cpp">
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">NoExtensions</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
-    </ClCompile>
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdNeon*.cpp">
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">NoExtensions</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
-    </ClCompile>
-    <ClCompile Include="$(ProjectDir)..\..\3rd\Simd\src\Simd\SimdMsa*.cpp">
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">NoExtensions</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
-    </ClCompile>
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdAllocator.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdArray.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdAvx1.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdAvx2.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdAvx512bw.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdAvx512f.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdAvx512vnni.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdBase.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdConfig.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdConst.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdContour.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdCpu.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdDefs.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdDetection.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdDrawing.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdEnable.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdFont.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdFrame.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdGemm.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdImageMatcher.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdInit.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdLib.h" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdLib.cpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdLib.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdLog.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdMath.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdMemory.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdMotion.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdMsa.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdNeon.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdNeural.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdParallel.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdPerformance.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdPixel.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdPoint.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdPyramid.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdRectangle.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdResizer.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdRuntime.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdShift.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSse1.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSse2.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSse3.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSse41.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSse42.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSsse3.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetConvolution32f.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetConvolution8i.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetDeconvolution32f.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetMergedConvolution32f.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdTime.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdVersion.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdView.hpp" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdVmx.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdVsx.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdXml.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Avx1.vcxproj">
+      <Project>{d6e29b9b-ee2d-4339-8417-dcadc283884f}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Avx2.vcxproj">
+      <Project>{4c82474f-3b9a-4b92-ac74-2434ca1d5064}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Avx512bw.vcxproj">
+      <Project>{3e24da78-24e3-41d2-9066-54c75be13b90}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Avx512f.vcxproj">
+      <Project>{eaef875c-436d-4760-8e30-87b334afd979}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Avx512vnni.vcxproj">
+      <Project>{e89969de-d5f1-44c5-81af-a4283851090b}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Base.vcxproj">
+      <Project>{1622c4ef-06a4-4daa-9631-5d71b32858a2}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Msa.vcxproj">
+      <Project>{af08f27a-49fe-4a7f-84cc-3dd0005863ef}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Neon.vcxproj">
+      <Project>{271c2d02-b19d-4193-8d83-cc0f06e75f3d}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Sse1.vcxproj">
+      <Project>{5bd9c258-d7fb-4477-bd5f-8f6ce6ec22ae}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Sse2.vcxproj">
+      <Project>{01bfb333-09d1-4d8e-85c0-c05d333cf807}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Sse3.vcxproj">
+      <Project>{541af1ec-146d-4904-909a-2ad6c26e3b38}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Sse41.vcxproj">
+      <Project>{50073d4b-e2ef-4fa5-9868-380c4a4dae0c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Sse42.vcxproj">
+      <Project>{310d4930-8048-41a0-87ec-b0987be24281}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Ssse3.vcxproj">
+      <Project>{5153f702-a5fd-440d-917d-fda213663527}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Vmx.vcxproj">
+      <Project>{a88b854a-fcf9-484a-bda2-e27f1ec3a0a9}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Vsx.vcxproj">
+      <Project>{e3be9fd8-d69d-4b04-b719-c475d868c5eb}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
