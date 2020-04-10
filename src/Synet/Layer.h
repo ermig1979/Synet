@@ -38,7 +38,8 @@ namespace Synet
         typedef T Type;
         typedef Synet::Tensor<Type> Tensor;
         typedef std::vector<Tensor> Tensors;
-        typedef std::vector<Tensor*> TensorPtrs;
+        typedef Tensor* TensorPtr;
+        typedef std::vector<TensorPtr> TensorPtrs;
         typedef std::shared_ptr<Layer> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
 

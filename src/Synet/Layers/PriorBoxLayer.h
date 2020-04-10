@@ -107,9 +107,10 @@ namespace Synet
                 _imgH = 0;
                 _imgW = 0;
             }
-            _trans = src[0]->Format() == TensorFormatNhwc;
-            size_t layerH = _trans ? src[0]->Axis(1) : src[0]->Axis(2);
-            size_t layerW = _trans ? src[0]->Axis(2) : src[0]->Axis(3);
+
+            size_t layerH, layerW;
+            GetSize(src[0], layerH, layerW);
+
             if (param.step().size() == 2)
             {
                 _stepH = param.step()[0];
@@ -122,8 +123,8 @@ namespace Synet
             }
             else if (_version == 2)
             {
-                size_t dataH = _trans ? src[1]->Axis(1) : src[1]->Axis(2);
-                size_t dataW = _trans ? src[1]->Axis(2) : src[1]->Axis(3);
+                size_t dataH, dataW;
+                GetSize(src[1], dataH, dataW);
                 _stepH = float(dataH) / layerH;
                 _stepW = float(dataW) / layerW;
             }
@@ -153,17 +154,35 @@ namespace Synet
         }
 
     private:
+        typedef typename Base::TensorPtr TensorPtr;
+
+        void GetSize(const TensorPtr & src, size_t & h, size_t & w)
+        {
+            if (src->GetType() == TensorType64i)
+            {
+                const int64_t* data = src->As64i().CpuData();
+                h = (size_t)data[0];
+                w = (size_t)data[1];
+            }
+            else if (src->Format() == TensorFormatNhwc)
+            {
+                h = src->Axis(1);
+                w = src->Axis(2);
+            }
+            else
+            {
+                h = src->Axis(2);
+                w = src->Axis(3);
+            }
+        }
 
         void CalculatePriorBoxV0(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            size_t layerH = _trans ? src[0]->Axis(1) : src[0]->Axis(2);
-            size_t layerW = _trans ? src[0]->Axis(2) : src[0]->Axis(3);
+            size_t layerH, layerW;
+            GetSize(src[0], layerH, layerW);
             size_t imgW, imgH;
             if (_imgH == 0 || _imgW == 0)
-            {
-                imgH = _trans ? src[1]->Axis(1) : src[1]->Axis(2);
-                imgW = _trans ? src[1]->Axis(2) : src[1]->Axis(3);
-            }
+                GetSize(src[1], imgH, imgW);
             else
             {
                 imgH = _imgH;
@@ -244,14 +263,11 @@ namespace Synet
 
         void CalculatePriorBoxV1(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            size_t layerH = _trans ? src[0]->Axis(1) : src[0]->Axis(2);
-            size_t layerW = _trans ? src[0]->Axis(2) : src[0]->Axis(3);
+            size_t layerH, layerW;
+            GetSize(src[0], layerH, layerW);
             size_t imgW, imgH;
             if (_imgH == 0 || _imgW == 0)
-            {
-                imgH = _trans ? src[1]->Axis(1) : src[1]->Axis(2);
-                imgW = _trans ? src[1]->Axis(2) : src[1]->Axis(3);
-            }
+                GetSize(src[1], imgH, imgW);
             else
             {
                 imgH = _imgH;
@@ -348,14 +364,11 @@ namespace Synet
 
         void CalculatePriorBoxV2(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            size_t layerH = _trans ? src[0]->Axis(1) : src[0]->Axis(2);
-            size_t layerW = _trans ? src[0]->Axis(2) : src[0]->Axis(3);
+            size_t layerH, layerW;
+            GetSize(src[0], layerH, layerW);
             size_t imgW, imgH;
             if (_imgH == 0 || _imgW == 0)
-            {
-                imgH = _trans ? src[1]->Axis(1) : src[1]->Axis(2);
-                imgW = _trans ? src[1]->Axis(2) : src[1]->Axis(3);
-            }
+                GetSize(src[1], imgH, imgW);
             else
             {
                 imgH = _imgH;
@@ -438,7 +451,7 @@ namespace Synet
 
         int _version;
         Floats _minSizes, _maxSizes, _aspectRatios, _variance;
-        bool _flip, _clip, _scaleAllSizes, _trans;
+        bool _flip, _clip, _scaleAllSizes;
         size_t _numPriors, _imgW, _imgH;
         float _stepW, _stepH, _offset;
     };

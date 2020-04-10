@@ -60,6 +60,8 @@ namespace Synet
                 String type = pLayer->FirstAttribute("type")->Value();
                 if (type == "Add" && !ConvertAddLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
+                if (type == "Concat" && !ConvertConcatLayer(pLayer, dstXml.layers(), trans, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Const" && !ConvertConstLayer(pLayer, srcBin, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Convert" && !ConvertConvertLayer(pLayer, dstXml.layers(), layer))
@@ -77,6 +79,8 @@ namespace Synet
                 if (type == "Parameter" && !ConvertParameterLayer(pLayer, trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "PReLU" && !ConvertPreluLayer(pLayer, dstXml.layers(), layer))
+                    return ErrorMessage(pLayer);
+                if (type == "PriorBox" && !ConvertPriorBoxLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "PriorBoxClustered" && !ConvertPriorBoxClusteredLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
@@ -154,6 +158,28 @@ namespace Synet
             {
                 layer.type() = Synet::LayerTypeEltwise;
                 layer.eltwise().operation() = EltwiseOperationTypeSum;
+            }
+            return true;
+        }
+
+        bool ConvertConcatLayer(const XmlNode* pLayer, const LayerParams& layers, bool trans, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeConcat;
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            StringToValue(pData->FirstAttribute("axis")->Value(), layer.concat().axis());
+            if (trans && !PermutedToNchw(layers, false, true))
+            {
+                Shape input = ConvertInputShape(pLayer);
+                if (input.size() == 4)
+                {
+                    Shape nchw = Shape({ 0, 3, 1, 2 });
+                    layer.concat().axis() = (uint32_t)nchw[layer.concat().axis()];
+                }
+                else
+                    return false;
+                
             }
             return true;
         }
@@ -324,7 +350,7 @@ namespace Synet
             layer.weight() = second->weight();
             layer.innerProduct().outputNum() = (uint32_t)output[1];
             layer.src().resize(1);
-            if (trans && !PermutedToNchw(layers, false))
+            if (trans && !PermutedToNchw(layers, false, false))
             {
                 const LayerParam * first = GetLayer(layers, layer.src()[0]);
                 if (first == NULL || first->type() != LayerTypeReshape)
@@ -433,6 +459,26 @@ namespace Synet
             return true;
         }
 
+        bool ConvertPriorBoxLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            layer.type() = Synet::LayerTypePriorBox;
+            layer.priorBox().version() = 1;
+            StringToValue(pData->FirstAttribute("clip")->Value(), layer.priorBox().clip());
+            StringToValue(pData->FirstAttribute("flip")->Value(), layer.priorBox().flip());
+            StringToValue(pData->FirstAttribute("offset")->Value(), layer.priorBox().offset());
+            ConvertVector(pData->FirstAttribute("step"), layer.priorBox().step());
+            if (pData->FirstAttribute("scale_all_sizes"))
+                StringToValue(pData->FirstAttribute("scale_all_sizes")->Value(), layer.priorBox().scaleAllSizes());
+            ConvertVector(pData->FirstAttribute("aspect_ratio"), layer.priorBox().aspectRatio());
+            ConvertVector(pData->FirstAttribute("max_size"), layer.priorBox().maxSize());
+            ConvertVector(pData->FirstAttribute("min_size"), layer.priorBox().minSize());
+            ConvertVector(pData->FirstAttribute("variance"), layer.priorBox().variance());
+            return true;
+        }
+
         bool ConvertPriorBoxClusteredLayer(const XmlNode* pLayer, LayerParam& layer)
         {
             const XmlNode* pData = pLayer->FirstNode("data");
@@ -509,7 +555,7 @@ namespace Synet
                     layer.reshape().axis() = 1;
                     shape.erase(shape.begin(), shape.begin() + 1);
                 }
-                if (trans && !PermutedToNchw(layers, false))
+                if (trans && !PermutedToNchw(layers, false, false))
                 {
                     if (shape.size() == 4)
                     {
@@ -551,7 +597,7 @@ namespace Synet
             if (pData == NULL)
                 return false;
             StringToValue(pData->FirstAttribute("axis")->Value(), layer.softmax().axis());
-            if (trans && !PermutedToNchw(layers, false))
+            if (trans && !PermutedToNchw(layers, false, false))
             {
                 Shape input = ConvertInputShape(pLayer);
                 if (input.size() == 4)
@@ -625,7 +671,7 @@ namespace Synet
             if (!CheckSourceNumber(layer, 2))
                 return false;
             const LayerParam* first = GetLayer(layers, layer.src()[0]);
-            if (first->type() == LayerTypePriorBoxClustered)
+            if (first->type() == LayerTypePriorBoxClustered || first->type() == LayerTypePriorBox)
             {
                 layer.type() = Synet::LayerTypeStub;
             }
@@ -793,28 +839,30 @@ namespace Synet
             return true;
         }
 
-        static bool PermutedToNchw(const LayerParams & layers, size_t current, bool checkInnerProduct)
+        static bool PermutedToNchw(const LayerParams & layers, size_t current, bool checkInnerProduct, bool checkPriorBox)
         {
             const LayerParam& layer = layers[current];
             if (layer.type() == LayerTypePermute && layer.permute().format() == TensorFormatNchw)
                 return true;
             if (checkInnerProduct && layer.type() == LayerTypeInnerProduct)
                 return true;
+            if (checkPriorBox && layer.type() == LayerTypePriorBox)
+                return true;
             for (size_t s = 0; s < layer.src().size(); ++s)
             {
                 Pin src = ParsePin(layer.src()[s]);
                 for (size_t l = 0; l < current; ++l)
                 {
-                    if (src.name == layers[l].name() && PermutedToNchw(layers, l, checkInnerProduct))
+                    if (src.name == layers[l].name() && PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox))
                         return true;
                 }
             }
             return false;
         }
 
-        static bool PermutedToNchw(const LayerParams& layers, bool checkInnerProduct = true)
+        static bool PermutedToNchw(const LayerParams& layers, bool checkInnerProduct, bool checkPriorBox)
         {
-            return PermutedToNchw(layers, layers.size() - 1, checkInnerProduct);
+            return PermutedToNchw(layers, layers.size() - 1, checkInnerProduct, checkPriorBox);
         }
     };
 }
