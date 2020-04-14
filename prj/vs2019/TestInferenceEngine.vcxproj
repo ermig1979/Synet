@@ -21,6 +21,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\Test\TestImage.cpp" />
     <ClCompile Include="..\..\src\Test\TestInferenceEngine.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -34,6 +35,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\Test\TestCommon.h" />
     <ClInclude Include="..\..\src\Test\TestCompare.h" />
+    <ClInclude Include="..\..\src\Test\TestImage.h" />
     <ClInclude Include="..\..\src\Test\TestOptions.h" />
     <ClInclude Include="..\..\src\Test\TestPerformance.h" />
     <ClInclude Include="..\..\src\Test\TestSynet.h" />

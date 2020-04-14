@@ -26,6 +26,8 @@
 
 #include "TestCommon.h"
 
+#include <locale>
+
 #ifdef _MSC_VER
 #define NOMINMAX
 #include <windows.h>
@@ -70,7 +72,7 @@ namespace Test
 #endif
     }
 
-    bool CreatePath(const String & path)
+    inline bool CreatePath(const String & path)
     {
 #if defined(_MSC_VER) && _MSC_VER < 1900
         return std::tr2::sys::create_directories(std::tr2::sys::path(path));
@@ -111,25 +113,34 @@ namespace Test
 #endif
     }
 
-    inline String DirectoryByPath(const String & path_)
+    inline String DirectoryByPath(const String & path)
     {
 #ifdef WIN32
-        size_t pos = path_.find_last_of("\\");
+        size_t pos = path.find_last_of("\\");
         if (pos == std::string::npos)
-            return path_;
+            return path;
         else
-            return path_.substr(0, pos);
+            return path.substr(0, pos);
 #elif defined(__unix__)
-        size_t pos = path_.find_last_of("/");
+        size_t pos = path.find_last_of("/");
         if (pos == std::string::npos)
-            return path_;
+            return path;
         else
-            return path_.substr(0, pos);
+            return path.substr(0, pos);
 #else
         std::cerr << "GetNameByPath: Is not implemented yet!\n";
         return "";
 #endif
-        return path_.substr(0, path_.find_last_of("/\\"));
+    }
+
+    inline String ExtensionByPath(const String& path)
+    {
+        String name = GetNameByPath(path);
+        size_t pos = path.find_last_of(".");
+        if (pos == std::string::npos)
+            return String();
+        else
+            return path.substr(pos + 1);
     }
 
     inline bool DirectoryExists(const String & path)
@@ -211,6 +222,15 @@ namespace Test
         for (size_t i = 0; i < tmp.size(); ++i)
             for (size_t j = 0; j < 7; ++j)
                 data[i*7 + j] = tmp[i].val[j];
+    }
+
+    inline String ToLower(const String& src)
+    {
+        std::locale loc;
+        String dst(src);
+        for (size_t i = 0; i < dst.size(); ++i)
+            dst[i] = std::tolower(dst[i], loc);
+        return dst;
     }
 }
 

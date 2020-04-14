@@ -29,6 +29,7 @@
 #include "TestOptions.h"
 #include "TestPerformance.h"
 #include "TestSynet.h"
+#include "TestImage.h"
 
 namespace Test
 {
@@ -240,7 +241,7 @@ namespace Test
                         size_t p = s * bN + b;
                         test->path[p] = MakePath(_options.imageDirectory, names[(t*bN + b)*sN + s]);
                         View original;
-                        if (!original.Load(test->path[p]))
+                        if (!LoadImage(test->path[p], original))
                         {
                             std::cout << "Can't read '" << test->path[p] << "' image!" << std::endl;
                             return false;
@@ -345,7 +346,7 @@ namespace Test
             if (_options.annotateRegions)
             {
                 View image;
-                if (!image.Load(inputPath))
+                if (!LoadImage(inputPath, image))
                 {
                     std::cout << "Can't read '" << inputPath << "' image!" << std::endl;
                     return false;
@@ -362,7 +363,7 @@ namespace Test
                     Simd::DrawRectangle(image, l, t, r, b, white);
                 }
                 String outputPath = MakePath(_options.outputDirectory, network.Name() + "_" + GetNameByPath(inputPath));
-                if (!image.Save(outputPath))
+                if (!SaveImage(image, outputPath))
                 {
                     std::cout << "Can't write '" << outputPath << "' image!" << std::endl;
                     return false;

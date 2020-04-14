@@ -15,3 +15,6 @@
 	url = https://github.com/opencv/dldt.git
 	branch = 2020
 	ignore = dirty
+[submodule "3rd/stb"]
+	path = 3rd/stb
+	url = https://github.com/nothings/stb.git
