@@ -21,8 +21,8 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 */
-#include "TestImage.h"
 #include "TestUtils.h"
+#include "TestImage.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -46,9 +46,9 @@ namespace Test
 			{
 				if (c == 3)
 				{
-					view.Recreate(x, y, View::Bgr24);
-					Simd::Copy(View(x, y, x, View::Bgr24, data), view);
-					return true;
+					view.Recreate(x, y, View::Bgra32);
+					Simd::Convert(View(x, y, x*3, View::Bgr24, data), view);
+					result = true;
 				}
 				stbi_image_free(data);
 			}
@@ -68,7 +68,7 @@ namespace Test
 				bgr = view;
 			else
 			{
-				View bgr(view.Size(), View::Bgr24);
+				bgr.Recreate(view.width, view.height, View::Bgr24, NULL, 1);
 				Simd::Convert(view, bgr);
 			}
 			return stbi_write_jpg(path.c_str(), (int)bgr.width, (int)bgr.height, 3, bgr.data, 100) != 0;
