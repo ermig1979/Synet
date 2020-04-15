@@ -33,7 +33,7 @@ namespace Synet
     {
     public:
 
-        bool Run(Synet::NetworkParam & network, const Floats & bin)
+        bool Run(Synet::NetworkParam & network, Floats & bin)
         {
             if (!MergeLayers(network, bin, 0))
                 return false;
@@ -56,7 +56,7 @@ namespace Synet
         typedef std::vector<Change> Changes;
         typedef std::vector<LayerType> LayerTypes;
 
-        bool MergeLayers(Synet::NetworkParam& network, const Floats& bin, int stage)
+        bool MergeLayers(Synet::NetworkParam& network, Floats& bin, int stage)
         {
             const bool is8i = network.statistics().size() > 0;
             Changes changes;
@@ -67,7 +67,7 @@ namespace Synet
                 {
                 case 0:
                 {
-                    if (MergeCurrentAndBias(network.layers(), i, merged, changes))
+                    if (MergeCurrentAndBias(network.layers(), i, bin, merged, changes))
                         continue;
                     break;
                 }
@@ -134,12 +134,12 @@ namespace Synet
             return true;
         }
 
-        bool MergeCurrentAndBias(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        bool MergeCurrentAndBias(const LayerParams& src, size_t& index, Floats& bin, LayerParams& dst, Changes& changes)
         {
             if (index == 0)
                 return false;
             const LayerParam & current = src[index - 1];
-            const LayerParam & bias = src[index + 0];
+            const LayerParam & bias = src[index];
             if (bias.type() != LayerTypeBias || bias.src()[0] != current.name())
                 return false;
             if (InsideLink(src, index + 1, 1))
@@ -156,6 +156,17 @@ namespace Synet
                     return false;
                 dst.back().innerProduct().biasTerm() = true;
                 break;
+            case LayerTypePower:
+                if (current.power().power() != 1.0f || current.power().shift() != 0.0f)
+                    return false;
+                dst.back().type() = LayerTypeScale;
+                dst.back().scale().biasTerm() = true;
+                dst.back().weight().push_back(bias.weight()[0]);
+                dst.back().weight()[0].offset() = bin.size() * sizeof(float);
+                for (size_t i = 0; i < dst.back().weight()[0].dim()[0]; ++i)
+                    bin.push_back(current.power().scale());
+                dst.back().power().scale() = 1.0f;
+                break;
             case LayerTypeScale:
                 if (current.scale().biasTerm())
                     return false;
@@ -166,7 +177,7 @@ namespace Synet
             }
             dst.back().name() = bias.name();
             dst.back().dst() = bias.dst();
-            dst.back().weight().push_back(src[index].weight()[0]);
+            dst.back().weight().push_back(bias.weight()[0]);
             return true;
         }
 

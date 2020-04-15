@@ -60,6 +60,6 @@ fi
 #TEST inference_engine test_009f 40 1 1 1 001
 #TEST inference_engine test_009i 40 1 0 1 000
 #TEST inference_engine test_010f 100 1 1 1 001t
-TEST inference_engine test_011f 40 1 1 1 000t
+TEST inference_engine test_011f 40 1 1 1 001t
 
 exit
