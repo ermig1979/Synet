@@ -952,7 +952,7 @@ namespace Synet
                 post = true;
             if (!(scale && (pre || post)))
                 return false;
-            if (InsideLink(src, index + (pre ? 0 : 1), 1 + (pre ? 1 : 0) + (post ? 1 : 0), 0, LayerTypes({LayerTypePriorBox, LayerTypePriorBoxClustered})))
+            if (InsideLink(src, index + (pre ? 0 : 1), 1 + (pre ? 1 : 0) + (post ? 1 : 0), 0, LayerTypes({LayerTypePriorBox, LayerTypePriorBoxClustered, LayerTypeMeta})))
                 return false;
             LayerParam layer;
             layer.type() = LayerTypeFused;

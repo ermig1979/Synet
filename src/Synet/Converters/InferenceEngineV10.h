@@ -60,6 +60,8 @@ namespace Synet
                 String type = pLayer->FirstAttribute("type")->Value();
                 if (type == "Add" && !ConvertAddLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
+                if (type == "Clamp" && !ConvertClampLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Concat" && !ConvertConcatLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Const" && !ConvertConstLayer(pLayer, srcBin, layer))
@@ -69,6 +71,8 @@ namespace Synet
                 if ((type == "Convolution" || type == "GroupConvolution") && !ConvertConvolutionLayer(pLayer, trans, dstXml.layers(), layer, dstBin))
                     return ErrorMessage(pLayer);
                 if (type == "DetectionOutput" && !ConvertDetectionOutputLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "Interpolate" && !ConvertInterpolateLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if ((type == "MatMul") && !ConvertMatMulLayer(pLayer, trans, dstXml.layers(), layer, dstBin))
                     return ErrorMessage(pLayer);
@@ -83,6 +87,8 @@ namespace Synet
                 if (type == "PriorBox" && !ConvertPriorBoxLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "PriorBoxClustered" && !ConvertPriorBoxClusteredLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "PriorBoxV2" && !ConvertPriorBoxV2Layer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "ReduceMean" && !ConvertReduceMeanLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
@@ -159,6 +165,17 @@ namespace Synet
                 layer.type() = Synet::LayerTypeEltwise;
                 layer.eltwise().operation() = EltwiseOperationTypeSum;
             }
+            return true;
+        }
+
+        bool ConvertClampLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeRestrictRange;
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            StringToValue(pData->FirstAttribute("min")->Value(), layer.restrictRange().lower());
+            StringToValue(pData->FirstAttribute("max")->Value(), layer.restrictRange().upper());
             return true;
         }
 
@@ -317,6 +334,40 @@ namespace Synet
             StringToValue(pData->FirstAttribute("share_location")->Value(), layer.detectionOutput().shareLocation());
             if (pData->FirstAttribute("clip"))
                 StringToValue(pData->FirstAttribute("clip")->Value(), layer.detectionOutput().clip());
+            return true;
+        }
+
+        bool ConvertInterpolateLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            layer.type() = LayerTypeInterp2;
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            if (pData->FirstAttribute("factor"))
+                StringToValue(pData->FirstAttribute("factor")->Value(), layer.interp2().factor());
+            const XmlAttr* pPadBeg = pData->FirstAttribute("pad_beg");
+            const XmlAttr* pPadEnd = pData->FirstAttribute("pad_end");
+            if (pPadBeg && pPadEnd)
+            {
+                size_t padBeg, padEnd;
+                StringToValue(pPadBeg->Value(), padBeg);
+                StringToValue(pPadEnd->Value(), padEnd);
+                layer.interp2().pad() = Shape({ padBeg, padBeg, padEnd, padEnd });
+            }
+            if (pData->FirstAttribute("align_corners"))
+                StringToValue(pData->FirstAttribute("align_corners")->Value(), layer.interp2().alignCorners());
+
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeMeta || second->meta().type() != MetaTypeConst)
+                return false;
+            if (second->meta().alpha().shape().size() != 1 || second->meta().alpha().shape()[0] != 2)
+                return false;
+            const int64_t* alpha = second->meta().alpha().i64().data();
+            layer.interp2().height() = (int32_t)alpha[0];
+            layer.interp2().width() = (int32_t)alpha[1];
+            layer.src().resize(1);
             return true;
         }
 
@@ -499,6 +550,25 @@ namespace Synet
             if (pData->FirstAttribute("step_w"))
                 StringToValue(pData->FirstAttribute("step_w")->Value(), layer.priorBoxClustered().stepW());
             StringToValue(pData->FirstAttribute("offset")->Value(), layer.priorBoxClustered().offset());
+            return true;
+        }
+
+        bool ConvertPriorBoxV2Layer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            layer.type() = Synet::LayerTypePriorBox;
+            layer.priorBox().version() = 2;
+            StringToValue(pData->FirstAttribute("clip")->Value(), layer.priorBox().clip());
+            StringToValue(pData->FirstAttribute("flip")->Value(), layer.priorBox().flip());
+            StringToValue(pData->FirstAttribute("offset")->Value(), layer.priorBox().offset());
+            if (pData->FirstAttribute("scale_all_sizes"))
+                StringToValue(pData->FirstAttribute("scale_all_sizes")->Value(), layer.priorBox().scaleAllSizes());
+            ConvertVector(pData->FirstAttribute("aspect_ratio"), layer.priorBox().aspectRatio());
+            ConvertVector(pData->FirstAttribute("max_size"), layer.priorBox().maxSize());
+            ConvertVector(pData->FirstAttribute("min_size"), layer.priorBox().minSize());
+            ConvertVector(pData->FirstAttribute("variance"), layer.priorBox().variance());
             return true;
         }
 
