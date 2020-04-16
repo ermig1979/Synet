@@ -339,6 +339,7 @@ namespace Synet
 
         bool ConvertInterpolateLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
         {
+#if 0
             if (!CheckSourceNumber(layer, 2))
                 return false;
             layer.type() = LayerTypeInterp2;
@@ -368,6 +369,26 @@ namespace Synet
             layer.interp2().height() = (int32_t)alpha[0];
             layer.interp2().width() = (int32_t)alpha[1];
             layer.src().resize(1);
+#else
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            layer.type() = LayerTypeInterp;
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            const XmlAttr* pMode = pData->FirstAttribute("mode");
+            if (pMode && String(pMode->Value()) == "nearest")
+                layer.interp().interpolationType() = InterpolationTypeNearest;
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeMeta || second->meta().type() != MetaTypeConst)
+                return false;
+            if (second->meta().alpha().shape().size() != 1 || second->meta().alpha().shape()[0] != 2)
+                return false;
+            const int64_t* alpha = second->meta().alpha().i64().data();
+            layer.interp().height() = (int32_t)alpha[0];
+            layer.interp().width() = (int32_t)alpha[1];
+            layer.src().resize(1);
+#endif
             return true;
         }
 
