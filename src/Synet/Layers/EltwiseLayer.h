@@ -126,9 +126,15 @@ namespace Synet
                     assert(src[i]->Shape() == src[0]->Shape());
                     _src[i] = src[i]->CpuData();
                 }
+                _batch = 1, _channels = 1, _spatial = src[0]->Size();
             }
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
             this->UsePerfStat();
+        }
+
+        virtual int64_t Flop() const
+        {
+            return _batch * _channels * _spatial * (_coefficients.size() - 1) * (_operation == EltwiseOperationTypeSum ? 2 : 1);
         }
 
     protected:

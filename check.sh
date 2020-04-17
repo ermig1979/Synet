@@ -11,7 +11,7 @@ VERSION=$7
 DIR=./data/"$FRAMEWORK"/"$NAME"
 PATHES="-om=$DIR/other.dsc -ow=$DIR/other.dat -sm=$DIR/synet$FORMAT.xml -sw=$DIR/synet$FORMAT.bin -id=$DIR/image -od=$DIR/output -tp=$DIR/param.xml"
 PREFIX="${FRAMEWORK:0:1}"
-LOG=./test/all/"$LOG_DIR$PREFIX"/l"$PREFIX"_"$NAME"_t"$THREAD"_f"$FORMAT"_b"$BATCH".txt
+LOG=./test/check/"$LOG_DIR$PREFIX"/l"$PREFIX"_"$NAME"_t"$THREAD"_f"$FORMAT"_b"$BATCH".txt
 BIN_DIR=./build_"$FRAMEWORK"
 BIN="$BIN_DIR"/test_"$FRAMEWORK"
 

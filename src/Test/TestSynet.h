@@ -156,7 +156,7 @@ namespace Test
         {
             SetInput(x);
             {
-                TEST_PERF_FUNC();
+                TEST_PERF_FUNC2(_net.Flop());
                 _net.Forward();
             }
             SetOutput();

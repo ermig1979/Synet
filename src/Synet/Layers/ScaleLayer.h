@@ -145,6 +145,11 @@ namespace Synet
             _compatibility = 1;
         }
 
+        virtual int64_t Flop() const
+        {
+            return _batch * _channels * _height * _width * 2;
+        }
+
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {

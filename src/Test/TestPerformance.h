@@ -270,6 +270,7 @@ namespace Test
 #endif
 
 #define TEST_PERF_FUNC() Test::ScopedPerformanceMeasurer SYNET_CAT(__spm, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION));
+#define TEST_PERF_FUNC2(flop) Test::ScopedPerformanceMeasurer SYNET_CAT(__spm, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, flop));
 #define TEST_PERF_BLOCK(name) Test::ScopedPerformanceMeasurer SYNET_CAT(__spm, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, name));
 #define TEST_PERF_BLOCK_END(name) Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, name)->Leave();
 

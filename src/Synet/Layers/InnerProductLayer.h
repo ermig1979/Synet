@@ -66,6 +66,11 @@ namespace Synet
         {
         }
 
+        virtual int64_t Flop() const
+        {
+            return _Mdim * _Ndim * _Kdim * 2;
+        }
+
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _biasTerm = this->Param().innerProduct().biasTerm();
@@ -102,8 +107,7 @@ namespace Synet
             dst[0]->Reshape(dstShape, src[0]->Format());
             std::stringstream desc;
             desc << " M=" << _Mdim << " N=" << _Ndim << " K=" << _Kdim;
-            int64_t flop = _Mdim * _Ndim * _Kdim * 2;
-            this->UsePerfStat(desc.str(), flop);
+            this->UsePerfStat(desc.str(), Flop());
         }
 
     protected:

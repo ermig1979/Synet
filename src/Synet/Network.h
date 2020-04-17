@@ -534,6 +534,14 @@ namespace Synet
                 _layers[i]->CompactWeight();
         }
 
+        int64_t Flop() const
+        {
+            int64_t flop = 0;
+            for (size_t i = 0; i < _layers.size(); ++i)
+                flop += _layers[i]->Flop();
+            return flop;
+        }
+
     private:
         typedef std::shared_ptr<Layer> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;

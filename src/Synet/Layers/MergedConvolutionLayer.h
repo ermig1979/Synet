@@ -346,10 +346,7 @@ namespace Synet
             desc << _num << "x" << _conv[0].srcC << "x" << _conv[0].srcH << "x" << _conv[0].srcW;
             desc << "-" << _conv[0].dstC << "x" << _conv[0].kernelY << "x" << _conv[0].strideY;
             desc << "-" << _conv[1].kernelY << "x" << _conv[1].strideY << "-" << _conv[2].dstC;
-            int64_t flop = 0;
-            for(size_t i = 0; i < Detail::MCC; ++i)
-                flop += _num * _conv[i].kernelY * _conv[i].kernelX * _conv[i].srcC * _conv[i].dstH * _conv[i].dstW * _conv[i].dstC / _conv[i].group * 2;
-            this->UsePerfStat(desc.str(), flop);
+            this->UsePerfStat(desc.str(), Flop());
         }
 
         virtual size_t MemoryUsage() const
@@ -362,6 +359,14 @@ namespace Synet
             for(size_t i = 0; i < Detail::MCC; ++i)
                 if (_internal[i])
                     ((Tensor&)this->Weight()[_index[i]]).Clear();
+        }
+
+        virtual int64_t Flop() const
+        {
+            int64_t flop = 0;
+            for (size_t i = 0; i < Detail::MCC; ++i)
+                flop += _num * _conv[i].kernelY * _conv[i].kernelX * _conv[i].srcC * _conv[i].dstH * _conv[i].dstW * _conv[i].dstC / _conv[i].group * 2;
+            return flop;
         }
 
     protected:

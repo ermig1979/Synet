@@ -70,6 +70,11 @@ namespace Synet
             return 0;
         }
 
+        virtual int64_t Flop() const
+        {
+            return 0;
+        }
+
         virtual void CompactWeight()
         {
         }

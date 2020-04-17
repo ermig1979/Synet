@@ -61,6 +61,11 @@ namespace Synet
             return Base::MemoryUsage() + _convolution32f.InternalBufferSize() * sizeof(Type);
         }
 
+        virtual int64_t Flop() const
+        {
+            return _num* _conv.kernelY* _conv.kernelX* _conv.srcC* _conv.dstH* _conv.dstW* _conv.dstC / _conv.group * 2;
+        }
+
         virtual void CompactWeight()
         {
             if (_internal)
@@ -200,8 +205,7 @@ namespace Synet
             std::stringstream desc;
             desc << "i=" << _num << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW << " o=" << _conv.dstC;
             desc << " k=" << _conv.kernelY << " s=" << _conv.strideY << " g=" << _conv.group;
-            int64_t flop = _num * _conv.kernelY * _conv.kernelX * _conv.srcC * _conv.dstH * _conv.dstW * _conv.dstC / _conv.group * 2;
-            this->UsePerfStat(desc.str(), flop);
+            this->UsePerfStat(desc.str(), Flop());
         }
 
         virtual void DebugPrint(std::ostream& os, int flag, int first, int last, int precision)

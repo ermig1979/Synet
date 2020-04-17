@@ -195,6 +195,11 @@ namespace Synet
             _method = this->Param().pooling().method();
         }
 
+        virtual int64_t Flop() const
+        {
+            return _skip ? int64_t(0) : _num * _kernelY * _kernelX * _channels * _dstH * _dstW;
+        }
+
         virtual bool Can8i() const
         {
             return _method == PoolingMethodTypeMax;
@@ -358,8 +363,7 @@ namespace Synet
                 std::stringstream desc;
                 desc << "i=" << _num << "x" << _channels << "x" << _srcH << "x" << _srcW;
                 desc << " k=" << _kernelY << "x" << _kernelX << " s=" << _strideY << "x" << _strideX << (_method ? " avg" : " max");
-                int64_t flop = _num * _kernelY * _kernelX * _channels * _dstH * _dstW;
-                this->UsePerfStat(desc.str(), flop);
+                this->UsePerfStat(desc.str(), Flop());
             }
         }
 
