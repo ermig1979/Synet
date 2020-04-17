@@ -45,6 +45,7 @@ namespace Test
         String imageFilter;
         String outputDirectory;
         size_t repeatNumber;
+        double executionTime;
         size_t workThreads;
         size_t testThreads;
         float threshold;
@@ -78,7 +79,8 @@ namespace Test
             imageDirectory = GetArg("-id", "./image");
             imageFilter = GetArg("-if", "*.ppm");
             outputDirectory = GetArg("-od", "./output");
-            repeatNumber = FromString<size_t>(GetArg("-rn", "1"));
+            repeatNumber = std::max(0, FromString<int>(GetArg("-rn", "1")));
+            executionTime = FromString<double>(GetArg("-et", "10.0"));
             workThreads = FromString<size_t>(GetArg("-wt", "1"));
             testThreads = FromString<size_t>(GetArg("-tt", "0"));
             threshold = FromString<float>(GetArg("-t", "0.001"));

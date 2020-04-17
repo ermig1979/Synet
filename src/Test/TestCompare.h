@@ -36,7 +36,7 @@ namespace Test
     template<class OtherNetwork> class Comparer
     {
     public:
-        Comparer(const Options & options)
+        Comparer(const Options& options)
             : _options(options)
         {
             assert(_options.testThreads >= 0);
@@ -71,7 +71,7 @@ namespace Test
         }
 
     private:
-        const Options & _options;
+        const Options& _options;
         TestParamHolder _param;
         std::vector<OtherNetwork> _others;
         std::vector<SynetNetwork> _synets;
@@ -127,7 +127,7 @@ namespace Test
             return true;
         }
 
-        bool InitNetwork(const String & model, const String & weight, Network & network) const
+        bool InitNetwork(const String& model, const String& weight, Network& network) const
         {
             if (!FileExists(model))
             {
@@ -156,12 +156,12 @@ namespace Test
         bool InitNetworks()
         {
 #ifdef SYNET_OTHER_RUN        
-                if ((_options.enable & ENABLE_OTHER) && !InitNetwork(_options.otherModel, _options.otherWeight, _others[0]))
-                    return false;
+            if ((_options.enable & ENABLE_OTHER) && !InitNetwork(_options.otherModel, _options.otherWeight, _others[0]))
+                return false;
 #endif
 #ifdef SYNET_SYNET_RUN
-                if ((_options.enable & ENABLE_SYNET) && !InitNetwork(_options.synetModel, _options.synetWeight, _synets[0]))
-                    return false;
+            if ((_options.enable & ENABLE_SYNET) && !InitNetwork(_options.synetModel, _options.synetWeight, _synets[0]))
+                return false;
 #endif            
 #if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
             if (_options.enable == (ENABLE_OTHER | ENABLE_SYNET))
@@ -174,8 +174,8 @@ namespace Test
                 }
                 for (size_t s = 0; s < _others[0].SrcCount(); ++s)
                 {
-                    const Shape & os = _others[0].SrcShape(s);
-                    const Shape & ss = _synets[0].SrcShape(s);
+                    const Shape& os = _others[0].SrcShape(s);
+                    const Shape& ss = _synets[0].SrcShape(s);
                     if (os != ss)
                     {
                         std::cout << "Networks have difference Src[" << s << "] size: ";
@@ -204,7 +204,7 @@ namespace Test
             return true;
         }
 
-        bool CreateTestList(const Network & network)
+        bool CreateTestList(const Network& network)
         {
             if (!DirectoryExists(_options.imageDirectory))
             {
@@ -235,11 +235,11 @@ namespace Test
                 for (size_t s = 0; s < sN; ++s)
                 {
                     test->input[s].resize(network.SrcSize(s));
-                    float * input = test->input[s].data();
+                    float* input = test->input[s].data();
                     for (size_t b = 0; b < bN; ++b)
                     {
                         size_t p = s * bN + b;
-                        test->path[p] = MakePath(_options.imageDirectory, names[(t*bN + b)*sN + s]);
+                        test->path[p] = MakePath(_options.imageDirectory, names[(t * bN + b) * sN + s]);
                         View original;
                         if (!LoadImage(test->path[p], original))
                         {
@@ -273,7 +273,7 @@ namespace Test
                             {
                                 for (size_t y = 0; y < channels[c].height; ++y)
                                 {
-                                    const uint8_t * row = channels[c].Row<uint8_t>(y);
+                                    const uint8_t* row = channels[c].Row<uint8_t>(y);
                                     ::SimdUint8ToFloat32(row, channels[c].width, &lower[c], &upper[c], input);
                                     input += channels[c].width;
                                 }
@@ -288,7 +288,7 @@ namespace Test
                             }
                             for (size_t y = 0; y < original.height; ++y)
                             {
-                                const uint8_t * row = original.Row<uint8_t>(y);
+                                const uint8_t* row = original.Row<uint8_t>(y);
                                 const float lo = 0.0f, hi = 255.0f;
                                 ::SimdUint8ToFloat32(row, original.width, &lo, &hi, input);
                                 input += original.width;
@@ -319,7 +319,7 @@ namespace Test
             return false;
         }
 
-        bool DebugPrint(Network & network, size_t i) const
+        bool DebugPrint(Network& network, size_t i) const
         {
             if (_options.debugPrint)
             {
@@ -341,7 +341,7 @@ namespace Test
             return true;
         }
 
-        bool AnnotateRegions(const Network & network, const String & inputPath) const
+        bool AnnotateRegions(const Network& network, const String& inputPath) const
         {
             if (_options.annotateRegions)
             {
@@ -355,7 +355,7 @@ namespace Test
                 uint32_t white = 0xFFFFFFFF;
                 for (size_t i = 0; i < regions.size(); ++i)
                 {
-                    const Region & region = regions[i];
+                    const Region& region = regions[i];
                     ptrdiff_t l = ptrdiff_t(region.x - region.w / 2);
                     ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
                     ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
@@ -378,9 +378,9 @@ namespace Test
             return d <= t || d / std::max(::fabs(a), ::fabs(b)) <= t;
         }
 
-        bool CompareResults(const TestData & test, size_t index, size_t thread)
+        bool CompareResults(const TestData& test, size_t index, size_t thread)
         {
-            const Output & output = test.output[thread];
+            const Output& output = test.output[thread];
             if (output.other.size() != output.synet.size())
             {
                 std::cout << "Test " << index << " '" << test.path[0];
@@ -420,13 +420,13 @@ namespace Test
 
         bool SingleThreadComparison()
         {
-            size_t repeats = _options.repeatNumber, total = _tests.size()*repeats, current = 0;
+            size_t repeats = std::max<size_t>(1, _options.repeatNumber), total = _tests.size() * repeats, current = 0;
             for (size_t i = 0; i < _tests.size(); ++i)
             {
-                TestData & test = *_tests[i];
+                TestData& test = *_tests[i];
                 for (size_t r = 0; r < repeats; ++r, ++current)
                 {
-                    std::cout << "Test progress : " << ToString(100.0*current / total, 1) << "% " << std::flush;
+                    std::cout << "Test progress : " << ToString(100.0 * current / total, 1) << "% " << std::flush;
 #ifdef SYNET_OTHER_RUN
                     if (_options.enable & ENABLE_OTHER)
                     {
@@ -454,7 +454,7 @@ namespace Test
                     }
 #endif
 #if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
-                    if(r == 0 && _options.enable == (ENABLE_OTHER | ENABLE_SYNET) && !CompareResults(test, i, 0))
+                    if (r == 0 && _options.enable == (ENABLE_OTHER | ENABLE_SYNET) && !CompareResults(test, i, 0))
                         return false;
 #endif             
                     std::cout << " \r" << std::flush;
@@ -469,7 +469,8 @@ namespace Test
 
         bool MultiThreadsComparison()
         {
-            size_t total = _tests.size()*_options.repeatNumber, current = 0;
+            size_t current = 0, total = _options.repeatNumber ?
+                _tests.size() * _options.repeatNumber : size_t(_options.executionTime * 1000);
             _currents.resize(_options.TestThreads(), 0);
             _threads.resize(_options.TestThreads());
             for (size_t t = 0; t < _threads.size(); ++t)
@@ -480,7 +481,7 @@ namespace Test
                 current = total;
                 for (size_t t = 0; t < _currents.size(); ++t)
                     current = std::min(current, _currents[t]);
-                std::cout << "Test progress : " << ToString(100.0*current / total, 1) << "% " << std::flush;
+                std::cout << "Test progress : " << ToString(100.0 * current / total, 1) << "% " << std::flush;
                 Sleep(1);
                 std::cout << " \r" << std::flush;
             }
@@ -492,7 +493,7 @@ namespace Test
                     _threads[t].join();
                 for (size_t i = 0; i < _tests.size(); ++i)
                 {
-                    TestData & test = *_tests[i];
+                    TestData& test = *_tests[i];
 #if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
                     if (_options.enable == (ENABLE_OTHER | ENABLE_SYNET) && !CompareResults(test, i, t))
                         return false;
@@ -506,10 +507,10 @@ namespace Test
             return PrintFinishMessage();
         }
 
-        static void TestThread(Comparer * comparer, size_t thread)
+        static void TestThread(Comparer* comparer, size_t thread)
         {
-            const Options & options = comparer->_options;
-            size_t current = 0, networks = 1, repeats = options.repeatNumber;
+            const Options& options = comparer->_options;
+            size_t current = 0, networks = 1;
             if (thread)
             {
 #ifdef SYNET_OTHER_RUN        
@@ -522,19 +523,36 @@ namespace Test
 #endif 
             }
 #if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
-            if(options.enable == (ENABLE_OTHER | ENABLE_SYNET))
+            if (options.enable == (ENABLE_OTHER | ENABLE_SYNET))
                 networks = 2;
 #endif 
 #ifdef SYNET_OTHER_RUN 
             if (options.enable & ENABLE_OTHER)
             {
-                for (size_t i = 0; i < comparer->_tests.size(); ++i)
+                if (options.repeatNumber)
                 {
-                    TestData & test = *comparer->_tests[i];
-                    for (size_t r = 0; r < repeats; ++r, ++current)
+                    for (size_t i = 0; i < comparer->_tests.size(); ++i)
                     {
-                        test.output[thread].other = comparer->_others[thread].Predict(test.input);
-                        comparer->_currents[thread] = current / networks;
+                        TestData& test = *comparer->_tests[i];
+                        for (size_t r = 0; r < options.repeatNumber; ++r, ++current)
+                        {
+                            test.output[thread].other = comparer->_others[thread].Predict(test.input);
+                            comparer->_currents[thread] = current / networks;
+                        }
+                    }
+                }
+                else
+                {
+                    double start = GetTime(), duration = 0;
+                    while (duration < options.executionTime)
+                    {
+                        for (size_t i = 0; i < comparer->_tests.size() && duration < options.executionTime; ++i)
+                        {
+                            TestData& test = *comparer->_tests[i];
+                            test.output[thread].other = comparer->_others[thread].Predict(test.input);
+                            duration = GetTime() - start;
+                            comparer->_currents[thread] = size_t(duration * 1000) / networks;
+                        }
                     }
                 }
             }
@@ -542,18 +560,36 @@ namespace Test
 #ifdef SYNET_SYNET_RUN   
             if (options.enable & ENABLE_SYNET)
             {
-                for (size_t i = 0; i < comparer->_tests.size(); ++i)
+                if (options.repeatNumber)
                 {
-                    TestData & test = *comparer->_tests[i];
-                    for (size_t r = 0; r < repeats; ++r, ++current)
+                    for (size_t i = 0; i < comparer->_tests.size(); ++i)
                     {
-                        test.output[thread].synet = comparer->_synets[thread].Predict(test.input);
-                        comparer->_currents[thread] = current / networks;
+                        TestData& test = *comparer->_tests[i];
+                        for (size_t r = 0; r < options.repeatNumber; ++r, ++current)
+                        {
+                            test.output[thread].synet = comparer->_synets[thread].Predict(test.input);
+                            comparer->_currents[thread] = current / networks;
+                        }
+                    }
+                }
+                else
+                {
+                    double start = GetTime(), duration = 0;
+                    while (duration < options.executionTime)
+                    {
+                        for (size_t i = 0; i < comparer->_tests.size() && duration < options.executionTime; ++i)
+                        {
+                            TestData& test = *comparer->_tests[i];
+                            test.output[thread].synet = comparer->_synets[thread].Predict(test.input);
+                            duration = GetTime() - start;
+                            comparer->_currents[thread] = size_t((options.executionTime*(networks - 1) + duration) * 1000) / networks;
+                        }
                     }
                 }
             }
 #endif           
-            comparer->_currents[thread] = current / networks;
+            comparer->_currents[thread] = options.repeatNumber ?
+                comparer->_tests.size() * options.repeatNumber : size_t(options.executionTime * 1000);
         }
 
         inline void Sleep(unsigned int miliseconds)
