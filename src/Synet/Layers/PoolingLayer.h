@@ -355,10 +355,12 @@ namespace Synet
                 default:
                     assert(0);
                 }
+                std::stringstream desc;
+                desc << "i=" << _num << "x" << _channels << "x" << _srcH << "x" << _srcW;
+                desc << " k=" << _kernelY << "x" << _kernelX << " s=" << _strideY << "x" << _strideX << (_method ? " avg" : " max");
+                int64_t flop = _num * _kernelY * _kernelX * _channels * _dstH * _dstW;
+                this->UsePerfStat(desc.str(), flop);
             }
-            std::stringstream desc;
-            desc << "i=" << _channels << "x" << _srcH << "x" << _srcW << " k=" << _kernelY << " s=" << _strideY << (_method ? " avg" : " max");
-            this->UsePerfStat(desc.str());
         }
 
     protected:
