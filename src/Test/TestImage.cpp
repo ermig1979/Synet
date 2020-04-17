@@ -44,10 +44,22 @@ namespace Test
 			stbi_uc* data = stbi_load(path.c_str(), &x, &y, &c, STBI_rgb);
 			if (data)
 			{
+				if (c == 1)
+				{
+					view.Recreate(x, y, View::Gray8);
+					Simd::Convert(View(x, y, x * c, View::Gray8, data), view);
+					result = true;
+				}
 				if (c == 3)
 				{
 					view.Recreate(x, y, View::Bgra32);
-					Simd::Convert(View(x, y, x*3, View::Bgr24, data), view);
+					Simd::Convert(View(x, y, x * c, View::Bgr24, data), view);
+					result = true;
+				}
+				if (c == 4)
+				{
+					view.Recreate(x, y, View::Bgra32);
+					Simd::Convert(View(x, y, x * c, View::Bgra32, data), view);
 					result = true;
 				}
 				stbi_image_free(data);
