@@ -33,30 +33,32 @@ namespace Test
 	{
 	public:
 		Report(const Options& options)
-			: _separator(" ")
+			: _options(options)
+			, _separator(" ")
 		{
-			LoadSync(options.syncName);
-			AddCurrent(options);
-			SaveSync(options.syncName);
+			LoadSync(_options.syncName);
+			AddCurrent();
+			SaveSync(_options.syncName);
 		}
 
-		bool SaveText(const String& name)
+		bool Save(const String& name, bool html)
 		{
 			if (name.empty())
 				return true;
 			if (!CreateOutputDirectory(name))
 				return false;
-
-			return false;
-		}
-
-		bool SaveHtml(const String& name)
-		{
-			if (name.empty())
+			std::ofstream ofs(name);
+			if (ofs.is_open())
+			{
+				Table table(GetTableSize());
+				FillTable(table);
+				if(html)
+					ofs << table.GenerateHtml();
+				else
+					ofs << table.GenerateText();
+				ofs.close();
 				return true;
-			if (!CreateOutputDirectory(name))
-				return false;
-
+			}			
 			return false;
 		}
 
@@ -69,8 +71,9 @@ namespace Test
 		};
 		typedef std::vector<Test> Tests;
 
+		const Options& _options;
 		String _separator;
-		Tests _tests;
+		Tests _tests, _summary;
 
 		bool LoadSync(const String & name)
 		{
@@ -121,15 +124,15 @@ namespace Test
 			return false;
 		}
 
-		void AddCurrent(const Options& options)
+		void AddCurrent()
 		{
 			Test test;
-			test.name = GetTestName(options.logName);
-			test.batch = options.batchSize;
-			test.other = GetNetworkPredictPm(options.otherName).Average();
-			test.synet = GetNetworkPredictPm("Synet").Average();
+			test.name = GetTestName(_options.logName);
+			test.batch = _options.batchSize;
+			test.other = GetNetworkPredictPm(_options.otherName).Average() * 1000.0;
+			test.synet = GetNetworkPredictPm("Synet").Average() * 1000.0;
 			test.flops = GetNetworkPredictPm("Synet").GFlops();
-			test.memory = options.synetMemoryUsage;
+			test.memory = _options.synetMemoryUsage / 1024.0 / 1024.0;
 			_tests.push_back(test);
 		}
 
@@ -148,6 +151,38 @@ namespace Test
 			ss << "Network::Predict(const Vectors&)";
 			return PerformanceMeasurerStorage::s_storage.GetCombined(ss.str());
 		}
+
+		Size GetTableSize()
+		{
+			size_t cols = 7;
+			size_t rows = _tests.size() + _summary.size();
+			return Size(cols, rows);
+		}
+
+		void FillTable(Table & table)
+		{
+			size_t col = 0;
+			table.SetHeader(col++, "Test", true);
+			table.SetHeader(col++, "Batch", true);
+			table.SetHeader(col++, _options.otherName + ", ms", true);
+			table.SetHeader(col++, "Synet, ms" , true);
+			table.SetHeader(col++, _options.otherName + ", Gflops", true);
+			table.SetHeader(col++, "Synet, Gflops", true);
+			table.SetHeader(col++, String("Synet / ") + _options.otherName, true);
+
+			for (size_t i = 0; i < _tests.size(); ++i)
+			{
+				size_t col = 0;
+				table.SetCell(col++, i, _tests[i].name);
+				table.SetCell(col++, i, ToString(_tests[i].batch));
+				table.SetCell(col++, i, ToString(_tests[i].other / _tests[i].batch, 3));
+				table.SetCell(col++, i, ToString(_tests[i].synet / _tests[i].batch, 3));
+				table.SetCell(col++, i, ToString(_tests[i].flops * _tests[i].synet / _tests[i].other, 1));
+				table.SetCell(col++, i, ToString(_tests[i].flops, 1));
+				table.SetCell(col++, i, ToString(_tests[i].other / _tests[i].synet, 2));
+			}
+			//summary
+		}
 	};
 
 	void GenerateReport(const Options& options)
@@ -155,8 +190,8 @@ namespace Test
 		if (options.syncName.empty() || !CreateOutputDirectory(options.syncName))
 			return;
 		Report report(options);
-		report.SaveText(options.textReport);
-		report.SaveHtml(options.htmlReport);
+		report.Save(options.textReport, false);
+		report.Save(options.htmlReport, true);
 	}
 }
 

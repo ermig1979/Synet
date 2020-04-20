@@ -38,12 +38,16 @@ namespace Test
             Right,
         };
 
+        Table(const Test::Size & size)
+            : _size(size.x, size.y)
+        {
+            Init();
+        }
+
         Table(size_t width, size_t height)
             : _size(width, height)
         {
-            _cells.resize(width * height);
-            _headers.resize(width);
-            _rows.resize(height);
+            Init();
         }
 
         Test::Size Size() const
@@ -178,6 +182,13 @@ namespace Test
             if (header.alignment == Right)
                 return ExpandToLeft(value, header.width);
             return String();
+        }
+
+        void Init()
+        {
+            _cells.resize(_size.x * _size.y);
+            _headers.resize(_size.x);
+            _rows.resize(_size.y);
         }
     };
 }
