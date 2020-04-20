@@ -35,10 +35,13 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\Test\TestCommon.h" />
     <ClInclude Include="..\..\src\Test\TestCompare.h" />
+    <ClInclude Include="..\..\src\Test\TestHtml.h" />
     <ClInclude Include="..\..\src\Test\TestImage.h" />
     <ClInclude Include="..\..\src\Test\TestOptions.h" />
     <ClInclude Include="..\..\src\Test\TestPerformance.h" />
+    <ClInclude Include="..\..\src\Test\TestReport.h" />
     <ClInclude Include="..\..\src\Test\TestSynet.h" />
+    <ClInclude Include="..\..\src\Test\TestTable.h" />
     <ClInclude Include="..\..\src\Test\TestUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -23,6 +23,7 @@
 */
 
 #include "Test/TestCompare.h"
+#include "Test/TestReport.h"
 
 #include "Synet/Converters/InferenceEngine.h"
 

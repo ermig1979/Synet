@@ -35,7 +35,7 @@ if [ $? -ne 0 ];then
   exit
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -et=10.0 -dp=0 -dpf=6 -dpl=2 -dpp=8 -ar=0 -rt=0.3 -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -et=10.0 -dp=0 -dpf=6 -dpl=2 -dpp=8 -ar=0 -rt=0.3 -cs=0 -ln=$LOG
 if [ $? -ne 0 ];then
   echo "Test $DIR is failed!"
   exit

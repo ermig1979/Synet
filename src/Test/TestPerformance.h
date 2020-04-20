@@ -260,6 +260,23 @@ namespace Test
                 os << j->second->Statistic() << std::endl;
             os << "----- ~~~~~~~~~~~ -----" << std::endl;
         }
+
+        PerformanceMeasurer GetCombined(const String& name)
+        {
+            PerformanceMeasurer combined;
+            for (ThreadMap::const_iterator t = _map.begin(); t != _map.end(); t++)
+            {
+                FunctionMap::const_iterator f = t->second.find(name);
+                if (f != t->second.end() && f->second->Average() != 0)
+                {
+                    if (combined.Average() == 0)
+                        combined = *f->second;
+                    else
+                        combined.Combine(*f->second);
+                }
+            }
+            return combined;
+        }
     };
 }
 

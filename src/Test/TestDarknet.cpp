@@ -23,6 +23,7 @@
 */
 
 #include "TestCompare.h"
+#include "TestReport.h"
 
 #ifdef SYNET_OTHER_RUN
 

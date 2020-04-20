@@ -156,8 +156,12 @@ namespace Test
         bool InitNetworks()
         {
 #ifdef SYNET_OTHER_RUN        
-            if ((_options.enable & ENABLE_OTHER) && !InitNetwork(_options.otherModel, _options.otherWeight, _others[0]))
-                return false;
+            if (_options.enable & ENABLE_OTHER)
+            {
+                if(!InitNetwork(_options.otherModel, _options.otherWeight, _others[0]))
+                    return false;
+                _options.otherName = _others[0].Name();
+            }
 #endif
 #ifdef SYNET_SYNET_RUN
             if ((_options.enable & ENABLE_SYNET) && !InitNetwork(_options.synetModel, _options.synetWeight, _synets[0]))

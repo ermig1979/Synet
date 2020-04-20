@@ -31,6 +31,8 @@ namespace Test
     const int ENABLE_OTHER = 1;
     const int ENABLE_SYNET = 2;
 
+    void GenerateReport(const struct Options& options);
+
     struct Options
     {
         String mode;
@@ -50,6 +52,10 @@ namespace Test
         size_t testThreads;
         float threshold;
         String logName;
+        bool consoleSilence;
+        String syncName;
+        String textReport;
+        String htmlReport;
         int tensorFormat;
         int batchSize;
         int debugPrint;
@@ -59,8 +65,10 @@ namespace Test
         int annotateRegions;
         float regionThreshold;
         float regionOverlap;
+
         mutable bool result;
         mutable size_t synetMemoryUsage;
+        mutable String otherName;
 
         Options(int argc, char* argv[])
             : _argc(argc)
@@ -85,6 +93,10 @@ namespace Test
             testThreads = FromString<size_t>(GetArg("-tt", "0"));
             threshold = FromString<float>(GetArg("-t", "0.001"));
             logName = GetArg("-ln", "", false);
+            consoleSilence = FromString<bool>(GetArg("-cs", "0"));
+            syncName = GetArg("-sn", "", false);
+            textReport = GetArg("-tr", "", false);
+            htmlReport = GetArg("-hr", "", false);
             tensorFormat = FromString<int>(GetArg("-tf", "1"));
             batchSize = FromString<int>(GetArg("-bs", "1"));
             debugPrint = FromString<int>(GetArg("-dp", "0"));
@@ -113,21 +125,19 @@ namespace Test
                 if (enable & ENABLE_SYNET)
                     ss << SimdPerformanceStatistic();
 #endif
-                std::cout << ss.str();
+                if(!consoleSilence)
+                    std::cout << ss.str();
                 if (!logName.empty())
                 {
-                    String dir = DirectoryByPath(logName);
-                    if (!DirectoryExists(dir) && !CreatePath(dir))
-                    {
-                        std::cout << "Can't create output directory '" << dir << "' !" << std::endl;
+                    if (!CreateOutputDirectory(logName))
                         return;
-                    }
                     std::ofstream log(logName.c_str());
                     if (log.is_open())
                     {
                         log << ss.str();
                         log.close();
                     }
+                    GenerateReport(*this);
                 }
             }
         }

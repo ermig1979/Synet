@@ -41,7 +41,7 @@
 
 namespace Test
 {
-    template <class T> inline String ToString(const T & val)
+    template <class T> inline String ToString(const T& val)
     {
         std::stringstream ss;
         ss << val;
@@ -55,7 +55,7 @@ namespace Test
         return ss.str();
     }
 
-    template <class T> inline T FromString(const String & str)
+    template <class T> inline T FromString(const String& str)
     {
         std::stringstream ss(str);
         T t;
@@ -63,7 +63,27 @@ namespace Test
         return t;
     }
 
-    inline String MakePath(const String & a, const String & b)
+    inline String ExpandToLeft(const String& value, size_t count)
+    {
+        assert(count >= value.size());
+        std::stringstream ss;
+        for (size_t i = value.size(); i < count; i++)
+            ss << " ";
+        ss << value;
+        return ss.str();
+    }
+
+    inline String ExpandToRight(const String& value, size_t count)
+    {
+        assert(count >= value.size());
+        std::stringstream ss;
+        ss << value;
+        for (size_t i = value.size(); i < count; i++)
+            ss << " ";
+        return ss.str();
+    }
+
+    inline String MakePath(const String& a, const String& b)
     {
 #ifdef _MSC_VER
         return a + (a[a.size() - 1] == '\\' ? "" : "\\") + b;
@@ -72,7 +92,7 @@ namespace Test
 #endif
     }
 
-    inline bool CreatePath(const String & path)
+    inline bool CreatePath(const String& path)
     {
 #if defined(_MSC_VER) && _MSC_VER < 1900
         return std::tr2::sys::create_directories(std::tr2::sys::path(path));
@@ -161,6 +181,18 @@ namespace Test
 #endif	//_MSC_VER
     }
 
+
+    inline bool CreateOutputDirectory(const String& path)
+    {
+        String directory = DirectoryByPath(path);
+        if (!DirectoryExists(directory) && !CreatePath(directory))
+        {
+            std::cout << "Can't create output directory '" << directory << "' !" << std::endl;
+            return false;
+        }
+        return true;
+    }
+
     inline StringList GetFileList(const String & directory, const String & filter, bool files, bool directories)
     {
         std::list<String> names;
@@ -230,6 +262,16 @@ namespace Test
         String dst(src);
         for (size_t i = 0; i < dst.size(); ++i)
             dst[i] = std::tolower(dst[i], loc);
+        return dst;
+    }
+
+    inline String WithoutSymbol(const String& src, char symbol = ' ')
+    {
+        String dst;
+        dst.reserve(src.size());
+        for (size_t i = 0; i < src.size(); ++i)
+            if(src[i] != symbol)
+                dst.push_back(src[i]);
         return dst;
     }
 }
