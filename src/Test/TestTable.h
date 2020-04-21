@@ -71,11 +71,12 @@ namespace Test
             _rows[row] = RowProp(separator, bold);
         }
 
-        void SetCell(size_t col, size_t row, const String& value, Color color = Black)
+        void SetCell(size_t col, size_t row, const String& value, Color color = Black, const String & link = "")
         {
             Cell& cell = _cells[row * _size.x + col];
             cell.value = value;
             cell.color = color;
+            cell.link = link;
             _headers[col].width = std::max(_headers[col].width, value.size());
         }
 
@@ -149,8 +150,16 @@ namespace Test
                     style << "font-weight: bold; background-color:#f0f0f0";
                 html.WriteBegin("tr", Html::Attr("align", "center", "style", style.str()), true, false);
                 for (ptrdiff_t col = 0; col < _size.x; ++col)
-                    html.WriteValue("td", Html::Attr("class", String("td") + Test::ToString(_headers[col].separator) +
-                        ToString(_cells[row * _size.x + col].color)), _cells[row * _size.x + col].value, false);
+                {
+                    const Cell& cell = _cells[row * _size.x + col];
+                    html.WriteBegin("td", Html::Attr("class", String("td") + Test::ToString(_headers[col].separator) + ToString(cell.color)), false, false);
+                    if(cell.link.size())
+                        html.WriteBegin("a", Html::Attr("href", cell.link), false, false);
+                    html.WriteText(cell.value, false, false);
+                    if (cell.link.size())
+                        html.WriteEnd("a", false, false);
+                    html.WriteEnd("td", false, false);
+                }
                 html.WriteEnd("tr", true, true);
             }
 
@@ -186,7 +195,7 @@ namespace Test
 
         struct Cell
         {
-            String value;
+            String value, link;
             Color color;
         };
         typedef std::vector<Cell> Cells;

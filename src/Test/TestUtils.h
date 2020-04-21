@@ -48,6 +48,13 @@ namespace Test
         return ss.str();
     }
 
+    inline String ToString(int value, int width)
+    {
+        std::stringstream ss;
+        ss << std::setfill('0') << std::setw(width) << value;
+        return ss.str();
+    }
+
     inline String ToString(double value, int precision)
     {
         std::stringstream ss;
@@ -275,6 +282,21 @@ namespace Test
             if(src[i] != symbol)
                 dst.push_back(src[i]);
         return dst;
+    }
+
+    inline String GetCurrentDateTimeString()
+    {
+        std::time_t t;
+        std::time(&t);
+        std::tm* tm = ::localtime(&t);
+        std::stringstream ss;
+        ss << ToString(tm->tm_year + 1900, 4) << "."
+            << ToString(tm->tm_mon + 1, 2) << "."
+            << ToString(tm->tm_mday, 2) << " "
+            << ToString(tm->tm_hour, 2) << ":"
+            << ToString(tm->tm_min, 2) << ":"
+            << ToString(tm->tm_sec, 2);
+        return ss.str();
     }
 }
 

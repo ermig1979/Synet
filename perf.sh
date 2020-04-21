@@ -41,7 +41,7 @@ if [ "$BATCH" = "1" ];then
   fi
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -et=10.0 -cs=1 -ln=$LOG -sn="$OUT"/sync.txt -tr="$OUT"/report.txt -hr="$OUT"/report.html
+"$BIN" -m=compare -e=3 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -et=10.0 -st=10.0 -cs=1 -ln=$LOG -sn="$OUT"/sync.txt -tr="$OUT"/report.txt -hr="$OUT"/report.html
 if [ $? -ne 0 ];then
   echo "Test $DIR is failed!"
   exit
@@ -71,7 +71,7 @@ TEST_I test_001 1
 TEST_I test_002 0
 TEST_I test_003f 0
 #TEST_I test_003i 0
-#TEST_I test_004 0
+TEST_I test_004 0
 TEST_I test_005 1
 TEST_I test_006 1
 TEST_I test_007 1

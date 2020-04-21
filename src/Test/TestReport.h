@@ -41,7 +41,7 @@ namespace Test
 			SaveSync(_options.syncName);
 		}
 
-		bool Save(const String& name, bool html)
+		bool Save(const String& name, bool text)
 		{
 			if (name.empty())
 				return true;
@@ -55,10 +55,39 @@ namespace Test
 				SetHeader(table);
 				SetCells(table, _summary, 0, true);
 				SetCells(table, _tests, _summary.size(), false);
-				if(html)
-					ofs << table.GenerateHtml();
-				else
+				if (text)
+				{
+					ofs << "~~~~~~~~~~~~~~~~~~~~~Synet Performance Report~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+					ofs << "Test generation time: " + GetCurrentDateTimeString() << std::endl;
+					ofs << "Number of test threads: " << _options.testThreads << std::endl;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+					Simd::PrintInfo(ofs);
+#endif
 					ofs << table.GenerateText();
+				}
+				else
+				{
+					Html html(ofs);
+
+					html.WriteBegin("html", Html::Attr(), true, true);
+					html.WriteValue("title", Html::Attr(), "Synet Performance Report", true);
+					html.WriteBegin("body", Html::Attr(), true, true);
+
+					html.WriteValue("h1", Html::Attr("id", "home"), "Synet Performance Report", true);
+
+					html.WriteValue("h4", Html::Attr(), String("Test generation time: ") + GetCurrentDateTimeString(), true);
+					html.WriteValue("h4", Html::Attr(), String("Number of test threads: ") + ToString(_options.testThreads), true);
+					html.WriteBegin("h4", Html::Attr(), true, true);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+					Simd::PrintInfo(ofs);
+#endif
+					html.WriteEnd("h4", true, true);
+
+					ofs << table.GenerateHtml(html.Indent());
+
+					html.WriteEnd("body", true, true);
+					html.WriteEnd("html", true, true);
+				}
 				ofs.close();
 				return true;
 			}			
@@ -68,10 +97,10 @@ namespace Test
 	private:
 		struct Test
 		{
-			String name, desc;
-			int batch, count;
+			String name, desc, link;
+			int batch, count, skip;
 			double other, synet, flops, memory;
-			Test(const String & n = "", int b = 0) : name(n), batch(b), count(0), other(0), synet(0), flops(0), memory(0) {}
+			Test(const String & n = "", int b = 0) : name(n), batch(b), count(0), skip(0), other(0), synet(0), flops(0), memory(0) {}
 		};
 		typedef std::vector<Test> Tests;
 
@@ -89,7 +118,7 @@ namespace Test
 					String line;
 					std::getline(ifs, line);
 					Strings values = Synet::Separate(line, _separator);
-					if (values.size() > 6)
+					if (values.size() > 8)
 					{
 						Test test;
 						Synet::StringToValue(values[0], test.name);
@@ -99,6 +128,8 @@ namespace Test
 						Synet::StringToValue(values[4], test.flops);
 						Synet::StringToValue(values[5], test.memory);
 						Synet::StringToValue(values[6], test.desc);
+						Synet::StringToValue(values[7], test.link);
+						Synet::StringToValue(values[8], test.skip);
 						_tests.push_back(test);
 					}
 				}
@@ -122,6 +153,8 @@ namespace Test
 					ofs << _tests[i].flops << _separator;
 					ofs << _tests[i].memory << _separator;
 					ofs << _tests[i].desc << _separator;
+					ofs << _tests[i].link << _separator;
+					ofs << _tests[i].skip << _separator;
 					ofs << std::endl;
 				}
 				ofs.close();
@@ -135,11 +168,13 @@ namespace Test
 			Test test;
 			test.name = TestName(_options.logName);
 			test.batch = _options.batchSize;
-			test.other = NetworkPredictPm(_options.otherName).Average() * 1000.0;
-			test.synet = NetworkPredictPm("Synet").Average() * 1000.0;
+			test.other = NetworkPredictPm(_options.otherName).Average() * 1000.0 / test.batch;
+			test.synet = NetworkPredictPm("Synet").Average() * 1000.0 / test.batch;
 			test.flops = NetworkPredictPm("Synet").GFlops();
 			test.memory = _options.synetMemoryUsage / 1024.0 / 1024.0;
 			test.desc = TestDesc(_options.synetModel);
+			test.link = GetNameByPath(_options.logName);
+			test.skip = test.synet > test.other * _options.skipThreshold ? 2 : (test.synet * _options.skipThreshold < test.other ? 1 : 0);
 			_tests.push_back(test);
 		}
 
@@ -221,12 +256,12 @@ namespace Test
 			for (size_t i = 0; i < tests.size(); ++i, ++row)
 			{
 				const Test& test = tests[i];
-				size_t col = 0, batch = std::max<size_t>(1, test.batch);
-				table.SetCell(col++, row, test.name);
+				size_t col = 0;
+				table.SetCell(col++, row, test.name, Table::Black, test.link);
 				table.SetCell(col++, row, test.batch ? ToString(test.batch) : String("-"));
 				if (_options.otherName.size())
-					table.SetCell(col++, row, ToString(test.other / batch, 3));
-				table.SetCell(col++, row, ToString(test.synet / batch, 3));
+					table.SetCell(col++, row, ToString(test.other, 3), test.skip == 1 ? Table::Red : Table::Black);
+				table.SetCell(col++, row, ToString(test.synet, 3), test.skip == 2 ? Table::Red : Table::Black);
 				if (_options.otherName.size())
 				{
 					double relation = test.other / test.synet;
@@ -238,7 +273,7 @@ namespace Test
 					table.SetCell(col++, row, ToString(test.memory, 1));
 					table.SetCell(col++, row, test.desc);
 				}
-				table.SetRowProp(row, false, summary);
+				table.SetRowProp(row, summary && i == tests.size() - 1, summary);
 			}
 		}
 
@@ -247,7 +282,7 @@ namespace Test
 			for (size_t i = 0; i < _tests.size(); ++i)
 			{
 				const Test& test = _tests[i];
-				if (summary.batch && test.batch != summary.batch)
+				if ((summary.batch && test.batch != summary.batch) || test.skip)
 					continue;
 				summary.count++;
 				if (_options.otherName.size())
@@ -281,8 +316,8 @@ namespace Test
 		if (options.syncName.empty() || !CreateOutputDirectory(options.syncName))
 			return;
 		Report report(options);
-		report.Save(options.textReport, false);
-		report.Save(options.htmlReport, true);
+		report.Save(options.textReport, true);
+		report.Save(options.htmlReport, false);
 	}
 }
 

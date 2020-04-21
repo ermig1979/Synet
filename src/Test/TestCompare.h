@@ -547,16 +547,18 @@ namespace Test
                 }
                 else
                 {
+                    bool canstop = false;
                     double start = GetTime(), duration = 0;
                     while (duration < options.executionTime)
                     {
-                        for (size_t i = 0; i < comparer->_tests.size() && duration < options.executionTime; ++i)
+                        for (size_t i = 0; i < comparer->_tests.size() && (duration < options.executionTime || !canstop); ++i)
                         {
                             TestData& test = *comparer->_tests[i];
                             test.output[thread].other = comparer->_others[thread].Predict(test.input);
                             duration = GetTime() - start;
                             comparer->_currents[thread] = size_t(duration * 1000) / networks;
                         }
+                        canstop = true;
                     }
                 }
             }
@@ -578,16 +580,18 @@ namespace Test
                 }
                 else
                 {
+                    bool canstop = false;
                     double start = GetTime(), duration = 0;
                     while (duration < options.executionTime)
                     {
-                        for (size_t i = 0; i < comparer->_tests.size() && duration < options.executionTime; ++i)
+                        for (size_t i = 0; i < comparer->_tests.size() && (duration < options.executionTime || !canstop); ++i)
                         {
                             TestData& test = *comparer->_tests[i];
                             test.output[thread].synet = comparer->_synets[thread].Predict(test.input);
                             duration = GetTime() - start;
                             comparer->_currents[thread] = size_t((options.executionTime*(networks - 1) + duration) * 1000) / networks;
                         }
+                        canstop = true;
                     }
                 }
             }

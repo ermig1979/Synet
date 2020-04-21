@@ -54,6 +54,7 @@ namespace Test
         String logName;
         bool consoleSilence;
         String syncName;
+        double skipThreshold;
         String textReport;
         String htmlReport;
         int tensorFormat;
@@ -95,6 +96,7 @@ namespace Test
             logName = GetArg("-ln", "", false);
             consoleSilence = FromString<bool>(GetArg("-cs", "0"));
             syncName = GetArg("-sn", "", false);
+            skipThreshold = FromString<double>(GetArg("-st", "10.0"));
             textReport = GetArg("-tr", "", false);
             htmlReport = GetArg("-hr", "", false);
             tensorFormat = FromString<int>(GetArg("-tf", "1"));
