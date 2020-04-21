@@ -181,14 +181,16 @@ namespace Test
 #endif	//_MSC_VER
     }
 
-
     inline bool CreateOutputDirectory(const String& path)
     {
         String directory = DirectoryByPath(path);
-        if (!DirectoryExists(directory) && !CreatePath(directory))
+        if (directory != "" && directory != "." && directory != path)
         {
-            std::cout << "Can't create output directory '" << directory << "' !" << std::endl;
-            return false;
+            if (!DirectoryExists(directory) && !CreatePath(directory))
+            {
+                std::cout << "Can't create output directory '" << directory << "' !" << std::endl;
+                return false;
+            }
         }
         return true;
     }

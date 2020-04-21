@@ -38,6 +38,12 @@ namespace Test
             Right,
         };
 
+        enum Color
+        {
+            Black,
+            Red,
+        };
+
         Table(const Test::Size & size)
             : _size(size.x, size.y)
         {
@@ -65,9 +71,11 @@ namespace Test
             _rows[row] = RowProp(separator, bold);
         }
 
-        void SetCell(size_t col, size_t row, const String& value)
+        void SetCell(size_t col, size_t row, const String& value, Color color = Black)
         {
-            _cells[row * _size.x + col] = value;
+            Cell& cell = _cells[row * _size.x + col];
+            cell.value = value;
+            cell.color = color;
             _headers[col].width = std::max(_headers[col].width, value.size());
         }
 
@@ -93,7 +101,7 @@ namespace Test
                 table << indent.str() << "| ";
                 for (ptrdiff_t col = 0; col < _size.x; ++col)
                 {
-                    table << ExpandText(_cells[row * _size.x + col], _headers[col]) << " ";
+                    table << ExpandText(_cells[row * _size.x + col].value, _headers[col]) << " ";
                     if (_headers[col].separator)
                         table << "|" << (col < _size.x - 1 ? " " : "");
                 }
@@ -111,10 +119,12 @@ namespace Test
             Html html(stream, indent);
 
             html.WriteBegin("style", Html::Attr("type", "text/css"), true, true);
-            html.WriteText("th.th0 { border-left: 0px solid #000000; border-top: 0px solid #000000; border-right: 0px solid #000000; border-bottom: 1px solid #000000;}", true, true);
-            html.WriteText("th.th1 { border-left: 0px solid #000000; border-top: 0px solid #000000; border-right: 1px solid #000000; border-bottom: 1px solid #000000;}", true, true);
-            html.WriteText("td.td0 { border-left: 0px solid #000000; border-top: 0px solid #000000; border-right: 0px solid #000000; border-bottom: 0px solid #000000;}", true, true);
-            html.WriteText("td.td1 { border-left: 0px solid #000000; border-top: 0px solid #000000; border-right: 1px solid #000000; border-bottom: 0px solid #000000;}", true, true);
+            html.WriteText("th.th0 { border-left: 0px; border-top: 0px; border-right: 0px solid #0; border-bottom: 1px solid #0;}", true, true);
+            html.WriteText("th.th1 { border-left: 0px; border-top: 0px; border-right: 1px solid #0; border-bottom: 1px solid #0;}", true, true);
+            html.WriteText("td.td0b { border-left: 0px; border-top: 0px; border-right: 0px solid #0; border-bottom: 0px; color:#0;}", true, true);
+            html.WriteText("td.td1b { border-left: 0px; border-top: 0px; border-right: 1px solid #0; border-bottom: 0px; color:#0;}", true, true);
+            html.WriteText("td.td0r { border-left: 0px; border-top: 0px; border-right: 0px solid #0; border-bottom: 0px; color:red;}", true, true);
+            html.WriteText("td.td1r { border-left: 0px; border-top: 0px; border-right: 1px solid #0; border-bottom: 0px; color:red;}", true, true);
             html.WriteEnd("style", true, true);
 
             Html::Attributes attributes;
@@ -129,7 +139,7 @@ namespace Test
 
             html.WriteBegin("tr", Html::Attr("style", "background-color:#e0e0e0; font-weight:bold;"), true, false);
             for (ptrdiff_t col = 0; col < _size.x; ++col)
-                html.WriteValue("th", Html::Attr("class", String("th") + ToString(_headers[col].separator)), _headers[col].name, false);
+                html.WriteValue("th", Html::Attr("class", String("th") + Test::ToString(_headers[col].separator)), _headers[col].name, false);
             html.WriteEnd("tr", true, true);
 
             for (ptrdiff_t row = 0; row < _size.y; ++row)
@@ -139,7 +149,8 @@ namespace Test
                     style << "font-weight: bold; background-color:#f0f0f0";
                 html.WriteBegin("tr", Html::Attr("align", "center", "style", style.str()), true, false);
                 for (ptrdiff_t col = 0; col < _size.x; ++col)
-                    html.WriteValue("td", Html::Attr("class", String("td") + ToString(_headers[col].separator)), _cells[row * _size.x + col], false);
+                    html.WriteValue("td", Html::Attr("class", String("td") + Test::ToString(_headers[col].separator) +
+                        ToString(_cells[row * _size.x + col].color)), _cells[row * _size.x + col].value, false);
                 html.WriteEnd("tr", true, true);
             }
 
@@ -173,7 +184,13 @@ namespace Test
         typedef std::vector<Header> Headers;
         Headers _headers;
 
-        Strings _cells;
+        struct Cell
+        {
+            String value;
+            Color color;
+        };
+        typedef std::vector<Cell> Cells;
+        Cells _cells;
 
         static String ExpandText(const String& value, const Header& header)
         {
@@ -189,6 +206,16 @@ namespace Test
             _cells.resize(_size.x * _size.y);
             _headers.resize(_size.x);
             _rows.resize(_size.y);
+        }
+
+        String ToString(Color color) const
+        {
+            switch (color)
+            {
+            case Black: return "b";
+            case Red: return "r";
+            default: return "";
+            }
         }
     };
 }

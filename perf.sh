@@ -11,7 +11,7 @@ FORMAT=$5
 BATCH=$6
 VERSION=$7
 DIR=./data/"$FRAMEWORK"/"$NAME"
-PATHES="-om=$DIR/other.dsc -ow=$DIR/other.dat -sm=$DIR/synet$FORMAT.xml -sw=$DIR/synet$FORMAT.bin -id=$DIR/image -od=$DIR/output -tp=$DIR/param.xml"
+PATHES="-om=$DIR/other.dsc -ow=$DIR/other.dat -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$DIR/image -od=$DIR/output -tp=$DIR/param.xml"
 PREFIX="${FRAMEWORK:0:1}"
 OUT=./test/perf/"$DATE_TIME$PREFIX"_t"$THREAD"
 LOG="$OUT"/pl"$PREFIX"_"$NAME"_t"$THREAD"_b"$BATCH".txt
@@ -33,13 +33,15 @@ fi
 
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
-"$BIN" -m=convert $PATHES -tf=$FORMAT
-if [ $? -ne 0 ];then
-  echo "Test $DIR is failed!"
-  exit
+if [ "$BATCH" = "1" ];then
+  "$BIN" -m=convert $PATHES -tf=$FORMAT
+  if [ $? -ne 0 ];then
+    echo "Test $DIR is failed!"
+    exit
+  fi
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -et=1.0 -cs=1 -ln=$LOG -sn="$OUT"/sync.txt -tr="$OUT"/report.txt -hr="$OUT"/report.html
+"$BIN" -m=compare -e=3 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -et=10.0 -cs=1 -ln=$LOG -sn="$OUT"/sync.txt -tr="$OUT"/report.txt -hr="$OUT"/report.html
 if [ $? -ne 0 ];then
   echo "Test $DIR is failed!"
   exit
@@ -66,17 +68,17 @@ fi
 function TEST_ALL_I {
 TEST_I test_000 1
 TEST_I test_001 1
-#TEST_I test_002 0
-#TEST_I test_003f 0
+TEST_I test_002 0
+TEST_I test_003f 0
 #TEST_I test_003i 0
 #TEST_I test_004 0
-#TEST_I test_005 1
-#TEST_I test_006 1
-#TEST_I test_007 1
-#TEST_I test_008 1
-#TEST_I test_009f 0
-#TEST_I test_010f 0
-#TEST_I test_011f 0
+TEST_I test_005 1
+TEST_I test_006 1
+TEST_I test_007 1
+TEST_I test_008 1
+TEST_I test_009f 0
+TEST_I test_010f 0
+TEST_I test_011f 0
 }
 
 TEST_ALL_I
