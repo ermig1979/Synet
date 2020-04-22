@@ -58,9 +58,10 @@ namespace Test
 				if (text)
 				{
 					ofs << "~~~~~~~~~~~~~~~~~~~~~ Synet Performance Report ~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-					ofs << "Test generation time: " + GetCurrentDateTimeString() << std::endl;
+					ofs << "Test generation time: " + CurrentDateTimeString() << std::endl;
 					ofs << "Number of test threads: " << _options.testThreads << std::endl;
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
+					ofs << "CPU name: " << CpuModelString() << std::endl;
 					Simd::PrintInfo(ofs);
 #endif
 					ofs << table.GenerateText();
@@ -75,13 +76,14 @@ namespace Test
 
 					html.WriteValue("h1", Html::Attr("id", "home"), "Synet Performance Report", true);
 
-					html.WriteValue("h4", Html::Attr(), String("Test generation time: ") + GetCurrentDateTimeString(), true);
+					html.WriteValue("h4", Html::Attr(), String("Test generation time: ") + CurrentDateTimeString(), true);
 					html.WriteValue("h4", Html::Attr(), String("Number of test threads: ") + ToString(_options.testThreads), true);
-					html.WriteBegin("h4", Html::Attr(), true, true);
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
+					html.WriteValue("h4", Html::Attr(), String("CPU name: ") + CpuModelString(), true);
+					html.WriteBegin("h4", Html::Attr(), true, true);
 					Simd::PrintInfo(ofs);
-#endif
 					html.WriteEnd("h4", true, true);
+#endif
 
 					ofs << table.GenerateHtml(html.Indent());
 

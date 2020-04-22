@@ -296,7 +296,7 @@ namespace Test
         return dst;
     }
 
-    inline String GetCurrentDateTimeString()
+    inline String CurrentDateTimeString()
     {
         std::time_t t;
         std::time(&t);
@@ -309,6 +309,25 @@ namespace Test
             << ToString(tm->tm_min, 2) << ":"
             << ToString(tm->tm_sec, 2);
         return ss.str();
+    }
+
+    inline String CpuModelString()
+    {
+        String model;
+#ifdef WIN32
+        model = "Unknown";
+#else
+        ::FILE* p = ::popen("lscpu | grep 'Model name:' | sed -r 's/Model name:\\s{1,}//g'", "r");
+        if (p)
+        {
+            char buffer[PATH_MAX];
+            while (::fgets(buffer, PATH_MAX, p));
+            model = buffer;
+            model = model.substr(0, model.find('\n'));
+            ::pclose(p);
+        }
+#endif
+        return model;
     }
 }
 
