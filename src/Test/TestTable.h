@@ -102,7 +102,9 @@ namespace Test
                 table << indent.str() << "| ";
                 for (ptrdiff_t col = 0; col < _size.x; ++col)
                 {
-                    table << ExpandText(_cells[row * _size.x + col].value, _headers[col]) << " ";
+                    const Cell& cell = _cells[row * _size.x + col];
+                    table << ExpandText(cell.value, _headers[col]);
+                    table << (cell.color == Black ? " " : "*");
                     if (_headers[col].separator)
                         table << "|" << (col < _size.x - 1 ? " " : "");
                 }
@@ -204,9 +206,12 @@ namespace Test
         static String ExpandText(const String& value, const Header& header)
         {
             if (header.alignment == Left)
-                return ExpandToRight(value, header.width);
-            if (header.alignment == Right)
-                return ExpandToLeft(value, header.width);
+                return ExpandRight(value, header.width);
+            else if (header.alignment == Center)
+                return ExpandBoth(value, header.width);
+            else if(header.alignment == Right)
+                return ExpandLeft(value, header.width);
+            assert(0);
             return String();
         }
 

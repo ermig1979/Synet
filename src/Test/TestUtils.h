@@ -70,7 +70,7 @@ namespace Test
         return t;
     }
 
-    inline String ExpandToLeft(const String& value, size_t count)
+    inline String ExpandLeft(const String& value, size_t count)
     {
         assert(count >= value.size());
         std::stringstream ss;
@@ -80,12 +80,24 @@ namespace Test
         return ss.str();
     }
 
-    inline String ExpandToRight(const String& value, size_t count)
+    inline String ExpandRight(const String& value, size_t count)
     {
         assert(count >= value.size());
         std::stringstream ss;
         ss << value;
         for (size_t i = value.size(); i < count; i++)
+            ss << " ";
+        return ss.str();
+    }
+
+    inline String ExpandBoth(const String& value, size_t count)
+    {
+        assert(count >= value.size());
+        std::stringstream ss;
+        for (size_t i = 0, left = (count - value.size()) / 2; i < left; i++)
+            ss << " ";
+        ss << value;
+        for (size_t i = ss.str().size(); i < count; i++)
             ss << " ";
         return ss.str();
     }

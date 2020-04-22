@@ -31,7 +31,11 @@ To build test to compare Synet and [Inference Engine](https://github.com/opencv/
     ./build.sh inference_engine
 
 And application `inference_engine_test` will be created in directory `build_inference_engine`.
-In order to run this test use `./test.sh` bash script (in the file manually uncomment unit test that you need).
+There are several test scripts:
+
+* For manual testing you can use `./test.sh` (in the file you have to manually uncomment unit test that you need).
+* Script `./check.sh` checks correctness of all tests.
+* Script `./perf.sh` measures performance of Synet compare to Inference Engine.
 
 Use samples for Linux
 =======================================

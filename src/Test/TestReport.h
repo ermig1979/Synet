@@ -57,7 +57,7 @@ namespace Test
 				SetCells(table, _tests, _summary.size(), false);
 				if (text)
 				{
-					ofs << "~~~~~~~~~~~~~~~~~~~~~Synet Performance Report~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+					ofs << "~~~~~~~~~~~~~~~~~~~~~ Synet Performance Report ~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 					ofs << "Test generation time: " + GetCurrentDateTimeString() << std::endl;
 					ofs << "Number of test threads: " << _options.testThreads << std::endl;
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
@@ -239,16 +239,16 @@ namespace Test
 		void SetHeader(Table& table)
 		{
 			size_t col = 0;
-			table.SetHeader(col++, "Test", true);
-			table.SetHeader(col++, "Batch", true);
+			table.SetHeader(col++, "Test", true, Table::Center);
+			table.SetHeader(col++, "Batch", true, Table::Center);
 			if(_options.otherName.size())
-				table.SetHeader(col++, _options.otherName + ", ms", true);
-			table.SetHeader(col++, "Synet, ms", true);
+				table.SetHeader(col++, _options.otherName + ", ms", true, Table::Center);
+			table.SetHeader(col++, "Synet, ms", true, Table::Center);
 			if (_options.otherName.size())
-				table.SetHeader(col++, _options.otherName + " / Synet", true);
-			table.SetHeader(col++, "Synet, GFLOPS", true);
-			table.SetHeader(col++, "Synet, MB", true);
-			table.SetHeader(col++, "Description", true);
+				table.SetHeader(col++, _options.otherName + " / Synet", true, Table::Center);
+			table.SetHeader(col++, "Synet, GFLOPS", true, Table::Center);
+			table.SetHeader(col++, "Synet, MB", true, Table::Center);
+			table.SetHeader(col++, "Description", true, Table::Center);
 		}
 
 		void SetCells(Table& table, const Tests & tests, size_t row, bool summary)
@@ -268,11 +268,8 @@ namespace Test
 					table.SetCell(col++, row, ToString(relation, 2), relation < 1.00 ? Table::Red : Table::Black);
 				}
 				table.SetCell(col++, row, ToString(test.flops, 1));
-				if (!summary)
-				{
-					table.SetCell(col++, row, ToString(test.memory, 1));
-					table.SetCell(col++, row, test.desc);
-				}
+ 				table.SetCell(col++, row, summary ? String("-") : ToString(test.memory, 1));
+				table.SetCell(col++, row, summary ? String("-") : test.desc);
 				table.SetRowProp(row, summary && i == tests.size() - 1, summary);
 			}
 		}
