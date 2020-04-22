@@ -7,7 +7,6 @@ NUMBER=$3
 THREAD=$4
 FORMAT=$5
 BATCH=$6
-VERSION=$7
 DIR=./data/"$FRAMEWORK"/"$NAME"
 PATHES="-om=$DIR/other.dsc -ow=$DIR/other.dat -sm=$DIR/synet$FORMAT.xml -sw=$DIR/synet$FORMAT.bin -id=$DIR/image -od=$DIR/output -tp=$DIR/param.xml"
 PREFIX="${FRAMEWORK:0:1}"
@@ -17,10 +16,10 @@ BIN_DIR=./build_"$FRAMEWORK"
 BIN="$BIN_DIR"/test_"$FRAMEWORK"
 
 if [ "${NAME:0:5}" = "test_" ] && [ "${NAME:8:9}" = "i" ]; then
-  THRESHOLD=0.01
+  THRESHOLD=0.016
   echo "Use increased accuracy threshold : $THRESHOLD for INT8."
 else
-  THRESHOLD=0.002
+  THRESHOLD=0.0011
 fi
 
 echo $LOG
@@ -37,16 +36,12 @@ if [ $? -ne 0 ];then
   exit
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -cs=1 -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -cs=1 -ln=$LOG
 if [ $? -ne 0 ];then
   echo "Test $DIR is failed!"
   exit
 fi
 }
-
-if [ ! -d ./test ];then
-	mkdir ./test
-fi
 
 function TEST_I {
 FRAMEWORK=inference_engine
@@ -56,8 +51,7 @@ NUMBER=1
 THREAD=0
 TEST $FRAMEWORK $NAME $NUMBER $THREAD 0 1
 TEST $FRAMEWORK $NAME $NUMBER $THREAD 1 1
-if [ $TEST_BATCH -eq 1 ]
-then
+if [ $TEST_BATCH -eq 1 ];then
   TEST $FRAMEWORK $NAME $NUMBER $THREAD 1 2
 fi
 }

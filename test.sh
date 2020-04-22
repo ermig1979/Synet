@@ -35,16 +35,12 @@ if [ $? -ne 0 ];then
   exit
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.ppm -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -et=1.0 -dp=0 -dpf=6 -dpl=2 -dpp=8 -ar=0 -rt=0.3 -cs=0 -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -et=1.0 -dp=0 -dpf=6 -dpl=2 -dpp=8 -ar=0 -rt=0.3 -cs=0 -ln=$LOG
 if [ $? -ne 0 ];then
   echo "Test $DIR is failed!"
   exit
 fi
 }
-
-if [ ! -d ./test ];then
-	mkdir ./test
-fi
 
 #TEST darknet test_000 5 1 1 1 001a
 
@@ -53,7 +49,7 @@ fi
 #TEST inference_engine test_002 20 1 1 1 005t
 #TEST inference_engine test_003f 50 1 1 1 005t
 #TEST inference_engine test_003i 100 1 1 1 013
-TEST inference_engine test_004 -400 1 1 1 004t
+#TEST inference_engine test_004 -400 1 1 1 004t
 #TEST inference_engine test_005 2000 1 1 1 003
 #TEST inference_engine test_006 100 1 1 1 003
 #TEST inference_engine test_007 200 1 1 1 004

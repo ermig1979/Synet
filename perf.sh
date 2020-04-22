@@ -48,18 +48,13 @@ if [ $? -ne 0 ];then
 fi
 }
 
-if [ ! -d ./test ];then
-	mkdir ./test
-fi
-
 function TEST_I {
 FRAMEWORK=inference_engine
 NAME=$1
 TEST_BATCH=$2
 THREAD=$TEST_THREAD
 TEST $FRAMEWORK $NAME $THREAD 1
-if [ $TEST_BATCH -ne 0 ]
-then
+if [ $TEST_BATCH -ne 0 ];then
   TEST $FRAMEWORK $NAME $THREAD $BATCH_SIZE
 fi
 }

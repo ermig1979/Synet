@@ -42,13 +42,9 @@ then
 fi
 }
 
-if [ ! -d ./test ];then
-	mkdir ./test
-fi
-
 #IE_DBG int8_000 1 0 1 1 000a
 #IE_DBG int8_001 1 0 0 1 000a
-IE_DBG int8_002 1 0 1 1 000a
+#IE_DBG int8_002 1 0 1 1 000a
 #IE_DBG int8_003 1 0 0 1 000a  
 
 exit
