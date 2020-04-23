@@ -61,7 +61,7 @@ namespace Test
 					ofs << "Test generation time: " + CurrentDateTimeString() << std::endl;
 					ofs << "Number of test threads: " << _options.testThreads << std::endl;
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-					ofs << "CPU name: " << CpuModelString() << std::endl;
+					ofs << SystemInfo() << std::endl;
 					Simd::PrintInfo(ofs);
 #endif
 					ofs << table.GenerateText();
@@ -79,7 +79,7 @@ namespace Test
 					html.WriteValue("h4", Html::Attr(), String("Test generation time: ") + CurrentDateTimeString(), true);
 					html.WriteValue("h4", Html::Attr(), String("Number of test threads: ") + ToString(_options.testThreads), true);
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-					html.WriteValue("h4", Html::Attr(), String("CPU name: ") + CpuModelString(), true);
+					html.WriteValue("h4", Html::Attr(), SystemInfo(), true);
 					html.WriteBegin("h4", Html::Attr(), true, true);
 					Simd::PrintInfo(ofs);
 					html.WriteEnd("h4", true, true);

@@ -96,7 +96,7 @@ namespace Test
             logName = GetArg("-ln", "", false);
             consoleSilence = FromString<bool>(GetArg("-cs", "0"));
             syncName = GetArg("-sn", "", false);
-            skipThreshold = FromString<double>(GetArg("-st", "10.0"));
+            skipThreshold = FromString<double>(GetArg("-st", "20.0"));
             textReport = GetArg("-tr", "", false);
             htmlReport = GetArg("-hr", "", false);
             tensorFormat = FromString<int>(GetArg("-tf", "1"));

@@ -112,15 +112,36 @@ namespace Synet
             return _param(); 
         }
 
+        void Clear()
+        {
+            _param() = NetworkParam();
+            _layers.clear();
+            _tensors.clear();
+            _stats.clear();
+            _input.clear();
+            _stages.clear();
+            _stats.clear();
+            _src.clear();
+            _dst.clear();
+            _back.clear();
+            _tensorId.clear();
+            _layerId.clear();
+            _statId.clear();
+            _srcIds.clear();
+            _dstIds.clear();
+            _empty = true;
+        }
+
         bool Load(const String & model, const String & weight)
         {
+            Clear();
+
             if (!_param.Load(model))
             {
                 std::cout << "Can't load model file '" << model << "' !" << std::endl;
                 return false;
             }
 
-            _layers.clear();
             for (size_t i = 0; i < _param().layers().size(); ++i)
             {
                 LayerSharedPtr layer(Create(_param().layers()[i]));
@@ -150,10 +171,11 @@ namespace Synet
 
         bool Load(const char * modelData, size_t modelSize, const char * weightData, size_t weightSize)
         {
+            Clear();
+
             if (!_param.Load(modelData, modelSize))
                 return false;
 
-            _layers.clear();
             for (size_t i = 0; i < _param().layers().size(); ++i)
             {
                 LayerSharedPtr layer(Create(_param().layers()[i]));
@@ -579,18 +601,6 @@ namespace Synet
 
         bool Init()
         {
-            _tensors.clear();
-            _input.clear();
-            _stages.clear();
-            _stats.clear();
-            _src.clear();
-            _dst.clear();
-            _back.clear();
-            _tensorId.clear();
-            _layerId.clear();
-            _srcIds.clear();
-            _dstIds.clear();
-
             TensorPtrs buf;
             SetBuffers(buf);
             SetStats();
@@ -827,7 +837,6 @@ namespace Synet
 
         void SetStats()
         {
-            _stats.clear();
             for (size_t i = 0; i < _param().statistics().size(); ++i)
             {
                 const StatisticParam & src = _param().statistics()[i];

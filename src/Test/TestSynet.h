@@ -84,6 +84,7 @@ namespace Test
         virtual Shape SrcShape(size_t index) const { return Shape(); }
         virtual size_t SrcSize(size_t index) const { return 0; }
         virtual bool Init(const String & model, const String & weight, const Options & options, const TestParam & param) { return false; }
+        virtual void Free() { _output.clear(); }
         virtual const Vectors & Predict(const Vectors & src) { return _output; }
         virtual void DebugPrint(std::ostream & os, int flag, int first, int last, int precision) { }
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const { return Regions(); }
@@ -150,6 +151,12 @@ namespace Test
                 return true;
             }
             return false;
+        }
+
+        virtual void Free()
+        {
+            Network::Free();
+            _net.Clear();
         }
 
         virtual const Vectors & Predict(const Vectors & x)

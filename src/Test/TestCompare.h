@@ -515,17 +515,6 @@ namespace Test
         {
             const Options& options = comparer->_options;
             size_t current = 0, networks = 1;
-            if (thread)
-            {
-#ifdef SYNET_OTHER_RUN        
-                if ((options.enable & ENABLE_OTHER) && !comparer->InitNetwork(options.otherModel, options.otherWeight, comparer->_others[thread]))
-                    ::exit(0);
-#endif
-#ifdef SYNET_SYNET_RUN
-                if ((options.enable & ENABLE_SYNET) && !comparer->InitNetwork(options.synetModel, options.synetWeight, comparer->_synets[thread]))
-                    ::exit(0);
-#endif 
-            }
 #if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
             if (options.enable == (ENABLE_OTHER | ENABLE_SYNET))
                 networks = 2;
@@ -533,6 +522,8 @@ namespace Test
 #ifdef SYNET_OTHER_RUN 
             if (options.enable & ENABLE_OTHER)
             {
+                if (thread && !comparer->InitNetwork(options.otherModel, options.otherWeight, comparer->_others[thread]))
+                    ::exit(0);
                 if (options.repeatNumber)
                 {
                     for (size_t i = 0; i < comparer->_tests.size(); ++i)
@@ -561,11 +552,14 @@ namespace Test
                         canstop = true;
                     }
                 }
+                comparer->_others[thread].Free();
             }
 #endif
-#ifdef SYNET_SYNET_RUN   
+#ifdef SYNET_SYNET_RUN
             if (options.enable & ENABLE_SYNET)
             {
+                if (thread && !comparer->InitNetwork(options.synetModel, options.synetWeight, comparer->_synets[thread]))
+                    ::exit(0);
                 if (options.repeatNumber)
                 {
                     for (size_t i = 0; i < comparer->_tests.size(); ++i)
