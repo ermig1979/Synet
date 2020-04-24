@@ -113,7 +113,7 @@ namespace Test
 
         bool PrintFinishMessage() const
         {
-            std::cout << "Tests are finished successfully!" << std::endl << std::endl;
+            std::cout << "Tests are finished successfully!                                                              " << std::endl << std::endl;
             return true;
         }
 
@@ -382,15 +382,22 @@ namespace Test
             return d <= t || d / std::max(::fabs(a), ::fabs(b)) <= t;
         }
 
+        String TestFailedMessage(const TestData& test, size_t index, size_t thread)
+        {
+            std::stringstream ss;
+            ss << "At thread " << thread << " test " << index << " '" << test.path[0];
+            for (size_t k = 1; k < test.path.size(); ++k)
+                ss << ", " << test.path[k];
+            ss << "' is failed!";
+            return ss.str();
+        }
+
         bool CompareResults(const TestData& test, size_t index, size_t thread)
         {
             const Output& output = test.output[thread];
             if (output.other.size() != output.synet.size())
             {
-                std::cout << "Test " << index << " '" << test.path[0];
-                for (size_t k = 1; k < test.path.size(); ++k)
-                    std::cout << ", " << test.path[k];
-                std::cout << "' is failed!" << std::endl;
+                std::cout << TestFailedMessage(test, index, thread) << std::endl;
                 std::cout << "Dst count : " << output.other.size() << " != " << output.synet.size() << std::endl;
                 return false;
             }
@@ -398,28 +405,35 @@ namespace Test
             {
                 if (output.other[d].size() != output.synet[d].size())
                 {
-                    std::cout << "Test " << index << " '" << test.path[0];
-                    for (size_t k = 1; k < test.path.size(); ++k)
-                        std::cout << ", " << test.path[k];
-                    std::cout << "' is failed!" << std::endl;
+                    std::cout << TestFailedMessage(test, index, thread) << std::endl;
                     std::cout << "Dst[" << d << "] size : " << output.other[d].size() << " != " << output.synet[d].size() << std::endl;
                     return false;
                 }
-
                 for (size_t j = 0; j < output.synet[d].size(); ++j)
                 {
                     if (!Compare(output.other[d][j], output.synet[d][j], _options.threshold))
                     {
-                        std::cout << "Test " << index << " '" << test.path[0];
-                        for (size_t k = 1; k < test.path.size(); ++k)
-                            std::cout << ", " << test.path[k];
-                        std::cout << "' is failed!" << std::endl;
+                        std::cout << TestFailedMessage(test, index, thread) << std::endl;
                         std::cout << "Dst[" << d << "][" << j << "] : " << output.other[d][j] << " != " << output.synet[d][j] << std::endl;
                         return false;
                     }
                 }
             }
             return true;
+        }
+
+        String ProgressString(size_t current, size_t total) const
+        {
+            std::stringstream progress;
+            progress << "Test progress : " << ToString(100.0 * current / total, 1) << "% ";
+            if (_currents.size() > 1)
+            {
+                progress << "[ ";
+                for (size_t t = 0; t < _currents.size(); ++t)
+                    progress << ToString(100.0 * _currents[t] / total, 1) << "% ";
+                progress << "] ";
+            }
+            return progress.str();
         }
 
         bool SingleThreadComparison()
@@ -430,7 +444,7 @@ namespace Test
                 TestData& test = *_tests[i];
                 for (size_t r = 0; r < repeats; ++r, ++current)
                 {
-                    std::cout << "Test progress : " << ToString(100.0 * current / total, 1) << "% " << std::flush;
+                    std::cout << ProgressString(current, total) << std::flush;
 #ifdef SYNET_OTHER_RUN
                     if (_options.enable & ENABLE_OTHER)
                     {
@@ -485,7 +499,7 @@ namespace Test
                 current = total;
                 for (size_t t = 0; t < _currents.size(); ++t)
                     current = std::min(current, _currents[t]);
-                std::cout << "Test progress : " << ToString(100.0 * current / total, 1) << "% " << std::flush;
+                std::cout << ProgressString(current, total) << std::flush;
                 Sleep(1);
                 std::cout << " \r" << std::flush;
             }
