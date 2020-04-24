@@ -38,6 +38,7 @@ namespace Test
     public:
         Comparer(const Options& options)
             : _options(options)
+            , _progressMessageSizeMax(0)
         {
             assert(_options.testThreads >= 0);
             if (_options.enable & ENABLE_OTHER)
@@ -101,6 +102,7 @@ namespace Test
         };
         std::vector<Thread> _threads;
         std::condition_variable _startOther, _startSynet;
+        size_t _progressMessageSizeMax;
 
         void PrintStartMessage() const
         {
@@ -121,7 +123,7 @@ namespace Test
 
         bool PrintFinishMessage() const
         {
-            std::cout << "Tests are finished successfully!                                                              " << std::endl << std::endl;
+            std::cout << ExpandRight("Tests are finished successfully!", _progressMessageSizeMax) << std::endl << std::endl;
             return true;
         }
 
@@ -430,7 +432,7 @@ namespace Test
             return true;
         }
 
-        String ProgressString(size_t current, size_t total) const
+        String ProgressString(size_t current, size_t total)
         {
             std::stringstream progress;
             progress << "Test progress : " << ToString(100.0 * current / total, 1) << "% ";
@@ -441,6 +443,7 @@ namespace Test
                     progress << ToString(100.0 * _threads[t].current / total, 1) << "% ";
                 progress << "] ";
             }
+            _progressMessageSizeMax = std::max(_progressMessageSizeMax, progress.str().size());
             return progress.str();
         }
 
