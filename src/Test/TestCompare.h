@@ -91,8 +91,16 @@ namespace Test
         typedef std::shared_ptr<TestData> TestDataPtr;
         typedef std::vector<TestDataPtr> TestDataPtrs;
         TestDataPtrs _tests;
-        Shape _currents;
-        std::vector<std::thread> _threads;
+
+        struct Thread
+        {
+            size_t current;
+            bool other, synet;
+            std::thread thread;
+            Thread() : current(0), other(false), synet(false) {}
+        };
+        std::vector<Thread> _threads;
+        std::condition_variable _startOther, _startSynet;
 
         void PrintStartMessage() const
         {
@@ -426,11 +434,11 @@ namespace Test
         {
             std::stringstream progress;
             progress << "Test progress : " << ToString(100.0 * current / total, 1) << "% ";
-            if (_currents.size() > 1)
+            if (_threads.size() > 1)
             {
                 progress << "[ ";
-                for (size_t t = 0; t < _currents.size(); ++t)
-                    progress << ToString(100.0 * _currents[t] / total, 1) << "% ";
+                for (size_t t = 0; t < _threads.size(); ++t)
+                    progress << ToString(100.0 * _threads[t].current / total, 1) << "% ";
                 progress << "] ";
             }
             return progress.str();
@@ -489,16 +497,24 @@ namespace Test
         {
             size_t current = 0, total = _options.repeatNumber ?
                 _tests.size() * _options.repeatNumber : size_t(_options.executionTime * 1000);
-            _currents.resize(_options.TestThreads(), 0);
             _threads.resize(_options.TestThreads());
             for (size_t t = 0; t < _threads.size(); ++t)
-                _threads[t] = std::thread(TestThread, this, t);
+                _threads[t].thread = std::thread(TestThread, this, t);
 
             while (current < total)
             {
+                bool other = true, synet = true;
                 current = total;
-                for (size_t t = 0; t < _currents.size(); ++t)
-                    current = std::min(current, _currents[t]);
+                for (size_t t = 0; t < _threads.size(); ++t)
+                {
+                    current = std::min(current, _threads[t].current);
+                    other = other && _threads[t].other;
+                    synet = synet && _threads[t].synet;
+                }
+                if (other)
+                    _startOther.notify_all();
+                if (synet)
+                    _startSynet.notify_all();
                 std::cout << ProgressString(current, total) << std::flush;
                 Sleep(1);
                 std::cout << " \r" << std::flush;
@@ -507,8 +523,8 @@ namespace Test
             _options.synetMemoryUsage = 0;
             for (size_t t = 0; t < _threads.size(); ++t)
             {
-                if (_threads[t].joinable())
-                    _threads[t].join();
+                if (_threads[t].thread.joinable())
+                    _threads[t].thread.join();
                 for (size_t i = 0; i < _tests.size(); ++i)
                 {
                     TestData& test = *_tests[i];
@@ -538,6 +554,10 @@ namespace Test
             {
                 if (thread && !comparer->InitNetwork(options.otherModel, options.otherWeight, comparer->_others[thread]))
                     ::exit(0);
+                comparer->_threads[thread].other = true;
+                std::mutex mutex;
+                std::unique_lock<std::mutex> lock(mutex);
+                comparer->_startOther.wait(lock);
                 if (options.repeatNumber)
                 {
                     for (size_t i = 0; i < comparer->_tests.size(); ++i)
@@ -546,7 +566,7 @@ namespace Test
                         for (size_t r = 0; r < options.repeatNumber; ++r, ++current)
                         {
                             test.output[thread].other = comparer->_others[thread].Predict(test.input);
-                            comparer->_currents[thread] = current / networks;
+                            comparer->_threads[thread].current = current / networks;
                         }
                     }
                 }
@@ -561,7 +581,7 @@ namespace Test
                             TestData& test = *comparer->_tests[i];
                             test.output[thread].other = comparer->_others[thread].Predict(test.input);
                             duration = GetTime() - start;
-                            comparer->_currents[thread] = size_t(duration * 1000) / networks;
+                            comparer->_threads[thread].current = size_t(duration * 1000) / networks;
                         }
                         canstop = true;
                     }
@@ -574,6 +594,10 @@ namespace Test
             {
                 if (thread && !comparer->InitNetwork(options.synetModel, options.synetWeight, comparer->_synets[thread]))
                     ::exit(0);
+                comparer->_threads[thread].synet = true;
+                std::mutex mutex;
+                std::unique_lock<std::mutex> lock(mutex);
+                comparer->_startSynet.wait(lock);
                 if (options.repeatNumber)
                 {
                     for (size_t i = 0; i < comparer->_tests.size(); ++i)
@@ -582,7 +606,7 @@ namespace Test
                         for (size_t r = 0; r < options.repeatNumber; ++r, ++current)
                         {
                             test.output[thread].synet = comparer->_synets[thread].Predict(test.input);
-                            comparer->_currents[thread] = current / networks;
+                            comparer->_threads[thread].current = current / networks;
                         }
                     }
                 }
@@ -597,14 +621,14 @@ namespace Test
                             TestData& test = *comparer->_tests[i];
                             test.output[thread].synet = comparer->_synets[thread].Predict(test.input);
                             duration = GetTime() - start;
-                            comparer->_currents[thread] = size_t((options.executionTime*(networks - 1) + duration) * 1000) / networks;
+                            comparer->_threads[thread].current = size_t((options.executionTime*(networks - 1) + duration) * 1000) / networks;
                         }
                         canstop = true;
                     }
                 }
             }
 #endif           
-            comparer->_currents[thread] = options.repeatNumber ?
+            comparer->_threads[thread].current = options.repeatNumber ?
                 comparer->_tests.size() * options.repeatNumber : size_t(options.executionTime * 1000);
         }
 
