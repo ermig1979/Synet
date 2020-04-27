@@ -438,9 +438,12 @@ namespace Test
             progress << "Test progress : " << ToString(100.0 * current / total, 1) << "% ";
             if (_threads.size() > 1)
             {
+                const size_t m = 10;
                 progress << "[ ";
-                for (size_t t = 0; t < _threads.size(); ++t)
+                for (size_t t = 0, n = std::min(m, _threads.size()); t < n; ++t)
                     progress << ToString(100.0 * _threads[t].current / total, 1) << "% ";
+                if (_threads.size() > m)
+                    progress << "... ";
                 progress << "] ";
             }
             _progressMessageSizeMax = std::max(_progressMessageSizeMax, progress.str().size());
