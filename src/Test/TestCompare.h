@@ -629,6 +629,7 @@ namespace Test
                         canstop = true;
                     }
                 }
+                comparer->_synets[thread].Free();
             }
 #endif           
             comparer->_threads[thread].current = options.repeatNumber ?

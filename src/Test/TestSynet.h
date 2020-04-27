@@ -148,6 +148,7 @@ namespace Test
                 _net.CompactWeight();
                 _lower = param.lower();
                 _upper = param.upper();
+                _synetMemoryUsage = _net.MemoryUsage();
                 return true;
             }
             return false;
@@ -183,7 +184,7 @@ namespace Test
 
         virtual size_t MemoryUsage() const
         {
-            return _net.MemoryUsage();
+            return _synetMemoryUsage;
         }
 
     private:
@@ -191,6 +192,7 @@ namespace Test
         Net _net;
         bool _trans, _sort;
         Floats _lower, _upper;
+        size_t _synetMemoryUsage;
 
         bool Load(const String & model, const String & weight)
         {
