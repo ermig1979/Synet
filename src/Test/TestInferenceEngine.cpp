@@ -113,6 +113,7 @@ namespace Test
 
                 StringMap config;
                 config[InferenceEngine::PluginConfigParams::KEY_CPU_THREADS_NUM] = std::to_string(options.workThreads);
+                config[InferenceEngine::PluginConfigParams::KEY_CPU_BIND_THREAD] = InferenceEngine::PluginConfigParams::NO;
                 _batchSize = 1;
                 if (options.batchSize > 1)
                 {
@@ -125,7 +126,8 @@ namespace Test
                     }
                     catch (std::exception& e)
                     {
-                        std::cout << "Inference Engine init trouble: '" << e.what() << "', try to emulate batch > 1." << std::endl;
+                        if (!options.consoleSilence)
+                            std::cout << "Inference Engine init trouble: '" << e.what() << "', try to emulate batch > 1." << std::endl;
                         _batchSize = options.batchSize;
                         _ieNetwork->setBatchSize(1);
                         config.erase(InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED);

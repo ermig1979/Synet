@@ -266,7 +266,7 @@ namespace Test
 				table.SetCell(col++, row, ToString(test.synet, 3), test.skip == 2 ? Table::Red : Table::Black);
 				if (_options.otherName.size())
 				{
-					double relation = test.other / test.synet;
+					double relation = test.synet != 0 ? test.other / test.synet : 0.0;
 					table.SetCell(col++, row, ToString(relation, 2), relation < 1.00 ? Table::Red : Table::Black);
 				}
 				table.SetCell(col++, row, ToString(test.flops, 1));
