@@ -39,6 +39,8 @@ namespace Test
         Comparer(const Options& options)
             : _options(options)
             , _progressMessageSizeMax(0)
+            , _notifiedOther(false)
+            , _notifiedSynet(false)
         {
             assert(_options.testThreads >= 0);
             if (_options.enable & ENABLE_OTHER)
@@ -102,6 +104,7 @@ namespace Test
         };
         std::vector<Thread> _threads;
         std::condition_variable _startOther, _startSynet;
+        bool _notifiedOther, _notifiedSynet;
         size_t _progressMessageSizeMax;
 
         void PrintStartMessage() const
@@ -168,7 +171,7 @@ namespace Test
 #ifdef SYNET_OTHER_RUN        
             if (_options.enable & ENABLE_OTHER)
             {
-                if(!InitNetwork(_options.otherModel, _options.otherWeight, _others[0]))
+                if (!InitNetwork(_options.otherModel, _options.otherWeight, _others[0]))
                     return false;
                 _options.otherName = _others[0].Name();
             }
@@ -505,7 +508,7 @@ namespace Test
                 _tests.size() * _options.repeatNumber : size_t(_options.executionTime * 1000);
             _threads.resize(_options.TestThreads());
             for (size_t t = 0; t < _threads.size(); ++t)
-                _threads[t].thread = std::thread(TestThread, this, t);
+                _threads[t].thread = std::thread(TestThread, this, t, total);
 
             while (current < total)
             {
@@ -518,9 +521,15 @@ namespace Test
                     synet = synet && _threads[t].synet;
                 }
                 if (other)
+                {
+                    _notifiedOther = true;
                     _startOther.notify_all();
+                }
                 if (synet)
+                {
+                    _notifiedSynet = true;
                     _startSynet.notify_all();
+                }
                 std::cout << ProgressString(current, total) << std::flush;
                 Sleep(1);
                 std::cout << " \r" << std::flush;
@@ -547,7 +556,7 @@ namespace Test
             return PrintFinishMessage();
         }
 
-        static void TestThread(Comparer* comparer, size_t thread)
+        static void TestThread(Comparer* comparer, size_t thread, size_t total)
         {
             const Options& options = comparer->_options;
             size_t current = 0, networks = 1;
@@ -563,7 +572,9 @@ namespace Test
                 comparer->_threads[thread].other = true;
                 std::mutex mutex;
                 std::unique_lock<std::mutex> lock(mutex);
-                comparer->_startOther.wait(lock);
+                while (!comparer->_notifiedOther)
+                    comparer->_startOther.wait(lock);
+                comparer->_notifiedOther = false;
                 if (options.repeatNumber)
                 {
                     for (size_t i = 0; i < comparer->_tests.size(); ++i)
@@ -587,7 +598,7 @@ namespace Test
                             TestData& test = *comparer->_tests[i];
                             test.output[thread].other = comparer->_others[thread].Predict(test.input);
                             duration = GetTime() - start;
-                            comparer->_threads[thread].current = size_t(duration * 1000) / networks;
+                            comparer->_threads[thread].current = std::min(total, size_t(duration * 1000)) / networks;
                         }
                         canstop = true;
                     }
@@ -603,7 +614,9 @@ namespace Test
                 comparer->_threads[thread].synet = true;
                 std::mutex mutex;
                 std::unique_lock<std::mutex> lock(mutex);
-                comparer->_startSynet.wait(lock);
+                while (!comparer->_notifiedSynet)
+                    comparer->_startSynet.wait(lock);
+                comparer->_notifiedSynet = false;
                 if (options.repeatNumber)
                 {
                     for (size_t i = 0; i < comparer->_tests.size(); ++i)
@@ -627,7 +640,7 @@ namespace Test
                             TestData& test = *comparer->_tests[i];
                             test.output[thread].synet = comparer->_synets[thread].Predict(test.input);
                             duration = GetTime() - start;
-                            comparer->_threads[thread].current = size_t((options.executionTime*(networks - 1) + duration) * 1000) / networks;
+                            comparer->_threads[thread].current = (total * (networks - 1) + std::min(total, size_t(duration * 1000))) / networks;
                         }
                         canstop = true;
                     }
@@ -635,8 +648,7 @@ namespace Test
                 comparer->_synets[thread].Free();
             }
 #endif           
-            comparer->_threads[thread].current = options.repeatNumber ?
-                comparer->_tests.size() * options.repeatNumber : size_t(options.executionTime * 1000);
+            comparer->_threads[thread].current = total;
         }
 
         inline void Sleep(unsigned int miliseconds)
@@ -645,5 +657,3 @@ namespace Test
         }
     };
 }
-
-
