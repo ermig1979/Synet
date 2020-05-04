@@ -72,7 +72,7 @@ namespace Test
 
     inline String ExpandLeft(const String& value, size_t count)
     {
-        assert(count >= value.size());
+        count = std::max(count, value.size());
         std::stringstream ss;
         for (size_t i = value.size(); i < count; i++)
             ss << " ";
@@ -82,7 +82,7 @@ namespace Test
 
     inline String ExpandRight(const String& value, size_t count)
     {
-        assert(count >= value.size());
+        count = std::max(count, value.size());
         std::stringstream ss;
         ss << value;
         for (size_t i = value.size(); i < count; i++)
@@ -92,7 +92,7 @@ namespace Test
 
     inline String ExpandBoth(const String& value, size_t count)
     {
-        assert(count >= value.size());
+        count = std::max(count, value.size());
         std::stringstream ss;
         for (size_t i = 0, left = (count - value.size()) / 2; i < left; i++)
             ss << " ";

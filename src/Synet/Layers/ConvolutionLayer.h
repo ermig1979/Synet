@@ -464,8 +464,10 @@ namespace Synet
                 pDstB += D;
                 pDstS += D;
                 pSrcScale += C;
+                pSrcScaleInv += C;
                 pSrcShift += C;
                 pDstScale += D;
+                pDstScaleInv += D;
                 pDstShift += D;
                 pNormScale += D;
                 pNormShift += D;           

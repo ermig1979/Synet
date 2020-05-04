@@ -86,7 +86,7 @@ namespace Test
             synetWeight = GetArg("-sw", "./synet.bin");
             testParam = GetArg("-tp", "./param.xml");
             imageDirectory = GetArg("-id", "./image");
-            imageFilter = GetArg("-if", "*.ppm");
+            imageFilter = GetArg("-if", "*.*");
             outputDirectory = GetArg("-od", "./output");
             repeatNumber = std::max(0, FromString<int>(GetArg("-rn", "1")));
             executionTime = FromString<double>(GetArg("-et", "10.0"));
