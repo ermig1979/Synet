@@ -28,12 +28,52 @@
 
 namespace Test
 {
+    struct OptionsBase
+    {
+        mutable bool result;
+
+        OptionsBase(int argc, char* argv[])
+            : _argc(argc)
+            , _argv(argv)
+            , result(false)
+        {
+        }
+
+    protected:
+        String GetArg(const String& name, const String& default_ = String(), bool exit = true)
+        {
+            Strings values;
+            for (int i = 1; i < _argc; ++i)
+            {
+                String arg = _argv[i];
+                if (arg.substr(0, name.size()) == name && arg.substr(name.size(), 1) == "=")
+                    values.push_back(arg.substr(name.size() + 1));
+            }
+            if (values.empty())
+            {
+                if (default_.empty() && exit)
+                {
+                    std::cout << "Argument '" << name << "' is absent!" << std::endl;
+                    ::exit(1);
+                }
+                else
+                    return default_;
+            }
+            return values[0];
+        }
+    private:
+        int _argc;
+        char** _argv;
+    };
+
+    //-------------------------------------------------------------------------
+
     const int ENABLE_OTHER = 1;
     const int ENABLE_SYNET = 2;
 
     void GenerateReport(const struct Options& options);
 
-    struct Options
+    struct Options : public OptionsBase
     {
         String mode;
         int enable;
@@ -67,14 +107,11 @@ namespace Test
         float regionThreshold;
         float regionOverlap;
 
-        mutable bool result;
         mutable size_t synetMemoryUsage;
         mutable String otherName;
 
         Options(int argc, char* argv[])
-            : _argc(argc)
-            , _argv(argv)
-            , result(false)
+            : OptionsBase(argc, argv)
             , synetMemoryUsage(0)
         {
             mode = GetArg("-m");
@@ -153,32 +190,6 @@ namespace Test
         {
             return std::max<size_t>(1, testThreads);
         }
-
-    private:
-        String GetArg(const String & name, const String & default_ = String(), bool exit = true)
-        {
-            Strings values;
-            for (int i = 1; i < _argc; ++i)
-            {
-                String arg = _argv[i];
-                if (arg.substr(0, name.size()) == name && arg.substr(name.size(), 1) == "=")
-                    values.push_back(arg.substr(name.size() + 1));
-            }
-            if (values.empty())
-            {
-                if (default_.empty() && exit)
-                {
-                    std::cout << "Argument '" << name << "' is absent!" << std::endl;
-                    ::exit(1);
-                }
-                else
-                    return default_;
-            }
-            return values[0];
-        }
-
-        int _argc;
-        char ** _argv;
     };
 }
 

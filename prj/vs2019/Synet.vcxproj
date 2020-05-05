@@ -92,6 +92,7 @@
     <ClInclude Include="..\..\src\Synet\Network.h" />
     <ClInclude Include="..\..\src\Synet\Param.h" />
     <ClInclude Include="..\..\src\Synet\Params.h" />
+    <ClInclude Include="..\..\src\Synet\Quantization\Unpack.h" />
     <ClInclude Include="..\..\src\Synet\Stat.h" />
     <ClInclude Include="..\..\src\Synet\Synet.h" />
     <ClInclude Include="..\..\src\Synet\Tensor.h" />

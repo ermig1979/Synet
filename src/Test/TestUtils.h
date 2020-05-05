@@ -296,6 +296,10 @@ namespace Test
         return dst;
     }
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4996)
+#endif
     inline String CurrentDateTimeString()
     {
         std::time_t t;
@@ -310,6 +314,9 @@ namespace Test
             << ToString(tm->tm_sec, 2);
         return ss.str();
     }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
     inline String SystemInfo()
     {

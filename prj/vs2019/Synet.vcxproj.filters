@@ -247,6 +247,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Common.h" />
     <ClInclude Include="..\..\src\Synet\Buffer.h" />
+    <ClInclude Include="..\..\src\Synet\Quantization\Unpack.h">
+      <Filter>Quantization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -260,6 +263,9 @@
     </Filter>
     <Filter Include="Converters\Depricated">
       <UniqueIdentifier>{22ba054b-220b-4b3d-9978-01844a07aae3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quantization">
+      <UniqueIdentifier>{c7c3059c-3256-4387-ae02-ea14ca8acc63}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
