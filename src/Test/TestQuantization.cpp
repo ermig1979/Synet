@@ -33,12 +33,20 @@ Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
 int main(int argc, char* argv[])
 {
     Test::Quantization::Options options(argc, argv);
+    Test::Quantization::TestParamHolder param;
+    Test::String path = Test::MakePath(options.test, options.param);
+    if (!param.Load(path))
+    {
+        std::cout << "Can't load test param file '" << path  << "' !" << std::endl;
+        return 1;
+    }
 
     if (options.mode == "unpack")
     {
         SYNET_PERF_FUNC();
         std::cout << "Unpack network complex layers : ";
-        options.result = Synet::Quantization::UnpackComplexLayers(options.fp32Path, options.tempPath);
+        options.result = Synet::Quantization::UnpackComplexLayers(
+            Test::MakePath(options.test, param().fp32()), Test::MakePath(options.test, param().temp()));
         std::cout << (options.result ? "OK." : " Unpacking finished with errors!") << std::endl;
     }
     else

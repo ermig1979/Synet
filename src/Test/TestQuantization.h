@@ -34,24 +34,28 @@ namespace Test
         struct Options : public Test::OptionsBase
         {
             String mode;
-            String binPath;
-            String fp32Path;
-            String tempPath;
-            String int8Path;
-            String testImages;
+            String test;
+            String param;
 
             Options(int argc, char* argv[])
                 : OptionsBase(argc, argv)
             {
                 mode = GetArg("-mode");
-
-                binPath = GetArg("-bp", "data.bin");
-                fp32Path = GetArg("-fp", "fp32.xml");
-                tempPath = GetArg("-tp", "temp.xml");
-                int8Path = GetArg("-ip", "int8.xml");
-                testImages = GetArg("-ti", "../../images/persons/");
+                test = GetArg("-test", ".");
+                param = GetArg("-param", "param.xml");
             }
         };
+
+        struct TestParam
+        {
+            SYNET_PARAM_VALUE(String, images, String());
+            SYNET_PARAM_VALUE(String, bin, String("data.bin"));
+            SYNET_PARAM_VALUE(String, fp32, String("fp32.xml"));
+            SYNET_PARAM_VALUE(String, temp, String("temp.xml"));
+            SYNET_PARAM_VALUE(String, int8, String("int8.xml"));
+        };
+
+        SYNET_PARAM_HOLDER(TestParamHolder, TestParam, test);
     }
 }
 
