@@ -43,10 +43,11 @@ int main(int argc, char* argv[])
 
     if (options.mode == "unpack")
     {
-        SYNET_PERF_FUNC();
         std::cout << "Unpack network complex layers : ";
-        options.result = Synet::Quantization::UnpackComplexLayers(
-            Test::MakePath(options.test, param().fp32()), Test::MakePath(options.test, param().temp()));
+        Test::String src = Test::MakePath(options.test, param().fp32());
+        Test::String dst = Test::MakePath(options.test, param().temp());
+        options.result = Synet::Quantization::UnpackComplexLayers(src, dst);
+        Synet::Quantization::MergeLayersBack(dst, Test::MakePath(options.test, "back.xml"));
         std::cout << (options.result ? "OK." : " Unpacking finished with errors!") << std::endl;
     }
     else

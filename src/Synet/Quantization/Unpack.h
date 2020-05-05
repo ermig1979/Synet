@@ -27,6 +27,8 @@
 #include "Synet/Common.h"
 #include "Synet/Params.h"
 
+#include "Synet/Converters/Optimizer.h"
+
 namespace Synet
 {
 	namespace Quantization
@@ -44,9 +46,15 @@ namespace Synet
 			}
 
 		private:
-			typedef std::vector<Synet::LayerParam> LayerParams;
-			typedef std::pair<String, String> Change;
+			struct Change
+			{
+				size_t start;
+				String prev, curr;
+				Change(size_t s, const String & p, const String & c)
+					: start(s), prev(p), curr(c) {}
+			};
 			typedef std::vector<Change> Changes;
+			typedef std::vector<Synet::LayerParam> LayerParams;
 
             bool UnpackLayers(Synet::NetworkParam & network, int stage)
             {
@@ -59,8 +67,8 @@ namespace Synet
                     {
                     case 0:
                     {
-                        //if (UnpackMergedConvolution(layer, unpacked, changes))
-                        //    continue;
+                        if (UnpackMergedConvolution(layer, unpacked, changes))
+                            continue;
                         break;
                     }
                     case 1:
@@ -101,9 +109,10 @@ namespace Synet
 				convolution.convolution().activationParam1() = 6.0f;
 				convolution.dst()[0] = convolution.name();
 				activation.src() = convolution.dst();
-				activation.dst() = convolution.dst();
+				activation.dst().push_back(activation.name());
 				unpacked.push_back(convolution);
 				unpacked.push_back(activation);
+				changes.push_back(Change(unpacked.size(), convolution.name(), activation.name()));
 				return true;
 			}
 
@@ -114,27 +123,33 @@ namespace Synet
 
 			bool UnpackMergedConvolution(const Synet::LayerParam& layer, LayerParams& unpacked, Changes& changes)
 			{
-				if (layer.type() != LayerTypeMergedConvolution)
+				if (layer.type() != LayerTypeMergedConvolution || layer.mergedConvolution().add())
 					return false;
 
-				LayerParam conv1, conv2, conv3;
-				
-				conv1.type() = LayerTypeConvolution;
-				conv1.name() = layer.name() + "_conv1";
-				conv1.src() = layer.src();
-				conv1.dst().push_back(conv1.name());
+				LayerParam conv[3];
+				for (int i = 0, w = 0; i < 3; ++i)
+				{
+					conv[i].type() = LayerTypeConvolution;
+					conv[i].name() = layer.name() + (i == 2 ? String("") : String("_conv") + Synet::ValueToString(i));
+					conv[i].src() = i ? conv[i - 1].dst() : layer.src();
+					conv[i].dst().push_back(conv[i].name());
+					conv[i].convolution() = layer.mergedConvolution().conv()[i];
+					for (size_t end = w + WeightCount(conv[i].convolution()); w < end; ++w)
+						conv[i].weight().push_back(layer.weight()[w]);
+					unpacked.push_back(conv[i]);
+				}
 
-				return false;
+				return true;
 			}
 
 			bool Rename(const Change& change, LayerParams& layers)
 			{
-				for (size_t i = 0; i < layers.size(); ++i)
+				for (size_t i = change.start; i < layers.size(); ++i)
 				{
 					for (size_t j = 0; j < layers[i].src().size(); ++j)
 					{
-						if (layers[i].src()[j] == change.first)
-							layers[i].src()[j] = change.second;
+						if (layers[i].src()[j] == change.prev)
+							layers[i].src()[j] = change.curr;
 					}
 				}
 				return true;
@@ -180,6 +195,18 @@ namespace Synet
 			}
 
 			return true;
+		}
+
+		inline bool MergeLayersBack(const String& src, const String& dst)
+		{
+			NetworkParamHolder network;
+			if (network.Load(src))
+			{
+				Optimizer optimizer;
+				Floats bin;
+				optimizer.Run(network(), bin);
+			}
+			return network.Save(dst, false);
 		}
 	}
 }
