@@ -26,6 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Params.h"
+#include "Synet/Utils/FileUtils.h"
 #include "Synet/Converters/InferenceEngineV7.h"
 #include "Synet/Converters/InferenceEngineV10.h"
 #include "Synet/Converters/Optimizer.h"
@@ -35,32 +36,32 @@ namespace Synet
     class InferenceEngineToSynet
     {
     public:
-        bool Convert(const String & srcModelPath, const String & srcWeightPath, bool trans, const String & dstModelPath, const String & dstWeightPath)
+        bool Convert(const String & srcModel, const String & srcWeight, bool trans, const String & dstModel, const String & dstWeight)
         {
-            if (!Synet::FileExist(srcModelPath))
+            if (!Synet::FileExist(srcModel))
             {
-                std::cout << "File '" << srcModelPath << "' is not exist!" << std::endl;
+                std::cout << "File '" << srcModel << "' is not exist!" << std::endl;
                 return false;
             }
 
-            if (!Synet::FileExist(srcWeightPath))
+            if (!Synet::FileExist(srcWeight))
             {
-                std::cout << "File '" << srcWeightPath << "' is not exist!" << std::endl;
+                std::cout << "File '" << srcWeight << "' is not exist!" << std::endl;
                 return false;
             }
 
             XmlDoc srcXml;
             XmlFile file;
-            if (!LoadModel(srcModelPath, file, srcXml))
+            if (!LoadModel(srcModel, file, srcXml))
             {
-                std::cout << "Can't load Inference Engine model '" << srcModelPath << "' !" << std::endl;
+                std::cout << "Can't load Inference Engine model '" << srcModel << "' !" << std::endl;
                 return false;
             }
 
             Vector srcBin;
-            if (!LoadWeight(srcWeightPath, srcBin))
+            if (!LoadBinaryData(srcWeight, srcBin))
             {
-                std::cout << "Can't load Inference Engine weight '" << srcWeightPath << "' !" << std::endl;
+                std::cout << "Can't load Inference Engine weight '" << srcWeight << "' !" << std::endl;
                 return false;
             }
 
@@ -73,15 +74,15 @@ namespace Synet
             if (!optimizer.Run(dstXml(), dstBin))
                 return false;
 
-            if (!dstXml.Save(dstModelPath, false))
+            if (!dstXml.Save(dstModel, false))
             {
-                std::cout << "Can't save Synet model '" << dstModelPath << "' !" << std::endl;
+                std::cout << "Can't save Synet model '" << dstModel << "' !" << std::endl;
                 return false;
             }
 
-            if (!SaveWeight(dstBin, dstWeightPath))
+            if (!SaveBinaryData(dstBin, dstWeight))
             {
-                std::cout << "Can't save Synet weight '" << dstWeightPath << "' !" << std::endl;
+                std::cout << "Can't save Synet weight '" << dstWeight << "' !" << std::endl;
                 return false;
             }
 
@@ -115,22 +116,6 @@ namespace Synet
                     return false;
                 }
             }
-            return true;
-        }
-
-        bool LoadWeight(const String & path, Vector & bin)
-        {
-            std::ifstream ifs(path.c_str(), std::ofstream::binary);
-            if (!ifs.is_open())
-                return false;
-            size_t beg = ifs.tellg();
-            ifs.seekg(0, std::ios::end);
-            size_t end = ifs.tellg();
-            ifs.seekg(0, std::ios::beg);
-            size_t size = (end - beg) / sizeof(float);
-            bin.resize(size);
-            ifs.read((char*)bin.data(), size * sizeof(float));
-            ifs.close();
             return true;
         }
 
@@ -182,17 +167,6 @@ namespace Synet
             }
 
             return true;
-        }
-
-        bool SaveWeight(const Vector & bin, const String & path)
-        {
-            std::ofstream ofs(path.c_str(), std::ofstream::binary);
-            if (!ofs.is_open())
-                return false;
-            ofs.write((const char*)bin.data(), bin.size() * sizeof(float));
-            bool result = (bool)ofs;
-            ofs.close();
-            return result;
         }
     };
 

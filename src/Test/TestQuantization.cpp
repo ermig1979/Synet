@@ -25,8 +25,8 @@
 #include "Test/TestCompare.h"
 #include "Test/TestReport.h"
 #include "Test/TestQuantization.h"
-
-#include "Synet/Quantization/Unpack.h"
+#include "Synet/Converters/Deoptimizer.h"
+#include "Synet/Converters/Optimizer.h"
 
 Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
 
@@ -41,14 +41,14 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    if (options.mode == "unpack")
+    if (options.mode == "deoptimize")
     {
-        std::cout << "Unpack network complex layers : ";
+        std::cout << "Deoptimize Synet model : ";
         Test::String src = Test::MakePath(options.test, param().fp32());
         Test::String dst = Test::MakePath(options.test, param().temp());
-        options.result = Synet::Quantization::UnpackComplexLayers(src, dst);
-        Synet::Quantization::MergeLayersBack(dst, Test::MakePath(options.test, "back.xml"));
-        std::cout << (options.result ? "OK." : " Unpacking finished with errors!") << std::endl;
+        options.result = Synet::DeoptimizeSynetModel(src, dst);
+        Synet::OptimizeSynetModel(dst, "", Test::MakePath(options.test, "back.xml"), "");
+        std::cout << (options.result ? "OK." : " Deoptimization is finished with errors!") << std::endl;
     }
     else
         std::cout << "Unknown mode : " << options.mode << std::endl;

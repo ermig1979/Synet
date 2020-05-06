@@ -26,6 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Params.h"
+#include "Synet/Utils/FileUtils.h"
 
 namespace Synet
 {
@@ -1169,4 +1170,37 @@ namespace Synet
             return true;
         }
     };
+
+    inline bool OptimizeSynetModel(const String& srcXml, const String& srcBin, const String& dstXml, const String & dstBin)
+    {
+        NetworkParamHolder network;
+        if (!network.Load(srcXml))
+        {
+            std::cout << "Can't load Synet model '" << srcXml << "' !" << std::endl;
+            return false;
+        }
+        Floats bin;
+        if (!srcBin.empty() && !LoadBinaryData(srcBin, bin))
+        {
+            std::cout << "Can't load Synet weight '" << srcBin << "' !" << std::endl;
+            return false;
+        }
+        Optimizer optimizer;
+        if (!optimizer.Run(network(), bin))
+        {
+            std::cout << "Can't optimize Synet model!" << std::endl;
+            return false;
+        }
+        if (!network.Save(dstXml, false))
+        {
+            std::cout << "Can't save Synet model '" << dstXml << "' !" << std::endl;
+            return false;
+        }
+        if (!dstBin.empty() && !SaveBinaryData(bin, dstBin))
+        {
+            std::cout << "Can't save Synet weight '" << dstBin << "' !" << std::endl;
+            return false;
+        }
+        return true;
+    }
 }

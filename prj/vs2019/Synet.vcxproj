@@ -24,6 +24,7 @@
     <ClInclude Include="..\..\src\Synet\Buffer.h" />
     <ClInclude Include="..\..\src\Synet\Common.h" />
     <ClInclude Include="..\..\src\Synet\Converters\Darknet.h" />
+    <ClInclude Include="..\..\src\Synet\Converters\Deoptimizer.h" />
     <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Caffe.h" />
     <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Protobuf.h" />
     <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Tensorflow.h" />
@@ -92,7 +93,6 @@
     <ClInclude Include="..\..\src\Synet\Network.h" />
     <ClInclude Include="..\..\src\Synet\Param.h" />
     <ClInclude Include="..\..\src\Synet\Params.h" />
-    <ClInclude Include="..\..\src\Synet\Quantization\Unpack.h" />
     <ClInclude Include="..\..\src\Synet\Stat.h" />
     <ClInclude Include="..\..\src\Synet\Synet.h" />
     <ClInclude Include="..\..\src\Synet\Tensor.h" />
@@ -103,6 +103,7 @@
     <ClInclude Include="..\..\src\Synet\Utils\ConvParam.h" />
     <ClInclude Include="..\..\src\Synet\Utils\DebugPrint.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Deconvolution.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\FileUtils.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Gemm.h" />
     <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Math.h" />
