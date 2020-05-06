@@ -164,4 +164,31 @@ namespace Synet
     typedef std::vector<StatPtr> StatPtrs;
     typedef std::shared_ptr<Stat> StatSharedPtr;
     typedef std::vector<StatSharedPtr> StatSharedPtrs;
+
+    //-------------------------------------------------------------------------
+
+	template <typename T> void UpdateStatistics(const T* src, size_t batch, size_t channels, size_t height, size_t width, TensorFormat format, T* min, T* max)
+	{
+		for (size_t b = 0; b < batch; ++b)
+		{
+			if (format == TensorFormatNhwc)
+			{
+                for (size_t h = 0; h < height; ++h)
+				{
+					for (size_t w = 0; w < width; ++w)
+					{
+						for (size_t c = 0; c < channels; ++c)
+						{
+							float value = src[c];
+							min[c] = std::min(min[c], value);
+							max[c] = std::max(max[c], value);
+						}
+                        src += channels;
+					}
+				}
+			}
+			else
+				assert(0);
+		}
+	}
 }

@@ -192,6 +192,11 @@ namespace Synet
             return Init();
         }
 
+        bool Save(const String& model) const
+        {
+            return _param.Save(model, false);
+        }
+
         TensorPtrs & Src() 
         { 
             return _src; 
@@ -236,7 +241,7 @@ namespace Synet
                         {
                             if (param.type() == LayerTypeInput)
                             {
-                                _input[j].dst[0]->Reshape(srcShapes[i], Type(0), param.input().shape()[0].format());
+                                _input[j].dst[0]->Reshape(srcShapes[i], Type(0), param.input().shape()[0].format(), param.name());
                                 _src.push_back(_input[j].dst[0]);
                             }
                             else if (param.type() == LayerTypeMeta && (param.meta().type() == MetaTypeInput || param.meta().type() == MetaTypeInputWithDefault))
@@ -418,6 +423,13 @@ namespace Synet
                 _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
             }
             SetFastMode(mode);
+        }
+
+        void UpdateStatistics()
+        {
+            SYNET_PERF_FUNC();
+            for (size_t i = 0; i < _tensors.size(); ++i)
+                 UpdateStatistics(*_tensors[i]);
         }
 
         void DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
@@ -844,6 +856,27 @@ namespace Synet
                 _statId[src.name()] = _stats.size();
                 _stats.push_back(stat);
             }
+        }
+
+        void UpdateStatistics(const Tensor & tensor)
+        {
+            if (tensor.Name().empty() || tensor.GetType() != TensorType32f || tensor.Format() != TensorFormatNhwc || tensor.Count() != 4)
+                return;
+            size_t index = 0;
+            for (; index < _param().statistics().size(); ++index)
+                if (_param().statistics()[index].name() == tensor.Name())
+                    break;
+            if (index == _param().statistics().size())
+                _param().statistics().push_back(StatisticParam());
+            StatisticParam & stat = _param().statistics()[index];
+            if(stat.name().empty())
+                stat.name() = tensor.Name();
+            const Shape& shape = tensor.Shape();
+            if (stat.min().empty())
+                stat.min().resize(shape[3], FLT_MAX);
+            if (stat.max().empty())
+                stat.max().resize(shape[3], -FLT_MAX);
+            Synet::UpdateStatistics(tensor.CpuData(), shape[0], shape[3], shape[1], shape[2], tensor.Format(), stat.min().data(), stat.max().data());
         }
 
         bool InsertDst(const String & name)
