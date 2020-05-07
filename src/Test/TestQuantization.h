@@ -27,36 +27,63 @@
 #include "TestCommon.h"
 #include "TestOptions.h"
 
+#include "Synet/Converters/Deoptimizer.h"
+#include "Synet/Converters/Optimizer.h"
+
 namespace Test
 {
-    namespace Quantization
+    class Quantizer
     {
-        struct Options : public Test::OptionsBase
+    public:
+        Quantizer(const Options & options)
+            : _options(options)
         {
-            String mode;
-            String test;
-            String param;
-
-            Options(int argc, char* argv[])
-                : OptionsBase(argc, argv)
+            if (_options.debugPrint)
             {
-                mode = GetArg("-mode");
-                test = GetArg("-test", ".");
-                param = GetArg("-param", "param.xml");
+                _deopt = Test::MakePath(_options.outputDirectory, "fp32_deoptimized.xml");
             }
-        };
+            else
+            {
+                _deopt = _options.otherModel;
+            }
+        }
 
-        struct TestParam
+        bool Run()
         {
-            SYNET_PARAM_VALUE(String, images, String());
-            SYNET_PARAM_VALUE(String, bin, String("data.bin"));
-            SYNET_PARAM_VALUE(String, fp32, String("fp32.xml"));
-            SYNET_PARAM_VALUE(String, temp, String("temp.xml"));
-            SYNET_PARAM_VALUE(String, int8, String("int8.xml"));
-        };
+            if (!CreateDirectories())
+                return false;
+            if (!Deoptimize())
+                return false;
+            return true;
+        }
 
-        SYNET_PARAM_HOLDER(TestParamHolder, TestParam, test);
-    }
+    private:
+        const Options& _options;
+        String _deopt;
+
+        bool CreateDirectories()
+        {
+            if (_options.NeedOutputDirectory() && !DirectoryExists(_options.outputDirectory) && !CreatePath(_options.outputDirectory))
+            {
+                std::cout << "Can't create output directory '" << _options.outputDirectory << "' !" << std::endl;
+                return false;
+            }
+            return true;
+        }
+
+        bool Deoptimize()
+        {
+            if(!_options.consoleSilence)
+                std::cout << "Deoptimize Synet model : ";
+            bool result = Synet::DeoptimizeSynetModel(_options.synetModel, _deopt);
+            if (_options.debugPrint)
+                Synet::OptimizeSynetModel(_deopt, "", Test::MakePath(_options.outputDirectory, "fp32_optimized_back.xml"), "");
+            if (!_options.consoleSilence)
+                std::cout << (result ? "OK." : " Deoptimization is finished with errors!") << std::endl;
+            return result;
+        }
+    };
+
 }
 
 

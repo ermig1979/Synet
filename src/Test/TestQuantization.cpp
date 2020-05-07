@@ -25,30 +25,19 @@
 #include "Test/TestCompare.h"
 #include "Test/TestReport.h"
 #include "Test/TestQuantization.h"
-#include "Synet/Converters/Deoptimizer.h"
-#include "Synet/Converters/Optimizer.h"
 
 Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
 
 int main(int argc, char* argv[])
 {
-    Test::Quantization::Options options(argc, argv);
-    Test::Quantization::TestParamHolder param;
-    Test::String path = Test::MakePath(options.test, options.param);
-    if (!param.Load(path))
-    {
-        std::cout << "Can't load test param file '" << path  << "' !" << std::endl;
-        return 1;
-    }
+    Test::Options options(argc, argv);
 
-    if (options.mode == "deoptimize")
+    if (options.mode == "quantize")
     {
-        std::cout << "Deoptimize Synet model : ";
-        Test::String src = Test::MakePath(options.test, param().fp32());
-        Test::String dst = Test::MakePath(options.test, param().temp());
-        options.result = Synet::DeoptimizeSynetModel(src, dst);
-        Synet::OptimizeSynetModel(dst, "", Test::MakePath(options.test, "back.xml"), "");
-        std::cout << (options.result ? "OK." : " Deoptimization is finished with errors!") << std::endl;
+        std::cout << "Quantize Synet model : ";
+        Test::Quantizer quantizer(options);
+        options.result = quantizer.Run();
+        std::cout << (options.result ? "OK." : "Quantization is finished with errors!") << std::endl;
     }
     else
         std::cout << "Unknown mode : " << options.mode << std::endl;

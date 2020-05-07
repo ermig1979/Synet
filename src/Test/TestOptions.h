@@ -28,52 +28,12 @@
 
 namespace Test
 {
-    struct OptionsBase
-    {
-        mutable bool result;
-
-        OptionsBase(int argc, char* argv[])
-            : _argc(argc)
-            , _argv(argv)
-            , result(false)
-        {
-        }
-
-    protected:
-        String GetArg(const String& name, const String& default_ = String(), bool exit = true)
-        {
-            Strings values;
-            for (int i = 1; i < _argc; ++i)
-            {
-                String arg = _argv[i];
-                if (arg.substr(0, name.size()) == name && arg.substr(name.size(), 1) == "=")
-                    values.push_back(arg.substr(name.size() + 1));
-            }
-            if (values.empty())
-            {
-                if (default_.empty() && exit)
-                {
-                    std::cout << "Argument '" << name << "' is absent!" << std::endl;
-                    ::exit(1);
-                }
-                else
-                    return default_;
-            }
-            return values[0];
-        }
-    private:
-        int _argc;
-        char** _argv;
-    };
-
-    //-------------------------------------------------------------------------
-
     const int ENABLE_OTHER = 1;
     const int ENABLE_SYNET = 2;
 
     void GenerateReport(const struct Options& options);
 
-    struct Options : public OptionsBase
+    struct Options
     {
         String mode;
         int enable;
@@ -107,24 +67,30 @@ namespace Test
         float regionThreshold;
         float regionOverlap;
 
+        mutable bool result;
         mutable size_t synetMemoryUsage;
+        mutable size_t otherMemoryUsage;
+        mutable String synetName;
         mutable String otherName;
 
         Options(int argc, char* argv[])
-            : OptionsBase(argc, argv)
+            : _argc(argc)
+            , _argv(argv)
+            , result(false)
             , synetMemoryUsage(0)
+            , otherMemoryUsage(0)
         {
-            mode = GetArg("-m");
-            enable = FromString<int>(GetArg("-e", "3"));
-            textWeight = GetArg("-tw", "./other.txt");
-            otherModel = GetArg("-om", "./other.dsc");
-            otherWeight = GetArg("-ow", "./other.dat");
-            synetModel = GetArg("-sm", "./synet.xml");
-            synetWeight = GetArg("-sw", "./synet.bin");
-            testParam = GetArg("-tp", "./param.xml");
-            imageDirectory = GetArg("-id", "./image");
+            mode = GetArg2("-m", "-mode");
+            enable = FromString<int>(GetArg2("-e", "-enable", "3"));
+            textWeight = GetArg("-tw", "other.txt");
+            otherModel = GetArg("-om", "other.dsc");
+            otherWeight = GetArg("-ow", "other.dat");
+            synetModel = GetArg("-sm", "synet.xml");
+            synetWeight = GetArg("-sw", "synet.bin");
+            testParam = GetArg("-tp", "param.xml");
+            imageDirectory = GetArg("-id", "image");
             imageFilter = GetArg("-if", "*.*");
-            outputDirectory = GetArg("-od", "./output");
+            outputDirectory = GetArg("-od", "output");
             repeatNumber = std::max(0, FromString<int>(GetArg("-rn", "1")));
             executionTime = FromString<double>(GetArg("-et", "10.0"));
             workThreads = FromString<size_t>(GetArg("-wt", "1"));
@@ -190,6 +156,49 @@ namespace Test
         {
             return std::max<size_t>(1, testThreads);
         }
+
+    protected:
+        String GetArg(const String& name, const String& default_ = String(), bool exit = true)
+        {
+            return GetArgs({ name }, { default_ }, exit)[0];
+        }
+
+        String GetArg2(const String& name1, const String& name2, const String& default_ = String(), bool exit = true)
+        {
+            return GetArgs({ name1, name2 }, { default_ }, exit)[0];
+        }
+
+        Strings GetArgs(const Strings& names, const Strings& defaults = Strings(), bool exit = true)
+        {
+            Strings values;
+            for (int a = 1; a < _argc; ++a)
+            {
+                String arg = _argv[a];
+                for (size_t n = 0; n < names.size(); ++n)
+                {
+                    const String& name = names[n];
+                    if (arg.substr(0, name.size()) == name && arg.substr(name.size(), 1) == "=")
+                        values.push_back(arg.substr(name.size() + 1));
+                }
+            }
+            if (values.empty())
+            {
+                if (defaults.empty() && exit)
+                {
+                    std::cout << "Argument '";
+                    for (size_t n = 0; n < names.size(); ++n)
+                        std::cout << (n ? " | " : "") << names[n];
+                    std::cout << "' is absent!" << std::endl;
+                    ::exit(1);
+                }
+                else
+                    return defaults;
+            }
+            return values;
+        }
+    private:
+        int _argc;
+        char** _argv;
     };
 }
 
