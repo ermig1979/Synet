@@ -83,12 +83,12 @@ namespace Test
             mode = GetArg2("-m", "-mode");
             enable = FromString<int>(GetArg2("-e", "-enable", "3"));
             textWeight = GetArg("-tw", "other.txt");
-            otherModel = GetArg("-om", "other.dsc");
-            otherWeight = GetArg("-ow", "other.dat");
+            otherModel = GetArg("-om", QuantizationTest() ? "int8.xml" : "other.dsc");
+            otherWeight = GetArg("-ow", QuantizationTest() ? "synet.bin" : "other.dat");
             synetModel = GetArg("-sm", "synet.xml");
             synetWeight = GetArg("-sw", "synet.bin");
             testParam = GetArg("-tp", "param.xml");
-            imageDirectory = GetArg("-id", "image");
+            imageDirectory = GetArg("-id", QuantizationTest() ? "" : "image");
             imageFilter = GetArg("-if", "*.*");
             outputDirectory = GetArg("-od", "output");
             repeatNumber = std::max(0, FromString<int>(GetArg("-rn", "1")));
@@ -155,6 +155,11 @@ namespace Test
         size_t TestThreads() const
         {
             return std::max<size_t>(1, testThreads);
+        }
+
+        bool QuantizationTest() const
+        {
+            return mode == "quantize";
         }
 
     protected:

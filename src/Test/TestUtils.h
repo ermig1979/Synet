@@ -104,6 +104,8 @@ namespace Test
 
     inline String MakePath(const String& a, const String& b)
     {
+        if (a.empty())
+            return b;
 #ifdef _MSC_VER
         return a + (a[a.size() - 1] == '\\' ? "" : "\\") + b;
 #else
@@ -156,20 +158,16 @@ namespace Test
     {
 #ifdef WIN32
         size_t pos = path.find_last_of("\\");
-        if (pos == std::string::npos)
-            return path;
-        else
-            return path.substr(0, pos);
 #elif defined(__unix__)
         size_t pos = path.find_last_of("/");
-        if (pos == std::string::npos)
-            return path;
-        else
-            return path.substr(0, pos);
 #else
-        std::cerr << "GetNameByPath: Is not implemented yet!\n";
+        std::cerr << "DirectoryByPath: Is not implemented yet!\n";
         return "";
 #endif
+        if (pos == std::string::npos)
+            return path.find(".") ? String("") : path;
+        else
+            return path.substr(0, pos);
     }
 
     inline String ExtensionByPath(const String& path)

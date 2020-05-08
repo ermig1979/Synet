@@ -34,10 +34,8 @@ int main(int argc, char* argv[])
 
     if (options.mode == "quantize")
     {
-        std::cout << "Quantize Synet model : ";
         Test::Quantizer quantizer(options);
         options.result = quantizer.Run();
-        std::cout << (options.result ? "OK." : "Quantization is finished with errors!") << std::endl;
     }
     else
         std::cout << "Unknown mode : " << options.mode << std::endl;

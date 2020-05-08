@@ -59,7 +59,7 @@ namespace Test
 
     struct TestParam
     {
-        SYNET_PARAM_VALUE(String, origin, String());
+        SYNET_PARAM_VALUE(String, images, String());
         SYNET_PARAM_VALUE(Floats, lower, Floats(1, 0.0f));
         SYNET_PARAM_VALUE(Floats, upper, Floats(1, 1.0f));
         SYNET_PARAM_VECTOR(ShapeParam, input);
@@ -100,6 +100,11 @@ namespace Test
 {
     struct SynetNetwork : public Network
     {
+        virtual ~SynetNetwork() 
+        {
+            _net.Save("synet_with_stat.xml");
+        }
+
         virtual String Name() const
         {
             return "Synet";
@@ -168,6 +173,7 @@ namespace Test
                 _net.Forward();
             }
             SetOutput();
+            _net.UpdateStatistics();
             return _output;
         }
 
