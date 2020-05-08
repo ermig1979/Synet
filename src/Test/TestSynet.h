@@ -80,6 +80,7 @@ namespace Test
         Network() {}
         virtual ~Network() {}
         virtual String Name() const { return String(); }
+        virtual String Type() const { return String(); }
         virtual size_t SrcCount() const { return 0; }
         virtual Shape SrcShape(size_t index) const { return Shape(); }
         virtual size_t SrcSize(size_t index) const { return 0; }
@@ -100,14 +101,14 @@ namespace Test
 {
     struct SynetNetwork : public Network
     {
-        virtual ~SynetNetwork() 
-        {
-            _net.Save("synet_with_stat.xml");
-        }
-
         virtual String Name() const
         {
             return "Synet";
+        }
+
+        virtual String Type() const
+        {
+            return _net.Is8i() ? "int8" : "fp32";
         }
 
         virtual size_t SrcCount() const
@@ -129,7 +130,7 @@ namespace Test
 
         virtual bool Init(const String & model, const String & weight, const Options & options, const TestParam & param)
         {
-            TEST_PERF_FUNC();
+            TEST_PERF_BLOCK(Type());
             _regionThreshold = options.regionThreshold;
             Synet::SetThreadNumber(options.workThreads);
             if (Load(model, weight))
@@ -169,11 +170,10 @@ namespace Test
         {
             SetInput(x);
             {
-                TEST_PERF_FUNC2(_net.Flop());
+                TEST_PERF_BLOCK_FLOP(Type(), _net.Flop());
                 _net.Forward();
             }
             SetOutput();
-            _net.UpdateStatistics();
             return _output;
         }
 

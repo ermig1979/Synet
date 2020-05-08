@@ -26,6 +26,17 @@
 #include "Test/TestReport.h"
 #include "Test/TestQuantization.h"
 
+namespace Test
+{
+    struct Synet8iNetwork : public SynetNetwork
+    {
+        virtual String Type() const
+        {
+            return "int8";
+        }
+    };
+}
+
 Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
 
 int main(int argc, char* argv[])
@@ -36,6 +47,11 @@ int main(int argc, char* argv[])
     {
         Test::Quantizer quantizer(options);
         options.result = quantizer.Run();
+    }
+    else if (options.mode == "compare")
+    {
+        Test::Comparer<Test::Synet8iNetwork> comparer(options);
+        options.result = comparer.Run();
     }
     else
         std::cout << "Unknown mode : " << options.mode << std::endl;

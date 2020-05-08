@@ -576,7 +576,15 @@ namespace Synet
             return flop;
         }
 
-    private:
+        bool Is8i() const
+        {
+            for (size_t i = 0; i < _stages.size(); ++i)
+                if (_stages[i].layer->Is8i())
+                    return true;
+            return false;
+        }    
+
+private:
         typedef std::shared_ptr<Layer> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
 
@@ -699,13 +707,7 @@ namespace Synet
             return true;
         }
 
-        bool Is8i() const
-        {
-            for (size_t i = 0; i < _stages.size(); ++i)
-                if (_stages[i].layer->Is8i())
-                    return true;
-            return false;
-        }
+
 
         bool Is8iInSubGraph(const Stage & stage)
         {

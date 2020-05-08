@@ -174,11 +174,17 @@ namespace Test
                 if (!InitNetwork(_options.otherModel, _options.otherWeight, _others[0]))
                     return false;
                 _options.otherName = _others[0].Name();
+                _options.otherType = _others[0].Type();
             }
 #endif
 #ifdef SYNET_SYNET_RUN
-            if ((_options.enable & ENABLE_SYNET) && !InitNetwork(_options.synetModel, _options.synetWeight, _synets[0]))
-                return false;
+            if (_options.enable & ENABLE_SYNET) 
+            {
+                if(!InitNetwork(_options.synetModel, _options.synetWeight, _synets[0]))
+                    return false;
+                _options.synetName = _synets[0].Name();
+                _options.synetType = _synets[0].Type();
+            }
 #endif            
 #if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
             if (_options.enable == (ENABLE_OTHER | ENABLE_SYNET))
@@ -548,6 +554,10 @@ namespace Test
                         return false;
 #endif 
                 }
+#ifdef SYNET_OTHER_RUN
+                if (_options.enable & ENABLE_OTHER)
+                    _options.otherMemoryUsage += _others[t].MemoryUsage();
+#endif 
 #ifdef SYNET_SYNET_RUN
                 if (_options.enable & ENABLE_SYNET)
                     _options.synetMemoryUsage += _synets[t].MemoryUsage();

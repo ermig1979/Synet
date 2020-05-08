@@ -68,10 +68,8 @@ namespace Test
         float regionOverlap;
 
         mutable bool result;
-        mutable size_t synetMemoryUsage;
-        mutable size_t otherMemoryUsage;
-        mutable String synetName;
-        mutable String otherName;
+        mutable size_t synetMemoryUsage, otherMemoryUsage;
+        mutable String synetName, otherName, synetType, otherType;
 
         Options(int argc, char* argv[])
             : _argc(argc)

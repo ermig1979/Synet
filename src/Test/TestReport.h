@@ -97,18 +97,25 @@ namespace Test
 		}
 
 	private:
+		template<class T> struct Data
+		{
+			T time, flops, memory;
+			Data() : time(0), flops(0), memory(0) {}
+		};
+
 		struct Test
 		{
 			String name, desc, link;
 			int batch, count, skip;
-			double other, synet, flops, memory;
-			Test(const String & n = "", int b = 0) : name(n), batch(b), count(0), skip(0), other(0), synet(0), flops(0), memory(0) {}
+			Data<double> other, synet;
+			Test(const String & n = "", int b = 0) : name(n), batch(b), count(0), skip(0) {}
 		};
 		typedef std::vector<Test> Tests;
 
 		const Options& _options;
 		String _separator;
 		Tests _tests, _summary;
+		Data<bool> _other, _synet;
 
 		bool LoadSync(const String & name)
 		{
@@ -120,18 +127,20 @@ namespace Test
 					String line;
 					std::getline(ifs, line);
 					Strings values = Synet::Separate(line, _separator);
-					if (values.size() > 8)
+					if (values.size() > 10)
 					{
 						Test test;
 						Synet::StringToValue(values[0], test.name);
 						Synet::StringToValue(values[1], test.batch);
-						Synet::StringToValue(values[2], test.other);
-						Synet::StringToValue(values[3], test.synet);
-						Synet::StringToValue(values[4], test.flops);
-						Synet::StringToValue(values[5], test.memory);
-						Synet::StringToValue(values[6], test.desc);
-						Synet::StringToValue(values[7], test.link);
-						Synet::StringToValue(values[8], test.skip);
+						Synet::StringToValue(values[2], test.other.time);
+						Synet::StringToValue(values[3], test.synet.time);
+						Synet::StringToValue(values[4], test.other.flops);
+						Synet::StringToValue(values[5], test.synet.flops);
+						Synet::StringToValue(values[6], test.other.memory);
+						Synet::StringToValue(values[7], test.synet.memory);
+						Synet::StringToValue(values[8], test.desc);
+						Synet::StringToValue(values[9], test.link);
+						Synet::StringToValue(values[10], test.skip);
 						_tests.push_back(test);
 					}
 				}
@@ -139,6 +148,13 @@ namespace Test
 				return true;
 			}
 			return false;
+		}
+
+		void Update(const Data<double>& value, Data<bool>& enable)
+		{
+			enable.time = enable.time || value.time > 0;
+			enable.flops = enable.flops || value.flops > 0;
+			enable.memory = enable.memory || value.memory > 0;
 		}
 
 		bool SaveSync(const String& name)
@@ -150,14 +166,18 @@ namespace Test
 				{
 					ofs << _tests[i].name << _separator;
 					ofs << _tests[i].batch << _separator;
-					ofs << _tests[i].other << _separator;
-					ofs << _tests[i].synet << _separator;
-					ofs << _tests[i].flops << _separator;
-					ofs << _tests[i].memory << _separator;
+					ofs << _tests[i].other.time << _separator;
+					ofs << _tests[i].synet.time << _separator;
+					ofs << _tests[i].other.flops << _separator;
+					ofs << _tests[i].synet.flops << _separator;
+					ofs << _tests[i].other.memory << _separator;
+					ofs << _tests[i].synet.memory << _separator;
 					ofs << _tests[i].desc << _separator;
 					ofs << _tests[i].link << _separator;
 					ofs << _tests[i].skip << _separator;
 					ofs << std::endl;
+					Update(_tests[i].other, _other);
+					Update(_tests[i].synet, _synet);
 				}
 				ofs.close();
 				return true;
@@ -170,13 +190,16 @@ namespace Test
 			Test test;
 			test.name = TestName(_options.logName);
 			test.batch = _options.batchSize;
-			test.other = NetworkPredictPm(_options.otherName).Average() * 1000.0 / test.batch;
-			test.synet = NetworkPredictPm("Synet").Average() * 1000.0 / test.batch;
-			test.flops = NetworkPredictPm("Synet").GFlops();
-			test.memory = _options.synetMemoryUsage / 1024.0 / 1024.0;
+			test.other.time = NetworkPredictPm(_options.otherName, _options.otherType).Average() * 1000.0 / test.batch;
+			test.synet.time = NetworkPredictPm(_options.synetName, _options.synetType).Average() * 1000.0 / test.batch;
+			test.other.flops = NetworkPredictPm(_options.otherName, _options.otherType).GFlops();
+			test.synet.flops = NetworkPredictPm(_options.synetName, _options.synetType).GFlops();
+			test.other.memory = _options.otherMemoryUsage / 1024.0 / 1024.0;
+			test.synet.memory = _options.synetMemoryUsage / 1024.0 / 1024.0;
 			test.desc = TestDesc(_options.synetModel);
 			test.link = GetNameByPath(_options.logName);
-			test.skip = test.synet > test.other * _options.skipThreshold ? 2 : (test.synet * _options.skipThreshold < test.other ? 1 : 0);
+			test.skip = test.synet.time > test.other.time * _options.skipThreshold ? 2 : 
+				(test.synet.time * _options.skipThreshold < test.other.time ? 1 : 0);
 			_tests.push_back(test);
 		}
 
@@ -187,7 +210,7 @@ namespace Test
 			return name.substr(beg, end - beg);
 		}
 
-		String NetworkPredictName(const String & framework, bool emulation)
+		String NetworkPredictName(const String & framework, const String& description)
 		{
 			std::stringstream ss;
 #ifdef _MSC_VER
@@ -199,17 +222,17 @@ namespace Test
 			ss << framework;
 			ss << "Network::Predict(const Vectors&)";
 #endif
-			if (emulation)
-				ss << " { batch emulation } ";
+			if (!description.empty())
+				ss << " { " << description << " } ";
 			return ss.str();
 		}
 
-		PerformanceMeasurer NetworkPredictPm(String framework)
+		PerformanceMeasurer NetworkPredictPm(String framework, String type)
 		{
 			framework = WithoutSymbol(framework, ' ');
-			PerformanceMeasurer result = PerformanceMeasurerStorage::s_storage.GetCombined(NetworkPredictName(framework, false));
+			PerformanceMeasurer result = PerformanceMeasurerStorage::s_storage.GetCombined(NetworkPredictName(framework, type));
 			if (result.Average() == 0)
-				result = PerformanceMeasurerStorage::s_storage.GetCombined(NetworkPredictName(framework, true));
+				result = PerformanceMeasurerStorage::s_storage.GetCombined(NetworkPredictName(framework, "batch emulation"));
 			return result;
 		}
 
@@ -238,18 +261,32 @@ namespace Test
 			return Size(cols, rows);
 		}
 
+		String FullName(const String & name, const String& type) const
+		{ 
+			return name + (type.empty() ? "" : ("(" + type + ")")); 
+		}
+
 		void SetHeader(Table& table)
 		{
+			String other = FullName(_options.otherName, _options.otherType);
+			String synet = FullName(_options.synetName, _options.synetType);
 			size_t col = 0;
 			table.SetHeader(col++, "Test", true, Table::Center);
 			table.SetHeader(col++, "Batch", true, Table::Center);
-			if(_options.otherName.size())
-				table.SetHeader(col++, _options.otherName + ", ms", true, Table::Center);
-			table.SetHeader(col++, "Synet, ms", true, Table::Center);
-			if (_options.otherName.size())
-				table.SetHeader(col++, _options.otherName + " / Synet", true, Table::Center);
-			table.SetHeader(col++, "Synet, GFLOPS", true, Table::Center);
-			table.SetHeader(col++, "Synet, MB", true, Table::Center);
+			if (_other.time)
+				table.SetHeader(col++, other + ", ms", true, Table::Center);
+			if (_synet.time)
+				table.SetHeader(col++, synet + ", ms", true, Table::Center);
+			if (_other.time && _synet.time)
+				table.SetHeader(col++, other + " / " + synet, true, Table::Center);
+			if (_other.flops)
+				table.SetHeader(col++, other + ", GFLOPS", true, Table::Center);
+			if (_synet.flops)
+				table.SetHeader(col++, synet + ", GFLOPS", true, Table::Center);
+			if (_other.memory)
+				table.SetHeader(col++, other + ", MB", true, Table::Center);
+			if (_synet.memory)
+				table.SetHeader(col++, synet + ", MB", true, Table::Center);
 			table.SetHeader(col++, "Description", true, Table::Center);
 		}
 
@@ -261,16 +298,23 @@ namespace Test
 				size_t col = 0;
 				table.SetCell(col++, row, test.name, Table::Black, test.link);
 				table.SetCell(col++, row, test.batch ? ToString(test.batch) : String("-"));
-				if (_options.otherName.size())
-					table.SetCell(col++, row, ToString(test.other, 3), test.skip == 1 ? Table::Red : Table::Black);
-				table.SetCell(col++, row, ToString(test.synet, 3), test.skip == 2 ? Table::Red : Table::Black);
-				if (_options.otherName.size())
+				if (_other.time)
+					table.SetCell(col++, row, ToString(test.other.time, 3), test.skip == 1 ? Table::Red : Table::Black);
+				if (_synet.time)
+					table.SetCell(col++, row, ToString(test.synet.time, 3), test.skip == 2 ? Table::Red : Table::Black);
+				if (_other.time && _synet.time)
 				{
-					double relation = test.synet != 0 ? test.other / test.synet : 0.0;
+					double relation = test.synet.time != 0 ? test.other.time / test.synet.time : 0.0;
 					table.SetCell(col++, row, ToString(relation, 2), relation < 1.00 ? Table::Red : Table::Black);
 				}
-				table.SetCell(col++, row, ToString(test.flops, 1));
- 				table.SetCell(col++, row, summary ? String("-") : ToString(test.memory, 1));
+				if (_other.flops)
+					table.SetCell(col++, row, ToString(test.other.flops, 1));
+				if (_synet.flops)
+					table.SetCell(col++, row, ToString(test.synet.flops, 1));
+				if (_other.memory)
+					table.SetCell(col++, row, summary ? String("-") : ToString(test.other.memory, 1));
+				if (_synet.memory)
+					table.SetCell(col++, row, summary ? String("-") : ToString(test.synet.memory, 1));
 				table.SetCell(col++, row, summary ? String("-") : test.desc);
 				table.SetRowProp(row, summary && i == tests.size() - 1, summary);
 			}
@@ -284,15 +328,23 @@ namespace Test
 				if ((summary.batch && test.batch != summary.batch) || test.skip)
 					continue;
 				summary.count++;
-				if (_options.otherName.size())
-					summary.other += ::log(test.other);
-				summary.synet += ::log(test.synet);
-				summary.flops += ::log(test.flops);
+				if (_other.time)
+					summary.other.time += ::log(test.other.time);
+				if (_synet.time)
+					summary.synet.time += ::log(test.synet.time);
+				if (_other.flops)
+					summary.other.flops += ::log(test.other.flops);
+				if (_synet.flops)
+					summary.synet.flops += ::log(test.synet.flops);
 			}
-			if (_options.otherName.size())
-				summary.other = summary.count > 0 ? ::exp(summary.other / summary.count) : 0;
-			summary.synet = summary.count > 0 ? ::exp(summary.synet / summary.count) : 0;
-			summary.flops = summary.count > 0 ? ::exp(summary.flops / summary.count) : 0;
+			if (_other.time)
+				summary.other.time = summary.count > 0 ? ::exp(summary.other.time / summary.count) : 0;
+			if (_synet.time)
+				summary.synet.time = summary.count > 0 ? ::exp(summary.synet.time / summary.count) : 0;
+			if (_other.flops)
+				summary.other.flops = summary.count > 0 ? ::exp(summary.other.flops / summary.count) : 0;
+			if (_synet.flops)
+				summary.synet.flops = summary.count > 0 ? ::exp(summary.synet.flops / summary.count) : 0;
 		}
 
 		void FillSummary()
