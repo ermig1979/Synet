@@ -27,6 +27,7 @@
 #include "TestCommon.h"
 #include "TestOptions.h"
 #include "TestSynet.h"
+#include "TestImage.h"
 
 #include "Synet/Converters/Deoptimizer.h"
 #include "Synet/Converters/Optimizer.h"
@@ -62,6 +63,8 @@ namespace Test
                 return PrintFinishMessage(false);
             if (!CollectStatistics())
                 return PrintFinishMessage(false);
+            if (!PerformQuntization())
+                return PrintFinishMessage(false);
             return PrintFinishMessage(true);
         }
 
@@ -83,7 +86,7 @@ namespace Test
         bool PrintFinishMessage(bool result) const
         {
             if (result)
-                std::cout << (_options.consoleSilence ? "OK." : "Quantization is finished successful.") << std::endl;
+                std::cout << (_options.consoleSilence ? " OK." : "Quantization is finished successful.") << std::endl;
             else
                 std::cout << "Quantization is finished with errors!" << std::endl;
             return result;
@@ -117,22 +120,21 @@ namespace Test
             if (_options.debugPrint)
                 Synet::OptimizeSynetModel(_deopt, "", Test::MakePath(_options.outputDirectory, "fp32_optimized_back.xml"), "");
             if (!_options.consoleSilence)
-                std::cout << (result ? "OK." : " Deoptimization is finished with errors!") << std::endl;
+                std::cout << (result ? " OK." : "Deoptimization is finished with errors!") << std::endl;
             return result;
         }
 
         bool CollectStatistics()
         {
             if (!_options.consoleSilence)
-                std::cout << "Collect model quantization statistics : ";
+                std::cout << "Collect quantization statistics : ";
             bool result = InitSynet(_deopt, _options.synetWeight);
             result = result && CreateImageList();
-            if (result)
-            {
-
-            }
+            for (size_t i = 0; i < _images.size() && result; ++i)
+                result = result && UpdateStatistics(_images[i]);
+            result = result && _synet.Save(_stats);
             if (!_options.consoleSilence)
-                std::cout << (result ? "OK." : " Statistics collection is finished with errors!") << std::endl;
+                std::cout << (result ? " OK." : "Statistics collection is finished with errors!") << std::endl;
             return result;
         }
 
@@ -171,6 +173,60 @@ namespace Test
             _images.assign(images.begin(), images.end());
             for (size_t i = 0; i < images.size(); ++i)
                 _images[i] = MakePath(directory, _images[i]);
+            return true;
+        }
+
+        bool UpdateStatistics(const String & path)
+        {
+            View original;
+            if (!LoadImage(path, original))
+            {
+                std::cout << "Can't load image in '" << path << "' !" << std::endl;
+                return false;
+            }
+            View resized(_synet.NchwShape()[3], _synet.NchwShape()[2], original.format);
+            Simd::Resize(original, resized, SimdResizeMethodArea);
+            if (!_synet.SetInput(resized, _param().lower(), _param().upper()))
+            {
+                std::cout << "Can't set input for '" << path << "' image !" << std::endl;
+                return false;
+            }
+            _synet.Forward();
+            _synet.UpdateStatistics();
+            if (!_options.consoleSilence)
+                std::cout << ".";
+            return true;
+        }
+
+        bool PerformQuntization()
+        {
+            if (!_options.consoleSilence)
+                std::cout << "Perform model quantization : ";
+            Synet::NetworkParamHolder network;
+            if (!network.Load(_stats))
+            {
+                std::cout << "Can't load Synet model '" << _stats << "' !" << std::endl;
+                return false;
+            }
+            for (size_t i = 0; i < network().layers().size(); ++i)
+            {
+                if (network().layers()[i].type() == Synet::LayerTypeConvolution)
+                    network().layers()[i].convolution().quantizationLevel() = Synet::TensorType8i;
+            }
+            Floats bin;
+            Synet::Optimizer optimizer;
+            if (!optimizer.Run(network(), bin))
+            {
+                std::cout << "Can't optimize Synet model!" << std::endl;
+                return false;
+            }
+            if (!network.Save(_options.otherModel, false))
+            {
+                std::cout << "Can't save Synet model '" << _options.otherModel << "' !" << std::endl;
+                return false;
+            }
+            if (!_options.consoleSilence)
+                std::cout << " OK." << std::endl;
             return true;
         }
     };
