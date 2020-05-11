@@ -1,25 +1,35 @@
 
 function TEST {
 FRAMEWORK=$1
-NAME=$2
-NUMBER=$3
-THREAD=$4
-FORMAT=$5
-BATCH=$6
-VERSION=$7
-DIR=./data/"$FRAMEWORK"/"$NAME"
-PATHES="-fm=$DIR/other.dsc -fw=$DIR/other.dat -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$DIR/image -od=$DIR/output -tp=$DIR/param.xml"
 PREFIX="${FRAMEWORK:0:1}"
-LOG=./test/"$FRAMEWORK"/"$NAME"/"$PREFIX"_"$NAME"_t"$THREAD"_f"$FORMAT"_b"$BATCH"_v"$VERSION".txt
-BIN_DIR=./build_"$FRAMEWORK"
-BIN="$BIN_DIR"/test_"$FRAMEWORK"
-
-if [ "${NAME:0:5}" = "test_" ] && [ "${NAME:8:9}" = "i" ]; then
-  THRESHOLD=0.01
-  echo "Use increased accuracy threshold : $THRESHOLD for INT8."
+NAME=$2
+DIR=./data/"$FRAMEWORK"/"$NAME"
+if [ "$3" = "local" ]; then
+  IMAGE="$DIR"/image
 else
-  THRESHOLD=0.002
+  IMAGE=./data/images/_test/$3
 fi
+if [ "$FRAMEWORK" = "quantization" ]; then
+  PATHES="-fw=$DIR/synet.bin -fm=$DIR/synet.xml -sm=$DIR/int8.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
+  THRESHOLD=0.01
+  BIN_DIR=./build_inference_engine
+else
+  PATHES="-fm=$DIR/other.dsc -fw=$DIR/other.dat -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
+  if [ "${NAME:0:5}" = "test_" ] && [ "${NAME:8:9}" = "i" ]; then
+    THRESHOLD=0.01
+    echo "Use increased accuracy threshold : $THRESHOLD for INT8."
+  else
+    THRESHOLD=0.002
+  fi
+  BIN_DIR=./build_"$FRAMEWORK"
+fi
+NUMBER=$4
+THREAD=$5
+FORMAT=$6
+BATCH=$7
+VERSION=$8
+LOG=./test/"$FRAMEWORK"/"$NAME"/"$PREFIX"_"$NAME"_t"$THREAD"_f"$FORMAT"_b"$BATCH"_v"$VERSION".txt
+BIN="$BIN_DIR"/test_"$FRAMEWORK"
 
 echo $LOG
 
@@ -42,21 +52,25 @@ if [ $? -ne 0 ];then
 fi
 }
 
-#TEST darknet test_000 5 1 1 1 001a
+#TEST darknet test_000 local 5 1 1 1 001a
 
-#TEST inference_engine test_000 1000 1 1 1 006
-#TEST inference_engine test_001 500 1 1 1 006
-#TEST inference_engine test_002 20 1 1 1 005t
-#TEST inference_engine test_003f 50 1 1 1 005
-#TEST inference_engine test_003i 100 1 1 1 013
-#TEST inference_engine test_004 -400 1 1 1 004
-#TEST inference_engine test_005 2000 1 1 1 003
-#TEST inference_engine test_006 100 1 1 1 003
-#TEST inference_engine test_007 200 1 1 1 004
-#TEST inference_engine test_008 5 0 1 1 003ht
-#TEST inference_engine test_009f 40 0 1 1 001t
-#TEST inference_engine test_009i 40 1 1 1 000t
-#TEST inference_engine test_010f 100 1 1 1 002t
-#TEST inference_engine test_011f 40 1 1 1 001t
+#TEST inference_engine test_000 local 1000 1 1 1 006
+#TEST inference_engine test_001 local 500 1 1 1 006
+#TEST inference_engine test_002 local 20 1 1 1 005t
+#TEST inference_engine test_003f local 50 1 1 1 005
+#TEST inference_engine test_003i local 100 1 1 1 013
+#TEST inference_engine test_004 local -400 1 1 1 004
+#TEST inference_engine test_005 local 2000 1 1 1 003
+#TEST inference_engine test_006 local 100 1 1 1 003
+#TEST inference_engine test_007 local 200 1 1 1 004
+#TEST inference_engine test_008 local 5 0 1 1 003ht
+#TEST inference_engine test_009f local 40 0 1 1 001t
+#TEST inference_engine test_009i local 40 1 1 1 000t
+#TEST inference_engine test_010f local 100 1 1 1 002t
+#TEST inference_engine test_011f local 40 1 1 1 001t
+
+#TEST quantization test_003 faces 100 1 1 1 000t
+TEST quantization test_009 persons 1 0 1 1 000t
+
 
 exit
