@@ -121,8 +121,10 @@ namespace Test
             if (mode == "compare" && result)
             {
                 std::stringstream ss;
+                if (otherMemoryUsage)
+                    ss << FullName(otherName, otherType) << " memory usage: " << otherMemoryUsage / (1024 * 1024) << " MB." << std::endl;
                 if (synetMemoryUsage)
-                    ss << "Synet memory usage: " << synetMemoryUsage / (1024 * 1024) << " MB." << std::endl;
+                    ss << FullName(synetName, synetType) << " memory usage: " << synetMemoryUsage / (1024 * 1024) << " MB." << std::endl;
                 PerformanceMeasurerStorage::s_storage.Print(ss);
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
                 if (enable & ENABLE_SYNET)
@@ -158,6 +160,11 @@ namespace Test
         bool QuantizationTest() const
         {
             return mode == "quantize";
+        }
+
+        static inline String FullName(const String& name, const String& type)
+        {
+            return name + (type.empty() ? "" : ("(" + type + ")"));
         }
 
     protected:
@@ -199,6 +206,7 @@ namespace Test
             }
             return values;
         }
+
     private:
         int _argc;
         char** _argv;

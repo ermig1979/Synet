@@ -35,7 +35,7 @@ if [ $? -ne 0 ];then
   exit
 fi
 
-"$BIN" -m=compare -e=2 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -et=1.0 -dp=0 -dpf=26 -dpl=2 -dpp=8 -ar=0 -rt=0.5 -cs=0 -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -et=10.0 -dp=0 -dpf=6 -dpl=2 -dpp=8 -ar=0 -rt=0.5 -cs=0 -ln=$LOG
 if [ $? -ne 0 ];then
   echo "Test $DIR is failed!"
   exit
@@ -54,7 +54,7 @@ fi
 #TEST inference_engine test_006 100 1 1 1 003
 #TEST inference_engine test_007 200 1 1 1 004
 #TEST inference_engine test_008 5 0 1 1 003ht
-TEST inference_engine test_009f 40 0 1 1 001t
+#TEST inference_engine test_009f 40 0 1 1 001t
 #TEST inference_engine test_009i 40 1 1 1 000t
 #TEST inference_engine test_010f 100 1 1 1 002t
 #TEST inference_engine test_011f 40 1 1 1 001t

@@ -214,10 +214,10 @@ namespace Synet
         {
 #ifdef SYNET_LAYER_STATISTIC 
             String type = ValueToString(_param.type());
-            SYNET_PERF_INIT(_perfComm, "void Synet::" + type + "Layer::Forward()", 0);
+            SYNET_PERF_INIT(_perfComm, "void Synet::" + type + "Layer::Forward() {  " + (Is8i() ? "int8" : "fp32") + " } ", 0);
 #ifdef SYNET_SIZE_STATISTIC            
             if(desc.size())
-                SYNET_PERF_INIT(_perfSpec, "void Synet::" + type + "Layer::Forward() { " + desc + " }", flop);
+                SYNET_PERF_INIT(_perfSpec, "void Synet::" + type + "Layer::Forward() { " + desc + " } ", flop);
 #endif//SYNET_SIZE_STATISTIC
 #endif//SYNET_LAYER_STATISTIC
         }

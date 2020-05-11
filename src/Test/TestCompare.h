@@ -501,6 +501,10 @@ namespace Test
                     std::cout << " \r" << std::flush;
                 }
             }
+#ifdef SYNET_OTHER_RUN
+            if (_options.enable & ENABLE_OTHER)
+                _options.otherMemoryUsage = _others[0].MemoryUsage();
+#endif
 #ifdef SYNET_SYNET_RUN
             if (_options.enable & ENABLE_SYNET)
                 _options.synetMemoryUsage = _synets[0].MemoryUsage();

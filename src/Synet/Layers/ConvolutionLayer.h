@@ -204,7 +204,7 @@ namespace Synet
             _dstSize = dst[0]->Size(_axis);
             std::stringstream desc;
             desc << "i=" << _num << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW << " o=" << _conv.dstC;
-            desc << " k=" << _conv.kernelY << " s=" << _conv.strideY << " g=" << _conv.group;
+            desc << " k=" << _conv.kernelY << " s=" << _conv.strideY << " g=" << _conv.group << " " << (Is8i() ? "int8" : "fp32");
             this->UsePerfStat(desc.str(), Flop());
         }
 

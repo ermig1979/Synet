@@ -1,7 +1,7 @@
 
 function TEST {
 NAME=$1
-IMAGES=./data/images/$2
+IMAGES=./data/images/_g/$2
 NUMBER=$3
 THREAD=$4
 BATCH=$5
@@ -33,6 +33,7 @@ if [ $? -ne 0 ];then
 fi
 }
 
+#TEST test_003 faces 100 1 1 000
 TEST test_009 persons 1 0 1 000
 
 exit

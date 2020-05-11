@@ -261,15 +261,10 @@ namespace Test
 			return Size(cols, rows);
 		}
 
-		String FullName(const String & name, const String& type) const
-		{ 
-			return name + (type.empty() ? "" : ("(" + type + ")")); 
-		}
-
 		void SetHeader(Table& table)
 		{
-			String other = FullName(_options.otherName, _options.otherType);
-			String synet = FullName(_options.synetName, _options.synetType);
+			String other = Options::FullName(_options.otherName, _options.otherType);
+			String synet = Options::FullName(_options.synetName, _options.synetType);
 			size_t col = 0;
 			table.SetHeader(col++, "Test", true, Table::Center);
 			table.SetHeader(col++, "Batch", true, Table::Center);
