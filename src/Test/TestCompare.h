@@ -33,20 +33,20 @@
 
 namespace Test
 {
-    template<class OtherNetwork> class Comparer
+    template<class FirstNetwork, class SecondNetwork> class Comparer
     {
     public:
         Comparer(const Options& options)
             : _options(options)
             , _progressMessageSizeMax(0)
-            , _notifiedOther(false)
-            , _notifiedSynet(false)
+            , _notifiedFirst(false)
+            , _notifiedSecond(false)
         {
             assert(_options.testThreads >= 0);
-            if (_options.enable & ENABLE_OTHER)
-                _others.resize(_options.TestThreads());
-            if (_options.enable & ENABLE_SYNET)
-                _synets.resize(_options.TestThreads());
+            if (_options.enable & ENABLE_FIRST)
+                _firsts.resize(_options.TestThreads());
+            if (_options.enable & ENABLE_SECOND)
+                _seconds.resize(_options.TestThreads());
         }
 
         bool Run()
@@ -76,13 +76,13 @@ namespace Test
     private:
         const Options& _options;
         TestParamHolder _param;
-        std::vector<OtherNetwork> _others;
-        std::vector<SynetNetwork> _synets;
+        std::vector<FirstNetwork> _firsts;
+        std::vector<SecondNetwork> _seconds;
 
         struct Output
         {
-            Vectors other;
-            Vectors synet;
+            Vectors first;
+            Vectors second;
         };
         typedef std::vector<Output> Outputs;
         struct TestData
@@ -98,29 +98,29 @@ namespace Test
         struct Thread
         {
             size_t current;
-            bool other, synet;
+            bool first, second;
             std::thread thread;
-            Thread() : current(0), other(false), synet(false) {}
+            Thread() : current(0), first(false), second(false) {}
         };
         std::vector<Thread> _threads;
-        std::condition_variable _startOther, _startSynet;
-        bool _notifiedOther, _notifiedSynet;
+        std::condition_variable _startFirst, _startSecond;
+        bool _notifiedFirst, _notifiedSecond;
         size_t _progressMessageSizeMax;
 
         void PrintStartMessage() const
         {
             std::cout << "Start ";
-            if (_options.enable & ENABLE_OTHER)
-                std::cout << _others[0].Name() << " ";
-            if (_options.enable == (ENABLE_OTHER | ENABLE_SYNET))
+            if (_options.enable & ENABLE_FIRST)
+                std::cout << _firsts[0].Name() << " ";
+            if (_options.enable == (ENABLE_FIRST | ENABLE_SECOND))
                 std::cout << "and ";
-            if (_options.enable & ENABLE_SYNET)
-                std::cout << _synets[0].Name() << " ";
+            if (_options.enable & ENABLE_SECOND)
+                std::cout << _seconds[0].Name() << " ";
             if (_options.testThreads > 0)
                 std::cout << _options.testThreads << "-threads ";
             else
                 std::cout << "single-thread ";
-            std::cout << (_options.enable == (ENABLE_OTHER | ENABLE_SYNET) ? "comparison " : "performance ");
+            std::cout << (_options.enable == (ENABLE_FIRST | ENABLE_SECOND) ? "comparison " : "performance ");
             std::cout << "tests :" << std::endl;
         }
 
@@ -168,44 +168,44 @@ namespace Test
 
         bool InitNetworks()
         {
-#ifdef SYNET_OTHER_RUN        
-            if (_options.enable & ENABLE_OTHER)
+#ifdef SYNET_TEST_FIRST_RUN        
+            if (_options.enable & ENABLE_FIRST)
             {
-                if (!InitNetwork(_options.otherModel, _options.otherWeight, _others[0]))
+                if (!InitNetwork(_options.firstModel, _options.firstWeight, _firsts[0]))
                     return false;
-                _options.otherName = _others[0].Name();
-                _options.otherType = _others[0].Type();
+                _options.firstName = _firsts[0].Name();
+                _options.firstType = _firsts[0].Type();
             }
 #endif
-#ifdef SYNET_SYNET_RUN
-            if (_options.enable & ENABLE_SYNET) 
+#ifdef SYNET_TEST_SECOND_RUN
+            if (_options.enable & ENABLE_SECOND) 
             {
-                if(!InitNetwork(_options.synetModel, _options.synetWeight, _synets[0]))
+                if(!InitNetwork(_options.secondModel, _options.secondWeight, _seconds[0]))
                     return false;
-                _options.synetName = _synets[0].Name();
-                _options.synetType = _synets[0].Type();
+                _options.secondName = _seconds[0].Name();
+                _options.secondType = _seconds[0].Type();
             }
 #endif            
-#if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
-            if (_options.enable == (ENABLE_OTHER | ENABLE_SYNET))
+#if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_TEST_SECOND_RUN)
+            if (_options.enable == (ENABLE_FIRST | ENABLE_SECOND))
             {
-                if (_others[0].SrcCount() != _synets[0].SrcCount())
+                if (_firsts[0].SrcCount() != _seconds[0].SrcCount())
                 {
                     std::cout << "Networks have difference source number: " <<
-                        _others[0].SrcCount() << " != " << _synets[0].SrcCount() << std::endl;
+                        _firsts[0].SrcCount() << " != " << _seconds[0].SrcCount() << std::endl;
                     return false;
                 }
-                for (size_t s = 0; s < _others[0].SrcCount(); ++s)
+                for (size_t s = 0; s < _firsts[0].SrcCount(); ++s)
                 {
-                    const Shape& os = _others[0].SrcShape(s);
-                    const Shape& ss = _synets[0].SrcShape(s);
+                    const Shape& os = _firsts[0].SrcShape(s);
+                    const Shape& ss = _seconds[0].SrcShape(s);
                     if (os != ss)
                     {
                         std::cout << "Networks have difference Src[" << s << "] size: ";
-                        std::cout << _others[0].Name() << " {" << os[0];
+                        std::cout << _firsts[0].Name() << " {" << os[0];
                         for (size_t j = 1; j < os.size(); ++j)
                             std::cout << ", " << os[j];
-                        std::cout << "} != " << _synets[0].Name() << " {" << ss[0];
+                        std::cout << "} != " << _seconds[0].Name() << " {" << ss[0];
                         for (size_t j = 1; j < ss.size(); ++j)
                             std::cout << ", " << ss[j];
                         std::cout << "} ! " << std::endl;
@@ -331,13 +331,13 @@ namespace Test
 
         bool CreateTestList()
         {
-#ifdef SYNET_OTHER_RUN 
-            if (_options.enable & ENABLE_OTHER)
-                return CreateTestList(_others[0]);
+#ifdef SYNET_TEST_FIRST_RUN 
+            if (_options.enable & ENABLE_FIRST)
+                return CreateTestList(_firsts[0]);
 #endif
-#ifdef SYNET_SYNET_RUN 
-            if (_options.enable & ENABLE_SYNET)
-                return CreateTestList(_synets[0]);
+#ifdef SYNET_TEST_SECOND_RUN 
+            if (_options.enable & ENABLE_SECOND)
+                return CreateTestList(_seconds[0]);
 #endif
             return false;
         }
@@ -414,26 +414,26 @@ namespace Test
         bool CompareResults(const TestData& test, size_t index, size_t thread)
         {
             const Output& output = test.output[thread];
-            if (output.other.size() != output.synet.size())
+            if (output.first.size() != output.second.size())
             {
                 std::cout << TestFailedMessage(test, index, thread) << std::endl;
-                std::cout << "Dst count : " << output.other.size() << " != " << output.synet.size() << std::endl;
+                std::cout << "Dst count : " << output.first.size() << " != " << output.second.size() << std::endl;
                 return false;
             }
-            for (size_t d = 0; d < output.other.size(); ++d)
+            for (size_t d = 0; d < output.first.size(); ++d)
             {
-                if (output.other[d].size() != output.synet[d].size())
+                if (output.first[d].size() != output.second[d].size())
                 {
                     std::cout << TestFailedMessage(test, index, thread) << std::endl;
-                    std::cout << "Dst[" << d << "] size : " << output.other[d].size() << " != " << output.synet[d].size() << std::endl;
+                    std::cout << "Dst[" << d << "] size : " << output.first[d].size() << " != " << output.second[d].size() << std::endl;
                     return false;
                 }
-                for (size_t j = 0; j < output.synet[d].size(); ++j)
+                for (size_t j = 0; j < output.second[d].size(); ++j)
                 {
-                    if (!Compare(output.other[d][j], output.synet[d][j], _options.threshold))
+                    if (!Compare(output.first[d][j], output.second[d][j], _options.threshold))
                     {
                         std::cout << TestFailedMessage(test, index, thread) << std::endl;
-                        std::cout << "Dst[" << d << "][" << j << "] : " << output.other[d][j] << " != " << output.synet[d][j] << std::endl;
+                        std::cout << "Dst[" << d << "][" << j << "] : " << output.first[d][j] << " != " << output.second[d][j] << std::endl;
                         return false;
                     }
                 }
@@ -468,46 +468,46 @@ namespace Test
                 for (size_t r = 0; r < repeats; ++r, ++current)
                 {
                     std::cout << ProgressString(current, total) << std::flush;
-#ifdef SYNET_OTHER_RUN
-                    if (_options.enable & ENABLE_OTHER)
+#ifdef SYNET_TEST_FIRST_RUN
+                    if (_options.enable & ENABLE_FIRST)
                     {
-                        test.output[0].other = _others[0].Predict(test.input);
+                        test.output[0].first = _firsts[0].Predict(test.input);
                         if (r == 0)
                         {
-                            if (!DebugPrint(_others[0], i))
+                            if (!DebugPrint(_firsts[0], i))
                                 return false;
-                            if (!AnnotateRegions(_others[0], test.path[0]))
+                            if (!AnnotateRegions(_firsts[0], test.path[0]))
                                 return false;
                         }
                     }
 #endif
-#ifdef SYNET_SYNET_RUN
-                    if (_options.enable & ENABLE_SYNET)
+#ifdef SYNET_TEST_SECOND_RUN
+                    if (_options.enable & ENABLE_SECOND)
                     {
-                        test.output[0].synet = _synets[0].Predict(test.input);
+                        test.output[0].second = _seconds[0].Predict(test.input);
                         if (r == 0)
                         {
-                            if (!DebugPrint(_synets[0], i))
+                            if (!DebugPrint(_seconds[0], i))
                                 return false;
-                            if (!AnnotateRegions(_synets[0], test.path[0]))
+                            if (!AnnotateRegions(_seconds[0], test.path[0]))
                                 return false;
                         }
                     }
 #endif
-#if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
-                    if (r == 0 && _options.enable == (ENABLE_OTHER | ENABLE_SYNET) && !CompareResults(test, i, 0))
+#if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_TEST_SECOND_RUN)
+                    if (r == 0 && _options.enable == (ENABLE_FIRST | ENABLE_SECOND) && !CompareResults(test, i, 0))
                         return false;
 #endif             
                     std::cout << " \r" << std::flush;
                 }
             }
-#ifdef SYNET_OTHER_RUN
-            if (_options.enable & ENABLE_OTHER)
-                _options.otherMemoryUsage = _others[0].MemoryUsage();
+#ifdef SYNET_TEST_FIRST_RUN
+            if (_options.enable & ENABLE_FIRST)
+                _options.firstMemoryUsage = _firsts[0].MemoryUsage();
 #endif
-#ifdef SYNET_SYNET_RUN
-            if (_options.enable & ENABLE_SYNET)
-                _options.synetMemoryUsage = _synets[0].MemoryUsage();
+#ifdef SYNET_TEST_SECOND_RUN
+            if (_options.enable & ENABLE_SECOND)
+                _options.secondMemoryUsage = _seconds[0].MemoryUsage();
 #endif
             return PrintFinishMessage();
         }
@@ -522,30 +522,30 @@ namespace Test
 
             while (current < total)
             {
-                bool other = true, synet = true;
+                bool first = true, second = true;
                 current = total;
                 for (size_t t = 0; t < _threads.size(); ++t)
                 {
                     current = std::min(current, _threads[t].current);
-                    other = other && _threads[t].other;
-                    synet = synet && _threads[t].synet;
+                    first = first && _threads[t].first;
+                    second = second && _threads[t].second;
                 }
-                if (other)
+                if (first)
                 {
-                    _notifiedOther = true;
-                    _startOther.notify_all();
+                    _notifiedFirst = true;
+                    _startFirst.notify_all();
                 }
-                if (synet)
+                if (second)
                 {
-                    _notifiedSynet = true;
-                    _startSynet.notify_all();
+                    _notifiedSecond = true;
+                    _startSecond.notify_all();
                 }
                 std::cout << ProgressString(current, total) << std::flush;
                 Sleep(1);
                 std::cout << " \r" << std::flush;
             }
 
-            _options.synetMemoryUsage = 0;
+            _options.secondMemoryUsage = 0;
             for (size_t t = 0; t < _threads.size(); ++t)
             {
                 if (_threads[t].thread.joinable())
@@ -553,18 +553,18 @@ namespace Test
                 for (size_t i = 0; i < _tests.size(); ++i)
                 {
                     TestData& test = *_tests[i];
-#if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
-                    if (_options.enable == (ENABLE_OTHER | ENABLE_SYNET) && !CompareResults(test, i, t))
+#if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_TEST_SECOND_RUN)
+                    if (_options.enable == (ENABLE_FIRST | ENABLE_SECOND) && !CompareResults(test, i, t))
                         return false;
 #endif 
                 }
-#ifdef SYNET_OTHER_RUN
-                if (_options.enable & ENABLE_OTHER)
-                    _options.otherMemoryUsage += _others[t].MemoryUsage();
+#ifdef SYNET_TEST_FIRST_RUN
+                if (_options.enable & ENABLE_FIRST)
+                    _options.firstMemoryUsage += _firsts[t].MemoryUsage();
 #endif 
-#ifdef SYNET_SYNET_RUN
-                if (_options.enable & ENABLE_SYNET)
-                    _options.synetMemoryUsage += _synets[t].MemoryUsage();
+#ifdef SYNET_TEST_SECOND_RUN
+                if (_options.enable & ENABLE_SECOND)
+                    _options.secondMemoryUsage += _seconds[t].MemoryUsage();
 #endif            
             }
             return PrintFinishMessage();
@@ -574,21 +574,21 @@ namespace Test
         {
             const Options& options = comparer->_options;
             size_t current = 0, networks = 1;
-#if defined(SYNET_OTHER_RUN) && defined(SYNET_SYNET_RUN)
-            if (options.enable == (ENABLE_OTHER | ENABLE_SYNET))
+#if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_TEST_SECOND_RUN)
+            if (options.enable == (ENABLE_FIRST | ENABLE_SECOND))
                 networks = 2;
 #endif 
-#ifdef SYNET_OTHER_RUN 
-            if (options.enable & ENABLE_OTHER)
+#ifdef SYNET_TEST_FIRST_RUN 
+            if (options.enable & ENABLE_FIRST)
             {
-                if (thread && !comparer->InitNetwork(options.otherModel, options.otherWeight, comparer->_others[thread]))
+                if (thread && !comparer->InitNetwork(options.firstModel, options.firstWeight, comparer->_firsts[thread]))
                     ::exit(0);
-                comparer->_threads[thread].other = true;
+                comparer->_threads[thread].first = true;
                 std::mutex mutex;
                 std::unique_lock<std::mutex> lock(mutex);
-                while (!comparer->_notifiedOther)
-                    comparer->_startOther.wait(lock);
-                comparer->_notifiedOther = false;
+                while (!comparer->_notifiedFirst)
+                    comparer->_startFirst.wait(lock);
+                comparer->_notifiedFirst = false;
                 if (options.repeatNumber)
                 {
                     for (size_t i = 0; i < comparer->_tests.size(); ++i)
@@ -596,7 +596,7 @@ namespace Test
                         TestData& test = *comparer->_tests[i];
                         for (size_t r = 0; r < options.repeatNumber; ++r, ++current)
                         {
-                            test.output[thread].other = comparer->_others[thread].Predict(test.input);
+                            test.output[thread].first = comparer->_firsts[thread].Predict(test.input);
                             comparer->_threads[thread].current = current / networks;
                         }
                     }
@@ -610,27 +610,27 @@ namespace Test
                         for (size_t i = 0; i < comparer->_tests.size() && (duration < options.executionTime || !canstop); ++i)
                         {
                             TestData& test = *comparer->_tests[i];
-                            test.output[thread].other = comparer->_others[thread].Predict(test.input);
+                            test.output[thread].first = comparer->_firsts[thread].Predict(test.input);
                             duration = GetTime() - start;
                             comparer->_threads[thread].current = std::min(total, size_t(duration * 1000)) / networks;
                         }
                         canstop = true;
                     }
                 }
-                comparer->_others[thread].Free();
+                comparer->_firsts[thread].Free();
             }
 #endif
-#ifdef SYNET_SYNET_RUN
-            if (options.enable & ENABLE_SYNET)
+#ifdef SYNET_TEST_SECOND_RUN
+            if (options.enable & ENABLE_SECOND)
             {
-                if (thread && !comparer->InitNetwork(options.synetModel, options.synetWeight, comparer->_synets[thread]))
+                if (thread && !comparer->InitNetwork(options.secondModel, options.secondWeight, comparer->_seconds[thread]))
                     ::exit(0);
-                comparer->_threads[thread].synet = true;
+                comparer->_threads[thread].second = true;
                 std::mutex mutex;
                 std::unique_lock<std::mutex> lock(mutex);
-                while (!comparer->_notifiedSynet)
-                    comparer->_startSynet.wait(lock);
-                comparer->_notifiedSynet = false;
+                while (!comparer->_notifiedSecond)
+                    comparer->_startSecond.wait(lock);
+                comparer->_notifiedSecond = false;
                 if (options.repeatNumber)
                 {
                     for (size_t i = 0; i < comparer->_tests.size(); ++i)
@@ -638,7 +638,7 @@ namespace Test
                         TestData& test = *comparer->_tests[i];
                         for (size_t r = 0; r < options.repeatNumber; ++r, ++current)
                         {
-                            test.output[thread].synet = comparer->_synets[thread].Predict(test.input);
+                            test.output[thread].second = comparer->_seconds[thread].Predict(test.input);
                             comparer->_threads[thread].current = current / networks;
                         }
                     }
@@ -652,14 +652,14 @@ namespace Test
                         for (size_t i = 0; i < comparer->_tests.size() && (duration < options.executionTime || !canstop); ++i)
                         {
                             TestData& test = *comparer->_tests[i];
-                            test.output[thread].synet = comparer->_synets[thread].Predict(test.input);
+                            test.output[thread].second = comparer->_seconds[thread].Predict(test.input);
                             duration = GetTime() - start;
                             comparer->_threads[thread].current = (total * (networks - 1) + std::min(total, size_t(duration * 1000))) / networks;
                         }
                         canstop = true;
                     }
                 }
-                comparer->_synets[thread].Free();
+                comparer->_seconds[thread].Free();
             }
 #endif           
             comparer->_threads[thread].current = total;

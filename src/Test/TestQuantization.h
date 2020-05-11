@@ -47,8 +47,8 @@ namespace Test
             }
             else
             {
-                _deopt = _options.otherModel;
-                _stats = _options.otherModel;
+                _deopt = _options.firstModel;
+                _stats = _options.firstModel;
             }
         }
 
@@ -116,7 +116,7 @@ namespace Test
         {
             if(!_options.consoleSilence)
                 std::cout << "Deoptimize Synet model : ";
-            bool result = Synet::DeoptimizeSynetModel(_options.synetModel, _deopt);
+            bool result = Synet::DeoptimizeSynetModel(_options.secondModel, _deopt);
             if (_options.debugPrint)
                 Synet::OptimizeSynetModel(_deopt, "", Test::MakePath(_options.outputDirectory, "fp32_optimized_back.xml"), "");
             if (!_options.consoleSilence)
@@ -128,7 +128,7 @@ namespace Test
         {
             if (!_options.consoleSilence)
                 std::cout << "Collect quantization statistics : ";
-            bool result = InitSynet(_deopt, _options.synetWeight);
+            bool result = InitSynet(_deopt, _options.secondWeight);
             result = result && CreateImageList();
             for (size_t i = 0; i < _images.size() && result; ++i)
                 result = result && UpdateStatistics(_images[i]);
@@ -220,9 +220,9 @@ namespace Test
                 std::cout << "Can't optimize Synet model!" << std::endl;
                 return false;
             }
-            if (!network.Save(_options.otherModel, false))
+            if (!network.Save(_options.firstModel, false))
             {
-                std::cout << "Can't save Synet model '" << _options.otherModel << "' !" << std::endl;
+                std::cout << "Can't save Synet model '" << _options.firstModel << "' !" << std::endl;
                 return false;
             }
             if (!_options.consoleSilence)

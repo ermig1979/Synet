@@ -30,9 +30,9 @@
 #define SYNET_GEMM_SIMD_LIBRARY
 
 #ifndef WIN32
-#define SYNET_OTHER_RUN
+#define SYNET_TEST_FIRST_RUN
 #endif
-#define SYNET_SYNET_RUN
+#define SYNET_TEST_SECOND_RUN
 //#define SYNET_LAYER_STATISTIC
 //#define SYNET_SIZE_STATISTIC
 
@@ -40,8 +40,8 @@
 //#define SYNET_TEST_NET_RESHAPE
 //#define SYNET_TEST_SET_INPUT
 
-#if !defined(SYNET_OTHER_RUN) && !defined(SYNET_SYNET_RUN)
-#error SYNET_OTHER_RUN and SYNET_SYNET_RUN are undefined!
+#if !defined(SYNET_TEST_FIRST_RUN) && !defined(SYNET_TEST_SECOND_RUN)
+#error SYNET_TEST_FIRST_RUN and SYNET_TEST_SECOND_RUN are undefined!
 #endif
 
 #include <string>

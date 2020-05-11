@@ -28,8 +28,8 @@
 
 namespace Test
 {
-    const int ENABLE_OTHER = 1;
-    const int ENABLE_SYNET = 2;
+    const int ENABLE_FIRST = 1;
+    const int ENABLE_SECOND = 2;
 
     void GenerateReport(const struct Options& options);
 
@@ -38,10 +38,10 @@ namespace Test
         String mode;
         int enable;
         String textWeight;
-        String otherModel;
-        String otherWeight;
-        String synetModel;
-        String synetWeight;
+        String firstModel;
+        String firstWeight;
+        String secondModel;
+        String secondWeight;
         String testParam;
         String imageDirectory;
         String imageFilter;
@@ -68,23 +68,23 @@ namespace Test
         float regionOverlap;
 
         mutable bool result;
-        mutable size_t synetMemoryUsage, otherMemoryUsage;
-        mutable String synetName, otherName, synetType, otherType;
+        mutable size_t firstMemoryUsage,  secondMemoryUsage;
+        mutable String firstName, firstType, secondName, secondType;
 
         Options(int argc, char* argv[])
             : _argc(argc)
             , _argv(argv)
             , result(false)
-            , synetMemoryUsage(0)
-            , otherMemoryUsage(0)
+            , secondMemoryUsage(0)
+            , firstMemoryUsage(0)
         {
             mode = GetArg2("-m", "-mode");
             enable = FromString<int>(GetArg2("-e", "-enable", "3"));
             textWeight = GetArg("-tw", "other.txt");
-            otherModel = GetArg("-om", QuantizationTest() ? "int8.xml" : "other.dsc");
-            otherWeight = GetArg("-ow", QuantizationTest() ? "synet.bin" : "other.dat");
-            synetModel = GetArg("-sm", "synet.xml");
-            synetWeight = GetArg("-sw", "synet.bin");
+            firstModel = GetArg("-fm", QuantizationTest() ? "int8.xml" : "other.dsc");
+            firstWeight = GetArg("-fw", QuantizationTest() ? "synet.bin" : "other.dat");
+            secondModel = GetArg("-sm", "synet.xml");
+            secondWeight = GetArg("-sw", "synet.bin");
             testParam = GetArg("-tp", "param.xml");
             imageDirectory = GetArg("-id", QuantizationTest() ? "" : "image");
             imageFilter = GetArg("-if", "*.*");
@@ -121,13 +121,13 @@ namespace Test
             if (mode == "compare" && result)
             {
                 std::stringstream ss;
-                if (otherMemoryUsage)
-                    ss << FullName(otherName, otherType) << " memory usage: " << otherMemoryUsage / (1024 * 1024) << " MB." << std::endl;
-                if (synetMemoryUsage)
-                    ss << FullName(synetName, synetType) << " memory usage: " << synetMemoryUsage / (1024 * 1024) << " MB." << std::endl;
+                if (firstMemoryUsage)
+                    ss << FullName(firstName, firstType) << " memory usage: " << firstMemoryUsage / (1024 * 1024) << " MB." << std::endl;
+                if (secondMemoryUsage)
+                    ss << FullName(secondName, secondType) << " memory usage: " << secondMemoryUsage / (1024 * 1024) << " MB." << std::endl;
                 PerformanceMeasurerStorage::s_storage.Print(ss);
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-                if (enable & ENABLE_SYNET)
+                if (firstName == "Synet" || secondName == "Synet")
                     ss << SimdPerformanceStatistic();
 #endif
                 if(!consoleSilence)

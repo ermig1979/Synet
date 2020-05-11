@@ -107,7 +107,7 @@ namespace Test
 		{
 			String name, desc, link;
 			int batch, count, skip;
-			Data<double> other, synet;
+			Data<double> first, second;
 			Test(const String & n = "", int b = 0) : name(n), batch(b), count(0), skip(0) {}
 		};
 		typedef std::vector<Test> Tests;
@@ -132,12 +132,12 @@ namespace Test
 						Test test;
 						Synet::StringToValue(values[0], test.name);
 						Synet::StringToValue(values[1], test.batch);
-						Synet::StringToValue(values[2], test.other.time);
-						Synet::StringToValue(values[3], test.synet.time);
-						Synet::StringToValue(values[4], test.other.flops);
-						Synet::StringToValue(values[5], test.synet.flops);
-						Synet::StringToValue(values[6], test.other.memory);
-						Synet::StringToValue(values[7], test.synet.memory);
+						Synet::StringToValue(values[2], test.first.time);
+						Synet::StringToValue(values[3], test.second.time);
+						Synet::StringToValue(values[4], test.first.flops);
+						Synet::StringToValue(values[5], test.second.flops);
+						Synet::StringToValue(values[6], test.first.memory);
+						Synet::StringToValue(values[7], test.second.memory);
 						Synet::StringToValue(values[8], test.desc);
 						Synet::StringToValue(values[9], test.link);
 						Synet::StringToValue(values[10], test.skip);
@@ -166,18 +166,18 @@ namespace Test
 				{
 					ofs << _tests[i].name << _separator;
 					ofs << _tests[i].batch << _separator;
-					ofs << _tests[i].other.time << _separator;
-					ofs << _tests[i].synet.time << _separator;
-					ofs << _tests[i].other.flops << _separator;
-					ofs << _tests[i].synet.flops << _separator;
-					ofs << _tests[i].other.memory << _separator;
-					ofs << _tests[i].synet.memory << _separator;
+					ofs << _tests[i].first.time << _separator;
+					ofs << _tests[i].second.time << _separator;
+					ofs << _tests[i].first.flops << _separator;
+					ofs << _tests[i].second.flops << _separator;
+					ofs << _tests[i].first.memory << _separator;
+					ofs << _tests[i].second.memory << _separator;
 					ofs << _tests[i].desc << _separator;
 					ofs << _tests[i].link << _separator;
 					ofs << _tests[i].skip << _separator;
 					ofs << std::endl;
-					Update(_tests[i].other, _other);
-					Update(_tests[i].synet, _synet);
+					Update(_tests[i].first, _other);
+					Update(_tests[i].second, _synet);
 				}
 				ofs.close();
 				return true;
@@ -190,16 +190,16 @@ namespace Test
 			Test test;
 			test.name = TestName(_options.logName);
 			test.batch = _options.batchSize;
-			test.other.time = NetworkPredictPm(_options.otherName, _options.otherType).Average() * 1000.0 / test.batch;
-			test.synet.time = NetworkPredictPm(_options.synetName, _options.synetType).Average() * 1000.0 / test.batch;
-			test.other.flops = NetworkPredictPm(_options.otherName, _options.otherType).GFlops();
-			test.synet.flops = NetworkPredictPm(_options.synetName, _options.synetType).GFlops();
-			test.other.memory = _options.otherMemoryUsage / 1024.0 / 1024.0;
-			test.synet.memory = _options.synetMemoryUsage / 1024.0 / 1024.0;
-			test.desc = TestDesc(_options.synetModel);
+			test.first.time = NetworkPredictPm(_options.firstName, _options.firstType).Average() * 1000.0 / test.batch;
+			test.second.time = NetworkPredictPm(_options.secondName, _options.secondType).Average() * 1000.0 / test.batch;
+			test.first.flops = NetworkPredictPm(_options.firstName, _options.firstType).GFlops();
+			test.second.flops = NetworkPredictPm(_options.secondName, _options.secondType).GFlops();
+			test.first.memory = _options.firstMemoryUsage / 1024.0 / 1024.0;
+			test.second.memory = _options.secondMemoryUsage / 1024.0 / 1024.0;
+			test.desc = TestDesc(_options.secondModel);
 			test.link = GetNameByPath(_options.logName);
-			test.skip = test.synet.time > test.other.time * _options.skipThreshold ? 2 : 
-				(test.synet.time * _options.skipThreshold < test.other.time ? 1 : 0);
+			test.skip = test.second.time > test.first.time * _options.skipThreshold ? 2 : 
+				(test.second.time * _options.skipThreshold < test.first.time ? 1 : 0);
 			_tests.push_back(test);
 		}
 
@@ -256,32 +256,32 @@ namespace Test
 
 		Size TableSize()
 		{
-			size_t cols = _options.otherName.size() ? 8 : 6;
+			size_t cols = _options.firstName.size() ? 8 : 6;
 			size_t rows = _summary.size() + _tests.size();
 			return Size(cols, rows);
 		}
 
 		void SetHeader(Table& table)
 		{
-			String other = Options::FullName(_options.otherName, _options.otherType);
-			String synet = Options::FullName(_options.synetName, _options.synetType);
+			String first = Options::FullName(_options.firstName, _options.firstType);
+			String second = Options::FullName(_options.secondName, _options.secondType);
 			size_t col = 0;
 			table.SetHeader(col++, "Test", true, Table::Center);
 			table.SetHeader(col++, "Batch", true, Table::Center);
 			if (_other.time)
-				table.SetHeader(col++, other + ", ms", true, Table::Center);
+				table.SetHeader(col++, first + ", ms", true, Table::Center);
 			if (_synet.time)
-				table.SetHeader(col++, synet + ", ms", true, Table::Center);
+				table.SetHeader(col++, second + ", ms", true, Table::Center);
 			if (_other.time && _synet.time)
-				table.SetHeader(col++, other + " / " + synet, true, Table::Center);
+				table.SetHeader(col++, first + " / " + second, true, Table::Center);
 			if (_other.flops)
-				table.SetHeader(col++, other + ", GFLOPS", true, Table::Center);
+				table.SetHeader(col++, first + ", GFLOPS", true, Table::Center);
 			if (_synet.flops)
-				table.SetHeader(col++, synet + ", GFLOPS", true, Table::Center);
+				table.SetHeader(col++, second + ", GFLOPS", true, Table::Center);
 			if (_other.memory)
-				table.SetHeader(col++, other + ", MB", true, Table::Center);
+				table.SetHeader(col++, first + ", MB", true, Table::Center);
 			if (_synet.memory)
-				table.SetHeader(col++, synet + ", MB", true, Table::Center);
+				table.SetHeader(col++, second + ", MB", true, Table::Center);
 			table.SetHeader(col++, "Description", true, Table::Center);
 		}
 
@@ -294,22 +294,22 @@ namespace Test
 				table.SetCell(col++, row, test.name, Table::Black, test.link);
 				table.SetCell(col++, row, test.batch ? ToString(test.batch) : String("-"));
 				if (_other.time)
-					table.SetCell(col++, row, ToString(test.other.time, 3), test.skip == 1 ? Table::Red : Table::Black);
+					table.SetCell(col++, row, ToString(test.first.time, 3), test.skip == 1 ? Table::Red : Table::Black);
 				if (_synet.time)
-					table.SetCell(col++, row, ToString(test.synet.time, 3), test.skip == 2 ? Table::Red : Table::Black);
+					table.SetCell(col++, row, ToString(test.second.time, 3), test.skip == 2 ? Table::Red : Table::Black);
 				if (_other.time && _synet.time)
 				{
-					double relation = test.synet.time != 0 ? test.other.time / test.synet.time : 0.0;
+					double relation = test.second.time != 0 ? test.first.time / test.second.time : 0.0;
 					table.SetCell(col++, row, ToString(relation, 2), relation < 1.00 ? Table::Red : Table::Black);
 				}
 				if (_other.flops)
-					table.SetCell(col++, row, ToString(test.other.flops, 1));
+					table.SetCell(col++, row, ToString(test.first.flops, 1));
 				if (_synet.flops)
-					table.SetCell(col++, row, ToString(test.synet.flops, 1));
+					table.SetCell(col++, row, ToString(test.second.flops, 1));
 				if (_other.memory)
-					table.SetCell(col++, row, summary ? String("-") : ToString(test.other.memory, 1));
+					table.SetCell(col++, row, summary ? String("-") : ToString(test.first.memory, 1));
 				if (_synet.memory)
-					table.SetCell(col++, row, summary ? String("-") : ToString(test.synet.memory, 1));
+					table.SetCell(col++, row, summary ? String("-") : ToString(test.second.memory, 1));
 				table.SetCell(col++, row, summary ? String("-") : test.desc);
 				table.SetRowProp(row, summary && i == tests.size() - 1, summary);
 			}
@@ -324,22 +324,22 @@ namespace Test
 					continue;
 				summary.count++;
 				if (_other.time)
-					summary.other.time += ::log(test.other.time);
+					summary.first.time += ::log(test.first.time);
 				if (_synet.time)
-					summary.synet.time += ::log(test.synet.time);
+					summary.second.time += ::log(test.second.time);
 				if (_other.flops)
-					summary.other.flops += ::log(test.other.flops);
+					summary.first.flops += ::log(test.first.flops);
 				if (_synet.flops)
-					summary.synet.flops += ::log(test.synet.flops);
+					summary.second.flops += ::log(test.second.flops);
 			}
 			if (_other.time)
-				summary.other.time = summary.count > 0 ? ::exp(summary.other.time / summary.count) : 0;
+				summary.first.time = summary.count > 0 ? ::exp(summary.first.time / summary.count) : 0;
 			if (_synet.time)
-				summary.synet.time = summary.count > 0 ? ::exp(summary.synet.time / summary.count) : 0;
+				summary.second.time = summary.count > 0 ? ::exp(summary.second.time / summary.count) : 0;
 			if (_other.flops)
-				summary.other.flops = summary.count > 0 ? ::exp(summary.other.flops / summary.count) : 0;
+				summary.first.flops = summary.count > 0 ? ::exp(summary.first.flops / summary.count) : 0;
 			if (_synet.flops)
-				summary.synet.flops = summary.count > 0 ? ::exp(summary.synet.flops / summary.count) : 0;
+				summary.second.flops = summary.count > 0 ? ::exp(summary.second.flops / summary.count) : 0;
 		}
 
 		void FillSummary()

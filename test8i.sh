@@ -7,7 +7,7 @@ THREAD=$4
 BATCH=$5
 VERSION=$6
 DIR=./data/quantization/"$NAME"
-PATHES="-ow=$DIR/synet.bin -om=$DIR/int8.xml -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$IMAGES -od=$DIR/output -tp=$DIR/param.xml"
+PATHES="-fw=$DIR/synet.bin -fm=$DIR/int8.xml -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$IMAGES -od=$DIR/output -tp=$DIR/param.xml"
 LOG=./test/quantization/"$NAME"/q_"$NAME"_t"$THREAD"_b"$BATCH"_v"$VERSION".txt
 BIN_DIR=./build_inference_engine
 BIN="$BIN_DIR"/test_quantization

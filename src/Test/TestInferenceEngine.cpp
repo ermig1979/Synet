@@ -27,7 +27,7 @@
 
 #include "Synet/Converters/InferenceEngine.h"
 
-#ifdef SYNET_OTHER_RUN
+#ifdef SYNET_TEST_FIRST_RUN
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
@@ -443,14 +443,14 @@ namespace Test
 #pragma GCC diagnostic pop
 #endif
 
-#else //SYNET_OTHER_RUN
+#else //SYNET_FIRST_RUN
 namespace Test
 {
     struct InferenceEngineNetwork : public Network
     {
     };
 }
-#endif//SYNET_OTHER_RUN
+#endif//SYNET_FIRST_RUN
 
 namespace Test
 {
@@ -492,18 +492,18 @@ int main(int argc, char* argv[])
     {
         SYNET_PERF_FUNC();
         std::cout << "Convert network from Inference Engine to Synet : ";
-        options.result = Synet::ConvertInferenceEngineToSynet(options.otherModel, options.otherWeight, options.tensorFormat == 1, options.synetModel, options.synetWeight);
+        options.result = Synet::ConvertInferenceEngineToSynet(options.firstModel, options.firstWeight, options.tensorFormat == 1, options.secondModel, options.secondWeight);
         std::cout << (options.result ? "OK." : " Conversion finished with errors!") << std::endl;
     }
     else if (options.mode == "compare")
     {
-        Test::Comparer<Test::InferenceEngineNetwork> comparer(options);
+        Test::Comparer<Test::InferenceEngineNetwork, Test::SynetNetwork> comparer(options);
         options.result = comparer.Run();
     }
     else if (options.mode == "txt2bin")
     {
         std::cout << "Convert text weight to binary : ";
-        options.result = Test::ConvertTextWeightToBinary(options.textWeight, options.otherWeight);
+        options.result = Test::ConvertTextWeightToBinary(options.textWeight, options.firstWeight);
         std::cout << (options.result ? "OK." : " Conversion finished with errors!") << std::endl;
     }
     else

@@ -100,6 +100,7 @@ elseif(MODE STREQUAL "inference_engine")
 	if(BLIS)
 		add_dependencies(test_inference_engine ${BLIS_DEP})
 	endif()
+	
 	file(GLOB_RECURSE QUANTIZATION_SRC ${ROOT_DIR}/src/Test/TestQuantization.cpp ${ROOT_DIR}/src/Test/TestImage.cpp)
 	set_source_files_properties(${QUANTIZATION_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
 	add_executable(test_quantization ${QUANTIZATION_SRC})

@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
     }
     else if (options.mode == "compare")
     {
-        Test::Comparer<Test::Synet8iNetwork> comparer(options);
+        Test::Comparer<Test::SynetNetwork, Test::Synet8iNetwork> comparer(options);
         options.result = comparer.Run();
     }
     else

@@ -8,7 +8,7 @@ THREAD=$4
 FORMAT=$5
 BATCH=$6
 DIR=./data/"$FRAMEWORK"/"$NAME"
-PATHES="-om=$DIR/other.dsc -ow=$DIR/other.dat -sm=$DIR/synet$FORMAT.xml -sw=$DIR/synet$FORMAT.bin -id=$DIR/image -od=$DIR/output -tp=$DIR/param.xml"
+PATHES="-fm=$DIR/other.dsc -fw=$DIR/other.dat -sm=$DIR/synet$FORMAT.xml -sw=$DIR/synet$FORMAT.bin -id=$DIR/image -od=$DIR/output -tp=$DIR/param.xml"
 PREFIX="${FRAMEWORK:0:1}"
 OUT=./test/check/"$DATE_TIME$PREFIX"
 LOG="$OUT"/cl"$PREFIX"_"$NAME"_f"$FORMAT"_b"$BATCH".txt
