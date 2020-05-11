@@ -102,9 +102,12 @@ namespace Synet
         bool SetStats(const StatSharedPtrs & stats)
         {
             bool result = true;
-            result = result && SetStats(stats, _param.src(), _stats[0]);
-            result = result && SetStats(stats, _param.origin(), _stats[1]);
-            result = result && SetStats(stats, _param.dst(), _stats[2]);
+            if (Is8i())
+            {
+                result = result && SetStats(stats, _param.src(), _stats[0]);
+                result = result && SetStats(stats, _param.origin(), _stats[1]);
+                result = result && SetStats(stats, _param.dst(), _stats[2]);
+            }
             return result;
         }
 

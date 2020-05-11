@@ -256,9 +256,23 @@ namespace Test
 
 		Size TableSize()
 		{
-			size_t cols = _options.firstName.size() ? 8 : 6;
-			size_t rows = _summary.size() + _tests.size();
-			return Size(cols, rows);
+			size_t col = 3;
+			if (_other.time)
+				col++;
+			if (_synet.time)
+				col++;
+			if (_other.time && _synet.time)
+				col++;
+			if (_other.flops)
+				col++;
+			if (_synet.flops)
+				col++;
+			if (_other.memory)
+				col++;
+			if (_synet.memory)
+				col++;
+			size_t row = _summary.size() + _tests.size();
+			return Size(col, row);
 		}
 
 		void SetHeader(Table& table)

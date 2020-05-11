@@ -4,78 +4,88 @@ BATCH_SIZE=10
 
 function TEST {
 FRAMEWORK=$1
-NAME=$2
-THREAD=$3
-BATCH=$4
-DIR=./data/"$FRAMEWORK"/"$NAME"
-PATHES="-fm=$DIR/other.dsc -fw=$DIR/other.dat -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$DIR/image -od=$DIR/output -tp=$DIR/param.xml"
 PREFIX="${FRAMEWORK:0:1}"
+NAME=$2
+DIR=./data/"$FRAMEWORK"/"$NAME"
+if [ "$3" = "local" ]; then
+  IMAGE="$DIR"/image
+else
+  IMAGE=./data/images/_test/$3
+fi
+THREAD=$4
+BATCH=$5
+if [ "$FRAMEWORK" = "quantization" ]; then
+  PATHES="-fw=$DIR/synet.bin -fm=$DIR/synet.xml -sm=$DIR/int8.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
+  THRESHOLD=0.05
+else
+  PATHES="-fm=$DIR/other.dsc -fw=$DIR/other.dat -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
+  THRESHOLD=0.002
+fi
 OUT=./test/perf/"$DATE_TIME$PREFIX"_t"$THREAD"
 OUT_SYNC="$OUT"/sync.txt
 OUT_TEXT="$OUT"/_report.txt
 OUT_HTML="$OUT"/_report.html
 LOG="$OUT"/pl"$PREFIX"_"$NAME"_t"$THREAD"_b"$BATCH".txt
-BIN_DIR=./build_"$FRAMEWORK"
+#BIN_DIR=./build_"$FRAMEWORK"
+BIN_DIR=./build_inference_engine
 BIN="$BIN_DIR"/test_"$FRAMEWORK"
-
-if [ "${NAME:0:5}" = "test_" ] && [ "${NAME:8:9}" = "i" ]; then
-  THRESHOLD=0.01
-  echo "Use increased accuracy threshold : $THRESHOLD for INT8."
-else
-  THRESHOLD=0.002
-fi
 
 echo $LOG
 
 if [ -f $DIR/image/descript.ion ];then
-	rm $DIR/image/descript.ion
+  rm $DIR/image/descript.ion
 fi
 
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
 if [ "$BATCH" = "1" ];then
-  "$BIN" -m=convert $PATHES -tf=1
+  "$BIN" -m=convert $PATHES -tf=1 -cs=1
   if [ $? -ne 0 ];then
     echo "Test $DIR is failed!"
     exit
   fi
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -tf=1 -bs=$BATCH -t=$THRESHOLD -et=10.0 -st=20.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -t=$THRESHOLD -et=10.0 -st=20.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
 if [ $? -ne 0 ];then
   echo "Test $DIR is failed!"
   exit
 fi
 }
 
-function TEST_I {
-FRAMEWORK=inference_engine
-NAME=$1
-TEST_BATCH=$2
-THREAD=$TEST_THREAD
-TEST $FRAMEWORK $NAME $THREAD 1
+function TESTS {
+FRAMEWORK=$1
+TEST_NAME=$2
+TEST_IMAGE=$3
+TEST_BATCH=$4
+TEST $FRAMEWORK $TEST_NAME $TEST_IMAGE $TEST_THREAD 1
 if [ $TEST_BATCH -ne 0 ];then
-  TEST $FRAMEWORK $NAME $THREAD $BATCH_SIZE
+  TEST $FRAMEWORK $TEST_NAME $TEST_IMAGE $TEST_THREAD $BATCH_SIZE
 fi
 }
 
-function TEST_ALL_I {
-TEST_I test_000 1
-TEST_I test_001 1
-TEST_I test_002 0
-TEST_I test_003f 0
-#TEST_I test_003i 0
-TEST_I test_004 0
-TEST_I test_005 1
-TEST_I test_006 1
-TEST_I test_007 1
-TEST_I test_008 1
-TEST_I test_009f 0
-TEST_I test_010f 0
-TEST_I test_011f 0
+function TESTS_I {
+TESTS inference_engine test_000 local 1
+TESTS inference_engine test_001 local 1
+TESTS inference_engine test_002 local 0
+TESTS inference_engine test_003f local 0
+TESTS inference_engine test_004 local 0
+TESTS inference_engine test_005 local 1
+TESTS inference_engine test_006 local 1
+TESTS inference_engine test_007 local 1
+TESTS inference_engine test_008 local 1
+TESTS inference_engine test_009f local 0
+TESTS inference_engine test_010f local 0
+TESTS inference_engine test_011f local 0
 }
 
-TEST_ALL_I
+function TESTS_Q {
+TESTS quantization test_003 faces 0
+TESTS quantization test_009 persons 0
+}
+
+#TESTS_I
+TESTS_Q
 
 cat $OUT_TEXT
 

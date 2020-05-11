@@ -81,9 +81,9 @@ namespace Test
             mode = GetArg2("-m", "-mode");
             enable = FromString<int>(GetArg2("-e", "-enable", "3"));
             textWeight = GetArg("-tw", "other.txt");
-            firstModel = GetArg("-fm", QuantizationTest() ? "int8.xml" : "other.dsc");
+            firstModel = GetArg("-fm", QuantizationTest() ? "synet.xml" : "other.dsc");
             firstWeight = GetArg("-fw", QuantizationTest() ? "synet.bin" : "other.dat");
-            secondModel = GetArg("-sm", "synet.xml");
+            secondModel = GetArg("-sm", QuantizationTest() ? "int8.xml" : "synet.xml");
             secondWeight = GetArg("-sw", "synet.bin");
             testParam = GetArg("-tp", "param.xml");
             imageDirectory = GetArg("-id", QuantizationTest() ? "" : "image");
@@ -159,7 +159,12 @@ namespace Test
 
         bool QuantizationTest() const
         {
-            return mode == "quantize";
+            String app = _argv[0];
+#ifdef WIN32
+            return app.find("Quantization") != std::string::npos;
+#else
+            return app.find("quantization") != std::string::npos;
+#endif
         }
 
         static inline String FullName(const String& name, const String& type)

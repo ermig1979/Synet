@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
 {
     Test::Options options(argc, argv);
 
-    if (options.mode == "quantize")
+    if (options.mode == "convert")
     {
         Test::Quantizer quantizer(options);
         options.result = quantizer.Run();

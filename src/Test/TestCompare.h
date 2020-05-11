@@ -229,19 +229,22 @@ namespace Test
 
         bool CreateTestList(const Network& network)
         {
-            if (!DirectoryExists(_options.imageDirectory))
+            String imageDirectory = _options.imageDirectory;
+            if (imageDirectory.empty())
+                imageDirectory = Test::MakePath(DirectoryByPath(_options.testParam), _param().images());
+            if (!DirectoryExists(imageDirectory))
             {
-                std::cout << "Test image directory '" << _options.imageDirectory << "' is not exists!" << std::endl;
+                std::cout << "Test image directory '" << imageDirectory << "' is not exists!" << std::endl;
                 return false;
             }
-            StringList images = GetFileList(_options.imageDirectory, _options.imageFilter, true, false);
+            StringList images = GetFileList(imageDirectory, _options.imageFilter, true, false);
             images.sort();
             Strings names(images.begin(), images.end());
             size_t sN = network.SrcCount(), bN = _options.batchSize;
             size_t tN = names.size() / bN / sN;
             if (tN == 0)
             {
-                std::cout << "There is no one image in '" << _options.imageDirectory << "' for '" << _options.imageFilter << "' filter!" << std::endl;
+                std::cout << "There is no one image in '" << imageDirectory << "' for '" << _options.imageFilter << "' filter!" << std::endl;
                 return false;
             }
             StringList::const_iterator name = images.begin();
@@ -262,7 +265,7 @@ namespace Test
                     for (size_t b = 0; b < bN; ++b)
                     {
                         size_t p = s * bN + b;
-                        test->path[p] = MakePath(_options.imageDirectory, names[(t * bN + b) * sN + s]);
+                        test->path[p] = MakePath(imageDirectory, names[(t * bN + b) * sN + s]);
                         View original;
                         if (!LoadImage(test->path[p], original))
                         {

@@ -1,13 +1,13 @@
 
 function TEST {
 NAME=$1
-IMAGES=./data/images/_g/$2
+IMAGES=./data/images/_test/$2
 NUMBER=$3
 THREAD=$4
 BATCH=$5
 VERSION=$6
 DIR=./data/quantization/"$NAME"
-PATHES="-fw=$DIR/synet.bin -fm=$DIR/int8.xml -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$IMAGES -od=$DIR/output -tp=$DIR/param.xml"
+PATHES="-fw=$DIR/synet.bin -fm=$DIR/synet.xml -sm=$DIR/int8.xml -sw=$DIR/synet.bin -id=$IMAGES -od=$DIR/output -tp=$DIR/param.xml"
 LOG=./test/quantization/"$NAME"/q_"$NAME"_t"$THREAD"_b"$BATCH"_v"$VERSION".txt
 BIN_DIR=./build_inference_engine
 BIN="$BIN_DIR"/test_quantization
@@ -20,7 +20,7 @@ fi
 
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
-"$BIN" -m=quantize $PATHES -cs=0
+"$BIN" -m=convert $PATHES -cs=0
 if [ $? -ne 0 ];then
   echo "Test $DIR is failed!"
   exit
