@@ -24,10 +24,14 @@
 #include "TestUtils.h"
 #include "TestImage.h"
 
+#ifndef SYNET_TEST_STB_EXTERNAL
 #define STB_IMAGE_IMPLEMENTATION
+#endif
 #include "stb_image.h"
 
+#ifndef SYNET_TEST_STB_EXTERNAL
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#endif
 #include "stb_image_write.h"
 
 namespace Test

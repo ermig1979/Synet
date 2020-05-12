@@ -1,4 +1,3 @@
-
 function TEST {
 FRAMEWORK=$1
 PREFIX="${FRAMEWORK:0:1}"
@@ -10,9 +9,8 @@ else
   IMAGE=./data/images/_test/$3
 fi
 if [ "$FRAMEWORK" = "quantization" ]; then
-  PATHES="-fw=$DIR/synet.bin -fm=$DIR/synet.xml -sm=$DIR/int8.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
+  PATHES="-fm=$DIR/synet.xml -fw=$DIR/synet.bin -sm=$DIR/int8.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
   THRESHOLD=0.01
-  BIN_DIR=./build_inference_engine
 else
   PATHES="-fm=$DIR/other.dsc -fw=$DIR/other.dat -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
   if [ "${NAME:0:5}" = "test_" ] && [ "${NAME:8:9}" = "i" ]; then
@@ -21,7 +19,6 @@ else
   else
     THRESHOLD=0.002
   fi
-  BIN_DIR=./build_"$FRAMEWORK"
 fi
 NUMBER=$4
 THREAD=$5
@@ -29,30 +26,23 @@ FORMAT=$6
 BATCH=$7
 VERSION=$8
 LOG=./test/"$FRAMEWORK"/"$NAME"/"$PREFIX"_"$NAME"_t"$THREAD"_f"$FORMAT"_b"$BATCH"_v"$VERSION".txt
+BIN_DIR=./build #_"$FRAMEWORK"
 BIN="$BIN_DIR"/test_"$FRAMEWORK"
 
 echo $LOG
 
-if [ -f $DIR/image/descript.ion ];then
-	rm $DIR/image/descript.ion
-fi
+if [ -f $DIR/image/descript.ion ];then rm $DIR/image/descript.ion; fi
 
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
 "$BIN" -m=convert $PATHES -tf=$FORMAT
-if [ $? -ne 0 ];then
-  echo "Test $DIR is failed!"
-  exit
-fi
+if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 
 "$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -et=10.0 -dp=0 -dpf=6 -dpl=2 -dpp=8 -ar=0 -rt=0.5 -cs=0 -ln=$LOG
-if [ $? -ne 0 ];then
-  echo "Test $DIR is failed!"
-  exit
-fi
+if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
-#TEST darknet test_000 local 5 1 1 1 001a
+#TEST darknet test_000 local 5 1 1 1 002h
 
 #TEST inference_engine test_000 local 1000 1 1 1 006
 #TEST inference_engine test_001 local 500 1 1 1 006

@@ -15,7 +15,7 @@ fi
 THREAD=$4
 BATCH=$5
 if [ "$FRAMEWORK" = "quantization" ]; then
-  PATHES="-fw=$DIR/synet.bin -fm=$DIR/synet.xml -sm=$DIR/int8.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
+  PATHES="-fm=$DIR/synet.xml -fw=$DIR/synet.bin -sm=$DIR/int8.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
   THRESHOLD=0.05
 else
   PATHES="-fm=$DIR/other.dsc -fw=$DIR/other.dat -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
@@ -25,32 +25,23 @@ OUT=./test/perf/"$DATE_TIME$PREFIX"_t"$THREAD"
 OUT_SYNC="$OUT"/sync.txt
 OUT_TEXT="$OUT"/_report.txt
 OUT_HTML="$OUT"/_report.html
-LOG="$OUT"/pl"$PREFIX"_"$NAME"_t"$THREAD"_b"$BATCH".txt
-#BIN_DIR=./build_"$FRAMEWORK"
-BIN_DIR=./build_inference_engine
+LOG="$OUT"/p"$PREFIX"_"$NAME"_t"$THREAD"_b"$BATCH".txt
+BIN_DIR=./build #_"$FRAMEWORK"
 BIN="$BIN_DIR"/test_"$FRAMEWORK"
 
 echo $LOG
 
-if [ -f $DIR/image/descript.ion ];then
-  rm $DIR/image/descript.ion
-fi
+if [ -f $DIR/image/descript.ion ];then rm $DIR/image/descript.ion; fi
 
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
 if [ "$BATCH" = "1" ];then
   "$BIN" -m=convert $PATHES -tf=1 -cs=1
-  if [ $? -ne 0 ];then
-    echo "Test $DIR is failed!"
-    exit
-  fi
+  if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 fi
 
 "$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -t=$THRESHOLD -et=10.0 -st=20.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
-if [ $? -ne 0 ];then
-  echo "Test $DIR is failed!"
-  exit
-fi
+if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
 function TESTS {
@@ -59,9 +50,7 @@ TEST_NAME=$2
 TEST_IMAGE=$3
 TEST_BATCH=$4
 TEST $FRAMEWORK $TEST_NAME $TEST_IMAGE $TEST_THREAD 1
-if [ $TEST_BATCH -ne 0 ];then
-  TEST $FRAMEWORK $TEST_NAME $TEST_IMAGE $TEST_THREAD $BATCH_SIZE
-fi
+if [ $TEST_BATCH -ne 0 ];then TEST $FRAMEWORK $TEST_NAME $TEST_IMAGE $TEST_THREAD $BATCH_SIZE; fi
 }
 
 function TESTS_I {

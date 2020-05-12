@@ -111,11 +111,11 @@ namespace Test
         {
             std::cout << "Start ";
             if (_options.enable & ENABLE_FIRST)
-                std::cout << _firsts[0].Name() << " ";
+                std::cout << Options::FullName(_firsts[0].Name(), _firsts[0].Type()) << " ";
             if (_options.enable == (ENABLE_FIRST | ENABLE_SECOND))
                 std::cout << "and ";
             if (_options.enable & ENABLE_SECOND)
-                std::cout << _seconds[0].Name() << " ";
+                std::cout << Options::FullName(_seconds[0].Name(), _seconds[0].Type()) << " ";
             if (_options.testThreads > 0)
                 std::cout << _options.testThreads << "-threads ";
             else
