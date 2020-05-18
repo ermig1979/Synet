@@ -107,7 +107,7 @@ if((MODE STREQUAL "inference_engine") OR (MODE STREQUAL "all"))
 	endif()
 endif()
 
-if((MODE STREQUAL "quntization") OR (MODE STREQUAL "all"))	
+if((MODE STREQUAL "quantization") OR (MODE STREQUAL "all"))	
 	file(GLOB_RECURSE QUANTIZATION_SRC ${ROOT_DIR}/src/Test/TestQuantization.cpp ${ROOT_DIR}/src/Test/TestImage.cpp)
 	set_source_files_properties(${QUANTIZATION_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
 	add_executable(test_quantization ${QUANTIZATION_SRC})

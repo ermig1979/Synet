@@ -12,7 +12,7 @@ PATHES="-fm=$DIR/other.dsc -fw=$DIR/other.dat -sm=$DIR/synet$FORMAT.xml -sw=$DIR
 PREFIX="${FRAMEWORK:0:1}"
 OUT=./test/check/"$DATE_TIME$PREFIX"
 LOG="$OUT"/c"$PREFIX"_"$NAME"_f"$FORMAT"_b"$BATCH".txt
-BIN_DIR=./build #_"$FRAMEWORK"
+BIN_DIR=./build
 BIN="$BIN_DIR"/test_"$FRAMEWORK"
 
 if [ "${NAME:0:5}" = "test_" ] && [ "${NAME:8:9}" = "i" ]; then

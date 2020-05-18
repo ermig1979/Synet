@@ -58,7 +58,7 @@ namespace Synet
 
         virtual size_t MemoryUsage() const
         {
-            return Base::MemoryUsage() + _convolution32f.InternalBufferSize() * sizeof(Type);
+            return Base::MemoryUsage() + _convolution32f.InternalBufferSize() * sizeof(Type) + _convolution8i.InternalBufferSize() + _weight8i.Size();
         }
 
         virtual int64_t Flop() const

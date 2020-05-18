@@ -26,12 +26,12 @@ OUT_SYNC="$OUT"/sync.txt
 OUT_TEXT="$OUT"/_report.txt
 OUT_HTML="$OUT"/_report.html
 LOG="$OUT"/p"$PREFIX"_"$NAME"_t"$THREAD"_b"$BATCH".txt
-BIN_DIR=./build #_"$FRAMEWORK"
+BIN_DIR=./build
 BIN="$BIN_DIR"/test_"$FRAMEWORK"
 
 echo $LOG
 
-if [ -f $DIR/image/descript.ion ];then rm $DIR/image/descript.ion; fi
+if [ -f $IMAGE/descript.ion ];then rm $IMAGE/descript.ion; fi
 
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
@@ -40,7 +40,7 @@ if [ "$BATCH" = "1" ];then
   if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -t=$THRESHOLD -et=10.0 -st=20.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -t=$THRESHOLD -et=1.0 -st=20.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 

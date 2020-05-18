@@ -6,7 +6,7 @@ DIR=./data/"$FRAMEWORK"/"$NAME"
 if [ "$3" = "local" ]; then
   IMAGE="$DIR"/image
 else
-  IMAGE=./data/images/_test/$3
+  IMAGE=./data/images/$3
 fi
 if [ "$FRAMEWORK" = "quantization" ]; then
   PATHES="-fm=$DIR/synet.xml -fw=$DIR/synet.bin -sm=$DIR/int8.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
@@ -26,12 +26,12 @@ FORMAT=$6
 BATCH=$7
 VERSION=$8
 LOG=./test/"$FRAMEWORK"/"$NAME"/"$PREFIX"_"$NAME"_t"$THREAD"_f"$FORMAT"_b"$BATCH"_v"$VERSION".txt
-BIN_DIR=./build #_"$FRAMEWORK"
+BIN_DIR=./build
 BIN="$BIN_DIR"/test_"$FRAMEWORK"
 
 echo $LOG
 
-if [ -f $DIR/image/descript.ion ];then rm $DIR/image/descript.ion; fi
+if [ -f $IMAGE/descript.ion ];then rm $IMAGE/descript.ion; fi
 
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
@@ -60,7 +60,7 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 #TEST inference_engine test_011f local 40 1 1 1 001t
 
 #TEST quantization test_003 faces 100 1 1 1 000t
-TEST quantization test_009 persons 1 0 1 1 000t
+#TEST quantization test_009 persons 1 0 1 1 000t
 
 
 exit
