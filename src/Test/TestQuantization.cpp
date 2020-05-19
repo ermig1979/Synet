@@ -22,9 +22,9 @@
 * SOFTWARE.
 */
 
-#include "Test/TestCompare.h"
-#include "Test/TestReport.h"
-#include "Test/TestQuantization.h"
+#include "TestCompare.h"
+#include "TestReport.h"
+#include "TestQuantization.h"
 
 namespace Test
 {
