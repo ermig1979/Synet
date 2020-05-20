@@ -53,6 +53,10 @@ TEST $FRAMEWORK $TEST_NAME $TEST_IMAGE $TEST_THREAD 1
 if [ $TEST_BATCH -ne 0 ];then TEST $FRAMEWORK $TEST_NAME $TEST_IMAGE $TEST_THREAD $BATCH_SIZE; fi
 }
 
+function TESTS_D {
+TESTS darknet test_000 local 1
+}
+
 function TESTS_I {
 TESTS inference_engine test_000 local 1
 TESTS inference_engine test_001 local 1
@@ -73,8 +77,9 @@ TESTS quantization test_003 faces 0
 TESTS quantization test_009 persons 0
 }
 
+TESTS_D
 #TESTS_I
-TESTS_Q
+#TESTS_Q
 
 cat $OUT_TEXT
 
