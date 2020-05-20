@@ -389,7 +389,6 @@ namespace Synet
                     shape.push_back(blob.shape().dim(1));
                     size_t channel = layers[prev].convolution().outputNum();
                     size_t spatial = shape[1] / channel;
-                    std::cout << " c = " << channel << " s = " << spatial << std::endl;
                     tensor.Reshape(shape);
                     for (size_t d = 0; d < shape[0]; d++)
                     {

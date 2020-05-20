@@ -69,7 +69,7 @@ namespace Test
 
         mutable bool result;
         mutable size_t firstMemoryUsage,  secondMemoryUsage;
-        mutable String firstName, firstType, secondName, secondType;
+        mutable String firstName, firstType, secondName, secondType, statistics;
 
         Options(int argc, char* argv[])
             : _argc(argc)
@@ -126,6 +126,8 @@ namespace Test
                 if (secondMemoryUsage)
                     ss << FullName(secondName, secondType) << " memory usage: " << secondMemoryUsage / (1024 * 1024) << " MB." << std::endl;
                 PerformanceMeasurerStorage::s_storage.Print(ss);
+                if(!statistics.empty())
+                    ss << statistics;
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
                 if (firstName == "Synet" || secondName == "Synet")
                     ss << SimdPerformanceStatistic();

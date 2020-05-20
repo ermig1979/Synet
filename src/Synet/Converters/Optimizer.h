@@ -1083,7 +1083,11 @@ namespace Synet
                 for (size_t j = 0; j < layers[i].src().size(); ++j)
                 {
                     if (layers[i].src()[j] == change.first)
+                    {
+                        if (layers[i].src()[0] == layers[i].dst()[0] && layers[i].src().size() == 1)
+                            layers[i].dst()[0] = change.second;
                         layers[i].src()[j] = change.second;
+                    }
                 }
             }
             return true;

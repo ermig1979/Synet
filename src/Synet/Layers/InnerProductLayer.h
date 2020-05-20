@@ -106,7 +106,7 @@ namespace Synet
             dstShape[_axis] = _Ndim;
             dst[0]->Reshape(dstShape, src[0]->Format());
             std::stringstream desc;
-            desc << " M=" << _Mdim << " N=" << _Ndim << " K=" << _Kdim;
+            desc << "M=" << _Mdim << " N=" << _Ndim << " K=" << _Kdim;
             this->UsePerfStat(desc.str(), Flop());
         }
 
