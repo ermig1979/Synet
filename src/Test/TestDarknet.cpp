@@ -167,25 +167,24 @@ namespace Test
 
         void SetOutput()
         {
-            _output.resize(1);
-            size_t offset = 0;
+            _output.clear();
             for (size_t i = 0; i < _net->n; ++i)
             {
-                const layer & l = _net->layers[i];
+                const layer& l = _net->layers[i];
                 if (l.type == YOLO || l.type == REGION || l.type == DETECTION)
-                    AddToOutput(l, offset);
+                    AddToOutput(l);
             }
-            if (offset == 0)
-                AddToOutput(_net->layers[_net->n - 1], offset);
+            if (_output.empty())
+                AddToOutput(_net.layers[_net->n - 1]);
         }
 
-        void AddToOutput(const layer & l, size_t & offset)
+        void AddToOutput(const layer& l)
         {
-            size_t size = l.outputs*l.batch;
-            if (offset + size > _output[0].size())
-                _output[0].resize(offset + size);
-            memcpy(_output[0].data() + offset, l.output, size * sizeof(float));
-            offset += size;
+            _output.push_back(Vector());
+            Vector& output = _output.back();
+            size_t size = l.outputs * l.batch;
+            output.resize(size);
+            memcpy(output.data(), l.output, size * sizeof(float));
         }
 
         String PatchCfg(const String & src, size_t batchSize)
