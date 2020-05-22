@@ -68,13 +68,13 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Convert" && !ConvertConvertLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
-                if ((type == "Convolution" || type == "GroupConvolution") && !ConvertConvolutionLayer(pLayer, trans, dstXml.layers(), layer, dstBin))
+                if ((type == "Convolution" || type == "GroupConvolution") && !ConvertConvolutionLayer(pLayer, trans, dstXml.layers(), srcBin, layer, dstBin))
                     return ErrorMessage(pLayer);
                 if (type == "DetectionOutput" && !ConvertDetectionOutputLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Interpolate" && !ConvertInterpolateLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
-                if ((type == "MatMul") && !ConvertMatMulLayer(pLayer, trans, dstXml.layers(), layer, dstBin))
+                if ((type == "MatMul") && !ConvertMatMulLayer(pLayer, trans, dstXml.layers(), srcBin, layer, dstBin))
                     return ErrorMessage(pLayer);
                 if (type == "MaxPool" && !ConvertMaxPoolLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
@@ -272,7 +272,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConvolutionLayer(const XmlNode* pLayer, bool trans, const LayerParams& layers, LayerParam& layer, Vector& dstBin)
+        bool ConvertConvolutionLayer(const XmlNode* pLayer, bool trans, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin)
         {
             layer.type() = Synet::LayerTypeConvolution;
             layer.convolution().biasTerm() = false;
@@ -310,7 +310,7 @@ namespace Synet
             }
             layer.src().resize(1);
             if (trans)
-                return ReorderWeight(Shape(), layer, dstBin);
+                return ReorderWeight(srcBin, Shape(), layer, dstBin);
             return true;
         }
 
@@ -392,7 +392,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertMatMulLayer(const XmlNode* pLayer, bool trans, const LayerParams& layers, LayerParam& layer, Vector& dstBin)
+        bool ConvertMatMulLayer(const XmlNode* pLayer, bool trans, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin)
         {
             layer.type() = Synet::LayerTypeInnerProduct;
             const XmlNode* pData = pLayer->FirstNode("data");
@@ -428,7 +428,7 @@ namespace Synet
                 if (first == NULL || first->type() != LayerTypeReshape)
                     return false;
                 Shape origin = _tensors[first->src()[0]].shape;
-                return ReorderWeight(origin, layer, dstBin);
+                return ReorderWeight(srcBin, origin, layer, dstBin);
             }
             return true;
         }
@@ -876,7 +876,7 @@ namespace Synet
             return NULL;
         }
 
-        static bool ReorderWeight(const Shape & input, LayerParam & layer, Vector& bin)
+        static bool ReorderWeight(const Vector& srcBin, const Shape & input, LayerParam & layer, Vector& dstBin)
         {
             if (layer.weight().size() < 1)
             {
@@ -884,9 +884,8 @@ namespace Synet
                 return false;
             }
             WeightParam& weight = layer.weight()[0];
-            float * pDst = bin.data() + weight.offset() / sizeof(float);
-            Vector buf(pDst, pDst + weight.size() / sizeof(float));
-            const float * pSrc = buf.data();
+            const float * pSrc = srcBin.data() + weight.offset() / sizeof(float);
+            float * pDst = dstBin.data() + weight.offset() / sizeof(float);
             Shape & shape = weight.dim();
             weight.format() = TensorFormatNhwc;
             switch (layer.type())
