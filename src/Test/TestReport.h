@@ -250,7 +250,9 @@ namespace Test
 				if (layers.find(Synet::LayerTypeMergedConvolution) != layers.end()) desc.push_back('G');
 				if (layers.find(Synet::LayerTypeInnerProduct) != layers.end()) desc.push_back('I');
 				if (layers.find(Synet::LayerTypeDetectionOutput) != layers.end()) desc.push_back('D');
-			}
+                if (layers.find(Synet::LayerTypeYolo) != layers.end()) desc.push_back('Y');
+                if (layers.find(Synet::LayerTypeRegion) != layers.end()) desc.push_back('R');
+            }
 			return desc;
 		}
 
