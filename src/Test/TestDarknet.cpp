@@ -94,10 +94,10 @@ namespace Test
             bool interim = flag & (1 << Synet::DebugPrintLayerDst);
             for (int i = 0; i < _net->n; ++i)
             {
-                if ((i == _net->n - 1 && output) || interim || weight)
+                const ::layer& l = _net->layers[i];
+                if (((i == _net->n - 1 || l.type == YOLO || l.type == REGION || l.type == DETECTION) && output) || interim || weight)
                 {
                     os << "Layer: " << i << " : " << std::endl;
-                    const ::layer & l = _net->layers[i];
                     if (l.type == CONVOLUTIONAL && weight)
                     {
                         Synet::Tensor<float> weight({ (size_t)l.out_c, (size_t)l.c, (size_t)l.size, (size_t)l.size });
@@ -121,9 +121,9 @@ namespace Test
                         memcpy(bias.CpuData(), l.biases, bias.Size() * sizeof(float));
                         bias.DebugPrint(os, String("bias"), true, first, last, precision);
                     }
-                    if ((i == _net->n - 1 && output) || interim)
+                    if (((i == _net->n - 1 || l.type == YOLO || l.type == REGION || l.type == DETECTION) && output) || interim)
                     {
-                        Synet::Tensor<float> dst({ size_t(1), (size_t)l.out_c, (size_t)l.out_h, (size_t)l.out_w });
+                        Synet::Tensor<float> dst({ size_t(_net->batch), (size_t)l.out_c, (size_t)l.out_h, (size_t)l.out_w });
                         memcpy(dst.CpuData(), l.output, dst.Size() * sizeof(float));
                         dst.DebugPrint(os, String("dst[0]"), false, first, last, precision);
                     }
@@ -175,7 +175,7 @@ namespace Test
                     AddToOutput(l);
             }
             if (_output.empty())
-                AddToOutput(_net.layers[_net->n - 1]);
+                AddToOutput(_net->layers[_net->n - 1]);
         }
 
         void AddToOutput(const layer& l)
