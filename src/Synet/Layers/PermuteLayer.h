@@ -80,8 +80,8 @@ namespace Synet
                 }
                 for (size_t i = 0; i < _count; ++i)
                     _dstStride[_order[i]] = dstStride[i];
-
                 dst[0]->Reshape(_dstShape, param.format() == TensorFormatUnknown ? src[0]->Format() : param.format());
+                this->UsePerfStat();
             }
             else
                 dst[0]->ShareAs(*src[0], src[0]->Shape(), param.format() == TensorFormatUnknown ? src[0]->Format() : param.format());
@@ -92,7 +92,6 @@ namespace Synet
         {
             if (_permute)
             {
-                SYNET_PERF_FUNC();
                 const Type * pSrc = src[0]->CpuData();
                 Type * pDst = dst[0]->CpuData();
                 switch (_count)
