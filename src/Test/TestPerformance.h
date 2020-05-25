@@ -27,7 +27,9 @@
 #include "TestUtils.h"
 
 #if defined(_MSC_VER)
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <windows.h>
 #elif defined(__GNUC__)
 #include <sys/time.h>

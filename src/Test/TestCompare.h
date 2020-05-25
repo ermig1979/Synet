@@ -349,7 +349,7 @@ namespace Test
         {
             if (_options.debugPrint)
             {
-                String name = network.Name() + "_f" + std::to_string(_options.tensorFormat) +
+                String name = Options::FullName(network.Name(), network.Type()) + "_f" + std::to_string(_options.tensorFormat) +
                     "_b" + std::to_string(_options.batchSize) + "_i" + std::to_string(i) + ".log";
                 String path = MakePath(_options.outputDirectory, name);
                 std::ofstream log(path);
@@ -435,7 +435,7 @@ namespace Test
                 {
                     if (!Compare(output.first[d][j], output.second[d][j], _options.threshold))
                     {
-                        std::cout << TestFailedMessage(test, index, thread) << std::endl;
+                        std::cout << TestFailedMessage(test, index, thread) << std::endl << std::fixed;
                         std::cout << "Dst[" << d << "][" << j << "] : " << output.first[d][j] << " != " << output.second[d][j] << std::endl;
                         return false;
                     }

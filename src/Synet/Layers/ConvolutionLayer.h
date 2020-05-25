@@ -374,7 +374,10 @@ namespace Synet
                                 minW = std::min(minW, pNormW[kc]);
                                 maxW = std::max(maxW, pNormW[kc]);
                             }
-                        scale = 127.0f / std::max(abs(maxW), abs(minW));
+                        float abs = std::max(::abs(maxW), ::abs(minW));
+                        if (pSrcB)
+                            abs = std::max(abs, ::abs(pSrcB[d]) / float(128 * 256 * 256));
+                        scale = 127.0f / abs;
                         for (size_t k = 0, kc = 0; k < K; ++k)
                             for (size_t c = 0; c < C; ++c, ++kc)
                                 if (_negSrc)
@@ -408,7 +411,10 @@ namespace Synet
                                 minW = std::min(minW, pNormW[ck]);
                                 maxW = std::max(maxW, pNormW[ck]);
                             }
-                        scale = 127.0f / std::max(abs(maxW), abs(minW));
+                        float abs = std::max(::abs(maxW), ::abs(minW));
+                        if (pSrcB)
+                            abs = std::max(abs, ::abs(pSrcB[d]) / float(128 * 256 * 256));
+                        scale = 127.0f / abs;
                         for (size_t c = 0, ck = 0; c < C; ++c)
                             for (size_t k = 0; k < K; ++k, ++ck)
                                 if (_negSrc)
@@ -460,7 +466,8 @@ namespace Synet
                     pSrcW += CK*D;
                     pDstW += CK*D;
                 }
-                pSrcB += D;
+                if (pSrcB)
+                    pSrcB += D;
                 pDstB += D;
                 pDstS += D;
                 pSrcScale += C;

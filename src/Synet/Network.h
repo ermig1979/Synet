@@ -810,7 +810,7 @@ private:
                     if (param.type() == LayerTypeConvolution || param.type() == LayerTypeMergedConvolution || param.type() == LayerTypeScale)
                         _stats[_statId[param.dst()[0]]]->Unify();
 
-                    if (param.type() == LayerTypePooling)
+                    if (param.type() == LayerTypePooling && param.pooling().method() == PoolingMethodTypeMax)
                         _stats[_statId[param.dst()[0]]]->UnifyAs(*_stats[_statId[param.src()[0]]]);
                     if (param.type() == LayerTypeRelu && param.relu().negativeSlope() == 0.0f)
                         _stats[_statId[param.dst()[0]]]->UnifyAs(*_stats[_statId[param.src()[0]]]);

@@ -29,7 +29,9 @@
 #include <locale>
 
 #ifdef _MSC_VER
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <windows.h>
 #include <filesystem>
 #endif

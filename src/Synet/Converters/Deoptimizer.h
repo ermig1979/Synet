@@ -88,7 +88,7 @@ namespace Synet
                 }
 				deoptimized.push_back(layer);
             }
-            Rename(changes, deoptimized);
+			Rename(changes, deoptimized);
             network.layers() = deoptimized;
             return true;
         }
@@ -106,6 +106,13 @@ namespace Synet
 				activation.type() = LayerTypeRelu;
 				activation.name() = layer.name() + "_relu";
 				activation.relu().negativeSlope() = layer.convolution().activationParam0();
+			}
+			else if (layer.convolution().activationType() == ActivationFunctionTypePrelu)
+			{
+				activation.type() = LayerTypePrelu;
+				activation.name() = layer.name() + "_prelu";
+				activation.weight().push_back(layer.weight().back());
+				convolution.weight().pop_back();
 			}
 			else
 				return false;
@@ -173,11 +180,23 @@ namespace Synet
 			return true;
 		}
 
-		bool Rename(const Changes& changes, LayerParams& layers)
+		bool Update(size_t start, Changes & changes)
+		{
+			for (size_t i = start + 1; i < changes.size(); ++i)
+			{
+				if (changes[i].prev == changes[start].prev)
+					changes[i].prev = changes[start].curr;
+			}
+			return true;
+		}
+
+		bool Rename(Changes & changes, LayerParams& layers)
 		{
 			for (size_t k = 0; k < changes.size(); ++k)
 			{
 				if (!Rename(changes[k], layers))
+					return false;
+				if (!Update(k, changes))
 					return false;
 			}
 			return true;
