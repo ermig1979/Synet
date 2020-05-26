@@ -36,7 +36,7 @@ if [ -f $IMAGE/descript.ion ];then rm $IMAGE/descript.ion; fi
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
 if [ "$BATCH" = "1" ];then
-  "$BIN" -m=convert $PATHES -tf=1 -cs=1
+  "$BIN" -m=convert $PATHES -tf=$FORMAT -cs=1
   if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 fi
 
