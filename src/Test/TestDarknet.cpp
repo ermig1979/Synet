@@ -97,7 +97,7 @@ namespace Test
                 const ::layer& l = _net->layers[i];
                 if (((i == _net->n - 1 || l.type == YOLO || l.type == REGION || l.type == DETECTION) && output) || interim || weight)
                 {
-                    os << "Layer: " << i << " : " << std::endl;
+                    os << "Layer: " << i << " : " << ToString(l.type) << " ." << std::endl;
                     if (l.type == CONVOLUTIONAL && weight)
                     {
                         Synet::Tensor<float> weight({ (size_t)l.out_c, (size_t)l.c, (size_t)l.size, (size_t)l.size });
@@ -123,8 +123,8 @@ namespace Test
                     }
                     if (((i == _net->n - 1 || l.type == YOLO || l.type == REGION || l.type == DETECTION) && output) || interim)
                     {
-                        Synet::Tensor<float> dst({ size_t(_net->batch), (size_t)l.out_c, (size_t)l.out_h, (size_t)l.out_w });
-                        memcpy(dst.CpuData(), l.output, dst.Size() * sizeof(float));
+                        Synet::Tensor<float> dst;
+                        OutputToTensor(l, dst);
                         dst.DebugPrint(os, String("dst[0]"), false, first, last, precision);
                     }
                 }
@@ -181,9 +181,53 @@ namespace Test
         void AddToOutput(const layer& l)
         {
             _output.push_back(Tensor());
-            Tensor & output = _output.back();
-            output.Reshape(Shp(l.batch, l.outputs, std::max(l.out_h, 1), std::max(l.out_w, 1)));
-            memcpy(output.CpuData(), l.output, output.Size() * sizeof(float));
+            OutputToTensor(l, _output.back());
+        }
+
+        String ToString(LAYER_TYPE type) const
+        {
+            switch (type)
+            {
+            case CONVOLUTIONAL: return "Convolution";
+            case DECONVOLUTIONAL: return "Deconvolution";
+            case CONNECTED: return "Connected";
+            case MAXPOOL: return "Maxpool";
+            case SOFTMAX: return "Softmax";
+            case DETECTION: return "Detection";
+            case DROPOUT: return "Dropout";
+            case CROP: return "Crop";
+            case ROUTE: return "Route";
+            case COST: return "Cost";
+            case NORMALIZATION: return "Normalization";
+            case AVGPOOL: return "Avgpool";
+            case LOCAL: return "Local";
+            case SHORTCUT: return "Shortcut";
+            case ACTIVE: return "Active";
+            case RNN: return "Rnn";
+            case GRU: return "Gru";
+            case CRNN: return "Crnn";
+            case BATCHNORM: return "Batchnorm";
+            case NETWORK: return "Network";
+            case XNOR: return "Xnor";
+            case REGION: return "Region";
+            case YOLO: return "Yolo";
+            case REORG: return "Reorg";
+            case UPSAMPLE: return "Upsample";
+            case BLANK: return "Blank";
+            default:
+                return "";
+            }
+        }
+
+        void OutputToTensor(const layer& l, Tensor& t)
+        {
+            if (l.type == ::SOFTMAX)
+                t.Reshape(Shp(l.batch, l.outputs, 1, 1));
+            else if (l.type == ::YOLO || l.type == ::REGION || l.type == DETECTION)
+                t.Reshape(Shp(l.batch, l.outputs / l.h / l.w, l.h, l.w));
+            else
+                t.Reshape(Shp(l.batch, l.out_c, l.out_h, l.out_w));
+            memcpy(t.CpuData(), l.output, t.Size() * sizeof(float));
         }
 
         String PatchCfg(const String & src, size_t batchSize)
