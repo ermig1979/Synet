@@ -75,11 +75,11 @@ namespace Test
             return true;
         }
 
-        virtual const Vectors & Predict(const Vectors & src)
+        virtual const Tensors & Predict(const Tensors & src)
         {
             {
                 TEST_PERF_FUNC();
-                ::network_predict(_net, (float*)src[0].data());
+                ::network_predict(_net, (float*)src[0].CpuData());
             }
             SetOutput();
             return _output;
@@ -180,11 +180,10 @@ namespace Test
 
         void AddToOutput(const layer& l)
         {
-            _output.push_back(Vector());
-            Vector& output = _output.back();
-            size_t size = l.outputs * l.batch;
-            output.resize(size);
-            memcpy(output.data(), l.output, size * sizeof(float));
+            _output.push_back(Tensor());
+            Tensor & output = _output.back();
+            output.Reshape(Shp(l.batch, l.outputs, std::max(l.out_h, 1), std::max(l.out_w, 1)));
+            memcpy(output.CpuData(), l.output, output.Size() * sizeof(float));
         }
 
         String PatchCfg(const String & src, size_t batchSize)

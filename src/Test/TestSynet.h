@@ -40,6 +40,8 @@
 
 namespace Test
 {
+    using Synet::Shp;
+
     typedef Synet::Shape Shape;
     typedef Synet::Shapes Shapes;
     typedef Synet::Floats Floats;
@@ -74,6 +76,8 @@ namespace Test
     typedef Synet::Region<float> Region;
     typedef std::vector<Region> Regions;
     typedef Synet::Floats Floats;
+    typedef Synet::Tensor<float> Tensor;
+    typedef std::vector<Tensor> Tensors;
 
     struct Network
     {
@@ -86,12 +90,12 @@ namespace Test
         virtual size_t SrcSize(size_t index) const { return 0; }
         virtual bool Init(const String & model, const String & weight, const Options & options, const TestParam & param) { return false; }
         virtual void Free() { _output.clear(); }
-        virtual const Vectors & Predict(const Vectors & src) { return _output; }
+        virtual const Tensors& Predict(const Tensors& src) { return _output; }
         virtual void DebugPrint(std::ostream & os, int flag, int first, int last, int precision) { }
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const { return Regions(); }
         virtual size_t MemoryUsage() const { return 0; }
     protected:
-        Vectors _output;
+        Tensors _output;
         float _regionThreshold;
     };
     typedef std::shared_ptr<Network> NetworkPtr;
@@ -120,7 +124,7 @@ namespace Test
         {
             Shape shape = _net.Src()[index]->Shape();
             Synet::TensorFormat format = _net.Src()[index]->Format();
-            return shape.size() == 4 && format == Synet::TensorFormatNhwc ? Shape({shape[0], shape[3], shape[1], shape[2]}) : shape;
+            return shape.size() == 4 && format == Synet::TensorFormatNhwc ? Shp(shape[0], shape[3], shape[1], shape[2]) : shape;
         }
 
         virtual size_t SrcSize(size_t index) const
@@ -166,7 +170,7 @@ namespace Test
             _net.Clear();
         }
 
-        virtual const Vectors & Predict(const Vectors & x)
+        virtual const Tensors & Predict(const Tensors& x)
         {
             SetInput(x);
             {
@@ -231,7 +235,7 @@ namespace Test
 #endif
         }
 
-        void SetInput(const Vectors & x)
+        void SetInput(const Tensors& x)
         {
             assert(x.size() == _net.Src().size());
 #ifdef SYNET_TEST_SET_INPUT
@@ -246,10 +250,10 @@ namespace Test
             for (size_t i = 0; i < x.size(); ++i)
             {
                 Net::Tensor & src = *_net.Src()[i];
-                assert(x[i].size() == src.Size());
+                assert(x[i].Size() == src.Size());
                 if (src.Format() == Synet::TensorFormatNhwc && src.Count() == 4)
                 {
-                    const float * pX = x[i].data();
+                    const float * pX = x[i].CpuData();
                     for (size_t n = 0; n < src.Axis(0); ++n)
                         for (size_t c = 0; c < src.Axis(3); ++c)
                             for (size_t y = 0; y < src.Axis(1); ++y)
@@ -257,12 +261,12 @@ namespace Test
                                     src.CpuData(Shape({ n, y, x, c }))[0] = *pX++;
                 }
                 else
-                    memcpy(src.CpuData(), x[i].data(), x[i].size() * sizeof(float));
+                    memcpy(src.CpuData(), x[i].CpuData(), x[i].Size() * sizeof(float));
             }
         }
 
 #ifdef SYNET_TEST_SET_INPUT
-        void InputToViews(const Vector & src, Views & dst)
+        void InputToViews(const Tensor & src, Views & dst)
         {
             Shape shape = _net.NchwShape();
             assert(shape[1] == 1 || shape[1] == 3);
@@ -278,7 +282,7 @@ namespace Test
                     for (size_t y = 0; y < shape[2]; ++y)
                         for (size_t x = 0; x < shape[3]; ++x)
                             dst[b].data[dst[b].stride*y + x * (shape[1] == 1 ? 1 : 4) + c] = 
-                            Float32ToUint8(src[((b*shape[1] + c)*shape[2] + y)*shape[3] + x], _lower[c], _upper[c]);
+                            Float32ToUint8(src.CpuData(Shp( b, c, y, x ))[0], _lower[c], _upper[c]);
             }
         }
 
@@ -309,69 +313,75 @@ namespace Test
             }
         }
 
-        void SetOutput(const Net::Tensor & src, const Net::Layer & back, Vector & dst)
+        void SetOutput(const Net::Tensor & src, const Net::Layer & back, Tensor & dst)
         {
-            dst.clear();
             if (src.Count() == 4 && src.Axis(3) == 7 && back.Param().type() == Synet::LayerTypeDetectionOutput)
             {
+                assert(src.Axis(0) == 1);
+                Vector tmp;
                 const float * pSrc = src.CpuData();
                 for (size_t j = 0; j < src.Axis(2); ++j, pSrc += 7)
                 {
                     if (pSrc[1] == -1 || pSrc[2] < _regionThreshold)
                         break;
-                    size_t offset = dst.size();
-                    dst.resize(offset + 7);
-                    dst[offset + 0] = pSrc[0];
-                    dst[offset + 1] = pSrc[1];
-                    dst[offset + 2] = pSrc[2];
-                    dst[offset + 3] = pSrc[3];
-                    dst[offset + 4] = pSrc[4];
-                    dst[offset + 5] = pSrc[5];
-                    dst[offset + 6] = pSrc[6];
+                    size_t offset = tmp.size();
+                    tmp.resize(offset + 7);
+                    tmp[offset + 0] = pSrc[0];
+                    tmp[offset + 1] = pSrc[1];
+                    tmp[offset + 2] = pSrc[2];
+                    tmp[offset + 3] = pSrc[3];
+                    tmp[offset + 4] = pSrc[4];
+                    tmp[offset + 5] = pSrc[5];
+                    tmp[offset + 6] = pSrc[6];
                 }
-                SortDetectionOutput(dst.data(), dst.size());
+                SortDetectionOutput(tmp.data(), tmp.size());
+                dst.Reshape(Shp(1, 1, tmp.size()/7, 7));
+                memcpy(dst.CpuData(), tmp.data(), dst.Size() * sizeof(float));
             }
             else
             {
                 bool trans = src.Format() == Synet::TensorFormatNhwc;
                 bool batch = _net.Src()[0]->Axis(0) != 1;
-                dst.resize(src.Size());
                 if (trans && src.Count() == 4)
                 {
-                    float * pDst = dst.data();
+                    dst.Reshape(Shp(src.Axis(0), src.Axis(3), src.Axis(1), src.Axis(2)));
                     for (size_t n = 0; n < src.Axis(0); ++n)
                         for (size_t c = 0; c < src.Axis(3); ++c)
                             for (size_t y = 0; y < src.Axis(1); ++y)
                                 for (size_t x = 0; x < src.Axis(2); ++x)
-                                    *pDst++ = src.CpuData(Shape({ n, y, x, c }))[0];
+                                    dst.CpuData(Shp(n, c, y, x))[0] = src.CpuData(Shp(n, y, x, c))[0];
                 }
                 else if (trans && src.Count() == 3)
                 {
-                    float * pDst = dst.data();
                     if (batch)
                     {
+                        dst.Reshape(Shp(src.Axis(0), src.Axis(2), src.Axis(1)));
                         for (size_t n = 0; n < src.Axis(0); ++n)
                             for (size_t c = 0; c < src.Axis(2); ++c)
                                 for (size_t s = 0; s < src.Axis(1); ++s)
-                                    *pDst++ = src.CpuData(Shape({ n, s, c }))[0];
+                                    dst.CpuData(Shp(n, c, s))[0] = src.CpuData(Shp(n, s, c))[0];
                     }
                     else
                     {
+                        dst.Reshape(Shp(src.Axis(2), src.Axis(0), src.Axis(1)));
                         for (size_t c = 0; c < src.Axis(2); ++c)
                             for (size_t y = 0; y < src.Axis(0); ++y)
                                 for (size_t x = 0; x < src.Axis(1); ++x)
-                                    *pDst++ = src.CpuData(Shape({ y, x, c }))[0];
+                                    dst.CpuData(Shp(c, y, x))[0] = src.CpuData(Shp(y, x, c))[0];
                     }
                 }
                 else if (trans && src.Count() == 2 && src.Axis(0) == 1)
                 {
-                    float * pDst = dst.data();
+                    dst.Reshape(Shape({src.Axis(1), src.Axis(0)}));
                     for (size_t c = 0; c < src.Axis(1); ++c)
                         for (size_t s = 0; s < src.Axis(0); ++s)
-                            *pDst++ = src.CpuData(Shape({ s, c }))[0];
+                            dst.CpuData(Shp(c, s))[0] = src.CpuData(Shp(s, c))[0];
                 }
                 else
-                    memcpy(dst.data(), src.CpuData(), src.Size() * sizeof(float));
+                {
+                    dst.Reshape(src.Shape());
+                    memcpy(dst.CpuData(), src.CpuData(), src.Size() * sizeof(float));
+                }
             }
         }
 

@@ -81,14 +81,14 @@ namespace Test
 
         struct Output
         {
-            Vectors first;
-            Vectors second;
+            Tensors first;
+            Tensors second;
         };
         typedef std::vector<Output> Outputs;
         struct TestData
         {
             Strings path;
-            Vectors input;
+            Tensors input;
             Outputs output;
         };
         typedef std::shared_ptr<TestData> TestDataPtr;
@@ -260,8 +260,8 @@ namespace Test
                 test->output.resize(_options.TestThreads());
                 for (size_t s = 0; s < sN; ++s)
                 {
-                    test->input[s].resize(network.SrcSize(s));
-                    float* input = test->input[s].data();
+                    test->input[s].Reshape(network.SrcShape(s));
+                    float* input = test->input[s].CpuData();
                     for (size_t b = 0; b < bN; ++b)
                     {
                         size_t p = s * bN + b;
@@ -398,12 +398,6 @@ namespace Test
             return true;
         }
 
-        bool Compare(float a, float b, float t) const
-        {
-            float d = ::fabs(a - b);
-            return d <= t || d / std::max(::fabs(a), ::fabs(b)) <= t;
-        }
-
         String TestFailedMessage(const TestData& test, size_t index, size_t thread)
         {
             std::stringstream ss;
@@ -414,31 +408,77 @@ namespace Test
             return ss.str();
         }
 
+        bool Compare(float a, float b, float t) const
+        {
+            float d = ::fabs(a - b);
+            return d <= t || d / std::max(::fabs(a), ::fabs(b)) <= t;
+        }
+
+        bool Compare(const Tensor& f, const Tensor& s, const Shape & i, size_t d, const String & m) const
+        {
+            using Synet::Detail::DebugPrint;
+            float _f = f.CpuData(i)[0], _s = s.CpuData(i)[0];
+            if (!Compare(_f, _s, _options.threshold))
+            {
+                std::cout << m << std::endl << std::fixed;
+                std::cout << "Dst[" << d << "]" << DebugPrint(i) << " : " << _f << " != " << _s << std::endl;
+                return false;
+            }
+            return true;
+        }
+
         bool CompareResults(const TestData& test, size_t index, size_t thread)
         {
+            using Synet::Detail::DebugPrint;
             const Output& output = test.output[thread];
+            String failed = TestFailedMessage(test, index, thread);
             if (output.first.size() != output.second.size())
             {
-                std::cout << TestFailedMessage(test, index, thread) << std::endl;
+                std::cout << failed << std::endl;
                 std::cout << "Dst count : " << output.first.size() << " != " << output.second.size() << std::endl;
                 return false;
             }
             for (size_t d = 0; d < output.first.size(); ++d)
             {
-                if (output.first[d].size() != output.second[d].size())
+                const Tensor& f = output.first[d];
+                const Tensor& s = output.second[d];
+                if (f.Shape() != s.Shape())
                 {
-                    std::cout << TestFailedMessage(test, index, thread) << std::endl;
-                    std::cout << "Dst[" << d << "] size : " << output.first[d].size() << " != " << output.second[d].size() << std::endl;
+                    std::cout << failed << std::endl;
+                    std::cout << "Dst[" << d << "] shape : " << DebugPrint(f.Shape()) << " != " << DebugPrint(s.Shape()) << std::endl;
                     return false;
                 }
-                for (size_t j = 0; j < output.second[d].size(); ++j)
+                switch (f.Count())
                 {
-                    if (!Compare(output.first[d][j], output.second[d][j], _options.threshold))
-                    {
-                        std::cout << TestFailedMessage(test, index, thread) << std::endl << std::fixed;
-                        std::cout << "Dst[" << d << "][" << j << "] : " << output.first[d][j] << " != " << output.second[d][j] << std::endl;
-                        return false;
-                    }
+                case 1:
+                    for (size_t n = 0; n < f.Axis(0); ++n)
+                        if (!Compare(f, s, Shp(n), d, failed))
+                            return false;
+                    break;
+                case 2:
+                    for (size_t n = 0; n < f.Axis(0); ++n)
+                        for (size_t c = 0; c < f.Axis(1); ++c)
+                            if (!Compare(f, s, Shp(n, c), d, failed))
+                                return false;
+                    break;
+                case 3:
+                    for (size_t n = 0; n < f.Axis(0); ++n)
+                        for (size_t c = 0; c < f.Axis(1); ++c)
+                            for (size_t y = 0; y < f.Axis(2); ++y)
+                                if (!Compare(f, s, Shp(n, c, y), d, failed))
+                                    return false;
+                    break;
+                case 4:
+                    for (size_t n = 0; n < f.Axis(0); ++n)
+                        for (size_t c = 0; c < f.Axis(1); ++c)
+                            for (size_t y = 0; y < f.Axis(2); ++y)
+                                for (size_t x = 0; x < f.Axis(3); ++x)
+                                if (!Compare(f, s, Shp(n, c, y, x), d, failed))
+                                    return false;
+                    break;
+                default:
+                    std::cout << "Error! Dst has unsupported shape " << Synet::Detail::DebugPrint(f.Shape()) << std::endl;
+                    return false;
                 }
             }
             return true;

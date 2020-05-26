@@ -156,9 +156,9 @@ namespace Test
             }
 
             {
-                Vectors stub(SrcCount());
+                Tensors stub(SrcCount());
                 for (size_t i = 0; i < SrcCount(); ++i)
-                    stub[i].resize(SrcSize(i));
+                    stub[i].Reshape(SrcShape(i));
                 SetInput(stub, 0);
                 _ieInferRequest->Infer();
             }
@@ -169,7 +169,7 @@ namespace Test
             return true;
         }
 
-        virtual const Vectors& Predict(const Vectors& src)
+        virtual const Tensors& Predict(const Tensors& src)
         {
             if (_batchSize == 1)
             {
@@ -205,18 +205,22 @@ namespace Test
         virtual Regions GetRegions(const Size& size, float threshold, float overlap) const
         {
             Regions regions;
-            for (size_t i = 0; i < _output[0].size(); i += 7)
+            if (_output[0].Axis(-1) == 7)
             {
-                if (_output[0][i + 2] > threshold)
+                for (size_t i = 0; i < _output[0].Size(); i += 7)
                 {
-                    Region region;
-                    region.id = (size_t)_output[0][i + 1];
-                    region.prob = _output[0][i + 2];
-                    region.x = size.x * (_output[0][i + 3] + _output[0][i + 5]) / 2.0f;
-                    region.y = size.y * (_output[0][i + 4] + _output[0][i + 6]) / 2.0f;
-                    region.w = size.x * (_output[0][i + 5] - _output[0][i + 3]);
-                    region.h = size.y * (_output[0][i + 6] - _output[0][i + 4]);
-                    regions.push_back(region);
+                    const float* output = _output[0].CpuData();
+                    if (output[i + 2] > threshold)
+                    {
+                        Region region;
+                        region.id = (size_t)output[i + 1];
+                        region.prob = output[i + 2];
+                        region.x = size.x * (output[i + 3] + output[i + 5]) / 2.0f;
+                        region.y = size.y * (output[i + 4] + output[i + 6]) / 2.0f;
+                        region.w = size.x * (output[i + 5] - output[i + 3]);
+                        region.h = size.y * (output[i + 6] - output[i + 4]);
+                        regions.push_back(region);
+                    }
                 }
             }
             return regions;
@@ -259,14 +263,14 @@ namespace Test
             _ieInferRequest = _ieExecutableNetwork->CreateInferRequestPtr();
         }
 
-        void SetInput(const Vectors& x, size_t b)
+        void SetInput(const Tensors& x, size_t b)
         {
             assert(_ieInput.size() == x.size() && _ieInput[0]->getTensorDesc().getLayout() == InferenceEngine::Layout::NCHW);
             for (size_t i = 0; i < x.size(); ++i)
             {
                 const InferenceEngine::SizeVector& dims = _ieInput[i]->getTensorDesc().getDims();
                 const InferenceEngine::SizeVector& strides = _ieInput[i]->getTensorDesc().getBlockingDesc().getStrides();
-                const float* src = x[i].data() + b * x[i].size() / _batchSize;
+                const float* src = x[i].CpuData() + b * x[i].Size() / _batchSize;
                 float* dst = (float*)_ieInput[i]->buffer();
                 SetInput(dims, strides, 0, src, dst);
             }
@@ -298,33 +302,41 @@ namespace Test
                 const InferenceEngine::SizeVector& strides = _ieOutput[o]->getTensorDesc().getBlockingDesc().getStrides();
                 if (dims.size() == 4 && dims[3] == 7)
                 {
+                    assert(dims[0] == 1);
+                    Vector tmp;
                     const float* pOut = _ieOutput[o]->buffer();
-                    if (b == 0)
-                        _output[o].clear();
                     for (size_t j = 0; j < dims[2]; ++j, pOut += 7)
                     {
                         if (pOut[0] == -1 || pOut[2] <= _regionThreshold)
                             break;
-                        size_t size = _output[o].size();
-                        _output[o].resize(size + 7);
-                        _output[o][size + 0] = pOut[0];
-                        _output[o][size + 1] = pOut[1];
-                        _output[o][size + 2] = pOut[2];
-                        _output[o][size + 3] = pOut[3];
-                        _output[o][size + 4] = pOut[4];
-                        _output[o][size + 5] = pOut[5];
-                        _output[o][size + 6] = pOut[6];
+                        size_t size = tmp.size();
+                        tmp.resize(size + 7);
+                        tmp[size + 0] = pOut[0];
+                        tmp[size + 1] = pOut[1];
+                        tmp[size + 2] = pOut[2];
+                        tmp[size + 3] = pOut[3];
+                        tmp[size + 4] = pOut[4];
+                        tmp[size + 5] = pOut[5];
+                        tmp[size + 6] = pOut[6];
                     }
-                    SortDetectionOutput(_output[o].data(), _output[o].size());
+                    SortDetectionOutput(tmp.data(), tmp.size());
+                    _output[o].Reshape(Shp(1, 1, tmp.size() / 7, 7));
+                    memcpy(_output[o].CpuData(), tmp.data(), _output[o].Size() * sizeof(float));
                 }
                 else
                 {
+                    if (b == 0)
+                    {
+                        Shape shape = dims;
+                        if (_batchSize != 1)
+                            shape[0] = _batchSize;
+                        _output[o].Reshape(shape);
+                    }
                     size_t size = 1;
                     for (size_t i = 0; i < dims.size(); ++i)
                         size *= dims[i];
-                    _output[o].resize(size * _batchSize);
                     const float* pOut = _ieOutput[o]->buffer();
-                    SetOutput(dims, strides, 0, pOut, _output[o].data() + b * size);
+                    SetOutput(dims, strides, 0, pOut, _output[o].CpuData() + b * size);
                 }
             }
         }

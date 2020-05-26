@@ -43,6 +43,16 @@ namespace Synet
             return os;
         }
 
+        String DebugPrint(const Shape & shape)
+        {
+            std::stringstream ss;
+            ss << "{ ";
+            for (size_t i = 0; i < shape.size(); ++i)
+                ss << shape[i] << " ";
+            ss << "}";
+            return ss.str();
+        }
+
         inline size_t Size(const Shape& shape)
         {
             size_t size = 1;
@@ -121,11 +131,7 @@ namespace Synet
 
     template<class T> inline void DebugPrint(std::ostream & os, const T * data, const Shape& shape, const std::string & name, size_t first = 6, size_t last = 2, size_t precision = 8)
     {
-        os << name << " { ";
-        for (size_t i = 0; i < shape.size(); ++i)
-            os << shape[i] << " ";
-        os << "} ";
-        os << Detail::TypeID<T>() << std::endl;
+        os << name << " " << Detail::DebugPrint(shape) << " " << Detail::TypeID<T>() << std::endl;
         if (data == NULL)
             return;
         size_t n = shape.size();

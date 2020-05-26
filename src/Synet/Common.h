@@ -157,6 +157,31 @@ namespace Synet
     typedef std::vector<View> Views;
 #endif
 
+    SYNET_INLINE Shape Shp()
+    {
+        return Shape();
+    }
+
+    SYNET_INLINE Shape Shp(size_t axis0)
+    {
+        return Shape({ axis0 });
+    }
+
+    SYNET_INLINE Shape Shp(size_t axis0, size_t axis1)
+    {
+        return Shape({ axis0, axis1 });
+    }
+
+    SYNET_INLINE Shape Shp(size_t axis0, size_t axis1, size_t axis2)
+    {
+        return Shape({ axis0, axis1, axis2 });
+    }
+
+    SYNET_INLINE Shape Shp(size_t axis0, size_t axis1, size_t axis2, size_t axis3)
+    {
+        return Shape({ axis0, axis1, axis2, axis3 });
+    }
+
     SYNET_INLINE bool FileExist(const String & path)
     {
 #ifdef _MSC_VER
