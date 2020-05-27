@@ -191,4 +191,31 @@ namespace Synet
 				assert(0);
 		}
 	}
+
+    template <typename T> void UpdateStatistics(const T* src, size_t batch, size_t channels, size_t height, size_t width, TensorFormat format, T* min, T* max, uint32_t * histograms, size_t size, T eps)
+    {
+        UpdateStatistics(src, batch, channels, height, width, format, min, max);
+        for (size_t b = 0; b < batch; ++b)
+        {
+            if (format == TensorFormatNhwc)
+            {
+                for (size_t h = 0; h < height; ++h)
+                {
+                    for (size_t w = 0; w < width; ++w)
+                    {
+                        for (size_t c = 0; c < channels; ++c)
+                        {
+                            T range = std::max(eps, max - min);
+                            T value = (src[c] - min[c]) / range;
+                            uint32_t index = uint32_t(value * size);
+                            histograms[c * size + index]++;
+                        }
+                        src += channels;
+                    }
+                }
+            }
+            else
+                assert(0);
+        }
+    }
 }

@@ -421,7 +421,8 @@ namespace Test
             if (!Compare(_f, _s, _options.threshold))
             {
                 std::cout << m << std::endl << std::fixed;
-                std::cout << "Dst[" << d << "]" << DebugPrint(i) << " : " << _f << " != " << _s << std::endl;
+                std::cout << "Dst[" << d << "]" << DebugPrint(f.Shape()) << " at ";
+                std::cout << DebugPrint(i) << " : " << _f << " != " << _s << std::endl;
                 return false;
             }
             return true;
