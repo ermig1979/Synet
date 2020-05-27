@@ -256,7 +256,7 @@ namespace Test
         Strings _inputNames, _outputNames, _interimNames;
         size_t _batchSize;
 
-        void CreateExecutableNetworkAndInferRequest(const StringMap & config)
+        void CreateExecutableNetworkAndInferRequest(const StringMap& config)
         {
             _ieExecutableNetwork = std::make_shared<InferenceEngine::ExecutableNetwork>(
                 _ieCore->LoadNetwork(*_ieNetwork, _ieDeviceName, config));
@@ -329,7 +329,12 @@ namespace Test
                     {
                         Shape shape = dims;
                         if (_batchSize != 1)
-                            shape[0] = _batchSize;
+                        {
+                            if (shape[0] == 1)
+                                shape[0] = _batchSize;
+                            else
+                                shape.insert(shape.begin(), _batchSize);
+                        }
                         _output[o].Reshape(shape);
                     }
                     size_t size = 1;
@@ -466,7 +471,7 @@ namespace Test
 
 namespace Test
 {
-    bool ConvertTextWeightToBinary(const String & src, const String & dst)
+    bool ConvertTextWeightToBinary(const String& src, const String& dst)
     {
         std::ifstream ifs(src.c_str());
         if (!ifs.is_open())

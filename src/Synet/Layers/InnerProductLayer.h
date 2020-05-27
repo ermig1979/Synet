@@ -104,7 +104,7 @@ namespace Synet
             Shape dstShape = src[0]->Shape();
             dstShape.resize(_axis + 1);
             dstShape[_axis] = _Ndim;
-            dst[0]->Reshape(dstShape, src[0]->Format());
+            dst[0]->Reshape(dstShape, TensorFormatNchw);
             std::stringstream desc;
             desc << "M=" << _Mdim << " N=" << _Ndim << " K=" << _Kdim;
             this->UsePerfStat(desc.str(), Flop());

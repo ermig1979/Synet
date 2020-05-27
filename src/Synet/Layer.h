@@ -65,6 +65,11 @@ namespace Synet
             return _weight; 
         }
 
+        bool IsBack() const
+        {
+            return _isBack;
+        }
+
         virtual size_t MemoryUsage() const
         {
             return 0;
