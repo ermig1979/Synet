@@ -82,6 +82,7 @@
 #include "Synet/Layers/YoloLayer.h"
 
 #include "Synet/Utils/SetInput.h"
+#include "Synet/Utils/Statistics.h"
 
 namespace Synet
 {
@@ -425,11 +426,11 @@ namespace Synet
             SetFastMode(mode);
         }
 
-        void UpdateStatistics()
+        void UpdateStatistics(float quantile, float epsilon)
         {
             SYNET_PERF_FUNC();
             for (size_t i = 0; i < _tensors.size(); ++i)
-                 UpdateStatistics(*_tensors[i]);
+                 UpdateStatistics(*_tensors[i], quantile, epsilon);
         }
 
         void DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
@@ -707,8 +708,6 @@ private:
             return true;
         }
 
-
-
         bool Is8iInSubGraph(const Stage & stage)
         {
             const Layer & layer = *stage.layer;
@@ -860,7 +859,7 @@ private:
             }
         }
 
-        void UpdateStatistics(const Tensor & tensor)
+        void UpdateStatistics(const Tensor & tensor, float quantile, float epsilon)
         {
             if (tensor.Name().empty() || tensor.GetType() != TensorType32f || tensor.Format() != TensorFormatNhwc || tensor.Count() != 4)
                 return;
@@ -878,7 +877,7 @@ private:
                 stat.min().resize(shape[3], FLT_MAX);
             if (stat.max().empty())
                 stat.max().resize(shape[3], -FLT_MAX);
-            Synet::UpdateStatistics(tensor.CpuData(), shape[0], shape[3], shape[1], shape[2], tensor.Format(), stat.min().data(), stat.max().data());
+            UpdateChannelsQuantile(tensor, quantile, epsilon, stat.min().data(), stat.max().data());
         }
 
         bool InsertDst(const String & name)

@@ -192,7 +192,7 @@ namespace Test
                 return false;
             }
             _synet.Forward();
-            _synet.UpdateStatistics();
+            _synet.UpdateStatistics(0, 0.000001f);
             if (!_options.consoleSilence)
                 std::cout << ".";
             return true;
