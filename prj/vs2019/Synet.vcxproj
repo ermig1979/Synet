@@ -103,6 +103,7 @@
     <ClInclude Include="..\..\src\Synet\Utils\ConvParam.h" />
     <ClInclude Include="..\..\src\Synet\Utils\DebugPrint.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Deconvolution.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\Difference.h" />
     <ClInclude Include="..\..\src\Synet\Utils\FileUtils.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Gemm.h" />
     <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h" />

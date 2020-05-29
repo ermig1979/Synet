@@ -344,7 +344,7 @@ namespace Test
                 bool batch = _net.Src()[0]->Axis(0) != 1;
                 if (trans && src.Count() == 4)
                 {
-                    dst.Reshape(Shp(src.Axis(0), src.Axis(3), src.Axis(1), src.Axis(2)));
+                    dst.Reshape(Shp(src.Axis(0), src.Axis(3), src.Axis(1), src.Axis(2)), Synet::TensorFormatNchw);
                     for (size_t n = 0; n < src.Axis(0); ++n)
                         for (size_t c = 0; c < src.Axis(3); ++c)
                             for (size_t y = 0; y < src.Axis(1); ++y)
@@ -355,7 +355,7 @@ namespace Test
                 {
                     if (batch)
                     {
-                        dst.Reshape(Shp(src.Axis(0), src.Axis(2), src.Axis(1)));
+                        dst.Reshape(Shp(src.Axis(0), src.Axis(2), src.Axis(1)), Synet::TensorFormatNchw);
                         for (size_t n = 0; n < src.Axis(0); ++n)
                             for (size_t c = 0; c < src.Axis(2); ++c)
                                 for (size_t s = 0; s < src.Axis(1); ++s)
@@ -363,7 +363,7 @@ namespace Test
                     }
                     else
                     {
-                        dst.Reshape(Shp(src.Axis(2), src.Axis(0), src.Axis(1)));
+                        dst.Reshape(Shp(src.Axis(2), src.Axis(0), src.Axis(1)), Synet::TensorFormatNchw);
                         for (size_t c = 0; c < src.Axis(2); ++c)
                             for (size_t y = 0; y < src.Axis(0); ++y)
                                 for (size_t x = 0; x < src.Axis(1); ++x)
@@ -372,14 +372,14 @@ namespace Test
                 }
                 else if (trans && src.Count() == 2 && src.Axis(0) == 1)
                 {
-                    dst.Reshape(Shape({src.Axis(1), src.Axis(0)}));
+                    dst.Reshape(Shp(src.Axis(1), src.Axis(0)), Synet::TensorFormatNchw);
                     for (size_t c = 0; c < src.Axis(1); ++c)
                         for (size_t s = 0; s < src.Axis(0); ++s)
                             dst.CpuData(Shp(c, s))[0] = src.CpuData(Shp(s, c))[0];
                 }
                 else
                 {
-                    dst.Reshape(src.Shape());
+                    dst.Reshape(src.Shape(), Synet::TensorFormatNchw);
                     memcpy(dst.CpuData(), src.CpuData(), src.Size() * sizeof(float));
                 }
             }

@@ -28,7 +28,16 @@
 
 namespace Synet
 {
-    template<class T> bool LoadBinaryData(const String& path, std::vector<T> & data)
+    SYNET_INLINE bool FileExist(const String& path)
+    {
+#ifdef _MSC_VER
+        return (::_access(path.c_str(), 0) != -1);
+#else
+        return (::access(path.c_str(), F_OK) != -1);
+#endif
+    }
+
+    template<class T> inline bool LoadBinaryData(const String& path, std::vector<T> & data)
     {
         std::ifstream ifs(path.c_str(), std::ofstream::binary);
         if (!ifs.is_open())
@@ -44,7 +53,7 @@ namespace Synet
         return true;
     }
 
-    template<class T> bool SaveBinaryData(const std::vector<T> & data, const String& path)
+    template<class T> inline bool SaveBinaryData(const std::vector<T> & data, const String& path)
     {
         std::ofstream ofs(path.c_str(), std::ofstream::binary);
         if (!ofs.is_open())

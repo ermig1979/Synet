@@ -470,6 +470,10 @@ namespace Test
                                     return false;
                     break;
                 case 4:
+                {
+                    Tensor d(s.Shape(), s.Format());
+                    Synet::EstimateDifference(f, s, d);
+                }
                     for (size_t n = 0; n < f.Axis(0); ++n)
                         for (size_t c = 0; c < f.Axis(1); ++c)
                             for (size_t y = 0; y < f.Axis(2); ++y)

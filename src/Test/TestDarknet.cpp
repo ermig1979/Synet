@@ -222,11 +222,11 @@ namespace Test
         void OutputToTensor(const layer& l, Tensor& t)
         {
             if (l.type == ::SOFTMAX)
-                t.Reshape(Shp(l.batch, l.outputs, 1, 1));
+                t.Reshape(Shp(l.batch, l.outputs, 1, 1), Synet::TensorFormatNchw);
             else if (l.type == ::YOLO || l.type == ::REGION || l.type == DETECTION)
-                t.Reshape(Shp(l.batch, l.outputs / l.h / l.w, l.h, l.w));
+                t.Reshape(Shp(l.batch, l.outputs / l.h / l.w, l.h, l.w), Synet::TensorFormatNchw);
             else
-                t.Reshape(Shp(l.batch, l.out_c, l.out_h, l.out_w));
+                t.Reshape(Shp(l.batch, l.out_c, l.out_h, l.out_w), Synet::TensorFormatNchw);
             memcpy(t.CpuData(), l.output, t.Size() * sizeof(float));
         }
 

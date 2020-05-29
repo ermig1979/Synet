@@ -320,7 +320,7 @@ namespace Test
                         tmp[size + 6] = pOut[6];
                     }
                     SortDetectionOutput(tmp.data(), tmp.size());
-                    _output[o].Reshape(Shp(1, 1, tmp.size() / 7, 7));
+                    _output[o].Reshape(Shp(1, 1, tmp.size() / 7, 7), Synet::TensorFormatNchw);
                     memcpy(_output[o].CpuData(), tmp.data(), _output[o].Size() * sizeof(float));
                 }
                 else
@@ -335,7 +335,7 @@ namespace Test
                             else
                                 shape.insert(shape.begin(), _batchSize);
                         }
-                        _output[o].Reshape(shape);
+                        _output[o].Reshape(shape, Synet::TensorFormatNchw);
                     }
                     size_t size = 1;
                     for (size_t i = 0; i < dims.size(); ++i)

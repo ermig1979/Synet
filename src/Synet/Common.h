@@ -182,15 +182,6 @@ namespace Synet
         return Shape({ axis0, axis1, axis2, axis3 });
     }
 
-    SYNET_INLINE bool FileExist(const String & path)
-    {
-#ifdef _MSC_VER
-        return (::_access(path.c_str(), 0) != -1);
-#else
-        return (::access(path.c_str(), F_OK) != -1);
-#endif
-    }
-
     SYNET_INLINE Strings Separate(const String & str, const String & delimeter)
     {
         size_t current = 0;
@@ -271,7 +262,7 @@ namespace Synet
         size_t id;
     };
 
-    enum DebugPrinType
+    enum DebugPrintType
     {
         DebugPrintOutput = 0,
         DebugPrintLayerDst,

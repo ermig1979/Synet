@@ -25,3 +25,4 @@
 #pragma once
 
 #include "Synet/Network.h"
+#include "Synet/Utils/Difference.h"
