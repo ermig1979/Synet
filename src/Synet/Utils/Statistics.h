@@ -42,13 +42,29 @@ namespace Synet
                         {
                             for (size_t c = 0; c < channels; ++c)
                             {
-                                float value = src[c];
+                                T value = src[c];
                                 min[c] = std::min(min[c], value);
                                 max[c] = std::max(max[c], value);
                             }
                             src += channels;
                         }
                     }
+                }
+                else if (format == TensorFormatNchw)
+                {
+					for (size_t c = 0; c < channels; ++c)
+					{
+						for (size_t h = 0; h < height; ++h)
+						{
+							for (size_t w = 0; w < width; ++w)
+							{
+								T value = src[w];
+								min[c] = std::min(min[c], value);
+								max[c] = std::max(max[c], value);
+							}
+							src += width;
+						}
+					}
                 }
                 else
                     assert(0);
@@ -118,6 +134,8 @@ namespace Synet
         assert(tensor.Count() == 4);
         if (tensor.Format() == TensorFormatNhwc)
             Detail::UpdateChannelsMinMax(tensor.CpuData(), tensor.Axis(0), tensor.Axis(3), tensor.Axis(1), tensor.Axis(2), tensor.Format(), min, max);
+        else if (tensor.Format() == TensorFormatNchw)
+            Detail::UpdateChannelsMinMax(tensor.CpuData(), tensor.Axis(0), tensor.Axis(1), tensor.Axis(2), tensor.Axis(3), tensor.Format(), min, max);
         else
             assert(0);
     }

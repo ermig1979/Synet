@@ -24,145 +24,156 @@
 
 #pragma once
 
-#include "Synet/Tensor.h"
+#include "Synet/Utils/Statistics.h"
 
 namespace Synet
 {
-    template<class T> struct DifferenceStatistics
+    template <typename T> class Difference
     {
-        T max, min, sum, sqsum;
-        size_t count;
-        Shape indexMin, indexMax;
-        DifferenceStatistics()
-            : max(0), min(0), sum(0), sqsum(0), count(0)
+    public:
+        typedef T Type;
+        typedef Synet::Tensor<T> Tensor;
+        typedef std::vector<T> Vector;
+
+        Difference()
         {
         }
 
-        void Update(T val, const Shape& idx)
+        bool Estimate(const Tensor & first, const Tensor & second)
         {
-            count += 1;
-            sum += val;
-            sqsum += val * val;
-            if (val > max)
+            if (first.Format() != second.Format() || first.Shape() != second.Shape())
+                return false;
+
+            if (!Init(first))
+                return false;
+
+            SetNorm(first.CpuData());
+
+            CollectStatistics(first.CpuData(), second.CpuData());
+
+            _statistics.Resume();
+
+            return true;
+        }
+
+    private:
+
+        TensorFormat _format;
+        size_t _batch, _channels, _height, _width;
+        Vector _norm;
+
+        struct Specific
+        {
+            String name;
+            double diff;
+            Type first, second;
+            Shape index;
+            Specific()
+                : diff(0)
+            {}
+        };
+        typedef std::vector<Specific> Specifics;        
+        
+        struct Statistics
+        {
+            double sum, sqsum, average, sigma;
+            size_t count;
+            Specific absMax;
+
+            Statistics()
+                : sum(0), sqsum(0), count(0)
             {
-                max = val;
-                indexMax = idx;
             }
-            if (val < min)
+
+            void Update(Type first, Type second, Type norm, const Shape& index)
             {
-                min = val;
-                indexMin = idx;
+                double diff = (first - second) * norm;
+                count += 1;
+                sum += diff;
+                sqsum += diff * diff;
+                double abs = std::abs(diff);
+                if (abs > absMax.diff)
+                {
+                    absMax.diff = abs;
+                    absMax.first = first;
+                    absMax.second = second;
+                    absMax.index = index;
+                }
+            }
+
+            void Resume()
+            {
+                average = sum / count;
+                sigma = sqrt(sqsum / count - average * average);
+            }
+        } _statistics;        
+
+        bool Init(const Tensor& tensor)
+        {
+            _format = tensor.Format();
+            if (tensor.Count() != 4)
+                return false;
+            if (_format == TensorFormatNchw)
+            {
+                _batch = tensor.Axis(0);
+                _channels = tensor.Axis(1);
+                _height = tensor.Axis(2);
+                _width = tensor.Axis(3);
+            }
+            else if (TensorFormatNhwc)
+            {
+                _batch = tensor.Axis(0);
+                _height = tensor.Axis(1);
+                _width = tensor.Axis(2);
+                _channels = tensor.Axis(3);
+            }
+            else
+                return false;
+            return true;
+        }
+
+        void SetNorm(const T * src)
+        {
+            Vector min, max;
+            min.resize(_channels, std::numeric_limits<Type>::max());
+            max.resize(_channels, std::numeric_limits<Type>::lowest());
+            Detail::UpdateChannelsMinMax(src, _batch, _channels, _height, _width, _format, min.data(), max.data());
+            _norm.resize(_channels);
+            for (size_t c = 0; c < _channels; ++c)
+                _norm[c] = Type(1) / std::max(Type(1), max[c] - min[c]);
+        }
+
+        void CollectStatistics(const Type * first, const Type * second)
+        {
+            for (size_t b = 0; b < _batch; ++b)
+            {
+                if (_format == TensorFormatNhwc)
+                {
+                    for (size_t h = 0; h < _height; ++h)
+                    {
+                        for (size_t w = 0; w < _width; ++w)
+                        {
+                            for (size_t c = 0; c < _channels; ++c)
+                                _statistics.Update(first[c], second[c], _norm[c], Shp(b, c, h, w));
+                            first += _channels, second += _channels;
+                        }
+                    }
+                }
+                else if (_format == TensorFormatNchw)
+                {
+                    for (size_t c = 0; c < _channels; ++c)
+                    {
+                        for (size_t h = 0; h < _height; ++h)
+                        {
+                            for (size_t w = 0; w < _width; ++w)
+                                _statistics.Update(first[w], second[w], _norm[c], Shp(b, c, h, w));
+                            first += _width, second += _width;
+                        }
+                    }
+                }
+                else
+                    assert(0);
             }
         }
     };
-
-	namespace Detail
-	{
-        template <typename T> void UpdateChannelsMaxAbs(const T* src, size_t batch, size_t channels, size_t height, size_t width, TensorFormat format, T* max)
-        {
-            for (size_t b = 0; b < batch; ++b)
-            {
-                if (format == TensorFormatNhwc)
-                {
-                    for (size_t h = 0; h < height; ++h)
-                    {
-                        for (size_t w = 0; w < width; ++w)
-                        {
-                            for (size_t c = 0; c < channels; ++c)
-                            {
-                                float abs = std::abs(src[c]);
-                                max[c] = std::max(max[c], abs);
-                            }
-                            src += channels;
-                        }
-                    }
-                }
-                else if (format == TensorFormatNchw)
-                {
-					for (size_t c = 0; c < channels; ++c)
-					{
-                        float _max = max[c];
-						for (size_t h = 0; h < height; ++h)
-						{
-							for (size_t w = 0; w < width; ++w)
-							{
-								float abs = std::abs(src[w]);
-                                _max = std::max(_max, abs);
-							}
-							src += width;
-						}
-                        max[c] = _max;
-					}
-                }
-                else
-                    assert(0);
-            }
-        }
-
-        template <typename T, typename D> void SetDifferenceStatistics(const T* first, const T* second, size_t batch, size_t channels, size_t height, size_t width, TensorFormat format,
-            const T* norm, Synet::DifferenceStatistics<D>& diff)
-        {
-            for (size_t b = 0; b < batch; ++b)
-            {
-                if (format == TensorFormatNhwc)
-                {
-                    for (size_t h = 0; h < height; ++h)
-                    {
-                        for (size_t w = 0; w < width; ++w)
-                        {
-                            for (size_t c = 0; c < channels; ++c)
-                                diff.Update((first[c] - second[c]) / norm[c], Shp(b, c, h, w));
-                            first += channels, second += channels;
-                        }
-                    }
-                }
-                else if (format == TensorFormatNchw)
-                {
-                    for (size_t c = 0; c < channels; ++c)
-                    {
-                        for (size_t h = 0; h < height; ++h)
-                        {
-                            for (size_t w = 0; w < width; ++w)
-                                diff.Update((first[w] - second[w]) / norm[c], Shp(b, c, h, w));
-                            first += width, second += width;
-                        }
-                    }
-                }
-                else
-                    assert(0);
-            }
-        }
-	}
-
-    template <typename T> inline void UpdateChannelsMaxAbs(const Tensor<T>& tensor, T* max)
-    {
-        assert(tensor.Count() == 4);
-        if (tensor.Format() == TensorFormatNhwc)
-            Detail::UpdateChannelsMaxAbs(tensor.CpuData(), tensor.Axis(0), tensor.Axis(3), tensor.Axis(1), tensor.Axis(2), tensor.Format(), max);
-        else if (tensor.Format() == TensorFormatNchw)
-            Detail::UpdateChannelsMaxAbs(tensor.CpuData(), tensor.Axis(0), tensor.Axis(1), tensor.Axis(2), tensor.Axis(3), tensor.Format(), max);
-        else
-            assert(0);
-    }
-
-    template <typename T, typename D> inline void SetDifferenceStatistics(const Tensor<T>& a, const Tensor<T>& b, const T* n, DifferenceStatistics<D>& d)
-    {
-        assert(a.Count() == 4);
-        if (a.Format() == TensorFormatNhwc)
-            Detail::SetDifferenceStatistics(a.CpuData(), b.CpuData(), a.Axis(0), a.Axis(3), a.Axis(1), a.Axis(2), a.Format(), n, d);
-        else if (a.Format() == TensorFormatNchw)
-            Detail::SetDifferenceStatistics(a.CpuData(), b.CpuData(), a.Axis(0), a.Axis(1), a.Axis(2), a.Axis(3), a.Format(), n, d);
-        else
-            assert(0);
-    }
-
-	template <typename T, typename D> inline void EstimateDifference(const Tensor<T>& a, const Tensor<T>& b, DifferenceStatistics<D>& d)
-	{
-        assert(a.Count() == 4 && a.Shape() == b.Shape());
-        size_t channels = a.Format() == TensorFormatNhwc ? a.Axis(3) : a.Axis(1);
-        std::vector<T> max(channels, 1.0);
-        UpdateChannelsMaxAbs(a, max.data());
-        UpdateChannelsMaxAbs(b, max.data());
-        SetDifferenceStatistics(a, b, max.data(), d);
-	}
 }

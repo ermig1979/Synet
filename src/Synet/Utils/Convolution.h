@@ -137,6 +137,7 @@ namespace Synet
                 if (_context)
                     ::SimdRelease(_context);
                 SimdSynetCompatibilityType compatibility = SimdCpuInfo(SimdCpuInfoAvx512vnni) ? SimdSynetCompatibilityFast : SimdSynetCompatibilityOverflow16i;
+                //compatibility = SimdSynetCompatibilityFast;
                 compatibility = (SimdSynetCompatibilityType)(compatibility | SimdSynetCompatibilityNoFmaTail);
                 _context = ::SimdSynetConvolution8iInit(batch, (const SimdConvolutionParameters*)conv, compatibility);
             }

@@ -471,15 +471,15 @@ namespace Test
                     break;
                 case 4:
                 {
-                    Synet::DifferenceStatistics<double> d;
-                    Synet::EstimateDifference(f, s, d);
+                    Synet::Difference<float> difference;
+                    difference.Estimate(f, s);
                 }
                     for (size_t n = 0; n < f.Axis(0); ++n)
                         for (size_t c = 0; c < f.Axis(1); ++c)
                             for (size_t y = 0; y < f.Axis(2); ++y)
                                 for (size_t x = 0; x < f.Axis(3); ++x)
-                                if (!Compare(f, s, Shp(n, c, y, x), d, failed))
-                                    return false;
+                                    if (!Compare(f, s, Shp(n, c, y, x), d, failed))
+                                        return false;
                     break;
                 default:
                     std::cout << "Error! Dst has unsupported shape " << Synet::Detail::DebugPrint(f.Shape()) << std::endl;
