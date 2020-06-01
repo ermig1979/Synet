@@ -471,7 +471,7 @@ namespace Test
                     break;
                 case 4:
                 {
-                    Tensor d(s.Shape(), s.Format());
+                    Synet::DifferenceStatistics<double> d;
                     Synet::EstimateDifference(f, s, d);
                 }
                     for (size_t n = 0; n < f.Axis(0); ++n)
