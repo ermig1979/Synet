@@ -107,6 +107,9 @@ namespace Test
         bool _notifiedFirst, _notifiedSecond;
         size_t _progressMessageSizeMax;
 
+        typedef Synet::Difference<float> Difference;
+        typedef std::vector<Difference> Differences;
+
         void PrintStartMessage() const
         {
             std::cout << "Start ";
@@ -471,8 +474,13 @@ namespace Test
                     break;
                 case 4:
                 {
-                    Synet::Difference<float> difference;
+                    Difference difference;
                     difference.Estimate(f, s);
+                    const Difference::Specific* exceed = difference.Exceed(_options.threshold, 0.0001);
+                    if (exceed)
+                    {
+
+                    }
                 }
                     for (size_t n = 0; n < f.Axis(0); ++n)
                         for (size_t c = 0; c < f.Axis(1); ++c)
