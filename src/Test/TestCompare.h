@@ -421,7 +421,7 @@ namespace Test
         {
             using Synet::Detail::DebugPrint;
             float _f = f.CpuData(i)[0], _s = s.CpuData(i)[0];
-            if (!Compare(_f, _s, _options.threshold))
+            if (!Compare(_f, _s, _options.compareThreshold))
             {
                 std::cout << m << std::endl << std::fixed;
                 std::cout << "Dst[" << d << "]" << DebugPrint(f.Shape()) << " at ";
@@ -429,6 +429,17 @@ namespace Test
                 return false;
             }
             return true;
+        }
+
+        void PrintError(const Difference & d, size_t i, const String& m) const
+        {
+            using Synet::Detail::DebugPrint;
+            const Difference::Statistics& s = d.GetStatistics();
+            const Difference::Specific& e = s.exceed;
+            std::cout << m << std::endl << std::fixed;
+            std::cout << "Dst[" << i << "]" << DebugPrint(d.GetShape()) << " at ";
+            std::cout << DebugPrint(e.index) << " : diff = " << e.diff << " (" << e.first << " != " << e.second << ")";
+            std::cout << ", num = " << double(e.count)/s.count << "(" << e.count << "), max = " << s.max.diff << ", std = " << s.sdev << std::endl;
         }
 
         bool CompareResults(const TestData& test, size_t index, size_t thread)
@@ -452,6 +463,16 @@ namespace Test
                     std::cout << "Dst[" << d << "] shape : " << DebugPrint(f.Shape()) << " != " << DebugPrint(s.Shape()) << std::endl;
                     return false;
                 }
+                Difference difference(f, s);
+                if (difference.Valid())
+                {
+                    if (!difference.Estimate(_options.compareThreshold, _options.compareQuantile))
+                    {
+                        PrintError(difference, d, failed);
+                        return false;
+                    }
+                    continue;
+                }
                 switch (f.Count())
                 {
                 case 1:
@@ -473,15 +494,6 @@ namespace Test
                                     return false;
                     break;
                 case 4:
-                {
-                    Difference difference;
-                    difference.Estimate(f, s);
-                    const Difference::Specific* exceed = difference.Exceed(_options.threshold, 0.0001);
-                    if (exceed)
-                    {
-
-                    }
-                }
                     for (size_t n = 0; n < f.Axis(0); ++n)
                         for (size_t c = 0; c < f.Axis(1); ++c)
                             for (size_t y = 0; y < f.Axis(2); ++y)

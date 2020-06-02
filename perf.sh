@@ -16,10 +16,10 @@ THREAD=$4
 BATCH=$5
 if [ "$FRAMEWORK" = "quantization" ]; then
   PATHES="-fm=$DIR/synet.xml -fw=$DIR/synet.bin -sm=$DIR/int8.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
-  THRESHOLD=0.05
+  THRESHOLD=0.05; QUANTILE=0.0
 else
   PATHES="-fm=$DIR/other.dsc -fw=$DIR/other.dat -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
-  THRESHOLD=0.002
+  THRESHOLD=0.002; QUANTILE=0.0
 fi
 OUT=./test/perf/"$DATE_TIME$PREFIX"_t"$THREAD"
 OUT_SYNC="$OUT"/sync.txt
@@ -40,7 +40,7 @@ if [ "$BATCH" = "1" ];then
   if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -t=$THRESHOLD -et=1.0 -st=20.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -et=1.0 -st=20.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 

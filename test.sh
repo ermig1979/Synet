@@ -10,14 +10,14 @@ else
 fi
 if [ "$FRAMEWORK" = "quantization" ]; then
   PATHES="-fm=$DIR/synet.xml -fw=$DIR/synet.bin -sm=$DIR/int8.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
-  THRESHOLD=0.01
+  THRESHOLD=0.01; QUANTILE=0.0
 else
   PATHES="-fm=$DIR/other.dsc -fw=$DIR/other.dat -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
   if [ "${NAME:0:5}" = "test_" ] && [ "${NAME:8:9}" = "i" ]; then
-    THRESHOLD=0.01
+    THRESHOLD=0.01; QUANTILE=0.0
     echo "Use increased accuracy threshold : $THRESHOLD for INT8."
   else
-    THRESHOLD=0.002
+    THRESHOLD=0.002; QUANTILE=0.0
   fi
 fi
 NUMBER=$4
@@ -38,7 +38,7 @@ export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 "$BIN" -m=convert $PATHES -tf=$FORMAT
 if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -et=10.0 -dp=0 -dpf=6 -dpl=2 -dpp=8 -ar=0 -rt=0.5 -cs=0 -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -et=10.0 -dp=0 -dpf=6 -dpl=2 -dpp=8 -ar=0 -rt=0.5 -cs=0 -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 

@@ -40,18 +40,17 @@ namespace Synet
             double diff;
             Type first, second;
             Shape index;
-            Specific(double d = 0, Type f = 0, Type s = 0, const Shape& i = Shape())
-                : diff(d), first(f), second(s), index(i) {}
+            size_t count;
+            Specific(double d = 0, Type f = 0, Type s = 0, const Shape& i = Shape(), size_t c = 0)
+                : diff(d), first(f), second(s), index(i), count(c) {}
         };
-        typedef std::vector<Specific> Specifics;
         typedef std::vector<int> Histogram;
 
         struct Statistics
         {
             double vsum, asum, ssum, mean, sdev, adev;
             size_t count;
-            Specific max;
-            Specifics spec;
+            Specific max, exceed;
             Histogram hist;
 
             Statistics()
@@ -61,25 +60,24 @@ namespace Synet
             }
         };
 
-        Difference()
+        Difference(const Tensor& first, const Tensor& second)
+            : _valid(false)
         {
+            _valid = Init(first, second);
         }
 
-        bool Estimate(const Tensor & first, const Tensor & second)
+        bool Valid() const
         {
-            if (first.Format() != second.Format() || first.Shape() != second.Shape())
-                return false;
+            return _valid;
+        }
 
-            if (!Init(first))
-                return false;
+        bool Estimate(double threshold, double quantile = 0)
+        {
+            SetNorm(_first);
 
-            SetNorm(first.CpuData());
+            CollectStatistics(threshold);
 
-            CollectStatistics(first.CpuData(), second.CpuData());
-
-            SetResume();
-
-            return true;
+            return Resume(quantile);
         }
 
         const Statistics & GetStatistics() const
@@ -92,35 +90,22 @@ namespace Synet
             return _shape;
         }
 
-        const Specific* Exceed(double threshold, double quantile = 0)
-        {
-            size_t count = size_t(_statistics.count * quantile), exceed = 0;
-            for (size_t i = 0; i < _statistics.spec.size(); ++i)
-            {
-                if (_statistics.spec[i].diff > threshold)
-                {
-                    exceed += _statistics.hist[i];
-                    if(exceed >= count)
-                        return _statistics.spec.data() + i;
-                }
-            }
-            if (_statistics.max.diff > threshold && exceed >= count)
-                return &_statistics.max;
-            return NULL;
-        }
-
     private:
 
+        bool _valid;
+        const Type* _first, * _second;
         TensorFormat _format;
         size_t _batch, _channels, _height, _width;
         Shape _shape;
         Vector _norm;
         Statistics _statistics;
 
-        bool Init(const Tensor& tensor)
+        bool Init(const Tensor& first, const Tensor& second)
         {
-            _format = tensor.Format();
-            _shape = tensor.Shape();
+            if (first.Format() != second.Format() || first.Shape() != second.Shape())
+                return false;
+            _format = first.Format();
+            _shape = first.Shape();
             if (_shape.size() != 4)
                 return false;
             if (_format == TensorFormatNchw)
@@ -139,6 +124,8 @@ namespace Synet
             }
             else
                 return false;
+            _first = first.CpuData();
+            _second = second.CpuData();
             return true;
         }
 
@@ -153,8 +140,10 @@ namespace Synet
                 _norm[c] = Type(1) / std::max(Type(1), max[c] - min[c]);
         }
 
-        void CollectStatistics(const Type * first, const Type * second)
+        void CollectStatistics(double threshold)
         {
+            const Type* first = _first;
+            const Type* second = _second;
             for (size_t b = 0; b < _batch; ++b)
             {
                 if (_format == TensorFormatNhwc)
@@ -164,7 +153,7 @@ namespace Synet
                         for (size_t w = 0; w < _width; ++w)
                         {
                             for (size_t c = 0; c < _channels; ++c)
-                                UpdateStatistics(first[c], second[c], _norm[c], Shp(b, c, h, w));
+                                UpdateStatistics(first[c], second[c], _norm[c], Shp(b, c, h, w), threshold);
                             first += _channels, second += _channels;
                         }
                     }
@@ -176,7 +165,7 @@ namespace Synet
                         for (size_t h = 0; h < _height; ++h)
                         {
                             for (size_t w = 0; w < _width; ++w)
-                                UpdateStatistics(first[w], second[w], _norm[c], Shp(b, c, h, w));
+                                UpdateStatistics(first[w], second[w], _norm[c], Shp(b, c, h, w), threshold);
                             first += _width, second += _width;
                         }
                     }
@@ -186,7 +175,7 @@ namespace Synet
             }
         }
 
-        void UpdateStatistics(Type first, Type second, Type norm, const Shape& index)
+        void UpdateStatistics(Type first, Type second, Type norm, const Shape& index, double threshold)
         {
             double diff = (first - second) * norm;
             double absd = std::abs(diff);
@@ -195,19 +184,24 @@ namespace Synet
             _statistics.asum += absd;
             _statistics.ssum += diff * diff;
             if (absd > _statistics.max.diff)
-                _statistics.max = Specific(absd, first, second, index);
+                _statistics.max = Specific(absd, first, second, index, 1);
             int idx = int(10.0 * log10(std::max(1.0, std::min(1.0, absd) * 1000.0)));
-            if (_statistics.hist[idx] == 0)
-                _statistics.spec.push_back(Specific(absd, first, second, index));
             _statistics.hist[idx]++;
+            if (absd >= threshold)
+            {
+                if (_statistics.exceed.count == 0)
+                    _statistics.exceed = Specific(absd, first, second, index, 1);
+                else
+                    _statistics.exceed.count++;
+            }
         }
 
-        void SetResume()
+        bool Resume(double quantile)
         {
             _statistics.mean = _statistics.vsum / _statistics.count;
             _statistics.adev = _statistics.asum / _statistics.count;
             _statistics.sdev = sqrt(_statistics.ssum / _statistics.count - _statistics.mean * _statistics.mean);
-            std::sort(_statistics.spec.begin(), _statistics.spec.end(), [](const Specific& a, const Specific& b) { return a.diff < b.diff; });
+            return int(quantile*_statistics.count) >= _statistics.exceed.count;
         }
     };
 }

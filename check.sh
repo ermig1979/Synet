@@ -14,14 +14,14 @@ FORMAT=$4
 BATCH=$5
 if [ "$FRAMEWORK" = "quantization" ]; then
   PATHES="-fm=$DIR/synet.xml -fw=$DIR/synet.bin -sm=$DIR/int8.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
-  THRESHOLD=0.02
+  THRESHOLD=0.02; QUANTILE=0.0
 else
   PATHES="-fm=$DIR/other.dsc -fw=$DIR/other.dat -sm=$DIR/synet$FORMAT.xml -sw=$DIR/synet$FORMAT.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
   if [ "${NAME:0:5}" = "test_" ] && [ "${NAME:8:9}" = "i" ]; then
-    THRESHOLD=0.011
+    THRESHOLD=0.011; QUANTILE=0.0
     echo "Use increased accuracy threshold : $THRESHOLD for INT8."
   else
-    THRESHOLD=0.0016
+    THRESHOLD=0.0016; QUANTILE=0.0
   fi
 fi
 OUT=./test/check/"$DATE_TIME"
@@ -40,7 +40,7 @@ if [ "$BATCH" = "1" ];then
   if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -rn=1 -wt=1 -tt=0 -tf=$FORMAT -bs=$BATCH -t=$THRESHOLD -cs=1 -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -rn=1 -wt=1 -tt=0 -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -cs=1 -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 

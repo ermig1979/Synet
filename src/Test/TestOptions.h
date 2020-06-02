@@ -50,7 +50,8 @@ namespace Test
         double executionTime;
         size_t workThreads;
         size_t testThreads;
-        float threshold;
+        float compareThreshold;
+        double compareQuantile;
         String logName;
         bool consoleSilence;
         String syncName;
@@ -94,7 +95,8 @@ namespace Test
             executionTime = FromString<double>(GetArg("-et", "10.0"));
             workThreads = FromString<size_t>(GetArg("-wt", "1"));
             testThreads = FromString<size_t>(GetArg("-tt", "0"));
-            threshold = FromString<float>(GetArg("-t", "0.001"));
+            compareThreshold = FromString<float>(GetArg("-ct", "0.001"));
+            compareQuantile = FromString<double>(GetArg("-cq", "0.0"));
             logName = GetArg("-ln", "", false);
             consoleSilence = FromString<bool>(GetArg("-cs", "0"));
             syncName = GetArg("-sn", "", false);
