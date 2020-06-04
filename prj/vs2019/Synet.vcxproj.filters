@@ -77,9 +77,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\InterpLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Convert.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\ConvParam.h">
       <Filter>Utils</Filter>
     </ClInclude>
@@ -264,6 +261,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Convolution32fLayer.h">
       <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Quantization\Gemm.h">
+      <Filter>Quantization</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Quantization\Convert.h">
+      <Filter>Quantization</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

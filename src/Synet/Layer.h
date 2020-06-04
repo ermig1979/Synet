@@ -28,7 +28,6 @@
 #include "Synet/Tensor.h"
 #include "Synet/Params.h"
 #include "Synet/Stat.h"
-#include "Synet/Utils/Convert.h"
 
 namespace Synet
 {

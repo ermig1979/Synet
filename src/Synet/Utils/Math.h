@@ -43,6 +43,21 @@ namespace Synet
         return value*value;
     }
 
+    template <class T> SYNET_INLINE T Min(T a, T b)
+    {
+        return a < b ? a : b;
+    }
+
+    template <class T> SYNET_INLINE T Max(T a, T b)
+    {
+        return a > b ? a : b;
+    }
+
+    template <class T> SYNET_INLINE T RestrictRange(T value, T min, T max)
+    {
+        return Max(min, Min(max, value));
+    }
+
     template <typename T> void CpuSet(size_t size, T value, T * dst)
     {
         if (value == T(0))

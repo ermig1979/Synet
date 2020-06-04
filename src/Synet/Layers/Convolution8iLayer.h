@@ -25,6 +25,8 @@
 #pragma once
 
 #include "Synet/Layers/ConvolutionLayer.h"
+#include "Synet/Quantization/Gemm.h"
+#include "Synet/Quantization/Convert.h"
 
 namespace Synet
 {
@@ -99,7 +101,7 @@ namespace Synet
             _convolution8i.Init(alg.batch, &conv);
             if (_convolution8i.Enable())
             {
-                buf[TensorType8u * BUFFER_COUNT]->As8u().Extend({ _convolution8i.ExternalBufferSize() });
+                buf[TensorType8u * BUFFER_COUNT]->As8u().Extend(Shp(_convolution8i.ExternalBufferSize()));
                 const float* bias = alg.bias ? weight[1].CpuData() : NULL;
                 const float* params = conv.activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : alg.params;
                 const float* stats[4] = {
@@ -115,7 +117,7 @@ namespace Synet
                     buf[TensorType8u * BUFFER_COUNT + 1]->As8u().Extend(src->Shape());
                 buf[TensorType8u * BUFFER_COUNT]->As8u().Extend(Shp(conv.kernelY * conv.kernelX * conv.srcC * conv.dstH * conv.dstW));
                 buf[TensorType32i * BUFFER_COUNT]->As32i().Extend(shape, src->Format());
-                Init8i();
+                Quantize();
             }
         }
 
@@ -130,7 +132,7 @@ namespace Synet
                 int32_t* sum = buf[TensorType32i * BUFFER_COUNT]->As32i().CpuData();
                 if (!_src8u)
                     Convert32fTo8u(src[0]->As32f().CpuData(), _srcCvt, tmp);
-                ForwardCpu8i(tmp, buf0, sum);
+                ForwardCpu(tmp, buf0, sum);
                 if (_dst8u)
                     Convert32iTo8u(sum, _dstCvt, dst[0]->As8u().CpuData());
                 else
@@ -138,7 +140,7 @@ namespace Synet
             }
         }
 
-        void Init8i()
+        void Quantize()
         {
             const ConvParam& conv = this->_conv;
             const AlgParam& alg = this->_alg;
@@ -208,18 +210,18 @@ namespace Synet
                                 if (_negSrc)
                                 {
 #ifdef SYNET_INT8_INT8_DISABLE
-                                    int w = Detail::Convert32fTo8i(pNormW[kc], scale, 0.0f);
+                                    int w = Convert32fTo8iSym(pNormW[kc], scale);
                                     if (w & 1)
                                         w = Round(w*0.25f) * 4;
                                     pDstW[kc*GD + d] = w / 2;
                                     normB -= w * pSrcShift[c];
 #else
-                                    pDstW[kc*GD + d] = Detail::Convert32fTo8i(pNormW[kc], scale, 0.0f);
+                                    pDstW[kc*GD + d] = Convert32fTo8iSym(pNormW[kc], scale);
 #endif
                                 }
                                 else
                                 {
-                                    pDstW[kc*GD + d] = Detail::Convert32fTo8i(pNormW[kc], scale, 0.0f);
+                                    pDstW[kc*GD + d] = Convert32fTo8iSym(pNormW[kc], scale);
                                     normB -= pDstW[kc*GD + d] * pSrcShift[c];
                                 }
                     }
@@ -245,18 +247,18 @@ namespace Synet
                                 if (_negSrc)
                                 {
 #ifdef SYNET_INT8_INT8_DISABLE
-                                    int w = Detail::Convert32fTo8i(pNormW[ck], scale, 0.0f);
+                                    int w = Convert32fTo8iSym(pNormW[ck], scale);
                                     if (w & 1)
                                         w = Round(w*0.25f) * 4;
                                     pDstW[d*CK + ck] = w / 2;
                                     normB -= w * pSrcShift[c];
 #else
-                                    pDstW[d*CK + ck] = Detail::Convert32fTo8i(pNormW[ck], scale, 0.0f);
+                                    pDstW[d*CK + ck] = Convert32fTo8iSym(pNormW[ck], scale);
 #endif
                                 }
                                 else
                                 {
-                                    pDstW[d*CK + ck] = Detail::Convert32fTo8i(pNormW[ck], scale, 0.0f);
+                                    pDstW[d*CK + ck] = Convert32fTo8iSym(pNormW[ck], scale);
                                     normB -= pDstW[d*CK + ck] * pSrcShift[c];
                                 }
                     }
@@ -278,8 +280,6 @@ namespace Synet
                         pNormScale[d] = 1.0f / scale;
                         pNormShift[d] = 0;
                     }
-                    //if (g * D + d == 3)
-                    //    std::cout << std::fixed << std::setprecision(10) << " Synet : " << scale << " , " << pDstScaleInv[d] << " , " << pDstScale[d] << std::endl;
                 }
                 if (alg.trans)
                 {
@@ -306,7 +306,7 @@ namespace Synet
             }
         }
 
-        void ForwardCpu8i(const uint8_t * src, uint8_t * buf, int32_t * dst)
+        void ForwardCpu(const uint8_t * src, uint8_t * buf, int32_t * dst)
         {
             const ConvParam& conv = this->_conv;
             const AlgParam& alg = this->_alg;
@@ -359,7 +359,6 @@ namespace Synet
                 src += alg.sSize;
                 dst += alg.dSize;
             }
-
         }
 
     private:

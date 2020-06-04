@@ -61,7 +61,7 @@ namespace Synet
             _convolution32f.Init(alg.batch, &conv, SYNET_EXTERNAL_GEMM);
             if (_convolution32f.Enable())
             {
-                buf[TensorType32f * BUFFER_COUNT]->Extend({ _convolution32f.ExternalBufferSize() });
+                buf[TensorType32f * BUFFER_COUNT]->Extend(Shp(_convolution32f.ExternalBufferSize()));
                 _convolution32f.SetParams(weight[0].CpuData(), &alg.internal, alg.bias ? weight[1].CpuData() : NULL,
                     conv.activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : alg.params);
             }
