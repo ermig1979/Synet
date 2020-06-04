@@ -30,7 +30,8 @@
 #include "Synet/Layers/CastLayer.h"
 #include "Synet/Layers/ConcatLayer.h"
 #include "Synet/Layers/ConstLayer.h"
-#include "Synet/Layers/ConvolutionLayer.h"
+#include "Synet/Layers/Convolution32fLayer.h"
+#include "Synet/Layers/Convolution8iLayer.h"
 #include "Synet/Layers/CtcGreedyDecoderLayer.h"
 #include "Synet/Layers/DeconvolutionLayer.h"
 #include "Synet/Layers/DetectionOutputLayer.h"
@@ -922,7 +923,11 @@ private:
             case LayerTypeCast: return new CastLayer<T>(param);
             case LayerTypeConcat: return new ConcatLayer<T>(param);
             case LayerTypeConst: return new ConstLayer<T>(param);
-            case LayerTypeConvolution: return new ConvolutionLayer<T>(param);
+            case LayerTypeConvolution: 
+                if (param.convolution().quantizationLevel() == TensorType8i)
+                    return new Convolution8iLayer<T>(param);
+                else
+                    return new Convolution32fLayer<T>(param);
             case LayerTypeCtcGreedyDecoder: return new CtcGreedyDecoderLayer<T>(param);
             case LayerTypeDeconvolution: return new DeconvolutionLayer<T>(param);
             case LayerTypeDetectionOutput: return new DetectionOutputLayer<T>(param);

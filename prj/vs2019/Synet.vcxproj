@@ -40,6 +40,8 @@
     <ClInclude Include="..\..\src\Synet\Layers\CastLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ConcatLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ConstLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Convolution32fLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Convolution8iLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ConvolutionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\CtcGreedyDecoderLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\DeconvolutionLayer.h" />

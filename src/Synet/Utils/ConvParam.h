@@ -134,6 +134,11 @@ namespace Synet
             }
         }
 
+        bool Trans() const
+        {
+            return srcF == TensorFormatNhwc;
+        }
+
         bool Is1x1() const
         {
             return kernelY == 1 && kernelX == 1 && strideY == 1 && strideX == 1 &&
@@ -150,17 +155,25 @@ namespace Synet
             if (conv)
             {
                 if (trans)
-                    return Shape({ kernelY, kernelX, srcC / group, dstC });
+                    return Shp(kernelY, kernelX, srcC / group, dstC);
                 else
-                    return Shape({ dstC, srcC / group, kernelY, kernelX });
+                    return Shp(dstC, srcC / group, kernelY, kernelX);
             }
             else
             {
                 if (trans)
-                    return Shape({ srcC, kernelY, kernelX, dstC / group });
+                    return Shp(srcC, kernelY, kernelX, dstC / group);
                 else
-                    return Shape({ srcC, dstC / group, kernelY, kernelX });
+                    return Shp(srcC, dstC / group, kernelY, kernelX);
             }
+        }
+
+        Shape DstShape(size_t batch) const
+        {
+            if (dstF == TensorFormatNhwc)
+                return Shp(batch, dstH, dstW, dstC);
+            else
+                return Shp(batch, dstC, dstH, dstW);
         }
     };
 }
