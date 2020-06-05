@@ -146,7 +146,7 @@ namespace Synet
 
             for (size_t i = 0; i < _param().layers().size(); ++i)
             {
-                LayerSharedPtr layer(Create(_param().layers()[i]));
+                LayerSharedPtr layer(Create(_param().layers()[i], _param().quantization().method()));
                 if (layer)
                     _layers.push_back(layer);
             }
@@ -180,7 +180,7 @@ namespace Synet
 
             for (size_t i = 0; i < _param().layers().size(); ++i)
             {
-                LayerSharedPtr layer(Create(_param().layers()[i]));
+                LayerSharedPtr layer(Create(_param().layers()[i], _param().quantization().method()));
                 if (layer)
                     _layers.push_back(layer);
             }
@@ -911,7 +911,7 @@ private:
             return false;
         }
 
-        static LayerPtr Create(const LayerParam & param)
+        static LayerPtr Create(const LayerParam & param, QuantizationMethod method)
         {
             switch (param.type())
             {
@@ -923,7 +923,7 @@ private:
             case LayerTypeConst: return new ConstLayer<T>(param);
             case LayerTypeConvolution: 
                 if (param.convolution().quantizationLevel() == TensorType8i)
-                    return new Convolution8iLayer<T>(param);
+                    return new Convolution8iLayer<T>(param, method);
                 else
                     return new Convolution32fLayer<T>(param);
             case LayerTypeCtcGreedyDecoder: return new CtcGreedyDecoderLayer<T>(param);

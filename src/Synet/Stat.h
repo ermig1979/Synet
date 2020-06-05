@@ -105,7 +105,7 @@ namespace Synet
             channels = false;
         }
 
-        void Init8u()
+        void Init8u(QuantizationMethod method)
         {
             size_t n = min.size();
             if (zero8u.size() == n)
@@ -116,7 +116,7 @@ namespace Synet
             shift8uTo32f.resize(n);
             zero8u.resize(n);
 
-            if (SYNET_INT8_IE_COMPATIBLE)
+            if (method == QuantizationMethodIECompatible)
             {
                 for (size_t i = 0; i < n; ++i)
                 {
@@ -125,11 +125,7 @@ namespace Synet
                     if (fabs(invScale) < 1e-7)
                         invScale = 1.0f;
                     zero8u[i] = (negative ? 128 : 0);
-#ifdef SYNET_INT8_INPUT_ROUND_BUGFIX
                     scale32fTo8u[i] = float(1.0 / invScale);
-#else
-                    scale32fTo8u[i] = (negative ? 127.0f : 255.0f) / absMax; 
-#endif
                     scale8uTo32f[i] = invScale;
                     shift32fTo8u[i] = float(zero8u[i]);
                     shift8uTo32f[i] = -float(zero8u[i]) * invScale;

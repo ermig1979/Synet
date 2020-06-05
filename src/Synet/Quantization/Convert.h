@@ -95,41 +95,58 @@ namespace Synet
         return Detail::Convert<float, int8_t, float>(value, scale, 0.0f, -128, 127);
     }
 
-    struct ConvertParam
+    struct Converter
     {
-        size_t batch, channels, spatial;
+        size_t batch, channels, height, width;
         TensorFormat format;
         const float * scale, * shift;
+        int lower, upper;
 
-        ConvertParam()
+        Converter()
             : batch(0) 
             , channels(0) 
-            , spatial(0) 
+            , height(0)
+            , width(0)
             , format(TensorFormatUnknown) 
             , scale(NULL) 
             , shift(NULL) 
+            , lower(INT_MIN)
+            , upper(INT_MAX)
         {
         }
+
+        void Init(size_t b, size_t c, size_t h, size_t w, TensorFormat f, const float * k, const float * s, int l, int u)
+        {
+            batch = b;
+            channels = c;
+            height = h;
+            width = w;
+            format = f;
+            scale = k;
+            shift = s;
+            lower = l;
+            upper = u;
+        }
+
+        void Convert(const float* src, uint8_t* dst)
+        {
+            SYNET_PERF_FUNC();
+
+            Detail::Convert<float, uint8_t, float>(src, batch, channels, height, width, format, scale, shift, lower, upper, dst);
+        }
+
+        void Convert(const int32_t* src, float* dst)
+        {
+            SYNET_PERF_FUNC();
+
+            Detail::Convert<int32_t, float, float>(src, batch, channels, height, width, format, scale, shift, lower, upper, dst);
+        }
+
+        void Convert(const int32_t* src, uint8_t* dst)
+        {
+            SYNET_PERF_FUNC();
+
+            Detail::Convert<int32_t, uint8_t, float>(src, batch, channels, height, width, format, scale, shift, lower, upper, dst);
+        }
     };
-
-    inline void Convert32fTo8u(const float * src, const ConvertParam & p, uint8_t * dst)
-    {
-        SYNET_PERF_FUNC();
-        
-        Detail::Convert<float, uint8_t, float>(src, p.batch, p.channels, 1, p.spatial, p.format, p.scale, p.shift, 0, 255, dst);
-    }
-
-    inline void Convert32iTo32f(const int32_t * src, const ConvertParam & p, float * dst)
-    {
-        SYNET_PERF_FUNC();
-
-        Detail::Convert<int32_t, float, float>(src, p.batch, p.channels, 1, p.spatial, p.format, p.scale, p.shift, 0, 0, dst);
-    }
-
-    inline void Convert32iTo8u(const int32_t * src, const ConvertParam & p, uint8_t * dst)
-    {
-        SYNET_PERF_FUNC();
-
-        Detail::Convert<int32_t, uint8_t, float>(src, p.batch, p.channels, 1, p.spatial, p.format, p.scale, p.shift, 0, 255, dst);
-    }
 }

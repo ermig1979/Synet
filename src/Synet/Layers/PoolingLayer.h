@@ -204,6 +204,11 @@ namespace Synet
         {
             return _method == PoolingMethodTypeMax;
         }
+
+        virtual bool HasZero() const
+        {
+            return _padY || _padH || _padH || _padW;
+        }
         
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {

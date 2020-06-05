@@ -93,6 +93,11 @@ namespace Synet
             return false;
         }
 
+        virtual bool HasZero() const
+        {
+            return false;
+        }
+
         virtual void DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
         {
         }

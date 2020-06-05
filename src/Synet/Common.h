@@ -40,10 +40,6 @@
 //#define SYNET_MALLOC_DEBUG
 
 #define SYNET_INT8_SAFE_ZERO 1
-#define SYNET_INT8_INT16_OWERFLOW
-#define SYNET_INT8_IE_COMPATIBLE 1
-#define SYNET_INT8_INT8_DISABLE
-#define SYNET_INT8_INPUT_ROUND_BUGFIX
 
 #include <stddef.h>
 #include <assert.h>

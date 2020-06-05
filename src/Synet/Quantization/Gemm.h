@@ -24,17 +24,13 @@
 
 #pragma once
 
-#include "Synet/Common.h"
+#include "Synet/Utils/Math.h"
 
 namespace Synet
 {
-    inline void CpuGemm8iNN(size_t S, size_t D, size_t K, size_t C, const uint8_t* src, size_t lda, const int8_t* weight, size_t ldb, int32_t* dst, size_t ldc, int neg)
+    inline void CpuGemm8iNN(size_t S, size_t D, size_t K, size_t C, const uint8_t* src, size_t lda, const int8_t* weight, size_t ldb, int32_t* dst, size_t ldc, bool overflow16i)
     {
-#ifdef SYNET_INT8_INT8_DISABLE 
-        const size_t C2 = C / 2 * 2;
-#else
-        const size_t C2 = neg ? 0 : C / 2 * 2;
-#endif
+        const size_t C2 = overflow16i ? C / 2 * 2 : 0;
         for (size_t i = 0; i < S; ++i)
         {
             for (size_t j = 0; j < D; ++j)
@@ -50,52 +46,23 @@ namespace Synet
                     const int8_t* w1 = weight + (o + 1) * ldb;
                     int32_t* d = dst + i * ldc;
                     for (size_t j = 0; j < D; ++j)
-                    {
-                        int sum = s0 * w0[j] + s1 * w1[j];
-#if defined(SYNET_INT8_INT16_OWERFLOW)
-                        sum = std::min(std::max(SHRT_MIN, sum), SHRT_MAX);
-#endif
-                        d[j] += sum;
-                    }
+                        d[j] += RestrictRange(s0 * w0[j] + s1 * w1[j], SHRT_MIN, SHRT_MAX);
                 }
                 for (; c < C; ++c, ++o)
                 {
                     int32_t s0 = src[i * lda + o];
                     const int8_t* w0 = weight + o * ldb;
                     int32_t* d = dst + i * ldc;
-                    if (neg)
-                    {
-                        for (size_t j = 0; j < D; ++j)
-                        {
-                            int _w0 = w0[j];
-#ifdef SYNET_INT8_INT8_DISABLE
-                            int _s0 = int(s0);
-#else
-                            if (_w0 & 1)
-                                _w0 = Round(_w0 * 0.25f) * 4;
-                            int _s0 = int(s0) - 128;
-#endif
-                            int dp = _w0 * _s0;
-                            d[j] += dp;
-                        }
-                    }
-                    else
-                    {
-                        for (size_t j = 0; j < D; ++j)
-                            d[j] += s0 * w0[j];
-                    }
+                    for (size_t j = 0; j < D; ++j)
+                        d[j] += s0 * w0[j];
                 }
             }
         }
     }
 
-    inline void CpuGemm8iNN(size_t D, size_t S, size_t C, size_t K, const int8_t* weight, size_t lda, const uint8_t* src, size_t ldb, int32_t* dst, size_t ldc, int neg)
+    inline void CpuGemm8iNN(size_t D, size_t S, size_t C, size_t K, const int8_t* weight, size_t lda, const uint8_t* src, size_t ldb, int32_t* dst, size_t ldc, bool overflow16i)
     {
-#ifdef SYNET_INT8_INT8_DISABLE 
-        const size_t C2 = C / 2 * 2;
-#else
-        const size_t C2 = neg ? 0 : C / 2 * 2;
-#endif
+        const size_t C2 = overflow16i ? C / 2 * 2 : 0;
         for (size_t i = 0; i < D; ++i)
         {
             for (size_t j = 0; j < S; ++j)
@@ -111,13 +78,7 @@ namespace Synet
                     const uint8_t* s1 = src + ((c + 1) * K + k) * ldb;
                     int32_t* d = dst + i * ldc;
                     for (size_t j = 0; j < S; ++j)
-                    {
-                        int sum = s0[j] * w0 + s1[j] * w1;
-#if defined(SYNET_INT8_INT16_OWERFLOW)
-                        sum = std::min(std::max(SHRT_MIN, sum), SHRT_MAX);
-#endif
-                        d[j] += sum;
-                    }
+                        d[j] += RestrictRange(s0[j] * w0 + s1[j] * w1, SHRT_MIN, SHRT_MAX);
                 }
             }
             for (; c < C; ++c)
@@ -127,27 +88,8 @@ namespace Synet
                     int32_t w0 = weight[i * lda + (c + 0) * K + k];
                     const uint8_t* s0 = src + ((c + 0) * K + k) * ldb;
                     int32_t* d = dst + i * ldc;
-                    if (neg)
-                    {
-                        for (size_t j = 0; j < S; ++j)
-                        {
-                            int _w0 = w0;
-#ifdef SYNET_INT8_INT8_DISABLE
-                            int _s0 = int(s0[j]);
-#else
-                            if (_w0 & 1)
-                                _w0 = Round(_w0 * 0.25f) * 4;
-                            int _s0 = int(s0[j]) - 128;
-#endif
-                            int dp = _w0 * _s0;
-                            d[j] += dp;
-                        }
-                    }
-                    else
-                    {
-                        for (size_t j = 0; j < S; ++j)
-                            d[j] += s0[j] * w0;
-                    }
+                    for (size_t j = 0; j < S; ++j)
+                        d[j] += s0[j] * w0;
                 }
             }
         }
