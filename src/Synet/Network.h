@@ -580,10 +580,7 @@ namespace Synet
 
         bool Is8i() const
         {
-            for (size_t i = 0; i < _stages.size(); ++i)
-                if (_stages[i].layer->Is8i())
-                    return true;
-            return false;
+            return _param().quantization().method() != QuantizationMethodUnknown;
         }    
 
 private:
@@ -632,11 +629,11 @@ private:
             {
                 Stage stage;
                 stage.layer = _layers[i].get();
-                const LayerParam & param = stage.layer->Param();
+                const LayerParam& param = stage.layer->Param();
                 _layerId[param.name()] = i;
                 for (size_t j = 0; j < param.src().size(); ++j)
                 {
-                    const String & name = param.src()[j];
+                    const String& name = param.src()[j];
                     if (_tensorId.find(name) != _tensorId.end())
                     {
                         stage.src.push_back(_tensors[_tensorId[name]].get());
@@ -648,7 +645,7 @@ private:
                 }
                 for (size_t j = 0; j < param.dst().size(); ++j)
                 {
-                    const String & name = param.dst()[j];
+                    const String& name = param.dst()[j];
                     if (j < param.src().size() && name == param.src()[j])
                     {
                         stage.dst.push_back(_tensors[_tensorId[name]].get());
@@ -672,7 +669,7 @@ private:
                     }
                 }
                 stage.buf = buf;
-                if(_stats.size())
+                if (_stats.size())
                     stage.layer->SetStats(_stats);
                 if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput))
                     _input.push_back(stage);
@@ -701,8 +698,11 @@ private:
                     }
                 }
             }
-            SetTensorTypes();
-            SetStatProps();
+            if (Is8i())
+            {
+                SetTensorTypes();
+                UnifyStats();
+            }
             if (!Dynamic())
                 Reshape();
             _empty = false;
@@ -752,8 +752,6 @@ private:
 
         void SetTensorTypes()
         {
-            if (!Is8i())
-                return;
             for (size_t t = 0; t < _tensors.size(); ++t)
                 if (_tensors[t]->GetType() == TensorTypeUnknown)
                     _tensors[t]->SetType(TensorType32f);
@@ -796,9 +794,9 @@ private:
             return true;
         }
 
-        void SetStatProps()
+        void UnifyStats()
         {
-            if (!Is8i() || !(SYNET_INT8_IE_COMPATIBLE))
+            if (_param().quantization().method() > QuantizationMethodIECompatible)
                 return;
             for (size_t i = 0; i < _input.size(); ++i)
                 _stats[_statId[_input[i].layer->Param().name()]]->Unify();
@@ -851,9 +849,9 @@ private:
 
         void SetStats()
         {
-            for (size_t i = 0; i < _param().statistics().size(); ++i)
+            for (size_t i = 0; i < _param().quantization().statistics().size(); ++i)
             {
-                const StatisticParam & src = _param().statistics()[i];
+                const StatisticParam & src = _param().quantization().statistics()[i];
                 StatSharedPtr stat(new Stat(src));
                 _statId[src.name()] = _stats.size();
                 _stats.push_back(stat);
@@ -865,12 +863,12 @@ private:
             if (tensor.Name().empty() || tensor.GetType() != TensorType32f || tensor.Format() != TensorFormatNhwc || tensor.Count() != 4)
                 return;
             size_t index = 0;
-            for (; index < _param().statistics().size(); ++index)
-                if (_param().statistics()[index].name() == tensor.Name())
+            for (; index < _param().quantization().statistics().size(); ++index)
+                if (_param().quantization().statistics()[index].name() == tensor.Name())
                     break;
-            if (index == _param().statistics().size())
-                _param().statistics().push_back(StatisticParam());
-            StatisticParam & stat = _param().statistics()[index];
+            if (index == _param().quantization().statistics().size())
+                _param().quantization().statistics().push_back(StatisticParam());
+            StatisticParam & stat = _param().quantization().statistics()[index];
             if(stat.name().empty())
                 stat.name() = tensor.Name();
             const Shape& shape = tensor.Shape();
@@ -1011,7 +1009,5 @@ private:
         {
             return Intersection(a, b) / Union(a, b);
         }
-        
-        friend class TensorflowToSynet;
     };
 }

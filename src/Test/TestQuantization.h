@@ -213,6 +213,7 @@ namespace Test
                 if (network().layers()[i].type() == Synet::LayerTypeConvolution)
                     network().layers()[i].convolution().quantizationLevel() = Synet::TensorType8i;
             }
+            network().quantization().method() = (Synet::QuantizationMethod)_options.quantizationMethod;
             Floats bin;
             Synet::Optimizer optimizer;
             if (!optimizer.Run(network(), bin))

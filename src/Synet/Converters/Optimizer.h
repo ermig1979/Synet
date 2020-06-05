@@ -59,7 +59,7 @@ namespace Synet
 
         bool MergeLayers(Synet::NetworkParam& network, Floats& bin, int stage)
         {
-            const bool is8i = network.statistics().size() > 0;
+            const bool is8i = network.quantization().method() != QuantizationMethodUnknown;
             Changes changes;
             LayerParams merged;
             for (size_t i = 0; i < network.layers().size(); ++i)
@@ -1131,7 +1131,7 @@ namespace Synet
 
         bool ReuseLayers(Synet::NetworkParam& network)
         {
-            if (network.statistics().size())
+            if (network.quantization().method() != QuantizationMethodUnknown)
                 return true;
             LayerParams & layers = network.layers();
             for (size_t i = 0; i < layers.size(); ++i)

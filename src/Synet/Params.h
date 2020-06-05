@@ -169,6 +169,9 @@ namespace Synet
         RoundingTypeCeil,
         RoundingTypeFloor);
 
+    SYNET_PARAM_ENUM(QuantizationMethod,
+        QuantizationMethodIECompatible);
+
     SYNET_PARAM_ENUM(TensorFormat,
         TensorFormatNchw,
         TensorFormatNhwc,
@@ -647,13 +650,19 @@ namespace Synet
         SYNET_PARAM_VALUE(Floats, max, Floats());
     };
 
+    struct QuantizationParam
+    {
+        SYNET_PARAM_VALUE(QuantizationMethod, method, QuantizationMethodUnknown);
+        SYNET_PARAM_VECTOR(StatisticParam, statistics);
+    };
+
     struct NetworkParam
     {
         SYNET_PARAM_VALUE(int32_t, version, 0);
         SYNET_PARAM_VALUE(String, name, String());
         SYNET_PARAM_VALUE(Strings, dst, Strings());
         SYNET_PARAM_VECTOR(LayerParam, layers);
-        SYNET_PARAM_VECTOR(StatisticParam, statistics);
+        SYNET_PARAM_STRUCT(QuantizationParam, quantization);
     };
 
     SYNET_PARAM_HOLDER(NetworkParamHolder, NetworkParam, network);

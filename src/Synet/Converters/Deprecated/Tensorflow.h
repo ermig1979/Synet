@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include "Synet/Network.h"
 #include "Synet/Converters/Optimizer.h"
 
 #if defined(SYNET_TENSORFLOW_ENABLE)
@@ -1477,38 +1476,6 @@ namespace Synet
                         node->set_input(j, newName);
                 }
             }
-        }
-
-        bool SetShape(const LayerParam & param)
-        {
-            if (param.type() == LayerTypeInput)
-            {
-                _shape[param.name()].push_back(param.input().shape()[0].dim());
-            }
-            else
-            {
-                typedef Synet::Network<float> Net;
-                std::unique_ptr<Net::Layer> layer(Net::Create(param));
-                if (!layer)
-                    return false;
-                std::vector<std::shared_ptr<Tensor>> tensors;
-                Net::TensorPtrs src, buf, dst;
-                tensors.push_back(std::make_shared<Tensor>());
-                buf.push_back(tensors.back().get());
-                tensors.push_back(std::make_shared<Tensor>());
-                dst.push_back(tensors.back().get());
-                for (size_t i = 0; i < param.src().size(); ++i)
-                {
-                    if (_shape.find(param.src()[i]) == _shape.end())
-                        return false;
-                    const Shape & shape = _shape[param.src()[i]][0];
-                    tensors.push_back(std::make_shared<Tensor>(shape));
-                    src.push_back(tensors.back().get());
-                }
-                layer->Reshape(src, buf, dst);
-                _shape[param.name()].push_back(dst[0]->Shape());            
-            }
-            return true;
         }
 
         String NotImplementedMarker()

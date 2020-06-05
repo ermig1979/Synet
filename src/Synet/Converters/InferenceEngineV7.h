@@ -145,6 +145,7 @@ namespace Synet
             const XmlNode* pStatistics = srcXml.FirstNode("statistics");
             if (pStatistics)
             {
+                dstXml.quantization().method() = QuantizationMethodIECompatible;
                 const XmlNode* pLayer = pStatistics->FirstNode("layer");
                 while (pLayer)
                 {
@@ -157,7 +158,7 @@ namespace Synet
                         std::cout << "Can't load statistics! " << std::endl;
                         return false;
                     }
-                    dstXml.statistics().push_back(statistic);
+                    dstXml.quantization().statistics().push_back(statistic);
                     pLayer = pLayer->NextSibling("layer");
                 }
             }
