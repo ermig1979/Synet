@@ -131,6 +131,21 @@ namespace Synet
                     shift8uTo32f[i] = -float(zero8u[i]) * invScale;
                 }
             }
+            else if (method == QuantizationMethodSymmetricNarrowed)
+            {
+                for (size_t i = 0; i < n; ++i)
+                {
+                    float absMax = ::fmax(::fabs(min[i]), ::fabs(max[i]));
+                    float invScale = absMax / (negative ? 90.0f : 182.0f);
+                    if (fabs(invScale) < 1e-7)
+                        invScale = 1.0f;
+                    zero8u[i] = (negative ? 90 : 0);
+                    scale32fTo8u[i] = float(1.0 / invScale);
+                    scale8uTo32f[i] = invScale;
+                    shift32fTo8u[i] = float(zero8u[i]);
+                    shift8uTo32f[i] = -float(zero8u[i]) * invScale;
+                }
+            }
             else
             {
                 for (size_t i = 0; i < n; ++i)

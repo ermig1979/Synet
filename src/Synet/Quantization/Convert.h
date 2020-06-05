@@ -90,9 +90,9 @@ namespace Synet
         }
     }
 
-    inline int8_t Convert32fTo8iSym(const float value, float scale)
+    inline int8_t ConvertTo8i(const float value, float scale, float shift, int lower, int upper)
     {
-        return Detail::Convert<float, int8_t, float>(value, scale, 0.0f, -128, 127);
+        return Detail::Convert<float, int8_t, float>(value, scale, shift, lower, upper);
     }
 
     struct Converter

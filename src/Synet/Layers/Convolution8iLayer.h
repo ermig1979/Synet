@@ -190,9 +190,6 @@ namespace Synet
             _weight8i.Reshape(this->Weight()[0].Shape(), alg.trans ? TensorFormatNhwc : TensorFormatNchw);
             _norm32i.Reshape(Shp(2, conv.dstC));
             _norm32f.Reshape(Shp(2, conv.dstC));
-            if (!_src8u)
-                _srcCvt.Init(alg.batch, conv.srcC, conv.srcH, conv.srcW, (TensorFormat)alg.trans,
-                    statS.scale32fTo8u.data(), statS.shift32fTo8u.data(), 0, 255);
             size_t G = conv.group, D = conv.dstC / G, C = conv.srcC / G, K = conv.kernelY*conv.kernelX, CK = C * K, GD = G*D;
             Floats normW(CK);
             const float * pSrcW = this->Weight()[0].CpuData();
@@ -209,6 +206,13 @@ namespace Synet
             int32_t * pDstB = pDstS + conv.dstC;
             float * pNormScale = _norm32f.CpuData();
             float * pNormShift = pNormScale + conv.dstC;
+            int wLo, wUp, sLo, sUp;
+            bool avoidOverflow16i = statS.negative && _method == QuantizationMethodIECompatible;
+            if (_method == QuantizationMethodIECompatible)
+                wLo = -128, wUp = 127, sLo = 0, sUp = 255;
+            else if(_method == QuantizationMethodSymmetricNarrowed)
+                wLo = -90, wUp = 90, sLo = 0, sUp = 182;
+            _srcCvt.Init(alg.batch, conv.srcC, conv.srcH, conv.srcW, (TensorFormat)alg.trans, pSrcScale, pSrcShift, 0, 255);
             _dstCvt.Init(alg.batch, conv.dstC, conv.dstH, conv.dstW, (TensorFormat)alg.trans, pNormScale, pNormShift, 0, 255);
             for (size_t g = 0; g < G; ++g)
             {
@@ -221,12 +225,12 @@ namespace Synet
                         float abs = std::max(::abs(maxW), ::abs(minW));
                         if (pSrcB)
                             abs = std::max(abs, ::abs(pSrcB[d]) / float(128 * 256 * 256));
-                        scale = 127.0f / abs;
+                        scale = wUp / abs;
                         for (size_t k = 0, kc = 0; k < K; ++k)
                             for (size_t c = 0; c < C; ++c, ++kc)
-                                if (_negSrc)
+                                if (avoidOverflow16i)
                                 {
-                                    int w = Convert32fTo8iSym(pNormW[kc], scale);
+                                    int w = ConvertTo8i(pNormW[kc], scale, 0, wLo, wUp);
                                     if (w & 1)
                                         w = Round(w*0.25f) * 4;
                                     pDstW[kc*GD + d] = w / 2;
@@ -234,7 +238,7 @@ namespace Synet
                                 }
                                 else
                                 {
-                                    pDstW[kc*GD + d] = Convert32fTo8iSym(pNormW[kc], scale);
+                                    pDstW[kc*GD + d] = ConvertTo8i(pNormW[kc], scale, 0, wLo, wUp);
                                     normB -= pDstW[kc*GD + d] * pSrcShift[c];
                                 }
                     }
@@ -244,12 +248,12 @@ namespace Synet
                         float abs = std::max(::abs(maxW), ::abs(minW));
                         if (pSrcB)
                             abs = std::max(abs, ::abs(pSrcB[d]) / float(128 * 256 * 256));
-                        scale = 127.0f / abs;
+                        scale = wUp / abs;
                         for (size_t c = 0, ck = 0; c < C; ++c)
                             for (size_t k = 0; k < K; ++k, ++ck)
-                                if (_negSrc)
+                                if (avoidOverflow16i)
                                 {
-                                    int w = Convert32fTo8iSym(pNormW[ck], scale);
+                                    int w = ConvertTo8i(pNormW[ck], scale, 0, wLo, wUp);
                                     if (w & 1)
                                         w = Round(w*0.25f) * 4;
                                     pDstW[d*CK + ck] = w / 2;
@@ -257,11 +261,11 @@ namespace Synet
                                 }
                                 else
                                 {
-                                    pDstW[d*CK + ck] = Convert32fTo8iSym(pNormW[ck], scale);
+                                    pDstW[d*CK + ck] = ConvertTo8i(pNormW[ck], scale, 0, wLo, wUp);
                                     normB -= pDstW[d*CK + ck] * pSrcShift[c];
                                 }
                     }
-                    pDstS[d] = _negSrc ? 2 : 1;
+                    pDstS[d] = avoidOverflow16i ? 2 : 1;
                     if (pSrcB)
                         normB += pSrcB[d] * scale;
                     pDstB[d] = Synet::Quantize(normB);

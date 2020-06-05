@@ -170,7 +170,8 @@ namespace Synet
         RoundingTypeFloor);
 
     SYNET_PARAM_ENUM(QuantizationMethod,
-        QuantizationMethodIECompatible);
+        QuantizationMethodIECompatible,
+        QuantizationMethodSymmetricNarrowed);
 
     SYNET_PARAM_ENUM(TensorFormat,
         TensorFormatNchw,
