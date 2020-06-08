@@ -85,7 +85,7 @@ namespace Test
             return _output;
         }
 
-        virtual void DebugPrint(std::ostream& os, int flag, int first, int last, int precision)
+        virtual void DebugPrint(const Tensors& src, std::ostream& os, int flag, int first, int last, int precision)
         {
             if (!flag)
                 return;

@@ -456,7 +456,8 @@ namespace Synet
                 Layer & layer = *_stages[i].layer;
                 if ((layer._isBack && printOutput) || printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
                 {
-                    layer.Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
+                    if(printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
+                        layer.Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
                     os << "Layer: " << layer.Param().name() << " : ";
                     os << ValueToString(layer.Param().type()) << " ( ";
                     for (size_t j = 0; j < layer.Param().src().size(); ++j)
@@ -808,7 +809,7 @@ private:
                     if (param.type() == LayerTypeConvolution || param.type() == LayerTypeMergedConvolution || param.type() == LayerTypeScale)
                         _stats[_statId[param.dst()[0]]]->Unify();
 
-                    if (param.type() == LayerTypePooling && param.pooling().method() == PoolingMethodTypeMax)
+                    if (param.type() == LayerTypePooling && param.pooling().method() == PoolingMethodTypeMax && !_stats[_statId[param.src()[0]]]->channels)
                         _stats[_statId[param.dst()[0]]]->UnifyAs(*_stats[_statId[param.src()[0]]]);
                     if (param.type() == LayerTypeRelu && param.relu().negativeSlope() == 0.0f)
                         _stats[_statId[param.dst()[0]]]->UnifyAs(*_stats[_statId[param.src()[0]]]);

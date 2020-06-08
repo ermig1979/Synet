@@ -106,21 +106,31 @@ namespace Synet
                 return false;
             _format = first.Format();
             _shape = first.Shape();
-            if (_shape.size() != 4)
-                return false;
-            if (_format == TensorFormatNchw)
+            if (_shape.size() == 4)
+            {
+                if (_format == TensorFormatNchw)
+                {
+                    _batch = _shape[0];
+                    _channels = _shape[1];
+                    _height = _shape[2];
+                    _width = _shape[3];
+                }
+                else if (TensorFormatNhwc)
+                {
+                    _batch = _shape[0];
+                    _height = _shape[1];
+                    _width = _shape[2];
+                    _channels = _shape[3];
+                }
+                else
+                    return false;
+            }
+            else if (_shape.size() == 2)
             {
                 _batch = _shape[0];
                 _channels = _shape[1];
-                _height = _shape[2];
-                _width = _shape[3];
-            }
-            else if (TensorFormatNhwc)
-            {
-                _batch = _shape[0];
-                _height = _shape[1];
-                _width = _shape[2];
-                _channels = _shape[3];
+                _height = 1;
+                _width = 1;
             }
             else
                 return false;
@@ -146,29 +156,40 @@ namespace Synet
             const Type* second = _second;
             for (size_t b = 0; b < _batch; ++b)
             {
-                if (_format == TensorFormatNhwc)
+                if (_shape.size() == 4)
                 {
-                    for (size_t h = 0; h < _height; ++h)
-                    {
-                        for (size_t w = 0; w < _width; ++w)
-                        {
-                            for (size_t c = 0; c < _channels; ++c)
-                                UpdateStatistics(first[c], second[c], _norm[c], Shp(b, c, h, w), threshold);
-                            first += _channels, second += _channels;
-                        }
-                    }
-                }
-                else if (_format == TensorFormatNchw)
-                {
-                    for (size_t c = 0; c < _channels; ++c)
+                    if (_format == TensorFormatNhwc)
                     {
                         for (size_t h = 0; h < _height; ++h)
                         {
                             for (size_t w = 0; w < _width; ++w)
-                                UpdateStatistics(first[w], second[w], _norm[c], Shp(b, c, h, w), threshold);
-                            first += _width, second += _width;
+                            {
+                                for (size_t c = 0; c < _channels; ++c)
+                                    UpdateStatistics(first[c], second[c], _norm[c], Shp(b, c, h, w), threshold);
+                                first += _channels, second += _channels;
+                            }
                         }
                     }
+                    else if (_format == TensorFormatNchw)
+                    {
+                        for (size_t c = 0; c < _channels; ++c)
+                        {
+                            for (size_t h = 0; h < _height; ++h)
+                            {
+                                for (size_t w = 0; w < _width; ++w)
+                                    UpdateStatistics(first[w], second[w], _norm[c], Shp(b, c, h, w), threshold);
+                                first += _width, second += _width;
+                            }
+                        }
+                    }
+                    else
+                        assert(0);
+                }
+                else if (_shape.size() == 2)
+                {
+                    for (size_t c = 0; c < _channels; ++c)
+                        UpdateStatistics(first[c], second[c], _norm[c], Shp(b, c), threshold);
+                    first += _channels, second += _channels;
                 }
                 else
                     assert(0);

@@ -75,7 +75,7 @@ namespace Synet
 
         void UnifyAs(const Stat & stat)
         {
-            assert(min.size() == stat.min.size() && !stat.channels);
+            assert(min.size() == stat.max.size() && !stat.channels);
             for (size_t i = 0; i < min.size(); ++i)
             {
                 assert(min[i] >= stat.min[0] && max[i] <= stat.max[0]);

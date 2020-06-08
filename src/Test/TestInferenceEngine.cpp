@@ -193,7 +193,7 @@ namespace Test
             return _output;
         }
 
-        virtual void DebugPrint(std::ostream& os, int flag, int first, int last, int precision)
+        virtual void DebugPrint(const Tensors& src, std::ostream& os, int flag, int first, int last, int precision)
         {
             for (size_t i = 0; i < _ieInterim.size(); ++i)
                 DebugPrint(os, *_ieInterim[i], _interimNames[i], flag, first, last, precision);

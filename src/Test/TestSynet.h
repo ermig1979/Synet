@@ -91,7 +91,7 @@ namespace Test
         virtual bool Init(const String & model, const String & weight, const Options & options, const TestParam & param) { return false; }
         virtual void Free() { _output.clear(); }
         virtual const Tensors& Predict(const Tensors& src) { return _output; }
-        virtual void DebugPrint(std::ostream & os, int flag, int first, int last, int precision) { }
+        virtual void DebugPrint(const Tensors& src, std::ostream & os, int flag, int first, int last, int precision) { }
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const { return Regions(); }
         virtual size_t MemoryUsage() const { return 0; }
     protected:
@@ -170,9 +170,9 @@ namespace Test
             _net.Clear();
         }
 
-        virtual const Tensors & Predict(const Tensors& x)
+        virtual const Tensors & Predict(const Tensors& src)
         {
-            SetInput(x);
+            SetInput(src);
             {
                 TEST_PERF_BLOCK_FLOP(Type(), _net.Flop());
                 _net.Forward();
@@ -181,10 +181,13 @@ namespace Test
             return _output;
         }
 
-        virtual void DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
+        virtual void DebugPrint(const Tensors& src, std::ostream & os, int flag, int first, int last, int precision)
         {
             if (flag)
+            {
+                SetInput(src);
                 _net.DebugPrint(os, flag, first, last, precision);
+            }
         };
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
