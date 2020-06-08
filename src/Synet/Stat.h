@@ -27,6 +27,7 @@
 #include "Synet/Common.h"
 #include "Synet/Params.h"
 #include "Synet/Utils/Math.h"
+#include "Synet/Quantization/Const.h"
 
 namespace Synet
 {
@@ -121,10 +122,10 @@ namespace Synet
                 for (size_t i = 0; i < n; ++i)
                 {
                     float absMax = ::fmax(::fabs(min[i]), ::fabs(max[i]));
-                    float invScale = absMax / (negative ? 127.0f : 255.0f);
+                    float invScale = absMax / (negative ? QUANT_IE_COMP_SRC_I8_MAX : QUANT_IE_COMP_SRC_U8_MAX);
                     if (fabs(invScale) < 1e-7)
                         invScale = 1.0f;
-                    zero8u[i] = (negative ? 128 : 0);
+                    zero8u[i] = (negative ? -QUANT_IE_COMP_SRC_I8_MIN : QUANT_IE_COMP_SRC_U8_MIN);
                     scale32fTo8u[i] = float(1.0 / invScale);
                     scale8uTo32f[i] = invScale;
                     shift32fTo8u[i] = float(zero8u[i]);
@@ -136,10 +137,10 @@ namespace Synet
                 for (size_t i = 0; i < n; ++i)
                 {
                     float absMax = ::fmax(::fabs(min[i]), ::fabs(max[i]));
-                    float invScale = absMax / (negative ? 90.0f : 182.0f);
+                    float invScale = absMax / (negative ? QUANT_SYMM_NARR_SRC_I8_MAX : QUANT_SYMM_NARR_SRC_U8_MAX);
                     if (fabs(invScale) < 1e-7)
                         invScale = 1.0f;
-                    zero8u[i] = (negative ? 90 : 0);
+                    zero8u[i] = (negative ? -QUANT_SYMM_NARR_SRC_I8_MIN : QUANT_SYMM_NARR_SRC_U8_MIN);
                     scale32fTo8u[i] = float(1.0 / invScale);
                     scale8uTo32f[i] = invScale;
                     shift32fTo8u[i] = float(zero8u[i]);

@@ -669,7 +669,7 @@ private:
                     }
                 }
                 stage.buf = buf;
-                if (_stats.size())
+                if (Is8i())
                     stage.layer->SetStats(_stats);
                 if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput))
                     _input.push_back(stage);
@@ -796,7 +796,7 @@ private:
 
         void UnifyStats()
         {
-            if (_param().quantization().method() > QuantizationMethodIECompatible)
+            if (_param().quantization().method() > QuantizationMethodSymmetricNarrowed)
                 return;
             for (size_t i = 0; i < _input.size(); ++i)
                 _stats[_statId[_input[i].layer->Param().name()]]->Unify();

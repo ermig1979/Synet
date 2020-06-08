@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Synet/Layers/ConvolutionLayer.h"
+#include "Synet/Quantization/Const.h"
 #include "Synet/Quantization/Gemm.h"
 #include "Synet/Quantization/Convert.h"
 
@@ -105,7 +106,8 @@ namespace Synet
                 dst->As8u().Reshape(shape, src->Format());
             else
                 dst->As32f().Reshape(shape, src->Format());
-            _convolution8i.Init(alg.batch, &conv);
+            if(_method == QuantizationMethodIECompatible)
+                _convolution8i.Init(alg.batch, &conv);
             if (_convolution8i.Enable())
             {
                 buf[TensorType8u * BUFFER_COUNT]->As8u().Extend(Shp(_convolution8i.ExternalBufferSize()));
@@ -209,11 +211,11 @@ namespace Synet
             int wLo, wUp, sLo, sUp;
             bool avoidOverflow16i = statS.negative && _method == QuantizationMethodIECompatible;
             if (_method == QuantizationMethodIECompatible)
-                wLo = -128, wUp = 127, sLo = 0, sUp = 255;
+                wLo = QUANT_IE_COMP_WEIGHT_MIN, wUp = QUANT_IE_COMP_WEIGHT_MAX, sLo = QUANT_IE_COMP_SRC_U8_MIN, sUp = QUANT_IE_COMP_SRC_U8_MAX;
             else if(_method == QuantizationMethodSymmetricNarrowed)
-                wLo = -90, wUp = 90, sLo = 0, sUp = 182;
-            _srcCvt.Init(alg.batch, conv.srcC, conv.srcH, conv.srcW, (TensorFormat)alg.trans, pSrcScale, pSrcShift, 0, 255);
-            _dstCvt.Init(alg.batch, conv.dstC, conv.dstH, conv.dstW, (TensorFormat)alg.trans, pNormScale, pNormShift, 0, 255);
+                wLo = QUANT_SYMM_NARR_WEIGHT_MIN, wUp = QUANT_SYMM_NARR_WEIGHT_MAX, sLo = QUANT_SYMM_NARR_SRC_U8_MIN, sUp = QUANT_SYMM_NARR_SRC_U8_MAX;
+            _srcCvt.Init(alg.batch, conv.srcC, conv.srcH, conv.srcW, (TensorFormat)alg.trans, pSrcScale, pSrcShift, sLo, sUp);
+            _dstCvt.Init(alg.batch, conv.dstC, conv.dstH, conv.dstW, (TensorFormat)alg.trans, pNormScale, pNormShift, sLo, sUp);
             for (size_t g = 0; g < G; ++g)
             {
                 for (size_t d = 0; d < D; ++d)

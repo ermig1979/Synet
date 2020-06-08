@@ -439,7 +439,8 @@ namespace Test
             std::cout << m << std::endl << std::fixed;
             std::cout << "Dst[" << i << "]" << DebugPrint(d.GetShape()) << " at ";
             std::cout << DebugPrint(e.index) << " : diff = " << e.diff << " (" << e.first << " != " << e.second << ")";
-            std::cout << ", num = " << double(e.count)/s.count << "(" << e.count << "), max = " << s.max.diff << ", std = " << s.sdev << std::endl;
+            std::cout << ", num = " << double(e.count) / s.count << "(" << e.count << "), max = " << s.max.diff;
+            std::cout << ", avg = " << s.mean << ", std = " << s.sdev << ", abs = " << s.adev << std::endl;
         }
 
         bool CompareResults(const TestData& test, size_t index, size_t thread)
