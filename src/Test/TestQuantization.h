@@ -198,6 +198,20 @@ namespace Test
             return true;
         }
 
+        bool QuantizeConvolution(const Synet::LayerParam& layer) const
+        {
+            if (layer.type() != Synet::LayerTypeConvolution)
+                return false;
+            const SyNet::Tensor* tensor = _synet.GetInternalTensor(layer.src()[0]);
+            if (tensor && tensor->Format() == Synet::TensorFormatNhwc)
+            {
+                Shape shape = tensor->Shape();
+                if (shape[1] == 1 && shape[2] == 1)
+                    return false;
+            }
+            return true;
+        }
+
         bool PerformQuntization()
         {
             if (!_options.consoleSilence)
@@ -210,7 +224,7 @@ namespace Test
             }
             for (size_t i = 0; i < network().layers().size(); ++i)
             {
-                if (network().layers()[i].type() == Synet::LayerTypeConvolution)
+                if (QuantizeConvolution(network().layers()[i]))
                     network().layers()[i].convolution().quantizationLevel() = Synet::TensorType8i;
             }
             network().quantization().method() = (Synet::QuantizationMethod)_options.quantizationMethod;

@@ -582,9 +582,17 @@ namespace Synet
         bool Is8i() const
         {
             return _param().quantization().method() != QuantizationMethodUnknown;
-        }    
+        }  
 
-private:
+        const Tensor* GetInternalTensor(const String& name) const
+        {
+            NameIdMap::const_iterator it = _tensorId.find(name);
+            if (it != _tensorId.end())
+                return _tensors[it->second].get();
+            return NULL;
+        }
+
+    private:
         typedef std::shared_ptr<Layer> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
 

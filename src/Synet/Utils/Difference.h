@@ -128,9 +128,9 @@ namespace Synet
             else if (_shape.size() == 2)
             {
                 _batch = _shape[0];
-                _channels = _shape[1];
+                _channels = 1;
                 _height = 1;
-                _width = 1;
+                _width = _shape[1];
             }
             else
                 return false;
@@ -187,9 +187,9 @@ namespace Synet
                 }
                 else if (_shape.size() == 2)
                 {
-                    for (size_t c = 0; c < _channels; ++c)
-                        UpdateStatistics(first[c], second[c], _norm[c], Shp(b, c), threshold);
-                    first += _channels, second += _channels;
+                    for (size_t w = 0; w < _width; ++w)
+                        UpdateStatistics(first[w], second[w], _norm[0], Shp(b, w), threshold);
+                    first += _width, second += _width;
                 }
                 else
                     assert(0);
