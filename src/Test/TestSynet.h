@@ -38,68 +38,7 @@
 #endif //SYNET_LAYER_STATISTIC
 #include "Synet/Synet.h"
 
-namespace Test
-{
-    using Synet::Shp;
-
-    typedef Synet::Shape Shape;
-    typedef Synet::Shapes Shapes;
-    typedef Synet::Floats Floats;
-
-    struct SizeParam
-    {
-        SYNET_PARAM_VALUE(String, name, String());
-        SYNET_PARAM_VALUE(int32_t, size, 0);
-    };
-
-    struct ShapeParam
-    {
-        SYNET_PARAM_VALUE(String, name, String());
-        SYNET_PARAM_VECTOR(SizeParam, shape);
-        SYNET_PARAM_VALUE(int32_t, size, 0);
-    };
-
-    struct TestParam
-    {
-        SYNET_PARAM_VALUE(String, images, String());
-        SYNET_PARAM_VALUE(Floats, lower, Floats(1, 0.0f));
-        SYNET_PARAM_VALUE(Floats, upper, Floats(1, 1.0f));
-        SYNET_PARAM_VECTOR(ShapeParam, input);
-        SYNET_PARAM_VECTOR(ShapeParam, output);
-    };
-
-    SYNET_PARAM_HOLDER(TestParamHolder, TestParam, test);
-}
-
-namespace Test
-{
-    typedef Synet::Region<float> Region;
-    typedef std::vector<Region> Regions;
-    typedef Synet::Floats Floats;
-    typedef Synet::Tensor<float> Tensor;
-    typedef std::vector<Tensor> Tensors;
-
-    struct Network
-    {
-        Network() {}
-        virtual ~Network() {}
-        virtual String Name() const { return String(); }
-        virtual String Type() const { return String(); }
-        virtual size_t SrcCount() const { return 0; }
-        virtual Shape SrcShape(size_t index) const { return Shape(); }
-        virtual size_t SrcSize(size_t index) const { return 0; }
-        virtual bool Init(const String & model, const String & weight, const Options & options, const TestParam & param) { return false; }
-        virtual void Free() { _output.clear(); }
-        virtual const Tensors& Predict(const Tensors& src) { return _output; }
-        virtual void DebugPrint(const Tensors& src, std::ostream & os, int flag, int first, int last, int precision) { }
-        virtual Regions GetRegions(const Size & size, float threshold, float overlap) const { return Regions(); }
-        virtual size_t MemoryUsage() const { return 0; }
-    protected:
-        Tensors _output;
-        float _regionThreshold;
-    };
-    typedef std::shared_ptr<Network> NetworkPtr;
-}
+#include "TestNetwork.h"
 
 namespace Test
 {
@@ -132,7 +71,7 @@ namespace Test
             return _net.Src()[index]->Size();
         }
 
-        virtual bool Init(const String & model, const String & weight, const Options & options, const TestParam & param)
+        virtual bool Init(const String & model, const String & weight, const Options& options, const TestParam & param)
         {
             TEST_PERF_BLOCK(Type());
             _regionThreshold = options.regionThreshold;

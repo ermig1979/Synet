@@ -9,7 +9,8 @@ option(PERF_STAT "Performance statistic level: 0 - no statistic, 1 - Synet layer
 set(MAX_ERRORS 5)
 
 
-if(NOT((MODE STREQUAL "all") OR (MODE STREQUAL "inference_engine") OR (MODE STREQUAL "darknet") OR (MODE STREQUAL "quantization") OR (MODE STREQUAL "use_samples")))
+if(NOT((MODE STREQUAL "all") OR (MODE STREQUAL "darknet") OR (MODE STREQUAL "face_recognition") OR 
+       (MODE STREQUAL "inference_engine") OR (MODE STREQUAL "quantization") OR (MODE STREQUAL "use_samples")))
     message(FATAL_ERROR "Unknown value of MODE: '${MODE}'!")
 endif()
 
@@ -94,6 +95,13 @@ if((MODE STREQUAL "darknet") OR (MODE STREQUAL "all"))
 	if(BLIS)
 		add_dependencies(test_darknet ${BLIS_DEP})
 	endif()
+endif()
+
+if((MODE STREQUAL "face_recognition") OR (MODE STREQUAL "all"))	
+	file(GLOB_RECURSE FR_SRC ${ROOT_DIR}/src/Test/TestFaceRecognition.cpp ${ROOT_DIR}/src/Test/TestImage.cpp)
+	set_source_files_properties(${FR_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
+	add_executable(test_face_recognition ${FR_SRC})
+	target_link_libraries(test_face_recognition ${SIMD_LIB} -ldl -lpthread)
 endif()
 
 if((MODE STREQUAL "inference_engine") OR (MODE STREQUAL "all"))

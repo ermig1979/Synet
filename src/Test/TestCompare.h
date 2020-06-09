@@ -155,7 +155,9 @@ namespace Test
                 std::cout << "File '" << weight << "' is not exist!" << std::endl;
                 return false;
             }
-            if (!network.Init(model, weight, _options, _param()))
+            Network::Options options(_options.outputDirectory, _options.workThreads, 
+                options.consoleSilence, _options.batchSize, _options.debugPrint, _options.regionThreshold);
+            if (!network.Init(model, weight, options, _param()))
             {
                 std::cout << "Can't load " << network.Name() << " from '" << model << "' and '" << weight << "' !" << std::endl;
                 return false;

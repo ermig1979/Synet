@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "TestArgs.h"
 #include "TestPerformance.h"
 
 namespace Test
@@ -33,7 +34,7 @@ namespace Test
 
     void GenerateReport(const struct Options& options);
 
-    struct Options
+    struct Options : public ArgsParser
     {
         String mode;
         int enable;
@@ -75,8 +76,7 @@ namespace Test
         mutable String firstName, firstType, secondName, secondType, statistics;
 
         Options(int argc, char* argv[])
-            : _argc(argc)
-            , _argv(argv)
+            : ArgsParser(argc, argv)
             , result(false)
             , secondMemoryUsage(0)
             , firstMemoryUsage(0)
@@ -167,7 +167,7 @@ namespace Test
 
         bool QuantizationTest() const
         {
-            String app = _argv[0];
+            String app = AppName();
 #ifdef WIN32
             return app.find("Quantization") != std::string::npos;
 #else
@@ -179,50 +179,6 @@ namespace Test
         {
             return name + (type.empty() ? "" : ("(" + type + ")"));
         }
-
-    protected:
-        String GetArg(const String& name, const String& default_ = String(), bool exit = true)
-        {
-            return GetArgs({ name }, { default_ }, exit)[0];
-        }
-
-        String GetArg2(const String& name1, const String& name2, const String& default_ = String(), bool exit = true)
-        {
-            return GetArgs({ name1, name2 }, { default_ }, exit)[0];
-        }
-
-        Strings GetArgs(const Strings& names, const Strings& defaults = Strings(), bool exit = true)
-        {
-            Strings values;
-            for (int a = 1; a < _argc; ++a)
-            {
-                String arg = _argv[a];
-                for (size_t n = 0; n < names.size(); ++n)
-                {
-                    const String& name = names[n];
-                    if (arg.substr(0, name.size()) == name && arg.substr(name.size(), 1) == "=")
-                        values.push_back(arg.substr(name.size() + 1));
-                }
-            }
-            if (values.empty())
-            {
-                if (defaults.empty() && exit)
-                {
-                    std::cout << "Argument '";
-                    for (size_t n = 0; n < names.size(); ++n)
-                        std::cout << (n ? " | " : "") << names[n];
-                    std::cout << "' is absent!" << std::endl;
-                    ::exit(1);
-                }
-                else
-                    return defaults;
-            }
-            return values;
-        }
-
-    private:
-        int _argc;
-        char** _argv;
     };
 }
 

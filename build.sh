@@ -3,6 +3,7 @@ ECHO="0"
 TEST_MODE=$1
 if [ "${TEST_MODE}" == "" ] || [ "${TEST_MODE}" == "a" ]; then TEST_MODE="all"; fi
 if [ "${TEST_MODE}" == "d" ]; then TEST_MODE="darknet"; fi
+if [ "${TEST_MODE}" == "f" ]; then TEST_MODE="face_recognition"; fi
 if [ "${TEST_MODE}" == "i" ]; then TEST_MODE="inference_engine"; fi
 if [ "${TEST_MODE}" == "q" ]; then TEST_MODE="quantization"; fi
 if [ "${TEST_MODE}" == "u" ]; then TEST_MODE="use_samples"; fi
