@@ -33,5 +33,7 @@ int main(int argc, char* argv[])
 
     Test::FaceRecognition faceRecognition(options);
 
-    return 0;
+    options.result = faceRecognition.Run();
+
+    return options.result ? 0 : 1;
 }

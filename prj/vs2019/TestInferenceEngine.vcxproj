@@ -38,6 +38,7 @@
     <ClInclude Include="..\..\src\Test\TestCompare.h" />
     <ClInclude Include="..\..\src\Test\TestHtml.h" />
     <ClInclude Include="..\..\src\Test\TestImage.h" />
+    <ClInclude Include="..\..\src\Test\TestInferenceEngine.h" />
     <ClInclude Include="..\..\src\Test\TestNetwork.h" />
     <ClInclude Include="..\..\src\Test\TestOptions.h" />
     <ClInclude Include="..\..\src\Test\TestPerformance.h" />

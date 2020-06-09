@@ -26,6 +26,10 @@
 
 #include "TestCommon.h"
 #include "TestArgs.h"
+#ifdef SYNET_TEST_FIRST_RUN
+#include "TestInferenceEngine.h"
+#endif
+#include "TestSynet.h"
 
 namespace Test
 {
@@ -41,17 +45,26 @@ namespace Test
 			String testParam;
 			String testList;
 			String imageDirectory;
+			String outputDirectory;
+			bool result;
 
 			Options(int argc, char* argv[])
 				: ArgsParser(argc, argv)
+				, result(false)
 			{
 				mode = GetArg("-m");
 				framework = GetArg("-f");
-				testModel = GetArg("-tm", "synet_fp32.xml");
-				testWeight = GetArg("-tw", "synet_fp32.bin");
+				testModel = GetArg("-tm", "sy_fp32.xml");
+				testWeight = GetArg("-tw", "sy_fp32.bin");
 				testParam = GetArg("-tp", "param.xml");
-				testList = GetArg("-tl", "pair.txt");
+				testList = GetArg("-tl", "pairs100.txt");
 				imageDirectory = GetArg("-id", "image");
+				outputDirectory = GetArg("-od", "output");
+			}
+
+			bool NeedOutputDirectory() const
+			{
+				return false;
 			}
 		};
 
@@ -61,15 +74,47 @@ namespace Test
 
 		}
 
-	protected:
-		struct Face
+		bool Run()
 		{
- 
-		};
+			if (!LoadTestParam())
+				return false;
+			if (!CreateDirectories())
+				return false;
+			return true;
+		}
 
 	private:
-		const Options& _options;
+		struct Face
+		{
+			String name;
+			String path;
+			Tensor input;
+			Tensor desc;
+		};
 
+		const Options& _options;
+		TestParamHolder _param;
+		NetworkPtr _network;
+
+		bool LoadTestParam()
+		{
+			if (!_param.Load(_options.testParam))
+			{
+				std::cout << "Can't load file '" << _options.testParam << "' !" << std::endl;
+				return false;
+			}
+			return true;
+		}
+
+		bool CreateDirectories()
+		{
+			if (_options.NeedOutputDirectory() && !DirectoryExists(_options.outputDirectory) && !CreatePath(_options.outputDirectory))
+			{
+				std::cout << "Can't create output directory '" << _options.outputDirectory << "' !" << std::endl;
+				return false;
+			}
+			return true;
+		}
 	};
 }
 

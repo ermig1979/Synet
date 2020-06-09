@@ -27,7 +27,7 @@
 #include "TestCommon.h"
 #include "TestPerformance.h"
 
-#ifdef SYNET_LAYER_STATISTIC
+#if defined(SYNET_LAYER_STATISTIC) && !defined(SYNET_PERF_FUNC)
 #define SYNET_PERF_FUNC() TEST_PERF_FUNC()
 #define SYNET_PERF_BLOCK(name) TEST_PERF_BLOCK(name)
 #define SYNET_PERF_BLOCK_END(name) TEST_PERF_BLOCK_END(name)
@@ -35,7 +35,7 @@
 #define SYNET_PERF_SET(name, value) name = value;
 #define SYNET_PERF_INIT(name, desc, flop) name = Test::PerformanceMeasurerStorage::s_storage.Get(desc, flop);
 #define SYNET_PERF_TEST(name) Test::ScopedPerformanceMeasurer SYNET_CAT(__spm,__LINE__)(name);
-#endif //SYNET_LAYER_STATISTIC
+#endif
 #include "Synet/Synet.h"
 
 #include "TestNetwork.h"
