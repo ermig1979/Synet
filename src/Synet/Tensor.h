@@ -408,7 +408,7 @@ namespace Synet
             _shape = tensor._shape;
             _format = tensor._format;
             _name = tensor._name;
-            _buffer.reset(tensor._buffer.Clone());
+            _buffer.reset(tensor._buffer->Clone());
         }
 
         SYNET_INLINE void Import(const TensorParam & param)

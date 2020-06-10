@@ -156,7 +156,7 @@ namespace Test
                 return false;
             }
             Network::Options options(_options.outputDirectory, _options.workThreads, 
-                options.consoleSilence, _options.batchSize, _options.debugPrint, _options.regionThreshold);
+                _options.consoleSilence, _options.batchSize, _options.debugPrint, _options.regionThreshold);
             if (!network.Init(model, weight, options, _param()))
             {
                 std::cout << "Can't load " << network.Name() << " from '" << model << "' and '" << weight << "' !" << std::endl;
