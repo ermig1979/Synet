@@ -38,7 +38,6 @@ namespace Test
 	public:
 		struct Options : public ArgsParser
 		{
-			String mode;
 			String framework;
 			String testModel;
 			String testWeight;
@@ -52,7 +51,6 @@ namespace Test
 				: ArgsParser(argc, argv)
 				, result(false)
 			{
-				mode = GetArg("-m");
 				framework = GetArg("-f");
 				testModel = GetArg("-tm", "sy_fp32.xml");
 				testWeight = GetArg("-tw", "sy_fp32.bin");
@@ -80,21 +78,32 @@ namespace Test
 				return false;
 			if (!CreateDirectories())
 				return false;
+			if (!LoadTestList())
+				return false;
 			return true;
 		}
 
 	private:
 		struct Face
 		{
-			String name;
-			String path;
-			Tensor input;
-			Tensor desc;
+			String name, path;
+			Tensor input, desc;
 		};
+		typedef std::shared_ptr<Face> FacePtr;
+
+		struct Test
+		{
+			Face first, second;
+			float distance;
+		};
+		typedef std::vector<Test> Tests;
+		typedef std::shared_ptr<Test> TestPtr;
+		typedef std::vector<TestPtr> TestPtrs;
 
 		const Options& _options;
 		TestParamHolder _param;
 		NetworkPtr _network;
+		Tests _tests;
 
 		bool LoadTestParam()
 		{
@@ -113,6 +122,78 @@ namespace Test
 				std::cout << "Can't create output directory '" << _options.outputDirectory << "' !" << std::endl;
 				return false;
 			}
+			return true;
+		}
+
+		bool SetPath(const String& name, int index, String& path)
+		{
+			path = MakePath(_options.imageDirectory, name + "_" + ToString(index, 4) + ".jpg");
+			if(!FileExists(path))
+			{
+				std::cout << "Test image '" << path << "' is not exist!" << std::endl;
+				return false;
+			}
+			return true;
+		}
+
+		bool LoadTestList()
+		{
+			if (!DirectoryExists(_options.imageDirectory))
+			{
+				std::cout << "Image directory '" << _options.imageDirectory << "' is not exist!" << std::endl;
+				return false;
+			}
+			if (!FileExists(_options.testList))
+			{
+				std::cout << "Test list file '" << _options.testList << "' is not exist!" << std::endl;
+				return false;
+			}
+			std::ifstream ifs(_options.testList);
+			if (!ifs.is_open())
+			{
+				std::cout << "Can't open test list file '" << _options.testList << "'!" << std::endl;
+				return false;
+			}
+			String line;
+			if (!std::getline(ifs, line))
+			{
+				std::cout << "Can't read 1-st file line!" << std::endl;
+				return false;
+			}
+			size_t size = FromString<int>(line);
+			if (size > USHRT_MAX)
+			{
+				std::cout << "Wrong test size " << size << " !" << std::endl;
+				return false;
+			}
+			_tests.resize(size * 2);
+			for (size_t i = 0; i < _tests.size(); ++i)
+			{
+				if (!std::getline(ifs, line))
+				{
+					std::cout << "Can't read " << i + 2 << " file line!" << std::endl;
+					return false;
+				}
+				std::stringstream ss(line);
+				int first, second;
+				if (i < size)
+				{
+					ss >> _tests[i].first.name >> first >> second;
+					_tests[i].second.name = _tests[i].first.name;
+				}
+				else
+					ss >> _tests[i].first.name >> first >> _tests[i].second.name >> second;
+				if (_tests[i].first.name.empty() || _tests[i].second.name.empty() || first == 0 || second == 0)
+				{
+					std::cout << "Can't parse " << i + 2 << " file line!" << std::endl;
+					return false;
+				}
+				if (!SetPath(_tests[i].first.name, first, _tests[i].first.path))
+					return false;
+				if (!SetPath(_tests[i].second.name, second, _tests[i].second.path))
+					return false;
+			}
+			ifs.close();
 			return true;
 		}
 	};
