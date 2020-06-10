@@ -87,6 +87,8 @@ namespace Test
 				return false;
 			if (!PerformTests())
 				return false;
+			if (!ProcessResult())
+				return false;
 			return PrintFinishMessage();
 		}
 
@@ -107,12 +109,19 @@ namespace Test
 		typedef std::vector<Test> Tests;
 		typedef std::shared_ptr<Test> TestPtr;
 		typedef std::vector<TestPtr> TestPtrs;
+		
+		struct Result
+		{
+			double threshold;
+			double accuracy;
+		};
 
 		const Options& _options;
 		TestParamHolder _param;
 		NetworkPtr _network;
 		Tests _tests;
 		size_t _progressMessageSizeMax;
+		Result _result;
 
 		void PrintStartMessage() const
 		{
@@ -121,7 +130,11 @@ namespace Test
 
 		bool PrintFinishMessage() const
 		{
-			std::cout << ExpandRight("Test is finished successfully!", _progressMessageSizeMax) << std::endl << std::endl;
+			std::stringstream ss;
+			ss << "Test is finished.";
+			ss << " Number = " << _tests.size();
+			ss << " Accuracy = " << ToString(_result.accuracy*100.0, 2) << " %" ;
+			std::cout << ExpandRight(ss.str(), _progressMessageSizeMax) << std::endl << std::endl;
 			return true;
 		}
 
@@ -325,6 +338,41 @@ namespace Test
 				}
 				std::cout << "\r" << std::flush;
 			}
+			return true;
+		}
+
+		bool ProcessResult()
+		{
+			typedef std::pair<float, int> Pair;
+			std::vector<Pair> tests(_tests.size());
+			int negatives = 0, positives = 0;
+			for (size_t i = 0; i < _tests.size(); ++i)
+			{
+				tests[i].first = _tests[i + 0].distance;
+				if (_tests[i].first.name == _tests[i].second.name)
+					tests[i].second = +1, positives++;
+				else
+					tests[i].second = -1, negatives++;
+				tests[i].second = _tests[i].first.name == _tests[i].second.name ? 1 : -1;
+			}
+			std::sort(tests.begin(), tests.end(), [](const Pair& a, const Pair& b) {return a.first < b.first; });
+			size_t idx = tests.size(), num = negatives, max = num;
+			for (size_t i = 0; i < tests.size(); ++i)
+			{
+				num += tests[i].second;
+				if (num > max)
+				{
+					max = num;
+					idx = i;
+				}
+			}
+			if (idx >= tests.size() - 1)
+			{
+				std::cout << "Can't process result!" << std::endl;
+				return false;
+			}
+			_result.accuracy = double(max) / tests.size();
+			_result.threshold = (tests[idx].first + tests[idx + 1].first) / 2;
 			return true;
 		}
 	};
