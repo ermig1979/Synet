@@ -61,6 +61,14 @@ namespace Test
 				outputDirectory = GetArg("-od", "output");
 			}
 
+			~Options()
+			{
+				if (result)
+				{
+					PerformanceMeasurerStorage::s_storage.Print(std::cout);
+				}
+			}
+
 			bool NeedOutputDirectory() const
 			{
 				return false;
