@@ -71,7 +71,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Avx512vnni", "Avx512vnni.vc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestQuantization", "TestQuantization.vcxproj", "{1DBDF00B-B821-440B-8AC1-1D561F2ABFB9}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestFaceRecognition", "TestFaceRecognition.vcxproj", "{E97C6131-4CB4-4B1E-BEDF-BB86DF044DA5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestPrecision", "TestPrecision.vcxproj", "{E97C6131-4CB4-4B1E-BEDF-BB86DF044DA5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

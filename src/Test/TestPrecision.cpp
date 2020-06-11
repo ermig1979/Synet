@@ -23,17 +23,17 @@
 */
 
 #include "TestPerformance.h"
-#include "TestFaceRecognition.h"
+#include "TestPrecision.h"
 
 Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
 
 int main(int argc, char* argv[])
 {
-    Test::FaceRecognition::Options options(argc, argv);
+    Test::Precision::Options options(argc, argv);
 
-    Test::FaceRecognition faceRecognition(options);
+    Test::Precision precision(options);
 
-    options.result = faceRecognition.Run();
+    options.result = precision.Run();
 
     return options.result ? 0 : 1;
 }

@@ -4,7 +4,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E97C6131-4CB4-4B1E-BEDF-BB86DF044DA5}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>TestInferenceEngine</RootNamespace>
+    <RootNamespace>TestPrecision</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -21,7 +21,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\Test\TestFaceRecognition.cpp" />
+    <ClCompile Include="..\..\src\Test\TestPrecision.cpp" />
     <ClCompile Include="..\..\src\Test\TestImage.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -36,7 +36,7 @@
     <ClInclude Include="..\..\src\Test\TestArgs.h" />
     <ClInclude Include="..\..\src\Test\TestCommon.h" />
     <ClInclude Include="..\..\src\Test\TestCompare.h" />
-    <ClInclude Include="..\..\src\Test\TestFaceRecognition.h" />
+    <ClInclude Include="..\..\src\Test\TestPrecision.h" />
     <ClInclude Include="..\..\src\Test\TestHtml.h" />
     <ClInclude Include="..\..\src\Test\TestImage.h" />
     <ClInclude Include="..\..\src\Test\TestNetwork.h" />

@@ -34,11 +34,12 @@
 
 namespace Test
 {
-	class FaceRecognition
+	class Precision
 	{
 	public:
 		struct Options : public ArgsParser
 		{
+			String mode;
 			String framework;
 			String testModel;
 			String testWeight;
@@ -52,6 +53,7 @@ namespace Test
 				: ArgsParser(argc, argv)
 				, result(false)
 			{
+				mode = GetArg("-m", "reidentification");
 				framework = GetArg("-f", "synet");
 				testModel = GetArg("-tm", "sy_fp32.xml");
 				testWeight = GetArg("-tw", "sy_fp32.bin");
@@ -75,7 +77,7 @@ namespace Test
 			}
 		};
 
-		FaceRecognition(const Options& options)
+		Precision(const Options& options)
 			: _options(options)
 			, _progressMessageSizeMax(0)
 		{
@@ -101,17 +103,17 @@ namespace Test
 		}
 
 	private:
-		struct Face
+		struct Object
 		{
 			String name, path;
 			Tensors input;
 			Tensor desc;
 		};
-		typedef std::shared_ptr<Face> FacePtr;
+		typedef std::shared_ptr<Object> ObjectPtr;
 
 		struct Test
 		{
-			Face first, second;
+			Object first, second;
 			float distance;
 		};
 		typedef std::vector<Test> Tests;
@@ -276,16 +278,16 @@ namespace Test
 			return true;
 		}
 
-		bool CalculateFaceDescriptor(Face & face)
+		bool CalculateFaceDescriptor(Object& object)
 		{
 			View original;
-			if (!LoadImage(face.path, original))
+			if (!LoadImage(object.path, original))
 			{
-				std::cout << "Can't read '" << face.path << "' image!" << std::endl;
+				std::cout << "Can't read '" << object.path << "' image!" << std::endl;
 				return false;
 			}
 			Shape shape = _network->SrcShape(0);
-			face.input.resize(1, Tensor(shape));
+			object.input.resize(1, Tensor(shape));
 			Floats lower = _param().lower(), upper = _param().upper();
 			if (lower.size() == 1)
 				lower.resize(shape[1], lower[0]);
@@ -306,7 +308,7 @@ namespace Test
 			}
 			else
 				channels[0] = resized;
-			float * input = face.input[0].CpuData();
+			float * input = object.input[0].CpuData();
 			for (size_t c = 0; c < channels.size(); ++c)
 			{
 				for (size_t y = 0; y < channels[c].height; ++y)
@@ -316,7 +318,7 @@ namespace Test
 					input += channels[c].width;
 				}
 			}
-			face.desc.Clone(_network->Predict(face.input)[0]);
+			object.desc.Clone(_network->Predict(object.input)[0]);
 			return true;
 		}
 
