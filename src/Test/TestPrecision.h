@@ -47,11 +47,18 @@ namespace Test
 			String testList;
 			String imageDirectory;
 			String outputDirectory;
-			bool result;
+			String logName;
+			bool consoleSilence;
+			size_t testThreads;
+
+			mutable volatile bool result;
+			mutable size_t memoryUsage, testNumber;
+			mutable double precision, threshold;
 
 			Options(int argc, char* argv[])
 				: ArgsParser(argc, argv)
-				, result(false)
+				, result(true)
+				, memoryUsage(0)
 			{
 				mode = GetArg("-m", "reidentification");
 				framework = GetArg("-f", "synet");
@@ -61,19 +68,44 @@ namespace Test
 				testList = GetArg("-tl", "pairs10.txt");
 				imageDirectory = GetArg("-id", "image");
 				outputDirectory = GetArg("-od", "output");
+				logName = GetArg("-ln", "", false);
+				consoleSilence = FromString<bool>(GetArg("-cs", "0"));
+				testThreads = FromString<size_t>(GetArg("-tt", "1"));
 			}
 
 			~Options()
 			{
 				if (result)
 				{
-					PerformanceMeasurerStorage::s_storage.Print(std::cout);
+					std::stringstream ss;
+					ss << "Precision: " << ToString(precision * 100, 2) << " %, threshold: " << ToString(threshold, 3) << std::endl;
+					if (memoryUsage)
+						ss << framework << " memory usage: " << memoryUsage / (1024 * 1024) << " MB in " << TestThreads() << " threads." << std::endl;
+					PerformanceMeasurerStorage::s_storage.Print(ss);
+					if (!consoleSilence)
+						std::cout << ss.str();
+					if (!logName.empty())
+					{
+						if (!CreateOutputDirectory(logName))
+							return;
+						std::ofstream log(logName.c_str());
+						if (log.is_open())
+						{
+							log << ss.str();
+							log.close();
+						}
+					}
 				}
 			}
 
 			bool NeedOutputDirectory() const
 			{
 				return false;
+			}
+
+			size_t TestThreads() const
+			{
+				return Synet::RestrictRange<size_t>(testThreads, 1, std::thread::hardware_concurrency());
 			}
 		};
 
@@ -120,31 +152,33 @@ namespace Test
 		typedef std::shared_ptr<Test> TestPtr;
 		typedef std::vector<TestPtr> TestPtrs;
 		
-		struct Result
+		struct Thread
 		{
-			double threshold;
-			double accuracy;
+			size_t begin, end, current;
+			std::thread thread;
+			Thread() : begin(0), end(0), current(0) {}
 		};
+		typedef std::vector<Thread> Threads;
 
 		const Options& _options;
 		TestParamHolder _param;
-		NetworkPtr _network;
+		NetworkPtrs _networks;
 		Tests _tests;
+		Threads _threads;
 		size_t _progressMessageSizeMax;
-		Result _result;
 
 		void PrintStartMessage() const
 		{
-			std::cout << "Start test for " << _options.testModel << " model :" << std::endl;
+			std::cout << "Start test (";
+			std::cout << " framework: " << _options.framework;
+			std::cout << ", test: " << GetNameByPath(DirectoryByPath(_options.testModel));
+			std::cout << ", model: " << GetNameByPath(_options.testModel);
+			std::cout << ", list: " << GetNameByPath(_options.testList) << " ):" << std::endl;
 		}
 
 		bool PrintFinishMessage() const
 		{
-			std::stringstream ss;
-			ss << "Test is finished.";
-			ss << " Number = " << _tests.size();
-			ss << " Accuracy = " << ToString(_result.accuracy*100.0, 2) << " %" ;
-			std::cout << ExpandRight(ss.str(), _progressMessageSizeMax) << std::endl << std::endl;
+			std::cout << ExpandRight("Test is finished.", _progressMessageSizeMax) << std::endl << std::endl;
 			return true;
 		}
 
@@ -180,28 +214,32 @@ namespace Test
 				std::cout << "Weight file '" << _options.testWeight << "' is not exist!" << std::endl;
 				return false;
 			}
-			if (_options.framework == "synet")
-				_network = std::make_shared<SynetNetwork>();
+			_networks.resize(_options.testThreads);
+			for (size_t i = 0; i < _networks.size(); ++i)
+			{
+				if (_options.framework == "synet")
+					_networks[i] = std::make_shared<SynetNetwork>();
 #ifdef SYNET_TEST_FIRST_RUN
-			else if(_options.framework == "inference_engine")
-				_network = std::make_shared<InferenceEngineNetwork>();
+				else if (_options.framework == "inference_engine")
+					_networks[i] = std::make_shared<InferenceEngineNetwork>();
 #endif
-			else
-			{
-				std::cout << "Unknown framework: " << _options.framework << "!" << std::endl;
-				return false;
-			}
-			Network::Options options(_options.outputDirectory, 1, true, 1, 0, 0.5f);
-			if (!_network->Init(_options.testModel, _options.testWeight, options, _param()))
-			{
-				std::cout << "Can't load " << _network->Name() << " from '" << _options.testModel << "' and '" << _options.testWeight << "' !" << std::endl;
-				return false;
-			}
-			Shape shape = _network->SrcShape(0);
-			if (shape.size() != 4 || (shape[1] != 3 && shape[1] != 1))
-			{
-				std::cout << "Wrong " << _network->Name() << " classifier input shape: " << Synet::Detail::DebugPrint(shape) << " !" << std::endl;
-				return false;
+				else
+				{
+					std::cout << "Unknown framework: " << _options.framework << "!" << std::endl;
+					return false;
+				}
+				Network::Options options(_options.outputDirectory, 1, true, 1, 0, 0.5f);
+				if (!_networks[i]->Init(_options.testModel, _options.testWeight, options, _param()))
+				{
+					std::cout << "Can't load " << _networks[i]->Name() << " from '" << _options.testModel << "' and '" << _options.testWeight << "' !" << std::endl;
+					return false;
+				}
+				Shape shape = _networks[i]->SrcShape(0);
+				if (shape.size() != 4 || (shape[1] != 3 && shape[1] != 1))
+				{
+					std::cout << "Wrong " << _networks[i]->Name() << " classifier input shape: " << Synet::Detail::DebugPrint(shape) << " !" << std::endl;
+					return false;
+				}
 			}
 			return true;
 		}
@@ -278,7 +316,7 @@ namespace Test
 			return true;
 		}
 
-		bool CalculateFaceDescriptor(Object& object)
+		bool CalculateFaceDescriptor(Object& object, size_t thread)
 		{
 			View original;
 			if (!LoadImage(object.path, original))
@@ -286,7 +324,7 @@ namespace Test
 				std::cout << "Can't read '" << object.path << "' image!" << std::endl;
 				return false;
 			}
-			Shape shape = _network->SrcShape(0);
+			Shape shape = _networks[thread]->SrcShape(0);
 			object.input.resize(1, Tensor(shape));
 			Floats lower = _param().lower(), upper = _param().upper();
 			if (lower.size() == 1)
@@ -318,7 +356,7 @@ namespace Test
 					input += channels[c].width;
 				}
 			}
-			object.desc.Clone(_network->Predict(object.input)[0]);
+			object.desc.Clone(_networks[thread]->Predict(object.input)[0]);
 			return true;
 		}
 
@@ -326,6 +364,20 @@ namespace Test
 		{
 			SimdCosineDistance32f(test.first.desc.CpuData(), test.second.desc.CpuData(), test.first.desc.Size(), &test.distance);
 			return true;
+		}
+
+		static void ThreadTask(Precision * precision, size_t thread)
+		{
+			size_t& current = precision->_threads[thread].current;
+			volatile bool& result = precision->_options.result;
+			for (; current < precision->_threads[thread].end && result; current++)
+			{
+				result = result && precision->CalculateFaceDescriptor(precision->_tests[current].first, thread);
+				result = result && precision->CalculateFaceDescriptor(precision->_tests[current].second, thread);
+				precision->CalculateDistance(precision->_tests[current]);
+			}
+			if (!result)
+				std::cout << "Error at " << current << " test!" << std::endl;
 		}
 
 		String ProgressString(size_t current, size_t total)
@@ -338,17 +390,35 @@ namespace Test
 
 		bool PerformTests()
 		{
-			for (size_t i = 0; i < _tests.size(); ++i)
+			size_t current = 0, total = _tests.size();
+			_threads.resize(_options.testThreads);
+			size_t part = Synet::DivHi(_tests.size(), _threads.size());
+			for (size_t t = 0; t < _threads.size(); ++t)
 			{
-				std::cout << ProgressString(i, _tests.size()) << std::flush;
-				if (!(CalculateFaceDescriptor(_tests[i].first) && CalculateFaceDescriptor(_tests[i].second) && CalculateDistance(_tests[i])))
-				{
-					std::cout << "Error at " << i << " test!" << std::endl;
-					return false;
-				}
-				std::cout << "\r" << std::flush;
+				_threads[t].begin = t * part;
+				_threads[t].current = t * part;
+				_threads[t].end = std::min((t + 1) * part, _tests.size());
+				_threads[t].thread = std::thread(ThreadTask, this, t);
 			}
-			return true;
+
+			while (current < total && _options.result)
+			{
+				current = 0;
+				for (size_t t = 0; t < _threads.size(); ++t)
+					current += _threads[t].current - _threads[t].begin;
+				std::cout << ProgressString(current, total) << std::flush;
+				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				std::cout << " \r" << std::flush;
+			}
+
+			for (size_t t = 0; t < _threads.size(); ++t)
+			{
+				if (_threads[t].thread.joinable())
+					_threads[t].thread.join();
+				_options.memoryUsage += _networks[t]->MemoryUsage();
+			}
+
+			return _options.result;
 		}
 
 		bool ProcessResult()
@@ -381,8 +451,9 @@ namespace Test
 				std::cout << "Can't process result!" << std::endl;
 				return false;
 			}
-			_result.accuracy = double(max) / tests.size();
-			_result.threshold = (tests[idx].first + tests[idx + 1].first) / 2;
+			_options.testNumber = tests.size();
+			_options.precision = double(max) / tests.size();
+			_options.threshold = (tests[idx].first + tests[idx + 1].first) / 2;
 			return true;
 		}
 	};

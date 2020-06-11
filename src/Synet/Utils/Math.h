@@ -28,6 +28,11 @@
 
 namespace Synet
 {
+    SYNET_INLINE size_t DivHi(size_t value, size_t divider)
+    {
+        return (value + divider - 1) / divider;
+    }
+
     SYNET_INLINE int Round(float value)
     {
         return (int)(value + (value >= 0 ? 0.5f : -0.5f));

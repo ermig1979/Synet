@@ -9,8 +9,8 @@ option(PERF_STAT "Performance statistic level: 0 - no statistic, 1 - Synet layer
 set(MAX_ERRORS 5)
 
 
-if(NOT((MODE STREQUAL "all") OR (MODE STREQUAL "darknet") OR (MODE STREQUAL "face_recognition") OR 
-       (MODE STREQUAL "inference_engine") OR (MODE STREQUAL "quantization") OR (MODE STREQUAL "use_samples")))
+if(NOT((MODE STREQUAL "all") OR (MODE STREQUAL "darknet") OR (MODE STREQUAL "inference_engine") OR 
+       (MODE STREQUAL "precision") OR (MODE STREQUAL "quantization") OR (MODE STREQUAL "use_samples")))
     message(FATAL_ERROR "Unknown value of MODE: '${MODE}'!")
 endif()
 

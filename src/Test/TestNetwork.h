@@ -107,5 +107,6 @@ namespace Test
         float _regionThreshold;
     };
     typedef std::shared_ptr<Network> NetworkPtr;
+    typedef std::vector<NetworkPtr> NetworkPtrs;
 }
 
