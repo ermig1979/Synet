@@ -32,9 +32,26 @@ namespace Synet
 {
     namespace Detail
     {
-        template <typename T> void ScaleLayerForwardCpu(const T * src, const T * scale, const T * bias, size_t channels, size_t height, size_t width, T * dst, int trans, int compatibility)
+        template <typename T> void ScaleLayerForwardCpu(const T * src, const T * scale, const T * bias, size_t channels, size_t height, size_t width, T * dst, TensorFormat format, int compatibility)
         {
-            if (trans)
+            if (format == TensorFormatNchw)
+            {
+                for (size_t c = 0; c < channels; ++c)
+                {
+                    const T s = scale[c];
+                    const T b = bias ? bias[c] : 0;
+                    for (size_t h = 0; h < height; ++h)
+                    {
+                        for (size_t w = 0; w < width; ++w)
+                        {
+                            dst[w] = src[w] * s + b;
+                        }
+                        src += width;
+                        dst += width;
+                    }
+                }
+            }
+            else if (format == TensorFormatNhwc)
             {
                 if (bias)
                 {
@@ -64,28 +81,13 @@ namespace Synet
                 }
             }
             else
-            {
-                for (size_t c = 0; c < channels; ++c)
-                {
-                    const T s = scale[c];
-                    const T b = bias ? bias[c] : 0;
-                    for (size_t h = 0; h < height; ++h)
-                    {
-                        for (size_t w = 0; w < width; ++w)
-                        {
-                            dst[w] = src[w] * s + b;
-                        }
-                        src += width;
-                        dst += width;
-                    }
-                }
-            }
+                assert(0);
         }
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-        template <> SYNET_INLINE void ScaleLayerForwardCpu<float>(const float * src, const float * scale, const float * bias, size_t channels, size_t height, size_t width, float* dst, int trans, int compatibility)
+        template <> SYNET_INLINE void ScaleLayerForwardCpu<float>(const float * src, const float * scale, const float * bias, size_t channels, size_t height, size_t width, float* dst, TensorFormat format, int compatibility)
         {
-            ::SimdSynetScaleLayerForward(src, scale, bias, channels, height, width, dst, (::SimdTensorFormatType)trans, (::SimdSynetCompatibilityType)compatibility);
+            ::SimdSynetScaleLayerForward(src, scale, bias, channels, height, width, dst, (::SimdTensorFormatType)format, (::SimdSynetCompatibilityType)compatibility);
         }
 #endif
     }
@@ -117,7 +119,8 @@ namespace Synet
             }
             const Tensor & scale = this->Weight()[0];
             _channels = scale.Size();
-            _trans = src[0]->Format() == TensorFormatNhwc;
+            _type = src[0]->GetType();
+            _format = src[0]->Format();
             if (scale.Size() == src[0]->Size())
             {
                 _batch = 1;
@@ -134,8 +137,8 @@ namespace Synet
                 }
                 else
                 {
-                    _height = _trans ? src[0]->Axis(1) : src[0]->Axis(2);
-                    _width = _trans ? src[0]->Axis(2) : src[0]->Axis(3);
+                    _height = _format == TensorFormatNhwc ? src[0]->Axis(1) : src[0]->Axis(2);
+                    _width = _format == TensorFormatNhwc ? src[0]->Axis(2) : src[0]->Axis(3);
                 }
             }
             assert(src[0]->Size() == _batch*_channels*_height*_width);
@@ -153,21 +156,32 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            const Type* pSrc = src[0]->CpuData();
-            const Type * pScale = this->Weight()[0].CpuData();
-            const Type * pBias = _biasTerm ? this->Weight()[1].CpuData() : NULL;
-            Type * pDst = dst[0]->CpuData();
+            const Type * scale = this->Weight()[0].CpuData();
+            const Type * bias = _biasTerm ? this->Weight()[1].CpuData() : NULL;
+            if (_type == TensorType32f)
+            {
+                ForwardCpu(src[0]->CpuData(), scale, bias, dst[0]->CpuData());
+            }
+            else 
+                assert(0);
+        }
+
+        void ForwardCpu(const float * src, const float* scale, const float * bias, float * dst)
+        {
             for (size_t b = 0; b < _batch; ++b)
             {
-                Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _channels, _height, _width, pDst, _trans, _compatibility);
-                pSrc += _channels * _height * _width;
-                pDst += _channels * _height * _width;
+                Detail::ScaleLayerForwardCpu(src, scale, bias, _channels, _height, _width, dst, _format, _compatibility);
+                src += _channels * _height * _width;
+                dst += _channels * _height * _width;
             }
         }
 
     private:
+        TensorFormat _format;
+        TensorType _type;
         size_t _axis, _batch, _channels, _height, _width;
-        int _trans, _compatibility;
+        int _compatibility;
         bool _biasTerm;
+        Tensor _scale, _shift;
     };
 }

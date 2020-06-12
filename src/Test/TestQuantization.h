@@ -198,18 +198,58 @@ namespace Test
             return true;
         }
 
-        bool QuantizeConvolution(const Synet::LayerParam& layer) const
+        void ScaleToConvolution(Synet::LayerParam& layer)
+        {
+            if (layer.type() != Synet::LayerTypeScale)
+                return;
+            const SyNet::Tensor* tensor = _synet.GetInternalTensor(layer.src()[0]);
+            if (!(tensor && tensor->Format() == Synet::TensorFormatNhwc && tensor->Count() == 4))
+                return;
+            size_t channels = tensor->Axis(3);
+            layer.type() = Synet::LayerTypeConvolution;
+            layer.convolution().biasTerm() = layer.scale().biasTerm();
+            layer.convolution().outputNum() = channels;
+            layer.convolution().group() = channels;
+            layer.convolution().kernel() = Shp(1, 1);
+            layer.weight()[0].dim() = Shp(1, 1, 1, channels);
+            layer.weight()[0].format() = Synet::TensorFormatNhwc;
+            layer.scale() = Synet::ScaleParam();
+            layer.convolution().quantizationLevel() = Synet::TensorType8i;
+        }
+
+        void QuantizeConvolution(Synet::LayerParam& layer)
         {
             if (layer.type() != Synet::LayerTypeConvolution)
-                return false;
+                return;
             const SyNet::Tensor* tensor = _synet.GetInternalTensor(layer.src()[0]);
             if (tensor && tensor->Format() == Synet::TensorFormatNhwc)
             {
                 Shape shape = tensor->Shape();
                 if (shape[1] == 1 && shape[2] == 1)
-                    return false;
+                    return;
             }
-            return true;
+            layer.convolution().quantizationLevel() = Synet::TensorType8i;
+        }
+
+        void HighlightGlobalPooling(Synet::LayerParam& layer)
+        {
+            if (layer.type() != Synet::LayerTypePooling)
+                return;
+            const SyNet::Tensor* tensor = _synet.GetInternalTensor(layer.src()[0]);
+            if (tensor && tensor->Format() == Synet::TensorFormatNhwc)
+            {
+                const Shape & shape = tensor->Shape();
+                const Shape& kernel = layer.pooling().kernel();
+                const Shape& stride = layer.pooling().stride();
+                if (shape.size() == 4 && shape[1] == kernel[0] && shape[2] == kernel[1] && 
+                    layer.pooling().stride() == Shp(1, 1) && layer.pooling().pad() == Shp(0, 0, 0, 0))
+                {
+                    layer.pooling().globalPooling() = true;
+                    layer.pooling().kernel().clear();
+                    layer.pooling().stride().clear();
+                    layer.pooling().pad().clear();
+                }
+            }
         }
 
         bool PerformQuntization()
@@ -224,8 +264,10 @@ namespace Test
             }
             for (size_t i = 0; i < network().layers().size(); ++i)
             {
-                if (QuantizeConvolution(network().layers()[i]))
-                    network().layers()[i].convolution().quantizationLevel() = Synet::TensorType8i;
+                Synet::LayerParam& layer = network().layers()[i];
+                ScaleToConvolution(layer);
+                QuantizeConvolution(layer);
+                HighlightGlobalPooling(layer);
             }
             network().quantization().method() = (Synet::QuantizationMethod)_options.quantizationMethod;
             Floats bin;

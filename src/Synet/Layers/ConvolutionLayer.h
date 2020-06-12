@@ -104,8 +104,8 @@ namespace Synet
                 _alg.grW = _conv.dstC / _conv.group;
 
                 _alg.siS = _conv.dstH * _conv.dstW;
-                _alg.ldS = _alg.siW;
-                _alg.grS = _alg.siS * _alg.siW;
+                _alg.ldS = _alg.siW * (_alg.is1x1 ? _conv.group : 1);
+                _alg.grS = _alg.siW * (_alg.is1x1 ? 1 : _alg.siS);
 
                 _alg.siD = _conv.dstC / _conv.group;
                 _alg.ldD = _conv.dstC;

@@ -86,7 +86,7 @@ namespace Test
 					ss << SystemInfo() << std::endl;
 					PerformanceMeasurerStorage::s_storage.Print(ss);
 					if (!consoleSilence)
-						std::cout << ss.str();
+						std::cout << ss.str() << std::endl;
 					if (!logName.empty())
 					{
 						if (!CreateOutputDirectory(logName))

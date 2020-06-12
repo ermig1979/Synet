@@ -149,9 +149,10 @@ namespace Synet
                 for (size_t b = 0; b < _batch; ++b)
                 {
                     if(_scale == 1)
-                        Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _channels, 1, _spatial, pDst, _trans, 0);
+                        Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _channels, 1, _spatial, pDst, src[0]->Format(), 0);
                     else
-                        Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _spatial, 1, _channels, pDst, 1 - _trans, 0);
+                        Detail::ScaleLayerForwardCpu(pSrc, pScale, pBias, _spatial, 1, _channels, pDst, 
+                            src[0]->Format() == TensorFormatNhwc ? TensorFormatNchw : TensorFormatNhwc, 0);
                     pSrc += _channels*_spatial;
                     pDst += _channels*_spatial;
                     pScale += (_scale == 1 ? _channels : _spatial);

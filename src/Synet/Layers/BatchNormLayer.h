@@ -112,7 +112,7 @@ namespace Synet
                 size_t size = src[0]->Size(1);
                 for (size_t i = 0; i < num; ++i)
                 {
-                    Detail::ScaleLayerForwardCpu(pSrc, _scale.CpuData(), _bias.CpuData(), _channels, 1, spatialDim, pDst, src[0]->Format() == TensorFormatNhwc, 0);
+                    Detail::ScaleLayerForwardCpu(pSrc, _scale.CpuData(), _bias.CpuData(), _channels, 1, spatialDim, pDst, src[0]->Format(), 0);
                     pSrc += size;
                     pDst += size;
                 }
