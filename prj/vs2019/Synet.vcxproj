@@ -83,6 +83,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\SliceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SoftplusLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SqueezeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\StridedSliceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\StubLayer.h" />

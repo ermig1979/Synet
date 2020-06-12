@@ -271,6 +271,9 @@
     <ClInclude Include="..\..\src\Synet\Quantization\Const.h">
       <Filter>Quantization</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
