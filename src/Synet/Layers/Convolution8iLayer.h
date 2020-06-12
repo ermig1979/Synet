@@ -356,11 +356,27 @@ namespace Synet
                 case ActivationFunctionTypeRelu:
                     CpuRelu(dst, alg.dSize, 0, dst);
                     break;
+                case ActivationFunctionTypePrelu:
+                    CpuPrelu32i(dst, conv.dstC, conv.dstH, conv.dstW, this->Weight().back().CpuData(), dst);
                 default:
                     assert(0);
                 }
                 src += alg.sSize;
                 dst += alg.dSize;
+            }
+        }
+
+        void CpuPrelu32i(const int32_t* src, size_t channels, size_t height, size_t width, const float* slope, int32_t* dst)
+        {
+            for (size_t h = 0; h < height; ++h)
+            {
+                for (size_t w = 0; w < width; ++w)
+                {
+                    for (size_t c = 0; c < channels; ++c)
+                        dst[c] = src[c] >= 0 ? src[c] : int32_t(src[c]*slope[c]);
+                    src += channels;
+                    dst += channels;
+                }
             }
         }
 

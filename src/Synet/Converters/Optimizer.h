@@ -59,6 +59,7 @@ namespace Synet
 
         bool MergeLayers(Synet::NetworkParam& network, Floats& bin, int stage)
         {
+            QuantizationMethod method = network.quantization().method();
             const bool is8i = network.quantization().method() != QuantizationMethodUnknown;
             Changes changes;
             LayerParams merged;
@@ -114,13 +115,13 @@ namespace Synet
                 }
                 case 2:
                 {
-                    if (MergeConvolutionOrDeconvolutionAndActivation(network.layers(), i, is8i, merged, changes))
+                    if (MergeConvolutionOrDeconvolutionAndActivation(network.layers(), i, method, merged, changes))
                         continue;
                     break;
                 }
                 case 3:
                 {
-                    if (MergeThreeConvolutions(network.layers(), i, is8i, merged, changes))
+                    if (MergeThreeConvolutions(network.layers(), i, method, merged, changes))
                         continue;
                     break;
                 }
@@ -251,7 +252,7 @@ namespace Synet
             return true;
         }
 
-        bool MergeConvolutionOrDeconvolutionAndActivation(const LayerParams & src, size_t index, bool is8i, LayerParams & dst, Changes & changes)
+        bool MergeConvolutionOrDeconvolutionAndActivation(const LayerParams & src, size_t index, QuantizationMethod method, LayerParams & dst, Changes & changes)
         {
             if (index == 0)
                 return false;
@@ -271,7 +272,7 @@ namespace Synet
                 }
             }
             bool result = false;
-            if (src[index].type() == LayerTypeRestrictRange && !is8i)
+            if (src[index].type() == LayerTypeRestrictRange && method == QuantizationMethodUnknown)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypeRestrictRange;
                 dst.back().convolution().activationParam0() = src[index].restrictRange().lower();
@@ -284,19 +285,19 @@ namespace Synet
                 dst.back().convolution().activationParam0() = src[index].relu().negativeSlope();
                 result = true;
             }
-            if (src[index].type() == LayerTypePrelu && !is8i)
+            if (src[index].type() == LayerTypePrelu && method != QuantizationMethodIECompatible)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypePrelu;
                 dst.back().weight().push_back(src[index].weight()[0]);
                 result = true;
             }
-            if (src[index].type() == LayerTypeElu && !is8i)
+            if (src[index].type() == LayerTypeElu && method == QuantizationMethodUnknown)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypeElu;
                 dst.back().convolution().activationParam0() = src[index].elu().alpha();
                 result = true;
             }
-            if (src[index].type() == LayerTypeHswish && !is8i)
+            if (src[index].type() == LayerTypeHswish && method == QuantizationMethodUnknown)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypeHswish;
                 dst.back().convolution().activationParam0() = src[index].hswish().shift();
@@ -317,9 +318,9 @@ namespace Synet
             return result;
         }
 
-        bool MergeThreeConvolutions(const LayerParams & src, size_t & index, bool is8i, LayerParams & dst, Changes & changes)
+        bool MergeThreeConvolutions(const LayerParams & src, size_t & index, QuantizationMethod method, LayerParams & dst, Changes & changes)
         {
-            if (src.size() < index + 3 || is8i)
+            if (src.size() < index + 3 || method != QuantizationMethodUnknown)
                 return false;
             const LayerParam & l0 = src[index + 0];
             const Shape & k0 = l0.convolution().kernel();
