@@ -49,7 +49,7 @@ namespace Test
 			String outputDirectory;
 			String logName;
 			bool consoleSilence;
-			size_t testThreads;
+			int testThreads;
 
 			mutable volatile bool result;
 			mutable size_t memoryUsage, testNumber;
@@ -70,7 +70,7 @@ namespace Test
 				outputDirectory = GetArg("-od", "output");
 				logName = GetArg("-ln", "", false);
 				consoleSilence = FromString<bool>(GetArg("-cs", "0"));
-				testThreads = FromString<size_t>(GetArg("-tt", "1"));
+				testThreads = FromString<int>(GetArg("-tt", "1"));
 			}
 
 			~Options()
@@ -78,9 +78,12 @@ namespace Test
 				if (result)
 				{
 					std::stringstream ss;
+
+					ss << "Test info: (" << Description() << ")." << std::endl;
 					ss << "Precision: " << ToString(precision * 100, 2) << " %, threshold: " << ToString(threshold, 3) << std::endl;
 					if (memoryUsage)
-						ss << framework << " memory usage: " << memoryUsage / (1024 * 1024) << " MB in " << TestThreads() << " threads." << std::endl;
+						ss << "Memory usage: " << memoryUsage / (1024 * 1024) << " MB." << std::endl;
+					ss << SystemInfo() << std::endl;
 					PerformanceMeasurerStorage::s_storage.Print(ss);
 					if (!consoleSilence)
 						std::cout << ss.str();
@@ -106,6 +109,17 @@ namespace Test
 			size_t TestThreads() const
 			{
 				return Synet::RestrictRange<size_t>(testThreads, 1, std::thread::hardware_concurrency());
+			}
+
+			String Description() const
+			{
+				std::stringstream ss;
+				ss << "framework: " << framework;
+				ss << ", test: " << GetNameByPath(DirectoryByPath(testModel));
+				ss << ", model: " << GetNameByPath(testModel);
+				ss << ", list: " << GetNameByPath(testList);
+				ss << ", threads: " << TestThreads();
+				return ss.str();
 			}
 		};
 
@@ -169,11 +183,7 @@ namespace Test
 
 		void PrintStartMessage() const
 		{
-			std::cout << "Start test (";
-			std::cout << " framework: " << _options.framework;
-			std::cout << ", test: " << GetNameByPath(DirectoryByPath(_options.testModel));
-			std::cout << ", model: " << GetNameByPath(_options.testModel);
-			std::cout << ", list: " << GetNameByPath(_options.testList) << " ):" << std::endl;
+			std::cout << "Start test (" << _options.Description() << "):" << std::endl;
 		}
 
 		bool PrintFinishMessage() const

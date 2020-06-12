@@ -128,6 +128,7 @@ namespace Synet
                 buf[TensorType32i * BUFFER_COUNT]->As32i().Extend(shape, src->Format());
                 Quantize();
             }
+            alg.internal = 1;
         }
 
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
