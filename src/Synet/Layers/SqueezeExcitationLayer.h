@@ -26,6 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
+#include "Synet/Layers/ScaleLayer.h"
 #include "Synet/Utils/Activation.h"
 
 namespace Synet
@@ -82,8 +83,6 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
-            assert(src.size() == 2 && src[0].Shape() == src[1].Shape() && src[0]->Count() == 4);
-
             const Tensors& weight = this->Weight();
             assert(weight[0].Count() == 4 && weight[1].Count() == 4);
             _type = src[0]->GetType();
@@ -123,7 +122,7 @@ namespace Synet
             else
                 assert(0);
 
-            if (src[0] != dst[0] && src[1] != dst[0])
+            if (src[0] != dst[0])
                 dst[0]->Reshape(src[0]->Shape(), _format);
             this->UsePerfStat();
         }
@@ -132,14 +131,14 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             if (_type == TensorType32f)
-                ForwardCpu(src[0]->As32f().CpuData(), src[1]->As32f().CpuData(), dst[0]->As32f().CpuData());
+                ForwardCpu(src[0]->As32f().CpuData(), dst[0]->As32f().CpuData());
             else if (_type == TensorType8u)
-                ForwardCpu(src[0]->As8u().CpuData(), src[1]->As8u().CpuData(), dst[0]->As8u().CpuData());
+                ForwardCpu(src[0]->As8u().CpuData(), dst[0]->As8u().CpuData());
             else
                 assert(0);
         }
 
-        void ForwardCpu(const float * src0, const float* src1, float * dst)
+        void ForwardCpu(const float * src, float * dst)
         {
             float * sum = _sum.As32f().CpuData();
             float * norm0 = _norm[0].CpuData();
@@ -148,14 +147,14 @@ namespace Synet
             const float * wgt1 = this->Weight()[1].CpuData();
             for (size_t b = 0; b < _batch; ++b)
             {
-                Detail::ChannelSum(src0, _channels, _height, _width, _format, sum);
+                Detail::ChannelSum(src, _channels, _height, _width, _format, sum);
                 CpuScale(sum, _channels, _kA, norm0);
                 Product(_channels, _squeeze, norm0, wgt0, norm1);
                 CpuRelu(norm1, _squeeze, 0.0f, norm1);
                 Product(_squeeze, _channels, norm1, wgt1, norm0);
                 CpuSigmoid(norm0, _channels, norm0);
-                SetOutput(src0, src1, norm0, dst);
-                src0 += _size, src1 += _size, dst += _size;
+                Detail::ScaleLayerForwardCpu<float>(src, norm0, NULL, _channels, _height, _width, dst, _format, 0);
+                src += _size, dst += _size;
             }
         }
 
@@ -167,44 +166,14 @@ namespace Synet
                 CpuGemm(CblasNoTrans, CblasNoTrans, 1, D, C, 1.0f, src, C, weight, D, 0.0f, dst, D);
         }
 
-        void SetOutput(const float* src0, const float* src1, const float* norm, float* dst)
-        {
-            if (_format == TensorFormatNhwc)
-            {
-                for (size_t h = 0; h < _height; ++h)
-                {
-                    for (size_t w = 0; w < _width; ++w)
-                    {
-                        for (size_t c = 0; c < _channels; ++c)
-                            dst[c] = src0[c]*norm[c] + src1[c];
-                        src0 += _channels, src1 += _channels, dst += _channels;
-                    }
-                }
-            }
-            else if (_format == TensorFormatNchw)
-            {
-                for (size_t c = 0; c < _channels; ++c)
-                {
-                    for (size_t h = 0; h < _height; ++h)
-                    {
-                        for (size_t w = 0; w < _width; ++w)
-                            dst[w] = src0[w] * norm[c] + src1[w];
-                        src0 += _width, src1 += _width, dst += _width;
-                    }
-                }
-            }
-            else
-                assert(0);
-        }
-
-        void ForwardCpu(const uint8_t* src0, const uint8_t* src1, uint8_t* dst)
+        void ForwardCpu(const uint8_t* src, uint8_t* dst)
         {
             int32_t * sum = _sum.As32i().CpuData();
             for (size_t b = 0; b < _batch; ++b)
             {
-                Detail::ChannelSum(src0, _channels, _height, _width, _format, sum);
+                Detail::ChannelSum(src, _channels, _height, _width, _format, sum);
 
-                src0 += _size, src1 += _size, dst += _size;
+                src += _size, dst += _size;
             }
         }
 
