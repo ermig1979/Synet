@@ -73,6 +73,7 @@
 #include "Synet/Layers/SoftmaxLayer.h"
 #include "Synet/Layers/SoftplusLayer.h"
 #include "Synet/Layers/SqueezeLayer.h"
+#include "Synet/Layers/SqueezeExcitationLayer.h"
 #include "Synet/Layers/StridedSliceLayer.h"
 #include "Synet/Layers/StubLayer.h"
 #include "Synet/Layers/SwitchLayer.h"
@@ -977,6 +978,7 @@ namespace Synet
             case LayerTypeSoftmax: return new SoftmaxLayer<T>(param);
             case LayerTypeSoftplus: return new SoftplusLayer<T>(param);
             case LayerTypeSqueeze: return new SqueezeLayer<T>(param);
+            case LayerTypeSqueezeExcitation: return new SqueezeExcitationLayer<T>(param);
             case LayerTypeStridedSlice: return new StridedSliceLayer<T>(param);
             case LayerTypeStub: return new StubLayer<T>(param);
             case LayerTypeSwitch: return new SwitchLayer<T>(param);

@@ -26,6 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
+#include "Synet/Utils/Activation.h"
 
 namespace Synet
 {
@@ -70,6 +71,8 @@ namespace Synet
     public:
         typedef T Type;
         typedef Layer<T> Base;
+        typedef typename Base::Tensor Tensor;
+        typedef typename Base::Tensors Tensors;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         SqueezeExcitationLayer(const LayerParam& param)
@@ -79,37 +82,137 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
-            assert(src.size() == 2 && src[0].Shape() == src[1].Shape());
+            assert(src.size() == 2 && src[0].Shape() == src[1].Shape() && src[0]->Count() == 4);
 
-            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            const Tensors& weight = this->Weight();
+            assert(weight[0].Count() == 4 && weight[1].Count() == 4);
+            _type = src[0]->GetType();
+            _format = src[0]->Format();
+            _batch = src[0]->Axis(0);
+            if (_format == TensorFormatNchw)
+            {
+                _channels = src[0]->Axis(1);
+                _height = src[0]->Axis(2);
+                _width = src[0]->Axis(3);
+                _squeeze = weight[0].Axis(0);
+                assert(weight[1].Axis(0) == _channels);
+            }
+            else if (_format == TensorFormatNhwc)
+            {
+                _height = src[0]->Axis(1);
+                _width = src[0]->Axis(2);
+                _channels = src[0]->Axis(3);
+                _squeeze = weight[0].Axis(3);
+                assert(weight[1].Axis(3) == _channels);
+            }
+            else
+                assert(0);
+            _size = _channels * _height * _width;
+            _kA = 1.0f / (_height * _width);
+            _norm[0].Reshape(Shp(_channels));
+            _norm[1].Reshape(Shp(_squeeze));
+
+            if (_type == TensorType32f)
+            {
+                _sum.As32f().Reshape(Shp(_channels));
+            }
+            else if (_type == TensorType8u)
+            {
+                _sum.As32i().Reshape(Shp(_channels));
+            }
+            else
+                assert(0);
+
+            if (src[0] != dst[0] && src[1] != dst[0])
+                dst[0]->Reshape(src[0]->Shape(), _format);
             this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
+            if (_type == TensorType32f)
+                ForwardCpu(src[0]->As32f().CpuData(), src[1]->As32f().CpuData(), dst[0]->As32f().CpuData());
+            else if (_type == TensorType8u)
+                ForwardCpu(src[0]->As8u().CpuData(), src[1]->As8u().CpuData(), dst[0]->As8u().CpuData());
+            else
+                assert(0);
         }
 
         void ForwardCpu(const float * src0, const float* src1, float * dst)
         {
+            float * sum = _sum.As32f().CpuData();
+            float * norm0 = _norm[0].CpuData();
+            float * norm1 = _norm[1].CpuData();
+            const float * wgt0 = this->Weight()[0].CpuData();
+            const float * wgt1 = this->Weight()[1].CpuData();
             for (size_t b = 0; b < _batch; ++b)
             {
-
+                Detail::ChannelSum(src0, _channels, _height, _width, _format, sum);
+                CpuScale(sum, _channels, _kA, norm0);
+                Product(_channels, _squeeze, norm0, wgt0, norm1);
+                CpuRelu(norm1, _squeeze, 0.0f, norm1);
+                Product(_squeeze, _channels, norm1, wgt1, norm0);
+                CpuSigmoid(norm0, _channels, norm0);
+                SetOutput(src0, src1, norm0, dst);
+                src0 += _size, src1 += _size, dst += _size;
             }
+        }
+
+        void Product(size_t C, size_t D, const float* src, const float* weight, float* dst)
+        {
+            if (_format == TensorFormatNchw)
+                CpuGemm(CblasNoTrans, CblasNoTrans, D, 1, C, 1.0f, weight, C, src, 1, 0.0f, dst, 1);
+            else if (_format == TensorFormatNhwc)
+                CpuGemm(CblasNoTrans, CblasNoTrans, 1, D, C, 1.0f, src, C, weight, D, 0.0f, dst, D);
+        }
+
+        void SetOutput(const float* src0, const float* src1, const float* norm, float* dst)
+        {
+            if (_format == TensorFormatNhwc)
+            {
+                for (size_t h = 0; h < _height; ++h)
+                {
+                    for (size_t w = 0; w < _width; ++w)
+                    {
+                        for (size_t c = 0; c < _channels; ++c)
+                            dst[c] = src0[c]*norm[c] + src1[c];
+                        src0 += _channels, src1 += _channels, dst += _channels;
+                    }
+                }
+            }
+            else if (_format == TensorFormatNchw)
+            {
+                for (size_t c = 0; c < _channels; ++c)
+                {
+                    for (size_t h = 0; h < _height; ++h)
+                    {
+                        for (size_t w = 0; w < _width; ++w)
+                            dst[w] = src0[w] * norm[c] + src1[w];
+                        src0 += _width, src1 += _width, dst += _width;
+                    }
+                }
+            }
+            else
+                assert(0);
         }
 
         void ForwardCpu(const uint8_t* src0, const uint8_t* src1, uint8_t* dst)
         {
+            int32_t * sum = _sum.As32i().CpuData();
             for (size_t b = 0; b < _batch; ++b)
             {
+                Detail::ChannelSum(src0, _channels, _height, _width, _format, sum);
 
+                src0 += _size, src1 += _size, dst += _size;
             }
         }
 
     private:
         TensorType _type;
         TensorFormat _format;
-        size_t _batch, _channels, _height, _width, _size; 
-        Tensor _scale;
+        size_t _batch, _channels, _height, _width, _size, _squeeze; 
+        Tensor _sum, _norm[2];
+        float _kA;
     };
 }
