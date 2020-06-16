@@ -433,16 +433,18 @@ namespace Test
             return true;
         }
 
-        void PrintError(const Difference & d, size_t i, const String& m) const
+        void PrintError(const Difference & d, size_t i, const String& msg) const
         {
             using Synet::Detail::DebugPrint;
             const Difference::Statistics& s = d.GetStatistics();
             const Difference::Specific& e = s.exceed;
-            std::cout << m << std::endl << std::fixed;
+            const Difference::Specific& m = s.max;
+            std::cout << msg << std::endl << std::fixed;
             std::cout << "Dst[" << i << "]" << DebugPrint(d.GetShape()) << " at ";
             std::cout << DebugPrint(e.index) << " : diff = " << e.diff << " (" << e.first << " != " << e.second << ")";
-            std::cout << ", num = " << double(e.count) / s.count << "(" << e.count << "), max = " << s.max.diff;
-            std::cout << ", avg = " << s.mean << ", std = " << s.sdev << ", abs = " << s.adev << std::endl;
+            std::cout << ", num = " << double(e.count) / s.count << "(" << e.count << ")";
+            std::cout << ", avg = " << s.mean << ", std = " << s.sdev << ", abs = " << s.adev;
+            std::cout << ", max " << DebugPrint(m.index) << " diff = " << s.max.diff << " (" << m.first << " != " << m.second << ")" << std::endl;
         }
 
         bool CompareResults(const TestData& test, size_t index, size_t thread)

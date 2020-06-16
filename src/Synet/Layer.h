@@ -234,6 +234,36 @@ namespace Synet
 #endif//SYNET_LAYER_STATISTIC
         }
 
+        static float * Buf32f(const TensorPtrs& buf, size_t idx)
+        {
+            return buf[TensorType32f * BUFFER_COUNT + idx]->As32f().CpuData();
+        }
+
+        static int32_t * Buf32i(const TensorPtrs& buf, size_t idx)
+        {
+            return buf[TensorType32i * BUFFER_COUNT + idx]->As32i().CpuData();
+        }
+
+        static uint8_t* Buf8u(const TensorPtrs& buf, size_t idx)
+        {
+            return buf[TensorType8u * BUFFER_COUNT + idx]->As8u().CpuData();
+        }
+
+        static void Extend32f(const TensorPtrs& buf, size_t idx, const Shape & shape, TensorFormat format)
+        {
+            return buf[TensorType32f * BUFFER_COUNT + idx]->As32f().Extend(shape, format);
+        }
+
+        static void Extend32i(const TensorPtrs& buf, size_t idx, const Shape& shape, TensorFormat format)
+        {
+            return buf[TensorType32i * BUFFER_COUNT + idx]->As32i().Extend(shape, format);
+        }
+
+        static void Extend8u(const TensorPtrs& buf, size_t idx, const Shape& shape, TensorFormat format)
+        {
+            return buf[TensorType8u * BUFFER_COUNT + idx]->As8u().Extend(shape, format);
+        }
+
     private:
         template<class U> friend class Network;
 

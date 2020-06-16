@@ -28,6 +28,7 @@
 #include "Synet/Layer.h"
 #include "Synet/Layers/ScaleLayer.h"
 #include "Synet/Utils/Activation.h"
+#include "Synet/Quantization/Convert.h"
 
 namespace Synet
 {
@@ -76,8 +77,9 @@ namespace Synet
         typedef typename Base::Tensors Tensors;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        SqueezeExcitationLayer(const LayerParam& param)
+        SqueezeExcitationLayer(const LayerParam& param, QuantizationMethod method)
             : Base(param)
+            , _method(method)
         {
         }
 
@@ -107,48 +109,57 @@ namespace Synet
             else
                 assert(0);
             _size = _channels * _height * _width;
-            _kA = 1.0f / (_height * _width);
-            _norm[0].Reshape(Shp(_channels));
-            _norm[1].Reshape(Shp(_squeeze));
+            _kAvg = 1.0f / (_height * _width);
 
             if (_type == TensorType32f)
             {
-                _sum.As32f().Reshape(Shp(_channels));
+                Base::Extend32f(buf, 0, Shp(_channels), _format);
             }
             else if (_type == TensorType8u)
             {
-                _sum.As32i().Reshape(Shp(_channels));
+                Base::Extend32i(buf, 0, Shp(_channels), _format);
+                Init8i();
             }
             else
                 assert(0);
+            Base::Extend32f(buf, 1, Shp(_channels + _squeeze), _format);
 
             if (src[0] != dst[0])
                 dst[0]->Reshape(src[0]->Shape(), _format);
             this->UsePerfStat();
         }
 
+        virtual bool Can8i() const
+        {
+            return _method != QuantizationMethodUnknown;
+        }
+
+        virtual bool Is8i() const
+        {
+            return _method != QuantizationMethodUnknown;
+        }
+
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
+            float * norm0 = Base::Buf32f(buf, 1);
+            float * norm1 = norm0 + _channels;
             if (_type == TensorType32f)
-                ForwardCpu(src[0]->As32f().CpuData(), dst[0]->As32f().CpuData());
+                ForwardCpu(src[0]->As32f().CpuData(), Base::Buf32f(buf, 0), norm0, norm1, dst[0]->As32f().CpuData());
             else if (_type == TensorType8u)
-                ForwardCpu(src[0]->As8u().CpuData(), dst[0]->As8u().CpuData());
+                ForwardCpu(src[0]->As8u().CpuData(), Base::Buf32i(buf, 0), norm0, norm1, dst[0]->As8u().CpuData());
             else
                 assert(0);
         }
 
-        void ForwardCpu(const float * src, float * dst)
+        void ForwardCpu(const float * src, float * sum, float * norm0, float * norm1, float * dst)
         {
-            float * sum = _sum.As32f().CpuData();
-            float * norm0 = _norm[0].CpuData();
-            float * norm1 = _norm[1].CpuData();
-            const float * wgt0 = this->Weight()[0].CpuData();
-            const float * wgt1 = this->Weight()[1].CpuData();
+            const float* wgt0 = this->Weight()[0].CpuData();
+            const float* wgt1 = this->Weight()[1].CpuData();
             for (size_t b = 0; b < _batch; ++b)
             {
                 Detail::ChannelSum(src, _channels, _height, _width, _format, sum);
-                CpuScale(sum, _channels, _kA, norm0);
+                CpuScale(sum, _channels, _kAvg, norm0);
                 Product(_channels, _squeeze, norm0, wgt0, norm1);
                 CpuRelu(norm1, _squeeze, 0.0f, norm1);
                 Product(_squeeze, _channels, norm1, wgt1, norm0);
@@ -166,22 +177,92 @@ namespace Synet
                 CpuGemm(CblasNoTrans, CblasNoTrans, 1, D, C, 1.0f, src, C, weight, D, 0.0f, dst, D);
         }
 
-        void ForwardCpu(const uint8_t* src, uint8_t* dst)
+        void ForwardCpu(const uint8_t* src, int32_t * sum, float* norm0, float* norm1, uint8_t* dst)
         {
-            int32_t * sum = _sum.As32i().CpuData();
+            const float* wgt0 = this->Weight()[0].CpuData();
+            const float* wgt1 = this->Weight()[1].CpuData();
             for (size_t b = 0; b < _batch; ++b)
             {
                 Detail::ChannelSum(src, _channels, _height, _width, _format, sum);
-
+                Detail::Convert<int32_t, float, float>(sum, 1, _channels, 1, 1, TensorFormatNhwc, 
+                    _sumScale.data(), _sumShift.data(), INT_MIN, INT_MAX, norm0);
+                Product(_channels, _squeeze, norm0, wgt0, norm1);
+                CpuRelu(norm1, _squeeze, 0.0f, norm1);
+                Product(_squeeze, _channels, norm1, wgt1, norm0);
+                CpuSigmoid(norm0, _channels, norm0);
+                Scale(src, norm0, dst);
                 src += _size, dst += _size;
             }
+        }
+
+        void Init8i()
+        {
+            _sumScale.resize(_channels);
+            _sumShift.resize(_channels);
+            Stat& statS = *this->Stats(0)[0];
+            Stat& statD = *this->Stats(2)[0];
+            statS.Init8u(_method);
+            statD.Init8u(_method);
+            for (size_t c = 0; c < _channels; c++)
+            {
+                _sumScale[c] = statS.scale8uTo32f[c] * _kAvg;
+                _sumShift[c] = statS.shift8uTo32f[c] * _kAvg;
+            }
+        }
+
+        void Scale(const uint8_t* src, float* norm, uint8_t* dst)
+        {
+            int lower, upper;
+            if (_method == QuantizationMethodIECompatible)
+                lower = QUANT_IE_COMP_SRC_U8_MIN, upper = QUANT_IE_COMP_SRC_U8_MAX;
+            else if (_method == QuantizationMethodSymmetricNarrowed)
+                lower = QUANT_SYMM_NARR_SRC_U8_MIN, upper = QUANT_SYMM_NARR_SRC_U8_MAX;
+            const float* srcScale = this->Stats(0)[0]->scale8uTo32f.data();
+            const float* srcShift = this->Stats(0)[0]->shift8uTo32f.data();
+            const float* dstScale = this->Stats(2)[0]->scale32fTo8u.data();
+            const float* dstShift = this->Stats(2)[0]->shift32fTo8u.data();
+            if (_format == TensorFormatNchw)
+            {
+                for (size_t c = 0; c < _channels; ++c)
+                {
+                    for (size_t h = 0; h < _height; ++h)
+                    {
+                        for (size_t w = 0; w < _width; ++w)
+                        {
+                            float value = Detail::Convert<uint8_t, float, float>(src[w], srcScale[c], srcShift[c], INT_MIN, INT_MAX);
+                            dst[w] = Detail::Convert<float, uint8_t, float>(value*norm[c], dstScale[c], dstShift[c], lower, upper);
+                        }
+                        src += _width;
+                        dst += _width;
+                    }
+                }
+            }
+            else if (_format == TensorFormatNhwc)
+            {
+                for (size_t h = 0; h < _height; ++h)
+                {
+                    for (size_t w = 0; w < _width; ++w)
+                    {
+                        for (size_t c = 0; c < _channels; ++c)
+                        {
+                            float value = Detail::Convert<uint8_t, float, float>(src[c], srcScale[c], srcShift[c], INT_MIN, INT_MAX);
+                            dst[c] = Detail::Convert<float, uint8_t, float>(value * norm[c], dstScale[c], dstShift[c], lower, upper);
+                        }
+                        src += _channels;
+                        dst += _channels;
+                    }
+                }
+            }
+            else
+                assert(0);
         }
 
     private:
         TensorType _type;
         TensorFormat _format;
         size_t _batch, _channels, _height, _width, _size, _squeeze; 
-        Tensor _sum, _norm[2];
-        float _kA;
+        float _kAvg;
+        QuantizationMethod _method;
+        Floats _sumScale, _sumShift;
     };
 }

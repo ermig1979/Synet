@@ -806,7 +806,7 @@ namespace Synet
 
         void UnifyStats()
         {
-            if (_param().quantization().method() > QuantizationMethodSymmetricNarrowed)
+            if (_param().quantization().method() >= QuantizationMethodSymmetricNarrowed)
                 return;
             for (size_t i = 0; i < _input.size(); ++i)
                 _stats[_statId[_input[i].layer->Param().name()]]->Unify();
@@ -978,7 +978,7 @@ namespace Synet
             case LayerTypeSoftmax: return new SoftmaxLayer<T>(param);
             case LayerTypeSoftplus: return new SoftplusLayer<T>(param);
             case LayerTypeSqueeze: return new SqueezeLayer<T>(param);
-            case LayerTypeSqueezeExcitation: return new SqueezeExcitationLayer<T>(param);
+            case LayerTypeSqueezeExcitation: return new SqueezeExcitationLayer<T>(param, method);
             case LayerTypeStridedSlice: return new StridedSliceLayer<T>(param);
             case LayerTypeStub: return new StubLayer<T>(param);
             case LayerTypeSwitch: return new SwitchLayer<T>(param);

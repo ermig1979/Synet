@@ -181,6 +181,18 @@ namespace Synet
             }
         }
 
+        static inline float AvoidOverflow(float abs, const float* bias, const float* prelu, size_t index)
+        {
+            if (bias)
+            {
+                float min = ::abs(bias[index]);
+                if (prelu)
+                    min *= std::max(1.0f, ::abs(prelu[index]));
+                abs = std::max(abs, min / float(128 * 256 * 256));
+            }
+            return abs;
+        }
+
         void Quantize()
         {
             const ConvParam& conv = this->_conv;
@@ -197,6 +209,7 @@ namespace Synet
             Floats normW(CK);
             const float * pSrcW = this->Weight()[0].CpuData();
             const float * pSrcB = alg.bias ? this->Weight()[1].CpuData() : NULL;
+            const float * pPrelu = conv.activation == ActivationFunctionTypePrelu ? this->Weight().back().CpuData() : NULL;
             const float * pSrcScaleInv = statS.scale8uTo32f.data();
             const float * pSrcScale = statS.scale32fTo8u.data();
             const float * pSrcShift = statS.shift32fTo8u.data();
@@ -225,9 +238,7 @@ namespace Synet
                     if (alg.trans)
                     {
                         SetNormMinMax(pSrcW + d, pSrcScaleInv, pNormW, minW, maxW);
-                        float abs = std::max(::abs(maxW), ::abs(minW));
-                        if (pSrcB)
-                            abs = std::max(abs, ::abs(pSrcB[d]) / float(128 * 256 * 256));
+                        float abs = AvoidOverflow(std::max(::abs(maxW), ::abs(minW)), pSrcB, pPrelu, d);
                         scale = wUp / abs;
                         for (size_t k = 0, kc = 0; k < K; ++k)
                             for (size_t c = 0; c < C; ++c, ++kc)
@@ -248,9 +259,7 @@ namespace Synet
                     else
                     {
                         SetNormMinMax(pSrcW + d * CK, pSrcScaleInv, pNormW, minW, maxW);
-                        float abs = std::max(::abs(maxW), ::abs(minW));
-                        if (pSrcB)
-                            abs = std::max(abs, ::abs(pSrcB[d]) / float(128 * 256 * 256));
+                        float abs = AvoidOverflow(std::max(::abs(maxW), ::abs(minW)), pSrcB, pPrelu, d);
                         scale = wUp / abs;
                         for (size_t c = 0, ck = 0; c < C; ++c)
                             for (size_t k = 0; k < K; ++k, ++ck)
@@ -295,6 +304,8 @@ namespace Synet
                 }
                 if (pSrcB)
                     pSrcB += D;
+                if (pPrelu)
+                    pPrelu += D;
                 pDstB += D;
                 pDstS += D;
                 pSrcScale += C;
@@ -358,6 +369,7 @@ namespace Synet
                     break;
                 case ActivationFunctionTypePrelu:
                     CpuPrelu32i(dst, conv.dstC, conv.dstH, conv.dstW, this->Weight().back().CpuData(), dst);
+                    break;
                 default:
                     assert(0);
                 }
