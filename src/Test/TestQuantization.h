@@ -217,6 +217,24 @@ namespace Test
             layer.convolution().quantizationLevel() = Synet::TensorType8i;
         }
 
+        void EltwiseToAdd(Synet::LayerParam& layer)
+        {
+            if (layer.type() != Synet::LayerTypeEltwise || 
+                layer.eltwise().operation() != Synet::EltwiseOperationTypeSum ||
+                layer.src().size() != 2)
+                return;
+            const SyNet::Tensor* src0 = _synet.GetInternalTensor(layer.src()[0]);
+            if (!(src0 && src0->Format() == Synet::TensorFormatNhwc && src0->Count() == 4))
+                return;
+            const SyNet::Tensor* src1 = _synet.GetInternalTensor(layer.src()[1]);
+            if (!(src1 && src1->Format() == Synet::TensorFormatNhwc && src1->Count() == 4))
+                return;
+            if (src0->Shape() != src1->Shape())
+                return;
+            layer.eltwise() = Synet::EltwiseParam();
+            layer.type() = Synet::LayerTypeAdd;
+        }
+
         void QuantizeConvolution(Synet::LayerParam& layer)
         {
             if (layer.type() != Synet::LayerTypeConvolution)
@@ -265,6 +283,7 @@ namespace Test
             for (size_t i = 0; i < network().layers().size(); ++i)
             {
                 Synet::LayerParam& layer = network().layers()[i];
+                EltwiseToAdd(layer);
                 ScaleToConvolution(layer);
                 QuantizeConvolution(layer);
                 HighlightGlobalPooling(layer);

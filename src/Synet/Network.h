@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "Synet/Layers/AddLayer.h"
 #include "Synet/Layers/BatchNormLayer.h"
 #include "Synet/Layers/BiasLayer.h"
 #include "Synet/Layers/BinaryOperationLayer.h"
@@ -925,6 +926,7 @@ namespace Synet
         {
             switch (param.type())
             {
+            case LayerTypeAdd: return new AddLayer<T>(param, method);
             case LayerTypeBatchNorm: return new BatchNormLayer<T>(param);
             case LayerTypeBias: return new BiasLayer<T>(param);
             case LayerTypeBinaryOperation: return new BinaryOperationLayer<T>(param);

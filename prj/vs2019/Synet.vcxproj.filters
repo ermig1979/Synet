@@ -274,6 +274,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\AddLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

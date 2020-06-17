@@ -30,6 +30,7 @@
 namespace Synet
 {
     SYNET_PARAM_ENUM(LayerType,
+        LayerTypeAdd,
         LayerTypeBatchNorm,
         LayerTypeBias,
         LayerTypeBinaryOperation,
