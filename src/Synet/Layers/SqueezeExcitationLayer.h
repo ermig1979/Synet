@@ -87,7 +87,8 @@ namespace Synet
         {
             const Tensors& weight = this->Weight();
             assert(weight[0].Count() == 4 && weight[1].Count() == 4);
-            _type = src[0]->GetType();
+            _src8u = src[0]->GetType() == TensorType8u;
+            _dst8u = dst[0]->GetType() == TensorType8u;
             _format = src[0]->Format();
             _batch = src[0]->Axis(0);
             if (_format == TensorFormatNchw)
@@ -111,21 +112,22 @@ namespace Synet
             _size = _channels * _height * _width;
             _kAvg = 1.0f / (_height * _width);
 
-            if (_type == TensorType32f)
-            {
-                Base::Extend32f(buf, 0, Shp(_channels), _format);
-            }
-            else if (_type == TensorType8u)
+            if (_src8u)
             {
                 Base::Extend32i(buf, 0, Shp(_channels), _format);
                 Init8i();
             }
             else
-                assert(0);
+                Base::Extend32f(buf, 0, Shp(_channels), _format);
             Base::Extend32f(buf, 1, Shp(_channels + _squeeze), _format);
 
             if (src[0] != dst[0])
-                dst[0]->Reshape(src[0]->Shape(), _format);
+            {
+                if(_dst8u)
+                    dst[0]->As8u().Reshape(src[0]->Shape(), _format);
+                else
+                    dst[0]->As32f().Reshape(src[0]->Shape(), _format);
+            }
             this->UsePerfStat();
         }
 
@@ -144,12 +146,15 @@ namespace Synet
         {
             float * norm0 = Base::Buf32f(buf, 1);
             float * norm1 = norm0 + _channels;
-            if (_type == TensorType32f)
-                ForwardCpu(src[0]->As32f().CpuData(), Base::Buf32f(buf, 0), norm0, norm1, dst[0]->As32f().CpuData());
-            else if (_type == TensorType8u)
-                ForwardCpu(src[0]->As8u().CpuData(), Base::Buf32i(buf, 0), norm0, norm1, dst[0]->As8u().CpuData());
+            if (_src8u)
+            {
+                if(_dst8u)
+                    ForwardCpu(src[0]->As8u().CpuData(), Base::Buf32i(buf, 0), norm0, norm1, dst[0]->As8u().CpuData(), NULL);
+                else
+                    ForwardCpu(src[0]->As8u().CpuData(), Base::Buf32i(buf, 0), norm0, norm1, NULL, dst[0]->As32f().CpuData());
+            }
             else
-                assert(0);
+                ForwardCpu(src[0]->As32f().CpuData(), Base::Buf32f(buf, 0), norm0, norm1, dst[0]->As32f().CpuData());
         }
 
         void ForwardCpu(const float * src, float * sum, float * norm0, float * norm1, float * dst)
@@ -177,7 +182,7 @@ namespace Synet
                 CpuGemm(CblasNoTrans, CblasNoTrans, 1, D, C, 1.0f, src, C, weight, D, 0.0f, dst, D);
         }
 
-        void ForwardCpu(const uint8_t* src, int32_t * sum, float* norm0, float* norm1, uint8_t* dst)
+        void ForwardCpu(const uint8_t* src, int32_t * sum, float* norm0, float* norm1, uint8_t* dst8u, float* dst32f)
         {
             const float* wgt0 = this->Weight()[0].CpuData();
             const float* wgt1 = this->Weight()[1].CpuData();
@@ -190,8 +195,11 @@ namespace Synet
                 CpuRelu(norm1, _squeeze, 0.0f, norm1);
                 Product(_squeeze, _channels, norm1, wgt1, norm0);
                 CpuSigmoid(norm0, _channels, norm0);
-                Scale(src, norm0, dst);
-                src += _size, dst += _size;
+                if(_dst8u)
+                    Scale(src, norm0, dst8u, NULL), dst8u += _size;
+                else
+                    Scale(src, norm0, NULL, dst32f), dst32f += _size;
+                src += _size;
             }
         }
 
@@ -210,7 +218,7 @@ namespace Synet
             }
         }
 
-        void Scale(const uint8_t* src, float* norm, uint8_t* dst)
+        void Scale(const uint8_t* src, float* norm, uint8_t* dst8u, float *dst32f)
         {
             int lower, upper;
             if (_method == QuantizationMethodIECompatible)
@@ -227,13 +235,22 @@ namespace Synet
                 {
                     for (size_t h = 0; h < _height; ++h)
                     {
-                        for (size_t w = 0; w < _width; ++w)
+                        if (_dst8u)
                         {
-                            float value = Detail::Convert<uint8_t, float, float>(src[w], srcScale[c], srcShift[c], INT_MIN, INT_MAX);
-                            dst[w] = Detail::Convert<float, uint8_t, float>(value*norm[c], dstScale[c], dstShift[c], lower, upper);
+                            for (size_t w = 0; w < _width; ++w)
+                            {
+                                float value = Detail::Convert<uint8_t, float, float>(src[w], srcScale[c], srcShift[c], INT_MIN, INT_MAX);
+                                dst8u[w] = Detail::Convert<float, uint8_t, float>(value*norm[c], dstScale[c], dstShift[c], lower, upper);
+                            }
+                            dst8u += _width; 
+                        }
+                        else
+                        {
+                            for (size_t w = 0; w < _width; ++w)
+                                dst32f[w] = Detail::Convert<uint8_t, float, float>(src[w], srcScale[c], srcShift[c], INT_MIN, INT_MAX) * norm[c];
+                            dst32f += _width;
                         }
                         src += _width;
-                        dst += _width;
                     }
                 }
             }
@@ -243,13 +260,22 @@ namespace Synet
                 {
                     for (size_t w = 0; w < _width; ++w)
                     {
-                        for (size_t c = 0; c < _channels; ++c)
+                        if (_dst8u)
                         {
-                            float value = Detail::Convert<uint8_t, float, float>(src[c], srcScale[c], srcShift[c], INT_MIN, INT_MAX);
-                            dst[c] = Detail::Convert<float, uint8_t, float>(value * norm[c], dstScale[c], dstShift[c], lower, upper);
+                            for (size_t c = 0; c < _channels; ++c)
+                            {
+                                float value = Detail::Convert<uint8_t, float, float>(src[c], srcScale[c], srcShift[c], INT_MIN, INT_MAX);
+                                dst8u[c] = Detail::Convert<float, uint8_t, float>(value * norm[c], dstScale[c], dstShift[c], lower, upper);
+                            }
+                            dst8u += _channels;
+                        }
+                        else
+                        {
+                            for (size_t c = 0; c < _channels; ++c)
+                                dst32f[c] = Detail::Convert<uint8_t, float, float>(src[c], srcScale[c], srcShift[c], INT_MIN, INT_MAX) * norm[c];
+                            dst32f += _channels;
                         }
                         src += _channels;
-                        dst += _channels;
                     }
                 }
             }
@@ -258,7 +284,7 @@ namespace Synet
         }
 
     private:
-        TensorType _type;
+        bool _src8u, _dst8u;
         TensorFormat _format;
         size_t _batch, _channels, _height, _width, _size, _squeeze; 
         float _kAvg;
