@@ -72,8 +72,8 @@ namespace Synet
                 }
                 case 1:
                 {
-                    if (SeparateConvolutionOrDeconvolution(layer, deoptimized, changes))
-                        continue;
+                    //if (SeparateConvolutionOrDeconvolution(layer, deoptimized, changes))
+                    //    continue;
                     break;
                 }
 				case 2:

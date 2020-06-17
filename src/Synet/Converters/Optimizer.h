@@ -1152,17 +1152,17 @@ namespace Synet
             return false;
         }
 
-        bool CanReuse(const LayerParam & layer, bool is8i)
+        bool CanReuse(const LayerParam & layer)
         {
-            if (layer.type() == LayerTypeSigmoid && !is8i)
+            if (layer.type() == LayerTypeSigmoid)
                 return true;
-            if (layer.type() == LayerTypeScale && !is8i)
+            if (layer.type() == LayerTypeScale)
                 return true;
-            if (layer.type() == LayerTypeEltwise && !is8i)
+            if (layer.type() == LayerTypeEltwise)
                 return true;
-            if (layer.type() == LayerTypeRelu && !is8i)
+            if (layer.type() == LayerTypeRelu)
                 return true;
-            if (layer.type() == LayerTypeSqueezeExcitation && !is8i)
+            if (layer.type() == LayerTypeSqueezeExcitation)
                 return true;
             if (layer.type() == LayerTypePooling && layer.pooling().method() == PoolingMethodTypeMax && 
                 layer.pooling().kernel() == Shp(1, 1) && layer.pooling().stride() == Shp(1, 1))
@@ -1172,8 +1172,8 @@ namespace Synet
 
         bool ReuseLayers(Synet::NetworkParam& network)
         {
-            //if (network.quantization().method() != QuantizationMethodUnknown)
-            //    return true;
+            if (network.quantization().method() != QuantizationMethodUnknown)
+                return true;
             LayerParams & layers = network.layers();
             for (size_t i = 0; i < layers.size(); ++i)
             {
@@ -1184,7 +1184,7 @@ namespace Synet
                     continue;
                 if (!IsUsed(layer.dst()[0], layers, i + 1))
                     continue;
-                if (!CanReuse(layer, network.quantization().method() != QuantizationMethodUnknown))
+                if (!CanReuse(layer))
                     continue;
                 if (!Rename(Change(layer.dst()[0], layer.src()[0]), layers))
                     return false;
@@ -1193,23 +1193,28 @@ namespace Synet
             return true;
         }
 
+        bool IsStub(const LayerParam& layer)
+        {
+            if (layer.type() == LayerTypeStub)
+                return true;
+            if (layer.type() == LayerTypePooling && layer.pooling().method() == PoolingMethodTypeMax &&
+                layer.pooling().kernel() == Shp(1, 1) && layer.pooling().stride() == Shp(1, 1))
+                return true;
+            return false;
+        }
+
         bool RemoveStub(Synet::NetworkParam& network)
         {
             LayerParams& layers = network.layers();
             for (size_t i = 1; i < layers.size(); ++i)
             {
-                LayerParam & prev = layers[i - 1];
-                LayerParam & curr = layers[i];
-                if (curr.type() != LayerTypeStub)
+                LayerParam* curr = &layers[i];
+                if (!IsStub(*curr))
                     continue;
-                if (IsUsed(curr.src()[0], layers, i + 1))
+                if (curr->src().size() != 1 || curr->dst().size() != 1)
                     continue;
-                if (curr.src().size() != 1 || curr.dst().size() != 1)
-                    continue;
-                if (prev.dst().size() != 1 || prev.dst()[0] != curr.src()[0])
-                    continue;
-                prev.name() = curr.name();
-                prev.dst()[0] = curr.dst()[0];
+                if (!Rename(Change(curr->dst()[0], curr->src()[0]), layers))
+                    return false;
                 layers.erase(layers.begin() + i);
             }
             return true;
