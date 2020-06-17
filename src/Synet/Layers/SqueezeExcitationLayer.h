@@ -214,7 +214,7 @@ namespace Synet
             for (size_t c = 0; c < _channels; c++)
             {
                 _sumScale[c] = statS.scale8uTo32f[c] * _kAvg;
-                _sumShift[c] = statS.shift8uTo32f[c] * _kAvg;
+                _sumShift[c] = statS.shift8uTo32f[c];
             }
         }
 
