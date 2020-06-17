@@ -733,6 +733,8 @@ namespace Synet
                 for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
                 {
                     const Stage & dst = _stages[*id];
+                    if (&dst == &stage)
+                        continue;
                     if (dst.layer->Is8i())
                         continue;
                     if (dst.layer->Can8i() && Is8iInSubGraph(dst))
@@ -754,6 +756,8 @@ namespace Synet
                 for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
                 {
                     const Stage & dst = _stages[*id];
+                    if (&dst == &stage)
+                        continue;
                     if (dst.layer->Is8i())
                         continue;
                     Set8iInSubGraph(dst);

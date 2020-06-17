@@ -1152,17 +1152,17 @@ namespace Synet
             return false;
         }
 
-        bool CanReuse(const LayerParam & layer)
+        bool CanReuse(const LayerParam & layer, bool is8i)
         {
-            if (layer.type() == LayerTypeSigmoid)
+            if (layer.type() == LayerTypeSigmoid && !is8i)
                 return true;
-            if (layer.type() == LayerTypeScale)
+            if (layer.type() == LayerTypeScale && !is8i)
                 return true;
-            if (layer.type() == LayerTypeEltwise)
+            if (layer.type() == LayerTypeEltwise && !is8i)
                 return true;
-            if (layer.type() == LayerTypeRelu)
+            if (layer.type() == LayerTypeRelu && !is8i)
                 return true;
-            if (layer.type() == LayerTypeSqueezeExcitation)
+            if (layer.type() == LayerTypeSqueezeExcitation && !is8i)
                 return true;
             if (layer.type() == LayerTypePooling && layer.pooling().method() == PoolingMethodTypeMax && 
                 layer.pooling().kernel() == Shp(1, 1) && layer.pooling().stride() == Shp(1, 1))
@@ -1172,8 +1172,8 @@ namespace Synet
 
         bool ReuseLayers(Synet::NetworkParam& network)
         {
-            if (network.quantization().method() != QuantizationMethodUnknown)
-                return true;
+            //if (network.quantization().method() != QuantizationMethodUnknown)
+            //    return true;
             LayerParams & layers = network.layers();
             for (size_t i = 0; i < layers.size(); ++i)
             {
@@ -1184,7 +1184,7 @@ namespace Synet
                     continue;
                 if (!IsUsed(layer.dst()[0], layers, i + 1))
                     continue;
-                if (!CanReuse(layer))
+                if (!CanReuse(layer, network.quantization().method() != QuantizationMethodUnknown))
                     continue;
                 if (!Rename(Change(layer.dst()[0], layer.src()[0]), layers))
                     return false;

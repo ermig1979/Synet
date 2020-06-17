@@ -28,6 +28,7 @@
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
 #include "Synet/Utils/Math.h"
+#include "Synet/Quantization/Convert.h"
 
 namespace Synet
 {
@@ -46,12 +47,12 @@ namespace Synet
 
         virtual bool Can8i() const
         {
-            return false;// _method != QuantizationMethodUnknown;
+            return _method != QuantizationMethodUnknown;
         }
 
         virtual bool Is8i() const
         {
-            return false;// _method != QuantizationMethodUnknown;
+            return _method != QuantizationMethodUnknown;
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -77,7 +78,11 @@ namespace Synet
                 assert(0);
 
             if (_src8u)
-                Init8i();
+            {
+                this->Stats(0)[0]->Init8u(_method);
+                this->Stats(0)[1]->Init8u(_method);
+                this->Stats(2)[0]->Init8u(_method);
+            }
 
             if (src[0] != dst[0])
             {
@@ -102,15 +107,85 @@ namespace Synet
             else
                 CpuAdd(src[0]->As32f().CpuData(), src[1]->As32f().CpuData(), src[0]->Size(), dst[0]->As32f().CpuData());
         }
-
-        void Init8i()
-        {
-
-        }
         
-        void Add8i(const uint8_t* src0, const uint8_t* src1, uint8_t dst8u, float* dst32f)
+        void Add8i(const uint8_t* src0, const uint8_t* src1, uint8_t * dst8u, float* dst32f)
         {
-
+            int lower, upper;
+            if (_method == QuantizationMethodIECompatible)
+                lower = QUANT_IE_COMP_SRC_U8_MIN, upper = QUANT_IE_COMP_SRC_U8_MAX;
+            else if (_method == QuantizationMethodSymmetricNarrowed)
+                lower = QUANT_SYMM_NARR_SRC_U8_MIN, upper = QUANT_SYMM_NARR_SRC_U8_MAX;
+            const float* scaleSrc0 = this->Stats(0)[0]->scale8uTo32f.data();
+            const float* shiftSrc0 = this->Stats(0)[0]->shift8uTo32f.data();
+            const float* scaleSrc1 = this->Stats(0)[1]->scale8uTo32f.data();
+            const float* shiftSrc1 = this->Stats(0)[1]->shift8uTo32f.data();
+            const float* scaleDst = this->Stats(2)[0]->scale32fTo8u.data();
+            const float* shiftDst = this->Stats(2)[0]->shift32fTo8u.data();
+            for (size_t b = 0; b < _batch; ++b)
+            {
+                if (_format == TensorFormatNchw)
+                {
+                    for (size_t c = 0; c < _channels; ++c)
+                    {
+                        for (size_t h = 0; h < _height; ++h)
+                        {
+                            if (_dst8u)
+                            {
+                                for (size_t w = 0; w < _width; ++w)
+                                {
+                                    float s0 = Detail::Convert<uint8_t, float, float>(src0[w], scaleSrc0[c], shiftSrc0[c], INT_MIN, INT_MAX);
+                                    float s1 = Detail::Convert<uint8_t, float, float>(src1[w], scaleSrc1[c], shiftSrc1[c], INT_MIN, INT_MAX);
+                                    dst8u[w] = Detail::Convert<float, uint8_t, float>(s0 + s1, scaleDst[c], shiftDst[c], lower, upper);
+                                }
+                                dst8u += _width;
+                            }
+                            else
+                            {
+                                for (size_t w = 0; w < _width; ++w)
+                                {
+                                    float s0 = Detail::Convert<uint8_t, float, float>(src0[w], scaleSrc0[c], shiftSrc0[c], INT_MIN, INT_MAX);
+                                    float s1 = Detail::Convert<uint8_t, float, float>(src1[w], scaleSrc1[c], shiftSrc1[c], INT_MIN, INT_MAX);
+                                    dst32f[w] = s0 + s1;
+                                }
+                                dst32f += _width;
+                            }
+                            src0 += _width, src1 += _width;
+                        }
+                    }
+                }
+                else if (_format == TensorFormatNhwc)
+                {
+                    for (size_t h = 0; h < _height; ++h)
+                    {
+                        for (size_t w = 0; w < _width; ++w)
+                        {
+                            if (_dst8u)
+                            {
+                                for (size_t c = 0; c < _channels; ++c)
+                                {
+                                    float s0 = Detail::Convert<uint8_t, float, float>(src0[c], scaleSrc0[c], shiftSrc0[c], INT_MIN, INT_MAX);
+                                    float s1 = Detail::Convert<uint8_t, float, float>(src1[c], scaleSrc1[c], shiftSrc1[c], INT_MIN, INT_MAX);
+                                    dst8u[c] = Detail::Convert<float, uint8_t, float>(s0 + s1, scaleDst[c], shiftDst[c], lower, upper);
+                                }
+                                dst8u += _channels;
+                            }
+                            else
+                            {
+                                for (size_t c = 0; c < _channels; ++c)
+                                {
+                                    float s0 = Detail::Convert<uint8_t, float, float>(src0[c], scaleSrc0[c], shiftSrc0[c], INT_MIN, INT_MAX);
+                                    float s1 = Detail::Convert<uint8_t, float, float>(src1[c], scaleSrc1[c], shiftSrc1[c], INT_MIN, INT_MAX);
+                                    dst32f[c] = s0 + s1;
+                                }
+                                dst32f += _channels;
+                            }
+                            src0 += _channels, src1 += _channels;
+                        }
+                    }
+                }
+                else
+                    assert(0);
+            }
         }
 
     private:
