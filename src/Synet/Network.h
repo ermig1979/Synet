@@ -544,7 +544,7 @@ namespace Synet
                 {
                     if (_layers[i]->Weight()[j].Size() == 0)
                         continue;
-                    const void * ptr = _layers[i]->Weight()[j].CpuData();
+                    const void * ptr = _layers[i]->Weight()[j].RawCpuData();
                     if (unique.find(ptr) == unique.end())
                     {
                         memoryUsage += _layers[i]->Weight()[j].MemoryUsage();
@@ -555,7 +555,7 @@ namespace Synet
             }
             for (size_t i = 0; i < _tensors.size(); ++i)
             {
-                const void * ptr = _tensors[i]->CpuData();
+                const void * ptr = _tensors[i]->RawCpuData();
                 if (unique.find(ptr) == unique.end())
                 {
                     memoryUsage += _tensors[i]->MemoryUsage();
@@ -875,7 +875,10 @@ namespace Synet
 
         void UpdateStatistics(const Tensor & tensor, float quantile, float epsilon)
         {
-            if (tensor.Name().empty() || tensor.GetType() != TensorType32f || tensor.Format() != TensorFormatNhwc || tensor.Count() != 4)
+            if (tensor.Name().empty() || tensor.GetType() != TensorType32f)
+                return;
+            size_t channels = GetChannels(tensor);
+            if (channels == 0)
                 return;
             size_t index = 0;
             for (; index < _param().quantization().statistics().size(); ++index)
@@ -886,11 +889,10 @@ namespace Synet
             StatisticParam & stat = _param().quantization().statistics()[index];
             if(stat.name().empty())
                 stat.name() = tensor.Name();
-            const Shape& shape = tensor.Shape();
             if (stat.min().empty())
-                stat.min().resize(shape[3], FLT_MAX);
+                stat.min().resize(channels, FLT_MAX);
             if (stat.max().empty())
-                stat.max().resize(shape[3], -FLT_MAX);
+                stat.max().resize(channels, -FLT_MAX);
             UpdateChannelsQuantile(tensor, quantile, epsilon, stat.min().data(), stat.max().data());
         }
 

@@ -244,7 +244,14 @@ namespace Test
             }
             StringList images = GetFileList(imageDirectory, _options.imageFilter, true, false);
             images.sort();
-            Strings names(images.begin(), images.end());
+
+            Strings names;
+            names.reserve(images.size());
+            size_t curr = 0;
+            for(StringList::const_iterator it = images.begin(); it != images.end(); ++it, ++curr)
+                if(curr >= _options.imageBegin && curr < _options.imageEnd)
+                    names.push_back(*it);
+
             size_t sN = network.SrcCount(), bN = _options.batchSize;
             size_t tN = names.size() / bN / sN;
             if (tN == 0)
@@ -252,7 +259,6 @@ namespace Test
                 std::cout << "There is no one image in '" << imageDirectory << "' for '" << _options.imageFilter << "' filter!" << std::endl;
                 return false;
             }
-            StringList::const_iterator name = images.begin();
 
             Floats lower = _param().lower(), upper = _param().upper();
             _tests.clear();

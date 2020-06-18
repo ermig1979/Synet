@@ -164,15 +164,25 @@ namespace Test
                 return false;
             }
             StringList images = GetFileList(directory, _options.imageFilter, true, false);
+            images.sort();
             if (images.empty())
             {
                 std::cout << "There is no one image in '" << directory << "' for '" << _options.imageFilter << "' filter!" << std::endl;
                 return false;
             }
-            images.sort();
-            _images.assign(images.begin(), images.end());
-            for (size_t i = 0; i < images.size(); ++i)
-                _images[i] = MakePath(directory, _images[i]);
+
+            _images.reserve(images.size());
+            size_t curr = 0;
+            for (StringList::const_iterator it = images.begin(); it != images.end(); ++it, ++curr)
+                if (curr >= _options.imageBegin && curr < _options.imageEnd)
+                    _images.push_back(MakePath(directory, *it));
+            if (_images.empty())
+            {
+                std::cout << "There is no one image in '" << _options.imageDirectory << "' for '" << _options.imageFilter
+                    << "' filter in range [" << _options.imageBegin << " ... " <<  _options.imageEnd << "] !" << std::endl;
+                return false;
+            }
+
             return true;
         }
 
@@ -208,8 +218,8 @@ namespace Test
             size_t channels = tensor->Axis(3);
             layer.type() = Synet::LayerTypeConvolution;
             layer.convolution().biasTerm() = layer.scale().biasTerm();
-            layer.convolution().outputNum() = channels;
-            layer.convolution().group() = channels;
+            layer.convolution().outputNum() = (uint32_t)channels;
+            layer.convolution().group() = (uint32_t)channels;
             layer.convolution().kernel() = Shp(1, 1);
             layer.weight()[0].dim() = Shp(1, 1, 1, channels);
             layer.weight()[0].format() = Synet::TensorFormatNhwc;

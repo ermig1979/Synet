@@ -46,6 +46,8 @@ namespace Test
         String testParam;
         String imageDirectory;
         String imageFilter;
+        size_t imageBegin;
+        size_t imageEnd;
         String outputDirectory;
         size_t repeatNumber;
         double executionTime;
@@ -91,6 +93,8 @@ namespace Test
             testParam = GetArg("-tp", "param.xml");
             imageDirectory = GetArg("-id", QuantizationTest() ? "" : "image");
             imageFilter = GetArg("-if", "*.*");
+            imageBegin = FromString<size_t>(GetArg("-ib", "0"));
+            imageEnd = FromString<size_t>(GetArg("-ie", "1000000"));
             outputDirectory = GetArg("-od", "output");
             repeatNumber = std::max(0, FromString<int>(GetArg("-rn", "1")));
             executionTime = FromString<double>(GetArg("-et", "10.0"));

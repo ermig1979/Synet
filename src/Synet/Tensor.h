@@ -411,7 +411,8 @@ namespace Synet
         {
             _buffer = tensor._buffer;
             _type = tensor._type;
-            _name = tensor._name;
+            if(_name.empty())
+                _name = tensor._name;
             _shape = shape;
             _format = format;
             assert(Size(0, _shape.size()) <= _buffer->size);

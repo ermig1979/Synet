@@ -91,6 +91,22 @@ namespace Synet
                         }
                     }
                 }
+                else if (format == TensorFormatNchw)
+                {
+                    for (size_t c = 0; c < channels; ++c)
+                    {
+                        for (size_t h = 0; h < height; ++h)
+                        {
+                            for (size_t w = 0; w < width; ++w)
+                            {
+                                T value = (src[w] - min[c]) / (max[c] - min[c]);
+                                uint32_t index = Round(value * (size - 1));
+                                histogram[c * size + index]++;
+                            }
+                            src += width;
+                        }
+                    }
+                }
                 else
                     assert(0);
             }
@@ -129,44 +145,50 @@ namespace Synet
         }
     }
 
-    template <typename T> void UpdateChannelsMinMax(const Tensor<T> & tensor, T* min, T* max)
+    template <typename T> size_t GetChannels(const Tensor<T>& tensor)
     {
-        assert(tensor.Count() == 4);
-        if (tensor.Format() == TensorFormatNhwc)
-            Detail::UpdateChannelsMinMax(tensor.CpuData(), tensor.Axis(0), tensor.Axis(3), tensor.Axis(1), tensor.Axis(2), tensor.Format(), min, max);
-        else if (tensor.Format() == TensorFormatNchw)
-            Detail::UpdateChannelsMinMax(tensor.CpuData(), tensor.Axis(0), tensor.Axis(1), tensor.Axis(2), tensor.Axis(3), tensor.Format(), min, max);
-        else
-            assert(0);
-    }
-
-    template <typename T> void UpdateChannelsHistogram(const Tensor<T>& tensor, const T* min, const T* max, uint32_t* histogram, size_t size)
-    {
-        assert(tensor.Count() == 4);
-        if (tensor.Format() == TensorFormatNhwc)
-            Detail::UpdateChannelsHistogram(tensor.CpuData(), tensor.Axis(0), tensor.Axis(3), tensor.Axis(1), tensor.Axis(2), tensor.Format(), min, max, histogram, size);
-        else
-            assert(0);
+        if (tensor.Count() == 4)
+        {
+            if (tensor.Format() == TensorFormatNhwc)
+                return tensor.Axis(3);
+            if (tensor.Format() == TensorFormatNchw)
+                return tensor.Axis(1);
+        }
+        if (tensor.Count() == 2)
+            return tensor.Axis(1);
+        return 0;
     }
 
     template <typename T> void UpdateChannelsQuantile(const Tensor<T>& tensor, T quntile, T epsilon, T * lower, T * upper)
     {
-        assert(tensor.Count() == 4 && tensor.Format() == TensorFormatNhwc);
-        size_t channels = tensor.Axis(3);
+        size_t batch = 0, channels = 0, height = 0, width = 0;
+        if (tensor.Count() == 4)
+        {
+            batch = tensor.Axis(0);
+            if (tensor.Format() == TensorFormatNhwc)
+                channels = tensor.Axis(3), height = tensor.Axis(1), width = tensor.Axis(2);
+            else if (tensor.Format() == TensorFormatNchw)
+                channels = tensor.Axis(1), height = tensor.Axis(2), width = tensor.Axis(3);
+        }
+        if (tensor.Count() == 2)
+        {
+            batch = tensor.Axis(0), channels = tensor.Axis(1), height = 1, width = 1;
+        }
+        assert(batch && channels && height && width);
         size_t count = tensor.Size() / channels;
         size_t threshold = Round(quntile * count);
         if (threshold == 0)
         {
-            UpdateChannelsMinMax(tensor, lower, upper);
+            Detail::UpdateChannelsMinMax(tensor.CpuData(), batch, channels, height, width, tensor.Format(), lower, upper);
             return;
         }
         std::vector<T> min(channels, std::numeric_limits<T>::max());
         std::vector<T> max(channels, std::numeric_limits<T>::lowest());
-        UpdateChannelsMinMax(tensor, min.data(), max.data());
+        Detail::UpdateChannelsMinMax(tensor.CpuData(), batch, channels, height, width, tensor.Format(), min.data(), max.data());
         Detail::ValidateMinMax(min.data(), max.data(), channels, epsilon);
         const size_t SIZE = 256;
         std::vector<uint32_t> histogram(channels * SIZE, 0);
-        UpdateChannelsHistogram(tensor, min.data(), max.data(), histogram.data(), SIZE);
+        Detail::UpdateChannelsHistogram(tensor.CpuData(), batch, channels, height, width, tensor.Format(), min.data(), max.data(), histogram.data(), SIZE);
         Detail::UpdateMinMax(min.data(), max.data(), channels, histogram.data(), SIZE, threshold, lower, upper);
     }
 }
