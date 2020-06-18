@@ -45,6 +45,20 @@ namespace Synet
         template <> SYNET_INLINE TensorType GetTensorType<int8_t>() { return TensorType8i; }
         template <> SYNET_INLINE TensorType GetTensorType<uint8_t>() { return TensorType8u; }
         template <> SYNET_INLINE TensorType GetTensorType<int64_t>() { return TensorType64i; }
+
+        SYNET_INLINE size_t TensorTypeSize(TensorType type)
+        {
+            switch (type)
+            {
+            case TensorTypeUnknown: return 0;
+            case TensorType32f: return 4;
+            case TensorType32i: return 4;
+            case TensorType8i: return 1;
+            case TensorType8u: return 1;
+            case TensorType64i: return 8;
+            default: assert(0); return 0;
+            }
+        }
     }
 
     template<class T> class Tensor
@@ -231,6 +245,11 @@ namespace Synet
             return _type;
         }
 
+        SYNET_INLINE size_t TypeSize() const
+        {
+            return Detail::TensorTypeSize(_type);
+        }
+
         SYNET_INLINE void SetType(TensorType type)
         {
             assert(_buffer->size == 0);
@@ -340,6 +359,11 @@ namespace Synet
         SYNET_INLINE const uint8_t * RawCpuData() const
         {
             return (const uint8_t*)_buffer->data;
+        }
+
+        SYNET_INLINE size_t RawSize() const
+        {
+            return _buffer->size * TypeSize();
         }
 
         SYNET_INLINE Type * CpuData()
@@ -465,7 +489,7 @@ namespace Synet
 
         SYNET_INLINE size_t MemoryUsage() const
         {
-            return _buffer->Owner() ? _buffer->size * sizeof(Type) : 0;
+            return _buffer->Owner() ? RawSize() : 0;
         }
 
         SYNET_INLINE void Capture()

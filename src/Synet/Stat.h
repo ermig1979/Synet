@@ -170,6 +170,12 @@ namespace Synet
                 }
             }
         }
+
+        SYNET_INLINE size_t MemoryUsage() const
+        {
+            return (min.size() + max.size() + scale32fTo8u.size() + shift32fTo8u.size() + 
+                scale8uTo32f.size() + shift8uTo32f.size())*sizeof(float) + zero8u.size();
+        }
     };
 
     typedef Stat * StatPtr;

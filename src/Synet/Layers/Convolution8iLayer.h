@@ -53,7 +53,8 @@ namespace Synet
 
         virtual size_t MemoryUsage() const
         {
-            return Base::MemoryUsage() + _convolution8i.InternalBufferSize() + _weight8i.Size();
+            return Base::MemoryUsage() + _convolution8i.InternalBufferSize() + _weight8i.MemoryUsage()
+                + _norm32i.MemoryUsage() + _norm32f.MemoryUsage();
         }
 
         virtual bool Can8i() const
