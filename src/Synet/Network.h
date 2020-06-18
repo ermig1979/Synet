@@ -955,7 +955,7 @@ namespace Synet
             case LayerTypeFused: return new FusedLayer<T>(param);
             case LayerTypeGather: return new GatherLayer<T>(param);
             case LayerTypeHswish: return new HswishLayer<T>(param);
-            case LayerTypeInnerProduct: return new InnerProductLayer<T>(param);
+            case LayerTypeInnerProduct: return new InnerProductLayer<T>(param, method);
             case LayerTypeInput: return new InputLayer<T>(param);
             case LayerTypeInterp: return new InterpLayer<T>(param);
             case LayerTypeInterp2: return new Interp2Layer<T>(param);

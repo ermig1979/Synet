@@ -28,6 +28,10 @@
 #include "Synet/Layer.h"
 #include "Synet/Utils/Math.h"
 
+#ifdef _N
+#undef _N
+#endif
+
 namespace Synet
 {
     namespace Detail
@@ -61,83 +65,102 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        InnerProductLayer(const LayerParam & param)
+        InnerProductLayer(const LayerParam & param, QuantizationMethod method)
             : Base(param)
+            , _method(method)
         {
         }
 
         virtual int64_t Flop() const
         {
-            return _Mdim * _Ndim * _Kdim * 2;
+            return _M * _N * _K * 2;
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            _biasTerm = this->Param().innerProduct().biasTerm();
-            _transposeA = this->Param().innerProduct().transposeA();
-            _transposeB = this->Param().innerProduct().transposeB();
-            _axis = this->Param().innerProduct().axis();
-            _Kdim = src[0]->Size(_axis);
+            const InnerProductParam& param = this->Param().innerProduct();
+            _is8i = param.quantizationLevel() == TensorType8i && src.size() == 1;
+            _src8u = src[0]->GetType() == TensorType8u;
+            _dst8u = dst[0]->GetType() == TensorType8u;
+            _biasTerm = param.biasTerm();
+            _transA = param.transposeA();
+            _transB = param.transposeB();
+            size_t axis = param.axis();
+            _K = src[0]->Size(axis);
             if (src.size() == 2)
             {
                 assert(_biasTerm == false);
-                assert(_Kdim = src[1]->Size(0, _axis));
-                _Ndim = src[1]->Axis(_axis);
+                assert(_K = src[1]->Size(0, axis));
+                _N = src[1]->Axis(axis);
             }
             else
             {
-                _Ndim = this->Param().innerProduct().outputNum();
+                _N = this->Param().innerProduct().outputNum();
                 const typename Base::Tensors & weight = this->Weight();
                 if (_biasTerm)
                     assert(weight.size() == 2);
                 else
                     assert(weight.size() == 1);
-                if (_transposeB)
-                    assert(weight[0].Shape() == Shape({ _Kdim, _Ndim }));
+                if (_transB)
+                    assert(weight[0].Shape() == Shp(_K, _N));
                 else
-                    assert(weight[0].Shape() == Shape({ _Ndim, _Kdim }));
+                    assert(weight[0].Shape() == Shp(_N, _K));
                 if (_biasTerm)
-                    assert(weight[1].Shape() == Shape({ _Ndim }));
+                    assert(weight[1].Shape() == Shp(_N));
             }
+            _M = src[0]->Size(0, axis);
 
-            _Mdim = src[0]->Size(0, _axis);
             Shape dstShape = src[0]->Shape();
-            dstShape.resize(_axis + 1);
-            dstShape[_axis] = _Ndim;
-            dst[0]->Reshape(dstShape, TensorFormatNchw);
+            dstShape.resize(axis + 1);
+            dstShape[axis] = _N;
+            if (_dst8u)
+                dst[0]->As8u().Reshape(dstShape, src[0]->Format());
+            else
+                dst[0]->As32f().Reshape(dstShape, src[0]->Format());
             std::stringstream desc;
-            desc << "M=" << _Mdim << " N=" << _Ndim << " K=" << _Kdim;
+            desc << "M=" << _M << " N=" << _N << " K=" << _K;
             this->UsePerfStat(desc.str(), Flop());
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            ForwardCpu(src[0]->CpuData(), src.size() > 1 ? src[1]->CpuData() : this->Weight()[0].CpuData(), dst[0]->CpuData());
-        }
-
-        void ForwardCpu(const T * a, const T * b, T * c)
-        {
-            if (!_transposeB && _Mdim == 1)
+            if (_is8i)
             {
-                for (size_t i = 0; i < _Mdim; ++i)
-                    Detail::InnerProductLayerForwardCpu(a + i*_Kdim, b, _biasTerm ? this->Weight()[1].CpuData() : NULL, _Ndim, _Kdim, c + i*_Ndim);
+                uint8_t* tmp = _src8u ? src[0]->As8u().CpuData() : Base::Buf8u(buf, 0);
+                int32_t* sum = Base::Buf32i(buf, 0);
+                if (!_src8u)
+                    _srcCvt.Convert(src[0]->As32f().CpuData(), tmp);
+                //ForwardCpu(tmp, sum);
+                if (_dst8u)
+                    _dstCvt.Convert(sum, dst[0]->As8u().CpuData());
+                else
+                    _dstCvt.Convert(sum, dst[0]->As32f().CpuData());
             }
             else
+                ForwardCpu(src[0]->CpuData(), src.size() > 1 ? src[1]->CpuData() : this->Weight()[0].CpuData(), dst[0]->CpuData());
+        }
+
+        void ForwardCpu(const float * src, const float* wgt, float* dst)
+        {
+            const float* bias = _biasTerm ? this->Weight()[1].CpuData() : NULL;
+            if (!_transB && _M == 1)
+                Detail::InnerProductLayerForwardCpu(src, wgt, bias, _N, _K, dst);
+            else
             {
-                CpuGemm<Type>(_transposeA ? CblasTrans : CblasNoTrans, _transposeB ? CblasNoTrans : CblasTrans, _Mdim, _Ndim, _Kdim, Type(1), a, _Kdim, b, _Kdim, Type(0), c, _Ndim);
+                CpuGemm(_transA ? CblasTrans : CblasNoTrans, _transB ? CblasNoTrans : CblasTrans, _M, _N, _K, 1.0f, src, _K, wgt, _K, 0.0f, dst, _N);
                 if (_biasTerm)
                 {
-                    for(size_t i = 0; i < _Mdim; ++i)
-                        CpuAddBias(this->Weight()[1].CpuData(), _Ndim, 1, c + i*_Ndim);
+                    for(size_t i = 0; i < _M; ++i)
+                        CpuAddBias(bias, _N, 1, dst + i*_N);
                 }
             }
         }
 
     private:
-        typedef typename Base::Tensor Tensor;
-
-        size_t _Mdim, _Kdim, _Ndim, _axis;
-        bool _biasTerm, _transposeA, _transposeB;
+        QuantizationMethod _method;
+        size_t _M, _N, _K;
+        bool _biasTerm, _transA, _transB, _src8u, _dst8u, _is8i;
+        Converter _srcCvt, _dstCvt;
     };
 }
