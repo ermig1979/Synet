@@ -67,12 +67,24 @@ namespace Synet
     public:
         typedef T Type;
         typedef Layer<T> Base;
+        typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
         InnerProductLayer(const LayerParam & param, QuantizationMethod method)
             : Base(param)
             , _method(method)
         {
+            _is8i = param.innerProduct().quantizationLevel() == TensorType8i;
+        }
+
+        virtual bool Is8i() const
+        {
+            return _is8i;
+        }
+
+        virtual bool Can8i() const
+        {
+            return _is8i;
         }
 
         virtual int64_t Flop() const
@@ -85,10 +97,15 @@ namespace Synet
             return Base::MemoryUsage() + _weight8i.MemoryUsage() + _norm32i.MemoryUsage() + _norm32f.MemoryUsage();
         }
 
+        virtual void CompactWeight()
+        {
+            if (_is8i)
+                ((Tensor&)this->Weight()[0]).Clear();
+        }
+
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const InnerProductParam& param = this->Param().innerProduct();
-            _is8i = param.quantizationLevel() == TensorType8i && src.size() == 1;
             _src8u = src[0]->GetType() == TensorType8u;
             _dst8u = dst[0]->GetType() == TensorType8u;
             _biasTerm = param.biasTerm();

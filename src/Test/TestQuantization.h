@@ -259,6 +259,13 @@ namespace Test
             layer.convolution().quantizationLevel() = Synet::TensorType8i;
         }
 
+        void QuantizeInnerProduct(Synet::LayerParam& layer)
+        {
+            if (layer.type() != Synet::LayerTypeInnerProduct)
+                return;
+            layer.innerProduct().quantizationLevel() = Synet::TensorType8i;
+        }
+
         void HighlightGlobalPooling(Synet::LayerParam& layer)
         {
             if (layer.type() != Synet::LayerTypePooling)
@@ -296,6 +303,7 @@ namespace Test
                 EltwiseToAdd(layer);
                 ScaleToConvolution(layer);
                 QuantizeConvolution(layer);
+                QuantizeInnerProduct(layer);
                 HighlightGlobalPooling(layer);
             }
             network().quantization().method() = (Synet::QuantizationMethod)_options.quantizationMethod;

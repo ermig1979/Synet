@@ -65,7 +65,7 @@ namespace Test
 				testModel = GetArg("-tm", "sy_fp32.xml");
 				testWeight = GetArg("-tw", "sy_fp32.bin");
 				testParam = GetArg("-tp", "param.xml");
-				testList = GetArg("-tl", "pairs10.txt");
+				testList = GetArg("-tl", "pairs1.txt");
 				imageDirectory = GetArg("-id", "image");
 				outputDirectory = GetArg("-od", "output");
 				logName = GetArg("-ln", "", false);
