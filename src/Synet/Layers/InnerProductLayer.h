@@ -27,6 +27,7 @@
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
 #include "Synet/Utils/Math.h"
+#include "Synet/Layers/ScaleLayer.h"
 
 #ifdef _N
 #undef _N
@@ -74,6 +75,11 @@ namespace Synet
         virtual int64_t Flop() const
         {
             return _M * _N * _K * 2;
+        }
+
+        virtual size_t MemoryUsage() const
+        {
+            return Base::MemoryUsage() + _weight8i.MemoryUsage() + _norm32i.MemoryUsage() + _norm32f.MemoryUsage();
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -131,7 +137,7 @@ namespace Synet
                 int32_t* sum = Base::Buf32i(buf, 0);
                 if (!_src8u)
                     _srcCvt.Convert(src[0]->As32f().CpuData(), tmp);
-                //ForwardCpu(tmp, sum);
+                ForwardCpu(tmp, sum);
                 if (_dst8u)
                     _dstCvt.Convert(sum, dst[0]->As8u().CpuData());
                 else
@@ -157,10 +163,24 @@ namespace Synet
             }
         }
 
+        void ForwardCpu(const uint8_t* src, int32_t* dst)
+        {
+            const bool overflow16i = true;
+            const int32_t* scale = _norm32i.CpuData();
+            const int32_t* shift = scale + _N;
+            Synet::CpuGemm8iNT(_M, _N, _K, src, _K, _weight8i.CpuData(), _K, dst, _N, overflow16i);
+            for (size_t i = 0; i < _M; ++i, dst += _N)
+                Detail::ScaleLayerForwardCpu(dst, scale, shift, _N, 1, 1, dst, TensorFormatNhwc, 1);
+        }
+
     private:
         QuantizationMethod _method;
         size_t _M, _N, _K;
         bool _biasTerm, _transA, _transB, _src8u, _dst8u, _is8i;
         Converter _srcCvt, _dstCvt;
+
+        Tensor8i _weight8i;
+        Tensor32i _norm32i;
+        Tensor32f _norm32f;
     };
 }
