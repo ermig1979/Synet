@@ -422,10 +422,14 @@ namespace Synet
             layer.weight() = second->weight();
             layer.innerProduct().outputNum() = (uint32_t)output[1];
             layer.src().resize(1);
-            if (trans && !PermutedToNchw(layers, false, false))
+            if (trans && !PermutedToNchw(layers, true, false))
             {
                 const LayerParam * first = GetLayer(layers, layer.src()[0]);
-                if (first == NULL || first->type() != LayerTypeReshape)
+                if (first == NULL)
+                    return false;
+                if (first->type() == LayerTypePooling && first->pooling().globalPooling())
+                    return true;
+                if (first->type() != LayerTypeReshape)
                     return false;
                 Shape origin = _tensors[first->src()[0]].shape;
                 return ReorderWeight(srcBin, origin, layer, dstBin);
@@ -952,7 +956,10 @@ namespace Synet
 
         static bool PermutedToNchw(const LayerParams& layers, bool checkInnerProduct, bool checkPriorBox)
         {
-            return PermutedToNchw(layers, layers.size() - 1, checkInnerProduct, checkPriorBox);
+            size_t start = layers.size() - 1;
+            if (layers[start].type() == LayerTypeConst && start)
+                start--;
+            return PermutedToNchw(layers, start, checkInnerProduct, checkPriorBox);
         }
     };
 }
