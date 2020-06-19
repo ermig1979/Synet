@@ -249,17 +249,17 @@ namespace Synet
             return buf[TensorType8u * BUFFER_COUNT + idx]->As8u().CpuData();
         }
 
-        static void Extend32f(const TensorPtrs& buf, size_t idx, const Shape & shape, TensorFormat format)
+        static void Extend32f(const TensorPtrs& buf, size_t idx, const Shape & shape, TensorFormat format = TensorFormatUnknown)
         {
             return buf[TensorType32f * BUFFER_COUNT + idx]->As32f().Extend(shape, format);
         }
 
-        static void Extend32i(const TensorPtrs& buf, size_t idx, const Shape& shape, TensorFormat format)
+        static void Extend32i(const TensorPtrs& buf, size_t idx, const Shape& shape, TensorFormat format = TensorFormatUnknown)
         {
             return buf[TensorType32i * BUFFER_COUNT + idx]->As32i().Extend(shape, format);
         }
 
-        static void Extend8u(const TensorPtrs& buf, size_t idx, const Shape& shape, TensorFormat format)
+        static void Extend8u(const TensorPtrs& buf, size_t idx, const Shape& shape, TensorFormat format = TensorFormatUnknown)
         {
             return buf[TensorType8u * BUFFER_COUNT + idx]->As8u().Extend(shape, format);
         }

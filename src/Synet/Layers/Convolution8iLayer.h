@@ -111,7 +111,7 @@ namespace Synet
                 _convolution8i.Init(alg.batch, &conv);
             if (_convolution8i.Enable())
             {
-                buf[TensorType8u * BUFFER_COUNT]->As8u().Extend(Shp(_convolution8i.ExternalBufferSize()));
+                Base::Extend8u(buf, 0, Shp(_convolution8i.ExternalBufferSize()));
                 const float* bias = alg.bias ? weight[1].CpuData() : NULL;
                 const float* params = conv.activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : alg.params;
                 const float* stats[4] = {
@@ -124,9 +124,9 @@ namespace Synet
             else
             {
                 if (!_src8u)
-                    buf[TensorType8u * BUFFER_COUNT + 1]->As8u().Extend(src->Shape());
-                buf[TensorType8u * BUFFER_COUNT]->As8u().Extend(Shp(conv.kernelY * conv.kernelX * conv.srcC * conv.dstH * conv.dstW));
-                buf[TensorType32i * BUFFER_COUNT]->As32i().Extend(shape, src->Format());
+                    Base::Extend8u(buf, 1, src->Shape());
+                Base::Extend8u(buf, 0, Shp(conv.kernelY * conv.kernelX * conv.srcC * conv.dstH * conv.dstW));
+                Base::Extend32i(buf, 0, shape, src->Format());
                 Quantize();
             }
             alg.internal = 1;
@@ -135,15 +135,14 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             if (_convolution8i.Enable())
-                _convolution8i.Forward(src[0]->RawCpuData(), buf[TensorType8u * BUFFER_COUNT]->RawCpuData(), dst[0]->RawCpuData());
+                _convolution8i.Forward(src[0]->RawCpuData(), Base::Buf8u(buf, 0), dst[0]->RawCpuData());
             else
             {
-                uint8_t* buf0 = buf[TensorType8u * BUFFER_COUNT]->As8u().CpuData();
-                uint8_t* tmp = _src8u ? src[0]->As8u().CpuData() : buf[TensorType8u * BUFFER_COUNT + 1]->As8u().CpuData();
-                int32_t* sum = buf[TensorType32i * BUFFER_COUNT]->As32i().CpuData();
+                uint8_t* tmp = _src8u ? src[0]->As8u().CpuData() : Base::Buf8u(buf, 1);
+                int32_t* sum = Base::Buf32i(buf, 0);
                 if (!_src8u)
                     _srcCvt.Convert(src[0]->As32f().CpuData(), tmp);
-                ForwardCpu(tmp, buf0, sum);
+                ForwardCpu(tmp, Base::Buf8u(buf, 0), sum);
                 if (_dst8u)
                     _dstCvt.Convert(sum, dst[0]->As8u().CpuData());
                 else
@@ -202,7 +201,6 @@ namespace Synet
             Stat & statD = *this->Stats(2)[0];
             statS.Init8u(_method);
             statD.Init8u(_method);
-            _negSrc = statS.negative;
             _weight8i.Reshape(this->Weight()[0].Shape(), alg.trans ? TensorFormatNhwc : TensorFormatNchw);
             _norm32i.Reshape(Shp(2, conv.dstC));
             _norm32f.Reshape(Shp(2, conv.dstC));
@@ -395,7 +393,7 @@ namespace Synet
 
     private:
         QuantizationMethod _method;
-        bool _is8i, _src8u, _dst8u, _negSrc;
+        bool _is8i, _src8u, _dst8u;
         Converter _srcCvt, _dstCvt;
 
         Convolution8i _convolution8i;

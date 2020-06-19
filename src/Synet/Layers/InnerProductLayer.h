@@ -28,6 +28,9 @@
 #include "Synet/Layer.h"
 #include "Synet/Utils/Math.h"
 #include "Synet/Layers/ScaleLayer.h"
+#include "Synet/Quantization/Gemm.h"
+#include "Synet/Quantization/Convert.h"
+#include "Synet/Quantization/Const.h"
 
 #ifdef _N
 #undef _N
@@ -115,15 +118,21 @@ namespace Synet
                     assert(weight[1].Shape() == Shp(_N));
             }
             _M = src[0]->Size(0, axis);
-
             Shape dstShape = src[0]->Shape();
             dstShape.resize(axis + 1);
             dstShape[axis] = _N;
             if (_dst8u)
-                dst[0]->As8u().Reshape(dstShape, src[0]->Format());
+                dst[0]->As8u().Reshape(dstShape, TensorFormatNchw);
             else
-                dst[0]->As32f().Reshape(dstShape, src[0]->Format());
+                dst[0]->As32f().Reshape(dstShape, TensorFormatNchw);
             std::stringstream desc;
+            if (_is8i)
+            {
+                if (!_src8u)
+                    Base::Extend8u(buf, 0, src[0]->Shape(), src[0]->Format());
+                Base::Extend32i(buf, 0, dstShape, TensorFormatNchw);
+                Quantize();
+            }            
             desc << "M=" << _M << " N=" << _N << " K=" << _K;
             this->UsePerfStat(desc.str(), Flop());
         }
@@ -159,6 +168,84 @@ namespace Synet
                 {
                     for(size_t i = 0; i < _M; ++i)
                         CpuAddBias(bias, _N, 1, dst + i*_N);
+                }
+            }
+        }
+
+        void Quantize()
+        {
+            Stat& statS = *this->Stats(0)[0];
+            Stat& statD = *this->Stats(2)[0];
+            statS.Init8u(_method);
+            statD.Init8u(_method);
+            _weight8i.Reshape(this->Weight()[0].Shape(), TensorFormatNchw);
+            _norm32i.Reshape(Shp(2, _N));
+            _norm32f.Reshape(Shp(2, _N));
+            Floats normW(_K);
+            const float* pSrcW = this->Weight()[0].CpuData();
+            const float* pSrcB = _biasTerm ? this->Weight()[1].CpuData() : NULL;
+            const float* pSrcScaleInv = statS.scale8uTo32f.data();
+            const float* pSrcScale = statS.scale32fTo8u.data();
+            const float* pSrcShift = statS.shift32fTo8u.data();
+            const float* pDstScale = statD.scale8uTo32f.data();
+            const float* pDstScaleInv = statD.scale32fTo8u.data();
+            const float* pDstShift = statD.shift8uTo32f.data();
+            float* pNormW = normW.data();
+            int8_t* pDstW = _weight8i.CpuData();
+            int32_t* pDstS = _norm32i.CpuData();
+            int32_t* pDstB = pDstS + _N;
+            float* pNormScale = _norm32f.CpuData();
+            float* pNormShift = pNormScale + _N;
+            int wLo, wUp, sLo, sUp;
+            bool avoidOverflow16i = statS.negative && _method == QuantizationMethodIECompatible;
+            if (_method == QuantizationMethodIECompatible)
+                wLo = QUANT_IE_COMP_WEIGHT_MIN, wUp = QUANT_IE_COMP_WEIGHT_MAX, sLo = QUANT_IE_COMP_SRC_U8_MIN, sUp = QUANT_IE_COMP_SRC_U8_MAX;
+            else if (_method == QuantizationMethodSymmetricNarrowed)
+                wLo = QUANT_SYMM_NARR_WEIGHT_MIN, wUp = QUANT_SYMM_NARR_WEIGHT_MAX, sLo = QUANT_SYMM_NARR_SRC_U8_MIN, sUp = QUANT_SYMM_NARR_SRC_U8_MAX;
+            _srcCvt.Init(_M, _K, 1, 1, TensorFormatNhwc, pSrcScale, pSrcShift, sLo, sUp);
+            _dstCvt.Init(_M, _N, 1, 1, TensorFormatNhwc, pNormScale, pNormShift, sLo, sUp);
+            for (size_t i = 0; i < _N; ++i)
+            {
+                float normB = 0, minW = FLT_MAX, maxW = -FLT_MAX, scale = 1.0f;
+                for (size_t k = 0; k < _K; ++k)
+                {
+                    pNormW[k] = pSrcW[i * _K + k] * pSrcScaleInv[k];
+                    minW = std::min(minW, pNormW[k]);
+                    maxW = std::max(maxW, pNormW[k]);
+                }
+                float abs = std::max(::abs(maxW), ::abs(minW));
+                if (pSrcB)
+                    abs = std::max(abs, ::abs(pSrcB[i]) / float(128 * 256 * 256));
+                scale = wUp / abs;
+                for (size_t k = 0; k < _K; ++k)
+                {
+                    if (avoidOverflow16i)
+                    {
+                        int w = ConvertTo8i(pNormW[k], scale, 0, wLo, wUp);
+                        if (w & 1)
+                            w = Round(w * 0.25f) * 4;
+                        pDstW[i * _K + k] = w / 2;
+                        normB -= w * pSrcShift[k];
+                    }
+                    else
+                    {
+                        pDstW[i * _K + k] = ConvertTo8i(pNormW[k], scale, 0, wLo, wUp);
+                        normB -= pDstW[i * _K + k] * pSrcShift[k];
+                    }
+                }
+                pDstS[i] = avoidOverflow16i ? 2 : 1;
+                if (pSrcB)
+                    normB += pSrcB[i] * scale;
+                pDstB[i] = Synet::Quantize(normB);
+                if (_dst8u)
+                {
+                    pNormScale[i] = (1.0f / scale) * pDstScaleInv[i];
+                    pNormShift[i] = -pDstShift[i] / pDstScale[i];
+                }
+                else
+                {
+                    pNormScale[i] = 1.0f / scale;
+                    pNormShift[i] = 0;
                 }
             }
         }

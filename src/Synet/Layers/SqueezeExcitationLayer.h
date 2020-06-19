@@ -114,12 +114,12 @@ namespace Synet
 
             if (_src8u)
             {
-                Base::Extend32i(buf, 0, Shp(_channels), _format);
+                Base::Extend32i(buf, 0, Shp(_channels));
                 Init8i();
             }
             else
-                Base::Extend32f(buf, 0, Shp(_channels), _format);
-            Base::Extend32f(buf, 1, Shp(_channels + _squeeze), _format);
+                Base::Extend32f(buf, 0, Shp(_channels));
+            Base::Extend32f(buf, 1, Shp(_channels + _squeeze));
 
             if (src[0] != dst[0])
             {
