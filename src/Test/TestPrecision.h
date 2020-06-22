@@ -27,10 +27,10 @@
 #include "TestCommon.h"
 #include "TestArgs.h"
 #include "TestImage.h"
+#include "TestSynet.h"
 #ifdef SYNET_TEST_FIRST_RUN
 #include "TestInferenceEngine.h"
 #endif
-#include "TestSynet.h"
 
 namespace Test
 {
@@ -85,6 +85,10 @@ namespace Test
 						ss << "Memory usage: " << memoryUsage / (1024 * 1024) << " MB." << std::endl;
 					ss << SystemInfo() << std::endl;
 					PerformanceMeasurerStorage::s_storage.Print(ss);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+					if (framework == "synet")
+						ss << SimdPerformanceStatistic();
+#endif
 					if (!consoleSilence)
 						std::cout << ss.str() << std::endl;
 					if (!logName.empty())

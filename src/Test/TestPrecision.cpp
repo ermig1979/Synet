@@ -22,7 +22,6 @@
 * SOFTWARE.
 */
 
-#include "TestPerformance.h"
 #include "TestPrecision.h"
 
 Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
