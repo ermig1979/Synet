@@ -42,11 +42,13 @@ namespace Test
         {
             if (_options.debugPrint)
             {
+                _opt = Test::MakePath(_options.outputDirectory, "fp32_optimized.xml");
                 _deopt = Test::MakePath(_options.outputDirectory, "fp32_deoptimized.xml");
                 _stats = Test::MakePath(_options.outputDirectory, "fp32_deopt_stats.xml");
             }
             else
             {
+                _opt = _options.secondModel;
                 _deopt = _options.secondModel;
                 _stats = _options.secondModel;
             }
@@ -58,6 +60,8 @@ namespace Test
             if (!LoadTestParam())
                 return PrintFinishMessage(false);
             if (!CreateDirectories())
+                return PrintFinishMessage(false);
+            if (!OptimizeModel())
                 return PrintFinishMessage(false);
             if (!DeoptimizeModel())
                 return PrintFinishMessage(false);
@@ -71,7 +75,7 @@ namespace Test
     private:
         TestParamHolder _param;
         const Options& _options;
-        String _deopt, _stats;
+        String _opt, _deopt, _stats;
         Strings _images;
         typedef Synet::Network<float> SyNet;
         SyNet _synet;
@@ -112,11 +116,21 @@ namespace Test
             return true;
         }
 
+        bool OptimizeModel()
+        {
+            if (!_options.consoleSilence)
+                std::cout << "Optimize Synet FP32 model : ";
+            bool result = Synet::OptimizeSynetModel(_options.firstModel, "", _opt, "");
+            if (!_options.consoleSilence)
+                std::cout << (result ? " OK." : "Optimization is finished with errors!") << std::endl;
+            return result;
+        }
+
         bool DeoptimizeModel()
         {
             if(!_options.consoleSilence)
-                std::cout << "Deoptimize Synet model : ";
-            bool result = Synet::DeoptimizeSynetModel(_options.firstModel, _deopt);
+                std::cout << "Deoptimize Synet FP32 model : ";
+            bool result = Synet::DeoptimizeSynetModel(_opt, _deopt);
             if (_options.debugPrint)
                 Synet::OptimizeSynetModel(_deopt, "", Test::MakePath(_options.outputDirectory, "fp32_optimized_back.xml"), "");
             if (!_options.consoleSilence)

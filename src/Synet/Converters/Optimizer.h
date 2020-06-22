@@ -85,8 +85,6 @@ namespace Synet
                         continue;
                     if (MergeSoftmax(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeSqueezeExcitation(network.layers(), i, merged, changes))
-                        continue;
                     if (MergeFused0(network.layers(), i, merged, changes))
                         continue;
                     if (MergeFused1(network.layers(), i, merged, changes))
@@ -124,6 +122,8 @@ namespace Synet
                 case 3:
                 {
                     if (MergeThreeConvolutions(network.layers(), i, method, merged, changes))
+                        continue;
+                    if (MergeSqueezeExcitation(network.layers(), i, merged, changes))
                         continue;
                     break;
                 }
@@ -522,35 +522,34 @@ namespace Synet
 
         bool MergeSqueezeExcitation(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
         {
-            if (src.size() <= index + 5)
+            if (src.size() <= index + 4)
                 return false;
             if (src[index + 0].type() != LayerTypePooling || src[index + 0].pooling().method() != PoolingMethodTypeAverage)
                 return false;
             if (src[index + 1].type() != LayerTypeConvolution || src[index + 1].convolution().kernel() != Shp(1, 1) || 
-                src[index + 1].convolution().biasTerm() || src[index + 1].src()[0] != src[index + 0].name())
+                src[index + 1].convolution().biasTerm() || src[index + 1].src()[0] != src[index + 0].name() || 
+                src[index + 1].convolution().activationType() != ActivationFunctionTypeRelu)
                 return false;
-            if (src[index + 2].type() != LayerTypeRelu || src[index + 2].src()[0] != src[index + 1].name())
+            if (src[index + 2].type() != LayerTypeConvolution || src[index + 2].convolution().kernel() != Shp(1, 1) ||
+                src[index + 2].convolution().biasTerm() || src[index + 2].src()[0] != src[index + 1].name())
                 return false;
-            if (src[index + 3].type() != LayerTypeConvolution || src[index + 3].convolution().kernel() != Shp(1, 1) ||
-                src[index + 3].convolution().biasTerm() || src[index + 3].src()[0] != src[index + 2].name())
+            if (src[index + 3].type() != LayerTypeSigmoid || src[index + 3].src()[0] != src[index + 2].name())
                 return false;
-            if (src[index + 4].type() != LayerTypeSigmoid || src[index + 4].src()[0] != src[index + 3].name())
+            if (src[index + 4].type() != LayerTypeEltwise || src[index + 4].eltwise().operation() != EltwiseOperationTypeProduct ||
+                src[index + 4].src()[0] != src[index + 0].src()[0] || src[index + 4].src()[1] != src[index + 3].dst()[0])
                 return false;
-            if (src[index + 5].type() != LayerTypeEltwise || src[index + 5].eltwise().operation() != EltwiseOperationTypeProduct ||
-                src[index + 5].src()[0] != src[index + 0].src()[0] || src[index + 5].src()[1] != src[index + 4].name())
-                return false;
-            if (InsideLink(src, index + 1, 5))
+            if (InsideLink(src, index + 1, 4))
                 return false;
             LayerParam layer;
             layer.type() = LayerTypeSqueezeExcitation;
-            layer.name() = src[index + 5].name();
+            layer.name() = src[index + 4].name();
             layer.src().push_back(src[index + 0].src()[0]);
             layer.weight().push_back(src[index + 1].weight()[0]);
-            layer.weight().push_back(src[index + 3].weight()[0]);
-            layer.dst().push_back(layer.name());
+            layer.weight().push_back(src[index + 2].weight()[0]);
+            layer.dst().push_back(src[index + 4].dst()[0]);
             dst.push_back(layer);
-            index += 6;
-            return false;
+            index += 4;
+            return true;
         }
 
         bool MergeFused0(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
