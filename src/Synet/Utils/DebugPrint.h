@@ -43,7 +43,7 @@ namespace Synet
             return os;
         }
 
-        String DebugPrint(const Shape & shape)
+        inline String DebugPrint(const Shape & shape)
         {
             std::stringstream ss;
             ss << "{ ";
