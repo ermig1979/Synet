@@ -29,6 +29,7 @@
 #include "Synet/Layer.h"
 #include "Synet/Utils/Math.h"
 #include "Synet/Layers/ScaleLayer.h"
+#include "Synet/Layers/BiasLayer.h"
 
 namespace Synet
 {
@@ -96,7 +97,8 @@ namespace Synet
                 for (size_t i = 0; i < src.size(); ++i)
                     _coefficients[i] = param.coefficients()[i];
             } 
-
+            _bias = 0;
+            _scale = 0; 
             if (src.size() == 2 && src[0]->Shape() != src[1]->Shape())
             {
                 if (_operation == EltwiseOperationTypeProduct && src[0]->Count() == 4)
@@ -114,12 +116,35 @@ namespace Synet
                     else
                         assert(0);
                 }
+                else if (_operation == EltwiseOperationTypeSum && src[0]->Count() == src[1]->Count())
+                {
+                    _bias = 1;
+                    _trans = 1;
+                    _batch = 1;
+                    _channels = 1;
+                    _spatial = 1;
+                    for (size_t i = 0, already = 0; i < src[0]->Count(); ++i)
+                    {
+                        if (src[0]->Axis(i) == src[1]->Axis(i))
+                        {
+                            if (already)
+                                _channels *= src[0]->Axis(i);
+                            else
+                                _batch *= src[0]->Axis(i);
+                        }
+                        else
+                        {
+                            assert(src[1]->Axis(i) == 1);
+                            already = 1;
+                            _spatial *= src[0]->Axis(i);
+                        }
+                    }
+                }
                 else
                     assert(0);
             }
             else
             {
-                _scale = 0;
                 _src.resize(src.size());
                 for (size_t i = 0; i < src.size(); ++i)
                 {
@@ -128,7 +153,8 @@ namespace Synet
                 }
                 _batch = 1, _channels = 1, _spatial = src[0]->Size();
             }
-            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            if(dst[0] != src[0])
+                dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
             this->UsePerfStat();
         }
 
@@ -158,6 +184,19 @@ namespace Synet
                     pScale += (_scale == 1 ? _channels : _spatial);
                 }
             }
+            else if (_bias)
+            {
+                const Type* pSrc = src[0]->CpuData();
+                const Type* pBias = src[1]->CpuData();
+                Type* pDst = dst[0]->CpuData();
+                for (size_t b = 0; b < _batch; ++b)
+                {
+                    Detail::BiasLayerForwardCpu(pSrc, pBias, _channels, _spatial, pDst, _trans);
+                    pSrc += _channels * _spatial;
+                    pDst += _channels * _spatial;
+                    pBias +=  _channels;
+                }
+            }
             else
             {
                 Detail::EltwiseLayerForwardCpu(_src.data(), _coefficients.data(), _src.size(), dst[0]->Size(), _operation, dst[0]->CpuData());
@@ -171,7 +210,7 @@ namespace Synet
         EltwiseOperationType _operation;
         Vector _coefficients;
         Pointers _src;
-        int _scale, _trans;
+        int _bias, _scale, _trans;
         size_t _batch, _channels, _spatial;
     };
 }

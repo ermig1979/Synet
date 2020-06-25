@@ -1181,6 +1181,8 @@ namespace Synet
                     continue;
                 if (IsUsed(layer.src()[0], layers, i + 1))
                     continue;
+                if (i && layer.src()[0] == layers[i - 1].name() && layers[i - 1].type() == LayerTypeConst)
+                    continue;
                 if (!IsUsed(layer.dst()[0], layers, i + 1))
                     continue;
                 if (!CanReuse(layer))

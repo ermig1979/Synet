@@ -92,6 +92,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "ReduceMean" && !ConvertReduceMeanLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
+                if (type == "ReduceSum" && !ConvertReduceSumLayer(pLayer, srcBin, dstXml.layers(), layer))
+                    return ErrorMessage(pLayer);
                 if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Reshape" && !ConvertReshapeLayer(pLayer, srcBin, dstXml.layers(), trans, layer))
@@ -110,8 +112,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Unsqueeze" && !ConvertUnsqueezeLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
-
-#if 0
+#if 1
                 if (layer.type() == LayerTypeUnknown)
                     return ErrorMessage(pLayer);
 #else
@@ -149,10 +150,12 @@ namespace Synet
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
+            Shape src0 = ConvertInputShape(pLayer, "0");
+            Shape src1 = ConvertInputShape(pLayer, "1");
             const LayerParam* second = GetLayer(layers, layer.src()[1]);
             if (second == NULL)
                 return false;
-            if (second->type() == LayerTypeConst)
+            if (second->type() == LayerTypeConst && TensorSize(src0) >= TensorSize(src1))
             {
                 layer.type() = Synet::LayerTypeBias;
                 layer.weight() = second->weight();
@@ -164,6 +167,8 @@ namespace Synet
             {
                 layer.type() = Synet::LayerTypeEltwise;
                 layer.eltwise().operation() = EltwiseOperationTypeSum;
+                if (TensorSize(src0) < TensorSize(src1))
+                    std::swap(layer.src()[0], layer.src()[1]);
             }
             return true;
         }
@@ -617,6 +622,26 @@ namespace Synet
             return true;
         }
 
+        bool ConvertReduceSumLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeMeta || second->meta().type() != MetaTypeConst)
+                return false;
+            const Longs & alpha = second->meta().alpha().i64();
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            layer.type() = Synet::LayerTypeReduction;
+            layer.reduction().type() = ReductionTypeSum;
+            for (size_t i = 0; i < alpha.size(); ++i)
+                layer.reduction().axis().push_back((int)alpha[i]);
+            StringToValue(pData->FirstAttribute("keep_dims")->Value(), layer.reduction().keepDims());
+            layer.src().resize(1);
+            return true;
+        }
+
         bool ConvertReluLayer(const XmlNode* pLayer, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeRelu;
@@ -936,6 +961,8 @@ namespace Synet
         static bool PermutedToNchw(const LayerParams & layers, size_t current, bool checkInnerProduct, bool checkPriorBox)
         {
             const LayerParam& layer = layers[current];
+            if (layer.type() == LayerTypeConvolution && layer.weight()[0].format() == TensorFormatNhwc)
+                return false;
             if (layer.type() == LayerTypePermute && layer.permute().format() == TensorFormatNchw)
                 return true;
             if (checkInnerProduct && layer.type() == LayerTypeInnerProduct)
