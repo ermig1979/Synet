@@ -27,6 +27,7 @@
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
 #include "Synet/Layers/ScaleLayer.h"
+#include "Synet/Layers/InnerProductLayer.h"
 #include "Synet/Utils/Activation.h"
 #include "Synet/Quantization/Convert.h"
 
@@ -83,6 +84,17 @@ namespace Synet
         {
         }
 
+        virtual void CompactWeight()
+        {
+            ((Tensor&)this->Weight()[0]).Clear();
+            ((Tensor&)this->Weight()[1]).Clear();
+        }
+
+        virtual size_t MemoryUsage() const
+        {
+            return (_sumScale.size() + _sumShift.size() + _rWeight[0].size() + _rWeight[1].size())*sizeof(float);
+        }
+
         virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const Tensors& weight = this->Weight();
@@ -98,6 +110,8 @@ namespace Synet
                 _width = src[0]->Axis(3);
                 _squeeze = weight[0].Axis(0);
                 assert(weight[1].Axis(0) == _channels);
+                _rWeight[0].assign(weight[0].CpuData(), weight[0].CpuData() + _squeeze * _channels);
+                _rWeight[1].assign(weight[1].CpuData(), weight[1].CpuData() + _squeeze * _channels);
             }
             else if (_format == TensorFormatNhwc)
             {
@@ -106,6 +120,14 @@ namespace Synet
                 _channels = src[0]->Axis(3);
                 _squeeze = weight[0].Axis(3);
                 assert(weight[1].Axis(3) == _channels);
+                _rWeight[0].resize(_squeeze * _channels);
+                for (size_t s = 0; s < _squeeze; ++s)
+                    for (size_t c = 0; c < _channels; ++c)
+                        _rWeight[0][s * _channels + c] = weight[0].CpuData()[c * _squeeze + s];
+                _rWeight[1].resize(_squeeze * _channels);
+                for (size_t c = 0; c < _channels; ++c)
+                    for (size_t s = 0; s < _squeeze; ++s)
+                        _rWeight[1][c * _squeeze + s] = weight[1].CpuData()[s * _channels + c];
             }
             else
                 assert(0);
@@ -165,21 +187,13 @@ namespace Synet
             {
                 Detail::ChannelSum(src, _channels, _height, _width, _format, sum);
                 CpuScale(sum, _channels, _kAvg, norm0);
-                Product(_channels, _squeeze, norm0, wgt0, norm1);
+                Detail::InnerProductLayerForwardCpu<float>(norm0, _rWeight[0].data(), NULL, _squeeze, _channels, norm1);
                 CpuRelu(norm1, _squeeze, 0.0f, norm1);
-                Product(_squeeze, _channels, norm1, wgt1, norm0);
+                Detail::InnerProductLayerForwardCpu<float>(norm1, _rWeight[1].data(), NULL, _channels, _squeeze, norm0);
                 CpuSigmoid(norm0, _channels, norm0);
                 Detail::ScaleLayerForwardCpu<float>(src, norm0, NULL, _channels, _height, _width, dst, _format, 0);
                 src += _size, dst += _size;
             }
-        }
-
-        void Product(size_t C, size_t D, const float* src, const float* weight, float* dst)
-        {
-            if (_format == TensorFormatNchw)
-                CpuGemm(CblasNoTrans, CblasNoTrans, D, 1, C, 1.0f, weight, C, src, 1, 0.0f, dst, 1);
-            else if (_format == TensorFormatNhwc)
-                CpuGemm(CblasNoTrans, CblasNoTrans, 1, D, C, 1.0f, src, C, weight, D, 0.0f, dst, D);
         }
 
         void ForwardCpu(const uint8_t* src, int32_t * sum, float* norm0, float* norm1, uint8_t* dst8u, float* dst32f)
@@ -191,9 +205,9 @@ namespace Synet
                 Detail::ChannelSum(src, _channels, _height, _width, _format, sum);
                 Detail::Convert<int32_t, float, float>(sum, 1, _channels, 1, 1, TensorFormatNhwc, 
                     _sumScale.data(), _sumShift.data(), INT_MIN, INT_MAX, norm0);
-                Product(_channels, _squeeze, norm0, wgt0, norm1);
+                Detail::InnerProductLayerForwardCpu<float>(norm0, _rWeight[0].data(), NULL, _squeeze, _channels, norm1);
                 CpuRelu(norm1, _squeeze, 0.0f, norm1);
-                Product(_squeeze, _channels, norm1, wgt1, norm0);
+                Detail::InnerProductLayerForwardCpu<float>(norm1, _rWeight[1].data(), NULL, _channels, _squeeze, norm0);
                 CpuSigmoid(norm0, _channels, norm0);
                 if(_dst8u)
                     Scale(src, norm0, dst8u, NULL), dst8u += _size;
@@ -289,6 +303,6 @@ namespace Synet
         size_t _batch, _channels, _height, _width, _size, _squeeze; 
         float _kAvg;
         QuantizationMethod _method;
-        Floats _sumScale, _sumShift;
+        Floats _sumScale, _sumShift, _rWeight[2];
     };
 }
