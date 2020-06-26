@@ -34,7 +34,7 @@
 #define SYNET_PERF_DECL(name) Test::PerformanceMeasurer * name;
 #define SYNET_PERF_SET(name, value) name = value;
 #define SYNET_PERF_INIT(name, desc, flop) name = Test::PerformanceMeasurerStorage::s_storage.Get(desc, flop);
-#define SYNET_PERF_TEST(name) Test::ScopedPerformanceMeasurer SYNET_CAT(__spm,__LINE__)(name);
+#define SYNET_PERF_TEST(name) Test::PerformanceMeasurerHolder SYNET_CAT(__pmh,__LINE__)(name);
 #endif
 #include "Synet/Synet.h"
 

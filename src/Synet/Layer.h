@@ -45,6 +45,9 @@ namespace Synet
         Layer(const LayerParam & param)
             : _param(param)
             , _isBack(false)
+            , _perfEnable(false)
+            , _perfInited(false)
+            , _perfFlop(0)
         {
             SYNET_PERF_SET(_perfComm, NULL);
             SYNET_PERF_SET(_perfSpec, NULL);
@@ -124,6 +127,7 @@ namespace Synet
 
         inline void Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            InitPerfStat();
             SYNET_PERF_TEST(_perfComm);
             SYNET_PERF_TEST(_perfSpec);
             ForwardCpu(src, buf, dst);
@@ -224,14 +228,9 @@ namespace Synet
 
         void UsePerfStat(const String & desc = "", int64_t flop = 0)
         {
-#ifdef SYNET_LAYER_STATISTIC 
-            String type = ValueToString(_param.type());
-            SYNET_PERF_INIT(_perfComm, "void Synet::" + type + "Layer::Forward() {  " + (Is8i() ? "int8" : "fp32") + " } ", 0);
-#ifdef SYNET_SIZE_STATISTIC            
-            if(desc.size())
-                SYNET_PERF_INIT(_perfSpec, "void Synet::" + type + "Layer::Forward() { " + desc + " } ", flop);
-#endif//SYNET_SIZE_STATISTIC
-#endif//SYNET_LAYER_STATISTIC
+            _perfEnable = true;
+            _perfDesc = desc;
+            _perfFlop = flop;
         }
 
         static float * Buf32f(const TensorPtrs& buf, size_t idx)
@@ -272,8 +271,27 @@ namespace Synet
         StatPtrs _stats[3];
         bool _isBack;
 
+        bool _perfEnable, _perfInited;
+        String _perfDesc;
+        int64_t _perfFlop;
         SYNET_PERF_DECL(_perfComm);
         SYNET_PERF_DECL(_perfSpec);
+
+        void InitPerfStat()
+        {
+            if (_perfEnable && !_perfInited)
+            {
+#ifdef SYNET_LAYER_STATISTIC 
+                String type = ValueToString(_param.type());
+                SYNET_PERF_INIT(_perfComm, "void Synet::" + type + "Layer::Forward() {  " + (Is8i() ? "int8" : "fp32") + " } ", 0);
+#ifdef SYNET_SIZE_STATISTIC            
+                if (_perfDesc.size())
+                    SYNET_PERF_INIT(_perfSpec, "void Synet::" + type + "Layer::Forward() { " + _perfDesc + " } ", _perfFlop);
+#endif//SYNET_SIZE_STATISTIC
+#endif//SYNET_LAYER_STATISTIC
+                _perfInited = true;
+            }
+        }
 
         bool SetStats(const StatSharedPtrs & src, const Strings & names, StatPtrs & dst)
         {

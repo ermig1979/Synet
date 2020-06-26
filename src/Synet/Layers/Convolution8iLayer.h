@@ -107,8 +107,7 @@ namespace Synet
                 dst->As8u().Reshape(shape, src->Format());
             else
                 dst->As32f().Reshape(shape, src->Format());
-            if(_method == QuantizationMethodIECompatible)
-                _convolution8i.Init(alg.batch, &conv);
+            _convolution8i.Init(alg.batch, &conv, _method);
             if (_convolution8i.Enable())
             {
                 Base::Extend8u(buf, 0, Shp(_convolution8i.ExternalBufferSize()));
@@ -384,7 +383,7 @@ namespace Synet
                 for (size_t w = 0; w < width; ++w)
                 {
                     for (size_t c = 0; c < channels; ++c)
-                        dst[c] = src[c] >= 0 ? src[c] : int32_t(src[c]*slope[c]);
+                        dst[c] = src[c] >= 0 ? src[c] : Synet::Quantize(float(src[c])*slope[c]);
                     src += channels;
                     dst += channels;
                 }

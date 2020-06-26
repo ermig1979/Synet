@@ -683,14 +683,14 @@ namespace Test
                 else
                 {
                     bool canstop = false;
-                    double start = GetTime(), duration = 0;
+                    double start = Time(), duration = 0;
                     while (duration < options.executionTime)
                     {
                         for (size_t i = 0; i < comparer->_tests.size() && (duration < options.executionTime || !canstop); ++i)
                         {
                             TestData& test = *comparer->_tests[i];
                             test.output[thread].first = comparer->_firsts[thread].Predict(test.input);
-                            duration = GetTime() - start;
+                            duration = Time() - start;
                             comparer->_threads[thread].current = std::min(total, size_t(duration * 1000)) / networks;
                         }
                         canstop = true;
@@ -725,14 +725,14 @@ namespace Test
                 else
                 {
                     bool canstop = false;
-                    double start = GetTime(), duration = 0;
+                    double start = Time(), duration = 0;
                     while (duration < options.executionTime)
                     {
                         for (size_t i = 0; i < comparer->_tests.size() && (duration < options.executionTime || !canstop); ++i)
                         {
                             TestData& test = *comparer->_tests[i];
                             test.output[thread].second = comparer->_seconds[thread].Predict(test.input);
-                            duration = GetTime() - start;
+                            duration = Time() - start;
                             comparer->_threads[thread].current = (total * (networks - 1) + std::min(total, size_t(duration * 1000))) / networks;
                         }
                         canstop = true;

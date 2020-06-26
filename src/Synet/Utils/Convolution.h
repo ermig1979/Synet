@@ -43,7 +43,7 @@ namespace Synet
         {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
             if (_context)
-                ::SimdRelease(_context);
+                ::SimdRelease(_context), _context = NULL;
 #endif
         }
 
@@ -56,7 +56,7 @@ namespace Synet
             {
                 _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
                 if (_context)
-                    ::SimdRelease(_context);
+                    ::SimdRelease(_context), _context = NULL;
                 _context = ::SimdSynetConvolution32fInit(batch, (const SimdConvolutionParameters*)conv, gemm);
             }
 #endif
@@ -124,21 +124,30 @@ namespace Synet
         {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
             if (_context)
-                ::SimdRelease(_context);
+                ::SimdRelease(_context), _context = NULL;
 #endif
         }
 
-        SYNET_INLINE void Init(size_t batch, const ConvParam* conv)
+        SYNET_INLINE void Init(size_t batch, const ConvParam* conv, QuantizationMethod method)
         {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
             if (_batch != batch || _srcH != conv->srcH || _srcW != conv->srcW)
             {
                 _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
                 if (_context)
-                    ::SimdRelease(_context);
-                SimdSynetCompatibilityType compatibility = SimdCpuInfo(SimdCpuInfoAvx512vnni) ? SimdSynetCompatibilityFast : SimdSynetCompatibilityOverflow16i;
-                //compatibility = SimdSynetCompatibilityFast;
-                compatibility = (SimdSynetCompatibilityType)(compatibility | SimdSynetCompatibilityNoFmaTail);
+                    ::SimdRelease(_context), _context = NULL;
+                SimdSynetCompatibilityType compatibility;
+                if (method == QuantizationMethodIECompatible)
+                {
+                    compatibility = SimdCpuInfo(SimdCpuInfoAvx512vnni) ? SimdSynetCompatibility8iPrecise : SimdSynetCompatibility8iOverflow;
+                    compatibility = (SimdSynetCompatibilityType)(compatibility | SimdSynetCompatibilityFmaNoTail);
+                }
+                else if (method == QuantizationMethodSymmetricNarrowed)
+                {
+                    compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility8iNarrowed | SimdSynetCompatibilityFmaUse);
+                }
+                else
+                    return;
                 _context = ::SimdSynetConvolution8iInit(batch, (const SimdConvolutionParameters*)conv, compatibility);
             }
 #endif

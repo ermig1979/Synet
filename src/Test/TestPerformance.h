@@ -39,57 +39,89 @@
 
 namespace Test
 {
-    typedef std::string String;
-
-    inline double GetTime()
-    {
 #if defined(_MSC_VER)
-        LARGE_INTEGER frequency;
+    inline double Time()
+    {
+        LARGE_INTEGER counter, frequency;
+        QueryPerformanceCounter(&counter);
         QueryPerformanceFrequency(&frequency);
+        return double(counter.QuadPart) / double(frequency.QuadPart);
+    }
+
+    inline int64_t TimeCounter()
+    {
         LARGE_INTEGER counter;
         QueryPerformanceCounter(&counter);
-        return double(counter.QuadPart) / double(frequency.QuadPart);
+        return counter.QuadPart;
+    }
+
+    inline int64_t TimeFrequency()
+    {
+        LARGE_INTEGER frequency;
+        QueryPerformanceFrequency(&frequency);
+        return frequency.QuadPart;
+    }
 #elif defined(__GNUC__)
-        timeval t1;
-        gettimeofday(&t1, NULL);
-        return t1.tv_sec + t1.tv_usec / 1000000.0;
+    inline double Time()
+    {
+        timeval t;
+        gettimeofday(&t, NULL);
+        return t.tv_sec + t.tv_usec * 0.000001;
+    }
+
+    inline int64_t TimeCounter()
+    {
+        timeval t;
+        gettimeofday(&t, NULL);
+        return int64_t(t.tv_sec) * int64_t(1000000) + int64_t(t.tv_usec);
+    }
+
+    inline int64_t TimeFrequency()
+    {
+        return int64_t(1000000);
+    }
 #else
 #error Platform is not supported!
 #endif
+
+    inline double Miliseconds(int64_t count)
+    {
+        return double(count) / double(TimeFrequency()) * 1000.0;
     }
 
     //-------------------------------------------------------------------------
 
     class PerformanceMeasurer
     {
-        String	_description;
-        double _start;
-        int64_t _count, _flop;
-        double _total;
-        double _min;
-        double _max;
-        bool _entered;
+        String	_name;
+        int64_t _start, _current, _total, _min, _max, _count, _flop;
+        bool _entered, _paused;
 
     public:
-        PerformanceMeasurer(const String & description = "Unnamed", int64_t flop = 0)
-            : _description(description)
-            , _count(0)
-            , _total(0)
-            , _min(std::numeric_limits<double>::max())
-            , _max(std::numeric_limits<double>::min())
-            , _entered(false)
+        PerformanceMeasurer(const String & name = "Unnamed", int64_t flop = 0)
+            : _name(name)
             , _flop(flop)
+            , _count(0)
+            , _current(0)
+            , _total(0)
+            , _min(std::numeric_limits<int64_t>::max())
+            , _max(std::numeric_limits<int64_t>::min())
+            , _entered(false)
+            , _paused(false)
         {
         }
 
-        PerformanceMeasurer(const PerformanceMeasurer & pm)
-            : _description(pm._description)
+        PerformanceMeasurer(const PerformanceMeasurer& pm)
+            : _name(pm._name)
+            , _flop(pm._flop)
             , _count(pm._count)
+            , _start(pm._start)
+            , _current(pm._current)
             , _total(pm._total)
             , _min(pm._min)
             , _max(pm._max)
             , _entered(pm._entered)
-            , _flop(pm._flop)
+            , _paused(pm._paused)
         {
         }
 
@@ -98,74 +130,96 @@ namespace Test
             if (!_entered)
             {
                 _entered = true;
-                _start = GetTime();
+                _paused = false;
+                _start = TimeCounter();
             }
         }
 
-        void Leave()
+        void Leave(bool pause = false)
         {
-            if (_entered)
+            if (_entered || _paused)
             {
-                _entered = false;
-                double difference = double(GetTime() - _start);
-                _total += difference;
-                _min = std::min(_min, difference);
-                _max = std::max(_max, difference);
-                ++_count;
+                if (_entered)
+                {
+                    _entered = false;
+                    _current += TimeCounter() - _start;
+                }
+                if (!pause)
+                {
+                    _total += _current;
+                    _min = std::min(_min, _current);
+                    _max = std::max(_max, _current);
+                    ++_count;
+                    _current = 0;
+                }
+                _paused = pause;
             }
         }
 
         double Average() const
         {
-            return _count ? (_total / _count) : 0;
+            return _count ? (Miliseconds(_total) / _count) : 0;
         }
 
         double GFlops() const
         {
-            return _count && _flop && _total > 0 ? (double(_flop) * _count / _total / 1000000000.0) : 0;
+            return _count && _flop && _total > 0 ? (double(_flop) * _count / Miliseconds(_total) / 1000000.0) : 0;
         }
 
         String Statistic() const
         {
             std::stringstream ss;
-            ss << _description << ": ";
-            ss << std::setprecision(0) << std::fixed << _total * 1000 << " ms";
+            ss << _name << ": ";
+            ss << std::setprecision(0) << std::fixed << Miliseconds(_total) << " ms";
             ss << " / " << _count << " = ";
-            ss << std::setprecision(3) << std::fixed << Average()*1000.0 << " ms";
-            ss << std::setprecision(3) << " { min = " << _min * 1000.0 << " ; max = " << _max * 1000.0 << " } ";
+            ss << std::setprecision(3) << std::fixed << Average() << " ms";
+            ss << std::setprecision(3) << " {min=" << Miliseconds(_min) << "; max=" << Miliseconds(_max) << "}";
             if (_flop)
                 ss << " " << std::setprecision(1) << GFlops() << " GFlops";
             return ss.str();
         }
 
-        String Description() const 
-        { 
-            return _description; 
-        }
-
-        void Combine(const PerformanceMeasurer & other)
+        void Combine(const PerformanceMeasurer& other)
         {
             _count += other._count;
             _total += other._total;
             _min = std::min(_min, other._min);
             _max = std::max(_max, other._max);
         }
+
+        String Name() const 
+        { 
+            return _name; 
+        }
     };
 
     //-------------------------------------------------------------------------
 
-    class ScopedPerformanceMeasurer
+    class PerformanceMeasurerHolder
     {
-        PerformanceMeasurer * _pm;
-    public:
+        PerformanceMeasurer* _pm;
 
-        ScopedPerformanceMeasurer(PerformanceMeasurer * pm) : _pm(pm)
+    public:
+        inline PerformanceMeasurerHolder(PerformanceMeasurer* pm, bool enter = true)
+            : _pm(pm)
+        {
+            if (_pm && enter)
+                _pm->Enter();
+        }
+
+        inline void Enter()
         {
             if (_pm)
                 _pm->Enter();
         }
 
-        ~ScopedPerformanceMeasurer()
+        inline void Leave(bool pause)
+        {
+            if (_pm)
+                _pm->Leave(pause);
+        }
+
+        inline ~PerformanceMeasurerHolder()
         {
             if (_pm)
                 _pm->Leave();
@@ -288,9 +342,9 @@ namespace Test
 #define TEST_FUNCTION __PRETTY_FUNCTION__
 #endif
 
-#define TEST_PERF_FUNC() Test::ScopedPerformanceMeasurer SYNET_CAT(__spm, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION));
-#define TEST_PERF_FUNC_FLOP(flop) Test::ScopedPerformanceMeasurer SYNET_CAT(__spm, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, flop));
-#define TEST_PERF_BLOCK(name) Test::ScopedPerformanceMeasurer SYNET_CAT(__spm, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, name));
-#define TEST_PERF_BLOCK_FLOP(name, flop) Test::ScopedPerformanceMeasurer SYNET_CAT(__spm, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, name, flop));
+#define TEST_PERF_FUNC() Test::PerformanceMeasurerHolder SYNET_CAT(__pmh, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION));
+#define TEST_PERF_FUNC_FLOP(flop) Test::PerformanceMeasurerHolder SYNET_CAT(__pmh, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, flop));
+#define TEST_PERF_BLOCK(name) Test::PerformanceMeasurerHolder SYNET_CAT(__pmh, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, name));
+#define TEST_PERF_BLOCK_FLOP(name, flop) Test::PerformanceMeasurerHolder SYNET_CAT(__pmh, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, name, flop));
 #define TEST_PERF_BLOCK_END(name) Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, name)->Leave();
 
