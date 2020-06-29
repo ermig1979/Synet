@@ -550,7 +550,7 @@ namespace Test
 #ifdef SYNET_TEST_FIRST_RUN
                     if (_options.enable & ENABLE_FIRST)
                     {
-                        test.output[0].first = _firsts[0].Predict(test.input);
+                        Copy(_firsts[0].Predict(test.input), test.output[0].first);
                         if (r == 0)
                         {
                             if (!DebugPrint(_firsts[0], i))
@@ -563,7 +563,7 @@ namespace Test
 #ifdef SYNET_TEST_SECOND_RUN
                     if (_options.enable & ENABLE_SECOND)
                     {
-                        test.output[0].second = _seconds[0].Predict(test.input);
+                        Copy(_seconds[0].Predict(test.input), test.output[0].second);
                         if (r == 0)
                         {
                             if (!DebugPrint(_seconds[0], i))
@@ -675,7 +675,7 @@ namespace Test
                         TestData& test = *comparer->_tests[i];
                         for (size_t r = 0; r < options.repeatNumber; ++r, ++current)
                         {
-                            test.output[thread].first = comparer->_firsts[thread].Predict(test.input);
+                            Copy(comparer->_firsts[thread].Predict(test.input), test.output[thread].first);
                             comparer->_threads[thread].current = current / networks;
                         }
                     }
@@ -689,7 +689,7 @@ namespace Test
                         for (size_t i = 0; i < comparer->_tests.size() && (duration < options.executionTime || !canstop); ++i)
                         {
                             TestData& test = *comparer->_tests[i];
-                            test.output[thread].first = comparer->_firsts[thread].Predict(test.input);
+                            Copy(comparer->_firsts[thread].Predict(test.input), test.output[thread].first);
                             duration = Time() - start;
                             comparer->_threads[thread].current = std::min(total, size_t(duration * 1000)) / networks;
                         }
@@ -717,7 +717,7 @@ namespace Test
                         TestData& test = *comparer->_tests[i];
                         for (size_t r = 0; r < options.repeatNumber; ++r, ++current)
                         {
-                            test.output[thread].second = comparer->_seconds[thread].Predict(test.input);
+                            Copy(comparer->_seconds[thread].Predict(test.input), test.output[thread].second);
                             comparer->_threads[thread].current = current / networks;
                         }
                     }
@@ -731,7 +731,7 @@ namespace Test
                         for (size_t i = 0; i < comparer->_tests.size() && (duration < options.executionTime || !canstop); ++i)
                         {
                             TestData& test = *comparer->_tests[i];
-                            test.output[thread].second = comparer->_seconds[thread].Predict(test.input);
+                            Copy(comparer->_seconds[thread].Predict(test.input), test.output[thread].second);
                             duration = Time() - start;
                             comparer->_threads[thread].current = (total * (networks - 1) + std::min(total, size_t(duration * 1000))) / networks;
                         }
@@ -747,6 +747,13 @@ namespace Test
         inline void Sleep(unsigned int miliseconds)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(miliseconds));
+        }
+
+        static inline void Copy(const Tensors & src, Tensors & dst)
+        {
+            dst.resize(src.size());
+            for (size_t i = 0; i < src.size(); ++i)
+                dst[i].Clone(src[i]);
         }
     };
 }
