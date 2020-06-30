@@ -978,7 +978,7 @@ namespace Synet
             case LayerTypeReorg: return new ReorgLayer<T>(param);
             case LayerTypeReshape: return new ReshapeLayer<T>(param);
             case LayerTypeRestrictRange: return new RestrictRangeLayer<T>(param);
-            case LayerTypeScale: return new ScaleLayer<T>(param);
+            case LayerTypeScale: return new ScaleLayer<T>(param, method);
             case LayerTypeShortcut: return new ShortcutLayer<T>(param);
             case LayerTypeShuffle: return new ShuffleLayer<T>(param);
             case LayerTypeSigmoid: return new SigmoidLayer<T>(param);

@@ -26,11 +26,11 @@
 
 #include "TestCommon.h"
 #include "TestArgs.h"
-#include "TestImage.h"
 #include "TestSynet.h"
 #ifdef SYNET_TEST_FIRST_RUN
 #include "TestInferenceEngine.h"
 #endif
+#include "TestImage.h"
 
 namespace Test
 {

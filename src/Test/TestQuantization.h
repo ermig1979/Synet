@@ -315,7 +315,7 @@ namespace Test
             {
                 Synet::LayerParam& layer = network().layers()[i];
                 EltwiseToAdd(layer);
-                ScaleToConvolution(layer);
+                //ScaleToConvolution(layer);
                 QuantizeConvolution(layer);
                 QuantizeInnerProduct(layer);
                 HighlightGlobalPooling(layer);

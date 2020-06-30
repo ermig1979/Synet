@@ -74,6 +74,7 @@
     <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetConvolution8i.h" />
     <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetDeconvolution32f.h" />
     <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetMergedConvolution32f.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetScale8i.h" />
     <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdTime.h" />
     <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdVersion.h" />
     <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdView.hpp" />

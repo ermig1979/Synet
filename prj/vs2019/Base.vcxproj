@@ -56,6 +56,7 @@
     <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetConvolution8i.h" />
     <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetDeconvolution32f.h" />
     <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetMergedConvolution32f.h" />
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetScale8i.h" />
     <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdTime.h" />
     <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdUpdate.h" />
     <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdView.hpp" />
@@ -136,6 +137,7 @@
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSynetFused.cpp" />
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSynetMergedConvolution32f.cpp" />
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSynetPooling.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSynetScale.cpp" />
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseTexture.cpp" />
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseThread.cpp" />
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseTransform.cpp" />
