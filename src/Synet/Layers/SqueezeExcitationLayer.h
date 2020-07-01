@@ -181,8 +181,6 @@ namespace Synet
 
         void ForwardCpu(const float * src, float * sum, float * norm0, float * norm1, float * dst)
         {
-            const float* wgt0 = this->Weight()[0].CpuData();
-            const float* wgt1 = this->Weight()[1].CpuData();
             for (size_t b = 0; b < _batch; ++b)
             {
                 Detail::ChannelSum(src, _channels, _height, _width, _format, sum);
@@ -198,8 +196,6 @@ namespace Synet
 
         void ForwardCpu(const uint8_t* src, int32_t * sum, float* norm0, float* norm1, uint8_t* dst8u, float* dst32f)
         {
-            const float* wgt0 = this->Weight()[0].CpuData();
-            const float* wgt1 = this->Weight()[1].CpuData();
             for (size_t b = 0; b < _batch; ++b)
             {
                 Detail::ChannelSum(src, _channels, _height, _width, _format, sum);

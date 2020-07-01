@@ -288,7 +288,7 @@ namespace Synet
             assert(src[0]->Size() == _batch*_channels*_height*_width);
             if (_is8i)
             {
-                //_scale8i.Init(_batch, _channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, _method);
+                _scale8i.Init(_batch, _channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, _method);
                 if (_scale8i.Enable())
                 {
                     const float* bias = _biasTerm ? this->Weight()[1].CpuData() : NULL;

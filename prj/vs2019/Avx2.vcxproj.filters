@@ -211,6 +211,7 @@
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdAvx2BgraToBgr.cpp">
       <Filter>Avx2</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdAvx2SynetScale.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Avx2">

@@ -43,6 +43,9 @@
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdSse1Winograd.cpp">
       <Filter>Sse1</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdSse1SynetScale.cpp">
+      <Filter>Sse1</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Sse1">
@@ -123,6 +126,12 @@
       <Filter>Inc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdWinograd.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetScale8i.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetConvolution8i.h">
       <Filter>Inc</Filter>
     </ClInclude>
   </ItemGroup>
