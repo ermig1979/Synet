@@ -31,10 +31,10 @@
 #define SYNET_PERF_FUNC() TEST_PERF_FUNC()
 #define SYNET_PERF_BLOCK(name) TEST_PERF_BLOCK(name)
 #define SYNET_PERF_BLOCK_END(name) TEST_PERF_BLOCK_END(name)
-#define SYNET_PERF_DECL(name) Test::PerformanceMeasurer * name;
+#define SYNET_PERF_DECL(name) ::Test::PerformanceMeasurer * name;
 #define SYNET_PERF_SET(name, value) name = value;
-#define SYNET_PERF_INIT(name, desc, flop) name = Test::PerformanceMeasurerStorage::s_storage.Get(desc, flop);
-#define SYNET_PERF_TEST(name) Test::PerformanceMeasurerHolder SYNET_CAT(__pmh,__LINE__)(name);
+#define SYNET_PERF_INIT(name, desc, flop) name = ::Test::PerformanceMeasurerStorage::s_storage.Get(desc, flop);
+#define SYNET_PERF_TEST(name) ::Test::PerformanceMeasurerHolder SYNET_CAT(__pmh,__LINE__)(name);
 #endif
 #include "Synet/Synet.h"
 

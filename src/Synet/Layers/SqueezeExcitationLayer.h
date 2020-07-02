@@ -92,7 +92,7 @@ namespace Synet
 
         virtual size_t MemoryUsage() const
         {
-            return (_sumScale.size() + _sumShift.size() + _rWeight[0].size() + _rWeight[1].size())*sizeof(float);
+            return (_sumScale.size() + _sumShift.size() + _rWeight[0].size() + _rWeight[1].size())*sizeof(float) + _scale8i.InternalBufferSize();
         }
 
         virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
@@ -150,6 +150,16 @@ namespace Synet
                 else
                     dst[0]->As32f().Reshape(src[0]->Shape(), _format);
             }
+            _scale8i.Init(_batch, _channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, _method);
+            if (_scale8i.Enable())
+            {
+                const float* stats[4] = {
+                    this->Stats(0).empty() ? NULL : this->Stats(0)[0]->min.data(),
+                    this->Stats(0).empty() ? NULL : this->Stats(0)[0]->max.data(),
+                    this->Stats(2).empty() ? NULL : this->Stats(2)[0]->min.data(),
+                    this->Stats(2).empty() ? NULL : this->Stats(2)[0]->max.data() };
+                _scale8i.SetParams(_sumScale.data(), NULL, stats);
+            }
             this->UsePerfStat();
         }
 
@@ -206,9 +216,9 @@ namespace Synet
                 Detail::InnerProductLayerForwardCpu<float>(norm1, _rWeight[1].data(), NULL, _channels, _squeeze, norm0);
                 CpuSigmoid(norm0, _channels, norm0);
                 if(_dst8u)
-                    Scale(src, norm0, dst8u, NULL), dst8u += _size;
+                    Scale(src, norm0, dst8u), dst8u += _size;
                 else
-                    Scale(src, norm0, NULL, dst32f), dst32f += _size;
+                    Scale(src, norm0, dst32f), dst32f += _size;
                 src += _size;
             }
         }
@@ -228,8 +238,14 @@ namespace Synet
             }
         }
 
-        void Scale(const uint8_t* src, float* norm, uint8_t* dst8u, float *dst32f)
+        void Scale(const uint8_t* src, float* norm, uint8_t* dst)
         {
+            if (_scale8i.Enable())
+            {
+                _scale8i.SetParams(norm, NULL, NULL);
+                _scale8i.Forward(src, dst);
+                return;
+            }
             int lower, upper;
             if (_method == QuantizationMethodIECompatible)
                 lower = QUANT_IE_COMP_SRC_U8_MIN, upper = QUANT_IE_COMP_SRC_U8_MAX;
@@ -245,21 +261,12 @@ namespace Synet
                 {
                     for (size_t h = 0; h < _height; ++h)
                     {
-                        if (_dst8u)
+                        for (size_t w = 0; w < _width; ++w)
                         {
-                            for (size_t w = 0; w < _width; ++w)
-                            {
-                                float value = Detail::Convert<uint8_t, float, float>(src[w], srcScale[c], srcShift[c], INT_MIN, INT_MAX);
-                                dst8u[w] = Detail::Convert<float, uint8_t, float>(value*norm[c], dstScale[c], dstShift[c], lower, upper);
-                            }
-                            dst8u += _width; 
+                            float value = Detail::Convert<uint8_t, float, float>(src[w], srcScale[c], srcShift[c], INT_MIN, INT_MAX);
+                            dst[w] = Detail::Convert<float, uint8_t, float>(value*norm[c], dstScale[c], dstShift[c], lower, upper);
                         }
-                        else
-                        {
-                            for (size_t w = 0; w < _width; ++w)
-                                dst32f[w] = Detail::Convert<uint8_t, float, float>(src[w], srcScale[c], srcShift[c], INT_MIN, INT_MAX) * norm[c];
-                            dst32f += _width;
-                        }
+                        dst += _width; 
                         src += _width;
                     }
                 }
@@ -270,21 +277,52 @@ namespace Synet
                 {
                     for (size_t w = 0; w < _width; ++w)
                     {
-                        if (_dst8u)
+                        for (size_t c = 0; c < _channels; ++c)
                         {
-                            for (size_t c = 0; c < _channels; ++c)
-                            {
-                                float value = Detail::Convert<uint8_t, float, float>(src[c], srcScale[c], srcShift[c], INT_MIN, INT_MAX);
-                                dst8u[c] = Detail::Convert<float, uint8_t, float>(value * norm[c], dstScale[c], dstShift[c], lower, upper);
-                            }
-                            dst8u += _channels;
+                            float value = Detail::Convert<uint8_t, float, float>(src[c], srcScale[c], srcShift[c], INT_MIN, INT_MAX);
+                            dst[c] = Detail::Convert<float, uint8_t, float>(value * norm[c], dstScale[c], dstShift[c], lower, upper);
                         }
-                        else
-                        {
-                            for (size_t c = 0; c < _channels; ++c)
-                                dst32f[c] = Detail::Convert<uint8_t, float, float>(src[c], srcScale[c], srcShift[c], INT_MIN, INT_MAX) * norm[c];
-                            dst32f += _channels;
-                        }
+                        dst += _channels;
+                        src += _channels;
+                    }
+                }
+            }
+            else
+                assert(0);
+        }
+
+        void Scale(const uint8_t* src, float* norm, float* dst)
+        {
+            if (_scale8i.Enable())
+            {
+                _scale8i.SetParams(norm, NULL, NULL);
+                _scale8i.Forward(src, (uint8_t*)dst);
+                return;
+            }
+            const float* srcScale = this->Stats(0)[0]->scale8uTo32f.data();
+            const float* srcShift = this->Stats(0)[0]->shift8uTo32f.data();
+            if (_format == TensorFormatNchw)
+            {
+                for (size_t c = 0; c < _channels; ++c)
+                {
+                    for (size_t h = 0; h < _height; ++h)
+                    {
+                        for (size_t w = 0; w < _width; ++w)
+                            dst[w] = Detail::Convert<uint8_t, float, float>(src[w], srcScale[c], srcShift[c], INT_MIN, INT_MAX) * norm[c];
+                        dst += _width;
+                        src += _width;
+                    }
+                }
+            }
+            else if (_format == TensorFormatNhwc)
+            {
+                for (size_t h = 0; h < _height; ++h)
+                {
+                    for (size_t w = 0; w < _width; ++w)
+                    {
+                        for (size_t c = 0; c < _channels; ++c)
+                            dst[c] = Detail::Convert<uint8_t, float, float>(src[c], srcScale[c], srcShift[c], INT_MIN, INT_MAX) * norm[c];
+                        dst += _channels;
                         src += _channels;
                     }
                 }
@@ -300,5 +338,6 @@ namespace Synet
         float _kAvg;
         QuantizationMethod _method;
         Floats _sumScale, _sumShift, _rWeight[2];
+        Scale8i _scale8i;
     };
 }

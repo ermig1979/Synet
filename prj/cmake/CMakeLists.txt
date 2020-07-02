@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.7)
+project(Synet)
 
 option(SYNET_INFO "Print build information" ON)
 option(SIMD "Use Simd Library" ON)
@@ -54,7 +55,7 @@ endif()
 
 if(SIMD)
 	option(SIMD_TEST "" OFF)
-	set(SIMD_INFO ${SYNET_INFO})
+	set(SIMD_INFO ${SYNET_INFO} CACHE BOOL "" FORCE)
 	set(SIMD_LIB "Simd")	
 	set(CHECK_VERSION "0")
 	set(LIBRARY "SHARED")

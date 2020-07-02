@@ -332,6 +332,8 @@ namespace Test
 
 		bool CalculateFaceDescriptor(Object& object, size_t thread)
 		{
+			TEST_PERF_FUNC();
+
 			View original;
 			if (!LoadImage(object.path, original))
 			{

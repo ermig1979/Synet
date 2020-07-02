@@ -342,9 +342,9 @@ namespace Test
 #define TEST_FUNCTION __PRETTY_FUNCTION__
 #endif
 
-#define TEST_PERF_FUNC() Test::PerformanceMeasurerHolder SYNET_CAT(__pmh, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION));
-#define TEST_PERF_FUNC_FLOP(flop) Test::PerformanceMeasurerHolder SYNET_CAT(__pmh, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, flop));
-#define TEST_PERF_BLOCK(name) Test::PerformanceMeasurerHolder SYNET_CAT(__pmh, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, name));
-#define TEST_PERF_BLOCK_FLOP(name, flop) Test::PerformanceMeasurerHolder SYNET_CAT(__pmh, __LINE__)(Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, name, flop));
-#define TEST_PERF_BLOCK_END(name) Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, name)->Leave();
+#define TEST_PERF_FUNC() ::Test::PerformanceMeasurerHolder SYNET_CAT(__pmh, __LINE__)(::Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION));
+#define TEST_PERF_FUNC_FLOP(flop) ::Test::PerformanceMeasurerHolder SYNET_CAT(__pmh, __LINE__)(::Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, flop));
+#define TEST_PERF_BLOCK(name) ::Test::PerformanceMeasurerHolder SYNET_CAT(__pmh, __LINE__)(::Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, name));
+#define TEST_PERF_BLOCK_FLOP(name, flop) ::Test::PerformanceMeasurerHolder SYNET_CAT(__pmh, __LINE__)(::Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, name, flop));
+#define TEST_PERF_BLOCK_END(name) ::Test::PerformanceMeasurerStorage::s_storage.Get(TEST_FUNCTION, name)->Leave();
 
