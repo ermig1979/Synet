@@ -118,10 +118,10 @@ namespace Synet
                         float ymax = (centerY + boxH / 2.0f) / _imgH;
                         if (_clip) 
                         {
-                            xmin = std::min(std::max(xmin, 0.0f), 1.0f);
-                            ymin = std::min(std::max(ymin, 0.0f), 1.0f);
-                            xmax = std::min(std::max(xmax, 0.0f), 1.0f);
-                            ymax = std::min(std::max(ymax, 0.0f), 1.0f);
+                            xmin = Min(Max(xmin, 0.0f), 1.0f);
+                            ymin = Min(Max(ymin, 0.0f), 1.0f);
+                            xmax = Min(Max(xmax, 0.0f), 1.0f);
+                            ymax = Min(Max(ymax, 0.0f), 1.0f);
                         }
                         pDst0[h * layerW * _numPriors * 4 + w * _numPriors * 4 + s * 4 + 0] = xmin;
                         pDst0[h * layerW * _numPriors * 4 + w * _numPriors * 4 + s * 4 + 1] = ymin;

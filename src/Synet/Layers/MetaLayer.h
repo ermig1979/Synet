@@ -276,7 +276,7 @@ namespace Synet
                 Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
                 dst0.Reshape(src0.Shape());
                 for (size_t i = 0; i < src0.Size(); ++i)
-                    dst0.CpuData()[i] = std::max(src0.CpuData()[i], src1.CpuData()[i]);
+                    dst0.CpuData()[i] = Max(src0.CpuData()[i], src1.CpuData()[i]);
             }
             else
                 assert(0);
@@ -292,7 +292,7 @@ namespace Synet
                 Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
                 dst0.Reshape(src0.Shape());
                 for (size_t i = 0; i < src0.Size(); ++i)
-                    dst0.CpuData()[i] = std::min(src0.CpuData()[i], src1.CpuData()[i]);
+                    dst0.CpuData()[i] = Min(src0.CpuData()[i], src1.CpuData()[i]);
             }
             else
                 assert(0);

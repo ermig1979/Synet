@@ -245,7 +245,7 @@ namespace Synet
             if (_clip)
             {
                 for (size_t d = 0; d < dim; ++d)
-                    pDst[d] = std::min<Type>(std::max<Type>(pDst[d], Type(0)), Type(1));
+                    pDst[d] = Min<Type>(Max<Type>(pDst[d], Type(0)), Type(1));
             }
             pDst += dst[0]->Size(2);
             if (_variance.size() == 1)
@@ -346,7 +346,7 @@ namespace Synet
             if (_clip)
             {
                 for (size_t d = 0; d < dim; ++d)
-                    pDst[d] = std::min<Type>(std::max<Type>(pDst[d], Type(0)), Type(1));
+                    pDst[d] = Min<Type>(Max<Type>(pDst[d], Type(0)), Type(1));
             }
             pDst += dst[0]->Size(2);
             if (_variance.size() == 1)
@@ -433,7 +433,7 @@ namespace Synet
             if (_clip)
             {
                 for (size_t d = 0; d < dim; ++d)
-                    pDst[d] = std::min<Type>(std::max<Type>(pDst[d], Type(0)), Type(1));
+                    pDst[d] = Min<Type>(Max<Type>(pDst[d], Type(0)), Type(1));
             }
             pDst += dst[0]->Size(2);
             if (_variance.size() == 1)

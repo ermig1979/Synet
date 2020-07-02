@@ -117,7 +117,7 @@ namespace Test
 
     inline bool CreatePath(const String& path)
     {
-#if defined(_MSC_VER) && _MSC_VER < 1900
+#if defined(_MSC_VER) && _MSC_VER <= 1900
         return std::tr2::sys::create_directories(std::tr2::sys::path(path));
 #else
         return std::system((String("mkdir -p ") + path).c_str()) == 0;

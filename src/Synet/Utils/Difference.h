@@ -147,7 +147,7 @@ namespace Synet
             Detail::UpdateChannelsMinMax(src, _batch, _channels, _height, _width, _format, min.data(), max.data());
             _norm.resize(_channels);
             for (size_t c = 0; c < _channels; ++c)
-                _norm[c] = Type(1) / std::max(Type(1), max[c] - min[c]);
+                _norm[c] = Type(1) / Max(Type(1), max[c] - min[c]);
         }
 
         void CollectStatistics(double threshold)
@@ -199,14 +199,14 @@ namespace Synet
         void UpdateStatistics(Type first, Type second, Type norm, const Shape& index, double threshold)
         {
             double diff = (first - second) * norm;
-            double absd = std::abs(diff);
+            double absd = Abs(diff);
             _statistics.count += 1;
             _statistics.vsum += diff;
             _statistics.asum += absd;
             _statistics.ssum += diff * diff;
             if (absd > _statistics.max.diff)
                 _statistics.max = Specific(absd, first, second, index, 1);
-            int idx = int(10.0 * log10(std::max(1.0, std::min(1.0, absd) * 1000.0)));
+            int idx = int(10.0 * log10(Max(1.0, Min(1.0, absd) * 1000.0)));
             _statistics.hist[idx]++;
             if (absd >= threshold)
             {

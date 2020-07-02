@@ -43,7 +43,7 @@ namespace Synet
 
     template<class T> SYNET_INLINE T CpuRestrictRange(T value, T lower, T upper)
     {
-        return std::min(std::max(lower, value), upper);
+        return Min(Max(lower, value), upper);
     }
 
     template<class T> void CpuRestrictRange(const T * src, size_t size, T lower, T upper, T * dst)
@@ -56,7 +56,7 @@ namespace Synet
 
     template <typename T> SYNET_INLINE T CpuRelu(T value, T slope)
     {
-        return std::max(value, T(0)) + slope * std::min(value, T(0));
+        return Max(value, T(0)) + slope * Min(value, T(0));
     }
 
     template <typename T> void CpuRelu(const T * src, size_t size, T slope, T * dst)

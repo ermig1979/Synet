@@ -37,7 +37,7 @@ namespace Synet
             {
             case UnaryOperationTypeAbs:
                 for (size_t i = 0; i < size; ++i)
-                    dst[i] = ::abs(src[i]);
+                    dst[i] = Abs(src[i]);
                 break;
             case UnaryOperationTypeExp:
                 for (size_t i = 0; i < size; ++i)

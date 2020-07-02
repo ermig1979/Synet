@@ -161,8 +161,8 @@ namespace Synet
                     for (size_t c = 0; c < C; ++c, ++kc)
                     {
                         norm[kc] = weight[kc * GD] * scale[c];
-                        min = std::min(min, norm[kc]);
-                        max = std::max(max, norm[kc]);
+                        min = Min(min, norm[kc]);
+                        max = Max(max, norm[kc]);
                     }
                 }
             }
@@ -173,8 +173,8 @@ namespace Synet
                     for (size_t k = 0; k < K; ++k, ++ck)
                     {
                         norm[ck] = weight[ck] * scale[c];
-                        min = std::min(min, norm[ck]);
-                        max = std::max(max, norm[ck]);
+                        min = Min(min, norm[ck]);
+                        max = Max(max, norm[ck]);
                     }
                 }
             }
@@ -184,10 +184,10 @@ namespace Synet
         {
             if (bias)
             {
-                float min = ::abs(bias[index]);
+                float min = Abs(bias[index]);
                 if (prelu)
-                    min *= std::max(1.0f, ::abs(prelu[index]));
-                abs = std::max(abs, min / float(128 * 256 * 256));
+                    min *= Max(1.0f, Abs(prelu[index]));
+                abs = Max(abs, min / float(128 * 256 * 256));
             }
             return abs;
         }
@@ -236,7 +236,7 @@ namespace Synet
                     if (alg.trans)
                     {
                         SetNormMinMax(pSrcW + d, pSrcScaleInv, pNormW, minW, maxW);
-                        float abs = AvoidOverflow(std::max(::abs(maxW), ::abs(minW)), pSrcB, pPrelu, d);
+                        float abs = AvoidOverflow(Max(Abs(maxW), Abs(minW)), pSrcB, pPrelu, d);
                         scale = wUp / abs;
                         for (size_t k = 0, kc = 0; k < K; ++k)
                             for (size_t c = 0; c < C; ++c, ++kc)
@@ -257,7 +257,7 @@ namespace Synet
                     else
                     {
                         SetNormMinMax(pSrcW + d * CK, pSrcScaleInv, pNormW, minW, maxW);
-                        float abs = AvoidOverflow(std::max(::abs(maxW), ::abs(minW)), pSrcB, pPrelu, d);
+                        float abs = AvoidOverflow(Max(Abs(maxW), Abs(minW)), pSrcB, pPrelu, d);
                         scale = wUp / abs;
                         for (size_t c = 0, ck = 0; c < C; ++c)
                             for (size_t k = 0; k < K; ++k, ++ck)

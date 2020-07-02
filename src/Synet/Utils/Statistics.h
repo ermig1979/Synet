@@ -43,8 +43,8 @@ namespace Synet
                             for (size_t c = 0; c < channels; ++c)
                             {
                                 T value = src[c];
-                                min[c] = std::min(min[c], value);
-                                max[c] = std::max(max[c], value);
+                                min[c] = Min(min[c], value);
+                                max[c] = Max(max[c], value);
                             }
                             src += channels;
                         }
@@ -59,8 +59,8 @@ namespace Synet
 							for (size_t w = 0; w < width; ++w)
 							{
 								T value = src[w];
-								min[c] = std::min(min[c], value);
-								max[c] = std::max(max[c], value);
+								min[c] = Min(min[c], value);
+								max[c] = Max(max[c], value);
 							}
 							src += width;
 						}
@@ -115,15 +115,15 @@ namespace Synet
         template <typename T> void ValidateMinMax(const T * min, T * max, size_t channels, T epsilon)
         {
             for (size_t c = 0; c < channels; ++c)
-                max[c] = min[c] + std::max(max[c] - min[c], epsilon);
+                max[c] = min[c] + Max(max[c] - min[c], epsilon);
         }
 
         template <typename T> void UpdateMinMax(const T* srcMin, T* srcMax, size_t channels, T * dstMin, T * dstMax)
         {
             for (size_t c = 0; c < channels; ++c)
             {
-                dstMin[c] = std::min(dstMin[c], srcMin[c]);
-                dstMax[c] = std::max(dstMax[c], srcMax[c]);
+                dstMin[c] = Min(dstMin[c], srcMin[c]);
+                dstMax[c] = Max(dstMax[c], srcMax[c]);
             }
         }
 
@@ -138,8 +138,8 @@ namespace Synet
                     hi = i + 1;
                 T min = srcMin[c] + (srcMax[c] - srcMin[c]) * lo / size;
                 T max = srcMin[c] + (srcMax[c] - srcMin[c]) * hi / size;
-                dstMin[c] = std::min(dstMin[c], min);
-                dstMax[c] = std::max(dstMax[c], max);
+                dstMin[c] = Min(dstMin[c], min);
+                dstMax[c] = Max(dstMax[c], max);
                 histogram += size;
             }
         }

@@ -113,8 +113,8 @@ namespace Synet
             size_t dstWidth = pad ? srcWidth : srcWidth - 2;
             size_t dstHeightFull = dstHeight / 2 * 2;
             size_t dstWidthFull = dstWidth / 2 * 2;
-            size_t noseW = std::min<size_t>(4, dstWidth + 1);
-            size_t noseH = std::min<size_t>(4, dstHeight + 1);
+            size_t noseW = Min<size_t>(4, dstWidth + 1);
+            size_t noseH = Min<size_t>(4, dstHeight + 1);
             size_t start = pad ? 2 : 0;
             if (pad)
             {
@@ -344,8 +344,8 @@ namespace Synet
             size_t dstStride = ((dstHeight + 1) / 2) * ((dstWidth + 1) / 2)*srcChannels;
             size_t dstHeightFull = dstHeight / 2 * 2;
             size_t dstWidthFull = dstWidth / 2 * 2;
-            size_t noseW = std::min<size_t>(4, dstWidth + 1);
-            size_t noseH = std::min<size_t>(4, dstHeight + 1);
+            size_t noseW = Min<size_t>(4, dstWidth + 1);
+            size_t noseH = Min<size_t>(4, dstHeight + 1);
             size_t start = pad ? 2 : 0;
             if (pad)
             {
@@ -669,8 +669,8 @@ namespace Synet
             size_t dstStride = ((dstHeight + 3) / 4) * ((dstWidth + 3) / 4)*srcChannels;
             size_t dstHeightFull = dstHeight / 4 * 4;
             size_t dstWidthFull = dstWidth / 4 * 4;
-            size_t noseW = std::min<size_t>(6, dstWidth + 1);
-            size_t noseH = std::min<size_t>(6, dstHeight + 1);
+            size_t noseW = Min<size_t>(6, dstWidth + 1);
+            size_t noseH = Min<size_t>(6, dstHeight + 1);
             size_t start = pad ? 4 : 0;
             if (pad)
             {

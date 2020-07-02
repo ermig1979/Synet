@@ -150,15 +150,18 @@ namespace Synet
                 else
                     dst[0]->As32f().Reshape(src[0]->Shape(), _format);
             }
-            _scale8i.Init(_batch, _channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, _method);
-            if (_scale8i.Enable())
+            if (_src8u)
             {
-                const float* stats[4] = {
-                    this->Stats(0).empty() ? NULL : this->Stats(0)[0]->min.data(),
-                    this->Stats(0).empty() ? NULL : this->Stats(0)[0]->max.data(),
-                    this->Stats(2).empty() ? NULL : this->Stats(2)[0]->min.data(),
-                    this->Stats(2).empty() ? NULL : this->Stats(2)[0]->max.data() };
-                _scale8i.SetParams(_sumScale.data(), NULL, stats);
+                _scale8i.Init(1, _channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, _method);
+                if (_scale8i.Enable())
+                {
+                    const float* stats[4] = {
+                        this->Stats(0).empty() ? NULL : this->Stats(0)[0]->min.data(),
+                        this->Stats(0).empty() ? NULL : this->Stats(0)[0]->max.data(),
+                        this->Stats(2).empty() ? NULL : this->Stats(2)[0]->min.data(),
+                        this->Stats(2).empty() ? NULL : this->Stats(2)[0]->max.data() };
+                    _scale8i.SetParams(_sumScale.data(), NULL, stats);
+                }
             }
             this->UsePerfStat();
         }

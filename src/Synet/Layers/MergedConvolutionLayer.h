@@ -50,7 +50,7 @@ namespace Synet
         {
             static SYNET_INLINE T Func(T value, const T * params, size_t offset)
             {
-                return std::max(T(0), value);
+                return Max(T(0), value);
             }
         };
 
@@ -58,7 +58,7 @@ namespace Synet
         {
             static SYNET_INLINE T Func(T value, const T * params, size_t offset)
             {
-                return std::max(T(0), value) + params[0] * std::min(T(0), value);
+                return Max(T(0), value) + params[0] * Min(T(0), value);
             }
         };
 
@@ -66,7 +66,7 @@ namespace Synet
         {
             static SYNET_INLINE T Func(T value, const T * params, size_t offset)
             {
-                return std::min(std::max(params[0], value), params[1]);
+                return Min(Max(params[0], value), params[1]);
             }
         };
 
@@ -74,7 +74,7 @@ namespace Synet
         {
             static SYNET_INLINE T Func(T value, const T * params, size_t offset)
             {
-                return std::max(T(0), value) + params[offset] * std::min(T(0), value);
+                return Max(T(0), value) + params[offset] * Min(T(0), value);
             }
         };
 

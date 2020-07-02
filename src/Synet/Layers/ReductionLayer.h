@@ -40,7 +40,7 @@ namespace Synet
                 for (size_t c = 0; c < count; ++c)
                 {
                     for (size_t i = 0; i < inner; ++i)
-                        dst[i] = std::max(dst[i], src[i]);
+                        dst[i] = Max(dst[i], src[i]);
                     src += inner;
                 }
                 dst += inner;
