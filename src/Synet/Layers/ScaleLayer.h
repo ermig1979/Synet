@@ -270,6 +270,8 @@ namespace Synet
                 _batch = 1;
                 _height = 1;
                 _width = 1;
+                if (_format == TensorFormatUnknown)
+                    _format = TensorFormatNchw;
             }
             else
             {

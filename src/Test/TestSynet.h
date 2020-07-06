@@ -312,7 +312,7 @@ namespace Test
                                     dst.CpuData(Shp(c, y, x))[0] = src.CpuData(Shp(y, x, c))[0];
                     }
                 }
-                else if (trans && src.Count() == 2 && src.Axis(0) == 1)
+                else if (trans && src.Count() == 2 && (src.Axis(0) == 1 || src.Format() == Synet::TensorFormatNhwc))
                 {
                     dst.Reshape(Shp(src.Axis(1), src.Axis(0)), Synet::TensorFormatNchw);
                     for (size_t c = 0; c < src.Axis(1); ++c)
