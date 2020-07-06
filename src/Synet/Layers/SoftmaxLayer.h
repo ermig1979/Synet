@@ -100,7 +100,7 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            _axis = std::min<size_t>(this->Param().softmax().axis(), src[0]->Count() - 1);
+            _axis = Min<size_t>(this->Param().softmax().axis(), src[0]->Count() - 1);
             _outer = src[0]->Size(0, _axis);
             _count = src[0]->Axis(_axis);
             _inner = src[0]->Size(_axis + 1);

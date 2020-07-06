@@ -227,12 +227,12 @@ namespace Synet
                 for (size_t k = 0; k < _K; ++k)
                 {
                     pNormW[k] = pSrcW[i * _K + k] * pSrcScaleInv[k];
-                    minW = std::min(minW, pNormW[k]);
-                    maxW = std::max(maxW, pNormW[k]);
+                    minW = Min(minW, pNormW[k]);
+                    maxW = Max(maxW, pNormW[k]);
                 }
-                float abs = std::max(::abs(maxW), ::abs(minW));
+                float abs = Max(Abs(maxW), Abs(minW));
                 if (pSrcB)
-                    abs = std::max(abs, ::abs(pSrcB[i]) / float(128 * 256 * 256));
+                    abs = Max(abs, Abs(pSrcB[i]) / float(128 * 256 * 256));
                 scale = wUp / abs;
                 for (size_t k = 0; k < _K; ++k)
                 {

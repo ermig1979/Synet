@@ -34,7 +34,7 @@ namespace Synet
     {
         template <class T> SYNET_INLINE T FusedLayerForward0(T x, T s)
         {
-            return (x - (T)::abs(x))*s + std::max((T)0, x);
+            return (x - (T)Abs(x))*s + Max((T)0, x);
         }
 
         template <class T> void FusedLayerForwardCpu0(const T * src, const T * bias, const T * scale, size_t count, size_t size, T * dst, int trans)
@@ -63,7 +63,7 @@ namespace Synet
 
         template <class T> SYNET_INLINE T FusedLayerForward1(T x, T s, T b)
         {
-            return std::max((T)0, -x)*s + b + std::max((T)0, x);
+            return Max((T)0, -x)*s + b + Max((T)0, x);
         }
 
         template <class T> void FusedLayerForwardCpu1(const T * src, const T * bias0, const T * scale1, const T * bias1, size_t count, size_t size, T * dst, int trans)
@@ -93,7 +93,7 @@ namespace Synet
         template <class T> SYNET_INLINE T FusedLayerForward2(T src, T scale, T bias, T slope)
         {
             T x = src * scale + bias;
-            return std::max((T)0, x) + std::min((T)0, x)*slope;
+            return Max((T)0, x) + Min((T)0, x)*slope;
         }
 
         template <class T> void FusedLayerForwardCpu2(const T * src, const T * scale, const T * bias, size_t count, size_t size, T slope, T * dst, int trans)
@@ -122,7 +122,7 @@ namespace Synet
 
         template <class T> SYNET_INLINE T FusedLayerForward3(T x, T s)
         {
-            return std::max((T)0, x) + std::min(x, (T)0) * s;
+            return Max((T)0, x) + Min(x, (T)0) * s;
         }        
         
         template <class T> void FusedLayerForwardCpu3(const T * src, const T * bias, const T * scale, size_t count, size_t size, T * dst, int trans)
@@ -158,8 +158,8 @@ namespace Synet
                     for (size_t i = 0; i < count; ++i)
                     {
                         T x = src[i] + bias0[i];
-                        dst[i] = std::max((T)0, x);
-                        dst[i + count] = std::max((T)0, x*scale1[0] + bias1[0]);
+                        dst[i] = Max((T)0, x);
+                        dst[i + count] = Max((T)0, x*scale1[0] + bias1[0]);
                     }
                     src += count;
                     dst += 2 * count;
@@ -173,8 +173,8 @@ namespace Synet
                     for (size_t j = 0; j < size; ++j)
                     {
                         T x = src[j] + bias0[i];
-                        dst0[j] = std::max((T)0, x);
-                        dst1[j] = std::max((T)0, x*scale1[0] + bias1[0]);
+                        dst0[j] = Max((T)0, x);
+                        dst1[j] = Max((T)0, x*scale1[0] + bias1[0]);
                     }
                     src += size;
                     dst0 += size;
@@ -216,7 +216,7 @@ namespace Synet
 
         template <class T> SYNET_INLINE T FusedLayerForward9(T src, T scale, T bias)
         {
-            return std::max((T)0, src * scale + bias);
+            return Max((T)0, src * scale + bias);
         }
 
         template <class T> void FusedLayerForwardCpu9(const T * src0, const T * src1, const T * scale0, const T * bias0, size_t count0, size_t count1, size_t size, T * dst0, T * dst1, int trans)
@@ -275,7 +275,7 @@ namespace Synet
 
         template <class T> SYNET_INLINE T FusedLayerForward11(T src, T shift, T lower, T upper, T scale)
         {
-            return std::max(lower, std::min(src + shift, upper))*scale*src;
+            return Max(lower, Min(src + shift, upper))*scale*src;
         }
 
         template <class T> void FusedLayerForwardCpu11(const T * src, size_t size, const T * params, T * dst)

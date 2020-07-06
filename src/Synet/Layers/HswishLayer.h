@@ -34,7 +34,7 @@ namespace Synet
     {
         template <class T> SYNET_INLINE T HswishCpu(T value, T shift, T scale)
         {
-            return std::max(std::min(value, shift) + shift, T(0))*scale*value;
+            return Max(Min(value, shift) + shift, T(0))*scale*value;
         }
 
         template <class T> void HswishLayerForwardCpu(const T * src, size_t size, T shift, T scale, T * dst)

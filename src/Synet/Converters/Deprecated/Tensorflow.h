@@ -1602,7 +1602,7 @@ namespace Synet
             {
                 const float *data = reinterpret_cast<const float*>(tensor.tensor_content().c_str());
                 size_t size = tensor.tensor_content().size() / sizeof(float);
-                for (size_t i = 0; i < std::min(size_t(10), size); i++)
+                for (size_t i = 0; i < Min(size_t(10), size); i++)
                     std::cout << " " << data[i];
                 if (size > size_t(10))
                     std::cout << " ... " << size - 10 << " more";
@@ -1612,7 +1612,7 @@ namespace Synet
             {
                 const int *data = reinterpret_cast<const int*>(tensor.tensor_content().c_str());
                 size_t size = tensor.tensor_content().size() / sizeof(int);
-                for (size_t i = 0; i < std::min(size_t(10), size); i++)
+                for (size_t i = 0; i < Min(size_t(10), size); i++)
                     std::cout << " " << data[i];
                 if (size > size_t(10))
                     std::cout << " ... " << size - 10 << " more";
@@ -1622,7 +1622,7 @@ namespace Synet
             {
                 const bool * data = reinterpret_cast<const bool*>(tensor.tensor_content().c_str());
                 size_t size = tensor.tensor_content().size() / sizeof(bool);
-                for (size_t i = 0; i < std::min(size_t(10), size); i++)
+                for (size_t i = 0; i < Min(size_t(10), size); i++)
                     std::cout << " " << (int)data[i];
                 if (size > size_t(10))
                     std::cout << " ... " << size - 10 << " more";
@@ -1646,7 +1646,7 @@ namespace Synet
                 }
                 else
                 {
-                    for (size_t i = 0; i < std::min(size_t(10), size); i++)
+                    for (size_t i = 0; i < Min(size_t(10), size); i++)
                         std::cout << " " << values[i];
                     if (size > size_t(10))
                         std::cout << " ... " << size - 10 << " more";

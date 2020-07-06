@@ -58,6 +58,11 @@ namespace Synet
         return a > b ? a : b;
     }
 
+    template <class T> SYNET_INLINE T Abs(T a)
+    {
+        return a < 0 ? -a : a;
+    }
+
     template <class T> SYNET_INLINE T RestrictRange(T value, T min, T max)
     {
         return Max(min, Min(max, value));
@@ -108,13 +113,13 @@ namespace Synet
     template <typename T> void CpuMax(const T * a, const T * b, size_t size, T * dst)
     {
         for (size_t i = 0; i < size; ++i)
-            dst[i] = std::max(a[i], b[i]);
+            dst[i] = Max(a[i], b[i]);
     }
 
     template <typename T> void CpuMin(const T * a, const T * b, size_t size, T * dst)
     {
         for (size_t i = 0; i < size; ++i)
-            dst[i] = std::min(a[i], b[i]);
+            dst[i] = Min(a[i], b[i]);
     }
 
     template <typename T> void CpuSqr(const T * src, size_t size, T * dst)
@@ -180,7 +185,7 @@ namespace Synet
     {
         T sum = 0;
         for (size_t i = 0; i < size; ++i)
-            sum += ::abs(src[i]);
+            sum += Abs(src[i]);
         return sum;
     }
 

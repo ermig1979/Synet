@@ -386,10 +386,10 @@ namespace Synet
 
         void ClipBBox(const NormalizedBBox & src, NormalizedBBox & dst) 
         {
-            dst.xmin = std::max(std::min(src.xmin, 1.f), 0.f);
-            dst.ymin = std::max(std::min(src.ymin, 1.f), 0.f);
-            dst.xmax = std::max(std::min(src.xmax, 1.f), 0.f);
-            dst.ymax = std::max(std::min(src.ymax, 1.f), 0.f);
+            dst.xmin = Max(Min(src.xmin, 1.f), 0.f);
+            dst.ymin = Max(Min(src.ymin, 1.f), 0.f);
+            dst.xmax = Max(Min(src.xmax, 1.f), 0.f);
+            dst.ymax = Max(Min(src.ymax, 1.f), 0.f);
             dst.size = BBoxSize(src, true);
             dst.difficult = src.difficult;
         }
@@ -524,10 +524,10 @@ namespace Synet
             }
             else 
             {
-                intersect.xmin = std::max(bbox1.xmin, bbox2.xmin);
-                intersect.ymin = std::max(bbox1.ymin, bbox2.ymin);
-                intersect.xmax = std::min(bbox1.xmax, bbox2.xmax);
-                intersect.ymax = std::min(bbox1.ymax, bbox2.ymax);
+                intersect.xmin = Max(bbox1.xmin, bbox2.xmin);
+                intersect.ymin = Max(bbox1.ymin, bbox2.ymin);
+                intersect.xmax = Min(bbox1.xmax, bbox2.xmax);
+                intersect.ymax = Min(bbox1.ymax, bbox2.ymax);
             }
         }
 

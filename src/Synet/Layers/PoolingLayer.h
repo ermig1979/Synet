@@ -40,13 +40,13 @@ namespace Synet
                 for (size_t ph = 0; ph < dstH; ++ph)
                 {
                     size_t hStart = ph * strideY - padY;
-                    size_t hEnd = std::min(hStart + kernelY, srcH);
-                    hStart = std::max<ptrdiff_t>(0, hStart);
+                    size_t hEnd = Min(hStart + kernelY, srcH);
+                    hStart = Max<ptrdiff_t>(0, hStart);
                     for (size_t pw = 0; pw < dstW; ++pw)
                     {
                         size_t wStart = pw * strideX - padX;
-                        size_t wEnd = std::min(wStart + kernelX, srcW);
-                        wStart = std::max<ptrdiff_t>(0, wStart);
+                        size_t wEnd = Min(wStart + kernelX, srcW);
+                        wStart = Max<ptrdiff_t>(0, wStart);
                         for (size_t c = 0; c < channels; ++c)
                             dst[c] = std::numeric_limits<T>::lowest();
                         for (size_t h = hStart; h < hEnd; ++h)
@@ -55,7 +55,7 @@ namespace Synet
                             {
                                 const T* pc = src + (h * srcW + w) * channels;
                                 for (size_t c = 0; c < channels; ++c)
-                                    dst[c] = std::max(dst[c], pc[c]);
+                                    dst[c] = Max(dst[c], pc[c]);
                             }
                         }
                         dst += channels;
@@ -69,17 +69,17 @@ namespace Synet
                     for (size_t ph = 0; ph < dstH; ++ph)
                     {
                         size_t hStart = ph * strideY - padY;
-                        size_t hEnd = std::min(hStart + kernelY, srcH);
-                        hStart = std::max<ptrdiff_t>(0, hStart);
+                        size_t hEnd = Min(hStart + kernelY, srcH);
+                        hStart = Max<ptrdiff_t>(0, hStart);
                         for (size_t pw = 0; pw < dstW; ++pw)
                         {
                             size_t wStart = pw * strideX - padX;
-                            size_t wEnd = std::min(wStart + kernelX, srcW);
-                            wStart = std::max<ptrdiff_t>(0, wStart);
+                            size_t wEnd = Min(wStart + kernelX, srcW);
+                            wStart = Max<ptrdiff_t>(0, wStart);
                             T max = std::numeric_limits<T>::lowest();
                             for (size_t h = hStart; h < hEnd; ++h)
                                 for (size_t w = wStart; w < wEnd; ++w)
-                                    max = std::max(max, src[h * srcW + w]);
+                                    max = Max(max, src[h * srcW + w]);
                             dst[ph * dstW + pw] = max;
                         }
                     }
@@ -101,13 +101,13 @@ namespace Synet
                 for (size_t ph = 0; ph < dstH; ++ph)
                 {
                     size_t hStart = ph * strideY - padY;
-                    size_t hEnd = std::min(hStart + kernelY, srcH);
-                    hStart = std::max<ptrdiff_t>(0, hStart);
+                    size_t hEnd = Min(hStart + kernelY, srcH);
+                    hStart = Max<ptrdiff_t>(0, hStart);
                     for (size_t pw = 0; pw < dstW; ++pw)
                     {
                         size_t wStart = pw * strideX - padX;
-                        size_t wEnd = std::min(wStart + kernelX, srcW);
-                        wStart = std::max<ptrdiff_t>(0, wStart);
+                        size_t wEnd = Min(wStart + kernelX, srcW);
+                        wStart = Max<ptrdiff_t>(0, wStart);
                         for (size_t c = 0; c < channels; ++c)
                             dst[c] = Type(0);
                         for (size_t h = hStart; h < hEnd; ++h)
@@ -136,13 +136,13 @@ namespace Synet
                     for (size_t ph = 0; ph < dstH; ++ph)
                     {
                         size_t hStart = ph * strideY - padY;
-                        size_t hEnd = std::min(hStart + kernelY, srcH);
-                        hStart = std::max<ptrdiff_t>(0, hStart);
+                        size_t hEnd = Min(hStart + kernelY, srcH);
+                        hStart = Max<ptrdiff_t>(0, hStart);
                         for (size_t pw = 0; pw < dstW; ++pw)
                         {
                             size_t wStart = pw * strideX - padX;
-                            size_t wEnd = std::min(wStart + kernelX, srcW);
-                            wStart = std::max<ptrdiff_t>(0, wStart);
+                            size_t wEnd = Min(wStart + kernelX, srcW);
+                            wStart = Max<ptrdiff_t>(0, wStart);
                             Type sum = Type(0);
                             for (size_t h = hStart; h < hEnd; ++h)
                                 for (size_t w = wStart; w < wEnd; ++w)

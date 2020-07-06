@@ -62,8 +62,8 @@ namespace Synet
             float _max = max[0], _min = min[0];
             for (size_t i = 1; i < min.size(); ++i)
             {
-                _min = std::min(_min, min[i]);
-                _max = std::max(_max, max[i]);
+                _min = Min(_min, min[i]);
+                _max = Max(_max, max[i]);
             }
             for (size_t i = 0; i < min.size(); ++i)
             {
@@ -151,8 +151,8 @@ namespace Synet
             {
                 for (size_t i = 0; i < n; ++i)
                 {
-                    float _min = std::min(0.0f, min[i]);
-                    float _max = std::max(0.0f, max[i]);
+                    float _min = Min(0.0f, min[i]);
+                    float _max = Max(0.0f, max[i]);
                     float scale = 255.0f / (_max - _min);
                     zero8u[i] = (uint8_t)Quantize(0.0f - _min * scale);
                     scale32fTo8u[i] = scale;
