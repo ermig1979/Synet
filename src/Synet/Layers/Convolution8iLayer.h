@@ -226,8 +226,8 @@ namespace Synet
                 wLo = QUANT_IE_COMP_WEIGHT_MIN, wUp = QUANT_IE_COMP_WEIGHT_MAX, sLo = QUANT_IE_COMP_SRC_U8_MIN, sUp = QUANT_IE_COMP_SRC_U8_MAX;
             else if(_method == QuantizationMethodSymmetricNarrowed)
                 wLo = QUANT_SYMM_NARR_WEIGHT_MIN, wUp = QUANT_SYMM_NARR_WEIGHT_MAX, sLo = QUANT_SYMM_NARR_SRC_U8_MIN, sUp = QUANT_SYMM_NARR_SRC_U8_MAX;
-            _srcCvt.Init(alg.batch, conv.srcC, conv.srcH, conv.srcW, (TensorFormat)alg.trans, pSrcScale, pSrcShift, sLo, sUp);
-            _dstCvt.Init(alg.batch, conv.dstC, conv.dstH, conv.dstW, (TensorFormat)alg.trans, pNormScale, pNormShift, sLo, sUp);
+            _srcCvt.Init(alg.batch, conv.srcC, conv.srcH, conv.srcW, (TensorFormat)alg.trans, pSrcScale, pSrcShift, _method);
+            _dstCvt.Init(alg.batch, conv.dstC, conv.dstH, conv.dstW, (TensorFormat)alg.trans, pNormScale, pNormShift, _method);
             for (size_t g = 0; g < G; ++g)
             {
                 for (size_t d = 0; d < D; ++d)

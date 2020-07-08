@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "Synet/Quantization/Const.h"
 #include "Synet/Utils/Math.h"
 #include "Synet/Params.h"
 
@@ -100,7 +101,11 @@ namespace Synet
         size_t batch, channels, height, width;
         TensorFormat format;
         const float * scale, * shift;
+        QuantizationMethod method;
         int lower, upper;
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        SimdSynetCompatibilityType compatibility;
+#endif
 
         Converter()
             : batch(0) 
@@ -110,12 +115,13 @@ namespace Synet
             , format(TensorFormatUnknown) 
             , scale(NULL) 
             , shift(NULL) 
+            , method(QuantizationMethodUnknown)
             , lower(INT_MIN)
             , upper(INT_MAX)
         {
         }
 
-        void Init(size_t b, size_t c, size_t h, size_t w, TensorFormat f, const float * k, const float * s, int l, int u)
+        void Init(size_t b, size_t c, size_t h, size_t w, TensorFormat f, const float * k, const float * s, QuantizationMethod m)
         {
             batch = b;
             channels = c;
@@ -124,28 +130,44 @@ namespace Synet
             format = f;
             scale = k;
             shift = s;
-            lower = l;
-            upper = u;
+            method = m;
+            if (method == QuantizationMethodSymmetricNarrowed)
+            {
+                lower = QUANT_SYMM_NARR_SRC_U8_MIN;
+                upper = QUANT_SYMM_NARR_SRC_U8_MAX;
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+                compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility8iNarrowed | SimdSynetCompatibilityFmaUse);
+#endif
+            }
+            else
+            {
+                lower = QUANT_IE_COMP_SRC_U8_MIN;
+                upper = QUANT_IE_COMP_SRC_U8_MAX;
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+                compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility8iPrecise | SimdSynetCompatibilityFmaUse);
+#endif
+            }
         }
 
-        void Convert(const float* src, uint8_t* dst)
+        SYNET_INLINE void Convert(const float* src, uint8_t* dst)
         {
-            SYNET_PERF_FUNC();
-
+            //SYNET_PERF_FUNC();
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            SimdSynetConvert32fTo8u(src, batch, channels, height, width, (SimdTensorFormatType)format, scale, shift, dst, compatibility);
+#else
             Detail::Convert<float, uint8_t, float>(src, batch, channels, height, width, format, scale, shift, lower, upper, dst);
+#endif        
         }
 
-        void Convert(const int32_t* src, float* dst)
+        SYNET_INLINE void Convert(const int32_t* src, float* dst)
         {
-            SYNET_PERF_FUNC();
-
+            //SYNET_PERF_FUNC();
             Detail::Convert<int32_t, float, float>(src, batch, channels, height, width, format, scale, shift, lower, upper, dst);
         }
 
-        void Convert(const int32_t* src, uint8_t* dst)
+        SYNET_INLINE void Convert(const int32_t* src, uint8_t* dst)
         {
-            SYNET_PERF_FUNC();
-
+            //SYNET_PERF_FUNC();
             Detail::Convert<int32_t, uint8_t, float>(src, batch, channels, height, width, format, scale, shift, lower, upper, dst);
         }
     };
