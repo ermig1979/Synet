@@ -68,6 +68,19 @@ namespace Synet
             else
                 assert(0);
         }
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+        template <> inline void ChannelSum<uint8_t, int32_t>(const uint8_t* src, size_t channels, size_t height, size_t width, TensorFormat format, int32_t* sum)
+        {
+            //SYNET_PERF_FUNC();
+            size_t spatial = height * width;
+            if (format == TensorFormatNhwc)
+                SimdGetColSums(src, channels, channels, spatial, (uint32_t*)sum);
+            else if (format == TensorFormatNchw)
+                SimdGetRowSums(src, spatial, spatial, channels, (uint32_t*)sum);
+            else
+                assert(0);
+        }
+#endif
     }
 
     template <class T> class SqueezeExcitationLayer : public Synet::Layer<T>
