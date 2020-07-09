@@ -58,7 +58,7 @@ namespace Synet
                     return false;
 
                 String type = pLayer->FirstAttribute("type")->Value();
-                if (type == "Add" && !ConvertAddLayer(pLayer, dstXml.layers(), layer))
+                if (type == "Add" && !ConvertAddLayer(pLayer, dstXml.layers(), srcBin, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Clamp" && !ConvertClampLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
@@ -146,7 +146,7 @@ namespace Synet
             Pin(const String& n = String(), int i = 0) : name(n), index(i) {}
         };
 
-        bool ConvertAddLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
+        bool ConvertAddLayer(const XmlNode* pLayer, const LayerParams& layers, const Vector & srcBin, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -157,11 +157,20 @@ namespace Synet
                 return false;
             if (second->type() == LayerTypeConst && TensorSize(src0) >= TensorSize(src1))
             {
-                layer.type() = Synet::LayerTypeBias;
-                layer.weight() = second->weight();
+                if (TensorSize(src1) == 1)
+                {
+                    layer.type() = Synet::LayerTypePower;
+                    const float * pShift = srcBin.data() + second->weight()[0].offset() / sizeof(float);
+                    layer.power().shift() = pShift[0];
+                }
+                else
+                {
+                    layer.type() = Synet::LayerTypeBias;
+                    layer.weight() = second->weight();
+                    if (!CompactShape(layer.weight()[0].dim()))
+                        return false;
+                }
                 layer.src().resize(1);
-                if (!CompactShape(layer.weight()[0].dim()))
-                    return false;
             }
             else
             {
@@ -208,7 +217,6 @@ namespace Synet
 
         bool ConvertConstLayer(const XmlNode* pLayer, const Vector & srcBin, LayerParam & layer)
         {
-
             const XmlNode* pData = pLayer->FirstNode("data");
             if (pData)
             {
@@ -465,12 +473,18 @@ namespace Synet
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
+            const LayerParam* first = GetLayer(layers, layer.src()[0]);
             const LayerParam* second = GetLayer(layers, layer.src()[1]);
-            if (second == NULL)
+            if (first == NULL || second == NULL)
                 return false;
-            if (second->type() == LayerTypeConst)
+            if (first->type() == LayerTypeConst || second->type() == LayerTypeConst)
             {
-                if (TensorSize(layers.back().weight()[0].dim()) == 1)
+                if (first->type() == LayerTypeConst)
+                {
+                    std::swap(layer.src()[0], layer.src()[1]);
+                    std::swap(first, second);
+                }
+                if (TensorSize(second->weight()[0].dim()) == 1)
                 {
                     layer.type() = Synet::LayerTypePower;
                     layer.power().power() = 1.0f;
