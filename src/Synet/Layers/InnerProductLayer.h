@@ -269,10 +269,16 @@ namespace Synet
 
         void ForwardCpu(const uint8_t* src, int32_t* dst)
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            SimdSynetCompatibilityType compatibility = _method == QuantizationMethodSymmetricNarrowed ?
+                SimdSynetCompatibility8iNarrowed : SimdSynetCompatibility8iOverflow;
+            SimdSynetInnerProduct8i(_M, _N, _K, src, _weight8i.CpuData(), dst, compatibility);
+#else
             const bool overflow16i = true;
+            Synet::CpuGemm8iNT(_M, _N, _K, src, _K, _weight8i.CpuData(), _K, dst, _N, overflow16i);
+#endif           
             const int32_t* scale = _norm32i.CpuData();
             const int32_t* shift = scale + _N;
-            Synet::CpuGemm8iNT(_M, _N, _K, src, _K, _weight8i.CpuData(), _K, dst, _N, overflow16i);
             for (size_t i = 0; i < _M; ++i, dst += _N)
                 Detail::ScaleLayerForwardCpu(dst, scale, shift, _N, 1, 1, dst, TensorFormatNhwc, 1);
         }

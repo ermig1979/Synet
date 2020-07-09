@@ -37,6 +37,7 @@ namespace Synet
     {
         template <class T, class S> void ChannelSum(const T* src, size_t channels, size_t height, size_t width, TensorFormat format, S * sum)
         {
+            //SYNET_PERF_FUNC();
             if (format == TensorFormatNhwc)
             {
                 for (size_t c = 0; c < channels; ++c)
