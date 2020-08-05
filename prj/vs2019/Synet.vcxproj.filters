@@ -8,7 +8,6 @@
     <ClInclude Include="..\..\src\Synet\Network.h" />
     <ClInclude Include="..\..\src\Synet\Param.h" />
     <ClInclude Include="..\..\src\Synet\Params.h" />
-    <ClInclude Include="..\..\src\Synet\Stat.h" />
     <ClInclude Include="..\..\src\Synet\Synet.h" />
     <ClInclude Include="..\..\src\Synet\Tensor.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Activation.h">
@@ -276,6 +275,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\AddLayer.h">
       <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Quantization\Stat.h">
+      <Filter>Quantization</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

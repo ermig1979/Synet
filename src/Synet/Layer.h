@@ -27,7 +27,7 @@
 #include "Synet/Common.h"
 #include "Synet/Tensor.h"
 #include "Synet/Params.h"
-#include "Synet/Stat.h"
+#include "Synet/Quantization/Stat.h"
 
 namespace Synet
 {
