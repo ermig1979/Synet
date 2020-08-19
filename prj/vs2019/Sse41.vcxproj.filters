@@ -19,9 +19,6 @@
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdSse41SynetConversion.cpp">
       <Filter>Sse41</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdSse41SynetConvolution8i.cpp">
-      <Filter>Sse41</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdSse41SynetPooling.cpp">
       <Filter>Sse41</Filter>
     </ClCompile>
@@ -29,6 +26,12 @@
       <Filter>Sse41</Filter>
     </ClCompile>
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdSse41Synet.cpp">
+      <Filter>Sse41</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdSse41SynetConvolution8iNhwcDepthwise.cpp">
+      <Filter>Sse41</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdSse41SynetConvolution8iNhwcDirect.cpp">
       <Filter>Sse41</Filter>
     </ClCompile>
   </ItemGroup>

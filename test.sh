@@ -61,6 +61,7 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 
 #TEST quantization test_003 faces 100 1 1 1 000t
 #TEST quantization test_009 persons 1 0 1 1 000t
+TEST quantization test_010 faces 100 4 1 1 000t
 
 
 exit

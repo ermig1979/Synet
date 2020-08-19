@@ -399,7 +399,7 @@ namespace Test
                     ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
                     Simd::DrawRectangle(image, l, t, r, b, white);
                 }
-                String outputPath = MakePath(_options.outputDirectory, network.Name() + "_" + GetNameByPath(inputPath));
+                String outputPath = MakePath(_options.outputDirectory, Options::FullName(network.Name(), network.Type()) + "_" + GetNameByPath(inputPath));
                 if (!SaveImage(image, outputPath))
                 {
                     std::cout << "Can't write '" << outputPath << "' image!" << std::endl;
