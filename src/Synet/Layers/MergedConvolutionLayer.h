@@ -259,36 +259,42 @@ namespace Synet
                 _internal[i] = 0;
             }
 
-            assert(_conv[0].group == 1);
-            switch (_conv[0].activation)
+            size_t directIdx, depthwiseIdx;
+            if (_conv[0].group == 1 && _conv[1].IsDepthwise())
+                directIdx = 0, depthwiseIdx = 1;
+            else if (_count == 2 && _conv[0].IsDepthwise() && _conv[1].Is1x1())
+                directIdx = 1, depthwiseIdx = 0;
+            else
+                assert(0);
+
+            switch (_conv[directIdx].activation)
             {
-            case ActivationFunctionTypeIdentity: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeIdentity, 0>; break;
-            case ActivationFunctionTypeRelu: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRelu, 0>; break;
-            case ActivationFunctionTypeLeakyRelu: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeLeakyRelu, 0>; break;
-            case ActivationFunctionTypeRestrictRange: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRestrictRange, 0>; break;
-            case ActivationFunctionTypePrelu: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypePrelu, 0>; break;
-            case ActivationFunctionTypeElu: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeElu, 0>; break;
-            case ActivationFunctionTypeHswish: _convolution[0] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeHswish, 0>; break;
+            case ActivationFunctionTypeIdentity: _convolution[directIdx] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeIdentity, 0>; break;
+            case ActivationFunctionTypeRelu: _convolution[directIdx] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRelu, 0>; break;
+            case ActivationFunctionTypeLeakyRelu: _convolution[directIdx] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeLeakyRelu, 0>; break;
+            case ActivationFunctionTypeRestrictRange: _convolution[directIdx] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRestrictRange, 0>; break;
+            case ActivationFunctionTypePrelu: _convolution[directIdx] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypePrelu, 0>; break;
+            case ActivationFunctionTypeElu: _convolution[directIdx] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeElu, 0>; break;
+            case ActivationFunctionTypeHswish: _convolution[directIdx] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeHswish, 0>; break;
             default: assert(0);
             }
 
-            assert(_conv[1].IsDepthwise());
-            switch (_conv[1].activation)
+            switch (_conv[depthwiseIdx].activation)
             {
-            case ActivationFunctionTypeIdentity: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeIdentity>; break;
-            case ActivationFunctionTypeRelu: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeRelu>; break;
-            case ActivationFunctionTypeLeakyRelu: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeLeakyRelu>; break;
-            case ActivationFunctionTypeRestrictRange: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeRestrictRange>; break;
-            case ActivationFunctionTypePrelu: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypePrelu>; break;
-            case ActivationFunctionTypeElu: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeElu>; break;
-            case ActivationFunctionTypeHswish: _convolution[1] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeHswish>; break;
+            case ActivationFunctionTypeIdentity: _convolution[depthwiseIdx] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeIdentity>; break;
+            case ActivationFunctionTypeRelu: _convolution[depthwiseIdx] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeRelu>; break;
+            case ActivationFunctionTypeLeakyRelu: _convolution[depthwiseIdx] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeLeakyRelu>; break;
+            case ActivationFunctionTypeRestrictRange: _convolution[depthwiseIdx] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeRestrictRange>; break;
+            case ActivationFunctionTypePrelu: _convolution[depthwiseIdx] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypePrelu>; break;
+            case ActivationFunctionTypeElu: _convolution[depthwiseIdx] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeElu>; break;
+            case ActivationFunctionTypeHswish: _convolution[depthwiseIdx] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeHswish>; break;
             default: assert(0);
             }
 
             if (_count > 2)
             {
                 _add = p.add() ? 1 : 0;
-                assert(_conv[2].group == 1);
+                assert(_conv[2].Is1x1());
                 if (_add)
                 {
                     switch (_conv[2].activation)
@@ -352,11 +358,9 @@ namespace Synet
                 buf[0]->Extend(Shape({ _conv[0].dstC*_conv[0].dstH*_conv[0].dstW + (_count > 2 ? _conv[1].dstC *_conv[1].dstH *_conv[1].dstW : 0) }));
             }
             std::stringstream desc;
-            desc << _count << ":" << _num << "x" << _conv[0].srcC << "x" << _conv[0].srcH << "x" << _conv[0].srcW;
-            desc << "-" << _conv[0].dstC << "x" << _conv[0].kernelY << "x" << _conv[0].strideY;
-            desc << "-" << _conv[1].kernelY << "x" << _conv[1].strideY;
-            if(_count > 2)
-                desc << "-" << _conv[2].dstC;
+            desc << _count << ": " << _num << "x" << _conv[0].srcC << "x" << _conv[0].srcH << "x" << _conv[0].srcW;
+            for(size_t i = 0; i < _count; ++i)
+                desc << "-" << (_conv[i].IsDepthwise() ? String("") : ValueToString(_conv[i].dstC) + "x") << _conv[i].kernelY << "x" << _conv[i].strideY;
             this->UsePerfStat(desc.str(), Flop());
         }
 

@@ -141,7 +141,7 @@ namespace Synet
 
         bool Is1x1() const
         {
-            return kernelY == 1 && kernelX == 1 && strideY == 1 && strideX == 1 &&
+            return group == 1 && kernelY == 1 && kernelX == 1 && strideY == 1 && strideX == 1 &&
                 dilationY == 1 && dilationX == 1 && padY == 0 && padX == 0 && padH == 0 && padW == 0;
         }
 

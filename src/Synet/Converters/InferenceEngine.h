@@ -70,7 +70,8 @@ namespace Synet
             if (!ConvertNetwork(srcXml, srcBin, trans, dstXml(), dstBin))
                 return false;
 
-            Optimizer optimizer;
+            OptimizerParamHolder param;
+            Optimizer optimizer(param());
             if (!optimizer.Run(dstXml(), dstBin))
                 return false;
 

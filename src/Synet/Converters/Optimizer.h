@@ -30,20 +30,28 @@
 
 namespace Synet
 {
+    struct OptimizerParam
+    {
+        SYNET_PARAM_VALUE(bool, mergeTwoConvolution, false);
+    };
+
+    SYNET_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);
+
     class Optimizer
     {
     public:
+        Optimizer(const OptimizerParam& param)
+            : _param(param)
+        {
+        }
 
         bool Run(Synet::NetworkParam & network, Floats & bin)
         {
-            if (!MergeLayers(network, bin, 0))
-                return false;
-            if (!MergeLayers(network, bin, 1))
-                return false;
-            if (!MergeLayers(network, bin, 2))
-                return false;
-            if (!MergeLayers(network, bin, 3))
-                return false;
+            for (size_t stage = 0; stage < 5; stage++)
+            {
+                if (!MergeLayers(network, bin, stage))
+                    return false;
+            }
             if (!ReuseLayers(network))
                 return false;
             if (!RemoveStub(network))
@@ -56,6 +64,8 @@ namespace Synet
         typedef std::pair<String, String> Change;
         typedef std::vector<Change> Changes;
         typedef std::vector<LayerType> LayerTypes;
+
+        const OptimizerParam & _param;
 
         bool MergeLayers(Synet::NetworkParam& network, Floats& bin, int stage)
         {
@@ -124,6 +134,12 @@ namespace Synet
                     if (MergeThreeConvolutions(network.layers(), i, method, merged, changes))
                         continue;
                     if (MergeSqueezeExcitation(network.layers(), i, merged, changes))
+                        continue;
+                    break;
+                }
+                case 4:
+                {
+                    if (MergeTwoConvolutions(network.layers(), i, method, merged, changes))
                         continue;
                     break;
                 }
@@ -347,6 +363,22 @@ namespace Synet
                 return false;
             if (l1.convolution().outputNum() < l2.convolution().outputNum()*0.75 && l2.convolution().outputNum() > 256)
                 return false;
+            if (index && _param.mergeTwoConvolution())
+            {
+                const LayerParam& ln = src[index - 1];
+                if (ln.type() == LayerTypeConvolution && l0.src()[0] == ln.dst()[0] &&
+                    ln.convolution().outputNum() == ln.convolution().group() && !InsideLink(src, index - 1, 4) &&
+                    l2.convolution().outputNum() >= l1.convolution().outputNum())
+                    return false;
+            }
+            if (src.size() > index + 1 && _param.mergeTwoConvolution())
+            {
+                const LayerParam& l3 = src[index + 3];
+                if (l3.type() == LayerTypeConvolution && l3.src()[0] == l2.dst()[0] &&
+                    l3.convolution().outputNum() == l3.convolution().group() && !InsideLink(src, index, 4) &&
+                    l2.convolution().outputNum() >= l1.convolution().outputNum())
+                    return false;
+            }
             LayerParam layer;
             layer.type() = LayerTypeMergedConvolution;
             layer.name() = l2.name();
@@ -418,6 +450,53 @@ namespace Synet
                     }
                 }
             }
+            return true;
+        }
+
+        bool MergeTwoConvolutions(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 2 || method != QuantizationMethodUnknown || !_param.mergeTwoConvolution())
+                return false;
+            const LayerParam& l0 = src[index + 0];
+            const Shape& k0 = l0.convolution().kernel();
+            const LayerParam& l1 = src[index + 1];
+            const Shape& k1 = l1.convolution().kernel();
+            if (l0.type() != LayerTypeConvolution || l1.type() != LayerTypeConvolution || l1.src()[0] != l0.dst()[0])
+                return false;
+            if (l0.weight()[0].format() != TensorFormatNhwc)
+                return false;
+            if (InsideLink(src, index, 2))
+                return false;
+            if (l0.convolution().group() != 1)
+            {
+                if (l0.convolution().outputNum() != l0.convolution().group())
+                    return false;
+                if (k0.size() < 2 || (k0[0] != k0[1] || (k0[0] != 3 && k0[0] != 5 && k0[0] != 7)))
+                    return false;
+                if (k1.size() < 2 || (k1[0] != k1[1] || (k1[0] != 1)))
+                    return false;
+            }
+            else
+            {
+                if (k0.size() < 2 || (k0[0] != k0[1] || (k0[0] != 1 && k0[0] != 3)))
+                    return false;
+                if (l1.convolution().outputNum() != l1.convolution().group())
+                    return false;
+                if (k1.size() < 2 || (k1[0] != k1[1] || (k1[0] != 3 && k1[0] != 5 && k1[0] != 7)))
+                    return false;
+            }
+            LayerParam layer;
+            layer.type() = LayerTypeMergedConvolution;
+            layer.name() = l1.name();
+            layer.src() = l0.src();
+            layer.dst().push_back(layer.name());
+            for (size_t l = 0; l < 2; ++l)
+                for (size_t i = 0; i < src[index + l].weight().size(); ++i)
+                    layer.weight().push_back(src[index + l].weight()[i]);
+            layer.mergedConvolution().conv().push_back(l0.convolution());
+            layer.mergedConvolution().conv().push_back(l1.convolution());
+            index += 1;
+            dst.push_back(layer);
             return true;
         }
 
@@ -1236,7 +1315,8 @@ namespace Synet
             std::cout << "Can't load Synet weight '" << srcBin << "' !" << std::endl;
             return false;
         }
-        Optimizer optimizer;
+        OptimizerParamHolder param;
+        Optimizer optimizer(param());
         if (!optimizer.Run(network(), bin))
         {
             std::cout << "Can't optimize Synet model!" << std::endl;

@@ -322,7 +322,8 @@ namespace Test
             }
             network().quantization().method() = (Synet::QuantizationMethod)_options.quantizationMethod;
             Floats bin;
-            Synet::Optimizer optimizer;
+            Synet::OptimizerParamHolder param;
+            Synet::Optimizer optimizer(param());
             if (!optimizer.Run(network(), bin))
             {
                 std::cout << "Can't optimize Synet model!" << std::endl;
