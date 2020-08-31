@@ -32,7 +32,7 @@ namespace Synet
 {
     struct OptimizerParam
     {
-        SYNET_PARAM_VALUE(bool, mergeTwoConvolution, false);
+        SYNET_PARAM_VALUE(bool, mergeTwoConvolution, true);
     };
 
     SYNET_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);

@@ -131,8 +131,10 @@ namespace Synet
             _alg.sSize = src[0]->Size(1);
             _alg.dSize = dst[0]->Size(1);
             std::stringstream desc;
-            desc << "i=" << _alg.batch << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW << " o=" << _conv.dstC;
-            desc << " k=" << _conv.kernelY << " s=" << _conv.strideY << " g=" << _conv.group << " " << (this->Is8i() ? "int8" : "fp32");
+            desc << _alg.batch << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW;
+            desc << "-" << _conv.dstC << "x" << _conv.kernelY << "x" << _conv.kernelX;
+            desc << "-" << Max(_conv.dilationY, _conv.dilationX) << "-" << Max(_conv.strideY, _conv.strideX);
+            desc << "-" << _conv.group << " " << (this->Is8i() ? "int8" : "fp32");
             this->UsePerfStat(desc.str(), Flop());
         }
 

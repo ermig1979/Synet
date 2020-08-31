@@ -346,8 +346,7 @@ namespace Synet
             if(_add)
                 assert(_srcSize == _dstSize);
 
-            if(_count == 3)
-                _mergedConvolution32f.Init(_num, _conv, _count, _add);
+            _mergedConvolution32f.Init(_num, _conv, _count, _add);
             if (_mergedConvolution32f.Enable())
             {
                 buf[0]->Extend({ _mergedConvolution32f.ExternalBufferSize() });
