@@ -88,7 +88,7 @@
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdNeonSynetConvolution8i.cpp" />
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdNeonSynetDeconvolution32f.cpp" />
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdNeonSynetFused.cpp" />
-    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdNeonSynetMergedConvolution32f.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdNeonSynetMergedConvolution32fCdc.cpp" />
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdNeonSynetPooling.cpp" />
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdNeonTexture.cpp" />
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdNeonTransform.cpp" />

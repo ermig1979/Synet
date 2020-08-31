@@ -27,7 +27,9 @@
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdAvx1SynetConvolution32fNhwcDirect3r.cpp" />
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdAvx1SynetDeconvolution32f.cpp" />
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdAvx1SynetFused.cpp" />
-    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdAvx1SynetMergedConvolution32f.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdAvx1SynetMergedConvolution32fCd.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdAvx1SynetMergedConvolution32fCdc.cpp" />
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdAvx1SynetMergedConvolution32fDc.cpp" />
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdAvx1SynetPooling.cpp" />
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdAvx1SynetScale.cpp" />
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdAvx1Winograd.cpp" />

@@ -157,9 +157,6 @@
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdSse2SynetDeconvolution32f.cpp">
       <Filter>Sse2</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdSse2SynetMergedConvolution32f.cpp">
-      <Filter>Sse2</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdSse2Texture.cpp">
       <Filter>Sse2</Filter>
     </ClCompile>
@@ -167,6 +164,15 @@
       <Filter>Sse2</Filter>
     </ClCompile>
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdSse2YuvToHue.cpp">
+      <Filter>Sse2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdSse2SynetMergedConvolution32fCd.cpp">
+      <Filter>Sse2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdSse2SynetMergedConvolution32fCdc.cpp">
+      <Filter>Sse2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdSse2SynetMergedConvolution32fDc.cpp">
       <Filter>Sse2</Filter>
     </ClCompile>
   </ItemGroup>
