@@ -119,9 +119,12 @@ namespace Test
                     try
                     {
                         _ieNetwork->setBatchSize(options.batchSize);
+                        config[InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_LIMIT] = std::to_string(options.batchSize);
                         config[InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED] = InferenceEngine::PluginConfigParams::YES;
                         CreateExecutableNetworkAndInferRequest(config);
                         _ieInferRequest->SetBatch(options.batchSize);
+                        GetBlobs();
+                        StubInfer();
                     }
                     catch (std::exception& e)
                     {
@@ -129,37 +132,20 @@ namespace Test
                             std::cout << "Inference Engine init trouble: '" << e.what() << "', try to emulate batch > 1." << std::endl;
                         _batchSize = options.batchSize;
                         _ieNetwork->setBatchSize(1);
+                        config.erase(InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_LIMIT);
                         config.erase(InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED);
                         CreateExecutableNetworkAndInferRequest(config);
                     }
                 }
                 else
                     CreateExecutableNetworkAndInferRequest(config);
-
-                _ieInput.clear();
-                for (size_t i = 0; i < _inputNames.size(); ++i)
-                    _ieInput.push_back(_ieInferRequest->GetBlob(_inputNames[i]));
-
-                _ieOutput.clear();
-                for (size_t i = 0; i < _outputNames.size(); ++i)
-                    _ieOutput.push_back(_ieInferRequest->GetBlob(_outputNames[i]));
-
-                _ieInterim.clear();
-                for (size_t i = 0; i < _interimNames.size(); ++i)
-                    _ieInterim.push_back(_ieInferRequest->GetBlob(_interimNames[i]));
+                GetBlobs();
+                StubInfer();
             }
             catch (std::exception& e)
             {
                 std::cout << "Inference Engine init error: " << e.what() << std::endl;
                 return false;
-            }
-
-            {
-                Tensors stub(SrcCount());
-                for (size_t i = 0; i < SrcCount(); ++i)
-                    stub[i].Reshape(SrcShape(i));
-                SetInput(stub, 0);
-                _ieInferRequest->Infer();
             }
 
             if (options.debugPrint & (1 << Synet::DebugPrintLayerDst))
@@ -260,6 +246,28 @@ namespace Test
             _ieExecutableNetwork = std::make_shared<InferenceEngine::ExecutableNetwork>(
                 _ieCore->LoadNetwork(*_ieNetwork, _ieDeviceName, config));
             _ieInferRequest = _ieExecutableNetwork->CreateInferRequestPtr();
+        }
+
+        void GetBlobs()
+        {
+            _ieInput.clear();
+            for (size_t i = 0; i < _inputNames.size(); ++i)
+                _ieInput.push_back(_ieInferRequest->GetBlob(_inputNames[i]));
+            _ieOutput.clear();
+            for (size_t i = 0; i < _outputNames.size(); ++i)
+                _ieOutput.push_back(_ieInferRequest->GetBlob(_outputNames[i]));
+            _ieInterim.clear();
+            for (size_t i = 0; i < _interimNames.size(); ++i)
+                _ieInterim.push_back(_ieInferRequest->GetBlob(_interimNames[i]));
+        }
+
+        void StubInfer()
+        {
+            Tensors stub(SrcCount());
+            for (size_t i = 0; i < SrcCount(); ++i)
+                stub[i].Reshape(SrcShape(i));
+            SetInput(stub, 0);
+            _ieInferRequest->Infer();
         }
 
         void SetInput(const Tensors& x, size_t b)
