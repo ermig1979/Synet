@@ -218,9 +218,9 @@ namespace Test
 			ss << framework;
 			ss << "Network::Predict";
 #else
-			ss << "virtual const Vectors& Test::";
+			ss << "virtual const Tensors& Test::";
 			ss << framework;
-			ss << "Network::Predict(const Vectors&)";
+			ss << "Network::Predict(const Tensors&)";
 #endif
 			if (!description.empty())
 				ss << " { " << description << " } ";

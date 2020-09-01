@@ -294,7 +294,7 @@ namespace Test
                             View converted(original.Size(), shape[1] == 1 ? View::Gray8 : View::Bgr24);
                             Simd::Convert(original, converted);
                             View resized(Size(shape[3], shape[2]), converted.format);
-                            Simd::ResizeBilinear(converted, resized);
+                            Simd::Resize(converted, resized, SimdResizeMethodArea);
 
                             Views channels(shape[1]);
                             if (shape[1] > 1)
