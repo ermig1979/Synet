@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="Prop.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{039CFE6E-B8BF-4C72-9D57-22B6BEB0BBAA}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>TestInferenceEngine</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\3rd\Simd\src;$(SolutionDir)..\..\3rd\dldt\inference-engine\include;$(SolutionDir)..\..\3rd\dldt\inference-engine\src\extension;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectReference Include="Simd.vcxproj">
+      <Project>{fc4ceece-ac57-44d7-9f29-d387ee8910ef}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Synet.vcxproj">
+      <Project>{c809d7a3-6c52-4e36-8582-00ced929317d}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\Test\TestPerformanceHistory.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

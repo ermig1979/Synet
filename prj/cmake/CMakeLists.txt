@@ -10,8 +10,10 @@ option(PERF_STAT "Performance statistic level: 0 - no statistic, 1 - Synet layer
 set(MAX_ERRORS 5)
 
 
-if(NOT((MODE STREQUAL "all") OR (MODE STREQUAL "darknet") OR (MODE STREQUAL "inference_engine") OR 
-       (MODE STREQUAL "precision") OR (MODE STREQUAL "quantization") OR (MODE STREQUAL "use_samples")))
+if(NOT((MODE STREQUAL "all") OR 
+       (MODE STREQUAL "darknet") OR (MODE STREQUAL "inference_engine") OR 
+       (MODE STREQUAL "performance_history") OR (MODE STREQUAL "precision") OR 
+       (MODE STREQUAL "quantization") OR (MODE STREQUAL "use_samples")))
     message(FATAL_ERROR "Unknown value of MODE: '${MODE}'!")
 endif()
 
@@ -88,9 +90,9 @@ if((MODE STREQUAL "darknet") OR (MODE STREQUAL "all"))
 	set(DARKNET_DIR ${ROOT_DIR}/3rd/darknet)
 	include_directories(${DARKNET_DIR}/src)
 	add_subdirectory(${DARKNET_DIR} 3rd/darknet)
-	file(GLOB_RECURSE TEST_SRC ${ROOT_DIR}/src/Test/TestDarknet.cpp ${ROOT_DIR}/src/Test/TestImage.cpp)
-	set_source_files_properties(${TEST_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
-	add_executable(test_darknet ${TEST_SRC})
+	file(GLOB_RECURSE TEST_DARKNET_SRC ${ROOT_DIR}/src/Test/TestDarknet.cpp ${ROOT_DIR}/src/Test/TestImage.cpp)
+	set_source_files_properties(${TEST_DARKNET_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
+	add_executable(test_darknet ${TEST_DARKNET_SRC})
 	target_compile_definitions(test_darknet PUBLIC SYNET_TEST_STB_EXTERNAL)
 	target_link_libraries(test_darknet darknet ${SIMD_LIB} ${BLIS_LIB} -ldl -lpthread)
 	if(BLIS)
@@ -100,14 +102,21 @@ endif()
 
 if((MODE STREQUAL "inference_engine") OR (MODE STREQUAL "all"))
 	include(${ROOT_DIR}/prj/cmake/inference-engine.cmake)
-	file(GLOB_RECURSE TEST_SRC ${ROOT_DIR}/src/Test/TestInferenceEngine.cpp ${ROOT_DIR}/src/Test/TestImage.cpp)
-	set_source_files_properties(${TEST_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
-	add_executable(test_inference_engine ${TEST_SRC})
+	file(GLOB_RECURSE TEST_IE_SRC ${ROOT_DIR}/src/Test/TestInferenceEngine.cpp ${ROOT_DIR}/src/Test/TestImage.cpp)
+	set_source_files_properties(${TEST_IE_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
+	add_executable(test_inference_engine ${TEST_IE_SRC})
 	add_dependencies(test_inference_engine make_inference_engine)
 	target_link_libraries(test_inference_engine ${IE_BIN_LIBS} ${SIMD_LIB} ${BLIS_LIB} -ldl -lpthread)
 	if(BLIS)
 		add_dependencies(test_inference_engine ${BLIS_DEP})
 	endif()
+endif()
+
+if((MODE STREQUAL "performance_history") OR (MODE STREQUAL "all"))	
+	file(GLOB_RECURSE PERF_HIST_SRC ${ROOT_DIR}/src/Test/TestPerformanceHistory.cpp ${ROOT_DIR}/src/Test/TestImage.cpp)
+	set_source_files_properties(${PERF_HIST_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
+	add_executable(test_performance_history ${PERF_HIST_SRC})
+	target_link_libraries(test_performance_history ${SIMD_LIB} -ldl -lpthread)
 endif()
 
 if((MODE STREQUAL "precision") OR (MODE STREQUAL "all"))	

@@ -47,7 +47,7 @@ namespace Synet
 
         bool Run(Synet::NetworkParam & network, Floats & bin)
         {
-            for (size_t stage = 0; stage < 5; stage++)
+            for (int stage = 0; stage < 5; stage++)
             {
                 if (!MergeLayers(network, bin, stage))
                     return false;
