@@ -47,6 +47,11 @@ namespace Test
             return GetArgs({ name1, name2 }, { default_ }, exit)[0];
         }
 
+        Strings GetArgs(const String& name, const Strings& defaults = Strings(), bool exit = true)
+        {
+            return GetArgs(Strings({ name }), defaults, exit);
+        }
+
         Strings GetArgs(const Strings& names, const Strings& defaults = Strings(), bool exit = true)
         {
             Strings values;

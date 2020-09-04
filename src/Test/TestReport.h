@@ -190,8 +190,8 @@ namespace Test
 			Test test;
 			test.name = TestName(_options.logName);
 			test.batch = _options.batchSize;
-			test.first.time = NetworkPredictPm(_options.firstName, _options.firstType).Average() * 1000.0 / test.batch;
-			test.second.time = NetworkPredictPm(_options.secondName, _options.secondType).Average() * 1000.0 / test.batch;
+			test.first.time = NetworkPredictPm(_options.firstName, _options.firstType).Average() / test.batch;
+			test.second.time = NetworkPredictPm(_options.secondName, _options.secondType).Average() / test.batch;
 			test.first.flops = NetworkPredictPm(_options.firstName, _options.firstType).GFlops();
 			test.second.flops = NetworkPredictPm(_options.secondName, _options.secondType).GFlops();
 			test.first.memory = _options.firstMemoryUsage / 1024.0 / 1024.0;
