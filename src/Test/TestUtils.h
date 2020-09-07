@@ -104,15 +104,24 @@ namespace Test
         return ss.str();
     }
 
+    inline String FolderSeparator()
+    {
+#ifdef WIN32
+        return String("\\");
+#elif defined(__unix__)
+        return String("/");
+#else
+        std::cerr << "FolderSeparator: Is not implemented yet!\n";
+        return return String("");
+#endif
+    }
+
     inline String MakePath(const String& a, const String& b)
     {
         if (a.empty())
             return b;
-#ifdef _MSC_VER
-        return a + (a[a.size() - 1] == '\\' ? "" : "\\") + b;
-#else
-        return a + (a[a.size() - 1] == '/' ? "" : "/") + b;
-#endif
+        String s = FolderSeparator();
+        return a + (a[a.size() - 1] == s[0] ? "" : s) + b;
     }
 
     inline bool CreatePath(const String& path)
@@ -158,18 +167,21 @@ namespace Test
 
     inline String DirectoryByPath(const String & path)
     {
-#ifdef WIN32
-        size_t pos = path.find_last_of("\\");
-#elif defined(__unix__)
-        size_t pos = path.find_last_of("/");
-#else
-        std::cerr << "DirectoryByPath: Is not implemented yet!\n";
-        return "";
-#endif
+        size_t pos = path.find_last_of(FolderSeparator());
         if (pos == std::string::npos)
-            return path.find(".") ? String("") : path;
+            return path.find(".") == 0 ? String("") : path;
         else
             return path.substr(0, pos);
+    }
+
+    inline String LastDirectoryByPath(const String& path)
+    {
+        String directory = DirectoryByPath(path);
+        size_t pos = path.find_last_of(FolderSeparator());
+        if (pos == std::string::npos)
+            return path.find(".") == 0 ? String("") : path;
+        else
+            return path.substr(pos + 1, path.size() - pos);
     }
 
     inline String ExtensionByPath(const String& path)

@@ -38,6 +38,7 @@ namespace Test
             Strings inputFirsts;
             Strings inputSeconds;
             String outputDirectory;
+            String reportName;
             bool autoCorrection;
             double significantDeviation;
 
@@ -46,7 +47,8 @@ namespace Test
             {
                 inputFirsts = GetArgs("-if", Strings());
                 inputSeconds = GetArgs("-is", Strings());
-                outputDirectory = GetArg("-od", "output");
+                outputDirectory = GetArg("-od", "changes");
+                reportName = GetArg("-rn", "_report");
                 autoCorrection = FromString<bool>(GetArg("-ac", "1"));
                 significantDeviation = FromString<double>(GetArg("-sd", "0.05"));
             }
@@ -64,6 +66,8 @@ namespace Test
             if (!SetCompareMap())
                 return false;
             if (!AutoCorrection())
+                return false;
+            if (!SetAverage())
                 return false;
             if (!FillSummary())
                 return false;
@@ -102,10 +106,12 @@ namespace Test
         typedef std::vector<Set> Sets;
         Sets _first, _second;
 
+        typedef std::vector<double> Doubles;
         typedef std::pair<String, int> Id;
         struct Comp
         {
-            Tests first, second;
+            Tests firsts, seconds;
+            Test first, second;
         };
         typedef std::map<Id, Comp> CompMap;
         CompMap _full, _summ;
@@ -133,7 +139,8 @@ namespace Test
         {
             const String separator = " ";
             set.name = name;
-            std::ifstream ifs(MakePath(name, "sync.txt"));
+            String path = MakePath(name, "sync.txt");
+            std::ifstream ifs(path);
             if (ifs.is_open())
             {
                 while (!ifs.eof())
@@ -162,7 +169,11 @@ namespace Test
                 std::sort(set.tests.begin(), set.tests.end());
                 return true;
             }
-            return false;
+            else
+            {
+                std::cout << "Can't open file '" << path << "' !" << std::endl;
+                return false;
+            }
         }
 
         bool SetCompareMap()
@@ -174,7 +185,7 @@ namespace Test
                 for (size_t j = 0; j < set.tests.size(); ++j)
                 {
                     const Test& test = set.tests[j];
-                    _full[Id(test.name, test.batch)].first.push_back(test);
+                    _full[Id(test.name, test.batch)].firsts.push_back(test);
                 }
             }
             for (size_t i = 0; i < _second.size(); ++i)
@@ -183,13 +194,13 @@ namespace Test
                 for (size_t j = 0; j < set.tests.size(); ++j)
                 {
                     const Test& test = set.tests[j];
-                    _full[Id(test.name, test.batch)].second.push_back(test);
+                    _full[Id(test.name, test.batch)].seconds.push_back(test);
                 }
             }
-            const size_t n = _options.inputFirsts.size() + _options.inputSeconds.size();
             for (CompMap::iterator it = _full.begin(); it != _full.end();)
             {
-                if (it->second.first.size() + it->second.second.size() < n)
+                if (it->second.firsts.size() < _options.inputFirsts.size() ||
+                    it->second.seconds.size() < _options.inputSeconds.size())
                     it = _full.erase(it);
                 else
                     ++it;
@@ -201,24 +212,75 @@ namespace Test
         {
             if (!_options.autoCorrection)
                 return true;
-            double firstLog = 0, secondLog = 0;
+
+            Doubles first(_options.inputFirsts.size(), 0), second(_options.inputSeconds.size(), 0);
             for (CompMap::iterator it = _full.begin(); it != _full.end(); ++it)
             {
-                const Test& first = it->second.first[0];
-                const Test& second = it->second.second[0];
-                firstLog += ::log(first.second.time);
-                secondLog += ::log(second.second.time);
+                for(size_t i = 0; i < first.size(); ++i)
+                    first[i] += ::log(it->second.firsts[i].second.time);
+                for (size_t i = 0; i < second.size(); ++i)
+                    second[i] += ::log(it->second.seconds[i].second.time);
             }
-            double firstAvg = ::exp(firstLog / _full.size());
-            double secondAvg = ::exp(secondLog / _full.size());
-            double kFirst = firstAvg * 0.01 > secondAvg ? 0.001 : 1.0;
-            double kSecond = secondAvg * 0.01 > firstAvg ? 0.001 : 1.0;
+
+            for (size_t i = 0; i < first.size(); ++i)
+                first[i] = ::exp(first[i] / _full.size());
+            for (size_t i = 0; i < second.size(); ++i)
+                second[i] = ::exp(second[i] / _full.size());
+
+            Doubles firstK(first.size(), 1.0), secondK(second.size(), 1.0);
+            for (size_t i = 0; i < first.size(); ++i)
+            {
+                for (size_t j = 0; j < first.size(); ++j)
+                    if (first[i] * 0.01 > first[j])
+                        firstK[i] = 0.001;
+                for (size_t j = 0; j < second.size(); ++j)
+                    if (first[i] * 0.01 > second[j])
+                        firstK[i] = 0.001;
+            }
+            for (size_t i = 0; i < second.size(); ++i)
+            {
+                for (size_t j = 0; j < first.size(); ++j)
+                    if (second[i] * 0.01 > first[j])
+                        secondK[i] = 0.001;
+                for (size_t j = 0; j < second.size(); ++j)
+                    if (second[i] * 0.01 > second[j])
+                        secondK[i] = 0.001;
+            }
+
             for (CompMap::iterator it = _full.begin(); it != _full.end(); ++it)
             {
-                Test& first = it->second.first[0];
-                Test& second = it->second.second[0];
-                first.second.time *= kFirst;
-                second.second.time *= kSecond;
+                for (size_t i = 0; i < first.size(); ++i)
+                    it->second.firsts[i].second.time *= firstK[i];
+                for (size_t i = 0; i < second.size(); ++i)
+                    it->second.seconds[i].second.time *= secondK[i];
+            }
+
+            return true;
+        }
+
+        bool SetAverage()
+        {
+            for (CompMap::iterator it = _full.begin(); it != _full.end(); ++it)
+            {
+                Comp& comp = it->second;
+                comp.first = comp.firsts[0];
+                comp.second = comp.seconds[0];
+
+                comp.first.second.time = 0;
+                comp.first.second.flops = 0;
+                for (size_t i = 0, n = comp.firsts.size(); i < n; ++i)
+                {
+                    comp.first.second.time += comp.firsts[i].second.time / n;
+                    comp.first.second.flops += comp.firsts[i].second.flops / n;
+                }
+
+                comp.second.second.time = 0;
+                comp.second.second.flops = 0;
+                for (size_t i = 0, n = comp.seconds.size(); i < n; ++i)
+                {
+                    comp.second.second.time += comp.seconds[i].second.time / n;
+                    comp.second.second.flops += comp.seconds[i].second.flops / n;
+                }
             }
             return true;
         }
@@ -227,35 +289,39 @@ namespace Test
         {
             for (CompMap::iterator it = _full.begin(); it != _full.end(); ++it)
             {
-                const Test& first = it->second.first[0];
-                const Test& second = it->second.second[0];
+                const Test& first = it->second.first;
+                const Test& second = it->second.second;
+                Comp & common = _summ[Id(" Common", 0)];
                 Comp & batch = _summ[Id("Batch-" + std::to_string(first.batch), first.batch)];
-                Comp & common = _summ[Id("Common", 0)];
-                batch.first.resize(1);
-                common.first.resize(1);
-                batch.second.resize(1);
-                common.second.resize(1);
-                batch.first[0].count++;
-                common.first[0].count++;
+                batch.firsts.resize(1);
+                common.firsts.resize(1);
+                batch.seconds.resize(1);
+                common.seconds.resize(1);
+                batch.first.count++;
+                common.first.count++;
 
-                batch.first[0].second.time += ::log(first.second.time);
-                common.first[0].second.time += ::log(first.second.time);
+                batch.first.second.time += ::log(first.second.time);
+                common.first.second.time += ::log(first.second.time);
 
-                batch.first[0].second.flops += ::log(first.second.flops);
-                common.first[0].second.flops += ::log(first.second.flops);
+                batch.first.second.flops += ::log(first.second.flops);
+                common.first.second.flops += ::log(first.second.flops);
 
-                batch.second[0].second.time += ::log(second.second.time);
-                common.second[0].second.time += ::log(second.second.time);
+                batch.second.second.time += ::log(second.second.time);
+                common.second.second.time += ::log(second.second.time);
+
+                batch.second.second.flops += ::log(second.second.flops);
+                common.second.second.flops += ::log(second.second.flops);
             }
 
             for (CompMap::iterator it = _summ.begin(); it != _summ.end(); ++it)
             {
                 Comp& comp = it->second;
-                comp.first[0].name = it->first.first;
-                comp.first[0].batch = it->first.second;
-                comp.first[0].second.time = comp.first[0].count > 0 ? ::exp(comp.first[0].second.time / comp.first[0].count) : 0;
-                comp.first[0].second.flops = comp.first[0].count > 0 ? ::exp(comp.first[0].second.flops / comp.first[0].count) : 0;
-                comp.second[0].second.time = comp.first[0].count > 0 ? ::exp(comp.second[0].second.time / comp.first[0].count) : 0;
+                comp.first.name = it->first.first;
+                comp.first.batch = it->first.second;
+                comp.first.second.time = comp.first.count > 0 ? ::exp(comp.first.second.time / comp.first.count) : 0;
+                comp.first.second.flops = comp.first.count > 0 ? ::exp(comp.first.second.flops / comp.first.count) : 0;
+                comp.second.second.time = comp.first.count > 0 ? ::exp(comp.second.second.time / comp.first.count) : 0;
+                comp.second.second.flops = comp.first.count > 0 ? ::exp(comp.second.second.flops / comp.first.count) : 0;
             }
             return true;
         }
@@ -264,9 +330,9 @@ namespace Test
         {
             if (!CreateOutputDirectory(_options.outputDirectory))
                 return false;
-            if (!Save(MakePath(_options.outputDirectory, "_report.html"), false))
+            if (!Save(MakePath(_options.outputDirectory, _options.reportName + ".html"), false))
                 return false;
-            if (!Save(MakePath(_options.outputDirectory, "_report.txt"), true))
+            if (!Save(MakePath(_options.outputDirectory, _options.reportName + ".txt"), true))
                 return false;
             return true;
         }
@@ -329,10 +395,25 @@ namespace Test
             return Size(col, row);
         }
 
+        String OneName(const Strings& names)
+        {
+            if (names.size() == 1)
+                return LastDirectoryByPath(names[0]);
+            else
+            {
+                std::stringstream ss;
+                ss << "(" << LastDirectoryByPath(names[0]);
+                for (size_t i = 1; i < names.size(); ++i)
+                    ss << ", " << LastDirectoryByPath(names[i]);
+                ss << ")";
+                return ss.str();
+            }
+        }
+
         void SetHeader(Table& table)
         {
-            String first = _options.inputFirsts[0];
-            String second = _options.inputSeconds[0];
+            String first = OneName(_options.inputFirsts);
+            String second = OneName(_options.inputSeconds);
             size_t col = 0;
             table.SetHeader(col++, "Test", true, Table::Center);
             table.SetHeader(col++, "Batch", true, Table::Center);
@@ -346,8 +427,8 @@ namespace Test
 
         void SetCells(Table& table, const Comp& comp, size_t row, bool summary)
         {
-            const Test& first = comp.first[0];
-            const Test& second = comp.second[0];
+            const Test& first = comp.first;
+            const Test& second = comp.second;
             size_t col = 0;
             table.SetCell(col++, row, first.name, Table::Black);
             table.SetCell(col++, row, first.batch ? ToString(first.batch) : String("-"));
@@ -356,8 +437,8 @@ namespace Test
             double relation = first.second.time / second.second.time;
             double threshold = 1.0 - _options.significantDeviation;
             table.SetCell(col++, row, ToString(relation, 2), relation < threshold ? Table::Red : Table::Black);
-            table.SetCell(col++, row, ToString(first.second.flops, 1));
-            table.SetCell(col++, row, summary ? String("-") : ToString(first.second.memory, 1));
+            table.SetCell(col++, row, ToString(second.second.flops, 1));
+            table.SetCell(col++, row, summary ? String("-") : ToString(second.second.memory, 1));
             table.SetCell(col++, row, summary ? String("-") : first.desc);
             table.SetRowProp(row, summary && row == (summary ? _summ.size() : _full.size()) - 1, summary);
         }
