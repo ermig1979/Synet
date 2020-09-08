@@ -5,6 +5,7 @@
     <ProjectGuid>{039CFE6E-B8BF-4C72-9D57-22B6BEB0BBAA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>TestInferenceEngine</RootNamespace>
+    <ProjectName>TestPerformanceDifference</ProjectName>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -28,7 +29,17 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\Test\TestPerformanceHistory.cpp" />
+    <ClInclude Include="..\..\src\Test\TestArgs.h" />
+    <ClInclude Include="..\..\src\Test\TestCommon.h" />
+    <ClInclude Include="..\..\src\Test\TestHtml.h" />
+    <ClInclude Include="..\..\src\Test\TestNetwork.h" />
+    <ClInclude Include="..\..\src\Test\TestPerformance.h" />
+    <ClInclude Include="..\..\src\Test\TestSynet.h" />
+    <ClInclude Include="..\..\src\Test\TestTable.h" />
+    <ClInclude Include="..\..\src\Test\TestUtils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\Test\TestPerformanceDifference.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

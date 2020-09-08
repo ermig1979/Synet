@@ -73,7 +73,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestQuantization", "TestQua
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestPrecision", "TestPrecision.vcxproj", "{E97C6131-4CB4-4B1E-BEDF-BB86DF044DA5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestPerformanceHistory", "TestPerformanceHistory.vcxproj", "{039CFE6E-B8BF-4C72-9D57-22B6BEB0BBAA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestPerformanceDifference", "TestPerformanceDifference.vcxproj", "{039CFE6E-B8BF-4C72-9D57-22B6BEB0BBAA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

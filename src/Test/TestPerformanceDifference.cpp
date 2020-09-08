@@ -30,7 +30,7 @@
 
 namespace Test
 {
-    class PerformanceHistory
+    class PerformanceDifference
     {
     public:
         struct Options : public ArgsParser
@@ -40,30 +40,30 @@ namespace Test
             String outputDirectory;
             String reportName;
             bool autoCorrection;
-            double significantDeviation;
+            double significantDifference;
 
             Options(int argc, char* argv[])
                 : ArgsParser(argc, argv)
             {
                 inputFirsts = GetArgs("-if", Strings());
                 inputSeconds = GetArgs("-is", Strings());
-                outputDirectory = GetArg("-od", "changes");
-                reportName = GetArg("-rn", "_report");
+                outputDirectory = GetArg("-od", "diff");
+                reportName = GetArg("-rn", "_diff");
                 autoCorrection = FromString<bool>(GetArg("-ac", "1"));
-                significantDeviation = FromString<double>(GetArg("-sd", "0.05"));
+                significantDifference = FromString<double>(GetArg("-sd", "0.05"));
             }
         };
 
-        PerformanceHistory(const Options & options)
+        PerformanceDifference(const Options & options)
             : _options(options)
         {
         }
 
-        bool Run()
+        bool Estimate()
         {
             if (!LoadInput())
                 return false;
-            if (!SetCompareMap())
+            if (!SetDiffMap())
                 return false;
             if (!AutoCorrection())
                 return false;
@@ -108,13 +108,13 @@ namespace Test
 
         typedef std::vector<double> Doubles;
         typedef std::pair<String, int> Id;
-        struct Comp
+        struct Diff
         {
             Tests firsts, seconds;
             Test first, second;
         };
-        typedef std::map<Id, Comp> CompMap;
-        CompMap _full, _summ;
+        typedef std::map<Id, Diff> DiffMap;
+        DiffMap _full, _summ;
 
         bool LoadInput()
         {
@@ -176,7 +176,7 @@ namespace Test
             }
         }
 
-        bool SetCompareMap()
+        bool SetDiffMap()
         {
             _full.clear();
             for (size_t i = 0; i < _first.size(); ++i)
@@ -197,7 +197,7 @@ namespace Test
                     _full[Id(test.name, test.batch)].seconds.push_back(test);
                 }
             }
-            for (CompMap::iterator it = _full.begin(); it != _full.end();)
+            for (DiffMap::iterator it = _full.begin(); it != _full.end();)
             {
                 if (it->second.firsts.size() < _options.inputFirsts.size() ||
                     it->second.seconds.size() < _options.inputSeconds.size())
@@ -214,7 +214,7 @@ namespace Test
                 return true;
 
             Doubles first(_options.inputFirsts.size(), 0), second(_options.inputSeconds.size(), 0);
-            for (CompMap::iterator it = _full.begin(); it != _full.end(); ++it)
+            for (DiffMap::iterator it = _full.begin(); it != _full.end(); ++it)
             {
                 for(size_t i = 0; i < first.size(); ++i)
                     first[i] += ::log(it->second.firsts[i].second.time);
@@ -247,7 +247,7 @@ namespace Test
                         secondK[i] = 0.001;
             }
 
-            for (CompMap::iterator it = _full.begin(); it != _full.end(); ++it)
+            for (DiffMap::iterator it = _full.begin(); it != _full.end(); ++it)
             {
                 for (size_t i = 0; i < first.size(); ++i)
                     it->second.firsts[i].second.time *= firstK[i];
@@ -260,9 +260,9 @@ namespace Test
 
         bool SetAverage()
         {
-            for (CompMap::iterator it = _full.begin(); it != _full.end(); ++it)
+            for (DiffMap::iterator it = _full.begin(); it != _full.end(); ++it)
             {
-                Comp& comp = it->second;
+                Diff& comp = it->second;
                 comp.first = comp.firsts[0];
                 comp.second = comp.seconds[0];
 
@@ -287,12 +287,12 @@ namespace Test
 
         bool FillSummary()
         {
-            for (CompMap::iterator it = _full.begin(); it != _full.end(); ++it)
+            for (DiffMap::iterator it = _full.begin(); it != _full.end(); ++it)
             {
                 const Test& first = it->second.first;
                 const Test& second = it->second.second;
-                Comp & common = _summ[Id(" Common", 0)];
-                Comp & batch = _summ[Id("Batch-" + std::to_string(first.batch), first.batch)];
+                Diff & common = _summ[Id(" Common", 0)];
+                Diff & batch = _summ[Id("Batch-" + std::to_string(first.batch), first.batch)];
                 batch.firsts.resize(1);
                 common.firsts.resize(1);
                 batch.seconds.resize(1);
@@ -313,9 +313,9 @@ namespace Test
                 common.second.second.flops += ::log(second.second.flops);
             }
 
-            for (CompMap::iterator it = _summ.begin(); it != _summ.end(); ++it)
+            for (DiffMap::iterator it = _summ.begin(); it != _summ.end(); ++it)
             {
-                Comp& comp = it->second;
+                Diff& comp = it->second;
                 comp.first.name = it->first.first;
                 comp.first.batch = it->first.second;
                 comp.first.second.time = comp.first.count > 0 ? ::exp(comp.first.second.time / comp.first.count) : 0;
@@ -349,19 +349,14 @@ namespace Test
                 Table table(TableSize());
                 SetHeader(table);
                 size_t row = 0;
-                for (CompMap::iterator it = _summ.begin(); it != _summ.end(); ++it, ++row)
+                for (DiffMap::iterator it = _summ.begin(); it != _summ.end(); ++it, ++row)
                     SetCells(table, it->second, row, true);
-                for (CompMap::iterator it = _full.begin(); it != _full.end(); ++it, ++row)
+                for (DiffMap::iterator it = _full.begin(); it != _full.end(); ++it, ++row)
                     SetCells(table, it->second, row, false);
                 if (text)
                 {
-                    ofs << "~~~~~~~~~~~~~~~~~~~~~ Synet Performance Report ~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-                    ofs << "Test generation time: " + CurrentDateTimeString() << std::endl;
-                    //ofs << "Number of test threads: " << _options.testThreads << std::endl;
-#if defined(SYNET_SIMD_LIBRARY_ENABLE)
-                    ofs << SystemInfo() << std::endl;
-                    Simd::PrintInfo(ofs);
-#endif
+                    ofs << "~~~~~~~~~~~~~~~~~~~~~ Synet Performance Difference ~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+                    ofs << "Difference generation time: " + CurrentDateTimeString() << std::endl;
                     ofs << table.GenerateText();
                 }
                 else
@@ -369,13 +364,12 @@ namespace Test
                     Html html(ofs);
 
                     html.WriteBegin("html", Html::Attr(), true, true);
-                    html.WriteValue("title", Html::Attr(), "Synet Performance Changes", true);
+                    html.WriteValue("title", Html::Attr(), "Synet Performance Difference", true);
                     html.WriteBegin("body", Html::Attr(), true, true);
 
-                    html.WriteValue("h1", Html::Attr("id", "home"), "Synet Performance Changes", true);
+                    html.WriteValue("h1", Html::Attr("id", "home"), "Synet Performance Difference", true);
 
-                    html.WriteValue("h4", Html::Attr(), String("Test analysis time: ") + CurrentDateTimeString(), true);
-//                    html.WriteValue("h4", Html::Attr(), String("Number of test threads: ") + ToString(_options.testThreads), true);
+                    html.WriteValue("h4", Html::Attr(), String("Difference generation time: ") + CurrentDateTimeString(), true);
 
                     ofs << table.GenerateHtml(html.Indent());
 
@@ -395,7 +389,7 @@ namespace Test
             return Size(col, row);
         }
 
-        String OneName(const Strings& names)
+        String UnitedName(const Strings& names)
         {
             if (names.size() == 1)
                 return LastDirectoryByPath(names[0]);
@@ -412,8 +406,8 @@ namespace Test
 
         void SetHeader(Table& table)
         {
-            String first = OneName(_options.inputFirsts);
-            String second = OneName(_options.inputSeconds);
+            String first = UnitedName(_options.inputFirsts);
+            String second = UnitedName(_options.inputSeconds);
             size_t col = 0;
             table.SetHeader(col++, "Test", true, Table::Center);
             table.SetHeader(col++, "Batch", true, Table::Center);
@@ -425,7 +419,7 @@ namespace Test
             table.SetHeader(col++, "Description", true, Table::Center);
         }
 
-        void SetCells(Table& table, const Comp& comp, size_t row, bool summary)
+        void SetCells(Table& table, const Diff& comp, size_t row, bool summary)
         {
             const Test& first = comp.first;
             const Test& second = comp.second;
@@ -435,7 +429,7 @@ namespace Test
             table.SetCell(col++, row, ToString(first.second.time, 3), Table::Black);
             table.SetCell(col++, row, ToString(second.second.time, 3), Table::Black);
             double relation = first.second.time / second.second.time;
-            double threshold = 1.0 - _options.significantDeviation;
+            double threshold = 1.0 - _options.significantDifference;
             table.SetCell(col++, row, ToString(relation, 2), relation < threshold ? Table::Red : Table::Black);
             table.SetCell(col++, row, ToString(second.second.flops, 1));
             table.SetCell(col++, row, summary ? String("-") : ToString(second.second.memory, 1));
@@ -447,7 +441,7 @@ namespace Test
 
 int main(int argc, char* argv[])
 {
-    Test::PerformanceHistory::Options options(argc, argv);
-    Test::PerformanceHistory history(options);
-    return history.Run() ? 0 : 1;
+    Test::PerformanceDifference::Options options(argc, argv);
+    Test::PerformanceDifference difference(options);
+    return difference.Estimate() ? 0 : 1;
 }

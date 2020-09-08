@@ -12,7 +12,7 @@ set(MAX_ERRORS 5)
 
 if(NOT((MODE STREQUAL "all") OR 
        (MODE STREQUAL "darknet") OR (MODE STREQUAL "inference_engine") OR 
-       (MODE STREQUAL "performance_history") OR (MODE STREQUAL "precision") OR 
+       (MODE STREQUAL "performance_difference") OR (MODE STREQUAL "precision") OR 
        (MODE STREQUAL "quantization") OR (MODE STREQUAL "use_samples")))
     message(FATAL_ERROR "Unknown value of MODE: '${MODE}'!")
 endif()
@@ -112,11 +112,11 @@ if((MODE STREQUAL "inference_engine") OR (MODE STREQUAL "all"))
 	endif()
 endif()
 
-if((MODE STREQUAL "performance_history") OR (MODE STREQUAL "all"))	
-	file(GLOB_RECURSE PERF_HIST_SRC ${ROOT_DIR}/src/Test/TestPerformanceHistory.cpp ${ROOT_DIR}/src/Test/TestImage.cpp)
-	set_source_files_properties(${PERF_HIST_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
-	add_executable(test_performance_history ${PERF_HIST_SRC})
-	target_link_libraries(test_performance_history ${SIMD_LIB} -ldl -lpthread)
+if((MODE STREQUAL "performance_difference") OR (MODE STREQUAL "all"))	
+	file(GLOB_RECURSE PERF_DIFF_SRC ${ROOT_DIR}/src/Test/TestPerformanceDifference.cpp ${ROOT_DIR}/src/Test/TestImage.cpp)
+	set_source_files_properties(${PERF_DIFF_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
+	add_executable(test_performance_difference ${PERF_DIFF_SRC})
+	target_link_libraries(test_performance_difference ${SIMD_LIB} -ldl -lpthread)
 endif()
 
 if((MODE STREQUAL "precision") OR (MODE STREQUAL "all"))	
