@@ -61,6 +61,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\InterpLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\LogLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\LrnLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolutionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MetaLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\NormalizeLayer.h" />

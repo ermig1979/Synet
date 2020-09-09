@@ -28,7 +28,7 @@
 
 namespace Synet
 {
-    template <class T>  class MergedConvolution32f
+    template <class T> class MergedConvolution32f
     {
     public:
         MergedConvolution32f()

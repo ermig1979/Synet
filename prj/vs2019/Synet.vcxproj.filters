@@ -279,6 +279,9 @@
     <ClInclude Include="..\..\src\Synet\Quantization\Stat.h">
       <Filter>Quantization</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

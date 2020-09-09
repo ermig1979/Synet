@@ -79,7 +79,7 @@ namespace Synet
             Synet::DebugPrint(os, _srcCvt.shift, _srcCvt.channels, "_srcCvt.shift", first, last, precision);
             _weight8i.DebugPrint(os, "_weight8i", true, first, last, precision);
             _norm32f.DebugPrint(os, "_norm32f", false, first, last, precision);
-            _norm32f.DebugPrint(os, "_bias32f", false, first, last, precision);
+            _bias32f.DebugPrint(os, "_bias32f", false, first, last, precision);
             Synet::DebugPrint(os, _dstCvt.scale, _dstCvt.channels, "_dstCvt.scale", first, last, precision);
             Synet::DebugPrint(os, _dstCvt.shift, _dstCvt.channels, "_dstCvt.shift", first, last, precision);
         }
