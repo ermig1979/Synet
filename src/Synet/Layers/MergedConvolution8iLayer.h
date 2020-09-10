@@ -62,7 +62,55 @@ namespace Synet
 
         virtual void Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
         {
+            assert(this->_add == 0);
 
+            const ConvParam * conv = this->_conv;
+            _src8u = src->GetType() == TensorType8u;
+            _dst8u = dst->GetType() == TensorType8u;
+            Shape shape = conv[this->_count - 1].DstShape(this->_batch);
+            if (_dst8u)
+                dst->As8u().Reshape(shape, src->Format());
+            else
+                dst->As32f().Reshape(shape, src->Format());
+
+            _mergedConvolution8i.Init(this->_batch, this->_conv, this->_count, _method);
+            if (_mergedConvolution8i.Enable())
+            {
+                Base::Extend8u(buf, 0, Shp(_mergedConvolution8i.ExternalBufferSize()));
+                const float* stats[6] = { 
+                    this->Stats(0).empty() ? NULL : this->Stats(0)[0]->min.data(),
+                    this->Stats(0).empty() ? NULL : this->Stats(0)[0]->max.data(),
+                    this->Stats(1).empty() ? NULL : this->Stats(1).back()->min.data(),
+                    this->Stats(1).empty() ? NULL : this->Stats(1).back()->max.data(),
+                    this->Stats(2).empty() ? NULL : this->Stats(2)[0]->min.data(),
+                    this->Stats(2).empty() ? NULL : this->Stats(2)[0]->max.data()};
+                _mergedConvolution8i.SetParams(this->_weight, this->_internal, this->_bias, this->_params, stats);
+
+            }
+            else
+            {
+                if (!conv[0].IsDepthwise())
+                {
+                    if (!_src8u)
+                        Base::Extend8u(buf, 0, src->Shape());
+                    if(!conv[0].Is1x1())
+                        Base::Extend8u(buf, 1, Shp(conv[0].ImgSize()));
+                    Base::Extend32i(buf, 0, conv[0].DstShape(1));
+                    Base::Extend32f(buf, 0, conv[0].DstShape(1));
+                    if (this->_count == 3)
+                    {
+                        Base::Extend32f(buf, 1, conv[1].DstShape(1));
+                        Base::Extend8u(buf, 0, conv[1].DstShape(1));
+                        Base::Extend32i(buf, 0, conv[2].DstShape(1));
+                    }
+                    if(_dst8u)
+                        Base::Extend32f(buf, 1, shape, src->Format());//?
+                }
+                if (_dst8u)
+                    Base::Extend32f(buf, 0, shape, src->Format());
+            //    Quantize();
+            }
+            //alg.internal = 1;
         }
 
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)

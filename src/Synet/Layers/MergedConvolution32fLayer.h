@@ -193,43 +193,44 @@ namespace Synet
             _mergedConvolution32f.Init(this->_batch, conv, this->_count, this->_add);
             if (_mergedConvolution32f.Enable())
             {
-                buf[0]->Extend({ _mergedConvolution32f.ExternalBufferSize() });
+                Base::Extend32f(buf, 0, Shp(_mergedConvolution32f.ExternalBufferSize()));
                 _mergedConvolution32f.SetParams(this->_weight, this->_internal, this->_bias, this->_params);
             }
             else
             {
-                buf[0]->Extend(Shape({ conv[0].dstC * conv[0].dstH * conv[0].dstW + (this->_count > 2 ? conv[1].dstC * conv[1].dstH * conv[1].dstW : 0) }));
+                Base::Extend32f(buf, 0, conv[0].DstShape(1));
+                if (this->_count > 2)
+                    Base::Extend32f(buf, 1, conv[1].DstShape(1));
             }
         }
 
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-             ForwardCpu(src[0]->CpuData(), buf[0]->CpuData(), dst[0]->CpuData());
+             ForwardCpu(src[0]->CpuData(), Base::Buf32f(buf, 0), Base::Buf32f(buf, 1), dst[0]->CpuData());
         }
 
-        void ForwardCpu(const T * src, T * buf, T * dst)
+        void ForwardCpu(const float * src, float* buf0, float* buf1, float* dst)
         {
             if (_mergedConvolution32f.Enable())
-                _mergedConvolution32f.Forward(src, buf, dst);
+                _mergedConvolution32f.Forward(src, buf0, dst);
             else
             {
                 const ConvParam* conv = this->_conv;
-                const Type** weight = this->_weight;
-                const Type** bias = this->_bias;
-                const Type** params = this->_params;
-                Type * buf1 = buf + conv[0].dstC * conv[0].dstH * conv[0].dstW;
+                const float** weight = this->_weight;
+                const float** bias = this->_bias;
+                const float** params = this->_params;
                 for (size_t b = 0; b < this->_batch; ++b)
                 {
-                    _convolution[0](src, conv[0], weight[0], bias[0], params[0], buf);
+                    _convolution[0](src, conv[0], weight[0], bias[0], params[0], buf0);
                     if (this->_count > 2)
                     {
-                        _convolution[1](buf, conv[1], weight[1], bias[1], params[1], buf1);
+                        _convolution[1](buf0, conv[1], weight[1], bias[1], params[1], buf1);
                         if (this->_add)
                             memcpy(dst, src, sizeof(T) * this->_dSize);
                         _convolution[2](buf1, conv[2], weight[2], bias[2], params[2], dst);
                     }
                     else
-                        _convolution[1](buf, conv[1], weight[1], bias[1], params[1], dst);
+                        _convolution[1](buf0, conv[1], weight[1], bias[1], params[1], dst);
                     src += this->_sSize;
                     dst += this->_dSize;
                 }

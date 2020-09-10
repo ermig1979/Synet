@@ -116,8 +116,9 @@ namespace Synet
             else
             {
                 if (!_src8u)
-                    Base::Extend8u(buf, 1, src->Shape());
-                Base::Extend8u(buf, 0, Shp(conv.kernelY * conv.kernelX * conv.srcC * conv.dstH * conv.dstW));
+                    Base::Extend8u(buf, 0, src->Shape());
+                if(!conv.Is1x1())
+                    Base::Extend8u(buf, 1, Shp(conv.ImgSize()));
                 Base::Extend32i(buf, 0, Shp(1, shape[1], shape[2], shape[3]), src->Format());
                 if(_dst8u)
                     Base::Extend32f(buf, 0, shape, src->Format());
@@ -132,8 +133,8 @@ namespace Synet
                 _convolution8i.Forward(src[0]->RawCpuData(), Base::Buf8u(buf, 0), dst[0]->RawCpuData());
             else
             {
-                uint8_t* src8u = _src8u ? src[0]->As8u().CpuData() : Base::Buf8u(buf, 1);
-                uint8_t* buf8u = Base::Buf8u(buf, 0);
+                uint8_t* src8u = _src8u ? src[0]->As8u().CpuData() : Base::Buf8u(buf, 0);
+                uint8_t* buf8u = Base::Buf8u(buf, 1);
                 int32_t* sum32i = Base::Buf32i(buf, 0);
                 if (!_src8u)
                     _srcCvt.Convert(src[0]->As32f().CpuData(), src8u);

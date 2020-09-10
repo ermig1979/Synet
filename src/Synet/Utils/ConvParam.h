@@ -175,5 +175,10 @@ namespace Synet
             else
                 return Shp(batch, dstC, dstH, dstW);
         }
+
+        size_t ImgSize() const
+        {
+            return kernelY * kernelX * srcC * dstH * dstW;
+        }
     };
 }

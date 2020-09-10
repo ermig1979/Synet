@@ -66,7 +66,7 @@ namespace Synet
                     conv.activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : alg.params);
             }
             else
-                Base::Extend32f(buf, 0, Shp(conv.kernelY * conv.kernelX * conv.srcC, conv.dstH * conv.dstW), src->Format());
+                Base::Extend32f(buf, 0, Shp(conv.ImgSize()), src->Format());
         }
 
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)

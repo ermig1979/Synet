@@ -126,7 +126,7 @@ namespace Synet
 #endif
         }
 
-        SYNET_INLINE void Init(size_t batch, const ConvParam* convs, size_t count, int add, QuantizationMethod method)
+        SYNET_INLINE void Init(size_t batch, const ConvParam* convs, size_t count, QuantizationMethod method)
         {
         }
 
