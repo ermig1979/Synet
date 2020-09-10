@@ -240,6 +240,6 @@ namespace Synet
         typedef void(*ConvolutionBiasActivationPtr)(const T * src, const ConvParam & conv, const T * weight, const T * bias, const T * params, T * dst);
         ConvolutionBiasActivationPtr _convolution[Detail::MCC_MAX];
 
-        MergedConvolution32f<Type> _mergedConvolution32f;
+        MergedConvolution32f _mergedConvolution32f;
     };
 }

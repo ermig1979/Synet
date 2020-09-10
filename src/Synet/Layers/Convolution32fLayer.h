@@ -61,17 +61,17 @@ namespace Synet
             _convolution32f.Init(alg.batch, &conv, SYNET_EXTERNAL_GEMM);
             if (_convolution32f.Enable())
             {
-                buf[TensorType32f * BUFFER_COUNT]->Extend(Shp(_convolution32f.ExternalBufferSize()));
+                Base::Extend32f(buf, 0, Shp(_convolution32f.ExternalBufferSize()), src->Format());
                 _convolution32f.SetParams(weight[0].CpuData(), &alg.internal, alg.bias ? weight[1].CpuData() : NULL,
                     conv.activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : alg.params);
             }
             else
-                buf[TensorType32f * BUFFER_COUNT]->Extend(Shape({ conv.kernelY * conv.kernelX * conv.srcC, conv.dstH * conv.dstW }));
+                Base::Extend32f(buf, 0, Shp(conv.kernelY * conv.kernelX * conv.srcC, conv.dstH * conv.dstW), src->Format());
         }
 
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-             ForwardCpu(src[0]->CpuData(), buf[TensorType32f*BUFFER_COUNT]->CpuData(), dst[0]->CpuData());
+             ForwardCpu(src[0]->CpuData(), Base::Buf32f(buf, 0), dst[0]->CpuData());
         }
 
         void ForwardCpu(const T * src, T * buf, T * dst)

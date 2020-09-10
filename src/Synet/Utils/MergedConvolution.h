@@ -28,7 +28,7 @@
 
 namespace Synet
 {
-    template <class T> class MergedConvolution32f
+    class MergedConvolution32f
     {
     public:
         MergedConvolution32f()
@@ -41,10 +41,24 @@ namespace Synet
 
         virtual ~MergedConvolution32f()
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdRelease(_context), _context = NULL;
+#endif
         }
 
         void Init(size_t batch, const ConvParam * convs, size_t count, int add)
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_batch != batch || _srcH != convs[0].srcH || _srcW != convs[0].srcW)
+            {
+                _batch = batch, _srcH = convs[0].srcH, _srcW = convs[0].srcW;
+                if (_context)
+                    ::SimdRelease(_context), _context = NULL;
+                if (convs[1].dstH > 1 && convs[1].dstW > 1)
+                    _context = ::SimdSynetMergedConvolution32fInit(batch, (const SimdConvolutionParameters*)convs, count, (SimdBool)add);
+            }
+#endif
         }
 
         bool Enable()
@@ -54,20 +68,36 @@ namespace Synet
 
         size_t ExternalBufferSize() const 
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            return _context ? ::SimdSynetMergedConvolution32fExternalBufferSize(_context) : 0;
+#else
             return 1;
+#endif
         }
 
         size_t InternalBufferSize() const
         {
-            return 0;
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            return _context ? ::SimdSynetMergedConvolution32fInternalBufferSize(_context) : 0;
+#else
+            return 1;
+#endif
         }
 
-        void SetParams(const T * const * weight, int * internal, const T * const * bias, const T * const * params)
+        void SetParams(const float * const * weight, int * internal, const float* const * bias, const float* const * params)
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdSynetMergedConvolution32fSetParams(_context, weight, (::SimdBool*)internal, bias, params);
+#endif
         }
 
-        void Forward(const T * src, T * buf, T * dst)
+        void Forward(const float* src, float* buf, float* dst)
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdSynetMergedConvolution32fForward(_context, src, buf, dst);
+#endif
         }
 
     private:
@@ -75,45 +105,56 @@ namespace Synet
         size_t _batch, _srcH, _srcW;
     };
 
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-    template<> SYNET_INLINE MergedConvolution32f<float>::~MergedConvolution32f()
-    {
-        if (_context)
-            ::SimdRelease(_context);
-    }
+    //-------------------------------------------------------------------------
 
-    template<> SYNET_INLINE void MergedConvolution32f<float>::Init(size_t batch, const ConvParam * convs, size_t count, int add)
+    class MergedConvolution8i
     {
-        if (_batch != batch || _srcH != convs[0].srcH || _srcW != convs[0].srcW)
+    public:
+        MergedConvolution8i()
+            : _context(NULL)
+            , _batch(0)
+            , _srcH(0)
+            , _srcW(0)
         {
-            _batch = batch, _srcH = convs[0].srcH, _srcW = convs[0].srcW;
+        }
+
+        virtual ~MergedConvolution8i()
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
             if (_context)
                 ::SimdRelease(_context), _context = NULL;
-            if(convs[1].dstH > 1 && convs[1].dstW > 1)
-                _context = ::SimdSynetMergedConvolution32fInit(batch, (const SimdConvolutionParameters *)convs, count, (SimdBool)add);
-        }
-    }
-
-    template<> SYNET_INLINE size_t MergedConvolution32f<float>::ExternalBufferSize() const
-    {
-        return _context ? ::SimdSynetMergedConvolution32fExternalBufferSize(_context) : 0;
-    }
-
-    template<> SYNET_INLINE size_t MergedConvolution32f<float>::InternalBufferSize() const
-    {
-        return _context ? ::SimdSynetMergedConvolution32fInternalBufferSize(_context) : 0;
-    }
-
-    template<> SYNET_INLINE void MergedConvolution32f<float>::SetParams(const float * const * weight, int * internal, const float * const * bias, const float * const * params)
-    {
-        if (_context)
-            ::SimdSynetMergedConvolution32fSetParams(_context, weight, (::SimdBool*)internal, bias, params);
-    }
-
-    template<> SYNET_INLINE void MergedConvolution32f<float>::Forward(const float * src, float * buf, float * dst)
-    {
-        if (_context)
-            ::SimdSynetMergedConvolution32fForward(_context, src, buf, dst);
-    }
 #endif
+        }
+
+        SYNET_INLINE void Init(size_t batch, const ConvParam* convs, size_t count, int add, QuantizationMethod method)
+        {
+        }
+
+        SYNET_INLINE bool Enable() const
+        {
+            return _context != NULL;
+        }
+
+        SYNET_INLINE size_t ExternalBufferSize() const
+        {
+            return 0;
+        }
+
+        SYNET_INLINE size_t InternalBufferSize() const
+        {
+            return 0;
+        }
+
+        SYNET_INLINE void SetParams(const float* const* weight, int* internal, const float* const* bias, const float* const* params, const float* const* stats)
+        {
+        }
+
+        SYNET_INLINE void Forward(const uint8_t* src, uint8_t* buf, uint8_t* dst)
+        {
+        }
+
+    private:
+        void* _context;
+        size_t _batch, _srcH, _srcW;
+    };
 }

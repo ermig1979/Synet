@@ -197,7 +197,7 @@ namespace Synet
                 _internal[i] = 0;
             }
 
-            _add = _count > 2 && p.add() ? 1 : 0;
+            _add = !this->Is8i() && _count ==3 && p.add() ? 1 : 0;
             _batch = src[0]->Axis(0);
 
             Reshape(src[0], buf, dst[0]);

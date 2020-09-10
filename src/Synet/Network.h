@@ -50,6 +50,7 @@
 #include "Synet/Layers/LogLayer.h"
 #include "Synet/Layers/LrnLayer.h"
 #include "Synet/Layers/MergedConvolution32fLayer.h"
+#include "Synet/Layers/MergedConvolution8iLayer.h"
 #include "Synet/Layers/MetaLayer.h"
 #include "Synet/Layers/NormalizeLayer.h"
 #include "Synet/Layers/PadLayer.h"
@@ -962,9 +963,9 @@ namespace Synet
             case LayerTypeLog: return new LogLayer<T>(param);
             case LayerTypeLrn: return new LrnLayer<T>(param);
             case LayerTypeMergedConvolution: 
-                //if (param.mergedConvolution().conv()[0].quantizationLevel() == TensorType8i)
-                //    return new MergedConvolution8iLayer<T>(param, method);
-                //else
+                if (param.mergedConvolution().conv()[0].quantizationLevel() == TensorType8i)
+                    return new MergedConvolution8iLayer<T>(param, method);
+                else
                     return new MergedConvolution32fLayer<T>(param);
             case LayerTypeMeta: return new MetaLayer<T>(param);
             case LayerTypeNormalize: return new NormalizeLayer<T>(param);

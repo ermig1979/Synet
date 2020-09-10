@@ -347,12 +347,11 @@ namespace Synet
 
     private:
         QuantizationMethod _method;
-        bool _is8i, _src8u, _dst8u;
+        bool _src8u, _dst8u;
         Converter _srcCvt, _dstCvt;
-
-        Convolution8i _convolution8i;
-
         Tensor8i _weight8i;
         Tensor32f _norm32f, _bias32f;
+
+        Convolution8i _convolution8i;
     };
 }
