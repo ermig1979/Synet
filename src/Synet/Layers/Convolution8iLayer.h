@@ -148,6 +148,8 @@ namespace Synet
                         src32f += alg.sSize;
                     }
                     ForwardCpu(src8u, buf8u, sum32i, dst32f);
+                    if (_src8u)
+                        src8u += alg.sSize;
                     if (_dst8u)
                     {
                         _dstCvt.Convert(dst32f, dst8u);
@@ -155,8 +157,6 @@ namespace Synet
                     }
                     else
                         dst32f += alg.dSize;
-                    if (_src8u)
-                        src8u += alg.sSize;
                 }
             }
         }

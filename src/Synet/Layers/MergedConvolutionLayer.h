@@ -152,81 +152,84 @@ namespace Synet
 
             const MergedConvolutionParam & p = this->Param().mergedConvolution();
             const ConvolutionParam * conv = p.conv().data();
-            _count = p.conv().size();
-            assert(_count >= Detail::MCC_MIN && _count <= Detail::MCC_MAX);
+            AlgParam& a = _alg;
+            a.count = p.conv().size();
+            assert(a.count >= Detail::MCC_MIN && a.count <= Detail::MCC_MAX);
             const Tensors & weight = this->Weight();
 
-            for (size_t i = 0, next = 0; i < _count; ++i)
+            for (size_t i = 0, next = 0; i < a.count; ++i)
             {
-                _conv[i].Set(conv[i]);
+                a.conv[i].Set(conv[i]);
                 if(i)
-                    _conv[i].Set(_conv[i - 1], true);
+                    a.conv[i].Set(a.conv[i - 1], true);
                 else
-                    _conv[i].Set(*src[0], *dst[0], true);
+                    a.conv[i].Set(*src[0], *dst[0], true);
 
-                _index[i] = next++;
-                const Tensor & w = weight[_index[i]];
-                assert(w.Shape() == _conv[i].WeightShape(true, true) && w.Format() == src[0]->Format());
-                _weight[i] = w.CpuData();
+                a.index[i] = next++;
+                const Tensor & w = weight[a.index[i]];
+                assert(w.Shape() == a.conv[i].WeightShape(true, true) && w.Format() == src[0]->Format());
+                a.weight[i] = w.CpuData();
 
-                _biasTerm[i] = conv[i].biasTerm();
-                if (_biasTerm[i])
+                a.biasTerm[i] = conv[i].biasTerm();
+                if (a.biasTerm[i])
                 {
                     const Tensor & b = weight[next++];
-                    assert(b.Size() == _conv[i].dstC);
-                    _bias[i] = b.CpuData();
+                    assert(b.Size() == a.conv[i].dstC);
+                    a.bias[i] = b.CpuData();
                 }
                 else
-                    _bias[i] = NULL;
+                    a.bias[i] = NULL;
 
-                if (_conv[i].activation == ActivationFunctionTypePrelu)
+                if (a.conv[i].activation == ActivationFunctionTypePrelu)
                 {
                     const Tensor & p = weight[next++];
                     if (p.Size() == 1)
-                        _conv[i].activation = ActivationFunctionTypeLeakyRelu;
+                        a.conv[i].activation = ActivationFunctionTypeLeakyRelu;
                     else
-                        assert(p.Size() == _conv[i].dstC);
-                    _params[i] = p.CpuData();
+                        assert(p.Size() == a.conv[i].dstC);
+                    a.params[i] = p.CpuData();
                 }
                 else
                 {
-                    _actParam[i][0] = conv[i].activationParam0();
-                    _actParam[i][1] = conv[i].activationParam1();
-                    _params[i] = _actParam[i];
+                    a.actParam[i][0] = conv[i].activationParam0();
+                    a.actParam[i][1] = conv[i].activationParam1();
+                    a.params[i] = a.actParam[i];
                 }
-                _internal[i] = 0;
+                a.internal[i] = 0;
             }
 
-            _add = (!this->Is8i() && _count == 3 && p.add()) ? 1 : 0;
-            _batch = src[0]->Axis(0);
+            a.add = (!this->Is8i() && a.count == 3 && p.add()) ? 1 : 0;
+            a.batch = src[0]->Axis(0);
 
             Reshape(src[0], buf, dst[0]);
 
-            _sSize = src[0]->Size(1);
-            _dSize = dst[0]->Size(1);
-            if(_add)
-                assert(_sSize == _dSize);
+            a.sSize = src[0]->Size(1);
+            a.dSize = dst[0]->Size(1);
+            if(a.add)
+                assert(a.sSize == a.dSize);
 
             std::stringstream desc;
-            desc << _count << ": " << _batch << "x" << _conv[0].srcC << "x" << _conv[0].srcH << "x" << _conv[0].srcW;
-            for(size_t i = 0; i < _count; ++i)
-                desc << "-" << (_conv[i].IsDepthwise() ? String("") : ValueToString(_conv[i].dstC) + "x") << _conv[i].kernelY << "x" << _conv[i].strideY;
+            desc << a.count << ": " << a.batch << "x" << a.conv[0].srcC << "x" << a.conv[0].srcH << "x" << a.conv[0].srcW;
+            for(size_t i = 0; i < a.count; ++i)
+                desc << "-" << (a.conv[i].IsDepthwise() ? String("") : ValueToString(a.conv[i].dstC) + "x") << a.conv[i].kernelY << "x" << a.conv[i].strideY;
             desc << " " << (this->Is8i() ? "int8" : "fp32");
             this->UsePerfStat(desc.str(), Flop());
         }
 
         virtual void CompactWeight()
         {
-            for(size_t i = 0; i < _count; ++i)
-                if (_internal[i])
-                    ((Tensor&)this->Weight()[_index[i]]).Clear();
+            const AlgParam& a = _alg;
+            for(size_t i = 0; i < a.count; ++i)
+                if (a.internal[i])
+                    ((Tensor&)this->Weight()[a.index[i]]).Clear();
         }
 
         virtual int64_t Flop() const
         {
+            const AlgParam& a = _alg;
             int64_t flop = 0;
-            for (size_t i = 0; i < _count; ++i)
-                flop += _batch * _conv[i].kernelY * _conv[i].kernelX * _conv[i].srcC * _conv[i].dstH * _conv[i].dstW * _conv[i].dstC / _conv[i].group * 2;
+            for (size_t i = 0; i < a.count; ++i)
+                flop += a.batch * a.conv[i].kernelY * a.conv[i].kernelX * a.conv[i].srcC * a.conv[i].dstH * a.conv[i].dstW * a.conv[i].dstC / a.conv[i].group * 2;
             return flop;
         }
 
@@ -234,12 +237,14 @@ namespace Synet
 
         virtual void Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst) = 0;
 
-        bool _biasTerm[Detail::MCC_MAX];
-        int _internal[Detail::MCC_MAX], _add;
-        size_t _index[Detail::MCC_MAX];
-        ConvParam _conv[Detail::MCC_MAX];
-        size_t _sSize, _dSize, _batch, _count;
-        float _actParam[Detail::MCC_MAX][2];
-        const Type * _weight[Detail::MCC_MAX], * _bias[Detail::MCC_MAX], * _params[Detail::MCC_MAX];
+        struct AlgParam
+        {
+            bool biasTerm[Detail::MCC_MAX];
+            int internal[Detail::MCC_MAX], add;
+            size_t index[Detail::MCC_MAX], sSize, dSize, batch, count;
+            ConvParam conv[Detail::MCC_MAX];
+            float actParam[Detail::MCC_MAX][2];
+            const float * weight[Detail::MCC_MAX], * bias[Detail::MCC_MAX], * params[Detail::MCC_MAX];
+        } _alg;
     };
 }

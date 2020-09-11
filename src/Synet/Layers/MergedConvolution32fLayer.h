@@ -118,19 +118,20 @@ namespace Synet
         }
 
     protected:
+        typedef typename MergedConvolutionLayer<T>::AlgParam AlgParam;
 
         virtual void Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
         {
-            const ConvParam* conv = this->_conv;
+            AlgParam& a = this->_alg;
             size_t directIdx, depthwiseIdx;
-            if (conv[0].group == 1 && conv[1].IsDepthwise())
+            if (a.conv[0].group == 1 && a.conv[1].IsDepthwise())
                 directIdx = 0, depthwiseIdx = 1;
-            else if (this->_count == 2 && conv[0].IsDepthwise() && conv[1].Is1x1())
+            else if (a.count == 2 && a.conv[0].IsDepthwise() && a.conv[1].Is1x1())
                 directIdx = 1, depthwiseIdx = 0;
             else
                 assert(0);
 
-            switch (conv[directIdx].activation)
+            switch (a.conv[directIdx].activation)
             {
             case ActivationFunctionTypeIdentity: _convolution[directIdx] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeIdentity, 0>; break;
             case ActivationFunctionTypeRelu: _convolution[directIdx] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRelu, 0>; break;
@@ -142,7 +143,7 @@ namespace Synet
             default: assert(0);
             }
 
-            switch (conv[depthwiseIdx].activation)
+            switch (a.conv[depthwiseIdx].activation)
             {
             case ActivationFunctionTypeIdentity: _convolution[depthwiseIdx] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeIdentity>; break;
             case ActivationFunctionTypeRelu: _convolution[depthwiseIdx] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeRelu>; break;
@@ -154,12 +155,12 @@ namespace Synet
             default: assert(0);
             }
 
-            if (this->_count > 2)
+            if (a.count > 2)
             {
-                assert(conv[2].Is1x1());
-                if (this->_add)
+                assert(a.conv[2].Is1x1());
+                if (a.add)
                 {
-                    switch (conv[2].activation)
+                    switch (a.conv[2].activation)
                     {
                     case ActivationFunctionTypeIdentity: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeIdentity, 1>; break;
                     case ActivationFunctionTypeRelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRelu, 1>; break;
@@ -173,7 +174,7 @@ namespace Synet
                 }
                 else
                 {
-                    switch (conv[2].activation)
+                    switch (a.conv[2].activation)
                     {
                     case ActivationFunctionTypeIdentity: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeIdentity, 0>; break;
                     case ActivationFunctionTypeRelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeRelu, 0>; break;
@@ -187,20 +188,20 @@ namespace Synet
                 }
             }
 
-            const ConvParam& back = conv[this->_count - 1];
-            dst->Reshape(Shp(this->_batch, back.dstH, back.dstW, back.dstC), src->Format());
+            const ConvParam& back = a.conv[a.count - 1];
+            dst->Reshape(Shp(a.batch, back.dstH, back.dstW, back.dstC), src->Format());
 
-            _mergedConvolution32f.Init(this->_batch, conv, this->_count, this->_add);
+            _mergedConvolution32f.Init(a.batch, a.conv, a.count, a.add);
             if (_mergedConvolution32f.Enable())
             {
                 Base::Extend32f(buf, 0, Shp(_mergedConvolution32f.ExternalBufferSize()));
-                _mergedConvolution32f.SetParams(this->_weight, this->_internal, this->_bias, this->_params);
+                _mergedConvolution32f.SetParams(a.weight, a.internal, a.bias, a.params);
             }
             else
             {
-                Base::Extend32f(buf, 0, conv[0].DstShape(1));
-                if (this->_count > 2)
-                    Base::Extend32f(buf, 1, conv[1].DstShape(1));
+                Base::Extend32f(buf, 0, a.conv[0].DstShape(1));
+                if (a.count > 2)
+                    Base::Extend32f(buf, 1, a.conv[1].DstShape(1));
             }
         }
 
@@ -215,24 +216,21 @@ namespace Synet
                 _mergedConvolution32f.Forward(src, buf0, dst);
             else
             {
-                const ConvParam* conv = this->_conv;
-                const float** weight = this->_weight;
-                const float** bias = this->_bias;
-                const float** params = this->_params;
-                for (size_t b = 0; b < this->_batch; ++b)
+                const AlgParam& a = this->_alg;
+                for (size_t b = 0; b < a.batch; ++b)
                 {
-                    _convolution[0](src, conv[0], weight[0], bias[0], params[0], buf0);
-                    if (this->_count > 2)
+                    _convolution[0](src, a.conv[0], a.weight[0], a.bias[0], a.params[0], buf0);
+                    if (a.count > 2)
                     {
-                        _convolution[1](buf0, conv[1], weight[1], bias[1], params[1], buf1);
-                        if (this->_add)
-                            memcpy(dst, src, sizeof(T) * this->_dSize);
-                        _convolution[2](buf1, conv[2], weight[2], bias[2], params[2], dst);
+                        _convolution[1](buf0, a.conv[1], a.weight[1], a.bias[1], a.params[1], buf1);
+                        if (a.add)
+                            memcpy(dst, src, sizeof(T) * a.dSize);
+                        _convolution[2](buf1, a.conv[2], a.weight[2], a.bias[2], a.params[2], dst);
                     }
                     else
-                        _convolution[1](buf0, conv[1], weight[1], bias[1], params[1], dst);
-                    src += this->_sSize;
-                    dst += this->_dSize;
+                        _convolution[1](buf0, a.conv[1], a.weight[1], a.bias[1], a.params[1], dst);
+                    src += a.sSize;
+                    dst += a.dSize;
                 }
             }
         }

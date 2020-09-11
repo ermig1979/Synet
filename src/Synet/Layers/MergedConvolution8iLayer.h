@@ -59,21 +59,23 @@ namespace Synet
         }
 
     protected:
+        typedef typename MergedConvolutionLayer<T>::AlgParam AlgParam;
 
         virtual void Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
         {
-            assert(this->_add == 0);
-
-            const ConvParam * conv = this->_conv;
+            AlgParam& a = this->_alg;
+            assert(a.add == 0);
+            const ConvParam& back = a.conv[a.count - 1];
             _src8u = src->GetType() == TensorType8u;
             _dst8u = dst->GetType() == TensorType8u;
-            Shape shape = conv[this->_count - 1].DstShape(this->_batch);
+            _dw0 = a.conv[0].IsDepthwise();
+            Shape shape = back.DstShape(a.batch);
             if (_dst8u)
                 dst->As8u().Reshape(shape, src->Format());
             else
                 dst->As32f().Reshape(shape, src->Format());
 
-            _mergedConvolution8i.Init(this->_batch, this->_conv, this->_count, _method);
+            _mergedConvolution8i.Init(a.batch, a.conv, a.count, _method);
             if (_mergedConvolution8i.Enable())
             {
                 Base::Extend8u(buf, 0, Shp(_mergedConvolution8i.ExternalBufferSize()));
@@ -84,52 +86,93 @@ namespace Synet
                     this->Stats(1).empty() ? NULL : this->Stats(1).back()->max.data(),
                     this->Stats(2).empty() ? NULL : this->Stats(2)[0]->min.data(),
                     this->Stats(2).empty() ? NULL : this->Stats(2)[0]->max.data()};
-                _mergedConvolution8i.SetParams(this->_weight, this->_internal, this->_bias, this->_params, stats);
-
+                _mergedConvolution8i.SetParams(a.weight, a.internal, a.bias, a.params, stats);
             }
             else
             {
-                if (!conv[0].IsDepthwise())
+                if (_dw0)
+                {
+                    if (_src8u)
+                        Base::Extend32f(buf, 0, a.conv[0].SrcShape(1));
+                    Base::Extend32f(buf, 1, a.conv[0].DstShape(1));
+                    Base::Extend8u(buf, 0, a.conv[1].SrcShape(1));
+                    Base::Extend32i(buf, 0, a.conv[1].DstShape(1));
+                    a.internal[1] = 1;
+                }
+                else
                 {
                     if (!_src8u)
-                        Base::Extend8u(buf, 0, src->Shape());
-                    if(!conv[0].Is1x1())
-                        Base::Extend8u(buf, 1, Shp(conv[0].ImgSize()));
-                    Base::Extend32i(buf, 0, conv[0].DstShape(1));
-                    Base::Extend32f(buf, 0, conv[0].DstShape(1));
-                    if (this->_count == 3)
+                        Base::Extend8u(buf, 0, a.conv[0].SrcShape(1));
+                    if(!a.conv[0].Is1x1())
+                        Base::Extend8u(buf, 1, Shp(a.conv[0].ImgSize()));
+                    Base::Extend32i(buf, 0, a.conv[0].DstShape(1));
+                    Base::Extend32f(buf, 0, a.conv[0].DstShape(1));
+                    if (a.count == 3)
                     {
-                        Base::Extend32f(buf, 1, conv[1].DstShape(1));
-                        Base::Extend8u(buf, 0, conv[1].DstShape(1));
-                        Base::Extend32i(buf, 0, conv[2].DstShape(1));
+                        Base::Extend32f(buf, 1, a.conv[1].DstShape(1));
+                        Base::Extend8u(buf, 1, a.conv[1].DstShape(1));
+                        Base::Extend32i(buf, 0, a.conv[2].DstShape(1));
+                        a.internal[2] = 1;
                     }
-                    if(_dst8u)
-                        Base::Extend32f(buf, 1, shape, src->Format());//?
+                    a.internal[0] = 1;
                 }
-                if (_dst8u)
-                    Base::Extend32f(buf, 0, shape, src->Format());
+                if(_dst8u)
+                    Base::Extend32f(buf, 1, back.DstShape(1));
             //    Quantize();
             }
-            //alg.internal = 1;
         }
 
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-        }
-
-        void ForwardCpu(const T * src, T * buf, T * dst)
-        {
             if (_mergedConvolution8i.Enable())
-                _mergedConvolution8i.Forward(src, buf, dst);
+                _mergedConvolution8i.Forward(src[0]->RawCpuData(), Base::Buf8u(buf, 0), dst[0]->RawCpuData());
             else
             {
-
+                const AlgParam& a = this->_alg;
+                float* src32f = _src8u ? (_dw0 ? Base::Buf32f(buf, 0) : NULL) : src[0]->As32f().CpuData();
+                uint8_t* src8u = _src8u ? src[0]->As8u().CpuData() : (_dw0 ? NULL : Base::Buf8u(buf, 0));
+                uint8_t* buf8u = Base::Buf8u(buf, 1);
+                int32_t* sum32i = Base::Buf32i(buf, 0);
+                float* buf32f = Base::Buf32f(buf, 0);
+                float* dst32f = _dst8u ? Base::Buf32f(buf, 1) : dst[0]->As32f().CpuData();
+                uint8_t* dst8u = _dst8u ? dst[0]->As8u().CpuData() : NULL;
+                for (size_t b = 0; b < a.batch; ++b)
+                {
+                    if (!_src8u && !_dw0)
+                    {
+                        _srcCvt.Convert(src32f, src8u);
+                        src32f += a.sSize;
+                    }
+                    if (_src8u && _dw0)
+                    {
+                        _srcCvt.Convert(src8u, src32f);
+                        src8u += a.sSize;
+                    }
+                    //if(a.count == 3)
+                    //ForwardCpu(src8u, buf8u, buf32f, sum32i, dst32f);
+                    if (_src8u && !_dw0)
+                        src8u += a.sSize;
+                    if (!_src8u && _dw0)
+                        src32f += a.sSize;
+                    if (_dst8u)
+                    {
+                        _dstCvt.Convert(dst32f, dst8u);
+                        dst8u += a.dSize;
+                    }
+                    else
+                        dst32f += a.dSize;
+                }
             }
+        }
+
+        void ForwardCpuCdc(uint8_t* src, uint8_t* buf, int32_t* sum, float* dst)
+        {
+
         }
 
     private:
         QuantizationMethod _method;
-        bool _src8u, _dst8u;
+        bool _src8u, _dst8u, _dw0;
         Converter _srcCvt, _intCvt, _dstCvt;
         Tensor8i _weight8i[2];
         Tensor32f _norm32f[2], _bias32f[2];

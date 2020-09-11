@@ -170,5 +170,11 @@ namespace Synet
             //SYNET_PERF_FUNC();
             Detail::Convert<int32_t, uint8_t, float>(src, batch, channels, height, width, format, scale, shift, lower, upper, dst);
         }
+
+        SYNET_INLINE void Convert(const uint8_t* src, float* dst)
+        {
+            //SYNET_PERF_FUNC();
+            Detail::Convert<uint8_t, float, float>(src, batch, channels, height, width, format, scale, shift, lower, upper, dst);
+        }
     };
 }
