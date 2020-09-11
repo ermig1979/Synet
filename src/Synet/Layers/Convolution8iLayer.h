@@ -116,12 +116,12 @@ namespace Synet
             else
             {
                 if (!_src8u)
-                    Base::Extend8u(buf, 0, src->Shape());
+                    Base::Extend8u(buf, 0, conv.SrcShape(1));
                 if(!conv.Is1x1())
                     Base::Extend8u(buf, 1, Shp(conv.ImgSize()));
-                Base::Extend32i(buf, 0, Shp(1, shape[1], shape[2], shape[3]), src->Format());
+                Base::Extend32i(buf, 0, conv.DstShape(1));
                 if(_dst8u)
-                    Base::Extend32f(buf, 0, shape, src->Format());
+                    Base::Extend32f(buf, 0, conv.DstShape(1));
                 Quantize();
             }
             alg.internal = 1;
@@ -133,19 +133,31 @@ namespace Synet
                 _convolution8i.Forward(src[0]->RawCpuData(), Base::Buf8u(buf, 0), dst[0]->RawCpuData());
             else
             {
+                const AlgParam& alg = this->_alg;
+                const float* src32f = _src8u ? NULL : src[0]->As32f().CpuData();
                 uint8_t* src8u = _src8u ? src[0]->As8u().CpuData() : Base::Buf8u(buf, 0);
                 uint8_t* buf8u = Base::Buf8u(buf, 1);
                 int32_t* sum32i = Base::Buf32i(buf, 0);
-                if (!_src8u)
-                    _srcCvt.Convert(src[0]->As32f().CpuData(), src8u);
-                if (_dst8u)
+                float* dst32f = _dst8u ? Base::Buf32f(buf, 0) : dst[0]->As32f().CpuData();
+                uint8_t* dst8u = _dst8u ? dst[0]->As8u().CpuData() : NULL;
+                for (size_t b = 0; b < alg.batch; ++b)
                 {
-                    float * dst32f = Base::Buf32f(buf, 0);
+                    if(!_src8u)
+                    {
+                        _srcCvt.Convert(src32f, src8u);
+                        src32f += alg.sSize;
+                    }
                     ForwardCpu(src8u, buf8u, sum32i, dst32f);
-                    _dstCvt.Convert(dst32f, dst[0]->As8u().CpuData());
+                    if (_dst8u)
+                    {
+                        _dstCvt.Convert(dst32f, dst8u);
+                        dst8u += alg.dSize;
+                    }
+                    else
+                        dst32f += alg.dSize;
+                    if (_src8u)
+                        src8u += alg.sSize;
                 }
-                else
-                    ForwardCpu(src8u, buf8u, sum32i, dst[0]->As32f().CpuData());
             }
         }
 
@@ -207,8 +219,8 @@ namespace Synet
                 wLo = QUANT_IE_COMP_WEIGHT_MIN, wUp = QUANT_IE_COMP_WEIGHT_MAX, sLo = QUANT_IE_COMP_SRC_U8_MIN, sUp = QUANT_IE_COMP_SRC_U8_MAX;
             else if (_method == QuantizationMethodSymmetricNarrowed)
                 wLo = QUANT_SYMM_NARR_WEIGHT_MIN, wUp = QUANT_SYMM_NARR_WEIGHT_MAX, sLo = QUANT_SYMM_NARR_SRC_U8_MIN, sUp = QUANT_SYMM_NARR_SRC_U8_MAX;
-            _srcCvt.Init(alg.batch, conv.srcC, conv.srcH, conv.srcW, (TensorFormat)alg.trans, statS.scale32fTo8u.data(), statS.shift32fTo8u.data(), _method);
-            _dstCvt.Init(alg.batch, conv.dstC, conv.dstH, conv.dstW, (TensorFormat)alg.trans, statD.scale32fTo8u.data(), statD.shift32fTo8u.data(), _method);
+            _srcCvt.Init(1, conv.srcC, conv.srcH, conv.srcW, (TensorFormat)alg.trans, statS.scale32fTo8u.data(), statS.shift32fTo8u.data(), _method);
+            _dstCvt.Init(1, conv.dstC, conv.dstH, conv.dstW, (TensorFormat)alg.trans, statD.scale32fTo8u.data(), statD.shift32fTo8u.data(), _method);
             for (size_t g = 0; g < G; ++g)
             {
                 for (size_t d = 0; d < D; ++d)
@@ -285,64 +297,59 @@ namespace Synet
             const int8_t* weight = _weight8i.CpuData();
             const float* norm = _norm32f.CpuData();
             const float* bias = _bias32f.CpuData();
-            for (size_t b = 0; b < alg.batch; ++b)
+            const uint8_t* tmp = src;
+            if (!alg.is1x1)
             {
-                const uint8_t* tmp = src;
-                if (!alg.is1x1)
-                {
-                    if (alg.trans)
-                        Synet::ImgToRow(tmp, conv.srcH, conv.srcW, conv.srcC, conv.kernelY, conv.kernelX,
-                            conv.padY, conv.padX, conv.padH, conv.padW, conv.strideY, conv.strideX, conv.dilationY, conv.dilationX, conv.group, zero, buf);
-                    else
-                        Synet::ImgToCol(tmp, conv.srcC, conv.srcH, conv.srcW, conv.kernelY, conv.kernelX,
-                            conv.padY, conv.padX, conv.padH, conv.padW, conv.strideY, conv.strideX, conv.dilationY, conv.dilationX, zero, buf);
-                    tmp = buf;
-                }
                 if (alg.trans)
-                {
-                    assert(conv.group == 1 || conv.group == conv.srcC);
-                    if (conv.group == 1)
-                        Synet::CpuGemm8iNN(alg.siS, alg.siD, conv.kernelY * conv.kernelX, conv.srcC, tmp, alg.ldS, weight, alg.ldW, sum, alg.ldD, overflow16i);
-                    else
-                        for (size_t g = 0; g < conv.group; ++g)
-                            Synet::CpuGemmNN(alg.siS, alg.siD, alg.siW, tmp + alg.grS * g, alg.ldS, weight + alg.grW * g, alg.ldW, sum + alg.grD * g, alg.ldD);
-                }
+                    Synet::ImgToRow(tmp, conv.srcH, conv.srcW, conv.srcC, conv.kernelY, conv.kernelX,
+                        conv.padY, conv.padX, conv.padH, conv.padW, conv.strideY, conv.strideX, conv.dilationY, conv.dilationX, conv.group, zero, buf);
                 else
-                {
-                    if (conv.group == 1)
-                        Synet::CpuGemm8iNN(alg.siD, alg.siS, conv.srcC, conv.kernelY * conv.kernelX, weight, alg.ldW, tmp, alg.ldS, sum, alg.ldD, overflow16i);
-                    else
-                        for (size_t g = 0; g < conv.group; ++g)
-                            Synet::CpuGemmNN(alg.siD, alg.siS, alg.siW, weight + alg.grW * g, alg.ldW, tmp + alg.grS * g, alg.ldS, sum + alg.grD * g, alg.ldD);
-                }
-                Detail::Convert<int32_t, float, float>(sum, 1, conv.dstC, conv.dstH, conv.dstW, conv.dstF, norm, bias, 0, 0, dst);
-                switch (conv.activation)
-                {
-                case ActivationFunctionTypeIdentity:
-                    break;
-                case ActivationFunctionTypeRelu:
-                    CpuRelu(dst, alg.dSize, 0.0f, dst);
-                    break;
-                case ActivationFunctionTypeLeakyRelu:
-                    CpuRelu(dst, alg.dSize, alg.params[0], dst);
-                    break;
-                case ActivationFunctionTypeRestrictRange:
-                    CpuRestrictRange(dst, alg.dSize, alg.params[0], alg.params[1], dst);
-                    break;
-                case ActivationFunctionTypePrelu:
-                    Detail::PreluLayerForwardCpu(dst, this->Weight().back().CpuData(), conv.dstC, conv.dstH * conv.dstW, dst, alg.trans);
-                    break;
-                case ActivationFunctionTypeElu:
-                    CpuElu(dst, alg.dSize, alg.params[0], dst);
-                    break;
-                case ActivationFunctionTypeHswish:
-                    Detail::HswishLayerForwardCpu(dst, alg.dSize, alg.params[0], alg.params[1], dst);
-                    break;
-                default:
-                    assert(0);
-                }
-                src += alg.sSize;
-                dst += alg.dSize;
+                    Synet::ImgToCol(tmp, conv.srcC, conv.srcH, conv.srcW, conv.kernelY, conv.kernelX,
+                        conv.padY, conv.padX, conv.padH, conv.padW, conv.strideY, conv.strideX, conv.dilationY, conv.dilationX, zero, buf);
+                tmp = buf;
+            }
+            if (alg.trans)
+            {
+                assert(conv.group == 1 || conv.group == conv.srcC);
+                if (conv.group == 1)
+                    Synet::CpuGemm8iNN(alg.siS, alg.siD, conv.kernelY * conv.kernelX, conv.srcC, tmp, alg.ldS, weight, alg.ldW, sum, alg.ldD, overflow16i);
+                else
+                    for (size_t g = 0; g < conv.group; ++g)
+                        Synet::CpuGemmNN(alg.siS, alg.siD, alg.siW, tmp + alg.grS * g, alg.ldS, weight + alg.grW * g, alg.ldW, sum + alg.grD * g, alg.ldD);
+            }
+            else
+            {
+                if (conv.group == 1)
+                    Synet::CpuGemm8iNN(alg.siD, alg.siS, conv.srcC, conv.kernelY * conv.kernelX, weight, alg.ldW, tmp, alg.ldS, sum, alg.ldD, overflow16i);
+                else
+                    for (size_t g = 0; g < conv.group; ++g)
+                        Synet::CpuGemmNN(alg.siD, alg.siS, alg.siW, weight + alg.grW * g, alg.ldW, tmp + alg.grS * g, alg.ldS, sum + alg.grD * g, alg.ldD);
+            }
+            Detail::Convert<int32_t, float, float>(sum, 1, conv.dstC, conv.dstH, conv.dstW, conv.dstF, norm, bias, 0, 0, dst);
+            switch (conv.activation)
+            {
+            case ActivationFunctionTypeIdentity:
+                break;
+            case ActivationFunctionTypeRelu:
+                CpuRelu(dst, alg.dSize, 0.0f, dst);
+                break;
+            case ActivationFunctionTypeLeakyRelu:
+                CpuRelu(dst, alg.dSize, alg.params[0], dst);
+                break;
+            case ActivationFunctionTypeRestrictRange:
+                CpuRestrictRange(dst, alg.dSize, alg.params[0], alg.params[1], dst);
+                break;
+            case ActivationFunctionTypePrelu:
+                Detail::PreluLayerForwardCpu(dst, this->Weight().back().CpuData(), conv.dstC, conv.dstH * conv.dstW, dst, alg.trans);
+                break;
+            case ActivationFunctionTypeElu:
+                CpuElu(dst, alg.dSize, alg.params[0], dst);
+                break;
+            case ActivationFunctionTypeHswish:
+                Detail::HswishLayerForwardCpu(dst, alg.dSize, alg.params[0], alg.params[1], dst);
+                break;
+            default:
+                assert(0);
             }
         }
 

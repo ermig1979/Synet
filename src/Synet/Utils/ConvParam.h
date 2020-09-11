@@ -168,6 +168,14 @@ namespace Synet
             }
         }
 
+        Shape SrcShape(size_t batch) const
+        {
+            if (srcF == TensorFormatNhwc)
+                return Shp(batch, srcH, srcW, srcC);
+            else
+                return Shp(batch, srcC, srcH, srcW);
+        }
+
         Shape DstShape(size_t batch) const
         {
             if (dstF == TensorFormatNhwc)
