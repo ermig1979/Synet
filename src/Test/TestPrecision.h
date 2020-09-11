@@ -50,6 +50,7 @@ namespace Test
 			String logName;
 			bool consoleSilence;
 			int testThreads;
+			int batchSize;
 
 			mutable volatile bool result;
 			mutable size_t memoryUsage, testNumber;
@@ -71,6 +72,7 @@ namespace Test
 				logName = GetArg("-ln", "", false);
 				consoleSilence = FromString<bool>(GetArg("-cs", "0"));
 				testThreads = FromString<int>(GetArg("-tt", "1"));
+				batchSize = FromString<int>(GetArg("-bs", "1"));
 			}
 
 			~Options()
@@ -115,6 +117,11 @@ namespace Test
 				return Synet::RestrictRange<size_t>(testThreads, 1, std::thread::hardware_concurrency());
 			}
 
+			size_t BatchSize() const
+			{
+				return Synet::Max<size_t>(batchSize, 1);
+			}
+
 			String Description() const
 			{
 				std::stringstream ss;
@@ -123,6 +130,7 @@ namespace Test
 				ss << ", model: " << GetNameByPath(testModel);
 				ss << ", list: " << GetNameByPath(testList);
 				ss << ", threads: " << TestThreads();
+				ss << ", batch: " << BatchSize();
 				return ss.str();
 			}
 		};
@@ -156,14 +164,12 @@ namespace Test
 		struct Object
 		{
 			String name, path;
-			Tensors input;
 			Tensor desc;
 		};
-		typedef std::shared_ptr<Object> ObjectPtr;
 
 		struct Test
 		{
-			Object first, second;
+			Object objects[2];
 			float distance;
 		};
 		typedef std::vector<Test> Tests;
@@ -172,6 +178,8 @@ namespace Test
 		
 		struct Thread
 		{
+			NetworkPtr network;
+			Tensors input, output;
 			size_t begin, end, current;
 			std::thread thread;
 			Thread() : begin(0), end(0), current(0) {}
@@ -180,7 +188,6 @@ namespace Test
 
 		const Options& _options;
 		TestParamHolder _param;
-		NetworkPtrs _networks;
 		Tests _tests;
 		Threads _threads;
 		size_t _progressMessageSizeMax;
@@ -228,32 +235,38 @@ namespace Test
 				std::cout << "Weight file '" << _options.testWeight << "' is not exist!" << std::endl;
 				return false;
 			}
-			_networks.resize(_options.testThreads);
-			for (size_t i = 0; i < _networks.size(); ++i)
+			_threads.resize(_options.testThreads);
+			for (size_t t = 0; t < _threads.size(); ++t)
 			{
+				NetworkPtr& network = _threads[t].network;
 				if (_options.framework == "synet")
-					_networks[i] = std::make_shared<SynetNetwork>();
+					network = std::make_shared<SynetNetwork>();
 #ifdef SYNET_TEST_FIRST_RUN
 				else if (_options.framework == "inference_engine")
-					_networks[i] = std::make_shared<InferenceEngineNetwork>();
+					network = std::make_shared<InferenceEngineNetwork>();
 #endif
 				else
 				{
 					std::cout << "Unknown framework: " << _options.framework << "!" << std::endl;
 					return false;
 				}
-				Network::Options options(_options.outputDirectory, 1, true, 1, 0, 0.5f);
-				if (!_networks[i]->Init(_options.testModel, _options.testWeight, options, _param()))
+				Network::Options options(_options.outputDirectory, 1, true, _options.batchSize, 0, 0.5f);
+				if (!network->Init(_options.testModel, _options.testWeight, options, _param()))
 				{
-					std::cout << "Can't load " << _networks[i]->Name() << " from '" << _options.testModel << "' and '" << _options.testWeight << "' !" << std::endl;
+					std::cout << "Can't load " << network->Name() << " from '" << _options.testModel << "' and '" << _options.testWeight << "' !" << std::endl;
 					return false;
 				}
-				Shape shape = _networks[i]->SrcShape(0);
+				Shape shape = network->SrcShape(0);
 				if (shape.size() != 4 || (shape[1] != 3 && shape[1] != 1))
 				{
-					std::cout << "Wrong " << _networks[i]->Name() << " classifier input shape: " << Synet::Detail::DebugPrint(shape) << " !" << std::endl;
+					std::cout << "Wrong " << network->Name() << " classifier input shape: " << Synet::Detail::DebugPrint(shape) << " !" << std::endl;
 					return false;
 				}
+				_threads[t].input.resize(1, Tensor(shape));
+				if (_param().lower().size() == 1)
+					_param().lower().resize(shape[1], _param().lower()[0]);
+				if (_param().upper().size() == 1)
+					_param().upper().resize(shape[1], _param().upper()[0]);
 			}
 			return true;
 		}
@@ -311,43 +324,37 @@ namespace Test
 				int first, second;
 				if (i < size)
 				{
-					ss >> _tests[i].first.name >> first >> second;
-					_tests[i].second.name = _tests[i].first.name;
+					ss >> _tests[i].objects[0].name >> first >> second;
+					_tests[i].objects[1].name = _tests[i].objects[0].name;
 				}
 				else
-					ss >> _tests[i].first.name >> first >> _tests[i].second.name >> second;
-				if (_tests[i].first.name.empty() || _tests[i].second.name.empty() || first == 0 || second == 0)
+					ss >> _tests[i].objects[0].name >> first >> _tests[i].objects[1].name >> second;
+				if (_tests[i].objects[0].name.empty() || _tests[i].objects[1].name.empty() || first == 0 || second == 0)
 				{
 					std::cout << "Can't parse " << i + 2 << " file line!" << std::endl;
 					return false;
 				}
-				if (!SetPath(_tests[i].first.name, first, _tests[i].first.path))
+				if (!SetPath(_tests[i].objects[0].name, first, _tests[i].objects[0].path))
 					return false;
-				if (!SetPath(_tests[i].second.name, second, _tests[i].second.path))
+				if (!SetPath(_tests[i].objects[1].name, second, _tests[i].objects[1].path))
 					return false;
 			}
 			ifs.close();
 			return true;
 		}
 
-		bool CalculateFaceDescriptor(Object& object, size_t thread)
+		bool SetInput(const String & path, Tensor & input, size_t index)
 		{
 			TEST_PERF_FUNC();
 
 			View original;
-			if (!LoadImage(object.path, original))
+			if (!LoadImage(path, original))
 			{
-				std::cout << "Can't read '" << object.path << "' image!" << std::endl;
+				std::cout << "Can't read '" << path << "' image!" << std::endl;
 				return false;
 			}
-			Shape shape = _networks[thread]->SrcShape(0);
-			object.input.resize(1, Tensor(shape));
-			Floats lower = _param().lower(), upper = _param().upper();
-			if (lower.size() == 1)
-				lower.resize(shape[1], lower[0]);
-			if (upper.size() == 1)
-				upper.resize(shape[1], upper[0]);
 
+			const Shape& shape = input.Shape();
 			View converted(original.Size(), shape[1] == 1 ? View::Gray8 : View::Bgr24);
 			Simd::Convert(original, converted);
 			View resized(Size(shape[3], shape[2]), converted.format);
@@ -362,35 +369,65 @@ namespace Test
 			}
 			else
 				channels[0] = resized;
-			float * input = object.input[0].CpuData();
+
+			float* ptr = input.CpuData(Shp(index, 0, 0, 0));
 			for (size_t c = 0; c < channels.size(); ++c)
 			{
 				for (size_t y = 0; y < channels[c].height; ++y)
 				{
 					const uint8_t* row = channels[c].Row<uint8_t>(y);
-					::SimdUint8ToFloat32(row, channels[c].width, &lower[c], &upper[c], input);
-					input += channels[c].width;
+					::SimdUint8ToFloat32(row, channels[c].width, &_param().lower()[c], &_param().upper()[c], ptr);
+					ptr += channels[c].width;
 				}
 			}
-			object.desc.Clone(_networks[thread]->Predict(object.input)[0]);
+
 			return true;
 		}
 
-		bool CalculateDistance(Test& test)
+		bool CalculateFaceDescriptors(Test* tests, size_t batch, size_t index, size_t thread)
 		{
-			SimdCosineDistance32f(test.first.desc.CpuData(), test.second.desc.CpuData(), test.first.desc.Size(), &test.distance);
+			TEST_PERF_FUNC();
+
+			Thread& t = _threads[thread];
+			for (size_t b = 0; b < batch; ++b)
+			{
+				const Object & o = tests[b].objects[index];
+				if (!SetInput(o.path, t.input[0], b))
+					return false;
+			}
+			t.output = t.network->Predict(t.input);
+			size_t size = t.output[0].Size(1);
+			for (size_t b = 0; b < batch; ++b)
+			{
+				Object& o = tests[b].objects[index];
+				o.desc.Reshape(Shp(size));
+				memcpy(o.desc.CpuData(), t.output[0].CpuData() + b * size, o.desc.RawSize());
+			}
 			return true;
+		}
+
+		void CalculateDistances(Test * tests, size_t batch)
+		{
+			for (size_t b = 0; b < batch; ++b)
+			{
+				Object* o = tests[b].objects;
+				SimdCosineDistance32f(o[0].desc.CpuData(), o[1].desc.CpuData(), o[0].desc.Size(), &tests[b].distance);
+			}
 		}
 
 		static void ThreadTask(Precision * precision, size_t thread)
 		{
 			size_t& current = precision->_threads[thread].current;
+			size_t end = precision->_threads[thread].end;
 			volatile bool& result = precision->_options.result;
-			for (; current < precision->_threads[thread].end && result; current++)
+			for (; current < end && result;)
 			{
-				result = result && precision->CalculateFaceDescriptor(precision->_tests[current].first, thread);
-				result = result && precision->CalculateFaceDescriptor(precision->_tests[current].second, thread);
-				precision->CalculateDistance(precision->_tests[current]);
+				size_t batch = std::min(precision->_options.BatchSize(), end - current);
+				Test* tests = precision->_tests.data() + current;
+				result = result && precision->CalculateFaceDescriptors(tests, batch, 0, thread);
+				result = result && precision->CalculateFaceDescriptors(tests, batch, 1, thread);
+				precision->CalculateDistances(tests, batch);
+				current += batch;
 			}
 			if (!result)
 				std::cout << "Error at " << current << " test!" << std::endl;
@@ -407,7 +444,6 @@ namespace Test
 		bool PerformTests()
 		{
 			size_t current = 0, total = _tests.size();
-			_threads.resize(_options.testThreads);
 			size_t part = Synet::DivHi(_tests.size(), _threads.size());
 			for (size_t t = 0; t < _threads.size(); ++t)
 			{
@@ -431,7 +467,7 @@ namespace Test
 			{
 				if (_threads[t].thread.joinable())
 					_threads[t].thread.join();
-				_options.memoryUsage += _networks[t]->MemoryUsage();
+				_options.memoryUsage += _threads[t].network->MemoryUsage();
 			}
 
 			return _options.result;
@@ -445,11 +481,11 @@ namespace Test
 			for (size_t i = 0; i < _tests.size(); ++i)
 			{
 				tests[i].first = _tests[i + 0].distance;
-				if (_tests[i].first.name == _tests[i].second.name)
+				if (_tests[i].objects[0].name == _tests[i].objects[1].name)
 					tests[i].second = +1, positives++;
 				else
 					tests[i].second = -1, negatives++;
-				tests[i].second = _tests[i].first.name == _tests[i].second.name ? 1 : -1;
+				tests[i].second = _tests[i].objects[0].name == _tests[i].objects[1].name ? 1 : -1;
 			}
 			std::sort(tests.begin(), tests.end(), [](const Pair& a, const Pair& b) {return a.first < b.first; });
 			size_t idx = tests.size(), num = negatives, max = num;
