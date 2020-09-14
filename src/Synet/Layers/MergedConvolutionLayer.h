@@ -245,6 +245,10 @@ namespace Synet
             ConvParam conv[Detail::MCC_MAX];
             float actParam[Detail::MCC_MAX][2];
             const float * weight[Detail::MCC_MAX], * bias[Detail::MCC_MAX], * params[Detail::MCC_MAX];
+
+            bool IsCdc() const { return count == 3; }
+            bool IsCd() const { return count == 2 && conv[0].group == 1; }
+            bool IsDc() const { return conv[0].group != 1; }
         } _alg;
     };
 }

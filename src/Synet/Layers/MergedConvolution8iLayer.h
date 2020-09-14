@@ -118,7 +118,7 @@ namespace Synet
                 }
                 if(_dst8u)
                     Base::Extend32f(buf, 1, back.DstShape(1));
-            //    Quantize();
+                Quantize();
             }
         }
 
@@ -148,8 +148,7 @@ namespace Synet
                         _srcCvt.Convert(src8u, src32f);
                         src8u += a.sSize;
                     }
-                    //if(a.count == 3)
-                    //ForwardCpu(src8u, buf8u, buf32f, sum32i, dst32f);
+                    ForwardCpu(src8u, buf8u, sum32i, buf32f, dst32f);
                     if (_src8u && !_dw0)
                         src8u += a.sSize;
                     if (!_src8u && _dw0)
@@ -165,9 +164,98 @@ namespace Synet
             }
         }
 
-        void ForwardCpuCdc(uint8_t* src, uint8_t* buf, int32_t* sum, float* dst)
+        void ForwardCpu(uint8_t* src, uint8_t* buf8u, int32_t* buf32i, float* buf32f, float* dst)
         {
 
+        }
+
+        void Quantize()
+        {
+            const AlgParam& a = this->_alg;
+            const ConvParam* c = a.conv;
+            const ConvParam& b = c[a.count - 1];
+
+            Stat * statS = this->Stats(0)[0];
+            statS->Init8u(_method);
+            _srcCvt.Init(1, c[0].srcC, c[0].srcH, c[0].srcW, TensorFormatNhwc, statS->scale32fTo8u.data(), statS->shift32fTo8u.data(), _method);
+
+            Stat * statI = this->Stats(1).empty() ? NULL : this->Stats(1).back();
+            if (statI)
+            {
+                statI->Init8u(_method);
+                _intCvt.Init(1, b.srcC, b.srcH, b.srcW, TensorFormatNhwc, statI->scale32fTo8u.data(), statI->shift32fTo8u.data(), _method);
+            }
+
+            Stat * statD = this->Stats(2)[0];
+            statD->Init8u(_method);
+            _dstCvt.Init(1, b.dstC, b.dstH, b.dstW, TensorFormatNhwc, statD->scale32fTo8u.data(), statD->shift32fTo8u.data(), _method);
+
+            if (a.IsDc())
+                Quantize(1, *statI, 0);
+            else
+            {
+                Quantize(0, *statS, 0);
+                if (a.IsCdc())
+                    Quantize(2, *statI, 1);
+            }
+        }
+
+        void Quantize(size_t srcIdx, const Stat & stat, size_t dstIdx)
+        {
+            const AlgParam& a = this->_alg;
+            const ConvParam & conv = a.conv[srcIdx];
+            assert(conv.group == 1);
+            const Tensor* weight = this->Weight().data() + a.index[srcIdx];
+            _weight8i[dstIdx].Reshape(weight[0].Shape(), TensorFormatNhwc);
+            _norm32f[dstIdx].Reshape(Shp(conv.dstC));
+            _bias32f[dstIdx].Reshape(Shp(conv.dstC));
+            size_t D = conv.dstC, C = conv.srcC, K = conv.kernelY * conv.kernelX, CK = C * K;
+            Floats normW(CK);
+            const float* pSrcW = weight[0].CpuData();
+            const float* pSrcB = a.biasTerm[srcIdx] ? weight[1].CpuData() : NULL;
+            const float* pScale = stat.scale32fTo8u.data();
+            const float* pShift = stat.shift32fTo8u.data();
+            float* pNormW = normW.data();
+            int8_t* pDstW = _weight8i[dstIdx].CpuData();
+            float* pNorm = _norm32f[dstIdx].CpuData();
+            float* pBias = _bias32f[dstIdx].CpuData();
+            int wLo, wUp, sLo, sUp;
+            bool avoidOverflow16i = stat.negative && _method == QuantizationMethodIECompatible;
+            if (_method == QuantizationMethodIECompatible)
+                wLo = QUANT_IE_COMP_WEIGHT_MIN, wUp = QUANT_IE_COMP_WEIGHT_MAX, sLo = QUANT_IE_COMP_SRC_U8_MIN, sUp = QUANT_IE_COMP_SRC_U8_MAX;
+            else if (_method == QuantizationMethodSymmetricNarrowed)
+                wLo = QUANT_SYMM_NARR_WEIGHT_MIN, wUp = QUANT_SYMM_NARR_WEIGHT_MAX, sLo = QUANT_SYMM_NARR_SRC_U8_MIN, sUp = QUANT_SYMM_NARR_SRC_U8_MAX;
+            for (size_t d = 0; d < conv.dstC; ++d)
+            {
+                float normB = 0, minW = FLT_MAX, maxW = -FLT_MAX, scale = 1.0f;
+                for (size_t k = 0, kc = 0; k < K; ++k)
+                {
+                    for (size_t c = 0; c < C; ++c, ++kc)
+                    {
+                        pNormW[kc] = pSrcW[kc * D + d] / pScale[c];
+                        minW = Min(minW, pNormW[kc]);
+                        maxW = Max(maxW, pNormW[kc]);
+                    }
+                }
+                scale = wUp / Max(Abs(maxW), Abs(minW));
+                for (size_t k = 0, kc = 0; k < K; ++k)
+                    for (size_t c = 0; c < C; ++c, ++kc)
+                        if (avoidOverflow16i)
+                        {
+                            int w = ConvertTo8i(pNormW[kc], scale, 0, wLo, wUp);
+                            if (w & 1)
+                                w = Round(w * 0.25f) * 4;
+                            pDstW[kc * D + d] = w / 2;
+                            normB -= w * pShift[c];
+                        }
+                        else
+                        {
+                            pDstW[kc * D + d] = ConvertTo8i(pNormW[kc], scale, 0, wLo, wUp);
+                            normB -= pDstW[kc * D + d] * pShift[c];
+                        }
+                pNorm[d] = (avoidOverflow16i ? 2.0f : 1.0f) / scale;
+                pBias[d] = (pSrcB ? pSrcB[d] : 0.0f) + normB / scale;
+            }
         }
 
     private:
