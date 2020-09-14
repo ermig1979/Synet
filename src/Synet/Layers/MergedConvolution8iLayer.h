@@ -169,6 +169,53 @@ namespace Synet
 
         }
 
+        void DirectConvolution8i(const uint8_t* src, size_t cIdx, size_t wIdx, const uint8_t* zero, uint8_t* buf, int32_t* sum, float* dst)
+        {
+            const AlgParam& a = this->_alg;
+            const bool overflow16i = true;
+            const ConvParam & conv = a.conv[cIdx];
+            const int8_t* weight = _weight8i[wIdx].CpuData();
+            const float* norm = _norm32f[wIdx].CpuData();
+            const float* bias = _bias32f[wIdx].CpuData();
+            const float* params = a.params[wIdx];
+            const uint8_t* tmp = src;
+            if (!conv.Is1x1())
+            {
+                Synet::ImgToRow(tmp, conv.srcH, conv.srcW, conv.srcC, conv.kernelY, conv.kernelX,
+                    conv.padY, conv.padX, conv.padH, conv.padW, conv.strideY, conv.strideX, conv.dilationY, conv.dilationX, conv.group, zero, buf);
+                tmp = buf;
+            }
+            size_t K = conv.srcC * conv.kernelY * conv.kernelX, N = conv.dstH * conv.dstW, M = conv.dstC;
+            Synet::CpuGemm8iNN(N, M, conv.kernelY * conv.kernelX, conv.srcC, tmp, K, weight, M, sum, M, overflow16i);
+            Detail::Convert<int32_t, float, float>(sum, 1, conv.dstC, conv.dstH, conv.dstW, conv.dstF, norm, bias, 0, 0, dst);
+            size_t dSize = conv.dstC * conv.dstH * conv.dstW;
+            switch (conv.activation)
+            {
+            case ActivationFunctionTypeIdentity:
+                break;
+            case ActivationFunctionTypeRelu:
+                CpuRelu(dst, dSize, 0.0f, dst);
+                break;
+            case ActivationFunctionTypeLeakyRelu:
+                CpuRelu(dst, dSize, params[0], dst);
+                break;
+            case ActivationFunctionTypeRestrictRange:
+                CpuRestrictRange(dst, dSize, params[0], params[1], dst);
+                break;
+            case ActivationFunctionTypePrelu:
+                Detail::PreluLayerForwardCpu(dst, params, conv.dstC, conv.dstH * conv.dstW, dst, 1);
+                break;
+            case ActivationFunctionTypeElu:
+                CpuElu(dst, dSize, params[0], dst);
+                break;
+            case ActivationFunctionTypeHswish:
+                Detail::HswishLayerForwardCpu(dst, dSize, params[0], params[1], dst);
+                break;
+            default:
+                assert(0);
+            }
+        }
+
         void Quantize()
         {
             const AlgParam& a = this->_alg;
