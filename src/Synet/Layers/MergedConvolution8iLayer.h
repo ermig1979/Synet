@@ -177,8 +177,8 @@ namespace Synet
                     }
                     if (_dw0)
                     {
-                        _depthwise(src32f, a.conv[0], a.weight[0], a.bias[0], a.params[0], dst32f);
-                        _intCvt.Convert(dst32f, buf8u);
+                        _depthwise(src32f, a.conv[0], a.weight[0], a.bias[0], a.params[0], buf32f);
+                        _intCvt.Convert(buf32f, buf8u);
                         DirectConvolution8i(buf8u, 1, 0, NULL, NULL, buf32i, dst32f);
                     }
                     else
