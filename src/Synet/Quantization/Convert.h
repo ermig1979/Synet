@@ -149,6 +149,11 @@ namespace Synet
             }
         }
 
+        bool Empty() const
+        {
+            return scale == NULL;
+        }
+
         SYNET_INLINE void Convert(const float* src, uint8_t* dst)
         {
             //SYNET_PERF_FUNC();

@@ -58,6 +58,22 @@ namespace Synet
                 + _weight8i[1].MemoryUsage() + _norm32f[1].MemoryUsage() + _bias32f[1].MemoryUsage();
         }
 
+        virtual void DebugPrint(std::ostream& os, int flag, int first, int last, int precision)
+        {
+            Synet::DebugPrint(os, _srcCvt.scale, _srcCvt.channels, "_srcCvt.scale", first, last, precision);
+            Synet::DebugPrint(os, _srcCvt.shift, _srcCvt.channels, "_srcCvt.shift", first, last, precision);
+            _weight8i[0].DebugPrint(os, "_weight8i[0]", true, first, last, precision);
+            _norm32f[0].DebugPrint(os, "_norm32f[0]", false, first, last, precision);
+            _bias32f[0].DebugPrint(os, "_bias32f[0]", false, first, last, precision);
+            Synet::DebugPrint(os, _intCvt.scale, _intCvt.channels, "_intCvt.scale", first, last, precision);
+            Synet::DebugPrint(os, _intCvt.shift, _intCvt.channels, "_intCvt.shift", first, last, precision);
+            _weight8i[1].DebugPrint(os, "_weight8i[1]", true, first, last, precision);
+            _norm32f[1].DebugPrint(os, "_norm32f[1]", false, first, last, precision);
+            _bias32f[1].DebugPrint(os, "_bias32f[1]", false, first, last, precision);
+            Synet::DebugPrint(os, _dstCvt.scale, _dstCvt.channels, "_dstCvt.scale", first, last, precision);
+            Synet::DebugPrint(os, _dstCvt.shift, _dstCvt.channels, "_dstCvt.shift", first, last, precision);
+        }
+
     protected:
         typedef typename MergedConvolutionLayer<T>::AlgParam AlgParam;
 
@@ -118,7 +134,7 @@ namespace Synet
                 }
                 if(_dst8u)
                     Base::Extend32f(buf, 1, back.DstShape(1));
-                Quantize();
+                Init();
             }
         }
 
@@ -129,10 +145,11 @@ namespace Synet
             else
             {
                 const AlgParam& a = this->_alg;
+                const uint8_t* zero = this->Stats(0)[0]->zero8u.data();
                 float* src32f = _src8u ? (_dw0 ? Base::Buf32f(buf, 0) : NULL) : src[0]->As32f().CpuData();
                 uint8_t* src8u = _src8u ? src[0]->As8u().CpuData() : (_dw0 ? NULL : Base::Buf8u(buf, 0));
                 uint8_t* buf8u = Base::Buf8u(buf, 1);
-                int32_t* sum32i = Base::Buf32i(buf, 0);
+                int32_t* buf32i = Base::Buf32i(buf, 0);
                 float* buf32f = Base::Buf32f(buf, 0);
                 float* dst32f = _dst8u ? Base::Buf32f(buf, 1) : dst[0]->As32f().CpuData();
                 uint8_t* dst8u = _dst8u ? dst[0]->As8u().CpuData() : NULL;
@@ -148,7 +165,22 @@ namespace Synet
                         _srcCvt.Convert(src8u, src32f);
                         src8u += a.sSize;
                     }
-                    ForwardCpu(src8u, buf8u, sum32i, buf32f, dst32f);
+                    if (_dw0)
+                    {
+                        _depthwise(src32f, a.conv[0], a.weight[0], a.bias[0], a.params[0], dst32f);
+                        _intCvt.Convert(dst32f, buf8u);
+                        DirectConvolution8i(buf8u, 1, 0, NULL, NULL, buf32i, dst32f);
+                    }
+                    else
+                    {
+                        DirectConvolution8i(src8u, 0, 0, zero, buf8u, buf32i, buf32f);
+                        _depthwise(buf32f, a.conv[1], a.weight[1], a.bias[1], a.params[1], dst32f);
+                        if (a.IsCdc())
+                        {
+                            _intCvt.Convert(dst32f, buf8u);
+                            DirectConvolution8i(buf8u, 2, 1, NULL, NULL, buf32i, dst32f);
+                        }                    
+                    }
                     if (_src8u && !_dw0)
                         src8u += a.sSize;
                     if (!_src8u && _dw0)
@@ -162,11 +194,6 @@ namespace Synet
                         dst32f += a.dSize;
                 }
             }
-        }
-
-        void ForwardCpu(uint8_t* src, uint8_t* buf8u, int32_t* buf32i, float* buf32f, float* dst)
-        {
-
         }
 
         void DirectConvolution8i(const uint8_t* src, size_t cIdx, size_t wIdx, const uint8_t* zero, uint8_t* buf, int32_t* sum, float* dst)
@@ -216,7 +243,7 @@ namespace Synet
             }
         }
 
-        void Quantize()
+        void Init()
         {
             const AlgParam& a = this->_alg;
             const ConvParam* c = a.conv;
@@ -244,6 +271,18 @@ namespace Synet
                 Quantize(0, *statS, 0);
                 if (a.IsCdc())
                     Quantize(2, *statI, 1);
+            }
+
+            switch (a.conv[_dw0 ? 0 : 1].activation)
+            {
+            case ActivationFunctionTypeIdentity: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeIdentity>; break;
+            case ActivationFunctionTypeRelu: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeRelu>; break;
+            case ActivationFunctionTypeLeakyRelu: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeLeakyRelu>; break;
+            case ActivationFunctionTypeRestrictRange: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeRestrictRange>; break;
+            case ActivationFunctionTypePrelu: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypePrelu>; break;
+            case ActivationFunctionTypeElu: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeElu>; break;
+            case ActivationFunctionTypeHswish: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeHswish>; break;
+            default: assert(0);
             }
         }
 
@@ -286,7 +325,9 @@ namespace Synet
                 }
                 scale = wUp / Max(Abs(maxW), Abs(minW));
                 for (size_t k = 0, kc = 0; k < K; ++k)
+                {
                     for (size_t c = 0; c < C; ++c, ++kc)
+                    {
                         if (avoidOverflow16i)
                         {
                             int w = ConvertTo8i(pNormW[kc], scale, 0, wLo, wUp);
@@ -300,6 +341,8 @@ namespace Synet
                             pDstW[kc * D + d] = ConvertTo8i(pNormW[kc], scale, 0, wLo, wUp);
                             normB -= pDstW[kc * D + d] * pShift[c];
                         }
+                    }
+                }
                 pNorm[d] = (avoidOverflow16i ? 2.0f : 1.0f) / scale;
                 pBias[d] = (pSrcB ? pSrcB[d] : 0.0f) + normB / scale;
             }
@@ -311,6 +354,8 @@ namespace Synet
         Converter _srcCvt, _intCvt, _dstCvt;
         Tensor8i _weight8i[2];
         Tensor32f _norm32f[2], _bias32f[2];
+        typedef void(*DepthwiseConvolution32fPtr)(const float* src, const ConvParam& conv, const float* weight, const float* bias, const float* params, float* dst);
+        DepthwiseConvolution32fPtr _depthwise;
 
         MergedConvolution8i _mergedConvolution8i;
     };
