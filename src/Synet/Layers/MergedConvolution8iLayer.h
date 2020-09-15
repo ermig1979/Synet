@@ -51,6 +51,16 @@ namespace Synet
         {
         }
 
+        virtual bool Can8i() const
+        {
+            return true;
+        }
+
+        virtual bool Is8i() const
+        {
+            return true;
+        }
+
         virtual size_t MemoryUsage() const
         {
             return Base::MemoryUsage() + _mergedConvolution8i.InternalBufferSize() +

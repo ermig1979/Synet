@@ -32,7 +32,8 @@ namespace Synet
 {
     struct OptimizerParam
     {
-        SYNET_PARAM_VALUE(bool, mergeTwoConvolution, true);
+        SYNET_PARAM_VALUE(bool, mergeTwoConvolutions, true);
+        SYNET_PARAM_VALUE(bool, mergeInt8Convolutions, false);
     };
 
     SYNET_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);
@@ -338,7 +339,7 @@ namespace Synet
 
         bool MergeThreeConvolutions(const LayerParams & src, size_t & index, QuantizationMethod method, LayerParams & dst, Changes & changes)
         {
-            if (src.size() < index + 3 || method != QuantizationMethodUnknown)
+            if (src.size() < index + 3 || (method != QuantizationMethodUnknown && !_param.mergeInt8Convolutions()))
                 return false;
             const LayerParam & l0 = src[index + 0];
             const Shape & k0 = l0.convolution().kernel();
@@ -363,7 +364,7 @@ namespace Synet
                 return false;
             if (l1.convolution().outputNum() < l2.convolution().outputNum()*0.75 && l2.convolution().outputNum() > 256)
                 return false;
-            if (index && _param.mergeTwoConvolution())
+            if (index && _param.mergeTwoConvolutions())
             {
                 const LayerParam& ln = src[index - 1];
                 if (ln.type() == LayerTypeConvolution && l0.src()[0] == ln.dst()[0] &&
@@ -371,7 +372,7 @@ namespace Synet
                     l2.convolution().outputNum() >= l1.convolution().outputNum())
                     return false;
             }
-            if (src.size() > index + 1 && _param.mergeTwoConvolution())
+            if (src.size() > index + 3 && _param.mergeTwoConvolutions())
             {
                 const LayerParam& l3 = src[index + 3];
                 if (l3.type() == LayerTypeConvolution && l3.src()[0] == l2.dst()[0] &&
@@ -390,9 +391,14 @@ namespace Synet
             layer.mergedConvolution().conv().push_back(l0.convolution());
             layer.mergedConvolution().conv().push_back(l1.convolution());
             layer.mergedConvolution().conv().push_back(l2.convolution());
+            if (layer.mergedConvolution().conv()[0].quantizationLevel() == TensorType8i)
+            {
+                layer.origin().push_back(l0.name());
+                layer.origin().push_back(l1.name());
+            }
             index += 2;
             dst.push_back(layer);
-            if (src.size() > index + 1)
+            if (src.size() > index + 1 && method == QuantizationMethodUnknown)
             {
                 const LayerParam & l3 = src[index + 1];
                 if (l2.convolution().activationType() == ActivationFunctionTypeIdentity && l3.type() == LayerTypeEltwise && l3.eltwise().operation() == EltwiseOperationTypeSum &&
@@ -455,7 +461,7 @@ namespace Synet
 
         bool MergeTwoConvolutions(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes)
         {
-            if (src.size() < index + 2 || method != QuantizationMethodUnknown || !_param.mergeTwoConvolution())
+            if (src.size() < index + 2 || !_param.mergeTwoConvolutions() || (method != QuantizationMethodUnknown && !_param.mergeInt8Convolutions()))
                 return false;
             const LayerParam& l0 = src[index + 0];
             const Shape& k0 = l0.convolution().kernel();
@@ -495,6 +501,8 @@ namespace Synet
                     layer.weight().push_back(src[index + l].weight()[i]);
             layer.mergedConvolution().conv().push_back(l0.convolution());
             layer.mergedConvolution().conv().push_back(l1.convolution());
+            if (layer.mergedConvolution().conv()[0].quantizationLevel() == TensorType8i)
+                layer.origin().push_back(l0.name());
             index += 1;
             dst.push_back(layer);
             return true;

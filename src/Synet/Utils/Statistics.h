@@ -136,6 +136,8 @@ namespace Synet
                     lo = i;
                 for (size_t sum = 0, i = size - 1; sum <= threshold; i -= 1, sum += histogram[i])
                     hi = i + 1;
+                if (hi < lo)
+                    std::swap(lo, hi);
                 T min = srcMin[c] + (srcMax[c] - srcMin[c]) * lo / size;
                 T max = srcMin[c] + (srcMax[c] - srcMin[c]) * hi / size;
                 dstMin[c] = Min(dstMin[c], min);
