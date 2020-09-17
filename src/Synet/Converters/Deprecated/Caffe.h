@@ -77,7 +77,8 @@ namespace Synet
             if (!ConvertWeight(srcWeight, trans, holder(), weight))
                 return false;
 
-            Optimizer optimizer;
+            OptimizerParamHolder param;
+            Optimizer optimizer(param());
             if (!optimizer.Run(holder(), weight))
                 return false;
 
