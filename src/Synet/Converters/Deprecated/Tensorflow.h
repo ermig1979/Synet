@@ -106,7 +106,8 @@ namespace Synet
             if (!ConvertNetwork(holder(), weight))
                 return false;
 
-            Optimizer optimizer;
+            OptimizerParamHolder param;
+            Optimizer optimizer(param());
             if (!optimizer.Run(holder(), weight))
                 return false;
 
