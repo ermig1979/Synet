@@ -154,47 +154,49 @@ namespace Synet
                 _mergedConvolution8i.Forward(src[0]->RawCpuData(), Base::Buf8u(buf, 0), dst[0]->RawCpuData());
             else
             {
+                float* buf0 = Base::Buf32f(buf, 0);
+                float* buf1 = Base::Buf32f(buf, 1);
+                uint8_t* buf2 = Base::Buf8u(buf, 0);
+                uint8_t* buf3 = Base::Buf8u(buf, 1);
+                int32_t* buf4 = Base::Buf32i(buf, 0);
+
                 const AlgParam& a = this->_alg;
-                const uint8_t* zero = this->Stats(0)[0]->zero8u.data();
-                float* src32f = _src8u ? (_dw0 ? Base::Buf32f(buf, 0) : NULL) : src[0]->As32f().CpuData();
-                uint8_t* src8u = _src8u ? src[0]->As8u().CpuData() : (_dw0 ? NULL : Base::Buf8u(buf, 0));
-                uint8_t* buf8u = Base::Buf8u(buf, 1);
-                int32_t* buf32i = Base::Buf32i(buf, 0);
-                float* buf32f = Base::Buf32f(buf, 0);
-                float* dst32f = _dst8u ? Base::Buf32f(buf, 1) : dst[0]->As32f().CpuData();
+                float* src32f = _src8u ? (_dw0 ? buf0 : NULL) : src[0]->As32f().CpuData();
+                uint8_t* src8u = _src8u ? src[0]->As8u().CpuData() : (_dw0 ? NULL : buf2);
+                float* dst32f = _dst8u ? buf1 : dst[0]->As32f().CpuData();
                 uint8_t* dst8u = _dst8u ? dst[0]->As8u().CpuData() : NULL;
                 for (size_t b = 0; b < a.batch; ++b)
                 {
-                    if (!_src8u && !_dw0)
-                    {
-                        _srcCvt.Convert(src32f, src8u);
-                        src32f += a.sSize;
-                    }
-                    if (_src8u && _dw0)
-                    {
-                        _srcCvt.Convert(src8u, src32f);
-                        src8u += a.sSize;
-                    }
                     if (_dw0)
                     {
-                        _depthwise(src32f, a.conv[0], a.weight[0], a.bias[0], a.params[0], buf32f);
-                        _intCvt.Convert(buf32f, buf8u);
-                        DirectConvolution8i(buf8u, 1, 0, NULL, NULL, buf32i, dst32f);
+                        if (_src8u)
+                        {
+                            _srcCvt.Convert(src8u, src32f);
+                            src8u += a.sSize;
+                        }  
+                        _depthwise(src32f, a.conv[0], a.weight[0], a.bias[0], a.params[0], buf1);
+                        if (!_src8u)
+                            src32f += a.sSize;
+                        _intCvt.Convert(buf1, buf3);
+                        DirectConvolution8i(buf3, 1, 0, NULL, NULL, buf4, dst32f);
                     }
                     else
                     {
-                        DirectConvolution8i(src8u, 0, 0, zero, buf8u, buf32i, buf32f);
-                        _depthwise(buf32f, a.conv[1], a.weight[1], a.bias[1], a.params[1], dst32f);
+                        if (!_src8u)
+                        {
+                            _srcCvt.Convert(src32f, src8u);
+                            src32f += a.sSize;
+                        }
+                        DirectConvolution8i(src8u, 0, 0, this->Stats(0)[0]->zero8u.data(), buf3, buf4, buf0);
+                        if (_src8u)
+                            src8u += a.sSize;
+                        _depthwise(buf0, a.conv[1], a.weight[1], a.bias[1], a.params[1], a.IsCdc() ? buf1 : dst32f);
                         if (a.IsCdc())
                         {
-                            _intCvt.Convert(dst32f, buf8u);
-                            DirectConvolution8i(buf8u, 2, 1, NULL, NULL, buf32i, dst32f);
+                            _intCvt.Convert(buf1, buf3);
+                            DirectConvolution8i(buf3, 2, 1, NULL, NULL, buf4, dst32f);
                         }                    
                     }
-                    if (_src8u && !_dw0)
-                        src8u += a.sSize;
-                    if (!_src8u && _dw0)
-                        src32f += a.sSize;
                     if (_dst8u)
                     {
                         _dstCvt.Convert(dst32f, dst8u);

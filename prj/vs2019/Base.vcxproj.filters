@@ -250,6 +250,9 @@
     <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSynetScale.cpp">
       <Filter>Base</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\3rd\Simd\src\Simd\SimdBaseSynetMergedConvolution8i.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdBase.h">
@@ -373,6 +376,15 @@
       <Filter>Inc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetScale8i.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdExtract.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetConvolution8iCommon.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Simd\src\Simd\SimdSynetMergedConvolution8i.h">
       <Filter>Inc</Filter>
     </ClInclude>
   </ItemGroup>

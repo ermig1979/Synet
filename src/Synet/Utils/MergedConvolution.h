@@ -128,6 +128,27 @@ namespace Synet
 
         SYNET_INLINE void Init(size_t batch, const ConvParam* convs, size_t count, QuantizationMethod method)
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_batch != batch || _srcH != convs[0].srcH || _srcW != convs[0].srcW)
+            {
+                _batch = batch, _srcH = convs[0].srcH, _srcW = convs[0].srcW;
+                if (_context)
+                    ::SimdRelease(_context), _context = NULL;
+                SimdSynetCompatibilityType compatibility;
+                if (method == QuantizationMethodIECompatible)
+                {
+                    compatibility = SimdCpuInfo(SimdCpuInfoAvx512vnni) ? SimdSynetCompatibility8iPrecise : SimdSynetCompatibility8iOverflow;
+                    compatibility = (SimdSynetCompatibilityType)(compatibility | SimdSynetCompatibilityFmaNoTail);
+                }
+                else if (method == QuantizationMethodSymmetricNarrowed)
+                {
+                    compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility8iNarrowed | SimdSynetCompatibilityFmaUse);
+                }
+                else
+                    return;
+                _context = ::SimdSynetMergedConvolution8iInit(batch, (const SimdConvolutionParameters*)convs, count, compatibility);
+            }
+#endif
         }
 
         SYNET_INLINE bool Enable() const
@@ -137,20 +158,36 @@ namespace Synet
 
         SYNET_INLINE size_t ExternalBufferSize() const
         {
-            return 0;
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            return _context ? ::SimdSynetMergedConvolution8iExternalBufferSize(_context) : 0;
+#else
+            return 1;
+#endif
         }
 
         SYNET_INLINE size_t InternalBufferSize() const
         {
-            return 0;
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            return _context ? ::SimdSynetMergedConvolution8iInternalBufferSize(_context) : 0;
+#else
+            return 1;
+#endif
         }
 
         SYNET_INLINE void SetParams(const float* const* weight, int* internal, const float* const* bias, const float* const* params, const float* const* stats)
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdSynetMergedConvolution8iSetParams(_context, weight, (::SimdBool*)internal, bias, params, stats);
+#endif
         }
 
         SYNET_INLINE void Forward(const uint8_t* src, uint8_t* buf, uint8_t* dst)
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdSynetMergedConvolution8iForward(_context, src, buf, dst);
+#endif
         }
 
     private:
