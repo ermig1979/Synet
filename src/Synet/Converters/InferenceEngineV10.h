@@ -94,6 +94,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "ReduceSum" && !ConvertReduceSumLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
+                if (type == "RegionYolo" && !ConvertRegionYoloLayer(pLayer, dstXml.layers(), trans, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Reshape" && !ConvertReshapeLayer(pLayer, srcBin, dstXml.layers(), trans, layer))
@@ -106,7 +108,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "SoftMax" && !ConvertSoftmaxLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
-                if (type == "StridedSlice" && !ConvertStridedSliceLayer(pLayer, dstXml.layers(), layer))
+                if (type == "StridedSlice" && !ConvertStridedSliceLayer(pLayer, dstXml.layers(), srcBin, trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Transpose" && !ConvertTransposeLayer(pLayer, srcBin, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
@@ -296,6 +298,12 @@ namespace Synet
                 return false;
             if (!ConvertVector(pData->FirstAttribute("dilations"), layer.convolution().dilation()))
                 return false;
+            if (pData->FirstAttribute("auto_pad"))
+            {
+                String autoPad = pData->FirstAttribute("auto_pad")->Value();
+                if (autoPad == "same_upper")
+                    layer.convolution().autoPad() = true;
+            }
             if (!ConvertVectors(pData->FirstAttribute("pads_begin"), pData->FirstAttribute("pads_end"), layer.convolution().pad()))
                 return false;
             if (!CheckSourceNumber(layer, 2))
@@ -656,6 +664,36 @@ namespace Synet
             return true;
         }
 
+        bool ConvertRegionYoloLayer(const XmlNode* pLayer, LayerParams& layers, bool trans, LayerParam& layer)
+        {
+            layer.type() = LayerTypeYolo;
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            if (!ConvertVector(pData->FirstAttribute("anchors"), layer.yolo().anchors()))
+                return false;
+            if (!ConvertValue(pData->FirstAttribute("classes"), layer.yolo().classes()))
+                return false;
+            if (!ConvertValue(pData->FirstAttribute("num"), layer.yolo().num()))
+                return false;
+            if (!ConvertVector(pData->FirstAttribute("mask"), layer.yolo().mask()))
+                return false;
+            layer.yolo().num() /= 2;
+            if (trans)
+            {
+                LayerParam permute;
+                permute.type() = LayerTypePermute;
+                permute.src() = layer.src();
+                permute.name() = layer.name() + "_auto_permute";
+                permute.dst().push_back(permute.name());
+                permute.permute().order() = Shp(0, 3, 1, 2);
+                permute.permute().format() = TensorFormatNchw;
+                layer.src() = permute.dst();
+                layers.push_back(permute);
+            }
+            return true;
+        }
+
         bool ConvertReluLayer(const XmlNode* pLayer, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeRelu;
@@ -743,16 +781,58 @@ namespace Synet
             return true;
         }
 
-        bool ConvertStridedSliceLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
+        bool ConvertStridedSliceLayer(const XmlNode* pLayer, const LayerParams& layers, const Vector& srcBin, bool trans, LayerParam& layer)
         {
+            bool meta = true;
             for (size_t s = 0; s < layer.src().size(); ++s)
             {
                 const LayerParam * source = GetLayer(layers, layer.src()[s]);
-                if (source == NULL || source->type() != LayerTypeMeta)
+                if (source == NULL)
                     return false;
+                if (source->type() != LayerTypeMeta)
+                    meta = false;
             }
-            layer.type() = LayerTypeMeta;
-            layer.meta().type() = MetaTypeStridedSlice;
+            if (meta)
+            {
+                layer.type() = LayerTypeMeta;
+                layer.meta().type() = MetaTypeStridedSlice;
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeStridedSlice;
+                const XmlNode * pData = pLayer->FirstNode("data");
+                if (pData == NULL)
+                    return false;
+                if (!ConvertShapeParameter(pData, "begin_mask", trans, layer.stridedSlice().beginMask()))
+                    return false;
+                if (!ConvertShapeParameter(pData, "ellipsis_mask", trans, layer.stridedSlice().ellipsisMask()))
+                    return false;
+                if (!ConvertShapeParameter(pData, "end_mask", trans, layer.stridedSlice().endMask()))
+                    return false;
+                if (!ConvertShapeParameter(pData, "new_axis_mask", trans, layer.stridedSlice().newAxisMask()))
+                    return false;
+                if (!ConvertShapeParameter(pData, "shrink_axis_mask", trans, layer.stridedSlice().shrinkAxisMask()))
+                    return false;
+                for (size_t s = layer.src().size() - 1; s > 0; --s)
+                {
+                    const LayerParam * source = GetLayer(layers, layer.src()[s]);
+                    bool result = false;
+                    switch (s)
+                    {
+                    case 1:
+                        result = GetShapeFromConst(*source, srcBin, trans, layer.stridedSlice().beginDims());
+                        break;
+                    case 2:
+                        result = GetShapeFromConst(*source, srcBin, trans, layer.stridedSlice().endDims());
+                        break;
+                    case 3:
+                        result = GetShapeFromConst(*source, srcBin, trans, layer.stridedSlice().strideDims());
+                        break;
+                    }
+                    if (!result)
+                        return false;
+                }
+            }
             return true;
         }
 
@@ -1001,6 +1081,84 @@ namespace Synet
             if (layers[start].type() == LayerTypeConst && start)
                 start--;
             return PermutedToNchw(layers, start, checkInnerProduct, checkPriorBox);
+        }
+
+        template<class T> bool GetShapeFromWeight(const WeightParam & weight, const Vector & bin, Shape & shape)
+        {
+            size_t size = weight.dim()[0];
+            if (size != weight.size() / sizeof(T))
+                return false;
+            T * data = (T*)((uint8_t*)bin.data() + weight.offset());
+            shape.resize(size);
+            for (size_t i = 0; i < size; ++i)
+                shape[i] = (size_t)data[i];
+            return true;
+        }
+
+        bool GetShapeFromConst(const LayerParam & layer, const Vector & bin, bool trans, Shape & shape)
+        {
+            if (layer.type() == LayerTypeConst)
+            {
+                if (layer.weight().size() != 1)
+                    return false;
+                const WeightParam & weight = layer.weight()[0];
+                if (weight.dim().size() != 1)
+                    return false;
+                switch (weight.type())
+                {
+                case TensorType32i:
+                    if (!GetShapeFromWeight<int32_t>(weight, bin, shape))
+                        return false;
+                case TensorType64i:
+                    if (!GetShapeFromWeight<int64_t>(weight, bin, shape))
+                        return false;
+                default:
+                    return false;
+                }
+            }
+            else if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeConst)
+            {
+                const TensorParam & alpha = layer.meta().alpha();
+                if (alpha.shape().size() != 1)
+                    return false;
+                shape.resize(alpha.shape()[0]);
+                if (alpha.type() == TensorType32i)
+                {
+                    for (size_t i = 0; i < shape.size(); ++i)
+                        shape[i] = (size_t)alpha.i32()[i];
+                }
+                else if (alpha.type() == TensorType64i)
+                {
+                    for (size_t i = 0; i < shape.size(); ++i)
+                        shape[i] = (size_t)alpha.i64()[i];
+                }
+                else
+                    return false;
+            }
+            else
+                return false;
+            if (trans)
+            {
+                if (shape.size() == 4)
+                {
+                    shape = Shp(shape[0], shape[2], shape[3], shape[1]);
+                }
+            }
+            return true;
+        }
+
+        bool ConvertShapeParameter(const XmlNode * data, const String & name, bool trans, Shape & shape)
+        {
+            if (!ConvertVector(data->FirstAttribute(name.c_str()), shape))
+                return false;
+            if (trans)
+            {
+                if (shape.size() == 4)
+                {
+                    shape = Shp(shape[0], shape[2], shape[3], shape[1]);
+                }
+            }
+            return true;
         }
     };
 }

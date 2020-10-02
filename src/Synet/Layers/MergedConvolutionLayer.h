@@ -161,9 +161,9 @@ namespace Synet
             {
                 a.conv[i].Set(conv[i]);
                 if(i)
-                    a.conv[i].Set(a.conv[i - 1], true);
+                    a.conv[i].Set(a.conv[i - 1], true, conv[i].autoPad());
                 else
-                    a.conv[i].Set(*src[0], *dst[0], true);
+                    a.conv[i].Set(*src[0], *dst[0], true, conv[i].autoPad());
 
                 a.index[i] = next++;
                 const Tensor & w = weight[a.index[i]];

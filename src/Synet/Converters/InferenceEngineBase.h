@@ -153,6 +153,14 @@ namespace Synet
             return true;
         }
 
+        template<class T> static bool ConvertValue(const XmlBase * pSrc, T & dst)
+        {
+            if (pSrc == NULL)
+                return false;
+            StringToValue(pSrc->Value(), dst);
+            return true;
+        }
+
         template<class T> static bool ConvertVector(const XmlBase * pSrc, std::vector<T> & dst, const String & delimeter = ",")
         {
             if (pSrc == NULL)

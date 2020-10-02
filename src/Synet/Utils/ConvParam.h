@@ -75,10 +75,10 @@ namespace Synet
 
             const Shape & pad = conv.pad();
             assert(pad.size() <= 4 && pad.size() != 3);
-            padY = pad.size() > 0 ? pad[0] : 0;
-            padX = pad.size() > 1 ? pad[1] : padY;
-            padH = pad.size() > 2 ? pad[2] : padY;
-            padW = pad.size() > 3 ? pad[3] : padX;
+            padY = !conv.autoPad() && pad.size() > 0 ? pad[0] : 0;
+            padX = !conv.autoPad() && pad.size() > 1 ? pad[1] : padY;
+            padH = !conv.autoPad() && pad.size() > 2 ? pad[2] : padY;
+            padW = !conv.autoPad() && pad.size() > 3 ? pad[3] : padX;
             assert(padY >= 0 && padX >= 0 && padH >= 0 && padW >= 0);
 
             activation = conv.activationType();
@@ -87,7 +87,7 @@ namespace Synet
             assert(dstC > 0 && dstC % group == 0);
         }
 
-        template<class T> void Set(const Tensor<T> & src, const Tensor<T>& dst, bool conv)
+        template<class T> void Set(const Tensor<T> & src, const Tensor<T>& dst, bool conv, bool autoPad)
         {
             if (src.Format() == TensorFormatNhwc)
             {
@@ -105,10 +105,10 @@ namespace Synet
             srcF = src.Format();
             dstT = dst.GetType() == TensorTypeUnknown ? srcT : dst.GetType();
             dstF = dst.Format() == TensorFormatUnknown ? srcF : dst.Format();
-            SetDst(conv);
+            SetDst(conv, autoPad);
         }
 
-        void Set(const ConvParam & src, bool conv)
+        void Set(const ConvParam & src, bool conv, bool autoPad)
         {
             srcC = src.dstC;
             srcH = src.dstH;
@@ -117,20 +117,29 @@ namespace Synet
             srcF = src.srcF;
             dstT = src.dstT;
             dstF = src.dstF;
-            SetDst(conv);
+            SetDst(conv, autoPad);
         }
 
-        void SetDst(bool conv)
+        void SetDst(bool conv, bool autoPad)
         {
-            if (conv)
+            if (autoPad)
             {
-                dstH = (srcH + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
-                dstW = (srcW + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
+                assert(conv);
+                SetAutoPad(srcH, kernelY, dilationY, strideY, dstH, padY, padH);
+                SetAutoPad(srcW, kernelX, dilationX, strideX, dstW, padX, padW);
             }
             else
             {
-                dstH = strideY * (srcH - 1) + dilationY * (kernelY - 1) + 1 - padY - padH;
-                dstW = strideX * (srcW - 1) + dilationX * (kernelX - 1) + 1 - padX - padW;
+                if (conv)
+                {
+                    dstH = (srcH + padY + padH - (dilationY * (kernelY - 1) + 1)) / strideY + 1;
+                    dstW = (srcW + padX + padW - (dilationX * (kernelX - 1) + 1)) / strideX + 1;
+                }
+                else
+                {
+                    dstH = strideY * (srcH - 1) + dilationY * (kernelY - 1) + 1 - padY - padH;
+                    dstW = strideX * (srcW - 1) + dilationX * (kernelX - 1) + 1 - padX - padW;
+                }
             }
         }
 
@@ -168,14 +177,6 @@ namespace Synet
             }
         }
 
-        Shape SrcShape(size_t batch) const
-        {
-            if (srcF == TensorFormatNhwc)
-                return Shp(batch, srcH, srcW, srcC);
-            else
-                return Shp(batch, srcC, srcH, srcW);
-        }
-
         Shape DstShape(size_t batch) const
         {
             if (dstF == TensorFormatNhwc)
@@ -184,9 +185,18 @@ namespace Synet
                 return Shp(batch, dstC, dstH, dstW);
         }
 
-        size_t ImgSize() const
+        static void SetAutoPad(size_t src, size_t kernel, size_t dilation, size_t stride, size_t & dst, size_t & beg, size_t &end)
         {
-            return kernelY * kernelX * srcC * dstH * dstW;
+            dst = (src - 1) / stride + 1;
+            beg = 0;
+            end = 0;
+            for (size_t i = 0; dst > (src + beg + end - (dilation * (kernel - 1) + 1)) / stride + 1; ++i)
+            {
+                if (i & 1)
+                    beg++;
+                else
+                    end++;
+            }
         }
     };
 }

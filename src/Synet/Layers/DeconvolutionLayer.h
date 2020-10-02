@@ -73,7 +73,7 @@ namespace Synet
             const Tensors & weight = this->Weight();
 
             _conv.Set(param);
-            _conv.Set(*src[0], *dst[0], false);
+            _conv.Set(*src[0], *dst[0], false, false);
 
             _is1x1 = _conv.Is1x1();
             _biasTerm = param.biasTerm();

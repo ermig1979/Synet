@@ -307,7 +307,7 @@ namespace Test
             {
                 const InferenceEngine::SizeVector& dims = _ieOutput[o]->getTensorDesc().getDims();
                 const InferenceEngine::SizeVector& strides = _ieOutput[o]->getTensorDesc().getBlockingDesc().getStrides();
-                if (dims.size() == 4 && dims[3] == 7)
+                if (dims.size() == 4 && dims[3] == 7 && _outputNames[o].find("Yolo") == std::string::npos)
                 {
                     assert(dims[0] == 1);
                     Vector tmp;
