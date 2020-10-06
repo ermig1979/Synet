@@ -273,6 +273,7 @@ namespace Synet
     {
         SYNET_PARAM_VALUE(uint32_t, outputNum, 0);
         SYNET_PARAM_VALUE(bool, biasTerm, true);
+        SYNET_PARAM_VALUE(bool, autoPad, false);
         SYNET_PARAM_VALUE(Shape, kernel, Shape());
         SYNET_PARAM_VALUE(Shape, pad, Shape());
         SYNET_PARAM_VALUE(Shape, stride, Shape());

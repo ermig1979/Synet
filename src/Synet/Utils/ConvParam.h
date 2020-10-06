@@ -177,12 +177,25 @@ namespace Synet
             }
         }
 
+        Shape SrcShape(size_t batch) const
+        {
+            if (srcF == TensorFormatNhwc)
+                return Shp(batch, srcH, srcW, srcC);
+            else
+                return Shp(batch, srcC, srcH, srcW);
+        }
+
         Shape DstShape(size_t batch) const
         {
             if (dstF == TensorFormatNhwc)
                 return Shp(batch, dstH, dstW, dstC);
             else
                 return Shp(batch, dstC, dstH, dstW);
+        }
+
+        size_t ImgSize() const
+        {
+            return kernelY * kernelX * srcC * dstH * dstW;
         }
 
         static void SetAutoPad(size_t src, size_t kernel, size_t dilation, size_t stride, size_t & dst, size_t & beg, size_t &end)
