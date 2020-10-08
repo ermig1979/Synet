@@ -125,7 +125,8 @@ namespace Test
 			String Description() const
 			{
 				std::stringstream ss;
-				ss << "framework: " << framework;
+				ss << "mode: " << mode;
+				ss << ", framework: " << framework;
 				ss << ", test: " << GetNameByPath(DirectoryByPath(testModel));
 				ss << ", model: " << GetNameByPath(testModel);
 				ss << ", list: " << GetNameByPath(testList);
@@ -139,7 +140,6 @@ namespace Test
 			: _options(options)
 			, _progressMessageSizeMax(0)
 		{
-
 		}
 
 		bool Run()
@@ -160,22 +160,8 @@ namespace Test
 			return PrintFinishMessage();
 		}
 
-	private:
-		struct Object
-		{
-			String name, path;
-			Tensor desc;
-		};
+	protected:
 
-		struct Test
-		{
-			Object objects[2];
-			float distance;
-		};
-		typedef std::vector<Test> Tests;
-		typedef std::shared_ptr<Test> TestPtr;
-		typedef std::vector<TestPtr> TestPtrs;
-		
 		struct Thread
 		{
 			NetworkPtr network;
@@ -188,7 +174,6 @@ namespace Test
 
 		const Options& _options;
 		TestParamHolder _param;
-		Tests _tests;
 		Threads _threads;
 		size_t _progressMessageSizeMax;
 
@@ -271,78 +256,6 @@ namespace Test
 			return true;
 		}
 
-		bool SetPath(const String& name, int index, String& path)
-		{
-			path = MakePath(_options.imageDirectory, name + "_" + ToString(index, 4) + ".jpg");
-			if(!FileExists(path))
-			{
-				std::cout << "Test image '" << path << "' is not exist!" << std::endl;
-				return false;
-			}
-			return true;
-		}
-
-		bool LoadTestList()
-		{
-			if (!DirectoryExists(_options.imageDirectory))
-			{
-				std::cout << "Image directory '" << _options.imageDirectory << "' is not exist!" << std::endl;
-				return false;
-			}
-			if (!FileExists(_options.testList))
-			{
-				std::cout << "Test list file '" << _options.testList << "' is not exist!" << std::endl;
-				return false;
-			}
-			std::ifstream ifs(_options.testList);
-			if (!ifs.is_open())
-			{
-				std::cout << "Can't open test list file '" << _options.testList << "'!" << std::endl;
-				return false;
-			}
-			String line;
-			if (!std::getline(ifs, line))
-			{
-				std::cout << "Can't read 1-st file line!" << std::endl;
-				return false;
-			}
-			size_t size = FromString<int>(line);
-			if (size > USHRT_MAX)
-			{
-				std::cout << "Wrong test size " << size << " !" << std::endl;
-				return false;
-			}
-			_tests.resize(size * 2);
-			for (size_t i = 0; i < _tests.size(); ++i)
-			{
-				if (!std::getline(ifs, line))
-				{
-					std::cout << "Can't read " << i + 2 << " file line!" << std::endl;
-					return false;
-				}
-				std::stringstream ss(line);
-				int first, second;
-				if (i < size)
-				{
-					ss >> _tests[i].objects[0].name >> first >> second;
-					_tests[i].objects[1].name = _tests[i].objects[0].name;
-				}
-				else
-					ss >> _tests[i].objects[0].name >> first >> _tests[i].objects[1].name >> second;
-				if (_tests[i].objects[0].name.empty() || _tests[i].objects[1].name.empty() || first == 0 || second == 0)
-				{
-					std::cout << "Can't parse " << i + 2 << " file line!" << std::endl;
-					return false;
-				}
-				if (!SetPath(_tests[i].objects[0].name, first, _tests[i].objects[0].path))
-					return false;
-				if (!SetPath(_tests[i].objects[1].name, second, _tests[i].objects[1].path))
-					return false;
-			}
-			ifs.close();
-			return true;
-		}
-
 		bool SetInput(const String & path, Tensor & input, size_t index)
 		{
 			TEST_PERF_FUNC();
@@ -384,55 +297,6 @@ namespace Test
 			return true;
 		}
 
-		bool CalculateFaceDescriptors(Test* tests, size_t batch, size_t index, size_t thread)
-		{
-			TEST_PERF_FUNC();
-
-			Thread& t = _threads[thread];
-			for (size_t b = 0; b < batch; ++b)
-			{
-				const Object & o = tests[b].objects[index];
-				if (!SetInput(o.path, t.input[0], b))
-					return false;
-			}
-			t.output = t.network->Predict(t.input);
-			size_t size = t.output[0].Size(1);
-			for (size_t b = 0; b < batch; ++b)
-			{
-				Object& o = tests[b].objects[index];
-				o.desc.Reshape(Shp(size));
-				memcpy(o.desc.CpuData(), t.output[0].CpuData() + b * size, o.desc.RawSize());
-			}
-			return true;
-		}
-
-		void CalculateDistances(Test * tests, size_t batch)
-		{
-			for (size_t b = 0; b < batch; ++b)
-			{
-				Object* o = tests[b].objects;
-				SimdCosineDistance32f(o[0].desc.CpuData(), o[1].desc.CpuData(), o[0].desc.Size(), &tests[b].distance);
-			}
-		}
-
-		static void ThreadTask(Precision * precision, size_t thread)
-		{
-			size_t& current = precision->_threads[thread].current;
-			size_t end = precision->_threads[thread].end;
-			volatile bool& result = precision->_options.result;
-			for (; current < end && result;)
-			{
-				size_t batch = std::min(precision->_options.BatchSize(), end - current);
-				Test* tests = precision->_tests.data() + current;
-				result = result && precision->CalculateFaceDescriptors(tests, batch, 0, thread);
-				result = result && precision->CalculateFaceDescriptors(tests, batch, 1, thread);
-				precision->CalculateDistances(tests, batch);
-				current += batch;
-			}
-			if (!result)
-				std::cout << "Error at " << current << " test!" << std::endl;
-		}
-
 		String ProgressString(size_t current, size_t total)
 		{
 			std::stringstream progress;
@@ -441,15 +305,30 @@ namespace Test
 			return progress.str();
 		}
 
+		static void ThreadTask(Precision* precision, size_t thread)
+		{
+			size_t& current = precision->_threads[thread].current;
+			size_t end = precision->_threads[thread].end;
+			volatile bool& result = precision->_options.result;
+			for (; current < end && result;)
+			{
+				size_t batch = std::min(precision->_options.BatchSize(), end - current);
+				result = precision->PerformBatch(thread, current, batch);
+				current += batch;
+			}
+			if (!result)
+				std::cout << "Error at " << current << " test!" << std::endl;
+		}
+
 		bool PerformTests()
 		{
-			size_t current = 0, total = _tests.size();
-			size_t part = Synet::DivHi(_tests.size(), _threads.size());
+			size_t current = 0, total = _options.testNumber;
+			size_t part = Synet::DivHi(total, _threads.size());
 			for (size_t t = 0; t < _threads.size(); ++t)
 			{
 				_threads[t].begin = t * part;
 				_threads[t].current = t * part;
-				_threads[t].end = std::min((t + 1) * part, _tests.size());
+				_threads[t].end = std::min((t + 1) * part, total);
 				_threads[t].thread = std::thread(ThreadTask, this, t);
 			}
 
@@ -473,41 +352,9 @@ namespace Test
 			return _options.result;
 		}
 
-		bool ProcessResult()
-		{
-			typedef std::pair<float, int> Pair;
-			std::vector<Pair> tests(_tests.size());
-			int negatives = 0, positives = 0;
-			for (size_t i = 0; i < _tests.size(); ++i)
-			{
-				tests[i].first = _tests[i + 0].distance;
-				if (_tests[i].objects[0].name == _tests[i].objects[1].name)
-					tests[i].second = +1, positives++;
-				else
-					tests[i].second = -1, negatives++;
-				tests[i].second = _tests[i].objects[0].name == _tests[i].objects[1].name ? 1 : -1;
-			}
-			std::sort(tests.begin(), tests.end(), [](const Pair& a, const Pair& b) {return a.first < b.first; });
-			size_t idx = tests.size(), num = negatives, max = num;
-			for (size_t i = 0; i < tests.size(); ++i)
-			{
-				num += tests[i].second;
-				if (num > max)
-				{
-					max = num;
-					idx = i;
-				}
-			}
-			if (idx >= tests.size() - 1)
-			{
-				std::cout << "Can't process result!" << std::endl;
-				return false;
-			}
-			_options.testNumber = tests.size();
-			_options.precision = double(max) / tests.size();
-			_options.threshold = (tests[idx].first + tests[idx + 1].first) / 2;
-			return true;
-		}
+		virtual bool LoadTestList() = 0;
+		virtual bool PerformBatch(size_t thread, size_t current, size_t batch) = 0;
+		virtual bool ProcessResult() = 0;
 	};
 }
 

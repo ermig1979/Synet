@@ -22,30 +22,37 @@
 * SOFTWARE.
 */
 
-#include "TestDetectionPrecision.h"
-#include "TestReidentificationPrecision.h"
+#pragma once
 
-Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
+#include "TestPrecision.h"
 
-int main(int argc, char* argv[])
+namespace Test
 {
-    Test::Precision::Options options(argc, argv);
+	class DetectionPrecision : public Precision
+	{
+	public:
+		DetectionPrecision(const Options& options)
+			: Precision(options)
+		{
+		}
 
-    if (options.mode == "reidentification")
-    {
-        Test::ReidentificationPrecision precision(options);
-        options.result = precision.Run();
-    }
-    else if (options.mode == "detection")
-    {
-        Test::DetectionPrecision precision(options);
-        options.result = precision.Run();
-    }
-    else
-    {
-        std::cout << "Unknown mode: " << options.mode << " !" << std::endl;
-        return 2;
-    }
+	private:
 
-    return options.result ? 0 : 1;
+		virtual bool LoadTestList()
+		{
+			return true;
+		}
+
+		virtual bool PerformBatch(size_t thread, size_t current, size_t batch)
+		{
+			return true;
+		}
+
+		virtual bool ProcessResult()
+		{
+			return true;
+		}
+	};
 }
+
+
