@@ -39,6 +39,7 @@
 #include "Synet/Synet.h"
 
 #include "TestNetwork.h"
+#include "TestEpsilonDecoder.h"
 
 namespace Test
 {
@@ -98,6 +99,7 @@ namespace Test
                 _lower = param.lower();
                 _upper = param.upper();
                 _synetMemoryUsage = _net.MemoryUsage();
+                _epsilon.Init(Size(_net.NchwShape()[3], _net.NchwShape()[2]), param.epsilon());
                 return true;
             }
             return false;
@@ -131,7 +133,10 @@ namespace Test
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
-            return _net.GetRegions(size.x, size.y, threshold, overlap);
+            if (_epsilon.Enable())
+                return _epsilon.GetRegions(_net.Dst()[0]->CpuData(), _net.Dst()[1]->CpuData(), _net.Dst()[2]->CpuData(), size, threshold, overlap);
+            else
+                return _net.GetRegions(size.x, size.y, threshold, overlap);
         }
 
         virtual size_t MemoryUsage() const
@@ -145,6 +150,7 @@ namespace Test
         bool _trans, _sort;
         Floats _lower, _upper;
         size_t _synetMemoryUsage;
+        EpsilonDecoder _epsilon;
 
         bool Load(const String & model, const String & weight)
         {

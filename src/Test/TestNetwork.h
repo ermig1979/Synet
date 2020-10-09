@@ -49,6 +49,15 @@ namespace Test
         SYNET_PARAM_VALUE(int32_t, size, 0);
     };
 
+    struct EpsilonParam
+    {
+        SYNET_PARAM_VALUE(bool, enable, false);
+        SYNET_PARAM_VALUE(Floats, variance, Floats({ 0.1f, 0.2f }));
+        SYNET_PARAM_VALUE(Shape, step, Shape({ 8, 16, 32, 64 }));
+        SYNET_PARAM_VALUE(Shape, minSize, Shape({ 10, 16, 24, 32, 48, 0, 64, 96, 0, 128, 192, 256 }));
+        SYNET_PARAM_VALUE(bool, clip, false);
+    };
+
     struct TestParam
     {
         SYNET_PARAM_VALUE(String, images, String());
@@ -56,6 +65,7 @@ namespace Test
         SYNET_PARAM_VALUE(Floats, upper, Floats(1, 1.0f));
         SYNET_PARAM_VECTOR(ShapeParam, input);
         SYNET_PARAM_VECTOR(ShapeParam, output);
+        SYNET_PARAM_STRUCT(EpsilonParam, epsilon);
     };
 
     SYNET_PARAM_HOLDER(TestParamHolder, TestParam, test);

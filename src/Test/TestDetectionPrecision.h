@@ -37,6 +37,23 @@ namespace Test
 		}
 
 	private:
+		struct Box
+		{
+			float confidence, rect[4], landmarks[10];
+		};
+		typedef std::vector<Box> Boxes;
+
+		struct Test
+		{
+			String name, image, index;
+			Boxes detected, control;
+		};
+
+		typedef std::vector<Test> Tests;
+		typedef std::shared_ptr<Test> TestPtr;
+		typedef std::vector<TestPtr> TestPtrs;
+
+		Tests _tests;
 
 		virtual bool LoadTestList()
 		{
@@ -52,6 +69,7 @@ namespace Test
 		{
 			return true;
 		}
+
 	};
 }
 

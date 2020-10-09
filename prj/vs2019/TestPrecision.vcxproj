@@ -37,6 +37,7 @@
     <ClInclude Include="..\..\src\Test\TestCommon.h" />
     <ClInclude Include="..\..\src\Test\TestCompare.h" />
     <ClInclude Include="..\..\src\Test\TestDetectionPrecision.h" />
+    <ClInclude Include="..\..\src\Test\TestEpsilonDecoder.h" />
     <ClInclude Include="..\..\src\Test\TestInferenceEngine.h" />
     <ClInclude Include="..\..\src\Test\TestPrecision.h" />
     <ClInclude Include="..\..\src\Test\TestHtml.h" />
