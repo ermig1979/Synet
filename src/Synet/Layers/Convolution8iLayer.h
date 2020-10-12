@@ -59,7 +59,7 @@ namespace Synet
 
         virtual bool Can8i() const
         {
-            return true;
+            return true;// this->Param().convolution().group() == 1;
         }
 
         virtual bool Is8i() const

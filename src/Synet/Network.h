@@ -736,7 +736,7 @@ namespace Synet
                     const Stage & dst = _stages[*id];
                     if (&dst == &stage)
                         continue;
-                    if (dst.layer->Is8i())
+                    if (dst.layer->Is8i() && dst.layer->Can8i())
                         continue;
                     if (dst.layer->Can8i() && Is8iInSubGraph(dst))
                         continue;

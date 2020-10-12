@@ -46,6 +46,7 @@ namespace Test
 			String testParam;
 			String testList;
 			String imageDirectory;
+			String indexFile;
 			String outputDirectory;
 			String logName;
 			bool consoleSilence;
@@ -60,6 +61,9 @@ namespace Test
 				: ArgsParser(argc, argv)
 				, result(true)
 				, memoryUsage(0)
+				, testNumber(0)
+				, precision(0.0f)
+				, threshold(0.5f)
 			{
 				mode = GetArg("-m", "reidentification");
 				framework = GetArg("-f", "synet");
@@ -68,6 +72,7 @@ namespace Test
 				testParam = GetArg("-tp", "param.xml");
 				testList = GetArg("-tl", "pairs1.txt");
 				imageDirectory = GetArg("-id", "image");
+				indexFile = GetArg("-if", "index.txt");
 				outputDirectory = GetArg("-od", "output");
 				logName = GetArg("-ln", "", false);
 				consoleSilence = FromString<bool>(GetArg("-cs", "0"));

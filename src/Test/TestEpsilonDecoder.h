@@ -135,10 +135,10 @@ namespace Test
             float r1 = Synet::RestrictRange(b.rect[1], 0.0f, 1.0f);
             float r2 = Synet::RestrictRange(b.rect[2], 0.0f, 1.0f);
             float r3 = Synet::RestrictRange(b.rect[3], 0.0f, 1.0f);
-            r.x = Synet::Round((r0 + r2) / 2.0f * w);
-            r.y = Synet::Round((r1 + r3) / 2.0f * h);
-            r.w = Synet::Round((Synet::Max(r0, r2) - Synet::Min(r0, r2))*w);
-            r.h = Synet::Round((Synet::Max(r1, r3) - Synet::Min(r1, r3))*h);
+            r.x = (r0 + r2) / 2.0f * w;
+            r.y = (r1 + r3) / 2.0f * h;
+            r.w = (Synet::Max(r0, r2) - Synet::Min(r0, r2)) * w;
+            r.h = (Synet::Max(r1, r3) - Synet::Min(r1, r3)) * h;
             return r;
         }
 

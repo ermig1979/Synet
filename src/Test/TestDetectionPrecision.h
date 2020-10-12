@@ -37,16 +37,11 @@ namespace Test
 		}
 
 	private:
-		struct Box
-		{
-			float confidence, rect[4], landmarks[10];
-		};
-		typedef std::vector<Box> Boxes;
 
 		struct Test
 		{
-			String name, image, index;
-			Boxes detected, control;
+			String name, path;
+			Regions detected, control;
 		};
 
 		typedef std::vector<Test> Tests;
@@ -55,8 +50,46 @@ namespace Test
 
 		Tests _tests;
 
+		bool ParseIndexFile()
+		{
+			String path = MakePath(_options.imageDirectory, _options.indexFile);
+			std::ifstream ifs(path);
+			if (!ifs.is_open())
+			{
+				std::cout << "Can't open file '" << path << "' !" << std::endl;
+				return false;
+			}
+			while (!ifs.eof())
+			{
+				Test test;
+				ifs >> test.name;
+				test.path = MakePath(_options.imageDirectory, test.name);
+				if (!FileExists(test.path))
+				{
+					std::cout << "Image '" << test.path << "' is not exists!" << std::endl;
+					return false;
+				}
+				size_t number;
+				ifs >> number;
+				for (size_t i = 0; i < number; ++i)
+				{
+					Region region;
+					ifs >> region.x >> region.y >> region.w >> region.h >> region.id;
+					for (size_t j = 0, stub; j < 5; ++j)
+						ifs >> stub;
+					if(region.id == 0)
+						test.control.push_back(region);
+				}
+				_tests.push_back(test);
+			}
+			return true;
+		}
+
 		virtual bool LoadTestList()
 		{
+			if (!ParseIndexFile())
+				return false;
+
 			return true;
 		}
 
@@ -69,7 +102,6 @@ namespace Test
 		{
 			return true;
 		}
-
 	};
 }
 

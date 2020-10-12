@@ -270,6 +270,8 @@ namespace Test
                 if (shape[1] == 1 && shape[2] == 1)
                     return;
             }
+            if (layer.convolution().group() != 1)
+                return;
             layer.convolution().quantizationLevel() = Synet::TensorType8i;
         }
 
