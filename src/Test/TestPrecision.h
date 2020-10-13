@@ -52,6 +52,9 @@ namespace Test
 			bool consoleSilence;
 			int testThreads;
 			int batchSize;
+			int objectType;
+			float ratioVariation;
+			bool annotateRegions;
 
 			mutable volatile bool result;
 			mutable size_t memoryUsage, testNumber;
@@ -78,6 +81,9 @@ namespace Test
 				consoleSilence = FromString<bool>(GetArg("-cs", "0"));
 				testThreads = FromString<int>(GetArg("-tt", "1"));
 				batchSize = FromString<int>(GetArg("-bs", "1"));
+				objectType = FromString<int>(GetArg("-ot", "0"));
+				ratioVariation = FromString<float>(GetArg("-rv", "0.2"));
+				annotateRegions = FromString<bool>(GetArg("-ar", "0"));
 			}
 
 			~Options()
@@ -114,7 +120,7 @@ namespace Test
 
 			bool NeedOutputDirectory() const
 			{
-				return false;
+				return annotateRegions;
 			}
 
 			size_t TestThreads() const
@@ -261,7 +267,7 @@ namespace Test
 			return true;
 		}
 
-		bool SetInput(const String & path, Tensor & input, size_t index)
+		bool SetInput(const String & path, Tensor & input, size_t index, Size * pSize)
 		{
 			TEST_PERF_FUNC();
 
@@ -271,6 +277,8 @@ namespace Test
 				std::cout << "Can't read '" << path << "' image!" << std::endl;
 				return false;
 			}
+			if (pSize)
+				*pSize = original.Size();
 
 			const Shape& shape = input.Shape();
 			View converted(original.Size(), shape[1] == 1 ? View::Gray8 : View::Bgr24);

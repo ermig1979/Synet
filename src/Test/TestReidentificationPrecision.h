@@ -135,7 +135,7 @@ namespace Test
 			for (size_t b = 0; b < batch; ++b)
 			{
 				const Object & o = tests[b].objects[index];
-				if (!SetInput(o.path, t.input[0], b))
+				if (!SetInput(o.path, t.input[0], b, NULL))
 					return false;
 			}
 			t.output = t.network->Predict(t.input);

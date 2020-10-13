@@ -285,6 +285,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution8iLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Region.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

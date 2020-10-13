@@ -103,6 +103,7 @@
     <ClInclude Include="..\..\src\Synet\Quantization\Convert.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\Gemm.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\Stat.h" />
+    <ClInclude Include="..\..\src\Synet\Region.h" />
     <ClInclude Include="..\..\src\Synet\Synet.h" />
     <ClInclude Include="..\..\src\Synet\Tensor.h" />
     <ClCompile Include="..\..\src\Synet\Synet.cpp" />

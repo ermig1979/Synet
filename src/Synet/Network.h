@@ -519,7 +519,7 @@ namespace Synet
                     for (size_t k = 0; k < regions.size(); ++k)
                     {
                         Region & r = regions[k];
-                        if (c.id == r.id && RelativeIntersection(c, r) >= overlap)
+                        if (c.id == r.id && Overlap(c, r) >= overlap)
                         {
                             if (c.prob > r.prob)
                                r = c;
@@ -1003,35 +1003,6 @@ namespace Synet
             default:
                 return NULL;
             }
-        }
-
-        static SYNET_INLINE Type Overlap(Type x1, Type w1, Type x2, Type w2)
-        {
-            Type l1 = x1 - w1 / 2;
-            Type l2 = x2 - w2 / 2;
-            Type left = l1 > l2 ? l1 : l2;
-            Type r1 = x1 + w1 / 2;
-            Type r2 = x2 + w2 / 2;
-            Type right = r1 < r2 ? r1 : r2;
-            return right - left;
-        }
-
-        static SYNET_INLINE Type Intersection(const Region & a, const Region & b)
-        {
-            Type w = Overlap(a.x, a.w, b.x, b.w);
-            Type h = Overlap(a.y, a.h, b.y, b.h);
-            return (w < 0 || h < 0) ? 0 : w*h;
-        }
-
-        static SYNET_INLINE Type Union(const Region & a, const Region & b)
-        {
-            Type i = Intersection(a, b);
-            return a.w*a.h + b.w*b.h - i;
-        }
-
-        static SYNET_INLINE Type RelativeIntersection(const Region & a, const Region & b)
-        {
-            return Intersection(a, b) / Union(a, b);
         }
     };
 }

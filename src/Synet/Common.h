@@ -253,12 +253,6 @@ namespace Synet
 #endif
     }
 
-    template <class T> struct Region
-    {
-        T x, y, w, h, prob;
-        size_t id;
-    };
-
     enum DebugPrintType
     {
         DebugPrintOutput = 0,
