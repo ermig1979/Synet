@@ -46,6 +46,8 @@ namespace Synet
     {
         T x, y, w, h, prob;
         size_t id;
+
+        Region() : x(0), y(0), w(0), h(0), prob(0), id(0) {}
     };
 
     template<class T> SYNET_INLINE T Intersection(const Region<T>& a, const Region<T>& b)

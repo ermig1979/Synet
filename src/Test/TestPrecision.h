@@ -54,7 +54,10 @@ namespace Test
 			int batchSize;
 			int objectType;
 			float ratioVariation;
+			float thresholdOverlap;
+			float thresholdConfidence;
 			bool annotateRegions;
+			bool generateIndex;
 
 			mutable volatile bool result;
 			mutable size_t memoryUsage, testNumber;
@@ -81,9 +84,12 @@ namespace Test
 				consoleSilence = FromString<bool>(GetArg("-cs", "0"));
 				testThreads = FromString<int>(GetArg("-tt", "1"));
 				batchSize = FromString<int>(GetArg("-bs", "1"));
-				objectType = FromString<int>(GetArg("-ot", "0"));
-				ratioVariation = FromString<float>(GetArg("-rv", "0.2"));
+				objectType = FromString<int>(GetArg("-ot", "2"));
+				ratioVariation = FromString<float>(GetArg("-rv", "0.333"));
+				thresholdOverlap = FromString<float>(GetArg("-to", "0.5"));
+				thresholdConfidence = FromString<float>(GetArg("-tc", "0.5"));
 				annotateRegions = FromString<bool>(GetArg("-ar", "0"));
+				generateIndex = FromString<bool>(GetArg("-gi", "0"));
 			}
 
 			~Options()

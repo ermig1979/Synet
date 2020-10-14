@@ -100,6 +100,7 @@ namespace Test
 				std::cout << "Can't open file '" << path << "' !" << std::endl;
 				return false;
 			}
+			_tests.clear();
 			while (!ifs.eof())
 			{
 				Test test;
@@ -118,11 +119,11 @@ namespace Test
 				{
 					Region region;
 					ifs >> region.x >> region.y >> region.w >> region.h >> region.id;
-					region.x += region.w / 2;
-					region.y += region.h / 2;
+					region.x += int(region.w) / 2;
+					region.y += int(region.h) / 2;
 					for (size_t j = 0, stub; j < 5; ++j)
 						ifs >> stub;
-					if(region.id >= 0 && region.id <= 2)
+					if(region.id >= 0 && region.id <= _options.objectType)
 						test.control.push_back(region);
 				}
 				if(_list.empty() || _list.find(test.name) != _list.end())
@@ -132,12 +133,67 @@ namespace Test
 			return true;
 		}
 
+		bool GenerateIndexFile()
+		{
+			StringList names = GetFileList(_options.imageDirectory, "*.jpg", true, false);
+			_tests.clear();
+			if (names.empty())
+			{
+				std::cout << "Directory '" << _options.imageDirectory << "' is empty!" << std::endl;
+				return false;
+			}
+			for (StringList::const_iterator it = names.begin(); it != names.end(); ++it)
+			{
+				Test test;
+				test.name = *it;
+				test.path = MakePath(_options.imageDirectory, test.name);
+				if (test.name != _options.indexFile)
+					_tests.push_back(test);
+			}
+			_options.testNumber = _tests.size();
+			return true;
+		}
+
+		bool SaveIndexFile()
+		{
+			String path = MakePath(_options.imageDirectory, _options.indexFile);
+			std::ofstream ofs(path);
+			if (!ofs.is_open())
+			{
+				std::cout << "Can't open file '" << path << "' !" << std::endl;
+				return false;
+			}
+			for (size_t i = 0; i < _tests.size(); ++i)
+			{
+				const Test& t = _tests[i];
+				ofs << t.name << std::endl;
+				ofs << t.control.size() << std::endl;
+				for (size_t k = 0; k < t.control.size(); ++k)
+				{
+					const Region& r = t.control[k];
+					ofs << int(r.x) + int(r.w) / 2 << " ";
+					ofs << int(r.y) + int(r.h) / 2 << " ";
+					ofs << int(r.w) << " " << int(r.h) << " ";
+					ofs << r.id << " 0 0 0 0 0" << std::endl;
+				}
+			}
+			return true;
+		}
+
 		virtual bool LoadTestList()
 		{
 			if (!LoadListFile())
 				return false;
-			if (!ParseIndexFile())
-				return false;
+			if (_options.generateIndex)
+			{
+				if (!GenerateIndexFile())
+					return false;
+			}
+			else
+			{
+				if (!ParseIndexFile())
+					return false;
+			}
 			return true;
 		}
 
@@ -174,7 +230,9 @@ namespace Test
 				return true;
 
 			t.output = t.network->Predict(t.input);
-			test.detected = t.network->GetRegions(imgSize, 0.25f, 0.5f);
+			test.detected = t.network->GetRegions(imgSize, _options.thresholdConfidence, _options.thresholdOverlap);
+			if (_options.generateIndex)
+				test.control = test.detected;
 
 			return true;
 		}
@@ -211,30 +269,54 @@ namespace Test
 
 		virtual bool ProcessResult()
 		{
+			if (_options.generateIndex)
+			{
+				if (!SaveIndexFile())
+					return false;
+			}
 			SaveListFile();
 			typedef std::pair<float, int> Pair;
 			std::vector<Pair> detections;
-			size_t total = 0;
+			Shape totals(_options.objectType + 1, 0);
 			for (size_t i = 0; i < _tests.size(); ++i)
 			{
 				const Test& test = _tests[i];
-				total += test.control.size();
+				for (size_t k = 0; k < test.control.size(); ++k)
+					totals[test.control[k].id]++;
 				for (size_t j = 0; j < test.detected.size(); ++j)
 				{
-					bool found = false;
+					int type = -1;
 					for (size_t k = 0; k < test.control.size(); ++k)
 					{
 						float overlap = Synet::Overlap(test.detected[j], test.control[k]);
-						if (overlap > 0.50f)
-							found = true;
+						if (overlap > _options.thresholdOverlap)
+						{
+							type = test.control[k].id;
+						}
 					}
-					detections.push_back(Pair(test.detected[j].prob, found ? 1 : -1));
+					detections.push_back(Pair(test.detected[j].prob, type));
 				}
 				if(_options.annotateRegions)
 					Annotate(test);
 			}
-			std::sort(detections.begin(), detections.end(), [](const Pair& a, const Pair& b) {return a.first < b.first; });
-
+			std::sort(detections.begin(), detections.end(), [](const Pair& a, const Pair& b) {return a.first > b.first; });
+			size_t idx = 0, num = 0, max = num;
+			for (size_t i = 0; i < detections.size(); ++i)
+			{
+				int type = detections[i].second;
+				num += type == 0 ? 1 : (type == -1 ? -1 : 0);
+				if (num > max)
+				{
+					max = num;
+					idx = i;
+				}
+			}
+			_options.precision = double(max) / totals[0];
+			_options.threshold = detections[idx].first / 2.0f;
+			if(idx < detections.size() - 1)
+				_options.threshold += detections[idx + 1].first / 2.0f;
+			else
+				_options.threshold += _options.thresholdConfidence / 2.0f;
 			return true;
 		}
 	};
