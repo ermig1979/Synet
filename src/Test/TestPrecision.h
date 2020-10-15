@@ -60,16 +60,18 @@ namespace Test
 			bool generateIndex;
 
 			mutable volatile bool result;
-			mutable size_t memoryUsage, testNumber;
-			mutable double precision, threshold;
+			mutable size_t memoryUsage, testNumber, number;
+			mutable double precision, error, threshold;
 
 			Options(int argc, char* argv[])
 				: ArgsParser(argc, argv)
 				, result(true)
 				, memoryUsage(0)
 				, testNumber(0)
-				, precision(0.0f)
-				, threshold(0.5f)
+				, number(0)
+				, precision(0.0)
+				, error(0.0)
+				, threshold(0.5)
 			{
 				mode = GetArg("-m", "reidentification");
 				framework = GetArg("-f", "synet");
@@ -99,7 +101,8 @@ namespace Test
 					std::stringstream ss;
 
 					ss << "Test info: (" << Description() << ")." << std::endl;
-					ss << "Precision: " << ToString(precision * 100, 2) << " %, threshold: " << ToString(threshold, 3) << std::endl;
+					ss << "Number: " << number << ", precision: " << ToString(precision * 100, 2);
+					ss << " %, error: " << ToString(error * 100, 2) << " %, threshold: " << ToString(threshold, 3) << std::endl;
 					if (memoryUsage)
 						ss << "Memory usage: " << memoryUsage / (1024 * 1024) << " MB." << std::endl;
 					ss << SystemInfo() << std::endl;

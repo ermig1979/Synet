@@ -58,17 +58,21 @@ namespace Test
 			_list.clear();
 			String path = _options.testList;
 			std::ifstream ifs(path);
-			if (!ifs.is_open())
+			if (ifs.is_open())
 			{
-				std::cout << "Can't open file '" << path << "' !" << std::endl;
-				return false;
+				while (!ifs.eof())
+				{
+					String name;
+					ifs >> name;
+					if (!name.empty())
+						_list.insert(name);
+				}				
 			}
-			while (!ifs.eof())
+			else
 			{
-				String name;
-				ifs >> name;
-				if (!name.empty())
-					_list.insert(name);
+				std::cout << "Can't open list file '" << path << "' !" << std::endl;
+				if (!_options.generateIndex)
+					return false;
 			}
 			return true;
 		}
@@ -147,7 +151,7 @@ namespace Test
 				Test test;
 				test.name = *it;
 				test.path = MakePath(_options.imageDirectory, test.name);
-				if (test.name != _options.indexFile)
+				if (ExtensionByPath(test.name) == "jpg")
 					_tests.push_back(test);
 			}
 			_options.testNumber = _tests.size();
@@ -171,10 +175,10 @@ namespace Test
 				for (size_t k = 0; k < t.control.size(); ++k)
 				{
 					const Region& r = t.control[k];
-					ofs << int(r.x) + int(r.w) / 2 << " ";
-					ofs << int(r.y) + int(r.h) / 2 << " ";
+					ofs << int(r.x) - int(r.w) / 2 << " ";
+					ofs << int(r.y) - int(r.h) / 2 << " ";
 					ofs << int(r.w) << " " << int(r.h) << " ";
-					ofs << r.id << " 0 0 0 0 0" << std::endl;
+					ofs << r.id << " 0 0 0 0 " << k << std::endl;
 				}
 			}
 			return true;
@@ -237,16 +241,18 @@ namespace Test
 			return true;
 		}
 
-		void Annotate(const Region& region, uint32_t color, View& image)
+		void Annotate(const Region& region, size_t index, uint32_t color, int width, const Simd::Font * font, View& image)
 		{
 			ptrdiff_t l = ptrdiff_t(region.x - region.w / 2);
 			ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
 			ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
 			ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
-			Simd::DrawRectangle(image, l, t, r, b, color);
+			Simd::DrawRectangle(image, l, t, r, b, color, width);
+			if(font)
+				font->Draw(image, std::to_string(index), Size(l, t), color);
 		}
 
-		bool Annotate(const Test& test)
+		bool Annotate(const Test& test, const Simd::Font& font)
 		{
 			View image;
 			if (!LoadImage(test.path, image))
@@ -254,10 +260,10 @@ namespace Test
 				std::cout << "Can't read '" << test.path << "' image!" << std::endl;
 				return false;
 			}
-			for (size_t j = 0; j < test.detected.size(); ++j)
-				Annotate(test.detected[j], 0xFFFF0000, image);
 			for (size_t j = 0; j < test.control.size(); ++j)
-				Annotate(test.control[j], 0xFF00FF00, image);
+				Annotate(test.control[j], j, 0xFFFF0000, 2, NULL, image);
+			for (size_t j = 0; j < test.detected.size(); ++j)
+				Annotate(test.detected[j], j, 0xFF00FF00, 1, &font, image);
 			String path = MakePath(_options.outputDirectory, GetNameByPath(test.name));
 			if (!SaveImage(image, path))
 			{
@@ -274,6 +280,7 @@ namespace Test
 				if (!SaveIndexFile())
 					return false;
 			}
+			Simd::Font font(20);
 			SaveListFile();
 			typedef std::pair<float, int> Pair;
 			std::vector<Pair> detections;
@@ -297,21 +304,33 @@ namespace Test
 					detections.push_back(Pair(test.detected[j].prob, type));
 				}
 				if(_options.annotateRegions)
-					Annotate(test);
+					Annotate(test, font);
 			}
 			std::sort(detections.begin(), detections.end(), [](const Pair& a, const Pair& b) {return a.first > b.first; });
-			size_t idx = 0, num = 0, max = num;
+			int idx = 0, max = 0, pos = 0, neg = 0, posMax = 0, negMax = 0;
 			for (size_t i = 0; i < detections.size(); ++i)
 			{
 				int type = detections[i].second;
-				num += type == 0 ? 1 : (type == -1 ? -1 : 0);
-				if (num > max)
+				switch (type)
 				{
-					max = num;
+				case -1: 
+					neg++;
+					break;
+				case 0:
+					pos++;
+					break;
+				}
+				if (pos - neg > max)
+				{
+					max = pos - neg;
 					idx = i;
+					posMax = pos;
+					negMax = neg;
 				}
 			}
-			_options.precision = double(max) / totals[0];
+			_options.number = totals[0];
+			_options.precision = double(posMax) / totals[0];
+			_options.error = double(negMax) / totals[0];
 			_options.threshold = detections[idx].first / 2.0f;
 			if(idx < detections.size() - 1)
 				_options.threshold += detections[idx + 1].first / 2.0f;

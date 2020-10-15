@@ -199,7 +199,9 @@ namespace Test
 				std::cout << "Can't process result!" << std::endl;
 				return false;
 			}
+			_options.number = tests.size();
 			_options.precision = double(max) / tests.size();
+			_options.error = 1.0 - _options.precision;
 			_options.threshold = (tests[idx].first + tests[idx + 1].first) / 2;
 			return true;
 		}
