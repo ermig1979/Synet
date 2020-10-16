@@ -188,8 +188,11 @@ namespace Test
             _images.reserve(images.size());
             size_t curr = 0;
             for (StringList::const_iterator it = images.begin(); it != images.end(); ++it, ++curr)
-                if (curr >= _options.imageBegin && curr < _options.imageEnd)
+            {
+                String ext = ExtensionByPath(*it);
+                if (curr >= _options.imageBegin && curr < _options.imageEnd && ext != "txt")
                     _images.push_back(MakePath(directory, *it));
+            }
             if (_images.empty())
             {
                 std::cout << "There is no one image in '" << _options.imageDirectory << "' for '" << _options.imageFilter
@@ -270,8 +273,8 @@ namespace Test
                 if (shape[1] == 1 && shape[2] == 1)
                     return;
             }
-            if (layer.convolution().group() != 1)
-                return;
+            //if (layer.convolution().group() != 1)
+            //    return;
             layer.convolution().quantizationLevel() = Synet::TensorType8i;
         }
 

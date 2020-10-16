@@ -249,8 +249,11 @@ namespace Test
             names.reserve(images.size());
             size_t curr = 0;
             for(StringList::const_iterator it = images.begin(); it != images.end(); ++it, ++curr)
-                if(curr >= _options.imageBegin && curr < _options.imageEnd)
+            {
+                String ext = ExtensionByPath(*it);
+                if (curr >= _options.imageBegin && curr < _options.imageEnd && ext != "txt")
                     names.push_back(*it);
+            }
 
             size_t sN = network.SrcCount(), bN = _options.batchSize;
             size_t tN = names.size() / bN / sN;
@@ -439,18 +442,38 @@ namespace Test
             return true;
         }
 
-        void PrintError(const Difference & d, size_t i, const String& msg) const
+        void PrintError(const Difference & d, size_t i, const String& msg, std::ostream & os) const
         {
             using Synet::Detail::DebugPrint;
             const Difference::Statistics& s = d.GetStatistics();
             const Difference::Specific& e = s.exceed;
             const Difference::Specific& m = s.max;
-            std::cout << msg << std::endl << std::fixed;
-            std::cout << "Dst[" << i << "]" << DebugPrint(d.GetShape()) << " at ";
-            std::cout << DebugPrint(e.index) << " : diff = " << e.diff << " (" << e.first << " != " << e.second << ")";
-            std::cout << ", num = " << double(e.count) / s.count << "(" << e.count << ")";
-            std::cout << ", avg = " << s.mean << ", std = " << s.sdev << ", abs = " << s.adev;
-            std::cout << ", max " << DebugPrint(m.index) << " diff = " << s.max.diff << " (" << m.first << " != " << m.second << ")" << std::endl;
+            os << msg << std::endl << std::fixed;
+            os << "Dst[" << i << "]" << DebugPrint(d.GetShape()) << " at ";
+            os << DebugPrint(e.index) << " : diff = " << e.diff << " (" << e.first << " != " << e.second << ")";
+            os << ", num = " << double(e.count) / s.count << "(" << e.count << ")";
+            os << ", avg = " << s.mean << ", std = " << s.sdev << ", abs = " << s.adev;
+            os << ", max " << DebugPrint(m.index) << " diff = " << s.max.diff << " (" << m.first << " != " << m.second << ")" << std::endl;
+        }
+
+        void PrintNeighbours(const Tensor& t, const Shape & m, int n, std::ostream& os)
+        {
+            for (int y = Synet::Max<int>(0, m[2] - n), h = Synet::Min(t.Axis(2), m[2] + n + 1); y < h; y++)
+            {
+                for (int x = Synet::Max<int>(0, m[3] - n), w = Synet::Min(t.Axis(3), m[3] + n + 1); x < w; x++)
+                    os << ExpandLeft(ToString(t.CpuData(Shp(m[0], m[1], y, x))[0], 3), 8) << " ";
+                os << std::endl;
+            }
+            os << std::endl;
+        }
+
+        void PrintMaxErrorNeighbours(const Tensor& f, const Tensor& s, const Difference& d, int n, std::ostream& os)
+        {
+            if (f.Shape() != s.Shape() || f.Count() != 4)
+                return;
+            const Shape& m = d.GetStatistics().max.index;
+            PrintNeighbours(f, m, n, os);
+            PrintNeighbours(s, m, n, os);
         }
 
         bool CompareResults(const TestData& test, size_t index, size_t thread)
@@ -479,7 +502,8 @@ namespace Test
                 {
                     if (!difference.Estimate(_options.compareThreshold, _options.compareQuantile))
                     {
-                        PrintError(difference, d, failed);
+                        PrintError(difference, d, failed, std::cout);
+                        PrintMaxErrorNeighbours(f, s, difference, 2, std::cout);
                         return false;
                     }
                     continue;

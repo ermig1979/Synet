@@ -331,11 +331,16 @@ namespace Test
 			_options.number = totals[0];
 			_options.precision = double(posMax) / totals[0];
 			_options.error = double(negMax) / totals[0];
-			_options.threshold = detections[idx].first / 2.0f;
-			if(idx < detections.size() - 1)
-				_options.threshold += detections[idx + 1].first / 2.0f;
+			if (detections.size())
+			{
+				_options.threshold = detections[idx].first / 2.0f;
+				if (idx < detections.size() - 1)
+					_options.threshold += detections[idx + 1].first / 2.0f;
+				else
+					_options.threshold += _options.thresholdConfidence / 2.0f;
+			}
 			else
-				_options.threshold += _options.thresholdConfidence / 2.0f;
+				_options.threshold = _options.thresholdConfidence;
 			return true;
 		}
 	};

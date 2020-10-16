@@ -962,8 +962,9 @@ namespace Synet
             case LayerTypeInterp2: return new Interp2Layer<T>(param);
             case LayerTypeLog: return new LogLayer<T>(param);
             case LayerTypeLrn: return new LrnLayer<T>(param);
-            case LayerTypeMergedConvolution: 
-                if (param.mergedConvolution().conv()[0].quantizationLevel() == TensorType8i)
+            case LayerTypeMergedConvolution:
+                if (param.mergedConvolution().conv()[0].quantizationLevel() == TensorType8i ||
+                    param.mergedConvolution().conv()[1].quantizationLevel() == TensorType8i)
                     return new MergedConvolution8iLayer<T>(param, method);
                 else
                     return new MergedConvolution32fLayer<T>(param);
