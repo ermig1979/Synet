@@ -391,7 +391,8 @@ namespace Synet
             layer.mergedConvolution().conv().push_back(l0.convolution());
             layer.mergedConvolution().conv().push_back(l1.convolution());
             layer.mergedConvolution().conv().push_back(l2.convolution());
-            if (layer.mergedConvolution().conv()[0].quantizationLevel() == TensorType8i)
+            if (layer.mergedConvolution().conv()[0].quantizationLevel() == TensorType8i || 
+                layer.mergedConvolution().conv()[2].quantizationLevel() == TensorType8i)
             {
                 layer.origin().push_back(l0.name());
                 layer.origin().push_back(l1.name());
@@ -501,7 +502,8 @@ namespace Synet
                     layer.weight().push_back(src[index + l].weight()[i]);
             layer.mergedConvolution().conv().push_back(l0.convolution());
             layer.mergedConvolution().conv().push_back(l1.convolution());
-            if (layer.mergedConvolution().conv()[0].quantizationLevel() == TensorType8i)
+            if (layer.mergedConvolution().conv()[0].quantizationLevel() == TensorType8i || 
+                layer.mergedConvolution().conv()[1].quantizationLevel() == TensorType8i)
                 layer.origin().push_back(l0.name());
             index += 1;
             dst.push_back(layer);

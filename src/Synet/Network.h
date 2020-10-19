@@ -929,6 +929,14 @@ namespace Synet
             return false;
         }
 
+        static inline bool Use8i(const MergedConvolutionParam & param)
+        {
+            if (param.conv().size() == 3)
+                return param.conv()[0].quantizationLevel() == TensorType8i && param.conv()[2].quantizationLevel() == TensorType8i;
+            else
+                return param.conv()[0].quantizationLevel() == TensorType8i || param.conv()[1].quantizationLevel() == TensorType8i;
+        }
+
         static LayerPtr Create(const LayerParam & param, QuantizationMethod method)
         {
             switch (param.type())
@@ -963,8 +971,7 @@ namespace Synet
             case LayerTypeLog: return new LogLayer<T>(param);
             case LayerTypeLrn: return new LrnLayer<T>(param);
             case LayerTypeMergedConvolution:
-                if (param.mergedConvolution().conv()[0].quantizationLevel() == TensorType8i ||
-                    param.mergedConvolution().conv()[1].quantizationLevel() == TensorType8i)
+                if (Use8i(param.mergedConvolution()))
                     return new MergedConvolution8iLayer<T>(param, method);
                 else
                     return new MergedConvolution32fLayer<T>(param);

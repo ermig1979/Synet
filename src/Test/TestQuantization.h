@@ -269,12 +269,17 @@ namespace Test
             const SyNet::Tensor* tensor = _synet.GetInternalTensor(layer.src()[0]);
             if (tensor && tensor->Format() == Synet::TensorFormatNhwc)
             {
-                Shape shape = tensor->Shape();
-                if (shape[1] == 1 && shape[2] == 1)
+                Shape iShape = tensor->Shape();
+                if (iShape[1] == 1 && iShape[2] == 1)
                     return;
+                Shape wShape = layer.weight()[0].dim();
+                //if (wShape[0] * wShape[1] * wShape[2] <= 64)
+                //    return;
+                //if (wShape[2] <= 64)
+                //    return;
             }
-            //if (layer.convolution().group() != 1)
-            //    return;
+            if (layer.convolution().group() != 1)
+                return;
             layer.convolution().quantizationLevel() = Synet::TensorType8i;
         }
 
