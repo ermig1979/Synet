@@ -40,6 +40,7 @@ namespace Synet
         Floats scale32fTo8u, shift32fTo8u, scale8uTo32f, shift8uTo32f;
         Bytes zero8u;
         bool negative, channels;
+        int iMin, iMax, uMin, uMax;
 
         Stat(const StatisticParam & param)
             : negative(false)
@@ -117,30 +118,31 @@ namespace Synet
             shift8uTo32f.resize(n);
             zero8u.resize(n);
 
-            if (method == QuantizationMethodIECompatible)
+            if (method == QuantizationMethodIECompatible || 
+                method == QuantizationMethodSymmetricNarrowed ||
+                method == QuantizationMethodUnifiedNarrowed)
             {
-                for (size_t i = 0; i < n; ++i)
+                if (method == QuantizationMethodIECompatible)
                 {
-                    float absMax = ::fmax(::fabs(min[i]), ::fabs(max[i]));
-                    float invScale = absMax / (negative ? QUANT_IE_COMP_SRC_I8_MAX : QUANT_IE_COMP_SRC_U8_MAX);
-                    if (fabs(invScale) < 1e-7)
-                        invScale = 1.0f;
-                    zero8u[i] = (negative ? -QUANT_IE_COMP_SRC_I8_MIN : QUANT_IE_COMP_SRC_U8_MIN);
-                    scale32fTo8u[i] = float(1.0 / invScale);
-                    scale8uTo32f[i] = invScale;
-                    shift32fTo8u[i] = float(zero8u[i]);
-                    shift8uTo32f[i] = -float(zero8u[i]) * invScale;
+                    iMin = QUANT_IE_COMP_SRC_I8_MIN;
+                    iMax = QUANT_IE_COMP_SRC_I8_MAX;
+                    uMin = QUANT_IE_COMP_SRC_U8_MIN;
+                    uMax = QUANT_IE_COMP_SRC_U8_MAX;
                 }
-            }
-            else if (method == QuantizationMethodSymmetricNarrowed)
-            {
+                else
+                {
+                    iMin = QUANT_SYMM_NARR_SRC_I8_MIN;
+                    iMax = QUANT_SYMM_NARR_SRC_I8_MAX;
+                    uMin = QUANT_SYMM_NARR_SRC_U8_MIN;
+                    uMax = QUANT_SYMM_NARR_SRC_U8_MAX;
+                }
                 for (size_t i = 0; i < n; ++i)
                 {
                     float absMax = ::fmax(::fabs(min[i]), ::fabs(max[i]));
-                    float invScale = absMax / (negative ? QUANT_SYMM_NARR_SRC_I8_MAX : QUANT_SYMM_NARR_SRC_U8_MAX);
+                    float invScale = absMax / (negative ? iMax : uMax);
                     if (fabs(invScale) < 1e-7)
                         invScale = 1.0f;
-                    zero8u[i] = (negative ? -QUANT_SYMM_NARR_SRC_I8_MIN : QUANT_SYMM_NARR_SRC_U8_MIN);
+                    zero8u[i] = (negative ? -iMin : uMin);
                     scale32fTo8u[i] = float(1.0 / invScale);
                     scale8uTo32f[i] = invScale;
                     shift32fTo8u[i] = float(zero8u[i]);
@@ -149,6 +151,7 @@ namespace Synet
             }
             else
             {
+                assert(0);
                 for (size_t i = 0; i < n; ++i)
                 {
                     float _min = Min(0.0f, min[i]);

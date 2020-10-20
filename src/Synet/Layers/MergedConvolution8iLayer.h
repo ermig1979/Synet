@@ -53,7 +53,7 @@ namespace Synet
 
         virtual bool Can8i() const
         {
-            return true;// this->Param().mergedConvolution().conv()[0].group() == 1;
+            return true;
         }
 
         virtual bool Is8i() const
@@ -105,6 +105,9 @@ namespace Synet
             if (_mergedConvolution8i.Enable())
             {
                 Base::Extend8u(buf, 0, Shp(_mergedConvolution8i.ExternalBufferSize()));
+                if (!this->Stats(1).empty() && (_method == QuantizationMethodIECompatible || 
+                    _method == QuantizationMethodUnifiedNarrowed))
+                    this->Stats(1).back()->Unify();
                 const float* stats[6] = { 
                     this->Stats(0).empty() ? NULL : this->Stats(0)[0]->min.data(),
                     this->Stats(0).empty() ? NULL : this->Stats(0)[0]->max.data(),
@@ -268,6 +271,8 @@ namespace Synet
             Stat * statI = this->Stats(1).empty() ? NULL : this->Stats(1).back();
             if (statI)
             {
+                if (_method == QuantizationMethodIECompatible || _method == QuantizationMethodUnifiedNarrowed)
+                    statI->Unify();
                 statI->Init8u(_method);
                 _intCvt.Init(1, b.srcC, b.srcH, b.srcW, TensorFormatNhwc, statI->scale32fTo8u.data(), statI->shift32fTo8u.data(), _method);
             }
@@ -317,12 +322,7 @@ namespace Synet
             int8_t* pDstW = _weight8i[dstIdx].CpuData();
             float* pNorm = _norm32f[dstIdx].CpuData();
             float* pBias = _bias32f[dstIdx].CpuData();
-            int wLo, wUp, sLo, sUp;
             bool avoidOverflow16i = stat.negative && _method == QuantizationMethodIECompatible;
-            if (_method == QuantizationMethodIECompatible)
-                wLo = QUANT_IE_COMP_WEIGHT_MIN, wUp = QUANT_IE_COMP_WEIGHT_MAX, sLo = QUANT_IE_COMP_SRC_U8_MIN, sUp = QUANT_IE_COMP_SRC_U8_MAX;
-            else if (_method == QuantizationMethodSymmetricNarrowed)
-                wLo = QUANT_SYMM_NARR_WEIGHT_MIN, wUp = QUANT_SYMM_NARR_WEIGHT_MAX, sLo = QUANT_SYMM_NARR_SRC_U8_MIN, sUp = QUANT_SYMM_NARR_SRC_U8_MAX;
             for (size_t d = 0; d < conv.dstC; ++d)
             {
                 float normB = 0, minW = FLT_MAX, maxW = -FLT_MAX, scale = 1.0f;
@@ -335,24 +335,21 @@ namespace Synet
                         maxW = Max(maxW, pNormW[kc]);
                     }
                 }
-                scale = wUp / Max(Abs(maxW), Abs(minW));
+                scale = stat.iMax / Max(Abs(maxW), Abs(minW));
                 for (size_t k = 0, kc = 0; k < K; ++k)
                 {
                     for (size_t c = 0; c < C; ++c, ++kc)
                     {
+                        int w = ConvertTo8i(pNormW[kc], scale, 0, stat.iMin, stat.iMax);
                         if (avoidOverflow16i)
                         {
-                            int w = ConvertTo8i(pNormW[kc], scale, 0, wLo, wUp);
                             if (w & 1)
                                 w = Round(w * 0.25f) * 4;
                             pDstW[kc * D + d] = w / 2;
-                            normB -= w * pShift[c];
                         }
                         else
-                        {
-                            pDstW[kc * D + d] = ConvertTo8i(pNormW[kc], scale, 0, wLo, wUp);
-                            normB -= pDstW[kc * D + d] * pShift[c];
-                        }
+                            pDstW[kc * D + d] = w;
+                        normB -= w * pShift[c];
                     }
                 }
                 pNorm[d] = (avoidOverflow16i ? 2.0f : 1.0f) / scale;

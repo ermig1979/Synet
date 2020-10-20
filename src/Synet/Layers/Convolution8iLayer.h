@@ -213,12 +213,7 @@ namespace Synet
             int8_t* pDstW = _weight8i.CpuData();
             float* pNorm = _norm32f.CpuData();
             float* pBias = _bias32f.CpuData();
-            int wLo, wUp, sLo, sUp;
             bool avoidOverflow16i = statS.negative && _method == QuantizationMethodIECompatible;
-            if (_method == QuantizationMethodIECompatible)
-                wLo = QUANT_IE_COMP_WEIGHT_MIN, wUp = QUANT_IE_COMP_WEIGHT_MAX, sLo = QUANT_IE_COMP_SRC_U8_MIN, sUp = QUANT_IE_COMP_SRC_U8_MAX;
-            else if (_method == QuantizationMethodSymmetricNarrowed)
-                wLo = QUANT_SYMM_NARR_WEIGHT_MIN, wUp = QUANT_SYMM_NARR_WEIGHT_MAX, sLo = QUANT_SYMM_NARR_SRC_U8_MIN, sUp = QUANT_SYMM_NARR_SRC_U8_MAX;
             _srcCvt.Init(1, conv.srcC, conv.srcH, conv.srcW, (TensorFormat)alg.trans, statS.scale32fTo8u.data(), statS.shift32fTo8u.data(), _method);
             _dstCvt.Init(1, conv.dstC, conv.dstH, conv.dstW, (TensorFormat)alg.trans, statD.scale32fTo8u.data(), statD.shift32fTo8u.data(), _method);
             for (size_t g = 0; g < G; ++g)
@@ -229,12 +224,14 @@ namespace Synet
                     if (alg.trans)
                     {
                         SetNormMinMax(pSrcW + d, pScale, pNormW, minW, maxW);
-                        scale = wUp / Max(Abs(maxW), Abs(minW));
+                        scale = statS.iMax / Max(Abs(maxW), Abs(minW));
                         for (size_t k = 0, kc = 0; k < K; ++k)
+                        {
                             for (size_t c = 0; c < C; ++c, ++kc)
+                            {
                                 if (avoidOverflow16i)
                                 {
-                                    int w = ConvertTo8i(pNormW[kc], scale, 0, wLo, wUp);
+                                    int w = ConvertTo8i(pNormW[kc], scale, 0, statS.iMin, statS.iMax);
                                     if (w & 1)
                                         w = Round(w * 0.25f) * 4;
                                     pDstW[kc * GD + d] = w / 2;
@@ -242,19 +239,23 @@ namespace Synet
                                 }
                                 else
                                 {
-                                    pDstW[kc * GD + d] = ConvertTo8i(pNormW[kc], scale, 0, wLo, wUp);
+                                    pDstW[kc * GD + d] = ConvertTo8i(pNormW[kc], scale, 0, statS.iMin, statS.iMax);
                                     normB -= pDstW[kc * GD + d] * pShift[c];
                                 }
+                            }
+                        }
                     }
                     else
                     {
                         SetNormMinMax(pSrcW + d * CK, pScale, pNormW, minW, maxW);
-                        scale = wUp / Max(Abs(maxW), Abs(minW));
+                        scale = statS.iMax / Max(Abs(maxW), Abs(minW));
                         for (size_t c = 0, ck = 0; c < C; ++c)
+                        {
                             for (size_t k = 0; k < K; ++k, ++ck)
+                            {
                                 if (avoidOverflow16i)
                                 {
-                                    int w = ConvertTo8i(pNormW[ck], scale, 0, wLo, wUp);
+                                    int w = ConvertTo8i(pNormW[ck], scale, 0, statS.iMin, statS.iMax);
                                     if (w & 1)
                                         w = Round(w * 0.25f) * 4;
                                     pDstW[d * CK + ck] = w / 2;
@@ -262,9 +263,11 @@ namespace Synet
                                 }
                                 else
                                 {
-                                    pDstW[d * CK + ck] = ConvertTo8i(pNormW[ck], scale, 0, wLo, wUp);
+                                    pDstW[d * CK + ck] = ConvertTo8i(pNormW[ck], scale, 0, statS.iMin, statS.iMax);
                                     normB -= pDstW[d * CK + ck] * pShift[c];
                                 }
+                            }
+                        }
                     }
                     pNorm[d] = (avoidOverflow16i ? 2.0f : 1.0f) / scale;
                     pBias[d] = (pSrcB ? pSrcB[d] : 0.0f) + normB / scale;

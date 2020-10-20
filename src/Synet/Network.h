@@ -812,7 +812,7 @@ namespace Synet
 
         void UnifyStats()
         {
-            if (_param().quantization().method() >= QuantizationMethodSymmetricNarrowed)
+            if (_param().quantization().method() == QuantizationMethodSymmetricNarrowed)
                 return;
             for (size_t i = 0; i < _input.size(); ++i)
                 _stats[_statId[_input[i].layer->Param().name()]]->Unify();

@@ -173,7 +173,8 @@ namespace Synet
 
     SYNET_PARAM_ENUM(QuantizationMethod,
         QuantizationMethodIECompatible,
-        QuantizationMethodSymmetricNarrowed);
+        QuantizationMethodSymmetricNarrowed,
+        QuantizationMethodUnifiedNarrowed);
 
     SYNET_PARAM_ENUM(TensorFormat,
         TensorFormatNchw,
