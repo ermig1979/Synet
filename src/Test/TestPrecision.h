@@ -52,6 +52,7 @@ namespace Test
 			bool consoleSilence;
 			int testThreads;
 			int batchSize;
+			int repeatNumber;
 			int objectType;
 			float ratioVariation;
 			float thresholdOverlap;
@@ -85,7 +86,8 @@ namespace Test
 				logName = GetArg("-ln", "", false);
 				consoleSilence = FromString<bool>(GetArg("-cs", "0"));
 				testThreads = FromString<int>(GetArg("-tt", "1"));
-				batchSize = FromString<int>(GetArg("-bs", "1"));
+				batchSize = Synet::Max(FromString<int>(GetArg("-bs", "1")), 1);
+				repeatNumber = Synet::Max(FromString<int>(GetArg("-rn", "1")), 1);
 				objectType = FromString<int>(GetArg("-ot", "2"));
 				ratioVariation = FromString<float>(GetArg("-rv", "0.333"));
 				thresholdOverlap = FromString<float>(GetArg("-to", "0.5"));
@@ -137,10 +139,6 @@ namespace Test
 				return Synet::RestrictRange<size_t>(testThreads, 1, std::thread::hardware_concurrency());
 			}
 
-			size_t BatchSize() const
-			{
-				return Synet::Max<size_t>(batchSize, 1);
-			}
 
 			String Description() const
 			{
@@ -151,7 +149,8 @@ namespace Test
 				ss << ", model: " << GetNameByPath(testModel);
 				ss << ", list: " << GetNameByPath(testList);
 				ss << ", threads: " << TestThreads();
-				ss << ", batch: " << BatchSize();
+				ss << ", batch: " << batchSize;
+				ss << ", repeats: " << repeatNumber;
 				return ss.str();
 			}
 		};
@@ -334,7 +333,7 @@ namespace Test
 			volatile bool& result = precision->_options.result;
 			for (; current < end && result;)
 			{
-				size_t batch = std::min(precision->_options.BatchSize(), end - current);
+				size_t batch = Synet::Min<size_t>(precision->_options.batchSize, end - current);
 				result = precision->PerformBatch(thread, current, batch);
 				current += batch;
 			}

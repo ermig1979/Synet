@@ -233,7 +233,8 @@ namespace Test
 			if (test.skip)
 				return true;
 
-			t.output = t.network->Predict(t.input);
+			for (int i = 0; i < _options.repeatNumber; ++i)
+				t.output = t.network->Predict(t.input);
 			test.detected = t.network->GetRegions(imgSize, _options.thresholdConfidence, _options.thresholdOverlap);
 			if (_options.generateIndex)
 				test.control = test.detected;

@@ -138,7 +138,8 @@ namespace Test
 				if (!SetInput(o.path, t.input[0], b, NULL))
 					return false;
 			}
-			t.output = t.network->Predict(t.input);
+			for(int i = 0; i < _options.repeatNumber; ++i)
+				t.output = t.network->Predict(t.input);
 			size_t size = t.output[0].Size(1);
 			for (size_t b = 0; b < batch; ++b)
 			{
