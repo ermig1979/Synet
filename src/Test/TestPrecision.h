@@ -139,7 +139,6 @@ namespace Test
 				return Synet::RestrictRange<size_t>(testThreads, 1, std::thread::hardware_concurrency());
 			}
 
-
 			String Description() const
 			{
 				std::stringstream ss;
