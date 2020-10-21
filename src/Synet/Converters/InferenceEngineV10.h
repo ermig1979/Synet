@@ -224,8 +224,15 @@ namespace Synet
             {
                 String type = pData->FirstAttribute("element_type")->Value();
                 Shape shape;
-                if(!ConvertVector(pData->FirstAttribute("shape"), shape) || shape != ConvertOutputShape(pLayer))
+                if(!ConvertVector(pData->FirstAttribute("shape"), shape))
                     return false;
+                if (shape == Shp(0))
+                    shape[0] = 1;
+                else
+                {
+                    if (shape != ConvertOutputShape(pLayer))
+                        return false;
+                }
                 size_t offset, size;
                 StringToValue(pData->FirstAttribute("offset")->Value(), offset);
                 if (type == "f32")
@@ -236,6 +243,18 @@ namespace Synet
                     layer.weight()[0].dim() = shape;
                     layer.weight()[0].offset() = offset;
                     StringToValue(pData->FirstAttribute("size")->Value(), layer.weight()[0].size());
+                }
+                else if (type == "i32")
+                {
+                    layer.type() = Synet::LayerTypeMeta;
+                    layer.meta().type() = Synet::MetaTypeConst;
+                    layer.meta().alpha().type() = TensorType32i;
+                    layer.meta().alpha().shape() = shape;
+                    size = TensorSize(shape);
+                    layer.meta().alpha().i32().resize(size);
+                    const int32_t* src = GetWeight<int32_t>(srcBin, offset);
+                    for (size_t i = 0; i < size; ++i)
+                        layer.meta().alpha().i32()[i] = src[i];
                 }
                 else if (type == "i64")
                 {
