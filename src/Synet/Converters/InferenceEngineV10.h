@@ -70,6 +70,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if ((type == "Convolution" || type == "GroupConvolution") && !ConvertConvolutionLayer(pLayer, trans, dstXml.layers(), srcBin, layer, dstBin))
                     return ErrorMessage(pLayer);
+                if (type == "Gather" && !ConvertGatherLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "DetectionOutput" && !ConvertDetectionOutputLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Interpolate" && !ConvertInterpolateLayer(pLayer, srcBin, dstXml.layers(), layer))
@@ -91,6 +93,8 @@ namespace Synet
                 if (type == "PriorBoxV2" && !ConvertPriorBoxV2Layer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "ReduceMean" && !ConvertReduceMeanLayer(pLayer, srcBin, dstXml.layers(), layer))
+                    return ErrorMessage(pLayer);
+                if (type == "ReduceProd" && !ConvertReduceProdLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "ReduceSum" && !ConvertReduceSumLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
@@ -197,22 +201,33 @@ namespace Synet
 
         bool ConvertConcatLayer(const XmlNode* pLayer, const LayerParams& layers, bool trans, LayerParam& layer)
         {
-            layer.type() = Synet::LayerTypeConcat;
-            const XmlNode* pData = pLayer->FirstNode("data");
-            if (pData == NULL)
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            if (src0 == NULL)
                 return false;
-            StringToValue(pData->FirstAttribute("axis")->Value(), layer.concat().axis());
-            if (trans && !PermutedToNchw(layers, false, true))
+            if (src0->type() == Synet::LayerTypeMeta)
             {
-                Shape input = ConvertInputShape(pLayer);
-                if (input.size() == 4)
-                {
-                    Shape nchw = Shape({ 0, 3, 1, 2 });
-                    layer.concat().axis() = (uint32_t)nchw[layer.concat().axis()];
-                }
-                else
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypePack;
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeConcat;
+                const XmlNode* pData = pLayer->FirstNode("data");
+                if (pData == NULL)
                     return false;
-                
+                StringToValue(pData->FirstAttribute("axis")->Value(), layer.concat().axis());
+                if (trans && !PermutedToNchw(layers, false, true))
+                {
+                    Shape input = ConvertInputShape(pLayer);
+                    if (input.size() == 4)
+                    {
+                        Shape nchw = Shape({ 0, 3, 1, 2 });
+                        layer.concat().axis() = (uint32_t)nchw[layer.concat().axis()];
+                    }
+                    else
+                        return false;
+
+                }
             }
             return true;
         }
@@ -374,6 +389,13 @@ namespace Synet
             StringToValue(pData->FirstAttribute("share_location")->Value(), layer.detectionOutput().shareLocation());
             if (pData->FirstAttribute("clip"))
                 StringToValue(pData->FirstAttribute("clip")->Value(), layer.detectionOutput().clip());
+            return true;
+        }
+
+        bool ConvertGatherLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeMeta;
+            layer.meta().type() = Synet::MetaTypeGather;
             return true;
         }
 
@@ -663,6 +685,22 @@ namespace Synet
             return true;
         }
 
+        bool ConvertReduceProdLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            const XmlAttr* pKeepDims = pData->FirstAttribute("keep_dims");
+            if (pKeepDims == NULL)
+                return false;
+            layer.type() = Synet::LayerTypeMeta;
+            layer.meta().type() = Synet::MetaTypeReduceProd;
+            layer.meta().alpha().type() = TensorType32i;
+            layer.meta().alpha().shape() = Shp(1);
+            layer.meta().alpha().i32().resize(1, String(pKeepDims->Value()) == "True" ? 1 : 0);
+            return true;
+        }
+
         bool ConvertReduceSumLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
@@ -725,6 +763,7 @@ namespace Synet
                 return false;
             Shape input = ConvertInputShape(pLayer);
             Shape output = ConvertOutputShape(pLayer);
+            const LayerParam* first = GetLayer(layers, layer.src()[0]);
             const LayerParam* second = GetLayer(layers, layer.src()[1]);
             if (second == NULL || second->type() != LayerTypeMeta)
                 return false;
@@ -754,8 +793,15 @@ namespace Synet
                     }
                 }
             }
+            else if(first->type() == Synet::LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeReshape;
+            }
             else
-                return false;
+            {
+                layer.type() = LayerTypeReshape;
+            }
             return true;
         }
 
@@ -907,17 +953,26 @@ namespace Synet
             if (first->type() == LayerTypePriorBoxClustered || first->type() == LayerTypePriorBox)
             {
                 layer.type() = Synet::LayerTypeStub;
+                layer.src().resize(1);
             }
             else
             {
                 const LayerParam* second = GetLayer(layers, layer.src()[1]);
                 if (second == NULL || second->type() != LayerTypeMeta || second->meta().type() != MetaTypeConst)
                     return false;
-                const int64_t* alpha = second->meta().alpha().i64().data();
-                layer.type() = Synet::LayerTypeExpandDims;
-                layer.expandDims().axis() = (int32_t)alpha[0];
+                if (first->type() == LayerTypeMeta)
+                {
+                    layer.type() = Synet::LayerTypeMeta;
+                    layer.meta().type() = Synet::MetaTypeExpandDims;
+                }
+                else
+                {
+                    const int64_t* alpha = second->meta().alpha().i64().data();
+                    layer.type() = Synet::LayerTypeExpandDims;
+                    layer.expandDims().axis() = (int32_t)alpha[0];
+                    layer.src().resize(1);
+                }
             }
-            layer.src().resize(1);
             return true;
         }
 

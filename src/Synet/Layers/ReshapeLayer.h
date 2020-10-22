@@ -65,15 +65,24 @@ namespace Synet
             if (src.size() == 2)
             {
                 bool trans = src[0]->Format() == TensorFormatNhwc;
-                assert(src[1]->Count() == 1 && src[1]->GetType() == TensorType32i);
-                const Synet::Tensor<int32_t> & src1 = src[1]->As32i();
+                assert(src[1]->Count() == 1);
                 Shape shape;
-                for (size_t i = 0; i < src1.Size(); ++i)
-                    shape.push_back(src1.CpuData()[i]);
-                if (!trans && shape.size() == 2 && shape[0] != -1)
-                    shape = Shape({ shape[1], shape[0] });
-                if (!trans && shape.size() == 4)
-                    shape = Shape({ shape[0], shape[3], shape[1], shape[2] });
+                if (src[1]->GetType() == TensorType32i)
+                {
+                    for (size_t i = 0; i < src[1]->Size(); ++i)
+                        shape.push_back((size_t)src[1]->As32i().CpuData()[i]);
+                    if (!trans && shape.size() == 2 && shape[0] != -1)
+                        shape = Shape({ shape[1], shape[0] });
+                    if (!trans && shape.size() == 4)
+                        shape = Shape({ shape[0], shape[3], shape[1], shape[2] });
+                }
+                else if (src[1]->GetType() == TensorType64i)
+                {
+                    for (size_t i = 0; i < src[1]->Size(); ++i)
+                        shape.push_back((size_t)src[1]->As64i().CpuData()[i]);
+                }
+                else
+                    assert(0);
                 size_t unknown = 0;
                 for (size_t i = 0; i < shape.size(); ++i)
                 {

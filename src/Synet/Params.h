@@ -129,6 +129,7 @@ namespace Synet
         MetaTypePack,
         MetaTypeRange,
         MetaTypeRealDiv,
+        MetaTypeReduceProd,
         MetaTypeReshape,
         MetaTypeRsqrt,
         MetaTypeShape,

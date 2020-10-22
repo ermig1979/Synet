@@ -392,7 +392,7 @@ namespace Test
                     return false;
                 }
                 Regions regions = network.GetRegions(image.Size(), _options.regionThreshold, _options.regionOverlap);
-                uint32_t white = 0xFFFFFFFF;
+                uint32_t white = 0xFF00FF00;
                 for (size_t i = 0; i < regions.size(); ++i)
                 {
                     const Region& region = regions[i];
