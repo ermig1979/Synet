@@ -224,9 +224,13 @@ namespace Synet
                         Shape nchw = Shape({ 0, 3, 1, 2 });
                         layer.concat().axis() = (uint32_t)nchw[layer.concat().axis()];
                     }
+                    else if (input.size() == 3)
+                    {
+                        Shape ncs = Shape({ 0, 2, 1});
+                        layer.concat().axis() = (uint32_t)ncs[layer.concat().axis()];
+                    }
                     else
                         return false;
-
                 }
             }
             return true;
@@ -1135,14 +1139,15 @@ namespace Synet
                 return true;
             if (checkInnerProduct && layer.type() == LayerTypeInnerProduct)
                 return true;
-            if (checkPriorBox && layer.type() == LayerTypePriorBox)
+            if (checkPriorBox && (layer.type() == LayerTypePriorBox || layer.type() == LayerTypePriorBoxClustered))
                 return true;
             for (size_t s = 0; s < layer.src().size(); ++s)
             {
                 Pin src = ParsePin(layer.src()[s]);
                 for (size_t l = 0; l < current; ++l)
                 {
-                    if (src.name == layers[l].name() && PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox))
+                    if (src.name == layers[l].name() && layers[l].type() != LayerTypeMeta &&
+                        PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox))
                         return true;
                 }
             }
