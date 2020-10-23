@@ -38,7 +38,7 @@ export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 "$BIN" -m=convert $PATHES -tf=$FORMAT -cs=0 -qm=$METHOD
 if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 
-"$BIN" -m=compare -e=2 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -et=10.0 -dp=0 -dpf=6 -dpl=2 -dpp=8 -ar=0 -rt=0.9 -cs=0 -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -et=10.0 -dp=0 -dpf=6 -dpl=2 -dpp=6 -ar=0 -rt=0.5 -cs=0 -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
@@ -57,9 +57,9 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 #TEST inference_engine test_009f local 40 0 1 1 001t
 #TEST inference_engine test_009i local 40 1 1 1 000t
 #TEST inference_engine test_010f local 100 1 1 1 002t
-#TEST inference_engine test_011f local 40 1 1 1 001t
-TEST inference_engine test_012f persons 20 1 1 1 000
-#TEST inference_engine test_013f persons 1 0 0 1 000
+#TEST inference_engine test_011f local 40 1 1 1 002
+#TEST inference_engine test_012f persons 1 0 1 1 001
+TEST inference_engine test_013f persons 20 1 1 1 001
 
 #TEST quantization test_003 faces 100 1 1 1 000t
 #TEST quantization test_009 persons 1 0 1 1 000t

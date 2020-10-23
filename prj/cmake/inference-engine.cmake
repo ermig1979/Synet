@@ -1,12 +1,16 @@
 
-set(IE_ROOT_DIR ${ROOT_DIR}/3rd/dldt)
+set(IE_ROOT_DIR ${ROOT_DIR}/3rd/openvino)
 set(IE_BIN_DIR ${IE_ROOT_DIR}/bin/intel64/Release/lib)
 set(IE_3RD_DIR ${IE_ROOT_DIR}/inference-engine/temp)
 set(IE_THREADING "OMP" CACHE STRING "Set threading mode for IE: TBB / OMP / SEQ")
 
-set(IE_BIN_LIBS ${IE_BIN_DIR}/libinference_engine.so ${IE_BIN_DIR}/libMKLDNNPlugin.so ${IE_BIN_DIR}/libngraph.so)
+set(IE_BIN_LIBS
+	${IE_BIN_DIR}/libinference_engine.so 
+	${IE_BIN_DIR}/libMKLDNNPlugin.so 
+	${IE_BIN_DIR}/libngraph.so 
+	${IE_BIN_DIR}/libinference_engine_legacy.so)
 if(IE_THREADING STREQUAL "TBB")	
-	list(APPEND DLDT_BIN_LIBS ${IE_3RD_DIR}/tbb/lib/libtbb.so.2)
+	list(APPEND IE_BIN_LIBS ${IE_3RD_DIR}/tbb/lib/libtbb.so.2)
 	set(IE_SAMPLES ON)
 elseif(IE_THREADING STREQUAL "OMP")
 	list(APPEND IE_BIN_LIBS ${IE_3RD_DIR}/omp/lib/libiomp5.so)
@@ -35,6 +39,8 @@ set(IE_BUILD_OPTIONS
 	-DENABLE_AVX2=ON
 	-DENABLE_SSE42=ON
 	-DTHREADING=${IE_THREADING}
+	-DNGRAPH_UNIT_TEST_ENABLE=OFF
+	-DNGRAPH_TEST_UTIL_ENABLE=OFF
 	)
 
 set(IE_PLUGINS_XML ${IE_BIN_DIR}/plugins.xml)

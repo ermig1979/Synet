@@ -13,7 +13,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>_CONSOLE;SYNET_SIZE_STATISTIC;SYNET_LAYER_STATISTIC;SYNET_TEST_FIRST_RUN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\3rd\Simd\src;$(SolutionDir)..\..\3rd\dldt\inference-engine\include;$(SolutionDir)..\..\3rd\dldt\inference-engine\src\extension;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\3rd\Simd\src;$(SolutionDir)..\..\3rd\openvino\inference-engine\include;$(SolutionDir)..\..\3rd\openvino\inference-engine\src\extension;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>

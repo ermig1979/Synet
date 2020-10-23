@@ -18,3 +18,7 @@
 [submodule "3rd/stb"]
 	path = 3rd/stb
 	url = https://github.com/nothings/stb.git
+[submodule "3rd/openvino"]
+	path = 3rd/openvino
+	url = https://github.com/openvinotoolkit/openvino.git
+	branch = releases/2020/3

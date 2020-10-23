@@ -3852,7 +3852,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="213" name="627" type="ShapeOf" version="opset3">
+		<layer id="213" name="627" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -5200,7 +5200,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="291" name="636" type="ShapeOf" version="opset3">
+		<layer id="291" name="636" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -5765,7 +5765,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="326" name="645" type="ShapeOf" version="opset3">
+		<layer id="326" name="645" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -6084,7 +6084,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="347" name="580" type="ShapeOf" version="opset3">
+		<layer id="347" name="580" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -6380,7 +6380,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="367" name="589" type="ShapeOf" version="opset3">
+		<layer id="367" name="589" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -6676,7 +6676,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="387" name="598" type="ShapeOf" version="opset3">
+		<layer id="387" name="598" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -6804,7 +6804,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="397" name="607" type="ShapeOf" version="opset3">
+		<layer id="397" name="607" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -6917,7 +6917,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="407" name="616/FlattenONNX_/input_shape" type="ShapeOf" version="opset3">
+		<layer id="407" name="616/FlattenONNX_/input_shape" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -7044,7 +7044,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="417" name="616/ShapeOf_" type="ShapeOf" version="opset3">
+		<layer id="417" name="616/ShapeOf_" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -7078,7 +7078,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="419" name="618" type="ShapeOf" version="opset3">
+		<layer id="419" name="618" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -7181,7 +7181,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="428" name="574/0_port" type="ShapeOf" version="opset3">
+		<layer id="428" name="574/0_port" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -7243,7 +7243,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="433" name="574/1_port" type="ShapeOf" version="opset3">
+		<layer id="433" name="574/1_port" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -7348,7 +7348,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="441" name="575/0_port" type="ShapeOf" version="opset3">
+		<layer id="441" name="575/0_port" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -7410,7 +7410,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="446" name="575/1_port" type="ShapeOf" version="opset3">
+		<layer id="446" name="575/1_port" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -7515,7 +7515,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="454" name="576/0_port" type="ShapeOf" version="opset3">
+		<layer id="454" name="576/0_port" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -7577,7 +7577,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="459" name="576/1_port" type="ShapeOf" version="opset3">
+		<layer id="459" name="576/1_port" type="ShapeOf" version="opset1">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
