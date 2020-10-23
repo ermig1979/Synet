@@ -10,11 +10,6 @@
 	path = 3rd/blis
 	url = https://github.com/ermig1979/blis.git
 	ignore = dirty
-[submodule "3rd/dldt"]
-	path = 3rd/dldt
-	url = https://github.com/opencv/dldt.git
-	branch = 2020
-	ignore = dirty
 [submodule "3rd/stb"]
 	path = 3rd/stb
 	url = https://github.com/nothings/stb.git
