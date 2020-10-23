@@ -1,5 +1,5 @@
 DATE_TIME=`date +"%Y_%m_%d__%H_%M"`
-TEST_THREAD=1
+TEST_THREAD=4
 BATCH_SIZE=10
 
 function TEST {
@@ -40,7 +40,7 @@ if [ "$BATCH" = "1" ];then
   if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -et=1.0 -st=20.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -et=10.0 -st=20.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
@@ -70,6 +70,8 @@ TESTS inference_engine test_008 local 1
 TESTS inference_engine test_009f local 0
 TESTS inference_engine test_010f local 0
 TESTS inference_engine test_011f local 0
+TESTS inference_engine test_012f persons 0
+TESTS inference_engine test_013f persons 0
 }
 
 function TESTS_Q {
@@ -78,7 +80,7 @@ TESTS quantization test_009 persons 0
 }
 
 TESTS_D
-#TESTS_I
+TESTS_I
 #TESTS_Q
 
 cat $OUT_TEXT

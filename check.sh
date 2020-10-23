@@ -74,6 +74,8 @@ TEST_I test_008 local 1
 TEST_I test_009f local 0
 TEST_I test_010f local 0
 TEST_I test_011f local 0
+TEST_I test_012f persons 0
+TEST_I test_013f persons 0
 }
 
 TEST_ALL_D

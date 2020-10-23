@@ -314,8 +314,10 @@ namespace Test
                     const float* pOut = _ieOutput[o]->buffer();
                     for (size_t j = 0; j < dims[2]; ++j, pOut += 7)
                     {
-                        if (pOut[0] == -1 || pOut[2] <= _regionThreshold)
+                        if (pOut[0] == -1)
                             break;
+                        if (pOut[2] <= _regionThreshold)
+                            continue;
                         size_t size = tmp.size();
                         tmp.resize(size + 7);
                         tmp[size + 0] = pOut[0];

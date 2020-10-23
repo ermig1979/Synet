@@ -107,6 +107,10 @@ namespace Test
         bool _notifiedFirst, _notifiedSecond;
         size_t _progressMessageSizeMax;
 
+        typedef Simd::Pixel::Bgra32 Color;
+        typedef std::vector<Color> Colors;
+        mutable Colors _colors;
+
         typedef Synet::Difference<float> Difference;
         typedef std::vector<Difference> Differences;
 
@@ -381,6 +385,24 @@ namespace Test
             return true;
         }
 
+        Color GetColor(size_t index) const
+        {
+            if (index >= _colors.size())
+            {
+                if (index < 4)
+                {
+                    _colors.push_back(Color(0xFF, 0xFF, 0xFF));
+                    _colors.push_back(Color(0xFF, 0x00, 0x00));
+                    _colors.push_back(Color(0x00, 0xFF, 0x00));
+                    _colors.push_back(Color(0x00, 0x00, 0xFF));
+                }
+                else
+                    while (index <= _colors.size())
+                        _colors.push_back(Color(::rand(), ::rand(), ::rand()));
+            }
+            return _colors[index];
+        }
+
         bool AnnotateRegions(const Network& network, const String& inputPath) const
         {
             if (_options.annotateRegions)
@@ -400,7 +422,7 @@ namespace Test
                     ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
                     ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
                     ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
-                    Simd::DrawRectangle(image, l, t, r, b, white);
+                    Simd::DrawRectangle(image, l, t, r, b, GetColor(region.id));
                 }
                 String outputPath = MakePath(_options.outputDirectory, Options::FullName(network.Name(), network.Type()) + "_" + GetNameByPath(inputPath));
                 if (!SaveImage(image, outputPath))

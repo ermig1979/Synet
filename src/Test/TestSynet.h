@@ -270,8 +270,10 @@ namespace Test
                 const float * pSrc = src.CpuData();
                 for (size_t j = 0; j < src.Axis(2); ++j, pSrc += 7)
                 {
-                    if (pSrc[1] == -1 || pSrc[2] < _regionThreshold)
+                    if (pSrc[0] == -1)
                         break;
+                    if (pSrc[2] <= _regionThreshold)
+                        continue;
                     size_t offset = tmp.size();
                     tmp.resize(offset + 7);
                     tmp[offset + 0] = pSrc[0];
