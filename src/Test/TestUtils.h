@@ -276,6 +276,8 @@ namespace Test
                 tmp[i].val[j] = data[i*7 + j];
         std::sort(tmp.begin(), tmp.end(), [](const Tmp & t1, const Tmp & t2) 
         {
+            if (abs(t1.val[1] - t2.val[1]) > 0.5f)
+                return t1.val[1] > t2.val[1];
             const float thr = 0.01f;
             if (abs(t1.val[2] - t2.val[2]) > thr)
                 return t1.val[2] > t2.val[2];
