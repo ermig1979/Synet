@@ -226,6 +226,9 @@ namespace Test
             _outputNames.clear();
             _interimNames.clear();
             _batchSize = 0;
+#ifdef __linux__
+            malloc_trim(0);
+#endif
         }
 
     private:

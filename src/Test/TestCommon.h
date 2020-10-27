@@ -57,6 +57,7 @@
 #include <condition_variable>
 #include <map>
 #include <algorithm>
+#include <type_traits>
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
 #include "Simd/SimdLib.h"

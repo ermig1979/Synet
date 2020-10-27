@@ -57,6 +57,7 @@ namespace Test
         double compareQuantile;
         String logName;
         bool consoleSilence;
+        bool reverseExecution;
         String syncName;
         double skipThreshold;
         String textReport;
@@ -104,6 +105,7 @@ namespace Test
             compareQuantile = FromString<double>(GetArg("-cq", "0.0"));
             logName = GetArg("-ln", "", false);
             consoleSilence = FromString<bool>(GetArg("-cs", "0"));
+            reverseExecution = FromString<bool>(GetArg("-re", "0"));
             syncName = GetArg("-sn", "", false);
             skipThreshold = FromString<double>(GetArg("-st", "20.0"));
             textReport = GetArg("-tr", "", false);
@@ -128,7 +130,7 @@ namespace Test
 
         ~Options()
         {
-            if ((mode == "compare" || mode == "rcompare" ) && result)
+            if (mode == "compare" && result)
             {
                 std::stringstream ss;
                 if (firstMemoryUsage)

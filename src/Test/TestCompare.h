@@ -175,9 +175,9 @@ namespace Test
             return true;
         }
 
-        bool InitNetworks()
+        bool InitNetworkFirst()
         {
-#ifdef SYNET_TEST_FIRST_RUN        
+#if defined(SYNET_TEST_FIRST_RUN)
             if (_options.enable & ENABLE_FIRST)
             {
                 if (!InitNetwork(_options.firstModel, _options.firstWeight, _firsts[0]))
@@ -186,15 +186,35 @@ namespace Test
                 _options.firstType = _firsts[0].Type();
             }
 #endif
-#ifdef SYNET_TEST_SECOND_RUN
-            if (_options.enable & ENABLE_SECOND) 
+            return true;
+        }
+
+        bool InitNetworkSecond()
+        {
+#if defined(SYNET_TEST_SECOND_RUN)
+            if (_options.enable & ENABLE_SECOND)
             {
-                if(!InitNetwork(_options.secondModel, _options.secondWeight, _seconds[0]))
+                if (!InitNetwork(_options.secondModel, _options.secondWeight, _seconds[0]))
                     return false;
                 _options.secondName = _seconds[0].Name();
                 _options.secondType = _seconds[0].Type();
             }
-#endif            
+#endif
+            return true;
+        }
+
+        bool InitNetworks()
+        {
+            if (_options.reverseExecution)
+            {
+                if (!(InitNetworkSecond() && InitNetworkFirst()))
+                    return false;
+            }
+            else
+            {
+                if (!(InitNetworkFirst() && InitNetworkSecond()))
+                    return false;
+            }
 #if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_TEST_SECOND_RUN)
             if (_options.enable == (ENABLE_FIRST | ENABLE_SECOND))
             {
@@ -584,6 +604,44 @@ namespace Test
             return progress.str();
         }
 
+        bool SingleThreadRunFirst(size_t index, size_t repeat)
+        {
+#ifdef SYNET_TEST_FIRST_RUN
+            if (_options.enable & ENABLE_FIRST)
+            {
+                TestData& test = *_tests[index];
+                Copy(_firsts[0].Predict(test.input), test.output[0].first);
+                if (repeat == 0)
+                {
+                    if (!DebugPrint(_firsts[0], index))
+                        return false;
+                    if (!AnnotateRegions(_firsts[0], test.path[0]))
+                        return false;
+                }
+            }
+#endif
+            return true;
+        }
+
+        bool SingleThreadRunSecond(size_t index, size_t repeat)
+        {
+#ifdef SYNET_TEST_SECOND_RUN
+            if (_options.enable & ENABLE_SECOND)
+            {
+                TestData& test = *_tests[index];
+                Copy(_seconds[0].Predict(test.input), test.output[0].second);
+                if (repeat == 0)
+                {
+                    if (!DebugPrint(_seconds[0], index))
+                        return false;
+                    if (!AnnotateRegions(_seconds[0], test.path[0]))
+                        return false;
+                }
+            }
+#endif
+            return true;
+        }
+
         bool SingleThreadComparison()
         {
             size_t repeats = std::max<size_t>(1, _options.repeatNumber), total = _tests.size() * repeats, current = 0;
@@ -593,32 +651,16 @@ namespace Test
                 for (size_t r = 0; r < repeats; ++r, ++current)
                 {
                     std::cout << ProgressString(current, total) << std::flush;
-#ifdef SYNET_TEST_FIRST_RUN
-                    if (_options.enable & ENABLE_FIRST)
+                    if (_options.reverseExecution)
                     {
-                        Copy(_firsts[0].Predict(test.input), test.output[0].first);
-                        if (r == 0)
-                        {
-                            if (!DebugPrint(_firsts[0], i))
-                                return false;
-                            if (!AnnotateRegions(_firsts[0], test.path[0]))
-                                return false;
-                        }
+                        if(!(SingleThreadRunSecond(i, r) && SingleThreadRunFirst(i, r)))
+                            return false;
                     }
-#endif
-#ifdef SYNET_TEST_SECOND_RUN
-                    if (_options.enable & ENABLE_SECOND)
+                    else
                     {
-                        Copy(_seconds[0].Predict(test.input), test.output[0].second);
-                        if (r == 0)
-                        {
-                            if (!DebugPrint(_seconds[0], i))
-                                return false;
-                            if (!AnnotateRegions(_seconds[0], test.path[0]))
-                                return false;
-                        }
+                        if (!(SingleThreadRunFirst(i, r) && SingleThreadRunSecond(i, r)))
+                            return false;
                     }
-#endif
 #if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_TEST_SECOND_RUN)
                     if (r == 0 && _options.enable == (ENABLE_FIRST | ENABLE_SECOND) && !CompareResults(test, i, 0))
                         return false;
@@ -695,6 +737,100 @@ namespace Test
             return PrintFinishMessage();
         }
 
+        void MultuThreadRunFirst(size_t thread, size_t total, size_t& current, size_t networks, size_t second)
+        {
+#ifdef SYNET_TEST_FIRST_RUN 
+            if (_options.enable & ENABLE_FIRST)
+            {
+                if (thread && !InitNetwork(_options.firstModel, _options.firstWeight, _firsts[thread]))
+                    ::exit(0);
+                _threads[thread].first = true;
+                std::mutex mutex;
+                std::unique_lock<std::mutex> lock(mutex);
+                while (!_notifiedFirst)
+                    _startFirst.wait(lock);
+                _notifiedFirst = false;
+                if (_options.repeatNumber)
+                {
+                    for (size_t i = 0; i < _tests.size(); ++i)
+                    {
+                        TestData& test = *_tests[i];
+                        for (size_t r = 0; r < _options.repeatNumber; ++r, ++current)
+                        {
+                            Copy(_firsts[thread].Predict(test.input), test.output[thread].first);
+                            _threads[thread].current = current / networks;
+                        }
+                    }
+                }
+                else
+                {
+                    bool canstop = false;
+                    double start = Time(), duration = 0;
+                    while (duration < _options.executionTime)
+                    {
+                        for (size_t i = 0; i < _tests.size() && (duration < _options.executionTime || !canstop); ++i)
+                        {
+                            TestData& test = *_tests[i];
+                            Copy(_firsts[thread].Predict(test.input), test.output[thread].first);
+                            duration = Time() - start;
+                            (total * (networks - 1) * second +
+                                std::min(total, size_t(duration * 1000))) / networks;
+                        }
+                        canstop = true;
+                    }
+                }
+                _firsts[thread].Free();
+            }
+#endif
+        }
+
+        void MultuThreadRunSecond(size_t thread, size_t total, size_t& current, size_t networks, size_t second)
+        {
+#ifdef SYNET_TEST_SECOND_RUN 
+            if (_options.enable & ENABLE_SECOND)
+            {
+                if (thread && !InitNetwork(_options.secondModel, _options.secondWeight, _seconds[thread]))
+                    ::exit(0);
+                _threads[thread].second = true;
+                std::mutex mutex;
+                std::unique_lock<std::mutex> lock(mutex);
+                while (!_notifiedSecond)
+                    _startSecond.wait(lock);
+                _notifiedSecond = false;
+                if (_options.repeatNumber)
+                {
+                    for (size_t i = 0; i < _tests.size(); ++i)
+                    {
+                        TestData& test = *_tests[i];
+                        for (size_t r = 0; r < _options.repeatNumber; ++r, ++current)
+                        {
+                            Copy(_seconds[thread].Predict(test.input), test.output[thread].second);
+                            _threads[thread].current = current / networks;
+                        }
+                    }
+                }
+                else
+                {
+                    bool canstop = false;
+                    double start = Time(), duration = 0;
+                    while (duration < _options.executionTime)
+                    {
+                        for (size_t i = 0; i < _tests.size() && (duration < _options.executionTime || !canstop); ++i)
+                        {
+                            TestData& test = *_tests[i];
+                            Copy(_seconds[thread].Predict(test.input), test.output[thread].second);
+                            duration = Time() - start;
+                            (total * (networks - 1) * second +
+                                std::min(total, size_t(duration * 1000))) / networks;
+                        }
+                        canstop = true;
+                    }
+                }
+                _seconds[thread].Free();
+            }
+#endif
+        }
+
         static void TestThread(Comparer* comparer, size_t thread, size_t total)
         {
             const Options& options = comparer->_options;
@@ -702,91 +838,17 @@ namespace Test
 #if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_TEST_SECOND_RUN)
             if (options.enable == (ENABLE_FIRST | ENABLE_SECOND))
                 networks = 2;
-#endif 
-#ifdef SYNET_TEST_FIRST_RUN 
-            if (options.enable & ENABLE_FIRST)
+#endif             
+            if (options.reverseExecution)
             {
-                if (thread && !comparer->InitNetwork(options.firstModel, options.firstWeight, comparer->_firsts[thread]))
-                    ::exit(0);
-                comparer->_threads[thread].first = true;
-                std::mutex mutex;
-                std::unique_lock<std::mutex> lock(mutex);
-                while (!comparer->_notifiedFirst)
-                    comparer->_startFirst.wait(lock);
-                comparer->_notifiedFirst = false;
-                if (options.repeatNumber)
-                {
-                    for (size_t i = 0; i < comparer->_tests.size(); ++i)
-                    {
-                        TestData& test = *comparer->_tests[i];
-                        for (size_t r = 0; r < options.repeatNumber; ++r, ++current)
-                        {
-                            Copy(comparer->_firsts[thread].Predict(test.input), test.output[thread].first);
-                            comparer->_threads[thread].current = current / networks;
-                        }
-                    }
-                }
-                else
-                {
-                    bool canstop = false;
-                    double start = Time(), duration = 0;
-                    while (duration < options.executionTime)
-                    {
-                        for (size_t i = 0; i < comparer->_tests.size() && (duration < options.executionTime || !canstop); ++i)
-                        {
-                            TestData& test = *comparer->_tests[i];
-                            Copy(comparer->_firsts[thread].Predict(test.input), test.output[thread].first);
-                            duration = Time() - start;
-                            comparer->_threads[thread].current = std::min(total, size_t(duration * 1000)) / networks;
-                        }
-                        canstop = true;
-                    }
-                }
-                comparer->_firsts[thread].Free();
+                comparer->MultuThreadRunSecond(thread, total, current, networks, 0);
+                comparer->MultuThreadRunFirst(thread, total, current, networks, 1);
             }
-#endif
-#ifdef SYNET_TEST_SECOND_RUN
-            if (options.enable & ENABLE_SECOND)
+            else
             {
-                if (thread && !comparer->InitNetwork(options.secondModel, options.secondWeight, comparer->_seconds[thread]))
-                    ::exit(0);
-                comparer->_threads[thread].second = true;
-                std::mutex mutex;
-                std::unique_lock<std::mutex> lock(mutex);
-                while (!comparer->_notifiedSecond)
-                    comparer->_startSecond.wait(lock);
-                comparer->_notifiedSecond = false;
-                if (options.repeatNumber)
-                {
-                    for (size_t i = 0; i < comparer->_tests.size(); ++i)
-                    {
-                        TestData& test = *comparer->_tests[i];
-                        for (size_t r = 0; r < options.repeatNumber; ++r, ++current)
-                        {
-                            Copy(comparer->_seconds[thread].Predict(test.input), test.output[thread].second);
-                            comparer->_threads[thread].current = current / networks;
-                        }
-                    }
-                }
-                else
-                {
-                    bool canstop = false;
-                    double start = Time(), duration = 0;
-                    while (duration < options.executionTime)
-                    {
-                        for (size_t i = 0; i < comparer->_tests.size() && (duration < options.executionTime || !canstop); ++i)
-                        {
-                            TestData& test = *comparer->_tests[i];
-                            Copy(comparer->_seconds[thread].Predict(test.input), test.output[thread].second);
-                            duration = Time() - start;
-                            comparer->_threads[thread].current = (total * (networks - 1) + std::min(total, size_t(duration * 1000))) / networks;
-                        }
-                        canstop = true;
-                    }
-                }
-                comparer->_seconds[thread].Free();
+                comparer->MultuThreadRunFirst(thread, total, current, networks, 0);
+                comparer->MultuThreadRunSecond(thread, total, current, networks, 1);
             }
-#endif           
             comparer->_threads[thread].current = total;
         }
 

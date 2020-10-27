@@ -109,6 +109,9 @@ namespace Test
         {
             Network::Free();
             _net.Clear();
+#ifdef __linux__
+            malloc_trim(0);
+#endif
         }
 
         virtual const Tensors & Predict(const Tensors& src)
