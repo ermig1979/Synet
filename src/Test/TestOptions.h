@@ -128,7 +128,7 @@ namespace Test
 
         ~Options()
         {
-            if (mode == "compare" && result)
+            if ((mode == "compare" || mode == "rcompare" ) && result)
             {
                 std::stringstream ss;
                 if (firstMemoryUsage)

@@ -88,6 +88,13 @@ int main(int argc, char* argv[])
         Test::Comparer<Test::InferenceEngineNetwork, Test::SynetNetwork> comparer(options);
         options.result = comparer.Run();
     }
+    else if (options.mode == "rcompare")
+    {
+        std::swap(options.firstModel, options.secondModel);
+        std::swap(options.firstWeight, options.secondWeight);
+        Test::Comparer<Test::SynetNetwork, Test::InferenceEngineNetwork> comparer(options);
+        options.result = comparer.Run();
+    }
     else if (options.mode == "txt2bin")
     {
         std::cout << "Convert text weight to binary : ";
