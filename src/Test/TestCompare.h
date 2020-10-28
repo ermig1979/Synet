@@ -773,7 +773,7 @@ namespace Test
                             TestData& test = *_tests[i];
                             Copy(_firsts[thread].Predict(test.input), test.output[thread].first);
                             duration = Time() - start;
-                            (total * (networks - 1) * second +
+                            _threads[thread].current = (total * (networks - 1) * second +
                                 std::min(total, size_t(duration * 1000))) / networks;
                         }
                         canstop = true;
@@ -820,7 +820,7 @@ namespace Test
                             TestData& test = *_tests[i];
                             Copy(_seconds[thread].Predict(test.input), test.output[thread].second);
                             duration = Time() - start;
-                            (total * (networks - 1) * second +
+                            _threads[thread].current = (total * (networks - 1) * second +
                                 std::min(total, size_t(duration * 1000))) / networks;
                         }
                         canstop = true;
