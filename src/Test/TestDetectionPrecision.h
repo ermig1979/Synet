@@ -95,7 +95,7 @@ namespace Test
 			return true;
 		}
 
-		bool ParseIndexFile()
+		bool LoadTextIndexFile()
 		{
 			String path = MakePath(_options.imageDirectory, _options.indexFile);
 			std::ifstream ifs(path);
@@ -137,7 +137,18 @@ namespace Test
 			return true;
 		}
 
-		bool GenerateIndexFile()
+		bool LoadIndex()
+		{
+			switch (_param().index().type())
+			{
+			case Synet::IndexTypeTextV1:
+				return LoadTextIndexFile();
+			default:
+				return false;
+			}
+		}
+
+		bool GenerateIndex()
 		{
 			StringList names = GetFileList(_options.imageDirectory, "*.jpg", true, false);
 			_tests.clear();
@@ -158,7 +169,7 @@ namespace Test
 			return true;
 		}
 
-		bool SaveIndexFile()
+		bool SaveTextIndexFile()
 		{
 			String path = MakePath(_options.imageDirectory, _options.indexFile);
 			std::ofstream ofs(path);
@@ -184,18 +195,29 @@ namespace Test
 			return true;
 		}
 
+		bool SaveIndex()
+		{
+			switch (_param().index().type())
+			{
+			case Synet::IndexTypeTextV1:
+				return SaveTextIndexFile();
+			default:
+				return false;
+			}
+		}
+
 		virtual bool LoadTestList()
 		{
 			if (!LoadListFile())
 				return false;
 			if (_options.generateIndex)
 			{
-				if (!GenerateIndexFile())
+				if (!GenerateIndex())
 					return false;
 			}
 			else
 			{
-				if (!ParseIndexFile())
+				if (!LoadIndex())
 					return false;
 			}
 			return true;
@@ -278,7 +300,7 @@ namespace Test
 		{
 			if (_options.generateIndex)
 			{
-				if (!SaveIndexFile())
+				if (!SaveIndex())
 					return false;
 			}
 			Simd::Font font(20);

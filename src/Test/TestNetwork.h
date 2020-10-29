@@ -28,6 +28,13 @@
 #include "Synet/Params.h"
 #include "Synet/Tensor.h"
 
+namespace Synet
+{
+    SYNET_PARAM_ENUM(IndexType,
+        IndexTypeTextV1,
+        IndexTypeXmlV1);
+}
+
 namespace Test
 {
     using Synet::Shp;
@@ -58,6 +65,11 @@ namespace Test
         SYNET_PARAM_VALUE(bool, clip, false);
     };
 
+    struct IndexParam
+    {
+        SYNET_PARAM_VALUE(Synet::IndexType, type, Synet::IndexTypeUnknown);
+    };
+
     struct TestParam
     {
         SYNET_PARAM_VALUE(String, images, String());
@@ -66,6 +78,7 @@ namespace Test
         SYNET_PARAM_VECTOR(ShapeParam, input);
         SYNET_PARAM_VECTOR(ShapeParam, output);
         SYNET_PARAM_STRUCT(EpsilonParam, epsilon);
+        SYNET_PARAM_STRUCT(IndexParam, index);
     };
 
     SYNET_PARAM_HOLDER(TestParamHolder, TestParam, test);
