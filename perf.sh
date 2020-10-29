@@ -1,5 +1,5 @@
 DATE_TIME=`date +"%Y_%m_%d__%H_%M"`
-TEST_THREAD=4
+TEST_THREAD=1
 BATCH_SIZE=10
 
 function TEST {
@@ -10,7 +10,7 @@ DIR=./data/"$FRAMEWORK"/"$NAME"
 if [ "$3" = "local" ]; then
   IMAGE="$DIR"/image
 else
-  IMAGE=./data/images/_test/$3
+  IMAGE=./data/images/$3
 fi
 THREAD=$4
 BATCH=$5
@@ -40,7 +40,7 @@ if [ "$BATCH" = "1" ];then
   if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -et=10.0 -st=20.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -re=1 -et=10.0 -st=20.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
