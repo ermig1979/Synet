@@ -42,7 +42,7 @@ namespace Test
 		{
 			bool skip;
 			String name, path;
-			Regions detected, control;
+			Regions current, control;
 		};
 
 		typedef std::vector<Test> Tests;
@@ -97,7 +97,7 @@ namespace Test
 
 		bool LoadTextIndexFile()
 		{
-			String path = MakePath(_options.imageDirectory, _options.indexFile);
+			String path = MakePath(_options.imageDirectory, _param().index().name());
 			std::ifstream ifs(path);
 			if (!ifs.is_open())
 			{
@@ -139,39 +139,15 @@ namespace Test
 
 		bool LoadIndex()
 		{
-			switch (_param().index().type())
-			{
-			case Synet::IndexTypeTextV1:
+			if (_param().index().type() == "DetectionTextV1")
 				return LoadTextIndexFile();
-			default:
+			else
 				return false;
-			}
-		}
-
-		bool GenerateIndex()
-		{
-			StringList names = GetFileList(_options.imageDirectory, "*.jpg", true, false);
-			_tests.clear();
-			if (names.empty())
-			{
-				std::cout << "Directory '" << _options.imageDirectory << "' is empty!" << std::endl;
-				return false;
-			}
-			for (StringList::const_iterator it = names.begin(); it != names.end(); ++it)
-			{
-				Test test;
-				test.name = *it;
-				test.path = MakePath(_options.imageDirectory, test.name);
-				if (ExtensionByPath(test.name) == "jpg")
-					_tests.push_back(test);
-			}
-			_options.testNumber = _tests.size();
-			return true;
 		}
 
 		bool SaveTextIndexFile()
 		{
-			String path = MakePath(_options.imageDirectory, _options.indexFile);
+			String path = MakePath(_options.imageDirectory, _param().index().name());
 			std::ofstream ofs(path);
 			if (!ofs.is_open())
 			{
@@ -197,13 +173,10 @@ namespace Test
 
 		bool SaveIndex()
 		{
-			switch (_param().index().type())
-			{
-			case Synet::IndexTypeTextV1:
+			if (_param().index().type() == "DetectionTextV1")
 				return SaveTextIndexFile();
-			default:
+			else
 				return false;
-			}
 		}
 
 		virtual bool LoadTestList()
@@ -212,7 +185,7 @@ namespace Test
 				return false;
 			if (_options.generateIndex)
 			{
-				if (!GenerateIndex())
+				if (!GenerateIndex(_tests))
 					return false;
 			}
 			else
@@ -257,9 +230,9 @@ namespace Test
 
 			for (int i = 0; i < _options.repeatNumber; ++i)
 				t.output = t.network->Predict(t.input);
-			test.detected = t.network->GetRegions(imgSize, _options.thresholdConfidence, _options.thresholdOverlap);
+			test.current = t.network->GetRegions(imgSize, _options.thresholdConfidence, _options.thresholdOverlap);
 			if (_options.generateIndex)
-				test.control = test.detected;
+				test.control = test.current;
 
 			return true;
 		}
@@ -285,8 +258,8 @@ namespace Test
 			}
 			for (size_t j = 0; j < test.control.size(); ++j)
 				Annotate(test.control[j], j, 0xFFFF0000, 2, NULL, image);
-			for (size_t j = 0; j < test.detected.size(); ++j)
-				Annotate(test.detected[j], j, 0xFF00FF00, 1, &font, image);
+			for (size_t j = 0; j < test.current.size(); ++j)
+				Annotate(test.current[j], j, 0xFF00FF00, 1, &font, image);
 			String path = MakePath(_options.outputDirectory, GetNameByPath(test.name));
 			if (!SaveImage(image, path))
 			{
@@ -294,6 +267,14 @@ namespace Test
 				return false;
 			}
 			return true;
+		}
+
+		String PrintResume(size_t number, double precision, double error, double threshold)
+		{
+			std::stringstream ss;
+			ss << "Number: " << number << ", precision: " << ToString(precision * 100, 2);
+			ss << " %, error: " << ToString(error * 100, 2) << " %, threshold: " << ToString(threshold, 3);
+			return ss.str();
 		}
 
 		virtual bool ProcessResult()
@@ -313,18 +294,18 @@ namespace Test
 				const Test& test = _tests[i];
 				for (size_t k = 0; k < test.control.size(); ++k)
 					totals[test.control[k].id]++;
-				for (size_t j = 0; j < test.detected.size(); ++j)
+				for (size_t j = 0; j < test.current.size(); ++j)
 				{
 					int type = -1;
 					for (size_t k = 0; k < test.control.size(); ++k)
 					{
-						float overlap = Synet::Overlap(test.detected[j], test.control[k]);
+						float overlap = Synet::Overlap(test.current[j], test.control[k]);
 						if (overlap > _options.thresholdOverlap)
 						{
-							type = test.control[k].id;
+							type = (int)test.control[k].id;
 						}
 					}
-					detections.push_back(Pair(test.detected[j].prob, type));
+					detections.push_back(Pair(test.current[j].prob, type));
 				}
 				if(_options.annotateRegions)
 					Annotate(test, font);
@@ -346,24 +327,23 @@ namespace Test
 				if (pos - neg > max)
 				{
 					max = pos - neg;
-					idx = i;
+					idx = (int)i;
 					posMax = pos;
 					negMax = neg;
 				}
 			}
-			_options.number = totals[0];
-			_options.precision = double(posMax) / totals[0];
-			_options.error = double(negMax) / totals[0];
+			double threshold;
 			if (detections.size())
 			{
-				_options.threshold = detections[idx].first / 2.0f;
+				threshold = detections[idx].first / 2.0f;
 				if (idx < detections.size() - 1)
-					_options.threshold += detections[idx + 1].first / 2.0f;
+					threshold += detections[idx + 1].first / 2.0f;
 				else
-					_options.threshold += _options.thresholdConfidence / 2.0f;
+					threshold += _options.thresholdConfidence / 2.0f;
 			}
 			else
-				_options.threshold = _options.thresholdConfidence;
+				threshold = _options.thresholdConfidence;
+			_options.resume = PrintResume(totals[0], double(posMax) / totals[0], double(negMax) / totals[0], threshold);
 			return true;
 		}
 	};

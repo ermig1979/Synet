@@ -28,13 +28,6 @@
 #include "Synet/Params.h"
 #include "Synet/Tensor.h"
 
-namespace Synet
-{
-    SYNET_PARAM_ENUM(IndexType,
-        IndexTypeTextV1,
-        IndexTypeXmlV1);
-}
-
 namespace Test
 {
     using Synet::Shp;
@@ -67,7 +60,8 @@ namespace Test
 
     struct IndexParam
     {
-        SYNET_PARAM_VALUE(Synet::IndexType, type, Synet::IndexTypeUnknown);
+        SYNET_PARAM_VALUE(String, type, "");
+        SYNET_PARAM_VALUE(String, name, "index.txt");
     };
 
     struct TestParam

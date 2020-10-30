@@ -46,7 +46,6 @@ namespace Test
 			String testParam;
 			String testList;
 			String imageDirectory;
-			String indexFile;
 			String outputDirectory;
 			String logName;
 			bool consoleSilence;
@@ -61,18 +60,14 @@ namespace Test
 			bool generateIndex;
 
 			mutable volatile bool result;
-			mutable size_t memoryUsage, testNumber, number;
-			mutable double precision, error, threshold;
+			mutable size_t memoryUsage, testNumber;
+			mutable String resume;
 
 			Options(int argc, char* argv[])
 				: ArgsParser(argc, argv)
 				, result(true)
 				, memoryUsage(0)
 				, testNumber(0)
-				, number(0)
-				, precision(0.0)
-				, error(0.0)
-				, threshold(0.5)
 			{
 				mode = GetArg("-m", "reidentification");
 				framework = GetArg("-f", "synet");
@@ -81,7 +76,6 @@ namespace Test
 				testParam = GetArg("-tp", "param.xml");
 				testList = GetArg("-tl", "pairs1.txt");
 				imageDirectory = GetArg("-id", "image");
-				indexFile = GetArg("-if", "index.txt");
 				outputDirectory = GetArg("-od", "output");
 				logName = GetArg("-ln", "", false);
 				consoleSilence = FromString<bool>(GetArg("-cs", "0"));
@@ -101,10 +95,8 @@ namespace Test
 				if (result)
 				{
 					std::stringstream ss;
-
-					ss << "Test info: (" << Description() << ")." << std::endl;
-					ss << "Number: " << number << ", precision: " << ToString(precision * 100, 2);
-					ss << " %, error: " << ToString(error * 100, 2) << " %, threshold: " << ToString(threshold, 3) << std::endl;
+					//ss << "Test info: (" << Description() << ")." << std::endl;
+					ss << resume << std::endl;
 					if (memoryUsage)
 						ss << "Memory usage: " << memoryUsage / (1024 * 1024) << " MB." << std::endl;
 					ss << SystemInfo() << std::endl;
@@ -271,6 +263,27 @@ namespace Test
 				if (_param().upper().size() == 1)
 					_param().upper().resize(shape[1], _param().upper()[0]);
 			}
+			return true;
+		}
+
+		template<class Test> bool GenerateIndex(std::vector<Test> & tests)
+		{
+			StringList names = GetFileList(_options.imageDirectory, "*.jpg", true, false);
+			tests.clear();
+			if (names.empty())
+			{
+				std::cout << "Directory '" << _options.imageDirectory << "' is empty!" << std::endl;
+				return false;
+			}
+			for (StringList::const_iterator it = names.begin(); it != names.end(); ++it)
+			{
+				Test test;
+				test.name = *it;
+				test.path = MakePath(_options.imageDirectory, test.name);
+				if (ExtensionByPath(test.name) == "jpg")
+					tests.push_back(test);
+			}
+			_options.testNumber = tests.size();
 			return true;
 		}
 

@@ -22,6 +22,7 @@
 * SOFTWARE.
 */
 
+#include "TestClassificationPrecision.h"
 #include "TestDetectionPrecision.h"
 #include "TestReidentificationPrecision.h"
 
@@ -31,14 +32,19 @@ int main(int argc, char* argv[])
 {
     Test::Precision::Options options(argc, argv);
 
-    if (options.mode == "reidentification")
+    if (options.mode == "classification")
     {
-        Test::ReidentificationPrecision precision(options);
+        Test::ClassificationPrecision precision(options);
         options.result = precision.Run();
     }
     else if (options.mode == "detection")
     {
         Test::DetectionPrecision precision(options);
+        options.result = precision.Run();
+    }
+    else if (options.mode == "reidentification")
+    {
+        Test::ReidentificationPrecision precision(options);
         options.result = precision.Run();
     }
     else
