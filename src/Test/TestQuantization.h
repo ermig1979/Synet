@@ -34,6 +34,19 @@
 
 namespace Test
 {
+    struct QuantParam
+    {
+        SYNET_PARAM_VALUE(Synet::QuantizationMethod, method, Synet::QuantizationMethodUnknown);
+        SYNET_PARAM_VALUE(float, truncationQuantile, 0.0f);
+        SYNET_PARAM_VALUE(int, imageBegin, 0);
+        SYNET_PARAM_VALUE(int, imageEnd, 1000000);
+        SYNET_PARAM_VALUE(bool, quantizeDepthwiseConvolution, false);
+        SYNET_PARAM_VALUE(bool, quantizeDegenerateConvolution, false);
+        SYNET_PARAM_VALUE(int, quantizeInnerProductWeightSizeMin, 0);
+    };
+
+    SYNET_PARAM_HOLDER(QuantParamHolder, QuantParam, quant);    
+        
     class Quantizer
     {
     public:
@@ -57,7 +70,7 @@ namespace Test
         bool Run()
         {
             PrintStartMessage();
-            if (!LoadTestParam())
+            if (!LoadParam())
                 return PrintFinishMessage(false);
             if (!CreateDirectories())
                 return PrintFinishMessage(false);
@@ -74,15 +87,20 @@ namespace Test
 
     private:
         TestParamHolder _param;
+        QuantParamHolder _quant;
         const Options& _options;
         String _opt, _deopt, _stats;
         Strings _images;
         typedef Synet::Network<float> SyNet;
         SyNet _synet;
+        String _progressMessage;
 
-        void PrintStartMessage() const
+        void PrintStartMessage()
         {
-            std::cout << "Start quantization of Synet model : ";
+            _progressMessage = _options.consoleSilence ? 
+                "Start quantization of Synet model : " : 
+                "Collect quantization statistics : ";
+            std::cout << _progressMessage;
             if (!_options.consoleSilence)
                 std::cout << std::endl;
         }
@@ -90,17 +108,27 @@ namespace Test
         bool PrintFinishMessage(bool result) const
         {
             if (result)
-                std::cout << (_options.consoleSilence ? " OK." : "Quantization is finished successful.") << std::endl;
+            {
+                if (_options.consoleSilence)
+                    std::cout << "\r" << _progressMessage << " OK.  " << std::endl;
+                else
+                    std::cout << "Quantization is finished successful." << std::endl;
+            }
             else
                 std::cout << "Quantization is finished with errors!" << std::endl;
             return result;
         }
 
-        bool LoadTestParam()
+        bool LoadParam()
         {
             if (!_param.Load(_options.testParam))
             {
                 std::cout << "Can't load file '" << _options.testParam << "' !" << std::endl;
+                return false;
+            }
+            if (!_quant.Load(_options.quantParam))
+            {
+                std::cout << "Can't load file '" << _options.quantParam << "' !" << std::endl;
                 return false;
             }
             return true;
@@ -140,15 +168,17 @@ namespace Test
 
         bool CollectStatistics()
         {
-            if (!_options.consoleSilence)
-                std::cout << "Collect quantization statistics : ";
             bool result = InitSynet(_deopt, _options.firstWeight);
             result = result && CreateImageList();
             for (size_t i = 0; i < _images.size() && result; ++i)
+            {
+                std::cout << "\r" << _progressMessage << ToString(100.0 * i / _images.size(), 1) << "% " << std::flush;
                 result = result && UpdateStatistics(_images[i]);
+            }
             result = result && _synet.Save(_stats);
             if (!_options.consoleSilence)
-                std::cout << (result ? " OK." : "Statistics collection is finished with errors!") << std::endl;
+                std::cout << "\r" << _progressMessage << (result ? " OK.  " : 
+                        "Statistics collection is finished with errors!") << std::endl << std::flush;
             return result;
         }
 
@@ -186,24 +216,24 @@ namespace Test
             }
 
             _images.reserve(images.size());
-            size_t curr = 0;
+            int curr = 0;
             for (StringList::const_iterator it = images.begin(); it != images.end(); ++it, ++curr)
             {
                 String ext = ExtensionByPath(*it);
-                if (curr >= _options.imageBegin && curr < _options.imageEnd && ext != "txt")
+                if (curr >= _quant().imageBegin() && curr < _quant().imageEnd() && ext == "jpg")
                     _images.push_back(MakePath(directory, *it));
             }
             if (_images.empty())
             {
-                std::cout << "There is no one image in '" << _options.imageDirectory << "' for '" << _options.imageFilter
-                    << "' filter in range [" << _options.imageBegin << " ... " <<  _options.imageEnd << "] !" << std::endl;
+                std::cout << "There is no one image in '" << _options.imageDirectory << "' in range [" 
+                    << _quant().imageBegin() << " .. " << _quant().imageEnd() << "] !" << std::endl;
                 return false;
             }
 
             return true;
         }
 
-        bool UpdateStatistics(const String & path)
+        bool UpdateStatistics(const String& path)
         {
             View original;
             if (!LoadImage(path, original))
@@ -219,9 +249,7 @@ namespace Test
                 return false;
             }
             _synet.Forward();
-            _synet.UpdateStatistics(_options.quantizationQuantile, 0.000001f);
-            if (!_options.consoleSilence)
-                std::cout << ".";
+            _synet.UpdateStatistics(_quant().truncationQuantile(), 0.000001f);
             return true;
         }
 
@@ -270,7 +298,7 @@ namespace Test
             if (tensor && tensor->Format() == Synet::TensorFormatNhwc)
             {
                 Shape iShape = tensor->Shape();
-                if (iShape[1] == 1 && iShape[2] == 1)
+                if (iShape[1] == 1 && iShape[2] == 1 && !_quant().quantizeDegenerateConvolution())
                     return;
                 Shape wShape = layer.weight()[0].dim();
                 //if (wShape[0] * wShape[1] * wShape[2] <= 64)
@@ -278,7 +306,7 @@ namespace Test
                 //if (wShape[2] <= 64)
                 //    return;
             }
-            if (layer.convolution().group() != 1)
+            if (layer.convolution().group() != 1 && !_quant().quantizeDepthwiseConvolution())
                 return;
             layer.convolution().quantizationLevel() = Synet::TensorType8i;
         }
@@ -286,6 +314,9 @@ namespace Test
         void QuantizeInnerProduct(Synet::LayerParam& layer)
         {
             if (layer.type() != Synet::LayerTypeInnerProduct)
+                return;
+            Shape wShape = layer.weight()[0].dim();
+            if (wShape[0] * wShape[1] <= _quant().quantizeInnerProductWeightSizeMin())
                 return;
             layer.innerProduct().quantizationLevel() = Synet::TensorType8i;
         }
@@ -330,7 +361,7 @@ namespace Test
                 QuantizeInnerProduct(layer);
                 HighlightGlobalPooling(layer);
             }
-            network().quantization().method() = (Synet::QuantizationMethod)_options.quantizationMethod;
+            network().quantization().method() = _quant().method();
             Floats bin;
             Synet::OptimizerParamHolder param;
             Synet::Optimizer optimizer(param());

@@ -44,6 +44,7 @@ namespace Test
         String secondModel;
         String secondWeight;
         String testParam;
+        String quantParam;
         String imageDirectory;
         String imageFilter;
         size_t imageBegin;
@@ -71,8 +72,6 @@ namespace Test
         int annotateRegions;
         float regionThreshold;
         float regionOverlap;
-        float quantizationQuantile;
-        int quantizationMethod;
 
         mutable bool result;
         mutable size_t firstMemoryUsage,  secondMemoryUsage;
@@ -92,6 +91,7 @@ namespace Test
             secondModel = GetArg("-sm", QuantizationTest() ? "int8.xml" : "synet.xml");
             secondWeight = GetArg("-sw", "synet.bin");
             testParam = GetArg("-tp", "param.xml");
+            quantParam = GetArg("-qp", "quant.xml");
             imageDirectory = GetArg("-id", QuantizationTest() ? "" : "image");
             imageFilter = GetArg("-if", "*.*");
             imageBegin = FromString<size_t>(GetArg("-ib", "0"));
@@ -119,8 +119,6 @@ namespace Test
             annotateRegions = FromString<int>(GetArg("-ar", "0"));
             regionThreshold = FromString<float>(GetArg("-rt", "0.3"));
             regionOverlap = FromString<float>(GetArg("-ro", "0.5"));
-            quantizationQuantile = FromString<float>(GetArg("-qq", "0.0"));
-            quantizationMethod = FromString<int>(GetArg("-qm", "0"));
             if (enable < 1 || enable > 3)
             {
                 std::cout << "Parameter '-e' (enable) must be only 1, 2, 3!" << std::endl;
