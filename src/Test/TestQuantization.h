@@ -40,9 +40,11 @@ namespace Test
         SYNET_PARAM_VALUE(float, truncationQuantile, 0.0f);
         SYNET_PARAM_VALUE(int, imageBegin, 0);
         SYNET_PARAM_VALUE(int, imageEnd, 1000000);
-        SYNET_PARAM_VALUE(bool, quantizeDepthwiseConvolution, false);
-        SYNET_PARAM_VALUE(bool, quantizeDegenerateConvolution, false);
-        SYNET_PARAM_VALUE(int, quantizeInnerProductWeightSizeMin, 0);
+        SYNET_PARAM_VALUE(bool, depthwiseConvolution, false);
+        SYNET_PARAM_VALUE(bool, degenerateConvolution, false);
+        SYNET_PARAM_VALUE(bool, scaleToConvolution, false);
+        SYNET_PARAM_VALUE(int, innerProductWeightMin, 0);
+        SYNET_PARAM_VALUE(Strings, skippedLayers, Strings());
     };
 
     SYNET_PARAM_HOLDER(QuantParamHolder, QuantParam, quant);    
@@ -257,6 +259,8 @@ namespace Test
         {
             if (layer.type() != Synet::LayerTypeScale)
                 return;
+            if (!_quant().scaleToConvolution())
+                return;
             const SyNet::Tensor* tensor = _synet.GetInternalTensor(layer.src()[0]);
             if (!(tensor && tensor->Format() == Synet::TensorFormatNhwc && tensor->Count() == 4))
                 return;
@@ -297,16 +301,10 @@ namespace Test
             const SyNet::Tensor* tensor = _synet.GetInternalTensor(layer.src()[0]);
             if (tensor && tensor->Format() == Synet::TensorFormatNhwc)
             {
-                Shape iShape = tensor->Shape();
-                if (iShape[1] == 1 && iShape[2] == 1 && !_quant().quantizeDegenerateConvolution())
+                if (tensor->Axis(1) == 1 && tensor->Axis(2) == 1 && !_quant().degenerateConvolution())
                     return;
-                Shape wShape = layer.weight()[0].dim();
-                //if (wShape[0] * wShape[1] * wShape[2] <= 64)
-                //    return;
-                //if (wShape[2] <= 64)
-                //    return;
             }
-            if (layer.convolution().group() != 1 && !_quant().quantizeDepthwiseConvolution())
+            if (layer.convolution().group() != 1 && !_quant().depthwiseConvolution())
                 return;
             layer.convolution().quantizationLevel() = Synet::TensorType8i;
         }
@@ -316,7 +314,7 @@ namespace Test
             if (layer.type() != Synet::LayerTypeInnerProduct)
                 return;
             Shape wShape = layer.weight()[0].dim();
-            if (wShape[0] * wShape[1] <= _quant().quantizeInnerProductWeightSizeMin())
+            if (wShape[0] * wShape[1] <= _quant().innerProductWeightMin())
                 return;
             layer.innerProduct().quantizationLevel() = Synet::TensorType8i;
         }
@@ -355,8 +353,14 @@ namespace Test
             for (size_t i = 0; i < network().layers().size(); ++i)
             {
                 Synet::LayerParam& layer = network().layers()[i];
+                bool skip = false;
+                for (size_t s = 0; s < _quant().skippedLayers().size() && !skip; ++s)
+                    if (layer.name() == _quant().skippedLayers()[s])
+                        skip = true;
+                if (skip)
+                    continue;
                 EltwiseToAdd(layer);
-                //ScaleToConvolution(layer);
+                ScaleToConvolution(layer);
                 QuantizeConvolution(layer);
                 QuantizeInnerProduct(layer);
                 HighlightGlobalPooling(layer);
