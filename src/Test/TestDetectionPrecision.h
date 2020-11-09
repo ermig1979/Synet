@@ -137,10 +137,32 @@ namespace Test
 			return true;
 		}
 
+		bool LoadXmlIndexFile(Test& test)
+		{
+			String path = WithoutExtension(test.path) + ".xml";
+		}
+
+		bool LoadXmlIndexFiles()
+		{
+			_tests.clear();
+			for (StringSet::const_iterator it = _list.begin(); it != _list.end(); ++it)
+			{
+				Test test;
+				test.name = *it;
+				test.path = MakePath(_options.imageDirectory, test.name);
+				if (LoadXmlIndexFile(test))
+					_tests.push_back(test);
+			}
+			_options.testNumber = _tests.size();
+
+		}
+
 		bool LoadIndex()
 		{
 			if (_param().index().type() == "DetectionTextV1")
 				return LoadTextIndexFile();
+			else if(_param().index().type() == "DetectionXmlFilesV1")
+				return LoadXmlIndexFiles();
 			else
 				return false;
 		}

@@ -186,12 +186,20 @@ namespace Test
 
     inline String ExtensionByPath(const String& path)
     {
-        String name = GetNameByPath(path);
         size_t pos = path.find_last_of(".");
         if (pos == std::string::npos)
             return String();
         else
             return path.substr(pos + 1);
+    }
+
+    inline String WithoutExtension(const String& path)
+    {
+        size_t pos = path.find_last_of(".");
+        if (pos == std::string::npos)
+            return path;
+        else
+            return path.substr(0, pos);
     }
 
     inline bool DirectoryExists(const String & path)
