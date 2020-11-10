@@ -127,7 +127,11 @@ namespace Test
 					region.y += int(region.h) / 2;
 					for (size_t j = 0, stub; j < 5; ++j)
 						ifs >> stub;
-					if(region.id >= 0 && region.id <= _options.objectType)
+					bool add = false;
+					for (size_t j = 0; j < _param().index().ids().size(); ++j)
+						if (_param().index().ids()[j].id() == region.id)
+							add = true;
+					if(add)
 						test.control.push_back(region);
 				}
 				if(_list.empty() || _list.find(test.name) != _list.end())
@@ -137,9 +141,95 @@ namespace Test
 			return true;
 		}
 
+		typedef Synet::Xml::XmlBase<char> XmlBase;
+		typedef Synet::Xml::XmlNode<char> XmlNode;
+
+		template<class T> static bool Convert(const XmlBase * src, T& dst)
+		{
+			if (src == NULL)
+				return false;
+			Synet::StringToValue(src->Value(), dst);
+			return true;
+		}
+
+		bool LoadRegion(const XmlNode & object, Region& region)
+		{
+			XmlNode * pName = object.FirstNode("name");
+			if (pName == NULL)
+			{
+				std::cout << "Can't find <name> node!" << std::endl;
+				return false;
+			}
+			region.id = -1;
+			for (size_t i = 0; i < _param().index().ids().size(); ++i)
+				if (_param().index().ids()[i].name() == pName->Value())
+					region.id = _param().index().ids()[i].id();
+			if(region.id == -1)
+				return false;
+			XmlNode * pBndbox = object.FirstNode("bndbox");
+			if (pBndbox == NULL)
+			{
+				std::cout << "Can't find <bndbox> node!" << std::endl;
+				return false;
+			}
+			int xmin, ymin, xmax, ymax;
+			if (!Convert(pBndbox->FirstNode("xmin"), xmin))
+				return false;
+			if (!Convert(pBndbox->FirstNode("ymin"), ymin))
+				return false;			
+			if (!Convert(pBndbox->FirstNode("xmax"), xmax))
+				return false;
+			if (!Convert(pBndbox->FirstNode("ymax"), ymax))
+				return false;
+			region.x = float(xmin + xmax) * 0.5f;
+			region.y = float(ymin + ymax) * 0.5f;
+			region.w = float(xmax - xmin);
+			region.h = float(ymax - ymin);
+			return true;
+		}
+
 		bool LoadXmlIndexFile(Test& test)
 		{
-			String path = WithoutExtension(test.path) + ".xml";
+			String original = WithoutExtension(test.path) + ".xml";
+			String corrected = WithoutExtension(test.path) + "_.xml";
+			String path = FileExists(corrected) ? corrected : original;
+			std::ifstream ifs(path.c_str());
+			if (ifs.is_open())
+			{
+				using namespace Synet::Xml;
+				File<char> file(ifs);
+				XmlDocument<char> doc;
+				try
+				{
+					doc.Parse<0>(file.Data());
+				}
+				catch (std::exception& e)
+				{
+					std::cout << "Can't parse xml '" << path << "' file! There is an exception: " << e.what() << std::endl;
+					return false;
+				}
+				XmlNode * pAnnotation = doc.FirstNode("annotation");
+				if (pAnnotation == NULL)
+				{
+					std::cout << "Can't find <annotation> node!" << std::endl;
+					return false;
+				}
+				XmlNode* pObject = pAnnotation->FirstNode("object");
+				while(pObject)
+				{
+					Region region;
+					if(LoadRegion(*pObject, region))
+						test.control.push_back(region);
+					pObject = pObject->NextSibling();
+				}
+				ifs.close();
+			}
+			else
+			{
+				std::cout << "Can't open '" << path << "' index file!" << std::endl;
+				return false;
+			}
+			return true;
 		}
 
 		bool LoadXmlIndexFiles()
@@ -152,9 +242,11 @@ namespace Test
 				test.path = MakePath(_options.imageDirectory, test.name);
 				if (LoadXmlIndexFile(test))
 					_tests.push_back(test);
+				else
+					return false;
 			}
 			_options.testNumber = _tests.size();
-
+			return true;
 		}
 
 		bool LoadIndex()
@@ -197,6 +289,8 @@ namespace Test
 		{
 			if (_param().index().type() == "DetectionTextV1")
 				return SaveTextIndexFile();
+			else if (_param().index().type() == "DetectionXmlFilesV1")
+				return true;
 			else
 				return false;
 		}
@@ -310,22 +404,19 @@ namespace Test
 			SaveListFile();
 			typedef std::pair<float, int> Pair;
 			std::vector<Pair> detections;
-			Shape totals(_options.objectType + 1, 0);
+			size_t total = 0;
 			for (size_t i = 0; i < _tests.size(); ++i)
 			{
 				const Test& test = _tests[i];
-				for (size_t k = 0; k < test.control.size(); ++k)
-					totals[test.control[k].id]++;
+				total += test.control.size();
 				for (size_t j = 0; j < test.current.size(); ++j)
 				{
 					int type = -1;
 					for (size_t k = 0; k < test.control.size(); ++k)
 					{
 						float overlap = Synet::Overlap(test.current[j], test.control[k]);
-						if (overlap > _options.thresholdOverlap)
-						{
-							type = (int)test.control[k].id;
-						}
+						if (overlap > _options.thresholdOverlap && test.current[j].id == test.control[k].id)
+							type = 1;
 					}
 					detections.push_back(Pair(test.current[j].prob, type));
 				}
@@ -336,13 +427,12 @@ namespace Test
 			int idx = 0, max = 0, pos = 0, neg = 0, posMax = 0, negMax = 0;
 			for (size_t i = 0; i < detections.size(); ++i)
 			{
-				int type = detections[i].second;
-				switch (type)
+				switch (detections[i].second)
 				{
 				case -1: 
 					neg++;
 					break;
-				case 0:
+				case 1:
 					pos++;
 					break;
 				}
@@ -365,7 +455,7 @@ namespace Test
 			}
 			else
 				threshold = _options.thresholdConfidence;
-			_options.resume = PrintResume(totals[0], double(posMax) / totals[0], double(negMax) / totals[0], threshold);
+			_options.resume = PrintResume(total, double(posMax) / total, double(negMax) / total, threshold);
 			return true;
 		}
 	};

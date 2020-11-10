@@ -52,7 +52,6 @@ namespace Test
 			int testThreads;
 			int batchSize;
 			int repeatNumber;
-			int objectType;
 			float ratioVariation;
 			float thresholdOverlap;
 			float thresholdConfidence;
@@ -82,7 +81,6 @@ namespace Test
 				testThreads = FromString<int>(GetArg("-tt", "1"));
 				batchSize = Synet::Max(FromString<int>(GetArg("-bs", "1")), 1);
 				repeatNumber = Synet::Max(FromString<int>(GetArg("-rn", "1")), 1);
-				objectType = FromString<int>(GetArg("-ot", "2"));
 				ratioVariation = FromString<float>(GetArg("-rv", "0.333"));
 				thresholdOverlap = FromString<float>(GetArg("-to", "0.5"));
 				thresholdConfidence = FromString<float>(GetArg("-tc", "0.5"));

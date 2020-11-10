@@ -58,10 +58,17 @@ namespace Test
         SYNET_PARAM_VALUE(bool, clip, false);
     };
 
+    struct IdParam
+    {
+        SYNET_PARAM_VALUE(String, name, "");
+        SYNET_PARAM_VALUE(int, id, 0);
+    };
+
     struct IndexParam
     {
         SYNET_PARAM_VALUE(String, type, "");
         SYNET_PARAM_VALUE(String, name, "index.txt");
+        SYNET_PARAM_VECTOR(IdParam, ids);
     };
 
     struct TestParam
