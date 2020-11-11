@@ -58,6 +58,13 @@ namespace Test
         SYNET_PARAM_VALUE(bool, clip, false);
     };
 
+    struct DetectionParam
+    {
+        SYNET_PARAM_VALUE(float, confidence, 0.5f);
+        SYNET_PARAM_VALUE(float, overlap, 0.5f);
+        SYNET_PARAM_STRUCT(EpsilonParam, epsilon);
+    };
+
     struct IdParam
     {
         SYNET_PARAM_VALUE(String, name, "");
@@ -78,7 +85,7 @@ namespace Test
         SYNET_PARAM_VALUE(Floats, upper, Floats(1, 1.0f));
         SYNET_PARAM_VECTOR(ShapeParam, input);
         SYNET_PARAM_VECTOR(ShapeParam, output);
-        SYNET_PARAM_STRUCT(EpsilonParam, epsilon);
+        SYNET_PARAM_STRUCT(DetectionParam, detection);
         SYNET_PARAM_STRUCT(IndexParam, index);
     };
 

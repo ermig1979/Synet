@@ -346,7 +346,7 @@ namespace Test
 
 			for (int i = 0; i < _options.repeatNumber; ++i)
 				t.output = t.network->Predict(t.input);
-			test.current = t.network->GetRegions(imgSize, _options.thresholdConfidence, _options.thresholdOverlap);
+			test.current = t.network->GetRegions(imgSize, _param().detection().confidence(), _param().detection().overlap());
 			if (_options.generateIndex)
 				test.control = test.current;
 
@@ -355,10 +355,10 @@ namespace Test
 
 		void Annotate(const Region& region, size_t index, uint32_t color, int width, const Simd::Font * font, View& image)
 		{
-			ptrdiff_t l = ptrdiff_t(region.x - region.w / 2);
-			ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
-			ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
-			ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
+			ptrdiff_t l = ptrdiff_t(region.x - region.w / 2.0f);
+			ptrdiff_t t = ptrdiff_t(region.y - region.h / 2.0f);
+			ptrdiff_t r = ptrdiff_t(region.x + region.w / 2.0f);
+			ptrdiff_t b = ptrdiff_t(region.y + region.h / 2.0f);
 			Simd::DrawRectangle(image, l, t, r, b, color, width);
 			if(font)
 				font->Draw(image, std::to_string(index), Size(l, t), color);
@@ -385,11 +385,14 @@ namespace Test
 			return true;
 		}
 
-		String PrintResume(size_t number, double precision, double error, double threshold)
+		String PrintResume(size_t tp, size_t fn, size_t fp, double threshold)
 		{
 			std::stringstream ss;
-			ss << "Number: " << number << ", precision: " << ToString(precision * 100, 2);
-			ss << " %, error: " << ToString(error * 100, 2) << " %, threshold: " << ToString(threshold, 3);
+			ss << "Number: " << tp + fn;
+			ss << ", recall: " << ToString(100.0 * tp / (tp + fn), 2);
+			ss<< " %, precision: " << ToString(100.0 * tp / (tp + fp), 2);
+			ss << " %, f1: " << ToString(200.0 * tp / (2.0*tp + fn + fp), 2);
+			ss << " %, threshold: " << ToString(threshold, 3);
 			return ss.str();
 		}
 
@@ -408,6 +411,8 @@ namespace Test
 			for (size_t i = 0; i < _tests.size(); ++i)
 			{
 				const Test& test = _tests[i];
+				if (test.skip)
+					continue;
 				total += test.control.size();
 				for (size_t j = 0; j < test.current.size(); ++j)
 				{
@@ -415,7 +420,7 @@ namespace Test
 					for (size_t k = 0; k < test.control.size(); ++k)
 					{
 						float overlap = Synet::Overlap(test.current[j], test.control[k]);
-						if (overlap > _options.thresholdOverlap && test.current[j].id == test.control[k].id)
+						if (overlap > _options.compareOverlap && test.current[j].id == test.control[k].id)
 							type = 1;
 					}
 					detections.push_back(Pair(test.current[j].prob, type));
@@ -425,37 +430,49 @@ namespace Test
 			}
 			std::sort(detections.begin(), detections.end(), [](const Pair& a, const Pair& b) {return a.first > b.first; });
 			int idx = 0, max = 0, pos = 0, neg = 0, posMax = 0, negMax = 0;
+			double threshold;
+
 			for (size_t i = 0; i < detections.size(); ++i)
 			{
 				switch (detections[i].second)
 				{
-				case -1: 
+				case -1:
 					neg++;
 					break;
 				case 1:
 					pos++;
 					break;
-				}
-				if (pos - neg > max)
+				}			
+				if (_options.adaptiveThreshold)
 				{
-					max = pos - neg;
-					idx = (int)i;
-					posMax = pos;
-					negMax = neg;
+					if (pos - neg > max)
+					{
+						max = pos - neg;
+						idx = (int)i;
+						posMax = pos;
+						negMax = neg;
+					}
+				}
+				else
+				{
+					if (detections[i].first >= _param().detection().confidence())
+					{
+						posMax = pos;
+						negMax = neg;
+					}
 				}
 			}
-			double threshold;
-			if (detections.size())
+			if (detections.size() && _options.adaptiveThreshold)
 			{
 				threshold = detections[idx].first / 2.0f;
 				if (idx < detections.size() - 1)
 					threshold += detections[idx + 1].first / 2.0f;
 				else
-					threshold += _options.thresholdConfidence / 2.0f;
+					threshold += _param().detection().confidence() / 2.0f;
 			}
 			else
-				threshold = _options.thresholdConfidence;
-			_options.resume = PrintResume(total, double(posMax) / total, double(negMax) / total, threshold);
+				threshold = _param().detection().confidence();
+			_options.resume = PrintResume(posMax, total - posMax, negMax, threshold);
 			return true;
 		}
 	};

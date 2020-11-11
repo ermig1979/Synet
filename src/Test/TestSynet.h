@@ -99,7 +99,7 @@ namespace Test
                 _lower = param.lower();
                 _upper = param.upper();
                 _synetMemoryUsage = _net.MemoryUsage();
-                _epsilon.Init(Size(_net.NchwShape()[3], _net.NchwShape()[2]), param.epsilon());
+                _epsilon.Init(Size(_net.NchwShape()[3], _net.NchwShape()[2]), param.detection().epsilon());
                 return true;
             }
             return false;
