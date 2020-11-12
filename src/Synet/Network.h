@@ -738,6 +738,8 @@ namespace Synet
                         continue;
                     if (dst.layer->Is8i() && dst.layer->Can8i())
                         continue;
+                    if (dst.layer->Param().type() == LayerTypePriorBox)
+                        continue;
                     if (dst.layer->Can8i() && Is8iInSubGraph(dst))
                         continue;
                     return false;
@@ -801,6 +803,8 @@ namespace Synet
                     if (param.type() == LayerTypeConvolution && param.convolution().group() != param.convolution().outputNum())
                         continue;
                     if (param.type() == LayerTypeMergedConvolution)
+                        continue;
+                    if (param.type() == LayerTypePriorBox)
                         continue;
                     if (IsSubGraphEndConv(*id))
                         continue;

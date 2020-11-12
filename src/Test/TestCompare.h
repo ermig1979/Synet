@@ -275,7 +275,7 @@ namespace Test
             for(StringList::const_iterator it = images.begin(); it != images.end(); ++it, ++curr)
             {
                 String ext = ExtensionByPath(*it);
-                if (curr >= _options.imageBegin && curr < _options.imageEnd && ext != "txt")
+                if (curr >= _options.imageBegin && curr < _options.imageEnd && (ext == "jpg" || ext == "ppm"))
                     names.push_back(*it);
             }
 

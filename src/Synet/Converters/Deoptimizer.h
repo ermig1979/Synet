@@ -136,7 +136,7 @@ namespace Synet
 		bool SeparateMergedConvolution(const Synet::LayerParam& layer, LayerParams& deoptimized, Changes& changes)
 		{
 			const MergedConvolutionParam& merg = layer.mergedConvolution();
-			if (layer.type() != LayerTypeMergedConvolution || merg.add())
+			if (layer.type() != LayerTypeMergedConvolution)
 				return false;
 			LayerParam conv[3];
 			for (int i = 0, w = 0, n = (int)merg.conv().size(); i < n; ++i)
@@ -149,6 +149,19 @@ namespace Synet
 				for (size_t end = w + WeightCount(conv[i].convolution()); w < end; ++w)
 					conv[i].weight().push_back(layer.weight()[w]);
 				deoptimized.push_back(conv[i]);
+			}
+			if (merg.add())
+			{
+				deoptimized.back().name() = layer.name() + "_conv2";
+				deoptimized.back().dst()[0] = deoptimized.back().name();
+				LayerParam add;
+				add.type() = LayerTypeEltwise;
+				add.eltwise().operation() = EltwiseOperationTypeSum;
+				add.name() = layer.name();
+				add.src().push_back(layer.src()[0]);
+				add.src().push_back(deoptimized.back().dst()[0]);
+				add.dst().push_back(layer.name());
+				deoptimized.push_back(add);
 			}
 			return true;
 		}
