@@ -131,7 +131,7 @@ namespace Synet
             scale = k;
             shift = s;
             method = m;
-            if (method == QuantizationMethodSymmetricNarrowed)
+            if (method == QuantizationMethodSymmetricNarrowed || method == QuantizationMethodUnifiedNarrowed)
             {
                 lower = QUANT_SYMM_NARR_SRC_U8_MIN;
                 upper = QUANT_SYMM_NARR_SRC_U8_MAX;

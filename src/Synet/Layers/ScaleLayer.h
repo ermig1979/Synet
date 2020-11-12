@@ -177,7 +177,7 @@ namespace Synet
                 if (_context)
                     ::SimdRelease(_context), _context = NULL;
                 SimdSynetCompatibilityType compatibility;
-                if (method == QuantizationMethodSymmetricNarrowed)
+                if (method == QuantizationMethodSymmetricNarrowed || method == QuantizationMethodUnifiedNarrowed)
                     compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility8iNarrowed | SimdSynetCompatibilityFmaUse);
                 else
                     return;
@@ -236,7 +236,7 @@ namespace Synet
             : Base(param)
             , _method(method)
         {
-            _is8i = (_method == QuantizationMethodSymmetricNarrowed);
+            _is8i = _method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed;
         }
 
         virtual bool Is8i() const
@@ -418,7 +418,7 @@ namespace Synet
             }
             if (_method == QuantizationMethodIECompatible)
                 _lower = QUANT_IE_COMP_SRC_U8_MIN, _upper = QUANT_IE_COMP_SRC_U8_MAX;
-            else if (_method == QuantizationMethodSymmetricNarrowed)
+            else if (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed)
                 _lower = QUANT_SYMM_NARR_SRC_U8_MIN, _upper = QUANT_SYMM_NARR_SRC_U8_MAX;
         }
 

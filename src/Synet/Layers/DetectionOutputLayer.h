@@ -95,7 +95,7 @@ namespace Synet
 
         void GetRegions(const TensorPtrs & src, Type threshold, Regions & dst)
         {
-            SYNET_PERF_FUNC();
+            //SYNET_PERF_FUNC();
             dst.clear();
             const Type * pSrc = src[0]->CpuData();
             size_t count = src[0]->Axis(2);

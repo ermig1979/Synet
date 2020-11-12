@@ -117,7 +117,7 @@ namespace Synet
             const float* scaleDst = this->Stats(2)[0]->scale32fTo8u.data();
             const float* shiftDst = this->Stats(2)[0]->shift32fTo8u.data();
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-            if (_method == QuantizationMethodSymmetricNarrowed)
+            if (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed)
             {
                 SimdSynetCompatibilityType compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility8iNarrowed | SimdSynetCompatibilityFmaUse);
                 ::SimdSynetAdd8i(src0, scaleSrc0, shiftSrc0, src1, scaleSrc1, shiftSrc1, dst, scaleDst, shiftDst, 
@@ -125,7 +125,8 @@ namespace Synet
                 return;
             }
 #endif
-            int upper = (_method == QuantizationMethodSymmetricNarrowed ? QUANT_SYMM_NARR_SRC_U8_MAX : QUANT_IE_COMP_SRC_U8_MAX);
+            int upper = ((_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed) ? 
+                QUANT_SYMM_NARR_SRC_U8_MAX : QUANT_IE_COMP_SRC_U8_MAX);
             for (size_t b = 0; b < _batch; ++b)
             {
                 if (_format == TensorFormatNchw)

@@ -132,9 +132,9 @@ namespace Test
             {
                 std::stringstream ss;
                 if (firstMemoryUsage)
-                    ss << FullName(firstName, firstType) << " memory usage: " << firstMemoryUsage / (1024 * 1024) << " MB." << std::endl;
+                    ss << FullName(firstName, firstType) << " memory usage: " << ToString(firstMemoryUsage / (1024.0 * 1024.0), 1) << " MB." << std::endl;
                 if (secondMemoryUsage)
-                    ss << FullName(secondName, secondType) << " memory usage: " << secondMemoryUsage / (1024 * 1024) << " MB." << std::endl;
+                    ss << FullName(secondName, secondType) << " memory usage: " << ToString(secondMemoryUsage / (1024.0 * 1024.0), 1) << " MB." << std::endl;
                 PerformanceMeasurerStorage::s_storage.Print(ss);
                 if(!statistics.empty())
                     ss << statistics;

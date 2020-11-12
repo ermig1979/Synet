@@ -96,7 +96,7 @@ namespace Test
 					//ss << "Test info: (" << Description() << ")." << std::endl;
 					ss << resume << std::endl;
 					if (memoryUsage)
-						ss << "Memory usage: " << memoryUsage / (1024 * 1024) << " MB." << std::endl;
+						ss << "Memory usage: " << ToString(memoryUsage / (1024.0 * 1024.0), 1) << " MB." << std::endl;
 					ss << SystemInfo() << std::endl;
 					PerformanceMeasurerStorage::s_storage.Print(ss);
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)

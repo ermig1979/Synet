@@ -266,7 +266,7 @@ namespace Synet
             int lower, upper;
             if (_method == QuantizationMethodIECompatible)
                 lower = QUANT_IE_COMP_SRC_U8_MIN, upper = QUANT_IE_COMP_SRC_U8_MAX;
-            else if (_method == QuantizationMethodSymmetricNarrowed)
+            else if (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed)
                 lower = QUANT_SYMM_NARR_SRC_U8_MIN, upper = QUANT_SYMM_NARR_SRC_U8_MAX;
             const float* srcScale = this->Stats(0)[0]->scale8uTo32f.data();
             const float* srcShift = this->Stats(0)[0]->shift8uTo32f.data();

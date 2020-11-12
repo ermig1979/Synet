@@ -217,7 +217,7 @@ namespace Synet
             bool avoidOverflow16i = statS.negative && _method == QuantizationMethodIECompatible;
             if (_method == QuantizationMethodIECompatible)
                 wLo = QUANT_IE_COMP_WEIGHT_MIN, wUp = QUANT_IE_COMP_WEIGHT_MAX, sLo = QUANT_IE_COMP_SRC_U8_MIN, sUp = QUANT_IE_COMP_SRC_U8_MAX;
-            else if (_method == QuantizationMethodSymmetricNarrowed)
+            else if (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed)
                 wLo = QUANT_SYMM_NARR_WEIGHT_MIN, wUp = QUANT_SYMM_NARR_WEIGHT_MAX, sLo = QUANT_SYMM_NARR_SRC_U8_MIN, sUp = QUANT_SYMM_NARR_SRC_U8_MAX;
             _srcCvt.Init(_M, _K, 1, 1, TensorFormatNhwc, pSrcScale, pSrcShift, _method);
             _dstCvt.Init(_M, _N, 1, 1, TensorFormatNhwc, pNormScale, pNormShift, _method);
@@ -270,7 +270,7 @@ namespace Synet
         void ForwardCpu(const uint8_t* src, int32_t* dst)
         {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-            SimdSynetCompatibilityType compatibility = _method == QuantizationMethodSymmetricNarrowed ?
+            SimdSynetCompatibilityType compatibility = (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed) ?
                 SimdSynetCompatibility8iNarrowed : SimdSynetCompatibility8iOverflow;
             SimdSynetInnerProduct8i(_M, _N, _K, src, _weight8i.CpuData(), dst, compatibility);
 #else
