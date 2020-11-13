@@ -102,6 +102,11 @@ namespace Synet
             return false;
         }
 
+        virtual bool Resizable() const
+        {
+            return true;
+        }
+
         virtual void DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
         {
         }

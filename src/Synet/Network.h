@@ -345,13 +345,9 @@ namespace Synet
 
         bool Resizable() const
         {
-            for (size_t i = 0; i < _param().layers().size(); ++i)
-            {
-                const LayerParam & layer = _param().layers()[i];
-                if (layer.type() == LayerTypeInnerProduct)
+            for (size_t i = 0; i < _layers.size(); ++i)
+                if (!_layers[i]->Resizable())
                     return false;
-            }
-            return true;
         }
 
         Shape NchwShape() const 
@@ -736,8 +732,10 @@ namespace Synet
                     const Stage & dst = _stages[*id];
                     if (&dst == &stage)
                         continue;
-                    if (dst.layer->Is8i() && dst.layer->Can8i())
+                    if (dst.layer->Is8i())
                         continue;
+                    //if (dst.layer->Can8i() && _param().quantization().method() != QuantizationMethodSymmetricNarrowed)
+                    //    continue;
                     if (dst.layer->Param().type() == LayerTypePriorBox)
                         continue;
                     if (dst.layer->Can8i() && Is8iInSubGraph(dst))

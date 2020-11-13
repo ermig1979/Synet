@@ -77,6 +77,11 @@ namespace Synet
             _is8i = param.innerProduct().quantizationLevel() == TensorType8i;
         }
 
+        virtual bool Resizable() const
+        {
+            return false;
+        }
+
         virtual bool Is8i() const
         {
             return _is8i;

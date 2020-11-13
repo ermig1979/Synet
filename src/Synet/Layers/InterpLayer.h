@@ -183,6 +183,18 @@ namespace Synet
         {
         }
 
+        virtual bool Resizable() const
+        {
+            const InterpParam& param = this->Param().interp();
+            return !(param.height() && param.width());
+        }
+
+        virtual bool Can8i() const
+        {
+            const InterpParam& param = this->Param().interp();
+            return param.interpolationType() == InterpolationTypeNearest;
+        }
+
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const InterpParam & param = this->Param().interp();
@@ -194,6 +206,9 @@ namespace Synet
             _channels = _trans ? src[0]->Axis(3) : src[0]->Axis(1);
             _srcH = _trans ? src[0]->Axis(1) : src[0]->Axis(2);
             _srcW = _trans ? src[0]->Axis(2) : src[0]->Axis(3);
+            _src8u = src[0]->GetType() == TensorType8u;
+            _dst8u = dst[0]->GetType() == TensorType8u;
+            assert(_src8u == _dst8u);
             size_t srcH = _srcH - _cropBeg - _cropEnd;
             size_t srcW = _srcW - _cropBeg - _cropEnd;
             if (param.useTensorSize())
@@ -230,23 +245,33 @@ namespace Synet
             }
             else
                 assert(0);
-            if(_trans)
-                dst[0]->Reshape({ _num, _dstH, _dstW, _channels }, TensorFormatNhwc);
+            Shape dstShape = _trans ? Shp(_num, _dstH, _dstW, _channels) : Shp(_num, _channels, _dstH, _dstW);
+            if (_src8u && _dst8u)
+            {
+                assert(param.interpolationType() == InterpolationTypeNearest);
+                dst[0]->As8u().Reshape(dstShape, src[0]->Format());
+            }
             else
-                dst[0]->Reshape({ _num, _channels, _dstH, _dstW }, TensorFormatNchw);
+                dst[0]->As32f().Reshape(dstShape, src[0]->Format());
             this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            const Type * pSrc = src[0]->CpuData();
-            Type * pDst = dst[0]->CpuData();
-            for(size_t i = 0; i < _num; ++i)
+            if (_src8u && _dst8u)
+                ForwardCpu(src[0]->As8u().CpuData(), dst[0]->As8u().CpuData());
+            else
+                ForwardCpu(src[0]->As32f().CpuData(), dst[0]->As32f().CpuData());
+        }
+
+        template<class TT> void ForwardCpu(const TT * src, TT * dst)
+        {
+            for (size_t i = 0; i < _num; ++i)
             {
-                Detail::InterpLayerForwardCpu(_channels, pSrc, _srcH, _srcW, _cropBeg, _cropEnd, pDst, _dstH, _dstW, _type, _trans);
-                pSrc += _channels*_srcH*_srcW;
-                pDst += _channels*_dstH*_dstW;
+                Detail::InterpLayerForwardCpu(_channels, src, _srcH, _srcW, _cropBeg, _cropEnd, dst, _dstH, _dstW, _type, _trans);
+                src += _channels * _srcH * _srcW;
+                dst += _channels * _dstH * _dstW;
             }
         }
 
@@ -254,5 +279,6 @@ namespace Synet
         size_t _num, _channels, _srcH, _srcW, _dstH, _dstW, _cropBeg, _cropEnd;
         InterpolationType _type;
         int _trans;
+        bool _src8u, _dst8u;
     };
 }
