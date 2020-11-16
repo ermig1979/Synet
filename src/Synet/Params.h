@@ -269,6 +269,7 @@ namespace Synet
     struct ConcatParam
     {
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
+        SYNET_PARAM_VALUE(bool, fixed, false);
     };
 
     struct ConvolutionParam

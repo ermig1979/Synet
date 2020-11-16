@@ -145,13 +145,6 @@ namespace Synet
         TensorInfoMap _tensors;
         LayerParamMap _layers;
 
-        struct Pin
-        {
-            String name;
-            int index;
-            Pin(const String& n = String(), int i = 0) : name(n), index(i) {}
-        };
-
         bool ConvertAddLayer(const XmlNode* pLayer, const LayerParams& layers, const Vector & srcBin, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
@@ -231,6 +224,16 @@ namespace Synet
                     }
                     else
                         return false;
+                }
+                layer.concat().fixed() = true;
+                for (size_t i = 0; i < layer.src().size() && layer.concat().fixed(); ++i)
+                {
+                    const LayerParam* src = GetLayer(layers, layer.src()[i]);
+                    if (src == NULL)
+                        return false;
+                    if (src->type() != LayerTypePriorBox &&
+                        src->type() != LayerTypePriorBoxClustered)
+                        layer.concat().fixed() = false;
                 }
             }
             return true;
@@ -1053,28 +1056,6 @@ namespace Synet
         template<class T> static const T * GetWeight(const Vector & bin, const WeightParam & param)
         {
             return GetWeight<T>(bin, param.offset());
-        }
-
-        static Pin ParsePin(const String& name)
-        {
-            Pin pin(name);
-            size_t delimiter = name.find_first_of(":");
-            if (delimiter != std::string::npos)
-            {
-                pin.name = name.substr(0, delimiter);
-                std::istringstream(name.substr(delimiter + 1)) >> pin.index;
-            }
-            return pin;
-        }
-
-        static const LayerParam* GetLayer(const LayerParams& layers, const String& name)
-        {
-            Pin pin = ParsePin(name);
-            for (size_t i = 0; i < layers.size(); ++i)
-                if (pin.name == layers[i].name())
-                    return &layers[i];
-            std::cout << "Can't found layer " << pin.name << " !" << std::endl;
-            return NULL;
         }
 
         static bool ReorderWeight(const Vector& srcBin, const Shape & input, LayerParam & layer, Vector& dstBin)

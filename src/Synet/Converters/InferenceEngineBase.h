@@ -64,6 +64,13 @@ namespace Synet
 
         typedef std::map<String, LayerParam> LayerParamMap;
 
+        struct Pin
+        {
+            String name;
+            int index;
+            Pin(const String& n = String(), int i = 0) : name(n), index(i) {}
+        };
+
         static bool ParseEdges(const XmlNode& src, Edges& edges)
         {
             edges.clear();
@@ -289,6 +296,28 @@ namespace Synet
                 std::cout << " , version = " << pLayer->FirstAttribute("version")->Value();
             std::cout << " !" << std::endl;
             return false;
+        }
+
+        static Pin ParsePin(const String& name)
+        {
+            Pin pin(name);
+            size_t delimiter = name.find_first_of(":");
+            if (delimiter != std::string::npos)
+            {
+                pin.name = name.substr(0, delimiter);
+                std::istringstream(name.substr(delimiter + 1)) >> pin.index;
+            }
+            return pin;
+        }
+
+        static const LayerParam* GetLayer(const LayerParams& layers, const String& name)
+        {
+            Pin pin = ParsePin(name);
+            for (size_t i = 0; i < layers.size(); ++i)
+                if (pin.name == layers[i].name())
+                    return &layers[i];
+            std::cout << "Can't found layer " << pin.name << " !" << std::endl;
+            return NULL;
         }
     };
 }

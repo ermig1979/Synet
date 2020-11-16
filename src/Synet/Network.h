@@ -734,8 +734,6 @@ namespace Synet
                         continue;
                     if (dst.layer->Is8i())
                         continue;
-                    //if (dst.layer->Can8i() && _param().quantization().method() != QuantizationMethodSymmetricNarrowed)
-                    //    continue;
                     if (dst.layer->Param().type() == LayerTypePriorBox)
                         continue;
                     if (dst.layer->Can8i() && Is8iInSubGraph(dst))

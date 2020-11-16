@@ -60,19 +60,24 @@ namespace Synet
             _topK = param.nms().topK();
             _eta = param.nms().eta();            
             
-            //assert(src[0]->Shape() == src[1]->Shape());
-            _bboxPreds.Reshape(src[0]->Shape());
-            if (_shareLocation)
-                _bboxPermute.Reshape(src[0]->Shape());
-            _confPermute.Reshape(src[1]->Shape());
             _numPriors = src[2]->Axis(2) / 4;
             assert(_numPriors * _numLocClasses * 4 == src[0]->Axis(1));
             assert(_numPriors * _numClasses == src[1]->Axis(1));
+
+            GetPriorBBoxes(src[2]->CpuData(), _numPriors, _priorBboxes, _priorVariances);
+
             Shape shape(2, 1);
             shape.push_back(1);
             shape.push_back(7);
             dst[0]->Reshape(shape);
             this->UsePerfStat();
+        }
+
+        virtual size_t MemoryUsage() const
+        {
+            return Base::MemoryUsage() +
+                _priorBboxes.size() * sizeof(NormalizedBBox) +
+                _priorVariances.size() * sizeof(float*);
         }
 
         struct NormalizedBBox
@@ -121,20 +126,17 @@ namespace Synet
         {
             const Type * pLoc = src[0]->CpuData();
             const Type * pConf = src[1]->CpuData();
-            const Type * pPrior = src[2]->CpuData();
             size_t num = src[0]->Axis(0);
 
-            LabelBBoxes allLocPreds;
-            GetLocPredictions(pLoc, num, _numPriors, _numLocClasses, _shareLocation, allLocPreds);
+            GetLocPredictions(pLoc, num, _numPriors, _numLocClasses, _shareLocation, _allLocPreds);
 
-            LabelPreds allConfScores;
-            GetConfidenceScores(pConf, num, _numPriors, _numClasses, allConfScores, false);
+            GetConfidenceScores(pConf, num, _numPriors, _numClasses, _allConfScores, false);
 
             if (_keepMaxClassScoresOnly)
             {
                 for (size_t i = 0; i < num; ++i) 
                 {
-                    LabelPred & labelScores = allConfScores[i];
+                    LabelPred & labelScores = _allConfScores[i];
                     for (size_t p = 0; p < _numPriors; ++p)
                     {
                         float maxScore = 0.0f;
@@ -154,20 +156,15 @@ namespace Synet
                 }
             }
 
-            NormalizedBBoxes priorBboxes;
-            Variances priorVariances;
-            GetPriorBBoxes(pPrior, _numPriors, priorBboxes, priorVariances);
-
-            LabelBBoxes allDecodeBboxes;
-            DecodeBBoxesAll(allLocPreds, priorBboxes, priorVariances, num, _shareLocation, _numLocClasses, 
-                _backgroundLabelId, _codeType, _varianceEncodedInTarget, _clip, allDecodeBboxes);
+            DecodeBBoxesAll(_allLocPreds, _priorBboxes, _priorVariances, num, _shareLocation, _numLocClasses,
+                _backgroundLabelId, _codeType, _varianceEncodedInTarget, _clip, _allDecodeBboxes);
 
             size_t numKept = 0;
             IndexMaps allIndices;
             for (size_t i = 0; i < num; ++i) 
             {
-                const LabelBBox & decodeBboxes = allDecodeBboxes[i];
-                const LabelPred & confScores = allConfScores[i];
+                const LabelBBox & decodeBboxes = _allDecodeBboxes[i];
+                const LabelPred & confScores = _allConfScores[i];
                 IndexMap indices;
                 size_t numDet = 0;
                 for (size_t c = 0; c < _numClasses; ++c)
@@ -241,8 +238,8 @@ namespace Synet
             size_t count = 0;
             for (size_t i = 0; i < num; ++i) 
             {
-                const LabelPred & confScores = allConfScores[i];
-                const LabelBBox & decodeBboxes = allDecodeBboxes[i];
+                const LabelPred & confScores = _allConfScores[i];
+                const LabelBBox & decodeBboxes = _allDecodeBboxes[i];
                 for (IndexMap::iterator it = allIndices[i].begin(); it != allIndices[i].end(); ++it) 
                 {
                     int label = it->first;
@@ -289,27 +286,30 @@ namespace Synet
         ptrdiff_t _backgroundLabelId, _keepTopK, _topK;
         PriorBoxCodeType _codeType;
         float _confidenceThreshold, _nmsThreshold, _eta;
-        Tensor _bboxPreds, _bboxPermute, _confPermute;
+        NormalizedBBoxes _priorBboxes;
+        Variances _priorVariances;
+        LabelBBoxes _allLocPreds, _allDecodeBboxes;
+        LabelPreds _allConfScores;
 
         void GetLocPredictions(const Type * pLoc, size_t num, size_t numPredsPerClass, size_t numLocClasses, bool shareLocation, LabelBBoxes & locPreds)
         {
-            locPreds.clear();
             locPreds.resize(num);
             for (size_t i = 0; i < num; ++i) 
             {
                 LabelBBox & labelBbox = locPreds[i];
-                for (size_t p = 0; p < numPredsPerClass; ++p)
+                for (size_t c = 0; c < numLocClasses; ++c)
                 {
-                    size_t startIdx = p * numLocClasses * 4;
-                    for (size_t c = 0; c < numLocClasses; ++c)
+                    int label = shareLocation ? -1 : (int)c;
+                    if (labelBbox.find(label) == labelBbox.end())
+                        labelBbox[label].resize(numPredsPerClass);
+                    std::vector<NormalizedBBox>& bBoxes = labelBbox[label];
+                    for (size_t p = 0; p < numPredsPerClass; ++p)
                     {
-                        int label = shareLocation ? -1 : (int)c;
-                        if (labelBbox.find(label) == labelBbox.end())
-                            labelBbox[label].resize(numPredsPerClass);
-                        labelBbox[label][p].xmin = pLoc[startIdx + c * 4 + 0];
-                        labelBbox[label][p].ymin = pLoc[startIdx + c * 4 + 1];
-                        labelBbox[label][p].xmax = pLoc[startIdx + c * 4 + 2];
-                        labelBbox[label][p].ymax = pLoc[startIdx + c * 4 + 3];
+                        size_t startIdx = p * numLocClasses * 4;
+                        bBoxes[p].xmin = pLoc[startIdx + c * 4 + 0];
+                        bBoxes[p].ymin = pLoc[startIdx + c * 4 + 1];
+                        bBoxes[p].xmax = pLoc[startIdx + c * 4 + 2];
+                        bBoxes[p].ymax = pLoc[startIdx + c * 4 + 3];
                     }
                 }
                 pLoc += numPredsPerClass * numLocClasses * 4;
@@ -318,11 +318,16 @@ namespace Synet
 
         void GetConfidenceScores(const Type * pConf, size_t num, size_t numPredsPerClass, size_t numClasses, LabelPreds & confPreds, bool keepMaxScoreOnly)
         {
-            confPreds.clear();
             confPreds.resize(num);
             for (size_t i = 0; i < num; ++i) 
             {
                 LabelPred & labelScores = confPreds[i];
+                std::vector<float*> scores(numClasses);
+                for (size_t c = 0; c < numClasses; ++c)
+                {
+                    labelScores[(int)c].resize(numPredsPerClass);
+                    scores[c] = labelScores[(int)c].data();
+                }
                 for (size_t p = 0; p < numPredsPerClass; ++p)
                 {
                     size_t startIdx = p * numClasses;
@@ -330,7 +335,7 @@ namespace Synet
                     float maxClassScore = 0;
                     for (size_t c = 0; c < numClasses; ++c)
                     {
-                        labelScores[(int)c].push_back(pConf[startIdx + c]);
+                        scores[c][p] = pConf[startIdx + c];
                         if (pConf[startIdx + c] >= maxClassScore)
                         {
                             maxClassScoreIdx = c;
@@ -341,7 +346,7 @@ namespace Synet
                     {
                         for (size_t c = 0; c < numClasses; ++c)
                             if (c != maxClassScoreIdx)
-                                labelScores[(int)c].back() = 0.0;
+                                scores[c][p] = 0.0f;
                     }
                 }
                 pConf += numPredsPerClass * numClasses;
@@ -350,37 +355,31 @@ namespace Synet
 
         void GetPriorBBoxes(const Type * pPrior, size_t numPriors, NormalizedBBoxes & priorBboxes, Variances & priorVariances)
         {
-            priorBboxes.clear();
-            priorVariances.clear();
-            priorBboxes.reserve(numPriors);
-            priorVariances.reserve(numPriors);
+            priorBboxes.resize(numPriors);
+            priorVariances.resize(numPriors);
+            const Type* pVar = pPrior + numPriors * 4;
             for (size_t i = 0; i < numPriors; ++i)
             {
                 size_t startIdx = i * 4;
-                NormalizedBBox bbox;
+                NormalizedBBox & bbox = priorBboxes[i];
                 bbox.xmin = pPrior[startIdx + 0];
                 bbox.ymin = pPrior[startIdx + 1];
                 bbox.xmax = pPrior[startIdx + 2];
                 bbox.ymax = pPrior[startIdx + 3];
-                float bboxSize = BBoxSize(bbox, true);
-                bbox.size = bboxSize;
-                priorBboxes.push_back(bbox);
-                priorVariances.push_back((Type*)(pPrior + (numPriors + i) * 4));
+                bbox.size = BBoxSize(bbox);
+                priorVariances[i] = (Type*)(pVar + startIdx);
             }
         }
 
-        float BBoxSize(const NormalizedBBox & bbox, bool normalized) 
+        SYNET_INLINE float BBoxSize(const NormalizedBBox& bbox)
         {
-            if (bbox.xmax < bbox.xmin || bbox.ymax < bbox.ymin) 
+            if (bbox.xmax < bbox.xmin || bbox.ymax < bbox.ymin)
                 return 0;
-            else 
+            else
             {
                 float w = bbox.xmax - bbox.xmin;
                 float h = bbox.ymax - bbox.ymin;
-                if (normalized)
-                    return w * h;
-                else 
-                    return (w + 1) * (h + 1);
+                return w * h;
             }
         }
 
@@ -390,12 +389,12 @@ namespace Synet
             dst.ymin = Max(Min(src.ymin, 1.f), 0.f);
             dst.xmax = Max(Min(src.xmax, 1.f), 0.f);
             dst.ymax = Max(Min(src.ymax, 1.f), 0.f);
-            dst.size = BBoxSize(src, true);
+            dst.size = BBoxSize(src);
             dst.difficult = src.difficult;
         }
 
-        void DecodeBBox(const NormalizedBBox & priorBbox, const T * priorVariance, PriorBoxCodeType codeType, bool varianceEncodedInTarget,
-            bool clipBbox, const NormalizedBBox & bbox, NormalizedBBox & decodeBbox) 
+        void DecodeBBox(const NormalizedBBox & priorBbox, const T * priorVariance, PriorBoxCodeType codeType, 
+            bool varianceEncodedInTarget, bool clipBbox, const NormalizedBBox & bbox, NormalizedBBox & decodeBbox) 
         {
             if (codeType == PriorBoxCodeTypeCorner)
             {
@@ -462,28 +461,25 @@ namespace Synet
             }
             else
                 assert(0);
-            decodeBbox.size = BBoxSize(decodeBbox, true);
+            decodeBbox.size = BBoxSize(decodeBbox);
             if (clipBbox)
                 ClipBBox(decodeBbox, decodeBbox);
         }
 
-        void DecodeBBoxes(const NormalizedBBoxes & priorBboxes, const Variances & priorVariances, PriorBoxCodeType codeType, bool varianceEncodedInTarget,
-            bool clipBbox, const NormalizedBBoxes & bboxes, NormalizedBBoxes & decodeBboxes) 
+        void DecodeBBoxes(const NormalizedBBoxes & priorBboxes, const Variances & priorVariances, 
+            PriorBoxCodeType codeType, bool varianceEncodedInTarget, bool clipBbox, 
+            const NormalizedBBoxes & bboxes, NormalizedBBoxes & decodeBboxes) 
         {
             size_t numBboxes = priorBboxes.size();
-            decodeBboxes.clear();
+            decodeBboxes.resize(numBboxes);
             for (size_t i = 0; i < numBboxes; ++i) 
-            {
-                NormalizedBBox decodeBbox;
-                DecodeBBox(priorBboxes[i], priorVariances[i], codeType, varianceEncodedInTarget, clipBbox, bboxes[i], decodeBbox);
-                decodeBboxes.push_back(decodeBbox);
-            }
+                DecodeBBox(priorBboxes[i], priorVariances[i], codeType, varianceEncodedInTarget, clipBbox, bboxes[i], decodeBboxes[i]);
         }
 
-        void DecodeBBoxesAll(const LabelBBoxes & allLocPreds, const NormalizedBBoxes & priorBboxes, const Variances & priorVariances, size_t num, 
-            bool shareLocation, size_t numLocClasses, size_t backgroundLabelId, PriorBoxCodeType codeType, bool varianceEncodedInTarget, bool clip, LabelBBoxes & allDecodeBboxes)
+        void DecodeBBoxesAll(const LabelBBoxes & allLocPreds, const NormalizedBBoxes & priorBboxes, const Variances & priorVariances, 
+            size_t num, bool shareLocation, size_t numLocClasses, size_t backgroundLabelId, 
+            PriorBoxCodeType codeType, bool varianceEncodedInTarget, bool clip, LabelBBoxes & allDecodeBboxes)
         {
-            allDecodeBboxes.clear();
             allDecodeBboxes.resize(num);
             for (size_t i = 0; i < num; ++i) 
             {
@@ -549,8 +545,8 @@ namespace Synet
             if (intersectW > 0 && intersectH > 0) 
             {
                 float intersectS = intersectW * intersectH;
-                float bbox1Size = BBoxSize(bbox1, true);
-                float bbox2Size = BBoxSize(bbox2, true);
+                float bbox1Size = BBoxSize(bbox1);
+                float bbox2Size = BBoxSize(bbox2);
                 return intersectS / (bbox1Size + bbox2Size - intersectS);
             }
             else

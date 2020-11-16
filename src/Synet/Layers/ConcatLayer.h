@@ -50,6 +50,7 @@ namespace Synet
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _concatAxis = this->Param().concat().axis();
+            _fixed = this->Param().concat().fixed();
             _concatNum = src[0]->Size(0, _concatAxis);
             _concatInputSize = src[0]->Size(_concatAxis + 1);
             size_t srcSizeSum = src[0]->Size();
@@ -85,18 +86,24 @@ namespace Synet
                 assert(srcSizeSum == dst[0]->Size());
             }
             _dstConcatAxis = dst[0]->Axis(_concatAxis);
+            if (_fixed)
+                ForwardCpu(src, dst);
             this->UsePerfStat();
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            if (src.size() == 1)
+            if (src.size() == 1 || _fixed)
                 return;
+            ForwardCpu(src, dst);
+        }
 
+        void ForwardCpu(const TensorPtrs& src, const TensorPtrs& dst)
+        {
             switch (_type)
             {
-            case TensorType32f: 
+            case TensorType32f:
             {
                 std::vector<float*> pSrc(src.size());
                 for (size_t i = 0; i < src.size(); ++i)
@@ -158,5 +165,6 @@ namespace Synet
         size_t _concatNum, _concatInputSize, _concatAxis, _dstConcatAxis;
         Index _srcConcatAxis;
         TensorType _type;
+        bool _fixed;
     };
 }

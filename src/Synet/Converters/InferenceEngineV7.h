@@ -64,7 +64,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Const" && !ConvertConstLayer(pLayer, srcBin, trans, layer, dstBin))
                     return ErrorMessage(pLayer);
-                if (type == "Concat" && !ConvertConcatLayer(pLayer, trans, layer))
+                if (type == "Concat" && !ConvertConcatLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
                 if ((type == "Convolution" || type == "Deconvolution") && !ConvertConvolutionOrDeconvolutionLayer(pLayer, srcBin, trans, layer, dstBin))
                     return ErrorMessage(pLayer);
@@ -260,7 +260,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConcatLayer(const XmlNode * pLayer, bool trans, LayerParam & layer)
+        bool ConvertConcatLayer(const XmlNode * pLayer, const LayerParams& layers, bool trans, LayerParam & layer)
         {
             layer.type() = Synet::LayerTypeConcat;
             const XmlNode * pData = pLayer->FirstNode("data");
@@ -277,6 +277,16 @@ namespace Synet
                 }
                 //if (input.size() == 3 && layer.concat().axis() == 1)
                 //    layer.concat().axis() = 2;
+            }
+            layer.concat().fixed() = true;
+            for (size_t i = 0; i < layer.src().size() && layer.concat().fixed(); ++i)
+            {
+                const LayerParam* src = GetLayer(layers, layer.src()[i]);
+                if (src == NULL)
+                    return false;
+                if (src->type() != LayerTypePriorBox &&
+                    src->type() != LayerTypePriorBoxClustered)
+                    layer.concat().fixed() = false;
             }
             return true;
         }
