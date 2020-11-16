@@ -86,7 +86,7 @@ namespace Synet
                 assert(srcSizeSum == dst[0]->Size());
             }
             _dstConcatAxis = dst[0]->Axis(_concatAxis);
-            if (_fixed)
+            //if (_fixed)
                 ForwardCpu(src, dst);
             this->UsePerfStat();
         }
