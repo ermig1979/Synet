@@ -348,6 +348,7 @@ namespace Synet
             for (size_t i = 0; i < _layers.size(); ++i)
                 if (!_layers[i]->Resizable())
                     return false;
+            return true;
         }
 
         Shape NchwShape() const 
