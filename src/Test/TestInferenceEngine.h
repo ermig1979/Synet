@@ -28,6 +28,8 @@
 #include "TestPerformance.h"
 #include "TestNetwork.h"
 
+#define SYNET_TEST_IE_VERSION 202101
+
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -378,7 +380,7 @@ namespace Test
             _interimNames.clear();
             if ((options.debugPrint & (1 << Synet::DebugPrintLayerDst)) == 0)
                 return;
-
+#if SYNET_TEST_IE_VERSION < 202101
             StringMap config, interim;
             InferenceEngine::ExecutableNetwork exec = _ieCore->LoadNetwork(*_ieNetwork, _ieDeviceName, config);
             InferenceEngine::CNNNetwork net = exec.GetExecGraphInfo();
@@ -412,11 +414,16 @@ namespace Test
                 _ieNetwork->addOutput(name);
                 _interimNames.push_back(name);
             }
+#endif
         }
 
         void DebugPrint(std::ostream& os, InferenceEngine::Blob& blob, const String& name, int flag, int first, int last, int precision)
         {
-            os << "Layer: " << name << " : " << GetLayerType(name) << std::endl;
+            os << "Layer: " << name;
+#if SYNET_TEST_IE_VERSION < 202101
+            os << " : " << GetLayerType(name);
+#endif
+            os << std::endl;
             Sizes dims = blob.getTensorDesc().getDims();
             const Sizes& strides = blob.getTensorDesc().getBlockingDesc().getStrides();
             Synet::TensorFormat format = Synet::TensorFormatUnknown;
@@ -455,6 +462,7 @@ namespace Test
             }
         }
 
+#if SYNET_TEST_IE_VERSION < 202101
         String GetLayerType(const String& name)
         {
             for (InferenceEngine::details::CNNNetworkIterator it = _ieNetwork->begin(); it != _ieNetwork->end(); ++it)
@@ -465,6 +473,7 @@ namespace Test
             }
             return String();
         }
+#endif
     };
 }
 
