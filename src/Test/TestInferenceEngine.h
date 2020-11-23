@@ -89,8 +89,17 @@ namespace Test
             _regionThreshold = options.regionThreshold;
             try
             {
+                String model_xml = WithoutExtension(model) + ".xml";
+                if (!FileExists(model_xml))
+                {
+                    if (!FileCopy(model, model_xml))
+                    {
+                        std::cout << "Can't copy file form '" << model << "' to '" << model_xml << "' !" << std::endl;
+                        return false;
+                    }
+                }
                 _ieCore = std::make_shared<InferenceEngine::Core>();
-                _ieNetwork = std::make_shared<InferenceEngine::CNNNetwork>(_ieCore->ReadNetwork(model, weight));
+                _ieNetwork = std::make_shared<InferenceEngine::CNNNetwork>(_ieCore->ReadNetwork(model_xml, weight));
 
                 _inputNames.clear();
                 InferenceEngine::InputsDataMap inputsInfo = _ieNetwork->getInputsInfo();

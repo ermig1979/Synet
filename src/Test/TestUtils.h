@@ -27,6 +27,8 @@
 #include "TestCommon.h"
 
 #include <locale>
+#include <iostream>
+#include <fstream>
 
 #ifdef _MSC_VER
 #ifndef NOMINMAX
@@ -273,6 +275,24 @@ namespace Test
             std::cout << "There is an error during (" << errno << ") opening '" << directory << "' !" << std::endl;
 #endif
         return names;
+    }
+
+    inline bool FileCopy(const String& src, const String& dst)
+    {
+        std::ifstream ifs(src, std::ios::binary);
+        std::ofstream ofs(dst, std::ios::binary);
+        if (ifs.is_open() && ofs.is_open())
+        {
+            std::copy(
+                std::istreambuf_iterator<char>(ifs), 
+                std::istreambuf_iterator<char>(),
+                std::ostreambuf_iterator<char>(ofs));
+            ifs.close();
+            ofs.close();
+            return true;
+        }
+        else
+            return false;
     }
 
     inline void SortDetectionOutput(float * data, size_t size)

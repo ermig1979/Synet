@@ -353,7 +353,7 @@ namespace Synet
 
         Shape NchwShape() const 
         {
-            assert(_src.size() == 1 && _src[0]->Count() == 4);
+            assert(_src.size() >= 1 && _src[0]->Count() == 4);
             Shape shape = _src[0]->Shape();
             if (_src[0]->Format() == TensorFormatNhwc)
                 shape = Shape({ shape[0], shape[3] , shape[1] , shape[2] });

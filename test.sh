@@ -44,7 +44,7 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 
 #TEST darknet test_000 local 5 1 1 1 002h
 
-#TEST inference_engine test_000 local 1000 1 1 1 006
+TEST inference_engine test_000 local 1000 1 1 1 007h
 #TEST inference_engine test_001 local 500 1 1 1 006
 #TEST inference_engine test_002 local 20 1 1 1 005t
 #TEST inference_engine test_003f local 50 1 1 1 005
@@ -58,7 +58,7 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 #TEST inference_engine test_009i local 40 1 1 1 000t
 #TEST inference_engine test_010f local 100 1 1 1 002t
 #TEST inference_engine test_011f local 40 1 1 1 002
-TEST inference_engine test_012f persons 10 1 1 1 001
+#TEST inference_engine test_012f persons 10 1 1 1 001
 #TEST inference_engine test_013f persons 20 1 1 1 001
 
 #TEST quantization test_003 faces 100 1 1 1 000t
