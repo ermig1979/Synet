@@ -7,8 +7,23 @@ set(IE_THREADING "OMP" CACHE STRING "Set threading mode for IE: TBB / OMP / SEQ"
 set(IE_BIN_LIBS
 	${IE_BIN_DIR}/libinference_engine.so 
 	${IE_BIN_DIR}/libMKLDNNPlugin.so 
-	${IE_BIN_DIR}/libngraph.so 
-	${IE_BIN_DIR}/libinference_engine_legacy.so)
+	${IE_BIN_DIR}/libtemplatePlugin.so
+	${IE_BIN_DIR}/libtemplate_extension.so
+	${IE_BIN_DIR}/libonnx_importer.so
+	${IE_BIN_DIR}/libngraph.so
+	${IE_BIN_DIR}/libngraph_backend.so
+	${IE_BIN_DIR}/libMultiDevicePlugin.so
+	${IE_BIN_DIR}/libinterpreter_backend.so
+	${IE_BIN_DIR}/libinference_engine_transformations.so
+	${IE_BIN_DIR}/libinference_engine_preproc.so
+	${IE_BIN_DIR}/libinference_engine_onnx_reader.so
+	${IE_BIN_DIR}/libinference_engine_lp_transformations.so
+	${IE_BIN_DIR}/libinference_engine_legacy.so
+	${IE_BIN_DIR}/libinference_engine_ir_v7_reader.so
+	${IE_BIN_DIR}/libinference_engine_ir_reader.so
+	${IE_BIN_DIR}/libinference_engine_c_api.so
+	${IE_BIN_DIR}/libie_backend.so
+	${IE_BIN_DIR}/libformat_reader.so)
 if(IE_THREADING STREQUAL "TBB")	
 	list(APPEND IE_BIN_LIBS ${IE_3RD_DIR}/tbb/lib/libtbb.so.2)
 	set(IE_SAMPLES ON)

@@ -16,4 +16,4 @@
 [submodule "3rd/openvino"]
 	path = 3rd/openvino
 	url = https://github.com/openvinotoolkit/openvino.git
-	branch = releases/2020/3
+	branch = releases/2021/1
