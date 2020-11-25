@@ -10,8 +10,8 @@ option(PERF_STAT "Performance statistic level: 0 - no statistic, 1 - Synet layer
 set(MAX_ERRORS 5)
 
 
-if(NOT((MODE STREQUAL "all") OR 
-       (MODE STREQUAL "darknet") OR (MODE STREQUAL "inference_engine") OR 
+if(NOT((MODE STREQUAL "all") OR (MODE STREQUAL "darknet") OR 
+       (MODE STREQUAL "inference_engine") OR (MODE STREQUAL "onnx") OR 
        (MODE STREQUAL "performance_difference") OR (MODE STREQUAL "precision") OR 
        (MODE STREQUAL "quantization") OR (MODE STREQUAL "use_samples")))
     message(FATAL_ERROR "Unknown value of MODE: '${MODE}'!")
@@ -109,6 +109,20 @@ if((MODE STREQUAL "inference_engine") OR (MODE STREQUAL "all"))
 	target_link_libraries(test_inference_engine ${IE_BIN_LIBS} ${SIMD_LIB} ${BLIS_LIB} -ldl -lpthread)
 	if(BLIS)
 		add_dependencies(test_inference_engine ${BLIS_DEP})
+	endif()
+endif()
+
+if((MODE STREQUAL "onnx") OR (MODE STREQUAL "all"))
+	if (MODE STREQUAL "onnx")
+		include(${ROOT_DIR}/prj/cmake/inference-engine.cmake)
+	endif()
+	file(GLOB_RECURSE TEST_ONNX_SRC ${ROOT_DIR}/src/Test/TestOnnx.cpp ${ROOT_DIR}/src/Test/TestImage.cpp)
+	set_source_files_properties(${TEST_ONNX_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
+	add_executable(test_onnx ${TEST_ONNX_SRC})
+	add_dependencies(test_onnx make_inference_engine)
+	target_link_libraries(test_onnx ${IE_BIN_LIBS} ${SIMD_LIB} ${BLIS_LIB} -ldl -lpthread)
+	if(BLIS)
+		add_dependencies(test_onnx ${BLIS_DEP})
 	endif()
 endif()
 

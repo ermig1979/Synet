@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="Prop.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{31D66C8A-2AC5-4564-AB95-2F63B308F96B}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>TestOnnx</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\Test\TestOnnx.cpp" />
+    <ClCompile Include="..\..\src\Test\TestImage.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Simd.vcxproj">
+      <Project>{fc4ceece-ac57-44d7-9f29-d387ee8910ef}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Synet.vcxproj">
+      <Project>{c809d7a3-6c52-4e36-8582-00ced929317d}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\Test\TestArgs.h" />
+    <ClInclude Include="..\..\src\Test\TestCommon.h" />
+    <ClInclude Include="..\..\src\Test\TestCompare.h" />
+    <ClInclude Include="..\..\src\Test\TestHtml.h" />
+    <ClInclude Include="..\..\src\Test\TestImage.h" />
+    <ClInclude Include="..\..\src\Test\TestNetwork.h" />
+    <ClInclude Include="..\..\src\Test\TestOptions.h" />
+    <ClInclude Include="..\..\src\Test\TestPerformance.h" />
+    <ClInclude Include="..\..\src\Test\TestReport.h" />
+    <ClInclude Include="..\..\src\Test\TestSynet.h" />
+    <ClInclude Include="..\..\src\Test\TestTable.h" />
+    <ClInclude Include="..\..\src\Test\TestUtils.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

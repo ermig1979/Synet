@@ -75,6 +75,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestPrecision", "TestPrecis
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestPerformanceDifference", "TestPerformanceDifference.vcxproj", "{039CFE6E-B8BF-4C72-9D57-22B6BEB0BBAA}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestOnnx", "TestOnnx.vcxproj", "{31D66C8A-2AC5-4564-AB95-2F63B308F96B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -275,6 +277,14 @@ Global
 		{039CFE6E-B8BF-4C72-9D57-22B6BEB0BBAA}.Release|Win32.Build.0 = Release|Win32
 		{039CFE6E-B8BF-4C72-9D57-22B6BEB0BBAA}.Release|x64.ActiveCfg = Release|x64
 		{039CFE6E-B8BF-4C72-9D57-22B6BEB0BBAA}.Release|x64.Build.0 = Release|x64
+		{31D66C8A-2AC5-4564-AB95-2F63B308F96B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{31D66C8A-2AC5-4564-AB95-2F63B308F96B}.Debug|Win32.Build.0 = Debug|Win32
+		{31D66C8A-2AC5-4564-AB95-2F63B308F96B}.Debug|x64.ActiveCfg = Debug|x64
+		{31D66C8A-2AC5-4564-AB95-2F63B308F96B}.Debug|x64.Build.0 = Debug|x64
+		{31D66C8A-2AC5-4564-AB95-2F63B308F96B}.Release|Win32.ActiveCfg = Release|Win32
+		{31D66C8A-2AC5-4564-AB95-2F63B308F96B}.Release|Win32.Build.0 = Release|Win32
+		{31D66C8A-2AC5-4564-AB95-2F63B308F96B}.Release|x64.ActiveCfg = Release|x64
+		{31D66C8A-2AC5-4564-AB95-2F63B308F96B}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -312,6 +322,7 @@ Global
 		{1DBDF00B-B821-440B-8AC1-1D561F2ABFB9} = {AFFDA6C0-D2CE-421C-8B55-7A55284D9427}
 		{E97C6131-4CB4-4B1E-BEDF-BB86DF044DA5} = {AFFDA6C0-D2CE-421C-8B55-7A55284D9427}
 		{039CFE6E-B8BF-4C72-9D57-22B6BEB0BBAA} = {AFFDA6C0-D2CE-421C-8B55-7A55284D9427}
+		{31D66C8A-2AC5-4564-AB95-2F63B308F96B} = {AFFDA6C0-D2CE-421C-8B55-7A55284D9427}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8D0544B9-1F3D-447C-B071-0078E50D9328}

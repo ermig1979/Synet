@@ -286,6 +286,9 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Region.h" />
+    <ClInclude Include="..\..\src\Synet\Converters\Onnx.h">
+      <Filter>Converters</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
