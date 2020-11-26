@@ -44,7 +44,7 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 
 #TEST darknet test_000 local 5 1 1 1 002h
 
-TEST inference_engine test_000 local 1000 1 1 1 007h
+TEST inference_engine test_000 local 1000 4 1 1 007h
 #TEST inference_engine test_001 local 500 1 1 1 006
 #TEST inference_engine test_002 local 20 1 1 1 005t
 #TEST inference_engine test_003f local 50 1 1 1 005
