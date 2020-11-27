@@ -13,6 +13,12 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>
+		$(SolutionDir)..\..\3rd\openvino\inference-engine\include;
+		$(SolutionDir)..\..\3rd\openvino\inference-engine\src\extension;
+		$(SolutionDir)..\..\3rd\openvino\ngraph\frontend\onnx_import\include;
+		$(SolutionDir)..\..\3rd\openvino\ngraph\core\include;
+		%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

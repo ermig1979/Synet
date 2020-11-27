@@ -31,6 +31,8 @@
 
 #if defined(SYNET_ONNX_ENABLE)
 
+#include <onnx_import/onnx.hpp>
+
 namespace Synet
 {
     class OnnxToSynet
@@ -50,10 +52,17 @@ namespace Synet
                 return false;
             }
 
+            std::shared_ptr<ngraph::Function> function = ngraph::onnx_import::import_onnx_model(srcGraphPath);
+            if (!function)
+            {
+                std::cout << "Can't read '" << srcGraphPath << "' !" << std::endl;
+                return false;
+            }
+
             Synet::NetworkParamHolder holder;
             Vector weight;
-
-            return false;
+            if (!ConvertNetwork(*function, trans, holder(), weight))
+                return false;
 
             OptimizerParamHolder param;
             Optimizer optimizer(param());
@@ -66,14 +75,59 @@ namespace Synet
             if (!SaveWeight(weight, dstWeightPath))
                 return false;
 
-            return true;
+            return false;
         }
 
     private:
+
         typedef std::vector<Synet::LayerParam> LayerParams;
         typedef Synet::Tensor<float> Tensor;
         typedef std::vector<Tensor> Tensors;
         typedef std::vector<float> Vector;
+
+        bool ConvertNetwork(const ngraph::Function& function, bool trans, Synet::NetworkParam& network, Vector& weight)
+        {
+            std::vector<std::shared_ptr<ngraph::Node>> nodes = function.get_ordered_ops();
+            std::cout << std::endl << "nodes.size(): " << nodes.size() << std::endl;
+            for (size_t i = 0; i < nodes.size(); ++i)
+            {
+                const ngraph::Node& node = *nodes[i];
+                const String& type = node.get_type_name();
+                LayerParam layer;
+                layer.name() = node.get_friendly_name();
+                if(type == "Parameter" && !ConvertNodeParameter(node, trans, layer))
+                    return ErrorMessage(node);
+                network.layers().push_back(layer);
+                std::cout << i << ": type = " << node.get_type_name();
+                std::cout << " desc = " << node.description();
+                std::cout << std::endl;
+                //node.write_description(std::cout, 3) << std::endl;
+                if (i > 50)
+                    break;
+            }
+
+            return true;
+        }
+
+        bool ConvertNodeParameter(const ngraph::Node& node, bool trans, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeInput;
+            if (node.get_output_size() < 1)
+                return false;
+            layer.input().shape().resize(node.get_output_size());
+            for (size_t i = 0; i < node.get_output_size(); ++i)
+            {
+                Shape shape = node.get_output_shape(i);
+                if (trans)
+                {
+                    if (shape.size() == 4)
+                        shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
+                    layer.input().shape()[i].format() = TensorFormatNhwc;
+                }
+                layer.input().shape()[i].dim() = shape;
+            }
+            return true;
+        }
 
         bool SaveWeight(const Vector& bin, const String& path)
         {
@@ -84,6 +138,31 @@ namespace Synet
             bool result = (bool)ofs;
             ofs.close();
             return result;
+        }
+
+        static String NotImplementedMarker()
+        {
+            return "~~~NOT_IMPLEMENTED~~~";
+        }
+
+        static void NotImplemented(const ngraph::Node & src, LayerParam& dst)
+        {
+            //dst.type() = LayerTypeStub;
+            dst.debug().clear();
+            dst.debug().push_back(NotImplementedMarker());
+            dst.debug().push_back(src.get_type_name());
+        }
+
+        static bool ErrorMessage(const ngraph::Node& node)
+        {
+            std::cout << "Can't convert layer :";
+            //std::cout << " id = " << pLayer->FirstAttribute("id")->Value();
+            std::cout << " name = " << node.get_friendly_name();
+            std::cout << " , type = " << node.get_type_name();
+            //if (pLayer->FirstAttribute("version"))
+            //    std::cout << " , version = " << pLayer->FirstAttribute("version")->Value();
+            std::cout << " !" << std::endl;
+            return false;
         }
     };
 
