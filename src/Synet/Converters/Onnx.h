@@ -32,7 +32,7 @@
 #if defined(SYNET_ONNX_ENABLE)
 
 #include <onnx_import/onnx.hpp>
-#include <ngraph/op/constant.hpp>
+#include <ngraph/ops.hpp>
 
 namespace Synet
 {
@@ -86,11 +86,18 @@ namespace Synet
         typedef std::vector<Tensor> Tensors;
         typedef std::vector<float> Vector;
 
-        bool ConvertNetwork(const ngraph::Function& function, bool trans, Synet::NetworkParam& network, Vector& weight)
+        struct Pin
+        {
+            String name;
+            int index;
+            Pin(const String& n = String(), int i = 0) : name(n), index(i) {}
+        };
+
+        bool ConvertNetwork(const ngraph::Function& function, bool trans, Synet::NetworkParam& network, Vector& reordered)
         {
             network.name() = function.get_friendly_name();
             std::vector<std::shared_ptr<ngraph::Node>> nodes = function.get_ordered_ops();
-            std::cout << std::endl << "nodes.size(): " << nodes.size() << std::endl;
+            Vector original;
             for (size_t i = 0; i < nodes.size(); ++i)
             {
                 const ngraph::Node& node = *nodes[i];
@@ -99,7 +106,9 @@ namespace Synet
                     return ErrorMessage(node);
 
                 const String& type = node.get_type_name();
-                if (type == "Constant" && !ConvertNodeConstant(node, trans, layer, weight))
+                if (type == "Constant" && !ConvertNodeConstant(node, trans, layer, original, reordered))
+                    return ErrorMessage(node);
+                if (type == "Convolution" && !ConvertNodeConvolution(node, trans, network.layers(), layer, original, reordered))
                     return ErrorMessage(node);
                 if(type == "Parameter" && !ConvertNodeParameter(node, trans, layer))
                     return ErrorMessage(node);
@@ -118,8 +127,8 @@ namespace Synet
                 //node.write_description(std::cout, 1) << std::endl;
             }
 
-            //if (!RemoveUnusedConst(network.layers()))
-            //    return false;
+            if (!RemoveUnusedConst(network.layers()))
+                return false;
 
             return true;
         }
@@ -139,7 +148,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertNodeConstant(const ngraph::Node& node, bool trans, LayerParam& layer, Vector& weight)
+        bool ConvertNodeConstant(const ngraph::Node& node, bool trans, LayerParam& layer, Vector& original, Vector& reordered)
         {
             if (node.get_output_size() != 1)
                 return false;
@@ -150,14 +159,16 @@ namespace Synet
             case ngraph::element::Type_t::f32:
             {
                 layer.type() = Synet::LayerTypeConst;
-                size_t offset = weight.size();
+                size_t offset = original.size();
                 layer.weight().resize(1);
                 layer.weight()[0].dim() = tensor.get_shape();
                 layer.weight()[0].offset() = offset * sizeof(float);
                 layer.weight()[0].type() = TensorType32f;
                 layer.weight()[0].size() = tensor.size();
-                weight.resize(offset + DivHi(tensor.size(), sizeof(float)));
-                memcpy(weight.data() + offset, ((ngraph::op::v0::Constant*)&node)->get_data_ptr(), tensor.size());
+                original.resize(offset + DivHi(tensor.size(), sizeof(float)));
+                memcpy(original.data() + offset, ((ngraph::op::v0::Constant*)&node)->get_data_ptr(), tensor.size());
+                reordered.resize(offset + DivHi(tensor.size(), sizeof(float)));
+                memcpy(reordered.data() + offset, ((ngraph::op::v0::Constant*)&node)->get_data_ptr(), tensor.size());
                 break;
             }
             case ngraph::element::Type_t::i64:
@@ -179,6 +190,47 @@ namespace Synet
             return true;
         }
 
+        bool ConvertNodeConvolution(const ngraph::Node& node, bool trans, const LayerParams & layers, LayerParam& layer, Vector& original, Vector& reordered)
+        {
+            layer.type() = Synet::LayerTypeConvolution;
+            layer.convolution().biasTerm() = false;
+            const ngraph::op::v1::Convolution* conv = (ngraph::op::v1::Convolution*)&node;
+            layer.convolution().stride() = conv->get_strides();
+            layer.convolution().dilation() = conv->get_dilations();
+            if (conv->get_auto_pad() == ngraph::op::PadType::SAME_UPPER)
+                layer.convolution().autoPad() = true;
+            layer.convolution().pad() = Shp(
+                conv->get_pads_begin()[0], conv->get_pads_begin()[1], 
+                conv->get_pads_end()[0], conv->get_pads_end()[1]);
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeConst)
+                return false;
+            const Shape& shape = second->weight()[0].dim();
+            layer.weight() = second->weight();
+            if (String(node.get_type_name()) == "Convolution")
+            {
+                if (!CheckDims(shape, 4, "convolution weight"))
+                    return false;
+                layer.convolution().kernel() = Shape({ shape[2], shape[3] });
+                layer.convolution().outputNum() = (uint32_t)shape[0];
+            }
+            else
+            {
+                if (!CheckDims(shape, 5, "convolution weight"))
+                    return false;
+                layer.convolution().kernel() = Shape({ shape[3], shape[4] });
+                layer.convolution().group() = (uint32_t)shape[0];
+                layer.convolution().outputNum() = (uint32_t)(shape[0] * shape[1]);
+                layer.weight()[0].dim() = Shape({ shape[0] * shape[1] , shape[2], shape[3], shape[4] });
+            }
+            layer.src().resize(1);
+            if (trans)
+                return ReorderWeight(original, Shape(), layer, reordered);
+            return true;
+        }
+
         bool ConvertNodeParameter(const ngraph::Node& node, bool trans, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeInput;
@@ -195,6 +247,71 @@ namespace Synet
                     layer.input().shape()[i].format() = TensorFormatNhwc;
                 }
                 layer.input().shape()[i].dim() = shape;
+            }
+            return true;
+        }
+
+        //---------------------------------------------------------------------
+
+        template<class T> static const T* GetWeight(const Vector& bin, size_t offset)
+        {
+            return (const T*)((const uint8_t*)bin.data() + offset);
+        }
+
+        template<class T> static const T* GetWeight(const Vector& bin, const WeightParam& param)
+        {
+            return GetWeight<T>(bin, param.offset());
+        }
+
+        static bool ReorderWeight(const Vector& srcBin, const Shape& input, LayerParam& layer, Vector& dstBin)
+        {
+            if (layer.weight().size() < 1)
+            {
+                std::cout << "There is no weight to reorder!" << std::endl;
+                return false;
+            }
+            WeightParam& weight = layer.weight()[0];
+            const float* pSrc = srcBin.data() + weight.offset() / sizeof(float);
+            float* pDst = dstBin.data() + weight.offset() / sizeof(float);
+            Shape& shape = weight.dim();
+            weight.format() = TensorFormatNhwc;
+            switch (layer.type())
+            {
+            case LayerTypeConvolution:
+            {
+                shape = Shape({ shape[2], shape[3], shape[1], shape[0] });
+                Tensor dst(pDst, weight.size() / sizeof(float), shape, weight.format());
+                for (size_t o = 0; o < shape[3]; ++o)
+                    for (size_t i = 0; i < shape[2]; ++i)
+                        for (size_t y = 0; y < shape[0]; ++y)
+                            for (size_t x = 0; x < shape[1]; ++x)
+                                dst.CpuData(Shape({ y, x, i, o }))[0] = *pSrc++;
+                break;
+            }
+            case LayerTypeInnerProduct:
+            {
+                for (size_t n = 0; n < shape[0]; n++)
+                {
+                    for (size_t c = 0; c < input[1]; c++)
+                    {
+                        for (size_t y = 0; y < input[2]; y++)
+                        {
+                            for (size_t x = 0; x < input[3]; x++)
+                            {
+                                size_t srcOffset = input[2] * input[3] * c + input[3] * y + x;
+                                size_t dstOffset = input[3] * input[1] * y + input[1] * x + c;
+                                pDst[dstOffset] = pSrc[srcOffset];
+                            }
+                        }
+                    }
+                    pSrc += input[1] * input[2] * input[3];
+                    pDst += input[1] * input[2] * input[3];
+                }
+                break;
+            }
+            default:
+                std::cout << "Unknsupported layer type " << ValueToString(layer.type()) << " to convert weight !" << std::endl;
+                return false;
             }
             return true;
         }
@@ -247,6 +364,58 @@ namespace Synet
                     if (unused)
                         layers.erase(layers.begin() + i), i--;
                 }
+            }
+            return true;
+        }
+
+        static Pin ParsePin(const String& name)
+        {
+            Pin pin(name);
+            size_t delimiter = name.find_first_of(":");
+            if (delimiter != std::string::npos)
+            {
+                pin.name = name.substr(0, delimiter);
+                std::istringstream(name.substr(delimiter + 1)) >> pin.index;
+            }
+            return pin;
+        }
+
+        static const LayerParam* GetLayer(const LayerParams& layers, const String& name)
+        {
+            Pin pin = ParsePin(name);
+            for (size_t i = 0; i < layers.size(); ++i)
+                if (pin.name == layers[i].name())
+                    return &layers[i];
+            std::cout << "Can't found layer " << pin.name << " !" << std::endl;
+            return NULL;
+        }
+
+        static String ShapeToStr(const Shape& shape)
+        {
+            std::stringstream ss;
+            ss << "{";
+            for (size_t i = 0; i < shape.size(); ++i)
+                ss << " " << shape[i];
+            ss << " }";
+            return ss.str();
+        }
+
+        static bool CheckDims(const Shape& shape, size_t dims, const String& desc)
+        {
+            if (shape.size() != dims)
+            {
+                std::cout << "Wrong " << desc << " shape " << ShapeToStr(shape) << " !" << std::endl;
+                return false;
+            }
+            return true;
+        }
+
+        static bool CheckSourceNumber(const LayerParam& layer, size_t size)
+        {
+            if (layer.src().size() != size)
+            {
+                std::cout << "Wrong number of sources (" << layer.src().size() << " instead of " << size << ") !" << std::endl;
+                return false;
             }
             return true;
         }
