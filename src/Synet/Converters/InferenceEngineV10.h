@@ -70,6 +70,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if ((type == "Convolution" || type == "GroupConvolution") && !ConvertConvolutionLayer(pLayer, trans, dstXml.layers(), srcBin, layer, dstBin))
                     return ErrorMessage(pLayer);
+                if (type == "CTCGreedyDecoder" && !ConvertCtcGreedyDecoderLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Gather" && !ConvertGatherLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "DetectionOutput" && !ConvertDetectionOutputLayer(pLayer, layer))
@@ -113,6 +115,8 @@ namespace Synet
                 if (type == "SoftMax" && !ConvertSoftmaxLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "StridedSlice" && !ConvertStridedSliceLayer(pLayer, dstXml.layers(), srcBin, trans, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "Tile" && !ConvertTileLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Transpose" && !ConvertTransposeLayer(pLayer, srcBin, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
@@ -373,6 +377,12 @@ namespace Synet
             layer.src().resize(1);
             if (trans)
                 return ReorderWeight(srcBin, Shape(), layer, dstBin);
+            return true;
+        }
+
+        bool ConvertCtcGreedyDecoderLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeCtcGreedyDecoder;
             return true;
         }
 
@@ -787,18 +797,18 @@ namespace Synet
                 for (size_t i = 0; i < shape.size(); ++i)
                     shape[i] = (size_t)alpha[i];
                 layer.src().resize(1);
-                if (input.size() > 1 && output.size() > 1 && input[0] == 1 && output[0] == 1)
-                {
-                    layer.reshape().axis() = 1;
-                    shape.erase(shape.begin(), shape.begin() + 1);
-                }
-                if (trans && !PermutedToNchw(layers, false, false))
+                if (trans && !PermutedToNchw(layers, true, false))
                 {
                     if (shape.size() == 4)
                     {
                         shape = Shape({ shape[0], shape[2] , shape[3], shape[1] });
                     }
                 }
+                if (input.size() > 1 && output.size() > 1 && input[0] == 1 && output[0] == 1)
+                {
+                    layer.reshape().axis() = 1;
+                    shape.erase(shape.begin(), shape.begin() + 1);
+                }            
             }
             else if(first->type() == Synet::LayerTypeMeta)
             {
@@ -905,6 +915,33 @@ namespace Synet
                         return false;
                 }
             }
+            return true;
+        }
+
+
+        bool ConvertTileLayer(const XmlNode* pLayer, const LayerParams& layers, bool trans, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            layer.type() = Synet::LayerTypeTile;
+            Shape input = ConvertInputShape(pLayer);
+            Shape output = ConvertOutputShape(pLayer);
+            if (input.size() != output.size())
+                return false;
+            for (size_t i = 0; i < input.size(); ++i)
+            {
+                if (input[i] != output[i])
+                {
+                    layer.tile().axis() = i;
+                    layer.tile().tiles() = output[i] / input[i];
+                }
+            }
+            if (trans && input.size() == 4 && !PermutedToNchw(layers, true, false))
+            {
+                uint32_t order[4] = { 0, 3, 1, 2 };
+                layer.tile().axis() = order[layer.tile().axis()];
+            }
+            layer.src().resize(1);
             return true;
         }
 

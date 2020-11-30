@@ -72,6 +72,7 @@ TESTS inference_engine test_010f local 0
 TESTS inference_engine test_011f local 0
 TESTS inference_engine test_012f persons 0
 TESTS inference_engine test_013f persons 0
+TESTS inference_engine test_014f local 0
 }
 
 function TESTS_Q {

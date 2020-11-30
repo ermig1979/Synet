@@ -8,7 +8,7 @@ DIR=./data/"$FRAMEWORK"/"$NAME"
 if [ "$3" = "local" ]; then
   IMAGE="$DIR"/image
 else
-  IMAGE=./data/images/_test/$3
+  IMAGE=./data/images/$3
 fi
 FORMAT=$4
 BATCH=$5
@@ -76,6 +76,7 @@ TEST_I test_010f local 0
 TEST_I test_011f local 0
 TEST_I test_012f persons 0
 TEST_I test_013f persons 0
+TEST_I test_014f local 0
 }
 
 TEST_ALL_D
