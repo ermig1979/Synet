@@ -32,6 +32,7 @@
 #if defined(SYNET_ONNX_ENABLE)
 
 #include <onnx_import/onnx.hpp>
+#include <ngraph/op/constant.hpp>
 
 namespace Synet
 {
@@ -87,25 +88,94 @@ namespace Synet
 
         bool ConvertNetwork(const ngraph::Function& function, bool trans, Synet::NetworkParam& network, Vector& weight)
         {
+            network.name() = function.get_friendly_name();
             std::vector<std::shared_ptr<ngraph::Node>> nodes = function.get_ordered_ops();
             std::cout << std::endl << "nodes.size(): " << nodes.size() << std::endl;
             for (size_t i = 0; i < nodes.size(); ++i)
             {
                 const ngraph::Node& node = *nodes[i];
-                const String& type = node.get_type_name();
                 LayerParam layer;
-                layer.name() = node.get_friendly_name();
+                if(!ConvertNodeAny(node, layer))
+                    return ErrorMessage(node);
+
+                const String& type = node.get_type_name();
+                if (type == "Constant" && !ConvertNodeConstant(node, trans, layer, weight))
+                    return ErrorMessage(node);
                 if(type == "Parameter" && !ConvertNodeParameter(node, trans, layer))
                     return ErrorMessage(node);
+
+#if 0
+                if (layer.type() == LayerTypeUnknown)
+                    return ErrorMessage(node);
+#else
+                if (layer.type() == LayerTypeUnknown)
+                {
+                    NotImplemented(node, layer);
+                    std::cout << "Not implemented layer : name = " << layer.name() << " ; type = " << type << std::endl;
+                }
+#endif
                 network.layers().push_back(layer);
-                std::cout << i << ": type = " << node.get_type_name();
-                std::cout << " desc = " << node.description();
-                std::cout << std::endl;
-                //node.write_description(std::cout, 3) << std::endl;
-                if (i > 50)
-                    break;
+                //node.write_description(std::cout, 1) << std::endl;
             }
 
+            //if (!RemoveUnusedConst(network.layers()))
+            //    return false;
+
+            return true;
+        }
+
+        bool ConvertNodeAny(const ngraph::Node& node, LayerParam& layer)
+        {
+            layer.name() = node.get_friendly_name();
+            for (size_t i = 0; i < node.get_input_size(); ++i)
+                layer.src().push_back(node.get_input_node_ptr(i)->get_friendly_name());
+            if(node.get_output_size() == 1)
+                layer.dst().push_back(layer.name());
+            else
+            {
+                for (size_t i = 0; i < node.get_output_size(); ++i)
+                    layer.dst().push_back(layer.name() + ":" + ValueToString(i));
+            }
+            return true;
+        }
+
+        bool ConvertNodeConstant(const ngraph::Node& node, bool trans, LayerParam& layer, Vector& weight)
+        {
+            if (node.get_output_size() != 1)
+                return false;
+            const ngraph::descriptor::Tensor& tensor = node.get_output_tensor(0);
+            ngraph::element::Type_t type = tensor.get_element_type();
+            switch (type)
+            {
+            case ngraph::element::Type_t::f32:
+            {
+                layer.type() = Synet::LayerTypeConst;
+                size_t offset = weight.size();
+                layer.weight().resize(1);
+                layer.weight()[0].dim() = tensor.get_shape();
+                layer.weight()[0].offset() = offset * sizeof(float);
+                layer.weight()[0].type() = TensorType32f;
+                layer.weight()[0].size() = tensor.size();
+                weight.resize(offset + DivHi(tensor.size(), sizeof(float)));
+                memcpy(weight.data() + offset, ((ngraph::op::v0::Constant*)&node)->get_data_ptr(), tensor.size());
+                break;
+            }
+            case ngraph::element::Type_t::i64:
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeConst;
+                layer.meta().alpha().type() = TensorType64i;
+                layer.meta().alpha().shape() = tensor.get_shape();
+                layer.meta().alpha().i64().resize(tensor.size() / sizeof(int64_t));
+                const int64_t* src = ((ngraph::op::v0::Constant*)&node)->get_data_ptr<int64_t>();
+                for (size_t i = 0; i < layer.meta().alpha().i64().size(); ++i)
+                    layer.meta().alpha().i64()[i] = src[i];
+                break;
+            }
+            default:
+                std::cout << "Unsupported ConstLayer type: " << tensor.get_element_type().get_type_name() << " !" << std::endl;
+                return false;
+            }
             return true;
         }
 
@@ -145,24 +215,40 @@ namespace Synet
             return "~~~NOT_IMPLEMENTED~~~";
         }
 
-        static void NotImplemented(const ngraph::Node & src, LayerParam& dst)
+        static void NotImplemented(const ngraph::Node & node, LayerParam& layer)
         {
-            //dst.type() = LayerTypeStub;
-            dst.debug().clear();
-            dst.debug().push_back(NotImplementedMarker());
-            dst.debug().push_back(src.get_type_name());
+            layer.debug().clear();
+            layer.debug().push_back(NotImplementedMarker());
+            layer.debug().push_back(node.get_type_name());
         }
 
         static bool ErrorMessage(const ngraph::Node& node)
         {
             std::cout << "Can't convert layer :";
-            //std::cout << " id = " << pLayer->FirstAttribute("id")->Value();
             std::cout << " name = " << node.get_friendly_name();
             std::cout << " , type = " << node.get_type_name();
-            //if (pLayer->FirstAttribute("version"))
-            //    std::cout << " , version = " << pLayer->FirstAttribute("version")->Value();
             std::cout << " !" << std::endl;
             return false;
+        }
+
+        static bool RemoveUnusedConst(LayerParams& layers)
+        {
+            for (size_t i = 0; i < layers.size(); ++i)
+            {
+                const LayerParam& layer = layers[i];
+                if (layer.type() == LayerTypeConst || (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeConst))
+                {
+                    const String& name = layer.name();
+                    bool unused = true;
+                    for (size_t j = i + 1; j < layers.size() && unused; ++j)
+                        for (size_t k = 0; k < layers[j].src().size() && unused; ++k)
+                            if (layers[j].src()[k] == name)
+                                unused = false;
+                    if (unused)
+                        layers.erase(layers.begin() + i), i--;
+                }
+            }
+            return true;
         }
     };
 
