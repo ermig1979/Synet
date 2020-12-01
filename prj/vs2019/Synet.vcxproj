@@ -34,6 +34,7 @@
     <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineV7.h" />
     <ClInclude Include="..\..\src\Synet\Converters\Onnx.h" />
     <ClInclude Include="..\..\src\Synet\Converters\Optimizer.h" />
+    <ClInclude Include="..\..\src\Synet\Converters\SynetUtils.h" />
     <ClInclude Include="..\..\src\Synet\Layer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\AddLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\BatchNormLayer.h" />

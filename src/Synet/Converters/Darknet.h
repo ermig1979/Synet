@@ -28,6 +28,7 @@
 #include "Synet/Params.h"
 #include "Synet/Tensor.h"
 #include "Synet/Converters/Optimizer.h"
+#include "Synet/Utils/FileUtils.h"
 
 #if defined(SYNET_DARKNET_ENABLE)
 
@@ -102,11 +103,17 @@ namespace Synet
             if (!optimizer.Run(holder(), weight))
                 return false;
 
-            if (!holder.Save(dstModelPath, false))
+            if (!param.Save(dstModelPath, false))
+            {
+                std::cout << "Can't save Synet model '" << dstModelPath << "' !" << std::endl;
                 return false;
+            }
 
-            if (!SaveWeight(weight, dstWeightPath))
+            if (!SaveBinaryData(weight, dstWeightPath))
+            {
+                std::cout << "Can't save Synet weight '" << dstWeightPath << "' !" << std::endl;
                 return false;
+            }
 
             return true;
         }
@@ -528,17 +535,6 @@ namespace Synet
                     size += l.out_c;
             }
             return size;
-        }
-
-        bool SaveWeight(const Vector & bin, const String & path)
-        {
-            std::ofstream ofs(path.c_str(), std::ofstream::binary);
-            if (!ofs.is_open())
-                return false;
-            ofs.write((const char*)bin.data(), bin.size() * sizeof(float));
-            bool result = (bool)ofs;
-            ofs.close();
-            return result;
         }
 
         String UniqueName(const String & prefix)

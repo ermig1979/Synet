@@ -27,18 +27,13 @@
 #include "Synet/Common.h"
 #include "Synet/Params.h"
 #include "Synet/Tensor.h"
+#include "Synet/Converters/SynetUtils.h"
 
 namespace Synet
 {
-    class InferenceEngineConverter
+    class InferenceEngineConverter : public SynetUtils
     {
     protected:
-
-        typedef std::vector<Synet::LayerParam> LayerParams;
-        typedef Synet::Tensor<float> Tensor;
-        typedef std::vector<Tensor> Tensors;
-
-        typedef std::vector<float> Vector;
         typedef Xml::File<char> XmlFile;
         typedef Xml::XmlBase<char> XmlBase;
         typedef Xml::XmlDocument<char> XmlDoc;
@@ -63,13 +58,6 @@ namespace Synet
         typedef std::map<String, TensorInfo> TensorInfoMap;
 
         typedef std::map<String, LayerParam> LayerParamMap;
-
-        struct Pin
-        {
-            String name;
-            int index;
-            Pin(const String& n = String(), int i = 0) : name(n), index(i) {}
-        };
 
         static bool ParseEdges(const XmlNode& src, Edges& edges)
         {
@@ -253,31 +241,6 @@ namespace Synet
             return ConvertShape(pPort);
         }
 
-        static bool RemoveUnusedConst(LayerParams& layers)
-        {
-            for (size_t i = 0; i < layers.size(); ++i)
-            {
-                const LayerParam& layer = layers[i];
-                if (layer.type() == LayerTypeConst || (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeConst))
-                {
-                    const String& name = layer.name();
-                    bool unused = true;
-                    for (size_t j = i + 1; j < layers.size() && unused; ++j)
-                        for (size_t k = 0; k < layers[j].src().size() && unused; ++k)
-                            if (layers[j].src()[k] == name)
-                                unused = false;
-                    if (unused)
-                        layers.erase(layers.begin() + i), i--;
-                }
-            }
-            return true;
-        }
-
-        static String NotImplementedMarker()
-        {
-            return "~~~NOT_IMPLEMENTED~~~";
-        }
-
         static void NotImplemented(const XmlNode * src, LayerParam & dst)
         {
             //dst.type() = LayerTypeStub;
@@ -296,28 +259,6 @@ namespace Synet
                 std::cout << " , version = " << pLayer->FirstAttribute("version")->Value();
             std::cout << " !" << std::endl;
             return false;
-        }
-
-        static Pin ParsePin(const String& name)
-        {
-            Pin pin(name);
-            size_t delimiter = name.find_first_of(":");
-            if (delimiter != std::string::npos)
-            {
-                pin.name = name.substr(0, delimiter);
-                std::istringstream(name.substr(delimiter + 1)) >> pin.index;
-            }
-            return pin;
-        }
-
-        static const LayerParam* GetLayer(const LayerParams& layers, const String& name)
-        {
-            Pin pin = ParsePin(name);
-            for (size_t i = 0; i < layers.size(); ++i)
-                if (pin.name == layers[i].name())
-                    return &layers[i];
-            std::cout << "Can't found layer " << pin.name << " !" << std::endl;
-            return NULL;
         }
     };
 }
