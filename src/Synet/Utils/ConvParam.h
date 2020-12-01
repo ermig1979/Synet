@@ -203,7 +203,9 @@ namespace Synet
             dst = (src - 1) / stride + 1;
             beg = 0;
             end = 0;
-            for (size_t i = 0; dst > (src + beg + end - (dilation * (kernel - 1) + 1)) / stride + 1; ++i)
+            if (dst == 1)
+                stride = 1;
+            for (size_t i = 0; ptrdiff_t(dst) > ptrdiff_t(src + beg + end - (dilation * (kernel - 1) + 1)) / ptrdiff_t(stride) + 1; ++i)
             {
                 if (i & 1)
                     beg++;

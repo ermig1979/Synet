@@ -337,9 +337,14 @@ namespace Synet
                 dst0.Reshape({ src.size() });
                 for (size_t i = 0; i < src.size(); ++i)
                 {
-                    const Synet::Tensor<int32_t> & srci = src[i]->As32i();
-                    assert(srci.Size() == 1);
-                    dst0.CpuData()[i] = srci.CpuData()[0];
+                    assert(src[i]->Size() == 1);
+                    if (src[i]->GetType() == TensorType32i)
+                        dst0.CpuData()[i] = (int32_t)src[i]->As32i().CpuData()[0];
+                    else if (src[i]->GetType() == TensorType64i)
+                        dst0.CpuData()[i] = (int32_t)src[i]->As64i().CpuData()[0];
+                    else
+                        assert(0);
+
                 }
             }
             else if (src[0]->GetType() == TensorType64i)
@@ -348,9 +353,13 @@ namespace Synet
                 dst0.Reshape({ src.size() });
                 for (size_t i = 0; i < src.size(); ++i)
                 {
-                    const Synet::Tensor<int64_t>& srci = src[i]->As64i();
-                    assert(srci.Size() == 1);
-                    dst0.CpuData()[i] = srci.CpuData()[0];
+                    assert(src[i]->Size() == 1);
+                    if (src[i]->GetType() == TensorType32i)
+                        dst0.CpuData()[i] = (int64_t)src[i]->As32i().CpuData()[0];
+                    else if (src[i]->GetType() == TensorType64i)
+                        dst0.CpuData()[i] = (int64_t)src[i]->As64i().CpuData()[0];
+                    else
+                        assert(0);
                 }
             }
             else
