@@ -106,11 +106,19 @@ namespace Synet
                     return ErrorMessage(node);
 
                 const String& type = node.get_type_name();
+                if (type == "Add" && !ConvertNodeAdd(node, network.layers(), original, layer))
+                    return ErrorMessage(node);
                 if (type == "Constant" && !ConvertNodeConstant(node, trans, layer, original, reordered))
                     return ErrorMessage(node);
                 if (type == "Convolution" && !ConvertNodeConvolution(node, trans, network.layers(), layer, original, reordered))
                     return ErrorMessage(node);
-                if(type == "Parameter" && !ConvertNodeParameter(node, trans, layer))
+                if (type == "Parameter" && !ConvertNodeParameter(node, trans, layer))
+                    return ErrorMessage(node);
+                if (type == "PRelu" && !ConvertNodePrelu(node, network.layers(), layer))
+                    return ErrorMessage(node);
+                if (type == "Relu" && !ConvertNodeRelu(node, layer))
+                    return ErrorMessage(node);
+                if (type == "Sigmoid" && !ConvertNodeSigmoid(node, layer))
                     return ErrorMessage(node);
 
 #if 0
@@ -144,6 +152,42 @@ namespace Synet
             {
                 for (size_t i = 0; i < node.get_output_size(); ++i)
                     layer.dst().push_back(layer.name() + ":" + ValueToString(i));
+            }
+            return true;
+        }
+
+        bool ConvertNodeAdd(const ngraph::Node& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            Shape src0 = node.get_input_shape(0);
+            Shape src1 = node.get_input_shape(1);
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL)
+                return false;
+            if (second->type() == LayerTypeConst && TensorSize(src0) >= TensorSize(src1))
+            {
+                if (TensorSize(src1) == 1)
+                {
+                    layer.type() = Synet::LayerTypePower;
+                    const float* pShift = original.data() + second->weight()[0].offset() / sizeof(float);
+                    layer.power().shift() = pShift[0];
+                }
+                else
+                {
+                    layer.type() = Synet::LayerTypeBias;
+                    layer.weight() = second->weight();
+                    if (!CompactShape(layer.weight()[0].dim()))
+                        return false;
+                }
+                layer.src().resize(1);
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeEltwise;
+                layer.eltwise().operation() = EltwiseOperationTypeSum;
+                if (TensorSize(src0) < TensorSize(src1))
+                    std::swap(layer.src()[0], layer.src()[1]);
             }
             return true;
         }
@@ -248,6 +292,33 @@ namespace Synet
                 }
                 layer.input().shape()[i].dim() = shape;
             }
+            return true;
+        }
+
+        bool ConvertNodePrelu(const ngraph::Node& node, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeConst)
+                return false;
+            layer.type() = Synet::LayerTypePrelu;
+            layer.weight() = second->weight();
+            layer.src().resize(1);
+            if (!CompactShape(layer.weight()[0].dim()))
+                return false;
+            return true;
+        }
+
+        bool ConvertNodeRelu(const ngraph::Node& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeRelu;
+            return true;
+        }
+
+        bool ConvertNodeSigmoid(const ngraph::Node& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeSigmoid;
             return true;
         }
 
@@ -418,6 +489,39 @@ namespace Synet
                 return false;
             }
             return true;
+        }
+
+        static bool CompactShape(Shape& shape)
+        {
+            size_t count = 0, value = 1;
+            for (size_t i = 0; i < shape.size(); ++i)
+            {
+                if (shape[i] != 1)
+                {
+                    value = shape[i];
+                    count++;
+                }
+            }
+            if (count > 1)
+            {
+                std::cout << "Can't compact shape " << ShapeToStr(shape) << " !" << std::endl;
+                return false;
+            }
+            shape = Shape({ value });
+            return true;
+        }
+
+        static size_t TensorSize(const Shape& shape)
+        {
+            if (shape.empty())
+                return 0;
+            else
+            {
+                size_t size = 1;
+                for (size_t i = 0; i < shape.size(); ++i)
+                    size *= shape[i];
+                return size;
+            }
         }
     };
 

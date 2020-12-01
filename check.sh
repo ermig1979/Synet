@@ -77,6 +77,7 @@ TEST_I test_011f local 0
 TEST_I test_012f persons 0
 TEST_I test_013f persons 0
 TEST_I test_014f local 0
+TEST_I test_015f license_plates 0
 }
 
 TEST_ALL_D
