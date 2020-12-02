@@ -94,9 +94,19 @@ namespace Synet
             return NULL;
         }
 
+        template<class T> static T* GetWeight(Vector& bin, size_t offset)
+        {
+            return (T*)((uint8_t*)bin.data() + offset);
+        }
+
         template<class T> static const T* GetWeight(const Vector& bin, size_t offset)
         {
             return (const T*)((const uint8_t*)bin.data() + offset);
+        }
+
+        template<class T> static T* GetWeight(Vector& bin, const WeightParam& param)
+        {
+            return GetWeight<T>(bin, param.offset());
         }
 
         template<class T> static const T* GetWeight(const Vector& bin, const WeightParam& param)

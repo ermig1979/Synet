@@ -84,7 +84,7 @@ namespace Synet
                 return false;
             }
 
-            return false;
+            return true;
         }
 
     private:
@@ -111,15 +111,17 @@ namespace Synet
                     return ErrorMessage(node);
                 if (type == "AvgPool" && !ConvertNodeAvgPool(node, layer))
                     return ErrorMessage(node);
+                if (type == "BatchNormInference" && !ConvertNodeBatchNormInference(node, network.layers(), original, layer, reordered))
+                    return ErrorMessage(node);
                 if (type == "Concat" && !ConvertNodeConcat(node, trans, network.layers(), layer))
                     return ErrorMessage(node);
                 if (type == "Constant" && !ConvertNodeConstant(node, trans, layer, original, reordered))
                     return ErrorMessage(node);
-                if (type == "Convolution" && !ConvertNodeConvolution(node, trans, network.layers(), layer, original, reordered))
+                if (type == "Convolution" && !ConvertNodeConvolution(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(node);
                 if (type == "Gather" && !ConvertNodeGather(node, layer))
                     return ErrorMessage(node);
-                if (type == "MatMul" && !ConvertNodeMatMul(node, trans, network.layers(), layer, original, reordered))
+                if (type == "MatMul" && !ConvertNodeMatMul(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(node);
                 if (type == "MaxPool" && !ConvertNodeMaxPool(node, layer))
                     return ErrorMessage(node);
@@ -189,8 +191,7 @@ namespace Synet
                 if (TensorSize(src1) == 1)
                 {
                     layer.type() = Synet::LayerTypePower;
-                    const float* pShift = original.data() + second->weight()[0].offset() / sizeof(float);
-                    layer.power().shift() = pShift[0];
+                    layer.power().shift() = GetWeight<float>(original, second->weight()[0])[0];
                 }
                 else
                 {
@@ -225,6 +226,45 @@ namespace Synet
             if (out[2] == 1 && out[3] == 1 && layer.pooling().stride() == Shp(1, 1))
                 layer.pooling().globalPooling() = true;
             layer.src().resize(1);
+            return true;
+        }
+
+        bool ConvertNodeBatchNormInference(const ngraph::Node& node, const LayerParams& layers, const Vector& original, LayerParam& layer, Vector& reordered)
+        {
+            if (!CheckSourceNumber(layer, 5))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            if (src0 == NULL || src0->type() != LayerTypeConst)
+                return false;
+            const float* gamma = GetWeight<float>(original, src0->weight()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src1 == NULL || src1->type() != LayerTypeConst)
+                return false;
+            const float* beta = GetWeight<float>(original, src1->weight()[0]);
+            const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
+            if (src3 == NULL || src3->type() != LayerTypeConst)
+                return false;
+            const float* mean = GetWeight<float>(original, src3->weight()[0]);
+            const LayerParam* src4 = GetLayer(layers, layer.src()[4]);
+            if (src4 == NULL || src4->type() != LayerTypeConst)
+                return false;
+            const float* var = GetWeight<float>(original, src4->weight()[0]);
+            const float eps = (float)((ngraph::op::v0::BatchNormInference*)&node)->get_eps_value();
+
+            layer.type() = Synet::LayerTypeScale;
+            layer.scale().biasTerm() = true;
+            layer.src() = Strings( { layer.src()[2] } );
+            layer.weight().resize(2);
+            layer.weight()[0] = src3->weight()[0];
+            layer.weight()[1] = src4->weight()[0];
+            float* scale = GetWeight<float>(reordered, layer.weight()[0]);
+            float* shift = GetWeight<float>(reordered, layer.weight()[1]);
+            size_t channels = layer.weight()[0].dim()[0];
+            for (size_t c = 0; c < channels; c++)
+            {
+                scale[c] = gamma[c] / sqrt(var[c] * var[c] + eps);
+                shift[c] = -shift[c] * mean[c] + beta[c];
+            }
             return true;
         }
 
@@ -314,7 +354,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertNodeConvolution(const ngraph::Node& node, bool trans, const LayerParams & layers, LayerParam& layer, Vector& original, Vector& reordered)
+        bool ConvertNodeConvolution(const ngraph::Node& node, bool trans, const LayerParams & layers, const Vector& original, LayerParam& layer, Vector& reordered)
         {
             layer.type() = Synet::LayerTypeConvolution;
             layer.convolution().biasTerm() = false;
@@ -362,7 +402,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertNodeMatMul(const ngraph::Node& node, bool trans, const LayerParams& layers, LayerParam& layer, Vector& original, Vector& reordered)
+        bool ConvertNodeMatMul(const ngraph::Node& node, bool trans, const LayerParams& layers, const Vector& original, LayerParam& layer, Vector& reordered)
         {
             layer.type() = Synet::LayerTypeInnerProduct;
             const ngraph::op::v0::MatMul* mm = (ngraph::op::v0::MatMul*)&node;
@@ -392,8 +432,6 @@ namespace Synet
                 if (first->type() != LayerTypeReshape)
                     return false;
                 Shape origin = node.get_input_node_ptr(0)->get_input_shape(0);
-                //std::cout << " inp shape = " << ShapeToStr(input) << std::endl;
-                //std::cout << " pre shape = " << ShapeToStr(origin) << std::endl;
                 return ReorderWeight(original, origin, layer, reordered);
             }
             return true;
