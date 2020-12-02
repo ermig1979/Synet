@@ -200,7 +200,7 @@ namespace Synet
             }
             case LayerTypeInnerProduct:
             {
-                for (size_t n = 0; n < shape[0]; n++)
+                if (layer.innerProduct().transposeB())
                 {
                     for (size_t c = 0; c < input[1]; c++)
                     {
@@ -208,19 +208,39 @@ namespace Synet
                         {
                             for (size_t x = 0; x < input[3]; x++)
                             {
-                                size_t srcOffset = input[2] * input[3] * c + input[3] * y + x;
-                                size_t dstOffset = input[3] * input[1] * y + input[1] * x + c;
-                                pDst[dstOffset] = pSrc[srcOffset];
+                                size_t srcOffset = (input[2] * input[3] * c + input[3] * y + x) * shape[1];
+                                size_t dstOffset = (input[3] * input[1] * y + input[1] * x + c) * shape[1];
+                                for (size_t n = 0; n < shape[1]; n++)
+                                    pDst[dstOffset + n] = pSrc[srcOffset + n];
                             }
                         }
                     }
-                    pSrc += input[1] * input[2] * input[3];
-                    pDst += input[1] * input[2] * input[3];
                 }
+                else
+                {
+                    for (size_t n = 0; n < shape[0]; n++)
+                    {
+                        for (size_t c = 0; c < input[1]; c++)
+                        {
+                            for (size_t y = 0; y < input[2]; y++)
+                            {
+                                for (size_t x = 0; x < input[3]; x++)
+                                {
+                                    size_t srcOffset = input[2] * input[3] * c + input[3] * y + x;
+                                    size_t dstOffset = input[3] * input[1] * y + input[1] * x + c;
+                                    pDst[dstOffset] = pSrc[srcOffset];
+                                }
+                            }
+                        }
+                        pSrc += input[1] * input[2] * input[3];
+                        pDst += input[1] * input[2] * input[3];
+                    }
+                }
+
                 break;
             }
             default:
-                std::cout << "Unknsupported layer type " << ValueToString(layer.type()) << " to convert weight !" << std::endl;
+                std::cout << "Unsupported layer type " << ValueToString(layer.type()) << " to convert weight !" << std::endl;
                 return false;
             }
             return true;

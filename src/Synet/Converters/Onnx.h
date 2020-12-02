@@ -119,6 +119,8 @@ namespace Synet
                     return ErrorMessage(node);
                 if (type == "Gather" && !ConvertNodeGather(node, layer))
                     return ErrorMessage(node);
+                if (type == "MatMul" && !ConvertNodeMatMul(node, trans, network.layers(), layer, original, reordered))
+                    return ErrorMessage(node);
                 if (type == "MaxPool" && !ConvertNodeMaxPool(node, layer))
                     return ErrorMessage(node);
                 if (type == "Multiply" && !ConvertNodeMultiply(node, network.layers(), original, layer))
@@ -128,6 +130,8 @@ namespace Synet
                 if (type == "PRelu" && !ConvertNodePrelu(node, network.layers(), layer))
                     return ErrorMessage(node);
                 if (type == "Relu" && !ConvertNodeRelu(node, layer))
+                    return ErrorMessage(node);
+                if (type == "Reshape" && !ConvertNodeReshape(node, trans, network.layers(), original, layer))
                     return ErrorMessage(node);
                 if (type == "Result" && !ConvertNodeResult(node, layer))
                     return ErrorMessage(node);
@@ -358,6 +362,43 @@ namespace Synet
             return true;
         }
 
+        bool ConvertNodeMatMul(const ngraph::Node& node, bool trans, const LayerParams& layers, LayerParam& layer, Vector& original, Vector& reordered)
+        {
+            layer.type() = Synet::LayerTypeInnerProduct;
+            const ngraph::op::v0::MatMul* mm = (ngraph::op::v0::MatMul*)&node;
+            bool transposeA = mm->get_transpose_a();
+            bool transposeB = mm->get_transpose_b();
+            layer.innerProduct().biasTerm() = false;
+            layer.innerProduct().transposeA() = transposeA;
+            layer.innerProduct().transposeB() = !transposeB;
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeConst)
+                return false;
+            const Shape& weight = second->weight()[0].dim();
+            if (!CheckDims(weight, 2, "inner product weight"))
+                return false;
+            layer.weight() = second->weight();
+            layer.innerProduct().outputNum() = (uint32_t)(transposeB ? weight[0] : weight[1]);
+            layer.src().resize(1);
+            if (trans && !PermutedToNchw(layers, true, false))
+            {
+                const LayerParam* first = GetLayer(layers, layer.src()[0]);
+                if (first == NULL)
+                    return false;
+                if (first->type() == LayerTypePooling && first->pooling().globalPooling())
+                    return true;
+                if (first->type() != LayerTypeReshape)
+                    return false;
+                Shape origin = node.get_input_node_ptr(0)->get_input_shape(0);
+                //std::cout << " inp shape = " << ShapeToStr(input) << std::endl;
+                //std::cout << " pre shape = " << ShapeToStr(origin) << std::endl;
+                return ReorderWeight(original, origin, layer, reordered);
+            }
+            return true;
+        }
+
         bool ConvertNodeMaxPool(const ngraph::Node& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypePooling;
@@ -451,6 +492,54 @@ namespace Synet
         bool ConvertNodeRelu(const ngraph::Node& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeRelu;
+            return true;
+        }
+
+        bool ConvertNodeReshape(const ngraph::Node& node, bool trans, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* first = GetLayer(layers, layer.src()[0]);
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeMeta)
+                return false;
+            if (second->meta().type() == MetaTypeConst)
+            {
+                Shape input = node.get_input_shape(0);
+                Shape output = node.get_output_shape(0);
+                if (second->meta().alpha().shape().size() != 1)
+                    return false;
+                if (!CheckDims(output, second->meta().alpha().shape()[0], "output shape"))
+                    return false;
+                Shape& shape = layer.reshape().shape();
+                const int64_t* alpha = second->meta().alpha().i64().data();
+                layer.type() = LayerTypeReshape;
+                shape.resize(output.size());
+                for (size_t i = 0; i < shape.size(); ++i)
+                    shape[i] = (size_t)alpha[i];
+                layer.src().resize(1);
+                if (trans && !PermutedToNchw(layers, true, false))
+                {
+                    if (shape.size() == 4)
+                    {
+                        shape = Shape({ shape[0], shape[2] , shape[3], shape[1] });
+                    }
+                }
+                if (input.size() > 1 && output.size() > 1 && input[0] == 1 && output[0] == 1)
+                {
+                    layer.reshape().axis() = 1;
+                    shape.erase(shape.begin(), shape.begin() + 1);
+                }
+            }
+            else if (first->type() == Synet::LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeReshape;
+            }
+            else
+            {
+                layer.type() = LayerTypeReshape;
+            }
             return true;
         }
 
