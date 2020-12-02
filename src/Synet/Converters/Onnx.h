@@ -111,9 +111,13 @@ namespace Synet
                     return ErrorMessage(node);
                 if (type == "AvgPool" && !ConvertNodeAvgPool(node, layer))
                     return ErrorMessage(node);
+                if (type == "Concat" && !ConvertNodeConcat(node, trans, network.layers(), layer))
+                    return ErrorMessage(node);
                 if (type == "Constant" && !ConvertNodeConstant(node, trans, layer, original, reordered))
                     return ErrorMessage(node);
                 if (type == "Convolution" && !ConvertNodeConvolution(node, trans, network.layers(), layer, original, reordered))
+                    return ErrorMessage(node);
+                if (type == "Gather" && !ConvertNodeGather(node, layer))
                     return ErrorMessage(node);
                 if (type == "MaxPool" && !ConvertNodeMaxPool(node, layer))
                     return ErrorMessage(node);
@@ -125,7 +129,11 @@ namespace Synet
                     return ErrorMessage(node);
                 if (type == "Relu" && !ConvertNodeRelu(node, layer))
                     return ErrorMessage(node);
+                if (type == "Result" && !ConvertNodeResult(node, layer))
+                    return ErrorMessage(node);
                 if (type == "Sigmoid" && !ConvertNodeSigmoid(node, layer))
+                    return ErrorMessage(node);
+                if (type == "Unsqueeze" && !ConvertNodeUnsqueeze(node, network.layers(), original, layer))
                     return ErrorMessage(node);
 
 #if 0
@@ -216,6 +224,50 @@ namespace Synet
             return true;
         }
 
+        bool ConvertNodeConcat(const ngraph::Node& node, bool trans, const LayerParams& layers, LayerParam& layer)
+        {
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            if (src0 == NULL)
+                return false;
+            if (src0->type() == Synet::LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypePack;
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeConcat;
+                layer.concat().axis()= ((ngraph::op::v0::Concat*)&node)->get_axis();
+                if (trans && !PermutedToNchw(layers, false, true))
+                {
+                    Shape input = node.get_input_shape(0);
+                    if (input.size() == 4)
+                    {
+                        Shape nchw = Shape({ 0, 3, 1, 2 });
+                        layer.concat().axis() = (uint32_t)nchw[layer.concat().axis()];
+                    }
+                    else if (input.size() == 3)
+                    {
+                        Shape ncs = Shape({ 0, 2, 1 });
+                        layer.concat().axis() = (uint32_t)ncs[layer.concat().axis()];
+                    }
+                    else
+                        return false;
+                }
+                layer.concat().fixed() = true;
+                for (size_t i = 0; i < layer.src().size() && layer.concat().fixed(); ++i)
+                {
+                    const LayerParam* src = GetLayer(layers, layer.src()[i]);
+                    if (src == NULL)
+                        return false;
+                    if (src->type() != LayerTypePriorBox &&
+                        src->type() != LayerTypePriorBoxClustered)
+                        layer.concat().fixed() = false;
+                }
+            }
+            return true;
+        }
+
         bool ConvertNodeConstant(const ngraph::Node& node, bool trans, LayerParam& layer, Vector& original, Vector& reordered)
         {
             if (node.get_output_size() != 1)
@@ -296,6 +348,13 @@ namespace Synet
             layer.src().resize(1);
             if (trans)
                 return ReorderWeight(original, Shape(), layer, reordered);
+            return true;
+        }
+
+        bool ConvertNodeGather(const ngraph::Node& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeMeta;
+            layer.meta().type() = Synet::MetaTypeGather;
             return true;
         }
 
@@ -395,9 +454,48 @@ namespace Synet
             return true;
         }
 
+        bool ConvertNodeResult(const ngraph::Node& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeStub;
+            if (layer.dst().empty())
+                layer.dst().push_back(layer.name());
+            return true;
+        }
+
         bool ConvertNodeSigmoid(const ngraph::Node& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeSigmoid;
+            return true;
+        }
+
+        bool ConvertNodeUnsqueeze(const ngraph::Node& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* first = GetLayer(layers, layer.src()[0]);
+            if (first->type() == LayerTypePriorBoxClustered || first->type() == LayerTypePriorBox)
+            {
+                layer.type() = Synet::LayerTypeStub;
+                layer.src().resize(1);
+            }
+            else
+            {
+                const LayerParam* second = GetLayer(layers, layer.src()[1]);
+                if (second == NULL || second->type() != LayerTypeMeta || second->meta().type() != MetaTypeConst)
+                    return false;
+                if (first->type() == LayerTypeMeta)
+                {
+                    layer.type() = Synet::LayerTypeMeta;
+                    layer.meta().type() = Synet::MetaTypeExpandDims;
+                }
+                else
+                {
+                    const int64_t* alpha = second->meta().alpha().i64().data();
+                    layer.type() = Synet::LayerTypeExpandDims;
+                    layer.expandDims().axis() = (int32_t)alpha[0];
+                    layer.src().resize(1);
+                }
+            }
             return true;
         }
 

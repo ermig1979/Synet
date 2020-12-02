@@ -121,6 +121,38 @@ namespace Synet
             return pin;
         }
 
+        static bool PermutedToNchw(const LayerParams& layers, size_t current, bool checkInnerProduct, bool checkPriorBox)
+        {
+            const LayerParam& layer = layers[current];
+            if (layer.type() == LayerTypeConvolution && layer.weight()[0].format() == TensorFormatNhwc)
+                return false;
+            if (layer.type() == LayerTypePermute && layer.permute().format() == TensorFormatNchw)
+                return true;
+            if (checkInnerProduct && layer.type() == LayerTypeInnerProduct)
+                return true;
+            if (checkPriorBox && (layer.type() == LayerTypePriorBox || layer.type() == LayerTypePriorBoxClustered))
+                return true;
+            for (size_t s = 0; s < layer.src().size(); ++s)
+            {
+                Pin src = ParsePin(layer.src()[s]);
+                for (size_t l = 0; l < current; ++l)
+                {
+                    if (src.name == layers[l].name() && layers[l].type() != LayerTypeMeta &&
+                        PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox))
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        static bool PermutedToNchw(const LayerParams& layers, bool checkInnerProduct, bool checkPriorBox)
+        {
+            size_t start = layers.size() - 1;
+            if (layers[start].type() == LayerTypeConst && start)
+                start--;
+            return PermutedToNchw(layers, start, checkInnerProduct, checkPriorBox);
+        }
+
         static bool RemoveUnusedConst(LayerParams& layers)
         {
             for (size_t i = 0; i < layers.size(); ++i)
