@@ -109,9 +109,13 @@ namespace Synet
                 const String& type = node.get_type_name();
                 if (type == "Add" && !ConvertNodeAdd(node, network.layers(), original, layer))
                     return ErrorMessage(node);
+                if (type == "AvgPool" && !ConvertNodeAvgPool(node, layer))
+                    return ErrorMessage(node);
                 if (type == "Constant" && !ConvertNodeConstant(node, trans, layer, original, reordered))
                     return ErrorMessage(node);
                 if (type == "Convolution" && !ConvertNodeConvolution(node, trans, network.layers(), layer, original, reordered))
+                    return ErrorMessage(node);
+                if (type == "MaxPool" && !ConvertNodeMaxPool(node, layer))
                     return ErrorMessage(node);
                 if (type == "Multiply" && !ConvertNodeMultiply(node, network.layers(), original, layer))
                     return ErrorMessage(node);
@@ -195,6 +199,23 @@ namespace Synet
             return true;
         }
 
+        bool ConvertNodeAvgPool(const ngraph::Node& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypePooling;
+            layer.pooling().method() = PoolingMethodTypeAverage;
+            const ngraph::op::v1::AvgPool* ap = (ngraph::op::v1::AvgPool*)&node;
+            layer.pooling().kernel() = ap->get_kernel();
+            layer.pooling().stride() = ap->get_strides();
+            layer.pooling().pad() = Shp(
+                ap->get_pads_begin()[0], ap->get_pads_begin()[1],
+                ap->get_pads_end()[0], ap->get_pads_end()[1]);
+            const Shape & out = node.get_output_shape(0);
+            if (out[2] == 1 && out[3] == 1 && layer.pooling().stride() == Shp(1, 1))
+                layer.pooling().globalPooling() = true;
+            layer.src().resize(1);
+            return true;
+        }
+
         bool ConvertNodeConstant(const ngraph::Node& node, bool trans, LayerParam& layer, Vector& original, Vector& reordered)
         {
             if (node.get_output_size() != 1)
@@ -275,6 +296,21 @@ namespace Synet
             layer.src().resize(1);
             if (trans)
                 return ReorderWeight(original, Shape(), layer, reordered);
+            return true;
+        }
+
+        bool ConvertNodeMaxPool(const ngraph::Node& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypePooling;
+            layer.pooling().method() = PoolingMethodTypeMax;
+            const ngraph::op::v1::MaxPool* mp = (ngraph::op::v1::MaxPool*)&node;
+            layer.pooling().kernel() = mp->get_kernel();
+            layer.pooling().stride() = mp->get_strides();
+            layer.pooling().pad() = Shp(
+                mp->get_pads_begin()[0], mp->get_pads_begin()[1],
+                mp->get_pads_end()[0], mp->get_pads_end()[1]);
+            if (mp->get_rounding_type() == ngraph::op::RoundingType::FLOOR)
+                layer.pooling().roundingType() = RoundingTypeFloor;
             return true;
         }
 
