@@ -72,11 +72,15 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "CTCGreedyDecoder" && !ConvertCtcGreedyDecoderLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
+                if (type == "Exp" && !ConvertExpLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Gather" && !ConvertGatherLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "DetectionOutput" && !ConvertDetectionOutputLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Interpolate" && !ConvertInterpolateLayer(pLayer, srcBin, dstXml.layers(), layer))
+                    return ErrorMessage(pLayer);
+                if (type == "Log" && !ConvertLogLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if ((type == "MatMul") && !ConvertMatMulLayer(pLayer, trans, dstXml.layers(), srcBin, layer, dstBin))
                     return ErrorMessage(pLayer);
@@ -115,6 +119,8 @@ namespace Synet
                 if (type == "SoftMax" && !ConvertSoftmaxLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "StridedSlice" && !ConvertStridedSliceLayer(pLayer, dstXml.layers(), srcBin, trans, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "Tanh" && !ConvertTanhLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Tile" && !ConvertTileLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
@@ -409,6 +415,13 @@ namespace Synet
             return true;
         }
 
+        bool ConvertExpLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnaryOperation;
+            layer.unaryOperation().type() = UnaryOperationTypeExp;
+            return true;
+        }        
+        
         bool ConvertGatherLayer(const XmlNode* pLayer, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeMeta;
@@ -468,6 +481,13 @@ namespace Synet
             layer.interp().width() = (int32_t)alpha[1];
             layer.src().resize(1);
 #endif
+            return true;
+        }
+
+        bool ConvertLogLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnaryOperation;
+            layer.unaryOperation().type() = UnaryOperationTypeLog;
             return true;
         }
 
@@ -748,11 +768,10 @@ namespace Synet
                 return false;
             if (!ConvertValue(pData->FirstAttribute("classes"), layer.yolo().classes()))
                 return false;
-            if (!ConvertValue(pData->FirstAttribute("num"), layer.yolo().num()))
-                return false;
             if (!ConvertVector(pData->FirstAttribute("mask"), layer.yolo().mask()))
                 return false;
-            layer.yolo().num() /= 2;
+            Shape output = ConvertOutputShape(pLayer);
+            layer.yolo().num() = output[1] / (layer.yolo().classes() + 5);
             if (trans)
             {
                 LayerParam permute;
@@ -915,6 +934,13 @@ namespace Synet
                         return false;
                 }
             }
+            return true;
+        }
+
+        bool ConvertTanhLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnaryOperation;
+            layer.unaryOperation().type() = UnaryOperationTypeTanh;
             return true;
         }
 
