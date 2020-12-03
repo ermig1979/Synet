@@ -57,6 +57,7 @@ namespace Synet
         LayerTypeLrn,
         LayerTypeMergedConvolution,
         LayerTypeMeta,
+        LayerTypeMish,
         LayerTypeNormalize,
         LayerTypePad,
         LayerTypePermute,

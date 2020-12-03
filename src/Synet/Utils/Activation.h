@@ -93,6 +93,19 @@ namespace Synet
 
     //-------------------------------------------------------------------------
 
+    template <typename T> SYNET_INLINE T CpuMish(T value, T threshold)
+    {
+        return value > threshold ? value : value * (T(1) - T(2) / (Square(::exp(value) + T(1)) + T(1)));
+    }
+
+    template <typename T> void CpuMish(const T* src, size_t size, T threshold, T* dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = CpuMish(src[i], threshold);
+    }
+
+    //-------------------------------------------------------------------------
+
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
     template <> SYNET_INLINE void CpuElu<float>(const float * src, size_t size, float alpha, float * dst)
     {

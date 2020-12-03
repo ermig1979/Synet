@@ -88,6 +88,8 @@ namespace Synet
                 {
                     if (MergeHswish(network.layers(), i, merged, changes))
                         continue;
+                    if (MergeMish(network.layers(), i, merged, changes))
+                        continue;
                     if (MergePrelu(network.layers(), i, bin, merged, changes))
                         continue;
                     if (MergeShuffle0(network.layers(), i, merged, changes))
@@ -233,6 +235,42 @@ namespace Synet
             layer.hswish().scale() = src[index + 2].power().scale();
             dst.push_back(layer);
             index += 3;
+            return true;
+        }
+
+        bool MergeMish(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 5)
+                return false;
+            if (src[index + 0].type() != LayerTypeUnaryOperation || 
+                src[index + 0].unaryOperation().type() != UnaryOperationTypeExp)
+                return false;
+            if (src[index + 1].type() != LayerTypePower || src[index + 1].power().power() != 1.0f ||
+                src[index + 1].power().scale() != 1.0f || src[index + 1].power().shift() != 1.0f ||
+                src[index + 1].src()[0] != src[index + 0].name())
+                return false;
+            if (src[index + 2].type() != LayerTypeUnaryOperation ||
+                src[index + 2].unaryOperation().type() != UnaryOperationTypeLog ||
+                src[index + 2].src()[0] != src[index + 1].name())
+                return false;
+            if (src[index + 3].type() != LayerTypeUnaryOperation ||
+                src[index + 3].unaryOperation().type() != UnaryOperationTypeTanh ||
+                src[index + 3].src()[0] != src[index + 2].name())
+                return false;
+            if (src[index + 4].type() != LayerTypeEltwise || src[index + 4].src().size() != 2 ||
+                src[index + 4].src()[0] != src[index + 0].src()[0] || src[index + 4].src()[1] != src[index + 3].name() ||
+                src[index + 4].eltwise().operation() != EltwiseOperationTypeProduct)
+                return false;
+            if (InsideLink(src, index + 1, 4))
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeMish;
+            layer.name() = src[index + 4].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            dst.push_back(layer);
+            index += 4;
             return true;
         }
 
