@@ -132,5 +132,10 @@ namespace Synet
     {
         ::SimdSynetSoftplus32f(src, size, &beta, &threshold, dst);
     }
+
+    template<> SYNET_INLINE void CpuMish<float>(const float* src, size_t size, float threshold, float* dst)
+    {
+        ::SimdSynetMish32f(src, size, &threshold, dst);
+    }
 #endif
 }
