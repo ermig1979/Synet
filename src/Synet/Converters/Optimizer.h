@@ -329,7 +329,7 @@ namespace Synet
                 }
             }
             bool result = false;
-            if (src[index].type() == LayerTypeRestrictRange && method == QuantizationMethodUnknown)
+            if (src[index].type() == LayerTypeRestrictRange)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypeRestrictRange;
                 dst.back().convolution().activationParam0() = src[index].restrictRange().lower();
@@ -348,17 +348,23 @@ namespace Synet
                 dst.back().weight().push_back(src[index].weight()[0]);
                 result = true;
             }
-            if (src[index].type() == LayerTypeElu && method == QuantizationMethodUnknown)
+            if (src[index].type() == LayerTypeElu)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypeElu;
                 dst.back().convolution().activationParam0() = src[index].elu().alpha();
                 result = true;
             }
-            if (src[index].type() == LayerTypeHswish && method == QuantizationMethodUnknown)
+            if (src[index].type() == LayerTypeHswish)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypeHswish;
                 dst.back().convolution().activationParam0() = src[index].hswish().shift();
                 dst.back().convolution().activationParam1() = src[index].hswish().scale();
+                result = true;
+            }
+            if (src[index].type() == LayerTypeMish)
+            {
+                dst.back().convolution().activationType() = ActivationFunctionTypeMish;
+                dst.back().convolution().activationParam0() = src[index].softplus().threshold();
                 result = true;
             }
             if (result)
@@ -483,6 +489,12 @@ namespace Synet
                                 dst.back().mergedConvolution().conv()[2].activationType() = ActivationFunctionTypeHswish;
                                 dst.back().mergedConvolution().conv()[2].activationParam0() = l4.hswish().shift();
                                 dst.back().mergedConvolution().conv()[2].activationParam1() = l4.hswish().scale();
+                                result = true;
+                            }
+                            if (l4.type() == LayerTypeMish)
+                            {
+                                dst.back().mergedConvolution().conv()[2].activationType() = ActivationFunctionTypeMish;
+                                dst.back().mergedConvolution().conv()[2].activationParam0() = l4.softplus().threshold();
                                 result = true;
                             }
                             if (result)

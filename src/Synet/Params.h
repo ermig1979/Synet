@@ -98,7 +98,8 @@ namespace Synet
         ActivationFunctionTypeRestrictRange,
         ActivationFunctionTypePrelu,
         ActivationFunctionTypeElu,
-        ActivationFunctionTypeHswish);
+        ActivationFunctionTypeHswish,
+        ActivationFunctionTypeMish);
 
     SYNET_PARAM_ENUM(BinaryOperationType,
         BinaryOperationTypeDiv,

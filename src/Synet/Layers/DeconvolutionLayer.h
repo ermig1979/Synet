@@ -238,6 +238,9 @@ namespace Synet
                     case ActivationFunctionTypeHswish:
                         Detail::HswishLayerForwardCpu(dst, _dstSize, _params[0], _params[1], dst);
                         break;
+                    case ActivationFunctionTypeMish:
+                        CpuMish(dst, _dstSize, _params[0], dst);
+                        break;
                     default:
                         assert(0);
                     }
