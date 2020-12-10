@@ -103,7 +103,7 @@ namespace Synet
             if (!optimizer.Run(holder(), weight))
                 return false;
 
-            if (!param.Save(dstModelPath, false))
+            if (!holder.Save(dstModelPath, false))
             {
                 std::cout << "Can't save Synet model '" << dstModelPath << "' !" << std::endl;
                 return false;
