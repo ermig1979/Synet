@@ -438,22 +438,26 @@ namespace Synet
 
         SYNET_INLINE void Import(const TensorParam & param)
         {
+            _buffer->Resize(0);
             switch (param.type())
             {
             case TensorType32f:
             {
+                _type = TensorType32f;
                 As32f().Reshape(param.shape(), param.format());
                 CpuCopy(param.f32().data(), param.f32().size(), As32f().CpuData());
                 break;
             }
             case TensorType32i:
             {
+                _type = TensorType32i;
                 As32i().Reshape(param.shape(), param.format());
                 CpuCopy(param.i32().data(), param.i32().size(), As32i().CpuData());
                 break;
             }
             case TensorType64i:
             {
+                _type = TensorType64i;
                 As64i().Reshape(param.shape(), param.format());
                 CpuCopy(param.i64().data(), param.i64().size(), As64i().CpuData());
                 break;
