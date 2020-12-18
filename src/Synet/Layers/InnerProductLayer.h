@@ -185,7 +185,9 @@ namespace Synet
                 Detail::InnerProductLayerForwardCpu(src, wgt, bias, _N, _K, dst);
             else
             {
-                CpuGemm(_transA ? CblasTrans : CblasNoTrans, _transB ? CblasNoTrans : CblasTrans, _M, _N, _K, 1.0f, src, _K, wgt, _K, 0.0f, dst, _N);
+                size_t lds = _transA ? _M : _K;
+                size_t ldw = _transB ? _N : _K;
+                CpuGemm(_transA ? CblasTrans : CblasNoTrans, _transB ? CblasNoTrans : CblasTrans, _M, _N, _K, 1.0f, src, lds, wgt, ldw, 0.0f, dst, _N);
                 if (_biasTerm)
                 {
                     for(size_t i = 0; i < _M; ++i)

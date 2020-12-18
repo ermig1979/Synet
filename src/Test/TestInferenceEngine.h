@@ -89,17 +89,8 @@ namespace Test
             _regionThreshold = options.regionThreshold;
             try
             {
-                String model_xml = WithoutExtension(model) + ".xml";
-                if (!FileExists(model_xml))
-                {
-                    if (!FileCopy(model, model_xml))
-                    {
-                        std::cout << "Can't copy file form '" << model << "' to '" << model_xml << "' !" << std::endl;
-                        return false;
-                    }
-                }
-                _ieCore = std::make_shared<InferenceEngine::Core>();
-                _ieNetwork = std::make_shared<InferenceEngine::CNNNetwork>(_ieCore->ReadNetwork(model_xml, weight));
+                if (!ReadNetwork(model, weight, param.desc() == "onnx"))
+                    return false;
 
                 _inputNames.clear();
                 InferenceEngine::InputsDataMap inputsInfo = _ieNetwork->getInputsInfo();
@@ -254,6 +245,33 @@ namespace Test
         std::vector<InferenceEngine::Blob::Ptr> _ieInput, _ieOutput, _ieInterim;
         Strings _inputNames, _outputNames, _interimNames;
         size_t _batchSize;
+
+        bool ReadNetwork(const String & model, const String& weight, bool onnx)
+        {
+            String src, dst, bin;
+            if (onnx)
+            {
+                src = weight;
+                dst = WithoutExtension(src) + ".onnx";
+            }
+            else
+            {
+                src = model;
+                dst = WithoutExtension(src) + ".xml";
+                bin = weight;
+            }
+            if (!FileExists(dst))
+            {
+                if (!FileCopy(src, dst))
+                {
+                    std::cout << "Can't copy file form '" << src << "' to '" << dst << "' !" << std::endl;
+                    return false;
+                }
+            }            
+            _ieCore = std::make_shared<InferenceEngine::Core>();
+            _ieNetwork = std::make_shared<InferenceEngine::CNNNetwork>(_ieCore->ReadNetwork(dst, bin));
+            return true;
+        }
 
         void CreateExecutableNetworkAndInferRequest(const StringMap& config)
         {

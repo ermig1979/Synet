@@ -262,8 +262,8 @@ namespace Synet
             size_t channels = layer.weight()[0].dim()[0];
             for (size_t c = 0; c < channels; c++)
             {
-                scale[c] = gamma[c] / sqrt(var[c] * var[c] + eps);
-                shift[c] = -shift[c] * mean[c] + beta[c];
+                scale[c] = gamma[c] / sqrt(var[c] + eps);
+                shift[c] = -scale[c] * mean[c] + beta[c];
             }
             return true;
         }
