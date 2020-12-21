@@ -48,7 +48,7 @@ namespace Synet
 
         bool Run(Synet::NetworkParam & network, Floats & bin)
         {
-            for (int stage = 0; stage < 5; stage++)
+            for (int stage = 0; stage < 6; stage++)
             {
                 if (!MergeLayers(network, bin, stage))
                     return false;
@@ -74,6 +74,7 @@ namespace Synet
             const bool is8i = network.quantization().method() != QuantizationMethodUnknown;
             Changes changes;
             LayerParams merged;
+            Floats buf;
             for (size_t i = 0; i < network.layers().size(); ++i)
             {
                 switch (stage)
@@ -85,6 +86,12 @@ namespace Synet
                     break;
                 }
                 case 1:
+                {
+                    //if (MergeConvolutionAndScale(network.layers(), i, bin, buf, merged, changes))
+                    //    continue;
+                    break;
+                }
+                case 2:
                 {
                     if (MergeHswish(network.layers(), i, merged, changes))
                         continue;
@@ -126,13 +133,13 @@ namespace Synet
                         continue;
                     break;
                 }
-                case 2:
+                case 3:
                 {
                     if (MergeConvolutionOrDeconvolutionAndActivation(network.layers(), i, method, merged, changes))
                         continue;
                     break;
                 }
-                case 3:
+                case 4:
                 {
                     if (MergeThreeConvolutions(network.layers(), i, method, merged, changes))
                         continue;
@@ -140,7 +147,7 @@ namespace Synet
                         continue;
                     break;
                 }
-                case 4:
+                case 5:
                 {
                     if (MergeTwoConvolutions(network.layers(), i, method, merged, changes))
                         continue;
@@ -154,6 +161,8 @@ namespace Synet
             }
             Rename(changes, merged);
             network.layers() = merged;
+            if (buf.size())
+                bin.swap(buf);
             return true;
         }
 
@@ -201,6 +210,40 @@ namespace Synet
             dst.back().name() = bias.name();
             dst.back().dst() = bias.dst();
             dst.back().weight().push_back(bias.weight()[0]);
+            return true;
+        }
+
+        bool MergeConvolutionAndScale(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        {
+            if (index == 0 || 1)
+                return false;
+            const LayerParam& conv = src[index - 1];
+            const LayerParam& scale = src[index];
+            if (conv.type() != LayerTypeConvolution || conv.convolution().biasTerm() || 
+                conv.convolution().activationType() != ActivationFunctionTypeIdentity)
+                return false;
+            if (scale.type() != LayerTypeScale || scale.src()[0] != conv.name())
+                return false;
+            if (InsideLink(src, index + 1, 1))
+                return false;
+            if (conv.weight()[0].format() != TensorFormatNhwc)
+                return false;
+            if (buf.empty())
+                buf = bin;
+            dst.back().name() = scale.name();
+            dst.back().dst() = scale.dst();
+            if (scale.scale().biasTerm())
+            {
+                dst.back().scale().biasTerm() = true;
+                dst.back().weight().push_back(scale.weight()[1]);
+            }
+            const float* pSrc = bin.data() + conv.weight()[0].offset() / 4;
+            const float* pScale = bin.data() + scale.weight()[0].offset() / 4;
+            float * pDst = buf.data() + conv.weight()[0].offset() / 4;
+            const Shape & dim = conv.weight()[0].dim();
+            for (size_t i = 0, n = dim[0] * dim[1] * dim[2]; i < n; ++i)
+                for (size_t j = 0, m = dim[3]; j < m; ++j)
+                    pDst[i * m + j] = pSrc[i * m + j] * pScale[j];
             return true;
         }
 
@@ -313,70 +356,63 @@ namespace Synet
         {
             if (index == 0)
                 return false;
-            if (src[index - 1].type() != LayerTypeConvolution && src[index - 1].type() != LayerTypeDeconvolution)
+            const LayerParam& conv = src[index - 1];
+            const LayerParam& act = src[index];
+            if (conv.type() != LayerTypeConvolution && conv.type() != LayerTypeDeconvolution)
                 return false;
-            if (src[index].src().size() != 1 || src[index].src()[0] != src[index - 1].name())
+            if (act.src().size() != 1 || act.src()[0] != conv.name())
                 return false;
-            if (src[index].dst()[0] != src[index - 1].name())
-            {
-                for (size_t i = index + 1; i < src.size(); ++i)
-                {
-                    for (size_t j = 0; j < src[i].src().size(); ++j)
-                    {
-                        if (src[i].src()[j] == src[index - 1].name())
-                            return false;
-                    }
-                }
-            }
+            if (InsideLink(src, index + 1, 1))
+                return false;
             bool result = false;
-            if (src[index].type() == LayerTypeRestrictRange)
+            if (act.type() == LayerTypeRestrictRange)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypeRestrictRange;
-                dst.back().convolution().activationParam0() = src[index].restrictRange().lower();
-                dst.back().convolution().activationParam1() = src[index].restrictRange().upper();
+                dst.back().convolution().activationParam0() = act.restrictRange().lower();
+                dst.back().convolution().activationParam1() = act.restrictRange().upper();
                 result = true;
             }
-            if (src[index].type() == LayerTypeRelu)
+            if (act.type() == LayerTypeRelu)
             {
-                dst.back().convolution().activationType() = src[index].relu().negativeSlope() == 0.0f ? ActivationFunctionTypeRelu : ActivationFunctionTypeLeakyRelu;
-                dst.back().convolution().activationParam0() = src[index].relu().negativeSlope();
+                dst.back().convolution().activationType() = act.relu().negativeSlope() == 0.0f ? ActivationFunctionTypeRelu : ActivationFunctionTypeLeakyRelu;
+                dst.back().convolution().activationParam0() = act.relu().negativeSlope();
                 result = true;
             }
-            if (src[index].type() == LayerTypePrelu && method != QuantizationMethodIECompatible)
+            if (act.type() == LayerTypePrelu && method != QuantizationMethodIECompatible)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypePrelu;
-                dst.back().weight().push_back(src[index].weight()[0]);
+                dst.back().weight().push_back(act.weight()[0]);
                 result = true;
             }
-            if (src[index].type() == LayerTypeElu)
+            if (act.type() == LayerTypeElu)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypeElu;
-                dst.back().convolution().activationParam0() = src[index].elu().alpha();
+                dst.back().convolution().activationParam0() = act.elu().alpha();
                 result = true;
             }
-            if (src[index].type() == LayerTypeHswish)
+            if (act.type() == LayerTypeHswish)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypeHswish;
-                dst.back().convolution().activationParam0() = src[index].hswish().shift();
-                dst.back().convolution().activationParam1() = src[index].hswish().scale();
+                dst.back().convolution().activationParam0() = act.hswish().shift();
+                dst.back().convolution().activationParam1() = act.hswish().scale();
                 result = true;
             }
-            if (src[index].type() == LayerTypeMish)
+            if (act.type() == LayerTypeMish)
             {
                 dst.back().convolution().activationType() = ActivationFunctionTypeMish;
-                dst.back().convolution().activationParam0() = src[index].softplus().threshold();
+                dst.back().convolution().activationParam0() = act.softplus().threshold();
                 result = true;
             }
             if (result)
             {
                 if (dst.back().convolution().quantizationLevel() == TensorType8i)
                 {
-                    dst.back().origin().push_back(src[index - 1].name());
-                    dst.back().name() = src[index].name();
-                    dst.back().dst()[0] = src[index].name();
+                    dst.back().origin().push_back(conv.name());
+                    dst.back().name() = act.name();
+                    dst.back().dst()[0] = act.name();
                 }
                 else
-                    changes.push_back(Change(src[index].name(), src[index - 1].name()));
+                    changes.push_back(Change(act.name(), conv.name()));
             }
             return result;
         }

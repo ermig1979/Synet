@@ -80,10 +80,11 @@ namespace Test
 
     struct TestParam
     {
-        SYNET_PARAM_VALUE(String, desc, String());
         SYNET_PARAM_VALUE(String, images, String());
         SYNET_PARAM_VALUE(Floats, lower, Floats(1, 0.0f));
         SYNET_PARAM_VALUE(Floats, upper, Floats(1, 1.0f));
+        SYNET_PARAM_VALUE(String, model, String());
+        SYNET_PARAM_VALUE(String, order, String());
         SYNET_PARAM_VECTOR(ShapeParam, input);
         SYNET_PARAM_VECTOR(ShapeParam, output);
         SYNET_PARAM_STRUCT(DetectionParam, detection);

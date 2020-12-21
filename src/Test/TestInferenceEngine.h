@@ -89,7 +89,7 @@ namespace Test
             _regionThreshold = options.regionThreshold;
             try
             {
-                if (!ReadNetwork(model, weight, param.desc() == "onnx"))
+                if (!ReadNetwork(model, weight, param.model() == "onnx"))
                     return false;
 
                 _inputNames.clear();

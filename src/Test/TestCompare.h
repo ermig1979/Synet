@@ -328,7 +328,10 @@ namespace Test
                             {
                                 for (size_t i = 0; i < shape[1]; ++i)
                                     channels[i].Recreate(resized.Size(), View::Gray8);
-                                Simd::DeinterleaveBgr(resized, channels[0], channels[1], channels[2]);
+                                if(_param().order() == "rgb")
+                                    Simd::DeinterleaveBgr(resized, channels[2], channels[1], channels[0]);
+                                else
+                                    Simd::DeinterleaveBgr(resized, channels[0], channels[1], channels[2]);
                             }
                             else
                                 channels[0] = resized;
