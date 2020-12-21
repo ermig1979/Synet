@@ -202,7 +202,7 @@ namespace Synet
             const LayerParam & bias = src[index];
             if (bias.type() != LayerTypeBias || bias.src()[0] != current.name())
                 return false;
-            if (InsideLink(src, index + 1, 1))
+            if (InsideLink(src, index - 1, 2))
                 return false;
             switch (current.type())
             {
@@ -252,7 +252,7 @@ namespace Synet
                 return false;
             if (scale.type() != LayerTypeScale || scale.src()[0] != conv.name())
                 return false;
-            if (InsideLink(src, index + 1, 1))
+            if (InsideLink(src, index - 1, 2))
                 return false;
             if (conv.weight()[0].format() != TensorFormatNhwc)
                 return false;
@@ -285,7 +285,7 @@ namespace Synet
                 return false;
             if (scale.type() != LayerTypeScale || scale.src()[0] != ip.name())
                 return false;
-            if (InsideLink(src, index + 1, 1))
+            if (InsideLink(src, index - 1, 2))
                 return false;
             if (buf.empty())
                 buf = bin;
@@ -421,7 +421,7 @@ namespace Synet
                 return false;
             if (act.src().size() != 1 || act.src()[0] != conv.name())
                 return false;
-            if (InsideLink(src, index + 1, 1))
+            if (InsideLink(src, index - 1, 2))
                 return false;
             bool result = false;
             if (act.type() == LayerTypeRestrictRange)
