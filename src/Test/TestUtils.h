@@ -148,7 +148,7 @@ namespace Test
     inline String GetNameByPath(const String & path_)
     {
 #ifdef _MSC_VER
-#if _MSC_VER < 1900
+#if _MSC_VER <= 1900
         std::tr2::sys::path path(path_);
         return path.filename().string();
 #else

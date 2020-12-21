@@ -92,6 +92,8 @@ namespace Synet
                 assert(unknown <= 1);
                 if (unknown)
                 {
+                    if (src[0]->Count() > 1 && shape.size() > 1 && shape[0] == 1)
+                        shape[0] = src[0]->Axis(0);
                     size_t known = 1, index = shape.size();
                     for (size_t i = 0; i < shape.size(); ++i)
                     {
