@@ -48,9 +48,9 @@ namespace Synet
 
         bool Run(Synet::NetworkParam & network, Floats & bin)
         {
-            for (int stage = 0; stage < 6; stage++)
+            for (int stage = 0; stage < 7; stage++)
             {
-                if (!MergeLayers(network, bin, stage))
+                if (!OptimizeLayers(network, bin, stage))
                     return false;
             }
             if (!ReuseLayers(network))
@@ -68,7 +68,7 @@ namespace Synet
 
         const OptimizerParam & _param;
 
-        bool MergeLayers(Synet::NetworkParam& network, Floats& bin, int stage)
+        bool OptimizeLayers(Synet::NetworkParam& network, Floats& bin, int stage)
         {
             QuantizationMethod method = network.quantization().method();
             const bool is8i = network.quantization().method() != QuantizationMethodUnknown;
@@ -81,17 +81,25 @@ namespace Synet
                 {
                 case 0:
                 {
-                    if (MergeCurrentAndBias(network.layers(), i, bin, merged, changes))
+                    if (TransposeInnerProduct(network.layers(), i, bin, buf, merged))
                         continue;
                     break;
                 }
                 case 1:
                 {
-                    //if (MergeConvolutionAndScale(network.layers(), i, bin, buf, merged, changes))
-                    //    continue;
+                    if (MergeCurrentAndBias(network.layers(), i, bin, merged, changes))
+                        continue;
                     break;
                 }
                 case 2:
+                {
+                    if (MergeConvolutionAndScale(network.layers(), i, bin, buf, merged, changes))
+                        continue;
+                    if (MergeInnerProductAndScale(network.layers(), i, bin, buf, merged, changes))
+                        continue;
+                    break;
+                }
+                case 3:
                 {
                     if (MergeHswish(network.layers(), i, merged, changes))
                         continue;
@@ -133,13 +141,13 @@ namespace Synet
                         continue;
                     break;
                 }
-                case 3:
+                case 4:
                 {
                     if (MergeConvolutionOrDeconvolutionAndActivation(network.layers(), i, method, merged, changes))
                         continue;
                     break;
                 }
-                case 4:
+                case 5:
                 {
                     if (MergeThreeConvolutions(network.layers(), i, method, merged, changes))
                         continue;
@@ -147,7 +155,7 @@ namespace Synet
                         continue;
                     break;
                 }
-                case 5:
+                case 6:
                 {
                     if (MergeTwoConvolutions(network.layers(), i, method, merged, changes))
                         continue;
@@ -163,6 +171,26 @@ namespace Synet
             network.layers() = merged;
             if (buf.size())
                 bin.swap(buf);
+            return true;
+        }
+
+        bool TransposeInnerProduct(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst)
+        {
+            const LayerParam& ip = src[index];
+            if (ip.type() != LayerTypeInnerProduct || !ip.innerProduct().transposeB())
+                return false;
+            const Shape & dim = ip.weight()[0].dim();
+            size_t offset = ip.weight()[0].offset() / 4;
+            if (buf.empty())
+                buf = bin;
+            dst.push_back(ip);
+            dst.back().innerProduct().transposeB() = false;
+            dst.back().weight()[0].dim() = Shp(dim[1], dim[0]);
+            const float* pSrc = bin.data() + offset;
+            float* pDst = buf.data() + offset;
+            for (size_t i = 0; i < dim[0]; ++i)
+                for (size_t j = 0; j < dim[1]; ++j)
+                    pDst[j * dim[0] + i] = pSrc[i * dim[1] + j];
             return true;
         }
 
@@ -215,7 +243,7 @@ namespace Synet
 
         bool MergeConvolutionAndScale(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
         {
-            if (index == 0 || 1)
+            if (index == 0)
                 return false;
             const LayerParam& conv = src[index - 1];
             const LayerParam& scale = src[index];
@@ -234,7 +262,7 @@ namespace Synet
             dst.back().dst() = scale.dst();
             if (scale.scale().biasTerm())
             {
-                dst.back().scale().biasTerm() = true;
+                dst.back().convolution().biasTerm() = true;
                 dst.back().weight().push_back(scale.weight()[1]);
             }
             const float* pSrc = bin.data() + conv.weight()[0].offset() / 4;
@@ -244,6 +272,37 @@ namespace Synet
             for (size_t i = 0, n = dim[0] * dim[1] * dim[2]; i < n; ++i)
                 for (size_t j = 0, m = dim[3]; j < m; ++j)
                     pDst[i * m + j] = pSrc[i * m + j] * pScale[j];
+            return true;
+        }
+
+        bool MergeInnerProductAndScale(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        {
+            if (index == 0)
+                return false;
+            const LayerParam& ip = src[index - 1];
+            const LayerParam& scale = src[index];
+            if (ip.type() != LayerTypeInnerProduct || ip.innerProduct().biasTerm() || ip.innerProduct().transposeB())
+                return false;
+            if (scale.type() != LayerTypeScale || scale.src()[0] != ip.name())
+                return false;
+            if (InsideLink(src, index + 1, 1))
+                return false;
+            if (buf.empty())
+                buf = bin;
+            dst.back().name() = scale.name();
+            dst.back().dst() = scale.dst();
+            if (scale.scale().biasTerm())
+            {
+                dst.back().innerProduct().biasTerm() = true;
+                dst.back().weight().push_back(scale.weight()[1]);
+            }
+            const float* pSrc = bin.data() + ip.weight()[0].offset() / 4;
+            const float* pScale = bin.data() + scale.weight()[0].offset() / 4;
+            float* pDst = buf.data() + ip.weight()[0].offset() / 4;
+            const Shape& dim = ip.weight()[0].dim();
+            for (size_t i = 0; i < dim[0]; ++i)
+                for (size_t j = 0; j < dim[1]; ++j)
+                    pDst[i * dim[1] + j] = pSrc[i * dim[1] + j] * pScale[i];
             return true;
         }
 
