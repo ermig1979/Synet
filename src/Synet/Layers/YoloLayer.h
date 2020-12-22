@@ -67,8 +67,8 @@ namespace Synet
             SYNET_PERF_FUNC();
             dst.clear();
             size_t b = 0;
-            size_t layerW = src[0]->Axis(2);
-            size_t layerH = src[0]->Axis(3);
+            size_t layerH = src[0]->Axis(2);
+            size_t layerW = src[0]->Axis(3);
             for (size_t y = 0; y < layerH; ++y)
             {
                 for (size_t x = 0; x < layerW; ++x)
