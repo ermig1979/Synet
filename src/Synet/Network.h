@@ -492,8 +492,9 @@ namespace Synet
 
         Regions GetRegions(size_t imageW, size_t imageH, Type threshold, Type overlap) const
         {
-            size_t netW = _src[0]->Axis(-1);
-            size_t netH = _src[0]->Axis(-2);
+            const Shape & netNCHW = NchwShape();
+            size_t netH = netNCHW[2];
+            size_t netW = netNCHW[3];
             Regions regions;
             for (size_t i = 0; i < _dst.size(); ++i)
             {
