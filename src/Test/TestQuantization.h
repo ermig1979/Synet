@@ -43,6 +43,7 @@ namespace Test
         SYNET_PARAM_VALUE(bool, depthwiseConvolution, false);
         SYNET_PARAM_VALUE(bool, degenerateConvolution, false);
         SYNET_PARAM_VALUE(bool, scaleToConvolution, false);
+        SYNET_PARAM_VALUE(bool, eltwiseToAdd, true);
         SYNET_PARAM_VALUE(int, innerProductWeightMin, 0);
         SYNET_PARAM_VALUE(Strings, skippedLayers, Strings());
     };
@@ -96,6 +97,7 @@ namespace Test
         typedef Synet::Network<float> SyNet;
         SyNet _synet;
         String _progressMessage;
+        typedef std::vector<Synet::LayerParam> LayerParams;
 
         void PrintStartMessage()
         {
@@ -276,8 +278,18 @@ namespace Test
             layer.convolution().quantizationLevel() = Synet::TensorType8i;
         }
 
-        void EltwiseToAdd(Synet::LayerParam& layer)
+        Synet::LayerParam GetLayerByName(const LayerParams& layers, const String& name)
         {
+            for (size_t i = 0; i < layers.size(); ++i)
+                if (layers[i].name() == name)
+                    return layers[i];
+            return Synet::LayerParam();
+        }
+
+        void EltwiseToAdd(Synet::LayerParam& layer, const LayerParams & layers)
+        {
+            if (!_quant().eltwiseToAdd())
+                return;
             if (layer.type() != Synet::LayerTypeEltwise || 
                 layer.eltwise().operation() != Synet::EltwiseOperationTypeSum ||
                 layer.src().size() != 2)
@@ -290,6 +302,9 @@ namespace Test
                 return;
             if (src0->Shape() != src1->Shape())
                 return;
+            //if (GetLayerByName(layers, layer.src()[0]).type() == Synet::LayerTypeRelu ||
+            //    GetLayerByName(layers, layer.src()[1]).type() == Synet::LayerTypeRelu)
+            //    return;
             layer.eltwise() = Synet::EltwiseParam();
             layer.type() = Synet::LayerTypeAdd;
         }
@@ -359,7 +374,7 @@ namespace Test
                         skip = true;
                 if (skip)
                     continue;
-                EltwiseToAdd(layer);
+                EltwiseToAdd(layer, network().layers());
                 ScaleToConvolution(layer);
                 QuantizeConvolution(layer);
                 QuantizeInnerProduct(layer);
