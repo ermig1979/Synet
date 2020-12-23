@@ -44,7 +44,7 @@ namespace Synet
 
         virtual bool Can8i() const
         {
-            return true;
+            return this->Param().concat().can8i();
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)

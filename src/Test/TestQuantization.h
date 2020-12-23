@@ -44,6 +44,7 @@ namespace Test
         SYNET_PARAM_VALUE(bool, degenerateConvolution, false);
         SYNET_PARAM_VALUE(bool, scaleToConvolution, false);
         SYNET_PARAM_VALUE(bool, eltwiseToAdd, true);
+        SYNET_PARAM_VALUE(bool, concatCan8i, true);
         SYNET_PARAM_VALUE(int, innerProductWeightMin, 0);
         SYNET_PARAM_VALUE(Strings, skippedLayers, Strings());
     };
@@ -355,6 +356,13 @@ namespace Test
             }
         }
 
+        void SetConcatCan8i(Synet::LayerParam& layer)
+        {
+            if (layer.type() != Synet::LayerTypeConcat)
+                return;
+            layer.concat().can8i() = _quant().concatCan8i();
+        }
+
         bool PerformQuntization()
         {
             if (!_options.consoleSilence)
@@ -379,6 +387,7 @@ namespace Test
                 QuantizeConvolution(layer);
                 QuantizeInnerProduct(layer);
                 HighlightGlobalPooling(layer);
+                SetConcatCan8i(layer);
             }
             network().quantization().method() = _quant().method();
             Floats bin;

@@ -272,6 +272,7 @@ namespace Synet
     {
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
         SYNET_PARAM_VALUE(bool, fixed, false);
+        SYNET_PARAM_VALUE(bool, can8i, true);
     };
 
     struct ConvolutionParam
