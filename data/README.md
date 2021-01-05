@@ -31,3 +31,20 @@ Inference Engine tests
 | test_014f | Licence plate recognition | FP32 | 10 | [xml](https://download.01.org/opencv/2021/openvinotoolkit/2021.1/open_model_zoo/models_bin/2/license-plate-recognition-barrier-0001/FP32/license-plate-recognition-barrier-0001.xml) | [4.6 MB](https://download.01.org/opencv/2021/openvinotoolkit/2021.1/open_model_zoo/models_bin/2/license-plate-recognition-barrier-0001/FP32/license-plate-recognition-barrier-0001.bin) |
 | test_015f | Licence plate detection | FP32 | 10 | [xml](https://download.01.org/opencv/2021/openvinotoolkit/2021.1/open_model_zoo/models_bin/2/vehicle-license-plate-detection-barrier-0106/FP32/vehicle-license-plate-detection-barrier-0106.xml) | [2.6 MB](https://download.01.org/opencv/2021/openvinotoolkit/2021.1/open_model_zoo/models_bin/2/vehicle-license-plate-detection-barrier-0106/FP32/vehicle-license-plate-detection-barrier-0106.bin) |
 
+----------------------
+Quantization tests
+======================
+
+| Name | Description |
+| --- | --- |
+| test_003 | Face detection |
+| test_010 | Face detection |
+
+----------------------
+Precision tests
+======================
+
+| Name | Description | Type |
+| --- | --- | --- |
+| test_003 | Face detection | FP32, INT8 |
+| test_010 | Face detection | FP32, INT8 |

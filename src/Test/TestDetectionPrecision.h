@@ -129,8 +129,15 @@ namespace Test
 						ifs >> stub;
 					bool add = false;
 					for (size_t j = 0; j < _param().index().ids().size(); ++j)
+					{
 						if (_param().index().ids()[j].id() == region.id)
 							add = true;
+						else if (_param().index().ids()[j].name() == ToString(region.id))
+						{
+							region.id = _param().index().ids()[j].id();
+							add = true;
+						}
+					}
 					if(add)
 						test.control.push_back(region);
 				}
@@ -322,7 +329,7 @@ namespace Test
 			float netRatio = float(netSize.x) / float(netSize.y);
 			float imgRatio = float(imgSize.x) / float(imgSize.y);
 			float ratioVariation = Synet::Max(netRatio, imgRatio) / Synet::Min(netRatio, imgRatio) - 1.0f;
-			return ratioVariation > _options.ratioVariation;
+			return ratioVariation > _options.ratioVariation && _param().input().size() != 0;
 		}
 
 		virtual bool PerformBatch(size_t thread, size_t current, size_t batch)

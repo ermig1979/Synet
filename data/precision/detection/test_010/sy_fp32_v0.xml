@@ -1,0 +1,1595 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network>
+	<version>1</version>
+	<name>face-detection-retail-0005</name>
+	<layers>
+		<item>
+			<type>Input</type>
+			<name>input.1</name>
+			<dst>input.1</dst>
+			<input>
+				<shape>
+					<item>
+						<dim>1 300 300 3</dim>
+						<format>Nhwc</format>
+					</item>
+				</shape>
+			</input>
+		</item>
+		<item>
+			<type>Fused</type>
+			<name>Add1_8474/Fused_Add_</name>
+			<src>input.1</src>
+			<dst>Add1_8474/Fused_Add_</dst>
+			<weight>
+				<item>
+					<dim>3</dim>
+					<offset>4</offset>
+					<size>12</size>
+				</item>
+				<item>
+					<dim>3</dim>
+					<offset>16</offset>
+					<size>12</size>
+				</item>
+			</weight>
+			<fused>
+				<type>10</type>
+				<floats>0.003922 0.000000 1.000000 0.000000</floats>
+			</fused>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>Add1_8294/Fused_Add_</name>
+			<src>Add1_8474/Fused_Add_</src>
+			<dst>Add1_8294/Fused_Add_</dst>
+			<weight>
+				<item>
+					<dim>3 3 3 24</dim>
+					<format>Nhwc</format>
+					<offset>28</offset>
+					<size>2592</size>
+				</item>
+				<item>
+					<dim>24</dim>
+					<offset>2620</offset>
+					<size>96</size>
+				</item>
+				<item>
+					<dim>3 3 1 24</dim>
+					<format>Nhwc</format>
+					<offset>2716</offset>
+					<size>864</size>
+				</item>
+				<item>
+					<dim>24</dim>
+					<offset>3580</offset>
+					<size>96</size>
+				</item>
+				<item>
+					<dim>1 1 24 12</dim>
+					<format>Nhwc</format>
+					<offset>3676</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>12</dim>
+					<offset>4828</offset>
+					<size>48</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>24</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>2 2</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>24</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>24</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>12</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>Add1_8222/Fused_Add_</name>
+			<src>Add1_8294/Fused_Add_</src>
+			<dst>Add1_8222/Fused_Add_</dst>
+			<weight>
+				<item>
+					<dim>1 1 12 72</dim>
+					<format>Nhwc</format>
+					<offset>4876</offset>
+					<size>3456</size>
+				</item>
+				<item>
+					<dim>72</dim>
+					<offset>8332</offset>
+					<size>288</size>
+				</item>
+				<item>
+					<dim>3 3 1 72</dim>
+					<format>Nhwc</format>
+					<offset>8620</offset>
+					<size>2592</size>
+				</item>
+				<item>
+					<dim>72</dim>
+					<offset>11212</offset>
+					<size>288</size>
+				</item>
+				<item>
+					<dim>1 1 72 18</dim>
+					<format>Nhwc</format>
+					<offset>11500</offset>
+					<size>5184</size>
+				</item>
+				<item>
+					<dim>18</dim>
+					<offset>16684</offset>
+					<size>72</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>72</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>72</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>2 2</stride>
+						<dilation>1 1</dilation>
+						<group>72</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>18</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>356</name>
+			<src>Add1_8222/Fused_Add_</src>
+			<dst>356</dst>
+			<weight>
+				<item>
+					<dim>1 1 18 108</dim>
+					<format>Nhwc</format>
+					<offset>16756</offset>
+					<size>7776</size>
+				</item>
+				<item>
+					<dim>108</dim>
+					<offset>24532</offset>
+					<size>432</size>
+				</item>
+				<item>
+					<dim>3 3 1 108</dim>
+					<format>Nhwc</format>
+					<offset>24964</offset>
+					<size>3888</size>
+				</item>
+				<item>
+					<dim>108</dim>
+					<offset>28852</offset>
+					<size>432</size>
+				</item>
+				<item>
+					<dim>1 1 108 18</dim>
+					<format>Nhwc</format>
+					<offset>29284</offset>
+					<size>7776</size>
+				</item>
+				<item>
+					<dim>18</dim>
+					<offset>37060</offset>
+					<size>72</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>108</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>108</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>108</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>18</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>Add1_/Fused_Add_</name>
+			<src>356</src>
+			<dst>Add1_/Fused_Add_</dst>
+			<weight>
+				<item>
+					<dim>1 1 18 108</dim>
+					<format>Nhwc</format>
+					<offset>37132</offset>
+					<size>7776</size>
+				</item>
+				<item>
+					<dim>108</dim>
+					<offset>44908</offset>
+					<size>432</size>
+				</item>
+				<item>
+					<dim>3 3 1 108</dim>
+					<format>Nhwc</format>
+					<offset>45340</offset>
+					<size>3888</size>
+				</item>
+				<item>
+					<dim>108</dim>
+					<offset>49228</offset>
+					<size>432</size>
+				</item>
+				<item>
+					<dim>1 1 108 24</dim>
+					<format>Nhwc</format>
+					<offset>49660</offset>
+					<size>10368</size>
+				</item>
+				<item>
+					<dim>24</dim>
+					<offset>60028</offset>
+					<size>96</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>108</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>108</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>2 2</stride>
+						<dilation>1 1</dilation>
+						<group>108</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>24</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>373</name>
+			<src>Add1_/Fused_Add_</src>
+			<dst>373</dst>
+			<weight>
+				<item>
+					<dim>1 1 24 144</dim>
+					<format>Nhwc</format>
+					<offset>60124</offset>
+					<size>13824</size>
+				</item>
+				<item>
+					<dim>144</dim>
+					<offset>73948</offset>
+					<size>576</size>
+				</item>
+				<item>
+					<dim>3 3 1 144</dim>
+					<format>Nhwc</format>
+					<offset>74524</offset>
+					<size>5184</size>
+				</item>
+				<item>
+					<dim>144</dim>
+					<offset>79708</offset>
+					<size>576</size>
+				</item>
+				<item>
+					<dim>1 1 144 24</dim>
+					<format>Nhwc</format>
+					<offset>80284</offset>
+					<size>13824</size>
+				</item>
+				<item>
+					<dim>24</dim>
+					<offset>94108</offset>
+					<size>96</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>144</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>144</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>144</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>24</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>382</name>
+			<src>373</src>
+			<dst>382</dst>
+			<weight>
+				<item>
+					<dim>1 1 24 144</dim>
+					<format>Nhwc</format>
+					<offset>94204</offset>
+					<size>13824</size>
+				</item>
+				<item>
+					<dim>144</dim>
+					<offset>108028</offset>
+					<size>576</size>
+				</item>
+				<item>
+					<dim>3 3 1 144</dim>
+					<format>Nhwc</format>
+					<offset>108604</offset>
+					<size>5184</size>
+				</item>
+				<item>
+					<dim>144</dim>
+					<offset>113788</offset>
+					<size>576</size>
+				</item>
+				<item>
+					<dim>1 1 144 24</dim>
+					<format>Nhwc</format>
+					<offset>114364</offset>
+					<size>13824</size>
+				</item>
+				<item>
+					<dim>24</dim>
+					<offset>128188</offset>
+					<size>96</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>144</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>144</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>144</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>24</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>Add1_8354/Fused_Add_</name>
+			<src>382</src>
+			<dst>Add1_8354/Fused_Add_</dst>
+			<weight>
+				<item>
+					<dim>1 1 24 144</dim>
+					<format>Nhwc</format>
+					<offset>128284</offset>
+					<size>13824</size>
+				</item>
+				<item>
+					<dim>144</dim>
+					<offset>142108</offset>
+					<size>576</size>
+				</item>
+				<item>
+					<dim>3 3 1 144</dim>
+					<format>Nhwc</format>
+					<offset>142684</offset>
+					<size>5184</size>
+				</item>
+				<item>
+					<dim>144</dim>
+					<offset>147868</offset>
+					<size>576</size>
+				</item>
+				<item>
+					<dim>1 1 144 48</dim>
+					<format>Nhwc</format>
+					<offset>148444</offset>
+					<size>27648</size>
+				</item>
+				<item>
+					<dim>48</dim>
+					<offset>176092</offset>
+					<size>192</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>144</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>144</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>2 2</stride>
+						<dilation>1 1</dilation>
+						<group>144</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>48</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>399</name>
+			<src>Add1_8354/Fused_Add_</src>
+			<dst>399</dst>
+			<weight>
+				<item>
+					<dim>1 1 48 288</dim>
+					<format>Nhwc</format>
+					<offset>176284</offset>
+					<size>55296</size>
+				</item>
+				<item>
+					<dim>288</dim>
+					<offset>231580</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>3 3 1 288</dim>
+					<format>Nhwc</format>
+					<offset>232732</offset>
+					<size>10368</size>
+				</item>
+				<item>
+					<dim>288</dim>
+					<offset>243100</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>1 1 288 48</dim>
+					<format>Nhwc</format>
+					<offset>244252</offset>
+					<size>55296</size>
+				</item>
+				<item>
+					<dim>48</dim>
+					<offset>299548</offset>
+					<size>192</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>288</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>288</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>288</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>48</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>408</name>
+			<src>399</src>
+			<dst>408</dst>
+			<weight>
+				<item>
+					<dim>1 1 48 288</dim>
+					<format>Nhwc</format>
+					<offset>299740</offset>
+					<size>55296</size>
+				</item>
+				<item>
+					<dim>288</dim>
+					<offset>355036</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>3 3 1 288</dim>
+					<format>Nhwc</format>
+					<offset>356188</offset>
+					<size>10368</size>
+				</item>
+				<item>
+					<dim>288</dim>
+					<offset>366556</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>1 1 288 48</dim>
+					<format>Nhwc</format>
+					<offset>367708</offset>
+					<size>55296</size>
+				</item>
+				<item>
+					<dim>48</dim>
+					<offset>423004</offset>
+					<size>192</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>288</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>288</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>288</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>48</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>417</name>
+			<src>408</src>
+			<dst>417</dst>
+			<weight>
+				<item>
+					<dim>1 1 48 288</dim>
+					<format>Nhwc</format>
+					<offset>423196</offset>
+					<size>55296</size>
+				</item>
+				<item>
+					<dim>288</dim>
+					<offset>478492</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>3 3 1 288</dim>
+					<format>Nhwc</format>
+					<offset>479644</offset>
+					<size>10368</size>
+				</item>
+				<item>
+					<dim>288</dim>
+					<offset>490012</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>1 1 288 48</dim>
+					<format>Nhwc</format>
+					<offset>491164</offset>
+					<size>55296</size>
+				</item>
+				<item>
+					<dim>48</dim>
+					<offset>546460</offset>
+					<size>192</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>288</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>288</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>288</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>48</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>Add1_8066/Fused_Add_</name>
+			<src>417</src>
+			<dst>Add1_8066/Fused_Add_</dst>
+			<weight>
+				<item>
+					<dim>1 1 48 288</dim>
+					<format>Nhwc</format>
+					<offset>546652</offset>
+					<size>55296</size>
+				</item>
+				<item>
+					<dim>288</dim>
+					<offset>601948</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>3 3 1 288</dim>
+					<format>Nhwc</format>
+					<offset>603100</offset>
+					<size>10368</size>
+				</item>
+				<item>
+					<dim>288</dim>
+					<offset>613468</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>1 1 288 72</dim>
+					<format>Nhwc</format>
+					<offset>614620</offset>
+					<size>82944</size>
+				</item>
+				<item>
+					<dim>72</dim>
+					<offset>697564</offset>
+					<size>288</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>288</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>288</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>288</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>72</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>434</name>
+			<src>Add1_8066/Fused_Add_</src>
+			<dst>434</dst>
+			<weight>
+				<item>
+					<dim>1 1 72 432</dim>
+					<format>Nhwc</format>
+					<offset>697852</offset>
+					<size>124416</size>
+				</item>
+				<item>
+					<dim>432</dim>
+					<offset>822268</offset>
+					<size>1728</size>
+				</item>
+				<item>
+					<dim>3 3 1 432</dim>
+					<format>Nhwc</format>
+					<offset>823996</offset>
+					<size>15552</size>
+				</item>
+				<item>
+					<dim>432</dim>
+					<offset>839548</offset>
+					<size>1728</size>
+				</item>
+				<item>
+					<dim>1 1 432 72</dim>
+					<format>Nhwc</format>
+					<offset>841276</offset>
+					<size>124416</size>
+				</item>
+				<item>
+					<dim>72</dim>
+					<offset>965692</offset>
+					<size>288</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>432</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>432</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>432</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>72</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>443</name>
+			<src>434</src>
+			<dst>443</dst>
+			<weight>
+				<item>
+					<dim>1 1 72 432</dim>
+					<format>Nhwc</format>
+					<offset>965980</offset>
+					<size>124416</size>
+				</item>
+				<item>
+					<dim>432</dim>
+					<offset>1090396</offset>
+					<size>1728</size>
+				</item>
+				<item>
+					<dim>3 3 1 432</dim>
+					<format>Nhwc</format>
+					<offset>1092124</offset>
+					<size>15552</size>
+				</item>
+				<item>
+					<dim>432</dim>
+					<offset>1107676</offset>
+					<size>1728</size>
+				</item>
+				<item>
+					<dim>1 1 432 72</dim>
+					<format>Nhwc</format>
+					<offset>1109404</offset>
+					<size>124416</size>
+				</item>
+				<item>
+					<dim>72</dim>
+					<offset>1233820</offset>
+					<size>288</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>432</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>432</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>432</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>72</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>Add1_8498/Fused_Add_</name>
+			<src>443</src>
+			<dst>Add1_8498/Fused_Add_</dst>
+			<weight>
+				<item>
+					<dim>1 1 72 432</dim>
+					<format>Nhwc</format>
+					<offset>1234108</offset>
+					<size>124416</size>
+				</item>
+				<item>
+					<dim>432</dim>
+					<offset>1358524</offset>
+					<size>1728</size>
+				</item>
+				<item>
+					<dim>3 3 1 432</dim>
+					<format>Nhwc</format>
+					<offset>1360252</offset>
+					<size>15552</size>
+				</item>
+				<item>
+					<dim>432</dim>
+					<offset>1375804</offset>
+					<size>1728</size>
+				</item>
+				<item>
+					<dim>1 1 432 120</dim>
+					<format>Nhwc</format>
+					<offset>1377532</offset>
+					<size>207360</size>
+				</item>
+				<item>
+					<dim>120</dim>
+					<offset>1584892</offset>
+					<size>480</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>432</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>432</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>432</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>120</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>460</name>
+			<src>Add1_8498/Fused_Add_</src>
+			<dst>460</dst>
+			<weight>
+				<item>
+					<dim>1 1 120 720</dim>
+					<format>Nhwc</format>
+					<offset>1585372</offset>
+					<size>345600</size>
+				</item>
+				<item>
+					<dim>720</dim>
+					<offset>1930972</offset>
+					<size>2880</size>
+				</item>
+				<item>
+					<dim>3 3 1 720</dim>
+					<format>Nhwc</format>
+					<offset>1933852</offset>
+					<size>25920</size>
+				</item>
+				<item>
+					<dim>720</dim>
+					<offset>1959772</offset>
+					<size>2880</size>
+				</item>
+				<item>
+					<dim>1 1 720 120</dim>
+					<format>Nhwc</format>
+					<offset>1962652</offset>
+					<size>345600</size>
+				</item>
+				<item>
+					<dim>120</dim>
+					<offset>2308252</offset>
+					<size>480</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>720</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>720</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>720</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>120</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>469</name>
+			<src>460</src>
+			<dst>469</dst>
+			<weight>
+				<item>
+					<dim>1 1 120 720</dim>
+					<format>Nhwc</format>
+					<offset>2308732</offset>
+					<size>345600</size>
+				</item>
+				<item>
+					<dim>720</dim>
+					<offset>2654332</offset>
+					<size>2880</size>
+				</item>
+				<item>
+					<dim>3 3 1 720</dim>
+					<format>Nhwc</format>
+					<offset>2657212</offset>
+					<size>25920</size>
+				</item>
+				<item>
+					<dim>720</dim>
+					<offset>2683132</offset>
+					<size>2880</size>
+				</item>
+				<item>
+					<dim>1 1 720 120</dim>
+					<format>Nhwc</format>
+					<offset>2686012</offset>
+					<size>345600</size>
+				</item>
+				<item>
+					<dim>120</dim>
+					<offset>3031612</offset>
+					<size>480</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>720</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>720</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>720</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>120</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>Add1_7946/Fused_Add_</name>
+			<src>469</src>
+			<dst>Add1_7946/Fused_Add_</dst>
+			<weight>
+				<item>
+					<dim>1 1 120 480</dim>
+					<format>Nhwc</format>
+					<offset>3032092</offset>
+					<size>230400</size>
+				</item>
+				<item>
+					<dim>480</dim>
+					<offset>3262492</offset>
+					<size>1920</size>
+				</item>
+				<item>
+					<dim>3 3 1 480</dim>
+					<format>Nhwc</format>
+					<offset>3264412</offset>
+					<size>17280</size>
+				</item>
+				<item>
+					<dim>480</dim>
+					<offset>3281692</offset>
+					<size>1920</size>
+				</item>
+				<item>
+					<dim>1 1 480 360</dim>
+					<format>Nhwc</format>
+					<offset>3283612</offset>
+					<size>691200</size>
+				</item>
+				<item>
+					<dim>360</dim>
+					<offset>3974812</offset>
+					<size>1440</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>480</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>480</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>480</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>360</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>482/Fused_Add_</name>
+			<src>Add1_7946/Fused_Add_</src>
+			<dst>482/Fused_Add_</dst>
+			<weight>
+				<item>
+					<dim>3 3 1 360</dim>
+					<format>Nhwc</format>
+					<offset>3976252</offset>
+					<size>12960</size>
+				</item>
+				<item>
+					<dim>360</dim>
+					<offset>3989212</offset>
+					<size>1440</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>360</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<group>360</group>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>485</name>
+			<src>482/Fused_Add_</src>
+			<dst>485</dst>
+			<weight>
+				<item>
+					<dim>1 1 360 36</dim>
+					<format>Nhwc</format>
+					<offset>3990652</offset>
+					<size>51840</size>
+				</item>
+				<item>
+					<dim>36</dim>
+					<offset>4042492</offset>
+					<size>144</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>36</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>517</name>
+			<src>485</src>
+			<dst>517</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Reshape</type>
+			<name>525</name>
+			<src>517</src>
+			<dst>525</dst>
+			<reshape>
+				<shape>-1</shape>
+				<axis>1</axis>
+			</reshape>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>478/Fused_Add_</name>
+			<src>Add1_7946/Fused_Add_</src>
+			<dst>478/Fused_Add_</dst>
+			<weight>
+				<item>
+					<dim>3 3 1 360</dim>
+					<format>Nhwc</format>
+					<offset>4042684</offset>
+					<size>12960</size>
+				</item>
+				<item>
+					<dim>360</dim>
+					<offset>4055644</offset>
+					<size>1440</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>360</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<group>360</group>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>481</name>
+			<src>478/Fused_Add_</src>
+			<dst>481</dst>
+			<weight>
+				<item>
+					<dim>1 1 360 18</dim>
+					<format>Nhwc</format>
+					<offset>4057084</offset>
+					<size>25920</size>
+				</item>
+				<item>
+					<dim>18</dim>
+					<offset>4083004</offset>
+					<size>72</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>18</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>488</name>
+			<src>481</src>
+			<dst>488</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Reshape</type>
+			<name>496</name>
+			<src>488</src>
+			<dst>496</dst>
+			<reshape>
+				<shape>-1</shape>
+				<axis>1</axis>
+			</reshape>
+		</item>
+		<item>
+			<type>Reshape</type>
+			<name>507</name>
+			<src>496</src>
+			<dst>507</dst>
+			<reshape>
+				<shape>-1 2</shape>
+				<axis>1</axis>
+			</reshape>
+		</item>
+		<item>
+			<type>Softmax</type>
+			<name>508</name>
+			<src>507</src>
+			<dst>508</dst>
+			<softmax>
+				<axis>2</axis>
+			</softmax>
+		</item>
+		<item>
+			<type>Reshape</type>
+			<name>516</name>
+			<src>508</src>
+			<dst>516</dst>
+			<reshape>
+				<shape>-1</shape>
+				<axis>1</axis>
+			</reshape>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>486/0_port</name>
+			<src>Add1_7946/Fused_Add_</src>
+			<dst>486/0_port</dst>
+			<meta>
+				<type>Shape</type>
+				<version>1</version>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>15257</name>
+			<src>486/0_port</src>
+			<dst>15257</dst>
+			<meta>
+				<type>Cast</type>
+				<alpha>
+					<type>32i</type>
+				</alpha>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>486/ss_0_port/Cast_114604_const</name>
+			<dst>486/ss_0_port/Cast_114604_const</dst>
+			<meta>
+				<type>Const</type>
+				<alpha>
+					<type>64i</type>
+					<shape>1</shape>
+					<i64>2</i64>
+				</alpha>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>486/ss_0_port/Cast_214606_const</name>
+			<dst>486/ss_0_port/Cast_214606_const</dst>
+			<meta>
+				<type>Const</type>
+				<alpha>
+					<type>64i</type>
+					<shape>1</shape>
+					<i64>4</i64>
+				</alpha>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>486/ss_0_port/Cast_314608_const</name>
+			<dst>486/ss_0_port/Cast_314608_const</dst>
+			<meta>
+				<type>Const</type>
+				<alpha>
+					<type>64i</type>
+					<shape>1</shape>
+					<i64>1</i64>
+				</alpha>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>486/ss_0_port</name>
+			<src>15257 486/ss_0_port/Cast_114604_const 486/ss_0_port/Cast_214606_const 486/ss_0_port/Cast_314608_const</src>
+			<dst>486/ss_0_port</dst>
+			<meta>
+				<type>StridedSlice</type>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>15253</name>
+			<src>486/ss_0_port</src>
+			<dst>15253</dst>
+			<meta>
+				<type>Cast</type>
+				<alpha>
+					<type>64i</type>
+				</alpha>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>486/1_port</name>
+			<src>Add1_8474/Fused_Add_</src>
+			<dst>486/1_port</dst>
+			<meta>
+				<type>Shape</type>
+				<version>1</version>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>15259</name>
+			<src>486/1_port</src>
+			<dst>15259</dst>
+			<meta>
+				<type>Cast</type>
+				<alpha>
+					<type>32i</type>
+				</alpha>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>486/ss_1_port/Cast_114616_const</name>
+			<dst>486/ss_1_port/Cast_114616_const</dst>
+			<meta>
+				<type>Const</type>
+				<alpha>
+					<type>64i</type>
+					<shape>1</shape>
+					<i64>2</i64>
+				</alpha>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>486/ss_1_port/Cast_214618_const</name>
+			<dst>486/ss_1_port/Cast_214618_const</dst>
+			<meta>
+				<type>Const</type>
+				<alpha>
+					<type>64i</type>
+					<shape>1</shape>
+					<i64>4</i64>
+				</alpha>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>486/ss_1_port/Cast_314620_const</name>
+			<dst>486/ss_1_port/Cast_314620_const</dst>
+			<meta>
+				<type>Const</type>
+				<alpha>
+					<type>64i</type>
+					<shape>1</shape>
+					<i64>1</i64>
+				</alpha>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>486/ss_1_port</name>
+			<src>15259 486/ss_1_port/Cast_114616_const 486/ss_1_port/Cast_214618_const 486/ss_1_port/Cast_314620_const</src>
+			<dst>486/ss_1_port</dst>
+			<meta>
+				<type>StridedSlice</type>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>15255</name>
+			<src>486/ss_1_port</src>
+			<dst>15255</dst>
+			<meta>
+				<type>Cast</type>
+				<alpha>
+					<type>64i</type>
+				</alpha>
+			</meta>
+		</item>
+		<item>
+			<type>PriorBoxClustered</type>
+			<name>486</name>
+			<src>15253 15255</src>
+			<dst>486</dst>
+			<priorBoxClustered>
+				<widths>9.400000 25.100000 14.700000 34.700001 143.000000 77.400002 128.800003 51.099998 75.599998</widths>
+				<heights>15.000000 39.599998 25.500000 63.200001 227.500000 162.899994 124.500000 105.099998 72.599998</heights>
+				<variance>0.100000 0.100000 0.200000 0.200000</variance>
+				<step>16.000000</step>
+			</priorBoxClustered>
+		</item>
+		<item>
+			<type>DetectionOutput</type>
+			<name>527/sink_port_0</name>
+			<src>525 516 486</src>
+			<dst>527/sink_port_0</dst>
+			<detectionOutput>
+				<numClasses>2</numClasses>
+				<nms>
+					<nmsThreshold>0.450000</nmsThreshold>
+					<topK>200</topK>
+				</nms>
+				<codeType>CenterSize</codeType>
+				<keepTopK>200</keepTopK>
+				<confidenceThreshold>0.020000</confidenceThreshold>
+			</detectionOutput>
+		</item>
+	</layers>
+</network>
+

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<quant>
+	<method>SymmetricNarrowed</method>
+	<truncationQuantile>0.000</truncationQuantile>
+	<imageBegin>0</imageBegin>
+	<imageEnd>100</imageEnd>
+	<depthwiseConvolution>0</depthwiseConvolution>
+	<degenerateConvolution>0</degenerateConvolution>
+	<scaleToConvolution>0</scaleToConvolution>
+	<eltwiseToAdd>1</eltwiseToAdd>
+	<concatCan8i>1</concatCan8i>
+	<innerProductWeightMin>1024</innerProductWeightMin>
+	<skippedLayers></skippedLayers>
+</quant>
+

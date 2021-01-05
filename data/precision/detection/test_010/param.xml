@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test>
+	<lower>0</lower>
+	<upper>255</upper>
+	<index>
+		<type>DetectionTextV1</type>
+		<name>_index.txt</name>
+		<ids>
+			<item>
+				<name>0</name>
+				<id>1</id>
+			</item>
+		</ids>
+	</index>
+</test>
+

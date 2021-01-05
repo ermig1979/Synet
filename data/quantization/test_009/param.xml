@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<test>
-	<images>../../images/persons</images>
-	<lower>0</lower>
-	<upper>255</upper>
-</test>
-

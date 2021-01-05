@@ -1,0 +1,1118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network>
+	<version>1</version>
+	<name>cnn_fd_004_sq_light_ssd</name>
+	<layers>
+		<item>
+			<type>Input</type>
+			<name>data</name>
+			<dst>data</dst>
+			<input>
+				<shape>
+					<item>
+						<dim>1 300 300 3</dim>
+						<format>Nhwc</format>
+					</item>
+				</shape>
+			</input>
+		</item>
+		<item>
+			<type>Scale</type>
+			<name>Scale1/Mul_/FusedScaleShift_</name>
+			<src>data</src>
+			<dst>data</dst>
+			<weight>
+				<item>
+					<dim>3</dim>
+					<offset>0</offset>
+					<size>12</size>
+				</item>
+				<item>
+					<dim>3</dim>
+					<offset>12</offset>
+					<size>12</size>
+				</item>
+			</weight>
+			<scale>
+				<biasTerm>1</biasTerm>
+			</scale>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>Convolution1</name>
+			<src>data</src>
+			<dst>Convolution1</dst>
+			<weight>
+				<item>
+					<dim>7 7 3 32</dim>
+					<format>Nhwc</format>
+					<offset>24</offset>
+					<size>18816</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>18840</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>32</outputNum>
+				<kernel>7 7</kernel>
+				<pad>3 3 3 3</pad>
+				<stride>2 2</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Pooling</type>
+			<name>Pooling1</name>
+			<src>Convolution1</src>
+			<dst>Pooling1</dst>
+			<pooling>
+				<method>Max</method>
+				<kernel>3 3</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>2 2</stride>
+			</pooling>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire2/squeeze1x1</name>
+			<src>Pooling1</src>
+			<dst>fire2/squeeze1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 32 8</dim>
+					<format>Nhwc</format>
+					<offset>18968</offset>
+					<size>1024</size>
+				</item>
+				<item>
+					<dim>8</dim>
+					<offset>19992</offset>
+					<size>32</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>8</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire2/expand3x3</name>
+			<src>fire2/squeeze1x1</src>
+			<dst>fire2/expand3x3</dst>
+			<weight>
+				<item>
+					<dim>3 3 8 32</dim>
+					<format>Nhwc</format>
+					<offset>20024</offset>
+					<size>9216</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>29240</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>32</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire2/expand1x1</name>
+			<src>fire2/squeeze1x1</src>
+			<dst>fire2/expand1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 8 32</dim>
+					<format>Nhwc</format>
+					<offset>29368</offset>
+					<size>1024</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>30392</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>32</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Concat</type>
+			<name>Concat1</name>
+			<src>fire2/expand3x3 fire2/expand1x1</src>
+			<dst>Concat1</dst>
+			<concat>
+				<axis>3</axis>
+			</concat>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire3/squeeze1x1</name>
+			<src>Concat1</src>
+			<dst>fire3/squeeze1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 8</dim>
+					<format>Nhwc</format>
+					<offset>30520</offset>
+					<size>2048</size>
+				</item>
+				<item>
+					<dim>8</dim>
+					<offset>32568</offset>
+					<size>32</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>8</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire3/expand3x3</name>
+			<src>fire3/squeeze1x1</src>
+			<dst>fire3/expand3x3</dst>
+			<weight>
+				<item>
+					<dim>3 3 8 32</dim>
+					<format>Nhwc</format>
+					<offset>32600</offset>
+					<size>9216</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>41816</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>32</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire3/expand1x1</name>
+			<src>fire3/squeeze1x1</src>
+			<dst>fire3/expand1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 8 32</dim>
+					<format>Nhwc</format>
+					<offset>41944</offset>
+					<size>1024</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>42968</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>32</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Concat</type>
+			<name>Concat2</name>
+			<src>fire3/expand3x3 fire3/expand1x1</src>
+			<dst>Concat2</dst>
+			<concat>
+				<axis>3</axis>
+			</concat>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire4/squeeze1x1</name>
+			<src>Concat2</src>
+			<dst>fire4/squeeze1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 16</dim>
+					<format>Nhwc</format>
+					<offset>43096</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>47192</offset>
+					<size>64</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>16</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire4/expand3x3</name>
+			<src>fire4/squeeze1x1</src>
+			<dst>fire4/expand3x3</dst>
+			<weight>
+				<item>
+					<dim>3 3 16 64</dim>
+					<format>Nhwc</format>
+					<offset>47256</offset>
+					<size>36864</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>84120</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire4/expand1x1</name>
+			<src>fire4/squeeze1x1</src>
+			<dst>fire4/expand1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 16 64</dim>
+					<format>Nhwc</format>
+					<offset>84376</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>88472</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Concat</type>
+			<name>Concat3</name>
+			<src>fire4/expand3x3 fire4/expand1x1</src>
+			<dst>Concat3</dst>
+			<concat>
+				<axis>3</axis>
+			</concat>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire5/squeeze1x1</name>
+			<src>Concat3</src>
+			<dst>fire5/squeeze1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 16</dim>
+					<format>Nhwc</format>
+					<offset>88728</offset>
+					<size>8192</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>96920</offset>
+					<size>64</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>16</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>2 2</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire5/expand3x3</name>
+			<src>fire5/squeeze1x1</src>
+			<dst>fire5/expand3x3</dst>
+			<weight>
+				<item>
+					<dim>3 3 16 64</dim>
+					<format>Nhwc</format>
+					<offset>96984</offset>
+					<size>36864</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>133848</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire5/expand1x1</name>
+			<src>fire5/squeeze1x1</src>
+			<dst>fire5/expand1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 16 64</dim>
+					<format>Nhwc</format>
+					<offset>134104</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>138200</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Concat</type>
+			<name>Concat4</name>
+			<src>fire5/expand3x3 fire5/expand1x1</src>
+			<dst>Concat4</dst>
+			<concat>
+				<axis>3</axis>
+			</concat>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire6/squeeze1x1</name>
+			<src>Concat4</src>
+			<dst>fire6/squeeze1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 24</dim>
+					<format>Nhwc</format>
+					<offset>138456</offset>
+					<size>12288</size>
+				</item>
+				<item>
+					<dim>24</dim>
+					<offset>150744</offset>
+					<size>96</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>24</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire6/expand3x3</name>
+			<src>fire6/squeeze1x1</src>
+			<dst>fire6/expand3x3</dst>
+			<weight>
+				<item>
+					<dim>3 3 24 96</dim>
+					<format>Nhwc</format>
+					<offset>150840</offset>
+					<size>82944</size>
+				</item>
+				<item>
+					<dim>96</dim>
+					<offset>233784</offset>
+					<size>384</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>96</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire6/expand1x1</name>
+			<src>fire6/squeeze1x1</src>
+			<dst>fire6/expand1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 24 96</dim>
+					<format>Nhwc</format>
+					<offset>234168</offset>
+					<size>9216</size>
+				</item>
+				<item>
+					<dim>96</dim>
+					<offset>243384</offset>
+					<size>384</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>96</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Concat</type>
+			<name>Concat5</name>
+			<src>fire6/expand3x3 fire6/expand1x1</src>
+			<dst>Concat5</dst>
+			<concat>
+				<axis>3</axis>
+			</concat>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire7/squeeze1x1</name>
+			<src>Concat5</src>
+			<dst>fire7/squeeze1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 192 24</dim>
+					<format>Nhwc</format>
+					<offset>243768</offset>
+					<size>18432</size>
+				</item>
+				<item>
+					<dim>24</dim>
+					<offset>262200</offset>
+					<size>96</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>24</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire7/expand3x3</name>
+			<src>fire7/squeeze1x1</src>
+			<dst>fire7/expand3x3</dst>
+			<weight>
+				<item>
+					<dim>3 3 24 96</dim>
+					<format>Nhwc</format>
+					<offset>262296</offset>
+					<size>82944</size>
+				</item>
+				<item>
+					<dim>96</dim>
+					<offset>345240</offset>
+					<size>384</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>96</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire7/expand1x1</name>
+			<src>fire7/squeeze1x1</src>
+			<dst>fire7/expand1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 24 96</dim>
+					<format>Nhwc</format>
+					<offset>345624</offset>
+					<size>9216</size>
+				</item>
+				<item>
+					<dim>96</dim>
+					<offset>354840</offset>
+					<size>384</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>96</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Concat</type>
+			<name>Concat6</name>
+			<src>fire7/expand3x3 fire7/expand1x1</src>
+			<dst>Concat6</dst>
+			<concat>
+				<axis>3</axis>
+			</concat>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire8/squeeze1x1</name>
+			<src>Concat6</src>
+			<dst>fire8/squeeze1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 192 32</dim>
+					<format>Nhwc</format>
+					<offset>355224</offset>
+					<size>24576</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>379800</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>32</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire8/expand3x3</name>
+			<src>fire8/squeeze1x1</src>
+			<dst>fire8/expand3x3</dst>
+			<weight>
+				<item>
+					<dim>3 3 32 128</dim>
+					<format>Nhwc</format>
+					<offset>379928</offset>
+					<size>147456</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>527384</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>128</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire8/expand1x1</name>
+			<src>fire8/squeeze1x1</src>
+			<dst>fire8/expand1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 32 128</dim>
+					<format>Nhwc</format>
+					<offset>527896</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>544280</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>128</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Concat</type>
+			<name>Concat7</name>
+			<src>fire8/expand3x3 fire8/expand1x1</src>
+			<dst>Concat7</dst>
+			<concat>
+				<axis>3</axis>
+			</concat>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire9/squeeze1x1</name>
+			<src>Concat7</src>
+			<dst>fire9/squeeze1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 32</dim>
+					<format>Nhwc</format>
+					<offset>544792</offset>
+					<size>32768</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>577560</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>32</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>2 2</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire9/expand3x3</name>
+			<src>fire9/squeeze1x1</src>
+			<dst>fire9/expand3x3</dst>
+			<weight>
+				<item>
+					<dim>3 3 32 128</dim>
+					<format>Nhwc</format>
+					<offset>577688</offset>
+					<size>147456</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>725144</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>128</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire9/expand1x1</name>
+			<src>fire9/squeeze1x1</src>
+			<dst>fire9/expand1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 32 128</dim>
+					<format>Nhwc</format>
+					<offset>725656</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>742040</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>128</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Concat</type>
+			<name>Concat8</name>
+			<src>fire9/expand3x3 fire9/expand1x1</src>
+			<dst>Concat8</dst>
+			<concat>
+				<axis>3</axis>
+			</concat>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire10/squeeze1x1</name>
+			<src>Concat8</src>
+			<dst>fire10/squeeze1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 48</dim>
+					<format>Nhwc</format>
+					<offset>742552</offset>
+					<size>49152</size>
+				</item>
+				<item>
+					<dim>48</dim>
+					<offset>791704</offset>
+					<size>192</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>48</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire10/expand3x3</name>
+			<src>fire10/squeeze1x1</src>
+			<dst>fire10/expand3x3</dst>
+			<weight>
+				<item>
+					<dim>3 3 48 192</dim>
+					<format>Nhwc</format>
+					<offset>791896</offset>
+					<size>331776</size>
+				</item>
+				<item>
+					<dim>192</dim>
+					<offset>1123672</offset>
+					<size>768</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>192</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire10/expand1x1</name>
+			<src>fire10/squeeze1x1</src>
+			<dst>fire10/expand1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 48 192</dim>
+					<format>Nhwc</format>
+					<offset>1124440</offset>
+					<size>36864</size>
+				</item>
+				<item>
+					<dim>192</dim>
+					<offset>1161304</offset>
+					<size>768</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>192</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Concat</type>
+			<name>Concat9</name>
+			<src>fire10/expand3x3 fire10/expand1x1</src>
+			<dst>Concat9</dst>
+			<concat>
+				<axis>3</axis>
+			</concat>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire11/squeeze1x1</name>
+			<src>Concat9</src>
+			<dst>fire11/squeeze1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 384 48</dim>
+					<format>Nhwc</format>
+					<offset>1162072</offset>
+					<size>73728</size>
+				</item>
+				<item>
+					<dim>48</dim>
+					<offset>1235800</offset>
+					<size>192</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>48</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire11/expand3x3</name>
+			<src>fire11/squeeze1x1</src>
+			<dst>fire11/expand3x3</dst>
+			<weight>
+				<item>
+					<dim>3 3 48 192</dim>
+					<format>Nhwc</format>
+					<offset>1235992</offset>
+					<size>331776</size>
+				</item>
+				<item>
+					<dim>192</dim>
+					<offset>1567768</offset>
+					<size>768</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>192</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire11/expand1x1</name>
+			<src>fire11/squeeze1x1</src>
+			<dst>fire11/expand1x1</dst>
+			<weight>
+				<item>
+					<dim>1 1 48 192</dim>
+					<format>Nhwc</format>
+					<offset>1568536</offset>
+					<size>36864</size>
+				</item>
+				<item>
+					<dim>192</dim>
+					<offset>1605400</offset>
+					<size>768</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>192</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Concat</type>
+			<name>Concat10</name>
+			<src>fire11/expand3x3 fire11/expand1x1</src>
+			<dst>Concat10</dst>
+			<concat>
+				<axis>3</axis>
+			</concat>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fc7_mbox_loc</name>
+			<src>Concat10</src>
+			<dst>fc7_mbox_loc</dst>
+			<weight>
+				<item>
+					<dim>3 3 384 36</dim>
+					<format>Nhwc</format>
+					<offset>1606168</offset>
+					<size>497664</size>
+				</item>
+				<item>
+					<dim>36</dim>
+					<offset>2103832</offset>
+					<size>144</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>36</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>fc7_mbox_loc_perm</name>
+			<src>fc7_mbox_loc</src>
+			<dst>fc7_mbox_loc_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>fc7_mbox_loc_flat</name>
+			<src>fc7_mbox_loc_perm</src>
+			<dst>fc7_mbox_loc_flat</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fc7_mbox_conf</name>
+			<src>Concat10</src>
+			<dst>fc7_mbox_conf</dst>
+			<weight>
+				<item>
+					<dim>3 3 384 18</dim>
+					<format>Nhwc</format>
+					<offset>2103976</offset>
+					<size>248832</size>
+				</item>
+				<item>
+					<dim>18</dim>
+					<offset>2352808</offset>
+					<size>72</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>18</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>fc7_mbox_conf_perm</name>
+			<src>fc7_mbox_conf</src>
+			<dst>fc7_mbox_conf_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>fc7_mbox_conf_flat</name>
+			<src>fc7_mbox_conf_perm</src>
+			<dst>fc7_mbox_conf_flat</dst>
+		</item>
+		<item>
+			<type>Reshape</type>
+			<name>mbox_conf_reshape</name>
+			<src>fc7_mbox_conf_flat</src>
+			<dst>mbox_conf_reshape</dst>
+			<reshape>
+				<shape>-1 2</shape>
+				<axis>1</axis>
+			</reshape>
+		</item>
+		<item>
+			<type>Softmax</type>
+			<name>mbox_conf_softmax</name>
+			<src>mbox_conf_reshape</src>
+			<dst>mbox_conf_softmax</dst>
+			<softmax>
+				<axis>2</axis>
+			</softmax>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>mbox_conf_flatten</name>
+			<src>mbox_conf_softmax</src>
+			<dst>mbox_conf_flatten</dst>
+		</item>
+		<item>
+			<type>PriorBoxClustered</type>
+			<name>fc7_mbox_priorbox</name>
+			<src>Concat10 data</src>
+			<dst>fc7_mbox_priorbox</dst>
+			<priorBoxClustered>
+				<widths>9.400000 25.100000 14.700000 34.700001 143.000000 77.400002 128.800003 51.099998 75.599998</widths>
+				<heights>15.000000 39.599998 25.500000 63.200001 227.500000 162.899994 124.500000 105.099998 72.599998</heights>
+				<variance>0.100000 0.100000 0.200000 0.200000</variance>
+				<step>16.000000</step>
+			</priorBoxClustered>
+		</item>
+		<item>
+			<type>DetectionOutput</type>
+			<name>detection_out</name>
+			<src>fc7_mbox_loc_flat mbox_conf_flatten fc7_mbox_priorbox</src>
+			<dst>detection_out</dst>
+			<detectionOutput>
+				<numClasses>2</numClasses>
+				<nms>
+					<nmsThreshold>0.450000</nmsThreshold>
+					<topK>400</topK>
+				</nms>
+				<codeType>CenterSize</codeType>
+				<keepTopK>200</keepTopK>
+				<confidenceThreshold>0.010000</confidenceThreshold>
+			</detectionOutput>
+		</item>
+	</layers>
+</network>
+
