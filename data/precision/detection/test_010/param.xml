@@ -2,6 +2,10 @@
 <test>
 	<lower>0</lower>
 	<upper>255</upper>
+	<detection>
+		<confidence>0.40</confidence>
+		<overlap>0.45</overlap>
+	</detection>
 	<index>
 		<type>DetectionTextV1</type>
 		<name>_index.txt</name>
