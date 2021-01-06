@@ -92,23 +92,11 @@ namespace Test
                 if (!ReadNetwork(model, weight, param.model() == "onnx"))
                     return false;
 
-                _inputNames.clear();
-                InferenceEngine::InputsDataMap inputsInfo = _ieNetwork->getInputsInfo();
-                for (InferenceEngine::InputsDataMap::iterator it = inputsInfo.begin(); it != inputsInfo.end(); ++it)
-                    _inputNames.push_back(it->first);
+                if (!InitInput(param))
+                    return false;
 
-                _outputNames.clear();
-                if (param.output().size())
-                {
-                    for (size_t i = 0; i < param.output().size(); ++i)
-                        _outputNames.push_back(param.output()[i].name());
-                }
-                else
-                {
-                    InferenceEngine::OutputsDataMap outputsInfo = _ieNetwork->getOutputsInfo();
-                    for (InferenceEngine::OutputsDataMap::iterator it = outputsInfo.begin(); it != outputsInfo.end(); ++it)
-                        _outputNames.push_back(it->first);
-                }
+                if (!InitOutput(param))
+                    return false;
 
                 AddInterimOutput(options);
 
@@ -270,6 +258,60 @@ namespace Test
             }            
             _ieCore = std::make_shared<InferenceEngine::Core>();
             _ieNetwork = std::make_shared<InferenceEngine::CNNNetwork>(_ieCore->ReadNetwork(dst, bin));
+            return true;
+        }
+
+        bool InitInput(const TestParam& param)
+        {
+            _inputNames.clear();
+            if (param.input().size())
+            {
+                typedef InferenceEngine::ICNNNetwork::InputShapes InputShapes;
+                InputShapes shapes = _ieNetwork->getInputShapes();
+                if (shapes.size() != param.input().size())
+                {
+                    std::cout << "Incorrect input count :" << param.input().size() << std::endl;
+                    return false;
+                }
+                for (size_t i = 0; i < param.input().size(); ++i)
+                {
+                    const String& name = param.input()[i].name();
+                    _inputNames.push_back(name);
+                    if (shapes.find(name) == shapes.end())
+                    {
+                        std::cout << "Input with name '" << name << "' is not exist! " << std::endl;
+                        return false;
+                    }
+                    Shape & shape = shapes[name];
+                    shape.clear();
+                    for (size_t j = 0; j < param.input()[i].shape().size(); ++j)
+                        shape.push_back(param.input()[i].shape()[j].size());
+                }
+                _ieNetwork->reshape(shapes);
+            }
+            else
+            {
+                InferenceEngine::InputsDataMap inputsInfo = _ieNetwork->getInputsInfo();
+                for (InferenceEngine::InputsDataMap::iterator it = inputsInfo.begin(); it != inputsInfo.end(); ++it)
+                    _inputNames.push_back(it->first);
+            }
+            return true;
+        }
+
+        bool InitOutput(const TestParam& param)
+        {
+            _outputNames.clear();
+            if (param.output().size())
+            {
+                for (size_t i = 0; i < param.output().size(); ++i)
+                    _outputNames.push_back(param.output()[i].name());
+            }
+            else
+            {
+                InferenceEngine::OutputsDataMap outputsInfo = _ieNetwork->getOutputsInfo();
+                for (InferenceEngine::OutputsDataMap::iterator it = outputsInfo.begin(); it != outputsInfo.end(); ++it)
+                    _outputNames.push_back(it->first);
+            }
             return true;
         }
 

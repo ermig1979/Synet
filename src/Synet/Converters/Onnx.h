@@ -102,6 +102,8 @@ namespace Synet
             for (size_t i = 0; i < nodes.size(); ++i)
             {
                 const ngraph::Node& node = *nodes[i];
+                //node.write_description(std::cout, 1) << std::endl;
+
                 LayerParam layer;
                 if(!ConvertNodeAny(node, layer))
                     return ErrorMessage(node);
@@ -113,6 +115,8 @@ namespace Synet
                     return ErrorMessage(node);
                 if (type == "BatchNormInference" && !ConvertNodeBatchNormInference(node, network.layers(), original, layer, reordered))
                     return ErrorMessage(node);
+                if (type == "Clamp" && !ConvertNodeClamp(node, layer))
+                    return ErrorMessage(node);
                 if (type == "Concat" && !ConvertNodeConcat(node, trans, network.layers(), layer))
                     return ErrorMessage(node);
                 if (type == "Constant" && !ConvertNodeConstant(node, trans, layer, original, reordered))
@@ -120,6 +124,8 @@ namespace Synet
                 if (type == "Convolution" && !ConvertNodeConvolution(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(node);
                 if (type == "Gather" && !ConvertNodeGather(node, layer))
+                    return ErrorMessage(node);
+                if (type == "GroupConvolution" && !ConvertNodeGroupConvolution(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(node);
                 if (type == "MatMul" && !ConvertNodeMatMul(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(node);
@@ -137,6 +143,8 @@ namespace Synet
                     return ErrorMessage(node);
                 if (type == "Result" && !ConvertNodeResult(node, layer))
                     return ErrorMessage(node);
+                if (type == "ShapeOf" && !ConvertNodeShapeOf(node, layer))
+                    return ErrorMessage(node);
                 if (type == "Sigmoid" && !ConvertNodeSigmoid(node, layer))
                     return ErrorMessage(node);
                 if (type == "Unsqueeze" && !ConvertNodeUnsqueeze(node, network.layers(), original, layer))
@@ -149,11 +157,11 @@ namespace Synet
                 if (layer.type() == LayerTypeUnknown)
                 {
                     NotImplemented(node, layer);
-                    std::cout << "Not implemented layer : name = " << layer.name() << " ; type = " << type << std::endl;
+                    std::cout << "Not implemented layer : ";
+                    node.write_description(std::cout, 1) << std::endl;
                 }
 #endif
                 network.layers().push_back(layer);
-                //node.write_description(std::cout, 1) << std::endl;
             }
 
             if (!RemoveUnusedConst(network.layers()))
@@ -181,11 +189,19 @@ namespace Synet
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
-            Shape src0 = node.get_input_shape(0);
-            Shape src1 = node.get_input_shape(1);
+            Shape src0 = GetInputShape(node, 0);
+            Shape src1 = GetInputShape(node, 1);
             const LayerParam* second = GetLayer(layers, layer.src()[1]);
             if (second == NULL)
                 return false;
+            if (second->type() == LayerTypeReshape && second->src().size() == 1)
+            {
+                const LayerParam* prev = GetLayer(layers, second->src()[0]);
+                if (prev == NULL)
+                    return false;
+                if (prev->type() == LayerTypeConst && TensorSize(src0) >= TensorSize(src1))
+                    second = prev;
+            }
             if (second->type() == LayerTypeConst && TensorSize(src0) >= TensorSize(src1))
             {
                 if (TensorSize(src1) == 1)
@@ -222,7 +238,7 @@ namespace Synet
             layer.pooling().pad() = Shp(
                 ap->get_pads_begin()[0], ap->get_pads_begin()[1],
                 ap->get_pads_end()[0], ap->get_pads_end()[1]);
-            const Shape & out = node.get_output_shape(0);
+            const Shape & out = GetOutputShape(node, 0);
             if (out[2] == 1 && out[3] == 1 && layer.pooling().stride() == Shp(1, 1))
                 layer.pooling().globalPooling() = true;
             layer.src().resize(1);
@@ -265,6 +281,15 @@ namespace Synet
                 scale[c] = gamma[c] / sqrt(var[c] + eps);
                 shift[c] = -scale[c] * mean[c] + beta[c];
             }
+            return true;
+        }
+
+        bool ConvertNodeClamp(const ngraph::Node& node, LayerParam& layer)
+        {
+            const ngraph::op::v0::Clamp* clamp = (ngraph::op::v0::Clamp*)&node;
+            layer.type() = Synet::LayerTypeRestrictRange;
+            layer.restrictRange().lower() = (float)clamp->get_min();
+            layer.restrictRange().upper() = (float)clamp->get_max();
             return true;
         }
 
@@ -336,6 +361,7 @@ namespace Synet
                 break;
             }
             case ngraph::element::Type_t::i64:
+            case ngraph::element::Type_t::u64:
             {
                 layer.type() = Synet::LayerTypeMeta;
                 layer.meta().type() = Synet::MetaTypeConst;
@@ -373,22 +399,10 @@ namespace Synet
                 return false;
             const Shape& shape = second->weight()[0].dim();
             layer.weight() = second->weight();
-            if (String(node.get_type_name()) == "Convolution")
-            {
-                if (!CheckDims(shape, 4, "convolution weight"))
-                    return false;
-                layer.convolution().kernel() = Shape({ shape[2], shape[3] });
-                layer.convolution().outputNum() = (uint32_t)shape[0];
-            }
-            else
-            {
-                if (!CheckDims(shape, 5, "convolution weight"))
-                    return false;
-                layer.convolution().kernel() = Shape({ shape[3], shape[4] });
-                layer.convolution().group() = (uint32_t)shape[0];
-                layer.convolution().outputNum() = (uint32_t)(shape[0] * shape[1]);
-                layer.weight()[0].dim() = Shape({ shape[0] * shape[1] , shape[2], shape[3], shape[4] });
-            }
+            if (!CheckDims(shape, 4, "convolution weight"))
+                return false;
+            layer.convolution().kernel() = Shape({ shape[2], shape[3] });
+            layer.convolution().outputNum() = (uint32_t)shape[0];
             layer.src().resize(1);
             if (trans)
                 return ReorderWeight(original, Shape(), layer, reordered);
@@ -399,6 +413,39 @@ namespace Synet
         {
             layer.type() = Synet::LayerTypeMeta;
             layer.meta().type() = Synet::MetaTypeGather;
+            return true;
+        }
+
+        bool ConvertNodeGroupConvolution(const ngraph::Node& node, bool trans, const LayerParams& layers, const Vector& original, LayerParam& layer, Vector& reordered)
+        {
+            layer.type() = Synet::LayerTypeConvolution;
+            layer.convolution().biasTerm() = false;
+            const ngraph::op::v1::GroupConvolution* gc = (ngraph::op::v1::GroupConvolution*)&node;
+            layer.convolution().stride() = gc->get_strides();
+            layer.convolution().dilation() = gc->get_dilations();
+            if (gc->get_auto_pad() == ngraph::op::PadType::SAME_UPPER)
+                layer.convolution().autoPad() = true;
+            layer.convolution().pad() = Shp(
+                gc->get_pads_begin()[0], gc->get_pads_begin()[1],
+                gc->get_pads_end()[0], gc->get_pads_end()[1]);
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeReshape)
+                return false;
+            const LayerParam* previous = GetLayer(layers, second->src()[0]);
+            if (previous == NULL || previous->type() != LayerTypeConst)
+                return false;
+            const Shape& shape = previous->weight()[0].dim();
+            layer.weight() = previous->weight();
+            if (!CheckDims(shape, 4, "group convolution weight"))
+                return false;
+            layer.convolution().kernel() = Shape({ shape[2], shape[3] });
+            layer.convolution().group() = (uint32_t)shape[0];
+            layer.convolution().outputNum() = (uint32_t)shape[0];
+            layer.src().resize(1);
+            if (trans)
+                return ReorderWeight(original, Shape(), layer, reordered);
             return true;
         }
 
@@ -431,7 +478,7 @@ namespace Synet
                     return true;
                 if (first->type() != LayerTypeReshape)
                     return false;
-                Shape origin = node.get_input_node_ptr(0)->get_input_shape(0);
+                Shape origin = GetInputShape(*node.get_input_node_ptr(0), 0);
                 return ReorderWeight(original, origin, layer, reordered);
             }
             return true;
@@ -500,7 +547,7 @@ namespace Synet
             layer.input().shape().resize(node.get_output_size());
             for (size_t i = 0; i < node.get_output_size(); ++i)
             {
-                Shape shape = node.get_output_shape(i);
+                Shape shape = GetOutputShape(node, i);
                 if (trans)
                 {
                     if (shape.size() == 4)
@@ -589,6 +636,14 @@ namespace Synet
             return true;
         }
 
+        bool ConvertNodeShapeOf(const ngraph::Node& node, LayerParam& layer)
+        {
+            layer.type() = LayerTypeMeta;
+            layer.meta().type() = MetaTypeShape;
+            layer.meta().version() = 1;
+            return true;
+        }
+
         bool ConvertNodeSigmoid(const ngraph::Node& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeSigmoid;
@@ -627,6 +682,28 @@ namespace Synet
         }
 
         //---------------------------------------------------------------------
+
+        static Shape GetOutputShape(const ngraph::Node& node, size_t index)
+        {
+            const ngraph::PartialShape & ps = node.get_output_partial_shape(index);
+            if (ps.is_static())
+                return ps.get_shape();
+            Shape shape = ps.get_min_shape();
+            if (shape.size() && shape[0] == 0)
+                shape[0] = 1;
+            return shape;
+        }
+
+        static Shape GetInputShape(const ngraph::Node& node, size_t index)
+        {
+            const ngraph::PartialShape& ps = node.get_input_partial_shape(index);
+            if (ps.is_static())
+                return ps.get_shape();
+            Shape shape = ps.get_min_shape();
+            if (shape.size() && shape[0] == 0)
+                shape[0] = 1;
+            return shape;
+        }
 
         static void NotImplemented(const ngraph::Node & node, LayerParam& layer)
         {

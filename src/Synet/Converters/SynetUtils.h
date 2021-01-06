@@ -163,21 +163,35 @@ namespace Synet
             return PermutedToNchw(layers, start, checkInnerProduct, checkPriorBox);
         }
 
+        static size_t UserCount(const LayerParams& layers, size_t index)
+        {
+            size_t users = 0;
+            for (size_t j = index + 1; j < layers.size(); ++j)
+                for (size_t k = 0; k < layers[j].src().size(); ++k)
+                    if (layers[j].src()[k] == layers[index].name())
+                        users++;
+            return users;
+        }
+
         static bool RemoveUnusedConst(LayerParams& layers)
         {
             for (size_t i = 0; i < layers.size(); ++i)
             {
-                const LayerParam& layer = layers[i];
-                if (layer.type() == LayerTypeConst || (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeConst))
+                const LayerParam& curr = layers[i];
+                if (curr.type() == LayerTypeConst || (curr.type() == LayerTypeMeta && curr.meta().type() == MetaTypeConst))
                 {
-                    const String& name = layer.name();
-                    bool unused = true;
-                    for (size_t j = i + 1; j < layers.size() && unused; ++j)
-                        for (size_t k = 0; k < layers[j].src().size() && unused; ++k)
-                            if (layers[j].src()[k] == name)
-                                unused = false;
-                    if (unused)
+                    if (UserCount(layers, i) == 0)
                         layers.erase(layers.begin() + i), i--;
+                    continue;
+                }
+                if (i && curr.type() == LayerTypeReshape)
+                {
+                    const LayerParam& prev = layers[i - 1];
+                    if (prev.type() == LayerTypeConst && curr.src().size() == 1 && curr.src()[0] == prev.name())
+                    {
+                        if (UserCount(layers, i) == 0 && UserCount(layers, i - 1) == 1)
+                            layers.erase(layers.begin() + i - 1, layers.begin() + i + 1), i -= 2;
+                    }
                 }
             }
             return true;
