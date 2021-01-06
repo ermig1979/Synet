@@ -222,7 +222,7 @@ namespace Synet
             {
                 layer.type() = Synet::LayerTypeEltwise;
                 layer.eltwise().operation() = EltwiseOperationTypeSum;
-                if (TensorSize(src0) < TensorSize(src1))
+                if (TensorSize(src0) < TensorSize(src1) && src0.size() <= src1.size())
                     std::swap(layer.src()[0], layer.src()[1]);
             }
             return true;

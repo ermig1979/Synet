@@ -99,7 +99,7 @@ namespace Synet
             } 
             _bias = 0;
             _scale = 0; 
-            if (src.size() == 2 && src[0]->Shape() != src[1]->Shape())
+            if (src.size() == 2 && src[0]->Shape() != src[1]->Shape() && src[0]->Size() != src[1]->Size())
             {
                 if (_operation == EltwiseOperationTypeProduct && src[0]->Count() == 4)
                 {
@@ -148,7 +148,7 @@ namespace Synet
                 _src.resize(src.size());
                 for (size_t i = 0; i < src.size(); ++i)
                 {
-                    assert(src[i]->Shape() == src[0]->Shape());
+                    assert(src[i]->Size() == src[0]->Size());
                     _src[i] = src[i]->CpuData();
                 }
                 _batch = 1, _channels = 1, _spatial = src[0]->Size();
