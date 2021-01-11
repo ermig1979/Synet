@@ -7,7 +7,7 @@ Darknet tests
 | darknet | Darknet reference | [cfg](https://github.com/pjreddie/darknet/blob/master/cfg/darknet.cfg) | [80 MB](https://pjreddie.com/media/files/darknet.weights) |
 
 ----------------------
-Inference Engine tests
+OpenVINO tests
 ======================
 
 | Name | Description | Type | IE version | Xml | Bin |
@@ -30,6 +30,14 @@ Inference Engine tests
 | test_013f | Person, vehicle, bike detection | FP32 | 10 | [xml](https://download.01.org/opencv/2021/openvinotoolkit/2021.1/open_model_zoo/models_bin/1/person-vehicle-bike-detection-crossroad-1016/FP32/person-vehicle-bike-detection-crossroad-1016.xml) | [11.0 MB](https://download.01.org/opencv/2021/openvinotoolkit/2021.1/open_model_zoo/models_bin/1/person-vehicle-bike-detection-crossroad-1016/FP32/person-vehicle-bike-detection-crossroad-1016.xml) |
 | test_014f | Licence plate recognition | FP32 | 10 | [xml](https://download.01.org/opencv/2021/openvinotoolkit/2021.1/open_model_zoo/models_bin/2/license-plate-recognition-barrier-0001/FP32/license-plate-recognition-barrier-0001.xml) | [4.6 MB](https://download.01.org/opencv/2021/openvinotoolkit/2021.1/open_model_zoo/models_bin/2/license-plate-recognition-barrier-0001/FP32/license-plate-recognition-barrier-0001.bin) |
 | test_015f | Licence plate detection | FP32 | 10 | [xml](https://download.01.org/opencv/2021/openvinotoolkit/2021.1/open_model_zoo/models_bin/2/vehicle-license-plate-detection-barrier-0106/FP32/vehicle-license-plate-detection-barrier-0106.xml) | [2.6 MB](https://download.01.org/opencv/2021/openvinotoolkit/2021.1/open_model_zoo/models_bin/2/vehicle-license-plate-detection-barrier-0106/FP32/vehicle-license-plate-detection-barrier-0106.bin) |
+
+----------------------
+ONNX tests
+======================
+
+| Name | Description | Architecture | Original |
+| --- | --- | --- | --- |
+| test_000 | Object classification | MobileNet-V2 | [13.6 MB](https://github.com/onnx/models/blob/master/vision/classification/mobilenet/model/mobilenetv2-7.onnx) |
 
 ----------------------
 Quantization tests
