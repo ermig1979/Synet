@@ -202,7 +202,7 @@ namespace Synet
                 if (prev->type() == LayerTypeConst && TensorSize(src0) >= TensorSize(src1))
                     second = prev;
             }
-            if (second->type() == LayerTypeConst && TensorSize(src0) >= TensorSize(src1))
+            if (second->type() == LayerTypeConst && (TensorSize(src0) >= TensorSize(src1) || src0.size() >= src1.size()))
             {
                 if (TensorSize(src1) == 1)
                 {
@@ -351,6 +351,8 @@ namespace Synet
                 size_t offset = original.size();
                 layer.weight().resize(1);
                 layer.weight()[0].dim() = tensor.get_shape();
+                if (layer.weight()[0].dim().empty())
+                    layer.weight()[0].dim() = Shp(1);
                 layer.weight()[0].offset() = offset * sizeof(float);
                 layer.weight()[0].type() = TensorType32f;
                 layer.weight()[0].size() = tensor.size();
@@ -509,7 +511,9 @@ namespace Synet
                 return false;
             if (first->type() == LayerTypeConst || second->type() == LayerTypeConst)
             {
-                if (first->type() == LayerTypeConst)
+                if (first->type() == LayerTypeConst && 
+                    (second->type() != LayerTypeConst || 
+                    TensorSize(first->weight()[0].dim()) == 1))
                 {
                     std::swap(layer.src()[0], layer.src()[1]);
                     std::swap(first, second);
@@ -530,6 +534,12 @@ namespace Synet
                         return false;
                 }
                 layer.src().resize(1);
+                if (first->type() == LayerTypeConst && layer.type() == Synet::LayerTypePower && !layer.power.Changed())
+                {
+                    layer.type() = LayerTypeConst;
+                    layer.weight() = first->weight();
+                    layer.src().resize(0);
+                }
             }
             else
             {
