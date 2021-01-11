@@ -56,6 +56,12 @@ TEST inference_engine $1 $2 1 1
 if [ $3 -ne 0 ];then TEST inference_engine $1 $2 1 2; fi
 }
 
+function TEST_O {
+TEST onnx $1 $2 0 1
+TEST onnx $1 $2 1 1
+if [ $3 -ne 0 ];then TEST onnx $1 $2 1 2; fi
+}
+
 function TEST_ALL_D {
 TEST_D test_000 local 1
 }
@@ -80,7 +86,12 @@ TEST_I test_014f local 0
 TEST_I test_015f license_plates 0
 }
 
+function TEST_ALL_O {
+TEST_O test_000 face 1
+}
+
 TEST_ALL_D
 TEST_ALL_I
+TEST_ALL_O
 
 exit

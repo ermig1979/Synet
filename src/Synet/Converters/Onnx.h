@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2020 Yermalayeu Ihar.
+* Copyright (c) 2018-2021 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -43,11 +43,11 @@ namespace Synet
     public:
         bool Convert(const String& srcParamPath, const String& srcGraphPath, bool trans, const String & dstModelPath, const String & dstWeightPath)
         {
-            if (!Synet::FileExist(srcParamPath))
-            {
-                std::cout << "File '" << srcParamPath << "' is not exist!" << std::endl;
-                return false;
-            }
+            //if (!Synet::FileExist(srcParamPath))
+            //{
+            //    std::cout << "File '" << srcParamPath << "' is not exist!" << std::endl;
+            //    return false;
+            //}
 
             if (!Synet::FileExist(srcGraphPath))
             {
@@ -150,7 +150,7 @@ namespace Synet
                 if (type == "Unsqueeze" && !ConvertNodeUnsqueeze(node, network.layers(), original, layer))
                     return ErrorMessage(node);
 
-#if 0
+#if 1
                 if (layer.type() == LayerTypeUnknown)
                     return ErrorMessage(node);
 #else

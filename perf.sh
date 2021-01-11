@@ -76,6 +76,10 @@ TESTS inference_engine test_014f local 0
 TESTS inference_engine test_015f license_plates 0
 }
 
+function TESTS_O {
+TESTS onnx test_000 face 1
+}
+
 function TESTS_Q {
 TESTS quantization test_003 faces 0
 TESTS quantization test_009 persons 0
@@ -83,6 +87,7 @@ TESTS quantization test_009 persons 0
 
 TESTS_D
 TESTS_I
+TESTS_O
 #TESTS_Q
 
 cat $OUT_TEXT

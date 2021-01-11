@@ -9,52 +9,69 @@ The main advantages  of Synet are:
 * Synet is header only, small C++ library.
 * Synet has only one external dependence - [Simd Library](https://github.com/ermig1979/Simd).
 
-Darknet Test project for Linux
+Building of test applications for Linux
 ==============================
-To build test to compare Synet and [Darknet](https://github.com/pjreddie/darknet) for Linux you can run following bash script:
+To build test applications you can run following bash script:
 
     git clone -b master --recurse-submodules -v https://github.com/ermig1979/Synet.git clone
     cd clone
-    ./build.sh darknet
+    ./build.sh
 
-And application `darknet_test` will be created in directory `build`.
-In order to run this test use `./test.sh` bash script (in the file manually uncomment unit test that you need).
+And applications `test_darknet`, `test_inference_engine`, `test_onnx`, `test_precision`, `test_quantization`, `use_face_detection` will be created in directory `build`.
+There is a detail description of these test applications below.
 
-    ./test.sh 
+Darknet test application
+========================
+The test application `test_darknet` is used for [Darknet](https://github.com/pjreddie/darknet) to Synet model conversion:
 
-Inference Engine Test project for Linux
-=======================================
-To build test to compare Synet and [Inference Engine](https://github.com/opencv/dldt) for Linux you can run following bash script:
+    ./build/test_darknet -m convert -fm darknet_model.cfg -fw darknet_weigths.dat -sm synet_model.xml -sw synet_weigths.bin
 
-    git clone -b master --recurse-submodules -v https://github.com/ermig1979/Synet.git clone
-    cd clone
-    ./build.sh inference_engine
-
-And application `inference_engine_test` will be created in directory `build`.
+Also it is used in order to compare performance and accuracy of Darknet and Synet frameworks.
 There are several test scripts:
 
 * For manual testing you can use `./test.sh` (in the file you have to manually uncomment unit test that you need).
 * Script `./check.sh` checks correctness of all tests.
-* Script `./perf.sh` measures performance of Synet compare to Inference Engine.
+* Script `./perf.sh` measures performance of Synet compare to Darknet.
 
-Use samples for Linux
-=======================================
-To build use samples for Linux you can run following bash script:
 
-    ./build.sh use_samples
-
-And application `use_face_detection` will be created in directory `build`.
-
-Darknet model conversion
+OpenVINO test application
 ========================
-In order to convert [Darknet](https://github.com/pjreddie/darknet) trained model to Synet model you can use `darknet_test` application:
+The test application `test_inference_engine` is used for [OpenVINO](https://github.com/openvinotoolkit/openvino) to Synet model conversion:
 
-	./build/darknet_test -m convert -fm darknet_model.cfg -fw darknet_weigths.dat -sm synet_model.xml -sw synet_weigths.bin
+    /build/test_inference_engine -m convert -fm ie_model.xml -fw ie_weigths.bin -sm synet_model.xml -sw synet_weigths.bin
 
-Other model conversion
-======================
-In order to convert [Caffe](https://github.com/BVLC/caffe), [Tensorflow](https://github.com/tensorflow/tensorflow), [MXNet](https://mxnet.apache.org) or [ONNX](https://onnx.ai) trained models to Synet format you previously need to convert they to [Inference Engine](https://github.com/opencv/dldt) models format.
-Then use `inference_engine_test` application:
+Also it is used in order to compare performance and accuracy of OpenVINO and Synet frameworks.
+There are several test scripts:
 
-	./build/inference_engine_test -m convert -fm ie_model.xml -fw ie_weigths.bin -sm synet_model.xml -sw synet_weigths.bin
+* For manual testing you can use `./test.sh` (in the file you have to manually uncomment unit test that you need).
+* Script `./check.sh` checks correctness of all tests.
+* Script `./perf.sh` measures performance of Synet compare to OpenVINO.
+
+
+ONNX test application
+========================
+The test application `test_onnx` is used for ONNX to Synet model conversion:
+
+    /build/test_onnx -m convert -fw onnx_model.onnx -sm synet_model.xml -sw synet_weigths.bin
+
+Also it is used in order to compare performance and accuracy of OpenVINO (it is used to infer ONNX models) and Synet frameworks.
+There are several test scripts:
+
+* For manual testing you can use `./test.sh` (in the file you have to manually uncomment unit test that you need).
+* Script `./check.sh` checks correctness of all tests.
+* Script `./perf.sh` measures performance of Synet compare to OpenVINO.
+
+Precision test application
+========================
+The precision test application `test_precision` is used for independent accuracy testing of quantized Synet and OpenVINO models.
+There is `./prec.sh` test script (in the file you have to manually uncomment unit test that you need).
+
+Quantization test application
+========================
+The quantization test application `test_quantization` is used for INT8 quantization of FP32 Synet models and testing of them.
+There is `./quant.sh` test script (in the file you have to manually uncomment unit test that you need).
+
+Using samples
+=======================================
+The application `use_face_detection` is an example of using of Synet framework to face detection.
 
