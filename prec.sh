@@ -28,13 +28,13 @@ if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 }
 
 function TEST_FD {
-TEST detection $1 $2 faces $3 _$4.txt 1 $5 $6
+TEST detection $1 $2 faces $3 _$4.txt $5 $6 $7
 }
 
-TEST_FD synet test_003 sy_fp32_v0 all 10 000
-TEST_FD synet test_003 sy_int8_v0 all 10 000
+TEST_FD synet test_003 sy_fp32_v0 all 1 100 001
+TEST_FD synet test_003 sy_int8_v0 all 1 100 001
 
-#TEST_FD synet test_010 sy_fp32_v0 all 10 000
-#TEST_FD synet test_010 sy_int8_v0 all 10 000
+TEST_FD synet test_010 sy_fp32_v0 all 1 100 001
+TEST_FD synet test_010 sy_int8_v0 all 1 100 001
 
 exit
