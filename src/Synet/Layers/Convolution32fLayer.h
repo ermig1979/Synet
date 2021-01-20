@@ -51,6 +51,11 @@ namespace Synet
     protected:
         typedef typename ConvolutionLayer<T>::AlgParam AlgParam;
 
+        virtual String InternalInfo() const
+        {
+            return  String(" fp32") + (_convolution32f.Enable() ? String(" ") + _convolution32f.Info() : String());
+        }
+
         virtual void Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
         {
             const Tensors& weight = this->Weight();

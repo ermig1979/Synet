@@ -120,6 +120,11 @@ namespace Synet
     protected:
         typedef typename MergedConvolutionLayer<T>::AlgParam AlgParam;
 
+        virtual String InternalInfo() const
+        {
+            return String(" fp32") + (_mergedConvolution32f.Enable() ? String(" ") + _mergedConvolution32f.Info() : String());
+        }
+
         virtual void Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
         {
             AlgParam& a = this->_alg;

@@ -61,7 +61,7 @@ namespace Synet
 #endif
         }
 
-        bool Enable()
+        bool Enable() const
         {
             return _context != NULL;
         }
@@ -69,7 +69,7 @@ namespace Synet
         size_t ExternalBufferSize() const 
         {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-            return _context ? ::SimdSynetMergedConvolution32fExternalBufferSize(_context) : 0;
+            return _context ? ::SimdSynetMergedConvolution32fExternalBufferSize(_context) : 1;
 #else
             return 1;
 #endif
@@ -80,7 +80,16 @@ namespace Synet
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
             return _context ? ::SimdSynetMergedConvolution32fInternalBufferSize(_context) : 0;
 #else
-            return 1;
+            return 0;
+#endif
+        }
+
+        String Info() const
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            return _context ? ::SimdSynetMergedConvolution32fInfo(_context) : String();
+#else
+            return String();
 #endif
         }
 
@@ -159,7 +168,7 @@ namespace Synet
         SYNET_INLINE size_t ExternalBufferSize() const
         {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-            return _context ? ::SimdSynetMergedConvolution8iExternalBufferSize(_context) : 0;
+            return _context ? ::SimdSynetMergedConvolution8iExternalBufferSize(_context) : 1;
 #else
             return 1;
 #endif
@@ -170,7 +179,16 @@ namespace Synet
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
             return _context ? ::SimdSynetMergedConvolution8iInternalBufferSize(_context) : 0;
 #else
-            return 1;
+            return 0;
+#endif
+        }
+
+        String Info() const
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            return _context ? ::SimdSynetMergedConvolution8iInfo(_context) : String();
+#else
+            return String();
 #endif
         }
 

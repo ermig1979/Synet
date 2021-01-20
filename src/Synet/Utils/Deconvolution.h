@@ -28,7 +28,7 @@
 
 namespace Synet
 {
-    template <class T>  class Deconvolution32f
+    class Deconvolution32f
     {
     public:
         Deconvolution32f()
@@ -39,12 +39,25 @@ namespace Synet
 
         virtual ~Deconvolution32f()
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdRelease(_context);
+#endif
         }
 
-        typedef void(*Gemm32fNNPtr)(size_t M, size_t N, size_t K, const T * alpha, const T * A, size_t lda, const T * B, size_t ldb, const T * beta, T * C, size_t ldc);
+        typedef void(*Gemm32fNNPtr)(size_t M, size_t N, size_t K, const float * alpha, const float* A, size_t lda, const float* B, size_t ldb, const float* beta, float* C, size_t ldc);
 
         void Init(size_t batch, const ConvParam * conv, Gemm32fNNPtr gemm)
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_batch != batch || _srcH != conv->srcH || _srcW != conv->srcW)
+            {
+                _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
+                if (_context)
+                    ::SimdRelease(_context);
+                _context = ::SimdSynetDeconvolution32fInit(batch, (const SimdConvolutionParameters*)conv, gemm);
+            }
+#endif
         }
 
         bool Enable()
@@ -54,65 +67,49 @@ namespace Synet
 
         size_t ExternalBufferSize() const 
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            return _context ? ::SimdSynetDeconvolution32fExternalBufferSize(_context) : 1;
+#else
             return 1;
+#endif
         }
 
         size_t InternalBufferSize() const
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            return _context ? ::SimdSynetDeconvolution32fInternalBufferSize(_context) : 0;
+#else
             return 0;
+#endif
         }
 
-        void SetParams(const T * weight, int * internal, const T * bias, const T * params)
+        String Info() const
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            return _context ? ::SimdSynetDeconvolution32fInfo(_context) : String();
+#else
+            return String();
+#endif
         }
 
-        void Forward(const T * src, T * buf, T * dst)
+        void SetParams(const float* weight, int * internal, const float * bias, const float * params)
         {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdSynetDeconvolution32fSetParams(_context, weight, (::SimdBool*)internal, bias, params);
+#endif
+        }
+
+        void Forward(const float* src, float* buf, float* dst)
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdSynetDeconvolution32fForward(_context, src, buf, dst);
+#endif
         }
 
     private:
         void * _context;
         size_t _batch, _srcH, _srcW;
     };
-
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-    template<> SYNET_INLINE Deconvolution32f<float>::~Deconvolution32f()
-    {
-        if (_context)
-            ::SimdRelease(_context);
-    }
-
-    template<> SYNET_INLINE void Deconvolution32f<float>::Init(size_t batch, const ConvParam * conv, ::SimdGemm32fNNPtr gemm)
-    {
-        if (_batch != batch || _srcH != conv->srcH || _srcW != conv->srcW)
-        {
-            _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
-            if (_context)
-                ::SimdRelease(_context);
-            _context = ::SimdSynetDeconvolution32fInit(batch, (const SimdConvolutionParameters *)conv, gemm);
-        }
-    }
-
-    template<> SYNET_INLINE size_t Deconvolution32f<float>::ExternalBufferSize() const
-    {
-        return _context ? ::SimdSynetDeconvolution32fExternalBufferSize(_context) : 0;
-    }
-
-    template<> SYNET_INLINE size_t Deconvolution32f<float>::InternalBufferSize() const
-    {
-        return _context ? ::SimdSynetDeconvolution32fInternalBufferSize(_context) : 0;
-    }
-
-    template<> SYNET_INLINE void Deconvolution32f<float>::SetParams(const float * weight, int * internal, const float * bias, const float * params)
-    {
-        if (_context)
-            ::SimdSynetDeconvolution32fSetParams(_context, weight, (::SimdBool*)internal, bias, params);
-    }
-
-    template<> SYNET_INLINE void Deconvolution32f<float>::Forward(const float * src, float * buf, float * dst)
-    {
-        if (_context)
-            ::SimdSynetDeconvolution32fForward(_context, src, buf, dst);
-    }
-#endif
 }

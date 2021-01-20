@@ -134,13 +134,14 @@ namespace Synet
             desc << _alg.batch << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW;
             desc << "-" << _conv.dstC << "x" << _conv.kernelY << "x" << _conv.kernelX;
             desc << "-" << Max(_conv.dilationY, _conv.dilationX) << "-" << Max(_conv.strideY, _conv.strideX);
-            desc << "-" << _conv.group << " " << (this->Is8i() ? "int8" : "fp32");
+            desc << "-" << _conv.group << InternalInfo();
             this->UsePerfStat(desc.str(), Flop());
         }
 
     protected:
 
         virtual void Reshape(const TensorPtr & src, const TensorPtrs& buf, const TensorPtr & dst) = 0;
+        virtual String InternalInfo() const = 0;
 
     protected:
         ConvParam _conv;

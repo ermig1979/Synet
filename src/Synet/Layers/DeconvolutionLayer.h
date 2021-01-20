@@ -170,8 +170,11 @@ namespace Synet
             _srcSize = src[0]->Size(_axis);
             _dstSize = dst[0]->Size(_axis);
             std::stringstream desc;
-            desc << "i=" << _num << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW << " o=" << _conv.dstC;
-            desc << " k=" << _conv.kernelY << " s=" << _conv.strideY << " g=" << _conv.group;
+            desc << _num << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW;
+            desc << "-" << _conv.dstC << "x" << _conv.kernelY << "x" << _conv.kernelX;
+            desc << "-" << Max(_conv.strideY, _conv.strideX) << "-" << _conv.group;
+            if (_deconvolution32f.Enable())
+                desc << " " << _deconvolution32f.Info();
             this->UsePerfStat(desc.str(), Flop());
         }
 
@@ -257,7 +260,7 @@ namespace Synet
         size_t _axis, _num, _srcSize, _dstSize, _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
         float _params[2];
 
-        Deconvolution32f<Type> _deconvolution32f;
+        Deconvolution32f _deconvolution32f;
 
         Tensor _weightT;
     };

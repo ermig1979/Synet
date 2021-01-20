@@ -70,7 +70,7 @@ namespace Synet
         SYNET_INLINE size_t ExternalBufferSize() const
         {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-            return _context ? ::SimdSynetConvolution32fExternalBufferSize(_context) : 0;
+            return _context ? ::SimdSynetConvolution32fExternalBufferSize(_context) : 1;
 #else
             return 1;
 #endif
@@ -83,7 +83,15 @@ namespace Synet
 #else
             return 0;
 #endif
-            return 0;
+        }
+
+        String Info() const
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            return _context ? ::SimdSynetConvolution32fInfo(_context) : String();
+#else
+            return String();
+#endif
         }
 
         SYNET_INLINE void SetParams(const float* weight, int* internal, const float* bias, const float* params)
@@ -161,7 +169,7 @@ namespace Synet
         SYNET_INLINE size_t ExternalBufferSize() const
         {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-            return _context ? ::SimdSynetConvolution8iExternalBufferSize(_context) : 0;
+            return _context ? ::SimdSynetConvolution8iExternalBufferSize(_context) : 1;
 #else
             return 1;
 #endif
@@ -173,6 +181,15 @@ namespace Synet
             return _context ? ::SimdSynetConvolution8iInternalBufferSize(_context) : 0;
 #else
             return 0;
+#endif
+        }
+
+        String Info() const
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            return _context ? ::SimdSynetConvolution8iInfo(_context) : String();
+#else
+            return String();
 #endif
         }
 

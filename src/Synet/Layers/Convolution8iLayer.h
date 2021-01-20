@@ -87,6 +87,15 @@ namespace Synet
     protected:
         typedef typename ConvolutionLayer<T>::AlgParam AlgParam;
 
+        virtual String InternalInfo() const
+        {
+            std::stringstream info;
+            info << " int8-" << (_src8u ? "u" : "f") << (_dst8u ? "u" : "f");
+            if (_convolution8i.Enable())
+                info << " " << _convolution8i.Info();
+            return info.str();
+        }
+
         virtual void Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
         {
             const Tensors& weight = this->Weight();
