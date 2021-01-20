@@ -385,6 +385,17 @@ namespace Test
 #endif
         return String("CPU: ") + cpu + ", Memory: " + mem + " MB";
     }
+
+    inline String MemoryUsageString(size_t usage, size_t count)
+    {
+        double total = usage / (1024.0 * 1024.0);
+        std::stringstream ss;
+        ss << ToString(total, 1);
+        if (count > 1)
+            ss << " / " << count << " = " << ToString(total / count, 1);
+        ss << " MB.";
+        return ss.str();
+    }
 }
 
 #ifdef _MSC_VER

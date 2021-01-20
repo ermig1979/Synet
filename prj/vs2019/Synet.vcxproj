@@ -123,6 +123,7 @@
     <ClInclude Include="..\..\src\Synet\Utils\MergedConvolution.h" />
     <ClInclude Include="..\..\src\Synet\Utils\SetInput.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Statistics.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\StringUtils.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Winograd.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Xml.h" />
   </ItemGroup>

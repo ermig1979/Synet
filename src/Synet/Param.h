@@ -27,6 +27,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Utils/Xml.h"
+#include "Synet/Utils/StringUtils.h"
 
 namespace Synet
 {
@@ -241,94 +242,6 @@ namespace Synet
             xmlParent->AppendNode(xmlCurrent);
         }
     };
-
-    template<class T> SYNET_INLINE  String ValueToString(const T & value)
-    {
-        std::stringstream ss;
-        ss << value;
-        return ss.str();
-    }
-
-    template<> SYNET_INLINE String ValueToString<size_t>(const size_t & value)
-    {
-        return ValueToString((ptrdiff_t)value);
-    }
-
-    template<> SYNET_INLINE String ValueToString<float>(const float & value)
-    {
-        std::stringstream ss;
-        ss << std::fixed << std::setprecision(std::numeric_limits<float>::digits10);
-        ss << value;
-        return ss.str();
-    }
-
-    template<class T> SYNET_INLINE String ValueToString(const std::vector<T> & values)
-    {
-        std::stringstream ss;
-        for (size_t i = 0; i < values.size(); ++i)
-            ss << (i ? " " : "") << ValueToString<T>(values[i]);
-        return ss.str();
-    }
-
-    template<class T> SYNET_INLINE  void StringToValue(const String & string, T & value)
-    {
-        std::stringstream ss(string);
-        ss >> value;
-    }
-
-    template<> SYNET_INLINE void StringToValue<size_t>(const String & string, size_t & value)
-    {
-        StringToValue(string, (ptrdiff_t&)value);
-    }
-
-    template<> SYNET_INLINE void StringToValue<bool>(const String & string, bool & value)
-    {
-        if (string == "0" || string == "false" || string == "False")
-            value = false;
-        else if (string == "1" || string == "true" || string == "True")
-            value = true;
-        else
-            assert(0);
-    }
-
-    template<class T> SYNET_INLINE void StringToValue(const String & string, std::vector<T> & values)
-    {
-        std::stringstream ss(string);
-        values.clear();
-        while (!ss.eof())
-        {
-            String item;
-            ss >> item;
-            if (item.size())
-            {
-                T value;
-                StringToValue(item, value);
-                values.push_back(value);
-            }
-        }
-    }
-
-    SYNET_INLINE String ToLowerCase(const String & src) 
-    {
-        String dst(src);
-        for (size_t i = 0; i < dst.size(); ++i)
-        {
-            if (dst[i] <= 'Z' && dst[i] >= 'A')
-                dst[i] = dst[i] - ('Z' - 'z');
-        }
-        return dst;
-    }
-
-    template<typename Enum, int Size> SYNET_INLINE Enum StringToEnum(const String & string)
-    {
-        int type = Size - 1;
-        for (; type >= 0; --type)
-        {
-            if (ToLowerCase(ValueToString<Enum>((Enum)type)) == ToLowerCase(string))
-                return (Enum)type;
-        }
-        return (Enum)type;
-    }
 
     SYNET_INLINE void ParseEnumNames(const char * data, Strings & names)
     {

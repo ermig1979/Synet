@@ -332,7 +332,7 @@ namespace Test
 			return ratioVariation > _options.ratioVariation && _param().input().size() != 0;
 		}
 
-		virtual bool PerformBatch(size_t thread, size_t current, size_t batch)
+		virtual bool PerformBatch(size_t thread, size_t current, size_t batch, size_t& progress)
 		{
 			if (_options.batchSize != 1)
 			{
@@ -351,7 +351,7 @@ namespace Test
 			if (test.skip)
 				return true;
 
-			for (int i = 0; i < _options.repeatNumber; ++i)
+			for (int i = 0; i < _options.repeatNumber; ++i, ++progress)
 				t.output = t.network->Predict(t.input);
 			test.current = t.network->GetRegions(imgSize, _param().detection().confidence(), _param().detection().overlap());
 			if (_options.generateIndex)

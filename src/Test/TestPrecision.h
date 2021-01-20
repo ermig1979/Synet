@@ -57,6 +57,7 @@ namespace Test
 			bool adaptiveThreshold;
 			bool annotateRegions;
 			bool generateIndex;
+			double statFilter;
 
 			mutable volatile bool result;
 			mutable size_t memoryUsage, testNumber;
@@ -86,6 +87,7 @@ namespace Test
 				adaptiveThreshold = FromString<bool>(GetArg("-at", "1"));
 				annotateRegions = FromString<bool>(GetArg("-ar", "0"));
 				generateIndex = FromString<bool>(GetArg("-gi", "0"));
+				statFilter = FromString<double>(GetArg("-sf", "0.0"));
 			}
 
 			~Options()
@@ -93,12 +95,11 @@ namespace Test
 				if (result)
 				{
 					std::stringstream ss;
-					//ss << "Test info: (" << Description() << ")." << std::endl;
 					ss << resume << std::endl;
 					if (memoryUsage)
-						ss << "Memory usage: " << ToString(memoryUsage / (1024.0 * 1024.0), 1) << " MB." << std::endl;
+						ss << "Memory usage: " << MemoryUsageString(memoryUsage, testThreads) << std::endl;
 					ss << SystemInfo() << std::endl;
-					PerformanceMeasurerStorage::s_storage.Print(ss);
+					PerformanceMeasurerStorage::s_storage.Print(ss, statFilter);
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 					if (framework == "synet")
 						ss << SimdPerformanceStatistic();
@@ -174,9 +175,9 @@ namespace Test
 		{
 			NetworkPtr network;
 			Tensors input, output;
-			size_t begin, end, current;
+			size_t begin, end, current, progress;
 			std::thread thread;
-			Thread() : begin(0), end(0), current(0) {}
+			Thread() : begin(0), end(0), current(0), progress(0) {}
 		};
 		typedef std::vector<Thread> Threads;
 
@@ -339,12 +340,13 @@ namespace Test
 		static void ThreadTask(Precision* precision, size_t thread)
 		{
 			size_t& current = precision->_threads[thread].current;
+			size_t& progress = precision->_threads[thread].progress;
 			size_t end = precision->_threads[thread].end;
 			volatile bool& result = precision->_options.result;
 			for (; current < end && result;)
 			{
 				size_t batch = Synet::Min<size_t>(precision->_options.batchSize, end - current);
-				result = precision->PerformBatch(thread, current, batch);
+				result = precision->PerformBatch(thread, current, batch, progress);
 				current += batch;
 			}
 			if (!result)
@@ -353,13 +355,13 @@ namespace Test
 
 		bool PerformTests()
 		{
-			size_t current = 0, total = _options.testNumber;
+			size_t current = 0, total = _options.testNumber * _options.repeatNumber;
 			size_t part = Synet::DivHi(total, _threads.size());
 			for (size_t t = 0; t < _threads.size(); ++t)
 			{
 				_threads[t].begin = t * part;
 				_threads[t].current = t * part;
-				_threads[t].end = std::min((t + 1) * part, total);
+				_threads[t].end = std::min((t + 1) * part, _options.testNumber);
 				_threads[t].thread = std::thread(ThreadTask, this, t);
 			}
 
@@ -367,7 +369,7 @@ namespace Test
 			{
 				current = 0;
 				for (size_t t = 0; t < _threads.size(); ++t)
-					current += _threads[t].current - _threads[t].begin;
+					current += _threads[t].progress;
 				std::cout << ProgressString(current, total) << std::flush;
 				std::this_thread::sleep_for(std::chrono::milliseconds(1));
 				std::cout << " \r" << std::flush;
@@ -384,7 +386,7 @@ namespace Test
 		}
 
 		virtual bool LoadTestList() = 0;
-		virtual bool PerformBatch(size_t thread, size_t current, size_t batch) = 0;
+		virtual bool PerformBatch(size_t thread, size_t current, size_t batch, size_t & progress) = 0;
 		virtual bool ProcessResult() = 0;
 	};
 }

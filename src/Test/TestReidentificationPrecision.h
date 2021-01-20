@@ -127,7 +127,7 @@ namespace Test
 			return true;
 		}
 
-		bool CalculateObjectDescriptors(Test* tests, size_t batch, size_t index, size_t thread)
+		bool CalculateObjectDescriptors(Test* tests, size_t batch, size_t index, size_t thread, size_t & repeat, size_t & progress)
 		{
 			TEST_PERF_FUNC();
 
@@ -138,8 +138,12 @@ namespace Test
 				if (!SetInput(o.path, t.input[0], b, NULL))
 					return false;
 			}
-			for(int i = 0; i < _options.repeatNumber; ++i)
+			for (int i = 0; i < _options.repeatNumber; ++i, ++repeat)
+			{
 				t.output = t.network->Predict(t.input);
+				if (repeat & 1)
+					progress += batch;
+			}
 			size_t size = t.output[0].Size(1);
 			for (size_t b = 0; b < batch; ++b)
 			{
@@ -160,12 +164,13 @@ namespace Test
 			return true;
 		}
 
-		virtual bool PerformBatch(size_t thread, size_t current, size_t batch)
+		virtual bool PerformBatch(size_t thread, size_t current, size_t batch, size_t& progress)
 		{
 			bool result = true;
 			Test* tests = _tests.data() + current;
-			result = result && CalculateObjectDescriptors(tests, batch, 0, thread);
-			result = result && CalculateObjectDescriptors(tests, batch, 1, thread);
+			size_t repeat = 0;
+			result = result && CalculateObjectDescriptors(tests, batch, 0, thread, repeat, progress);
+			result = result && CalculateObjectDescriptors(tests, batch, 1, thread, repeat, progress);
 			result = result && CalculateDistances(tests, batch);
 			return result;
 		}

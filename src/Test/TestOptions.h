@@ -72,6 +72,7 @@ namespace Test
         int annotateRegions;
         float regionThreshold;
         float regionOverlap;
+        double statFilter;
 
         mutable bool result;
         mutable size_t firstMemoryUsage,  secondMemoryUsage;
@@ -119,6 +120,7 @@ namespace Test
             annotateRegions = FromString<int>(GetArg("-ar", "0"));
             regionThreshold = FromString<float>(GetArg("-rt", "0.3"));
             regionOverlap = FromString<float>(GetArg("-ro", "0.5"));
+            statFilter = FromString<double>(GetArg("-sf", "0.0"));
             if (enable < 1 || enable > 3)
             {
                 std::cout << "Parameter '-e' (enable) must be only 1, 2, 3!" << std::endl;
@@ -132,10 +134,10 @@ namespace Test
             {
                 std::stringstream ss;
                 if (firstMemoryUsage)
-                    ss << FullName(firstName, firstType) << " memory usage: " << ToString(firstMemoryUsage / (1024.0 * 1024.0), 1) << " MB." << std::endl;
+                    ss << FullName(firstName, firstType) << " memory usage: " << MemoryUsageString(firstMemoryUsage, testThreads) << std::endl;
                 if (secondMemoryUsage)
-                    ss << FullName(secondName, secondType) << " memory usage: " << ToString(secondMemoryUsage / (1024.0 * 1024.0), 1) << " MB." << std::endl;
-                PerformanceMeasurerStorage::s_storage.Print(ss);
+                    ss << FullName(secondName, secondType) << " memory usage: " << MemoryUsageString(secondMemoryUsage, testThreads) << std::endl;
+                PerformanceMeasurerStorage::s_storage.Print(ss, statFilter);
                 if(!statistics.empty())
                     ss << statistics;
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)

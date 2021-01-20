@@ -182,7 +182,7 @@ namespace Test
 			return true;
 		}
 
-		virtual bool PerformBatch(size_t thread, size_t current, size_t batch)
+		virtual bool PerformBatch(size_t thread, size_t current, size_t batch, size_t& progress)
 		{
 			Thread & t = _threads[thread];
 			for (size_t b = 0; b < batch; ++b)
@@ -191,7 +191,7 @@ namespace Test
 				if (!SetInput(test.path, t.input[0], b, NULL))
 					return false;
 			}
-			for(int i = 0; i < _options.repeatNumber; ++i)
+			for(int i = 0; i < _options.repeatNumber; ++i, progress += batch)
 				t.output = t.network->Predict(t.input);
 			size_t size = t.output[0].Size(1);
 			const float* data = t.output[0].CpuData();

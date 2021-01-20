@@ -23,7 +23,7 @@ fi
 
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
-"$BIN" -m=$MODE -f=$FRAMEWORK -tm=$DIR/$MODEL.xml -tw=$WEIGHT -tl=$IMAGE/$LIST -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml -ln=$LOG -tt=$THREADS -bs=$BATCH -rn=$NUMBER -ar=0 -at=0 -gi=0 
+"$BIN" -m=$MODE -f=$FRAMEWORK -tm=$DIR/$MODEL.xml -tw=$WEIGHT -tl=$IMAGE/$LIST -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml -ln=$LOG -tt=$THREADS -bs=$BATCH -rn=$NUMBER -ar=0 -at=0 -gi=0 -sf=0.01
 if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 }
 
@@ -32,7 +32,7 @@ TEST detection $1 $2 faces $3 _$4.txt $5 $6 $7
 }
 
 TEST_FD synet test_003 sy_fp32_v0 all 1 10 001
-TEST_FD synet test_003 sy_int8_v0 all 1 10 001
+#TEST_FD synet test_003 sy_int8_v0 all 1 10 001
 
 #TEST_FD synet test_010 sy_fp32_v0 all 1 10 001
 #TEST_FD synet test_010 sy_int8_v0 all 1 10 001

@@ -125,7 +125,7 @@ namespace Test
         {
         }
 
-        void Enter()
+        inline void Enter()
         {
             if (!_entered)
             {
@@ -135,7 +135,7 @@ namespace Test
             }
         }
 
-        void Leave(bool pause = false)
+        inline void Leave(bool pause = false)
         {
             if (_entered || _paused)
             {
@@ -156,30 +156,34 @@ namespace Test
             }
         }
 
-        double Average() const
+        inline double Total() const
         {
-            return _count ? (Miliseconds(_total) / _count) : 0;
+            return Miliseconds(_total);
         }
 
-        double GFlops() const
+        inline double Average() const
         {
-            return _count && _flop && _total > 0 ? (double(_flop) * _count / Miliseconds(_total) / 1000000.0) : 0;
+            return _count ? (Total() / _count) : 0;
         }
 
-        String Statistic() const
+        inline double GFlops() const
+        {
+            return _count && _flop && _total > 0 ? (double(_flop) * _count / Total() / 1000000.0) : 0;
+        }
+
+        inline String Statistic() const
         {
             std::stringstream ss;
-            ss << _name << ": ";
-            ss << std::setprecision(0) << std::fixed << Miliseconds(_total) << " ms";
+            ss << ToString(Total(), 0) << " ms";
             ss << " / " << _count << " = ";
-            ss << std::setprecision(3) << std::fixed << Average() << " ms";
-            ss << std::setprecision(3) << " {min=" << Miliseconds(_min) << "; max=" << Miliseconds(_max) << "}";
+            ss << ToString(Average(), 3) << " ms";
+            ss << " {min=" << ToString(Miliseconds(_min), 3) << "; max=" << ToString(Miliseconds(_max), 3) << "}";
             if (_flop)
-                ss << " " << std::setprecision(1) << GFlops() << " GFlops";
+                ss << " " << ToString(GFlops(), 1) << " GFlops";
             return ss.str();
         }
 
-        void Combine(const PerformanceMeasurer& other)
+        inline void Combine(const PerformanceMeasurer& other)
         {
             _count += other._count;
             _total += other._total;
@@ -187,7 +191,7 @@ namespace Test
             _max = std::max(_max, other._max);
         }
 
-        String Name() const 
+        inline String Name() const
         { 
             return _name; 
         }
@@ -238,7 +242,7 @@ namespace Test
         ThreadMap _map;
         mutable std::mutex _mutex;
 
-        FunctionMap & ThisThread()
+        inline FunctionMap & ThisThread()
         {
             static thread_local FunctionMap* thread = NULL;
             if (thread == NULL)
@@ -247,6 +251,22 @@ namespace Test
                 thread = &_map[std::this_thread::get_id()];
             }
             return *thread;
+        }
+
+        inline String RemoveArgs(const String & name)
+        {
+            size_t beg = name.find("("), end = name.find(")");
+            if (beg != String::npos && end != String::npos)
+                return name.substr(0, beg + 1) + name.substr(end, name.size() - 1);
+            return name;
+        }
+
+        inline String RemoveDesc(const String& name)
+        {
+            size_t pos = name.find(" {");
+            if (pos != String::npos)
+                return name.substr(0, pos);
+            return name;
         }
 
     public:
@@ -260,7 +280,7 @@ namespace Test
         {
         }
 
-        PerformanceMeasurer * Get(const String & name, int64_t flop = 0)
+        inline PerformanceMeasurer * Get(const String & name, int64_t flop = 0)
         {
             FunctionMap& thread = ThisThread();
             PerformanceMeasurer* pm = NULL;
@@ -275,17 +295,17 @@ namespace Test
             return pm;
         }
 
-        PerformanceMeasurer * Get(const String & function, const String & block, int64_t flop = 0)
+        inline PerformanceMeasurer * Get(const String & function, const String & block, int64_t flop = 0)
         {
             return Get(function + " { " + block + " } ", flop);
         }
 
-        void Clear()
+        inline void Clear()
         {
             _map.clear();
         }
 
-        void Print(std::ostream & os)
+        void Print(std::ostream & os, double threshold = 0, const String & main = "SynetNetwork::Predict", const String& term = "Layer::Forward")
         {
             if (this == 0)
                 return;
@@ -305,7 +325,25 @@ namespace Test
                 }
             }
 
-            os << "----- Performance -----" << std::endl;
+            double time = 0;
+            std::map<String, size_t> sizes;
+            for (FunctionMap::const_iterator j = total.begin(); j != total.end(); j++)
+            {
+                if (j->first.find(term) != String::npos)
+                {
+                    String name = RemoveDesc(j->first);
+                    if (sizes.find(name) == sizes.end())
+                        sizes[name] = 0;
+                    sizes[name] = std::max(sizes[name], j->first.size());
+                }
+                if (j->first.find(main) != String::npos)
+                    time = std::max(time, j->second->Total() * threshold);
+            }
+
+            os << "----- Performance Report -----";
+            if (time > 0)
+                os << " (time >= " << ToString(time, 0) << " ms)";
+            os << std::endl;
 #ifdef __SimdLib_hpp__
             Simd::PrintInfo(os);
 #endif
@@ -313,8 +351,13 @@ namespace Test
             os << "Blis arch: " << bli_arch_string(bli_arch_query_id()) << std::endl;
 #endif
             for (FunctionMap::const_iterator j = total.begin(); j != total.end(); j++)
-                os << j->second->Statistic() << std::endl;
-            os << "----- ~~~~~~~~~~~ -----" << std::endl;
+            {
+                const String& name = j->first.find(term) != String::npos ? ExpandRight(j->first, sizes[RemoveDesc(j->first)]) : j->first;
+                const PerformanceMeasurer & perf = *j->second;
+                if (name.find(term) == String::npos || perf.Total() >= time)
+                    os << name << ": " << perf.Statistic() << std::endl;
+            }
+            os << "----- ~~~~~~~~~~~~~~~~~~~ -----" << std::endl;
         }
 
         PerformanceMeasurer GetCombined(const String& name)
