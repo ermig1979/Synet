@@ -305,7 +305,7 @@ namespace Test
             _map.clear();
         }
 
-        void Print(std::ostream & os, double threshold = 0, const String & main = "SynetNetwork::Predict", const String& term = "Layer::Forward")
+        void Print(std::ostream & os, double threshold = 0, const String & main = "Network::Predict", const String& term = "Layer::Forward")
         {
             if (this == 0)
                 return;
@@ -326,18 +326,16 @@ namespace Test
             }
 
             double time = 0;
-            std::map<String, size_t> sizes;
+            size_t size = 0;
             for (FunctionMap::const_iterator j = total.begin(); j != total.end(); j++)
             {
                 if (j->first.find(term) != String::npos)
-                {
-                    String name = RemoveDesc(j->first);
-                    if (sizes.find(name) == sizes.end())
-                        sizes[name] = 0;
-                    sizes[name] = std::max(sizes[name], j->first.size());
-                }
+                    size = std::max(size, j->first.size());
                 if (j->first.find(main) != String::npos)
+                {
                     time = std::max(time, j->second->Total() * threshold);
+                    size = std::max(size, j->first.size());
+                }
             }
 
             os << "----- Performance Report -----";
@@ -352,10 +350,20 @@ namespace Test
 #endif
             for (FunctionMap::const_iterator j = total.begin(); j != total.end(); j++)
             {
-                const String& name = j->first.find(term) != String::npos ? ExpandRight(j->first, sizes[RemoveDesc(j->first)]) : j->first;
-                const PerformanceMeasurer & perf = *j->second;
-                if (name.find(term) == String::npos || perf.Total() >= time)
-                    os << name << ": " << perf.Statistic() << std::endl;
+                const String& name = j->first;
+                const PerformanceMeasurer& perf = *j->second;
+                if (name.find(main) != String::npos)
+                    os << ExpandRight(name, size);
+                else if (name.find(term) != String::npos)
+                {
+                    if (perf.Total() >= time)
+                        os << ExpandRight(name, size + (name.find(" {  ") == String::npos ? 2 : 1));
+                    else
+                        continue;
+                }
+                else
+                    os << name;
+                os << ": " << perf.Statistic() << std::endl;
             }
             os << "----- ~~~~~~~~~~~~~~~~~~~ -----" << std::endl;
         }
