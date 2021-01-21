@@ -129,8 +129,6 @@ namespace Test
 
 		bool CalculateObjectDescriptors(Test* tests, size_t batch, size_t index, size_t thread, size_t & repeat, size_t & progress)
 		{
-			TEST_PERF_FUNC();
-
 			Thread& t = _threads[thread];
 			for (size_t b = 0; b < batch; ++b)
 			{

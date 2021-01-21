@@ -356,7 +356,7 @@ namespace Test
 		bool PerformTests()
 		{
 			size_t current = 0, total = _options.testNumber * _options.repeatNumber;
-			size_t part = Synet::DivHi(total, _threads.size());
+			size_t part = Synet::DivHi(_options.testNumber, _threads.size());
 			for (size_t t = 0; t < _threads.size(); ++t)
 			{
 				_threads[t].begin = t * part;
