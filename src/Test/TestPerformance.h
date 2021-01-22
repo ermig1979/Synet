@@ -339,8 +339,10 @@ namespace Test
             }
 
             os << "----- Performance Report -----";
+#if defined(SYNET_LAYER_STATISTIC) || defined(SYNET_SIZE_STATISTIC)
             if (time > 0)
                 os << " (time >= " << ToString(time, 0) << " ms)";
+#endif
             os << std::endl;
 #ifdef __SimdLib_hpp__
             Simd::PrintInfo(os);
