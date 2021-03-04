@@ -40,6 +40,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\BatchNormLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\BiasLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\BinaryOperationLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\BroadcastLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\CastLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ConcatLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ConstLayer.h" />

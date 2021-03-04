@@ -60,6 +60,10 @@ namespace Synet
                 String type = pLayer->FirstAttribute("type")->Value();
                 if (type == "Add" && !ConvertAddLayer(pLayer, dstXml.layers(), srcBin, layer))
                     return ErrorMessage(pLayer);
+                if(type == "AvgPool" && !ConvertAvgPoolLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "Broadcast" && !ConvertBroadcastLayer(pLayer, dstXml.layers(), layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Clamp" && !ConvertClampLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Concat" && !ConvertConcatLayer(pLayer, dstXml.layers(), trans, layer))
@@ -128,7 +132,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Unsqueeze" && !ConvertUnsqueezeLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
-#if 1
+#if 0
                 if (layer.type() == LayerTypeUnknown)
                     return ErrorMessage(pLayer);
 #else
@@ -188,6 +192,39 @@ namespace Synet
                 if (TensorSize(src0) < TensorSize(src1))
                     std::swap(layer.src()[0], layer.src()[1]);
             }
+            return true;
+        }
+
+        bool ConvertAvgPoolLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            layer.type() = Synet::LayerTypePooling;
+            layer.pooling().method() = PoolingMethodTypeAverage;
+            if (!ConvertVector(pData->FirstAttribute("kernel"), layer.pooling().kernel()))
+                return false;
+            if (!ConvertVector(pData->FirstAttribute("strides"), layer.pooling().stride()))
+                return false;
+            if (!ConvertVectors(pData->FirstAttribute("pads_begin"), pData->FirstAttribute("pads_end"), layer.pooling().pad()))
+                return false;
+            const XmlAttr* pAutoPad = pData->FirstAttribute("auto_pad");
+            if (pAutoPad && String(pAutoPad->Value()) == "valid")
+                layer.pooling().roundingType() = RoundingTypeFloor;
+            return true;
+        }
+
+        bool ConvertBroadcastLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
+            layer.type() = Synet::LayerTypeBroadcast;
+            if (src0->type() == LayerTypeConst && src1->type() == LayerTypeMeta)
+                layer.broadcast().fixed() = true;
             return true;
         }
 

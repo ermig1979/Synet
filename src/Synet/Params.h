@@ -34,6 +34,7 @@ namespace Synet
         LayerTypeBatchNorm,
         LayerTypeBias,
         LayerTypeBinaryOperation,
+        LayerTypeBroadcast,
         LayerTypeCast,
         LayerTypeConcat,
         LayerTypeConst,
@@ -266,6 +267,11 @@ namespace Synet
     struct BinaryOperationParam
     {
         SYNET_PARAM_VALUE(BinaryOperationType, type, BinaryOperationTypeUnknown);
+    };
+
+    struct BroadcastParam
+    {
+        SYNET_PARAM_VALUE(bool, fixed, false);
     };
 
     struct ConcatParam
@@ -606,6 +612,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(BatchNormParam, batchNorm);
         SYNET_PARAM_STRUCT(BiasParam, bias);
         SYNET_PARAM_STRUCT(BinaryOperationParam, binaryOperation);
+        SYNET_PARAM_STRUCT(BroadcastParam, broadcast);
         SYNET_PARAM_STRUCT(CastParam, cast);
         SYNET_PARAM_STRUCT(ConcatParam, concat);
         SYNET_PARAM_STRUCT(ConvolutionParam, convolution);

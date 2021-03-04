@@ -298,6 +298,9 @@
     <ClInclude Include="..\..\src\Synet\Utils\StringUtils.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\BroadcastLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

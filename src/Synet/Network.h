@@ -28,6 +28,7 @@
 #include "Synet/Layers/BatchNormLayer.h"
 #include "Synet/Layers/BiasLayer.h"
 #include "Synet/Layers/BinaryOperationLayer.h"
+#include "Synet/Layers/BroadcastLayer.h"
 #include "Synet/Layers/CastLayer.h"
 #include "Synet/Layers/ConcatLayer.h"
 #include "Synet/Layers/ConstLayer.h"
@@ -948,6 +949,7 @@ namespace Synet
             case LayerTypeBatchNorm: return new BatchNormLayer<T>(param);
             case LayerTypeBias: return new BiasLayer<T>(param);
             case LayerTypeBinaryOperation: return new BinaryOperationLayer<T>(param);
+            case LayerTypeBroadcast: return new BroadcastLayer<T>(param);
             case LayerTypeCast: return new CastLayer<T>(param);
             case LayerTypeConcat: return new ConcatLayer<T>(param);
             case LayerTypeConst: return new ConstLayer<T>(param);
