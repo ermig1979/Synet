@@ -51,7 +51,20 @@ namespace Synet
                 Shape remove(src[1]->Size());
                 for (size_t i = 0; i < src[1]->Size(); ++i)
                 {
-                    remove[i] = ((int*)src[1]->CpuData())[i];
+                    switch (src[1]->GetType())
+                    {
+                    case TensorType32f:
+                        remove[i] = ((int*)src[1]->CpuData())[i];
+                        break;
+                    case TensorType32i:
+                        remove[i] = src[1]->As32i().CpuData()[i];
+                        break;
+                    case TensorType64i:
+                        remove[i] = (size_t)src[1]->As64i().CpuData()[i];
+                        break;
+                    default:
+                        assert(0);
+                    }
                     if (src[0]->Format() == TensorFormatNhwc && src[0]->Count() == 4)
                         remove[i] = nhwc[remove[i]];
                 }
@@ -73,7 +86,6 @@ namespace Synet
                         shape.push_back(src[0]->Axis(i));
                 }
             }
-
             dst[0]->ShareAs(*src[0], shape, src[0]->Format());
         }
 

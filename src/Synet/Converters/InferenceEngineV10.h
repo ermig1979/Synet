@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2020 Yermalayeu Ihar.
+* Copyright (c) 2018-2021 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -123,6 +123,8 @@ namespace Synet
                 if (type == "Sigmoid" && !ConvertSigmoidLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "SoftMax" && !ConvertSoftmaxLayer(pLayer, dstXml.layers(), trans, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "Squeeze" && !ConvertSqueezeLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "StridedSlice" && !ConvertStridedSliceLayer(pLayer, dstXml.layers(), srcBin, trans, layer))
                     return ErrorMessage(pLayer);
@@ -373,7 +375,19 @@ namespace Synet
                     return false;
             }
             else
-                return false;
+            {
+                layer.type() = LayerTypeCast;
+                const XmlNode* pData = pLayer->FirstNode("data");
+                if (pData == NULL)
+                    return false;
+                String type = pData->FirstAttribute("destination_type")->Value();
+                if (type == "i32")
+                    layer.cast().type() = TensorType32i;
+                else if (type == "f32")
+                    layer.cast().type() = TensorType32f;
+                else
+                    return false;
+            }
             return true;
         }
 
@@ -937,6 +951,12 @@ namespace Synet
                     layer.softmax().axis() = (int32_t)nchw[layer.softmax().axis()];
                 }
             }
+            return true;
+        }
+
+        bool ConvertSqueezeLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeSqueeze;
             return true;
         }
 
