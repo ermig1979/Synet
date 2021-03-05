@@ -74,6 +74,7 @@ namespace Synet
         LayerTypeReorg,
         LayerTypeReshape,
         LayerTypeRestrictRange,
+        LayerTypeReverseSequence,
         LayerTypeScale,
         LayerTypeShortcut,
         LayerTypeShuffle,
@@ -524,6 +525,12 @@ namespace Synet
         SYNET_PARAM_VALUE(float, upper, +FLT_MAX);
     };
 
+    struct ReverseSequenceParam
+    {
+        SYNET_PARAM_VALUE(int32_t, batchAxis, 0);
+        SYNET_PARAM_VALUE(int32_t, seqAxis, 1);
+    };
+
     struct ScaleParam
     {
         SYNET_PARAM_VALUE(uint32_t, axis, 1);
@@ -645,6 +652,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(ReorgParam, reorg);
         SYNET_PARAM_STRUCT(ReshapeParam, reshape);
         SYNET_PARAM_STRUCT(RestrictRangeParam, restrictRange);
+        SYNET_PARAM_STRUCT(ReverseSequenceParam, reverseSequence);
         SYNET_PARAM_STRUCT(ScaleParam, scale);
         SYNET_PARAM_STRUCT(ShuffleParam, shuffle);
         SYNET_PARAM_STRUCT(SliceParam, slice);

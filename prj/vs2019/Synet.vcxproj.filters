@@ -301,6 +301,10 @@
     <ClInclude Include="..\..\src\Synet\Layers\BroadcastLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ReverseSequenceLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Fabric.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

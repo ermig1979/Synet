@@ -116,6 +116,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Result" && !ConvertResultLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
+                if (type == "ReverseSequence" && !ConvertReverseSequenceLayer(pLayer, dstXml.layers(), layer))
+                    return ErrorMessage(pLayer);
                 if (type == "ShapeOf" && !ConvertShapeOfLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Sigmoid" && !ConvertSigmoidLayer(pLayer, layer))
@@ -883,6 +885,25 @@ namespace Synet
             layer.type() = Synet::LayerTypeStub;
             if (layer.dst().empty())
                 layer.dst().push_back(layer.name());
+            return true;
+        }
+
+        bool ConvertReverseSequenceLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeReverseSequence;
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            if (!ConvertValue(pData->FirstAttribute("batch_axis"), layer.reverseSequence().batchAxis()))
+                return false;
+            if (!ConvertValue(pData->FirstAttribute("seq_axis"), layer.reverseSequence().seqAxis()))
+                return false;
             return true;
         }
 

@@ -54,14 +54,21 @@ namespace Synet
             _count = _order.size();
             assert(_count >= 2 && _count <= 5);
             size_t is = 0, os = 0;
+            Shape permute;
             for (size_t i = 0; i < _order.size(); ++i)
             {
                 if (_order[i] != i)
-                    _permute = true;
+                    permute.push_back(i);
                 is += i;
                 os += _order[i];
             }
             assert(is == os);
+            _permute = permute.size() > 1;
+            if (permute.size() == 2 && permute[0] + 1 == permute[1])
+            {
+                if (src[0]->Axis(permute[0]) == 1 || src[0]->Axis(permute[1]) == 1)
+                    _permute = false;
+            }
 
             if (_permute)
             {

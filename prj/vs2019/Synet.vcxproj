@@ -35,6 +35,7 @@
     <ClInclude Include="..\..\src\Synet\Converters\Onnx.h" />
     <ClInclude Include="..\..\src\Synet\Converters\Optimizer.h" />
     <ClInclude Include="..\..\src\Synet\Converters\SynetUtils.h" />
+    <ClInclude Include="..\..\src\Synet\Fabric.h" />
     <ClInclude Include="..\..\src\Synet\Layer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\AddLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\BatchNormLayer.h" />
@@ -83,6 +84,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\ReorgLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ReshapeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\RestrictRangeLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ReverseSequenceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ScaleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ShortcutLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ShuffleLayer.h" />
