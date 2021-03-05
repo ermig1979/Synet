@@ -17,3 +17,4 @@
 	path = 3rd/openvino
 	url = https://github.com/openvinotoolkit/openvino.git
 	branch = releases/2021/1
+	ignore = dirty
