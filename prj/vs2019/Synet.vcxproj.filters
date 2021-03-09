@@ -305,6 +305,9 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Fabric.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\TensorIteratorLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

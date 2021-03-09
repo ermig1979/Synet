@@ -111,6 +111,11 @@ namespace Synet
         {
         }
 
+        virtual void AddChild(const LayerSharedPtr& child)
+        {
+            assert(0);
+        }
+
         const StatPtrs & Stats(size_t index) const
         {
             assert(index < 3);
@@ -156,24 +161,11 @@ namespace Synet
                 }
                 else
                 {
-                    bool unique = true;
-                    for (size_t j = 0; j < layers.size() && unique; ++j)
-                    {
-                        if (layers[j].get() == this)
-                            break;
-                        for (size_t k = 0; k < layers[j]->Param().weight().size() && unique; ++k)
-                        {
-                            if (layers[j]->Param().weight()[k].offset() == offset)
-                            {
-                                tensor.Share(layers[j]->Weight()[k]);
-                                unique = false;
-                            }
-                        }
-                    }
-                    if (unique)
+                    if (!ShareExisted(offset, layers, tensor))
                     {
                         tensor.Reshape(param.dim(), Type(), param.format());
-                        is.seekg(offset, std::ios::beg);
+                        if (!is.seekg(offset, std::ios::beg))
+                            return false;
                         if (!is.read((char*)tensor.CpuData(), size))
                             return false;
                     }
@@ -203,21 +195,7 @@ namespace Synet
                 }
                 else
                 {
-                    bool unique = true;
-                    for (size_t j = 0; j < layers.size() && unique; ++j)
-                    {
-                        if (layers[j].get() == this)
-                            break;
-                        for (size_t k = 0; k < layers[j]->Param().weight().size() && unique; ++k)
-                        {
-                            if (layers[j]->Param().weight()[k].offset() == offset)
-                            {
-                                tensor.Share(layers[j]->Weight()[k]);
-                                unique = false;
-                            }
-                        }
-                    }
-                    if (unique)
+                    if (!ShareExisted(offset, layers, tensor))
                     {
                         if (offset + length > size)
                             return false;
@@ -256,17 +234,17 @@ namespace Synet
 
         static void Extend32f(const TensorPtrs& buf, size_t idx, const Shape & shape, TensorFormat format = TensorFormatUnknown)
         {
-            return buf[TensorType32f * BUFFER_COUNT + idx]->As32f().Extend(shape, format);
+            buf[TensorType32f * BUFFER_COUNT + idx]->As32f().Extend(shape, format);
         }
 
         static void Extend32i(const TensorPtrs& buf, size_t idx, const Shape& shape, TensorFormat format = TensorFormatUnknown)
         {
-            return buf[TensorType32i * BUFFER_COUNT + idx]->As32i().Extend(shape, format);
+            buf[TensorType32i * BUFFER_COUNT + idx]->As32i().Extend(shape, format);
         }
 
         static void Extend8u(const TensorPtrs& buf, size_t idx, const Shape& shape, TensorFormat format = TensorFormatUnknown)
         {
-            return buf[TensorType8u * BUFFER_COUNT + idx]->As8u().Extend(shape, format);
+            buf[TensorType8u * BUFFER_COUNT + idx]->As8u().Extend(shape, format);
         }
 
     private:
@@ -282,6 +260,24 @@ namespace Synet
         int64_t _perfFlop;
         SYNET_PERF_DECL(_perfComm);
         SYNET_PERF_DECL(_perfSpec);
+
+        bool ShareExisted(size_t offset, const LayerSharedPtrs& layers, Tensor& tensor)
+        {
+            for (size_t j = 0; j < layers.size(); ++j)
+            {
+                if (layers[j].get() == this)
+                    break;
+                for (size_t k = 0; k < layers[j]->Param().weight().size(); ++k)
+                {
+                    if (layers[j]->Param().weight()[k].offset() == offset)
+                    {
+                        tensor.Share(layers[j]->Weight()[k]);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
 
         void InitPerfStat()
         {

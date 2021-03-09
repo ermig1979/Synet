@@ -87,13 +87,7 @@ namespace Synet
                 std::cout << "Can't load model file '" << model << "' !" << std::endl;
                 return false;
             }
-
-            for (size_t i = 0; i < _param().layers().size(); ++i)
-            {
-                LayerSharedPtr layer(Fabric<T>::Create(_param().layers()[i], _param().quantization().method()));
-                if (layer)
-                    _layers.push_back(layer);
-            }
+            CreateLayers();
 
             std::ifstream ifs(weight.c_str(), std::ifstream::binary);
             if (!ifs.is_open())
@@ -121,13 +115,7 @@ namespace Synet
 
             if (!_param.Load(modelData, modelSize))
                 return false;
-
-            for (size_t i = 0; i < _param().layers().size(); ++i)
-            {
-                LayerSharedPtr layer(Fabric<T>::Create(_param().layers()[i], _param().quantization().method()));
-                if (layer)
-                    _layers.push_back(layer);
-            }
+            CreateLayers();
 
             for (size_t i = 0; i < _layers.size(); ++i)
             {
@@ -568,6 +556,29 @@ namespace Synet
         LayerPtrs _back;
         NameIdMap _tensorId, _layerId, _statId;
         NameIdSetMap _srcIds, _dstIds;
+
+        void CreateLayers()
+        {
+            NameIdMap layerId;
+            for (size_t i = 0; i < _param().layers().size(); ++i)
+            {
+                const LayerParam& param = _param().layers()[i];
+                LayerSharedPtr layer(Fabric<T>::Create(param, _param().quantization().method()));
+                if (layer)
+                {
+                    if (param.parent().empty())
+                    {
+                        layerId[param.name()] = _layers.size();
+                        _layers.push_back(layer);
+                    }
+                    else
+                    {
+                        assert(layerId.find(param.name()) != layerId.end());
+                        _layers[layerId[param.name()]]->AddChild(layer);
+                    }
+                }
+            }
+        }
 
         bool Init()
         {

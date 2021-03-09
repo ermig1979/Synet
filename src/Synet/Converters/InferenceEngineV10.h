@@ -44,6 +44,7 @@ namespace Synet
                 return false;
 
             IndexMap index;
+            TensorInfoMap info;
 
             const XmlNode* pLayers = srcXml.FirstNode("layers");
             if (pLayers == NULL)
@@ -53,8 +54,9 @@ namespace Synet
             {
                 pNextLayer = pLayer->NextSibling("layer");
 
+                LayerParams children;
                 LayerParam layer;
-                if (!ParseInputOutput(*pLayer, edges, dstXml.layers(), layer, index, _tensors))
+                if (!ParseInputOutput(*pLayer, edges, dstXml.layers(), layer, index, info))
                     return false;
 
                 String type = pLayer->FirstAttribute("type")->Value();
@@ -86,7 +88,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Log" && !ConvertLogLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
-                if ((type == "MatMul") && !ConvertMatMulLayer(pLayer, trans, dstXml.layers(), srcBin, layer, dstBin))
+                if ((type == "MatMul") && !ConvertMatMulLayer(pLayer, trans, dstXml.layers(), srcBin, layer, dstBin, info))
                     return ErrorMessage(pLayer);
                 if (type == "MaxPool" && !ConvertMaxPoolLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
@@ -130,13 +132,15 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Tanh" && !ConvertTanhLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
+                if ((type == "TensorIterator") && !ConvertTensorIteratorLayer(pLayer, trans, dstXml.layers(), srcBin, layer, dstBin, info, children))
+                    return ErrorMessage(pLayer);
                 if (type == "Tile" && !ConvertTileLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Transpose" && !ConvertTransposeLayer(pLayer, srcBin, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Unsqueeze" && !ConvertUnsqueezeLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
-#if 0
+#if defined(SYNET_IE_PARSE_STOP_ON_ERROR)
                 if (layer.type() == LayerTypeUnknown)
                     return ErrorMessage(pLayer);
 #else
@@ -147,7 +151,8 @@ namespace Synet
                 }
 #endif
                 dstXml.layers().push_back(layer);
-                _layers[layer.name()] = layer;
+                for(size_t c = 0; c < children.size(); ++c)
+                    dstXml.layers().push_back(children[c]);
                 pPrevLayer = pLayer;
                 pLayer = pNextLayer;
             }
@@ -159,9 +164,6 @@ namespace Synet
         }
 
     private:
-
-        TensorInfoMap _tensors;
-        LayerParamMap _layers;
 
         bool ConvertAddLayer(const XmlNode* pLayer, const LayerParams& layers, const Vector & srcBin, LayerParam& layer)
         {
@@ -544,7 +546,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertMatMulLayer(const XmlNode* pLayer, bool trans, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin)
+        bool ConvertMatMulLayer(const XmlNode* pLayer, bool trans, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin, TensorInfoMap& info)
         {
             layer.type() = Synet::LayerTypeInnerProduct;
             const XmlNode* pData = pLayer->FirstNode("data");
@@ -583,7 +585,7 @@ namespace Synet
                     return true;
                 if (first->type() != LayerTypeReshape)
                     return false;
-                Shape origin = _tensors[first->src()[0]].shape;
+                Shape origin = info[first->src()[0]].shape;
                 return ReorderWeight(srcBin, origin, layer, dstBin);
             }
             return true;
@@ -1045,6 +1047,65 @@ namespace Synet
                 layer.tile().axis() = order[layer.tile().axis()];
             }
             layer.src().resize(1);
+            return true;
+        }
+
+        bool ConvertTensorIteratorLayer(const XmlNode* pParent, bool trans, const LayerParams& parents, const Vector& srcBin, LayerParam& parent, Vector& dstBin, TensorInfoMap& info, LayerParams & children)
+        {
+            const XmlNode* pBody = pParent->FirstNode("body");
+            if (pBody == NULL)
+                return false;
+
+            if (trans)
+                trans = !PermutedToNchw(parents, false, true);
+
+            Edges edges;
+            if (!ParseEdges(*pBody, edges))
+                return false;
+
+            IndexMap index;
+
+            const XmlNode* pLayers = pBody->FirstNode("layers");
+            if (pLayers == NULL)
+                return false;
+            const XmlNode* pChild= pLayers->FirstNode("layer"), * pPrevChild = NULL, * pNextChild = NULL;
+            while (pChild)
+            {
+                pNextChild = pChild->NextSibling("layer");
+
+                LayerParam child;
+                child.parent() = parent.name();
+                if (!ParseInputOutput(*pChild, edges, children, child, index, info))
+                    return false;
+                String type = pChild->FirstAttribute("type")->Value();
+
+                if (type == "Concat" && !ConvertConcatLayer(pChild, children, trans, child))
+                    return ErrorMessage(pChild);
+                if (type == "Const" && !ConvertConstLayer(pChild, srcBin, child))
+                    return ErrorMessage(pChild);
+                if (type == "Parameter" && !ConvertParameterLayer(pChild, trans, child))
+                    return ErrorMessage(pChild);
+                if (type == "Result" && !ConvertResultLayer(pChild, child))
+                    return ErrorMessage(pChild);
+                if (type == "Squeeze" && !ConvertSqueezeLayer(pChild, child))
+                    return ErrorMessage(pChild);
+
+#if defined(SYNET_IE_PARSE_STOP_ON_ERROR)
+                if (child.type() == LayerTypeUnknown)
+                    return ErrorMessage(pChild);
+#else
+                if (child.type() == LayerTypeUnknown)
+                {
+                    NotImplemented(pChild, child);
+                    std::cout << "TensorIterator " << parent.name() << " : not implemented layer : name = " << child.name() << " ; type = " << type << std::endl;
+                }
+#endif
+                children.push_back(child);
+                pPrevChild = pChild;
+                pChild = pNextChild;
+            }
+
+            parent.type() = Synet::LayerTypeTensorIterator;
             return true;
         }
 

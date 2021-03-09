@@ -121,7 +121,7 @@ namespace Synet
                 if (type == "Unsqueeze" && !ConvertUnsqueezeLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
 
-#if 1
+#if defined(SYNET_IE_PARSE_STOP_ON_ERROR)
                 if (layer.type() == LayerTypeUnknown)
                     return ErrorMessage(pLayer);
 #else

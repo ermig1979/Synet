@@ -87,6 +87,7 @@ namespace Synet
         LayerTypeStridedSlice,
         LayerTypeStub,
         LayerTypeSwitch,
+        LayerTypeTensorIterator,
         LayerTypeTile,
         LayerTypeUnaryOperation,
         LayerTypeUnpack,
@@ -578,6 +579,20 @@ namespace Synet
         SYNET_PARAM_VALUE(uint32_t, tiles, 1);
     };
 
+    struct ConnectionParam
+    {
+        SYNET_PARAM_VALUE(String, src, String());
+        SYNET_PARAM_VALUE(String, dst, String());
+        SYNET_PARAM_VALUE(int32_t, axis, -1);
+    };
+
+    struct TensorIteratorParam
+    {
+        SYNET_PARAM_VECTOR(ConnectionParam, input);
+        SYNET_PARAM_VECTOR(ConnectionParam, output);
+        SYNET_PARAM_VECTOR(ConnectionParam, back);
+    };
+
     struct UnaryOperationParam
     {
         SYNET_PARAM_VALUE(UnaryOperationType, type, UnaryOperationTypeUnknown);
@@ -609,6 +624,7 @@ namespace Synet
 
     struct LayerParam
     {
+        SYNET_PARAM_VALUE(String, parent, String());
         SYNET_PARAM_VALUE(LayerType, type, LayerTypeUnknown);
         SYNET_PARAM_VALUE(String, name, String());
         SYNET_PARAM_VALUE(Strings, src, Strings());
@@ -660,6 +676,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(SoftplusParam, softplus);
         SYNET_PARAM_STRUCT(StridedSliceParam, stridedSlice);
         SYNET_PARAM_STRUCT(TileParam, tile);
+        SYNET_PARAM_STRUCT(TensorIteratorParam, tensorIterator);
         SYNET_PARAM_STRUCT(UnaryOperationParam, unaryOperation);
         SYNET_PARAM_STRUCT(UnpackParam, unpack);
         SYNET_PARAM_STRUCT(UpsampleParam, upsample);

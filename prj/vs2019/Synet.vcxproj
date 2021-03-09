@@ -97,6 +97,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\StridedSliceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\StubLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SwitchLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\TensorIteratorLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\TileLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\UnaryOperationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\UnpackLayer.h" />

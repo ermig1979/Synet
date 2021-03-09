@@ -29,6 +29,8 @@
 #include "Synet/Tensor.h"
 #include "Synet/Converters/SynetUtils.h"
 
+//#define SYNET_IE_PARSE_STOP_ON_ERROR
+
 namespace Synet
 {
     class InferenceEngineConverter : public SynetUtils
