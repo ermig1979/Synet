@@ -573,8 +573,8 @@ namespace Synet
                     }
                     else
                     {
-                        assert(layerId.find(param.name()) != layerId.end());
-                        _layers[layerId[param.name()]]->AddChild(layer);
+                        assert(layerId.find(param.parent()) != layerId.end());
+                        _layers[layerId[param.parent()]]->AddChild(layer);
                     }
                 }
             }

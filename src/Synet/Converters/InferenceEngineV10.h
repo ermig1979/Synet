@@ -1074,6 +1074,43 @@ namespace Synet
             return true;
         }
 
+        bool ConvertSubtractLayer(const XmlNode* pLayer, const LayerParams& layers, const Vector& srcBin, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            Shape is0 = ConvertInputShape(pLayer, "0");
+            Shape is1 = ConvertInputShape(pLayer, "1");
+            const LayerParam* sp0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* sp1 = GetLayer(layers, layer.src()[1]);
+            if (sp0 == NULL || sp1 == NULL)
+                return false;
+            if (sp1->type() == LayerTypeConst && (TensorSize(is1) == 1 || TensorSize(is1) == 0))
+            {
+                layer.type() = Synet::LayerTypePower;
+                const float* pShift = srcBin.data() + sp1->weight()[0].offset() / sizeof(float);
+                layer.power().shift() = -pShift[0];
+                layer.src().resize(1);
+            }
+            else if (sp0->type() == LayerTypeConst && (TensorSize(is0) == 1 || TensorSize(is0) == 0))
+            {
+                layer.type() = Synet::LayerTypePower;
+                layer.power().scale() = -1.0f;
+                const float* pShift = srcBin.data() + sp0->weight()[0].offset() / sizeof(float);
+                layer.power().shift() = pShift[0];
+                layer.src()[0] = layer.src()[1];
+                layer.src().resize(1);
+            }
+            else
+            {
+                if (TensorSize(is0) != TensorSize(is1))
+                    return false;
+                layer.type() = Synet::LayerTypeEltwise;
+                layer.eltwise().operation() = EltwiseOperationTypeSum;
+                layer.eltwise().coefficients() = Floats({1.0f, -1.0f});
+            }
+            return true;
+        }
+
         bool ConvertTanhLayer(const XmlNode* pLayer, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeUnaryOperation;
@@ -1109,18 +1146,20 @@ namespace Synet
 
         bool ConvertTensorIteratorLayer(const XmlNode* pParent, bool trans, const LayerParams& parents, const Vector& srcBin, LayerParam& parent, Vector& dstBin, TensorInfoMap& info, LayerParams & children)
         {
+            if (trans)
+                trans = !PermutedToNchw(parents, false, true);
+
             const XmlNode* pBody = pParent->FirstNode("body");
             if (pBody == NULL)
                 return false;
-
-            if (trans)
-                trans = !PermutedToNchw(parents, false, true);
 
             Edges edges;
             if (!ParseEdges(*pBody, edges))
                 return false;
 
             IndexMap index;
+            typedef std::map<String, String> NameMap;
+            NameMap names;
 
             const XmlNode* pLayers = pBody->FirstNode("layers");
             if (pLayers == NULL)
@@ -1134,6 +1173,7 @@ namespace Synet
                 child.parent() = parent.name();
                 if (!ParseInputOutput(*pChild, edges, children, child, index, info))
                     return false;
+                names[pChild->FirstAttribute("id")->Value()] = pChild->FirstAttribute("name")->Value();
                 String type = pChild->FirstAttribute("type")->Value();
 
                 if (type == "Add" && !ConvertAddLayer(pChild, children, srcBin, child))
@@ -1156,6 +1196,12 @@ namespace Synet
                     return ErrorMessage(pChild);
                 if (type == "Squeeze" && !ConvertSqueezeLayer(pChild, child))
                     return ErrorMessage(pChild);
+                if (type == "Subtract" && !ConvertSubtractLayer(pChild, children, srcBin, child))
+                    return ErrorMessage(pChild);
+                if (type == "Tanh" && !ConvertTanhLayer(pChild, child))
+                    return ErrorMessage(pChild);
+                if (type == "Unsqueeze" && !ConvertUnsqueezeLayer(pChild, srcBin, children, child))
+                    return ErrorMessage(pChild);
 
 #if defined(SYNET_IE_PARSE_STOP_ON_ERROR)
                 if (child.type() == LayerTypeUnknown)
@@ -1173,6 +1219,74 @@ namespace Synet
             }
 
             parent.type() = Synet::LayerTypeTensorIterator;
+
+            const XmlNode* pPortMap = pParent->FirstNode("port_map");
+            if (pPortMap == NULL)
+                return false;
+
+            const XmlNode* pInput = pPortMap->FirstNode("input");
+            if (pInput == NULL)
+                return false;
+            while (pInput)
+            {
+                int port = -1, layer = -1, axis = -1;
+                if (!ConvertValue(pInput->FirstAttribute("external_port_id"), port))
+                    return false;
+                if (!ConvertValue(pInput->FirstAttribute("internal_layer_id"), layer))
+                    return false;
+                ConvertValue(pInput->FirstAttribute("axis"), axis);
+
+                ConnectionParam connection;
+                connection.port() = port;
+                connection.dst() = names[ValueToString(layer)];
+                connection.axis() = axis;
+                parent.tensorIterator().input().push_back(connection);
+
+                pInput = pInput->NextSibling("input");
+            }
+
+            const XmlNode* pOutput = pPortMap->FirstNode("output");
+            if (pOutput == NULL)
+                return false;
+            while (pOutput)
+            {
+                int port = -1, layer = -1, axis = -1;
+                if (!ConvertValue(pOutput->FirstAttribute("external_port_id"), port))
+                    return false;
+                if (!ConvertValue(pOutput->FirstAttribute("internal_layer_id"), layer))
+                    return false;
+                ConvertValue(pOutput->FirstAttribute("axis"), axis);
+
+                ConnectionParam connection;
+                connection.src() = names[ValueToString(layer)];
+                connection.port() = port;
+                connection.axis() = axis;
+                parent.tensorIterator().output().push_back(connection);
+
+                pOutput = pOutput->NextSibling("output");
+            }
+
+            const XmlNode* pBackEdges = pParent->FirstNode("back_edges");
+            if (pBackEdges)
+            {
+                const XmlNode* pEdge = pBackEdges->FirstNode("edge");
+                while (pEdge)
+                {
+                    int src = -1, dst = -1;
+                    if (!ConvertValue(pEdge->FirstAttribute("from-layer"), src))
+                        return false;
+                    if (!ConvertValue(pEdge->FirstAttribute("to-layer"), dst))
+                        return false;
+
+                    ConnectionParam connection;
+                    connection.src() = names[ValueToString(src)];
+                    connection.dst() = names[ValueToString(dst)];
+                    parent.tensorIterator().back().push_back(connection);
+
+                    pEdge = pEdge->NextSibling("edge");
+                }
+            }
+
             return true;
         }
 

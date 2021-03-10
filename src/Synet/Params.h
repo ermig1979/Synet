@@ -583,6 +583,7 @@ namespace Synet
     {
         SYNET_PARAM_VALUE(String, src, String());
         SYNET_PARAM_VALUE(String, dst, String());
+        SYNET_PARAM_VALUE(int32_t, port, -1);
         SYNET_PARAM_VALUE(int32_t, axis, -1);
     };
 
