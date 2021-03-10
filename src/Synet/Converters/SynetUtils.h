@@ -64,6 +64,16 @@ namespace Synet
             return true;
         }
 
+        static bool CheckDestinationNumber(const LayerParam& layer, size_t size)
+        {
+            if (layer.dst().size() != size)
+            {
+                std::cout << "Wrong number of destinations (" << layer.dst().size() << " instead of " << size << ") !" << std::endl;
+                return false;
+            }
+            return true;
+        }
+
         static bool CompactShape(Shape& shape)
         {
             size_t count = 0, value = 1;

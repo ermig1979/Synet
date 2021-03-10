@@ -956,6 +956,63 @@ namespace Synet
             return true;
         }
 
+        bool ConvertSplitLayer(const XmlNode* pLayer, const LayerParams& layers, bool trans, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnpack;
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            size_t numSplits;
+            if (!ConvertValue(pData->FirstAttribute("num_splits"), numSplits))
+                return false;
+            if (!CheckDestinationNumber(layer, numSplits))
+                return false;
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL || src1->type() != LayerTypeMeta)
+                return false;
+            if (src1->meta().type() == MetaTypeConst)
+            {
+                if (src1->meta().alpha().shape().size() != 1 || src1->meta().alpha().shape()[0] != 1)
+                    return false;
+                switch (src1->meta().alpha().type())
+                {
+                case TensorType64i:
+                    layer.unpack().axis() = (int32_t)src1->meta().alpha().i64()[0];
+                    break;
+                default:
+                    return false;
+                }
+                if (trans && !PermutedToNchw(layers, false, false))
+                {
+                    Shape input = ConvertInputShape(pLayer);
+                    if (input.size() == 4)
+                    {
+                        Shape nchw = Shape({ 0, 3, 1, 2 });
+                        layer.unpack().axis() = (int32_t)nchw[layer.unpack().axis()];
+                    }
+                    if (input.size() == 3)
+                    {
+                        if (src0->type() == LayerTypePermute)
+                        {
+                            layer.unpack().axis() = 1;
+                        }
+                        else
+                        {
+                            Shape nchw = Shape({ 2, 0, 1 });
+                            layer.unpack().axis() = (int32_t)nchw[layer.unpack().axis()];
+                        }
+                    }
+                } 
+                layer.src().resize(1);
+            }
+            else
+                return false;
+            return true;
+        }
+
         bool ConvertSqueezeLayer(const XmlNode* pLayer, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeSqueeze;
@@ -1079,13 +1136,23 @@ namespace Synet
                     return false;
                 String type = pChild->FirstAttribute("type")->Value();
 
+                if (type == "Add" && !ConvertAddLayer(pChild, children, srcBin, child))
+                    return ErrorMessage(pChild);
                 if (type == "Concat" && !ConvertConcatLayer(pChild, children, trans, child))
                     return ErrorMessage(pChild);
                 if (type == "Const" && !ConvertConstLayer(pChild, srcBin, child))
                     return ErrorMessage(pChild);
+                if ((type == "MatMul") && !ConvertMatMulLayer(pChild, trans, children, srcBin, child, dstBin, info))
+                    return ErrorMessage(pChild);
+                if (type == "Multiply" && !ConvertMultiplyLayer(pChild, srcBin, children, child))
+                    return ErrorMessage(pChild);
                 if (type == "Parameter" && !ConvertParameterLayer(pChild, trans, child))
                     return ErrorMessage(pChild);
                 if (type == "Result" && !ConvertResultLayer(pChild, child))
+                    return ErrorMessage(pChild);
+                if (type == "Sigmoid" && !ConvertSigmoidLayer(pChild, child))
+                    return ErrorMessage(pChild);
+                if (type == "Split" && !ConvertSplitLayer(pChild, children, trans, child))
                     return ErrorMessage(pChild);
                 if (type == "Squeeze" && !ConvertSqueezeLayer(pChild, child))
                     return ErrorMessage(pChild);
