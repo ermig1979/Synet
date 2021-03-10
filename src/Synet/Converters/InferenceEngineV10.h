@@ -826,7 +826,7 @@ namespace Synet
             if (!ConvertVector(pData->FirstAttribute("mask"), layer.yolo().mask()))
                 return false;
             Shape output = ConvertOutputShape(pLayer);
-            layer.yolo().num() = output[1] / (layer.yolo().classes() + 5);
+            layer.yolo().num() = (int)(output[1] / (layer.yolo().classes() + 5));
             if (trans)
             {
                 LayerParam permute;
@@ -1131,8 +1131,8 @@ namespace Synet
             {
                 if (input[i] != output[i])
                 {
-                    layer.tile().axis() = i;
-                    layer.tile().tiles() = output[i] / input[i];
+                    layer.tile().axis() = int(i);
+                    layer.tile().tiles() = int(output[i] / input[i]);
                 }
             }
             if (trans && input.size() == 4 && !PermutedToNchw(layers, true, false))

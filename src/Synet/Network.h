@@ -566,12 +566,9 @@ namespace Synet
                 LayerSharedPtr layer(Fabric<T>::Create(param, _param().quantization().method()));
                 if (layer)
                 {
-                    if (param.parent().empty())
-                    {
-                        layerId[param.name()] = _layers.size();
-                        _layers.push_back(layer);
-                    }
-                    else
+                    layerId[param.name()] = _layers.size();
+                    _layers.push_back(layer);
+                    if (!param.parent().empty())
                     {
                         assert(layerId.find(param.parent()) != layerId.end());
                         _layers[layerId[param.parent()]]->AddChild(layer);
@@ -592,6 +589,8 @@ namespace Synet
                 Stage stage;
                 stage.layer = _layers[i].get();
                 const LayerParam& param = stage.layer->Param();
+                if (!param.parent().empty())
+                    continue;
                 _layerId[param.name()] = i;
                 for (size_t j = 0; j < param.src().size(); ++j)
                 {

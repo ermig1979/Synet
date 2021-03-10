@@ -110,7 +110,13 @@ namespace Synet
                             if (fromLayer.dst().size() == 1)
                                 dst.src().push_back(fromLayer.name());
                             else
-                                dst.src().push_back(fromLayer.name() + ":" + ValueToString(edges[i].fromPort - 1));
+                            {
+                                size_t dstPortMin = INT_MAX;
+                                for (size_t j = 0; j < edges.size(); ++j)
+                                    if (edges[j].fromLayer == edges[i].fromLayer)
+                                        dstPortMin = Synet::Min(dstPortMin, edges[j].fromPort);
+                                dst.src().push_back(fromLayer.name() + ":" + ValueToString(edges[i].fromPort - dstPortMin));
+                            }
                             find = true;
                             break;
                         }
