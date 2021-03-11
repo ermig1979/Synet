@@ -1311,7 +1311,7 @@ namespace Synet
                 for (size_t i = 0; i < order.size(); ++i)
                     order[i] = (size_t)alpha[i];
                 layer.src().resize(1);
-                if (trans)
+                if (trans && !PermutedToNchw(layers, layer.src(), true, false))
                 {
                     if (order.size() == 4)
                     {

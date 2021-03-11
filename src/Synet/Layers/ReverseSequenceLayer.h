@@ -53,6 +53,7 @@ namespace Synet
             for (i = seqAxis + 1, _inner = 1; i < shape.size(); ++i)
                 _inner *= shape[i];
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
         }
 
     protected:

@@ -505,7 +505,10 @@ namespace Synet
         {
             int64_t flop = 0;
             for (size_t i = 0; i < _layers.size(); ++i)
-                flop += _layers[i]->Flop();
+            {
+                if(_layers[i]->Param().parent().empty())
+                    flop += _layers[i]->Flop();
+            }
             return flop;
         }
 

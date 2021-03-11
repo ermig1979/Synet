@@ -88,6 +88,7 @@ namespace Synet
             dstShape[_dstAxis] = _itCount;
             _dstInt = itDst->Size(_dstAxis + 1);
             dst[_itDst.second]->Reshape(dstShape, itDst->Format());
+            this->UsePerfStat();
         }
 
         virtual void AddChild(const LayerSharedPtr& child)
@@ -95,10 +96,62 @@ namespace Synet
             _layers.push_back(child);
         }
 
+        virtual int64_t Flop() const
+        {
+            int64_t flop = 0;
+            for (size_t i = 0; i < _layers.size(); ++i)
+                flop += _layers[i]->Flop();
+            return flop*_itCount;
+        }
+
+        virtual size_t MemoryUsage() const
+        {
+            std::set<const void*> unique;
+            size_t memoryUsage = 0;
+            for (size_t i = 0; i < _tensors.size(); ++i)
+            {
+                const void* ptr = _tensors[i]->RawCpuData();
+                if (unique.find(ptr) == unique.end())
+                {
+                    memoryUsage += _tensors[i]->MemoryUsage();
+                    unique.insert(ptr);
+                }
+            }
+            return memoryUsage;
+        }
+
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            //assert(0);
+            for (size_t i = 0; i < _iLink.size(); ++i)
+            {
+                size_t size = src[_iLink[i].first]->Size();
+                const T* pSrc = src[_iLink[i].first]->CpuData();
+                T* pDst = _src[_iLink[i].second]->CpuData();
+                memcpy(pDst, pSrc, size * sizeof(T));
+            }
+            const T* pSrcE = src[_itSrc.first]->CpuData();
+            T* pSrcI = _src[_itSrc.second]->CpuData();
+            const T* pDstI = _dst[_itDst.first]->CpuData();
+            T* pDstE = dst[_itDst.second]->CpuData();
+            for (size_t it = 0; it < _itCount; ++it)
+            {
+                for (size_t i = 0; i < _srcExt; ++i)
+                    memcpy(pSrcI, pSrcE + (i * _itCount + it) * _srcInt, _srcInt * sizeof(T));
+
+                for (size_t s = 0; s < _stages.size(); ++s)
+                    _stages[s].layer->Forward(_stages[s].src, _stages[s].buf, _stages[s].dst);
+
+                for (size_t b = 0; b < _bLink.size(); ++b)
+                {
+                    size_t size = _dst[_bLink[b].first]->Size();
+                    const T* pSrc = _dst[_bLink[b].first]->CpuData();
+                    T* pDst = _src[_bLink[b].second]->CpuData();
+                    memcpy(pDst, pSrc, size * sizeof(T));
+                }
+                for (size_t o = 0; o < _dstExt; ++o)
+                    memcpy(pDstE + (o * _itCount + it) * _dstInt, pDstI, _dstInt * sizeof(T));
+            }
         }
 
     private:

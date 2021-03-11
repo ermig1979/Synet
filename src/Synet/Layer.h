@@ -212,6 +212,10 @@ namespace Synet
 
         void UsePerfStat(const String & desc = "", int64_t flop = 0)
         {
+#ifndef SYNET_SUBNET_STATISTIC
+            if (!_param.parent().empty())
+                return;
+#endif
             _perfEnable = true;
             _perfDesc = desc;
             _perfFlop = flop;
