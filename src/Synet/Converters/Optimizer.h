@@ -1372,17 +1372,20 @@ namespace Synet
             return true;
         }
 
-        bool IsUsed(const String & name, const LayerParams & layers, size_t start) const
+        size_t Users(const String& name, const LayerParams& layers, size_t start, const String & parent) const
         {
+            size_t users = 0;
             for (size_t i = start; i < layers.size(); ++i)
             {
+                if (layers[i].parent() != parent)
+                    continue;
                 for (size_t j = 0; j < layers[i].src().size(); ++j)
                 {
                     if (layers[i].src()[j] == name)
-                        return true;
+                        users++;
                 }
             }
-            return false;
+            return users;
         }
 
         bool CanReuse(const LayerParam & layer)
@@ -1413,11 +1416,11 @@ namespace Synet
                 LayerParam & layer = layers[i];
                 if (layer.src().empty())
                     continue;
-                if (IsUsed(layer.src()[0], layers, i + 1))
+                if (Users(layer.src()[0], layers, i + 1, "") > 0)
                     continue;
                 if (i && layer.src()[0] == layers[i - 1].name() && layers[i - 1].type() == LayerTypeConst)
                     continue;
-                if (!IsUsed(layer.dst()[0], layers, i + 1))
+                if (Users(layer.dst()[0], layers, i + 1, "") == 0)
                     continue;
                 if (!CanReuse(layer))
                     continue;
@@ -1428,9 +1431,9 @@ namespace Synet
             return true;
         }
 
-        bool IsStub(const LayerParam& layer)
+        bool IsStub(const LayerParam& layer, const LayerParams& layers)
         {
-            if (layer.type() == LayerTypeStub)
+            if (layer.type() == LayerTypeStub && (layer.parent().empty() || Users(layer.dst()[0], layers, 0, layer.parent()) > 0))
                 return true;
             if (layer.type() == LayerTypePooling && layer.pooling().method() == PoolingMethodTypeMax &&
                 layer.pooling().kernel() == Shp(1, 1) && layer.pooling().stride() == Shp(1, 1))
@@ -1443,12 +1446,12 @@ namespace Synet
             LayerParams& layers = network.layers();
             for (size_t i = 1; i < layers.size(); ++i)
             {
-                LayerParam* curr = &layers[i];
-                if (!IsStub(*curr))
+                LayerParam & layer = layers[i];
+                if (!IsStub(layer, layers))
                     continue;
-                if (curr->src().size() != 1 || curr->dst().size() != 1)
+                if (layer.src().size() != 1 || layer.dst().size() != 1)
                     continue;
-                if (!Rename(Change(curr->dst()[0], curr->src()[0]), layers))
+                if (!Rename(Change(layer.dst()[0], layer.src()[0]), layers))
                     return false;
                 layers.erase(layers.begin() + i);
             }

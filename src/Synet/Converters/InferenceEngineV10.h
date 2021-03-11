@@ -1259,7 +1259,7 @@ namespace Synet
 
                 ConnectionParam connection;
                 connection.src() = names[ValueToString(layer)];
-                connection.port() = port;
+                connection.port() = port - (int)parent.src().size();
                 connection.axis() = axis;
                 parent.tensorIterator().output().push_back(connection);
 

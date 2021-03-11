@@ -52,8 +52,42 @@ namespace Synet
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             if (_empty)
-                Init(buf);
-            assert(0);
+            {
+                InitGraph(buf);
+                SetLinks(src, dst);
+                _empty = false;
+            }
+
+            for (size_t i = 0; i < _iLink.size(); ++i)
+            {
+                const Tensor * iSrc = src[_iLink[i].first];
+                _src[_iLink[i].second]->Reshape(iSrc->Shape(), iSrc->Format());
+            }
+            const Tensor* itSrc = src[_itSrc.first];
+            Shape srcShape = itSrc->Shape();
+            _srcExt = itSrc->Size(0, _srcAxis);
+            _itCount = srcShape[_srcAxis];
+            _srcInt = itSrc->Size(_srcAxis + 1);
+            srcShape[_srcAxis] = 1;
+            _src[_itSrc.second]->Reshape(srcShape, itSrc->Format());
+
+            for (size_t i = 0; i < _stages.size(); ++i)
+                _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst);
+
+            for (size_t b = 0; b < _bLink.size(); ++b)
+                assert(_dst[_bLink[b].first]->Shape() == _src[_bLink[b].second]->Shape());
+            for (size_t o = 0; o < _oLink.size(); ++o)
+            {
+                const Tensor* oDst = src[_oLink[o].first];
+                src[_oLink[o].second]->Reshape(oDst->Shape(), oDst->Format());
+            }
+            const Tensor* itDst = _dst[_itDst.first];
+            Shape dstShape = itDst->Shape();
+            assert(dstShape[_dstAxis] == 1);
+            _dstExt = itDst->Size(0, _dstAxis);
+            dstShape[_dstAxis] = _itCount;
+            _dstInt = itDst->Size(_dstAxis + 1);
+            dst[_itDst.second]->Reshape(dstShape, itDst->Format());
         }
 
         virtual void AddChild(const LayerSharedPtr& child)
@@ -64,6 +98,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            assert(0);
         }
 
     private:
@@ -77,6 +112,9 @@ namespace Synet
         typedef std::vector<Stage> Stages;
         typedef std::set<String> NameSet;
         typedef std::map<String, size_t> NameIdMap;
+        typedef std::vector<ConnectionParam> ConnectionParams;
+        typedef std::pair<size_t, size_t> Link;
+        typedef std::vector<Link> Links;
 
         bool _empty;
         LayerSharedPtrs _layers;
@@ -84,8 +122,11 @@ namespace Synet
         Stages _input, _stages;
         TensorPtrs _src, _dst;
         NameIdMap _tensorId, _layerId;
+        Link _itSrc, _itDst;
+        Links _iLink, _oLink, _bLink;
+        size_t _itCount, _srcAxis, _srcExt, _srcInt, _dstAxis, _dstExt, _dstInt;
 
-        void Init(const TensorPtrs& buf)
+        void InitGraph(const TensorPtrs& buf)
         {
             NameSet available;
             for (size_t i = 0; i < _layers.size(); ++i)
@@ -139,7 +180,75 @@ namespace Synet
             }
             for (NameSet::const_iterator it = available.begin(); it != available.end(); ++it)
                 _dst.push_back(_tensors[_tensorId[*it]].get());
-            _empty = false;
+        }
+
+        void SetLinks(const TensorPtrs& src, const TensorPtrs& dst)
+        {
+            const ConnectionParams& input = this->Param().tensorIterator().input();
+            assert(src.size() == input.size() && src.size() == _src.size());
+            _itSrc = Link(-1, -1);
+            for (size_t i = 0, it = 0; i < input.size(); ++i)
+            {
+                assert(input[i].port() < src.size());
+                Link link(input[i].port(), -1);
+                for (size_t j = 0; j < _src.size(); ++j)
+                {
+                    if (_src[j]->Name() == input[i].dst())
+                        link.second = j;
+                }
+                if (input[i].axis() != -1)
+                {
+                    _itSrc = link;
+                    _srcAxis = input[i].axis();
+                    assert(++it == 1);
+                }
+                else
+                    _iLink.push_back(link);
+            }
+            assert(_itSrc.first < src.size() && _itSrc.second < _src.size());
+
+            const ConnectionParams& output = this->Param().tensorIterator().output();
+            assert(dst.size() == output.size() && dst.size() <= _dst.size());
+            _itDst = Link(-1, -1);
+            for (size_t o = 0, it = 0; o < output.size(); ++o)
+            {
+                assert(output[o].port() < dst.size());
+                Link link(-1, output[o].port());
+                for (size_t j = 0; j < _dst.size(); ++j)
+                {
+                    if (_dst[j]->Name() == output[o].src())
+                        link.first = j;
+                }
+                if (output[o].axis() != -1)
+                {
+                    _itDst = link;
+                    _dstAxis = output[o].axis();
+                    assert(++it == 1);
+                }
+                else
+                    _oLink.push_back(link);
+            }
+            assert(_itDst.first < _dst.size() && _itDst.second < src.size());
+
+            const ConnectionParams& back = this->Param().tensorIterator().back();
+            assert(back.size() <= _src.size());
+            for (size_t b = 0; b < back.size(); ++b)
+            {
+                Link link(-1, -1);
+                for (size_t i = 0; i < _dst.size(); ++i)
+                {
+                    if (_dst[i]->Name() == back[b].src())
+                        link.first = i;
+                }
+                for (size_t o = 0; o < _src.size(); ++o)
+                {
+                    if (_src[o]->Name() == back[b].dst())
+                        link.second = o;
+                }
+                assert(link.first < _dst.size() && link.second < _src.size());
+                assert(link.first != _itDst.first && link.second != _itSrc.second);
+                _bLink.push_back(link);
+            }
         }
     };
 }

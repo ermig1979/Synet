@@ -65,14 +65,14 @@ namespace Synet
                     const float h1r = rheight * h2;
                     const int h1 = (int)h1r;
                     const int h1p = (h1 < sizeH - 1) ? 1 : 0;
-                    const T h1lambda = h1r - h1;
+                    const T h1lambda = T(h1r - h1);
                     const T h0lambda = T(1.) - h1lambda;
                     for (int w2 = 0; w2 < dstW; ++w2)
                     {
                         const float w1r = rwidth * w2;
                         const int w1 = (int)w1r;
                         const int w1p = (w1 < sizeW - 1) ? 1 : 0;
-                        const T w1lambda = w1r - w1;
+                        const T w1lambda = T(w1r - w1);
                         const T w0lambda = T(1.) - w1lambda;
                         const T * pos1 = &src[h1 * srcW + w1];
                         T * pos2 = &dst[h2 * dstW + w2];

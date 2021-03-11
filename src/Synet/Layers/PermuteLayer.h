@@ -70,13 +70,13 @@ namespace Synet
                     _permute = false;
             }
 
+            _srcShape = src[0]->Shape();
+            assert(_srcShape.size() == _count);
+            _dstShape.clear();
+            for (size_t i = 0; i < _count; ++i)
+                _dstShape.push_back(_srcShape[_order[i]]);
             if (_permute)
             {
-                _srcShape = src[0]->Shape();
-                assert(_srcShape.size() == _count);
-                _dstShape.clear();
-                for (size_t i = 0; i < _count; ++i)
-                    _dstShape.push_back(_srcShape[_order[i]]);
                 _srcStride.resize(_count, 1);
                 _dstStride.resize(_count, 1);
                 Shape dstStride(_count, 1);
@@ -91,7 +91,7 @@ namespace Synet
                 this->UsePerfStat();
             }
             else
-                dst[0]->ShareAs(*src[0], src[0]->Shape(), param.format() == TensorFormatUnknown ? src[0]->Format() : param.format());
+                dst[0]->ShareAs(*src[0], _dstShape, param.format() == TensorFormatUnknown ? src[0]->Format() : param.format());
         }
 
     protected:
