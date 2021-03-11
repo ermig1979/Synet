@@ -157,7 +157,7 @@ namespace Synet
                 Pin src = ParsePin(layer.src()[s]);
                 for (size_t l = 0; l < current; ++l)
                 {
-                    if (src.name == layers[l].name() && layers[l].type() != LayerTypeMeta &&
+                    if (src.name == layers[l].name() && layers[l].type() != LayerTypeMeta && layers[l].type() &&
                         PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox))
                         return true;
                 }
@@ -171,6 +171,21 @@ namespace Synet
             if (layers[start].type() == LayerTypeConst && start)
                 start--;
             return PermutedToNchw(layers, start, checkInnerProduct, checkPriorBox);
+        }
+
+        static bool PermutedToNchw(const LayerParams& layers, const Strings & names, bool checkInnerProduct, bool checkPriorBox)
+        {
+            for (size_t s = 0; s < names.size(); ++s)
+            {
+                Pin src = ParsePin(names[s]);
+                for (size_t l = 0; l < layers.size(); ++l)
+                {
+                    if (src.name == layers[l].name() && layers[l].type() != LayerTypeMeta && layers[l].type() &&
+                        PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox))
+                        return true;
+                }
+            }
+            return false;
         }
 
         static size_t UserCount(const LayerParams& layers, size_t index)

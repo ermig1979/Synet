@@ -436,7 +436,7 @@ namespace Synet
                 layer.weight()[0].dim() = Shape({ shape[0] * shape[1] , shape[2], shape[3], shape[4] });
             }
             layer.src().resize(1);
-            if (trans)
+            if (trans && !PermutedToNchw(layers, true, false))
                 return ReorderWeight(srcBin, Shape(), layer, dstBin);
             return true;
         }
@@ -871,7 +871,7 @@ namespace Synet
                 for (size_t i = 0; i < shape.size(); ++i)
                     shape[i] = (size_t)alpha[i];
                 layer.src().resize(1);
-                if (trans && !PermutedToNchw(layers, true, false))
+                if (trans && !PermutedToNchw(layers, layer.src(), true, false))
                 {
                     if (shape.size() == 4)
                     {

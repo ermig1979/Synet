@@ -381,6 +381,7 @@ namespace Test
             {
                 const InferenceEngine::SizeVector& dims = _ieOutput[o]->getTensorDesc().getDims();
                 const InferenceEngine::SizeVector& strides = _ieOutput[o]->getTensorDesc().getBlockingDesc().getStrides();
+                const InferenceEngine::Precision& precision = _ieOutput[o]->getTensorDesc().getPrecision();
                 if (dims.size() == 4 && dims[3] == 7 && _outputNames[o].find("Yolo") == std::string::npos)
                 {
                     assert(dims[0] == 1);
@@ -423,16 +424,28 @@ namespace Test
                     size_t size = 1;
                     for (size_t i = 0; i < dims.size(); ++i)
                         size *= dims[i];
-                    const float* pOut = _ieOutput[o]->buffer();
-                    SetOutput(dims, strides, 0, pOut, _output[o].CpuData() + b * size);
+                    switch (precision)
+                    {
+                    case InferenceEngine::Precision::FP32:
+                        SetOutput(dims, strides, 0, (const float*)_ieOutput[o]->buffer(), _output[o].CpuData() + b * size);
+                        break;
+                    case InferenceEngine::Precision::I32:
+                        SetOutput(dims, strides, 0, (const int32_t*)_ieOutput[o]->buffer(), _output[o].CpuData() + b * size);
+                        break;
+                    default:
+                        assert(0);
+                    }
                 }
             }
         }
 
-        template<class T> void SetOutput(const Sizes& dims, const Sizes& strides, size_t current, const T* src, T* dst)
+        template<class S, class D> void SetOutput(const Sizes& dims, const Sizes& strides, size_t current, const S* src, D* dst)
         {
             if (current == dims.size() - 1)
-                memcpy(dst, src, dims[current] * sizeof(T));
+            {
+                for (size_t i = 0; i < dims[current]; ++i)
+                    dst[i] = (D)src[i];
+            }
             else
             {
                 size_t srcStride = strides[current];

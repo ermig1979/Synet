@@ -264,13 +264,28 @@ namespace Test
             }
         }
 
-        void SetOutput(const Net::Tensor & src, const Net::Layer & back, Tensor & dst)
+        void SetOutput(const Net::Tensor& src, const Net::Layer& back, Tensor& dst)
+        {
+            switch (src.GetType())
+            {
+            case Synet::TensorType32f:
+                SetOutputT(src.As32f(), back, dst);
+                break;
+            case Synet::TensorType32i:
+                SetOutputT(src.As32i(), back, dst);
+                break;
+            default:
+                assert(0);
+            }
+        }
+
+        template<class T> void SetOutputT(const Synet::Tensor<T> & src, const Net::Layer & back, Tensor & dst)
         {
             if (src.Count() == 4 && src.Axis(3) == 7 && back.Param().type() == Synet::LayerTypeDetectionOutput)
             {
                 assert(src.Axis(0) == 1);
                 Vector tmp;
-                const float * pSrc = src.CpuData();
+                const T * pSrc = src.CpuData();
                 for (size_t j = 0; j < src.Axis(2); ++j, pSrc += 7)
                 {
                     if (pSrc[0] == -1)
@@ -333,7 +348,8 @@ namespace Test
                 else
                 {
                     dst.Reshape(src.Shape(), Synet::TensorFormatNchw);
-                    memcpy(dst.CpuData(), src.CpuData(), src.Size() * sizeof(float));
+                    for (size_t i = 0; i < src.Size(); ++i)
+                        dst.CpuData()[i] = src.CpuData()[i];
                 }
             }
         }

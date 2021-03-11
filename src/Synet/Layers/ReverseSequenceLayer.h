@@ -76,11 +76,10 @@ namespace Synet
                 {
                     for (size_t r = 0; r < _reverse; ++r)
                     {
-                        for (size_t r = 0; r < _reverse; ++r)
-                            memcpy(pDst + r * _inner, pSrc + (_reverse - 1 - r) * _inner, _inner * sizeof(T));
-                        pDst += _reverse*_inner;
-                        pSrc += _reverse * _inner;
+                        memcpy(pDst + r * _inner, pSrc + (_reverse - 1 - r) * _inner, _inner * sizeof(T));
                     }
+                    pDst += _reverse * _inner;
+                    pSrc += _reverse * _inner;
                 }
             }
         }

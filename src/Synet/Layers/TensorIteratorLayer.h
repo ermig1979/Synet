@@ -98,7 +98,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            assert(0);
+            //assert(0);
         }
 
     private:
