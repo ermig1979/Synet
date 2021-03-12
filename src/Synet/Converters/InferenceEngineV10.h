@@ -112,7 +112,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if ((type == "ReduceMax" || type == "ReduceSum") && !ConvertReduceMaxOrSumLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
-                if (type == "RegionYolo" && !ConvertRegionYoloLayer(pLayer, dstXml.layers(), trans, layer))
+                if (type == "RegionYolo" && !ConvertRegionYoloLayer(pLayer, dstXml.layers(), trans, layer, index))
                     return ErrorMessage(pLayer);
                 if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
@@ -855,7 +855,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertRegionYoloLayer(const XmlNode* pLayer, LayerParams& layers, bool trans, LayerParam& layer)
+        bool ConvertRegionYoloLayer(const XmlNode* pLayer, LayerParams& layers, bool trans, LayerParam& layer, IndexMap & index)
         {
             layer.type() = LayerTypeYolo;
             const XmlNode* pData = pLayer->FirstNode("data");
@@ -880,6 +880,9 @@ namespace Synet
                 permute.permute().format() = TensorFormatNchw;
                 layer.src() = permute.dst();
                 layers.push_back(permute);
+                size_t layerId;
+                StringToValue(pLayer->FirstAttribute("id")->Value(), layerId);
+                index[layerId]++;
             }
             return true;
         }

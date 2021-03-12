@@ -58,7 +58,7 @@ namespace Synet
             
             Shape dstShape = src[0]->Shape();
             dstShape[1] = _num*(_classes + 4 + 1);
-            dst[0]->Reshape(dstShape);
+            dst[0]->Reshape(dstShape, src[0]->Format());
             this->UsePerfStat();
         }
 
