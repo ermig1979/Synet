@@ -522,6 +522,14 @@ namespace Test
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }
+            case InferenceEngine::Precision::I32:
+            {
+                Synet::Tensor<int32_t> tensor(dims, format);
+                const int32_t* pOut = blob.buffer();
+                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
+                break;
+            }
             case InferenceEngine::Precision::U8:
             {
                 Synet::Tensor<uint8_t> tensor(dims, format);

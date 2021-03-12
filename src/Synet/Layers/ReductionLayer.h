@@ -52,11 +52,27 @@ namespace Synet
             for (size_t o = 0; o < outer; ++o)
             {
                 for (size_t i = 0; i < inner; ++i)
-                    dst[i] = 0;
+                    dst[i] = T(0);
                 for (size_t c = 0; c < count; ++c)
                 {
                     for (size_t i = 0; i < inner; ++i)
                         dst[i] += src[i];
+                    src += inner;
+                }
+                dst += inner;
+            }
+        }
+
+        template <class T> void ReductionLayerForwardCpuProd(const T* src, size_t outer, size_t count, size_t inner, T* dst)
+        {
+            for (size_t o = 0; o < outer; ++o)
+            {
+                for (size_t i = 0; i < inner; ++i)
+                    dst[i] = T(1);
+                for (size_t c = 0; c < count; ++c)
+                {
+                    for (size_t i = 0; i < inner; ++i)
+                        dst[i] *= src[i];
                     src += inner;
                 }
                 dst += inner;
@@ -87,6 +103,9 @@ namespace Synet
                 break;
             case ReductionTypeSum:
                 _func = Detail::ReductionLayerForwardCpuSum;
+                break;
+            case ReductionTypeProd:
+                _func = Detail::ReductionLayerForwardCpuProd;
                 break;
             default:
                 assert(0);

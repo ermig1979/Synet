@@ -294,13 +294,13 @@ namespace Test
                         continue;
                     size_t offset = tmp.size();
                     tmp.resize(offset + 7);
-                    tmp[offset + 0] = pSrc[0];
-                    tmp[offset + 1] = pSrc[1];
-                    tmp[offset + 2] = pSrc[2];
-                    tmp[offset + 3] = pSrc[3];
-                    tmp[offset + 4] = pSrc[4];
-                    tmp[offset + 5] = pSrc[5];
-                    tmp[offset + 6] = pSrc[6];
+                    tmp[offset + 0] = (float)pSrc[0];
+                    tmp[offset + 1] = (float)pSrc[1];
+                    tmp[offset + 2] = (float)pSrc[2];
+                    tmp[offset + 3] = (float)pSrc[3];
+                    tmp[offset + 4] = (float)pSrc[4];
+                    tmp[offset + 5] = (float)pSrc[5];
+                    tmp[offset + 6] = (float)pSrc[6];
                 }
                 SortDetectionOutput(tmp.data(), tmp.size());
                 dst.Reshape(Shp(1, 1, tmp.size()/7, 7));
@@ -317,7 +317,7 @@ namespace Test
                         for (size_t c = 0; c < src.Axis(3); ++c)
                             for (size_t y = 0; y < src.Axis(1); ++y)
                                 for (size_t x = 0; x < src.Axis(2); ++x)
-                                    dst.CpuData(Shp(n, c, y, x))[0] = src.CpuData(Shp(n, y, x, c))[0];
+                                    dst.CpuData(Shp(n, c, y, x))[0] = (float)src.CpuData(Shp(n, y, x, c))[0];
                 }
                 else if (trans && src.Count() == 3)
                 {
@@ -327,7 +327,7 @@ namespace Test
                         for (size_t n = 0; n < src.Axis(0); ++n)
                             for (size_t c = 0; c < src.Axis(2); ++c)
                                 for (size_t s = 0; s < src.Axis(1); ++s)
-                                    dst.CpuData(Shp(n, c, s))[0] = src.CpuData(Shp(n, s, c))[0];
+                                    dst.CpuData(Shp(n, c, s))[0] = (float)src.CpuData(Shp(n, s, c))[0];
                     }
                     else
                     {
@@ -335,7 +335,7 @@ namespace Test
                         for (size_t c = 0; c < src.Axis(2); ++c)
                             for (size_t y = 0; y < src.Axis(0); ++y)
                                 for (size_t x = 0; x < src.Axis(1); ++x)
-                                    dst.CpuData(Shp(c, y, x))[0] = src.CpuData(Shp(y, x, c))[0];
+                                    dst.CpuData(Shp(c, y, x))[0] = (float)src.CpuData(Shp(y, x, c))[0];
                     }
                 }
                 else if (trans && src.Count() == 2 && (src.Axis(0) == 1 || src.Format() == Synet::TensorFormatNhwc))
@@ -343,13 +343,13 @@ namespace Test
                     dst.Reshape(Shp(src.Axis(1), src.Axis(0)), Synet::TensorFormatNchw);
                     for (size_t c = 0; c < src.Axis(1); ++c)
                         for (size_t s = 0; s < src.Axis(0); ++s)
-                            dst.CpuData(Shp(c, s))[0] = src.CpuData(Shp(s, c))[0];
+                            dst.CpuData(Shp(c, s))[0] = (float)src.CpuData(Shp(s, c))[0];
                 }
                 else
                 {
                     dst.Reshape(src.Shape(), Synet::TensorFormatNchw);
                     for (size_t i = 0; i < src.Size(); ++i)
-                        dst.CpuData()[i] = src.CpuData()[i];
+                        dst.CpuData()[i] = (float)src.CpuData()[i];
                 }
             }
         }

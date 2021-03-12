@@ -1433,7 +1433,7 @@ namespace Synet
 
         bool IsStub(const LayerParam& layer, const LayerParams& layers)
         {
-            if (layer.type() == LayerTypeStub && (layer.parent().empty() || Users(layer.dst()[0], layers, 0, layer.parent()) > 0))
+            if (layer.type() == LayerTypeStub && Users(layer.dst()[0], layers, 0, layer.parent()) > 0)
                 return true;
             if (layer.type() == LayerTypePooling && layer.pooling().method() == PoolingMethodTypeMax &&
                 layer.pooling().kernel() == Shp(1, 1) && layer.pooling().stride() == Shp(1, 1))

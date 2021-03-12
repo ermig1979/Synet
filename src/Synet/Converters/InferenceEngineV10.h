@@ -96,6 +96,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Parameter" && !ConvertParameterLayer(pLayer, trans, layer))
                     return ErrorMessage(pLayer);
+                if (type == "Power" && !ConvertPowerLayer(pLayer, srcBin, dstXml.layers(), layer))
+                    return ErrorMessage(pLayer);
                 if (type == "PReLU" && !ConvertPreluLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "PriorBox" && !ConvertPriorBoxLayer(pLayer, layer))
@@ -106,9 +108,9 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "ReduceMean" && !ConvertReduceMeanLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
-                if (type == "ReduceProd" && !ConvertReduceProdLayer(pLayer, layer))
+                if (type == "ReduceProd" && !ConvertReduceProdLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
-                if (type == "ReduceSum" && !ConvertReduceSumLayer(pLayer, srcBin, dstXml.layers(), layer))
+                if ((type == "ReduceMax" || type == "ReduceSum") && !ConvertReduceMaxOrSumLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "RegionYolo" && !ConvertRegionYoloLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
@@ -147,7 +149,7 @@ namespace Synet
                 if (layer.type() == LayerTypeUnknown)
                 {
                     NotImplemented(pLayer, layer);
-                    std::cout << "Not implemented layer : name = " << layer.name() << " ; type = " << type << std::endl;
+                    std::cout << "Not implemented layer : name = " << layer.name() << " ; type = " << type << " ; id = " << pLayer->FirstAttribute("id")->Value() << std::endl;
                 }
 #endif
                 dstXml.layers().push_back(layer);
@@ -680,6 +682,19 @@ namespace Synet
             return true;
         }
 
+        bool ConvertPowerLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeConst)
+                return false;
+            layer.type() = Synet::LayerTypePower;
+            layer.power().power() = GetWeight<float>(srcBin, second->weight()[0])[0];
+            layer.src().resize(1);
+            return true;
+        }
+
         bool ConvertPreluLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
@@ -777,23 +792,44 @@ namespace Synet
             return true;
         }
 
-        bool ConvertReduceProdLayer(const XmlNode* pLayer, LayerParam& layer)
+        bool ConvertReduceProdLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
         {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
             const XmlNode* pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
-            const XmlAttr* pKeepDims = pData->FirstAttribute("keep_dims");
-            if (pKeepDims == NULL)
+            bool keepDims;
+            if (!ConvertValue(pData->FirstAttribute("keep_dims"), keepDims))
                 return false;
-            layer.type() = Synet::LayerTypeMeta;
-            layer.meta().type() = Synet::MetaTypeReduceProd;
-            layer.meta().alpha().type() = TensorType32i;
-            layer.meta().alpha().shape() = Shp(1);
-            layer.meta().alpha().i32().resize(1, String(pKeepDims->Value()) == "True" ? 1 : 0);
+            if (src0->type() == LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeReduceProd;
+                layer.meta().alpha().type() = TensorType32i;
+                layer.meta().alpha().shape() = Shp(1);
+                layer.meta().alpha().i32().resize(1, keepDims ? 1 : 0);
+            }
+            else
+            {
+                if (src1->type() != LayerTypeMeta || src1->meta().type() != MetaTypeConst)
+                    return false;
+                const Longs& alpha = src1->meta().alpha().i64();
+                layer.type() = Synet::LayerTypeReduction;
+                layer.reduction().type() = ReductionTypeProd;
+                layer.reduction().keepDims() = keepDims;
+                for (size_t i = 0; i < alpha.size(); ++i)
+                    layer.reduction().axis().push_back((int)alpha[i]);
+                layer.src().resize(1);
+            }
             return true;
         }
 
-        bool ConvertReduceSumLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
+        bool ConvertReduceMaxOrSumLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -805,7 +841,13 @@ namespace Synet
             if (pData == NULL)
                 return false;
             layer.type() = Synet::LayerTypeReduction;
-            layer.reduction().type() = ReductionTypeSum;
+            String type = pLayer->FirstAttribute("type")->Value();
+            if (type == "ReduceMax")
+                layer.reduction().type() = ReductionTypeMax;
+            else if (type == "ReduceSum")
+                layer.reduction().type() = ReductionTypeSum;
+            else
+                return false;
             for (size_t i = 0; i < alpha.size(); ++i)
                 layer.reduction().axis().push_back((int)alpha[i]);
             StringToValue(pData->FirstAttribute("keep_dims")->Value(), layer.reduction().keepDims());

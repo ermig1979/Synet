@@ -171,7 +171,8 @@ namespace Synet
     
     SYNET_PARAM_ENUM(ReductionType,
         ReductionTypeMax,
-        ReductionTypeSum);
+        ReductionTypeSum,
+        ReductionTypeProd);
 
     SYNET_PARAM_ENUM(RoundingType,
         RoundingTypeCeil,

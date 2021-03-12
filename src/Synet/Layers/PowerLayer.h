@@ -30,6 +30,15 @@
 
 namespace Synet
 {
+    namespace Detail
+    {
+        template <typename T> void PowerForwardCpu(const T* src, size_t size, T scale, T shift, T power, T* dst)
+        {
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = ::pow(src[i] * scale + shift, power);
+        }
+    }
+
     template <class T> class PowerLayer : public Synet::Layer<T>
     {
     public:
@@ -46,9 +55,9 @@ namespace Synet
         {
             const PowerParam & param = this->Param().power();
             _power = param.power();
-            assert(_power == 1.0f);
             _scale = param.scale();
             _shift = param.shift();
+            _size = src[0]->Size();
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
             this->UsePerfStat();
         }
@@ -56,10 +65,18 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            Detail::ScaleLayerForwardCpu(src[0]->CpuData(), &_scale, &_shift, 1, 1, src[0]->Size(), dst[0]->CpuData(), src[0]->Format(), 0);
+            const T* pSrc = src[0]->CpuData();
+            T* pDst = dst[0]->CpuData();
+            if (_power == 1.0f)
+                Detail::ScaleLayerForwardCpu(pSrc, &_scale, &_shift, 1, 1, _size, pDst, src[0]->Format(), 0);
+            else if (_scale == 1.0f && _shift == 0.0f)
+                CpuPow(pSrc, _size, _power, pDst);
+            else
+                Detail::PowerForwardCpu(pSrc, _size, _scale, _shift, _power, pDst);
         }
 
     private:
         Type _power, _scale, _shift;
+        size_t _size;
     };
 }
