@@ -1388,6 +1388,16 @@ namespace Synet
             return users;
         }
 
+        const LayerParam * GetLayer(const String& name, const LayerParams& layers) const
+        {
+            for (size_t i = 0; i < layers.size(); ++i)
+            {
+                if (layers[i].name() == name)
+                    return &layers[i];
+            }
+            return NULL;
+        }
+
         bool CanReuse(const LayerParam & layer)
         {
             if (layer.type() == LayerTypeSigmoid)
@@ -1433,8 +1443,14 @@ namespace Synet
 
         bool IsStub(const LayerParam& layer, const LayerParams& layers)
         {
-            if (layer.type() == LayerTypeStub && Users(layer.dst()[0], layers, 0, layer.parent()) > 0)
-                return true;
+            if (layer.type() == LayerTypeStub)
+            {
+                if (Users(layer.dst()[0], layers, 0, layer.parent()) > 0)
+                    return true;
+                LayerType type = GetLayer(layer.src()[0], layers)->type();
+                if (type == LayerTypeDetectionOutput)
+                    return true;
+            }
             if (layer.type() == LayerTypePooling && layer.pooling().method() == PoolingMethodTypeMax &&
                 layer.pooling().kernel() == Shp(1, 1) && layer.pooling().stride() == Shp(1, 1))
                 return true;
