@@ -264,7 +264,7 @@ namespace Synet
                 if (pData == NULL)
                     return false;
                 StringToValue(pData->FirstAttribute("axis")->Value(), layer.concat().axis());
-                if (trans && !PermutedToNchw(layers, false, true))
+                if (trans && !PermutedToNchw(layers, layer.src(), false, true))
                 {
                     Shape input = ConvertInputShape(pLayer);
                     if (input.size() == 4)
@@ -438,7 +438,7 @@ namespace Synet
                 layer.weight()[0].dim() = Shape({ shape[0] * shape[1] , shape[2], shape[3], shape[4] });
             }
             layer.src().resize(1);
-            if (trans && !PermutedToNchw(layers, true, false))
+            if (trans && !PermutedToNchw(layers, layer.src(), true, false))
                 return ReorderWeight(srcBin, Shape(), layer, dstBin);
             return true;
         }
@@ -578,7 +578,7 @@ namespace Synet
             layer.weight() = second->weight();
             layer.innerProduct().outputNum() = (uint32_t)output[1];
             layer.src().resize(1);
-            if (trans && !PermutedToNchw(layers, true, false))
+            if (trans && !PermutedToNchw(layers, layer.src(), true, false))
             {
                 const LayerParam * first = GetLayer(layers, layer.src()[0]);
                 if (first == NULL)
@@ -986,7 +986,7 @@ namespace Synet
             if (pData == NULL)
                 return false;
             StringToValue(pData->FirstAttribute("axis")->Value(), layer.softmax().axis());
-            if (trans && !PermutedToNchw(layers, false, false))
+            if (trans && !PermutedToNchw(layers, layer.src(), false, false))
             {
                 Shape input = ConvertInputShape(pLayer);
                 if (input.size() == 4)
@@ -1027,7 +1027,7 @@ namespace Synet
                 default:
                     return false;
                 }
-                if (trans && !PermutedToNchw(layers, false, false))
+                if (trans && !PermutedToNchw(layers, layer.src(), false, false))
                 {
                     Shape input = ConvertInputShape(pLayer);
                     if (input.size() == 4)
@@ -1177,7 +1177,7 @@ namespace Synet
                     layer.tile().tiles() = int(output[i] / input[i]);
                 }
             }
-            if (trans && input.size() == 4 && !PermutedToNchw(layers, true, false))
+            if (trans && input.size() == 4 && !PermutedToNchw(layers, layer.src(), true, false))
             {
                 uint32_t order[4] = { 0, 3, 1, 2 };
                 layer.tile().axis() = order[layer.tile().axis()];
@@ -1189,7 +1189,7 @@ namespace Synet
         bool ConvertTensorIteratorLayer(const XmlNode* pParent, bool trans, const LayerParams& parents, const Vector& srcBin, LayerParam& parent, Vector& dstBin, TensorInfoMap& info, LayerParams & children)
         {
             if (trans)
-                trans = !PermutedToNchw(parents, false, true);
+                trans = !PermutedToNchw(parents, parent.src(), false, true);
 
             const XmlNode* pBody = pParent->FirstNode("body");
             if (pBody == NULL)
