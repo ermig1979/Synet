@@ -128,6 +128,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "SoftMax" && !ConvertSoftmaxLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
+                if (type == "Split" && !ConvertSplitLayer(pLayer, dstXml.layers(), trans, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Squeeze" && !ConvertSqueezeLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "StridedSlice" && !ConvertStridedSliceLayer(pLayer, dstXml.layers(), srcBin, trans, layer))
