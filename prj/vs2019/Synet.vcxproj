@@ -123,6 +123,7 @@
     <ClInclude Include="..\..\src\Synet\Utils\FileUtils.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Gemm.h" />
     <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\InnerProduct.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Math.h" />
     <ClInclude Include="..\..\src\Synet\Utils\MergedConvolution.h" />
     <ClInclude Include="..\..\src\Synet\Utils\SetInput.h" />

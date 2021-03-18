@@ -308,6 +308,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\TensorIteratorLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\InnerProduct.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

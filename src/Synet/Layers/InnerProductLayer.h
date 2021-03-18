@@ -26,11 +26,12 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/Utils/Math.h"
 #include "Synet/Layers/ScaleLayer.h"
 #include "Synet/Quantization/Gemm.h"
 #include "Synet/Quantization/Convert.h"
 #include "Synet/Quantization/Const.h"
+#include "Synet/Utils/Math.h"
+#include "Synet/Utils/InnerProduct.h"
 
 #ifdef _N
 #undef _N
@@ -73,6 +74,7 @@ namespace Synet
         InnerProductLayer(const LayerParam & param, QuantizationMethod method)
             : Base(param)
             , _method(method)
+            , _internal(0)
         {
             _is8i = param.innerProduct().quantizationLevel() == TensorType8i;
         }
@@ -99,12 +101,13 @@ namespace Synet
 
         virtual size_t MemoryUsage() const
         {
-            return Base::MemoryUsage() + _weight8i.MemoryUsage() + _norm32i.MemoryUsage() + _norm32f.MemoryUsage();
+            return Base::MemoryUsage() + _innerProduct32f.InternalBufferSize() * sizeof(float) +
+                _weight8i.MemoryUsage() + _norm32i.MemoryUsage() + _norm32f.MemoryUsage();
         }
 
         virtual void CompactWeight()
         {
-            if (_is8i)
+            if (_is8i || _internal)
                 ((Tensor&)this->Weight()[0]).Clear();
         }
 
@@ -147,14 +150,24 @@ namespace Synet
                 dst[0]->As8u().Reshape(dstShape, TensorFormatNchw);
             else
                 dst[0]->As32f().Reshape(dstShape, TensorFormatNchw);
-            std::stringstream desc;
             if (_is8i)
             {
                 if (!_src8u)
                     Base::Extend8u(buf, 0, src[0]->Shape(), src[0]->Format());
                 Base::Extend32i(buf, 0, dstShape, TensorFormatNchw);
                 Quantize();
-            }            
+            }
+            else if (!_transA && src.size() == 1)
+            {
+                _innerProduct32f.Init(_M, _K, _N, _transB ? 0 : 1);
+                if (_innerProduct32f.Enable())
+                {
+                    const float* weight = this->Weight()[0].CpuData();
+                    const float* bias = _biasTerm ? this->Weight()[1].CpuData() : NULL;
+                    _innerProduct32f.SetParams(weight, &_internal, bias, NULL);
+                }
+            }
+            std::stringstream desc;
             desc << "M=" << _M << " N=" << _N << " K=" << _K;
             this->UsePerfStat(desc.str(), Flop());
         }
@@ -180,18 +193,23 @@ namespace Synet
 
         void ForwardCpu(const float * src, const float* wgt, float* dst)
         {
-            const float* bias = _biasTerm ? this->Weight()[1].CpuData() : NULL;
-            if (!_transB && _M == 1)
-                Detail::InnerProductLayerForwardCpu(src, wgt, bias, _N, _K, dst);
+            if (_innerProduct32f.Enable())
+                _innerProduct32f.Forward(src, dst);
             else
             {
-                size_t lds = _transA ? _M : _K;
-                size_t ldw = _transB ? _N : _K;
-                CpuGemm(_transA ? CblasTrans : CblasNoTrans, _transB ? CblasNoTrans : CblasTrans, _M, _N, _K, 1.0f, src, lds, wgt, ldw, 0.0f, dst, _N);
-                if (_biasTerm)
+                const float* bias = _biasTerm ? this->Weight()[1].CpuData() : NULL;
+                if (!_transB && _M == 1)
+                    Detail::InnerProductLayerForwardCpu(src, wgt, bias, _N, _K, dst);
+                else
                 {
-                    for(size_t i = 0; i < _M; ++i)
-                        CpuAddBias(bias, _N, 1, dst + i*_N);
+                    size_t lds = _transA ? _M : _K;
+                    size_t ldw = _transB ? _N : _K;
+                    CpuGemm(_transA ? CblasTrans : CblasNoTrans, _transB ? CblasNoTrans : CblasTrans, _M, _N, _K, 1.0f, src, lds, wgt, ldw, 0.0f, dst, _N);
+                    if (_biasTerm)
+                    {
+                        for (size_t i = 0; i < _M; ++i)
+                            CpuAddBias(bias, _N, 1, dst + i * _N);
+                    }
                 }
             }
         }
@@ -294,6 +312,8 @@ namespace Synet
         QuantizationMethod _method;
         size_t _M, _N, _K;
         bool _biasTerm, _transA, _transB, _src8u, _dst8u, _is8i;
+        int _internal;
+        InnerProduct32f _innerProduct32f;
         Converter _srcCvt, _dstCvt;
 
         Tensor8i _weight8i;
