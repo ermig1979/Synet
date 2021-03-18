@@ -66,8 +66,8 @@ namespace Synet
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        BiasLayer(const LayerParam & param)
-            : Base(param)
+        BiasLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

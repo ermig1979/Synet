@@ -98,81 +98,81 @@ namespace Synet
         typedef Synet::Layer<T> Layer;
         typedef Layer * LayerPtr;
 
-        static LayerPtr Create(const LayerParam & param, QuantizationMethod method)
+        static LayerPtr Create(const LayerParam & param, Context* context, QuantizationMethod method)
         {
             switch (param.type())
             {
-            case LayerTypeAdd: return new AddLayer<T>(param, method);
-            case LayerTypeBatchNorm: return new BatchNormLayer<T>(param);
-            case LayerTypeBias: return new BiasLayer<T>(param);
-            case LayerTypeBinaryOperation: return new BinaryOperationLayer<T>(param);
-            case LayerTypeBroadcast: return new BroadcastLayer<T>(param);
-            case LayerTypeCast: return new CastLayer<T>(param);
-            case LayerTypeConcat: return new ConcatLayer<T>(param);
-            case LayerTypeConst: return new ConstLayer<T>(param);
+            case LayerTypeAdd: return new AddLayer<T>(param, context, method);
+            case LayerTypeBatchNorm: return new BatchNormLayer<T>(param, context);
+            case LayerTypeBias: return new BiasLayer<T>(param, context);
+            case LayerTypeBinaryOperation: return new BinaryOperationLayer<T>(param, context);
+            case LayerTypeBroadcast: return new BroadcastLayer<T>(param, context);
+            case LayerTypeCast: return new CastLayer<T>(param, context);
+            case LayerTypeConcat: return new ConcatLayer<T>(param, context);
+            case LayerTypeConst: return new ConstLayer<T>(param, context);
             case LayerTypeConvolution: 
                 if (param.convolution().quantizationLevel() == TensorType8i)
-                    return new Convolution8iLayer<T>(param, method);
+                    return new Convolution8iLayer<T>(param, context, method);
                 else
-                    return new Convolution32fLayer<T>(param);
-            case LayerTypeCtcGreedyDecoder: return new CtcGreedyDecoderLayer<T>(param);
-            case LayerTypeDeconvolution: return new DeconvolutionLayer<T>(param);
-            case LayerTypeDetectionOutput: return new DetectionOutputLayer<T>(param);
-            case LayerTypeDropout: return new StubLayer<T>(param);
-            case LayerTypeEltwise: return new EltwiseLayer<T>(param);
-            case LayerTypeExpandDims: return new ExpandDimsLayer<T>(param);
-            case LayerTypeFill: return new FillLayer<T>(param);
-            case LayerTypeFlatten: return new FlattenLayer<T>(param);
-            case LayerTypeFused: return new FusedLayer<T>(param);
-            case LayerTypeGather: return new GatherLayer<T>(param);
-            case LayerTypeHswish: return new HswishLayer<T>(param);
-            case LayerTypeInnerProduct: return new InnerProductLayer<T>(param, method);
-            case LayerTypeInput: return new InputLayer<T>(param);
-            case LayerTypeInterp: return new InterpLayer<T>(param);
-            case LayerTypeInterp2: return new Interp2Layer<T>(param);
-            case LayerTypeLog: return new LogLayer<T>(param);
-            case LayerTypeLrn: return new LrnLayer<T>(param);
+                    return new Convolution32fLayer<T>(param, context);
+            case LayerTypeCtcGreedyDecoder: return new CtcGreedyDecoderLayer<T>(param, context);
+            case LayerTypeDeconvolution: return new DeconvolutionLayer<T>(param, context);
+            case LayerTypeDetectionOutput: return new DetectionOutputLayer<T>(param, context);
+            case LayerTypeDropout: return new StubLayer<T>(param, context);
+            case LayerTypeEltwise: return new EltwiseLayer<T>(param, context);
+            case LayerTypeElu: return new EluLayer<T>(param, context);
+            case LayerTypeExpandDims: return new ExpandDimsLayer<T>(param, context);
+            case LayerTypeFill: return new FillLayer<T>(param, context);
+            case LayerTypeFlatten: return new FlattenLayer<T>(param, context);
+            case LayerTypeFused: return new FusedLayer<T>(param, context);
+            case LayerTypeGather: return new GatherLayer<T>(param, context);
+            case LayerTypeHswish: return new HswishLayer<T>(param, context);
+            case LayerTypeInnerProduct: return new InnerProductLayer<T>(param, context, method);
+            case LayerTypeInput: return new InputLayer<T>(param, context);
+            case LayerTypeInterp: return new InterpLayer<T>(param, context);
+            case LayerTypeInterp2: return new Interp2Layer<T>(param, context);
+            case LayerTypeLog: return new LogLayer<T>(param, context);
+            case LayerTypeLrn: return new LrnLayer<T>(param, context);
             case LayerTypeMergedConvolution:
                 if (Use8i(param.mergedConvolution()))
-                    return new MergedConvolution8iLayer<T>(param, method);
+                    return new MergedConvolution8iLayer<T>(param, context, method);
                 else
-                    return new MergedConvolution32fLayer<T>(param);
-            case LayerTypeMeta: return new MetaLayer<T>(param);
-            case LayerTypeMish: return new MishLayer<T>(param);
-            case LayerTypeNormalize: return new NormalizeLayer<T>(param);
-            case LayerTypePad: return new PadLayer<T>(param);
-            case LayerTypePermute: return new PermuteLayer<T>(param);
-            case LayerTypePooling: return new PoolingLayer<T>(param);
-            case LayerTypePower: return new PowerLayer<T>(param);
-            case LayerTypePrelu: return new PreluLayer<T>(param);
-            case LayerTypePriorBox: return new PriorBoxLayer<T>(param);
-            case LayerTypePriorBoxClustered: return new PriorBoxClusteredLayer<T>(param);
-            case LayerTypeReduction: return new ReductionLayer<T>(param);
-            case LayerTypeRegion: return new RegionLayer<T>(param);
-            case LayerTypeRelu: return new ReluLayer<T>(param);
-            case LayerTypeElu: return new EluLayer<T>(param);
-            case LayerTypeReorg: return new ReorgLayer<T>(param);
-            case LayerTypeReshape: return new ReshapeLayer<T>(param);
-            case LayerTypeRestrictRange: return new RestrictRangeLayer<T>(param);
-            case LayerTypeReverseSequence: return new ReverseSequenceLayer<T>(param);
-            case LayerTypeScale: return new ScaleLayer<T>(param, method);
-            case LayerTypeShortcut: return new ShortcutLayer<T>(param);
-            case LayerTypeShuffle: return new ShuffleLayer<T>(param);
-            case LayerTypeSigmoid: return new SigmoidLayer<T>(param);
-            case LayerTypeSlice: return new SliceLayer<T>(param);
-            case LayerTypeSoftmax: return new SoftmaxLayer<T>(param);
-            case LayerTypeSoftplus: return new SoftplusLayer<T>(param);
-            case LayerTypeSqueeze: return new SqueezeLayer<T>(param);
-            case LayerTypeSqueezeExcitation: return new SqueezeExcitationLayer<T>(param, method);
-            case LayerTypeStridedSlice: return new StridedSliceLayer<T>(param);
-            case LayerTypeStub: return new StubLayer<T>(param);
-            case LayerTypeSwitch: return new SwitchLayer<T>(param);
-            case LayerTypeTile: return new TileLayer<T>(param);
-            case LayerTypeTensorIterator: return new TensorIteratorLayer<T>(param);
-            case LayerTypeUnaryOperation: return new UnaryOperationLayer<T>(param);
-            case LayerTypeUnpack: return new UnpackLayer<T>(param);
-            case LayerTypeUpsample: return new UpsampleLayer<T>(param);
-            case LayerTypeYolo: return new YoloLayer<T>(param);
+                    return new MergedConvolution32fLayer<T>(param, context);
+            case LayerTypeMeta: return new MetaLayer<T>(param, context);
+            case LayerTypeMish: return new MishLayer<T>(param, context);
+            case LayerTypeNormalize: return new NormalizeLayer<T>(param, context);
+            case LayerTypePad: return new PadLayer<T>(param, context);
+            case LayerTypePermute: return new PermuteLayer<T>(param, context);
+            case LayerTypePooling: return new PoolingLayer<T>(param, context);
+            case LayerTypePower: return new PowerLayer<T>(param, context);
+            case LayerTypePrelu: return new PreluLayer<T>(param, context);
+            case LayerTypePriorBox: return new PriorBoxLayer<T>(param, context);
+            case LayerTypePriorBoxClustered: return new PriorBoxClusteredLayer<T>(param, context);
+            case LayerTypeReduction: return new ReductionLayer<T>(param, context);
+            case LayerTypeRegion: return new RegionLayer<T>(param, context);
+            case LayerTypeRelu: return new ReluLayer<T>(param, context);
+            case LayerTypeReorg: return new ReorgLayer<T>(param, context);
+            case LayerTypeReshape: return new ReshapeLayer<T>(param, context);
+            case LayerTypeRestrictRange: return new RestrictRangeLayer<T>(param, context);
+            case LayerTypeReverseSequence: return new ReverseSequenceLayer<T>(param, context);
+            case LayerTypeScale: return new ScaleLayer<T>(param, context, method);
+            case LayerTypeShortcut: return new ShortcutLayer<T>(param, context);
+            case LayerTypeShuffle: return new ShuffleLayer<T>(param, context);
+            case LayerTypeSigmoid: return new SigmoidLayer<T>(param, context);
+            case LayerTypeSlice: return new SliceLayer<T>(param, context);
+            case LayerTypeSoftmax: return new SoftmaxLayer<T>(param, context);
+            case LayerTypeSoftplus: return new SoftplusLayer<T>(param, context);
+            case LayerTypeSqueeze: return new SqueezeLayer<T>(param, context);
+            case LayerTypeSqueezeExcitation: return new SqueezeExcitationLayer<T>(param, context, method);
+            case LayerTypeStridedSlice: return new StridedSliceLayer<T>(param, context);
+            case LayerTypeStub: return new StubLayer<T>(param, context);
+            case LayerTypeSwitch: return new SwitchLayer<T>(param, context);
+            case LayerTypeTile: return new TileLayer<T>(param, context);
+            case LayerTypeTensorIterator: return new TensorIteratorLayer<T>(param, context);
+            case LayerTypeUnaryOperation: return new UnaryOperationLayer<T>(param, context);
+            case LayerTypeUnpack: return new UnpackLayer<T>(param, context);
+            case LayerTypeUpsample: return new UpsampleLayer<T>(param, context);
+            case LayerTypeYolo: return new YoloLayer<T>(param, context);
             default:
                 return NULL;
             }

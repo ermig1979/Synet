@@ -41,8 +41,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        PermuteLayer(const LayerParam & param)
-            : Base(param)
+        PermuteLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

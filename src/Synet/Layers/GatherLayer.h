@@ -36,8 +36,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        GatherLayer(const LayerParam & param)
-            : Base(param)
+        GatherLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

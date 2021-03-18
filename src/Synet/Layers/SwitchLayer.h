@@ -36,8 +36,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        SwitchLayer(const LayerParam & param)
-            : Base(param)
+        SwitchLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

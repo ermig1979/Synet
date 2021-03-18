@@ -46,8 +46,8 @@ namespace Synet
         typedef typename Base::TensorPtr TensorPtr;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ConvolutionLayer(const LayerParam & param)
-            : Base(param)
+        ConvolutionLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
             _alg.internal = 0;
         }

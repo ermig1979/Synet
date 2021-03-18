@@ -92,8 +92,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ReorgLayer(const LayerParam & param)
-            : Base(param)
+        ReorgLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

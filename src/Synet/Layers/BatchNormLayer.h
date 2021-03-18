@@ -40,8 +40,8 @@ namespace Synet
         typedef typename Base::Tensors Tensors;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        BatchNormLayer(const LayerParam & param)
-            : Base(param)
+        BatchNormLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

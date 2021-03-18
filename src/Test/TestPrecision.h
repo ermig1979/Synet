@@ -55,6 +55,7 @@ namespace Test
 			float ratioVariation;
 			float compareOverlap;
 			bool adaptiveThreshold;
+			int performanceLog;
 			bool annotateRegions;
 			bool generateIndex;
 			double statFilter;
@@ -85,6 +86,7 @@ namespace Test
 				ratioVariation = FromString<float>(GetArg("-rv", "0.500"));
 				compareOverlap = FromString<float>(GetArg("-co", "0.5"));
 				adaptiveThreshold = FromString<bool>(GetArg("-at", "1"));
+				performanceLog = FromString<int>(GetArg("-pl", "0"));
 				annotateRegions = FromString<bool>(GetArg("-ar", "0"));
 				generateIndex = FromString<bool>(GetArg("-gi", "0"));
 				statFilter = FromString<double>(GetArg("-sf", "0.0"));
@@ -244,7 +246,7 @@ namespace Test
 					std::cout << "Unknown framework: " << _options.framework << "!" << std::endl;
 					return false;
 				}
-				Network::Options options(_options.outputDirectory, 1, true, _options.batchSize, 0, 0.5f);
+				Network::Options options(_options.outputDirectory, 1, true, _options.batchSize, _options.performanceLog, 0, 0.5f);
 				if (!network->Init(_options.testModel, _options.testWeight, options, _param()))
 				{
 					std::cout << "Can't load " << network->Name() << " from '" << _options.testModel << "' and '" << _options.testWeight << "' !" << std::endl;

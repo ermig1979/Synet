@@ -149,8 +149,8 @@ namespace Synet
         typedef typename Base::Tensor Tensor;
         typedef typename Base::Tensors Tensors;
 
-        MergedConvolutionLayer(const LayerParam & param)
-            : Base(param)
+        MergedConvolutionLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

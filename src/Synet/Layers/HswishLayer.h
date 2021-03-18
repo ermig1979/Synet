@@ -58,8 +58,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        HswishLayer(const LayerParam & param)
-            : Base(param)
+        HswishLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

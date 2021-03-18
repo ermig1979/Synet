@@ -80,8 +80,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        EltwiseLayer(const LayerParam & param)
-            : Base(param)
+        EltwiseLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

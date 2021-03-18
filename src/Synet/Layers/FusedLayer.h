@@ -329,8 +329,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        FusedLayer(const LayerParam & param)
-            : Base(param)
+        FusedLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

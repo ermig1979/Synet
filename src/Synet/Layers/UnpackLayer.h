@@ -36,8 +36,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        UnpackLayer(const LayerParam & param)
-            : Base(param)
+        UnpackLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

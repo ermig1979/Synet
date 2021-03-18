@@ -65,6 +65,7 @@ namespace Test
         String htmlReport;
         int tensorFormat;
         int batchSize;
+        int performanceLog;
         int debugPrint;
         int debugPrintFirst;
         int debugPrintLast;
@@ -113,6 +114,7 @@ namespace Test
             htmlReport = GetArg("-hr", "", false);
             tensorFormat = FromString<int>(GetArg("-tf", "1"));
             batchSize = FromString<int>(GetArg("-bs", "1"));
+            performanceLog = FromString<int>(GetArg("-pl", "0"));
             debugPrint = FromString<int>(GetArg("-dp", "0"));
             debugPrintFirst = FromString<int>(GetArg("-dpf", "5"));
             debugPrintLast = FromString<int>(GetArg("-dpl", "2"));

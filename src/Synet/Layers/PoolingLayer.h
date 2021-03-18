@@ -189,8 +189,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        PoolingLayer(const LayerParam & param)
-            : Base(param)
+        PoolingLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
             _method = this->Param().pooling().method();
         }

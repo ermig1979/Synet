@@ -71,8 +71,8 @@ namespace Synet
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        InnerProductLayer(const LayerParam & param, QuantizationMethod method)
-            : Base(param)
+        InnerProductLayer(const LayerParam & param, Context* context, QuantizationMethod method)
+            : Base(param, context)
             , _method(method)
             , _internal(0)
         {

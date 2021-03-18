@@ -45,8 +45,8 @@ namespace Synet
         typedef typename Base::Tensor Tensor;
         typedef typename Base::Tensors Tensors;
 
-        MergedConvolution8iLayer(const LayerParam & param, QuantizationMethod method)
-            : MergedConvolutionLayer<T>(param)
+        MergedConvolution8iLayer(const LayerParam & param, Context* context, QuantizationMethod method)
+            : MergedConvolutionLayer<T>(param, context)
             , _method(method)
         {
         }

@@ -232,8 +232,8 @@ namespace Synet
         typedef typename Base::Tensors Tensors;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ScaleLayer(const LayerParam & param, QuantizationMethod method)
-            : Base(param)
+        ScaleLayer(const LayerParam & param, Context* context, QuantizationMethod method)
+            : Base(param, context)
             , _method(method)
         {
             _is8i = _method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed;

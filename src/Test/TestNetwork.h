@@ -109,13 +109,15 @@ namespace Test
             size_t workThreads;
             bool consoleSilence;
             int batchSize;
+            int performanceLog;
             int debugPrint;
             float regionThreshold;
-            Options(String od, size_t wt, bool cs, int bs, int dp, float rt)
+            Options(String od, size_t wt, bool cs, int bs, int pl, int dp, float rt)
                 : outputDirectory(od)
                 , workThreads(wt)
                 , consoleSilence(cs)
                 , batchSize(bs)
+                , performanceLog(pl)
                 , debugPrint(dp)
                 , regionThreshold(rt)
             {}

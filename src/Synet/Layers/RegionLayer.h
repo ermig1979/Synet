@@ -59,8 +59,8 @@ namespace Synet
         typedef Synet::Region<T> Region;
         typedef std::vector<Region> Regions;
 
-        RegionLayer(const LayerParam & param)
-            : Base(param)
+        RegionLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

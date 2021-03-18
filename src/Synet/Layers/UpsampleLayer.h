@@ -102,8 +102,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        UpsampleLayer(const LayerParam & param)
-            : Base(param)
+        UpsampleLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

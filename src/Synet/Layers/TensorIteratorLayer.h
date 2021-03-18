@@ -43,8 +43,8 @@ namespace Synet
         typedef std::shared_ptr<Layer<T>> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
 
-        TensorIteratorLayer(const LayerParam & param)
-            : Base(param)
+        TensorIteratorLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
             , _empty(true)
         {
         }

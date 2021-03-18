@@ -38,8 +38,8 @@ namespace Synet
         typedef Synet::Region<T> Region;
         typedef std::vector<Region> Regions;
 
-        YoloLayer(const LayerParam & param)
-            : Base(param)
+        YoloLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

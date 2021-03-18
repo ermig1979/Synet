@@ -86,8 +86,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        UnaryOperationLayer(const LayerParam & param)
-            : Base(param)
+        UnaryOperationLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

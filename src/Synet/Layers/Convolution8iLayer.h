@@ -41,8 +41,8 @@ namespace Synet
         typedef typename Base::TensorPtr TensorPtr;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        Convolution8iLayer(const LayerParam& param, QuantizationMethod method)
-            : ConvolutionLayer<T>(param)
+        Convolution8iLayer(const LayerParam& param, Context* context, QuantizationMethod method)
+            : ConvolutionLayer<T>(param, context)
             , _method(method)
         {
             const ConvolutionParam& p = this->Param().convolution();

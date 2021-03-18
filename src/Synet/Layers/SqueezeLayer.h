@@ -36,8 +36,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        SqueezeLayer(const LayerParam & param)
-            : Base(param)
+        SqueezeLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

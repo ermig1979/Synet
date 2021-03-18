@@ -116,8 +116,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        NormalizeLayer(const LayerParam & param)
-            : Base(param)
+        NormalizeLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

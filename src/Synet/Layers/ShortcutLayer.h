@@ -37,8 +37,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ShortcutLayer(const LayerParam & param)
-            : Base(param)
+        ShortcutLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

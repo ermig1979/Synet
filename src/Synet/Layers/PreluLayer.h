@@ -71,8 +71,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        PreluLayer(const LayerParam & param)
-            : Base(param)
+        PreluLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

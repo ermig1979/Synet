@@ -78,7 +78,7 @@ namespace Synet
             _empty = true;
         }
 
-        bool Load(const String & model, const String & weight)
+        bool Load(const String & model, const String & weight, const Options & options = Options())
         {
             Clear();
 
@@ -87,6 +87,7 @@ namespace Synet
                 std::cout << "Can't load model file '" << model << "' !" << std::endl;
                 return false;
             }
+            _context.options = options;
             CreateLayers();
 
             std::ifstream ifs(weight.c_str(), std::ifstream::binary);
@@ -109,12 +110,13 @@ namespace Synet
             return Init();
         }
 
-        bool Load(const char * modelData, size_t modelSize, const char * weightData, size_t weightSize)
+        bool Load(const char * modelData, size_t modelSize, const char * weightData, size_t weightSize, const Options& options = Options())
         {
             Clear();
 
             if (!_param.Load(modelData, modelSize))
                 return false;
+            _context.options = options;
             CreateLayers();
 
             for (size_t i = 0; i < _layers.size(); ++i)
@@ -550,6 +552,7 @@ namespace Synet
 
         bool _empty;
         NetworkParamHolder _param;
+        Context _context;
         LayerSharedPtrs _layers;
         TensorSharedPtrs _tensors;
         StatSharedPtrs _stats;
@@ -566,7 +569,7 @@ namespace Synet
             for (size_t i = 0; i < _param().layers().size(); ++i)
             {
                 const LayerParam& param = _param().layers()[i];
-                LayerSharedPtr layer(Fabric<T>::Create(param, _param().quantization().method()));
+                LayerSharedPtr layer(Fabric<T>::Create(param, &_context, _param().quantization().method()));
                 if (layer)
                 {
                     layerId[param.name()] = _layers.size();

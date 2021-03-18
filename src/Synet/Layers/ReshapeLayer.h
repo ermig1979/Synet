@@ -36,8 +36,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ReshapeLayer(const LayerParam & param)
-            : Base(param)
+        ReshapeLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

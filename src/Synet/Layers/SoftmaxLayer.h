@@ -93,8 +93,8 @@ namespace Synet
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        SoftmaxLayer(const LayerParam & param)
-            : Base(param)
+        SoftmaxLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

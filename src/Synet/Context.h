@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2018 Yermalayeu Ihar.
+* Copyright (c) 2018-2020 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -25,30 +25,31 @@
 #pragma once
 
 #include "Synet/Common.h"
-#include "Synet/Layer.h"
 
 namespace Synet
 {
-    template <class T> class ConstLayer : public Synet::Layer<T>
+    struct Options
     {
-    public:
-        typedef T Type;
-        typedef Layer<T> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
-        ConstLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
+        enum PerfomanceLog
         {
-        }
+            PerfomanceLogEmpty = 0,
+            PerfomanceLogLayer,
+            PerfomanceLogSize,
+            PerfomanceLogSubnet,
+        };
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        PerfomanceLog performanceLog;
+
+        Options()
         {
-            assert(this->Weight().size() == 1 && dst.size() == 1);
-            dst[0]->Share(this->Weight()[0]);
+            performanceLog = PerfomanceLogEmpty;
         }
+    };
+    struct Context
+    {
+        Options options;
 
-    protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        Context()
         {
         }
     };

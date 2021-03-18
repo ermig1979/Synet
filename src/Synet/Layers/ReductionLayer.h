@@ -87,8 +87,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ReductionLayer(const LayerParam & param)
-            : Base(param)
+        ReductionLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

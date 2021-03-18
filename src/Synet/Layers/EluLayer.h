@@ -37,8 +37,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        EluLayer(const LayerParam & param)
-            : Base(param)
+        EluLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

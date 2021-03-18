@@ -27,7 +27,7 @@
 #include "TestCommon.h"
 #include "TestPerformance.h"
 
-#if defined(SYNET_LAYER_STATISTIC) && !defined(SYNET_PERF_FUNC)
+#if defined(SYNET_PERFORMANCE_STATISTIC) && !defined(SYNET_PERF_FUNC)
 #define SYNET_PERF_FUNC() TEST_PERF_FUNC()
 #define SYNET_PERF_BLOCK(name) TEST_PERF_BLOCK(name)
 #define SYNET_PERF_BLOCK_END(name) TEST_PERF_BLOCK_END(name)
@@ -77,7 +77,7 @@ namespace Test
             TEST_PERF_BLOCK(Type());
             _regionThreshold = options.regionThreshold;
             Synet::SetThreadNumber(options.workThreads);
-            if (Load(model, weight))
+            if (Load(model, weight, options))
             {
                 _trans = _net.Format() == Synet::TensorFormatNhwc;
                 _sort = param.output().empty();
@@ -155,8 +155,11 @@ namespace Test
         size_t _synetMemoryUsage;
         EpsilonDecoder _epsilon;
 
-        bool Load(const String & model, const String & weight)
+        bool Load(const String & model, const String & weight, const Options& options)
         {
+            Synet::Options synOpt;
+            synOpt.performanceLog = (Synet::Options::PerfomanceLog)options.performanceLog;
+
 #ifdef SYNET_TEST_MEMORY_LOAD
             std::ifstream mifs(model, std::ios::binary);
             if (!mifs)
@@ -180,9 +183,9 @@ namespace Test
             wifs.read(wdata.data(), (std::streamsize)wsize);
             wifs.close();
 
-            return _net.Load(mdata.data(), msize, wdata.data(), wsize);
+            return _net.Load(mdata.data(), msize, wdata.data(), wsize, synOpt);
 #else
-            return _net.Load(model, weight);
+            return _net.Load(model, weight, synOpt);
 #endif
         }
 

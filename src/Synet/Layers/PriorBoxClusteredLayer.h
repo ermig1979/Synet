@@ -36,8 +36,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        PriorBoxClusteredLayer(const LayerParam & param)
-            : Base(param)
+        PriorBoxClusteredLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

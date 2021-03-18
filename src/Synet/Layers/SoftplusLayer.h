@@ -37,8 +37,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        SoftplusLayer(const LayerParam & param)
-            : Base(param)
+        SoftplusLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

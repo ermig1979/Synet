@@ -42,8 +42,8 @@ namespace Synet
         typedef std::vector<Tensor> Tensors;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        DeconvolutionLayer(const LayerParam & param)
-            : Base(param)
+        DeconvolutionLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
             _transW = false;
             _internal = 0;

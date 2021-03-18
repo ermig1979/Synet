@@ -37,8 +37,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        RestrictRangeLayer(const LayerParam & param)
-            : Base(param)
+        RestrictRangeLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

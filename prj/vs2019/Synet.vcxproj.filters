@@ -311,6 +311,7 @@
     <ClInclude Include="..\..\src\Synet\Utils\InnerProduct.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Context.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

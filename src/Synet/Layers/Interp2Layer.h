@@ -160,8 +160,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        Interp2Layer(const LayerParam & param)
-            : Base(param)
+        Interp2Layer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

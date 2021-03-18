@@ -140,8 +140,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ShuffleLayer(const LayerParam & param)
-            : Base(param)
+        ShuffleLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

@@ -23,7 +23,7 @@ fi
 
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
-"$BIN" -m=$MODE -f=$FRAMEWORK -tm=$DIR/$MODEL.xml -tw=$WEIGHT -tl=$IMAGE/$LIST -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml -ln=$LOG -tt=$THREADS -bs=$BATCH -rn=$NUMBER -ar=0 -at=0 -gi=0 -sf=0.001
+"$BIN" -m=$MODE -f=$FRAMEWORK -tm=$DIR/$MODEL.xml -tw=$WEIGHT -tl=$IMAGE/$LIST -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml -ln=$LOG -tt=$THREADS -bs=$BATCH -rn=$NUMBER -ar=0 -at=0 -gi=0 -sf=0.001 -pl=2
 if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 }
 

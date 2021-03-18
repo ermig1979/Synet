@@ -39,8 +39,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        AddLayer(const LayerParam & param, QuantizationMethod method)
-            : Base(param)
+        AddLayer(const LayerParam & param, Context* context, QuantizationMethod method)
+            : Base(param, context)
             , _method(method)
         {
         }

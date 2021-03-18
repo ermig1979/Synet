@@ -98,8 +98,8 @@ namespace Synet
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        LrnLayer(const LayerParam & param)
-            : Base(param)
+        LrnLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

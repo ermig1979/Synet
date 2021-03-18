@@ -92,8 +92,8 @@ namespace Synet
         typedef typename Base::Tensors Tensors;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        SqueezeExcitationLayer(const LayerParam& param, QuantizationMethod method)
-            : Base(param)
+        SqueezeExcitationLayer(const LayerParam& param, Context* context, QuantizationMethod method)
+            : Base(param, context)
             , _method(method)
         {
         }

@@ -36,8 +36,8 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        FillLayer(const LayerParam & param)
-            : Base(param)
+        FillLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
         {
         }
 

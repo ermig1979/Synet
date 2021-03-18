@@ -38,8 +38,8 @@ namespace Synet
         typedef typename Base::TensorPtr TensorPtr;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        Convolution32fLayer(const LayerParam & param)
-            : ConvolutionLayer<T>(param)
+        Convolution32fLayer(const LayerParam & param, Context* context)
+            : ConvolutionLayer<T>(param, context)
         {
         }
 

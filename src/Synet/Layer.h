@@ -28,6 +28,7 @@
 #include "Synet/Tensor.h"
 #include "Synet/Params.h"
 #include "Synet/Region.h"
+#include "Synet/Context.h"
 #include "Synet/Quantization/Stat.h"
 
 namespace Synet
@@ -43,8 +44,9 @@ namespace Synet
         typedef std::shared_ptr<Layer> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
 
-        Layer(const LayerParam & param)
+        Layer(const LayerParam & param, Context * context)
             : _param(param)
+            , _context(context)
             , _isBack(false)
             , _perfEnable(false)
             , _perfInited(false)
@@ -212,10 +214,8 @@ namespace Synet
 
         void UsePerfStat(const String & desc = "", int64_t flop = 0)
         {
-#ifndef SYNET_SUBNET_STATISTIC
-            if (!_param.parent().empty())
+            if (_context->options.performanceLog < Options::PerfomanceLogSubnet && !_param.parent().empty())
                 return;
-#endif
             _perfEnable = true;
             _perfDesc = desc;
             _perfFlop = flop;
@@ -255,6 +255,7 @@ namespace Synet
         template<class U> friend class Network;
 
         const LayerParam & _param;
+        Context* _context;
         Tensors _weight;
         StatPtrs _stats[3];
         bool _isBack;
@@ -287,14 +288,13 @@ namespace Synet
         {
             if (_perfEnable && !_perfInited)
             {
-#ifdef SYNET_LAYER_STATISTIC 
-                String type = ValueToString(_param.type());
-                SYNET_PERF_INIT(_perfComm, "void Synet::" + type + "Layer::Forward() {  " + (Is8i() ? "int8" : "fp32") + " } ", 0);
-#ifdef SYNET_SIZE_STATISTIC            
-                if (_perfDesc.size())
-                    SYNET_PERF_INIT(_perfSpec, "void Synet::" + type + "Layer::Forward() { " + _perfDesc + " } ", _perfFlop);
-#endif//SYNET_SIZE_STATISTIC
-#endif//SYNET_LAYER_STATISTIC
+                if (_context->options.performanceLog >= Options::PerfomanceLogLayer)
+                {
+                    String type = ValueToString(_param.type());
+                    SYNET_PERF_INIT(_perfComm, "void Synet::" + type + "Layer::Forward() {  " + (Is8i() ? "int8" : "fp32") + " } ", 0);
+                    if (_context->options.performanceLog >= Options::PerfomanceLogSize && _perfDesc.size())
+                        SYNET_PERF_INIT(_perfSpec, "void Synet::" + type + "Layer::Forward() { " + _perfDesc + " } ", _perfFlop);
+                }
                 _perfInited = true;
             }
         }

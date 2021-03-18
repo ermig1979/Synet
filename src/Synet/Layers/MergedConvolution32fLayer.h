@@ -107,8 +107,8 @@ namespace Synet
         typedef typename Base::Tensor Tensor;
         typedef typename Base::Tensors Tensors;
 
-        MergedConvolution32fLayer(const LayerParam & param)
-            : MergedConvolutionLayer<T>(param)
+        MergedConvolution32fLayer(const LayerParam & param, Context* context)
+            : MergedConvolutionLayer<T>(param, context)
         {
         }
 
