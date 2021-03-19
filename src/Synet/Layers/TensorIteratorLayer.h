@@ -88,7 +88,10 @@ namespace Synet
             dstShape[_dstAxis] = _itCount;
             _dstInt = itDst->Size(_dstAxis + 1);
             dst[_itDst.second]->Reshape(dstShape, itDst->Format());
-            this->UsePerfStat();
+
+            std::stringstream desc;
+            desc << _srcExt << "x" << _itCount << "x" << _srcInt;
+            this->UsePerfStat(desc.str(), Flop());
         }
 
         virtual void AddChild(const LayerSharedPtr& child)

@@ -68,7 +68,7 @@ namespace Test
         gettimeofday(&t, NULL);
         return t.tv_sec + t.tv_usec * 0.000001;
     }
-
+#if 0
     inline int64_t TimeCounter()
     {
         timeval t;
@@ -80,6 +80,19 @@ namespace Test
     {
         return int64_t(1000000);
     }
+#else
+    inline int64_t TimeCounter()
+    {
+        timespec t;
+        clock_gettime(CLOCK_REALTIME, &t);
+        return int64_t(t.tv_sec) * int64_t(1000000000) + int64_t(t.tv_nsec);
+    }
+
+    inline int64_t TimeFrequency()
+    {
+        return int64_t(1000000000);
+    }
+#endif
 #else
 #error Platform is not supported!
 #endif

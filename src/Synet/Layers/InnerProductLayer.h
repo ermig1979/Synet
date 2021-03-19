@@ -187,29 +187,29 @@ namespace Synet
                 else
                     _dstCvt.Convert(sum, dst[0]->As32f().CpuData());
             }
+            else if (_innerProduct32f.Enable())
+                _innerProduct32f.Forward(src[0]->CpuData(), dst[0]->CpuData());
             else
-                ForwardCpu(src[0]->CpuData(), src.size() > 1 ? src[1]->CpuData() : this->Weight()[0].CpuData(), dst[0]->CpuData());
+            {
+                const float* weight = src.size() > 1 ? src[1]->CpuData() : this->Weight()[0].CpuData();
+                ForwardCpu(src[0]->CpuData(), weight, dst[0]->CpuData());
+            }
         }
 
         void ForwardCpu(const float * src, const float* wgt, float* dst)
         {
-            if (_innerProduct32f.Enable())
-                _innerProduct32f.Forward(src, dst);
+            const float* bias = _biasTerm ? this->Weight()[1].CpuData() : NULL;
+            if (!_transB && _M == 1)
+                Detail::InnerProductLayerForwardCpu(src, wgt, bias, _N, _K, dst);
             else
             {
-                const float* bias = _biasTerm ? this->Weight()[1].CpuData() : NULL;
-                if (!_transB && _M == 1)
-                    Detail::InnerProductLayerForwardCpu(src, wgt, bias, _N, _K, dst);
-                else
+                size_t lds = _transA ? _M : _K;
+                size_t ldw = _transB ? _N : _K;
+                CpuGemm(_transA ? CblasTrans : CblasNoTrans, _transB ? CblasNoTrans : CblasTrans, _M, _N, _K, 1.0f, src, lds, wgt, ldw, 0.0f, dst, _N);
+                if (_biasTerm)
                 {
-                    size_t lds = _transA ? _M : _K;
-                    size_t ldw = _transB ? _N : _K;
-                    CpuGemm(_transA ? CblasTrans : CblasNoTrans, _transB ? CblasNoTrans : CblasTrans, _M, _N, _K, 1.0f, src, lds, wgt, ldw, 0.0f, dst, _N);
-                    if (_biasTerm)
-                    {
-                        for (size_t i = 0; i < _M; ++i)
-                            CpuAddBias(bias, _N, 1, dst + i * _N);
-                    }
+                    for (size_t i = 0; i < _M; ++i)
+                        CpuAddBias(bias, _N, 1, dst + i * _N);
                 }
             }
         }

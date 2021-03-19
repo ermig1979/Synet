@@ -48,7 +48,7 @@ namespace Synet
 
         bool Run(Synet::NetworkParam & network, Floats & bin)
         {
-            for (int stage = 0; stage < 7; stage++)
+            for (int stage = 0; stage < 8; stage++)
             {
                 if (!OptimizeLayers(network, bin, stage))
                     return false;
@@ -65,6 +65,7 @@ namespace Synet
         typedef std::pair<String, String> Change;
         typedef std::vector<Change> Changes;
         typedef std::vector<LayerType> LayerTypes;
+        typedef std::set<String> StringSet;
 
         const OptimizerParam & _param;
 
@@ -81,17 +82,23 @@ namespace Synet
                 {
                 case 0:
                 {
-                    if (TransposeInnerProduct(network.layers(), i, bin, buf, merged))
+                    if (ReduceTensorIteratorIO(network.layers(), i, bin, buf, merged))
                         continue;
                     break;
                 }
                 case 1:
                 {
-                    if (MergeCurrentAndBias(network.layers(), i, bin, merged, changes))
+                    if (TransposeInnerProduct(network.layers(), i, bin, buf, merged))
                         continue;
                     break;
                 }
                 case 2:
+                {
+                    if (MergeCurrentAndBias(network.layers(), i, bin, merged, changes))
+                        continue;
+                    break;
+                }
+                case 3:
                 {
                     if (MergeConvolutionAndScale(network.layers(), i, bin, buf, merged, changes))
                         continue;
@@ -99,7 +106,7 @@ namespace Synet
                         continue;
                     break;
                 }
-                case 3:
+                case 4:
                 {
                     if (MergeHswish(network.layers(), i, merged, changes))
                         continue;
@@ -141,13 +148,13 @@ namespace Synet
                         continue;
                     break;
                 }
-                case 4:
+                case 5:
                 {
                     if (MergeConvolutionOrDeconvolutionAndActivation(network.layers(), i, method, merged, changes))
                         continue;
                     break;
                 }
-                case 5:
+                case 6:
                 {
                     if (MergeThreeConvolutions(network.layers(), i, method, merged, changes))
                         continue;
@@ -155,7 +162,7 @@ namespace Synet
                         continue;
                     break;
                 }
-                case 6:
+                case 7:
                 {
                     if (MergeTwoConvolutions(network.layers(), i, method, merged, changes))
                         continue;
@@ -171,6 +178,59 @@ namespace Synet
             network.layers() = merged;
             if (buf.size())
                 bin.swap(buf);
+            return true;
+        }
+
+        bool ReduceTensorIteratorIO(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst)
+        {
+            const LayerParam & stt = src[index];
+            if (stt.type() != LayerTypeTensorIterator || stt.src().size() < 3 || stt.tensorIterator().back().size() < 1)
+                return false;
+            size_t srcDupls = 0;
+            for (size_t i = 2; i < stt.src().size(); ++i)
+            {
+                if (stt.src()[1] == stt.src()[i])
+                    srcDupls++;
+            }
+            size_t backDupls = 0;
+            for (size_t i = 1; i < stt.tensorIterator().back().size(); ++i)
+            {
+                if (stt.tensorIterator().back()[0].src() == stt.tensorIterator().back()[i].src())
+                    backDupls++;
+            }
+            if (srcDupls == 0 || srcDupls != backDupls || srcDupls < stt.src().size() - 2)
+                return false;
+            dst.push_back(stt);
+            LayerParam& dtt = dst.back();
+            dtt.src().resize(2);
+            String rem = dtt.tensorIterator().input()[1].dst();
+            StringSet del;
+            for (size_t i = 2; i < dtt.tensorIterator().input().size(); ++i)
+            {
+                dtt.tensorIterator().input()[i].port() = 1;
+                del.insert(dtt.tensorIterator().input()[i].dst());
+            }
+            dtt.tensorIterator().input().resize(2);
+            std::vector<ConnectionParam> back;
+            for (size_t i = 0; i < stt.tensorIterator().back().size(); ++i)
+            {
+                if (del.find(dtt.tensorIterator().back()[i].dst()) == del.end())
+                    back.push_back(dtt.tensorIterator().back()[i]);
+            }
+            dtt.tensorIterator().back().swap(back);
+            for (size_t i = index + 1; i < src.size(); ++i)
+            {
+                if (src[i].parent() != stt.name())
+                    break;
+                if (src[i].type() != LayerTypeInput || del.find(src[i].name()) == del.end())
+                    dst.push_back(src[i]);
+                for (size_t j = 0; j < dst.back().src().size(); ++j)
+                {
+                    if (del.find(dst.back().src()[j]) != del.end())
+                        dst.back().src()[j] = rem;
+                }
+                index++;
+            }
             return true;
         }
 
