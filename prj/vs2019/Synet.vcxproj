@@ -86,6 +86,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\ReshapeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\RestrictRangeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ReverseSequenceLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\RnnGruLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ScaleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ShortcutLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ShuffleLayer.h" />

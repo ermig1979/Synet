@@ -75,7 +75,11 @@ namespace Synet
                 _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst);
 
             for (size_t b = 0; b < _bLink.size(); ++b)
+            {
                 assert(_dst[_bLink[b].first]->Shape() == _src[_bLink[b].second]->Shape());
+                if(_src[_bLink[b].second]->CpuData() != _dst[_bLink[b].first]->CpuData())
+                    _src[_bLink[b].second]->Share(*_dst[_bLink[b].first]);
+            }
             for (size_t o = 0; o < _oLink.size(); ++o)
             {
                 const Tensor* oDst = src[_oLink[o].first];
@@ -90,7 +94,7 @@ namespace Synet
             dst[_itDst.second]->Reshape(dstShape, itDst->Format());
 
             std::stringstream desc;
-            desc << _srcExt << "x" << _itCount << "x" << _srcInt;
+            desc << _srcExt << "x" << _itCount << "x" << _srcInt << "-" << _dstInt;
             this->UsePerfStat(desc.str(), Flop());
         }
 
@@ -150,7 +154,8 @@ namespace Synet
                     size_t size = _dst[_bLink[b].first]->Size();
                     const T* pSrc = _dst[_bLink[b].first]->CpuData();
                     T* pDst = _src[_bLink[b].second]->CpuData();
-                    memcpy(pDst, pSrc, size * sizeof(T));
+                    if(pSrc != pDst)
+                        memcpy(pDst, pSrc, size * sizeof(T));
                 }
                 for (size_t o = 0; o < _dstExt; ++o)
                     memcpy(pDstE + (o * _itCount + it) * _dstInt, pDstI, _dstInt * sizeof(T));
