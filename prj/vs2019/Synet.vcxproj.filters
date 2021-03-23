@@ -312,7 +312,7 @@
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Context.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\RnnGruLayer.h">
+    <ClInclude Include="..\..\src\Synet\Layers\RnnGruBdLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
   </ItemGroup>

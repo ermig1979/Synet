@@ -152,7 +152,7 @@ namespace Synet
                 {
                     if (MergeConvolutionOrDeconvolutionAndActivation(network.layers(), i, method, merged, changes))
                         continue;
-                    if (MergeRnnGru(network.layers(), i, merged, changes))
+                    if (MergeRnnGruBd(network.layers(), i, merged, changes))
                         continue;
                     break;
                 }
@@ -1371,16 +1371,16 @@ namespace Synet
             return true;
         }
 
-        bool MergeRnnGru(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        bool MergeRnnGruBd(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
         {
-            const size_t RNN_GRU_SIZE = 19;
-            if (index == 0 || index + RNN_GRU_SIZE >= src.size())
+            const size_t RNN_GRU_BD_SIZE = 19;
+            if (index == 0 || index + RNN_GRU_BD_SIZE >= src.size())
                 return false;
             const LayerParam& parent = src[index - 1];
             if (parent.type() != LayerTypeTensorIterator || parent.src().size() != 2 || 
                 parent.dst().size() != 1 || parent.tensorIterator().back().size() != 1)
                 return false;
-            for (size_t i = 0; i < RNN_GRU_SIZE; ++i)
+            for (size_t i = 0; i < RNN_GRU_BD_SIZE; ++i)
             {
                 if (src[index + i].parent() != parent.name())
                     return false;
@@ -1403,16 +1403,16 @@ namespace Synet
                 return false;
             if (src[index + 16].type() != LayerTypeStub || src[index + 17].type() != LayerTypeExpandDims || src[index + 18].type() != LayerTypeStub)
                 return false;
-            if (!src[index + RNN_GRU_SIZE].parent().empty())
+            if (!src[index + RNN_GRU_BD_SIZE].parent().empty())
                 return false;
 
             dst.push_back(src[index + 0]);
             dst.push_back(src[index + 3]);
 
             LayerParam layer;
-            layer.type() = LayerTypeRnnGru;
+            layer.type() = LayerTypeRnnGruBd;
             layer.parent() = parent.name();
-            layer.name() = parent.name() + "_RnnGru";
+            layer.name() = parent.name() + "_RnnGruBd";
             layer.src().push_back(src[index + 0].dst()[0]);
             layer.src().push_back(src[index + 3].dst()[0]);
             layer.dst().push_back(src[index + 18].dst()[0]);
@@ -1423,7 +1423,7 @@ namespace Synet
             layer.weight().push_back(src[index + 12].weight()[1]);
             dst.push_back(layer);
 
-            index += RNN_GRU_SIZE - 1;
+            index += RNN_GRU_BD_SIZE - 1;
             return true;
         }
 

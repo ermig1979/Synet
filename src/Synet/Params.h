@@ -75,7 +75,7 @@ namespace Synet
         LayerTypeReshape,
         LayerTypeRestrictRange,
         LayerTypeReverseSequence,
-        LayerTypeRnnGru,
+        LayerTypeRnnGruBd,
         LayerTypeScale,
         LayerTypeShortcut,
         LayerTypeShuffle,

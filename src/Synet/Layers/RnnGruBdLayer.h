@@ -36,7 +36,7 @@ namespace Synet
 
     }
 
-    template <class T> class RnnGruLayer : public Synet::Layer<T>
+    template <class T> class RnnGruBdLayer : public Synet::Layer<T>
     {
     public:
         typedef T Type;
@@ -45,7 +45,7 @@ namespace Synet
         typedef typename Base::Tensors Tensors;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        RnnGruLayer(const LayerParam & param, Context* context)
+        RnnGruBdLayer(const LayerParam & param, Context* context)
             : Base(param, context)
         {
             _internal[0] = 0;
@@ -110,30 +110,31 @@ namespace Synet
             const float* src1 = src[1]->CpuData();
             float* dst0 = dst[0]->CpuData();
             float* dst1 = dst[1]->CpuData();
-            float* buf0 = _buffer[0].CpuData();
-            float* buf1 = _buffer[1].CpuData();
+            float* buf00 = _buffer[0].CpuData();
+            float* buf01 = buf00 + _input;
+            float* buf10 = _buffer[1].CpuData();
+            float* buf11 = buf10 + _output;
             float* buf2 = _buffer[2].CpuData();
 
             if (_batch == 1)
             {
-                memcpy(buf0, src0, _input * sizeof(float));
-                memcpy(buf0 + _input, src1, _output * sizeof(float));
+                memcpy(buf00, src0, _input * sizeof(float));
+                memcpy(buf01, src1, _output * sizeof(float));
 
-                _innerProduct32f[0].Forward(buf0, buf1);
-                CpuSigmoid(buf1, _output * 2, buf1);
+                _innerProduct32f[0].Forward(buf00, buf10);
+                CpuSigmoid(buf10, _output * 2, buf10);
 
-                memcpy(dst0, buf1 + _output, _output * sizeof(float));
-
-                //for (size_t i = 0; i < _output; ++i)
-                //    buf0[_input + i] = buf0[_input + i] * buf1[_output + i];
                 for (size_t i = 0; i < _output; ++i)
-                    buf0[i] = buf0[i]*buf1[i];
+                    buf01[i] = buf10[i]*src1[i];
 
-                _innerProduct32f[1].Forward(buf0, buf2);
+                _innerProduct32f[1].Forward(buf00, buf2);
                 Detail::UnaryOperationLayerForward(buf2, _output, UnaryOperationTypeTanh, buf2);
 
                 for (size_t i = 0; i < _output; ++i)
-                    dst1[i] = (1.0f - dst0[i])*src1[i] + dst0[i]*buf2[i];
+                    dst0[i] = (1.0f - buf11[i]) * buf2[i] + src1[i]* buf11[i];
+
+                for (size_t i = 0; i < _output; ++i)
+                    dst1[i] = dst0[i];
             }
             else
                 assert(0);

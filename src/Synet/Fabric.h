@@ -70,7 +70,7 @@
 #include "Synet/Layers/ReshapeLayer.h"
 #include "Synet/Layers/RestrictRangeLayer.h"
 #include "Synet/Layers/ReverseSequenceLayer.h"
-#include "Synet/Layers/RnnGruLayer.h"
+#include "Synet/Layers/RnnGruBdLayer.h"
 #include "Synet/Layers/ScaleLayer.h"
 #include "Synet/Layers/ShortcutLayer.h"
 #include "Synet/Layers/ShuffleLayer.h"
@@ -156,7 +156,7 @@ namespace Synet
             case LayerTypeReshape: return new ReshapeLayer<T>(param, context);
             case LayerTypeRestrictRange: return new RestrictRangeLayer<T>(param, context);
             case LayerTypeReverseSequence: return new ReverseSequenceLayer<T>(param, context);
-            case LayerTypeRnnGru: return new RnnGruLayer<T>(param, context);
+            case LayerTypeRnnGruBd: return new RnnGruBdLayer<T>(param, context);
             case LayerTypeScale: return new ScaleLayer<T>(param, context, method);
             case LayerTypeShortcut: return new ShortcutLayer<T>(param, context);
             case LayerTypeShuffle: return new ShuffleLayer<T>(param, context);
