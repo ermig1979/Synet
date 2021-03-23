@@ -205,15 +205,26 @@ namespace Synet
             dst.push_back(stt);
             LayerParam& dtt = dst.back();
             dtt.src().resize(2);
-            String rem = dtt.tensorIterator().input()[1].dst();
+            String rem;
             StringSet del;
-            for (size_t i = 2; i < dtt.tensorIterator().input().size(); ++i)
+            std::vector<ConnectionParam> back, input;
+            for (size_t i = 0; i < dtt.tensorIterator().input().size(); ++i)
             {
+                if (dtt.tensorIterator().input()[i].axis() != -1)
+                {
+                    input.push_back(dtt.tensorIterator().input()[i]);
+                    continue;
+                }
+                if (rem.empty())
+                {
+                    input.push_back(dtt.tensorIterator().input()[i]);
+                    rem = dtt.tensorIterator().input()[i].dst();
+                }
+                else
+                    del.insert(dtt.tensorIterator().input()[i].dst());
                 dtt.tensorIterator().input()[i].port() = 1;
-                del.insert(dtt.tensorIterator().input()[i].dst());
             }
-            dtt.tensorIterator().input().resize(2);
-            std::vector<ConnectionParam> back;
+            dtt.tensorIterator().input().swap(input);
             for (size_t i = 0; i < stt.tensorIterator().back().size(); ++i)
             {
                 if (del.find(dtt.tensorIterator().back()[i].dst()) == del.end())
