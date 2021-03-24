@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2020 Yermalayeu Ihar.
+* Copyright (c) 2018-2021 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -205,24 +205,29 @@ namespace Synet
             dst.push_back(stt);
             LayerParam& dtt = dst.back();
             dtt.src().resize(2);
-            String rem;
+            String rem, iter;
+            for (size_t i = 0; i < dtt.tensorIterator().input().size() && iter.empty(); ++i)
+                if (dtt.tensorIterator().input()[i].axis() != -1)
+                    iter = dtt.tensorIterator().input()[i].dst();
+            for (size_t i = index + 1; i < src.size() && rem.empty(); ++i)
+            {
+                if (src[i].parent() != stt.name())
+                    break;
+                if (src[i].type() == LayerTypeInput && src[i].name() != iter)
+                    rem = src[i].name();
+            }
             StringSet del;
             std::vector<ConnectionParam> back, input;
             for (size_t i = 0; i < dtt.tensorIterator().input().size(); ++i)
             {
-                if (dtt.tensorIterator().input()[i].axis() != -1)
+                ConnectionParam & p = dtt.tensorIterator().input()[i];
+                if (p.dst() == rem || p.dst() == iter)
                 {
-                    input.push_back(dtt.tensorIterator().input()[i]);
-                    continue;
-                }
-                if (rem.empty())
-                {
-                    input.push_back(dtt.tensorIterator().input()[i]);
-                    rem = dtt.tensorIterator().input()[i].dst();
+                    p.port() = Synet::Min<int>(1, p.port());
+                    input.push_back(p);
                 }
                 else
-                    del.insert(dtt.tensorIterator().input()[i].dst());
-                dtt.tensorIterator().input()[i].port() = 1;
+                    del.insert(p.dst());
             }
             dtt.tensorIterator().input().swap(input);
             for (size_t i = 0; i < stt.tensorIterator().back().size(); ++i)
