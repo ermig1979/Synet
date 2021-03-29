@@ -256,6 +256,16 @@ namespace Test
             return true;
         }
 
+        bool RequiredExtension(const String & name)
+        {
+            String ext = ExtensionByPath(name);
+            static const char * EXTS[] = { "JPG", "jpg", "png", "ppm", "pgm" };
+            for (size_t i = 0, n = sizeof(EXTS) / sizeof(EXTS[0]); i < n; ++i)
+                if (ext == EXTS[i])
+                    return true;
+            return false;
+        }
+
         bool CreateTestList(const Network& network)
         {
             String imageDirectory = _options.imageDirectory;
@@ -273,11 +283,8 @@ namespace Test
             names.reserve(images.size());
             size_t curr = 0;
             for(StringList::const_iterator it = images.begin(); it != images.end(); ++it, ++curr)
-            {
-                String ext = ExtensionByPath(*it);
-                if (curr >= _options.imageBegin && curr < _options.imageEnd && (ext == "jpg" || ext == "ppm" || ext == "pgm"))
+                if(curr >= _options.imageBegin && curr < _options.imageEnd && RequiredExtension(*it))
                     names.push_back(*it);
-            }
 
             size_t sN = network.SrcCount(), bN = _options.batchSize;
             size_t tN = names.size() / bN / sN;
