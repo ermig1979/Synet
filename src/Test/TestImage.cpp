@@ -45,7 +45,7 @@ namespace Test
 		{
 			bool result = false;
 			int x, y, c;
-			stbi_uc* data = stbi_load(path.c_str(), &x, &y, &c, STBI_rgb);
+            stbi_uc* data = stbi_load(path.c_str(), &x, &y, &c, STBI_default);// STBI_rgb);
 			if (data)
 			{
 				if (c == 1)

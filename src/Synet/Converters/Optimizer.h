@@ -1550,6 +1550,15 @@ namespace Synet
             return false;
         }
 
+        bool HasOutput(const Synet::NetworkParam& network, const LayerParam & layer)
+        {
+            for (size_t l = 0; l < layer.dst().size(); ++l)
+                for (size_t d = 0; d < network.dst().size(); ++d)
+                    if (layer.dst()[l] == network.dst()[d])
+                        return true;
+            return false;
+        }
+
         bool ReuseLayers(Synet::NetworkParam& network)
         {
             if (network.quantization().method() != QuantizationMethodUnknown)
@@ -1566,6 +1575,8 @@ namespace Synet
                     continue;
                 if (Users(layer.dst()[0], layers, i + 1, "") == 0)
                     continue;
+                if (HasOutput(network, layer))
+                    continue;
                 if (!CanReuse(layer))
                     continue;
                 if (!Rename(Change(layer.dst()[0], layer.src()[0]), layers))
@@ -1575,13 +1586,13 @@ namespace Synet
             return true;
         }
 
-        bool IsStub(const LayerParam& layer, const LayerParams& layers)
+        bool IsStub(const LayerParam& layer, const Synet::NetworkParam& network)
         {
             if (layer.type() == LayerTypeStub)
             {
-                if (Users(layer.dst()[0], layers, 0, layer.parent()) > 0)
+                if (Users(layer.dst()[0], network.layers(), 0, layer.parent()) > 0)// && !HasOutput(network, layer))
                     return true;
-                LayerType type = GetLayer(layer.src()[0], layers)->type();
+                LayerType type = GetLayer(layer.src()[0], network.layers())->type();
                 if (type == LayerTypeDetectionOutput)
                     return true;
             }
@@ -1597,7 +1608,7 @@ namespace Synet
             for (size_t i = 1; i < layers.size(); ++i)
             {
                 LayerParam & layer = layers[i];
-                if (!IsStub(layer, layers))
+                if (!IsStub(layer, network))
                     continue;
                 if (layer.src().size() != 1 || layer.dst().size() != 1)
                     continue;

@@ -65,15 +65,19 @@ namespace Synet
                 return false;
             }
 
+            int version;
             Synet::NetworkParamHolder dstXml;
             Vector dstBin = srcBin;
-            if (!ConvertNetwork(srcXml, srcBin, trans, dstXml(), dstBin))
+            if (!ConvertNetwork(srcXml, srcBin, trans, dstXml(), dstBin, version))
                 return false;
 
             OptimizerParamHolder param;
             Optimizer optimizer(param());
             if (!optimizer.Run(dstXml(), dstBin))
                 return false;
+
+            if (version >= 10)
+                dstXml().dst().clear();
 
             if (!dstXml.Save(dstModel, false))
             {
@@ -120,7 +124,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertNetwork(const XmlDoc & srcXml, const Vector & srcBin, bool trans, Synet::NetworkParam & dstXml, Vector & dstBin)
+        bool ConvertNetwork(const XmlDoc & srcXml, const Vector & srcBin, bool trans, Synet::NetworkParam & dstXml, Vector & dstBin, int & version)
         {
             const XmlNode * pNet = srcXml.FirstNode("net");
             if (pNet == NULL)
@@ -140,7 +144,6 @@ namespace Synet
                 return false;
             }
 
-            int version;
             StringToValue(pVersion->Value(), version);
 
             if (version <= 7)

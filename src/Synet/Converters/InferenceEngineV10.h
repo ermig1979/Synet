@@ -118,7 +118,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Reshape" && !ConvertReshapeLayer(pLayer, srcBin, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
-                if (type == "Result" && !ConvertResultLayer(pLayer, layer))
+                if (type == "Result" && !ConvertResultLayer(pLayer, layer, &dstXml))
                     return ErrorMessage(pLayer);
                 if (type == "ReverseSequence" && !ConvertReverseSequenceLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
@@ -943,11 +943,19 @@ namespace Synet
             return true;
         }
 
-        bool ConvertResultLayer(const XmlNode* pLayer, LayerParam& layer)
+        bool ConvertResultLayer(const XmlNode* pLayer, LayerParam& layer, Synet::NetworkParam * network)
         {
             layer.type() = Synet::LayerTypeStub;
             if (layer.dst().empty())
                 layer.dst().push_back(layer.name());
+            //{
+            //    if (layer.parent().empty())
+            //        layer.dst().push_back(layer.src()[0]);
+            //    else
+            //        layer.dst().push_back(layer.name());
+            //}
+            if (network && layer.parent().empty())
+                network->dst().push_back(layer.src()[0]);
             return true;
         }
 
@@ -1235,7 +1243,7 @@ namespace Synet
                     return ErrorMessage(pChild);
                 if (type == "Parameter" && !ConvertParameterLayer(pChild, trans, child))
                     return ErrorMessage(pChild);
-                if (type == "Result" && !ConvertResultLayer(pChild, child))
+                if (type == "Result" && !ConvertResultLayer(pChild, child, NULL))
                     return ErrorMessage(pChild);
                 if (type == "Sigmoid" && !ConvertSigmoidLayer(pChild, child))
                     return ErrorMessage(pChild);
