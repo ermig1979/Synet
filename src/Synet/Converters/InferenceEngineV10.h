@@ -142,6 +142,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Transpose" && !ConvertTransposeLayer(pLayer, srcBin, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
+                if (type == "VariadicSplit" && !ConvertVariadicSplitLayer(pLayer, dstXml.layers(), trans, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Unsqueeze" && !ConvertUnsqueezeLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
 #if defined(SYNET_IE_PARSE_STOP_ON_ERROR)
@@ -948,12 +950,6 @@ namespace Synet
             layer.type() = Synet::LayerTypeStub;
             if (layer.dst().empty())
                 layer.dst().push_back(layer.name());
-            //{
-            //    if (layer.parent().empty())
-            //        layer.dst().push_back(layer.src()[0]);
-            //    else
-            //        layer.dst().push_back(layer.name());
-            //}
             if (network && layer.parent().empty())
                 network->dst().push_back(layer.src()[0]);
             return true;
@@ -1386,6 +1382,69 @@ namespace Synet
             }
             else
                 return false;
+            return true;
+        }
+
+        bool ConvertVariadicSplitLayer(const XmlNode* pLayer, const LayerParams& layers, bool trans, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnpack;
+            if (!CheckSourceNumber(layer, 3))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+            if (src0 == NULL || src1 == NULL || src1->type() != LayerTypeMeta || src1->meta().type() != MetaTypeConst
+                || src2 == NULL || src2->type() != LayerTypeMeta || src2->meta().type() != MetaTypeConst)
+                return false;
+
+            if (src1->meta().alpha().shape().size() != 1 || src1->meta().alpha().shape()[0] != 1)
+                return false;
+            switch (src1->meta().alpha().type())
+            {
+            case TensorType64i:
+                layer.unpack().axis() = (int32_t)src1->meta().alpha().i64()[0];
+                break;
+            default:
+                return false;
+            }
+            if (trans && !PermutedToNchw(layers, layer.src(), false, false))
+            {
+                Shape input = ConvertInputShape(pLayer);
+                if (input.size() == 4)
+                {
+                    Shape nchw = Shape({ 0, 3, 1, 2 });
+                    layer.unpack().axis() = (int32_t)nchw[layer.unpack().axis()];
+                }
+                if (input.size() == 3)
+                {
+                    if (src0->type() == LayerTypePermute)
+                    {
+                        layer.unpack().axis() = 1;
+                    }
+                    else
+                    {
+                        Shape nchw = Shape({ 2, 0, 1 });
+                        layer.unpack().axis() = (int32_t)nchw[layer.unpack().axis()];
+                    }
+                }
+            }
+
+            if (src2->meta().alpha().shape().size() != 1)
+                return false;
+            switch (src2->meta().alpha().type())
+            {
+            case TensorType64i:
+            {
+                const int64_t * src = src2->meta().alpha().i64().data();
+                layer.unpack().parts().resize(src2->meta().alpha().i64().size());
+                for (size_t i = 0; i < layer.unpack().parts().size(); ++i)
+                    layer.unpack().parts()[i] = (size_t)(src[i]);
+                break;
+            }
+            default:
+                return false;
+            }
+            layer.src().resize(1);
             return true;
         }
 

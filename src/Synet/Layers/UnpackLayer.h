@@ -45,24 +45,42 @@ namespace Synet
         {
             const UnpackParam & param = this->Param().unpack();
             _axis = src[0]->Index(param.axis());
+            _size = src[0]->Axis(_axis);
             _count = dst.size();
-            _step = src[0]->Axis(_axis) / _count;
-            assert(src[0]->Axis(_axis) == _count*_step);
-            _outer = src[0]->Size(0, _axis);
-            _inner = src[0]->Size(_axis + 1);
-            Shape shape;
-            for (size_t i = 0; i < _axis; ++i)
-                shape.push_back(src[0]->Axis(i));
-            shape.push_back(_step);
-            for (size_t i = _axis + 1; i < src[0]->Count(); ++i)
-                shape.push_back(src[0]->Axis(i));
-            if (dst.size() > 1)
+            _begins.resize(_count);
+            _sizes.resize(_count);
+            if (param.parts().empty())
             {
+                size_t step = _size / _count;
                 for (size_t i = 0; i < _count; ++i)
-                    dst[i]->Reshape(shape, src[0]->Format());
+                {
+                    _begins[i] = i * step;
+                    _sizes[i] = step;
+                }
             }
             else
-                dst[0]->ShareAs(*src[0], shape, src[0]->Format());
+            {
+                assert(param.parts().size() == _count);
+                for (size_t i = 0; i < _count; ++i)
+                {
+                    _begins[i] = i ? param.parts()[i - 1] : 0;
+                    _sizes[i] = param.parts()[i];
+                }
+            }
+            assert(_begins.back() + _sizes.back() == _size);
+            _outer = src[0]->Size(0, _axis);
+            _inner = src[0]->Size(_axis + 1);
+            if (dst.size() > 1)
+            {
+                Shape shape = src[0]->Shape();
+                for (size_t i = 0; i < _count; ++i)
+                {
+                    shape[_axis] = _sizes[i];
+                    dst[i]->Reshape(shape, src[0]->Format());
+                }
+            }
+            else
+                dst[0]->Share(*src[0]);
             this->UsePerfStat();
         }
 
@@ -75,15 +93,16 @@ namespace Synet
                 {
                     for (size_t c = 0; c < _count; c += 1)
                     {
-                        const Type * pSrc = src[0]->CpuData() + (_count*o + c)*_step*_inner;
-                        Type * pDst = dst[c]->CpuData() + o*_step*_inner;
-                        CpuCopy(pSrc, _inner*_step, pDst);
+                        const Type * pSrc = src[0]->CpuData() + (o*_size + _begins[c])*_inner;
+                        Type * pDst = dst[c]->CpuData() + o*_sizes[c]*_inner;
+                        CpuCopy(pSrc, _sizes[c]*_inner, pDst);
                     }
                 }
             }
         }
 
     private:
-        size_t _axis, _outer, _count, _inner, _step;
+        size_t _axis, _outer, _count, _size, _inner;
+        Shape _begins, _sizes;
     };
 }

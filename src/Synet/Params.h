@@ -604,6 +604,7 @@ namespace Synet
     struct UnpackParam
     {
         SYNET_PARAM_VALUE(int32_t, axis, 0);
+        SYNET_PARAM_VALUE(Shape, parts, Shape());
     };
 
     struct UpsampleParam

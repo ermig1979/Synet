@@ -786,9 +786,11 @@ namespace Synet
                 return false;
             if (src[index + 3].type() != LayerTypeUnpack || src[index + 3].dst().size() != 2)
                 return false;
-            if (src[index + 4].type() != LayerTypeReshape || src[index + 4].reshape().shape().size() != 4)
+            if (src[index + 4].type() != LayerTypeReshape || 
+                src[index + 4].reshape().shape().size() + src[index + 4].reshape().axis() != 4)
                 return false;
-            if (src[index + 5].type() != LayerTypeReshape || src[index + 5].reshape().shape().size() != 4)
+            if (src[index + 5].type() != LayerTypeReshape || 
+                src[index + 5].reshape().shape().size() + src[index + 5].reshape().axis() != 4)
                 return false;
             if (InsideLink(src, index, 4, 1))
                 return false;

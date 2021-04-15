@@ -1,7 +1,7 @@
 Introduction
 ============
 
-Synet is a small framework to inference neural network on CPU. Synet uses models previously trained by other deep neural network frameworks.
+Synet is a small framework to infer neural network on CPU. Synet uses models previously trained by other deep neural network frameworks.
 
 The main advantages  of Synet are:
 
