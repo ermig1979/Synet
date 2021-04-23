@@ -188,6 +188,27 @@ namespace Synet
             return false;
         }
 
+        static int PermutedToNchw(const LayerParams& layers, const Strings& names, bool checkInnerProduct, bool checkPriorBox, Ints & stat)
+        {
+            stat.resize(names.size(), 0);
+            int count = 0;
+            for (size_t s = 0; s < names.size(); ++s)
+            {
+                Pin src = ParsePin(names[s]);
+                for (size_t l = 0; l < layers.size(); ++l)
+                {
+                    if (src.name == layers[l].name() && layers[l].type() != LayerTypeMeta && layers[l].type() &&
+                        PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox))
+                    {
+                        stat[s] = 1;
+                        count++;
+                        break;
+                    }
+                }
+            }
+            return count;
+        }
+
         static size_t UserCount(const LayerParams& layers, size_t index)
         {
             size_t users = 0;

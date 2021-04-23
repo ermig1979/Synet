@@ -68,7 +68,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Clamp" && !ConvertClampLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
-                if (type == "Concat" && !ConvertConcatLayer(pLayer, dstXml.layers(), trans, layer))
+                if (type == "Concat" && !ConvertConcatLayer(pLayer, dstXml.layers(), trans, layer, index))
                     return ErrorMessage(pLayer);
                 if (type == "Const" && !ConvertConstLayer(pLayer, srcBin, layer))
                     return ErrorMessage(pLayer);
@@ -251,7 +251,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConcatLayer(const XmlNode* pLayer, const LayerParams& layers, bool trans, LayerParam& layer)
+        bool ConvertConcatLayer(const XmlNode* pLayer, LayerParams& layers, bool trans, LayerParam& layer, IndexMap& index)
         {
             const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
             if (src0 == NULL)
@@ -268,21 +268,48 @@ namespace Synet
                 if (pData == NULL)
                     return false;
                 StringToValue(pData->FirstAttribute("axis")->Value(), layer.concat().axis());
-                if (trans && !PermutedToNchw(layers, layer.src(), false, true))
+                if (trans)
                 {
-                    Shape input = ConvertInputShape(pLayer);
-                    if (input.size() == 4)
+                    Ints perm;
+                    int count = PermutedToNchw(layers, layer.src(), true, true, perm);
+                    if (count == 0)
                     {
-                        Shape nchw = Shape({ 0, 3, 1, 2 });
-                        layer.concat().axis() = (uint32_t)nchw[layer.concat().axis()];
+                        Shape input = ConvertInputShape(pLayer);
+                        if (input.size() == 4)
+                        {
+                            Shape nchw = Shape({ 0, 3, 1, 2 });
+                            layer.concat().axis() = (uint32_t)nchw[layer.concat().axis()];
+                        }
+                        else if (input.size() == 3)
+                        {
+                            Shape ncs = Shape({ 0, 2, 1});
+                            layer.concat().axis() = (uint32_t)ncs[layer.concat().axis()];
+                        }
+                        else
+                            return false;
                     }
-                    else if (input.size() == 3)
+                    else if(count < perm.size())
                     {
-                        Shape ncs = Shape({ 0, 2, 1});
-                        layer.concat().axis() = (uint32_t)ncs[layer.concat().axis()];
+                        for (size_t i = 0; i < perm.size(); ++i)
+                        {
+                            Shape input = ConvertInputShape(pLayer, ValueToString(i));
+                            if (perm[i] == 0 && input.size() == 4)
+                            {
+                                LayerParam permute;
+                                permute.type() = LayerTypePermute;
+                                permute.src().push_back(layer.src()[i]);
+                                permute.name() = layer.src()[i] + "_permute_to_nchw";
+                                permute.dst().push_back(permute.name());
+                                permute.permute().order() = Shape({ 0, 3, 1, 2});
+                                permute.permute().format() = TensorFormatNchw;
+                                size_t layerId;
+                                StringToValue(pLayer->FirstAttribute("id")->Value(), layerId);
+                                index[layerId]++;
+                                layers.push_back(permute);
+                                layer.src()[i] = permute.name();
+                            }
+                        }
                     }
-                    else
-                        return false;
                 }
                 layer.concat().fixed() = true;
                 for (size_t i = 0; i < layer.src().size() && layer.concat().fixed(); ++i)
@@ -1229,7 +1256,7 @@ namespace Synet
 
                 if (type == "Add" && !ConvertAddLayer(pChild, children, srcBin, child))
                     return ErrorMessage(pChild);
-                if (type == "Concat" && !ConvertConcatLayer(pChild, children, trans, child))
+                if (type == "Concat" && !ConvertConcatLayer(pChild, children, trans, child, index))
                     return ErrorMessage(pChild);
                 if (type == "Const" && !ConvertConstLayer(pChild, srcBin, child))
                     return ErrorMessage(pChild);
