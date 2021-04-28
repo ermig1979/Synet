@@ -149,14 +149,12 @@ namespace Synet
             return _dst; 
         }
 
-        const Tensor * Dst(const String & tensorName) const
+        const Tensor * Dst(const String & name) const
         {
-            auto it = std::find_if(_dst.begin(), _dst.end(),
-                                   [&](const auto & t)
-                                   {
-                                       return t->Name() == tensorName;
-                                   });
-            return it == _dst.end() ? nullptr : *it;
+            for (size_t i = 0; i < _dst.size(); ++i)
+                if (_dst[i]->Name() == name)
+                    return _dst[i];
+            return NULL;
         }
 
         LayerPtrs Back() const
