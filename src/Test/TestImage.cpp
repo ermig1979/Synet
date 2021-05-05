@@ -34,28 +34,85 @@
 #endif
 #include "stb_image_write.h"
 
+//#define SYNET_TEST_STB_IMAGE_LOAD
+//#define SYNET_TEST_STB_IMAGE_SAVE
+
 namespace Test
 {
-	bool LoadImage(const String& path, View& view)
-	{
-		return view.Load(path);
-	}
+    bool LoadImage(const String& path, View& view)
+    {
+        String ext = ToLower(ExtensionByPath(path));
+#if defined(SYNET_TEST_STB_IMAGE_LOAD)
+        if (ext == "ppm" || ext == "pgm")
+            return view.Load(path);
+        else
+        {
+            bool result = false;
+            int x, y, c;
+            stbi_uc* data = stbi_load(path.c_str(), &x, &y, &c, STBI_rgb);
+            if (data)
+            {
+                if (c == 1)
+                {
+                    view.Recreate(x, y, View::Gray8);
+                    Simd::Convert(View(x, y, x * c, View::Gray8, data), view);
+                    result = true;
+                }
+                if (c == 3)
+                {
+                    view.Recreate(x, y, View::Bgra32);
+                    Simd::Convert(View(x, y, x * c, View::Rgb24, data), view);
+                    result = true;
+                }
+                if (c == 4)
+                {
+                    view.Recreate(x, y, View::Bgra32);
+                    Simd::Convert(View(x, y, x * c, View::Rgba32, data), view);
+                    result = true;
+                }
+                stbi_image_free(data);
+            }
+            return result;
+        }
+#else
+        if (ext == "pgm")
+            return view.Load(path, View::Gray8);
+        else
+            return view.Load(path, View::Bgra32);
+#endif
+    }
 
-	bool SaveImage(const View& view, const String& path)
-
-	{
-		String ext = ToLower(ExtensionByPath(path));
-		if (ext == "pgm")
-			return view.Save(path, SimdImageFilePgmBin);
-		else if (ext == "ppm")
-			return view.Save(path, SimdImageFilePpmBin);
-		else if (ext == "png")
-			return view.Save(path, SimdImageFilePng);
-		else if (ext == "jpg" || ext == "jpeg")
-			return view.Save(path, SimdImageFileJpeg, 95);
-		else
-			return false;
-	}
+    bool SaveImage(const View& view, const String& path)
+    {
+        String ext = ToLower(ExtensionByPath(path));
+        if (ext == "pgm")
+            return view.Save(path, SimdImageFilePgmBin);
+        else if (ext == "ppm")
+            return view.Save(path, SimdImageFilePpmBin);
+#if defined(SYNET_TEST_STB_IMAGE_SAVE)
+        else if (ext == "png")
+            return stbi_write_png(path.c_str(), (int)view.width, (int)view.height, (int)view.ChannelCount(), view.data, (int)view.stride) != 0;
+        else if (ext == "jpg" || ext == "jpeg")
+        {
+            View bgr;
+            if (view.format == View::Bgr24)
+                bgr = view;
+            else
+            {
+                bgr.Recreate(view.width, view.height, View::Bgr24, NULL, 1);
+                Simd::Convert(view, bgr);
+            }
+            return stbi_write_jpg(path.c_str(), (int)bgr.width, (int)bgr.height, 3, bgr.data, 100) != 0;
+        }
+#else
+        else if (ext == "png")
+            return view.Save(path, SimdImageFilePng);
+        else if (ext == "jpg" || ext == "jpeg")
+            return view.Save(path, SimdImageFileJpeg, 95);
+#endif
+        else
+            return false;
+    }
 }
 
 
