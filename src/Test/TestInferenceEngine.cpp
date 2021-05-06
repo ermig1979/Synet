@@ -68,6 +68,19 @@ namespace Test
         ofs.close();
         return true;
     }
+
+    bool ConvertInferenceEngineToSynet(const Test::Options options)
+    {
+        SYNET_PERF_FUNC();
+        Test::TestParamHolder param;
+        if (FileExists(options.testParam) && !param.Load(options.testParam))
+        {
+            std::cout << "Can't load file '" << options.testParam << "' !" << std::endl;
+            return false;
+        }
+        return Synet::ConvertInferenceEngineToSynet(options.firstModel, options.firstWeight, 
+            options.tensorFormat == 1, options.secondModel, options.secondWeight, param().optimizer());
+    }
 }
 
 Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
@@ -78,9 +91,8 @@ int main(int argc, char* argv[])
 
     if (options.mode == "convert")
     {
-        SYNET_PERF_FUNC();
         std::cout << "Convert network from Inference Engine to Synet : ";
-        options.result = Synet::ConvertInferenceEngineToSynet(options.firstModel, options.firstWeight, options.tensorFormat == 1, options.secondModel, options.secondWeight);
+        options.result = ConvertInferenceEngineToSynet(options);
         std::cout << (options.result ? "OK." : " Conversion finished with errors!") << std::endl;
     }
     else if (options.mode == "compare")

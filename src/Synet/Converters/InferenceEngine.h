@@ -36,7 +36,7 @@ namespace Synet
     class InferenceEngineToSynet
     {
     public:
-        bool Convert(const String & srcModel, const String & srcWeight, bool trans, const String & dstModel, const String & dstWeight)
+        bool Convert(const String & srcModel, const String & srcWeight, bool trans, const String & dstModel, const String & dstWeight, const OptimizerParam & optParam)
         {
             if (!Synet::FileExist(srcModel))
             {
@@ -72,7 +72,7 @@ namespace Synet
                 return false;
 
             OptimizerParamHolder param;
-            Optimizer optimizer(param());
+            Optimizer optimizer(optParam);
             if (!optimizer.Run(dstXml(), dstBin))
                 return false;
 
@@ -174,9 +174,9 @@ namespace Synet
         }
     };
 
-    bool ConvertInferenceEngineToSynet(const String & srcData, const String & srcWeights, bool trans, const String & dstXml, const String & dstBin)
+    bool ConvertInferenceEngineToSynet(const String & srcData, const String & srcWeights, bool trans, const String & dstXml, const String & dstBin, const OptimizerParam& optParam = OptimizerParam())
     {
         InferenceEngineToSynet ieToSynet;
-        return ieToSynet.Convert(srcData, srcWeights, trans, dstXml, dstBin);
+        return ieToSynet.Convert(srcData, srcWeights, trans, dstXml, dstBin, optParam);
     }
 }

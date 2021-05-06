@@ -33,6 +33,7 @@ namespace Synet
     struct OptimizerParam
     {
         SYNET_PARAM_VALUE(bool, mergeTwoConvolutions, true);
+        SYNET_PARAM_VALUE(int, mergeTwoConvolutionsOutputNumMax, 2048);
         SYNET_PARAM_VALUE(bool, mergeInt8Convolutions, true);
     };
 
@@ -696,6 +697,9 @@ namespace Synet
             if (l0.weight()[0].format() != TensorFormatNhwc)
                 return false;
             if (InsideLink(src, index, 2))
+                return false;
+            if (l0.convolution().outputNum() > _param.mergeTwoConvolutionsOutputNumMax() &&
+                l1.convolution().outputNum() > _param.mergeTwoConvolutionsOutputNumMax())
                 return false;
             if (l0.convolution().group() != 1)
             {

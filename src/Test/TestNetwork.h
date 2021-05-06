@@ -27,6 +27,7 @@
 #include "TestCommon.h"
 #include "Synet/Params.h"
 #include "Synet/Tensor.h"
+#include "Synet/Converters/Optimizer.h"
 
 namespace Test
 {
@@ -89,6 +90,7 @@ namespace Test
         SYNET_PARAM_VECTOR(ShapeParam, output);
         SYNET_PARAM_STRUCT(DetectionParam, detection);
         SYNET_PARAM_STRUCT(IndexParam, index);
+        SYNET_PARAM_STRUCT(Synet::OptimizerParam, optimizer);
     };
 
     SYNET_PARAM_HOLDER(TestParamHolder, TestParam, test);
