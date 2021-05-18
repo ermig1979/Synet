@@ -511,7 +511,7 @@ namespace Test
             Synet::TensorFormat format = Synet::TensorFormatUnknown;
             if (blob.getTensorDesc().getLayout() == InferenceEngine::Layout::NHWC)
                 format = Synet::TensorFormatNhwc;
-            dims[0] = _batchSize;
+            //dims[0] = _batchSize;
             switch (blob.getTensorDesc().getPrecision())
             {
             case InferenceEngine::Precision::FP32:

@@ -40,7 +40,7 @@ if [ "$BATCH" = "1" ];then
   if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -re=1 -et=10.0 -st=20.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -re=1 -et=10.0 -st=100.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 

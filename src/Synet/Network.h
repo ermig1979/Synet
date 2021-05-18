@@ -381,15 +381,19 @@ namespace Synet
             bool printLayerWeight = (flag & (1 << DebugPrintLayerWeight)) != 0;
             bool printInt8Buffers = (flag & (1 << DebugPrintInt8Buffers)) != 0;
             bool printLayerInternal = (flag & (1 << DebugPrintLayerInternal)) != 0;
-            for (size_t i = 0; i < _input.size() && printLayerDst; ++i)
+            for (size_t i = 0; i < _input.size() && (printLayerDst || printOutput); ++i)
             {
-                os << "Layer: " << _input[i].layer->Param().name() << " : ";
-                os << ValueToString(_input[i].layer->Param().type()) << " ( ";
-                for (size_t j = 0; j < _input[i].layer->Param().src().size(); ++j)
-                    os << _input[i].layer->Param().src()[j] << " ";
-                os << ")." << std::endl;
-                for (size_t j = 0; j < _input[i].dst.size(); ++j)
-                    _input[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]", false, first, last, precision);
+                Layer & layer = *_input[i].layer;
+                if ((layer._isBack && printOutput) || printLayerDst)
+                {
+                    os << "Layer: " << layer.Param().name() << " : ";
+                    os << ValueToString(layer.Param().type()) << " ( ";
+                    for (size_t j = 0; j < layer.Param().src().size(); ++j)
+                        os << layer.Param().src()[j] << " ";
+                    os << ")." << std::endl;
+                    for (size_t j = 0; j < _input[i].dst.size(); ++j)
+                        _input[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]", false, first, last, precision);
+                }
             }
             for (size_t i = 0; i < _stages.size(); ++i)
             {
