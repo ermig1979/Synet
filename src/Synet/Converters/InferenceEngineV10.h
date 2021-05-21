@@ -106,6 +106,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "PriorBoxV2" && !ConvertPriorBoxV2Layer(pLayer, layer))
                     return ErrorMessage(pLayer);
+                if (type == "Range" && !ConvertRangeLayer(pLayer, srcBin, dstXml.layers(), layer))
+                    return ErrorMessage(pLayer);
                 if (type == "ReduceMean" && !ConvertReduceMeanLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "ReduceProd" && !ConvertReduceProdLayer(pLayer, srcBin, dstXml.layers(), layer))
@@ -130,7 +132,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Split" && !ConvertSplitLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
-                if (type == "Squeeze" && !ConvertSqueezeLayer(pLayer, layer))
+                if (type == "Squeeze" && !ConvertSqueezeLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "StridedSlice" && !ConvertStridedSliceLayer(pLayer, dstXml.layers(), srcBin, trans, layer))
                     return ErrorMessage(pLayer);
@@ -803,23 +805,42 @@ namespace Synet
             return true;
         }
 
+        bool ConvertRangeLayer(const XmlNode* pLayer, const Vector & srcBin, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 3))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+            if (src0 == NULL || src1 == NULL || src2 == NULL)
+                return false;
+            if (src0->type() != LayerTypeMeta || src1->type() != LayerTypeMeta || src2->type() != LayerTypeMeta)
+                return false;
+            layer.type() = Synet::LayerTypeMeta;
+            layer.meta().type() = Synet::MetaTypeRange;
+            return true;
+        }
+
         bool ConvertReduceMeanLayer(const XmlNode* pLayer, const Vector & srcBin, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
             const LayerParam* second = GetLayer(layers, layer.src()[1]);
-            if (second == NULL || second->type() != LayerTypeMeta || second->meta().type() != MetaTypeConst)
+            if (second == NULL)
                 return false;
-            const Longs & alpha = second->meta().alpha().i64();
-            if (alpha.size() != 2 || alpha[0] != 2 || alpha[1] != 3)
-                return false;
+            if (second->type() == LayerTypeMeta && second->meta().type() == MetaTypeConst)
+            {
+                const Longs & alpha = second->meta().alpha().i64();
+                if (alpha.size() != 2 || alpha[0] != 2 || alpha[1] != 3)
+                    return false;
+                layer.src().resize(1);
+            }
             Shape input = ConvertInputShape(pLayer);
             if (input.size() != 4)
                 return false;
             layer.type() = Synet::LayerTypePooling;
             layer.pooling().method() = PoolingMethodTypeAverage;
             layer.pooling().globalPooling() = true;
-            layer.src().resize(1);
             return true;
         }
 
@@ -1091,9 +1112,21 @@ namespace Synet
             return true;
         }
 
-        bool ConvertSqueezeLayer(const XmlNode* pLayer, LayerParam& layer)
+        bool ConvertSqueezeLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
         {
-            layer.type() = Synet::LayerTypeSqueeze;
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
+            if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
+            {
+                layer.type() = LayerTypeMeta;
+                layer.meta().type() = MetaTypeSqueeze;
+            }
+            else
+                layer.type() = Synet::LayerTypeSqueeze;
             return true;
         }
 
@@ -1272,7 +1305,7 @@ namespace Synet
                     return ErrorMessage(pChild);
                 if (type == "Split" && !ConvertSplitLayer(pChild, children, trans, child))
                     return ErrorMessage(pChild);
-                if (type == "Squeeze" && !ConvertSqueezeLayer(pChild, child))
+                if (type == "Squeeze" && !ConvertSqueezeLayer(pChild, children, child))
                     return ErrorMessage(pChild);
                 if (type == "Subtract" && !ConvertSubtractLayer(pChild, children, srcBin, child))
                     return ErrorMessage(pChild);

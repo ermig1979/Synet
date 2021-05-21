@@ -67,6 +67,7 @@ namespace Synet
             case MetaTypeShape: ReshapeShape(src, param.version(), dst); break;
             case MetaTypeSlice: ReshapeSlice(src, dst); break;
             case MetaTypeSqrt: ReshapeSqrt(src, dst); break;
+            case MetaTypeSqueeze: ReshapeSqueeze(src, dst); break;
             case MetaTypeStridedSlice: ReshapeStridedSlice(src, dst); break;
             case MetaTypeStub: /*dst[0]->Reshape({});*/ break;
             case MetaTypeSub: ReshapeSub(src, dst); break;
@@ -368,7 +369,7 @@ namespace Synet
             {
                 int32_t begin = src[0]->As32i().CpuData()[0];
                 int32_t end = src[1]->As32i().CpuData()[0];
-                int32_t step = src[1]->As32i().CpuData()[0];
+                int32_t step = src[2]->As32i().CpuData()[0];
                 Ints result;
                 if (step > 0)
                     for (int32_t i = begin; i < end; i += step)
@@ -377,6 +378,23 @@ namespace Synet
                     for (int32_t i = begin; i > end; i += step)
                         result.push_back(i);
                 Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
+                dst0.Reshape({ result.size() });
+                for (size_t i = 0; i < result.size(); ++i)
+                    dst0.CpuData()[i] = result[0];
+            }
+            else if (src[0]->GetType() == TensorType64i)
+            {
+                int64_t begin = src[0]->As64i().CpuData()[0];
+                int64_t end = src[1]->As64i().CpuData()[0];
+                int64_t step = src[2]->As64i().CpuData()[0];
+                Ints result;
+                if (step > 0)
+                    for (int64_t i = begin; i < end; i += step)
+                        result.push_back(i);
+                else
+                    for (int64_t i = begin; i > end; i += step)
+                        result.push_back(i);
+                Synet::Tensor<int64_t> & dst0 = dst[0]->As64i();
                 dst0.Reshape({ result.size() });
                 for (size_t i = 0; i < result.size(); ++i)
                     dst0.CpuData()[i] = result[0];
@@ -519,6 +537,20 @@ namespace Synet
                 dst0.Reshape(src0.Shape());
                 for (size_t i = 0; i < src0.Size(); ++i)
                     dst0.CpuData()[i] = ::sqrt(src0.CpuData()[i]);
+            }
+            else
+                assert(0);
+        }
+
+        void ReshapeSqueeze(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            assert(src.size() == 2);
+            if (src[0]->GetType() == TensorType64i)
+            {
+                assert(src[0]->Size() == 1 && src[1]->Size() == 1);
+                dst[0]->As64i().Reshape(src[0]->Shape(), src[0]->Format());
+                for (size_t i = 0; i < src[0]->Size(); ++i)
+                    dst[0]->As64i().CpuData()[i] = src[0]->As64i().CpuData()[i];
             }
             else
                 assert(0);

@@ -141,6 +141,7 @@ namespace Synet
         MetaTypeShape,
         MetaTypeSlice,
         MetaTypeSqrt,
+        MetaTypeSqueeze,
         MetaTypeStridedSlice,
         MetaTypeStub,
         MetaTypeSub,
