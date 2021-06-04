@@ -92,6 +92,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "MaxPool" && !ConvertMaxPoolLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
+                if (type == "Mish" && !ConvertMishLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Multiply" && !ConvertMultiplyLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "Parameter" && !ConvertParameterLayer(pLayer, trans, layer))
@@ -562,13 +564,24 @@ namespace Synet
             if (pMode && String(pMode->Value()) == "nearest")
                 layer.interp().interpolationType() = InterpolationTypeNearest;
             const LayerParam* second = GetLayer(layers, layer.src()[1]);
-            if (second == NULL || second->type() != LayerTypeMeta || second->meta().type() != MetaTypeConst)
+            if (second == NULL || second->type() != LayerTypeMeta)
                 return false;
-            if (second->meta().alpha().shape().size() != 1 || second->meta().alpha().shape()[0] != 2)
-                return false;
-            const int64_t* alpha = second->meta().alpha().i64().data();
-            layer.interp().height() = (int32_t)alpha[0];
-            layer.interp().width() = (int32_t)alpha[1];
+            if (second->meta().type() == MetaTypeConst)
+            {
+                if (second->meta().alpha().shape().size() != 1 || second->meta().alpha().shape()[0] != 2)
+                    return false;
+                const int64_t* alpha = second->meta().alpha().i64().data();
+                layer.interp().height() = (int32_t)alpha[0];
+                layer.interp().width() = (int32_t)alpha[1];
+            }
+            else
+            {
+                Shape output = ConvertOutputShape(pLayer);
+                if (output.size() != 4)
+                    return false;
+                layer.interp().height() = (int32_t)output[2];
+                layer.interp().width() = (int32_t)output[3];
+            }
             layer.src().resize(1);
 #endif
             return true;
@@ -642,6 +655,12 @@ namespace Synet
             const XmlAttr * pRoundingType = pData->FirstAttribute("rounding_type");
             if (pRoundingType && String(pRoundingType->Value()) == "floor")
                 layer.pooling().roundingType() = RoundingTypeFloor;
+            return true;
+        }
+
+        bool ConvertMishLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeMish;
             return true;
         }
 
