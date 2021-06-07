@@ -443,6 +443,17 @@ namespace Synet
             {
                 TensorPtrs dst(1, _dst[i]);
                 const Layer * layer = _back[i];
+                if (layer->Param().type() == Synet::LayerTypeStub && layer->Param().src().size() == 1)
+                {
+                    for (size_t j = 0; j < _layers.size(); ++j)
+                    {
+                        if (_layers[j]->Param().name() == layer->Param().src()[0])
+                        {
+                            layer = _layers[j].get();
+                            break;
+                        }
+                    }
+                }
                 Regions candidats;
                 if (layer->Param().type() == Synet::LayerTypeYolo)
                     ((YoloLayer<float>*)layer)->GetRegions(dst, netW, netH, threshold, candidats);
