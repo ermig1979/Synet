@@ -64,7 +64,7 @@ namespace Test
             Shape shape = _ieInput[index]->getTensorDesc().getDims();
             if (_batchSize > 1)
             {
-                assert(shape.size() == 4);
+                assert(shape.size() >= 2);
                 shape[0] = _batchSize;
             }
             return shape;

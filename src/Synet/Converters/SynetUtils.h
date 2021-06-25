@@ -152,6 +152,9 @@ namespace Synet
                 return true;
             if (checkPriorBox && (layer.type() == LayerTypePriorBox || layer.type() == LayerTypePriorBoxClustered))
                 return true;
+            if (layer.type() == LayerTypeInput && layer.input().shape().size() > 0 && 
+                layer.input().shape()[0].format() == TensorFormatNchw)
+                return true;
             for (size_t s = 0; s < layer.src().size(); ++s)
             {
                 Pin src = ParsePin(layer.src()[s]);

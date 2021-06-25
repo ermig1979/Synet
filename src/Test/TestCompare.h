@@ -167,7 +167,7 @@ namespace Test
                 return false;
             }
             Shape shape = network.SrcShape(0);
-            if (!(shape[1] == 1 || shape[1] == 3))
+            if (!(shape[1] == 1 || shape[1] == 3 || _param().inputType() == "binary"))
             {
                 std::cout << "Wrong " << network.Name() << " classifier channels count '" << shape[1] << " !" << std::endl;
                 return false;
@@ -259,38 +259,30 @@ namespace Test
         bool RequiredExtension(const String & name)
         {
             String ext = ExtensionByPath(name);
-            static const char * EXTS[] = { "JPG", "jpg", "png", "ppm", "pgm" };
+            static const char * EXTS[] = { "JPG", "jpg", "png", "ppm", "pgm", "bin" };
             for (size_t i = 0, n = sizeof(EXTS) / sizeof(EXTS[0]); i < n; ++i)
                 if (ext == EXTS[i])
                     return true;
             return false;
         }
 
-        bool CreateTestList(const Network& network)
+        bool CreateTestListImages(const Network& network, const String & directory)
         {
-            String imageDirectory = _options.imageDirectory;
-            if (imageDirectory.empty())
-                imageDirectory = Test::MakePath(DirectoryByPath(_options.testParam), _param().images());
-            if (!DirectoryExists(imageDirectory))
-            {
-                std::cout << "Test image directory '" << imageDirectory << "' is not exists!" << std::endl;
-                return false;
-            }
-            StringList images = GetFileList(imageDirectory, _options.imageFilter, true, false);
+            StringList images = GetFileList(directory, _options.imageFilter, true, false);
             images.sort();
 
             Strings names;
             names.reserve(images.size());
             size_t curr = 0;
-            for(StringList::const_iterator it = images.begin(); it != images.end(); ++it, ++curr)
-                if(curr >= _options.imageBegin && curr < _options.imageEnd && RequiredExtension(*it))
+            for (StringList::const_iterator it = images.begin(); it != images.end(); ++it, ++curr)
+                if (curr >= _options.imageBegin && curr < _options.imageEnd && RequiredExtension(*it))
                     names.push_back(*it);
 
             size_t sN = network.SrcCount(), bN = _options.batchSize;
             size_t tN = names.size() / bN / sN;
             if (tN == 0)
             {
-                std::cout << "There is no one image in '" << imageDirectory << "' for '" << _options.imageFilter << "' filter!" << std::endl;
+                std::cout << "There is no one image in '" << directory << "' for '" << _options.imageFilter << "' filter!" << std::endl;
                 return false;
             }
 
@@ -310,7 +302,7 @@ namespace Test
                     for (size_t b = 0; b < bN; ++b)
                     {
                         size_t p = s * bN + b;
-                        test->path[p] = MakePath(imageDirectory, names[(t * bN + b) * sN + s]);
+                        test->path[p] = MakePath(directory, names[(t * bN + b) * sN + s]);
                         View original;
                         if (!LoadImage(test->path[p], original))
                         {
@@ -335,7 +327,7 @@ namespace Test
                             {
                                 for (size_t i = 0; i < shape[1]; ++i)
                                     channels[i].Recreate(resized.Size(), View::Gray8);
-                                if(_param().order() == "rgb")
+                                if (_param().order() == "rgb")
                                     Simd::DeinterleaveBgr(resized, channels[2], channels[1], channels[0]);
                                 else
                                     Simd::DeinterleaveBgr(resized, channels[0], channels[1], channels[2]);
@@ -378,6 +370,86 @@ namespace Test
                 _tests.push_back(test);
             }
             return true;
+        }
+
+        bool CreateTestListBinary(const Network& network, const String & directory)
+        {
+            StringList files = GetFileList(directory, _options.imageFilter, true, false);
+            files.sort();
+
+            Strings names;
+            names.reserve(files.size());
+            for (StringList::const_iterator it = files.begin(); it != files.end(); ++it)
+                if (RequiredExtension(*it))
+                    names.push_back(*it);
+
+            size_t sN = network.SrcCount(), bN = _options.batchSize;
+            if (names.size() != sN)
+            {
+                std::cout << "The number of binary files " << names.size() << " is differ from number of network sources " << sN << " in '" << directory << "' !" << std::endl;
+                return false;
+            }
+
+            _tests.clear();
+            for (size_t n = 0; n < sN; ++n)
+            {
+                size_t sS = network.SrcSize(n);
+                Vector data;
+                String path = MakePath(directory, names[n]);
+                if (!Synet::LoadBinaryData(path, data))
+                {
+                    std::cout << "Can't load binary file '" << path << "' !" << std::endl;
+                    return false;
+                }
+                size_t tN = data.size() / sS;
+                if (tN == 0)
+                {
+                    std::cout << "The binary file '" << path << "' is too small!" << std::endl;
+                    return false;
+                }
+                if (n == 0)
+                    _tests.resize(tN);
+                else if(_tests.size() != tN)
+                {
+                    std::cout << "The binary files are not compartible!" << std::endl;
+                    return false;
+                }
+                for (size_t offs = 0, i = 0; i < tN; offs += sS, i += 1)
+                {
+                    TestDataPtr & test = _tests[i];
+                    if (n == 0)
+                    {
+                        test.reset(new TestData());
+                        test->path.resize(bN * sN);
+                        test->input.resize(sN);
+                        test->output.resize(_options.TestThreads());
+                    }
+                    test->input[n].Reshape(network.SrcShape(n));
+                    memcpy(test->input[n].CpuData(), data.data() + offs, sS * sizeof(float));
+                }
+            }
+            return true;
+        }
+
+        bool CreateTestList(const Network& network)
+        {
+            String imageDirectory = _options.imageDirectory;
+            if (imageDirectory.empty())
+                imageDirectory = Test::MakePath(DirectoryByPath(_options.testParam), _param().images());
+            if (!DirectoryExists(imageDirectory))
+            {
+                std::cout << "Test image directory '" << imageDirectory << "' is not exists!" << std::endl;
+                return false;
+            }
+            if (_param().inputType() == "images")
+                return CreateTestListImages(network, imageDirectory);
+            else if(_param().inputType() == "binary")
+                return CreateTestListBinary(network, imageDirectory);
+            else
+            {
+                std::cout << "Unknown input type '" << _param().inputType() << "' !" << std::endl;
+                return false;
+            }
         }
 
         bool CreateTestList()

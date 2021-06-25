@@ -81,6 +81,7 @@ namespace Test
 
     struct TestParam
     {
+        SYNET_PARAM_VALUE(String, inputType, "images");
         SYNET_PARAM_VALUE(String, images, String());
         SYNET_PARAM_VALUE(Floats, lower, Floats(1, 0.0f));
         SYNET_PARAM_VALUE(Floats, upper, Floats(1, 1.0f));
@@ -102,6 +103,7 @@ namespace Test
     typedef Synet::Floats Floats;
     typedef Synet::Tensor<float> Tensor;
     typedef std::vector<Tensor> Tensors;
+    typedef Synet::Index Index;
 
     struct Network
     {

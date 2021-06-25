@@ -99,7 +99,8 @@ namespace Test
                 _lower = param.lower();
                 _upper = param.upper();
                 _synetMemoryUsage = _net.MemoryUsage();
-                _epsilon.Init(Size(_net.NchwShape()[3], _net.NchwShape()[2]), param.detection().epsilon());
+                if(param.detection().epsilon().enable())
+                    _epsilon.Init(Size(_net.NchwShape()[3], _net.NchwShape()[2]), param.detection().epsilon());
                 return true;
             }
             return false;
@@ -393,10 +394,10 @@ namespace Test
                             return false;
                     }
                 }
-                if (srcShape.size() == 4)   
+                if (srcShape.size() > 1)   
                 {
                     srcShape[0] = batchSize;
-                    if (_trans)
+                    if (_trans && srcShape.size() == 4)
                         srcShape = Shape({ srcShape[0], srcShape[2], srcShape[3], srcShape[1] });
                 }
                 if (srcShape.empty())

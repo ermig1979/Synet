@@ -716,12 +716,13 @@ namespace Synet
                 {
                     layer.input().shape().resize(1);
                     Shape shape = ConvertShape(pPort);
-
                     if (trans)
                     {
                         if (shape.size() == 4)
+                        {
                             shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
-                        layer.input().shape()[0].format() = TensorFormatNhwc;
+                            layer.input().shape()[0].format() = TensorFormatNhwc;
+                        }
                     }
                     layer.input().shape()[0].dim() = shape;
                 }
