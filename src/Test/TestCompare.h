@@ -401,7 +401,13 @@ namespace Test
                     std::cout << "Can't load binary file '" << path << "' !" << std::endl;
                     return false;
                 }
-                size_t tN = data.size() / sS;
+                size_t tN = data.size() / sS, tB = _options.binaryBegin / _options.batchSize, tE = std::min(_options.binaryEnd / _options.batchSize, tN);
+                if (tB >= tE)
+                {
+                    std::cout << "Wrong parameters: -bb=" << _options.binaryBegin << ", -be=" << _options.binaryEnd << ", binary size = " << tN << " !" << std::endl;
+                    return false;
+                }
+                tN = tE - tB;
                 if (tN == 0)
                 {
                     std::cout << "The binary file '" << path << "' is too small!" << std::endl;
@@ -414,8 +420,9 @@ namespace Test
                     std::cout << "The binary files are not compartible!" << std::endl;
                     return false;
                 }
-                for (size_t offs = 0, i = 0; i < tN; offs += sS, i += 1)
+                for (size_t i = 0; i < tN; i += 1)
                 {
+                    size_t offs = (tB + i) * sS;
                     TestDataPtr & test = _tests[i];
                     if (n == 0)
                     {

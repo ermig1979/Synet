@@ -49,6 +49,8 @@ namespace Test
         String imageFilter;
         size_t imageBegin;
         size_t imageEnd;
+        size_t binaryBegin;
+        size_t binaryEnd;
         String outputDirectory;
         size_t repeatNumber;
         double executionTime;
@@ -98,6 +100,8 @@ namespace Test
             imageFilter = GetArg("-if", "*.*");
             imageBegin = FromString<size_t>(GetArg("-ib", "0"));
             imageEnd = FromString<size_t>(GetArg("-ie", "1000000"));
+            binaryBegin = FromString<size_t>(GetArg("-bb", "0"));
+            binaryEnd = FromString<size_t>(GetArg("-be", "1000000"));
             outputDirectory = GetArg("-od", "output");
             repeatNumber = std::max(0, FromString<int>(GetArg("-rn", "1")));
             executionTime = FromString<double>(GetArg("-et", "10.0"));
