@@ -500,7 +500,7 @@ namespace Synet
                 return false;
             if (act.src().size() != 1 || act.src()[0] != conv.name())
                 return false;
-            if (InsideLink(src, index - 1, 2))
+            if (InsideLink(src, index - 1, 2) && act.src()[0] != act.dst()[0])
                 return false;
             bool result = false;
             if (act.type() == LayerTypeRestrictRange)
