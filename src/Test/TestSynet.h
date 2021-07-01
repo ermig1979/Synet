@@ -396,7 +396,8 @@ namespace Test
                 }
                 if (srcShape.size() > 1)   
                 {
-                    srcShape[0] = batchSize;
+                    if(batchSize != 1 && srcShape[0] == 1)
+                        srcShape[0] = batchSize;
                     if (_trans && srcShape.size() == 4)
                         srcShape = Shape({ srcShape[0], srcShape[2], srcShape[3], srcShape[1] });
                 }
