@@ -268,9 +268,9 @@ int main(int argc, char* argv[])
     {
         SYNET_PERF_FUNC();
 #ifdef SYNET_TEST_FIRST_RUN
-        std::cout << "Convert network from Darkent to Synet :" << std::endl;
+        std::cout << "Convert network from Darkent to Synet : ";
         options.result = Synet::ConvertDarknetToSynet(options.firstModel, options.firstWeight, options.tensorFormat == 1, options.secondModel, options.secondWeight);
-        std::cout << "Conversion is finished " << (options.result ? "successfully." : "with errors.") << std::endl;
+        std::cout << (options.result ? "OK." : " Conversion finished with errors!") << std::endl;
 #else
         std::cout << "Conversion of Darkent to Synet is not available!" << std::endl;
         options.result = false;
