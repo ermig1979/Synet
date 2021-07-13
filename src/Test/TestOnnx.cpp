@@ -25,17 +25,21 @@
 #include "TestCompare.h"
 #include "TestReport.h"
 
-#ifdef SYNET_TEST_FIRST_RUN
+#if defined(SYNET_TEST_FIRST_RUN) && !defined(SYNET_ONNXRUNTIME_ENABLE)
 
 #define SYNET_ONNX_ENABLE
 #include "Synet/Converters/Onnx.h"
 
 #include "TestInferenceEngine.h"
 
+namespace Test
+{
+    typedef InferenceEngineNetwork OnnxNetwork;
+}
 #else //SYNET_FIRST_RUN
 namespace Test
 {
-    struct InferenceEngineNetwork : public Network
+    struct OnnxNetwork : public Network
     {
     };
 }
@@ -59,7 +63,7 @@ int main(int argc, char* argv[])
 #endif
     if (options.mode == "compare")
     {
-        Test::Comparer<Test::InferenceEngineNetwork, Test::SynetNetwork> comparer(options);
+        Test::Comparer<Test::OnnxNetwork, Test::SynetNetwork> comparer(options);
         options.result = comparer.Run();
     }
     else

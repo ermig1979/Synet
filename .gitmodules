@@ -18,3 +18,7 @@
 	url = https://github.com/openvinotoolkit/openvino.git
 	branch = releases/2021/1
 	ignore = dirty
+[submodule "3rd/onnxruntime"]
+	path = 3rd/onnxruntime
+	url = https://github.com/microsoft/onnxruntime.git
+	branch = rel-1.8.1
