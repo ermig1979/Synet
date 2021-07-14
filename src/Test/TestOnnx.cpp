@@ -25,8 +25,19 @@
 #include "TestCompare.h"
 #include "TestReport.h"
 
-#if defined(SYNET_TEST_FIRST_RUN) && !defined(SYNET_ONNXRUNTIME_ENABLE)
+#if defined(SYNET_TEST_FIRST_RUN)
 
+#if defined(SYNET_ONNXRUNTIME_ENABLE)
+
+#include "TestOnnxRuntime.h"
+
+namespace Test
+{
+    OnnxRuntimeNetwork::Env OnnxRuntimeNetwork::s_env;
+
+    typedef OnnxRuntimeNetwork OnnxNetwork;
+}
+#else
 #define SYNET_ONNX_ENABLE
 #include "Synet/Converters/Onnx.h"
 
@@ -36,12 +47,12 @@ namespace Test
 {
     typedef InferenceEngineNetwork OnnxNetwork;
 }
+#endif
+
 #else //SYNET_FIRST_RUN
 namespace Test
 {
-    struct OnnxNetwork : public Network
-    {
-    };
+    typedef Network OnnxNetwork;
 }
 #endif//SYNET_FIRST_RUN
 
@@ -51,7 +62,7 @@ int main(int argc, char* argv[])
 {
     Test::Options options(argc, argv);
 
-#ifdef SYNET_ONNX_ENABLE
+#if defined(SYNET_ONNX_ENABLE)
     if (options.mode == "convert")
     {
         SYNET_PERF_FUNC();
