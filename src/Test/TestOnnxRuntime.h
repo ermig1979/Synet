@@ -54,22 +54,23 @@ namespace Test
 
         virtual size_t SrcCount() const
         {
-            return 0;
+            return _inputShapes.size();
         }
 
         virtual Shape SrcShape(size_t index) const
         {
-            Shape shape;
-            return shape;
+            return _inputShapes[index];
         }
 
         virtual size_t SrcSize(size_t index) const
         {
-            return 0;
+            return Synet::Detail::Size(SrcShape(index));
         }
 
         virtual bool Init(const String & model, const String & weight, const Options& options, const TestParam & param)
         {
+            TEST_PERF_FUNC();
+
             Ort::SessionOptions sessionOptions;
             sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
             sessionOptions.SetInterOpNumThreads((int)options.workThreads);
@@ -88,56 +89,95 @@ namespace Test
 
             _session.reset(new Ort::Session(s_env.env, weight.c_str(), sessionOptions));
 
-            Ort::AllocatorWithDefaultOptions allocator;
             for (size_t i = 0, n = _session->GetInputCount(); i < n; i++)
             {
-                _inputNames.push_back(_session->GetInputName(i, allocator));
-                _inputDims.push_back(_session->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape());
+                _inputNames.push_back(_session->GetInputName(i, s_env.allocator));
+                _inputShapes.push_back(Convert<size_t, int64_t>(_session->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape()));
             }
 
-        //    if (_inputDim[0] == -1)
-        //    {
-        //        std::cout << fullModelPath << " has dynamic input[0] : { ";
-        //        for (int j = 0; j < _inputDim.size(); j++)
-        //            std::cout << _inputDim[j] << " ";
-        //        std::cout << "}. Try to set batch " << _batchSize << "." << std::endl;
-        //        _inputDim[0] = _batchSize;
-        //}
+            _batchSize = options.batchSize;
 
-        //    for (size_t i = 0, n = _session->GetOutputCount(); i < n; i++)
-        //    {
-        //        _outputNames.push_back(_session->GetOutputName(i, allocator));
-        //        _outputDims.push_back(_session->GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape());
-        //    }
+            if (_inputShapes[0][0] == -1)
+            {
+                //std::cout << weight << " has dynamic input[0] : " << Synet::Detail::DebugPrint(_inputShapes[0]);
+                //std::cout << "}. Try to set batch " << _batchSize << "." << std::endl;
+                _inputShapes[0][0] = _batchSize;
+            }
 
-        //    Synet::Shape inputShape;
-        //    for (int i = 0; i < _inputDim.size(); i++)
-        //        inputShape.push_back((size_t)_inputDim[i]);
-        //    _inputTensor.Reshape(inputShape);
-        //    Ort::Value inputValue = Ort::Value::CreateTensor<float>(_memoryInfo, _inputTensor.CpuData(), _inputTensor.Size(), _inputDim.data(), _inputDim.size());
+            for (size_t i = 0, n = _session->GetOutputCount(); i < n; i++)
+            {
+                _outputNames.push_back(_session->GetOutputName(i, s_env.allocator));
+                _outputShapes.push_back(Convert<size_t, int64_t>(_session->GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape()));
+            }
 
-        //    for (size_t i = 0; i < _outputNames.size(); i++)
-        //        _outputValues.emplace_back(nullptr);
+            if (_inputShapes.size() != 1)
+            {
+                std::cout << "Current implementation of OnnxRuntimeNetwork supports only 1 input!" << std::endl;
+                return false;
+            }
 
-        //    _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), &inputValue, _inputNames.size(),
-        //        _outputNames.data(), _outputValues.data(), _outputNames.size());
-        //    assert(_outputValues.size() == _outputNames.size() && _outputValues.front().IsTensor());
+            Tensor inputTensor(_inputShapes[0]);
+            Dim inputDim = Convert<int64_t, size_t>(_inputShapes[0]);
+            Ort::Value inputValue = Ort::Value::CreateTensor<float>(s_env.memoryInfo, inputTensor.CpuData(), inputTensor.Size(), inputDim.data(), inputDim.size());
 
-            return false;
+            _outputValues = std::make_shared<Values>();
+            Values outputValues;
+            for (size_t i = 0; i < _outputValues->size(); i++)
+                _outputValues->emplace_back(nullptr);
+
+            _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), &inputValue, _inputNames.size(),
+                _outputNames.data(), _outputValues->data(), _outputNames.size());
+
+            if (!(_outputValues->size() == _outputNames.size() && _outputValues->front().IsTensor()))
+                return false;
+
+            _output.resize(_outputNames.size());
+            for (size_t i = 0; i < _outputNames.size(); i++)
+            {
+                _outputShapes[i] = Convert<size_t, int64_t>(_outputValues->at(i).GetTensorTypeAndShapeInfo().GetShape());
+                _output[i].Reshape(_outputShapes[i]);
+            }
+
+            return true;
         }
 
         virtual void Free()
         {
+            _session.reset();
+            _inputNames.clear();
+            _inputShapes.clear();
+            _outputNames.clear();
+            _outputShapes.clear();
         }
 
         virtual const Tensors & Predict(const Tensors& src)
         {
+            assert(src.size() == _inputNames.size());
+
+            Values inputValues;
+            for (size_t i = 0; i < src.size(); i++)
+            {
+                inputValues.emplace_back(nullptr);
+                assert(src[i].Shape() == _inputShapes[i]);
+                Dim dim = Convert<int64_t, size_t>(_inputShapes[i]);
+                inputValues[i] = Ort::Value::CreateTensor<float>(s_env.memoryInfo, (float*)src[i].CpuData(), src[i].Size(), dim.data(), dim.size());
+            }
+
+            {
+                TEST_PERF_FUNC();
+
+                _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), inputValues.data(), _inputNames.size(),
+                    _outputNames.data(), _outputValues->data(), _outputNames.size());
+            }
+
+            SetOutput();
+
             return _output;
         }
 
         virtual void DebugPrint(const Tensors& src, std::ostream & os, int flag, int first, int last, int precision)
         {
-        };
+        }
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
@@ -152,32 +192,58 @@ namespace Test
     private:
         typedef std::vector<int64_t> Dim;
         typedef std::vector<Dim> Dims;
+        typedef Ort::Value Value;
+        typedef std::vector<Value> Values;
+        typedef std::shared_ptr<Values> ValuesPtr;
 
-        std::shared_ptr<Ort::MemoryInfo> _memoryInfo;
         std::shared_ptr<Ort::Session> _session;
 
         std::vector<const char*> _inputNames;
-        Dims _inputDims;
-        Tensors _input;
+        Shapes _inputShapes;
 
         std::vector<const char*> _outputNames;
-        //std::vector<Ort::Value> _outputValues;
-        Dims _outputDims;
+        Shapes _outputShapes;
+        ValuesPtr _outputValues;
 
         size_t _batchSize;
 
         struct Env
         {
-            Ort::MemoryInfo memoryInfo; 
+            Ort::AllocatorWithDefaultOptions allocator;
             Ort::Env env;
+            Ort::MemoryInfo memoryInfo; 
 
             Env()
-                : memoryInfo(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault))
+                : env( { ORT_LOGGING_LEVEL_WARNING, "RootLogger" } )
+                , memoryInfo(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault))
             {
-                env = Ort::Env{ ORT_LOGGING_LEVEL_WARNING, "RootLogger" };
             }
         };
         static Env s_env;
+
+        template<class D, class S> std::vector<D> Convert(const std::vector<S>& src)
+        {
+            std::vector<D> dst(src.size());
+            for (size_t i = 0; i < src.size(); ++i)
+                dst[i] = (D)src[i];
+            return dst;
+        }
+
+        void SetOutput()
+        {
+            _output.resize(_outputNames.size());
+            for (size_t i = 0; i < _outputNames.size(); i++)
+            {
+                _outputShapes[i] = Convert<size_t, int64_t>(_outputValues->at(i).GetTensorTypeAndShapeInfo().GetShape());
+                _output[i].Reshape(_outputShapes[i]);
+
+                const float * src = _outputValues->at(i).GetTensorMutableData<float>();
+                float* dst = _output[i].CpuData();
+                size_t size = _output[i].Size();
+                for (size_t j = 0; j < size; ++j)
+                    dst[i] = src[i];
+            }
+        }
     };
 }
 

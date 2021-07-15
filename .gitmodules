@@ -22,3 +22,4 @@
 	path = 3rd/onnxruntime
 	url = https://github.com/microsoft/onnxruntime.git
 	branch = rel-1.8.1
+	ignore = dirty
