@@ -33,7 +33,7 @@ namespace Synet
     struct OptimizerParam
     {
         SYNET_PARAM_VALUE(bool, mergeTwoConvolutions, true);
-        SYNET_PARAM_VALUE(int, mergeTwoConvolutionsOutputNumMax, 256);
+        SYNET_PARAM_VALUE(uint32_t, mergeTwoConvolutionsOutputNumMax, 256);
         SYNET_PARAM_VALUE(bool, mergeInt8Convolutions, true);
     };
 
