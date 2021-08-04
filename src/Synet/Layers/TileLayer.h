@@ -57,8 +57,6 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            SYNET_PERF_FUNC();
-
             const T * pSrc = src[0]->CpuData();
             T * pDst = dst[0]->CpuData();
             if (_inner == 1)

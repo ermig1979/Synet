@@ -72,7 +72,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "DetectionOutput" && !ConvertDetectionOutputLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
-                if (type == "Eltwise" && !ConvertEltwiseLayer(pLayer, layer))
+                if (type == "Eltwise" && !ConvertEltwiseLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "Flatten" && !ConvertFlattenLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
@@ -483,7 +483,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertEltwiseLayer(const XmlNode * pLayer, LayerParam & layer)
+        bool ConvertEltwiseLayer(const XmlNode * pLayer, const LayerParams& layers, LayerParam & layer)
         {
             layer.type() = Synet::LayerTypeEltwise;
             const XmlNode * pData = pLayer->FirstNode("data");
@@ -504,6 +504,14 @@ namespace Synet
                 layer.eltwise().operation() = EltwiseOperationTypeProduct;
             else
                 assert(0);
+            if (layer.src().size() == 2)
+            {
+                const LayerParam * src0 = GetLayer(layers, layer.src()[0]);
+                if (src0 == NULL)
+                    return false;
+                if (src0->type() == Synet::LayerTypeTile)
+                    std::swap(layer.src()[0], layer.src()[1]);
+            }
             return true;
         }
 
