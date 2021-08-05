@@ -52,6 +52,7 @@ namespace Synet
             Shape shape = src[0]->Shape();
             shape[_axis] *= _tiles;
             dst[0]->Reshape(shape, src[0]->Format());
+            this->UsePerfStat();
         }
 
     protected:

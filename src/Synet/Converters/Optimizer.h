@@ -27,6 +27,7 @@
 #include "Synet/Common.h"
 #include "Synet/Params.h"
 #include "Synet/Utils/FileUtils.h"
+#include "Synet/Converters/SynetUtils.h"
 
 namespace Synet
 {
@@ -39,7 +40,7 @@ namespace Synet
 
     SYNET_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);
 
-    class Optimizer
+    class Optimizer : public SynetUtils
     {
     public:
         Optimizer(const OptimizerParam& param)
@@ -57,6 +58,8 @@ namespace Synet
             if (!ReuseLayers(network))
                 return false;
             if (!RemoveStub(network))
+                return false;
+            if (!RemoveUnusedConst(network.layers()))
                 return false;
             return true;
         }
@@ -113,7 +116,9 @@ namespace Synet
                         continue;
                     if (MergeMish(network.layers(), i, merged, changes))
                         continue;
-                    if (MergePrelu(network.layers(), i, bin, merged, changes))
+                    if (MergePrelu0(network.layers(), i, bin, merged, changes))
+                        continue;
+                    if (MergePrelu1(network.layers(), i, bin, buf, merged, changes))
                         continue;
                     if (MergeShuffle0(network.layers(), i, merged, changes))
                         continue;
@@ -455,7 +460,7 @@ namespace Synet
             return true;
         }
 
-        bool MergePrelu(const LayerParams & src, size_t & index, const Floats & bin, LayerParams & dst, Changes & changes)
+        bool MergePrelu0(const LayerParams & src, size_t & index, const Floats & bin, LayerParams & dst, Changes & changes)
         {
             if (src.size() < index + 2)
                 return false;
@@ -487,6 +492,53 @@ namespace Synet
             layer.weight().push_back(src[index + 0].weight()[0]);
             dst.push_back(layer);
             index += 1;
+            return true;
+        }
+
+        bool MergePrelu1(const LayerParams & src, size_t & index, const Floats & bin, Floats& buf, LayerParams & dst, Changes & changes)
+        {
+            if (src.size() < index + 5)
+                return false;
+            if (src[index + 0].type() != LayerTypePower || src[index + 0].power().scale() != -1.0f)
+                return false;
+            if (src[index + 1].type() != LayerTypeRelu)
+                return false;
+            if (src[index + 2].type() != LayerTypeEltwise || src[index + 2].src().size() != 2 ||
+                src[index + 2].src()[0] != src[index + 1].name() ||
+                src[index + 2].eltwise().operation() != EltwiseOperationTypeProduct)
+                return false;
+            if (src[index + 3].type() != LayerTypeRelu)
+                return false;
+            if (src[index + 4].type() != LayerTypeEltwise || src[index + 4].src().size() != 2 ||
+                src[index + 4].src()[0] != src[index + 2].name() || src[index + 4].src()[1] != src[index + 3].name() ||
+                src[index + 4].eltwise().operation() != EltwiseOperationTypeSum)
+                return false;
+            if (InsideLink(src, index + 1, 5))
+                return false;
+            size_t tile = GetIndex(src[index + 2].src()[1], src);
+            if (tile == src.size() || tile < 2)
+                return false;
+            if (src[tile - 0].type() != LayerTypeTile || src[tile - 0].src()[0] != src[tile - 1].name())
+                return false;
+            if (src[tile - 1].type() != LayerTypeTile || src[tile - 1].src()[0] != src[tile - 2].name())
+                return false;
+            if (src[tile - 2].type() != LayerTypeConst)
+                return false;
+            LayerParam layer;
+            layer.type() = LayerTypePrelu;
+            layer.name() = src[index + 4].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            layer.weight().push_back(src[tile - 2].weight()[0]);
+            dst.push_back(layer);
+            if (buf.empty())
+                buf = bin;
+            const float* pSrc = bin.data() + layer.weight()[0].offset() / 4;
+            float * pDst = buf.data() + layer.weight()[0].offset() / 4;
+            for (size_t i = 0, n = layer.weight()[0].size() / 4; i < n; ++i)
+                pDst[i] = -pSrc[i];
+            //dst.erase(dst.begin() + tile - 2, dst.begin() + tile + 1);
+            index += 4;
             return true;
         }
 
@@ -570,13 +622,13 @@ namespace Synet
                 return false;
             if (l0.weight()[0].format() != TensorFormatNhwc)
                 return false;
-            if (k0.size() < 2 || (k0[0] != k0[1] || (k0[0] != 1 && k0[0] != 3)))
+            if (k0.size() < 2 || (k0[0] != k0[1] || (k0[0] != 1 && k0[0] != 3)) || l0.convolution().group() != 1)
                 return false;
             if (l1.convolution().outputNum() != l1.convolution().group())
                 return false;
             if (k1.size() < 2 || (k1[0] != k1[1] || (k1[0] != 3 && k1[0] != 5 && k1[0] != 7)))
                 return false;
-            if (k2.size() < 2 || k2[0] != 1 || k2[1] != 1)
+            if (k2.size() < 2 || k2[0] != 1 || k2[1] != 1 || l2.convolution().group() != 1)
                 return false;
             if (InsideLink(src, index, 3))
                 return false;
@@ -707,12 +759,12 @@ namespace Synet
                     return false;
                 if (k0.size() < 2 || (k0[0] != k0[1] || (k0[0] != 3 && k0[0] != 5 && k0[0] != 7)))
                     return false;
-                if (k1.size() < 2 || (k1[0] != k1[1] || (k1[0] != 1)))
+                if (k1.size() < 2 || (k1[0] != k1[1] || (k1[0] != 1)) || l1.convolution().group() != 1)
                     return false;
             }
             else
             {
-                if (k0.size() < 2 || (k0[0] != k0[1] || (k0[0] != 1 && k0[0] != 3)))
+                if (k0.size() < 2 || (k0[0] != k0[1] || (k0[0] != 1 && k0[0] != 3)) || l0.convolution().group() != 1)
                     return false;
                 if (l1.convolution().outputNum() != l1.convolution().group())
                     return false;
@@ -1536,6 +1588,15 @@ namespace Synet
                     return &layers[i];
             }
             return NULL;
+        }
+
+        size_t GetIndex(const String& name, const LayerParams& layers) const
+        {
+            size_t i = 0;
+            for (; i < layers.size(); ++i)
+                if (layers[i].name() == name)
+                    break;
+            return i;
         }
 
         bool CanReuse(const LayerParam & layer)

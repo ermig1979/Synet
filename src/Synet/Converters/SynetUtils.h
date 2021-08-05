@@ -230,16 +230,29 @@ namespace Synet
                 if (curr.type() == LayerTypeConst || (curr.type() == LayerTypeMeta && curr.meta().type() == MetaTypeConst))
                 {
                     if (UserCount(layers, i) == 0)
-                        layers.erase(layers.begin() + i), i--;
+                        layers.erase(layers.begin() + i), i -= 1;
                     continue;
                 }
-                if (i && curr.type() == LayerTypeReshape)
+                if (i >= 1 && curr.type() == LayerTypeReshape)
                 {
                     const LayerParam& prev = layers[i - 1];
                     if (prev.type() == LayerTypeConst && curr.src().size() == 1 && curr.src()[0] == prev.name())
                     {
                         if (UserCount(layers, i) == 0 && UserCount(layers, i - 1) == 1)
                             layers.erase(layers.begin() + i - 1, layers.begin() + i + 1), i -= 2;
+                    }
+                }
+                if (i >= 2 && curr.type() == LayerTypeTile)
+                {
+                    const LayerParam& prev1 = layers[i - 1];
+                    if (prev1.type() == LayerTypeTile && curr.src().size() == 1 && curr.src()[0] == prev1.name())
+                    {
+                        const LayerParam& prev2 = layers[i - 2];
+                        if (prev2.type() == LayerTypeConst && prev1.src().size() == 1 && prev1.src()[0] == prev2.name())
+                        {
+                            if (UserCount(layers, i) == 0 && UserCount(layers, i - 1) == 1 && UserCount(layers, i - 2) == 1)
+                                layers.erase(layers.begin() + i - 2, layers.begin() + i + 1), i -= 3;
+                        }
                     }
                 }
             }
