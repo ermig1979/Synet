@@ -1,4 +1,5 @@
 DATE_TIME=`date +"%Y_%m_%d__%H_%M"`
+COUNTER=0
 
 function TEST {
 FRAMEWORK=$1
@@ -29,7 +30,8 @@ LOG="$OUT"/c"$PREFIX"_"$NAME"_f"$FORMAT"_b"$BATCH".txt
 BIN_DIR=./build
 BIN="$BIN_DIR"/test_"$FRAMEWORK"
 
-echo $LOG
+COUNTER=$((COUNTER+1))
+echo Test $COUNTER log is $LOG
 
 if [ -f $IMAGE/descript.ion ];then rm $IMAGE/descript.ion; fi
 
