@@ -54,8 +54,8 @@ namespace Synet
 
             Synet::NetworkParamHolder holder;
             Vector weight;
-            //if (!ConvertNetwork(*function, trans, holder(), weight))
-            //    return false;
+            if (!ConvertModel(model, trans, holder(), weight))
+                return false;
 
             OptimizerParamHolder param;
             Optimizer optimizer(param());
@@ -81,10 +81,10 @@ namespace Synet
 
         bool LoadModel(const String& path, onnx::ModelProto& model)
         {
-            std::ifstream ifs(path.c_str(), std::ios_base::binary);
+            std::ifstream ifs(path.c_str(), std::ios::ate | std::ios_base::binary);
             if (!ifs.is_open())
             {
-                std::cout << "Can't open Ffile '" << path << "' !" << std::endl;
+                std::cout << "Can't open file '" << path << "' !" << std::endl;
                 return false;
             }
             size_t size = ifs.tellg();
@@ -92,6 +92,7 @@ namespace Synet
             std::vector<char> buffer(size);
             ifs.read(buffer.data(), size);
             ifs.close();
+            std::cout << "Parse " << path << ", size: " << size << std::endl;
 
             if (!model.ParseFromArray(buffer.data(), size))
             {
@@ -99,9 +100,69 @@ namespace Synet
                 return false;
             }
 
+            return true;
+        }
 
+        bool ConvertModel(const onnx::ModelProto & model, bool trans, Synet::NetworkParam& network, Vector& reordered)
+        {
+            const onnx::GraphProto& graph = model.graph();
+
+            PrintGraph(graph, std::cout);
 
             return true;
+        }
+
+        bool PrintGraph(const onnx::GraphProto& graph, std::ostream & os)
+        {
+            os << std::endl;
+            os << "graph name: " << graph.name() << std::endl;
+            for (size_t i = 0; i < graph.input_size(); ++i)
+                os << " input[" << i << "]: " << ValueInfoString(graph.input(i)) << std::endl;
+            for (size_t i = 0; i < graph.node_size(); ++i)
+            {
+                const onnx::NodeProto& node = graph.node(i);
+                os << " node[" << i << "] " << node.op_type() << " : " << node.name() << " (";
+                for (size_t j = 0; j < node.input_size(); ++j)
+                    os << " " << node.input(j);
+                os << " ) -> (";
+                for (size_t j = 0; j < node.output_size(); ++j)
+                    os << " " << node.output(j);
+                os << " )";
+                os << std::endl;
+            }
+            for (size_t i = 0; i < graph.output_size(); ++i)
+                os << " output[" << i << "]: " << ValueInfoString(graph.output(i)) << std::endl;
+            os << std::endl;
+
+            return true;
+        }
+
+        String ValueInfoString(const onnx::ValueInfoProto& info)
+        {
+            std::stringstream ss;
+            ss << info.name();
+            if (info.type().has_tensor_type())
+            {
+                Shape shape = Convert(info.type().tensor_type().shape());
+                ss << " {";
+                for (size_t j = 0; j < shape.size(); ++j)
+                    ss << " " << ptrdiff_t(shape[j]);
+                ss << " }";
+            }
+            return ss.str();
+        }
+
+        Shape Convert(const onnx::TensorShapeProto& shapeProto)
+        {
+            Shape shape;
+            for (size_t i = 0; i < shapeProto.dim_size(); ++i)
+            {
+                if (shapeProto.dim(i).has_dim_value())
+                    shape.push_back((size_t)shapeProto.dim(i).dim_value());
+                else
+                    shape.push_back(size_t(-1));
+            }
+            return shape;
         }
     };
 
