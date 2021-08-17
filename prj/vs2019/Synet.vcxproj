@@ -33,7 +33,8 @@
     <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineBase.h" />
     <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineV10.h" />
     <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineV7.h" />
-    <ClInclude Include="..\..\src\Synet\Converters\Onnx.h" />
+    <ClInclude Include="..\..\src\Synet\Converters\OnnxNgraph.h" />
+    <ClInclude Include="..\..\src\Synet\Converters\OnnxRuntime.h" />
     <ClInclude Include="..\..\src\Synet\Converters\Optimizer.h" />
     <ClInclude Include="..\..\src\Synet\Converters\SynetUtils.h" />
     <ClInclude Include="..\..\src\Synet\Fabric.h" />

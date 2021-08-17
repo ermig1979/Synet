@@ -28,6 +28,7 @@
 #if defined(SYNET_TEST_FIRST_RUN)
 
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
+#include "Synet/Converters/OnnxRuntime.h"
 
 #include "TestOnnxRuntime.h"
 
@@ -38,8 +39,9 @@ namespace Test
     typedef OnnxRuntimeNetwork OnnxNetwork;
 }
 #else
+
 #define SYNET_ONNX_ENABLE
-#include "Synet/Converters/Onnx.h"
+#include "Synet/Converters/OnnxNgraph.h"
 
 #include "TestInferenceEngine.h"
 
@@ -62,7 +64,7 @@ int main(int argc, char* argv[])
 {
     Test::Options options(argc, argv);
 
-#if defined(SYNET_ONNX_ENABLE)
+#if defined(SYNET_ONNX_ENABLE) || defined(SYNET_ONNXRUNTIME_ENABLE)
     if (options.mode == "convert")
     {
         SYNET_PERF_FUNC();
