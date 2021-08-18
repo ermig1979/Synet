@@ -144,7 +144,13 @@ namespace Synet
                     layer.src().push_back(node.input(j));
                 for (size_t j = 0; j < node.output_size(); ++j)
                     layer.dst().push_back(node.output(j));
+                if (layer.dst().size() == 1)
+                    layer.name() = layer.dst()[0];
 
+                if (node.op_type() == "Add" && !ConvertAddNode(node, layer))
+                    return ErrorMessage(node);
+                if (node.op_type() == "Clip" && !ConvertClipNode(node, layer))
+                    return ErrorMessage(node);
                 if (node.op_type() == "Conv" && !ConvertConvNode(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(node);
 
@@ -231,6 +237,25 @@ namespace Synet
             }
             layer.input().shape()[0].dim() = shape;
             network.layers().push_back(layer);
+            return true;
+        }
+
+        bool ConvertAddNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            if (node.input_size() != 2)
+                return false;
+            layer.type() = Synet::LayerTypeEltwise;
+            layer.eltwise().operation() = EltwiseOperationTypeSum;
+            return true;
+        }
+
+        bool ConvertClipNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeRestrictRange;
+            if (!ConvertAtrributeFloat(node, "max", layer.restrictRange().upper()))
+                return false;
+            if (!ConvertAtrributeFloat(node, "min", layer.restrictRange().lower()))
+                return false;
             return true;
         }
 
@@ -463,6 +488,23 @@ namespace Synet
                 return false;
             }
             value = attribute->i();
+            return true;
+        }
+
+        bool ConvertAtrributeFloat(const onnx::NodeProto& node, const String& name, float & value)
+        {
+            const onnx::AttributeProto* attribute = GetAtrribute(node, name);
+            if (attribute == NULL)
+            {
+                std::cout << "Can't find attribute " << name << " !" << std::endl;
+                return false;
+            }
+            if (attribute->type() != onnx::AttributeProto_AttributeType_FLOAT)
+            {
+                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
+                return false;
+            }
+            value = attribute->f();
             return true;
         }
 

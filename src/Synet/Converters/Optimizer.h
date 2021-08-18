@@ -550,7 +550,7 @@ namespace Synet
             const LayerParam& act = src[index];
             if (conv.type() != LayerTypeConvolution && conv.type() != LayerTypeDeconvolution)
                 return false;
-            if (act.src().size() != 1 || act.src()[0] != conv.name())
+            if (act.src().size() != 1 || act.src()[0] != conv.dst()[0])
                 return false;
             if (InsideLink(src, index - 1, 2) && act.src()[0] != act.dst()[0])
                 return false;
