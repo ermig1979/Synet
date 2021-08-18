@@ -122,6 +122,7 @@ namespace Synet
                     return false;
                 }
             }
+            reordered = original;
 
             for (size_t i = 0; i < graph.input_size(); ++i)
             {
@@ -144,6 +145,9 @@ namespace Synet
                 for (size_t j = 0; j < node.output_size(); ++j)
                     layer.dst().push_back(node.output(j));
 
+                if (node.op_type() == "Conv" && !ConvertConvNode(node, trans, network.layers(), original, layer, reordered))
+                    return ErrorMessage(node);
+
 #if defined(SYNET_ONNX_PARSE_STOP_ON_ERROR)
                 if (layer.type() == LayerTypeUnknown)
                     return ErrorMessage(node);
@@ -151,13 +155,11 @@ namespace Synet
                 if (layer.type() == LayerTypeUnknown)
                 {
                     NotImplemented(node, layer);
-                    std::cout << "Not implemented layer : name = " << node.name() << " ; type = " << node.op_type() << std::endl;
+                    std::cout << "Not implemented layer: " << NodeString(node) << std::endl;
                 }
 #endif
                 network.layers().push_back(layer);
             }
-
-            reordered = original;
 
             return true;
         }
@@ -232,6 +234,42 @@ namespace Synet
             return true;
         }
 
+        bool ConvertConvNode(const onnx::NodeProto & node, bool trans, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin)
+        {
+            layer.type() = Synet::LayerTypeConvolution;
+            if (layer.src().size() < 2 || layer.src().size() > 3)
+                return false;
+            if (!ConvertAtrributeInts(node, "dilations", layer.convolution().dilation()))
+                return false;
+            if(!ConvertAtrributeInt(node, "group", layer.convolution().group()))
+                return false;
+            if (!ConvertAtrributeInts(node, "kernel_shape", layer.convolution().kernel()))
+                return false;
+            if (!ConvertAtrributeInts(node, "pads", layer.convolution().pad()))
+                return false;
+            if (!ConvertAtrributeInts(node, "strides", layer.convolution().stride()))
+                return false;
+            layer.weight().resize(layer.src().size() - 1);
+            const LayerParam* weight = GetLayer(layers, layer.src()[1]);
+            if (weight == NULL || weight->type() != LayerTypeConst)
+                return false;
+            const Shape& shape = weight->weight()[0].dim();
+            layer.weight()[0] = weight->weight()[0];
+            layer.convolution().outputNum() = (uint32_t)shape[0];
+            layer.convolution().biasTerm() = layer.src().size() > 2;
+            if (layer.convolution().biasTerm())
+            {
+                const LayerParam* bias = GetLayer(layers, layer.src()[2]);
+                if (bias == NULL || bias->type() != LayerTypeConst)
+                    return false;
+                layer.weight()[1] = bias->weight()[0];
+            }
+            layer.src().resize(1);
+            if (trans && !PermutedToNchw(layers, layer.src(), true, false))
+                return ReorderWeight(srcBin, Shape(), layer, dstBin);
+            return true;
+        }
+
         //-----------------------------------------------------------------------------------------
 
         bool PrintGraph(const onnx::GraphProto& graph, std::ostream & os, bool init)
@@ -239,28 +277,17 @@ namespace Synet
             os << std::endl;
             os << "graph name: " << graph.name() << std::endl;
             for (size_t i = 0; i < graph.input_size(); ++i)
-                os << " input[" << i << "]: " << ValueInfoString(graph.input(i)) << std::endl;
+                os << " input[" << i << "] " << ValueInfoString(graph.input(i)) << std::endl;
             if (init)
             {
                 for (size_t i = 0; i < graph.initializer_size(); ++i)
                     os << " const[" << i << "] " << TensorString(graph.initializer(i)) << std::endl;
             }
             for (size_t i = 0; i < graph.node_size(); ++i)
-            {
-                const onnx::NodeProto& node = graph.node(i);
-                os << " node[" << i << "] " << node.op_type() << " : " << node.name() << " (";
-                for (size_t j = 0; j < node.input_size(); ++j)
-                    os << " " << node.input(j);
-                os << " ) -> (";
-                for (size_t j = 0; j < node.output_size(); ++j)
-                    os << " " << node.output(j);
-                os << " )";
-                os << std::endl;
-            }
+                os << " node[" << i << "] " << NodeString(graph.node(i)) << std::endl;
             for (size_t i = 0; i < graph.output_size(); ++i)
-                os << " output[" << i << "]: " << ValueInfoString(graph.output(i)) << std::endl;
+                os << " output[" << i << "] " << ValueInfoString(graph.output(i)) << std::endl;
             os << std::endl;
-
             return true;
         }
 
@@ -278,11 +305,11 @@ namespace Synet
             }
             if (info.type().has_sequence_type())
             {
-                ss <<  " <ValueInfoString: I can't print sequence!>";
+                ss <<  " ValueInfoString: I can't print sequence!";
             }
             if (info.type().has_map_type())
             {
-                ss << " <ValueInfoString: I can't print map!>";
+                ss << " ValueInfoString: I can't print map!";
             }
             return ss.str();
         }
@@ -345,6 +372,48 @@ namespace Synet
             return ss.str();
         }
 
+        String AttributeString(const onnx::AttributeProto& attribute)
+        {
+            std::stringstream ss;
+            ss << attribute.name() << ":(";
+            switch (attribute.type())
+            {
+            case onnx::AttributeProto_AttributeType_INT:
+                ss << attribute.i();
+                break;
+            case onnx::AttributeProto_AttributeType_FLOAT:
+                ss << attribute.f();
+                break;
+            case onnx::AttributeProto_AttributeType_TENSOR:
+                ss << TensorString(attribute.t());
+                break;
+            case onnx::AttributeProto_AttributeType_INTS:
+                for(size_t i = 0; i < attribute.ints_size(); ++i)
+                    ss << (i ? " " : "") << attribute.ints(i);
+                break;
+            default:
+                ss << "unknown-" << attribute.type();
+            }
+            ss << ")";
+            return ss.str();
+        }
+
+        String NodeString(const onnx::NodeProto& node)
+        {
+            std::stringstream ss;
+            ss << "type: " << node.op_type() << ", name: " << node.name() << " (";
+            for (size_t j = 0; j < node.input_size(); ++j)
+                ss << " " << node.input(j);
+            ss << " ) -> (";
+            for (size_t j = 0; j < node.output_size(); ++j)
+                ss << " " << node.output(j);
+            ss << " ) {";
+            for (size_t j = 0; j < node.attribute_size(); ++j)
+                ss << " " << AttributeString(node.attribute(j));
+            ss << " }";
+            return ss.str();
+        }
+
         Shape Convert(const onnx::TensorShapeProto& shapeProto)
         {
             Shape shape;
@@ -358,7 +427,7 @@ namespace Synet
             return shape;
         }
 
-        static void NotImplemented(const onnx::NodeProto& node, LayerParam& dst)
+        void NotImplemented(const onnx::NodeProto& node, LayerParam& dst)
         {
             //dst.type() = LayerTypeStub;
             dst.debug().clear();
@@ -366,13 +435,54 @@ namespace Synet
             dst.debug().push_back(node.op_type());
         }
 
-        static bool ErrorMessage(const onnx::NodeProto& node)
+        bool ErrorMessage(const onnx::NodeProto& node)
         {
-            std::cout << "Can't convert node :";
-            std::cout << " name = " << node.name();
-            std::cout << " , type = " << node.op_type();
-            std::cout << " !" << std::endl;
+            std::cout << "Can't convert node : " << NodeString(node) << " !" << std::endl;
             return false;
+        }
+
+        const onnx::AttributeProto * GetAtrribute(const onnx::NodeProto& node, const String& name)
+        {
+            for (size_t i = 0; i < node.attribute_size(); ++i)
+                if (node.attribute(i).name() == name)
+                    return &node.attribute(i);
+            return NULL;
+        }
+
+        template<class T> bool ConvertAtrributeInt(const onnx::NodeProto& node, const String& name, T & value)
+        {
+            const onnx::AttributeProto* attribute = GetAtrribute(node, name);
+            if (attribute == NULL)
+            {
+                std::cout << "Can't find attribute " << name << " !" << std::endl;
+                return false;
+            }
+            if (attribute->type() != onnx::AttributeProto_AttributeType_INT)
+            {
+                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
+                return false;
+            }
+            value = attribute->i();
+            return true;
+        }
+
+        template<class T> bool ConvertAtrributeInts(const onnx::NodeProto& node, const String& name, std::vector<T>& values)
+        {
+            const onnx::AttributeProto* attribute = GetAtrribute(node, name);
+            if (attribute == NULL)
+            {
+                std::cout << "Can't find attribute " << name << " !" << std::endl;
+                return false;
+            }
+            if (attribute->type() != onnx::AttributeProto_AttributeType_INTS)
+            {
+                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
+                return false;
+            }
+            values.resize(attribute->ints_size());
+            for(size_t i = 0; i < attribute->ints_size(); ++i)
+                values[i] = attribute->ints(i);
+            return true;
         }
     };
 
