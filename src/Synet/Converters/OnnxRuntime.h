@@ -35,6 +35,8 @@
 
 #include "onnx/onnx.pb.h"
 
+//#define SYNET_ONNX_PARSE_STOP_ON_ERROR
+
 namespace Synet
 {
     class OnnxToSynet : public SynetUtils
@@ -57,10 +59,10 @@ namespace Synet
             if (!ConvertModel(model, trans, holder(), weight))
                 return false;
 
-            //OptimizerParamHolder param;
-            //Optimizer optimizer(param());
-            //if (!optimizer.Run(holder(), weight))
-            //    return false;
+            OptimizerParamHolder param;
+            Optimizer optimizer(param());
+            if (!optimizer.Run(holder(), weight))
+                return false;
 
             if (!holder.Save(dstModelPath, false))
             {
@@ -106,7 +108,7 @@ namespace Synet
         {
             const onnx::GraphProto& graph = model.graph();
 
-            PrintGraph(graph, std::cout, true);
+            //PrintGraph(graph, std::cout, false);
 
             network.name() = graph.name();
 
@@ -119,6 +121,40 @@ namespace Synet
                     std::cout << "Can't convert initializer '" << tensor.name() << "' !" << std::endl;
                     return false;
                 }
+            }
+
+            for (size_t i = 0; i < graph.input_size(); ++i)
+            {
+                const onnx::ValueInfoProto& input = graph.input(i);
+                if (!ConvertInput(input, trans, network))
+                {
+                    std::cout << "Can't convert input '" << input.name() << "' !" << std::endl;
+                    return false;
+                }
+            }
+
+            for (size_t i = 0; i < graph.node_size(); ++i)
+            {
+                const onnx::NodeProto& node = graph.node(i);
+                LayerParam layer;
+
+                layer.name() = node.name();
+                for (size_t j = 0; j < node.input_size(); ++j)
+                    layer.src().push_back(node.input(j));
+                for (size_t j = 0; j < node.output_size(); ++j)
+                    layer.dst().push_back(node.output(j));
+
+#if defined(SYNET_ONNX_PARSE_STOP_ON_ERROR)
+                if (layer.type() == LayerTypeUnknown)
+                    return ErrorMessage(node);
+#else
+                if (layer.type() == LayerTypeUnknown)
+                {
+                    NotImplemented(node, layer);
+                    std::cout << "Not implemented layer : name = " << node.name() << " ; type = " << node.op_type() << std::endl;
+                }
+#endif
+                network.layers().push_back(layer);
             }
 
             reordered = original;
@@ -149,11 +185,49 @@ namespace Synet
                     memcpy(weight.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
                 }
             }
+            else if(tensor.data_type() == onnx::TensorProto_DataType_INT64)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeConst;
+                layer.meta().alpha().type() = TensorType64i;
+                uint64_t size = 1;
+                for (size_t i = 0; i < tensor.dims_size(); ++i)
+                {
+                    size *= tensor.dims(i);
+                    layer.meta().alpha().shape().push_back(size_t(tensor.dims(i)));
+                }
+                layer.meta().alpha().i64().resize(size);
+                if (tensor.has_raw_data() && size)
+                {
+                    for (size_t i = 0; i < size; ++i)
+                        layer.meta().alpha().i64()[i] = ((int64_t*)tensor.raw_data().c_str())[i];
+                }
+            }
             else
             {
                 std::cout << " Unknown tensor type " << tensor.data_type() << " !" << std::endl;
-                return true;
+                return false;
             }
+            network.layers().push_back(layer);
+            return true;
+        }
+
+        bool ConvertInput(const onnx::ValueInfoProto & input, bool trans, Synet::NetworkParam& network)
+        {
+            LayerParam layer;
+            layer.name() = input.name();
+            layer.type() = LayerTypeInput;
+            layer.input().shape().resize(1);
+            Shape shape = Convert(input.type().tensor_type().shape());
+            if (trans)
+            {
+                if (shape.size() == 4)
+                {
+                    shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
+                    layer.input().shape()[0].format() = TensorFormatNhwc;
+                }
+            }
+            layer.input().shape()[0].dim() = shape;
             network.layers().push_back(layer);
             return true;
         }
@@ -219,7 +293,8 @@ namespace Synet
             ss << tensor.name() << " ";
             switch (tensor.data_type())
             {
-            case onnx::TensorProto_DataType_FLOAT: ss << "fp32"; break;
+            case onnx::TensorProto_DataType_FLOAT: ss << "f32"; break;
+            case onnx::TensorProto_DataType_INT64: ss << "i64"; break;
             default: ss << " unknown-" << tensor.data_type();
             }
 
@@ -230,6 +305,7 @@ namespace Synet
                 ss << " " << tensor.dims(i);
                 size *= tensor.dims(i);
             }
+            size_t printSize = std::min<size_t>(3, size);
             ss << " }";
 
             ss << "[";
@@ -240,15 +316,27 @@ namespace Synet
                 ss << std::fixed << std::setprecision(3);
                 if (tensor.float_data_size())
                 {
-                    size_t n = std::min<size_t>(3, tensor.float_data_size());
-                    for (size_t i = 0; i < n; ++i)
+                    for (size_t i = 0; i < printSize; ++i)
                         ss << " " << tensor.float_data(i);
                 }
-                if (tensor.has_raw_data() && size)
+                if (tensor.has_raw_data())
                 {
-                    size_t n = std::min<size_t>(3, size/4);
-                    for (size_t i = 0; i < n; ++i)
+                    for (size_t i = 0; i < printSize; ++i)
                         ss << " " << ((float*)tensor.raw_data().c_str())[i];
+                }
+                break;
+            }
+            case onnx::TensorProto_DataType_INT64:
+            {
+                if (tensor.int64_data_size())
+                {
+                    for (size_t i = 0; i < printSize; ++i)
+                        ss << " " << tensor.int64_data(i);
+                }
+                if (tensor.has_raw_data())
+                {
+                    for (size_t i = 0; i < printSize; ++i)
+                        ss << " " << ((int64_t*)tensor.raw_data().c_str())[i];
                 }
                 break;
             }
@@ -268,6 +356,23 @@ namespace Synet
                     shape.push_back(size_t(-1));
             }
             return shape;
+        }
+
+        static void NotImplemented(const onnx::NodeProto& node, LayerParam& dst)
+        {
+            //dst.type() = LayerTypeStub;
+            dst.debug().clear();
+            dst.debug().push_back(NotImplementedMarker());
+            dst.debug().push_back(node.op_type());
+        }
+
+        static bool ErrorMessage(const onnx::NodeProto& node)
+        {
+            std::cout << "Can't convert node :";
+            std::cout << " name = " << node.name();
+            std::cout << " , type = " << node.op_type();
+            std::cout << " !" << std::endl;
+            return false;
         }
     };
 
