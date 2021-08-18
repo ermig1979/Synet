@@ -57,10 +57,10 @@ namespace Synet
             if (!ConvertModel(model, trans, holder(), weight))
                 return false;
 
-            OptimizerParamHolder param;
-            Optimizer optimizer(param());
-            if (!optimizer.Run(holder(), weight))
-                return false;
+            //OptimizerParamHolder param;
+            //Optimizer optimizer(param());
+            //if (!optimizer.Run(holder(), weight))
+            //    return false;
 
             if (!holder.Save(dstModelPath, false))
             {
@@ -92,7 +92,6 @@ namespace Synet
             std::vector<char> buffer(size);
             ifs.read(buffer.data(), size);
             ifs.close();
-            std::cout << "Parse " << path << ", size: " << size << std::endl;
 
             if (!model.ParseFromArray(buffer.data(), size))
             {
@@ -107,17 +106,71 @@ namespace Synet
         {
             const onnx::GraphProto& graph = model.graph();
 
-            PrintGraph(graph, std::cout);
+            PrintGraph(graph, std::cout, true);
+
+            network.name() = graph.name();
+
+            Vector original;
+            for (size_t i = 0; i < graph.initializer_size(); ++i)
+            {
+                const onnx::TensorProto& tensor = graph.initializer(i);
+                if (!ConvertInitializer(tensor, network, original))
+                {
+                    std::cout << "Can't convert initializer '" << tensor.name() << "' !" << std::endl;
+                    return false;
+                }
+            }
+
+            reordered = original;
 
             return true;
         }
 
-        bool PrintGraph(const onnx::GraphProto& graph, std::ostream & os)
+        bool ConvertInitializer(const onnx::TensorProto& tensor, Synet::NetworkParam& network, Vector& weight)
+        {
+            LayerParam layer;
+            layer.name() = tensor.name();
+            if (tensor.data_type() == onnx::TensorProto_DataType_FLOAT)
+            {
+                layer.type() = LayerTypeConst;
+                layer.weight().resize(1);
+                layer.weight()[0].type() = TensorType32f;
+                uint64_t size = 1, offset = weight.size();
+                for (size_t i = 0; i < tensor.dims_size(); ++i)
+                {
+                    size *= tensor.dims(i);
+                    layer.weight()[0].dim().push_back(size_t(tensor.dims(i)));
+                }
+                layer.weight()[0].offset() = offset * sizeof(float);
+                layer.weight()[0].size() = size * sizeof(float);
+                if (tensor.has_raw_data() && size)
+                {
+                    weight.resize(offset + size);
+                    memcpy(weight.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                }
+            }
+            else
+            {
+                std::cout << " Unknown tensor type " << tensor.data_type() << " !" << std::endl;
+                return true;
+            }
+            network.layers().push_back(layer);
+            return true;
+        }
+
+        //-----------------------------------------------------------------------------------------
+
+        bool PrintGraph(const onnx::GraphProto& graph, std::ostream & os, bool init)
         {
             os << std::endl;
             os << "graph name: " << graph.name() << std::endl;
             for (size_t i = 0; i < graph.input_size(); ++i)
                 os << " input[" << i << "]: " << ValueInfoString(graph.input(i)) << std::endl;
+            if (init)
+            {
+                for (size_t i = 0; i < graph.initializer_size(); ++i)
+                    os << " const[" << i << "] " << TensorString(graph.initializer(i)) << std::endl;
+            }
             for (size_t i = 0; i < graph.node_size(); ++i)
             {
                 const onnx::NodeProto& node = graph.node(i);
@@ -149,6 +202,58 @@ namespace Synet
                     ss << " " << ptrdiff_t(shape[j]);
                 ss << " }";
             }
+            if (info.type().has_sequence_type())
+            {
+                ss <<  " <ValueInfoString: I can't print sequence!>";
+            }
+            if (info.type().has_map_type())
+            {
+                ss << " <ValueInfoString: I can't print map!>";
+            }
+            return ss.str();
+        }
+
+        String TensorString(const onnx::TensorProto& tensor)
+        {
+            std::stringstream ss;
+            ss << tensor.name() << " ";
+            switch (tensor.data_type())
+            {
+            case onnx::TensorProto_DataType_FLOAT: ss << "fp32"; break;
+            default: ss << " unknown-" << tensor.data_type();
+            }
+
+            ss << " {";
+            uint64_t size = 1;
+            for (size_t i = 0; i < tensor.dims_size(); ++i)
+            {
+                ss << " " << tensor.dims(i);
+                size *= tensor.dims(i);
+            }
+            ss << " }";
+
+            ss << "[";
+            switch (tensor.data_type())
+            {
+            case onnx::TensorProto_DataType_FLOAT: 
+            {
+                ss << std::fixed << std::setprecision(3);
+                if (tensor.float_data_size())
+                {
+                    size_t n = std::min<size_t>(3, tensor.float_data_size());
+                    for (size_t i = 0; i < n; ++i)
+                        ss << " " << tensor.float_data(i);
+                }
+                if (tensor.has_raw_data() && size)
+                {
+                    size_t n = std::min<size_t>(3, size/4);
+                    for (size_t i = 0; i < n; ++i)
+                        ss << " " << ((float*)tensor.raw_data().c_str())[i];
+                }
+                break;
+            }
+            }
+            ss << " ... ]";
             return ss.str();
         }
 
