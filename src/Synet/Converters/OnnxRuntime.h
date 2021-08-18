@@ -151,7 +151,13 @@ namespace Synet
                     return ErrorMessage(node);
                 if (node.op_type() == "Clip" && !ConvertClipNode(node, layer))
                     return ErrorMessage(node);
+                if (node.op_type() == "Constant" && !ConvertConstantNode(node, layer))
+                    return ErrorMessage(node);
                 if (node.op_type() == "Conv" && !ConvertConvNode(node, trans, network.layers(), original, layer, reordered))
+                    return ErrorMessage(node);
+                if (node.op_type() == "GlobalAveragePool" && !ConvertGlobalAveragePoolNode(node, layer))
+                    return ErrorMessage(node);
+                if (node.op_type() == "Shape" && !ConvertShapeNode(node, layer))
                     return ErrorMessage(node);
 
 #if defined(SYNET_ONNX_PARSE_STOP_ON_ERROR)
@@ -240,6 +246,8 @@ namespace Synet
             return true;
         }
 
+        //-----------------------------------------------------------------------------------------
+
         bool ConvertAddNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             if (node.input_size() != 2)
@@ -256,6 +264,44 @@ namespace Synet
                 return false;
             if (!ConvertAtrributeFloat(node, "min", layer.restrictRange().lower()))
                 return false;
+            return true;
+        }
+
+        bool ConvertConstantNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            String name = "value";
+            const onnx::AttributeProto * value = GetAtrribute(node, name);
+            if (value == NULL)
+            {
+                std::cout << "Can't find attribute " << name << " !" << std::endl;
+                return false;
+            }
+            if (value->type() != onnx::AttributeProto_AttributeType_TENSOR)
+            {
+                std::cout << "Attribute has wrong type " << value->type() << " !" << std::endl;
+                return false;
+            }
+            const onnx::TensorProto& tensor = value->t();
+            if (tensor.data_type() == onnx::TensorProto_DataType_INT64)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeConst;
+                layer.meta().alpha().type() = TensorType64i;
+                uint64_t size = 1;
+                for (size_t i = 0; i < tensor.dims_size(); ++i)
+                {
+                    size *= tensor.dims(i);
+                    layer.meta().alpha().shape().push_back(size_t(tensor.dims(i)));
+                }
+                if (tensor.dims_size() == 0)
+                    layer.meta().alpha().shape().push_back(1);
+                layer.meta().alpha().i64().resize(size);
+                if (tensor.has_raw_data())
+                {
+                    for (size_t i = 0; i < size; ++i)
+                        layer.meta().alpha().i64()[i] = ((int64_t*)tensor.raw_data().c_str())[i];
+                }
+            }
             return true;
         }
 
@@ -292,6 +338,21 @@ namespace Synet
             layer.src().resize(1);
             if (trans && !PermutedToNchw(layers, layer.src(), true, false))
                 return ReorderWeight(srcBin, Shape(), layer, dstBin);
+            return true;
+        }
+
+        bool ConvertGlobalAveragePoolNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypePooling;
+            layer.pooling().method() = PoolingMethodTypeAverage;
+            layer.pooling().globalPooling() = true;
+            return true;
+        }
+
+        bool ConvertShapeNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = LayerTypeMeta;
+            layer.meta().type() = MetaTypeShape;
             return true;
         }
 
