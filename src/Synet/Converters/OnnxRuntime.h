@@ -151,13 +151,19 @@ namespace Synet
                     return ErrorMessage(node);
                 if (node.op_type() == "Clip" && !ConvertClipNode(node, layer))
                     return ErrorMessage(node);
+                if (node.op_type() == "Concat" && !ConvertConcatNode(node, trans, network.layers(), layer))
+                    return ErrorMessage(node);
                 if (node.op_type() == "Constant" && !ConvertConstantNode(node, layer))
                     return ErrorMessage(node);
                 if (node.op_type() == "Conv" && !ConvertConvNode(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(node);
+                if (node.op_type() == "Gather" && !ConvertGatherNode(node, layer))
+                    return ErrorMessage(node);
                 if (node.op_type() == "GlobalAveragePool" && !ConvertGlobalAveragePoolNode(node, layer))
                     return ErrorMessage(node);
                 if (node.op_type() == "Shape" && !ConvertShapeNode(node, layer))
+                    return ErrorMessage(node);
+                if (node.op_type() == "Unsqueeze" && !ConvertUnsqueezeNode(node, network.layers(), layer))
                     return ErrorMessage(node);
 
 #if defined(SYNET_ONNX_PARSE_STOP_ON_ERROR)
@@ -267,6 +273,29 @@ namespace Synet
             return true;
         }
 
+        bool ConvertConcatNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
+        {
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            if (src0 == NULL)
+                return false;
+            if (src0->type() == Synet::LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypePack;
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeConcat;
+                if (!ConvertAtrributeInt(node, "axis", layer.concat().axis()))
+                    return false;
+                if (trans && !PermutedToNchw(layers, false, true))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         bool ConvertConstantNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             String name = "value";
@@ -341,6 +370,13 @@ namespace Synet
             return true;
         }
 
+        bool ConvertGatherNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = LayerTypeMeta;
+            layer.meta().type() = MetaTypeGather;
+            return true;
+        }
+
         bool ConvertGlobalAveragePoolNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypePooling;
@@ -353,6 +389,18 @@ namespace Synet
         {
             layer.type() = LayerTypeMeta;
             layer.meta().type() = MetaTypeShape;
+            return true;
+        }
+
+        bool ConvertUnsqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        {
+            if (node.input_size() != 1)
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            if (src0 == NULL || src0->type() != LayerTypeMeta)
+                return false;
+            layer.type() = Synet::LayerTypeMeta;
+            layer.meta().type() = Synet::MetaTypeExpandDims;
             return true;
         }
 
