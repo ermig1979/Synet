@@ -83,7 +83,7 @@ namespace Test
             std::stringstream logName;
             logName << "log_";
             logName << std::hex << std::this_thread::get_id();
-            logName << std::endl;
+            logName << ".txt";
             sessionOptions.SetLogId(logName.str().c_str());
             sessionOptions.SetLogSeverityLevel(ORT_LOGGING_LEVEL_FATAL);
 
@@ -119,10 +119,11 @@ namespace Test
             Tensor inputTensor(_inputShapes[0]);
             Dim inputDim = Convert<int64_t, size_t>(_inputShapes[0]);
             Ort::Value inputValue = Ort::Value::CreateTensor<float>(s_env.memoryInfo, inputTensor.CpuData(), inputTensor.Size(), inputDim.data(), inputDim.size());
+            if (!inputValue.IsTensor())
+                return false;
 
             _outputValues = std::make_shared<Values>();
-            Values outputValues;
-            for (size_t i = 0; i < _outputValues->size(); i++)
+            for (size_t i = 0; i < _outputNames.size(); i++)
                 _outputValues->emplace_back(nullptr);
 
             _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), &inputValue, _inputNames.size(),
@@ -148,6 +149,7 @@ namespace Test
             _inputShapes.clear();
             _outputNames.clear();
             _outputShapes.clear();
+            _outputValues->clear();
         }
 
         virtual const Tensors & Predict(const Tensors& src)

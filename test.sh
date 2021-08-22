@@ -25,7 +25,8 @@ THREAD=$5
 FORMAT=$6
 BATCH=$7
 VERSION=$8
-LOG=./test/"$FRAMEWORK"/"$NAME"/"$PREFIX"_"$NAME"_t"$THREAD"_f"$FORMAT"_b"$BATCH"_v"$VERSION".txt
+PERF=${9}
+LOG=./test/"$FRAMEWORK"/"$NAME"/"$PREFIX"_"$NAME"_t"$THREAD"_f"$FORMAT"_b"$BATCH"_v"$VERSION"_p"$PERF".txt
 BIN_DIR=./build
 BIN="$BIN_DIR"/test_"$FRAMEWORK"
 
@@ -38,36 +39,36 @@ export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 "$BIN" -m=convert $PATHES -tf=$FORMAT -cs=0 -qm=$METHOD
 if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 
-"$BIN" -m=compare -e=2 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -et=10.0 -dp=1 -dpf=6 -dpl=2 -dpp=4 -ar=1 -rt=0.5 -cs=0 -sf=0.01 -pl=2 -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -et=10.0 -dp=1 -dpf=6 -dpl=2 -dpp=4 -ar=0 -rt=0.5 -cs=0 -sf=0.01 -pl=$PERF -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
-#TEST darknet test_000 local 5 1 1 1 002h
+#TEST darknet test_000 local 5 1 1 1 002h 0
 
-#TEST inference_engine test_000 local 1000 1 1 1 008a
-#TEST inference_engine test_001 local 500 1 1 1 006
-#TEST inference_engine test_002 local 20 1 1 1 005t
-#TEST inference_engine test_003f local 50 1 1 1 006t
-#TEST inference_engine test_003i local 100 1 1 1 013
-#TEST inference_engine test_004 local 1 0 1 1 004
-#TEST inference_engine test_005 local 2000 1 1 1 003
-#TEST inference_engine test_006 local 100 1 1 1 003
-#TEST inference_engine test_007 local 200 1 1 1 004
-#TEST inference_engine test_008 local 5 0 1 1 004
-#TEST inference_engine test_009f local 40 0 1 1 001t
-#TEST inference_engine test_009i local 40 1 1 1 000t
-#TEST inference_engine test_010f local 100 1 1 1 002t
-#TEST inference_engine test_011f local 40 0 1 1 003
-#TEST inference_engine test_012f persons 10 1 1 1 001
-#TEST inference_engine test_013f persons 20 1 1 1 001 
-#TEST inference_engine test_014f local 200 1 1 1 000h
-#TEST inference_engine test_015f license_plates 100 1 1 1 000h
+#TEST inference_engine test_000 local 1000 1 1 1 008a 0
+#TEST inference_engine test_001 local 500 1 1 1 006 0
+#TEST inference_engine test_002 local 20 1 1 1 005t 0
+#TEST inference_engine test_003f local 50 1 1 1 006t 0
+#TEST inference_engine test_003i local 100 1 1 1 013 0
+#TEST inference_engine test_004 local 1 0 1 1 004 0
+#TEST inference_engine test_005 local 2000 1 1 1 003 0
+#TEST inference_engine test_006 local 100 1 1 1 003 0
+#TEST inference_engine test_007 local 200 1 1 1 004 0
+#TEST inference_engine test_008 local 5 0 1 1 004 0
+#TEST inference_engine test_009f local 40 0 1 1 001t 0
+#TEST inference_engine test_009i local 40 1 1 1 000t 0
+#TEST inference_engine test_010f local 100 1 1 1 002t 0
+#TEST inference_engine test_011f local 40 0 1 1 003 0
+#TEST inference_engine test_012f persons 10 1 1 1 001 0
+#TEST inference_engine test_013f persons 20 1 1 1 001 0
+#TEST inference_engine test_014f local 200 1 1 1 000h 0
+#TEST inference_engine test_015f license_plates 100 1 1 1 000h 0
 
-TEST onnx test_000 face 100 1 1 10 001
+TEST onnx test_000 face 100 0 1 1 002 2
 
-#TEST quantization test_003 faces 100 1 1 1 000t
-#TEST quantization test_009 persons 1 0 1 1 000t
-#TEST quantization test_010 faces 100 4 1 1 000t
+#TEST quantization test_003 faces 100 1 1 1 000t 0
+#TEST quantization test_009 persons 1 0 1 1 000t 0
+#TEST quantization test_010 faces 100 4 1 1 000t 0
 
 
 exit

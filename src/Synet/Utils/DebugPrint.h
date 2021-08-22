@@ -74,7 +74,7 @@ namespace Synet
             std::stringstream ss;
             ss << "{ ";
             for (size_t i = 0; i < shape.size(); ++i)
-                ss << shape[i] << " ";
+                ss << (ptrdiff_t)shape[i] << " ";
             ss << "}";
             return ss.str();
         }
