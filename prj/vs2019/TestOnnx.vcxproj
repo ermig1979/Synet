@@ -19,6 +19,7 @@
 		$(SolutionDir)..\..\3rd\openvino\ngraph\frontend\onnx_import\include;
 		$(SolutionDir)..\..\3rd\openvino\ngraph\core\include;
 		%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

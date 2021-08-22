@@ -165,14 +165,19 @@ namespace Synet
 
         void ReshapeExpandDims(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            assert(src.size() == 2 && src[1]->Size() == 1);
+            assert(src.size() == 1 || src.size() == 2);
             ptrdiff_t axis;
-            if (src[1]->GetType() == TensorType32i)
-                axis = src[1]->As32i().CpuData()[0];
-            else if (src[1]->GetType() == TensorType64i)
-                axis = src[1]->As64i().CpuData()[0];
+            if (src.size() == 2)
+            {
+                assert(src[1]->Size() == 1);
+                axis = GetAs<size_t>(*src[1], 0);
+            }
             else
-                assert(0);
+            {
+                const TensorParam& alpha = this->Param().meta().alpha();
+                assert(alpha.shape() == Shp(1) && alpha.type() == TensorType64i);
+                axis = alpha.i64()[0];
+            }
             if (axis < 0)
                 axis += src[0]->Count();
             Shape shape;
