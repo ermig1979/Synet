@@ -106,11 +106,21 @@ namespace Synet
 
         template<class T> static T* GetWeight(Vector& bin, size_t offset)
         {
+            if (offset >= bin.size() * sizeof(T))
+            {
+                std::cout << "Vector access overflow: " << offset << " >= " << bin.size() * sizeof(T) << " !" << std::endl;
+                return NULL;
+            }
             return (T*)((uint8_t*)bin.data() + offset);
         }
 
         template<class T> static const T* GetWeight(const Vector& bin, size_t offset)
         {
+            if (offset >= bin.size() * sizeof(T))
+            {
+                std::cout << "Vector access overflow: " << offset << " >= " << bin.size() * sizeof(T) << " !" << std::endl;
+                return NULL;
+            }
             return (const T*)((const uint8_t*)bin.data() + offset);
         }
 

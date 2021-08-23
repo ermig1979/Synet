@@ -149,11 +149,13 @@ namespace Synet
 
                 if (node.op_type() == "Add" && !ConvertAddNode(node, layer))
                     return ErrorMessage(node);
+                if (node.op_type() == "BatchNormalization" && !ConvertBatchNormalizationNode(node, network.layers(), original, layer, reordered))
+                    return ErrorMessage(node);
                 if (node.op_type() == "Clip" && !ConvertClipNode(node, layer))
                     return ErrorMessage(node);
                 if (node.op_type() == "Concat" && !ConvertConcatNode(node, trans, network.layers(), layer))
                     return ErrorMessage(node);
-                if (node.op_type() == "Constant" && !ConvertConstantNode(node, layer))
+                if (node.op_type() == "Constant" && !ConvertConstantNode(node, layer, original, reordered))
                     return ErrorMessage(node);
                 if (node.op_type() == "Conv" && !ConvertConvNode(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(node);
@@ -162,6 +164,8 @@ namespace Synet
                 if (node.op_type() == "Gemm" && !ConvertGemmNode(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(node);
                 if (node.op_type() == "GlobalAveragePool" && !ConvertGlobalAveragePoolNode(node, layer))
+                    return ErrorMessage(node);
+                if (node.op_type() == "PRelu" && !ConvertPreluNode(node, network.layers(), original, layer))
                     return ErrorMessage(node);
                 if (node.op_type() == "Reshape" && !ConvertReshapeNode(node, trans, network.layers(), original, layer))
                     return ErrorMessage(node);
@@ -269,6 +273,54 @@ namespace Synet
             return true;
         }
 
+        bool ConvertBatchNormalizationNode(const onnx::NodeProto & node, const LayerParams& layers, const Vector& original, LayerParam& layer, Vector& reordered)
+        {
+            if (layer.src().size() != 5)
+                return false;
+
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src1 == NULL || src1->type() != LayerTypeConst)
+                return false;
+            const float* gamma = GetWeight<float>(original, src1->weight()[0]);
+
+            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+            if (src2 == NULL || src2->type() != LayerTypeConst)
+                return false;
+            const float* beta = GetWeight<float>(original, src2->weight()[0]);
+
+            const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
+            if (src3 == NULL || src3->type() != LayerTypeConst)
+                return false;
+            const float* mean = GetWeight<float>(original, src3->weight()[0]);
+
+            const LayerParam* src4 = GetLayer(layers, layer.src()[4]);
+            if (src4 == NULL || src4->type() != LayerTypeConst)
+                return false;
+            const float* var = GetWeight<float>(original, src4->weight()[0]);
+
+            float epsilon, momentum;
+            if (!ConvertAtrributeFloat(node, "epsilon", epsilon))
+                return false;
+            if (!ConvertAtrributeFloat(node, "momentum", momentum))
+                return false;
+
+            layer.type() = Synet::LayerTypeScale;
+            layer.src().resize(1);
+            layer.scale().biasTerm() = true;
+            layer.weight().resize(2);
+            layer.weight()[0] = src3->weight()[0];
+            layer.weight()[1] = src4->weight()[0];
+            float* scale = GetWeight<float>(reordered, layer.weight()[0]);
+            float* shift = GetWeight<float>(reordered, layer.weight()[1]);
+            size_t channels = layer.weight()[0].dim()[0];
+            for (size_t c = 0; c < channels; c++)
+            {
+                scale[c] = gamma[c] / sqrt(var[c] + epsilon);
+                shift[c] = -scale[c] * mean[c] + beta[c];
+            }
+            return true;
+        }
+
         bool ConvertClipNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeRestrictRange;
@@ -302,7 +354,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConstantNode(const onnx::NodeProto& node, LayerParam& layer)
+        bool ConvertConstantNode(const onnx::NodeProto& node, LayerParam& layer, Vector& original, Vector& reordered)
         {
             String name = "value";
             const onnx::AttributeProto * value = GetAtrribute(node, name);
@@ -337,6 +389,29 @@ namespace Synet
                         layer.meta().alpha().i64()[i] = ((int64_t*)tensor.raw_data().c_str())[i];
                 }
             }
+            else if (tensor.data_type() == onnx::TensorProto_DataType_FLOAT)
+            {
+                layer.type() = LayerTypeConst;
+                layer.weight().resize(1);
+                layer.weight()[0].type() = TensorType32f;
+                uint64_t size = 1, offset = original.size();
+                for (size_t i = 0; i < tensor.dims_size(); ++i)
+                {
+                    size *= tensor.dims(i);
+                    layer.weight()[0].dim().push_back(size_t(tensor.dims(i)));
+                }
+                layer.weight()[0].offset() = offset * sizeof(float);
+                layer.weight()[0].size() = size * sizeof(float);
+                if (tensor.has_raw_data() && size)
+                {
+                    original.resize(offset + size);
+                    reordered.resize(offset + size);
+                    memcpy(original.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                    memcpy(reordered.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                }
+            }
+            else
+                return false;
             return true;
         }
 
@@ -432,6 +507,21 @@ namespace Synet
             layer.type() = Synet::LayerTypePooling;
             layer.pooling().method() = PoolingMethodTypeAverage;
             layer.pooling().globalPooling() = true;
+            return true;
+        }
+
+        bool ConvertPreluNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        {
+            if (layer.src().size() != 2)
+                return false;
+            const LayerParam* second = GetLayer(layers, layer.src()[1]);
+            if (second == NULL || second->type() != LayerTypeConst)
+                return false;
+            layer.type() = Synet::LayerTypePrelu;
+            layer.weight() = second->weight();
+            layer.src().resize(1);
+            if (!CompactShape(layer.weight()[0].dim()))
+                return false;
             return true;
         }
 
