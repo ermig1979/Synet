@@ -179,6 +179,11 @@ namespace Test
 
         virtual void DebugPrint(const Tensors& src, std::ostream & os, int flag, int first, int last, int precision)
         {
+            for (size_t i = 0; i < _outputNames.size(); i++)
+            {
+                os << "Layer: " << _outputNames[i] << " : " << std::endl;
+                _output[i].DebugPrint(os, "dst[0]", false, first, last, precision);
+            }
         }
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
@@ -243,7 +248,7 @@ namespace Test
                 float* dst = _output[i].CpuData();
                 size_t size = _output[i].Size();
                 for (size_t j = 0; j < size; ++j)
-                    dst[i] = src[i];
+                    dst[j] = src[j];
             }
         }
     };
