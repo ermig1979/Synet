@@ -59,7 +59,13 @@ namespace Test
 
         virtual Shape SrcShape(size_t index) const
         {
-            return _inputShapes[index];
+            Shape shape = _inputShapes[index];
+            if (_batchSize > 1)
+            {
+                assert(shape.size() >= 2);
+                shape[0] = _batchSize;
+            }
+            return shape;
         }
 
         virtual size_t SrcSize(size_t index) const
@@ -95,20 +101,20 @@ namespace Test
                 _inputShapes.push_back(Convert<size_t, int64_t>(_session->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape()));
             }
 
-            _batchSize = options.batchSize;
-
             if (_inputShapes[0][0] == -1)
             {
-                //std::cout << weight << " has dynamic input[0] : " << Synet::Detail::DebugPrint(_inputShapes[0]);
-                //std::cout << "}. Try to set batch " << _batchSize << "." << std::endl;
-                _inputShapes[0][0] = _batchSize;
+                _inputShapes[0][0] = options.batchSize;
+                _batchSize = 1;
+            }
+            else
+            {
+                _batchSize = options.batchSize;
+                if (_batchSize > 1 && !options.consoleSilence)
+                    std::cout << "OnnxRuntime model can't be reshaped, try to emulate batch > 1." << std::endl;
             }
 
             for (size_t i = 0, n = _session->GetOutputCount(); i < n; i++)
-            {
                 _outputNames.push_back(_session->GetOutputName(i, s_env.allocator));
-                _outputShapes.push_back(Convert<size_t, int64_t>(_session->GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape()));
-            }
 
             if (_inputShapes.size() != 1)
             {
@@ -135,8 +141,10 @@ namespace Test
             _output.resize(_outputNames.size());
             for (size_t i = 0; i < _outputNames.size(); i++)
             {
-                _outputShapes[i] = Convert<size_t, int64_t>(_outputValues->at(i).GetTensorTypeAndShapeInfo().GetShape());
-                _output[i].Reshape(_outputShapes[i]);
+                Shape shape = Convert<size_t, int64_t>(_outputValues->at(i).GetTensorTypeAndShapeInfo().GetShape());
+                if (_batchSize > 1)
+                    shape[0] = _batchSize;
+                _output[i].Reshape(shape);
             }
 
             return true;
@@ -148,32 +156,33 @@ namespace Test
             _inputNames.clear();
             _inputShapes.clear();
             _outputNames.clear();
-            _outputShapes.clear();
             _outputValues->clear();
         }
 
         virtual const Tensors & Predict(const Tensors& src)
         {
-            assert(src.size() == _inputNames.size());
-
             Values inputValues;
-            for (size_t i = 0; i < src.size(); i++)
+            if (_batchSize == 1)
             {
-                inputValues.emplace_back(nullptr);
-                assert(src[i].Shape() == _inputShapes[i]);
-                Dim dim = Convert<int64_t, size_t>(_inputShapes[i]);
-                inputValues[i] = Ort::Value::CreateTensor<float>(s_env.memoryInfo, (float*)src[i].CpuData(), src[i].Size(), dim.data(), dim.size());
+                SetInput(src, 0, inputValues);
+                {
+                    TEST_PERF_FUNC();
+                    _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), inputValues.data(), _inputNames.size(),
+                        _outputNames.data(), _outputValues->data(), _outputNames.size());
+                }
+                SetOutput(0);
             }
-
+            else
             {
-                TEST_PERF_FUNC();
-
-                _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), inputValues.data(), _inputNames.size(),
-                    _outputNames.data(), _outputValues->data(), _outputNames.size());
+                TEST_PERF_BLOCK("batch emulation");
+                for (size_t b = 0; b < _batchSize; ++b)
+                {
+                    SetInput(src, b, inputValues);
+                    _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), inputValues.data(), _inputNames.size(),
+                        _outputNames.data(), _outputValues->data(), _outputNames.size());
+                    SetOutput(b);
+                }
             }
-
-            SetOutput();
-
             return _output;
         }
 
@@ -209,7 +218,6 @@ namespace Test
         Shapes _inputShapes;
 
         std::vector<const char*> _outputNames;
-        Shapes _outputShapes;
         ValuesPtr _outputValues;
 
         size_t _batchSize;
@@ -236,17 +244,34 @@ namespace Test
             return dst;
         }
 
-        void SetOutput()
+        void SetInput(const Tensors& src, size_t b, Values & inputs)
+        {
+            assert(_inputNames.size() == src.size());
+            for (size_t i = 0; i < src.size(); i++)
+            {
+                Shape shape = _inputShapes[i], index(shape.size(), 0);
+                index[0] = b;
+                if(_batchSize > 1)
+                    shape[0] = _batchSize;
+                size_t size = Synet::Detail::Size(shape);
+                assert(src[i].Shape() == shape);
+                inputs.emplace_back(nullptr);
+                Dim dim = Convert<int64_t, size_t>(_inputShapes[i]);
+                inputs[i] = Ort::Value::CreateTensor<float>(s_env.memoryInfo, (float*)src[i].CpuData(index), size, dim.data(), dim.size());
+            }
+        }
+
+        void SetOutput(size_t b)
         {
             _output.resize(_outputNames.size());
             for (size_t i = 0; i < _outputNames.size(); i++)
             {
-                _outputShapes[i] = Convert<size_t, int64_t>(_outputValues->at(i).GetTensorTypeAndShapeInfo().GetShape());
-                _output[i].Reshape(_outputShapes[i]);
-
+                Shape shape = Convert<size_t, int64_t>(_outputValues->at(i).GetTensorTypeAndShapeInfo().GetShape());
+                Shape index(shape.size(), 0);
+                index[0] = b;
                 const float * src = _outputValues->at(i).GetTensorMutableData<float>();
-                float* dst = _output[i].CpuData();
-                size_t size = _output[i].Size();
+                float* dst = _output[i].CpuData(index);
+                size_t size = Synet::Detail::Size(shape);
                 for (size_t j = 0; j < size; ++j)
                     dst[j] = src[j];
             }
