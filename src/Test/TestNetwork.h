@@ -28,6 +28,7 @@
 #include "Synet/Params.h"
 #include "Synet/Tensor.h"
 #include "Synet/Converters/Optimizer.h"
+#include "Synet/Converters/OnnxCommon.h"
 
 namespace Test
 {
@@ -92,6 +93,7 @@ namespace Test
         SYNET_PARAM_STRUCT(DetectionParam, detection);
         SYNET_PARAM_STRUCT(IndexParam, index);
         SYNET_PARAM_STRUCT(Synet::OptimizerParam, optimizer);
+        SYNET_PARAM_STRUCT(Synet::OnnxParam, onnx);
     };
 
     SYNET_PARAM_HOLDER(TestParamHolder, TestParam, test);

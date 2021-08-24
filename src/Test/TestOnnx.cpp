@@ -29,7 +29,6 @@
 
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
 #include "Synet/Converters/OnnxRuntime.h"
-
 #include "TestOnnxRuntime.h"
 
 namespace Test
@@ -42,7 +41,6 @@ namespace Test
 
 #define SYNET_ONNX_ENABLE
 #include "Synet/Converters/OnnxNgraph.h"
-
 #include "TestInferenceEngine.h"
 
 namespace Test
@@ -50,7 +48,21 @@ namespace Test
     typedef InferenceEngineNetwork OnnxNetwork;
 }
 #endif
-
+namespace Test
+{
+    bool ConvertOnnxToSynet(const Test::Options &options)
+    {
+        SYNET_PERF_FUNC();
+        Test::TestParamHolder param;
+        if (FileExists(options.testParam) && !param.Load(options.testParam))
+        {
+            std::cout << "Can't load file '" << options.testParam << "' !" << std::endl;
+            return false;
+        }
+        return Synet::ConvertOnnxToSynet(options.firstModel, options.firstWeight,
+            options.tensorFormat == 1, options.secondModel, options.secondWeight, param().onnx(), param().optimizer());
+    }
+}
 #else //SYNET_FIRST_RUN
 namespace Test
 {
@@ -69,7 +81,7 @@ int main(int argc, char* argv[])
     {
         SYNET_PERF_FUNC();
         std::cout << "Convert network from Onnx to Synet : ";
-        options.result = Synet::ConvertOnnxToSynet(options.firstModel, options.firstWeight, options.tensorFormat == 1, options.secondModel, options.secondWeight);
+        options.result = Test::ConvertOnnxToSynet(options);
         std::cout << (options.result ? "OK." : " Conversion finished with errors!") << std::endl;
     }
     else 

@@ -69,7 +69,7 @@ namespace Test
         return true;
     }
 
-    bool ConvertInferenceEngineToSynet(const Test::Options options)
+    bool ConvertInferenceEngineToSynet(const Test::Options & options)
     {
         SYNET_PERF_FUNC();
         Test::TestParamHolder param;

@@ -24,25 +24,19 @@
 
 #pragma once
 
-#include "Synet/Common.h"
-#include "Synet/Params.h"
-#include "Synet/Tensor.h"
-#include "Synet/Converters/Optimizer.h"
-#include "Synet/Converters/SynetUtils.h"
-#include "Synet/Utils/FileUtils.h"
+#include "Synet/Converters/OnnxCommon.h"
 
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
 
 #include "onnx/onnx.pb.h"
-
-//#define SYNET_ONNX_PARSE_STOP_ON_ERROR
 
 namespace Synet
 {
     class OnnxToSynet : public SynetUtils
     {
     public:
-        bool Convert(const String& srcParamPath, const String& srcGraphPath, bool trans, const String & dstModelPath, const String & dstWeightPath)
+        bool Convert(const String& srcParamPath, const String& srcGraphPath, bool trans, const String & dstModelPath, const String & dstWeightPath, 
+            const OnnxParam& onnxParam, const OptimizerParam& optParam)
         {
             if (!Synet::FileExist(srcGraphPath))
             {
@@ -56,11 +50,10 @@ namespace Synet
 
             Synet::NetworkParamHolder holder;
             Vector weight;
-            if (!ConvertModel(model, trans, holder(), weight))
+            if (!ConvertModel(model, trans, onnxParam, holder(), weight))
                 return false;
 
-            OptimizerParamHolder param;
-            Optimizer optimizer(param());
+            Optimizer optimizer(optParam);
             if (!optimizer.Run(holder(), weight))
                 return false;
 
@@ -80,6 +73,8 @@ namespace Synet
         }
 
     private:
+
+        typedef std::map<String, String> Renames;
 
         bool LoadModel(const String& path, onnx::ModelProto& model)
         {
@@ -104,7 +99,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertModel(const onnx::ModelProto & model, bool trans, Synet::NetworkParam& network, Vector& reordered)
+        bool ConvertModel(const onnx::ModelProto & model, bool trans, const OnnxParam& onnxParam, Synet::NetworkParam& network, Vector& reordered)
         {
             const onnx::GraphProto& graph = model.graph();
 
@@ -134,18 +129,12 @@ namespace Synet
                 }
             }
 
+            Renames renames;
             for (size_t i = 0; i < graph.node_size(); ++i)
             {
                 const onnx::NodeProto& node = graph.node(i);
                 LayerParam layer;
-
-                layer.name() = node.name();
-                for (size_t j = 0; j < node.input_size(); ++j)
-                    layer.src().push_back(node.input(j));
-                for (size_t j = 0; j < node.output_size(); ++j)
-                    layer.dst().push_back(node.output(j));
-                //if (layer.dst().size() == 1)
-                    layer.name() = layer.dst()[0];
+                SetSrcAndDst(node, renames, layer);
 
                 if (node.op_type() == "Add" && !ConvertAddNode(node, layer))
                     return ErrorMessage(node);
@@ -195,6 +184,9 @@ namespace Synet
                 }
 #endif
                 network.layers().push_back(layer);
+
+                if (trans && !ManualInsertToNchwPermute(onnxParam, network.layers(), renames))
+                    return false;
             }
 
             return true;
@@ -269,6 +261,52 @@ namespace Synet
             }
             layer.input().shape()[0].dim() = shape;
             network.layers().push_back(layer);
+            return true;
+        }
+
+        void SetSrcAndDst(const onnx::NodeProto& node, const Renames &renames, LayerParam& layer)
+        {
+            layer.name() = node.name();
+            for (size_t j = 0; j < node.input_size(); ++j)
+            {
+                String input = node.input(j);
+                Renames::const_iterator rename = renames.find(input);
+                if (rename != renames.end())
+                    input = rename->second;
+                layer.src().push_back(input);
+            }
+            for (size_t j = 0; j < node.output_size(); ++j)
+                layer.dst().push_back(node.output(j));
+            layer.name() = layer.dst()[0];
+        }
+
+        bool ManualInsertToNchwPermute(const OnnxParam& onnxParam, LayerParams& layers, Renames& renames)
+        {
+            LayerParam& layer = layers.back();
+            for (size_t h = 0; h < onnxParam.toNchwHints().size(); ++h)
+            {
+                if (layer.name() == onnxParam.toNchwHints()[h])
+                {
+                    for (size_t d = 0; d < layer.dst().size(); ++d)
+                    {
+                        const String& dst = layer.dst()[d];
+                        LayerParam permute;
+                        permute.type() = LayerTypePermute;
+                        permute.src().push_back(dst);
+                        permute.name() = dst + "_permute_to_nchw";
+                        permute.dst().push_back(permute.name());
+                        permute.permute().order() = Shape({ 0, 3, 1, 2 });
+                        permute.permute().format() = TensorFormatNchw;
+                        layers.push_back(permute);
+                        if (renames.find(dst) != renames.end())
+                        {
+                            std::cout << "Multiple manual NhwcToNchw permute at " << layer.name() << " !" << std::endl;
+                            return false;
+                        }
+                        renames[dst] = permute.name();
+                    }
+                }
+            }
             return true;
         }
 
@@ -901,10 +939,11 @@ namespace Synet
         }
     };
 
-    bool ConvertOnnxToSynet(const String& srcParam, const String& srcGraph, bool trans, const String& dstXml, const String& dstBin)
+    bool ConvertOnnxToSynet(const String& srcParam, const String& srcGraph, bool trans, const String& dstXml, const String& dstBin, 
+        const OnnxParam& onnxParam, const OptimizerParam& optParam)
     {
         OnnxToSynet onnxToSynet;
-        return onnxToSynet.Convert(srcParam, srcGraph, trans, dstXml, dstBin);
+        return onnxToSynet.Convert(srcParam, srcGraph, trans, dstXml, dstBin, onnxParam, optParam);
     }
 }
 

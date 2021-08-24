@@ -24,13 +24,6 @@
 
 #pragma once
 
-#include "Synet/Common.h"
-#include "Synet/Params.h"
-#include "Synet/Tensor.h"
-#include "Synet/Converters/Optimizer.h"
-#include "Synet/Converters/SynetUtils.h"
-#include "Synet/Utils/FileUtils.h"
-
 #if defined(SYNET_ONNX_ENABLE)
 
 #include <onnx_import/onnx.hpp>
@@ -41,7 +34,8 @@ namespace Synet
     class OnnxToSynet : public SynetUtils
     {
     public:
-        bool Convert(const String& srcParamPath, const String& srcGraphPath, bool trans, const String & dstModelPath, const String & dstWeightPath)
+        bool Convert(const String& srcParamPath, const String& srcGraphPath, bool trans, const String & dstModelPath, const String & dstWeightPath, 
+            const OnnxParam& onnxParam, const OptimizerParam& optParam)
         {
             if (!Synet::FileExist(srcGraphPath))
             {
@@ -61,8 +55,7 @@ namespace Synet
             if (!ConvertNetwork(*function, trans, holder(), weight))
                 return false;
 
-            OptimizerParamHolder param;
-            Optimizer optimizer(param());
+            Optimizer optimizer(optParam);
             if (!optimizer.Run(holder(), weight))
                 return false;
 
@@ -144,7 +137,7 @@ namespace Synet
                 if (type == "Unsqueeze" && !ConvertNodeUnsqueeze(node, network.layers(), original, layer))
                     return ErrorMessage(node);
 
-#if 1
+#if defined(SYNET_ONNX_PARSE_STOP_ON_ERROR)
                 if (layer.type() == LayerTypeUnknown)
                     return ErrorMessage(node);
 #else
@@ -726,10 +719,11 @@ namespace Synet
         }
     };
 
-    bool ConvertOnnxToSynet(const String& srcParam, const String& srcGraph, bool trans, const String& dstXml, const String& dstBin)
+    bool ConvertOnnxToSynet(const String& srcParam, const String& srcGraph, bool trans, const String& dstXml, const String& dstBin, 
+        const OnnxParam& onnxParam, const OptimizerParam& optParam)
     {
         OnnxToSynet onnxToSynet;
-        return onnxToSynet.Convert(srcParam, srcGraph, trans, dstXml, dstBin);
+        return onnxToSynet.Convert(srcParam, srcGraph, trans, dstXml, dstBin, onnxParam, optParam);
     }
 }
 
