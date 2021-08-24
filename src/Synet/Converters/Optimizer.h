@@ -1636,7 +1636,7 @@ namespace Synet
                 LayerParam & layer = layers[i];
                 if (layer.src().empty())
                     continue;
-                if (Users(layer.src()[0], layers, i + 1, "") > 0)
+                if (Users(layer.src()[0], layers, 0, "") > 1)
                     continue;
                 if (i && layer.src()[0] == layers[i - 1].name() && layers[i - 1].type() == LayerTypeConst)
                     continue;

@@ -144,7 +144,7 @@ namespace Synet
                     layer.src().push_back(node.input(j));
                 for (size_t j = 0; j < node.output_size(); ++j)
                     layer.dst().push_back(node.output(j));
-                if (layer.dst().size() == 1)
+                //if (layer.dst().size() == 1)
                     layer.name() = layer.dst()[0];
 
                 if (node.op_type() == "Add" && !ConvertAddNode(node, layer))
@@ -165,11 +165,21 @@ namespace Synet
                     return ErrorMessage(node);
                 if (node.op_type() == "GlobalAveragePool" && !ConvertGlobalAveragePoolNode(node, layer))
                     return ErrorMessage(node);
+                if (node.op_type() == "MatMul" && !ConvertMatMulNode(node, trans, network.layers(), original, layer, reordered))
+                    return ErrorMessage(node);
+                if (node.op_type() == "MaxPool" && !ConvertMaxPoolNode(node, layer))
+                    return ErrorMessage(node);
+                if (node.op_type() == "Mul" && !ConvertMulNode(node, layer))
+                    return ErrorMessage(node);
                 if (node.op_type() == "PRelu" && !ConvertPreluNode(node, network.layers(), original, layer))
+                    return ErrorMessage(node);
+                if (node.op_type() == "Relu" && !ConvertReluNode(node, layer))
                     return ErrorMessage(node);
                 if (node.op_type() == "Reshape" && !ConvertReshapeNode(node, trans, network.layers(), original, layer))
                     return ErrorMessage(node);
                 if (node.op_type() == "Shape" && !ConvertShapeNode(node, layer))
+                    return ErrorMessage(node);
+                if (node.op_type() == "Sigmoid" && !ConvertSigmoidNode(node, layer))
                     return ErrorMessage(node);
                 if (node.op_type() == "Unsqueeze" && !ConvertUnsqueezeNode(node, network.layers(), layer))
                     return ErrorMessage(node);
@@ -510,6 +520,64 @@ namespace Synet
             return true;
         }
 
+        bool ConvertMatMulNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Vector& original, LayerParam& layer, Vector& reordered)
+        {
+            layer.type() = Synet::LayerTypeInnerProduct;
+            int transB = false;
+            layer.innerProduct().transposeB() = !transB;
+            if (layer.src().size() != 2)
+                return false;
+            layer.weight().resize(layer.src().size() - 1);
+            layer.innerProduct().biasTerm() = false;
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src1 == NULL || src1->type() != LayerTypeConst)
+                return false;
+            const Shape& weight = src1->weight()[0].dim();
+            if (!CheckDims(weight, 2, "inner product weight"))
+                return false;
+            layer.weight()[0] = src1->weight()[0];
+            layer.innerProduct().outputNum() = (uint32_t)(transB ? weight[0] : weight[1]);
+            layer.src().resize(1);
+            return true;
+            if (trans && !PermutedToNchw(layers, true, false))
+            {
+                const LayerParam* first = GetLayer(layers, layer.src()[0]);
+                if (first == NULL)
+                    return false;
+                if (first->type() == LayerTypePooling && first->pooling().globalPooling())
+                    return true;
+                if (first->type() != LayerTypeReshape)
+                    return false;
+                //Shape origin = GetInputShape(*node.get_input_node_ptr(0), 0);
+                //return ReorderWeight(original, origin, layer, reordered);
+            }
+            return true;
+        }
+
+        bool ConvertMaxPoolNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypePooling;
+            layer.pooling().method() = PoolingMethodTypeMax;
+            if (!ConvertAtrributeInts(node, "kernel_shape", layer.pooling().kernel()))
+                return false;
+            if (!ConvertAtrributeInts(node, "pads", layer.pooling().pad()))
+                return false;
+            if (!ConvertAtrributeInts(node, "strides", layer.pooling().stride()))
+                return false;
+            if(GetAtrribute(node, "ceil_mode") == NULL)
+                layer.pooling().roundingType() = RoundingTypeFloor;
+            return true;
+        }
+
+        bool ConvertMulNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            if (node.input_size() != 2)
+                return false;
+            layer.type() = Synet::LayerTypeEltwise;
+            layer.eltwise().operation() = EltwiseOperationTypeProduct;
+            return true;
+        }
+
         bool ConvertPreluNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
         {
             if (layer.src().size() != 2)
@@ -525,11 +593,9 @@ namespace Synet
             return true;
         }
 
-        bool ConvertShapeNode(const onnx::NodeProto& node, LayerParam& layer)
+        bool ConvertReluNode(const onnx::NodeProto& node, LayerParam& layer)
         {
-            layer.type() = LayerTypeMeta;
-            layer.meta().type() = MetaTypeShape;
-            layer.meta().version() = 1;
+            layer.type() = Synet::LayerTypeRelu;
             return true;
         }
 
@@ -569,6 +635,20 @@ namespace Synet
             {
                 layer.type() = LayerTypeReshape;
             }
+            return true;
+        }
+
+        bool ConvertShapeNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = LayerTypeMeta;
+            layer.meta().type() = MetaTypeShape;
+            layer.meta().version() = 1;
+            return true;
+        }
+
+        bool ConvertSigmoidNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeSigmoid;
             return true;
         }
 
