@@ -104,7 +104,7 @@ namespace Synet
         {
             const onnx::GraphProto& graph = model.graph();
 
-            PrintGraph(graph, std::cout, false, true);
+            //PrintGraph(graph, std::cout, true, true);
 
             network.name() = graph.name();
 
@@ -175,6 +175,8 @@ namespace Synet
                     return ErrorMessage(node);
                 if (node.op_type() == "Sigmoid" && !ConvertSigmoidNode(node, layer))
                     return ErrorMessage(node);
+                if (node.op_type() == "Sub" && !ConvertSubNode(node, network.layers(), original, layer))
+                    return ErrorMessage(node);
                 if (node.op_type() == "Unsqueeze" && !ConvertUnsqueezeNode(node, network.layers(), layer))
                     return ErrorMessage(node);
 
@@ -215,10 +217,24 @@ namespace Synet
                 }
                 layer.weight()[0].offset() = offset * sizeof(float);
                 layer.weight()[0].size() = size * sizeof(float);
-                if (tensor.has_raw_data() && size)
+                if (size)
                 {
-                    weight.resize(offset + size);
-                    memcpy(weight.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                    if (tensor.has_raw_data())
+                    {
+                        weight.resize(offset + size);
+                        memcpy(weight.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                    }
+                    else if (tensor.float_data_size())
+                    {
+                        if (size != tensor.float_data_size())
+                        {
+                            std::cout << " Wrong tensor float_data_size " << tensor.float_data_size() << " != " << size << " !" << std::endl;
+                            return false;
+                        }
+                        weight.resize(offset + size);
+                        for (size_t i = 0; i < size; ++i)
+                            weight[offset + i] = tensor.float_data(i);
+                    }
                 }
             }
             else if(tensor.data_type() == onnx::TensorProto_DataType_INT64)
@@ -319,7 +335,7 @@ namespace Synet
 
         bool ConvertAddNode(const onnx::NodeProto& node, LayerParam& layer)
         {
-            if (node.input_size() != 2)
+            if (!CheckSourceNumber(layer, 2))
                 return false;
             layer.type() = Synet::LayerTypeEltwise;
             layer.eltwise().operation() = EltwiseOperationTypeSum;
@@ -328,7 +344,7 @@ namespace Synet
 
         bool ConvertBatchNormalizationNode(const onnx::NodeProto & node, const LayerParams& layers, const Vector& original, LayerParam& layer, Vector& reordered)
         {
-            if (layer.src().size() != 5)
+            if (!CheckSourceNumber(layer, 5))
                 return false;
 
             const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
@@ -600,7 +616,7 @@ namespace Synet
 
         bool ConvertMulNode(const onnx::NodeProto& node, LayerParam& layer)
         {
-            if (node.input_size() != 2)
+            if (!CheckSourceNumber(layer, 2))
                 return false;
             layer.type() = Synet::LayerTypeEltwise;
             layer.eltwise().operation() = EltwiseOperationTypeProduct;
@@ -609,7 +625,7 @@ namespace Synet
 
         bool ConvertPreluNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
         {
-            if (layer.src().size() != 2)
+            if (!CheckSourceNumber(layer, 2))
                 return false;
             const LayerParam* second = GetLayer(layers, layer.src()[1]);
             if (second == NULL || second->type() != LayerTypeConst)
@@ -630,7 +646,7 @@ namespace Synet
 
         bool ConvertReshapeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Vector& original, LayerParam& layer)
         {
-            if (layer.src().size() != 2)
+            if (!CheckSourceNumber(layer, 2))
                 return false;
             const LayerParam* first = GetLayer(layers, layer.src()[0]);
             const LayerParam* second = GetLayer(layers, layer.src()[1]);
@@ -681,9 +697,42 @@ namespace Synet
             return true;
         }
 
+        bool ConvertSubNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
+            if (src1->type() == LayerTypeConst && TensorSize(src1->weight()[0].dim()) == 1)
+            {
+                layer.type() = Synet::LayerTypePower;
+                const float* pShift = GetWeight<float>(original, src1->weight()[0]);
+                layer.power().shift() = -pShift[0];
+                layer.src().resize(1);
+            }
+            else if (src0->type() == LayerTypeConst && TensorSize(src0->weight()[0].dim()) == 1)
+            {
+                layer.type() = Synet::LayerTypePower;
+                layer.power().scale() = -1.0f;
+                const float* pShift = GetWeight<float>(original, src0->weight()[0]);
+                layer.power().shift() = pShift[0];
+                layer.src()[0] = layer.src()[1];
+                layer.src().resize(1);
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeEltwise;
+                layer.eltwise().operation() = EltwiseOperationTypeSum;
+                layer.eltwise().coefficients() = Floats({ 1.0f, -1.0f });
+            }
+            return true;
+        }
+
         bool ConvertUnsqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
-            if (node.input_size() != 1)
+            if (!CheckSourceNumber(layer, 1))
                 return false;
             const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
             if (src0 == NULL || src0->type() != LayerTypeMeta)
