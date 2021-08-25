@@ -151,7 +151,7 @@ namespace Synet
             return pin;
         }
 
-        static bool PermutedToNchw(const LayerParams& layers, size_t current, bool checkInnerProduct, bool checkPriorBox)
+        static bool PermutedToNchw(const LayerParams& layers, size_t current, bool checkInnerProduct, bool checkPriorBox, bool globalPooling)
         {
             const LayerParam& layer = layers[current];
             if (layer.type() == LayerTypeConvolution && layer.weight()[0].format() == TensorFormatNhwc)
@@ -162,7 +162,9 @@ namespace Synet
                 return true;
             if (checkPriorBox && (layer.type() == LayerTypePriorBox || layer.type() == LayerTypePriorBoxClustered))
                 return true;
-            if (layer.type() == LayerTypeInput && layer.input().shape().size() > 0 && 
+            if (globalPooling && layer.type() == LayerTypePooling && layer.pooling().globalPooling())
+                return true;
+            if (layer.type() == LayerTypeInput && layer.input().shape().size() > 0 &&
                 layer.input().shape()[0].format() == TensorFormatNchw)
                 return true;
             for (size_t s = 0; s < layer.src().size(); ++s)
@@ -171,22 +173,22 @@ namespace Synet
                 for (size_t l = 0; l < current; ++l)
                 {
                     if (src.name == layers[l].name() && layers[l].type() != LayerTypeMeta && layers[l].type() &&
-                        PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox))
+                        PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
                         return true;
                 }
             }
             return false;
         }
 
-        static bool PermutedToNchw(const LayerParams& layers, bool checkInnerProduct, bool checkPriorBox)
+        static bool PermutedToNchw(const LayerParams& layers, bool checkInnerProduct, bool checkPriorBox, bool globalPooling)
         {
             size_t start = layers.size() - 1;
             if (layers[start].type() == LayerTypeConst && start)
                 start--;
-            return PermutedToNchw(layers, start, checkInnerProduct, checkPriorBox);
+            return PermutedToNchw(layers, start, checkInnerProduct, checkPriorBox, globalPooling);
         }
 
-        static bool PermutedToNchw(const LayerParams& layers, const Strings & names, bool checkInnerProduct, bool checkPriorBox)
+        static bool PermutedToNchw(const LayerParams& layers, const Strings & names, bool checkInnerProduct, bool checkPriorBox, bool globalPooling)
         {
             for (size_t s = 0; s < names.size(); ++s)
             {
@@ -194,14 +196,14 @@ namespace Synet
                 for (size_t l = 0; l < layers.size(); ++l)
                 {
                     if (src.name == layers[l].name() && layers[l].type() != LayerTypeMeta && layers[l].type() &&
-                        PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox))
+                        PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
                         return true;
                 }
             }
             return false;
         }
 
-        static int PermutedToNchw(const LayerParams& layers, const Strings& names, bool checkInnerProduct, bool checkPriorBox, Ints & stat)
+        static int PermutedToNchw(const LayerParams& layers, const Strings& names, bool checkInnerProduct, bool checkPriorBox, bool globalPooling, Ints & stat)
         {
             stat.resize(names.size(), 0);
             int count = 0;
@@ -211,7 +213,7 @@ namespace Synet
                 for (size_t l = 0; l < layers.size(); ++l)
                 {
                     if (src.name == layers[l].name() && layers[l].type() != LayerTypeMeta && layers[l].type() &&
-                        PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox))
+                        PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
                     {
                         stat[s] = 1;
                         count++;

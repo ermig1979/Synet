@@ -394,7 +394,7 @@ namespace Synet
                 layer.type() = Synet::LayerTypeConcat;
                 if (!ConvertAtrributeInt(node, "axis", layer.concat().axis()))
                     return false;
-                if (trans && !PermutedToNchw(layers, false, true))
+                if (trans && !PermutedToNchw(layers, false, true, true))
                 {
                     return false;
                 }
@@ -494,7 +494,7 @@ namespace Synet
                 layer.weight()[1] = bias->weight()[0];
             }
             layer.src().resize(1);
-            if (trans && !PermutedToNchw(layers, layer.src(), true, false))
+            if (trans && !PermutedToNchw(layers, layer.src(), true, false, false))
                 return ReorderWeight(srcBin, Shape(), layer, dstBin);
             return true;
         }
@@ -535,17 +535,10 @@ namespace Synet
                 layer.innerProduct().biasTerm() = false;
             layer.src().resize(1);
             return true;
-            if (trans && !PermutedToNchw(layers, true, false))
+            if (trans && !PermutedToNchw(layers, true, false, true))
             {
-                const LayerParam* first = GetLayer(layers, layer.src()[0]);
-                if (first == NULL)
-                    return false;
-                if (first->type() == LayerTypePooling && first->pooling().globalPooling())
-                    return true;
-                if (first->type() != LayerTypeReshape)
-                    return false;
-                //Shape origin = GetInputShape(*node.get_input_node_ptr(0), 0);
-                //return ReorderWeight(original, origin, layer, reordered);
+                std::cout << "Can 't convert Gemm node for NCHW format!" << std::endl;
+                return false;
             }
             return true;
         }
@@ -577,17 +570,10 @@ namespace Synet
             layer.innerProduct().outputNum() = (uint32_t)(transB ? weight[0] : weight[1]);
             layer.src().resize(1);
             return true;
-            if (trans && !PermutedToNchw(layers, true, false))
+            if (trans && !PermutedToNchw(layers, true, false, true))
             {
-                const LayerParam* first = GetLayer(layers, layer.src()[0]);
-                if (first == NULL)
-                    return false;
-                if (first->type() == LayerTypePooling && first->pooling().globalPooling())
-                    return true;
-                if (first->type() != LayerTypeReshape)
-                    return false;
-                //Shape origin = GetInputShape(*node.get_input_node_ptr(0), 0);
-                //return ReorderWeight(original, origin, layer, reordered);
+                std::cout << "Can 't convert MatMul node for NCHW format!" << std::endl;
+                return false;
             }
             return true;
         }
@@ -656,7 +642,7 @@ namespace Synet
                 for (size_t i = 0; i < shape.size(); ++i)
                     shape[i] = (size_t)alpha[i];
                 layer.src().resize(1);
-                if (trans && !PermutedToNchw(layers, true, false))
+                if (trans && !PermutedToNchw(layers, true, false, true))
                 {
                     if (shape.size() == 4)
                     {

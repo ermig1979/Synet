@@ -294,7 +294,7 @@ namespace Synet
             {
                 layer.type() = Synet::LayerTypeConcat;
                 layer.concat().axis()= ((ngraph::op::v0::Concat*)&node)->get_axis();
-                if (trans && !PermutedToNchw(layers, false, true))
+                if (trans && !PermutedToNchw(layers, false, true, false))
                 {
                     Shape input = node.get_input_shape(0);
                     if (input.size() == 4)
@@ -458,7 +458,7 @@ namespace Synet
             layer.weight() = second->weight();
             layer.innerProduct().outputNum() = (uint32_t)(transposeB ? weight[0] : weight[1]);
             layer.src().resize(1);
-            if (trans && !PermutedToNchw(layers, true, false))
+            if (trans && !PermutedToNchw(layers, true, false, false))
             {
                 const LayerParam* first = GetLayer(layers, layer.src()[0]);
                 if (first == NULL)
@@ -600,7 +600,7 @@ namespace Synet
                 for (size_t i = 0; i < shape.size(); ++i)
                     shape[i] = (size_t)alpha[i];
                 layer.src().resize(1);
-                if (trans && !PermutedToNchw(layers, true, false))
+                if (trans && !PermutedToNchw(layers, true, false, false))
                 {
                     if (shape.size() == 4)
                     {
