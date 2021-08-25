@@ -75,6 +75,7 @@ namespace Synet
     private:
 
         typedef std::map<String, String> Renames;
+        typedef std::set<String> Consts;
 
         bool LoadModel(const String& path, onnx::ModelProto& model)
         {
@@ -103,11 +104,12 @@ namespace Synet
         {
             const onnx::GraphProto& graph = model.graph();
 
-            //PrintGraph(graph, std::cout, false);
+            PrintGraph(graph, std::cout, false, true);
 
             network.name() = graph.name();
 
             Vector original;
+            Consts consts;
             for (size_t i = 0; i < graph.initializer_size(); ++i)
             {
                 const onnx::TensorProto& tensor = graph.initializer(i);
@@ -116,12 +118,15 @@ namespace Synet
                     std::cout << "Can't convert initializer '" << tensor.name() << "' !" << std::endl;
                     return false;
                 }
+                consts.insert(tensor.name());
             }
             reordered = original;
 
             for (size_t i = 0; i < graph.input_size(); ++i)
             {
                 const onnx::ValueInfoProto& input = graph.input(i);
+                if (consts.find(input.name()) != consts.end())
+                    continue;
                 if (!ConvertInput(input, trans, network))
                 {
                     std::cout << "Can't convert input '" << input.name() << "' !" << std::endl;
@@ -694,13 +699,20 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool PrintGraph(const onnx::GraphProto& graph, std::ostream & os, bool init)
+        bool PrintGraph(const onnx::GraphProto& graph, std::ostream & os, bool printConst = false, bool filterInput = true)
         {
             os << std::endl;
             os << "graph name: " << graph.name() << std::endl;
+            Consts consts;
+            for (size_t i = 0; i < graph.initializer_size(); ++i)
+                consts.insert(graph.initializer(i).name());
             for (size_t i = 0; i < graph.input_size(); ++i)
+            {
+                if (filterInput && consts.find(graph.input(i).name()) != consts.end())
+                    continue;
                 os << " input[" << i << "] " << ValueInfoString(graph.input(i)) << std::endl;
-            if (init)
+            }
+            if (printConst)
             {
                 for (size_t i = 0; i < graph.initializer_size(); ++i)
                     os << " const[" << i << "] " << TensorString(graph.initializer(i)) << std::endl;
