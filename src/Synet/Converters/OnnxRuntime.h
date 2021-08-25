@@ -153,6 +153,8 @@ namespace Synet
                     return ErrorMessage(node);
                 if (node.op_type() == "Conv" && !ConvertConvNode(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(node);
+                if (node.op_type() == "Exp" && !ConvertExpNode(node, layer))
+                    return ErrorMessage(node);
                 if (node.op_type() == "Gather" && !ConvertGatherNode(node, layer))
                     return ErrorMessage(node);
                 if (node.op_type() == "Gemm" && !ConvertGemmNode(node, trans, network.layers(), original, layer, reordered))
@@ -166,6 +168,10 @@ namespace Synet
                 if (node.op_type() == "Mul" && !ConvertMulNode(node, layer))
                     return ErrorMessage(node);
                 if (node.op_type() == "PRelu" && !ConvertPreluNode(node, network.layers(), original, layer))
+                    return ErrorMessage(node);
+                if (node.op_type() == "ReduceMax" && !ConvertReduceMaxNode(node, trans, network.layers(), layer))
+                    return ErrorMessage(node);
+                if (node.op_type() == "ReduceSum" && !ConvertReduceSumNode(node, trans, network.layers(), layer))
                     return ErrorMessage(node);
                 if (node.op_type() == "Relu" && !ConvertReluNode(node, layer))
                     return ErrorMessage(node);
@@ -417,7 +423,8 @@ namespace Synet
                     return false;
                 if (trans && !PermutedToNchw(layers, false, true, true))
                 {
-                    return false;
+                    Shape nchw = Shape({ 0, 3, 1, 2 });
+                    layer.concat().axis() = (uint32_t)nchw[layer.concat().axis()];
                 }
             }
             return true;
@@ -517,6 +524,13 @@ namespace Synet
             layer.src().resize(1);
             if (trans && !PermutedToNchw(layers, layer.src(), true, false, false))
                 return ReorderWeight(srcBin, Shape(), layer, dstBin);
+            return true;
+        }
+
+        bool ConvertExpNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnaryOperation;
+            layer.unaryOperation().type() = UnaryOperationTypeExp;
             return true;
         }
 
@@ -635,6 +649,40 @@ namespace Synet
             layer.src().resize(1);
             if (!CompactShape(layer.weight()[0].dim()))
                 return false;
+            return true;
+        }
+
+        bool ConvertReduceMaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeReduction;
+            layer.reduction().type() = ReductionTypeMax;
+            if (!ConvertAtrributeInts(node, "axes", layer.reduction().axis()))
+                return false;
+            if (!ConvertAtrributeInt(node, "keepdims", layer.reduction().keepDims()))
+                return false;
+            if (trans && !PermutedToNchw(layers, false, true, true))
+            {
+                Ints nchw = Ints({ 0, 3, 1, 2 }), axis = layer.reduction().axis();
+                for(size_t i = 0; i < axis.size(); ++i)
+                    layer.reduction().axis()[i] = nchw[axis[i]];
+            }
+            return true;
+        }
+
+        bool ConvertReduceSumNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeReduction;
+            layer.reduction().type() = ReductionTypeSum;
+            if (!ConvertAtrributeInts(node, "axes", layer.reduction().axis()))
+                return false;
+            if (!ConvertAtrributeInt(node, "keepdims", layer.reduction().keepDims()))
+                return false;
+            if (trans && !PermutedToNchw(layers, false, true, true))
+            {
+                Ints nchw = Ints({ 0, 3, 1, 2 }), axis = layer.reduction().axis();
+                for (size_t i = 0; i < axis.size(); ++i)
+                    layer.reduction().axis()[i] = nchw[axis[i]];
+            }
             return true;
         }
 
