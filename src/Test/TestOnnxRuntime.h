@@ -113,8 +113,22 @@ namespace Test
                     std::cout << "OnnxRuntime model can't be reshaped, try to emulate batch > 1." << std::endl;
             }
 
-            for (size_t i = 0, n = _session->GetOutputCount(); i < n; i++)
-                _outputNames.push_back(_session->GetOutputName(i, s_env.allocator));
+            _outputNames.clear();
+            _outputNameBuffers.clear();
+            if (param.output().size())
+            {
+                for (size_t i = 0; i < param.output().size(); ++i)
+                {
+                    _outputNameBuffers.push_back(param.output()[i].name());
+                    _outputNames.push_back(_outputNameBuffers[i].c_str());
+                }
+            }
+            else
+            {
+                for (size_t i = 0, n = _session->GetOutputCount(); i < n; i++)
+                    _outputNames.push_back(_session->GetOutputName(i, s_env.allocator));
+                std::sort(_outputNames.begin(), _outputNames.end(), [](const char* a, const char* b) -> bool { return strcmp(a, b) < 1; });
+            }
 
             if (_inputShapes.size() != 1)
             {
@@ -217,6 +231,7 @@ namespace Test
         std::vector<const char*> _inputNames;
         Shapes _inputShapes;
 
+        Strings _outputNameBuffers;
         std::vector<const char*> _outputNames;
         ValuesPtr _outputValues;
 
