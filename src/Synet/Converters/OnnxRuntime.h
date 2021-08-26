@@ -163,7 +163,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "GlobalAveragePool" && !ConvertGlobalAveragePoolNode(node, layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "MatMul" && !ConvertMatMulNode(node, trans, network.layers(), original, layer, reordered))
+                if (node.op_type() == "MatMul" && !ConvertMatMulNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "MaxPool" && !ConvertMaxPoolNode(node, layer))
                     return ErrorMessage(i, node);
@@ -184,6 +184,8 @@ namespace Synet
                 if (node.op_type() == "Sigmoid" && !ConvertSigmoidNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Sub" && !ConvertSubNode(node, network.layers(), original, layer))
+                    return ErrorMessage(i, node);
+                if (node.op_type() == "Transpose" && !ConvertTransposeNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Unsqueeze" && !ConvertUnsqueezeNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -615,7 +617,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertMatMulNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Vector& original, LayerParam& layer, Vector& reordered)
+        bool ConvertMatMulNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -626,20 +628,25 @@ namespace Synet
             const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
             if (src1 == NULL)
                 return false;
-            Shape weight;
             if (src1->type() == LayerTypeConst)
             {
-                weight = src1->weight()[0].dim();
-                if (!CheckDims(weight, 2, "inner product weight"))
-                    return false;
                 layer.weight()[0] = src1->weight()[0];
             }
-            else if (src1->type() == LayerTypePermute || src1->type() == LayerTypeUnknown)
+            else if (src1->type() == LayerTypePermute)
             {
-                layer.type() = LayerTypeUnknown;
-                return true;
+                if (!CheckSourceNumber(*src1, 1))
+                    return false;
+                const LayerParam* src10 = GetLayer(layers, src1->src()[0]);
+                if (src10 == NULL || src10->type() != LayerTypeConst)
+                    return false;
+                transB = true;
+                layer.weight() = src10->weight();
+                layers.erase(layers.begin() + (src1 - layers.data()));
             }
             else
+                return false;
+            Shape weight = layer.weight()[0].dim();
+            if (!CheckDims(weight, 2, "inner product weight"))
                 return false;
             layer.innerProduct().transposeB() = !transB;
             layer.innerProduct().outputNum() = (uint32_t)(transB ? weight[0] : weight[1]);
@@ -828,6 +835,16 @@ namespace Synet
                 layer.type() = Synet::LayerTypeBinaryOperation;
                 layer.binaryOperation().type() = BinaryOperationTypeSub;
             }
+            return true;
+        }
+
+        bool ConvertTransposeNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 1))
+                return false;
+            layer.type() = Synet::LayerTypePermute;
+            if (!ConvertAtrributeInts(node, "perm", layer.permute().order()))
+                return false;
             return true;
         }
 
