@@ -104,7 +104,7 @@ namespace Synet
         {
             const onnx::GraphProto& graph = model.graph();
 
-            //PrintGraph(graph, std::cout, true, true);
+            //PrintGraph(graph, std::cout, false, true);
 
             network.name() = graph.name();
 
@@ -142,55 +142,55 @@ namespace Synet
                 SetSrcAndDst(node, renames, layer);
 
                 if (node.op_type() == "Add" && !ConvertAddNode(node, layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "BatchNormalization" && !ConvertBatchNormalizationNode(node, network.layers(), original, layer, reordered))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Clip" && !ConvertClipNode(node, layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Concat" && !ConvertConcatNode(node, trans, network.layers(), layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Constant" && !ConvertConstantNode(node, layer, original, reordered))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Conv" && !ConvertConvNode(node, trans, network.layers(), original, layer, reordered))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Div" && !ConvertDivNode(node, network.layers(), original, layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Exp" && !ConvertExpNode(node, layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Gather" && !ConvertGatherNode(node, layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Gemm" && !ConvertGemmNode(node, trans, network.layers(), original, layer, reordered))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "GlobalAveragePool" && !ConvertGlobalAveragePoolNode(node, layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "MatMul" && !ConvertMatMulNode(node, trans, network.layers(), original, layer, reordered))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "MaxPool" && !ConvertMaxPoolNode(node, layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Mul" && !ConvertMulNode(node, layer))
-                    return ErrorMessage(node);
-                if (node.op_type() == "PRelu" && !ConvertPreluNode(node, network.layers(), original, layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
+                if (node.op_type() == "PRelu" && !ConvertPreluNode(node, network.layers(), layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "ReduceMax" && !ConvertReduceMaxNode(node, trans, network.layers(), layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "ReduceSum" && !ConvertReduceSumNode(node, trans, network.layers(), layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Relu" && !ConvertReluNode(node, layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Reshape" && !ConvertReshapeNode(node, trans, network.layers(), original, layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Shape" && !ConvertShapeNode(node, layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Sigmoid" && !ConvertSigmoidNode(node, layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Sub" && !ConvertSubNode(node, network.layers(), original, layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Unsqueeze" && !ConvertUnsqueezeNode(node, network.layers(), layer))
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
 
 #if defined(SYNET_ONNX_PARSE_STOP_ON_ERROR)
                 if (layer.type() == LayerTypeUnknown)
-                    return ErrorMessage(node);
+                    return ErrorMessage(i, node);
 #else
                 if (layer.type() == LayerTypeUnknown)
                 {
@@ -617,23 +617,33 @@ namespace Synet
 
         bool ConvertMatMulNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Vector& original, LayerParam& layer, Vector& reordered)
         {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
             layer.type() = Synet::LayerTypeInnerProduct;
             int transB = false;
-            layer.innerProduct().transposeB() = !transB;
-            if (layer.src().size() != 2)
-                return false;
             layer.weight().resize(layer.src().size() - 1);
             layer.innerProduct().biasTerm() = false;
             const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src1 == NULL || src1->type() != LayerTypeConst)
+            if (src1 == NULL)
                 return false;
-            const Shape& weight = src1->weight()[0].dim();
-            if (!CheckDims(weight, 2, "inner product weight"))
+            Shape weight;
+            if (src1->type() == LayerTypeConst)
+            {
+                weight = src1->weight()[0].dim();
+                if (!CheckDims(weight, 2, "inner product weight"))
+                    return false;
+                layer.weight()[0] = src1->weight()[0];
+            }
+            else if (src1->type() == LayerTypePermute || src1->type() == LayerTypeUnknown)
+            {
+                layer.type() = LayerTypeUnknown;
+                return true;
+            }
+            else
                 return false;
-            layer.weight()[0] = src1->weight()[0];
+            layer.innerProduct().transposeB() = !transB;
             layer.innerProduct().outputNum() = (uint32_t)(transB ? weight[0] : weight[1]);
             layer.src().resize(1);
-            return true;
             if (trans && !PermutedToNchw(layers, true, false, true))
             {
                 std::cout << "Can 't convert MatMul node for NCHW format!" << std::endl;
@@ -666,15 +676,30 @@ namespace Synet
             return true;
         }
 
-        bool ConvertPreluNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        bool ConvertPreluNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
-            const LayerParam* second = GetLayer(layers, layer.src()[1]);
-            if (second == NULL || second->type() != LayerTypeConst)
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src1 == NULL)
                 return false;
             layer.type() = Synet::LayerTypePrelu;
-            layer.weight() = second->weight();
+            if (src1->type() == LayerTypeConst)
+            {
+                layer.weight() = src1->weight();
+            }
+            else if (src1->type() == LayerTypeExpandDims)
+            {
+                if (!CheckSourceNumber(*src1, 1))
+                    return false;
+                const LayerParam* src10 = GetLayer(layers, src1->src()[0]);
+                if (src10 == NULL || src10->type() != LayerTypeConst)
+                    return false;
+                layer.weight() = src10->weight();
+                layers.erase(layers.begin() + (src1 - layers.data()));
+            }
+            else
+                return false;
             layer.src().resize(1);
             if (!CompactShape(layer.weight()[0].dim()))
                 return false;
@@ -811,14 +836,23 @@ namespace Synet
             if (!CheckSourceNumber(layer, 1))
                 return false;
             const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            if (src0 == NULL || src0->type() != LayerTypeMeta)
+            if (src0 == NULL)
                 return false;
-            layer.type() = Synet::LayerTypeMeta;
-            layer.meta().type() = Synet::MetaTypeExpandDims;
-            layer.meta().alpha().type() = TensorType64i;
-            if (!ConvertAtrributeInts(node, "axes", layer.meta().alpha().i64()))
-                return false;
-            layer.meta().alpha().shape().resize(1, layer.meta().alpha().i64().size());
+            if (src0->type() == LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeExpandDims;
+                layer.meta().alpha().type() = TensorType64i;
+                if (!ConvertAtrributeInts(node, "axes", layer.meta().alpha().i64()))
+                    return false;
+                layer.meta().alpha().shape().resize(1, layer.meta().alpha().i64().size());
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeExpandDims;
+                if (!ConvertAtrributeInts(node, "axes", layer.expandDims().axes()))
+                    return false;
+            }
             return true;
         }
 
@@ -994,9 +1028,9 @@ namespace Synet
             dst.debug().push_back(node.op_type());
         }
 
-        bool ErrorMessage(const onnx::NodeProto& node)
+        bool ErrorMessage(size_t index, const onnx::NodeProto& node)
         {
-            std::cout << "Can't convert node : " << NodeString(node) << " !" << std::endl;
+            std::cout << "Can't convert node[" << index << "]: " << NodeString(node) << " !" << std::endl;
             return false;
         }
 

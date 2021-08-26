@@ -320,6 +320,7 @@ namespace Synet
     struct ExpandDimsParam
     {
         SYNET_PARAM_VALUE(int32_t, axis, 0);
+        SYNET_PARAM_VALUE(Ints, axes, Ints());
     };
 
     struct EltwiseParam

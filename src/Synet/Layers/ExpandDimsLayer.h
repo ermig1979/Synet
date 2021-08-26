@@ -45,15 +45,32 @@ namespace Synet
         {
             assert(src[0] != dst[0]);
             const ExpandDimsParam & param = this->Param().expandDims();
-            ptrdiff_t axis = param.axis();
-            if (axis < 0)
-                axis += src[0]->Count();
+            const Ints & axes = param.axes();
             Shape shape;
-            for (ptrdiff_t i = 0; i < axis; ++i)
-                shape.push_back(src[0]->Axis(i));
-            shape.push_back(1);
-            for (size_t i = axis; i < src[0]->Count(); ++i)
-                shape.push_back(src[0]->Axis(i));
+            if (axes.empty())
+            {
+                ptrdiff_t axis = param.axis();
+                if (axis < 0)
+                    axis += src[0]->Count();
+                for (ptrdiff_t i = 0; i < axis; ++i)
+                    shape.push_back(src[0]->Axis(i));
+                shape.push_back(1);
+                for (size_t i = axis; i < src[0]->Count(); ++i)
+                    shape.push_back(src[0]->Axis(i));
+            }
+            else
+            {
+                shape.resize(src[0]->Count() + axes.size(), 1);
+                for (size_t i = 0, s = 0; i < shape.size(); ++i)
+                {
+                    bool insert = true;
+                    for (size_t a = 0; a < axes.size() && insert; ++a)
+                        if (axes[a] == i)
+                            insert = false;
+                    if (insert)
+                        shape[i] = src[0]->Axis(s++);
+                }
+            }
             dst[0]->ShareAs(*src[0], shape, src[0]->Format());
         }
 
