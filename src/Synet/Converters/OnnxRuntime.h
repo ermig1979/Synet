@@ -153,6 +153,8 @@ namespace Synet
                     return ErrorMessage(node);
                 if (node.op_type() == "Conv" && !ConvertConvNode(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(node);
+                if (node.op_type() == "Div" && !ConvertDivNode(node, network.layers(), original, layer))
+                    return ErrorMessage(node);
                 if (node.op_type() == "Exp" && !ConvertExpNode(node, layer))
                     return ErrorMessage(node);
                 if (node.op_type() == "Gather" && !ConvertGatherNode(node, layer))
@@ -527,6 +529,33 @@ namespace Synet
             return true;
         }
 
+        bool ConvertDivNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
+            if (src1->type() == LayerTypeConst && TensorSize(src1->weight()[0].dim()) == 1)
+            {
+                layer.type() = Synet::LayerTypePower;
+                const float* pScale = GetWeight<float>(original, src1->weight()[0]);
+                layer.power().scale() = 1.0f / pScale[0];
+                layer.src().resize(1);
+            }
+            else if (src0->type() == LayerTypeConst && TensorSize(src0->weight()[0].dim()) == 1)
+            {
+                return false;
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeBinaryOperation;
+                layer.binaryOperation().type() = BinaryOperationTypeDiv;
+            }
+            return true;
+        }
+
         bool ConvertExpNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeUnaryOperation;
@@ -771,9 +800,8 @@ namespace Synet
             }
             else
             {
-                layer.type() = Synet::LayerTypeEltwise;
-                layer.eltwise().operation() = EltwiseOperationTypeSum;
-                layer.eltwise().coefficients() = Floats({ 1.0f, -1.0f });
+                layer.type() = Synet::LayerTypeBinaryOperation;
+                layer.binaryOperation().type() = BinaryOperationTypeSub;
             }
             return true;
         }
