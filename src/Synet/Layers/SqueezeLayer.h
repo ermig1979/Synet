@@ -80,10 +80,26 @@ namespace Synet
             }
             else
             {
-                for (size_t i = 0; i < src[0]->Count(); ++i)
+                Ints axes = this->Param().squeeze().axes();
+                if (axes.empty())
                 {
-                    if (src[0]->Axis(i) != 1 || (i == 0 && !this->IsBack()))
-                        shape.push_back(src[0]->Axis(i));
+                    for (size_t i = 0; i < src[0]->Count(); ++i)
+                    {
+                        if (src[0]->Axis(i) != 1 || (i == 0 && !this->IsBack()))
+                            shape.push_back(src[0]->Axis(i));
+                    }
+                }
+                else
+                {
+                    for (size_t i = 0; i < src[0]->Count(); ++i)
+                    {
+                        bool leave = true;
+                        for (size_t a = 0; a < axes.size() && leave; ++a)
+                            if (axes[a] == i)
+                                leave = false;
+                        if (src[0]->Axis(i) != 1 || leave)
+                            shape.push_back(src[0]->Axis(i));
+                    }
                 }
             }
             dst[0]->ShareAs(*src[0], shape, src[0]->Format());

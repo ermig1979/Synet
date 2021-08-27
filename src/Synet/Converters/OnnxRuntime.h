@@ -185,6 +185,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Sub" && !ConvertSubNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Squeeze" && !ConvertSqueezeNode(node, network.layers(), layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Transpose" && !ConvertTransposeNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Unsqueeze" && !ConvertUnsqueezeNode(node, network.layers(), layer))
@@ -803,6 +805,27 @@ namespace Synet
         bool ConvertSigmoidNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeSigmoid;
+            return true;
+        }
+
+        bool ConvertSqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 1))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            if (src0 == NULL)
+                return false;
+            if (src0->type() == LayerTypeMeta)
+            {
+                layer.type() = LayerTypeMeta;
+                layer.meta().type() = MetaTypeSqueeze;
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeSqueeze;
+                if (!ConvertAtrributeInts(node, "axes", layer.squeeze().axes()))
+                    return false;
+            }
             return true;
         }
 

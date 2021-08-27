@@ -565,6 +565,11 @@ namespace Synet
         SYNET_PARAM_VALUE(float, threshold, 20.0f);
     };
 
+    struct SqueezeParam
+    {
+        SYNET_PARAM_VALUE(Ints, axes, Ints());
+    };
+
     struct StridedSliceParam
     {
         SYNET_PARAM_VALUE(Shape, beginMask, Shape());
@@ -680,6 +685,7 @@ namespace Synet
         SYNET_PARAM_STRUCT(SliceParam, slice);
         SYNET_PARAM_STRUCT(SoftmaxParam, softmax);
         SYNET_PARAM_STRUCT(SoftplusParam, softplus);
+        SYNET_PARAM_STRUCT(SqueezeParam, squeeze);
         SYNET_PARAM_STRUCT(StridedSliceParam, stridedSlice);
         SYNET_PARAM_STRUCT(TileParam, tile);
         SYNET_PARAM_STRUCT(TensorIteratorParam, tensorIterator);
