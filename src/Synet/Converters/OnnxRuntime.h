@@ -292,6 +292,8 @@ namespace Synet
                     layer.input().shape()[0].format() = TensorFormatNhwc;
                 }
             }
+            if (shape.size() > 1 && shape[0] == -1)
+                shape[0] = 1;
             layer.input().shape()[0].dim() = shape;
             network.layers().push_back(layer);
             return true;
