@@ -283,6 +283,23 @@ namespace Synet
             return true;
         }
 
+        bool SetBatch(size_t batch)
+        {
+            if (_input.size() != 1)
+                return false;
+            const LayerParam& param = _input[0].layer->Param();
+            if (param.type() != LayerTypeInput || param.input().shape().size() != 1)
+                return false;
+            const TensorFormat& format = param.input().shape()[0].format();
+            Shape shape = param.input().shape()[0].dim();
+            if (shape.size() < 2)
+                return false;
+            shape[0] = batch;
+            _input[0].dst[0]->Reshape(shape, Type(0), format);
+            ReshapeStages();
+            return true;
+        }
+
         bool Resizable() const
         {
             for (size_t i = 0; i < _layers.size(); ++i)
