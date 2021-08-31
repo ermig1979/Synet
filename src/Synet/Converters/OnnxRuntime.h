@@ -163,6 +163,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "GlobalAveragePool" && !ConvertGlobalAveragePoolNode(node, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "LeakyRelu" && !ConvertLeakyReluNode(node, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "MatMul" && !ConvertMatMulNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "MaxPool" && !ConvertMaxPoolNode(node, layer))
@@ -618,6 +620,14 @@ namespace Synet
             layer.type() = Synet::LayerTypePooling;
             layer.pooling().method() = PoolingMethodTypeAverage;
             layer.pooling().globalPooling() = true;
+            return true;
+        }
+
+        bool ConvertLeakyReluNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeRelu;
+            if (!ConvertAtrributeFloat(node, "alpha", layer.relu().negativeSlope()))
+                return false;
             return true;
         }
 
