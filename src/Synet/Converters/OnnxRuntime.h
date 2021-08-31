@@ -157,6 +157,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Exp" && !ConvertExpNode(node, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Flatten" && !ConvertFlattenNode(node, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Gather" && !ConvertGatherNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Gemm" && !ConvertGemmNode(node, trans, network.layers(), original, layer, reordered))
@@ -201,7 +203,7 @@ namespace Synet
                 if (layer.type() == LayerTypeUnknown)
                 {
                     NotImplemented(node, layer);
-                    std::cout << "Not implemented layer: " << NodeString(node) << std::endl;
+                    std::cout << "Not implemented node[" << i << "]: " << NodeString(node) << std::endl;
                 }
 #endif
                 network.layers().push_back(layer);
@@ -568,6 +570,14 @@ namespace Synet
         {
             layer.type() = Synet::LayerTypeUnaryOperation;
             layer.unaryOperation().type() = UnaryOperationTypeExp;
+            return true;
+        }
+
+        bool ConvertFlattenNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeFlatten;
+            if (!ConvertAtrributeInt(node, "axis", layer.flatten().axis()))
+                return false;
             return true;
         }
 
@@ -1094,11 +1104,16 @@ namespace Synet
             return NULL;
         }
 
-        template<class T> bool ConvertAtrributeInt(const onnx::NodeProto& node, const String& name, T & value)
+        template<class T> bool ConvertAtrributeInt(const onnx::NodeProto& node, const String& name, T & value, bool optional = false, const T & defVal = T())
         {
             const onnx::AttributeProto* attribute = GetAtrribute(node, name);
             if (attribute == NULL)
             {
+                if (optional)
+                {
+                    value = defVal;
+                    return true;
+                }
                 std::cout << "Can't find attribute " << name << " !" << std::endl;
                 return false;
             }
@@ -1111,11 +1126,16 @@ namespace Synet
             return true;
         }
 
-        bool ConvertAtrributeFloat(const onnx::NodeProto& node, const String& name, float & value)
+        bool ConvertAtrributeFloat(const onnx::NodeProto& node, const String& name, float & value, bool optional = false, const float & defVal = float())
         {
             const onnx::AttributeProto* attribute = GetAtrribute(node, name);
             if (attribute == NULL)
             {
+                if (optional)
+                {
+                    value = defVal;
+                    return true;
+                }
                 std::cout << "Can't find attribute " << name << " !" << std::endl;
                 return false;
             }
@@ -1128,11 +1148,17 @@ namespace Synet
             return true;
         }
 
-        template<class T> bool ConvertAtrributeInts(const onnx::NodeProto& node, const String& name, std::vector<T>& values)
+        template<class T> bool ConvertAtrributeInts(const onnx::NodeProto& node, const String& name, std::vector<T>& values, 
+            bool optional = false, const std::vector<T> & defVals = std::vector<T>())
         {
             const onnx::AttributeProto* attribute = GetAtrribute(node, name);
             if (attribute == NULL)
             {
+                if (optional)
+                {
+                    values = defVals;
+                    return true;
+                }
                 std::cout << "Can't find attribute " << name << " !" << std::endl;
                 return false;
             }
