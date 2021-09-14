@@ -177,6 +177,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "ReduceMax" && !ConvertReduceMaxNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "ReduceMean" && !ConvertReduceMeanNode(node, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "ReduceSum" && !ConvertReduceSumNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Relu" && !ConvertReluNode(node, layer))
@@ -751,6 +753,21 @@ namespace Synet
                 for(size_t i = 0; i < axis.size(); ++i)
                     layer.reduction().axis()[i] = nchw[axis[i]];
             }
+            return true;
+        }
+
+        bool ConvertReduceMeanNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeReduction;
+            layer.reduction().type() = ReductionTypeMax;
+            Ints axes;
+            if (!ConvertAtrributeInts(node, "axes", axes))
+                return false;
+            if (axes.size() != 2 || axes[0] != 2 || axes[1] != 3)
+                return false;
+            layer.type() = Synet::LayerTypePooling;
+            layer.pooling().method() = PoolingMethodTypeAverage;
+            layer.pooling().globalPooling() = true;
             return true;
         }
 
