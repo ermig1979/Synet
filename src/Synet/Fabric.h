@@ -44,6 +44,7 @@
 #include "Synet/Layers/FlattenLayer.h"
 #include "Synet/Layers/FusedLayer.h"
 #include "Synet/Layers/GatherLayer.h"
+#include "Synet/Layers/HardSigmoidLayer.h"
 #include "Synet/Layers/HswishLayer.h"
 #include "Synet/Layers/InnerProductLayer.h"
 #include "Synet/Layers/InputLayer.h"
@@ -128,6 +129,7 @@ namespace Synet
             case LayerTypeFused: return new FusedLayer<T>(param, context);
             case LayerTypeGather: return new GatherLayer<T>(param, context);
             case LayerTypeHswish: return new HswishLayer<T>(param, context);
+            case LayerTypeHardSigmoid: return new HardSigmoidLayer<T>(param, context);
             case LayerTypeInnerProduct: return new InnerProductLayer<T>(param, context, method);
             case LayerTypeInput: return new InputLayer<T>(param, context);
             case LayerTypeInterp: return new InterpLayer<T>(param, context);
