@@ -593,6 +593,13 @@ namespace Synet
                 dst.back().convolution().activationParam0() = act.softplus().threshold();
                 result = true;
             }
+            if (act.type() == LayerTypeHardSigmoid)
+            {
+                dst.back().convolution().activationType() = ActivationFunctionTypeHardSigmoid;
+                dst.back().convolution().activationParam0() = act.hardSigmoid().scale();
+                dst.back().convolution().activationParam1() = act.hardSigmoid().shift();
+                result = true;
+            }
             if (result)
             {
                 if (dst.back().convolution().quantizationLevel() == TensorType8i)

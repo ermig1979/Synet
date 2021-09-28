@@ -33,6 +33,7 @@
 #include "Synet/Layers/PreluLayer.h"
 #include "Synet/Layers/ScaleLayer.h"
 #include "Synet/Layers/HswishLayer.h"
+#include "Synet/Layers/HardSigmoidLayer.h"
 
 namespace Synet
 {

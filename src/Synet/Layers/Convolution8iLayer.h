@@ -363,6 +363,9 @@ namespace Synet
             case ActivationFunctionTypeMish:
                 CpuMish(dst, alg.dSize, alg.params[0], dst);
                 break;
+            case ActivationFunctionTypeHardSigmoid:
+                Detail::HardSigmoidLayerForwardCpu(dst, alg.dSize, alg.params[0], alg.params[1], dst);
+                break;
             default:
                 assert(0);
             }

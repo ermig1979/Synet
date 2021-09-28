@@ -28,6 +28,7 @@
 #include "Synet/Layer.h"
 #include "Synet/Utils/MergedConvolution.h"
 #include "Synet/Layers/HswishLayer.h"
+#include "Synet/Layers/HardSigmoidLayer.h"
 
 namespace Synet
 {
@@ -99,6 +100,14 @@ namespace Synet
             static SYNET_INLINE T Func(T value, const T* params, size_t offset)
             {
                 return CpuMish(value, params[0]);
+            }
+        };
+
+        template<class T> struct Activation<T, ActivationFunctionTypeHardSigmoid>
+        {
+            static SYNET_INLINE T Func(T value, const T * params, size_t offset)
+            {
+                return Detail::HardSigmoidCpu(value, params[0], params[1]);
             }
         };
 

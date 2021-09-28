@@ -104,7 +104,8 @@ namespace Synet
         ActivationFunctionTypePrelu,
         ActivationFunctionTypeElu,
         ActivationFunctionTypeHswish,
-        ActivationFunctionTypeMish);
+        ActivationFunctionTypeMish,
+        ActivationFunctionTypeHardSigmoid);
 
     SYNET_PARAM_ENUM(BinaryOperationType,
         BinaryOperationTypeDiv,

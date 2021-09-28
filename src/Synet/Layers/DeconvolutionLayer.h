@@ -30,6 +30,7 @@
 #include "Synet/Utils/ImgToCol.h"
 #include "Synet/Utils/Deconvolution.h"
 #include "Synet/Layers/HswishLayer.h"
+#include "Synet/Layers/HardSigmoidLayer.h"
 
 namespace Synet
 {
@@ -243,6 +244,9 @@ namespace Synet
                         break;
                     case ActivationFunctionTypeMish:
                         CpuMish(dst, _dstSize, _params[0], dst);
+                        break;
+                    case ActivationFunctionTypeHardSigmoid:
+                        Detail::HardSigmoidLayerForwardCpu(dst, _dstSize, _params[0], _params[1], dst);
                         break;
                     default:
                         assert(0);

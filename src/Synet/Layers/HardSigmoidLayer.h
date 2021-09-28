@@ -75,7 +75,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            Detail::HswishLayerForwardCpu(src[0]->CpuData(), src[0]->Size(), _scale, _shift, dst[0]->CpuData());
+            Detail::HardSigmoidLayerForwardCpu(src[0]->CpuData(), src[0]->Size(), _scale, _shift, dst[0]->CpuData());
         }
 
     private:
