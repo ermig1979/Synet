@@ -274,9 +274,14 @@ namespace Test
             Strings names;
             names.reserve(images.size());
             size_t curr = 0;
-            for (StringList::const_iterator it = images.begin(); it != images.end(); ++it, ++curr)
+            for (StringList::const_iterator it = images.begin(); it != images.end(); ++it)
+            {
                 if (curr >= _options.imageBegin && curr < _options.imageEnd && RequiredExtension(*it))
+                {
                     names.push_back(*it);
+                    curr++;
+                }
+            }
 
             size_t sN = network.SrcCount(), bN = _options.batchSize;
             size_t tN = names.size() / bN / sN;
