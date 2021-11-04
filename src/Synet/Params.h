@@ -125,6 +125,7 @@ namespace Synet
         MetaTypeAdd,
         MetaTypeCast,
         MetaTypeConst,
+        MetaTypeDiv,
         MetaTypeExpandDims,
         MetaTypeFill,
         MetaTypeGather,

@@ -145,6 +145,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "BatchNormalization" && !ConvertBatchNormalizationNode(node, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Cast" && !ConvertCastNode(node, network.layers(), original, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Clip" && !ConvertClipNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Concat" && !ConvertConcatNode(node, trans, network.layers(), layer))
@@ -185,15 +187,21 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Reshape" && !ConvertReshapeNode(node, trans, network.layers(), original, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Resize" && !ConvertResizeNode(node, network.layers(), original, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Shape" && !ConvertShapeNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Sigmoid" && !ConvertSigmoidNode(node, layer))
+                    return ErrorMessage(i, node);
+                if (node.op_type() == "Slice" && !ConvertSliceNode(node, network.layers(), original, layer))
+                    return ErrorMessage(i, node);
+                if (node.op_type() == "Softmax" && !ConvertSoftmaxNode(node, trans, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Sub" && !ConvertSubNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Squeeze" && !ConvertSqueezeNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Transpose" && !ConvertTransposeNode(node, layer))
+                if (node.op_type() == "Transpose" && !ConvertTransposeNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Unsqueeze" && !ConvertUnsqueezeNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -410,6 +418,40 @@ namespace Synet
             return true;
         }
 
+        bool ConvertCastNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 1))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            if (src0 == NULL)
+                return false;
+            int to;
+            if (!ConvertAtrributeInt(node, "to", to))
+                return false;
+            if (src0->type() == LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeCast;
+                if (to == onnx::TensorProto_DataType_FLOAT)
+                    layer.meta().alpha().type() = TensorType32f;
+                else if (to == onnx::TensorProto_DataType_INT32)
+                    layer.meta().alpha().type() = TensorType32i;
+                else if (to == onnx::TensorProto_DataType_INT64)
+                    layer.meta().alpha().type() = TensorType64i;
+                else
+                    return false;
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeCast;
+                if (to == onnx::TensorProto_DataType_FLOAT)
+                    layer.cast().type() = TensorType32f;
+                else if (to == onnx::TensorProto_DataType_INT32)
+                    layer.cast().type() = TensorType32i;
+            }
+            return true;
+        }
+
         bool ConvertClipNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeRestrictRange;
@@ -559,6 +601,11 @@ namespace Synet
             else if (src0->type() == LayerTypeConst && TensorSize(src0->weight()[0].dim()) == 1)
             {
                 return false;
+            }
+            else if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeDiv;
             }
             else
             {
@@ -833,6 +880,23 @@ namespace Synet
             return true;
         }
 
+        bool ConvertResizeNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            String mode;
+            if (!ConvertAtrributeString(node, "mode", mode))
+                return false;
+            if (mode == "nearest")
+                layer.interp().interpolationType() = InterpolationTypeNearest;
+            else
+                return false;
+            layer.type() = Synet::LayerTypeInterp;
+            return true;
+        }
+
         bool ConvertShapeNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = LayerTypeMeta;
@@ -844,6 +908,18 @@ namespace Synet
         bool ConvertSigmoidNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeSigmoid;
+            return true;
+        }
+
+        bool ConvertSoftmaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeSoftmax;
+            if (!ConvertAtrributeInt(node, "axis", layer.softmax().axis()))
+                return false;
+            if (trans && !PermutedToNchw(layers, layer.src(), false, false, false))
+            {
+                return false;
+            }
             return true;
         }
 
@@ -865,6 +941,26 @@ namespace Synet
                 if (!ConvertAtrributeInts(node, "axes", layer.squeeze().axes()))
                     return false;
             }
+            return true;
+        }
+
+        bool ConvertSliceNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 4))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+            const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
+            if (src0 == NULL || src1 == NULL || src2 == NULL || src3 == NULL)
+                return false;
+            if (src0->type() == LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = MetaTypeSlice;
+            }
+            else
+                return false;
             return true;
         }
 
@@ -900,13 +996,23 @@ namespace Synet
             return true;
         }
 
-        bool ConvertTransposeNode(const onnx::NodeProto& node, LayerParam& layer)
+        bool ConvertTransposeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1))
                 return false;
             layer.type() = Synet::LayerTypePermute;
-            if (!ConvertAtrributeInts(node, "perm", layer.permute().order()))
+            Shape order;
+            if (!ConvertAtrributeInts(node, "perm", order))
                 return false;
+            if (trans && !PermutedToNchw(layers, true, false, true))
+            {
+                if (order == Shape({ 0, 2, 3, 1 }))
+                {
+                    order = Shape({ 0, 1, 2, 3 });
+                    layer.permute().format() = TensorFormatNchw;
+                }
+            }
+            layer.permute().order() = order;
             return true;
         }
 
@@ -1056,6 +1162,9 @@ namespace Synet
             case onnx::AttributeProto_AttributeType_FLOAT:
                 ss << attribute.f();
                 break;
+            case onnx::AttributeProto_AttributeType_STRING:
+                ss << attribute.s();
+                break;
             case onnx::AttributeProto_AttributeType_TENSOR:
                 ss << TensorString(attribute.t());
                 break;
@@ -1162,6 +1271,28 @@ namespace Synet
                 return false;
             }
             value = attribute->f();
+            return true;
+        }
+
+        bool ConvertAtrributeString(const onnx::NodeProto& node, const String& name, String & value, bool optional = false, const String & defVal = String())
+        {
+            const onnx::AttributeProto* attribute = GetAtrribute(node, name);
+            if (attribute == NULL)
+            {
+                if (optional)
+                {
+                    value = defVal;
+                    return true;
+                }
+                std::cout << "Can't find attribute " << name << " !" << std::endl;
+                return false;
+            }
+            if (attribute->type() != onnx::AttributeProto_AttributeType_STRING)
+            {
+                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
+                return false;
+            }
+            value = attribute->s();
             return true;
         }
 

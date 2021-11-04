@@ -49,6 +49,7 @@ namespace Synet
             case MetaTypeAdd: ReshapeAdd(src, dst); break;
             case MetaTypeCast: ReshapeCast(src, param.alpha(), dst); break;
             case MetaTypeConst: ReshapeConst(param.alpha(), dst); break;
+            case MetaTypeDiv: ReshapeDiv(src, dst); break;
             case MetaTypeExpandDims: ReshapeExpandDims(src, dst); break;
             case MetaTypeGather: ReshapeGather(src, dst); break;
             case MetaTypeGreater: ReshapeGreater(src, dst); break;
@@ -161,6 +162,19 @@ namespace Synet
         void ReshapeConst(const TensorParam & alpha, const TensorPtrs & dst)
         {
             dst[0]->Import(alpha);
+        }
+
+        void ReshapeDiv(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            assert(src.size() == 2 && src[0]->Size() == src[1]->Size());
+            if (src[0]->GetType() == TensorType32f && src[1]->GetType() == TensorType32f)
+            {
+                dst[0]->As32f().Reshape(src[0]->Shape());
+                for (size_t i = 0; i < src[0]->Size(); ++i)
+                    dst[0]->As32f().CpuData()[i] = src[0]->As32f().CpuData()[i] / src[1]->As32f().CpuData()[i];
+            }
+            else
+                assert(0);
         }
 
         void ReshapeExpandDims(const TensorPtrs & src, const TensorPtrs & dst)
@@ -517,9 +531,9 @@ namespace Synet
 
         void ReshapeSlice(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            assert(src.size() == 3 && src[0]->Count() == 1 && src[1]->Size() == 1 && src[2]->Size() == 1);
             if (src[0]->GetType() == TensorType32i)
             {
+                assert(src.size() == 3 && src[0]->Count() == 1 && src[1]->Size() == 1 && src[2]->Size() == 1);
                 const Synet::Tensor<int32_t> & src0 = src[0]->As32i();
                 size_t begin = src[1]->As32i().CpuData()[0];
                 size_t size = src[2]->As32i().CpuData()[0];
@@ -527,6 +541,17 @@ namespace Synet
                 dst0.Reshape({ size });
                 for (size_t i = 0; i < size; ++i)
                     dst0.CpuData()[i] = src0.CpuData()[begin + i];
+            }
+            else if (src[0]->GetType() == TensorType64i)
+            {
+                assert(src.size() == 4 && src[0]->Count() == 1 && src[1]->Size() == 1 && src[2]->Size() == 1 && src[3]->Size() == 1);
+                const Synet::Tensor<int64_t> & src0 = src[0]->As64i();
+                size_t beg = src[1]->As64i().CpuData()[0];
+                size_t end = Min<size_t>(src[2]->As64i().CpuData()[0], src[0]->Size());
+                Synet::Tensor<int64_t> & dst0 = dst[0]->As64i();
+                dst0.Reshape({ end - beg });
+                for (size_t i = beg; i < end; ++i)
+                    dst0.CpuData()[i - beg] = src0.CpuData()[i];
             }
             else
                 assert(0);
