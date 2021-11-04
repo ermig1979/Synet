@@ -193,7 +193,14 @@ namespace Synet
 
             size_t srcH = _srcH - _padY - _padH;
             size_t srcW = _srcW - _padX - _padW;
-            if (param.factor() != 1.0f)
+            if (src.size() == 2)
+            {
+                const float * factor = src[1]->CpuData();
+                //assert(src[1]->Size() == 2);
+                _dstH = size_t(srcH * factor[2]);
+                _dstW = size_t(srcW * factor[3]);
+            }
+            else if (param.factor() != 1.0f)
             {
                 float factor = param.factor();
                 if (_alignCorners)

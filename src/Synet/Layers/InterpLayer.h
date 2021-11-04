@@ -98,11 +98,14 @@ namespace Synet
                 for (int dy = 0; dy < dstH; ++dy)
                 {
                     //size_t sy = (size_t)(ky*(dy + 0.5f));
-                    size_t sy = Round(dy * ky + kx / 2.0f - 0.5f);
+                    //size_t sy = Round(dy * ky + kx / 2.0f - 0.5f);
+                    //size_t sy = Round(dy * sizeH / dstH + kx / 2.0f - 0.5f);
+                    size_t sy = dy * sizeH / dstH;
                     for (int dx = 0; dx < dstW; ++dx)
                     {
                         //size_t sx = (size_t)(kx*(dx + 0.5f));
-                        size_t sx = Round(dx * kx + ky / 2.0f - 0.5f);
+                        //size_t sx = Round(dx * kx + ky / 2.0f - 0.5f);
+                        size_t sx = dx * sizeW / dstW;
                         const T * s = src + (sy * srcW + sx)*channels;
                         T * d = dst + (dy * dstW + dx)*channels;
                         memcpy(d, s, channels * sizeof(T));
@@ -114,11 +117,13 @@ namespace Synet
                 for (int dy = 0; dy < dstH; ++dy)
                 {
                     //size_t sy = (size_t)(ky*(dy + 0.5f));
-                    size_t sy = Round(dy * ky + kx / 2.0f - 0.5f);
+                    //size_t sy = Round(dy * ky + kx / 2.0f - 0.5f);
+                    size_t sy = dy * sizeH / dstH;
                     for (int dx = 0; dx < dstW; ++dx)
                     {
                         //size_t sx = (size_t)(kx*(dx + 0.5f));
-                        size_t sx = Round(dx * kx + ky / 2.0f - 0.5f);
+                        //size_t sx = Round(dx * kx + ky / 2.0f - 0.5f);
+                        size_t sx = dx * sizeW / dstW;
                         const T * s = src + sy * srcW + sx;
                         T * d = dst + dy * dstW + dx;
                         for (int c = 0; c < channels; ++c)
@@ -211,11 +216,20 @@ namespace Synet
             assert(_src8u == _dst8u);
             size_t srcH = _srcH - _cropBeg - _cropEnd;
             size_t srcW = _srcW - _cropBeg - _cropEnd;
-            if (param.useTensorSize())
+            if (src.size() == 2)
             {
-                assert(src.size() > 1 && _trans == 0);
-                _dstH = _trans ? src[1]->Axis(1) : src[1]->Axis(2);
-                _dstW = _trans ? src[1]->Axis(2) : src[1]->Axis(3);
+                if (param.useTensorSize())
+                {
+                    assert(src.size() > 1 && _trans == 0);
+                    _dstH = _trans ? src[1]->Axis(1) : src[1]->Axis(2);
+                    _dstW = _trans ? src[1]->Axis(2) : src[1]->Axis(3);
+                } 
+                else
+                {
+                    const float * factor = src[1]->CpuData();
+                    _dstH = size_t(srcH * factor[2]);
+                    _dstW = size_t(srcW * factor[3]);
+                }
             }
             else if (param.shrinkFactor() != 1 && param.zoomFactor() == 1)
             {

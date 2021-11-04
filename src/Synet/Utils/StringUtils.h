@@ -56,7 +56,7 @@ namespace Synet
         return ss.str();
     }
 
-    template<class T> SYNET_INLINE  void StringToValue(const String& string, T& value)
+    template<class T> SYNET_INLINE void StringToValue(const String& string, T& value)
     {
         std::stringstream ss(string);
         ss >> value;
