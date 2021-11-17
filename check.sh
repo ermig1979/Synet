@@ -1,3 +1,4 @@
+MODE=$1
 DATE_TIME=`date +"%Y_%m_%d__%H_%M"`
 COUNTER=0
 
@@ -25,7 +26,7 @@ else
     THRESHOLD=0.0016; QUANTILE=0.0 METHOD=-1
   fi
 fi
-OUT=./test/check/"$DATE_TIME"
+OUT=./test/check/"$DATE_TIME$MODE"
 LOG="$OUT"/c"$PREFIX"_"$NAME"_f"$FORMAT"_b"$BATCH".txt
 BIN_DIR=./build
 BIN="$BIN_DIR"/test_"$FRAMEWORK"
@@ -42,7 +43,7 @@ if [ "$BATCH" = "1" ];then
   if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -rn=1 -wt=1 -tt=0 -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -cs=1 -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -rn=1 -wt=1 -tt=0 -ie=10 -be=10 -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -cs=1 -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
@@ -64,11 +65,11 @@ TEST onnx $1 $2 1 1
 if [ $3 -ne 0 ];then TEST onnx $1 $2 1 2; fi
 }
 
-function TEST_ALL_D {
+function TEST_D_ALL {
 TEST_D test_000 local 1
 }
 
-function TEST_ALL_I {
+function TEST_I_ALL {
 TEST_I test_000 local 1
 TEST_I test_001 local 1
 TEST_I test_002 local 0
@@ -88,12 +89,21 @@ TEST_I test_014f local 0
 TEST_I test_015f license_plates 0
 }
 
-function TEST_ALL_O {
+function TEST_O_ALL {
 TEST_O test_000 face 1
+TEST_O test_001 faces 0
 }
 
-TEST_ALL_D
-TEST_ALL_I
-TEST_ALL_O
+function TEST_ALL {
+TEST_D_ALL
+TEST_I_ALL
+TEST_O_ALL
+}
+
+if [ "${MODE}" == "" ]; then TEST_ALL; fi
+if [ "${MODE}" == "d" ]; then TEST_D_ALL; fi
+if [ "${MODE}" == "i" ]; then TEST_I_ALL; fi
+if [ "${MODE}" == "o" ]; then TEST_O_ALL; fi
 
 exit
+

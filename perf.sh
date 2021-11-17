@@ -1,3 +1,4 @@
+MODE=$1
 DATE_TIME=`date +"%Y_%m_%d__%H_%M"`
 TEST_THREAD=1
 BATCH_SIZE=10
@@ -40,7 +41,7 @@ if [ "$BATCH" = "1" ];then
   if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -re=1 -et=10.0 -st=100.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -re=1 -et=10.0 -ie=10 -be=10 -st=100.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
@@ -53,11 +54,11 @@ TEST $FRAMEWORK $TEST_NAME $TEST_IMAGE $TEST_THREAD 1
 if [ $TEST_BATCH -ne 0 ];then TEST $FRAMEWORK $TEST_NAME $TEST_IMAGE $TEST_THREAD $BATCH_SIZE; fi
 }
 
-function TESTS_D {
+function TESTS_D_ALL {
 TESTS darknet test_000 local 1
 }
 
-function TESTS_I {
+function TESTS_I_ALL {
 TESTS inference_engine test_000 local 1
 TESTS inference_engine test_001 local 1
 TESTS inference_engine test_002 local 0
@@ -76,19 +77,27 @@ TESTS inference_engine test_014f local 0
 TESTS inference_engine test_015f license_plates 0
 }
 
-function TESTS_O {
+function TESTS_O_ALL {
 TESTS onnx test_000 face 1
+TESTS onnx test_001 faces 0
 }
 
-function TESTS_Q {
+function TESTS_Q_ALL {
 TESTS quantization test_003 faces 0
 TESTS quantization test_009 persons 0
 }
 
-TESTS_D
-TESTS_I
-TESTS_O
-#TESTS_Q
+function TEST_ALL {
+TEST_D_ALL
+TEST_I_ALL
+TEST_O_ALL
+}
+
+if [ "${MODE}" == "" ]; then TEST_ALL; fi
+if [ "${MODE}" == "d" ]; then TEST_D_ALL; fi
+if [ "${MODE}" == "i" ]; then TEST_I_ALL; fi
+if [ "${MODE}" == "o" ]; then TEST_O_ALL; fi
+if [ "${MODE}" == "q" ]; then TEST_Q_ALL; fi
 
 cat $OUT_TEXT
 

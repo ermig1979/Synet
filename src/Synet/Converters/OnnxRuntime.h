@@ -173,7 +173,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "MaxPool" && !ConvertMaxPoolNode(node, layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Mul" && !ConvertMulNode(node, layer))
+                if (node.op_type() == "Mul" && !ConvertMulNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "PRelu" && !ConvertPreluNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -532,6 +532,8 @@ namespace Synet
                     size *= tensor.dims(i);
                     layer.weight()[0].dim().push_back(size_t(tensor.dims(i)));
                 }
+                if (layer.weight()[0].dim().empty())
+                    layer.weight()[0].dim().push_back(1);
                 layer.weight()[0].offset() = offset * sizeof(float);
                 layer.weight()[0].size() = size * sizeof(float);
                 if (tensor.has_raw_data() && size)
@@ -747,12 +749,26 @@ namespace Synet
             return true;
         }
 
-        bool ConvertMulNode(const onnx::NodeProto& node, LayerParam& layer)
+        bool ConvertMulNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
-            layer.type() = Synet::LayerTypeEltwise;
-            layer.eltwise().operation() = EltwiseOperationTypeProduct;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
+            if (src1->type() == LayerTypeConst && TensorSize(src1->weight()[0].dim()) == 1)
+            {
+                layer.type() = Synet::LayerTypePower;
+                const float* pScale = GetWeight<float>(original, src1->weight()[0]);
+                layer.power().scale() = pScale[0];
+                layer.src().resize(1);
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeEltwise;
+                layer.eltwise().operation() = EltwiseOperationTypeProduct;
+            }
             return true;
         }
 
@@ -946,21 +962,34 @@ namespace Synet
 
         bool ConvertSliceNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
         {
-            if (!CheckSourceNumber(layer, 4))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
-            const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
-            if (src0 == NULL || src1 == NULL || src2 == NULL || src3 == NULL)
-                return false;
-            if (src0->type() == LayerTypeMeta)
+            if (layer.src().size() == 1)
             {
-                layer.type() = Synet::LayerTypeMeta;
-                layer.meta().type() = MetaTypeSlice;
+                if (!ConvertAtrributeInts(node, "axes", layer.stridedSlice().shrinkAxisMask()))
+                    return false;
+                if (!ConvertAtrributeInts(node, "starts", layer.stridedSlice().beginDims()))
+                    return false;
+                if (!ConvertAtrributeInts(node, "ends", layer.stridedSlice().endDims()))
+                    return false;
+                layer.type() = Synet::LayerTypeStridedSlice;
             }
             else
-                return false;
+            {
+                if (!CheckSourceNumber(layer, 4))
+                    return false;
+                const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+                const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+                const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+                const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
+                if (src0 == NULL || src1 == NULL || src2 == NULL || src3 == NULL)
+                    return false;
+                if (src0->type() == LayerTypeMeta)
+                {
+                    layer.type() = Synet::LayerTypeMeta;
+                    layer.meta().type() = MetaTypeSlice;
+                }
+                else
+                    return false;
+            }
             return true;
         }
 

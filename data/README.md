@@ -38,6 +38,7 @@ ONNX tests
 | Name | Description | Architecture | Original |
 | --- | --- | --- | --- |
 | test_000 | Object classification | MobileNet-V2 | [13.6 MB](https://github.com/onnx/models/blob/master/vision/classification/mobilenet/model/mobilenetv2-7.onnx) |
+| test_001 | Face detection | UltraFace | [1.6 MB](https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB/blob/master/models/onnx/version-RFB-640.onnx) |
 
 ----------------------
 Quantization tests
