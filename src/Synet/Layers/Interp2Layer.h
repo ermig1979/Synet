@@ -120,7 +120,7 @@ namespace Synet
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
         template <> inline void Interp2LayerForwardCpuBilinear<float>(size_t channels, const float * src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, float * dst, size_t dstH, size_t dstW, int alignCorners, int trans)
         {
-            SimdResizeMethodType method = alignCorners ? ::SimdResizeMethodCaffeInterp : ::SimdResizeMethodInferenceEngineInterp;
+            SimdResizeMethodType method = alignCorners ? ::SimdResizeMethodBilinearCaffe : ::SimdResizeMethodBilinearPytorch;
             if (trans)
             {
                 void * resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, channels, ::SimdResizeChannelFloat, method);

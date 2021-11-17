@@ -318,6 +318,12 @@
     <ClInclude Include="..\..\src\Synet\Converters\OnnxRuntime.h">
       <Filter>Converters</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\HardSigmoidLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Converters\OnnxCommon.h">
+      <Filter>Converters</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

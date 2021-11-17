@@ -33,6 +33,7 @@
     <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineBase.h" />
     <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineV10.h" />
     <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineV7.h" />
+    <ClInclude Include="..\..\src\Synet\Converters\OnnxCommon.h" />
     <ClInclude Include="..\..\src\Synet\Converters\OnnxNgraph.h" />
     <ClInclude Include="..\..\src\Synet\Converters\OnnxRuntime.h" />
     <ClInclude Include="..\..\src\Synet\Converters\Optimizer.h" />
@@ -60,6 +61,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\FlattenLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\FusedLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\GatherLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\HardSigmoidLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\HswishLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InnerProductLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InputLayer.h" />

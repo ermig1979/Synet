@@ -97,14 +97,9 @@ namespace Synet
             {
                 for (int dy = 0; dy < dstH; ++dy)
                 {
-                    //size_t sy = (size_t)(ky*(dy + 0.5f));
-                    //size_t sy = Round(dy * ky + kx / 2.0f - 0.5f);
-                    //size_t sy = Round(dy * sizeH / dstH + kx / 2.0f - 0.5f);
                     size_t sy = dy * sizeH / dstH;
                     for (int dx = 0; dx < dstW; ++dx)
                     {
-                        //size_t sx = (size_t)(kx*(dx + 0.5f));
-                        //size_t sx = Round(dx * kx + ky / 2.0f - 0.5f);
                         size_t sx = dx * sizeW / dstW;
                         const T * s = src + (sy * srcW + sx)*channels;
                         T * d = dst + (dy * dstW + dx)*channels;
@@ -116,13 +111,9 @@ namespace Synet
             {
                 for (int dy = 0; dy < dstH; ++dy)
                 {
-                    //size_t sy = (size_t)(ky*(dy + 0.5f));
-                    //size_t sy = Round(dy * ky + kx / 2.0f - 0.5f);
                     size_t sy = dy * sizeH / dstH;
                     for (int dx = 0; dx < dstW; ++dx)
                     {
-                        //size_t sx = (size_t)(kx*(dx + 0.5f));
-                        //size_t sx = Round(dx * kx + ky / 2.0f - 0.5f);
                         size_t sx = dx * sizeW / dstW;
                         const T * s = src + sy * srcW + sx;
                         T * d = dst + dy * dstW + dx;
@@ -142,13 +133,13 @@ namespace Synet
         {
             if (trans)
             {
-                void * resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, channels, ::SimdResizeChannelFloat, ::SimdResizeMethodCaffeInterp);
+                void * resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, channels, ::SimdResizeChannelFloat, ::SimdResizeMethodBilinearCaffe);
                 ::SimdResizerRun(resizer, (uint8_t*)src, channels * srcW * sizeof(float), (uint8_t*)dst, channels * dstW * sizeof(float));
                 ::SimdRelease(resizer);
             }
             else
             {
-                void * resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, 1, ::SimdResizeChannelFloat, ::SimdResizeMethodCaffeInterp);
+                void * resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, 1, ::SimdResizeChannelFloat, ::SimdResizeMethodBilinearCaffe);
                 for (size_t c = 0; c < channels; ++c)
                 {
                     ::SimdResizerRun(resizer, (uint8_t*)src, srcW * sizeof(float), (uint8_t*)dst, dstW * sizeof(float));
@@ -156,6 +147,27 @@ namespace Synet
                     dst += dstH * dstW;
                 }
                 ::SimdRelease(resizer);            
+            }
+        }
+
+        template <> inline void InterpLayerForwardCpuNearest<float>(size_t channels, const float* src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, float* dst, size_t dstH, size_t dstW, int trans)
+        {
+            if (trans)
+            {
+                void* resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, channels, ::SimdResizeChannelFloat, ::SimdResizeMethodNearestPytorch);
+                ::SimdResizerRun(resizer, (uint8_t*)src, channels * srcW * sizeof(float), (uint8_t*)dst, channels * dstW * sizeof(float));
+                ::SimdRelease(resizer);
+            }
+            else
+            {
+                void* resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, 1, ::SimdResizeChannelFloat, ::SimdResizeMethodNearestPytorch);
+                for (size_t c = 0; c < channels; ++c)
+                {
+                    ::SimdResizerRun(resizer, (uint8_t*)src, srcW * sizeof(float), (uint8_t*)dst, dstW * sizeof(float));
+                    src += srcH * srcW;
+                    dst += dstH * dstW;
+                }
+                ::SimdRelease(resizer);
             }
         }
 #endif
