@@ -29,6 +29,7 @@
 #include "Synet/Tensor.h"
 #include "Synet/Converters/Optimizer.h"
 #include "Synet/Converters/OnnxCommon.h"
+#include "Synet/Decoders/Epsilon.h"
 
 namespace Test
 {
@@ -51,20 +52,13 @@ namespace Test
         SYNET_PARAM_VALUE(int32_t, size, 0);
     };
 
-    struct EpsilonParam
-    {
-        SYNET_PARAM_VALUE(bool, enable, false);
-        SYNET_PARAM_VALUE(Floats, variance, Floats({ 0.1f, 0.2f }));
-        SYNET_PARAM_VALUE(Shape, step, Shape({ 8, 16, 32, 64 }));
-        SYNET_PARAM_VALUE(Shape, minSize, Shape({ 10, 16, 24, 32, 48, 0, 64, 96, 0, 128, 192, 256 }));
-        SYNET_PARAM_VALUE(bool, clip, false);
-    };
-
     struct DetectionParam
     {
         SYNET_PARAM_VALUE(float, confidence, 0.5f);
         SYNET_PARAM_VALUE(float, overlap, 0.5f);
-        SYNET_PARAM_STRUCT(EpsilonParam, epsilon);
+        SYNET_PARAM_VALUE(String, decoder, String());
+        SYNET_PARAM_STRUCT(Synet::EpsilonParam, epsilon);
+
     };
 
     struct IdParam

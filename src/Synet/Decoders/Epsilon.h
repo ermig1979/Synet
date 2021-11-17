@@ -1,5 +1,5 @@
 /*
-* Tests for Synet Framework (http://github.com/ermig1979/Synet).
+* Synet Framework (http://github.com/ermig1979/Synet).
 *
 * Copyright (c) 2018-2020 Yermalayeu Ihar.
 *
