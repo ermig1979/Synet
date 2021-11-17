@@ -324,6 +324,9 @@
     <ClInclude Include="..\..\src\Synet\Converters\OnnxCommon.h">
       <Filter>Converters</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Epsilon.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -340,6 +343,9 @@
     </Filter>
     <Filter Include="Quantization">
       <UniqueIdentifier>{c7c3059c-3256-4387-ae02-ea14ca8acc63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Decoders">
+      <UniqueIdentifier>{6d46924f-0c58-45c2-af95-c6bca4f4bf1b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

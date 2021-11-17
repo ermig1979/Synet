@@ -38,6 +38,7 @@
     <ClInclude Include="..\..\src\Synet\Converters\OnnxRuntime.h" />
     <ClInclude Include="..\..\src\Synet\Converters\Optimizer.h" />
     <ClInclude Include="..\..\src\Synet\Converters\SynetUtils.h" />
+    <ClInclude Include="..\..\src\Synet\Decoders\Epsilon.h" />
     <ClInclude Include="..\..\src\Synet\Fabric.h" />
     <ClInclude Include="..\..\src\Synet\Layer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\AddLayer.h" />
