@@ -964,7 +964,7 @@ namespace Synet
         {
             if (layer.src().size() == 1)
             {
-                if (!ConvertAtrributeInts(node, "axes", layer.stridedSlice().shrinkAxisMask()))
+                if (!ConvertAtrributeInts(node, "axes", layer.stridedSlice().axes()))
                     return false;
                 if (!ConvertAtrributeInts(node, "starts", layer.stridedSlice().beginDims()))
                     return false;

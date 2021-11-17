@@ -589,6 +589,7 @@ namespace Synet
         SYNET_PARAM_VALUE(Shape, beginDims, Shape());
         SYNET_PARAM_VALUE(Shape, endDims, Shape());
         SYNET_PARAM_VALUE(Shape, strideDims, Shape());
+        SYNET_PARAM_VALUE(Shape, axes, Shape());
     };
 
     struct TileParam

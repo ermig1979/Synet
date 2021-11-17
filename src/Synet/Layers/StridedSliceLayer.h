@@ -48,17 +48,17 @@ namespace Synet
 
             _srcDims = src[0]->Shape();
 
-            _shrinkAxes = param.shrinkAxisMask();
+            _axes = param.axes();
             if (param.beginDims().size())
             {
-                if (_shrinkAxes.size())
+                if (_axes.size())
                 {
-                    assert(param.beginDims().size() == _shrinkAxes.size());
+                    assert(param.beginDims().size() == _axes.size());
                     for (size_t s = 0, b = 0; s < _srcDims.size(); ++s)
                     {
                         bool found = false;
-                        for (size_t a = 0; a < _shrinkAxes.size(); ++a)
-                            if (s == _shrinkAxes[a])
+                        for (size_t a = 0; a < _axes.size(); ++a)
+                            if (s == _axes[a])
                                 found = true;
                         _beginDims.push_back(found ? param.beginDims()[b++] : 0);
                     }
@@ -71,14 +71,14 @@ namespace Synet
                 _beginDims.resize(_srcDims.size(), 0);
             if (param.endDims().size())
             {
-                if (_shrinkAxes.size())
+                if (_axes.size())
                 {
-                    assert(param.endDims().size() == _shrinkAxes.size());
+                    assert(param.endDims().size() == _axes.size());
                     for (size_t s = 0, e = 0; s < _srcDims.size(); ++s)
                     {
                         bool found = false;
-                        for (size_t a = 0; a < _shrinkAxes.size(); ++a)
-                            if (s == _shrinkAxes[a])
+                        for (size_t a = 0; a < _axes.size(); ++a)
+                            if (s == _axes[a])
                                 found = true;
                         _endDims.push_back(found ?  Min<size_t>(param.endDims()[e++], _srcDims[s]) : _srcDims[s]);
                     }
@@ -182,7 +182,7 @@ namespace Synet
         }
 
     private:
-        Shape _shrinkAxes, _beginDims, _endDims, _strideDims, _srcDims, _dstDims;
+        Shape _axes, _beginDims, _endDims, _strideDims, _srcDims, _dstDims;
         Shape _srcStrides, _dstStrides;
     };
 }
