@@ -47,7 +47,7 @@ namespace Synet
         T x, y, w, h, prob;
         size_t id;
 
-        Region() : x(0), y(0), w(0), h(0), prob(0), id(0) {}
+        Region() : x(0), y(0), w(0), h(0), prob(0), id(0){}
     };
 
     template<class T> SYNET_INLINE T Intersection(const Region<T>& a, const Region<T>& b)
@@ -66,5 +66,28 @@ namespace Synet
     template<class T> SYNET_INLINE T Overlap(const Region<T>& a, const Region<T>& b)
     {
         return Intersection(a, b) / Union(a, b);
+    }
+
+    template<class T> void Filter(std::vector<Region<T>>& src, T threshold)
+    {
+        std::vector<Region<T>> dst;
+        dst.reserve(src.size());
+        for (size_t s = 0; s < src.size(); ++s)
+        {
+            bool orig = true;
+            for (size_t d = 0; d < dst.size(); ++d)
+            {
+                if (Overlap(src[s], dst[d]) > threshold)
+                {
+                    if (src[s].prob > dst[d].prob)
+                        dst[d] = src[s];
+                    orig = false;
+                    break;
+                }
+            }
+            if (orig)
+                dst.push_back(src[s]);
+        }
+        src.swap(dst);
     }
 }

@@ -327,6 +327,9 @@
     <ClInclude Include="..\..\src\Synet\Decoders\Epsilon.h">
       <Filter>Decoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Ultraface.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

@@ -54,6 +54,7 @@ namespace Synet
                 if (_axes.size())
                 {
                     assert(param.beginDims().size() == _axes.size());
+                    _beginDims.clear();
                     for (size_t s = 0, b = 0; s < _srcDims.size(); ++s)
                     {
                         bool found = false;
@@ -74,6 +75,7 @@ namespace Synet
                 if (_axes.size())
                 {
                     assert(param.endDims().size() == _axes.size());
+                    _endDims.clear();
                     for (size_t s = 0, e = 0; s < _srcDims.size(); ++s)
                     {
                         bool found = false;

@@ -30,6 +30,7 @@
 #include "Synet/Converters/Optimizer.h"
 #include "Synet/Converters/OnnxCommon.h"
 #include "Synet/Decoders/Epsilon.h"
+#include "Synet/Decoders/Ultraface.h"
 
 namespace Test
 {
@@ -58,7 +59,7 @@ namespace Test
         SYNET_PARAM_VALUE(float, overlap, 0.5f);
         SYNET_PARAM_VALUE(String, decoder, String());
         SYNET_PARAM_STRUCT(Synet::EpsilonParam, epsilon);
-
+        SYNET_PARAM_STRUCT(Synet::UltrafaceParam, ultraface);
     };
 
     struct IdParam

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <test>
-	<lower>0</lower>
-	<upper>255</upper>
+	<lower>-1</lower>
+	<upper>1</upper>
 	<model>onnx</model>
 	<input>
 		<item>
@@ -22,5 +22,8 @@
 			</shape>
 		</item>
 	</input>
+	<detection>
+		<decoder>ultraface</decoder>
+	</detection>
 </test>
 
