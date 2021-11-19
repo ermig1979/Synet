@@ -106,7 +106,7 @@ namespace Synet
                 if (_strideDims[i] > 0)
                 {
                     size_t begin = _beginDims[i];
-                    size_t end = _endDims[i] == 0 ? _srcDims[i] : _endDims[i];
+                    size_t end = _endDims[i] == 0 ? _srcDims[i] : Min(_endDims[i], _srcDims[i]);
                     for (; begin < end; begin += _strideDims[i])
                         count++;
                 }

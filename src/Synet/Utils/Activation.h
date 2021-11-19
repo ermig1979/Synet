@@ -41,15 +41,28 @@ namespace Synet
 
     //-------------------------------------------------------------------------
 
-    template<class T> SYNET_INLINE T CpuRestrictRange(T value, T lower, T upper)
+    template <class T> SYNET_INLINE T CpuHswish(T value, T shift, T scale)
     {
-        return Min(Max(lower, value), upper);
+        return Max(Min(value, shift) + shift, T(0))*scale*value;
     }
 
-    template<class T> void CpuRestrictRange(const T * src, size_t size, T lower, T upper, T * dst)
+    template <class T> void CpuHswish(const T * src, size_t size, T shift, T scale, T * dst)
     {
         for (size_t i = 0; i < size; ++i)
-            dst[i] = CpuRestrictRange(src[i], lower, upper);
+            dst[i] = CpuHswish(src[i], shift, scale);
+    }
+
+    //-------------------------------------------------------------------------
+
+    template <typename T> SYNET_INLINE T CpuMish(T value, T threshold)
+    {
+        return value > threshold ? value : value * (T(1) - T(2) / (Square(::exp(value) + T(1)) + T(1)));
+    }
+
+    template <typename T> void CpuMish(const T* src, size_t size, T threshold, T* dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = CpuMish(src[i], threshold);
     }
 
     //-------------------------------------------------------------------------
@@ -63,7 +76,20 @@ namespace Synet
     {
         for (size_t i = 0; i < size; ++i)
             dst[i] = CpuRelu(src[i], slope);
-    }    
+    }      
+    
+    //-------------------------------------------------------------------------
+
+    template<class T> SYNET_INLINE T CpuRestrictRange(T value, T lower, T upper)
+    {
+        return Min(Max(lower, value), upper);
+    }
+
+    template<class T> void CpuRestrictRange(const T * src, size_t size, T lower, T upper, T * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = CpuRestrictRange(src[i], lower, upper);
+    }
 
     //-------------------------------------------------------------------------
 
@@ -93,15 +119,15 @@ namespace Synet
 
     //-------------------------------------------------------------------------
 
-    template <typename T> SYNET_INLINE T CpuMish(T value, T threshold)
+    template <typename T> SYNET_INLINE T CpuSwish(T value)
     {
-        return value > threshold ? value : value * (T(1) - T(2) / (Square(::exp(value) + T(1)) + T(1)));
+        return value / (T(1) + ::exp(-value));
     }
 
-    template <typename T> void CpuMish(const T* src, size_t size, T threshold, T* dst)
+    template <typename T> void CpuSwish(const T * src, size_t size, T * dst)
     {
         for (size_t i = 0; i < size; ++i)
-            dst[i] = CpuMish(src[i], threshold);
+            dst[i] = CpuSwish(src[i]);
     }
 
     //-------------------------------------------------------------------------
@@ -110,7 +136,17 @@ namespace Synet
     template <> SYNET_INLINE void CpuElu<float>(const float * src, size_t size, float alpha, float * dst)
     {
         ::SimdSynetElu32f(src, size, &alpha, dst);
-    }    
+    }  
+
+    template <> SYNET_INLINE void CpuHswish<float>(const float * src, size_t size, float shift, float scale, float * dst)
+    {
+        ::SimdSynetHswish32f(src, size, &shift, &scale, dst);
+    }
+
+    template<> SYNET_INLINE void CpuMish<float>(const float* src, size_t size, float threshold, float* dst)
+    {
+        ::SimdSynetMish32f(src, size, &threshold, dst);
+    }
 
     template <> SYNET_INLINE void CpuRelu<float>(const float * src, size_t size, float negativeSlope, float * dst)
     {
@@ -133,9 +169,5 @@ namespace Synet
         ::SimdSynetSoftplus32f(src, size, &beta, &threshold, dst);
     }
 
-    template<> SYNET_INLINE void CpuMish<float>(const float* src, size_t size, float threshold, float* dst)
-    {
-        ::SimdSynetMish32f(src, size, &threshold, dst);
-    }
 #endif
 }

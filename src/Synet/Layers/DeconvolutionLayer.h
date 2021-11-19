@@ -29,7 +29,7 @@
 #include "Synet/Utils/Gemm.h"
 #include "Synet/Utils/ImgToCol.h"
 #include "Synet/Utils/Deconvolution.h"
-#include "Synet/Layers/HswishLayer.h"
+#include "Synet/Layers/ActivationLayers.h"
 #include "Synet/Layers/HardSigmoidLayer.h"
 
 namespace Synet
@@ -240,7 +240,7 @@ namespace Synet
                         CpuElu(dst, _dstSize, _params[0], dst);
                         break;
                     case ActivationFunctionTypeHswish:
-                        Detail::HswishLayerForwardCpu(dst, _dstSize, _params[0], _params[1], dst);
+                        CpuHswish(dst, _dstSize, _params[0], _params[1], dst);
                         break;
                     case ActivationFunctionTypeMish:
                         CpuMish(dst, _dstSize, _params[0], dst);

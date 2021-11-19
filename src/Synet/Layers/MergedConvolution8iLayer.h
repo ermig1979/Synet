@@ -260,7 +260,7 @@ namespace Synet
                 CpuElu(dst, dSize, params[0], dst);
                 break;
             case ActivationFunctionTypeHswish:
-                Detail::HswishLayerForwardCpu(dst, dSize, params[0], params[1], dst);
+                CpuHswish(dst, dSize, params[0], params[1], dst);
                 break;
             case ActivationFunctionTypeMish:
                 CpuMish(dst, dSize, params[0], dst);

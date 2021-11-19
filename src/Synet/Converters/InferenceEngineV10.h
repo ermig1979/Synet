@@ -80,6 +80,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Exp" && !ConvertExpLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
+                if (type == "Floor" && !ConvertFloorLayer(pLayer, dstXml.layers(), layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Gather" && !ConvertGatherLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "DetectionOutput" && !ConvertDetectionOutputLayer(pLayer, layer))
@@ -137,6 +139,8 @@ namespace Synet
                 if (type == "Squeeze" && !ConvertSqueezeLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "StridedSlice" && !ConvertStridedSliceLayer(pLayer, dstXml.layers(), srcBin, trans, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "Swish" && !ConvertSwishLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Tanh" && !ConvertTanhLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
@@ -410,6 +414,8 @@ namespace Synet
                     layer.meta().alpha().type() = TensorType32i;
                 else if (type == "i64")
                     layer.meta().alpha().type() = TensorType64i;
+                else if (type == "f32")
+                    layer.meta().alpha().type() = TensorType32f;
                 else
                     return false;
             }
@@ -512,7 +518,24 @@ namespace Synet
             layer.type() = Synet::LayerTypeUnaryOperation;
             layer.unaryOperation().type() = UnaryOperationTypeExp;
             return true;
-        }        
+        }  
+
+        bool ConvertFloorLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 1))
+                return false;
+            const LayerParam * source = GetLayer(layers, layer.src()[0]);
+            if (source == NULL)
+                return false;
+            if (source->type() == LayerTypeMeta)
+            {
+                layer.type() = LayerTypeMeta;
+                layer.meta().type() = MetaTypeFloor;
+            }
+            else
+                return false;
+            return true;
+        }
         
         bool ConvertGatherLayer(const XmlNode* pLayer, LayerParam& layer)
         {
@@ -554,8 +577,8 @@ namespace Synet
             layer.interp2().width() = (int32_t)alpha[1];
             layer.src().resize(1);
 #else
-            if (!CheckSourceNumber(layer, 2))
-                return false;
+            //if (!CheckSourceNumber(layer, 2))
+            //    return false;
             layer.type() = LayerTypeInterp;
             const XmlNode* pData = pLayer->FirstNode("data");
             if (pData == NULL)
@@ -672,7 +695,26 @@ namespace Synet
             const LayerParam* second = GetLayer(layers, layer.src()[1]);
             if (first == NULL || second == NULL)
                 return false;
-            if (first->type() == LayerTypeConst || second->type() == LayerTypeConst)
+            if (first->type() == LayerTypeMeta && (second->type() == LayerTypeMeta || second->type() == LayerTypeConst))
+            {
+                if (second->type() == LayerTypeConst)
+                {
+                    LayerParam* change = (LayerParam*)second;
+                    change->type() = Synet::LayerTypeMeta;
+                    change->meta().type() = Synet::MetaTypeConst;
+                    change->meta().alpha().type() = TensorType32f;
+                    change->meta().alpha().shape() = second->weight()[0].dim();
+                    size_t size = TensorSize(second->weight()[0].dim());
+                    change->meta().alpha().f32().resize(size);
+                    const float* src = GetWeight<float>(srcBin, second->weight()[0].offset());
+                    for (size_t i = 0; i < size; ++i)
+                        change->meta().alpha().f32()[i] = src[i];
+                    change->weight().clear();
+                }
+                layer.type() = LayerTypeMeta;
+                layer.meta().type() = MetaTypeMul;
+            }
+            else if (first->type() == LayerTypeConst || second->type() == LayerTypeConst)
             {
                 if (first->type() == LayerTypeConst)
                 {
@@ -1239,6 +1281,12 @@ namespace Synet
                 layer.eltwise().operation() = EltwiseOperationTypeSum;
                 layer.eltwise().coefficients() = Floats({1.0f, -1.0f});
             }
+            return true;
+        }
+
+        bool ConvertSwishLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeSwish;
             return true;
         }
 

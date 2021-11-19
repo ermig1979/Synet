@@ -27,7 +27,7 @@
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
 #include "Synet/Utils/MergedConvolution.h"
-#include "Synet/Layers/HswishLayer.h"
+#include "Synet/Layers/ActivationLayers.h"
 #include "Synet/Layers/HardSigmoidLayer.h"
 
 namespace Synet
@@ -91,7 +91,7 @@ namespace Synet
         {
             static SYNET_INLINE T Func(T value, const T * params, size_t offset)
             {
-                return Detail::HswishCpu(value, params[0], params[1]);
+                return CpuHswish(value, params[0], params[1]);
             }
         };
 

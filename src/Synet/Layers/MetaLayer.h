@@ -54,6 +54,7 @@ namespace Synet
             case MetaTypeGather: ReshapeGather(src, dst); break;
             case MetaTypeGreater: ReshapeGreater(src, dst); break;
             case MetaTypeFill: ReshapeFill(src, dst); break;
+            case MetaTypeFloor: ReshapeFloor(src, dst); break;
             case MetaTypeInput: ReshapeInput(src, dst); break;
             case MetaTypeInputWithDefault: ReshapeInputWithDefault(src, dst); break;
             case MetaTypeMaximum: ReshapeMaximum(src, dst); break;
@@ -214,6 +215,19 @@ namespace Synet
             {
                 Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
                 dst0.Reshape(shape, src[1]->As32i().CpuData()[0]);
+            }
+            else
+                assert(0);
+        }
+
+        void ReshapeFloor(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            assert(src.size() == 1);
+            if (src[0]->GetType() == TensorType32f)
+            {
+                dst[0]->As32f().Reshape(src[0]->Shape());
+                for (size_t i = 0; i < src[0]->Size(); ++i)
+                    dst[0]->As32f().CpuData()[i] = ::floor(src[0]->As32f().CpuData()[i]);
             }
             else
                 assert(0);

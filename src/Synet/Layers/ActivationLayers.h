@@ -26,31 +26,10 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/Utils/Math.h"
+#include "Synet/Utils/Activation.h"
 
 namespace Synet
 {
-    namespace Detail
-    {
-        template <class T> SYNET_INLINE T HswishCpu(T value, T shift, T scale)
-        {
-            return Max(Min(value, shift) + shift, T(0))*scale*value;
-        }
-
-        template <class T> void HswishLayerForwardCpu(const T * src, size_t size, T shift, T scale, T * dst)
-        {
-            for (size_t i = 0; i < size; ++i)
-                dst[i] = HswishCpu(src[i], shift, scale);
-        }
-
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-        template <> SYNET_INLINE void HswishLayerForwardCpu(const float * src, size_t size, float shift, float scale, float * dst)
-        {
-            ::SimdSynetHswish32f(src, size, &shift, &scale, dst);
-        }
-#endif
-    }
-
     template <class T> class HswishLayer : public Synet::Layer<T>
     {
     public:
@@ -75,10 +54,37 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            Detail::HswishLayerForwardCpu(src[0]->CpuData(), src[0]->Size(), _shift, _scale, dst[0]->CpuData());
+            CpuHswish(src[0]->CpuData(), src[0]->Size(), _shift, _scale, dst[0]->CpuData());
         }
 
     private:
         Type _shift, _scale;
+    };
+
+    //---------------------------------------------------------------------------------------------
+
+    template <class T> class SwishLayer : public Synet::Layer<T>
+    {
+    public:
+        typedef T Type;
+        typedef Layer<T> Base;
+        typedef typename Base::TensorPtrs TensorPtrs;
+
+        SwishLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        {
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
+
+    protected:
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        {
+            CpuSwish(src[0]->CpuData(), src[0]->Size(), dst[0]->CpuData());
+        }
     };
 }

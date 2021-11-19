@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "Synet/Layers/ActivationLayers.h"
 #include "Synet/Layers/AddLayer.h"
 #include "Synet/Layers/BatchNormLayer.h"
 #include "Synet/Layers/BiasLayer.h"
@@ -45,7 +46,6 @@
 #include "Synet/Layers/FusedLayer.h"
 #include "Synet/Layers/GatherLayer.h"
 #include "Synet/Layers/HardSigmoidLayer.h"
-#include "Synet/Layers/HswishLayer.h"
 #include "Synet/Layers/InnerProductLayer.h"
 #include "Synet/Layers/InputLayer.h"
 #include "Synet/Layers/InterpLayer.h"
@@ -170,6 +170,7 @@ namespace Synet
             case LayerTypeSqueezeExcitation: return new SqueezeExcitationLayer<T>(param, context, method);
             case LayerTypeStridedSlice: return new StridedSliceLayer<T>(param, context);
             case LayerTypeStub: return new StubLayer<T>(param, context);
+            case LayerTypeSwish: return new SwishLayer<T>(param, context);
             case LayerTypeSwitch: return new SwitchLayer<T>(param, context);
             case LayerTypeTile: return new TileLayer<T>(param, context);
             case LayerTypeTensorIterator: return new TensorIteratorLayer<T>(param, context);
