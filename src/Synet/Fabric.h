@@ -79,6 +79,7 @@
 #include "Synet/Layers/SliceLayer.h"
 #include "Synet/Layers/SoftmaxLayer.h"
 #include "Synet/Layers/SoftplusLayer.h"
+#include "Synet/Layers/SpaceToDepthLayer.h"
 #include "Synet/Layers/SqueezeLayer.h"
 #include "Synet/Layers/SqueezeExcitationLayer.h"
 #include "Synet/Layers/StridedSliceLayer.h"
@@ -166,6 +167,7 @@ namespace Synet
             case LayerTypeSlice: return new SliceLayer<T>(param, context);
             case LayerTypeSoftmax: return new SoftmaxLayer<T>(param, context);
             case LayerTypeSoftplus: return new SoftplusLayer<T>(param, context);
+            case LayerTypeSpaceToDepth: return new SpaceToDepthLayer<T>(param, context);
             case LayerTypeSqueeze: return new SqueezeLayer<T>(param, context);
             case LayerTypeSqueezeExcitation: return new SqueezeExcitationLayer<T>(param, context, method);
             case LayerTypeStridedSlice: return new StridedSliceLayer<T>(param, context);

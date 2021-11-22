@@ -152,6 +152,8 @@ namespace Synet
                         continue;
                     if (MergePooling(network.layers(), i, merged, changes))
                         continue;
+                    if (MergeSpaceToDepth(network.layers(), i, merged, changes))
+                        continue;
                     break;
                 }
                 case 5:
@@ -1449,6 +1451,41 @@ namespace Synet
             layer.pooling().excludePad() = src[index + 4].pooling().excludePad();
             dst.push_back(layer);
             index += 4;
+            return true;
+        }
+
+        bool MergeSpaceToDepth(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            if (src.size() < index + 9)
+                return false;
+            if (src[index + 0].type() != LayerTypeStridedSlice)
+                return false;
+            if (src[index + 1].type() != LayerTypeStridedSlice)
+                return false;
+            if (src[index + 2].type() != LayerTypeStridedSlice)
+                return false;
+            if (src[index + 3].type() != LayerTypeStridedSlice)
+                return false;
+            if (src[index + 4].type() != LayerTypeStridedSlice)
+                return false;
+            if (src[index + 5].type() != LayerTypeStridedSlice)
+                return false;
+            if (src[index + 6].type() != LayerTypeStridedSlice)
+                return false;
+            if (src[index + 7].type() != LayerTypeStridedSlice)
+                return false;
+            if (src[index + 8].type() != LayerTypeConcat)
+                return false;
+            if (InsideLink(src, index + 1, 8))
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeSpaceToDepth;
+            layer.name() = src[index + 8].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            dst.push_back(layer);
+            index += 8;
             return true;
         }
 

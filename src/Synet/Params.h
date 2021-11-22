@@ -84,6 +84,7 @@ namespace Synet
         LayerTypeSlice,
         LayerTypeSoftmax,
         LayerTypeSoftplus,
+        LayerTypeSpaceToDepth,
         LayerTypeSqueeze,
         LayerTypeSqueezeExcitation,
         LayerTypeStridedSlice,
