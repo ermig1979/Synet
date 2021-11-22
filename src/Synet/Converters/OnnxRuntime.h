@@ -193,7 +193,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Sigmoid" && !ConvertSigmoidNode(node, layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Slice" && !ConvertSliceNode(node, network.layers(), original, layer))
+                if (node.op_type() == "Slice" && !ConvertSliceNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Softmax" && !ConvertSoftmaxNode(node, trans, network.layers(), original, layer))
                     return ErrorMessage(i, node);
@@ -882,6 +882,10 @@ namespace Synet
                     {
                         shape = Shape({ shape[0], shape[2] , shape[3], shape[1] });
                     }
+                    if (shape.size() == 3)
+                    {
+                        shape = Shape({ shape[0], shape[2] , shape[1] });
+                    }
                 }
             }
             else if (first->type() == Synet::LayerTypeMeta)
@@ -960,7 +964,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertSliceNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        bool ConvertSliceNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
         {
             if (layer.src().size() == 1)
             {
@@ -1001,19 +1005,24 @@ namespace Synet
                     return false;
                 if (src0->type() == LayerTypeMeta)
                     return false;
-                if (src1->type() != LayerTypeMeta || src1->meta().type() != Synet::MetaTypeConst)
+                if (src1->type() != LayerTypeMeta || src1->meta().type() != Synet::MetaTypeConst || src1->meta().alpha().i64().size() != 1)
                     return false;
-                if (src2->type() != LayerTypeMeta || src2->meta().type() != Synet::MetaTypeConst)
+                if (src2->type() != LayerTypeMeta || src2->meta().type() != Synet::MetaTypeConst || src2->meta().alpha().i64().size() != 1)
                     return false;
-                if (src3->type() != LayerTypeMeta || src3->meta().type() != Synet::MetaTypeConst)
+                if (src3->type() != LayerTypeMeta || src3->meta().type() != Synet::MetaTypeConst || src3->meta().alpha().i64().size() != 1)
                     return false;
-                if (src4->type() != LayerTypeMeta || src4->meta().type() != Synet::MetaTypeConst)
+                if (src4->type() != LayerTypeMeta || src4->meta().type() != Synet::MetaTypeConst || src4->meta().alpha().i64().size() != 1)
                     return false;
                 layer.type() = Synet::LayerTypeStridedSlice;
                 layer.stridedSlice().axes().push_back((size_t)src3->meta().alpha().i64()[0]);
                 layer.stridedSlice().beginDims().push_back((size_t)src1->meta().alpha().i64()[0]);
                 layer.stridedSlice().endDims().push_back((size_t)src2->meta().alpha().i64()[0]);
                 layer.stridedSlice().strideDims().push_back((size_t)src4->meta().alpha().i64()[0]);
+                if (trans && !PermutedToNchw(layers, false, true, true))
+                {
+                    Shape nchw = Shape({ 0, 3, 1, 2 });
+                    layer.stridedSlice().axes()[0] = nchw[layer.stridedSlice().axes()[0]];
+                }
                 layer.src().resize(1);
             }
             return true;
@@ -1064,6 +1073,11 @@ namespace Synet
                 if (order == Shape({ 0, 2, 3, 1 }))
                 {
                     order = Shape({ 0, 1, 2, 3 });
+                    layer.permute().format() = TensorFormatNchw;
+                }
+                if (order == Shape({ 0, 2, 1 }))
+                {
+                    order = Shape({ 0, 1, 2 });
                     layer.permute().format() = TensorFormatNchw;
                 }
             }
