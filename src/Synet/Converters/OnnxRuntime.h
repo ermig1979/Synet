@@ -972,10 +972,8 @@ namespace Synet
                     return false;
                 layer.type() = Synet::LayerTypeStridedSlice;
             }
-            else
+            else if (layer.src().size() == 4)
             {
-                if (!CheckSourceNumber(layer, 4))
-                    return false;
                 const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
                 const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
                 const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
@@ -989,6 +987,34 @@ namespace Synet
                 }
                 else
                     return false;
+            }
+            else
+            {
+                if (!CheckSourceNumber(layer, 5))
+                    return false;
+                const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+                const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+                const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+                const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
+                const LayerParam* src4 = GetLayer(layers, layer.src()[4]);
+                if (src0 == NULL || src1 == NULL || src2 == NULL || src3 == NULL || src4 == NULL)
+                    return false;
+                if (src0->type() == LayerTypeMeta)
+                    return false;
+                if (src1->type() != LayerTypeMeta || src1->meta().type() != Synet::MetaTypeConst)
+                    return false;
+                if (src2->type() != LayerTypeMeta || src2->meta().type() != Synet::MetaTypeConst)
+                    return false;
+                if (src3->type() != LayerTypeMeta || src3->meta().type() != Synet::MetaTypeConst)
+                    return false;
+                if (src4->type() != LayerTypeMeta || src4->meta().type() != Synet::MetaTypeConst)
+                    return false;
+                layer.type() = Synet::LayerTypeStridedSlice;
+                layer.stridedSlice().axes().push_back((size_t)src3->meta().alpha().i64()[0]);
+                layer.stridedSlice().beginDims().push_back((size_t)src1->meta().alpha().i64()[0]);
+                layer.stridedSlice().endDims().push_back((size_t)src2->meta().alpha().i64()[0]);
+                layer.stridedSlice().strideDims().push_back((size_t)src4->meta().alpha().i64()[0]);
+                layer.src().resize(1);
             }
             return true;
         }

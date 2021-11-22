@@ -93,7 +93,21 @@ namespace Synet
                 _endDims = _srcDims;
             if (param.strideDims().size())
             {
-                _strideDims = param.strideDims();
+                if (_axes.size())
+                {
+                    assert(param.strideDims().size() == _axes.size());
+                    _strideDims.clear();
+                    for (size_t s = 0, sd = 0; s < _srcDims.size(); ++s)
+                    {
+                        bool found = false;
+                        for (size_t a = 0; a < _axes.size(); ++a)
+                            if (s == _axes[a])
+                                found = true;
+                        _strideDims.push_back(found ? param.strideDims()[sd++] : 1);
+                    }
+                }
+                else
+                    _strideDims = param.strideDims();
                 assert(_beginDims.size() == _strideDims.size());
             }
             else
