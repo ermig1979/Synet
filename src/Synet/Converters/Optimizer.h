@@ -1503,7 +1503,8 @@ namespace Synet
                 return false;
             if (src[index + 0].type() != LayerTypeSigmoid)
                 return false;
-            if (src[index + 1].type() != LayerTypeEltwise || src[index + 1].eltwise().operation() != Synet::EltwiseOperationTypeProduct)
+            if (src[index + 1].type() != LayerTypeEltwise || src[index + 1].eltwise().operation() != Synet::EltwiseOperationTypeProduct ||
+                src[index + 1].src()[0] != src[index + 0].src()[0] || src[index + 1].src()[1] != src[index + 0].dst()[0])
                 return false;
             if (InsideLink(src, index + 1, 1))
                 return false;
