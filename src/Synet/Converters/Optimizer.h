@@ -604,6 +604,12 @@ namespace Synet
                 dst.back().convolution().activationParam1() = act.hardSigmoid().shift();
                 result = true;
             }
+            if (act.type() == LayerTypeSwish)
+            {
+                dst.back().convolution().activationType() = ActivationFunctionTypeSwish;
+                dst.back().convolution().activationParam0() = 1.0f;
+                result = true;
+            }
             if (result)
             {
                 if (dst.back().convolution().quantizationLevel() == TensorType8i)
