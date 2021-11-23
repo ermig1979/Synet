@@ -154,6 +154,8 @@ namespace Synet
                         continue;
                     if (MergeSpaceToDepth(network.layers(), i, merged, changes))
                         continue;
+                    if (MergeSwish(network.layers(), i, merged, changes))
+                        continue;
                     break;
                 }
                 case 5:
@@ -1489,6 +1491,27 @@ namespace Synet
             return true;
         }
 
+        bool MergeSwish(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            if (src.size() < index + 1)
+                return false;
+            if (src[index + 0].type() != LayerTypeSigmoid)
+                return false;
+            if (src[index + 1].type() != LayerTypeEltwise || src[index + 1].eltwise().operation() != Synet::EltwiseOperationTypeProduct)
+                return false;
+            if (InsideLink(src, index + 1, 1))
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeSwish;
+            layer.name() = src[index + 1].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            dst.push_back(layer);
+            index += 1;
+            return true;
+        }
+
         bool MergeRnnGruBd(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
         {
             const size_t RNN_GRU_BD_SIZE = 19;
@@ -1646,6 +1669,8 @@ namespace Synet
         bool CanReuse(const LayerParam & layer)
         {
             if (layer.type() == LayerTypeSigmoid)
+                return true;
+            if (layer.type() == LayerTypeSwish)
                 return true;
             if (layer.type() == LayerTypeScale)
                 return true;

@@ -169,5 +169,10 @@ namespace Synet
         ::SimdSynetSoftplus32f(src, size, &beta, &threshold, dst);
     }
 
+    template <> SYNET_INLINE void CpuSwish<float>(const float * src, size_t size, float * dst)
+    {
+        float slope = 1.0f;
+        ::SimdSynetSwish32f(src, size, &slope, dst);
+    }
 #endif
 }
