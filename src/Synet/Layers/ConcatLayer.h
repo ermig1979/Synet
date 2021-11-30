@@ -30,6 +30,22 @@
 
 namespace Synet
 {
+    namespace Detail
+    {
+        template <class T, size_t N> void Concat2N(const T * src0, const T * src1, size_t num, T * dst)
+        {
+            struct H { T a[N]; };
+            for (size_t n = 0; n < num; ++n)
+            {
+                ((H*)dst)[0] = *(H*)src0;
+                ((H*)dst)[1] = *(H*)src1;
+                src0 += N;
+                src1 += N;
+                dst += 2*N;
+            }
+        }
+    }
+
     template <class T> class ConcatLayer : public Synet::Layer<T>
     {
     public:
@@ -88,7 +104,17 @@ namespace Synet
             _dstConcatAxis = dst[0]->Axis(_concatAxis);
             if (src.size() != 1)
                 ForwardCpu(src, dst);
+            _special2N = (src.size() == 2 && _srcConcatAxis[0] == _srcConcatAxis[1]) ? _srcConcatAxis[0] : 0;
+#if 0
+            std::stringstream desc;
+            desc << _concatNum << "x";
+            for (size_t i = 0; i < src.size(); ++i)
+                desc << (i ? "-" : "") << _srcConcatAxis[i];
+            desc << "x" << _concatInputSize;
+            this->UsePerfStat(desc.str(), dst[0]->Size());
+#else
             this->UsePerfStat();
+#endif
         }
 
     protected:
@@ -136,14 +162,25 @@ namespace Synet
         {
             if (_concatInputSize == 1)
             {
-                for (size_t n = 0; n < _concatNum; ++n)
+                if (_special2N == 16)
+                    Detail::Concat2N<TT, 16>(src[0], src[1], _concatNum, dst);
+                else if (_special2N == 32)
+                    Detail::Concat2N<TT, 32>(src[0], src[1], _concatNum, dst);
+                else if (_special2N == 64)
+                    Detail::Concat2N<TT, 64>(src[0], src[1], _concatNum, dst);
+                else if (_special2N == 128)
+                    Detail::Concat2N<TT, 128>(src[0], src[1], _concatNum, dst);
+                else
                 {
-                    for (size_t i = 0; i < src.size(); ++i)
+                    for (size_t n = 0; n < _concatNum; ++n)
                     {
-                        size_t size = _srcConcatAxis[i];
-                        CpuCopy(src[i], size, dst);
-                        src[i] += size;
-                        dst += size;
+                        for (size_t i = 0; i < src.size(); ++i)
+                        {
+                            size_t size = _srcConcatAxis[i];
+                            CpuCopy(src[i], size, dst);
+                            src[i] += size;
+                            dst += size;
+                        }
                     }
                 }
             }
@@ -162,7 +199,7 @@ namespace Synet
 
     private:
         typedef std::vector<Type*> Ptrs;
-        size_t _concatNum, _concatInputSize, _concatAxis, _dstConcatAxis;
+        size_t _concatNum, _concatInputSize, _concatAxis, _dstConcatAxis, _special2N;
         Index _srcConcatAxis;
         TensorType _type;
         bool _fixed;
