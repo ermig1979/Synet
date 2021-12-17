@@ -24,6 +24,7 @@
 
 #pragma once
 
+//#define SYNET_CPL_ENABLE
 //#define SYNET_SIMD_LIBRARY_ENABLE
 //#define SYNET_BLIS_ENABLE
 
@@ -75,6 +76,10 @@
 #include <cmath>
 #include <iomanip>
 #include <type_traits>
+
+#ifdef SYNET_CPL_ENABLE
+#include "Cpl/Param.h"
+#endif
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdLib.h"

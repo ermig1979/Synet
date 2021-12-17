@@ -24,9 +24,14 @@
 
 #pragma once
 
+#ifndef SYNET_CPL_ENABLE
+#define SYNET_CPL_ENABLE
+#endif
+
 #ifndef SYNET_SIMD_LIBRARY_ENABLE
 #define SYNET_SIMD_LIBRARY_ENABLE
 #endif
+
 #define SYNET_GEMM_SIMD_LIBRARY
 
 #ifndef WIN32

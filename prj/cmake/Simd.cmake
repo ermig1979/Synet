@@ -15,7 +15,7 @@ else()
 endif()
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-add_definitions(-DSYNET_SIMD_LIBRARY_ENABLE)
+list(APPEND SYNET_DEFINITIONS -DSYNET_SIMD_LIBRARY_ENABLE)
 
 add_subdirectory(${ROOT_DIR}/3rd/Simd/prj/cmake 3rd/Simd)
 
