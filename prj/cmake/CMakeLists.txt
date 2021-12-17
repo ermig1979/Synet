@@ -114,7 +114,7 @@ if((MODE STREQUAL "onnx") OR (MODE STREQUAL "all"))
 		set(ONNX_PB_CC ${ORT_ONNX}/onnx/onnx.pb.cc)
 		add_custom_command(OUTPUT ${ONNX_PB_CC} DEPENDS make_ort
 			COMMAND ${CMAKE_COMMAND} -E copy ${ORT_DIR}/cmake/external/onnx/onnx/onnx.proto ${ORT_ONNX}/onnx/onnx.proto
-			COMMAND ${CMAKE_COMMAND} -E ${PB_BIN}/protoc --cpp_out=. onnx.proto WORKING_DIRECTORY ${ORT_ONNX}/onnx)
+			COMMAND ${PB_BIN}/protoc --cpp_out=. onnx.proto WORKING_DIRECTORY ${ORT_ONNX}/onnx)
 		add_custom_target(make_onnx_pb_cc DEPENDS ${ONNX_PB_CC})
 		add_dependencies(test_onnx make_ort make_onnx_pb_cc)
 		target_sources(test_onnx PUBLIC ${ONNX_PB_CC})

@@ -15,7 +15,8 @@ set(ORT_BUILD_OPTIONS
 	-Donnxruntime_BUILD_UNIT_TESTS=OFF
 	-Donnxruntime_BUILD_SHARED_LIB=ON
 	-Donnxruntime_BUILD_FOR_NATIVE_MACHINE=ON)
-	
+
+file(MAKE_DIRECTORY ${ORT_BIN})	
 add_custom_command(
 	OUTPUT ${ORT_LIBS}
 	COMMAND cmake ${ORT_DIR}/cmake ${ORT_BUILD_OPTIONS} && make -j8
