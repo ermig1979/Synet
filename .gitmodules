@@ -23,3 +23,6 @@
 	url = https://github.com/microsoft/onnxruntime.git
 	branch = rel-1.8.1
 	ignore = dirty
+[submodule "3rd/Cpl"]
+	path = 3rd/Cpl
+	url = https://github.com/ermig1979/Cpl.git
