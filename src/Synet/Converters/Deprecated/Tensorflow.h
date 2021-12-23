@@ -55,18 +55,18 @@ namespace Synet
 
         struct ShapeTipParam
         {
-            SYNET_PARAM_VALUE(String, name, String());
-            SYNET_PARAM_VALUE(Shape, shape, Shape());
+            CPL_PARAM_VALUE(String, name, String());
+            CPL_PARAM_VALUE(Shape, shape, Shape());
         };
 
         struct ConvertParam
         {
-            SYNET_PARAM_VALUE(Strings, ignore, Strings());
-            SYNET_PARAM_VALUE(Strings, output, Strings());
-            SYNET_PARAM_VECTOR(ShapeTipParam, tips);
+            CPL_PARAM_VALUE(Strings, ignore, Strings());
+            CPL_PARAM_VALUE(Strings, output, Strings());
+            CPL_PARAM_VECTOR(ShapeTipParam, tips);
         };
 
-        SYNET_PARAM_HOLDER(ConvertParamHolder, ConvertParam, convert);
+        CPL_PARAM_HOLDER(ConvertParamHolder, ConvertParam, convert);
 
         bool Convert(const String & srcParamPath, const String & srcGraphPath, bool trans, const String & dstModelPath, const String & dstWeightPath)
         {
