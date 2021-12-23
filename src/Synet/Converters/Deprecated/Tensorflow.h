@@ -82,9 +82,9 @@ namespace Synet
                 return false;
             }
 
-            if (!_param.Load(srcParamPath))
+            if (!_param.Load(srcParamPath, Cpl::ParamFormatXml))
             {
-                std::cout << "Can't load converion partameters!" << std::endl;
+                std::cout << "Can't load conversion partameters!" << std::endl;
                 return false;
             }
 
