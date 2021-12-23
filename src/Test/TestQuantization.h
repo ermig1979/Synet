@@ -36,20 +36,20 @@ namespace Test
 {
     struct QuantParam
     {
-        SYNET_PARAM_VALUE(Synet::QuantizationMethod, method, Synet::QuantizationMethodUnknown);
-        SYNET_PARAM_VALUE(float, truncationQuantile, 0.0f);
-        SYNET_PARAM_VALUE(int, imageBegin, 0);
-        SYNET_PARAM_VALUE(int, imageEnd, 1000000);
-        SYNET_PARAM_VALUE(bool, depthwiseConvolution, false);
-        SYNET_PARAM_VALUE(bool, degenerateConvolution, false);
-        SYNET_PARAM_VALUE(bool, scaleToConvolution, false);
-        SYNET_PARAM_VALUE(bool, eltwiseToAdd, true);
-        SYNET_PARAM_VALUE(bool, concatCan8i, true);
-        SYNET_PARAM_VALUE(int, innerProductWeightMin, 0);
-        SYNET_PARAM_VALUE(Strings, skippedLayers, Strings());
+        CPL_PARAM_VALUE(Synet::QuantizationMethod, method, Synet::QuantizationMethodUnknown);
+        CPL_PARAM_VALUE(float, truncationQuantile, 0.0f);
+        CPL_PARAM_VALUE(int, imageBegin, 0);
+        CPL_PARAM_VALUE(int, imageEnd, 1000000);
+        CPL_PARAM_VALUE(bool, depthwiseConvolution, false);
+        CPL_PARAM_VALUE(bool, degenerateConvolution, false);
+        CPL_PARAM_VALUE(bool, scaleToConvolution, false);
+        CPL_PARAM_VALUE(bool, eltwiseToAdd, true);
+        CPL_PARAM_VALUE(bool, concatCan8i, true);
+        CPL_PARAM_VALUE(int, innerProductWeightMin, 0);
+        CPL_PARAM_VALUE(Strings, skippedLayers, Strings());
     };
 
-    SYNET_PARAM_HOLDER(QuantParamHolder, QuantParam, quant);    
+    CPL_PARAM_HOLDER(QuantParamHolder, QuantParam, quant);    
         
     class Quantizer
     {

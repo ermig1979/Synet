@@ -147,21 +147,21 @@ namespace Test
                 {
                     String line;
                     std::getline(ifs, line);
-                    Strings values = Synet::Separate(line, separator);
+                    Strings values = Cpl::Separate(line, separator);
                     if (values.size() > 10)
                     {
                         Test test;
-                        Synet::StringToValue(values[0], test.name);
-                        Synet::StringToValue(values[1], test.batch);
-                        Synet::StringToValue(values[2], test.first.time);
-                        Synet::StringToValue(values[3], test.second.time);
-                        Synet::StringToValue(values[4], test.first.flops);
-                        Synet::StringToValue(values[5], test.second.flops);
-                        Synet::StringToValue(values[6], test.first.memory);
-                        Synet::StringToValue(values[7], test.second.memory);
-                        Synet::StringToValue(values[8], test.desc);
-                        Synet::StringToValue(values[9], test.link);
-                        Synet::StringToValue(values[10], test.skip);
+                        Cpl::ToVal(values[0], test.name);
+                        Cpl::ToVal(values[1], test.batch);
+                        Cpl::ToVal(values[2], test.first.time);
+                        Cpl::ToVal(values[3], test.second.time);
+                        Cpl::ToVal(values[4], test.first.flops);
+                        Cpl::ToVal(values[5], test.second.flops);
+                        Cpl::ToVal(values[6], test.first.memory);
+                        Cpl::ToVal(values[7], test.second.memory);
+                        Cpl::ToVal(values[8], test.desc);
+                        Cpl::ToVal(values[9], test.link);
+                        Cpl::ToVal(values[10], test.skip);
                         set.tests.push_back(test);
                     }
                 }

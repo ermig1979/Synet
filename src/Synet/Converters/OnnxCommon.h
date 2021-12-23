@@ -37,6 +37,6 @@ namespace Synet
 {
     struct OnnxParam
     {
-        SYNET_PARAM_VALUE(Strings, toNchwHints, Strings());
+        CPL_PARAM_VALUE(Strings, toNchwHints, Strings());
     };
 }

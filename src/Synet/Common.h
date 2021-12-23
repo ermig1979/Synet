@@ -24,7 +24,10 @@
 
 #pragma once
 
-//#define SYNET_CPL_ENABLE
+#ifndef SYNET_CPL_ENABLE
+#define SYNET_CPL_ENABLE
+#endif
+
 //#define SYNET_SIMD_LIBRARY_ENABLE
 //#define SYNET_BLIS_ENABLE
 

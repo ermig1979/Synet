@@ -42,56 +42,56 @@ namespace Test
 
     struct SizeParam
     {
-        SYNET_PARAM_VALUE(String, name, String());
-        SYNET_PARAM_VALUE(int32_t, size, 0);
+        CPL_PARAM_VALUE(String, name, String());
+        CPL_PARAM_VALUE(int32_t, size, 0);
     };
 
     struct ShapeParam
     {
-        SYNET_PARAM_VALUE(String, name, String());
-        SYNET_PARAM_VECTOR(SizeParam, shape);
-        SYNET_PARAM_VALUE(int32_t, size, 0);
+        CPL_PARAM_VALUE(String, name, String());
+        CPL_PARAM_VECTOR(SizeParam, shape);
+        CPL_PARAM_VALUE(int32_t, size, 0);
     };
 
     struct DetectionParam
     {
-        SYNET_PARAM_VALUE(float, confidence, 0.5f);
-        SYNET_PARAM_VALUE(float, overlap, 0.5f);
-        SYNET_PARAM_VALUE(String, decoder, String());
-        SYNET_PARAM_STRUCT(Synet::EpsilonParam, epsilon);
-        SYNET_PARAM_STRUCT(Synet::UltrafaceParam, ultraface);
+        CPL_PARAM_VALUE(float, confidence, 0.5f);
+        CPL_PARAM_VALUE(float, overlap, 0.5f);
+        CPL_PARAM_VALUE(String, decoder, String());
+        CPL_PARAM_STRUCT(Synet::EpsilonParam, epsilon);
+        CPL_PARAM_STRUCT(Synet::UltrafaceParam, ultraface);
     };
 
     struct IdParam
     {
-        SYNET_PARAM_VALUE(String, name, "");
-        SYNET_PARAM_VALUE(int, id, 0);
+        CPL_PARAM_VALUE(String, name, "");
+        CPL_PARAM_VALUE(int, id, 0);
     };
 
     struct IndexParam
     {
-        SYNET_PARAM_VALUE(String, type, "");
-        SYNET_PARAM_VALUE(String, name, "index.txt");
-        SYNET_PARAM_VECTOR(IdParam, ids);
+        CPL_PARAM_VALUE(String, type, "");
+        CPL_PARAM_VALUE(String, name, "index.txt");
+        CPL_PARAM_VECTOR(IdParam, ids);
     };
 
     struct TestParam
     {
-        SYNET_PARAM_VALUE(String, inputType, "images");
-        SYNET_PARAM_VALUE(String, images, String());
-        SYNET_PARAM_VALUE(Floats, lower, Floats(1, 0.0f));
-        SYNET_PARAM_VALUE(Floats, upper, Floats(1, 1.0f));
-        SYNET_PARAM_VALUE(String, model, String());
-        SYNET_PARAM_VALUE(String, order, String());
-        SYNET_PARAM_VECTOR(ShapeParam, input);
-        SYNET_PARAM_VECTOR(ShapeParam, output);
-        SYNET_PARAM_STRUCT(DetectionParam, detection);
-        SYNET_PARAM_STRUCT(IndexParam, index);
-        SYNET_PARAM_STRUCT(Synet::OptimizerParam, optimizer);
-        SYNET_PARAM_STRUCT(Synet::OnnxParam, onnx);
+        CPL_PARAM_VALUE(String, inputType, "images");
+        CPL_PARAM_VALUE(String, images, String());
+        CPL_PARAM_VALUE(Floats, lower, Floats(1, 0.0f));
+        CPL_PARAM_VALUE(Floats, upper, Floats(1, 1.0f));
+        CPL_PARAM_VALUE(String, model, String());
+        CPL_PARAM_VALUE(String, order, String());
+        CPL_PARAM_VECTOR(ShapeParam, input);
+        CPL_PARAM_VECTOR(ShapeParam, output);
+        CPL_PARAM_STRUCT(DetectionParam, detection);
+        CPL_PARAM_STRUCT(IndexParam, index);
+        CPL_PARAM_STRUCT(Synet::OptimizerParam, optimizer);
+        CPL_PARAM_STRUCT(Synet::OnnxParam, onnx);
     };
 
-    SYNET_PARAM_HOLDER(TestParamHolder, TestParam, test);
+    CPL_PARAM_HOLDER(TestParamHolder, TestParam, test);
 
     //-------------------------------------------------------------------------
 

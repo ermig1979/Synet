@@ -167,7 +167,7 @@ namespace Synet
             else
             {
                 for (size_t i = 0; i < node.get_output_size(); ++i)
-                    layer.dst().push_back(layer.name() + ":" + ValueToString(i));
+                    layer.dst().push_back(layer.name() + ":" + Cpl::ToStr(i));
             }
             return true;
         }

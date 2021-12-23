@@ -31,7 +31,7 @@ namespace Synet
     class InferenceEngineConverterV7 : public InferenceEngineConverter
     {
     public:
-        bool Convert(const Xml::XmlNode<char>& srcXml, const std::vector<float>& srcBin, bool trans, Synet::NetworkParam & dstXml, std::vector<float>& dstBin)
+        bool Convert(const XmlNode& srcXml, const std::vector<float>& srcBin, bool trans, Synet::NetworkParam & dstXml, std::vector<float>& dstBin)
         {
             dstXml.version() = 1;
 
@@ -174,8 +174,8 @@ namespace Synet
         static void ConvertWeight(const XmlNode * pNode, const Vector & srcBin, int mode, const Shape & input, WeightParam & param, Vector & dstBin)
         {
             const Shape & shape = param.dim();
-            StringToValue(pNode->FirstAttribute("offset")->Value(), param.offset());
-            StringToValue(pNode->FirstAttribute("size")->Value(), param.size());
+            Cpl::ToVal(pNode->FirstAttribute("offset")->Value(), param.offset());
+            Cpl::ToVal(pNode->FirstAttribute("size")->Value(), param.size());
             const float * pSrc = srcBin.data() + param.offset() / sizeof(float);
             float * pDst = dstBin.data() + param.offset() / sizeof(float);
             Tensor dst(pDst, param.size() / sizeof(float), shape, param.format());
@@ -255,8 +255,8 @@ namespace Synet
             const XmlNode * pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
-            StringToValue(pData->FirstAttribute("min")->Value(), layer.restrictRange().lower());
-            StringToValue(pData->FirstAttribute("max")->Value(), layer.restrictRange().upper());
+            Cpl::ToVal(pData->FirstAttribute("min")->Value(), layer.restrictRange().lower());
+            Cpl::ToVal(pData->FirstAttribute("max")->Value(), layer.restrictRange().upper());
             return true;
         }
 
@@ -266,7 +266,7 @@ namespace Synet
             const XmlNode * pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
-            StringToValue(pData->FirstAttribute("axis")->Value(), layer.concat().axis());
+            Cpl::ToVal(pData->FirstAttribute("axis")->Value(), layer.concat().axis());
             if (trans)
             {
                 Shape input = ConvertInputShape(pLayer);
@@ -346,35 +346,35 @@ namespace Synet
             if (pData->FirstAttribute("kernel-y") && pData->FirstAttribute("kernel-x"))
             {
                 layer.convolution().kernel().resize(2);
-                StringToValue(pData->FirstAttribute("kernel-y")->Value(), layer.convolution().kernel()[0]);
-                StringToValue(pData->FirstAttribute("kernel-x")->Value(), layer.convolution().kernel()[1]);
+                Cpl::ToVal(pData->FirstAttribute("kernel-y")->Value(), layer.convolution().kernel()[0]);
+                Cpl::ToVal(pData->FirstAttribute("kernel-x")->Value(), layer.convolution().kernel()[1]);
             }
             else if (!ConvertVector(pData->FirstAttribute("kernel"), layer.convolution().kernel()))
                 return false;
             if (pData->FirstAttribute("stride-y") && pData->FirstAttribute("stride-x"))
             {
                 layer.convolution().stride().resize(2);
-                StringToValue(pData->FirstAttribute("stride-y")->Value(), layer.convolution().stride()[0]);
-                StringToValue(pData->FirstAttribute("stride-x")->Value(), layer.convolution().stride()[1]);
+                Cpl::ToVal(pData->FirstAttribute("stride-y")->Value(), layer.convolution().stride()[0]);
+                Cpl::ToVal(pData->FirstAttribute("stride-x")->Value(), layer.convolution().stride()[1]);
             }
             else if (!ConvertVector(pData->FirstAttribute("strides"), layer.convolution().stride()))
                 return false;
             if (pData->FirstAttribute("dilation-y") && pData->FirstAttribute("dilation-x"))
             {
                 layer.convolution().dilation().resize(2);
-                StringToValue(pData->FirstAttribute("dilation-y")->Value(), layer.convolution().dilation()[0]);
-                StringToValue(pData->FirstAttribute("dilation-x")->Value(), layer.convolution().dilation()[1]);
+                Cpl::ToVal(pData->FirstAttribute("dilation-y")->Value(), layer.convolution().dilation()[0]);
+                Cpl::ToVal(pData->FirstAttribute("dilation-x")->Value(), layer.convolution().dilation()[1]);
             }
             else if (!ConvertVector(pData->FirstAttribute("dilations"), layer.convolution().dilation()))
                 return false;
-            StringToValue(pData->FirstAttribute("group")->Value(), layer.convolution().group());
+            Cpl::ToVal(pData->FirstAttribute("group")->Value(), layer.convolution().group());
             if (pData->FirstAttribute("pad-y") && pData->FirstAttribute("pad-x") && pData->FirstAttribute("pad-b") && pData->FirstAttribute("pad-r"))
             {
                 layer.convolution().pad().resize(4);
-                StringToValue(pData->FirstAttribute("pad-y")->Value(), layer.convolution().pad()[0]);
-                StringToValue(pData->FirstAttribute("pad-x")->Value(), layer.convolution().pad()[1]);
-                StringToValue(pData->FirstAttribute("pad-b")->Value(), layer.convolution().pad()[2]);
-                StringToValue(pData->FirstAttribute("pad-r")->Value(), layer.convolution().pad()[3]);
+                Cpl::ToVal(pData->FirstAttribute("pad-y")->Value(), layer.convolution().pad()[0]);
+                Cpl::ToVal(pData->FirstAttribute("pad-x")->Value(), layer.convolution().pad()[1]);
+                Cpl::ToVal(pData->FirstAttribute("pad-b")->Value(), layer.convolution().pad()[2]);
+                Cpl::ToVal(pData->FirstAttribute("pad-r")->Value(), layer.convolution().pad()[3]);
             }
             else if (!ConvertVectors(pData->FirstAttribute("pads_begin"), pData->FirstAttribute("pads_end"), layer.convolution().pad()))
                 return false;
@@ -471,13 +471,13 @@ namespace Synet
                 layer.detectionOutput().codeType() = PriorBoxCodeTypeCenterSize;
             else
                 assert(0);
-            StringToValue(pData->FirstAttribute("confidence_threshold")->Value(), layer.detectionOutput().confidenceThreshold());
-            StringToValue(pData->FirstAttribute("keep_top_k")->Value(), layer.detectionOutput().keepTopK());
-            StringToValue(pData->FirstAttribute("nms_threshold")->Value(), layer.detectionOutput().nms().nmsThreshold());
-            StringToValue(pData->FirstAttribute("num_classes")->Value(), layer.detectionOutput().numClasses());
-            StringToValue(pData->FirstAttribute("variance_encoded_in_target")->Value(), layer.detectionOutput().varianceEncodedInTarget());
-            StringToValue(pData->FirstAttribute("top_k")->Value(), layer.detectionOutput().nms().topK());
-            StringToValue(pData->FirstAttribute("share_location")->Value(), layer.detectionOutput().shareLocation());
+            Cpl::ToVal(pData->FirstAttribute("confidence_threshold")->Value(), layer.detectionOutput().confidenceThreshold());
+            Cpl::ToVal(pData->FirstAttribute("keep_top_k")->Value(), layer.detectionOutput().keepTopK());
+            Cpl::ToVal(pData->FirstAttribute("nms_threshold")->Value(), layer.detectionOutput().nms().nmsThreshold());
+            Cpl::ToVal(pData->FirstAttribute("num_classes")->Value(), layer.detectionOutput().numClasses());
+            Cpl::ToVal(pData->FirstAttribute("variance_encoded_in_target")->Value(), layer.detectionOutput().varianceEncodedInTarget());
+            Cpl::ToVal(pData->FirstAttribute("top_k")->Value(), layer.detectionOutput().nms().topK());
+            Cpl::ToVal(pData->FirstAttribute("share_location")->Value(), layer.detectionOutput().shareLocation());
             ConvertValue(pData->FirstAttribute("clip"), layer.detectionOutput().clip());
             ConvertValue(pData->FirstAttribute("background_label_id"), layer.detectionOutput().backgroundLabelId());
             return true;
@@ -527,8 +527,8 @@ namespace Synet
             const XmlNode * pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
-            StringToValue(pData->FirstAttribute("axis")->Value(), layer.flatten().axis());
-            StringToValue(pData->FirstAttribute("end_axis")->Value(), layer.flatten().endAxis());
+            Cpl::ToVal(pData->FirstAttribute("axis")->Value(), layer.flatten().axis());
+            Cpl::ToVal(pData->FirstAttribute("end_axis")->Value(), layer.flatten().endAxis());
             return true;
         }
 
@@ -540,7 +540,7 @@ namespace Synet
                 return false;
             if (pData->FirstAttribute("quantization_level") && pData->FirstAttribute("quantization_level")->Value() == String("I8"))
                 layer.convolution().quantizationLevel() = TensorType8i;
-            StringToValue(pData->FirstAttribute("out-size")->Value(), layer.innerProduct().outputNum());
+            Cpl::ToVal(pData->FirstAttribute("out-size")->Value(), layer.innerProduct().outputNum());
             Shape inputShape = ConvertInputShape(pLayer);
             size_t inputSize = 1;
             for (size_t i = 0; i < inputShape.size(); ++i)
@@ -615,22 +615,22 @@ namespace Synet
             const XmlAttr * pFactor = pData->FirstAttribute("factor");
             if (pFactor == NULL)
                 return false;
-            StringToValue(pFactor->Value(), layer.interp2().factor());
+            Cpl::ToVal(pFactor->Value(), layer.interp2().factor());
             const XmlAttr * pPadBeg = pData->FirstAttribute("pad_beg");
             const XmlAttr * pPadEnd = pData->FirstAttribute("pad_end");
             if (pPadBeg && pPadEnd)
             {
                 size_t padBeg, padEnd;
-                StringToValue(pPadBeg->Value(), padBeg);
-                StringToValue(pPadEnd->Value(), padEnd);
+                Cpl::ToVal(pPadBeg->Value(), padBeg);
+                Cpl::ToVal(pPadEnd->Value(), padEnd);
                 layer.interp2().pad() = Shape({padBeg, padBeg, padEnd, padEnd});
             }
             if (pData->FirstAttribute("height"))
-                StringToValue(pData->FirstAttribute("height")->Value(), layer.interp2().height());
+                Cpl::ToVal(pData->FirstAttribute("height")->Value(), layer.interp2().height());
             if (pData->FirstAttribute("width"))
-                StringToValue(pData->FirstAttribute("width")->Value(), layer.interp2().width());
+                Cpl::ToVal(pData->FirstAttribute("width")->Value(), layer.interp2().width());
             if (pData->FirstAttribute("align_corners"))
-                StringToValue(pData->FirstAttribute("align_corners")->Value(), layer.interp2().alignCorners());
+                Cpl::ToVal(pData->FirstAttribute("align_corners")->Value(), layer.interp2().alignCorners());
             return true;
         }
 
@@ -719,26 +719,26 @@ namespace Synet
             if (pData->FirstAttribute("kernel-y") && pData->FirstAttribute("kernel-x"))
             {
                 layer.pooling().kernel().resize(2);
-                StringToValue(pData->FirstAttribute("kernel-y")->Value(), layer.pooling().kernel()[0]);
-                StringToValue(pData->FirstAttribute("kernel-x")->Value(), layer.pooling().kernel()[1]);
+                Cpl::ToVal(pData->FirstAttribute("kernel-y")->Value(), layer.pooling().kernel()[0]);
+                Cpl::ToVal(pData->FirstAttribute("kernel-x")->Value(), layer.pooling().kernel()[1]);
             }
             else if (!ConvertVector(pData->FirstAttribute("kernel"), layer.pooling().kernel()))
                 return false;
             if (pData->FirstAttribute("stride-y") && pData->FirstAttribute("stride-x"))
             {
                 layer.pooling().stride().resize(2);
-                StringToValue(pData->FirstAttribute("stride-y")->Value(), layer.pooling().stride()[0]);
-                StringToValue(pData->FirstAttribute("stride-x")->Value(), layer.pooling().stride()[1]);
+                Cpl::ToVal(pData->FirstAttribute("stride-y")->Value(), layer.pooling().stride()[0]);
+                Cpl::ToVal(pData->FirstAttribute("stride-x")->Value(), layer.pooling().stride()[1]);
             }
             else if (!ConvertVector(pData->FirstAttribute("strides"), layer.pooling().stride()))
                 return false;
             if (pData->FirstAttribute("pad-y") && pData->FirstAttribute("pad-x") && pData->FirstAttribute("pad-b") && pData->FirstAttribute("pad-r"))
             {
                 layer.pooling().pad().resize(4);
-                StringToValue(pData->FirstAttribute("pad-y")->Value(), layer.pooling().pad()[0]);
-                StringToValue(pData->FirstAttribute("pad-x")->Value(), layer.pooling().pad()[1]);
-                StringToValue(pData->FirstAttribute("pad-b")->Value(), layer.pooling().pad()[2]);
-                StringToValue(pData->FirstAttribute("pad-r")->Value(), layer.pooling().pad()[3]);
+                Cpl::ToVal(pData->FirstAttribute("pad-y")->Value(), layer.pooling().pad()[0]);
+                Cpl::ToVal(pData->FirstAttribute("pad-x")->Value(), layer.pooling().pad()[1]);
+                Cpl::ToVal(pData->FirstAttribute("pad-b")->Value(), layer.pooling().pad()[2]);
+                Cpl::ToVal(pData->FirstAttribute("pad-r")->Value(), layer.pooling().pad()[3]);
             }
             else if (!ConvertVectors(pData->FirstAttribute("pads_begin"), pData->FirstAttribute("pads_end"), layer.pooling().pad()))
                 return false;
@@ -749,7 +749,7 @@ namespace Synet
             if (pAutoPad && String(pAutoPad->Value()) == "valid")
                 layer.pooling().roundingType() = RoundingTypeFloor;
             if (pData->FirstAttribute("exclude-pad"))
-                StringToValue(pData->FirstAttribute("exclude-pad")->Value(), layer.pooling().excludePad());
+                Cpl::ToVal(pData->FirstAttribute("exclude-pad")->Value(), layer.pooling().excludePad());
             return true;
         }
 
@@ -759,9 +759,9 @@ namespace Synet
             if (pData == NULL)
                 return false;
             layer.type() = Synet::LayerTypePower;
-            StringToValue(pData->FirstAttribute("power")->Value(), layer.power().power());
-            StringToValue(pData->FirstAttribute("scale")->Value(), layer.power().scale());
-            StringToValue(pData->FirstAttribute("shift")->Value(), layer.power().shift());
+            Cpl::ToVal(pData->FirstAttribute("power")->Value(), layer.power().power());
+            Cpl::ToVal(pData->FirstAttribute("scale")->Value(), layer.power().scale());
+            Cpl::ToVal(pData->FirstAttribute("shift")->Value(), layer.power().shift());
             return true;
         }
 
@@ -778,7 +778,7 @@ namespace Synet
                     const XmlNode * pData = pLayer->FirstNode("data");
                     bool channelShared = false;
                     if (pData && pData->FirstAttribute("channel_shared"))
-                        StringToValue(pData->FirstAttribute("channel_shared")->Value(), channelShared);
+                        Cpl::ToVal(pData->FirstAttribute("channel_shared")->Value(), channelShared);
                     layer.weight()[0].dim() = Shape({ channelShared ? size_t{1} : ConvertInputShape(pLayer)[1] });
                     ConvertWeight(pWeights, srcBin, 0, Shape(), layer.weight()[0], dstBin);
                 }
@@ -797,12 +797,12 @@ namespace Synet
                 return false;
             layer.type() = Synet::LayerTypePriorBox;
             layer.priorBox().version() = 1;
-            StringToValue(pData->FirstAttribute("clip")->Value(), layer.priorBox().clip());
-            StringToValue(pData->FirstAttribute("flip")->Value(), layer.priorBox().flip());
-            StringToValue(pData->FirstAttribute("offset")->Value(), layer.priorBox().offset());
+            Cpl::ToVal(pData->FirstAttribute("clip")->Value(), layer.priorBox().clip());
+            Cpl::ToVal(pData->FirstAttribute("flip")->Value(), layer.priorBox().flip());
+            Cpl::ToVal(pData->FirstAttribute("offset")->Value(), layer.priorBox().offset());
             ConvertVector(pData->FirstAttribute("step"), layer.priorBox().step());
             if (pData->FirstAttribute("scale_all_sizes"))
-                StringToValue(pData->FirstAttribute("scale_all_sizes")->Value(), layer.priorBox().scaleAllSizes());
+                Cpl::ToVal(pData->FirstAttribute("scale_all_sizes")->Value(), layer.priorBox().scaleAllSizes());
             ConvertVector(pData->FirstAttribute("aspect_ratio"), layer.priorBox().aspectRatio());
             ConvertVector(pData->FirstAttribute("max_size"), layer.priorBox().maxSize());
             ConvertVector(pData->FirstAttribute("min_size"), layer.priorBox().minSize());
@@ -818,18 +818,18 @@ namespace Synet
             layer.type() = Synet::LayerTypePriorBoxClustered;
             ConvertVector(pData->FirstAttribute("height"), layer.priorBoxClustered().heights());
             ConvertVector(pData->FirstAttribute("width"), layer.priorBoxClustered().widths());
-            StringToValue(pData->FirstAttribute("clip")->Value(), layer.priorBox().clip());
+            Cpl::ToVal(pData->FirstAttribute("clip")->Value(), layer.priorBox().clip());
             ConvertVector(pData->FirstAttribute("variance"), layer.priorBoxClustered().variance());
             if (pData->FirstAttribute("img_h"))
-                StringToValue(pData->FirstAttribute("img_h")->Value(), layer.priorBoxClustered().imgH());
+                Cpl::ToVal(pData->FirstAttribute("img_h")->Value(), layer.priorBoxClustered().imgH());
             if (pData->FirstAttribute("img_w"))
-                StringToValue(pData->FirstAttribute("img_w")->Value(), layer.priorBoxClustered().imgW());
-            StringToValue(pData->FirstAttribute("step")->Value(), layer.priorBoxClustered().step());
+                Cpl::ToVal(pData->FirstAttribute("img_w")->Value(), layer.priorBoxClustered().imgW());
+            Cpl::ToVal(pData->FirstAttribute("step")->Value(), layer.priorBoxClustered().step());
             if (pData->FirstAttribute("step_h"))
-                StringToValue(pData->FirstAttribute("step_h")->Value(), layer.priorBoxClustered().stepH());
+                Cpl::ToVal(pData->FirstAttribute("step_h")->Value(), layer.priorBoxClustered().stepH());
             if (pData->FirstAttribute("step_w"))
-                StringToValue(pData->FirstAttribute("step_w")->Value(), layer.priorBoxClustered().stepW());
-            StringToValue(pData->FirstAttribute("offset")->Value(), layer.priorBoxClustered().offset());
+                Cpl::ToVal(pData->FirstAttribute("step_w")->Value(), layer.priorBoxClustered().stepW());
+            Cpl::ToVal(pData->FirstAttribute("offset")->Value(), layer.priorBoxClustered().offset());
             return true;
         }
 
@@ -840,11 +840,11 @@ namespace Synet
                 return false;
             layer.type() = Synet::LayerTypePriorBox;
             layer.priorBox().version() = 2;
-            StringToValue(pData->FirstAttribute("clip")->Value(), layer.priorBox().clip());
-            StringToValue(pData->FirstAttribute("flip")->Value(), layer.priorBox().flip());
-            StringToValue(pData->FirstAttribute("offset")->Value(), layer.priorBox().offset());
+            Cpl::ToVal(pData->FirstAttribute("clip")->Value(), layer.priorBox().clip());
+            Cpl::ToVal(pData->FirstAttribute("flip")->Value(), layer.priorBox().flip());
+            Cpl::ToVal(pData->FirstAttribute("offset")->Value(), layer.priorBox().offset());
             if(pData->FirstAttribute("scale_all_sizes"))
-                StringToValue(pData->FirstAttribute("scale_all_sizes")->Value(), layer.priorBox().scaleAllSizes());
+                Cpl::ToVal(pData->FirstAttribute("scale_all_sizes")->Value(), layer.priorBox().scaleAllSizes());
             ConvertVector(pData->FirstAttribute("aspect_ratio"), layer.priorBox().aspectRatio());
             ConvertVector(pData->FirstAttribute("max_size"), layer.priorBox().maxSize());
             ConvertVector(pData->FirstAttribute("min_size"), layer.priorBox().minSize());
@@ -859,7 +859,7 @@ namespace Synet
             if (pData)
             {
                 if (pData->FirstAttribute("negative_slope"))
-                    StringToValue(pData->FirstAttribute("negative_slope")->Value(), layer.relu().negativeSlope());
+                    Cpl::ToVal(pData->FirstAttribute("negative_slope")->Value(), layer.relu().negativeSlope());
             }
             return true;
         }
@@ -1074,7 +1074,7 @@ namespace Synet
             const XmlNode * pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
-            StringToValue(pData->FirstAttribute("axis")->Value(), layer.softmax().axis());
+            Cpl::ToVal(pData->FirstAttribute("axis")->Value(), layer.softmax().axis());
             if (trans)
             {
                 Shape input;
@@ -1109,7 +1109,7 @@ namespace Synet
             const XmlNode * pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
-            StringToValue(pData->FirstAttribute("axis")->Value(), layer.unpack().axis());
+            Cpl::ToVal(pData->FirstAttribute("axis")->Value(), layer.unpack().axis());
             if (trans && !PermutedToNchw(layers))
             {
                 Shape input;
@@ -1221,8 +1221,8 @@ namespace Synet
             const XmlNode * pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
-            StringToValue(pData->FirstAttribute("axis")->Value(), layer.tile().axis());
-            StringToValue(pData->FirstAttribute("tiles")->Value(), layer.tile().tiles());
+            Cpl::ToVal(pData->FirstAttribute("axis")->Value(), layer.tile().axis());
+            Cpl::ToVal(pData->FirstAttribute("tiles")->Value(), layer.tile().tiles());
             if (trans && ConvertInputShape(pLayer).size() == 4)
             {
                 uint32_t order[4] = { 0, 3, 1, 2 };

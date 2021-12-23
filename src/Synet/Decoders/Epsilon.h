@@ -30,11 +30,11 @@ namespace Synet
 {
     struct EpsilonParam
     {
-        SYNET_PARAM_VALUE(Strings, names, Strings({ "conf", "lmks", "loc" }));
-        SYNET_PARAM_VALUE(Floats, variance, Floats({ 0.1f, 0.2f }));
-        SYNET_PARAM_VALUE(Shape, step, Shape({ 8, 16, 32, 64 }));
-        SYNET_PARAM_VALUE(Shape, minSize, Shape({ 10, 16, 24, 32, 48, 0, 64, 96, 0, 128, 192, 256 }));
-        SYNET_PARAM_VALUE(bool, clip, false);
+        CPL_PARAM_VALUE(Strings, names, Strings({ "conf", "lmks", "loc" }));
+        CPL_PARAM_VALUE(Floats, variance, Floats({ 0.1f, 0.2f }));
+        CPL_PARAM_VALUE(Shape, step, Shape({ 8, 16, 32, 64 }));
+        CPL_PARAM_VALUE(Shape, minSize, Shape({ 10, 16, 24, 32, 48, 0, 64, 96, 0, 128, 192, 256 }));
+        CPL_PARAM_VALUE(bool, clip, false);
     };
 
     class EpsilonDecoder

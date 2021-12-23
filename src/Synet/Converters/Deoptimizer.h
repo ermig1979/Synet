@@ -142,7 +142,7 @@ namespace Synet
 			for (int i = 0, w = 0, n = (int)merg.conv().size(); i < n; ++i)
 			{
 				conv[i].type() = LayerTypeConvolution;
-				conv[i].name() = layer.name() + (i == n - 1 ? String("") : String("_conv") + Synet::ValueToString(i));
+				conv[i].name() = layer.name() + (i == n - 1 ? String("") : String("_conv") + Cpl::ToStr(i));
 				conv[i].src() = i ? conv[i - 1].dst() : layer.src();
 				conv[i].dst().push_back(conv[i].name());
 				conv[i].convolution() = layer.mergedConvolution().conv()[i];

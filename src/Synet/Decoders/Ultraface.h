@@ -30,7 +30,7 @@ namespace Synet
 {
     struct UltrafaceParam
     {
-        SYNET_PARAM_VALUE(Strings, names, Strings({ "boxes", "scores" }));
+        CPL_PARAM_VALUE(Strings, names, Strings({ "boxes", "scores" }));
     };
 
     class UltrafaceDecoder

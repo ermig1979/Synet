@@ -228,7 +228,7 @@ namespace Synet
             std::stringstream desc;
             desc << a.count << ": " << a.batch << "x" << a.conv[0].srcC << "x" << a.conv[0].srcH << "x" << a.conv[0].srcW;
             for(size_t i = 0; i < a.count; ++i)
-                desc << "-" << (a.conv[i].IsDepthwise() ? String("") : ValueToString(a.conv[i].dstC) + "x") << a.conv[i].kernelY << "x" << a.conv[i].strideY;
+                desc << "-" << (a.conv[i].IsDepthwise() ? String("") : Cpl::ToStr(a.conv[i].dstC) + "x") << a.conv[i].kernelY << "x" << a.conv[i].strideY;
             desc << InternalInfo();
             this->UsePerfStat(desc.str(), Flop());
         }

@@ -395,7 +395,7 @@ namespace Synet
             if(dst)
                 layer.dst().push_back(layer.name());
             for (int i = 1; i < dst; ++i)
-                layer.dst().push_back(layer.name() + ":" + ValueToString(i));
+                layer.dst().push_back(layer.name() + ":" + Cpl::ToStr(i));
         }
 
         bool ConvertAddLayer(const ::tensorflow::NodeDef & node, Synet::LayerParam & layer, Vector & weight, size_t & offset)

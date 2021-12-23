@@ -36,11 +36,11 @@ namespace Synet
     class InferenceEngineConverter : public SynetUtils
     {
     protected:
-        typedef Xml::File<char> XmlFile;
-        typedef Xml::XmlBase<char> XmlBase;
-        typedef Xml::XmlDocument<char> XmlDoc;
-        typedef Xml::XmlNode<char> XmlNode;
-        typedef Xml::XmlAttribute<char> XmlAttr;
+        typedef Cpl::Xml::File<char> XmlFile;
+        typedef Cpl::Xml::XmlBase<char> XmlBase;
+        typedef Cpl::Xml::XmlDocument<char> XmlDoc;
+        typedef Cpl::Xml::XmlNode<char> XmlNode;
+        typedef Cpl::Xml::XmlAttribute<char> XmlAttr;
 
         struct Edge
         {
@@ -74,10 +74,10 @@ namespace Synet
             while (pEdge)
             {
                 Edge edge;
-                StringToValue(pEdge->FirstAttribute("from-layer")->Value(), edge.fromLayer);
-                StringToValue(pEdge->FirstAttribute("from-port")->Value(), edge.fromPort);
-                StringToValue(pEdge->FirstAttribute("to-layer")->Value(), edge.toLayer);
-                StringToValue(pEdge->FirstAttribute("to-port")->Value(), edge.toPort);
+                Cpl::ToVal(pEdge->FirstAttribute("from-layer")->Value(), edge.fromLayer);
+                Cpl::ToVal(pEdge->FirstAttribute("from-port")->Value(), edge.fromPort);
+                Cpl::ToVal(pEdge->FirstAttribute("to-layer")->Value(), edge.toLayer);
+                Cpl::ToVal(pEdge->FirstAttribute("to-port")->Value(), edge.toPort);
                 edges.push_back(edge);
                 pEdge = pEdge->NextSibling("edge");
             }
@@ -87,7 +87,7 @@ namespace Synet
         static bool ParseInputOutput(const XmlNode &src, const Edges & edges, const LayerParams & layers, LayerParam & dst, IndexMap & index, TensorInfoMap & info)
         {
             size_t layerId;
-            StringToValue(src.FirstAttribute("id")->Value(), layerId);
+            Cpl::ToVal(src.FirstAttribute("id")->Value(), layerId);
             index[layerId] = layers.size();
             //assert(layerId == layers.size());
 
@@ -100,7 +100,7 @@ namespace Synet
                 while (pPort)
                 {
                     size_t portId;
-                    StringToValue(pPort->FirstAttribute("id")->Value(), portId);
+                    Cpl::ToVal(pPort->FirstAttribute("id")->Value(), portId);
                     bool find = false;
                     for (size_t i = 0; i < edges.size(); ++i)
                     {
@@ -115,7 +115,7 @@ namespace Synet
                                 for (size_t j = 0; j < edges.size(); ++j)
                                     if (edges[j].fromLayer == edges[i].fromLayer)
                                         dstPortMin = Synet::Min(dstPortMin, edges[j].fromPort);
-                                dst.src().push_back(fromLayer.name() + ":" + ValueToString(edges[i].fromPort - dstPortMin));
+                                dst.src().push_back(fromLayer.name() + ":" + Cpl::ToStr(edges[i].fromPort - dstPortMin));
                             }
                             find = true;
                             break;
@@ -134,7 +134,7 @@ namespace Synet
                 while (pPort)
                 {
                     tensorInfos.push_back(TensorInfo());
-                    StringToValue(pPort->FirstAttribute("id")->Value(), tensorInfos.back().id);
+                    Cpl::ToVal(pPort->FirstAttribute("id")->Value(), tensorInfos.back().id);
                     tensorInfos.back().shape = ConvertShape(pPort);
                     pPort = pPort->NextSibling("port");
                 }
@@ -145,7 +145,7 @@ namespace Synet
                 else
                 {
                     for (size_t i = 0; i < tensorInfos.size(); ++i)
-                        dst.dst().push_back(dst.name() + ":" + ValueToString(i));
+                        dst.dst().push_back(dst.name() + ":" + Cpl::ToStr(i));
                 }
                 for (size_t i = 0; i < dst.dst().size(); ++i)
                 {
@@ -160,7 +160,7 @@ namespace Synet
         {
             if (pSrc == NULL)
                 return false;
-            StringToValue(pSrc->Value(), dst);
+            Cpl::ToVal(pSrc->Value(), dst);
             return true;
         }
 
@@ -181,7 +181,7 @@ namespace Synet
             }
             dst.resize(subs.size());
             for (size_t i = 0; i < subs.size(); ++i)
-                StringToValue(subs[i], dst[i]);
+                Cpl::ToVal(subs[i], dst[i]);
             return true;
         }
 
@@ -205,7 +205,7 @@ namespace Synet
             while (pDim)
             {
                 size_t dim;
-                StringToValue(pDim->Value(), dim);
+                Cpl::ToVal(pDim->Value(), dim);
                 shape.push_back(dim);
                 pDim = pDim->NextSibling("dim");
             }
@@ -214,10 +214,10 @@ namespace Synet
 
         static Shape ConvertShape(const String & str)
         {
-            Strings strs = Separate(str, ",");
+            Strings strs = Cpl::Separate(str, ",");
             Shape shape(strs.size());
             for (size_t i = 0; i < strs.size(); ++i)
-                StringToValue(strs[i], shape[i]);
+                Cpl::ToVal(strs[i], shape[i]);
             return shape;
         }
 

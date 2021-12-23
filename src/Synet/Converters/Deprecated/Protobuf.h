@@ -25,8 +25,6 @@
 #pragma once
 
 #include "Synet/Common.h"
-#include "Synet/Xml.h"
-#include "Synet/Param.h"
 
 #if defined(SYNET_PROTOBUF_ENABLE)
 
@@ -46,7 +44,7 @@ namespace google
                 Printer().Save(message, os);
             }
 
-            static void Save(const Message & message, Synet::Xml::XmlDocument<char> & doc)
+            static void Save(const Message & message, Cpl::Xml::XmlDocument<char> & doc)
             {
                 Printer().Save(message, doc);
             }
@@ -65,26 +63,26 @@ namespace google
 
                 void Save(const Message & message, std::ostream & os)
                 {
-                    Synet::Xml::XmlDocument<char> doc;
+                    Cpl::Xml::XmlDocument<char> doc;
                     Save(message, doc);
                     os << doc;
                 }
 
-                void Save(const Message & message, Synet::Xml::XmlDocument<char> & doc)
+                void Save(const Message & message, Cpl::Xml::XmlDocument<char> & doc)
                 {
-                    Synet::Xml::XmlNode<char> * xmlDeclaration = doc.AllocateNode(Synet::Xml::NodeDeclaration);
+                    Cpl::Xml::XmlNode<char> * xmlDeclaration = doc.AllocateNode(Cpl::Xml::NodeDeclaration);
                     xmlDeclaration->AppendAttribute(doc.AllocateAttribute("version", "1.0"));
                     xmlDeclaration->AppendAttribute(doc.AllocateAttribute("encoding", "utf-8"));
                     doc.AppendNode(xmlDeclaration);
 
-                    Synet::Xml::XmlNode<char> * rootNode = doc.AllocateNode(Synet::Xml::NodeElement, message.GetDescriptor()->name().c_str());
+                    Cpl::Xml::XmlNode<char> * rootNode = doc.AllocateNode(Cpl::Xml::NodeElement, message.GetDescriptor()->name().c_str());
                     doc.AppendNode(rootNode);
 
                     SaveMessage(message, doc, rootNode);
                 }
 
             private:
-                void SaveMessage(const Message & message, Synet::Xml::XmlDocument<char> & doc, Synet::Xml::XmlNode<char> * node)
+                void SaveMessage(const Message & message, Cpl::Xml::XmlDocument<char> & doc, Cpl::Xml::XmlNode<char> * node)
                 {
                     const Reflection * reflection = message.GetReflection();
                     vector<const FieldDescriptor*> fields;
@@ -94,7 +92,7 @@ namespace google
                 }
 
                 void SaveField(const Message & message, const Reflection * reflection, const FieldDescriptor * field,
-                    Synet::Xml::XmlDocument<char> & doc, Synet::Xml::XmlNode<char> * node)
+                    Cpl::Xml::XmlDocument<char> & doc, Cpl::Xml::XmlNode<char> * node)
                 {
                     int count = 0;
                     if (field->is_repeated()) 
@@ -137,7 +135,7 @@ namespace google
                 static inline const char * FalseString() { return "false"; }
 
                 void SaveValue(const Message & message, const Reflection* reflection, const FieldDescriptor * field,
-                    int fieldIndex, Synet::Xml::XmlDocument<char> & doc, Synet::Xml::XmlNode<char> * node)
+                    int fieldIndex, Cpl::Xml::XmlDocument<char> & doc, Cpl::Xml::XmlNode<char> * node)
                 {
                     assert(field->is_repeated() || fieldIndex == -1);
 
@@ -146,57 +144,57 @@ namespace google
                     case FieldDescriptor::CPPTYPE_INT32:
                     {
                         int32_t value = field->is_repeated() ? reflection->GetRepeatedInt32(message, field, fieldIndex) :  reflection->GetInt32(message, field); 
-                        Synet::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Synet::Xml::NodeElement,
-                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value).c_str()); 
+                        Cpl::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Cpl::Xml::NodeElement,
+                            FieldName(message, reflection, field).c_str(), Cpl::ToStr(value).c_str());
                         node->AppendNode(stringNode);
                         break;
                     }
                     case FieldDescriptor::CPPTYPE_INT64:
                     {
                         int64_t value = field->is_repeated() ? reflection->GetRepeatedInt64(message, field, fieldIndex) : reflection->GetInt64(message, field);
-                        Synet::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Synet::Xml::NodeElement,
-                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value).c_str());
+                        Cpl::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Cpl::Xml::NodeElement,
+                            FieldName(message, reflection, field).c_str(), Cpl::ToStr(value).c_str());
                         node->AppendNode(stringNode);
                         break;
                     }
                     case FieldDescriptor::CPPTYPE_UINT32:
                     {
                         uint32_t value = field->is_repeated() ? reflection->GetRepeatedUInt32(message, field, fieldIndex) : reflection->GetUInt32(message, field);
-                        Synet::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Synet::Xml::NodeElement,
-                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value).c_str());
+                        Cpl::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Cpl::Xml::NodeElement,
+                            FieldName(message, reflection, field).c_str(), Cpl::ToStr(value).c_str());
                         node->AppendNode(stringNode);
                         break;
                     }
                     case FieldDescriptor::CPPTYPE_UINT64:
                     {
                         uint64_t value = field->is_repeated() ? reflection->GetRepeatedUInt64(message, field, fieldIndex) : reflection->GetUInt64(message, field);
-                        Synet::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Synet::Xml::NodeElement,
-                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value).c_str());
+                        Cpl::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Cpl::Xml::NodeElement,
+                            FieldName(message, reflection, field).c_str(), Cpl::ToStr(value).c_str());
                         node->AppendNode(stringNode);
                         break; 
                     }
                     case FieldDescriptor::CPPTYPE_FLOAT:
                     {
                         float value = field->is_repeated() ? reflection->GetRepeatedFloat(message, field, fieldIndex) : reflection->GetFloat(message, field);
-                        Synet::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Synet::Xml::NodeElement,
-                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value).c_str());
+                        Cpl::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Cpl::Xml::NodeElement,
+                            FieldName(message, reflection, field).c_str(), Cpl::ToStr(value).c_str());
                         node->AppendNode(stringNode);
                         break;
                     }
                     case FieldDescriptor::CPPTYPE_DOUBLE:
                     {
                         double value = field->is_repeated() ? reflection->GetRepeatedDouble(message, field, fieldIndex) : reflection->GetDouble(message, field);
-                        Synet::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Synet::Xml::NodeElement,
-                            FieldName(message, reflection, field).c_str(), Synet::ValueToString(value).c_str());
+                        Cpl::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Cpl::Xml::NodeElement,
+                            FieldName(message, reflection, field).c_str(), Cpl::ToStr(value).c_str());
                         node->AppendNode(stringNode);
                         break;
                     }
                     case FieldDescriptor::CPPTYPE_STRING:
                     {
-                        Synet::String scratch;
+                        Cpl::String scratch;
                         const Synet::String & value = field->is_repeated() ? reflection->GetRepeatedStringReference(
                                 message, field, fieldIndex, &scratch) : reflection->GetStringReference(message, field, &scratch);
-                        Synet::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Synet::Xml::NodeElement,
+                        Cpl::Xml::XmlNode<char> * stringNode = doc.AllocateNode(Cpl::Xml::NodeElement,
                             FieldName(message, reflection, field).c_str(), value.c_str());
                         node->AppendNode(stringNode);
                         break;
@@ -205,13 +203,13 @@ namespace google
                     {
                         if (field->is_repeated())
                         {
-                            Synet::Xml::XmlNode<char> * boolNode = doc.AllocateNode(Synet::Xml::NodeElement, FieldName(message, reflection, field).c_str(), 
+                            Cpl::Xml::XmlNode<char> * boolNode = doc.AllocateNode(Cpl::Xml::NodeElement, FieldName(message, reflection, field).c_str(), 
                                 reflection->GetRepeatedBool(message, field, fieldIndex) ? TrueString() : FalseString());
                             node->AppendNode(boolNode);
                         }
                         else 
                         {
-                            Synet::Xml::XmlNode<char> * boolNode = doc.AllocateNode(Synet::Xml::NodeElement, FieldName(message, reflection, field).c_str(),
+                            Cpl::Xml::XmlNode<char> * boolNode = doc.AllocateNode(Cpl::Xml::NodeElement, FieldName(message, reflection, field).c_str(),
                                 reflection->GetBool(message, field) ? TrueString() : FalseString());
                             node->AppendNode(boolNode);
                         }
@@ -221,13 +219,13 @@ namespace google
                     {
                         Synet::String value = field->is_repeated() ? reflection->GetRepeatedEnum(message, field, fieldIndex)->name() :
                             reflection->GetEnum(message, field)->name();
-                        Synet::Xml::XmlNode<char> * enumNode = doc.AllocateNode(Synet::Xml::NodeElement, FieldName(message, reflection, field).c_str(), value.c_str());
+                        Cpl::Xml::XmlNode<char> * enumNode = doc.AllocateNode(Cpl::Xml::NodeElement, FieldName(message, reflection, field).c_str(), value.c_str());
                         node->AppendNode(enumNode);
                         break;
                     }                    
                     case FieldDescriptor::CPPTYPE_MESSAGE: 
                     {
-                        Synet::Xml::XmlNode<char> * messageNode = doc.AllocateNode(Synet::Xml::NodeElement, field->name().c_str());
+                        Cpl::Xml::XmlNode<char> * messageNode = doc.AllocateNode(Cpl::Xml::NodeElement, field->name().c_str());
                         node->AppendNode(messageNode);
                         SaveMessage(field->is_repeated() ? reflection->GetRepeatedMessage(message, field, fieldIndex) : 
                             reflection->GetMessage(message, field), doc, messageNode);

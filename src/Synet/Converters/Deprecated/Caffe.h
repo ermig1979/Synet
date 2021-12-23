@@ -123,7 +123,7 @@ namespace Synet
                 return false;
 
             dst.name() = src.name();
-            Synet::StringToValue<LayerType>(src.type(), dst.type());
+            Cpl::ToVal<LayerType>(src.type(), dst.type());
             for (int j = 0; j < src.bottom_size(); ++j)
                 dst.src().push_back(src.bottom(j));
             for (int j = 0; j < src.top_size(); ++j)

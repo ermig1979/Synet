@@ -6,7 +6,6 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
     <ClInclude Include="..\..\src\Synet\Network.h" />
-    <ClInclude Include="..\..\src\Synet\Param.h" />
     <ClInclude Include="..\..\src\Synet\Params.h" />
     <ClInclude Include="..\..\src\Synet\Synet.h" />
     <ClInclude Include="..\..\src\Synet\Tensor.h" />
@@ -110,7 +109,7 @@
       <Filter>Converters</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Caffe.h">
-      <Filter>Converters\Depricated</Filter>
+      <Filter>Converters\Deprecated</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolutionLayer.h">
       <Filter>Layers</Filter>
@@ -215,10 +214,10 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Tensorflow.h">
-      <Filter>Converters\Depricated</Filter>
+      <Filter>Converters\Deprecated</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Protobuf.h">
-      <Filter>Converters\Depricated</Filter>
+      <Filter>Converters\Deprecated</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\TileLayer.h">
       <Filter>Layers</Filter>
@@ -236,9 +235,6 @@
       <Filter>Converters</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\Winograd.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Xml.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Common.h" />
@@ -292,9 +288,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\MishLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\StringUtils.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\BroadcastLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
@@ -330,6 +323,39 @@
     <ClInclude Include="..\..\src\Synet\Decoders\Ultraface.h">
       <Filter>Decoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Args.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Config.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Console.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Defs.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\File.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Log.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Param.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Performance.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\String.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Xml.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Yaml.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -341,14 +367,17 @@
     <Filter Include="Utils">
       <UniqueIdentifier>{36aa89bf-afc4-4b67-8db6-28ef952a4fc5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Converters\Depricated">
-      <UniqueIdentifier>{22ba054b-220b-4b3d-9978-01844a07aae3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Quantization">
       <UniqueIdentifier>{c7c3059c-3256-4387-ae02-ea14ca8acc63}</UniqueIdentifier>
     </Filter>
     <Filter Include="Decoders">
       <UniqueIdentifier>{6d46924f-0c58-45c2-af95-c6bca4f4bf1b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cpl">
+      <UniqueIdentifier>{61106982-3cf0-4d97-94af-941102a58b36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Converters\Deprecated">
+      <UniqueIdentifier>{22ba054b-220b-4b3d-9978-01844a07aae3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

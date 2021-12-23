@@ -21,6 +21,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Args.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Config.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Console.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Defs.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\File.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Log.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Param.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Performance.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\String.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Xml.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Yaml.h" />
     <ClInclude Include="..\..\src\Synet\Buffer.h" />
     <ClInclude Include="..\..\src\Synet\Common.h" />
     <ClInclude Include="..\..\src\Synet\Context.h" />
@@ -111,7 +122,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\UpsampleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\YoloLayer.h" />
     <ClInclude Include="..\..\src\Synet\Network.h" />
-    <ClInclude Include="..\..\src\Synet\Param.h" />
     <ClInclude Include="..\..\src\Synet\Params.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\Const.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\Convert.h" />
@@ -135,9 +145,7 @@
     <ClInclude Include="..\..\src\Synet\Utils\MergedConvolution.h" />
     <ClInclude Include="..\..\src\Synet\Utils\SetInput.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Statistics.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\StringUtils.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Winograd.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\Xml.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

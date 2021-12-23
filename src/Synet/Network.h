@@ -115,7 +115,7 @@ namespace Synet
         {
             Clear();
 
-            if (!_param.Load(modelData, modelSize))
+            if (!_param.Load(modelData, modelSize, Cpl::ParamFormatXml))
                 return false;
             _context.options = options;
             CreateLayers();
@@ -404,12 +404,12 @@ namespace Synet
                 if ((layer._isBack && printOutput) || printLayerDst)
                 {
                     os << "Layer: " << layer.Param().name() << " : ";
-                    os << ValueToString(layer.Param().type()) << " ( ";
+                    os << Cpl::ToStr(layer.Param().type()) << " ( ";
                     for (size_t j = 0; j < layer.Param().src().size(); ++j)
                         os << layer.Param().src()[j] << " ";
                     os << ")." << std::endl;
                     for (size_t j = 0; j < _input[i].dst.size(); ++j)
-                        _input[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]", false, first, last, precision);
+                        _input[i].dst[j]->DebugPrint(os, String("dst[") + Cpl::ToStr(j) + "]", false, first, last, precision);
                 }
             }
             for (size_t i = 0; i < _stages.size(); ++i)
@@ -420,14 +420,14 @@ namespace Synet
                     if(printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
                         layer.Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
                     os << "Layer: " << layer.Param().name() << " : ";
-                    os << ValueToString(layer.Param().type()) << " ( ";
+                    os << Cpl::ToStr(layer.Param().type()) << " ( ";
                     for (size_t j = 0; j < layer.Param().src().size(); ++j)
                         os << layer.Param().src()[j] << " ";
                     os << ")." << std::endl;
                     if (printLayerWeight)
                     {
                         for (size_t j = 0; j < layer.Weight().size(); ++j)
-                            layer.Weight()[j].DebugPrint(os, String("weight[") + ValueToString(j) + "]", true, first, last, precision);
+                            layer.Weight()[j].DebugPrint(os, String("weight[") + Cpl::ToStr(j) + "]", true, first, last, precision);
                     }
                     if (printInt8Buffers && layer.Is8i())
                     {
@@ -444,7 +444,7 @@ namespace Synet
                     if ((layer._isBack && printOutput) || printLayerDst)
                     {
                         for (size_t j = 0; j < _stages[i].dst.size(); ++j)
-                            _stages[i].dst[j]->DebugPrint(os, String("dst[") + ValueToString(j) + "]", false, first, last, precision);
+                            _stages[i].dst[j]->DebugPrint(os, String("dst[") + Cpl::ToStr(j) + "]", false, first, last, precision);
                     }
                 }
             }

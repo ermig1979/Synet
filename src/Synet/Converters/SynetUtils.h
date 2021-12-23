@@ -338,7 +338,7 @@ namespace Synet
                 break;
             }
             default:
-                std::cout << "Unsupported layer type " << ValueToString(layer.type()) << " to convert weight !" << std::endl;
+                std::cout << "Unsupported layer type " << Cpl::ToStr(layer.type()) << " to convert weight !" << std::endl;
                 return false;
             }
             return true;

@@ -101,11 +101,11 @@ namespace Synet
         typedef std::vector<Tensor> Tensors;
 
         typedef std::vector<float> Vector;
-        typedef Xml::File<char> XmlFile;
-        typedef Xml::XmlBase<char> XmlBase;
-        typedef Xml::XmlDocument<char> XmlDoc;
-        typedef Xml::XmlNode<char> XmlNode;
-        typedef Xml::XmlAttribute<char> XmlAttr;
+        typedef Cpl::Xml::File<char> XmlFile;
+        typedef Cpl::Xml::XmlBase<char> XmlBase;
+        typedef Cpl::Xml::XmlDocument<char> XmlDoc;
+        typedef Cpl::Xml::XmlNode<char> XmlNode;
+        typedef Cpl::Xml::XmlAttribute<char> XmlAttr;
 
         bool LoadModel(const String & path, XmlFile & file, XmlDoc & xml)
         {
@@ -144,7 +144,7 @@ namespace Synet
                 return false;
             }
 
-            StringToValue(pVersion->Value(), version);
+            Cpl::ToVal(pVersion->Value(), version);
 
             if (version <= 7)
             {

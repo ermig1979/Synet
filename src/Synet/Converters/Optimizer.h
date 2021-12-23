@@ -33,12 +33,12 @@ namespace Synet
 {
     struct OptimizerParam
     {
-        SYNET_PARAM_VALUE(bool, mergeTwoConvolutions, true);
-        SYNET_PARAM_VALUE(uint32_t, mergeTwoConvolutionsOutputNumMax, 256);
-        SYNET_PARAM_VALUE(bool, mergeInt8Convolutions, true);
+        CPL_PARAM_VALUE(bool, mergeTwoConvolutions, true);
+        CPL_PARAM_VALUE(uint32_t, mergeTwoConvolutionsOutputNumMax, 256);
+        CPL_PARAM_VALUE(bool, mergeInt8Convolutions, true);
     };
 
-    SYNET_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);
+    CPL_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);
 
     class Optimizer : public SynetUtils
     {

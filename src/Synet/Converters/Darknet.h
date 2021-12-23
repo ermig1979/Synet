@@ -539,7 +539,7 @@ namespace Synet
 
         String UniqueName(const String & prefix)
         {
-            return prefix + "_" + Synet::ValueToString<size_t>(_id++);
+            return prefix + "_" + Cpl::ToStr<size_t>(_id++);
         }
 
         size_t _id;

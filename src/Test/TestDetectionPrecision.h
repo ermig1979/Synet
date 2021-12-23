@@ -148,14 +148,14 @@ namespace Test
 			return true;
 		}
 
-		typedef Synet::Xml::XmlBase<char> XmlBase;
-		typedef Synet::Xml::XmlNode<char> XmlNode;
+		typedef Cpl::Xml::XmlBase<char> XmlBase;
+		typedef Cpl::Xml::XmlNode<char> XmlNode;
 
 		template<class T> static bool Convert(const XmlBase * src, T& dst)
 		{
 			if (src == NULL)
 				return false;
-			Synet::StringToValue(src->Value(), dst);
+			Cpl::ToVal(src->Value(), dst);
 			return true;
 		}
 
@@ -203,7 +203,7 @@ namespace Test
 			std::ifstream ifs(path.c_str());
 			if (ifs.is_open())
 			{
-				using namespace Synet::Xml;
+				using namespace Cpl::Xml;
 				File<char> file(ifs);
 				XmlDocument<char> doc;
 				try
