@@ -75,7 +75,7 @@ namespace Test
 
         virtual bool Init(const String & model, const String & weight, const Options& options, const TestParam & param)
         {
-            TEST_PERF_FUNC();
+            CPL_PERF_FUNC();
 
             Ort::SessionOptions sessionOptions;
             sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
@@ -180,7 +180,7 @@ namespace Test
             {
                 SetInput(src, 0, inputValues);
                 {
-                    TEST_PERF_FUNC();
+                    CPL_PERF_FUNC();
                     _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), inputValues.data(), _inputNames.size(),
                         _outputNames.data(), _outputValues->data(), _outputNames.size());
                 }
@@ -188,7 +188,7 @@ namespace Test
             }
             else
             {
-                TEST_PERF_BLOCK("batch emulation");
+                CPL_PERF_BEG("batch emulation");
                 for (size_t b = 0; b < _batchSize; ++b)
                 {
                     SetInput(src, b, inputValues);

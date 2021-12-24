@@ -858,14 +858,14 @@ namespace Test
                 else
                 {
                     bool canstop = false;
-                    double start = Time(), duration = 0;
+                    double start = Cpl::Time(), duration = 0;
                     while (duration < _options.executionTime)
                     {
                         for (size_t i = 0; i < _tests.size() && (duration < _options.executionTime || !canstop); ++i)
                         {
                             TestData& test = *_tests[i];
                             Copy(_firsts[thread].Predict(test.input), test.output[thread].first);
-                            duration = Time() - start;
+                            duration = Cpl::Time() - start;
                             _threads[thread].current = (total * (networks - 1) * second +
                                 std::min(total, size_t(duration * 1000))) / networks;
                         }
@@ -905,14 +905,14 @@ namespace Test
                 else
                 {
                     bool canstop = false;
-                    double start = Time(), duration = 0;
+                    double start = Cpl::Time(), duration = 0;
                     while (duration < _options.executionTime)
                     {
                         for (size_t i = 0; i < _tests.size() && (duration < _options.executionTime || !canstop); ++i)
                         {
                             TestData& test = *_tests[i];
                             Copy(_seconds[thread].Predict(test.input), test.output[thread].second);
-                            duration = Time() - start;
+                            duration = Cpl::Time() - start;
                             _threads[thread].current = (total * (networks - 1) * second +
                                 std::min(total, size_t(duration * 1000))) / networks;
                         }

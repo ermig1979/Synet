@@ -227,12 +227,12 @@ namespace Test
 			return ss.str();
 		}
 
-		PerformanceMeasurer NetworkPredictPm(String framework, String type)
+		Cpl::PerformanceMeasurer NetworkPredictPm(String framework, String type)
 		{
 			framework = WithoutSymbol(framework, ' ');
-			PerformanceMeasurer result = PerformanceMeasurerStorage::s_storage.GetCombined(NetworkPredictName(framework, type));
+			Cpl::PerformanceMeasurer result = Cpl::PerformanceStorage::Global().Merged(NetworkPredictName(framework, type));
 			if (result.Average() == 0)
-				result = PerformanceMeasurerStorage::s_storage.GetCombined(NetworkPredictName(framework, "batch emulation"));
+				result = Cpl::PerformanceStorage::Global().Merged(NetworkPredictName(framework, "batch emulation"));
 			return result;
 		}
 

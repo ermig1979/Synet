@@ -101,7 +101,7 @@ namespace Test
 					if (memoryUsage)
 						ss << "Memory usage: " << MemoryUsageString(memoryUsage, testThreads) << std::endl;
 					ss << SystemInfo() << std::endl;
-					PerformanceMeasurerStorage::s_storage.Print(ss, statFilter);
+					PrintPerformance(ss, statFilter);
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 					if (framework == "synet")
 						ss << SimdPerformanceStatistic();
@@ -290,7 +290,7 @@ namespace Test
 
 		bool SetInput(const String & path, Tensor & input, size_t index, Size * pSize)
 		{
-			TEST_PERF_FUNC();
+			CPL_PERF_FUNC();
 
 			View original;
 			if (!LoadImage(path, original))

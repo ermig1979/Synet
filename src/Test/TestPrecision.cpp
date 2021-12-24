@@ -26,8 +26,6 @@
 #include "TestDetectionPrecision.h"
 #include "TestReidentificationPrecision.h"
 
-Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
-
 int main(int argc, char* argv[])
 {
     Test::Precision::Options options(argc, argv);

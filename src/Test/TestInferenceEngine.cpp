@@ -71,7 +71,7 @@ namespace Test
 
     bool ConvertInferenceEngineToSynet(const Test::Options & options)
     {
-        SYNET_PERF_FUNC();
+        CPL_PERF_FUNC();
         Test::TestParamHolder param;
         if (FileExists(options.testParam) && !param.Load(options.testParam))
         {
@@ -82,8 +82,6 @@ namespace Test
             options.tensorFormat == 1, options.secondModel, options.secondWeight, param().optimizer());
     }
 }
-
-Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
 
 int main(int argc, char* argv[])
 {

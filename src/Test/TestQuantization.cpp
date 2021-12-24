@@ -37,8 +37,6 @@ namespace Test
     };
 }
 
-Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
-
 int main(int argc, char* argv[])
 {
     Test::Options options(argc, argv);

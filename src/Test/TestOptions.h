@@ -143,7 +143,7 @@ namespace Test
                     ss << FullName(firstName, firstType) << " memory usage: " << MemoryUsageString(firstMemoryUsage, testThreads) << std::endl;
                 if (secondMemoryUsage)
                     ss << FullName(secondName, secondType) << " memory usage: " << MemoryUsageString(secondMemoryUsage, testThreads) << std::endl;
-                PerformanceMeasurerStorage::s_storage.Print(ss, statFilter);
+                PrintPerformance(ss, statFilter);
                 if(!statistics.empty())
                     ss << statistics;
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)

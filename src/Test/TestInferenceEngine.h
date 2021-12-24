@@ -81,7 +81,7 @@ namespace Test
 
         virtual bool Init(const String& model, const String& weight, const Options& options, const TestParam& param)
         {
-            TEST_PERF_FUNC();
+            CPL_PERF_FUNC();
 
             ::setenv("OMP_NUM_THREADS", std::to_string(options.workThreads).c_str(), 1);
             ::setenv("OMP_WAIT_POLICY", "PASSIVE", 1);
@@ -150,14 +150,14 @@ namespace Test
             {
                 SetInput(src, 0);
                 {
-                    TEST_PERF_FUNC();
+                    CPL_PERF_FUNC();
                     _ieInferRequest->Infer();
                 }
                 SetOutput(0);
             }
             else
             {
-                TEST_PERF_BLOCK("batch emulation");
+                CPL_PERF_BEG("batch emulation");
                 for (size_t b = 0; b < _batchSize; ++b)
                 {
                     SetInput(src, b);

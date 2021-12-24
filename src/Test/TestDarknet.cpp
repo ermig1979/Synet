@@ -68,7 +68,7 @@ namespace Test
 
         virtual bool Init(const String & model, const String & weight, const Options & options, const TestParam & param)
         {
-            TEST_PERF_FUNC();
+            CPL_PERF_FUNC();
             _regionThreshold = options.regionThreshold;
             _net = ::parse_network_cfg((char*)PatchCfg(model, options.batchSize).c_str());
             ::load_weights(_net, (char*)weight.c_str());
@@ -78,7 +78,7 @@ namespace Test
         virtual const Tensors & Predict(const Tensors & src)
         {
             {
-                TEST_PERF_FUNC();
+                CPL_PERF_FUNC();
                 ::network_predict(_net, (float*)src[0].CpuData());
             }
             SetOutput();
@@ -257,8 +257,6 @@ namespace Test
     };
 }
 #endif//SYNET_FIRST_RUN
-
-Test::PerformanceMeasurerStorage Test::PerformanceMeasurerStorage::s_storage;
 
 int main(int argc, char* argv[])
 {

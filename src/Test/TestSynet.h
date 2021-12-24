@@ -28,13 +28,13 @@
 #include "TestPerformance.h"
 
 #if defined(SYNET_PERFORMANCE_STATISTIC) && !defined(SYNET_PERF_FUNC)
-#define SYNET_PERF_FUNC() TEST_PERF_FUNC()
-#define SYNET_PERF_BLOCK(name) TEST_PERF_BLOCK(name)
-#define SYNET_PERF_BLOCK_END(name) TEST_PERF_BLOCK_END(name)
-#define SYNET_PERF_DECL(name) ::Test::PerformanceMeasurer * name;
+#define SYNET_PERF_FUNC() CPL_PERF_FUNC()
+#define SYNET_PERF_BLOCK(name) CPL_PERF_BEG(name)
+#define SYNET_PERF_BLOCK_END(name) CPL_PERF_END(name)
+#define SYNET_PERF_DECL(name) Cpl::PerformanceMeasurer * name;
 #define SYNET_PERF_SET(name, value) name = value;
-#define SYNET_PERF_INIT(name, desc, flop) name = ::Test::PerformanceMeasurerStorage::s_storage.Get(desc, flop);
-#define SYNET_PERF_TEST(name) ::Test::PerformanceMeasurerHolder SYNET_CAT(__pmh,__LINE__)(name);
+#define SYNET_PERF_INIT(name, desc, flop) name = Cpl::PerformanceStorage::Global().Get(desc, flop);
+#define SYNET_PERF_TEST(name) Cpl::PerformanceHolder CPL_CAT(__pmh,__LINE__)(name);
 #endif
 #include "Synet/Synet.h"
 
@@ -73,7 +73,7 @@ namespace Test
 
         virtual bool Init(const String & model, const String & weight, const Options& options, const TestParam & param)
         {
-            TEST_PERF_BLOCK(Type());
+            CPL_PERF_BEG(Type());
             _regionThreshold = options.regionThreshold;
             Synet::SetThreadNumber(options.workThreads);
             if (Load(model, weight, options))
@@ -120,7 +120,7 @@ namespace Test
         {
             SetInput(src);
             {
-                TEST_PERF_BLOCK_FLOP(Type(), _net.Flop());
+                CPL_PERF_BEGF(Type(), _net.Flop());
                 _net.Forward();
             }
             SetOutput();
