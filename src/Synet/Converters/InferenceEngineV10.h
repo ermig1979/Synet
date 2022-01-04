@@ -185,10 +185,30 @@ namespace Synet
                 return false;
             Shape src0 = ConvertInputShape(pLayer, "0");
             Shape src1 = ConvertInputShape(pLayer, "1");
+            const LayerParam* first = GetLayer(layers, layer.src()[0]);
             const LayerParam* second = GetLayer(layers, layer.src()[1]);
-            if (second == NULL)
+            if (first == NULL || second == NULL)
                 return false;
-            if (second->type() == LayerTypeConst && TensorSize(src0) >= TensorSize(src1))
+            if (first->type() == LayerTypeMeta && (second->type() == LayerTypeMeta || second->type() == LayerTypeConst))
+            {
+                if (second->type() == LayerTypeConst)
+                {
+                    LayerParam* change = (LayerParam*)second;
+                    change->type() = Synet::LayerTypeMeta;
+                    change->meta().type() = Synet::MetaTypeConst;
+                    change->meta().alpha().type() = TensorType32f;
+                    change->meta().alpha().shape() = second->weight()[0].dim();
+                    size_t size = TensorSize(second->weight()[0].dim());
+                    change->meta().alpha().f32().resize(size);
+                    const float* src = GetWeight<float>(srcBin, second->weight()[0].offset());
+                    for (size_t i = 0; i < size; ++i)
+                        change->meta().alpha().f32()[i] = src[i];
+                    change->weight().clear();
+                }
+                layer.type() = LayerTypeMeta;
+                layer.meta().type() = MetaTypeAdd;
+            }
+            else if (second->type() == LayerTypeConst && TensorSize(src0) >= TensorSize(src1))
             {
                 if (TensorSize(src1) == 1)
                 {
@@ -1028,13 +1048,20 @@ namespace Synet
                 layer.type() = LayerTypeReshape;
                 shape.resize(output.size());
                 for (size_t i = 0; i < shape.size(); ++i)
-                    shape[i] = (size_t)alpha[i];
+                {
+                    shape[i] = output[i];
+                    //shape[i] = (size_t)alpha[i];
+                }
                 layer.src().resize(1);
                 if (trans && !PermutedToNchw(layers, layer.src(), true, false, false))
                 {
                     if (shape.size() == 4)
                     {
                         shape = Shape({ shape[0], shape[2] , shape[3], shape[1] });
+                    }
+                    if (shape.size() == 5 && input[1] == output[1] * output[2])
+                    {
+                        shape = Shape({ shape[0], shape[3], shape[4], shape[1], shape[2] });
                     }
                 }
                 if (input.size() > 1 && output.size() > 1 && input[0] == 1 && output[0] == 1)
@@ -1474,8 +1501,9 @@ namespace Synet
             if (!CheckSourceNumber(layer, 2))
                 return false;
             Shape first = ConvertInputShape(pLayer);
+            const LayerParam * prev = GetLayer(layers, layer.src()[0]);
             const LayerParam * second = GetLayer(layers, layer.src()[1]);
-            if (second == NULL || second->type() != LayerTypeMeta)
+            if (prev == NULL || second == NULL || second->type() != LayerTypeMeta)
                 return false;
             if (second->meta().type() == MetaTypeConst)
             {
@@ -1504,6 +1532,19 @@ namespace Synet
                             Shape nhwc = Shape({ 0, 2, 3, 1 });
                             Shape nchw = Shape({ 0, 3, 1, 2 });
                             order = Shape({ nchw[order[nhwc[0]]], nchw[order[nhwc[1]]], nchw[order[nhwc[2]]], nchw[order[nhwc[3]]] });
+                        }
+                    }
+                    else if (order.size() == 5)
+                    {
+                        if (order == Shape({ 0, 2, 1, 3, 4 }))
+                            order = Shape({ 0, 1, 2, 4, 3 });
+                    }
+                    else if (order.size() == 3 && prev->type() == LayerTypeReshape)
+                    {
+                        if (prev->reshape().shape().size() == 2 && prev->reshape().axis() == 1 && order == Shape({ 0, 2, 1 }))
+                        {
+                            order = Shape({ 0, 1, 2 });
+                            layer.permute().format() = TensorFormatNchw;
                         }
                     }
                 }
