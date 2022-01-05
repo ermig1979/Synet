@@ -98,8 +98,13 @@ namespace Synet
         {
             Pin pin = ParsePin(name);
             for (size_t i = 0; i < layers.size(); ++i)
+            {
                 if (pin.name == layers[i].name())
                     return &layers[i];
+                for(size_t d = 0; d < layers[i].dst().size(); ++d)
+                    if (pin.name == layers[i].dst()[d])
+                        return &layers[i];
+            }
             std::cout << "Can't found layer " << pin.name << " !" << std::endl;
             return NULL;
         }
