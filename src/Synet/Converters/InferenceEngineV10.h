@@ -604,8 +604,23 @@ namespace Synet
             if (pData == NULL)
                 return false;
             const XmlAttr* pMode = pData->FirstAttribute("mode");
-            if (pMode && String(pMode->Value()) == "nearest")
-                layer.interp().interpolationType() = InterpolationTypeNearest;
+            if (pMode)
+            {
+                if (String(pMode->Value()) == "nearest")
+                    layer.interp().interpolationType() = InterpolationTypeNearest;
+                else if (String(pMode->Value()) == "linear_onnx")
+                    layer.interp().interpolationType() = InterpolationTypeBilinear;
+                else
+                    return false;
+            }
+            const XmlAttr* pCoordTranf = pData->FirstAttribute("coordinate_transformation_mode");
+            if (pCoordTranf)
+            {
+                if (String(pCoordTranf->Value()) == "pytorch_half_pixel")
+                    layer.interp().coordinateTransformType() = CoordinateTransformTypeHalfPixel;
+                else
+                    return false;
+            }
             const LayerParam* second = GetLayer(layers, layer.src()[1]);
             if (second == NULL || second->type() != LayerTypeMeta)
                 return false;
@@ -1055,6 +1070,10 @@ namespace Synet
                 layer.src().resize(1);
                 if (trans && !PermutedToNchw(layers, layer.src(), true, false, false))
                 {
+                    if (shape.size() == 3 && input.size() == 4)
+                    {
+                        shape = Shape({ shape[0], shape[2], shape[1] });
+                    }
                     if (shape.size() == 4)
                     {
                         shape = Shape({ shape[0], shape[2] , shape[3], shape[1] });

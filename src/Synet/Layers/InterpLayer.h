@@ -50,7 +50,8 @@ namespace Synet
             }
         }
 
-        template <typename T> void InterpLayerForwardCpuBilinear(size_t channels, const T * src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, T * dst, size_t dstH, size_t dstW, int trans)
+        template <typename T> void InterpLayerForwardCpuBilinear(size_t channels, const T * src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, 
+            T * dst, size_t dstH, size_t dstW, CoordinateTransformType coordTransfType, int trans)
         {
             if (trans)
             {
@@ -58,8 +59,14 @@ namespace Synet
             }
             else
             {
-                const float rheight = (dstH > 1) ? static_cast<float>(sizeH - 1) / (dstH - 1) : 0.f;
-                const float rwidth = (dstW > 1) ? static_cast<float>(sizeW - 1) / (dstW - 1) : 0.f;
+                float rheight, rwidth;
+                if (coordTransfType == CoordinateTransformTypeLegacy || coordTransfType == CoordinateTransformTypeCaffe)
+                {
+                    rheight = (dstH > 1) ? static_cast<float>(sizeH - 1) / (dstH - 1) : 0.f;
+                    rwidth = (dstW > 1) ? static_cast<float>(sizeW - 1) / (dstW - 1) : 0.f;
+                }
+                else
+                    assert(0);
                 for (int h2 = 0; h2 < dstH; ++h2)
                 {
                     const float h1r = rheight * h2;
@@ -89,10 +96,17 @@ namespace Synet
             }
         }
 
-        template <typename T> void InterpLayerForwardCpuNearest(size_t channels, const T * src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, T * dst, size_t dstH, size_t dstW, int trans)
+        template <typename T> void InterpLayerForwardCpuNearest(size_t channels, const T * src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, 
+            T * dst, size_t dstH, size_t dstW, CoordinateTransformType coordTransfType, int trans)
         {
-            float ky = float(sizeH) / float(dstH);
-            float kx = float(sizeW) / float(dstW);
+            float ky, kx;
+            if (coordTransfType == CoordinateTransformTypeLegacy || coordTransfType == CoordinateTransformTypePytorch)
+            {
+                ky = float(sizeH) / float(dstH);
+                kx = float(sizeW) / float(dstW);
+            }
+            else
+                assert(0);
             if (trans)
             {
                 for (int dy = 0; dy < dstH; ++dy)
@@ -129,17 +143,25 @@ namespace Synet
         }
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-        template <> inline void InterpLayerForwardCpuBilinear<float>(size_t channels, const float * src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, float * dst, size_t dstH, size_t dstW, int trans)
+        template <> inline void InterpLayerForwardCpuBilinear<float>(size_t channels, const float * src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, 
+            float * dst, size_t dstH, size_t dstW, CoordinateTransformType coordTransfType, int trans)
         {
+            SimdResizeMethodType method;
+            if (coordTransfType == CoordinateTransformTypeLegacy || coordTransfType == CoordinateTransformTypeCaffe)
+                method = ::SimdResizeMethodBilinearCaffe;
+            else if (coordTransfType == CoordinateTransformTypePytorch)
+                method = ::SimdResizeMethodBilinearPytorch;
+            else if (coordTransfType == CoordinateTransformTypeHalfPixel)
+                method = ::SimdResizeMethodBilinear;
             if (trans)
             {
-                void * resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, channels, ::SimdResizeChannelFloat, ::SimdResizeMethodBilinearCaffe);
+                void * resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, channels, ::SimdResizeChannelFloat, method);
                 ::SimdResizerRun(resizer, (uint8_t*)src, channels * srcW * sizeof(float), (uint8_t*)dst, channels * dstW * sizeof(float));
                 ::SimdRelease(resizer);
             }
             else
             {
-                void * resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, 1, ::SimdResizeChannelFloat, ::SimdResizeMethodBilinearCaffe);
+                void * resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, 1, ::SimdResizeChannelFloat, method);
                 for (size_t c = 0; c < channels; ++c)
                 {
                     ::SimdResizerRun(resizer, (uint8_t*)src, srcW * sizeof(float), (uint8_t*)dst, dstW * sizeof(float));
@@ -150,17 +172,25 @@ namespace Synet
             }
         }
 
-        template <> inline void InterpLayerForwardCpuNearest<float>(size_t channels, const float* src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, float* dst, size_t dstH, size_t dstW, int trans)
+        template <> inline void InterpLayerForwardCpuNearest<float>(size_t channels, const float* src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW, 
+            float* dst, size_t dstH, size_t dstW, CoordinateTransformType coordTransfType, int trans)
         {
+            SimdResizeMethodType method;
+            if (coordTransfType == CoordinateTransformTypeLegacy || coordTransfType == CoordinateTransformTypePytorch)
+                method = ::SimdResizeMethodNearestPytorch;
+            else if (coordTransfType == CoordinateTransformTypeHalfPixel)
+                method = ::SimdResizeMethodNearest;
+            else
+                assert(0);
             if (trans)
             {
-                void* resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, channels, ::SimdResizeChannelFloat, ::SimdResizeMethodNearestPytorch);
+                void* resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, channels, ::SimdResizeChannelFloat, method);
                 ::SimdResizerRun(resizer, (uint8_t*)src, channels * srcW * sizeof(float), (uint8_t*)dst, channels * dstW * sizeof(float));
                 ::SimdRelease(resizer);
             }
             else
             {
-                void* resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, 1, ::SimdResizeChannelFloat, ::SimdResizeMethodNearestPytorch);
+                void* resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, 1, ::SimdResizeChannelFloat, method);
                 for (size_t c = 0; c < channels; ++c)
                 {
                     ::SimdResizerRun(resizer, (uint8_t*)src, srcW * sizeof(float), (uint8_t*)dst, dstW * sizeof(float));
@@ -172,17 +202,18 @@ namespace Synet
         }
 #endif
 
-        template <typename T> void InterpLayerForwardCpu(size_t channels, const T * src, size_t srcH, size_t srcW, size_t cropB, size_t cropE, T * dst, size_t dstH, size_t dstW, InterpolationType type, int trans)
+        template <typename T> void InterpLayerForwardCpu(size_t channels, const T * src, size_t srcH, size_t srcW, size_t cropB, size_t cropE, T * dst, size_t dstH, size_t dstW, 
+            InterpolationType interpType, CoordinateTransformType coordTransfType, int trans)
         {
             size_t sizeH = srcH - cropB - cropE;
             size_t sizeW = srcW - cropB - cropE;
             src += (cropB * srcW + cropB)*(trans ? channels : 1);
             if (sizeH == dstH && sizeW == dstW)
                 InterpLayerForwardCpuCopy(channels, src, srcH, srcW, sizeH, sizeW, dst, dstH, dstW, trans);
-            else if (type == InterpolationTypeBilinear)
-                InterpLayerForwardCpuBilinear(channels, src, srcH, srcW, sizeH, sizeW, dst, dstH, dstW, trans);
-            else if (type == InterpolationTypeNearest)
-                InterpLayerForwardCpuNearest(channels, src, srcH, srcW, sizeH, sizeW, dst, dstH, dstW, trans);
+            else if (interpType == InterpolationTypeBilinear)
+                InterpLayerForwardCpuBilinear(channels, src, srcH, srcW, sizeH, sizeW, dst, dstH, dstW, coordTransfType, trans);
+            else if (interpType == InterpolationTypeNearest)
+                InterpLayerForwardCpuNearest(channels, src, srcH, srcW, sizeH, sizeW, dst, dstH, dstW, coordTransfType, trans);
             else
                 assert(0);
         }
@@ -217,7 +248,8 @@ namespace Synet
             const InterpParam & param = this->Param().interp();
             _cropBeg = param.cropBeg();
             _cropEnd = param.cropEnd();
-            _type = param.interpolationType();
+            _interpType = param.interpolationType();
+            _coordTransfType = param.coordinateTransformType();
             _trans = src[0]->Format() == TensorFormatNhwc;
             _num = src[0]->Axis(0);
             _channels = _trans ? src[0]->Axis(3) : src[0]->Axis(1);
@@ -274,7 +306,7 @@ namespace Synet
             Shape dstShape = _trans ? Shp(_num, _dstH, _dstW, _channels) : Shp(_num, _channels, _dstH, _dstW);
             if (_src8u && _dst8u)
             {
-                assert(param.interpolationType() == InterpolationTypeNearest);
+                assert(_interpType == InterpolationTypeNearest);
                 dst[0]->As8u().Reshape(dstShape, src[0]->Format());
             }
             else
@@ -295,7 +327,8 @@ namespace Synet
         {
             for (size_t i = 0; i < _num; ++i)
             {
-                Detail::InterpLayerForwardCpu(_channels, src, _srcH, _srcW, _cropBeg, _cropEnd, dst, _dstH, _dstW, _type, _trans);
+                Detail::InterpLayerForwardCpu(_channels, src, _srcH, _srcW, _cropBeg, _cropEnd, dst, _dstH, _dstW, 
+                    _interpType, _coordTransfType, _trans);
                 src += _channels * _srcH * _srcW;
                 dst += _channels * _dstH * _dstW;
             }
@@ -303,7 +336,8 @@ namespace Synet
 
     private:
         size_t _num, _channels, _srcH, _srcW, _dstH, _dstW, _cropBeg, _cropEnd;
-        InterpolationType _type;
+        InterpolationType _interpType;
+        CoordinateTransformType _coordTransfType;
         int _trans;
         bool _src8u, _dst8u;
     };

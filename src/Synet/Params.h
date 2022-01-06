@@ -115,6 +115,12 @@ CPL_PARAM_ENUM1(Synet, BinaryOperationType,
     BinaryOperationTypeDiv,
     BinaryOperationTypeSub);
 
+CPL_PARAM_ENUM1(Synet, CoordinateTransformType,
+    CoordinateTransformTypeLegacy,
+    CoordinateTransformTypeHalfPixel,
+    CoordinateTransformTypeCaffe,
+    CoordinateTransformTypePytorch);
+
 CPL_PARAM_ENUM1(Synet, EltwiseOperationType,
     EltwiseOperationTypeProduct,
     EltwiseOperationTypeSum,
@@ -399,6 +405,7 @@ namespace Synet
         CPL_PARAM_VALUE(int32_t, cropEnd, 0);
         CPL_PARAM_VALUE(bool, useTensorSize, false);
         CPL_PARAM_VALUE(InterpolationType, interpolationType, InterpolationTypeBilinear);
+        CPL_PARAM_VALUE(CoordinateTransformType, coordinateTransformType, CoordinateTransformTypeLegacy);
     };
 
     struct Interp2Param

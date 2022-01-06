@@ -505,7 +505,7 @@ namespace Test
 #if SYNET_TEST_IE_VERSION < 202101
             os << " : " << GetLayerType(name);
 #endif
-            os << std::endl;
+            os << " : " << std::endl;
             Sizes dims = blob.getTensorDesc().getDims();
             const Sizes& strides = blob.getTensorDesc().getBlockingDesc().getStrides();
             Synet::TensorFormat format = Synet::TensorFormatUnknown;
