@@ -947,13 +947,16 @@ namespace Synet
             else
                 return false;
 
-            String coordTransf;
-            if (!ConvertAtrributeString(node, "coordinate_transformation_mode", coordTransf))
-                return false;
-            if (coordTransf == "pytorch_half_pixel")
-                layer.interp().coordinateTransformType() = CoordinateTransformTypeHalfPixel;
-            else
-                return false;
+            if (GetAtrribute(node, "coordinate_transformation_mode"))
+            {
+                String coordTransf;
+                if (!ConvertAtrributeString(node, "coordinate_transformation_mode", coordTransf))
+                    return false;
+                if (coordTransf == "pytorch_half_pixel")
+                    layer.interp().coordinateTransformType() = CoordinateTransformTypeHalfPixel;
+                else
+                    return false;
+            }
 
             layer.type() = Synet::LayerTypeInterp;
             return true;
