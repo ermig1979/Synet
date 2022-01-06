@@ -885,11 +885,11 @@ namespace Synet
                 return false;
             if (src[index + 0].type() != LayerTypeConcat || src[index + 0].src().size() != 2)
                 return false;
-            if (src[index + 1].type() != LayerTypeReshape || src[index + 1].reshape().shape().size() != 4)
+            if (src[index + 1].type() != LayerTypeReshape || src[index + 1].reshape().axis() + src[index + 1].reshape().shape().size() != 5)
                 return false;
             if (src[index + 2].type() != LayerTypePermute)
                 return false;
-            if (src[index + 3].type() != LayerTypeReshape || src[index + 3].reshape().shape().size() != 3)
+            if (src[index + 3].type() != LayerTypeReshape || src[index + 3].reshape().axis() + src[index + 3].reshape().shape().size() != 4)
                 return false;
             if (src[index + 4].type() != LayerTypeUnpack || src[index + 4].dst().size() != 2)
                 return false;

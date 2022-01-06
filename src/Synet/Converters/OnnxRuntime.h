@@ -759,8 +759,16 @@ namespace Synet
                 return false;
             if (!ConvertAtrributeInts(node, "strides", layer.pooling().stride()))
                 return false;
+
             if(GetAtrribute(node, "ceil_mode") == NULL)
                 layer.pooling().roundingType() = RoundingTypeFloor;
+            else
+            {
+                int ceilMode;
+                if (!ConvertAtrributeInt(node, "ceil_mode", ceilMode))
+                    return false;
+                layer.pooling().roundingType() = ceilMode ? RoundingTypeCeil : RoundingTypeFloor;
+            }
             return true;
         }
 
@@ -891,8 +899,12 @@ namespace Synet
                 for (size_t i = 0; i < shape.size(); ++i)
                     shape[i] = (size_t)alpha[i];
                 layer.src().resize(1);
-                if (trans && !PermutedToNchw(layers, true, false, true))
+                if (trans && !PermutedToNchw(layers, layer.src(), true, false, true))
                 {
+                    if (shape.size() == 5)
+                    {
+                        shape = Shape({ shape[0], shape[3], shape[4], shape[1], shape[2] });
+                    }
                     if (shape.size() == 4)
                     {
                         shape = Shape({ shape[0], shape[2] , shape[3], shape[1] });
@@ -924,6 +936,7 @@ namespace Synet
                     return false;
                 layer.src().erase(layer.src().begin() + 1);
             }
+
             String mode;
             if (!ConvertAtrributeString(node, "mode", mode))
                 return false;
@@ -933,6 +946,15 @@ namespace Synet
                 layer.interp().interpolationType() = InterpolationTypeBilinear;
             else
                 return false;
+
+            String coordTransf;
+            if (!ConvertAtrributeString(node, "coordinate_transformation_mode", coordTransf))
+                return false;
+            if (coordTransf == "pytorch_half_pixel")
+                layer.interp().coordinateTransformType() = CoordinateTransformTypeHalfPixel;
+            else
+                return false;
+
             layer.type() = Synet::LayerTypeInterp;
             return true;
         }
@@ -1107,6 +1129,8 @@ namespace Synet
                 return false;
             if (trans && !PermutedToNchw(layers, true, false, true))
             {
+                if (order == Shape({ 0, 2, 1, 3, 4 }))
+                    order = Shape({ 0, 1, 2, 4, 3 });
                 if (order == Shape({ 0, 2, 3, 1 }))
                 {
                     order = Shape({ 0, 1, 2, 3 });
