@@ -155,7 +155,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Conv" && !ConvertConvNode(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Div" && !ConvertDivNode(node, network.layers(), original, layer))
+                if (node.op_type() == "Div" && !ConvertDivNode(node, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Exp" && !ConvertExpNode(node, layer))
                     return ErrorMessage(i, node);
@@ -201,7 +201,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Squeeze" && !ConvertSqueezeNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Sub" && !ConvertSubNode(node, network.layers(), original, layer))
+                if (node.op_type() == "Sub" && !ConvertSubNode(node, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Transpose" && !ConvertTransposeNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -223,6 +223,9 @@ namespace Synet
                 if (trans && !ManualInsertToNchwPermute(onnxParam, network.layers(), renames))
                     return false;
             }
+
+            if (!RemoveUnusedConst(network.layers()))
+                return false;
 
             return true;
         }
@@ -600,7 +603,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertDivNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        bool ConvertDivNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer, Vector& reordered)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -618,6 +621,20 @@ namespace Synet
             else if (src0->type() == LayerTypeConst && TensorSize(src0->weight()[0].dim()) == 1)
             {
                 return false;
+            }
+            else if (src1->type() == LayerTypeConst && SignificantDimsCount(src1->weight()[0].dim()) == 1)
+            {
+                layer.type() = Synet::LayerTypeScale;
+                layer.scale().biasTerm() = false;
+                layer.weight() = src1->weight();
+                if (!CompactShape(layer.weight()[0].dim()))
+                    return false;
+                const float* pSrc = GetWeight<float>(original, layer.weight()[0]);
+                float* pDst = GetWeight<float>(reordered, layer.weight()[0]);
+                size_t size = TensorSize(layer.weight()[0].dim());
+                for (size_t i = 0; i < size; ++i)
+                    pDst[i] = 1.0 / pSrc[i];
+                layer.src().resize(1);
             }
             else if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
             {
@@ -1090,7 +1107,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertSubNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        bool ConvertSubNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer, Vector& reordered)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1112,6 +1129,19 @@ namespace Synet
                 const float* pShift = GetWeight<float>(original, src0->weight()[0]);
                 layer.power().shift() = pShift[0];
                 layer.src()[0] = layer.src()[1];
+                layer.src().resize(1);
+            }
+            else if (src1->type() == LayerTypeConst && SignificantDimsCount(src1->weight()[0].dim()) == 1)
+            {
+                layer.type() = Synet::LayerTypeBias;
+                layer.weight() = src1->weight();
+                if (!CompactShape(layer.weight()[0].dim()))
+                    return false;
+                const float* pSrc = GetWeight<float>(original, layer.weight()[0]);
+                float* pDst = GetWeight<float>(reordered, layer.weight()[0]);
+                size_t size = TensorSize(layer.weight()[0].dim());
+                for (size_t i = 0; i < size; ++i)
+                    pDst[i] = -pSrc[i];
                 layer.src().resize(1);
             }
             else

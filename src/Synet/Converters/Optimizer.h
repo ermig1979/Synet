@@ -104,6 +104,8 @@ namespace Synet
                 }
                 case 3:
                 {
+                    if (MergeBiasAndScale(network.layers(), i, bin, buf, merged, changes))
+                        continue;
                     if (MergeConvolutionAndScale(network.layers(), i, bin, buf, merged, changes))
                         continue;
                     if (MergeInnerProductAndScale(network.layers(), i, bin, buf, merged, changes))
@@ -326,6 +328,38 @@ namespace Synet
             dst.back().name() = bias.name();
             dst.back().dst() = bias.dst();
             dst.back().weight().push_back(bias.weight()[0]);
+            return true;
+        }
+
+        bool MergeBiasAndScale(const LayerParams& src, size_t& index, Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        {
+            if (index == 0)
+                return false;
+            const LayerParam & bias = src[index - 1];
+            const LayerParam & scale = src[index];
+            if (bias.type() != LayerTypeBias)
+                return false;
+            if (scale.type() != LayerTypeScale || scale.scale().biasTerm() || scale.src()[0] != bias.dst()[0])
+                return false;
+            if (InsideLink(src, index - 1, 2))
+                return false;
+            dst.back().type() = LayerTypeScale;
+            dst.back().name() = scale.name();
+            dst.back().dst() = scale.dst();
+            dst.back().scale().biasTerm() = true;
+            dst.back().weight().push_back(scale.weight()[0]);
+            if (buf.empty())
+                buf = bin;
+            const float* pSrcScale = GetWeight<float>(bin, dst.back().weight()[1]);
+            const float* pSrcBias = GetWeight<float>(bin, dst.back().weight()[0]);
+            float* pDstScale = GetWeight<float>(buf, dst.back().weight()[0]);
+            float* pDstBias = GetWeight<float>(buf, dst.back().weight()[1]);
+            size_t size = TensorSize(dst.back().weight()[0].dim());
+            for (size_t i = 0; i < size; ++i)
+            {
+                pDstScale[i] = pSrcScale[i];
+                pDstBias[i] = pSrcScale[i] * pSrcBias[i];
+            }
             return true;
         }
 

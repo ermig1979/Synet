@@ -371,5 +371,14 @@ namespace Synet
                 return size;
             }
         }
+
+        static size_t SignificantDimsCount(const Shape& shape)
+        {
+            size_t significant = 0;
+            for (size_t i = 0; i < shape.size(); ++i)
+                if (shape[i] > 1)
+                    significant++;
+            return significant;
+        }
     };
 }
