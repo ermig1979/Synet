@@ -360,7 +360,23 @@ namespace Synet
 
         void ReshapePack(const TensorPtrs & src, const TensorPtrs & dst)
         {
-            if (src[0]->GetType() == TensorType32i)
+            if (src[0]->GetType() == TensorType32f)
+            {
+                Synet::Tensor<float> & dst0 = dst[0]->As32f();
+                size_t size = 0;
+                for (size_t i = 0; i < src.size(); ++i)
+                {
+                    assert(src[i]->Count() == 1);
+                    size += src[i]->Axis(0);
+                }
+                dst0.Reshape({ size });
+                for (size_t s = 0, d = 0; s < src.size(); ++s)
+                {
+                    for (size_t i = 0; i < src[s]->Axis(0); ++i, ++d)
+                        dst0.CpuData()[d] = src[s]->As32f().CpuData()[i];
+                }
+            }
+            else if (src[0]->GetType() == TensorType32i)
             {
                 Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
                 dst0.Reshape({ src.size() });
@@ -535,7 +551,7 @@ namespace Synet
             else
             {
                 if (trans && shape.size() == 4)
-                    shape = Shape({ shape[0], shape[3], shape[1], shape[2]});
+                    shape = Shape({ shape[0], shape[3], shape[1], shape[2] });
                 Synet::Tensor<int64_t>& dst0 = dst[0]->As64i();
                 dst0.Reshape({ shape.size() }, src[0]->Format());
                 for (size_t i = 0; i < shape.size(); ++i)

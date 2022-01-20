@@ -485,7 +485,8 @@ namespace Synet
             const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
             if (src0 == NULL)
                 return false;
-            if (src0->type() == Synet::LayerTypeMeta)
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0->type() == Synet::LayerTypeMeta || (src1 && src1->type() == Synet::LayerTypeMeta))
             {
                 layer.type() = Synet::LayerTypeMeta;
                 layer.meta().type() = Synet::MetaTypePack;

@@ -766,9 +766,18 @@ namespace Synet
 
         void SetTensorTypes()
         {
-            for (size_t t = 0; t < _tensors.size(); ++t)
-                if (_tensors[t]->GetType() == TensorTypeUnknown)
-                    _tensors[t]->SetType(TensorType32f);
+            for (size_t s = 0; s < _stages.size(); ++s)
+            {
+                const LayerParam & param = _stages[s].layer->Param();
+                if (param.type() == LayerTypeMeta)
+                    continue;
+                for (size_t d = 0; d < param.dst().size(); ++d)
+                {
+                    Tensor & tensor = *_tensors[_tensorId[param.dst()[d]]];
+                    if (tensor.GetType() == TensorTypeUnknown)
+                        tensor.SetType(TensorType32f);
+                }
+            }
             for (size_t s = 0; s < _stages.size(); ++s)
             {
                 const Layer & layer = *_stages[s].layer;

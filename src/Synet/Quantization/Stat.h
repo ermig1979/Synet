@@ -95,14 +95,17 @@ namespace Synet
                 assert(!stats[s]->channels);
             }
             assert(min.size() == total);
-            for (size_t s = 0, o = 0; s < size; ++s)
+            float sMin = FLT_MAX, sMax = -FLT_MAX;
+            for (size_t s = 0; s < size; ++s)
             {
-                for (size_t i = 0; i < stats[s]->min.size(); ++i, ++o)
-                {
-                    assert(min[o] >= stats[s]->min[0] && max[o] <= stats[s]->max[0]);
-                    min[o] = stats[s]->min[0];
-                    max[o] = stats[s]->max[0];
-                }
+                sMin = Min(sMin, stats[s]->min[0]);
+                sMax = Max(sMax, stats[s]->max[0]);
+            }
+            for (size_t i = 0; i < min.size(); ++i)
+            {
+                assert(min[i] >= sMin && max[i] <= sMax);
+                min[i] = sMin;
+                max[i] = sMax;
             }
             channels = false;
         }

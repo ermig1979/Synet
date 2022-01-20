@@ -31,7 +31,7 @@ function TEST_FD {
 TEST detection $1 $2 faces $3 _$4.txt $5 $6 $7
 }
 
-#TEST_FD synet test_003 sy_fp32_v0 all 1 10 001
+TEST_FD synet test_003 sy_fp32_v0 all 1 10 001
 #TEST_FD synet test_003 sy_int8_v0 all 1 10 001
 
 #TEST_FD synet test_010 sy_fp32_v0 all 1 10 001
