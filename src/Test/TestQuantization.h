@@ -27,7 +27,6 @@
 #include "TestCommon.h"
 #include "TestOptions.h"
 #include "TestSynet.h"
-#include "TestImage.h"
 
 #include "Synet/Converters/Deoptimizer.h"
 #include "Synet/Converters/Optimizer.h"

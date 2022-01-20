@@ -29,7 +29,6 @@
 #include "TestOptions.h"
 #include "TestPerformance.h"
 #include "TestSynet.h"
-#include "TestImage.h"
 
 namespace Test
 {

@@ -27,13 +27,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Test\TestOnnx.cpp" />
-    <ClCompile Include="..\..\src\Test\TestImage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Test\TestCommon.h" />
     <ClInclude Include="..\..\src\Test\TestCompare.h" />
     <ClInclude Include="..\..\src\Test\TestHtml.h" />
-    <ClInclude Include="..\..\src\Test\TestImage.h" />
     <ClInclude Include="..\..\src\Test\TestInferenceEngine.h" />
     <ClInclude Include="..\..\src\Test\TestNetwork.h" />
     <ClInclude Include="..\..\src\Test\TestOnnxRuntime.h" />

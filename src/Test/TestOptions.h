@@ -83,7 +83,7 @@ namespace Test
         mutable String firstName, firstType, secondName, secondType, statistics;
 
         Options(int argc, char* argv[])
-            : ArgsParser(argc, argv)
+            : ArgsParser(argc, argv, true)
             , result(false)
             , secondMemoryUsage(0)
             , firstMemoryUsage(0)

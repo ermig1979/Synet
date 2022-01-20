@@ -43,7 +43,7 @@ namespace Test
             double significantDifference;
 
             Options(int argc, char* argv[])
-                : ArgsParser(argc, argv)
+                : ArgsParser(argc, argv, true)
             {
                 inputFirsts = GetArgs("-if", Strings());
                 inputSeconds = GetArgs("-is", Strings());

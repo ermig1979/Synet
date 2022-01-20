@@ -106,6 +106,27 @@ namespace Test
         return ss.str();
     }
 
+    inline String ToLower(const String& src)
+    {
+        std::locale loc;
+        String dst(src);
+        for (size_t i = 0; i < dst.size(); ++i)
+            dst[i] = std::tolower(dst[i], loc);
+        return dst;
+    }
+
+    inline String WithoutSymbol(const String& src, char symbol = ' ')
+    {
+        String dst;
+        dst.reserve(src.size());
+        for (size_t i = 0; i < src.size(); ++i)
+            if (src[i] != symbol)
+                dst.push_back(src[i]);
+        return dst;
+    }
+
+    //---------------------------------------------------------------------------------------------
+
     inline String FolderSeparator()
     {
 #ifdef WIN32
@@ -295,6 +316,8 @@ namespace Test
             return false;
     }
 
+    //---------------------------------------------------------------------------------------------
+
     inline void SortDetectionOutput(float * data, size_t size)
     {
         struct Tmp { float val[7]; };
@@ -319,24 +342,37 @@ namespace Test
                 data[i*7 + j] = tmp[i].val[j];
     }
 
-    inline String ToLower(const String& src)
+    //---------------------------------------------------------------------------------------------
+
+#ifdef LoadImage
+#undef LoadImage
+#endif
+
+    inline bool LoadImage(const String& path, View& view)
     {
-        std::locale loc;
-        String dst(src);
-        for (size_t i = 0; i < dst.size(); ++i)
-            dst[i] = std::tolower(dst[i], loc);
-        return dst;
+        String ext = ToLower(ExtensionByPath(path));
+        if (ext == "pgm")
+            return view.Load(path, View::Gray8);
+        else
+            return view.Load(path, View::Bgra32);
     }
 
-    inline String WithoutSymbol(const String& src, char symbol = ' ')
+    inline bool SaveImage(const View& view, const String& path)
     {
-        String dst;
-        dst.reserve(src.size());
-        for (size_t i = 0; i < src.size(); ++i)
-            if(src[i] != symbol)
-                dst.push_back(src[i]);
-        return dst;
+        String ext = ToLower(ExtensionByPath(path));
+        if (ext == "pgm")
+            return view.Save(path, SimdImageFilePgmBin);
+        else if (ext == "ppm")
+            return view.Save(path, SimdImageFilePpmBin);
+        else if (ext == "png")
+            return view.Save(path, SimdImageFilePng);
+        else if (ext == "jpg" || ext == "jpeg")
+            return view.Save(path, SimdImageFileJpeg, 95);
+        else
+            return false;
     }
+
+    //---------------------------------------------------------------------------------------------
 
 #ifdef _MSC_VER
 #pragma warning(push)

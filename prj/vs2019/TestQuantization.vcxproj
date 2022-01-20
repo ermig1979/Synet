@@ -21,13 +21,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\Test\TestImage.cpp" />
     <ClCompile Include="..\..\src\Test\TestQuantization.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Test\TestCommon.h" />
     <ClInclude Include="..\..\src\Test\TestCompare.h" />
-    <ClInclude Include="..\..\src\Test\TestImage.h" />
     <ClInclude Include="..\..\src\Test\TestNetwork.h" />
     <ClInclude Include="..\..\src\Test\TestOptions.h" />
     <ClInclude Include="..\..\src\Test\TestPerformance.h" />

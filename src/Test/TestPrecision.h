@@ -29,7 +29,6 @@
 #ifdef SYNET_TEST_FIRST_RUN
 #include "TestInferenceEngine.h"
 #endif
-#include "TestImage.h"
 
 #include "Cpl/Args.h"
 
@@ -66,7 +65,7 @@ namespace Test
 			mutable String resume;
 
 			Options(int argc, char* argv[])
-				: ArgsParser(argc, argv)
+				: ArgsParser(argc, argv, true)
 				, result(true)
 				, memoryUsage(0)
 				, testNumber(0)

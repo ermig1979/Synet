@@ -22,7 +22,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Test\TestPrecision.cpp" />
-    <ClCompile Include="..\..\src\Test\TestImage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Test\TestClassificationPrecision.h" />
@@ -31,7 +30,6 @@
     <ClInclude Include="..\..\src\Test\TestDetectionPrecision.h" />
     <ClInclude Include="..\..\src\Test\TestInferenceEngine.h" />
     <ClInclude Include="..\..\src\Test\TestPrecision.h" />
-    <ClInclude Include="..\..\src\Test\TestImage.h" />
     <ClInclude Include="..\..\src\Test\TestNetwork.h" />
     <ClInclude Include="..\..\src\Test\TestOptions.h" />
     <ClInclude Include="..\..\src\Test\TestPerformance.h" />
