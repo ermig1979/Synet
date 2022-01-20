@@ -423,10 +423,10 @@ namespace Synet
                 Ints result;
                 if (step > 0)
                     for (int64_t i = begin; i < end; i += step)
-                        result.push_back(i);
+                        result.push_back((int)i);
                 else
                     for (int64_t i = begin; i > end; i += step)
-                        result.push_back(i);
+                        result.push_back((int)i);
                 Synet::Tensor<int64_t> & dst0 = dst[0]->As64i();
                 dst0.Reshape({ result.size() });
                 for (size_t i = 0; i < result.size(); ++i)

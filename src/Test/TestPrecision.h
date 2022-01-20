@@ -25,19 +25,20 @@
 #pragma once
 
 #include "TestCommon.h"
-#include "TestArgs.h"
 #include "TestSynet.h"
 #ifdef SYNET_TEST_FIRST_RUN
 #include "TestInferenceEngine.h"
 #endif
 #include "TestImage.h"
 
+#include "Cpl/Args.h"
+
 namespace Test
 {
 	class Precision
 	{
 	public:
-		struct Options : public ArgsParser
+		struct Options : public Cpl::ArgsParser
 		{
 			String mode;
 			String framework;

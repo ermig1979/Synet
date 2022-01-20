@@ -99,7 +99,9 @@ namespace Test
                 _upper = param.upper();
                 _synetMemoryUsage = _net.MemoryUsage();
                 if(param.detection().decoder() == "epsilon")
-                    _epsilon.Init(_net, param.detection().epsilon());
+                    _anchor.Init(_net, param.detection().epsilon());
+                if (param.detection().decoder() == "retina")
+                    _anchor.Init(_net, param.detection().retina());
                 if (param.detection().decoder() == "ultraface")
                     _ultraface.Init(param.detection().ultraface());
                 return true;
@@ -138,8 +140,8 @@ namespace Test
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
-            if (_epsilon.Enable())
-                return _epsilon.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
+            if (_anchor.Enable())
+                return _anchor.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
             else if (_ultraface.Enable())
                 return _ultraface.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
             else
@@ -157,7 +159,7 @@ namespace Test
         bool _trans, _sort;
         Floats _lower, _upper;
         size_t _synetMemoryUsage;
-        Synet::EpsilonDecoder _epsilon;
+        Synet::AnchorDecoder _anchor;
         Synet::UltrafaceDecoder _ultraface;
 
         bool Load(const String & model, const String & weight, const Options& options)

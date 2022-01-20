@@ -25,14 +25,12 @@
     <ClCompile Include="..\..\src\Test\TestImage.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\Test\TestArgs.h" />
     <ClInclude Include="..\..\src\Test\TestClassificationPrecision.h" />
     <ClInclude Include="..\..\src\Test\TestCommon.h" />
     <ClInclude Include="..\..\src\Test\TestCompare.h" />
     <ClInclude Include="..\..\src\Test\TestDetectionPrecision.h" />
     <ClInclude Include="..\..\src\Test\TestInferenceEngine.h" />
     <ClInclude Include="..\..\src\Test\TestPrecision.h" />
-    <ClInclude Include="..\..\src\Test\TestHtml.h" />
     <ClInclude Include="..\..\src\Test\TestImage.h" />
     <ClInclude Include="..\..\src\Test\TestNetwork.h" />
     <ClInclude Include="..\..\src\Test\TestOptions.h" />
@@ -40,7 +38,6 @@
     <ClInclude Include="..\..\src\Test\TestReidentificationPrecision.h" />
     <ClInclude Include="..\..\src\Test\TestReport.h" />
     <ClInclude Include="..\..\src\Test\TestSynet.h" />
-    <ClInclude Include="..\..\src\Test\TestTable.h" />
     <ClInclude Include="..\..\src\Test\TestUtils.h" />
   </ItemGroup>
   <ItemGroup>

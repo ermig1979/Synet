@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2020 Yermalayeu Ihar.
+* Copyright (c) 2018-2022 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -28,16 +28,16 @@
 
 namespace Synet
 {
-    struct EpsilonParam
+    struct AnchorParam
     {
-        CPL_PARAM_VALUE(Strings, names, Strings({ "conf", "lmks", "loc" }));
+        CPL_PARAM_VALUE(Strings, names, Strings({ "conformance", "landmarks", "location" }));
         CPL_PARAM_VALUE(Floats, variance, Floats({ 0.1f, 0.2f }));
-        CPL_PARAM_VALUE(Shape, step, Shape({ 8, 16, 32, 64 }));
-        CPL_PARAM_VALUE(Shape, minSize, Shape({ 10, 16, 24, 32, 48, 0, 64, 96, 0, 128, 192, 256 }));
+        CPL_PARAM_VALUE(Shape, step, Shape());
+        CPL_PARAM_VALUE(Shape, minSize, Shape());
         CPL_PARAM_VALUE(bool, clip, false);
     };
 
-    class EpsilonDecoder
+    class AnchorDecoder
     {
     public: 
         struct Box
@@ -50,11 +50,11 @@ namespace Synet
         typedef std::vector<Region> Regions;
         typedef Synet::Network<float> Net;
 
-        EpsilonDecoder()
+        AnchorDecoder()
         {
         }
 
-        bool Init(size_t netW, size_t netH, const EpsilonParam& param = EpsilonParam())
+        bool Init(size_t netW, size_t netH, const AnchorParam& param = AnchorParam())
         {
             _names = param.names();
             _variance = param.variance();
@@ -96,7 +96,7 @@ namespace Synet
             return true;
         }
 
-        bool Init(const Net& net, const EpsilonParam& param = EpsilonParam())
+        bool Init(const Net& net, const AnchorParam& param = AnchorParam())
         {
             return Init(net.NchwShape()[3], net.NchwShape()[2], param);
         }
@@ -225,6 +225,24 @@ namespace Synet
             src.swap(dst);
         }
     };
+
+    //---------------------------------------------------------------------------------------------
+
+    AnchorParam GetEpsilonParam()
+    {
+        AnchorParam epsilon;
+        epsilon.names() = Strings({ "conf", "lmks", "loc" });
+        epsilon.step() = Shape({ 8, 16, 32, 64 });
+        epsilon.minSize() = Shape({ 10, 16, 24, 32, 48, 0, 64, 96, 0, 128, 192, 256 });
+        return epsilon;
+    }
+
+    AnchorParam GetRetinaParam()
+    {
+        AnchorParam epsilon;
+        epsilon.names() = Strings({ "classifications", "ldm_regressions", "bbox_regressions" });
+        epsilon.step() = Shape({ 8, 16, 32 });
+        epsilon.minSize() = Shape({ 10, 20, 32, 64, 128, 256 });
+        return epsilon;
+    }
 }
-
-

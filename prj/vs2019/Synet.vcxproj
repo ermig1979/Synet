@@ -26,10 +26,12 @@
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Console.h" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Defs.h" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\File.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Html.h" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Log.h" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Param.h" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Performance.h" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\String.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Table.h" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Xml.h" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Yaml.h" />
     <ClInclude Include="..\..\src\Synet\Buffer.h" />
@@ -49,7 +51,7 @@
     <ClInclude Include="..\..\src\Synet\Converters\OnnxRuntime.h" />
     <ClInclude Include="..\..\src\Synet\Converters\Optimizer.h" />
     <ClInclude Include="..\..\src\Synet\Converters\SynetUtils.h" />
-    <ClInclude Include="..\..\src\Synet\Decoders\Epsilon.h" />
+    <ClInclude Include="..\..\src\Synet\Decoders\Anchor.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Ultraface.h" />
     <ClInclude Include="..\..\src\Synet\Fabric.h" />
     <ClInclude Include="..\..\src\Synet\Layer.h" />

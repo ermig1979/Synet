@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2020 Yermalayeu Ihar.
+* Copyright (c) 2018-2021 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -23,17 +23,17 @@
 */
 
 #include "TestUtils.h"
-#include "TestArgs.h"
-#include "TestHtml.h"
-#include "TestTable.h"
 #include "TestSynet.h"
+
+#include "Cpl/Args.h"
+#include "Cpl/Table.h"
 
 namespace Test
 {
     class PerformanceDifference
     {
     public:
-        struct Options : public ArgsParser
+        struct Options : public Cpl::ArgsParser
         {
             Strings inputFirsts;
             Strings inputSeconds;
@@ -346,7 +346,7 @@ namespace Test
             std::ofstream ofs(name);
             if (ofs.is_open())
             {
-                Table table(TableSize());
+                Cpl::Table table(TableSize().x, TableSize().y);
                 SetHeader(table);
                 size_t row = 0;
                 for (DiffMap::iterator it = _summ.begin(); it != _summ.end(); ++it, ++row)
@@ -361,15 +361,15 @@ namespace Test
                 }
                 else
                 {
-                    Html html(ofs);
+                    Cpl::Html html(ofs);
 
-                    html.WriteBegin("html", Html::Attr(), true, true);
-                    html.WriteValue("title", Html::Attr(), "Synet Performance Difference", true);
-                    html.WriteBegin("body", Html::Attr(), true, true);
+                    html.WriteBegin("html", Cpl::Html::Attr(), true, true);
+                    html.WriteValue("title", Cpl::Html::Attr(), "Synet Performance Difference", true);
+                    html.WriteBegin("body", Cpl::Html::Attr(), true, true);
 
-                    html.WriteValue("h1", Html::Attr("id", "home"), "Synet Performance Difference", true);
+                    html.WriteValue("h1", Cpl::Html::Attr("id", "home"), "Synet Performance Difference", true);
 
-                    html.WriteValue("h4", Html::Attr(), String("Difference generation time: ") + CurrentDateTimeString(), true);
+                    html.WriteValue("h4", Cpl::Html::Attr(), String("Difference generation time: ") + CurrentDateTimeString(), true);
 
                     ofs << table.GenerateHtml(html.Indent());
 
@@ -404,33 +404,33 @@ namespace Test
             }
         }
 
-        void SetHeader(Table& table)
+        void SetHeader(Cpl::Table& table)
         {
             String first = UnitedName(_options.inputFirsts);
             String second = UnitedName(_options.inputSeconds);
             size_t col = 0;
-            table.SetHeader(col++, "Test", true, Table::Center);
-            table.SetHeader(col++, "Batch", true, Table::Center);
-            table.SetHeader(col++, first + ", ms", true, Table::Center);
-            table.SetHeader(col++, second + ", ms", true, Table::Center);
-            table.SetHeader(col++, "Relation", true, Table::Center);
-            table.SetHeader(col++, "Performance, GFLOPS", true, Table::Center);
-            table.SetHeader(col++, "Size, MB", true, Table::Center);
-            table.SetHeader(col++, "Description", true, Table::Center);
+            table.SetHeader(col++, "Test", true, Cpl::Table::Center);
+            table.SetHeader(col++, "Batch", true, Cpl::Table::Center);
+            table.SetHeader(col++, first + ", ms", true, Cpl::Table::Center);
+            table.SetHeader(col++, second + ", ms", true, Cpl::Table::Center);
+            table.SetHeader(col++, "Relation", true, Cpl::Table::Center);
+            table.SetHeader(col++, "Performance, GFLOPS", true, Cpl::Table::Center);
+            table.SetHeader(col++, "Size, MB", true, Cpl::Table::Center);
+            table.SetHeader(col++, "Description", true, Cpl::Table::Center);
         }
 
-        void SetCells(Table& table, const Diff& comp, size_t row, bool summary)
+        void SetCells(Cpl::Table& table, const Diff& comp, size_t row, bool summary)
         {
             const Test& first = comp.first;
             const Test& second = comp.second;
             size_t col = 0;
-            table.SetCell(col++, row, first.name, Table::Black);
+            table.SetCell(col++, row, first.name, Cpl::Table::Black);
             table.SetCell(col++, row, first.batch ? ToString(first.batch) : String("-"));
-            table.SetCell(col++, row, ToString(first.second.time, 3), Table::Black);
-            table.SetCell(col++, row, ToString(second.second.time, 3), Table::Black);
+            table.SetCell(col++, row, ToString(first.second.time, 3), Cpl::Table::Black);
+            table.SetCell(col++, row, ToString(second.second.time, 3), Cpl::Table::Black);
             double relation = first.second.time / second.second.time;
             double threshold = 1.0 - _options.significantDifference;
-            table.SetCell(col++, row, ToString(relation, 2), relation < threshold ? Table::Red : Table::Black);
+            table.SetCell(col++, row, ToString(relation, 2), relation < threshold ? Cpl::Table::Red : Cpl::Table::Black);
             table.SetCell(col++, row, ToString(second.second.flops, 1));
             table.SetCell(col++, row, summary ? String("-") : ToString(second.second.memory, 1));
             table.SetCell(col++, row, summary ? String("-") : first.desc);

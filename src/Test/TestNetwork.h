@@ -29,7 +29,7 @@
 #include "Synet/Tensor.h"
 #include "Synet/Converters/Optimizer.h"
 #include "Synet/Converters/OnnxCommon.h"
-#include "Synet/Decoders/Epsilon.h"
+#include "Synet/Decoders/Anchor.h"
 #include "Synet/Decoders/Ultraface.h"
 
 namespace Test
@@ -58,7 +58,8 @@ namespace Test
         CPL_PARAM_VALUE(float, confidence, 0.5f);
         CPL_PARAM_VALUE(float, overlap, 0.5f);
         CPL_PARAM_VALUE(String, decoder, String());
-        CPL_PARAM_STRUCT(Synet::EpsilonParam, epsilon);
+        CPL_PARAM_STRUCT_MOD(Synet::AnchorParam, epsilon, Synet::GetEpsilonParam());
+        CPL_PARAM_STRUCT_MOD(Synet::AnchorParam, retina, Synet::GetRetinaParam());
         CPL_PARAM_STRUCT(Synet::UltrafaceParam, ultraface);
     };
 

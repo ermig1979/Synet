@@ -24,7 +24,8 @@
 
 #pragma once
 
-#include "TestArgs.h"
+#include "Cpl/Args.h"
+
 #include "TestPerformance.h"
 
 namespace Test
@@ -34,7 +35,7 @@ namespace Test
 
     void GenerateReport(const struct Options& options);
 
-    struct Options : public ArgsParser
+    struct Options : public Cpl::ArgsParser
     {
         String mode;
         int enable;

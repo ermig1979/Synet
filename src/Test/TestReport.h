@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2020 Yermalayeu Ihar.
+* Copyright (c) 2018-2021 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,9 @@
 
 #pragma once
 
-#include "TestTable.h"
 #include "TestOptions.h"
+
+#include "Cpl/Table.h"
 
 namespace Test
 {
@@ -51,7 +52,7 @@ namespace Test
 			if (ofs.is_open())
 			{
 				FillSummary();
-				Table table(TableSize());
+				Cpl::Table table(TableSize().x, TableSize().y);
 				SetHeader(table);
 				SetCells(table, _summary, 0, true);
 				SetCells(table, _tests, _summary.size(), false);
@@ -68,19 +69,19 @@ namespace Test
 				}
 				else
 				{
-					Html html(ofs);
+					Cpl::Html html(ofs);
 
-					html.WriteBegin("html", Html::Attr(), true, true);
-					html.WriteValue("title", Html::Attr(), "Synet Performance Report", true);
-					html.WriteBegin("body", Html::Attr(), true, true);
+					html.WriteBegin("html", Cpl::Html::Attr(), true, true);
+					html.WriteValue("title", Cpl::Html::Attr(), "Synet Performance Report", true);
+					html.WriteBegin("body", Cpl::Html::Attr(), true, true);
 
-					html.WriteValue("h1", Html::Attr("id", "home"), "Synet Performance Report", true);
+					html.WriteValue("h1", Cpl::Html::Attr("id", "home"), "Synet Performance Report", true);
 
-					html.WriteValue("h4", Html::Attr(), String("Test generation time: ") + CurrentDateTimeString(), true);
-					html.WriteValue("h4", Html::Attr(), String("Number of test threads: ") + ToString(_options.testThreads), true);
+					html.WriteValue("h4", Cpl::Html::Attr(), String("Test generation time: ") + CurrentDateTimeString(), true);
+					html.WriteValue("h4", Cpl::Html::Attr(), String("Number of test threads: ") + ToString(_options.testThreads), true);
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-					html.WriteValue("h4", Html::Attr(), SystemInfo(), true);
-					html.WriteBegin("h4", Html::Attr(), true, true);
+					html.WriteValue("h4", Cpl::Html::Attr(), SystemInfo(), true);
+					html.WriteBegin("h4", Cpl::Html::Attr(), true, true);
 					Simd::PrintInfo(ofs);
 					html.WriteEnd("h4", true, true);
 #endif
@@ -278,46 +279,46 @@ namespace Test
 			return Size(col, row);
 		}
 
-		void SetHeader(Table& table)
+		void SetHeader(Cpl::Table& table)
 		{
 			String first = Options::FullName(_options.firstName, _options.firstType);
 			String second = Options::FullName(_options.secondName, _options.secondType);
 			size_t col = 0;
-			table.SetHeader(col++, "Test", true, Table::Center);
-			table.SetHeader(col++, "Batch", true, Table::Center);
+			table.SetHeader(col++, "Test", true, Cpl::Table::Center);
+			table.SetHeader(col++, "Batch", true, Cpl::Table::Center);
 			if (_other.time)
-				table.SetHeader(col++, first + ", ms", true, Table::Center);
+				table.SetHeader(col++, first + ", ms", true, Cpl::Table::Center);
 			if (_synet.time)
-				table.SetHeader(col++, second + ", ms", true, Table::Center);
+				table.SetHeader(col++, second + ", ms", true, Cpl::Table::Center);
 			if (_other.time && _synet.time)
-				table.SetHeader(col++, first + " / " + second, true, Table::Center);
+				table.SetHeader(col++, first + " / " + second, true, Cpl::Table::Center);
 			if (_other.flops)
-				table.SetHeader(col++, first + ", GFLOPS", true, Table::Center);
+				table.SetHeader(col++, first + ", GFLOPS", true, Cpl::Table::Center);
 			if (_synet.flops)
-				table.SetHeader(col++, second + ", GFLOPS", true, Table::Center);
+				table.SetHeader(col++, second + ", GFLOPS", true, Cpl::Table::Center);
 			if (_other.memory)
-				table.SetHeader(col++, first + ", MB", true, Table::Center);
+				table.SetHeader(col++, first + ", MB", true, Cpl::Table::Center);
 			if (_synet.memory)
-				table.SetHeader(col++, second + ", MB", true, Table::Center);
-			table.SetHeader(col++, "Description", true, Table::Center);
+				table.SetHeader(col++, second + ", MB", true, Cpl::Table::Center);
+			table.SetHeader(col++, "Description", true, Cpl::Table::Center);
 		}
 
-		void SetCells(Table& table, const Tests & tests, size_t row, bool summary)
+		void SetCells(Cpl::Table& table, const Tests & tests, size_t row, bool summary)
 		{
 			for (size_t i = 0; i < tests.size(); ++i, ++row)
 			{
 				const Test& test = tests[i];
 				size_t col = 0;
-				table.SetCell(col++, row, test.name, Table::Black, test.link);
+				table.SetCell(col++, row, test.name, Cpl::Table::Black, test.link);
 				table.SetCell(col++, row, test.batch ? ToString(test.batch) : String("-"));
 				if (_other.time)
-					table.SetCell(col++, row, ToString(test.first.time, 3), test.skip == 1 ? Table::Red : Table::Black);
+					table.SetCell(col++, row, ToString(test.first.time, 3), test.skip == 1 ? Cpl::Table::Red : Cpl::Table::Black);
 				if (_synet.time)
-					table.SetCell(col++, row, ToString(test.second.time, 3), test.skip == 2 ? Table::Red : Table::Black);
+					table.SetCell(col++, row, ToString(test.second.time, 3), test.skip == 2 ? Cpl::Table::Red : Cpl::Table::Black);
 				if (_other.time && _synet.time)
 				{
 					double relation = test.second.time != 0 ? test.first.time / test.second.time : 0.0;
-					table.SetCell(col++, row, ToString(relation, 2), relation < 1.00 ? Table::Red : Table::Black);
+					table.SetCell(col++, row, ToString(relation, 2), relation < 1.00 ? Cpl::Table::Red : Cpl::Table::Black);
 				}
 				if (_other.flops)
 					table.SetCell(col++, row, ToString(test.first.flops, 1));

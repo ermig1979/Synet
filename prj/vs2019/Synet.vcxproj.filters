@@ -317,9 +317,6 @@
     <ClInclude Include="..\..\src\Synet\Converters\OnnxCommon.h">
       <Filter>Converters</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Decoders\Epsilon.h">
-      <Filter>Decoders</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Ultraface.h">
       <Filter>Decoders</Filter>
     </ClInclude>
@@ -355,6 +352,15 @@
     </ClInclude>
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Yaml.h">
       <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Html.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Table.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Anchor.h">
+      <Filter>Decoders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

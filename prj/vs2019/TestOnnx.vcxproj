@@ -30,7 +30,6 @@
     <ClCompile Include="..\..\src\Test\TestImage.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\Test\TestArgs.h" />
     <ClInclude Include="..\..\src\Test\TestCommon.h" />
     <ClInclude Include="..\..\src\Test\TestCompare.h" />
     <ClInclude Include="..\..\src\Test\TestHtml.h" />
