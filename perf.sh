@@ -75,6 +75,7 @@ TESTS inference_engine test_012f persons 0
 TESTS inference_engine test_013f persons 0
 TESTS inference_engine test_014f local 0
 TESTS inference_engine test_015f license_plates 0
+TESTS inference_engine test_016f face 1
 }
 
 function TESTS_O_ALL {

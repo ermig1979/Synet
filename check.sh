@@ -87,6 +87,7 @@ TEST_I test_012f persons 0
 TEST_I test_013f persons 0
 TEST_I test_014f local 0
 TEST_I test_015f license_plates 0
+TEST_I test_016f face 1
 }
 
 function TEST_O_ALL {
