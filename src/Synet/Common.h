@@ -29,7 +29,6 @@
 #endif
 
 //#define SYNET_SIMD_LIBRARY_ENABLE
-//#define SYNET_BLIS_ENABLE
 
 //#define SYNET_PROTOBUF_ENABLE
 //#define SYNET_PERFORMANCE_STATISTIC
@@ -87,13 +86,6 @@
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdLib.h"
 #include "Simd/SimdLib.hpp"
-#endif
-
-#ifdef SYNET_BLIS_ENABLE
-extern "C"
-{
-#include <blis/blis.h>
-}
 #endif
 
 #if defined(_MSC_VER)
@@ -190,8 +182,6 @@ namespace Synet
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return SimdGetThreadNumber();
-#elif defined(SYNET_BLIS_ENABLE)
-        return bli_thread_get_num_threads();
 #else
         return 1;
 #endif
@@ -201,9 +191,6 @@ namespace Synet
     {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
         SimdSetThreadNumber(threadNumber);
-#endif
-#ifdef SYNET_BLIS_ENABLE
-        bli_thread_set_num_threads(threadNumber);
 #endif
     }
 

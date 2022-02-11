@@ -63,9 +63,6 @@ namespace Test
 #ifdef __SimdLib_hpp__
         Simd::PrintInfo(os);
 #endif
-#ifdef BLIS_H        
-        os << "Blis arch: " << bli_arch_string(bli_arch_query_id()) << std::endl;
-#endif
         for (FunctionMap::const_iterator j = merged.begin(); j != merged.end(); j++)
         {
             const String& name = j->first;
