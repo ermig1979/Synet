@@ -395,14 +395,25 @@ namespace Synet
             else if (src[0]->GetType() == TensorType64i)
             {
                 Synet::Tensor<int64_t>& dst0 = dst[0]->As64i();
-                dst0.Reshape({ src.size() });
+                size_t size = 0;
                 for (size_t i = 0; i < src.size(); ++i)
                 {
-                    assert(src[i]->Size() == 1);
+                    assert(src[i]->Count() == 1);
+                    size += src[i]->Size();
+                }
+                dst0.Reshape({ size });
+                for (size_t i = 0, o = 0; i < src.size(); ++i)
+                {
                     if (src[i]->GetType() == TensorType32i)
-                        dst0.CpuData()[i] = (int64_t)src[i]->As32i().CpuData()[0];
+                    {
+                        for (size_t j = 0; j < src[i]->Size(); ++j, ++o)
+                            dst0.CpuData()[o] = (int64_t)src[i]->As32i().CpuData()[j];
+                    }
                     else if (src[i]->GetType() == TensorType64i)
-                        dst0.CpuData()[i] = (int64_t)src[i]->As64i().CpuData()[0];
+                    {
+                        for (size_t j = 0; j < src[i]->Size(); ++j, ++o)
+                            dst0.CpuData()[o] = (int64_t)src[i]->As64i().CpuData()[j];
+                    }
                     else
                         assert(0);
                 }

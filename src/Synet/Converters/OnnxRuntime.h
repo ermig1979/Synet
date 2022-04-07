@@ -972,6 +972,8 @@ namespace Synet
                     return false;
                 if (coordTransf == "pytorch_half_pixel")
                     layer.interp().coordinateTransformType() = CoordinateTransformTypeHalfPixel;
+                else if (coordTransf == "asymmetric")
+                    layer.interp().coordinateTransformType() = CoordinateTransformTypePytorch;
                 else
                     return false;
             }
