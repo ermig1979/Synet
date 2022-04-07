@@ -38,7 +38,7 @@ namespace Synet
         bool Convert(const String& srcParamPath, const String& srcGraphPath, bool trans, const String & dstModelPath, const String & dstWeightPath, 
             const OnnxParam& onnxParam, const OptimizerParam& optParam)
         {
-            if (!Synet::FileExist(srcGraphPath))
+            if (!Cpl::FileExists(srcGraphPath))
             {
                 std::cout << "File '" << srcGraphPath << "' is not exist!" << std::endl;
                 return false;

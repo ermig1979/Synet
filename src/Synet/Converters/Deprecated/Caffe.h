@@ -30,6 +30,10 @@
 
 #if defined(SYNET_CAFFE_ENABLE)
 
+#if !defined(SYNET_LEGACY_2020_ENABLE)
+#error The support of Caffe to Synet model conversion is stopped!
+#endif
+
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wterminate"
@@ -49,13 +53,13 @@ namespace Synet
     public:
         bool Convert(const String & srcModelPath, const String & srcWeightPath, bool trans, const String & dstModelPath, const String & dstWeightPath)
         {
-            if (!Synet::FileExist(srcModelPath))
+            if (!Cpl::FileExists(srcModelPath))
             {
                 std::cout << "File '" << srcModelPath << "' is not exist!" << std::endl;
                 return false;
             }
 
-            if (!Synet::FileExist(srcWeightPath))
+            if (!Cpl::FileExists(srcWeightPath))
             {
                 std::cout << "File '" << srcWeightPath << "' is not exist!" << std::endl;
                 return false;

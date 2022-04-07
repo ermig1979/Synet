@@ -28,6 +28,10 @@
 
 #if defined(SYNET_TENSORFLOW_ENABLE)
 
+#if !defined(SYNET_LEGACY_2020_ENABLE)
+#error The support of Tensorflow to Synet model conversion is stopped!
+#endif
+
 #if defined(_MSC_VER)
 #pragma warning (push)
 #pragma warning (disable: 4267 4800 4554 4244)
@@ -70,13 +74,13 @@ namespace Synet
 
         bool Convert(const String & srcParamPath, const String & srcGraphPath, bool trans, const String & dstModelPath, const String & dstWeightPath)
         {
-            if (!Synet::FileExist(srcParamPath))
+            if (!Cpl::FileExists(srcParamPath))
             {
                 std::cout << "File '" << srcParamPath << "' is not exist!" << std::endl;
                 return false;
             }
 
-            if (!Synet::FileExist(srcGraphPath))
+            if (!Cpl::FileExists(srcGraphPath))
             {
                 std::cout << "File '" << srcGraphPath << "' is not exist!" << std::endl;
                 return false;

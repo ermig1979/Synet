@@ -32,6 +32,10 @@
 
 #if defined(SYNET_DARKNET_ENABLE)
 
+#if !defined(SYNET_LEGACY_2020_ENABLE)
+#error The support of Darknet to Synet model conversion is stopped!
+#endif
+
 #ifdef SYNET_DARKNET_PATH
 #define SYNET_INCLUDE_DARKNET(file) SYNET_INCLUDE(SYNET_DARKNET_PATH, file)
 #else
@@ -69,13 +73,13 @@ namespace Synet
     public:
         bool Convert(const String & srcModelPath, const String & srcWeightPath, bool trans, const String & dstModelPath, const String & dstWeightPath)
         {
-            if (!Synet::FileExist(srcModelPath))
+            if (!Cpl::FileExists(srcModelPath))
             {
                 std::cout << "File '" << srcModelPath << "' is not exist!" << std::endl;
                 return false;
             }
 
-            if (!Synet::FileExist(srcWeightPath))
+            if (!Cpl::FileExists(srcWeightPath))
             {
                 std::cout << "File '" << srcWeightPath << "' is not exist!" << std::endl;
                 return false;

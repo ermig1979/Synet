@@ -39,8 +39,8 @@ namespace Test
 }
 #else
 
-#define SYNET_ONNX_ENABLE
-#include "Synet/Converters/OnnxNgraph.h"
+#define SYNET_ONNX_IE_ENABLE
+#include "Synet/Converters/Deprecated/OnnxNgraph.h"
 #include "TestInferenceEngine.h"
 
 namespace Test
@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
 {
     Test::Options options(argc, argv);
 
-#if defined(SYNET_ONNX_ENABLE) || defined(SYNET_ONNXRUNTIME_ENABLE)
+#if defined(SYNET_ONNX_IE_ENABLE) || defined(SYNET_ONNXRUNTIME_ENABLE)
     if (options.mode == "convert")
     {
         SYNET_PERF_FUNC();

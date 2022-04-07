@@ -93,9 +93,6 @@
     <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\Darknet.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Converters\InferenceEngine.h">
       <Filter>Converters</Filter>
     </ClInclude>
@@ -103,9 +100,6 @@
       <Filter>Converters</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineV10.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineV7.h">
       <Filter>Converters</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Caffe.h">
@@ -305,9 +299,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\RnnGruBdLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\OnnxNgraph.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Converters\OnnxRuntime.h">
       <Filter>Converters</Filter>
     </ClInclude>
@@ -361,6 +352,15 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Anchor.h">
       <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Darknet.h">
+      <Filter>Converters\Deprecated</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\InferenceEngineV7.h">
+      <Filter>Converters\Deprecated</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\OnnxNgraph.h">
+      <Filter>Converters\Deprecated</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

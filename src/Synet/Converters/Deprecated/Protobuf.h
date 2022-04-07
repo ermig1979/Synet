@@ -28,6 +28,10 @@
 
 #if defined(SYNET_PROTOBUF_ENABLE)
 
+#if !defined(SYNET_LEGACY_2020_ENABLE)
+#error The support of Protobuf to Synet model conversion is stopped!
+#endif
+
 #include <google/protobuf/message.h>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/descriptor.pb.h>

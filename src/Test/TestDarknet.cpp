@@ -29,7 +29,7 @@
 
 #define SYNET_DARKNET_ENABLE
 #define SYNET_DARKNET_PATH ../../../3rd/darknet/include
-#include "Synet/Converters/Darknet.h"
+#include "Synet/Converters/Deprecated/Darknet.h"
 
 namespace Test
 {

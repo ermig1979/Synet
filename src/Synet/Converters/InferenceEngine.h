@@ -27,7 +27,9 @@
 #include "Synet/Common.h"
 #include "Synet/Params.h"
 #include "Synet/Utils/FileUtils.h"
-#include "Synet/Converters/InferenceEngineV7.h"
+#if defined(SYNET_LEGACY_2020_ENABLE)
+#include "Synet/Converters/Deprecated/InferenceEngineV7.h"
+#endif
 #include "Synet/Converters/InferenceEngineV10.h"
 #include "Synet/Converters/Optimizer.h"
 
@@ -38,13 +40,13 @@ namespace Synet
     public:
         bool Convert(const String & srcModel, const String & srcWeight, bool trans, const String & dstModel, const String & dstWeight, const OptimizerParam & optParam)
         {
-            if (!Synet::FileExist(srcModel))
+            if (!Cpl::FileExists(srcModel))
             {
                 std::cout << "File '" << srcModel << "' is not exist!" << std::endl;
                 return false;
             }
 
-            if (!Synet::FileExist(srcWeight))
+            if (!Cpl::FileExists(srcWeight))
             {
                 std::cout << "File '" << srcWeight << "' is not exist!" << std::endl;
                 return false;
@@ -146,6 +148,8 @@ namespace Synet
 
             Cpl::ToVal(pVersion->Value(), version);
 
+
+#if defined(SYNET_LEGACY_2020_ENABLE)
             if (version <= 7)
             {
                 InferenceEngineConverterV7 converterV7;
@@ -155,7 +159,9 @@ namespace Synet
                     return false;
                 }
             }
-            else if (version <= 10)
+            else
+#endif
+            if (version > 7 && version <= 10)
             {
                 InferenceEngineConverterV10 converterV10;
                 if (!converterV10.Convert(*pNet, srcBin, trans, dstXml, dstBin))
@@ -163,7 +169,7 @@ namespace Synet
                     std::cout << "Can't convert IE model v" << version << "!" << std::endl;
                     return false;
                 }
-            }
+            }            
             else
             {
                 std::cout << "Unsupported version " << version << " of IE model!" << std::endl;

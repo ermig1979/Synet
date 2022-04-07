@@ -24,7 +24,13 @@
 
 #pragma once
 
-#if defined(SYNET_ONNX_ENABLE)
+#include "Synet/Converters/OnnxCommon.h"
+
+#if defined(SYNET_ONNX_IE_ENABLE)
+
+#if !defined(SYNET_LEGACY_2020_ENABLE)
+#error The support of ONNX to Synet model conversion based on Inference Engine is stopped!
+#endif
 
 #include <onnx_import/onnx.hpp>
 #include <ngraph/ops.hpp>
@@ -37,7 +43,7 @@ namespace Synet
         bool Convert(const String& srcParamPath, const String& srcGraphPath, bool trans, const String & dstModelPath, const String & dstWeightPath, 
             const OnnxParam& onnxParam, const OptimizerParam& optParam)
         {
-            if (!Synet::FileExist(srcGraphPath))
+            if (!Cpl::FileExists(srcGraphPath))
             {
                 std::cout << "File '" << srcGraphPath << "' is not exist!" << std::endl;
                 return false;

@@ -26,6 +26,10 @@
 
 #include "Synet/Converters/InferenceEngineBase.h"
 
+#if !defined(SYNET_LEGACY_2020_ENABLE)
+#error The support of Inference Engine V7 to Synet model conversion is stopped!
+#endif
+
 namespace Synet
 {
     class InferenceEngineConverterV7 : public InferenceEngineConverter
