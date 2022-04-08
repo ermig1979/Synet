@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2021 Yermalayeu Ihar,
+* Copyright (c) 2018-2022 Yermalayeu Ihar,
 *               2019-2019 Artur Voronkov.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
