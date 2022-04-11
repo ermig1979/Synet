@@ -70,22 +70,11 @@ TEST_D test_000 local 1
 }
 
 function TEST_I_ALL {
-TEST_I test_000 local 1
-TEST_I test_001 local 1
-TEST_I test_002 local 0
-TEST_I test_003f local 0
-#TEST_I test_003i local 0
-TEST_I test_004 local 0
-TEST_I test_005 local 1
-TEST_I test_006 local 1
-TEST_I test_007 local 1
-TEST_I test_008 local 1
-TEST_I test_009f local 0
 TEST_I test_010f local 0
 TEST_I test_011f local 0
 TEST_I test_012f persons 0
 TEST_I test_013f persons 0
-TEST_I test_014f local 0
+#TEST_I test_014f local 0
 TEST_I test_015f license_plates 0
 TEST_I test_016f face 1
 }

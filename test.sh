@@ -45,23 +45,11 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 
 #TEST darknet test_000 local 5 1 1 1 002h 0
 
-#TEST inference_engine test_000 local 1000 1 1 1 008a 0
-#TEST inference_engine test_001 local 500 1 1 1 006 0
-#TEST inference_engine test_002 local 20 1 1 1 005t 0
-#TEST inference_engine test_003f local 50 1 1 1 006t 0
-#TEST inference_engine test_003i local 100 1 1 1 013 0
-#TEST inference_engine test_004 local 1 0 1 1 004 0
-#TEST inference_engine test_005 local 2000 1 1 1 003 0
-#TEST inference_engine test_006 local 100 1 1 1 003 0
-#TEST inference_engine test_007 local 200 1 1 1 004 0
-#TEST inference_engine test_008 local 5 0 1 1 004 0
-#TEST inference_engine test_009f local 40 0 1 1 001t 0
-#TEST inference_engine test_009i local 40 1 1 1 000t 0
 #TEST inference_engine test_010f local 100 1 1 1 002t 0
 #TEST inference_engine test_011f local 40 0 1 1 003 0
 #TEST inference_engine test_012f persons 10 1 1 1 001 0
 #TEST inference_engine test_013f persons 20 1 1 1 001 0
-#TEST inference_engine test_014f local 200 1 1 1 000h 0
+#TEST inference_engine test_014f local 200 0 1 1 000h 0 ???
 #TEST inference_engine test_015f license_plates 100 1 1 1 000h 0
 TEST inference_engine test_016f face 500 1 1 1 000 0
 

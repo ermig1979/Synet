@@ -59,21 +59,11 @@ TESTS darknet test_000 local 1
 }
 
 function TESTS_I_ALL {
-TESTS inference_engine test_000 local 1
-TESTS inference_engine test_001 local 1
-TESTS inference_engine test_002 local 0
-TESTS inference_engine test_003f local 0
-TESTS inference_engine test_004 local 0
-TESTS inference_engine test_005 local 1
-TESTS inference_engine test_006 local 1
-TESTS inference_engine test_007 local 1
-TESTS inference_engine test_008 local 1
-TESTS inference_engine test_009f local 0
 TESTS inference_engine test_010f local 0
 TESTS inference_engine test_011f local 0
 TESTS inference_engine test_012f persons 0
 TESTS inference_engine test_013f persons 0
-TESTS inference_engine test_014f local 0
+#TESTS inference_engine test_014f local 0
 TESTS inference_engine test_015f license_plates 0
 TESTS inference_engine test_016f face 1
 }
