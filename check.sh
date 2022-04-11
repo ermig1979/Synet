@@ -47,12 +47,6 @@ fi
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
-function TEST_D {
-TEST darknet $1 $2 0 1
-TEST darknet $1 $2 1 1
-if [ $3 -ne 0 ];then TEST darknet $1 $2 1 2; fi
-}
-
 function TEST_I {
 TEST inference_engine $1 $2 0 1
 TEST inference_engine $1 $2 1 1
@@ -63,10 +57,6 @@ function TEST_O {
 TEST onnx $1 $2 0 1
 TEST onnx $1 $2 1 1
 if [ $3 -ne 0 ];then TEST onnx $1 $2 1 2; fi
-}
-
-function TEST_D_ALL {
-TEST_D test_000 local 1
 }
 
 function TEST_I_ALL {
@@ -85,13 +75,11 @@ TEST_O test_001 faces 0
 }
 
 function TEST_ALL {
-TEST_D_ALL
 TEST_I_ALL
 TEST_O_ALL
 }
 
 if [ "${MODE}" == "" ]; then TEST_ALL; fi
-if [ "${MODE}" == "d" ]; then TEST_D_ALL; fi
 if [ "${MODE}" == "i" ]; then TEST_I_ALL; fi
 if [ "${MODE}" == "o" ]; then TEST_O_ALL; fi
 

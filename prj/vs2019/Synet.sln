@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29411.138
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestDarknet", "TestDarknet.vcxproj", "{423128F2-9D4E-408D-9123-49CE57A32B0A}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Synet", "Synet.vcxproj", "{C809D7A3-6C52-4E36-8582-00CED929317F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestInferenceEngine", "TestInferenceEngine.vcxproj", "{F4F0DBBD-994A-41B1-8F5D-60AD8F8E4C8A}"
@@ -73,14 +71,6 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{423128F2-9D4E-408D-9123-49CE57A32B0A}.Debug|Win32.ActiveCfg = Debug|Win32
-		{423128F2-9D4E-408D-9123-49CE57A32B0A}.Debug|Win32.Build.0 = Debug|Win32
-		{423128F2-9D4E-408D-9123-49CE57A32B0A}.Debug|x64.ActiveCfg = Debug|x64
-		{423128F2-9D4E-408D-9123-49CE57A32B0A}.Debug|x64.Build.0 = Debug|x64
-		{423128F2-9D4E-408D-9123-49CE57A32B0A}.Release|Win32.ActiveCfg = Release|Win32
-		{423128F2-9D4E-408D-9123-49CE57A32B0A}.Release|Win32.Build.0 = Release|Win32
-		{423128F2-9D4E-408D-9123-49CE57A32B0A}.Release|x64.ActiveCfg = Release|x64
-		{423128F2-9D4E-408D-9123-49CE57A32B0A}.Release|x64.Build.0 = Release|x64
 		{C809D7A3-6C52-4E36-8582-00CED929317F}.Debug|Win32.ActiveCfg = Debug|Win32
 		{C809D7A3-6C52-4E36-8582-00CED929317F}.Debug|Win32.Build.0 = Debug|Win32
 		{C809D7A3-6C52-4E36-8582-00CED929317F}.Debug|x64.ActiveCfg = Debug|x64
@@ -238,7 +228,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{423128F2-9D4E-408D-9123-49CE57A32B0A} = {AFFDA6C0-D2CE-421C-8B55-7A55284D9427}
 		{C809D7A3-6C52-4E36-8582-00CED929317F} = {302014D6-E119-4F87-89FE-58B605B21254}
 		{F4F0DBBD-994A-41B1-8F5D-60AD8F8E4C8A} = {AFFDA6C0-D2CE-421C-8B55-7A55284D9427}
 		{C26833B7-8721-41F0-BA67-CBC4D5ADCD23} = {6DC1E51E-CC0D-4775-8A78-E94B83B25381}

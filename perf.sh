@@ -54,10 +54,6 @@ TEST $FRAMEWORK $TEST_NAME $TEST_IMAGE $TEST_THREAD 1
 if [ $TEST_BATCH -ne 0 ];then TEST $FRAMEWORK $TEST_NAME $TEST_IMAGE $TEST_THREAD $BATCH_SIZE; fi
 }
 
-function TESTS_D_ALL {
-TESTS darknet test_000 local 1
-}
-
 function TESTS_I_ALL {
 TESTS inference_engine test_010f local 0
 TESTS inference_engine test_011f local 0
@@ -79,13 +75,11 @@ TESTS quantization test_009 persons 0
 }
 
 function TEST_ALL {
-TEST_D_ALL
 TEST_I_ALL
 TEST_O_ALL
 }
 
 if [ "${MODE}" == "" ]; then TEST_ALL; fi
-if [ "${MODE}" == "d" ]; then TEST_D_ALL; fi
 if [ "${MODE}" == "i" ]; then TEST_I_ALL; fi
 if [ "${MODE}" == "o" ]; then TEST_O_ALL; fi
 if [ "${MODE}" == "q" ]; then TEST_Q_ALL; fi

@@ -24,10 +24,6 @@
 
 #pragma once
 
-#ifndef SYNET_CPL_ENABLE
-#define SYNET_CPL_ENABLE
-#endif
-
 //#define SYNET_SIMD_LIBRARY_ENABLE
 
 //#define SYNET_PROTOBUF_ENABLE
@@ -82,9 +78,7 @@
 #include <iomanip>
 #include <type_traits>
 
-#ifdef SYNET_CPL_ENABLE
 #include "Cpl/Param.h"
-#endif
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdLib.h"

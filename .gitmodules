@@ -2,10 +2,6 @@
 	path = 3rd/Simd
 	url = https://github.com/ermig1979/Simd.git
 	ignore = dirty
-[submodule "3rd/darknet"]
-	path = 3rd/darknet
-	url = https://github.com/ermig1979/darknet.git
-	ignore = dirty
 [submodule "3rd/blis"]
 	path = 3rd/blis
 	url = https://github.com/ermig1979/blis.git

@@ -43,8 +43,6 @@ if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
-#TEST darknet test_000 local 5 1 1 1 002h 0
-
 #TEST inference_engine test_010f local 100 1 1 1 002t 0
 #TEST inference_engine test_011f local 40 0 1 1 003 0
 #TEST inference_engine test_012f persons 10 1 1 1 001 0

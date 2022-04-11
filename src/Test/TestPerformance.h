@@ -26,8 +26,6 @@
 
 #include "TestUtils.h"
 
-#if defined(SYNET_CPL_ENABLE)
-
 #ifndef CPL_PERF_ENABLE
 #define CPL_PERF_ENABLE
 #endif
@@ -83,6 +81,4 @@ namespace Test
         os << "----- ~~~~~~~~~~~~~~~~~~~ -----" << std::endl;
     }
 }
-
-#endif
 

@@ -3,7 +3,6 @@ HT="1"
 
 TEST_MODE=$1
 if [ "${TEST_MODE}" == "" ] || [ "${TEST_MODE}" == "a" ]; then TEST_MODE="all"; fi
-if [ "${TEST_MODE}" == "d" ]; then TEST_MODE="darknet"; fi
 if [ "${TEST_MODE}" == "i" ]; then TEST_MODE="inference_engine"; fi
 if [ "${TEST_MODE}" == "o" ]; then TEST_MODE="onnx"; fi
 if [ "${TEST_MODE}" == "pd" ]; then TEST_MODE="performance_difference"; fi
