@@ -86,7 +86,7 @@ add_custom_command(
 	WORKING_DIRECTORY ${IE_ROOT_DIR}/build)
 	
 
-add_custom_target(make_inference_engine DEPENDS ${IE_BIN_LIBS})
+add_custom_target(make_openvino DEPENDS ${IE_BIN_LIBS})
 
 include_directories(${IE_ROOT_DIR}/src/inference/include/ie)
 include_directories(${IE_ROOT_DIR}/src/core/include)

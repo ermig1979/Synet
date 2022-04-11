@@ -28,7 +28,7 @@
 #include "TestPerformance.h"
 #include "TestNetwork.h"
 
-#define SYNET_TEST_IE_VERSION 202101
+#define SYNET_TEST_IE_VERSION 202201
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic push

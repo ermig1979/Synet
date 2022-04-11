@@ -4,7 +4,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{039CFE6E-B8BF-4C72-9D57-22B6BEB0BBAA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>TestInferenceEngine</RootNamespace>
+    <RootNamespace>TestPerformanceDifference</RootNamespace>
     <ProjectName>TestPerformanceDifference</ProjectName>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
@@ -14,7 +14,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\3rd\Simd\src;$(SolutionDir)..\..\3rd\dldt\inference-engine\include;$(SolutionDir)..\..\3rd\dldt\inference-engine\src\extension;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
