@@ -25,9 +25,7 @@
 #include "TestCompare.h"
 #include "TestReport.h"
 
-#if defined(SYNET_TEST_FIRST_RUN)
-
-#if defined(SYNET_ONNXRUNTIME_ENABLE)
+#if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_ONNXRUNTIME_ENABLE)
 #include "Synet/Converters/OnnxRuntime.h"
 #include "TestOnnxRuntime.h"
 
@@ -35,21 +33,6 @@ namespace Test
 {
     OnnxRuntimeNetwork::Env OnnxRuntimeNetwork::s_env;
 
-    typedef OnnxRuntimeNetwork OnnxNetwork;
-}
-#else
-
-#define SYNET_ONNX_IE_ENABLE
-#include "Synet/Converters/Deprecated/OnnxNgraph.h"
-#include "TestInferenceEngine.h"
-
-namespace Test
-{
-    typedef InferenceEngineNetwork OnnxNetwork;
-}
-#endif
-namespace Test
-{
     bool ConvertOnnxToSynet(const Test::Options &options)
     {
         SYNET_PERF_FUNC();
@@ -63,18 +46,20 @@ namespace Test
             options.tensorFormat == 1, options.secondModel, options.secondWeight, param().onnx(), param().optimizer());
     }
 }
-#else //SYNET_FIRST_RUN
+#else
 namespace Test
 {
-    typedef Network OnnxNetwork;
+    struct OnnxRuntimeNetwork : public Network
+    {
+    };
 }
-#endif//SYNET_FIRST_RUN
+#endif
 
 int main(int argc, char* argv[])
 {
     Test::Options options(argc, argv);
 
-#if defined(SYNET_ONNX_IE_ENABLE) || defined(SYNET_ONNXRUNTIME_ENABLE)
+#if defined(SYNET_ONNXRUNTIME_ENABLE)
     if (options.mode == "convert")
     {
         SYNET_PERF_FUNC();
@@ -86,7 +71,7 @@ int main(int argc, char* argv[])
 #endif
     if (options.mode == "compare")
     {
-        Test::Comparer<Test::OnnxNetwork, Test::SynetNetwork> comparer(options);
+        Test::Comparer<Test::OnnxRuntimeNetwork, Test::SynetNetwork> comparer(options);
         options.result = comparer.Run();
     }
     else

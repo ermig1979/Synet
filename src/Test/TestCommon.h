@@ -28,8 +28,6 @@
 #define SYNET_SIMD_LIBRARY_ENABLE
 #endif
 
-#define SYNET_GEMM_SIMD_LIBRARY
-
 #ifndef WIN32
 #define SYNET_TEST_FIRST_RUN
 #endif

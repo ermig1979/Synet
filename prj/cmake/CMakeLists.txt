@@ -9,7 +9,7 @@ option(PERF_STAT "Performance statistics level: 0 - no statistics, 1 - Synet sta
 set(MAX_ERRORS 5)
 
 
-if(NOT((MODE STREQUAL "all") OR (MODE STREQUAL "darknet") OR 
+if(NOT((MODE STREQUAL "all") OR 
        (MODE STREQUAL "inference_engine") OR (MODE STREQUAL "onnx") OR 
        (MODE STREQUAL "performance_difference") OR (MODE STREQUAL "precision") OR 
        (MODE STREQUAL "quantization") OR (MODE STREQUAL "use_samples")))

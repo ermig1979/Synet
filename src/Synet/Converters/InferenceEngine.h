@@ -27,9 +27,6 @@
 #include "Synet/Common.h"
 #include "Synet/Params.h"
 #include "Synet/Utils/FileUtils.h"
-#if defined(SYNET_LEGACY_2020_ENABLE)
-#include "Synet/Converters/Deprecated/InferenceEngineV7.h"
-#endif
 #include "Synet/Converters/InferenceEngineV10.h"
 #include "Synet/Converters/Optimizer.h"
 
@@ -148,20 +145,7 @@ namespace Synet
 
             Cpl::ToVal(pVersion->Value(), version);
 
-
-#if defined(SYNET_LEGACY_2020_ENABLE)
-            if (version <= 7)
-            {
-                InferenceEngineConverterV7 converterV7;
-                if (!converterV7.Convert(*pNet, srcBin, trans, dstXml, dstBin))
-                {
-                    std::cout << "Can't convert IE model v" << version << "!" << std::endl;
-                    return false;
-                }
-            }
-            else
-#endif
-            if (version > 7 && version <= 10)
+            if (version >= 10 && version <= 10)
             {
                 InferenceEngineConverterV10 converterV10;
                 if (!converterV10.Convert(*pNet, srcBin, trans, dstXml, dstBin))

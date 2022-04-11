@@ -102,9 +102,6 @@
     <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineV10.h">
       <Filter>Converters</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Caffe.h">
-      <Filter>Converters\Deprecated</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolutionLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
@@ -207,12 +204,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\YoloLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Tensorflow.h">
-      <Filter>Converters\Deprecated</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Protobuf.h">
-      <Filter>Converters\Deprecated</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\TileLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
@@ -305,9 +296,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\HardSigmoidLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\OnnxCommon.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Ultraface.h">
       <Filter>Decoders</Filter>
     </ClInclude>
@@ -353,15 +341,6 @@
     <ClInclude Include="..\..\src\Synet\Decoders\Anchor.h">
       <Filter>Decoders</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Darknet.h">
-      <Filter>Converters\Deprecated</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\InferenceEngineV7.h">
-      <Filter>Converters\Deprecated</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\OnnxNgraph.h">
-      <Filter>Converters\Deprecated</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -381,9 +360,6 @@
     </Filter>
     <Filter Include="Cpl">
       <UniqueIdentifier>{61106982-3cf0-4d97-94af-941102a58b36}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Converters\Deprecated">
-      <UniqueIdentifier>{22ba054b-220b-4b3d-9978-01844a07aae3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

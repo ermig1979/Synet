@@ -7,7 +7,7 @@ The main advantages  of Synet are:
 
 * Synet is faster then most other DNN original frameworks (has great single thread CPU performance).
 * Synet is header only, small C++ library.
-* Synet has only one external dependence - [Simd Library](https://github.com/ermig1979/Simd).
+* Synet has next external dependencies - [Cpl](https://github.com/ermig1979/Cpl) and [Simd Library](https://github.com/ermig1979/Simd).
 
 Building of test applications for Linux
 ==============================
@@ -17,22 +17,8 @@ To build test applications you can run following bash script:
     cd clone
     ./build.sh
 
-And applications `test_darknet`, `test_inference_engine`, `test_onnx`, `test_precision`, `test_quantization`, `use_face_detection` will be created in directory `build`.
+And applications `test_inference_engine`, `test_onnx`, `test_precision`, `test_quantization`, `use_face_detection` will be created in directory `build`.
 There is a detail description of these test applications below.
-
-Darknet test application
-========================
-The test application `test_darknet` is used for [Darknet](https://github.com/pjreddie/darknet) to Synet model conversion:
-
-    ./build/test_darknet -m convert -fm darknet_model.cfg -fw darknet_weigths.dat -sm synet_model.xml -sw synet_weigths.bin
-
-Also it is used in order to compare performance and accuracy of Darknet and Synet frameworks.
-There are several test scripts:
-
-* For manual testing you can use `./test.sh` (in the file you have to manually uncomment unit test that you need).
-* Script `./check.sh` checks correctness of all tests.
-* Script `./perf.sh` measures performance of Synet compare to Darknet.
-
 
 OpenVINO test application
 ========================
@@ -41,6 +27,8 @@ The test application `test_inference_engine` is used for [OpenVINO](https://gith
     /build/test_inference_engine -m convert -fm ie_model.xml -fw ie_weigths.bin -sm synet_model.xml -sw synet_weigths.bin
 
 Also it is used in order to compare performance and accuracy of OpenVINO and Synet frameworks.
+The current Synet and OpenVINO frameworks support only Inference Engine models version 10. 
+The previous versions of Inference Engine models are supported in [legacy_2020](https://github.com/ermig1979/Synet/tree/legacy_2020) branch.
 There are several test scripts:
 
 * For manual testing you can use `./test.sh` (in the file you have to manually uncomment unit test that you need).

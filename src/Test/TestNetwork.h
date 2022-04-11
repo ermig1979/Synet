@@ -28,7 +28,7 @@
 #include "Synet/Params.h"
 #include "Synet/Tensor.h"
 #include "Synet/Converters/Optimizer.h"
-#include "Synet/Converters/OnnxCommon.h"
+#include "Synet/Converters/OnnxRuntime.h"
 #include "Synet/Decoders/Anchor.h"
 #include "Synet/Decoders/Ultraface.h"
 

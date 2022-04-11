@@ -24,7 +24,22 @@
 
 #pragma once
 
-#include "Synet/Converters/OnnxCommon.h"
+//#define SYNET_ONNX_PARSE_STOP_ON_ERROR
+
+#include "Synet/Common.h"
+#include "Synet/Params.h"
+#include "Synet/Tensor.h"
+#include "Synet/Converters/Optimizer.h"
+#include "Synet/Converters/SynetUtils.h"
+#include "Synet/Utils/FileUtils.h"
+
+namespace Synet
+{
+    struct OnnxParam
+    {
+        CPL_PARAM_VALUE(Strings, toNchwHints, Strings());
+    };
+}
 
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
 

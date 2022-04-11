@@ -38,16 +38,9 @@
     <ClInclude Include="..\..\src\Synet\Common.h" />
     <ClInclude Include="..\..\src\Synet\Context.h" />
     <ClInclude Include="..\..\src\Synet\Converters\Deoptimizer.h" />
-    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Caffe.h" />
-    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Darknet.h" />
-    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\InferenceEngineV7.h" />
-    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\OnnxNgraph.h" />
-    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Protobuf.h" />
-    <ClInclude Include="..\..\src\Synet\Converters\Deprecated\Tensorflow.h" />
     <ClInclude Include="..\..\src\Synet\Converters\InferenceEngine.h" />
     <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineBase.h" />
     <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineV10.h" />
-    <ClInclude Include="..\..\src\Synet\Converters\OnnxCommon.h" />
     <ClInclude Include="..\..\src\Synet\Converters\OnnxRuntime.h" />
     <ClInclude Include="..\..\src\Synet\Converters\Optimizer.h" />
     <ClInclude Include="..\..\src\Synet\Converters\SynetUtils.h" />
