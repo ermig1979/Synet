@@ -266,7 +266,7 @@ namespace Synet
                 CpuMish(dst, dSize, params[0], dst);
                 break;
             case ActivationFunctionTypeHardSigmoid:
-                Detail::HardSigmoidLayerForwardCpu(dst, dSize, params[0], params[1], dst);
+                CpuHardSigmoid(dst, dSize, params[0], params[1], dst);
                 break;
             default:
                 assert(0);

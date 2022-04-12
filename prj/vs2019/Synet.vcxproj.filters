@@ -45,9 +45,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\EltwiseLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\EluLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ExpandDimsLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
@@ -61,9 +58,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\GatherLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\HswishLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\InputLayer.h">
@@ -147,16 +141,10 @@
     <ClInclude Include="..\..\src\Synet\Layers\RegionLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ReluLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ReorgLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ReshapeLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\RestrictRangeLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ScaleLayer.h">
@@ -168,16 +156,10 @@
     <ClInclude Include="..\..\src\Synet\Layers\ShuffleLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\SigmoidLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\SliceLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\SoftplusLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\SqueezeLayer.h">
@@ -270,9 +252,6 @@
     <ClInclude Include="..\..\src\Synet\Converters\SynetUtils.h">
       <Filter>Converters</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\MishLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\BroadcastLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
@@ -292,9 +271,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Converters\OnnxRuntime.h">
       <Filter>Converters</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\HardSigmoidLayer.h">
-      <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Ultraface.h">
       <Filter>Decoders</Filter>
@@ -340,6 +316,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Anchor.h">
       <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ActivationLayers.h">
+      <Filter>Layers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -30,6 +30,70 @@
 
 namespace Synet
 {
+    template <class T> class EluLayer : public Synet::Layer<T>
+    {
+    public:
+        typedef T Type;
+        typedef Layer<T> Base;
+        typedef typename Base::TensorPtrs TensorPtrs;
+
+        EluLayer(const LayerParam& param, Context* context)
+            : Base(param, context)
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            _alpha = this->Param().elu().alpha();
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
+
+    protected:
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            CpuElu<Type>(src[0]->CpuData(), src[0]->Size(), _alpha, dst[0]->CpuData());
+        }
+
+    private:
+        Type _alpha;
+    };
+
+    //---------------------------------------------------------------------------------------------
+
+    template <class T> class HardSigmoidLayer : public Synet::Layer<T>
+    {
+    public:
+        typedef T Type;
+        typedef Layer<T> Base;
+        typedef typename Base::TensorPtrs TensorPtrs;
+
+        HardSigmoidLayer(const LayerParam& param, Context* context)
+            : Base(param, context)
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            HardSigmoidParam hardSigmoid = this->Param().hardSigmoid();
+            _scale = hardSigmoid.scale();
+            _shift = hardSigmoid.shift();
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
+
+    protected:
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            CpuHardSigmoid(src[0]->CpuData(), src[0]->Size(), _scale, _shift, dst[0]->CpuData());
+        }
+
+    private:
+        Type _scale, _shift;
+    };
+
+    //---------------------------------------------------------------------------------------------
+
     template <class T> class HswishLayer : public Synet::Layer<T>
     {
     public:
@@ -59,6 +123,162 @@ namespace Synet
 
     private:
         Type _shift, _scale;
+    };
+
+    //---------------------------------------------------------------------------------------------
+
+    template <class T> class MishLayer : public Synet::Layer<T>
+    {
+    public:
+        typedef T Type;
+        typedef Layer<T> Base;
+        typedef typename Base::TensorPtrs TensorPtrs;
+
+        MishLayer(const LayerParam& param, Context* context)
+            : Base(param, context)
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            _threshold = this->Param().softplus().threshold();
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
+
+    protected:
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            CpuMish<Type>(src[0]->CpuData(), src[0]->Size(), _threshold, dst[0]->CpuData());
+        }
+
+    private:
+        Type _threshold;
+    };
+
+    //---------------------------------------------------------------------------------------------
+
+    template <class T> class ReluLayer : public Synet::Layer<T>
+    {
+    public:
+        typedef T Type;
+        typedef Layer<T> Base;
+        typedef typename Base::TensorPtrs TensorPtrs;
+
+        ReluLayer(const LayerParam& param, Context* context)
+            : Base(param, context)
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            _negativeSlope = this->Param().relu().negativeSlope();
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
+
+    protected:
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            CpuRelu<Type>(src[0]->CpuData(), src[0]->Size(), _negativeSlope, dst[0]->CpuData());
+        }
+
+    private:
+        Type _negativeSlope;
+    };
+
+    //---------------------------------------------------------------------------------------------
+
+    template <class T> class RestrictRangeLayer : public Synet::Layer<T>
+    {
+    public:
+        typedef T Type;
+        typedef Layer<T> Base;
+        typedef typename Base::TensorPtrs TensorPtrs;
+
+        RestrictRangeLayer(const LayerParam& param, Context* context)
+            : Base(param, context)
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            const RestrictRangeParam& param = this->Param().restrictRange();
+            _lower = param.lower();
+            _upper = param.upper();
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
+
+    protected:
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            CpuRestrictRange<Type>(src[0]->CpuData(), src[0]->Size(), _lower, _upper, dst[0]->CpuData());
+        }
+
+    private:
+        Type _lower, _upper;
+    };
+
+    //---------------------------------------------------------------------------------------------
+
+    template <class T> class SigmoidLayer : public Synet::Layer<T>
+    {
+    public:
+        typedef T Type;
+        typedef Layer<T> Base;
+        typedef typename Base::TensorPtrs TensorPtrs;
+
+        SigmoidLayer(const LayerParam& param, Context* context)
+            : Base(param, context)
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
+
+    protected:
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            CpuSigmoid<Type>(src[0]->CpuData(), src[0]->Size(), dst[0]->CpuData());
+        }
+
+    private:
+    };
+
+    //---------------------------------------------------------------------------------------------
+
+    template <class T> class SoftplusLayer : public Synet::Layer<T>
+    {
+    public:
+        typedef T Type;
+        typedef Layer<T> Base;
+        typedef typename Base::TensorPtrs TensorPtrs;
+
+        SoftplusLayer(const LayerParam& param, Context* context)
+            : Base(param, context)
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            _beta = this->Param().softplus().beta();
+            _threshold = this->Param().softplus().threshold();
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
+
+    protected:
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            CpuSoftplus<Type>(src[0]->CpuData(), src[0]->Size(), _beta, _threshold, dst[0]->CpuData());
+        }
+
+    private:
+        Type _beta, _threshold;
     };
 
     //---------------------------------------------------------------------------------------------

@@ -41,6 +41,19 @@ namespace Synet
 
     //-------------------------------------------------------------------------
 
+    template <class T> SYNET_INLINE T CpuHardSigmoid(T value, T scale, T shift)
+    {
+        return Max(T(0), Min(value * scale + shift, T(1)));
+    }
+
+    template <class T> void CpuHardSigmoid(const T* src, size_t size, T scale, T shift, T* dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = CpuHardSigmoid(src[i], scale, shift);
+    }
+
+    //-------------------------------------------------------------------------
+
     template <class T> SYNET_INLINE T CpuHswish(T value, T shift, T scale)
     {
         return Max(Min(value, shift) + shift, T(0))*scale*value;
@@ -137,6 +150,11 @@ namespace Synet
     {
         ::SimdSynetElu32f(src, size, &alpha, dst);
     }  
+
+    template <> SYNET_INLINE void CpuHardSigmoid(const float* src, size_t size, float scale, float shift, float* dst)
+    {
+        ::SimdSynetHardSigmoid32f(src, size, &scale, &shift, dst);
+    }
 
     template <> SYNET_INLINE void CpuHswish<float>(const float * src, size_t size, float shift, float scale, float * dst)
     {
