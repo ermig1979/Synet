@@ -26,6 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Params.h"
+#include "Synet/Tensor.h"
 
 namespace Synet
 {
