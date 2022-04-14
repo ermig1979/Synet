@@ -248,6 +248,9 @@ namespace Synet
                     case ActivationFunctionTypeHardSigmoid:
                         Detail::HardSigmoidLayerForwardCpu(dst, _dstSize, _params[0], _params[1], dst);
                         break;
+                    case ActivationFunctionTypeSwish:
+                        CpuSwish(dst, _dstSize, dst);
+                        break;
                     default:
                         assert(0);
                     }

@@ -268,6 +268,9 @@ namespace Synet
             case ActivationFunctionTypeHardSigmoid:
                 Detail::HardSigmoidLayerForwardCpu(dst, dSize, params[0], params[1], dst);
                 break;
+            case ActivationFunctionTypeSwish:
+                CpuSwish(dst, dSize, dst);
+                break;
             default:
                 assert(0);
             }
@@ -316,6 +319,7 @@ namespace Synet
             case ActivationFunctionTypeHswish: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeHswish>; break;
             case ActivationFunctionTypeMish: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeMish>; break;
             case ActivationFunctionTypeHardSigmoid: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeHardSigmoid>; break;
+            case ActivationFunctionTypeSwish: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeSwish>; break;
             default: assert(0);
             }
         }
