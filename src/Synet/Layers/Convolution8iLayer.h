@@ -366,6 +366,9 @@ namespace Synet
             case ActivationFunctionTypeHardSigmoid:
                 CpuHardSigmoid(dst, alg.dSize, alg.params[0], alg.params[1], dst);
                 break;
+            case ActivationFunctionTypeSwish:
+                CpuSwish(dst, alg.dSize, dst);
+                break;
             default:
                 assert(0);
             }
