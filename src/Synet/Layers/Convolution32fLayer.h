@@ -144,7 +144,7 @@ namespace Synet
                         CpuMish(dst, alg.dSize, alg.params[0], dst);
                         break;
                     case ActivationFunctionTypeHardSigmoid:
-                        CpuHardSigmoid(dst, alg.dSize, alg.params[0], alg.params[1], dst);
+                        Detail::HardSigmoidLayerForwardCpu(dst, alg.dSize, alg.params[0], alg.params[1], dst);
                         break;
                     case ActivationFunctionTypeSwish:
                         CpuSwish(dst, alg.dSize, dst);
