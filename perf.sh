@@ -74,15 +74,15 @@ TESTS quantization test_003 faces 0
 TESTS quantization test_009 persons 0
 }
 
-function TEST_ALL {
-TEST_I_ALL
-TEST_O_ALL
+function TESTS_ALL {
+TESTS_I_ALL
+TESTS_O_ALL
 }
 
-if [ "${MODE}" == "" ]; then TEST_ALL; fi
-if [ "${MODE}" == "i" ]; then TEST_I_ALL; fi
-if [ "${MODE}" == "o" ]; then TEST_O_ALL; fi
-if [ "${MODE}" == "q" ]; then TEST_Q_ALL; fi
+if [ "${MODE}" == "" ]; then TESTS_ALL; fi
+if [ "${MODE}" == "i" ]; then TESTS_I_ALL; fi
+if [ "${MODE}" == "o" ]; then TESTS_O_ALL; fi
+if [ "${MODE}" == "q" ]; then TESTS_Q_ALL; fi
 
 cat $OUT_TEXT
 

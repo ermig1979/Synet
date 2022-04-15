@@ -224,7 +224,7 @@ namespace Test
 			ss << "Network::Predict(const Tensors&)";
 #endif
 			if (!description.empty())
-				ss << " { " << description << " } ";
+				ss << "{ " << description << " }";
 			return ss.str();
 		}
 
