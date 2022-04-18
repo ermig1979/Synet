@@ -12,6 +12,10 @@ set(ORT_INCS ${ORT_ONNX} ${ORT_DIR}/cmake/external/protobuf/src ${ORT_DIR}/inclu
 set(ORT_BUILD_OPTIONS
 	-DCMAKE_BUILD_TYPE="Release"
 	-DCMAKE_CXX_FLAGS="-Wno-attributes"
+	-DPython_EXECUTABLE=/usr/bin/python3
+	-DPYTHON_EXECUTABLE=/usr/bin/python3
+	-Donnxruntime_ENABLE_CPU_FP16_OPS=OFF
+	-Donnxruntime_DISABLE_RTTI=OFF
 	-Donnxruntime_BUILD_UNIT_TESTS=OFF
 	-Donnxruntime_BUILD_SHARED_LIB=ON
 	-Donnxruntime_BUILD_FOR_NATIVE_MACHINE=ON)
