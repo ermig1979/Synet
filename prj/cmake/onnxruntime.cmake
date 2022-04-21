@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.7)
 
 set(ORT_DIR ${ROOT_DIR}/3rd/onnxruntime) 
 set(ORT_BIN ${CMAKE_BINARY_DIR}/3rd/onnxruntime) 

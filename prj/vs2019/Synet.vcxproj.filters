@@ -320,6 +320,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\ActivationLayers.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Version.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

@@ -592,9 +592,9 @@ namespace Test
 
         void PrintNeighbours(const Tensor& t, const Shape & m, int n, std::ostream& os)
         {
-            for (int y = Synet::Max<int>(0, m[2] - n), h = Synet::Min(t.Axis(2), m[2] + n + 1); y < h; y++)
+            for (int y = Synet::Max(0, (int)m[2] - n), h = (int)Synet::Min(t.Axis(2), m[2] + n + 1); y < h; y++)
             {
-                for (int x = Synet::Max<int>(0, m[3] - n), w = Synet::Min(t.Axis(3), m[3] + n + 1); x < w; x++)
+                for (int x = Synet::Max(0, (int)m[3] - n), w = (int)Synet::Min(t.Axis(3), m[3] + n + 1); x < w; x++)
                     os << ExpandLeft(ToString(t.CpuData(Shp(m[0], m[1], y, x))[0], 3), 8) << " ";
                 os << std::endl;
             }

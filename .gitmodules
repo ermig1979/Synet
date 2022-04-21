@@ -2,13 +2,6 @@
 	path = 3rd/Simd
 	url = https://github.com/ermig1979/Simd.git
 	ignore = dirty
-[submodule "3rd/blis"]
-	path = 3rd/blis
-	url = https://github.com/ermig1979/blis.git
-	ignore = dirty
-[submodule "3rd/stb"]
-	path = 3rd/stb
-	url = https://github.com/nothings/stb.git
 [submodule "3rd/openvino"]
 	path = 3rd/openvino
 	url = https://github.com/openvinotoolkit/openvino.git

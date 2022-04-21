@@ -78,6 +78,10 @@
 #include "Simd/SimdLib.hpp"
 #endif
 
+#if !defined(SYNET_VERSION)
+#include "Version.h"
+#endif
+
 #if defined(_MSC_VER)
 #define SYNET_INLINE __forceinline
 #elif defined(__GNUC__)
@@ -142,6 +146,11 @@ namespace Synet
     typedef Simd::View<Simd::Allocator> View;
     typedef std::vector<View> Views;
 #endif
+
+    SYNET_INLINE String Version()
+    {
+        return SYNET_VERSION;
+    }
 
     SYNET_INLINE Shape Shp()
     {

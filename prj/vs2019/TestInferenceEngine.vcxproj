@@ -16,7 +16,8 @@
       <AdditionalIncludeDirectories>
 		$(SolutionDir)..\..\3rd\openvino\src\inference\include\ie;
 		$(SolutionDir)..\..\3rd\openvino\core\include;
-		%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+		%(AdditionalIncludeDirectories)
+	  </AdditionalIncludeDirectories>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -24,13 +25,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\Test\TestImage.cpp" />
     <ClCompile Include="..\..\src\Test\TestInferenceEngine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Test\TestCommon.h" />
     <ClInclude Include="..\..\src\Test\TestCompare.h" />
-    <ClInclude Include="..\..\src\Test\TestImage.h" />
     <ClInclude Include="..\..\src\Test\TestInferenceEngine.h" />
     <ClInclude Include="..\..\src\Test\TestNetwork.h" />
     <ClInclude Include="..\..\src\Test\TestOptions.h" />

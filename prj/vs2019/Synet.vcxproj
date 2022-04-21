@@ -19,6 +19,9 @@
     <Link>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <PreBuildEvent>
+	  <Command>"$(ProjectDir)..\cmd\GetVersion.cmd" "$(ProjectDir)..\.." "1"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Args.h" />
@@ -134,6 +137,7 @@
     <ClInclude Include="..\..\src\Synet\Utils\SetInput.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Statistics.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Winograd.h" />
+    <ClInclude Include="..\..\src\Synet\Version.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

@@ -293,7 +293,9 @@ namespace Synet
                     String type = Cpl::ToStr(_param.type());
                     SYNET_PERF_INIT(_perfComm, "void Synet::" + type + "Layer::Forward() {  " + (Is8i() ? "int8" : "fp32") + " } ", 0);
                     if (_context->options.performanceLog >= Options::PerfomanceLogSize && _perfDesc.size())
+                    {
                         SYNET_PERF_INIT(_perfSpec, "void Synet::" + type + "Layer::Forward() { " + _perfDesc + " } ", _perfFlop);
+                    }
                 }
                 _perfInited = true;
             }
