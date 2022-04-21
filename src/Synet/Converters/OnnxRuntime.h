@@ -121,7 +121,11 @@ namespace Synet
 
             //PrintGraph(graph, std::cout, false, true);
 
-            network.name() = graph.name();
+            network.info().version() = 1;
+            network.info().name() = graph.name();
+            network.info().from() = "OnnxRuntime";
+            network.info().when() = Cpl::CurrentDateTimeString();
+            network.info().synet() = Synet::Version();
 
             Vector original;
             Consts consts;

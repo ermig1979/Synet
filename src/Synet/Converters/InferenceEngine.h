@@ -132,9 +132,10 @@ namespace Synet
                 return false;
             }
 
-            const XmlAttr* pName = srcXml.FirstAttribute("name");
+            dstXml.info().version() = 1;
+            const XmlAttr* pName = pNet->FirstAttribute("name");
             if (pName)
-                dstXml.name() = pName->Value();
+                dstXml.info().name() = pName->Value();
 
             const XmlAttr * pVersion = pNet->FirstAttribute("version");
             if (pVersion == NULL)
@@ -142,6 +143,9 @@ namespace Synet
                 std::cout << "Can't find 'version' attribute!" << std::endl;
                 return false;
             }
+            dstXml.info().from() = String("InferenceEngine-v") + pVersion->Value();
+            dstXml.info().when() = Cpl::CurrentDateTimeString();
+            dstXml.info().synet() = Synet::Version();
 
             Cpl::ToVal(pVersion->Value(), version);
 

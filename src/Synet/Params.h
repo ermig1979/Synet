@@ -735,10 +735,18 @@ namespace Synet
         CPL_PARAM_VECTOR(StatisticParam, statistics);
     };
 
-    struct NetworkParam
+    struct InfoParam
     {
         CPL_PARAM_VALUE(int32_t, version, 0);
         CPL_PARAM_VALUE(String, name, String());
+        CPL_PARAM_VALUE(String, from, String());
+        CPL_PARAM_VALUE(String, when, String());
+        CPL_PARAM_VALUE(String, synet, String());
+    };
+
+    struct NetworkParam
+    {
+        CPL_PARAM_STRUCT(InfoParam, info);
         CPL_PARAM_VALUE(Strings, dst, Strings());
         CPL_PARAM_VECTOR(LayerParam, layers);
         CPL_PARAM_STRUCT(QuantizationParam, quantization);

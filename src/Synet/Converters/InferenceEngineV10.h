@@ -33,12 +33,6 @@ namespace Synet
     public:
         bool Convert(const XmlNode& srcXml, const std::vector<float>& srcBin, bool trans, Synet::NetworkParam & dstXml, std::vector<float>& dstBin)
         {
-            dstXml.version() = 1;
-
-            const XmlAttr* pName = srcXml.FirstAttribute("name");
-            if (pName)
-                dstXml.name() = pName->Value();
-
             Edges edges;
             if (!ParseEdges(srcXml, edges))
                 return false;

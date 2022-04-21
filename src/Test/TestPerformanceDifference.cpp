@@ -356,7 +356,7 @@ namespace Test
                 if (text)
                 {
                     ofs << "~~~~~~~~~~~~~~~~~~~~~ Synet Performance Difference ~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-                    ofs << "Difference generation time: " + CurrentDateTimeString() << std::endl;
+                    ofs << "Difference generation time: " + Cpl::CurrentDateTimeString() << std::endl;
                     ofs << table.GenerateText();
                 }
                 else
@@ -369,7 +369,7 @@ namespace Test
 
                     html.WriteValue("h1", Cpl::Html::Attr("id", "home"), "Synet Performance Difference", true);
 
-                    html.WriteValue("h4", Cpl::Html::Attr(), String("Difference generation time: ") + CurrentDateTimeString(), true);
+                    html.WriteValue("h4", Cpl::Html::Attr(), String("Difference generation time: ") + Cpl::CurrentDateTimeString(), true);
 
                     ofs << table.GenerateHtml(html.Indent());
 

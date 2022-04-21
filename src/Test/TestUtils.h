@@ -374,28 +374,6 @@ namespace Test
 
     //---------------------------------------------------------------------------------------------
 
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable: 4996)
-#endif
-    inline String CurrentDateTimeString()
-    {
-        std::time_t t;
-        std::time(&t);
-        std::tm* tm = ::localtime(&t);
-        std::stringstream ss;
-        ss << ToString(tm->tm_year + 1900, 4) << "."
-            << ToString(tm->tm_mon + 1, 2) << "."
-            << ToString(tm->tm_mday, 2) << " "
-            << ToString(tm->tm_hour, 2) << ":"
-            << ToString(tm->tm_min, 2) << ":"
-            << ToString(tm->tm_sec, 2);
-        return ss.str();
-    }
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
     inline String SystemInfo()
     {
         String cpu = "Unknown", mem = "Unknown";
