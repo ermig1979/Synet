@@ -60,13 +60,14 @@ if [ $3 -ne 0 ];then TEST onnx $1 $2 1 2; fi
 }
 
 function TEST_I_ALL {
-TEST_I test_010f local 0
-TEST_I test_011f local 0
+TEST_I test_010f faces 0
+TEST_I test_011f vehicles 0
 TEST_I test_012f persons 0
 TEST_I test_013f persons 0
 #TEST_I test_014f local 0
 TEST_I test_015f license_plates 0
 TEST_I test_016f face 1
+TEST_I test_017f faces 0
 }
 
 function TEST_O_ALL {

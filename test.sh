@@ -39,7 +39,7 @@ export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 "$BIN" -m=convert $PATHES -tf=$FORMAT -cs=0 -qm=$METHOD
 if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -et=10.0 -ie=10 -be=10 -dp=1 -dpf=6 -dpl=2 -dpp=4 -ar=0 -rt=0.5 -cs=0 -sf=0.01 -pl=$PERF -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -et=10.0 -ie=10 -be=10 -dp=3 -dpf=6 -dpl=2 -dpp=4 -ar=1 -rt=0.5 -cs=0 -sf=0.01 -pl=$PERF -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
@@ -49,7 +49,8 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 #TEST inference_engine test_013f persons 20 1 1 1 001 0
 #TEST inference_engine test_014f local 200 0 1 1 000h 0 ???
 #TEST inference_engine test_015f license_plates 100 1 1 1 000h 0
-TEST inference_engine test_016f face 500 0 1 10 000 0
+#TEST inference_engine test_016f face 500 0 1 10 000 0
+TEST inference_engine test_017f faces 100 1 1 1 000 0
 
 #TEST onnx test_000 face 100 1 1 1 003 0
 #TEST onnx test_001 faces 1 0 1 1 000 2

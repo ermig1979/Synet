@@ -506,6 +506,7 @@ namespace Synet
 
         bool ConvertDetectionOutputLayer(const XmlNode* pLayer, LayerParam& layer)
         {
+            int opset = GetOpsetVersion(pLayer);
             layer.type() = Synet::LayerTypeDetectionOutput;
             const XmlNode* pData = pLayer->FirstNode("data");
             if (pData == NULL)
@@ -518,7 +519,8 @@ namespace Synet
             Cpl::ToVal(pData->FirstAttribute("confidence_threshold")->Value(), layer.detectionOutput().confidenceThreshold());
             Cpl::ToVal(pData->FirstAttribute("keep_top_k")->Value(), layer.detectionOutput().keepTopK());
             Cpl::ToVal(pData->FirstAttribute("nms_threshold")->Value(), layer.detectionOutput().nms().nmsThreshold());
-            Cpl::ToVal(pData->FirstAttribute("num_classes")->Value(), layer.detectionOutput().numClasses());
+            if (opset < 8)
+                Cpl::ToVal(pData->FirstAttribute("num_classes")->Value(), layer.detectionOutput().numClasses());
             Cpl::ToVal(pData->FirstAttribute("variance_encoded_in_target")->Value(), layer.detectionOutput().varianceEncodedInTarget());
             Cpl::ToVal(pData->FirstAttribute("top_k")->Value(), layer.detectionOutput().nms().topK());
             Cpl::ToVal(pData->FirstAttribute("share_location")->Value(), layer.detectionOutput().shareLocation());
@@ -1739,6 +1741,15 @@ namespace Synet
                 }
             }
             return true;
+        }
+
+        int GetOpsetVersion(const XmlNode* pLayer)
+        {
+            String version = pLayer->FirstAttribute("version")->Value();
+            if (version.substr(0, 5) == "opset")
+                return Cpl::ToVal<int>(version.substr(5));
+            else
+                return -1;
         }
     };
 }

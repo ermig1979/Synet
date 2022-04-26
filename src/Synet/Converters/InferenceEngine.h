@@ -149,7 +149,7 @@ namespace Synet
 
             Cpl::ToVal(pVersion->Value(), version);
 
-            if (version >= 10 && version <= 10)
+            if (version >= 10 && version <= 11)
             {
                 InferenceEngineConverterV10 converterV10;
                 if (!converterV10.Convert(*pNet, srcBin, trans, dstXml, dstBin))

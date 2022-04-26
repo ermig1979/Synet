@@ -45,44 +45,51 @@ fi
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
-function TESTS {
-FRAMEWORK=$1
-TEST_NAME=$2
-TEST_IMAGE=$3
-TEST_BATCH=$4
-TEST $FRAMEWORK $TEST_NAME $TEST_IMAGE $TEST_THREAD 1
-if [ $TEST_BATCH -ne 0 ];then TEST $FRAMEWORK $TEST_NAME $TEST_IMAGE $TEST_THREAD $BATCH_SIZE; fi
+function TEST_I {
+TEST inference_engine $1 $2 $TEST_THREAD 1
+if [ $3 -ne 0 ];then TEST inference_engine $1 $2 $TEST_THREAD $BATCH_SIZE; fi
 }
 
-function TESTS_I_ALL {
-TESTS inference_engine test_010f local 0
-TESTS inference_engine test_011f local 0
-TESTS inference_engine test_012f persons 0
-TESTS inference_engine test_013f persons 0
-#TESTS inference_engine test_014f local 0
-TESTS inference_engine test_015f license_plates 0
-TESTS inference_engine test_016f face 1
+function TEST_O {
+TEST onnx $1 $2 $TEST_THREAD 1
+if [ $3 -ne 0 ];then TEST onnx $1 $2 $TEST_THREAD $BATCH_SIZE; fi
 }
 
-function TESTS_O_ALL {
-TESTS onnx test_000 face 1
-TESTS onnx test_001 faces 0
+function TEST_Q {
+TEST quantization $1 $2 $TEST_THREAD 1
+if [ $3 -ne 0 ];then TEST quantization $1 $2 $TEST_THREAD $BATCH_SIZE; fi
+}
+
+function TEST_I_ALL {
+TEST_I test_010f faces 0
+TEST_I test_011f vehicles 0
+TEST_I test_012f persons 0
+TEST_I test_013f persons 0
+#TEST_I test_014f local 0
+TEST_I test_015f license_plates 0
+TEST_I test_016f face 1
+TEST_I test_017f faces 0
+}
+
+function TEST_O_ALL {
+TEST_O test_000 face 1
+TEST_O test_001 faces 0
 }
 
 function TESTS_Q_ALL {
-TESTS quantization test_003 faces 0
-TESTS quantization test_009 persons 0
+TEST_Q test_003 faces 0
+TEST_Q test_009 persons 0
 }
 
-function TESTS_ALL {
-TESTS_I_ALL
-TESTS_O_ALL
+function TEST_ALL {
+TEST_I_ALL
+TEST_O_ALL
 }
 
-if [ "${MODE}" == "" ]; then TESTS_ALL; fi
-if [ "${MODE}" == "i" ]; then TESTS_I_ALL; fi
-if [ "${MODE}" == "o" ]; then TESTS_O_ALL; fi
-if [ "${MODE}" == "q" ]; then TESTS_Q_ALL; fi
+if [ "${MODE}" == "" ]; then TEST_ALL; fi
+if [ "${MODE}" == "i" ]; then TEST_I_ALL; fi
+if [ "${MODE}" == "o" ]; then TEST_O_ALL; fi
+if [ "${MODE}" == "q" ]; then TEST_Q_ALL; fi
 
 cat $OUT_TEXT
 

@@ -46,9 +46,7 @@ namespace Synet
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const DetectionOutputParam & param = this->Param().detectionOutput();
-            _numClasses = param.numClasses();
             _shareLocation = param.shareLocation();
-            _numLocClasses = _shareLocation ? 1 : _numClasses;
             _backgroundLabelId = param.backgroundLabelId();
             _codeType = param.codeType();
             _varianceEncodedInTarget = param.varianceEncodedInTarget();
@@ -61,8 +59,17 @@ namespace Synet
             _eta = param.nms().eta();            
             
             _numPriors = src[2]->Axis(2) / 4;
+            if (param.numClasses() == 0)
+            {
+                _numClasses = src[1]->Axis(1) / _numPriors;
+            }
+            else
+            {
+                _numClasses = param.numClasses();
+                assert(_numPriors * _numClasses == src[1]->Axis(1));
+            }
+            _numLocClasses = _shareLocation ? 1 : _numClasses;
             assert(_numPriors * _numLocClasses * 4 == src[0]->Axis(1));
-            assert(_numPriors * _numClasses == src[1]->Axis(1));
 
             GetPriorBBoxes(src[2]->CpuData(), _numPriors, _priorBboxes, _priorVariances);
 
