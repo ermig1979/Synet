@@ -90,21 +90,20 @@ namespace Test
                 if (!InitOutput(param))
                     return false;
 
-                AddInterimOutput(options);
-
-                StringMap config;
-                //config[ov::PluginConfigParams::KEY_CPU_THREADS_NUM] = std::to_string(options.workThreads);
-                //config[ov::PluginConfigParams::KEY_CPU_BIND_THREAD] = InferenceEngine::PluginConfigParams::NO;
                 _ov->batchSize = 1;
                 if (options.batchSize > 1)
                 {
                     if (_ov->model->is_dynamic())
                     {
-
+                        //std::cout << "is dynamic !" << std::endl;
                     }
                     else
                     {
-
+                        //std::cout << "is static !" << std::endl;
+                        if (!options.consoleSilence)
+                            std::cout << "Inference Engine model is static. Try to emulate batch > 1." << std::endl;
+                        _ov->batchSize = options.batchSize;
+                        CreateCompiledModelAndInferRequest();
                     }
                     //try
                     //{
@@ -116,19 +115,9 @@ namespace Test
                     //    GetBlobs();
                     //    StubInfer();
                     //}
-                    //catch (std::exception& e)
-                    //{
-                    //    if (!options.consoleSilence)
-                    //        std::cout << "Inference Engine init trouble: '" << e.what() << "', try to emulate batch > 1." << std::endl;
-                    //    _batchSize = options.batchSize;
-                    //    _ieNetwork->setBatchSize(1);
-                    //    config.erase(InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_LIMIT);
-                    //    config.erase(InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED);
-                    //    CreateExecutableNetworkAndInferRequest(config);
-                    //}
                 }
                 else
-                    CreateCompiledModelAndInferRequest(config);
+                    CreateCompiledModelAndInferRequest();
                 GetTensors();
                 StubInfer();
             }
@@ -168,11 +157,8 @@ namespace Test
 
         virtual void DebugPrint(const Tensors& src, std::ostream& os, int flag, int first, int last, int precision)
         {
-            //for (size_t i = 0; i < _ieInterim.size(); ++i)
-            //    DebugPrint(os, *_ieInterim[i], _interimNames[i], flag, first, last, precision);
-
-            //for (size_t o = 0; o < _ieOutput.size(); ++o)
-            //    DebugPrint(os, *_ieOutput[o], _outputNames[o], flag, first, last, precision);
+            for (size_t o = 0; o < _ov->output.size(); ++o)
+                DebugPrint(os, _ov->output[o], _ov->outputNames[o], flag, first, last, precision);
         }
 
         virtual Regions GetRegions(const Size& size, float threshold, float overlap) const
@@ -293,8 +279,8 @@ namespace Test
             _ov->outputNames.clear();
             if (param.output().size())
             {
-            //    for (size_t i = 0; i < param.output().size(); ++i)
-            //        _outputNames.push_back(param.output()[i].name());
+                for (size_t i = 0; i < param.output().size(); ++i)
+                    _ov->outputNames.push_back(param.output()[i].name());
             }
             else
             {
@@ -304,7 +290,7 @@ namespace Test
             return true;
         }
 
-        void CreateCompiledModelAndInferRequest(const StringMap& config)
+        void CreateCompiledModelAndInferRequest()
         {
             _ov->compiledModel = _ov->core.compile_model(_ov->model, _ieDeviceName,
                 ov::inference_num_threads(1),
@@ -335,7 +321,7 @@ namespace Test
 
         void SetInput(const Tensors& x, size_t b)
         {
-            assert(_ov->input.size() == x.size());//&& _ieInput[0]->getTensorDesc().getLayout() == InferenceEngine::Layout::NCHW);
+            assert(_ov->input.size() == x.size());
             for (size_t i = 0; i < x.size(); ++i)
             {
                 const float* src = x[i].CpuData() + b * x[i].Size() / _ov->batchSize;
@@ -446,113 +432,54 @@ namespace Test
             }
         }
 
-        void AddInterimOutput(const Options& options)
+        void DebugPrint(std::ostream& os, const ov::Tensor & src, const String & name, int flag, int first, int last, int precision)
         {
-//            _interimNames.clear();
-//            if ((options.debugPrint & (1 << Synet::DebugPrintLayerDst)) == 0)
-//                return;
-//#if SYNET_TEST_IE_VERSION < 202101
-//            StringMap config, interim;
-//            InferenceEngine::ExecutableNetwork exec = _ieCore->LoadNetwork(*_ieNetwork, _ieDeviceName, config);
-//            InferenceEngine::CNNNetwork net = exec.GetExecGraphInfo();
-//            if (options.debugPrint & (1 << Synet::DebugPrintLayerDst))
-//                net.serialize(MakePath(options.outputDirectory, "ie_exec_orig.xml"));
-//            for (InferenceEngine::details::CNNNetworkIterator it = net.begin(); it != net.end(); ++it)
-//            {
-//                const InferenceEngine::CNNLayer& layer = **it;
-//                StringMap::const_iterator names = layer.params.find("originalLayersNames");
-//                StringMap::const_iterator order = layer.params.find("execOrder");
-//                if (names != layer.params.end() && names->second.size() && order != layer.params.end())
-//                {
-//                    String name = Synet::Separate(names->second, ",").back();
-//
-//                    bool unique = true;
-//                    for (size_t o = 0; unique && o < _outputNames.size(); ++o)
-//                        if (_outputNames[o] == name)
-//                            unique = false;
-//                    if (unique)
-//                    {
-//                        String number = order->second;
-//                        while (number.size() < 6)
-//                            number = String("0") + number;
-//                        interim[number] = name;
-//                    }
-//                }
-//            }
-//            for (StringMap::const_iterator it = interim.begin(); it != interim.end(); ++it)
-//            {
-//                String name = it->second;
-//                _ieNetwork->addOutput(name);
-//                _interimNames.push_back(name);
-//            }
-//#endif
-          }
-
-//        void DebugPrint(std::ostream& os, InferenceEngine::Blob& blob, const String& name, int flag, int first, int last, int precision)
-//        {
-//            os << "Layer: " << name;
-//#if SYNET_TEST_IE_VERSION < 202101
-//            os << " : " << GetLayerType(name);
-//#endif
-//            os << " : " << std::endl;
-//            Sizes dims = blob.getTensorDesc().getDims();
-//            const Sizes& strides = blob.getTensorDesc().getBlockingDesc().getStrides();
-//            Synet::TensorFormat format = Synet::TensorFormatUnknown;
-//            if (blob.getTensorDesc().getLayout() == InferenceEngine::Layout::NHWC)
-//                format = Synet::TensorFormatNhwc;
-//            //dims[0] = _batchSize;
-//            switch (blob.getTensorDesc().getPrecision())
-//            {
-//            case InferenceEngine::Precision::FP32:
-//            {
-//                Synet::Tensor<float> tensor(dims, format);
-//                const float* pOut = blob.buffer();
-//                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
-//                tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
-//                break;
-//            }
-//            case InferenceEngine::Precision::I32:
-//            {
-//                Synet::Tensor<int32_t> tensor(dims, format);
-//                const int32_t* pOut = blob.buffer();
-//                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
-//                tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
-//                break;
-//            }
-//            case InferenceEngine::Precision::U8:
-//            {
-//                Synet::Tensor<uint8_t> tensor(dims, format);
-//                const uint8_t* pOut = blob.buffer();
-//                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
-//                tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
-//                break;
-//            }
-//            case InferenceEngine::Precision::I8:
-//            {
-//                Synet::Tensor<int8_t> tensor(dims, format);
-//                const int8_t* pOut = blob.buffer();
-//                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
-//                tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
-//                break;
-//            }
-//            default:
-//                std::cout << "Can't debug print for layer '" << name << "' , unknown precision: " << blob.getTensorDesc().getPrecision() << std::endl;
-//                break;
-//            }
-//        }
-
-//#if SYNET_TEST_IE_VERSION < 202101
-//        String GetLayerType(const String& name)
-//        {
-//            for (InferenceEngine::details::CNNNetworkIterator it = _ieNetwork->begin(); it != _ieNetwork->end(); ++it)
-//            {
-//                const InferenceEngine::CNNLayer& layer = **it;
-//                if (layer.name == name)
-//                    return layer.type;
-//            }
-//            return String();
-//        }
-//#endif
+            os << "Layer: " << name;
+            os << " : " << std::endl;
+            Shape dims = src.get_shape();
+            Shape strides = src.get_strides();
+            Synet::TensorFormat format = Synet::TensorFormatNchw;
+            dims[0] = _ov->batchSize;
+            ov::element::Type_t type = src.get_element_type();
+            switch (type)
+            {
+            case ov::element::Type_t::f32:
+            {
+                Synet::Tensor<float> tensor(dims, format);
+                const float* pOut = (float*)src.data();
+                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
+                break;
+            }
+            case ov::element::Type_t::i32:
+            {
+                Synet::Tensor<int32_t> tensor(dims, format);
+                const int32_t* pOut = (int32_t*)src.data();
+                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
+                break;
+            }
+            case ov::element::Type_t::u8:
+            {
+                Synet::Tensor<uint8_t> tensor(dims, format);
+                const uint8_t* pOut = (uint8_t*)src.data();
+                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
+                break;
+            }
+            case ov::element::Type_t::i8:
+            {
+                Synet::Tensor<int8_t> tensor(dims, format);
+                const int8_t* pOut = (int8_t*)src.data();
+                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
+                break;
+            }
+            default:
+                std::cout << "Can't debug print for layer '" << name << "' , unknown type: " << src.get_element_type() << std::endl;
+                break;
+            }
+        }
     };
 }
 
