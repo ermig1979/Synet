@@ -29,7 +29,11 @@
 
 #ifdef SYNET_TEST_FIRST_RUN
 
+#if defined(SYNET_TEST_OPENVINO_API)
+#include "TestOpenVino.h"
+#else
 #include "TestInferenceEngine.h"
+#endif
 
 #else //SYNET_FIRST_RUN
 namespace Test

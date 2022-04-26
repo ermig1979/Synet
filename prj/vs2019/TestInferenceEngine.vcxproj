@@ -14,6 +14,7 @@
     <ClCompile>
       <PreprocessorDefinitions>_CONSOLE;SYNET_PERFORMANCE_STATISTIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>
+		$(SolutionDir)..\..\3rd\openvino\src\inference\include;
 		$(SolutionDir)..\..\3rd\openvino\src\inference\include\ie;
 		$(SolutionDir)..\..\3rd\openvino\core\include;
 		%(AdditionalIncludeDirectories)
@@ -32,6 +33,7 @@
     <ClInclude Include="..\..\src\Test\TestCompare.h" />
     <ClInclude Include="..\..\src\Test\TestInferenceEngine.h" />
     <ClInclude Include="..\..\src\Test\TestNetwork.h" />
+    <ClInclude Include="..\..\src\Test\TestOpenVino.h" />
     <ClInclude Include="..\..\src\Test\TestOptions.h" />
     <ClInclude Include="..\..\src\Test\TestPerformance.h" />
     <ClInclude Include="..\..\src\Test\TestReport.h" />
