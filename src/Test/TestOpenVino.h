@@ -30,6 +30,13 @@
 
 #include <openvino/openvino.hpp>
 
+#if defined(SYNET_TEST_OPENVINO_EXTENSIONS)
+#ifndef WITH_INF_ENGINE
+#define WITH_INF_ENGINE
+#endif
+#include "OpenvinoExtensions/priorbox_v2.hpp"
+#endif
+
 namespace Test
 {
     struct InferenceEngineNetwork : public Network
@@ -81,6 +88,9 @@ namespace Test
             _regionThreshold = options.regionThreshold;
             try
             {
+                if (!InitCore(options))
+                    return false;
+
                 if (!ReadNetwork(model, weight, param.model() == "onnx"))
                     return false;
 
@@ -95,26 +105,16 @@ namespace Test
                 {
                     if (_ov->model->is_dynamic())
                     {
-                        //std::cout << "is dynamic !" << std::endl;
+                        std::cout << "Inference Engine model is dynamic. This case is not implemented!" << std::endl;
+                        return false;
                     }
                     else
                     {
-                        //std::cout << "is static !" << std::endl;
                         if (!options.consoleSilence)
                             std::cout << "Inference Engine model is static. Try to emulate batch > 1." << std::endl;
                         _ov->batchSize = options.batchSize;
                         CreateCompiledModelAndInferRequest();
                     }
-                    //try
-                    //{
-                    //    _ovModel->setBatchSize(options.batchSize);
-                    //    config[InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_LIMIT] = std::to_string(options.batchSize);
-                    //    config[InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED] = InferenceEngine::PluginConfigParams::YES;
-                    //    CreateExecutableNetworkAndInferRequest(config);
-                    //    _ovInferRequest->SetBatch(options.batchSize);
-                    //    GetBlobs();
-                    //    StubInfer();
-                    //}
                 }
                 else
                     CreateCompiledModelAndInferRequest();
@@ -126,8 +126,6 @@ namespace Test
                 std::cout << "Inference Engine init error: " << e.what() << std::endl;
                 return false;
             }
-            //if (options.debugPrint & (1 << Synet::DebugPrintLayerDst))
-            //    _ieExecutableNetwork->GetExecGraphInfo().serialize(MakePath(options.outputDirectory, "ie_exec_outs.xml"));
             return true;
         }
 
@@ -208,6 +206,18 @@ namespace Test
         OvPtr _ov;
         const std::string _ieDeviceName = "CPU";
 
+        bool InitCore(const Options& options)
+        {
+            _ov = std::make_shared<Ov>();
+#if defined(SYNET_TEST_OPENVINO_EXTENSIONS)
+            _ov->core.add_extension(ov::OpExtension<OpenvinoCustomExtension::PriorBoxV2>());
+            if (!options.consoleSilence)
+                std::cout << "Inference Engine uses PriorBoxV2 extension." << std::endl;
+#endif
+            _ov->core.set_property(_ieDeviceName, ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY));
+            return true;
+        }
+
         bool ReadNetwork(const String & model, const String& weight, bool onnx)
         {
             String src, dst, bin;
@@ -230,8 +240,6 @@ namespace Test
                     return false;
                 }
             } 
-            _ov = std::make_shared<Ov>();
-            _ov->core.set_property("CPU", ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY));
             _ov->model = _ov->core.read_model(model, weight);
             return true;
         }
@@ -286,6 +294,7 @@ namespace Test
             {
                 for (size_t i = 0; i < _ov->model->outputs().size(); ++i)
                     _ov->outputNames.push_back(_ov->model->outputs()[i].get_any_name());
+                std::sort(_ov->outputNames.begin(), _ov->outputNames.end());
             }
             return true;
         }
