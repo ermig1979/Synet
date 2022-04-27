@@ -134,6 +134,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "StridedSlice" && !ConvertStridedSliceLayer(pLayer, dstXml.layers(), srcBin, trans, layer))
                     return ErrorMessage(pLayer);
+                if (type == "Subtract" && !ConvertSubtractLayer(pLayer, dstXml.layers(), srcBin, layer, dstBin))
+                    return ErrorMessage(pLayer);
                 if (type == "Swish" && !ConvertSwishLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Tanh" && !ConvertTanhLayer(pLayer, layer))
@@ -709,6 +711,11 @@ namespace Synet
             const XmlAttr * pRoundingType = pData->FirstAttribute("rounding_type");
             if (pRoundingType && String(pRoundingType->Value()) == "floor")
                 layer.pooling().roundingType() = RoundingTypeFloor;
+            if (layer.dst().size() > 1)
+            {
+                layer.dst().resize(1);
+                layer.dst()[0] = layer.name();
+            }
             return true;
         }
 
@@ -1289,7 +1296,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertSubtractLayer(const XmlNode* pLayer, const LayerParams& layers, const Vector& srcBin, LayerParam& layer)
+        bool ConvertSubtractLayer(const XmlNode* pLayer, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1313,6 +1320,19 @@ namespace Synet
                 const float* pShift = srcBin.data() + sp0->weight()[0].offset() / sizeof(float);
                 layer.power().shift() = pShift[0];
                 layer.src()[0] = layer.src()[1];
+                layer.src().resize(1);
+            }
+            else if (sp1->type() == LayerTypeConst && SignificantDimsCount(is1) == 1)
+            {
+                layer.type() = Synet::LayerTypeBias;
+                layer.weight() = sp1->weight();
+                if (!CompactShape(layer.weight()[0].dim()))
+                    return false;
+                const float* pSrc = GetWeight<float>(srcBin, layer.weight()[0]);
+                float* pDst = GetWeight<float>(dstBin, layer.weight()[0]);
+                size_t size = TensorSize(layer.weight()[0].dim());
+                for (size_t i = 0; i < size; ++i)
+                    pDst[i] = -pSrc[i];
                 layer.src().resize(1);
             }
             else
@@ -1417,7 +1437,7 @@ namespace Synet
                     return ErrorMessage(pChild);
                 if (type == "Squeeze" && !ConvertSqueezeLayer(pChild, children, child))
                     return ErrorMessage(pChild);
-                if (type == "Subtract" && !ConvertSubtractLayer(pChild, children, srcBin, child))
+                if (type == "Subtract" && !ConvertSubtractLayer(pChild, children, srcBin, child, dstBin))
                     return ErrorMessage(pChild);
                 if (type == "Tanh" && !ConvertTanhLayer(pChild, child))
                     return ErrorMessage(pChild);

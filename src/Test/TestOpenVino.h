@@ -211,7 +211,7 @@ namespace Test
             _ov = std::make_shared<Ov>();
 #if defined(SYNET_TEST_OPENVINO_EXTENSIONS)
             _ov->core.add_extension(ov::OpExtension<OpenvinoCustomExtension::PriorBoxV2>());
-            if (!options.consoleSilence)
+            if (!options.consoleSilence && 0)
                 std::cout << "Inference Engine uses PriorBoxV2 extension." << std::endl;
 #endif
             _ov->core.set_property(_ieDeviceName, ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY));
