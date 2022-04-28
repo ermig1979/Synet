@@ -70,6 +70,7 @@ TEST_I test_015f license_plates 0
 TEST_I test_016f face 1
 TEST_I test_017f faces 0
 TEST_I test_018f license_plates 1
+TEST_I test_019f face 1
 }
 
 function TEST_O_ALL {
