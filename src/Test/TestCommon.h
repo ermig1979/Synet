@@ -58,14 +58,14 @@
 #include <algorithm>
 #include <type_traits>
 
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+//#ifdef SYNET_SIMD_LIBRARY_ENABLE
 #include "Simd/SimdLib.h"
 #include "Simd/SimdLib.hpp"
 #include "Simd/SimdView.hpp"
 #include "Simd/SimdDrawing.hpp"
 #include "Simd/SimdPixel.hpp"
 #include "Simd/SimdFont.hpp"
-#endif
+//#endif
 
 namespace Test
 {

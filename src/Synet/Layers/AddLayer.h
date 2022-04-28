@@ -121,7 +121,7 @@ namespace Synet
             const float* shiftSrc1 = this->Stats(0)[1]->shift8uTo32f.data();
             const float* scaleDst = this->Stats(2)[0]->scale32fTo8u.data();
             const float* shiftDst = this->Stats(2)[0]->shift32fTo8u.data();
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed)
             {
                 SimdSynetCompatibilityType compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility8iNarrowed | SimdSynetCompatibilityFmaUse);

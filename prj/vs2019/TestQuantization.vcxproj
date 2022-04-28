@@ -12,7 +12,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>_CONSOLE;SYNET_PERFORMANCE_STATISTIC;SYNET_TEST_FIRST_RUN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CONSOLE;SYNET_TEST_FIRST_RUN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>
 		$(SolutionDir)..\..\3rd\openvino\src\inference\include\ie;
 		$(SolutionDir)..\..\3rd\openvino\core\include;

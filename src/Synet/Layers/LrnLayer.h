@@ -81,7 +81,7 @@ namespace Synet
             }
         }
 
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         template <> SYNET_INLINE void LrnLayerCrossChannelsCpu<float>(const float * src, size_t channels, size_t size, size_t inner, float alpha, float beta, float k, float * buf, float * dst, int trans)
         {
             float _k[3] = { k, alpha, -beta };

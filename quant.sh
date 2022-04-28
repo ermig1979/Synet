@@ -24,12 +24,12 @@ export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 "$BIN" -m=convert $PATHES -cs=1 -dp=1
 if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.* -ie=10 -rn=$NUMBER -wt=1 -tt=$THREAD -bs=$BATCH -ct=0.001 -cq=0.000 -re=0 -et=10.0 -dp=3 -dpf=6 -dpl=2 -dpp=6 -ar=0 -rt=0.50 -cs=0 -pl=2 -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -ie=10 -rn=$NUMBER -wt=1 -tt=$THREAD -bs=$BATCH -ct=0.001 -cq=0.000 -re=0 -et=10.0 -dp=31 -dpf=6 -dpl=2 -dpp=6 -ar=0 -rt=0.50 -cs=0 -pl=2 -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
 
-#TEST test_003 faces 1 0 1 0
-TEST test_010 faces 1 0 1 0
+TEST test_003 faces 1 0 1 0
+#TEST test_010 faces 1 0 1 0
 
 exit

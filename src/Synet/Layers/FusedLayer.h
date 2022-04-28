@@ -103,7 +103,7 @@ namespace Synet
                 for (size_t j = 0; j < size; ++j)
                 {
                     for (size_t i = 0; i < count; ++i)
-                        dst[i] = FusedLayerForward2(src[i], scale[i], bias[i], slope[0]);
+                        dst[i] = FusedLayerForward2(src[i], scale[i], bias[i], slope);
                     src += count;
                     dst += count;
                 }
@@ -113,7 +113,7 @@ namespace Synet
                 for (size_t i = 0; i < count; ++i)
                 {
                     for (size_t j = 0; j < size; ++j)
-                        dst[j] = FusedLayerForward2(src[j], scale[i], bias[i], slope[0]);
+                        dst[j] = FusedLayerForward2(src[j], scale[i], bias[i], slope);
                     src += size;
                     dst += size;
                 }
@@ -284,7 +284,7 @@ namespace Synet
                 dst[i] = FusedLayerForward11(src[i], params[0], params[1], params[2], params[3]);
         }
 
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         template <> SYNET_INLINE void FusedLayerForwardCpu0<float>(const float * src, const float * bias, const float * scale, size_t count, size_t size, float * dst, int trans)
         {
             ::SimdSynetFusedLayerForward0(src, bias, scale, count, size, dst, (::SimdTensorFormatType)trans);

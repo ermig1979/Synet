@@ -145,7 +145,7 @@ namespace Synet
 
     //-------------------------------------------------------------------------
 
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
     template <> SYNET_INLINE void CpuElu<float>(const float * src, size_t size, float alpha, float * dst)
     {
         ::SimdSynetElu32f(src, size, &alpha, dst);

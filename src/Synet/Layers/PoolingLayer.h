@@ -161,7 +161,7 @@ namespace Synet
                 assert(0);
         }
 
-#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         template <> SYNET_INLINE void PoolingForwardCpuMax<float>(const float * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
             size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, TensorFormat format)
         {

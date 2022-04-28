@@ -39,7 +39,7 @@ namespace Synet
 
         virtual ~Deconvolution32f()
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_context)
                 ::SimdRelease(_context);
 #endif
@@ -49,7 +49,7 @@ namespace Synet
 
         void Init(size_t batch, const ConvParam * conv, Gemm32fNNPtr gemm)
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_batch != batch || _srcH != conv->srcH || _srcW != conv->srcW)
             {
                 _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
@@ -67,7 +67,7 @@ namespace Synet
 
         size_t ExternalBufferSize() const 
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             return _context ? ::SimdSynetDeconvolution32fExternalBufferSize(_context) : 1;
 #else
             return 1;
@@ -76,7 +76,7 @@ namespace Synet
 
         size_t InternalBufferSize() const
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             return _context ? ::SimdSynetDeconvolution32fInternalBufferSize(_context) : 0;
 #else
             return 0;
@@ -85,7 +85,7 @@ namespace Synet
 
         String Info() const
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             return _context ? ::SimdSynetDeconvolution32fInfo(_context) : String();
 #else
             return String();
@@ -94,7 +94,7 @@ namespace Synet
 
         void SetParams(const float* weight, int * internal, const float * bias, const float * params)
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_context)
                 ::SimdSynetDeconvolution32fSetParams(_context, weight, (::SimdBool*)internal, bias, params);
 #endif
@@ -102,7 +102,7 @@ namespace Synet
 
         void Forward(const float* src, float* buf, float* dst)
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_context)
                 ::SimdSynetDeconvolution32fForward(_context, src, buf, dst);
 #endif

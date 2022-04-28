@@ -125,7 +125,7 @@ namespace Synet
             }
         }
 
-#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         template <> SYNET_INLINE void ShuffleLayerForwardCpu<float>(const float * src0, const float * src1, size_t channels0, size_t channels1, size_t spatial, float * dst0, float * dst1, TensorFormat format, int type)
         {
             ::SimdSynetShuffleLayerForward(src0, src1, channels0, channels1, spatial, dst0, dst1, (::SimdTensorFormatType)format, type);

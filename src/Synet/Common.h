@@ -25,6 +25,8 @@
 #pragma once
 
 //#define SYNET_SIMD_LIBRARY_ENABLE
+// 
+//#define SYNET_SIMD_SYNET_DISABLE
 
 //#define SYNET_PERFORMANCE_STATISTIC
 

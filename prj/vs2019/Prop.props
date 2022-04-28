@@ -48,7 +48,7 @@
     </ClCompile>
     <ClCompile Condition="'$(Configuration)'=='Debug'">
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;SYNET_PERFORMANCE_STATISTIC;SYNET_SIMD_LIBRARY_ENABLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <ClCompile Condition="'$(Configuration)'=='Release'">

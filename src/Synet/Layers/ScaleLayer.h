@@ -84,7 +84,7 @@ namespace Synet
                 assert(0);
         }
 
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         template <> SYNET_INLINE void ScaleLayerForwardCpu<float>(const float * src, const float * scale, const float * bias, size_t channels, size_t height, size_t width, float* dst, TensorFormat format, int compatibility)
         {
             ::SimdSynetScaleLayerForward(src, scale, bias, channels, height, width, dst, (::SimdTensorFormatType)format, (::SimdSynetCompatibilityType)compatibility);

@@ -56,7 +56,7 @@ namespace Synet
                     d += inner;
                 }
 
-                CpuExp(dst, count*inner, dst);
+                Synet::CpuExp(dst, count*inner, dst);
 
                 Synet::CpuCopy(dst, inner, buffer);
                 d = dst + inner;
@@ -77,7 +77,7 @@ namespace Synet
             }
         }
 
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         template <> SYNET_INLINE void SoftmaxLayerForwardCpu<float>(const float * src, size_t outer, size_t count, size_t inner, float * dst)
         {
             ::SimdSynetSoftmaxLayerForward(src, outer, count, inner, dst);

@@ -157,7 +157,7 @@ namespace Synet
         SYNET_INLINE void Convert(const float* src, uint8_t* dst)
         {
             //SYNET_PERF_FUNC();
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             SimdSynetConvert32fTo8u(src, batch, channels, height, width, (SimdTensorFormatType)format, scale, shift, dst, compatibility);
 #else
             Detail::Convert<float, uint8_t, float>(src, batch, channels, height, width, format, scale, shift, lower, upper, dst);

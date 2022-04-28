@@ -39,7 +39,7 @@ namespace Synet
 
         virtual ~InnerProduct32f()
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_context)
                 ::SimdRelease(_context), _context = NULL;
 #endif
@@ -47,7 +47,7 @@ namespace Synet
 
         SYNET_INLINE void Init(size_t batch, size_t input, size_t output, int transpose)
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_batch != batch)
             {
                 _batch = batch;
@@ -65,7 +65,7 @@ namespace Synet
 
         SYNET_INLINE size_t InternalBufferSize() const
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             return _context ? ::SimdSynetInnerProduct32fInternalBufferSize(_context) : 0;
 #else
             return 0;
@@ -74,7 +74,7 @@ namespace Synet
 
         SYNET_INLINE void SetParams(const float* weight, int* internal, const float* bias, const float* params)
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_context)
                 ::SimdSynetInnerProduct32fSetParams(_context, weight, (::SimdBool*)internal, bias, params);
 #endif
@@ -82,7 +82,7 @@ namespace Synet
 
         SYNET_INLINE void Forward(const float* src, float* dst)
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         if (_context)
             ::SimdSynetInnerProduct32fForward(_context, src, dst);
 #endif

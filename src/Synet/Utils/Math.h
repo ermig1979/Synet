@@ -146,6 +146,12 @@ namespace Synet
             dst[i] = ::pow(src[i], exp);
     }
 
+    template <typename T> void CpuExp(const T* src, size_t size, T* dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = ::exp(src[i]);
+    }
+
     template <typename T> void CpuAdd(const T & value, T * dst, size_t size)
     {
         for (size_t i = 0; i < size; ++i)
@@ -205,7 +211,7 @@ namespace Synet
         return touched;
     }
 
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
     template <> SYNET_INLINE void CpuSet<float>(size_t size, float value, float * dst)
     {
         ::SimdFill32f(dst, size, &value);

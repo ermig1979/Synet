@@ -56,7 +56,7 @@ namespace Synet
             }
         }
 
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         template <> SYNET_INLINE void PreluLayerForwardCpu(const float * src, const float * slope, size_t channels, size_t spatial, float * dst, int trans)
         {
             ::SimdSynetPreluLayerForward(src, slope, channels, spatial, dst, (::SimdTensorFormatType)trans);

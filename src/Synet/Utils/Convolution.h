@@ -41,7 +41,7 @@ namespace Synet
 
         virtual ~Convolution32f()
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_context)
                 ::SimdRelease(_context), _context = NULL;
 #endif
@@ -51,7 +51,7 @@ namespace Synet
 
         SYNET_INLINE void Init(size_t batch, const ConvParam * conv, Gemm32fNNPtr gemm)
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_batch != batch || _srcH != conv->srcH || _srcW != conv->srcW)
             {
                 _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
@@ -69,7 +69,7 @@ namespace Synet
 
         SYNET_INLINE size_t ExternalBufferSize() const
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             return _context ? ::SimdSynetConvolution32fExternalBufferSize(_context) : 1;
 #else
             return 1;
@@ -78,7 +78,7 @@ namespace Synet
 
         SYNET_INLINE size_t InternalBufferSize() const
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             return _context ? ::SimdSynetConvolution32fInternalBufferSize(_context) : 0;
 #else
             return 0;
@@ -87,7 +87,7 @@ namespace Synet
 
         String Info() const
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             return _context ? ::SimdSynetConvolution32fInfo(_context) : String();
 #else
             return String();
@@ -96,7 +96,7 @@ namespace Synet
 
         SYNET_INLINE void SetParams(const float* weight, int* internal, const float* bias, const float* params)
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_context)
                 ::SimdSynetConvolution32fSetParams(_context, weight, (::SimdBool*)internal, bias, params);
 #endif
@@ -104,7 +104,7 @@ namespace Synet
 
         SYNET_INLINE void Forward(const float* src, float* buf, float* dst)
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         if (_context)
             ::SimdSynetConvolution32fForward(_context, src, buf, dst);
 #endif
@@ -130,7 +130,7 @@ namespace Synet
 
         virtual ~Convolution8i()
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_context)
                 ::SimdRelease(_context), _context = NULL;
 #endif
@@ -138,7 +138,7 @@ namespace Synet
 
         SYNET_INLINE void Init(size_t batch, const ConvParam* conv, QuantizationMethod method)
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_batch != batch || _srcH != conv->srcH || _srcW != conv->srcW)
             {
                 _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
@@ -168,7 +168,7 @@ namespace Synet
 
         SYNET_INLINE size_t ExternalBufferSize() const
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             return _context ? ::SimdSynetConvolution8iExternalBufferSize(_context) : 1;
 #else
             return 1;
@@ -177,7 +177,7 @@ namespace Synet
 
         SYNET_INLINE size_t InternalBufferSize() const
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             return _context ? ::SimdSynetConvolution8iInternalBufferSize(_context) : 0;
 #else
             return 0;
@@ -186,7 +186,7 @@ namespace Synet
 
         String Info() const
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             return _context ? ::SimdSynetConvolution8iInfo(_context) : String();
 #else
             return String();
@@ -195,7 +195,7 @@ namespace Synet
 
         SYNET_INLINE void SetParams(const float* weight, const float* bias, const float* params, const float* const *stats)
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_context)
                 ::SimdSynetConvolution8iSetParams(_context, weight, bias, params, stats);
 #endif
@@ -203,7 +203,7 @@ namespace Synet
 
         SYNET_INLINE void Forward(const uint8_t* src, uint8_t* buf, uint8_t* dst)
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_context)
                 ::SimdSynetConvolution8iForward(_context, src, buf, dst);
 #endif
