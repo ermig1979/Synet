@@ -14,6 +14,7 @@ OpenVINO tests
 | test_017f | Face detection | FP32 | 11 | [xml](https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/3/face-detection-0200/FP32/face-detection-0200.xml) | [6.9 MB](https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/3/face-detection-0200/FP32/face-detection-0200.bin) |
 | test_018f | Vehicle attributes (type, color) | FP32 | 11 | [xml](https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/3/vehicle-attributes-recognition-barrier-0042/FP32/vehicle-attributes-recognition-barrier-0042.xml) | [42.6 MB](https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/3/vehicle-attributes-recognition-barrier-0042/FP32/vehicle-attributes-recognition-barrier-0042.bin) |
 | test_019f | Face attributes (age, gender) | FP32 | 11 | [xml](https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/3/age-gender-recognition-retail-0013/FP32/age-gender-recognition-retail-0013.xml) | [8.2 MB](https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/3/age-gender-recognition-retail-0013/FP32/age-gender-recognition-retail-0013.bin) |
+| test_020f | Person detection | FP32 | 11 | [xml](https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/3/person-detection-0303/FP32/person-detection-0303.xml) | [8.8 MB](https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/3/person-detection-0303/FP32/person-detection-0303.bin) |
 
 ----------------------
 ONNX tests

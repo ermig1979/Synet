@@ -63,6 +63,7 @@ namespace Synet
             case MetaTypePack: ReshapePack(src, dst); break;
             case MetaTypeRange: ReshapeRange(src, dst); break;
             case MetaTypeRealDiv: ReshapeRealDiv(src, dst); break;
+            case MetaTypeReduceMin: ReshapeReduceMin(src, dst); break;
             case MetaTypeReduceProd: ReshapeReduceProd(src, dst); break;
             case MetaTypeReshape: ReshapeReshape(src, dst); break;
             case MetaTypeRsqrt: ReshapeRsqrt(src, dst); break;
@@ -474,6 +475,22 @@ namespace Synet
                 dst0.Reshape(src0.Shape());
                 for (size_t i = 0; i < src0.Size(); ++i)
                     dst0.CpuData()[i] = src0.CpuData()[i] / src1.CpuData()[i];
+            }
+            else
+                assert(0);
+        }
+
+        void ReshapeReduceMin(const TensorPtrs& src, const TensorPtrs& dst)
+        {
+            bool keepDims = this->Param().meta().alpha().i32()[0] != 0;
+            size_t axis = (size_t)src[1]->As64i().CpuData()[0];
+            assert(src[0]->Count() == 1);
+            if (src[0]->GetType() == TensorType32i)
+            {
+                int32_t min = INT_MAX;
+                for (size_t i = 0; i < src[0]->Size(); ++i)
+                    min = Min(min, src[0]->As32i().CpuData()[i]);
+                dst[0]->As64i().Reshape(Shp(1), min);
             }
             else
                 assert(0);

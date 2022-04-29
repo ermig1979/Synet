@@ -149,6 +149,7 @@ CPL_PARAM_ENUM1(Synet, MetaType,
     MetaTypePack,
     MetaTypeRange,
     MetaTypeRealDiv,
+    MetaTypeReduceMin,
     MetaTypeReduceProd,
     MetaTypeReshape,
     MetaTypeRsqrt,
@@ -187,6 +188,7 @@ SYNET_PARAM_ENUM1(Synet, PriorBoxCodeType, Undefined, Size,
     
 CPL_PARAM_ENUM1(Synet, ReductionType,
     ReductionTypeMax,
+    ReductionTypeMin,
     ReductionTypeSum,
     ReductionTypeProd);
 

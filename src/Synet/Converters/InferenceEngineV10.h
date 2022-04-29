@@ -72,13 +72,15 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "CTCGreedyDecoder" && !ConvertCtcGreedyDecoderLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
+                if (type == "DetectionOutput" && !ConvertDetectionOutputLayer(pLayer, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "Divide" && !ConvertDivideLayer(pLayer, dstXml.layers(), srcBin, layer, dstBin))
+                    return ErrorMessage(pLayer);
                 if (type == "Exp" && !ConvertExpLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Floor" && !ConvertFloorLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "Gather" && !ConvertGatherLayer(pLayer, layer))
-                    return ErrorMessage(pLayer);
-                if (type == "DetectionOutput" && !ConvertDetectionOutputLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Interpolate" && !ConvertInterpolateLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
@@ -107,6 +109,8 @@ namespace Synet
                 if (type == "Range" && !ConvertRangeLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "ReduceMean" && !ConvertReduceMeanLayer(pLayer, srcBin, dstXml.layers(), layer))
+                    return ErrorMessage(pLayer);
+                if (type == "ReduceMin" && !ConvertReduceMinLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "ReduceProd" && !ConvertReduceProdLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
@@ -531,6 +535,49 @@ namespace Synet
             return true;
         }
 
+        bool ConvertDivideLayer(const XmlNode* pLayer, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            Shape is0 = ConvertInputShape(pLayer, "0");
+            Shape is1 = ConvertInputShape(pLayer, "1");
+            const LayerParam* sp0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* sp1 = GetLayer(layers, layer.src()[1]);
+            if (sp0 == NULL || sp1 == NULL)
+                return false;
+            if (sp1->type() == LayerTypeConst && (TensorSize(is1) == 1 || TensorSize(is1) == 0))
+            {
+                layer.type() = Synet::LayerTypePower;
+                const float* pScale = srcBin.data() + sp1->weight()[0].offset() / sizeof(float);
+                layer.power().scale() = 1.0f / pScale[0];
+                layer.src().resize(1);
+            }
+            else if (sp1->type() == LayerTypeConst && SignificantDimsCount(is1) == 1)
+            {
+                layer.type() = Synet::LayerTypeScale;
+                layer.weight() = sp1->weight();
+                if (!CompactShape(layer.weight()[0].dim()))
+                    return false;
+                const float* pSrc = GetWeight<float>(srcBin, layer.weight()[0]);
+                float* pDst = GetWeight<float>(dstBin, layer.weight()[0]);
+                size_t size = TensorSize(layer.weight()[0].dim());
+                for (size_t i = 0; i < size; ++i)
+                    pDst[i] = 1.0f / pSrc[i];
+                layer.src().resize(1);
+            }
+            else if (sp0->type() == LayerTypeMeta && sp1->type() == LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeDiv;
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeBinaryOperation;
+                layer.binaryOperation().type() = BinaryOperationTypeDiv;
+            }
+            return true;
+        }
+
         bool ConvertExpLayer(const XmlNode* pLayer, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeUnaryOperation;
@@ -564,37 +611,6 @@ namespace Synet
 
         bool ConvertInterpolateLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
         {
-#if 0
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            layer.type() = LayerTypeInterp2;
-            const XmlNode* pData = pLayer->FirstNode("data");
-            if (pData == NULL)
-                return false;
-            if (pData->FirstAttribute("factor"))
-                Cpl::ToVal(pData->FirstAttribute("factor")->Value(), layer.interp2().factor());
-            const XmlAttr* pPadBeg = pData->FirstAttribute("pad_beg");
-            const XmlAttr* pPadEnd = pData->FirstAttribute("pad_end");
-            if (pPadBeg && pPadEnd)
-            {
-                size_t padBeg, padEnd;
-                Cpl::ToVal(pPadBeg->Value(), padBeg);
-                Cpl::ToVal(pPadEnd->Value(), padEnd);
-                layer.interp2().pad() = Shape({ padBeg, padBeg, padEnd, padEnd });
-            }
-            if (pData->FirstAttribute("align_corners"))
-                Cpl::ToVal(pData->FirstAttribute("align_corners")->Value(), layer.interp2().alignCorners());
-
-            const LayerParam* second = GetLayer(layers, layer.src()[1]);
-            if (second == NULL || second->type() != LayerTypeMeta || second->meta().type() != MetaTypeConst)
-                return false;
-            if (second->meta().alpha().shape().size() != 1 || second->meta().alpha().shape()[0] != 2)
-                return false;
-            const int64_t* alpha = second->meta().alpha().i64().data();
-            layer.interp2().height() = (int32_t)alpha[0];
-            layer.interp2().width() = (int32_t)alpha[1];
-            layer.src().resize(1);
-#else
             //if (!CheckSourceNumber(layer, 2))
             //    return false;
             layer.type() = LayerTypeInterp;
@@ -604,9 +620,10 @@ namespace Synet
             const XmlAttr* pMode = pData->FirstAttribute("mode");
             if (pMode)
             {
-                if (String(pMode->Value()) == "nearest")
+                String mode = pMode->Value();
+                if (mode == "nearest")
                     layer.interp().interpolationType() = InterpolationTypeNearest;
-                else if (String(pMode->Value()) == "linear_onnx")
+                else if (mode == "linear_onnx")
                     layer.interp().interpolationType() = InterpolationTypeBilinear;
                 else
                     return false;
@@ -614,8 +631,11 @@ namespace Synet
             const XmlAttr* pCoordTranf = pData->FirstAttribute("coordinate_transformation_mode");
             if (pCoordTranf)
             {
-                if (String(pCoordTranf->Value()) == "pytorch_half_pixel")
+                String coordTransf = pCoordTranf->Value();
+                if (coordTransf == "pytorch_half_pixel")
                     layer.interp().coordinateTransformType() = CoordinateTransformTypeHalfPixel;
+                else if (coordTransf == "asymmetric")
+                    layer.interp().coordinateTransformType() = CoordinateTransformTypePytorch;
                 else
                     return false;
             }
@@ -639,7 +659,6 @@ namespace Synet
                 layer.interp().width() = (int32_t)output[3];
             }
             layer.src().resize(1);
-#endif
             return true;
         }
 
@@ -941,6 +960,43 @@ namespace Synet
             layer.type() = Synet::LayerTypePooling;
             layer.pooling().method() = PoolingMethodTypeAverage;
             layer.pooling().globalPooling() = true;
+            return true;
+        }
+
+        bool ConvertReduceMinLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            bool keepDims;
+            if (!ConvertValue(pData->FirstAttribute("keep_dims"), keepDims))
+                return false;
+            if (src0->type() == LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeReduceMin;
+                layer.meta().alpha().type() = TensorType32i;
+                layer.meta().alpha().shape() = Shp(1);
+                layer.meta().alpha().i32().resize(1, keepDims ? 1 : 0);
+            }
+            else
+            {
+                if (src1->type() != LayerTypeMeta || src1->meta().type() != MetaTypeConst)
+                    return false;
+                const Longs& alpha = src1->meta().alpha().i64();
+                layer.type() = Synet::LayerTypeReduction;
+                layer.reduction().type() = ReductionTypeMin;
+                layer.reduction().keepDims() = keepDims;
+                for (size_t i = 0; i < alpha.size(); ++i)
+                    layer.reduction().axis().push_back((int)alpha[i]);
+                layer.src().resize(1);
+            }
             return true;
         }
 

@@ -47,6 +47,22 @@ namespace Synet
             }
         }
 
+        template <class T> void ReductionLayerForwardCpuMin(const T* src, size_t outer, size_t count, size_t inner, T* dst)
+        {
+            for (size_t o = 0; o < outer; ++o)
+            {
+                for (size_t i = 0; i < inner; ++i)
+                    dst[i] = FLT_MAX;
+                for (size_t c = 0; c < count; ++c)
+                {
+                    for (size_t i = 0; i < inner; ++i)
+                        dst[i] = Min(dst[i], src[i]);
+                    src += inner;
+                }
+                dst += inner;
+            }
+        }
+
         template <class T> void ReductionLayerForwardCpuSum(const T * src, size_t outer, size_t count, size_t inner, T * dst)
         {
             for (size_t o = 0; o < outer; ++o)
@@ -100,6 +116,9 @@ namespace Synet
             {
             case ReductionTypeMax:
                 _func = Detail::ReductionLayerForwardCpuMax;
+                break;
+            case ReductionTypeMin:
+                _func = Detail::ReductionLayerForwardCpuMin;
                 break;
             case ReductionTypeSum:
                 _func = Detail::ReductionLayerForwardCpuSum;
