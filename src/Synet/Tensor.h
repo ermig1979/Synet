@@ -45,6 +45,7 @@ namespace Synet
         template <> SYNET_INLINE TensorType GetTensorType<int8_t>() { return TensorType8i; }
         template <> SYNET_INLINE TensorType GetTensorType<uint8_t>() { return TensorType8u; }
         template <> SYNET_INLINE TensorType GetTensorType<int64_t>() { return TensorType64i; }
+        template <> SYNET_INLINE TensorType GetTensorType<uint64_t>() { return TensorType64u; }
 
         SYNET_INLINE size_t TensorTypeSize(TensorType type)
         {
@@ -56,6 +57,7 @@ namespace Synet
             case TensorType8i: return 1;
             case TensorType8u: return 1;
             case TensorType64i: return 8;
+            case TensorType64u: return 8;
             default: assert(0); return 0;
             }
         }
@@ -238,6 +240,18 @@ namespace Synet
         {
             assert(_type == TensorTypeUnknown || _type == TensorType64i);
             return *(const Tensor<int64_t>*)this;
+        }
+
+        SYNET_INLINE Tensor<uint64_t>& As64u()
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType64u);
+            return *(Tensor<uint64_t>*)this;
+        }
+
+        SYNET_INLINE const Tensor<uint64_t>& As64u() const
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType64u);
+            return *(const Tensor<uint64_t>*)this;
         }
 
         SYNET_INLINE TensorType GetType() const
@@ -462,6 +476,13 @@ namespace Synet
                 CpuCopy(param.i64().data(), param.i64().size(), As64i().CpuData());
                 break;
             }
+            case TensorType64u:
+            {
+                _type = TensorType64u;
+                As64i().Reshape(param.shape(), param.format());
+                CpuCopy(param.u64().data(), param.u64().size(), As64u().CpuData());
+                break;
+            }
             default:
                 assert(0);
             }
@@ -485,6 +506,20 @@ namespace Synet
                 const Synet::Tensor<int32_t> & i32 = As32i();
                 param.i32().resize(i32.Size());
                 CpuCopy(i32.CpuData(), i32.Size(), param.i32().data());
+                break;
+            }
+            case TensorType64i:
+            {
+                const Synet::Tensor<int64_t>& i64 = As64i();
+                param.i64().resize(i64.Size());
+                CpuCopy(i64.CpuData(), i64.Size(), param.i64().data());
+                break;
+            }
+            case TensorType64u:
+            {
+                const Synet::Tensor<uint64_t>& u64 = As64u();
+                param.u64().resize(u64.Size());
+                CpuCopy(u64.CpuData(), u64.Size(), param.u64().data());
                 break;
             }
             default:
@@ -511,6 +546,7 @@ namespace Synet
             case TensorType8i: DebugPrint(os, As8i(), name, weight, first, last, precision); break;
             case TensorType8u: DebugPrint(os, As8u(), name, weight, first, last, precision); break;
             case TensorType64i: DebugPrint(os, As64i(), name, weight, first, last, precision); break;
+            case TensorType64u: DebugPrint(os, As64u(), name, weight, first, last, precision); break;
             }
         }
 
@@ -618,4 +654,5 @@ namespace Synet
     typedef Tensor<int8_t> Tensor8i;
     typedef Tensor<uint8_t> Tensor8u;
     typedef Tensor<int64_t> Tensor64i;
+    typedef Tensor<uint64_t> Tensor64u;
 }

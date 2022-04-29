@@ -129,26 +129,50 @@ namespace Synet
             _channelShared = param.channelShared() ? 1 : 0;
             _eps = param.eps();
 
-            assert(src[0]->Count() >= 3);
-            _num = src[0]->Size(0, -3);
-            if (_trans)
+            assert(src[0]->Count() == 3 || src[0]->Count() == 4);
+            _num = src[0]->Axis(0);
+            if (src[0]->Count() == 3)
             {
-                _channels = src[0]->Axis(-1);
-                _spatial = src[0]->Axis(-3) * src[0]->Axis(-2);
+                if (_trans)
+                {
+                    _channels = src[0]->Axis(2);
+                    _spatial = src[0]->Axis(1);
+                }
+                else
+                {
+                    _channels = src[0]->Axis(1);
+                    _spatial = src[0]->Axis(2);
+                }
             }
             else
             {
-                _channels = src[0]->Axis(-3);
-                _spatial = src[0]->Axis(-2) * src[0]->Axis(-1);
+                if (_trans)
+                {
+                    _channels = src[0]->Axis(3);
+                    _spatial = src[0]->Axis(1) * src[0]->Axis(2);
+                }
+                else
+                {
+                    _channels = src[0]->Axis(1);
+                    _spatial = src[0]->Axis(2) * src[0]->Axis(3);
+                }
             }
 
-            if (_channelShared)
+            if (this->Weight().empty())
             {
-                assert(this->Weight()[0].Size() == 1);
-                _scale.Reshape(Shape({ _channels }), this->Weight()[0].CpuData()[0]);
+                assert(_channelShared);
+                _scale.Reshape(Shape({ _channels }), 1.0f);
             }
             else
-                _scale.Share(this->Weight()[0]);
+            {
+                if (_channelShared)
+                {
+                    assert(this->Weight()[0].Size() == 1);
+                    _scale.Reshape(Shape({ _channels }), this->Weight()[0].CpuData()[0]);
+                }
+                else
+                    _scale.Share(this->Weight()[0]);
+            }
 
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
             buf[0]->Extend(Shape({ _spatial }));

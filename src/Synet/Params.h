@@ -220,7 +220,8 @@ CPL_PARAM_ENUM1(Synet, TensorType,
     TensorType32i,
     TensorType8i,
     TensorType8u,
-    TensorType64i);
+    TensorType64i,
+    TensorType64u);
 
 CPL_PARAM_ENUM1(Synet, UnaryOperationType,
     UnaryOperationTypeAbs,
@@ -244,6 +245,7 @@ namespace Synet
         CPL_PARAM_VALUE(Ints, i32, Ints());
         CPL_PARAM_VALUE(Floats, f32, Floats());
         CPL_PARAM_VALUE(Longs, i64, Longs());
+        CPL_PARAM_VALUE(ULongs, u64, ULongs());
     };
 
     struct WeightParam

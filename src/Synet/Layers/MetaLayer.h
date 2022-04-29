@@ -136,6 +136,7 @@ namespace Synet
                 case TensorType32i: Convert(src[0]->As32f(), dst[0]->As32i()); break;
                 case TensorType32f: Convert(src[0]->As32f(), dst[0]->As32f()); break;
                 case TensorType64i: Convert(src[0]->As32f(), dst[0]->As64i()); break;
+                case TensorType64u: Convert(src[0]->As32f(), dst[0]->As64u()); break;
                 default: assert(0);
                 }
                 break;
@@ -145,6 +146,7 @@ namespace Synet
                 case TensorType32i: Convert(src[0]->As32i(), dst[0]->As32i()); break;
                 case TensorType32f: Convert(src[0]->As32i(), dst[0]->As32f()); break;
                 case TensorType64i: Convert(src[0]->As32i(), dst[0]->As64i()); break;
+                case TensorType64u: Convert(src[0]->As32i(), dst[0]->As64u()); break;
                 default: assert(0);
                 }
                 break;
@@ -154,6 +156,17 @@ namespace Synet
                 case TensorType32i: Convert(src[0]->As64i(), dst[0]->As32i()); break;
                 case TensorType32f: Convert(src[0]->As64i(), dst[0]->As32f()); break;
                 case TensorType64i: Convert(src[0]->As64i(), dst[0]->As64i()); break;
+                case TensorType64u: Convert(src[0]->As64i(), dst[0]->As64u()); break;
+                default: assert(0);
+                }
+                break;
+            case TensorType64u:
+                switch (alpha.type())
+                {
+                case TensorType32i: Convert(src[0]->As64u(), dst[0]->As32i()); break;
+                case TensorType32f: Convert(src[0]->As64u(), dst[0]->As32f()); break;
+                case TensorType64i: Convert(src[0]->As64u(), dst[0]->As64i()); break;
+                case TensorType64u: Convert(src[0]->As64u(), dst[0]->As64u()); break;
                 default: assert(0);
                 }
                 break;

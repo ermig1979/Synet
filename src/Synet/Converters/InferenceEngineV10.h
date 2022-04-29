@@ -94,6 +94,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Multiply" && !ConvertMultiplyLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
+                if ((type == "MVN") && !ConvertMvnLayer(pLayer, dstXml.layers(), layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Parameter" && !ConvertParameterLayer(pLayer, trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Power" && !ConvertPowerLayer(pLayer, srcBin, dstXml.layers(), layer))
@@ -404,6 +406,18 @@ namespace Synet
                     for (size_t i = 0; i < size; ++i)
                         layer.meta().alpha().i64()[i] = src[i];
                 }
+                else if (type == "u64")
+                {
+                    layer.type() = Synet::LayerTypeMeta;
+                    layer.meta().type() = Synet::MetaTypeConst;
+                    layer.meta().alpha().type() = TensorType64u;
+                    layer.meta().alpha().shape() = shape;
+                    size = TensorSize(shape);
+                    layer.meta().alpha().u64().resize(size);
+                    const uint64_t* src = GetWeight<uint64_t>(srcBin, offset);
+                    for (size_t i = 0; i < size; ++i)
+                        layer.meta().alpha().u64()[i] = src[i];
+                }
                 else
                 {
                     std::cout << "Unknown element_type = " << type << " !" << std::endl;
@@ -432,10 +446,12 @@ namespace Synet
                 String type = pData->FirstAttribute("destination_type")->Value();
                 if (type == "i32")
                     layer.meta().alpha().type() = TensorType32i;
-                else if (type == "i64")
-                    layer.meta().alpha().type() = TensorType64i;
                 else if (type == "f32")
                     layer.meta().alpha().type() = TensorType32f;
+                else if (type == "i64")
+                    layer.meta().alpha().type() = TensorType64i;
+                else if (type == "u64")
+                    layer.meta().alpha().type() = TensorType64u;
                 else
                     return false;
             }
@@ -800,6 +816,40 @@ namespace Synet
                 layer.type() = Synet::LayerTypeEltwise;
                 layer.eltwise().operation() = EltwiseOperationTypeProduct;
             }
+            return true;
+        }
+
+        bool ConvertMvnLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            Shape is0 = ConvertInputShape(pLayer, "0");
+            const LayerParam* sp1 = GetLayer(layers, layer.src()[1]);
+            if (sp1 == NULL || sp1->type() != LayerTypeMeta || sp1->meta().type() != MetaTypeConst || sp1->meta().alpha().type() != TensorType64i)
+                return false;
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            layer.type() = Synet::LayerTypeNormalize;
+            if (!ConvertValue(pData->FirstAttribute("eps"), layer.normalize().eps()))
+                return false;
+            bool normalizeVariance;
+            if (!ConvertValue(pData->FirstAttribute("normalize_variance"), normalizeVariance))
+                return false;
+            if (!normalizeVariance)
+                return false;
+            String epsMode;
+            if (!ConvertValue(pData->FirstAttribute("eps_mode"), epsMode) || epsMode != "INSIDE_SQRT")
+                return false;
+            if (is0.size() == 3)
+            {
+                int axis = (int)sp1->meta().alpha().i64()[0];
+                layer.normalize().acrossSpatial() = axis == 2;
+            }
+            else
+                return false;
+            layer.normalize().channelShared() = true;
+            layer.src().resize(1);
             return true;
         }
 
