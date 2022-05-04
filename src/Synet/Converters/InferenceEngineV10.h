@@ -76,6 +76,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Divide" && !ConvertDivideLayer(pLayer, dstXml.layers(), srcBin, layer, dstBin))
                     return ErrorMessage(pLayer);
+                if (type == "Equal" && !ConvertEqualLayer(pLayer, dstXml.layers(), layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Exp" && !ConvertExpLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Floor" && !ConvertFloorLayer(pLayer, dstXml.layers(), layer))
@@ -128,6 +130,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "ReverseSequence" && !ConvertReverseSequenceLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
+                if (type == "Select" && !ConvertSelectLayer(pLayer, dstXml.layers(), layer))
+                    return ErrorMessage(pLayer);
                 if (type == "ShapeOf" && !ConvertShapeOfLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Sigmoid" && !ConvertSigmoidLayer(pLayer, layer))
@@ -149,6 +153,8 @@ namespace Synet
                 if ((type == "TensorIterator") && !ConvertTensorIteratorLayer(pLayer, trans, dstXml.layers(), srcBin, layer, dstBin, info, children))
                     return ErrorMessage(pLayer);
                 if (type == "Tile" && !ConvertTileLayer(pLayer, dstXml.layers(), trans, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "TopK" && !ConvertTopKLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Transpose" && !ConvertTransposeLayer(pLayer, srcBin, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
@@ -591,6 +597,19 @@ namespace Synet
                 layer.type() = Synet::LayerTypeBinaryOperation;
                 layer.binaryOperation().type() = BinaryOperationTypeDiv;
             }
+            return true;
+        }
+
+        bool ConvertEqualLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* sp0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* sp1 = GetLayer(layers, layer.src()[1]);
+            if (sp0 == NULL || sp1 == NULL || sp0->type() != LayerTypeMeta || sp1->type() != LayerTypeMeta)
+                return false;
+            layer.type() = Synet::LayerTypeMeta;
+            layer.meta().type() = Synet::MetaTypeEqual;
             return true;
         }
 
@@ -1161,7 +1180,12 @@ namespace Synet
             const LayerParam* second = GetLayer(layers, layer.src()[1]);
             if (second == NULL || second->type() != LayerTypeMeta)
                 return false;
-            if (second->meta().type() == MetaTypeConst)
+            if(first->type() == Synet::LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeReshape;
+            }            
+            else if (second->meta().type() == MetaTypeConst)
             {
                 if (second->meta().alpha().shape().size() != 1)
                     return false;
@@ -1198,11 +1222,6 @@ namespace Synet
                     shape.erase(shape.begin(), shape.begin() + 1);
                 }            
             }
-            else if(first->type() == Synet::LayerTypeMeta)
-            {
-                layer.type() = Synet::LayerTypeMeta;
-                layer.meta().type() = Synet::MetaTypeReshape;
-            }
             else
             {
                 layer.type() = LayerTypeReshape;
@@ -1236,6 +1255,21 @@ namespace Synet
                 return false;
             if (!ConvertValue(pData->FirstAttribute("seq_axis"), layer.reverseSequence().seqAxis()))
                 return false;
+            return true;
+        }
+
+        bool ConvertSelectLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 3))
+                return false;
+            const LayerParam* sp0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* sp1 = GetLayer(layers, layer.src()[1]);
+            const LayerParam* sp2 = GetLayer(layers, layer.src()[2]);
+            if (sp0 == NULL || sp1 == NULL || sp2 == NULL || 
+                sp0->type() != LayerTypeMeta || sp1->type() != LayerTypeMeta || sp2->type() != LayerTypeMeta)
+                return false;
+            layer.type() = Synet::LayerTypeMeta;
+            layer.meta().type() = Synet::MetaTypeSelect;
             return true;
         }
 
@@ -1488,6 +1522,25 @@ namespace Synet
                 layer.tile().axis() = order[layer.tile().axis()];
             }
             layer.src().resize(1);
+            return true;
+        }
+
+        bool ConvertTopKLayer(const XmlNode* pLayer, const LayerParams& layers, bool trans, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            layer.type() = Synet::LayerTypeTopK;
+            if (!ConvertValue(pData->FirstAttribute("axis"), layer.topK().axis()))
+                return false;
+            if (!ConvertValue(pData->FirstAttribute("mode"), layer.topK().mode()))
+                return false;
+            if (!ConvertValue(pData->FirstAttribute("sort"), layer.topK().sort()))
+                return false;
+            if (!ConvertValue(pData->FirstAttribute("index_element_type"), layer.topK().indexElementType()))
+                return false;
             return true;
         }
 

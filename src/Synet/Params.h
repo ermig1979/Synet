@@ -94,6 +94,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeSwitch,
     LayerTypeTensorIterator,
     LayerTypeTile,
+    LayerTypeTopK,
     LayerTypeUnaryOperation,
     LayerTypeUnpack,
     LayerTypeUpsample,
@@ -136,6 +137,7 @@ CPL_PARAM_ENUM1(Synet, MetaType,
     MetaTypeCast,
     MetaTypeConst,
     MetaTypeDiv,
+    MetaTypeEqual,
     MetaTypeExpandDims,
     MetaTypeFill,
     MetaTypeFloor,
@@ -153,6 +155,7 @@ CPL_PARAM_ENUM1(Synet, MetaType,
     MetaTypeReduceProd,
     MetaTypeReshape,
     MetaTypeRsqrt,
+    MetaTypeSelect,
     MetaTypeShape,
     MetaTypeSlice,
     MetaTypeSqrt,
@@ -222,6 +225,15 @@ CPL_PARAM_ENUM1(Synet, TensorType,
     TensorType8u,
     TensorType64i,
     TensorType64u);
+
+CPL_PARAM_ENUM1(Synet, TopKMode,
+    TopKModeMax,
+    TopKModeMin);
+
+CPL_PARAM_ENUM1(Synet, TopKSort,
+    TopKSortValue,
+    TopKSortIndex,
+    TopKSortNone);
 
 CPL_PARAM_ENUM1(Synet, UnaryOperationType,
     UnaryOperationTypeAbs,
@@ -616,6 +628,14 @@ namespace Synet
         CPL_PARAM_VALUE(uint32_t, tiles, 1);
     };
 
+    struct TopKParam
+    {
+        CPL_PARAM_VALUE(uint32_t, axis, 0);
+        CPL_PARAM_VALUE(TopKMode, mode, TopKModeMax);
+        CPL_PARAM_VALUE(TopKSort, sort, TopKSortValue); 
+        CPL_PARAM_VALUE(TensorType, indexElementType, TensorType64i);
+    };
+
     struct ConnectionParam
     {
         CPL_PARAM_VALUE(String, src, String());
@@ -718,6 +738,7 @@ namespace Synet
         CPL_PARAM_STRUCT(StridedSliceParam, stridedSlice);
         CPL_PARAM_STRUCT(TileParam, tile);
         CPL_PARAM_STRUCT(TensorIteratorParam, tensorIterator);
+        CPL_PARAM_STRUCT(TopKParam, topK);
         CPL_PARAM_STRUCT(UnaryOperationParam, unaryOperation);
         CPL_PARAM_STRUCT(UnpackParam, unpack);
         CPL_PARAM_STRUCT(UpsampleParam, upsample);

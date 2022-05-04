@@ -50,6 +50,7 @@ namespace Synet
             case MetaTypeCast: ReshapeCast(src, param.alpha(), dst); break;
             case MetaTypeConst: ReshapeConst(param.alpha(), dst); break;
             case MetaTypeDiv: ReshapeDiv(src, dst); break;
+            case MetaTypeEqual: ReshapeEqual(src, dst); break;
             case MetaTypeExpandDims: ReshapeExpandDims(src, dst); break;
             case MetaTypeGather: ReshapeGather(src, dst); break;
             case MetaTypeGreater: ReshapeGreater(src, dst); break;
@@ -67,6 +68,7 @@ namespace Synet
             case MetaTypeReduceProd: ReshapeReduceProd(src, dst); break;
             case MetaTypeReshape: ReshapeReshape(src, dst); break;
             case MetaTypeRsqrt: ReshapeRsqrt(src, dst); break;
+            case MetaTypeSelect: ReshapeSelect(src, dst); break;
             case MetaTypeShape: ReshapeShape(src, param.version(), dst); break;
             case MetaTypeSlice: ReshapeSlice(src, dst); break;
             case MetaTypeSqrt: ReshapeSqrt(src, dst); break;
@@ -187,6 +189,19 @@ namespace Synet
                 dst[0]->As32f().Reshape(src[0]->Shape());
                 for (size_t i = 0; i < src[0]->Size(); ++i)
                     dst[0]->As32f().CpuData()[i] = src[0]->As32f().CpuData()[i] / src[1]->As32f().CpuData()[i];
+            }
+            else
+                assert(0);
+        }
+
+        void ReshapeEqual(const TensorPtrs& src, const TensorPtrs& dst)
+        {
+            assert(src.size() == 2 && src[0]->Size() == src[1]->Size());
+            if (src[0]->GetType() == TensorType64i && src[1]->GetType() == TensorType64i)
+            {
+                dst[0]->As64i().Reshape(src[0]->Shape());
+                for (size_t i = 0; i < src[0]->Size(); ++i)
+                    dst[0]->As64i().CpuData()[i] = src[0]->As64i().CpuData()[i] == src[1]->As64i().CpuData()[i] ? 1 : 0;
             }
             else
                 assert(0);
@@ -568,6 +583,20 @@ namespace Synet
                 dst0.Reshape(src0.Shape());
                 for (size_t i = 0; i < src0.Size(); ++i)
                     dst0.CpuData()[i] = 1.0f/::sqrt(src0.CpuData()[i]);
+            }
+            else
+                assert(0);
+        }
+
+        void ReshapeSelect(const TensorPtrs& src, const TensorPtrs& dst)
+        {
+            assert(src.size() == 3 && src[0]->Size() == src[1]->Size() == src[2]->Size());
+            if (src[0]->GetType() == TensorType64i && src[1]->GetType() == TensorType64i && src[2]->GetType() == TensorType64i)
+            {
+                dst[0]->As64i().Reshape(src[0]->Shape());
+                for (size_t i = 0; i < src[0]->Size(); ++i)
+                    dst[0]->As64i().CpuData()[i] = src[0]->As64i().CpuData()[i] ? 
+                        src[1]->As64i().CpuData()[i] : src[2]->As64i().CpuData()[i];
             }
             else
                 assert(0);
