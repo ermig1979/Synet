@@ -389,6 +389,12 @@ namespace Synet
         CPL_PARAM_VALUE(Floats, floats, Floats());
     };
 
+    struct GatherParam
+    {
+        CPL_PARAM_VALUE(int, batchDims, 0);
+        CPL_PARAM_VALUE(int, axis, 0);
+    };
+
     struct HardSigmoidParam
     {
         CPL_PARAM_VALUE(float, scale, 1.0f / 6.0f);
@@ -721,6 +727,7 @@ namespace Synet
         CPL_PARAM_STRUCT(FillParam, fill);
         CPL_PARAM_STRUCT(FlattenParam, flatten);
         CPL_PARAM_STRUCT(FusedParam, fused);
+        CPL_PARAM_STRUCT(GatherParam, gather);
         CPL_PARAM_STRUCT(HardSigmoidParam, hardSigmoid);
         CPL_PARAM_STRUCT(HswishParam, hswish);
         CPL_PARAM_STRUCT(InnerProductParam, innerProduct);

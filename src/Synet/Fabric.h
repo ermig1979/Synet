@@ -78,8 +78,9 @@
 #include "Synet/Layers/StridedSliceLayer.h"
 #include "Synet/Layers/StubLayer.h"
 #include "Synet/Layers/SwitchLayer.h"
-#include "Synet/Layers/TileLayer.h"
 #include "Synet/Layers/TensorIteratorLayer.h"
+#include "Synet/Layers/TileLayer.h"
+#include "Synet/Layers/TopKLayer.h"
 #include "Synet/Layers/UnaryOperationLayer.h"
 #include "Synet/Layers/UpsampleLayer.h"
 #include "Synet/Layers/UnpackLayer.h"
@@ -167,8 +168,9 @@ namespace Synet
             case LayerTypeStub: return new StubLayer<T>(param, context);
             case LayerTypeSwish: return new SwishLayer<T>(param, context);
             case LayerTypeSwitch: return new SwitchLayer<T>(param, context);
-            case LayerTypeTile: return new TileLayer<T>(param, context);
             case LayerTypeTensorIterator: return new TensorIteratorLayer<T>(param, context);
+            case LayerTypeTile: return new TileLayer<T>(param, context);
+            case LayerTypeTopK: return new TopKLayer<T>(param, context);
             case LayerTypeUnaryOperation: return new UnaryOperationLayer<T>(param, context);
             case LayerTypeUnpack: return new UnpackLayer<T>(param, context);
             case LayerTypeUpsample: return new UpsampleLayer<T>(param, context);

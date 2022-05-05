@@ -82,7 +82,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Floor" && !ConvertFloorLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
-                if (type == "Gather" && !ConvertGatherLayer(pLayer, layer))
+                if (type == "Gather" && !ConvertGatherLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "Interpolate" && !ConvertInterpolateLayer(pLayer, srcBin, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
@@ -474,6 +474,10 @@ namespace Synet
                     layer.cast().type() = TensorType32i;
                 else if (type == "f32")
                     layer.cast().type() = TensorType32f;
+                else if (type == "i64")
+                    layer.cast().type() = TensorType64i;
+                else if (type == "u64")
+                    layer.cast().type() = TensorType64u;
                 else
                     return false;
             }
@@ -604,12 +608,6 @@ namespace Synet
 
         bool ConvertEqualLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
         {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* sp0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* sp1 = GetLayer(layers, layer.src()[1]);
-            if (sp0 == NULL || sp1 == NULL || sp0->type() != LayerTypeMeta || sp1->type() != LayerTypeMeta)
-                return false;
             layer.type() = Synet::LayerTypeMeta;
             layer.meta().type() = Synet::MetaTypeEqual;
             return true;
@@ -639,10 +637,39 @@ namespace Synet
             return true;
         }
         
-        bool ConvertGatherLayer(const XmlNode* pLayer, LayerParam& layer)
+        bool ConvertGatherLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
         {
-            layer.type() = Synet::LayerTypeMeta;
-            layer.meta().type() = Synet::MetaTypeGather;
+            if (!CheckSourceNumber(layer, 2, 3))
+                return false;
+            const LayerParam* sp0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* sp1 = GetLayer(layers, layer.src()[1]);
+            if (sp0 == NULL || sp1 == NULL)
+                return false;
+            if (sp0->type() == LayerTypeMeta && sp1->type() == LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeGather;
+            }
+            else
+            {
+                layer.type() = LayerTypeGather;
+                const XmlNode* pData = pLayer->FirstNode("data");
+                if (pData == NULL)
+                    return false;
+                if (!ConvertValue(pData->FirstAttribute("batch_dims"), layer.gather().batchDims()))
+                    return false;
+                if (layer.src().size() > 2)
+                {
+                    const LayerParam* sp2 = GetLayer(layers, layer.src()[2]);
+                    if (sp2 == NULL || sp2->type() != LayerTypeMeta || sp2->meta().type() != MetaTypeConst)
+                        return false;
+                    if (sp2->meta().alpha().type() == TensorType64i)
+                        layer.gather().axis() = (int)sp2->meta().alpha().i64()[0];
+                    else
+                        return false;
+                }
+            }
+            layer.src().resize(2);
             return true;
         }
 
@@ -1609,6 +1636,8 @@ namespace Synet
                 layer.topK().indexElementType() = TensorType64i;
             else
                 return false;
+            layer.dst().resize(1);
+            layer.dst()[0] = layer.name();
             return true;
         }
 
