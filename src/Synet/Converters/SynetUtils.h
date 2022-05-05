@@ -65,6 +65,16 @@ namespace Synet
             return true;
         }
 
+        static bool CheckSourceNumber(const LayerParam& layer, size_t min, size_t max)
+        {
+            if (layer.src().size() < min || layer.src().size() > max)
+            {
+                std::cout << "Wrong number of sources (" << layer.src().size() << ". It must be in range [" << min << ", " << max << "] !" << std::endl;
+                return false;
+            }
+            return true;
+        }
+
         static bool CheckDestinationNumber(const LayerParam& layer, size_t size)
         {
             if (layer.dst().size() != size)

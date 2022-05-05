@@ -62,6 +62,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeMergedConvolution,
     LayerTypeMeta,
     LayerTypeMish,
+    LayerTypeNonMaxSuppression,
     LayerTypeNormalize,
     LayerTypePad,
     LayerTypePermute,
@@ -115,6 +116,10 @@ CPL_PARAM_ENUM1(Synet, ActivationFunctionType,
 CPL_PARAM_ENUM1(Synet, BinaryOperationType,
     BinaryOperationTypeDiv,
     BinaryOperationTypeSub);
+
+CPL_PARAM_ENUM1(Synet, BoxEncodingType,
+    BoxEncodingTypeCorner,
+    BoxEncodingTypeCenter);
 
 CPL_PARAM_ENUM1(Synet, CoordinateTransformType,
     CoordinateTransformTypeLegacy,
@@ -462,6 +467,17 @@ namespace Synet
         CPL_PARAM_STRUCT(TensorParam, alpha);
     };
 
+    struct NonMaxSuppressionParam
+    {
+        CPL_PARAM_VALUE(BoxEncodingType, boxEncoding, BoxEncodingTypeCorner);
+        CPL_PARAM_VALUE(bool, sortResultDescending, false);
+        CPL_PARAM_VALUE(TensorType, outputType, TensorType64i);
+        CPL_PARAM_VALUE(int, maxOutputBoxesPerClass, 0);
+        CPL_PARAM_VALUE(float, iouThreshold, 0);
+        CPL_PARAM_VALUE(float, scoreThreshold, 0);
+        CPL_PARAM_VALUE(float, softNmsSigma, 0);
+    };
+
     struct NormalizeParam
     {
         CPL_PARAM_VALUE(bool, acrossSpatial, true);
@@ -715,6 +731,7 @@ namespace Synet
         CPL_PARAM_STRUCT(LrnParam, lrn);
         CPL_PARAM_STRUCT(MergedConvolutionParam, mergedConvolution);
         CPL_PARAM_STRUCT(MetaParam, meta);
+        CPL_PARAM_STRUCT(NonMaxSuppressionParam, nonMaxSuppression);
         CPL_PARAM_STRUCT(NormalizeParam, normalize);
         CPL_PARAM_STRUCT(PermuteParam, permute);
         CPL_PARAM_STRUCT(PoolingParam, pooling);

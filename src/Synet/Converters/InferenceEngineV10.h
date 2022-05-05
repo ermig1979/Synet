@@ -98,6 +98,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if ((type == "MVN") && !ConvertMvnLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
+                if ((type == "NonMaxSuppression") && !ConvertNonMaxSuppressionLayer(pLayer, dstXml.layers(), srcBin, layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Parameter" && !ConvertParameterLayer(pLayer, trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Power" && !ConvertPowerLayer(pLayer, srcBin, dstXml.layers(), layer))
@@ -872,6 +874,67 @@ namespace Synet
             return true;
         }
 
+        bool ConvertNonMaxSuppressionLayer(const XmlNode* pLayer, const LayerParams& layers, const Vector& srcBin, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2, 6))
+                return false;
+            layer.type() = Synet::LayerTypeNonMaxSuppression;
+            const XmlNode* pData = pLayer->FirstNode("data");
+            if (pData == NULL)
+                return false;
+            String boxEncoding;
+            if (!ConvertValue(pData->FirstAttribute("box_encoding"), boxEncoding))
+                return false;
+            if (boxEncoding == "corner")
+                layer.nonMaxSuppression().boxEncoding() = BoxEncodingTypeCorner;
+            else if (boxEncoding == "center")
+                layer.nonMaxSuppression().boxEncoding() = BoxEncodingTypeCenter;
+            else
+                return false;
+            if (!ConvertValue(pData->FirstAttribute("sort_result_descending"), layer.nonMaxSuppression().sortResultDescending()))
+                return false;
+            String outputType;
+            if (!ConvertValue(pData->FirstAttribute("output_type"), outputType))
+                return false;
+            if (outputType == "i64")
+                layer.nonMaxSuppression().outputType() = TensorType64i;
+            else
+                return false;
+            if (layer.src().size() > 2)
+            {
+                const LayerParam * src = GetLayer(layers, layer.src()[2]);
+                if (src == NULL || src->type() != LayerTypeMeta || src->meta().type() != MetaTypeConst)
+                    return false;
+                if (src->meta().alpha().type() == TensorType64i)
+                    layer.nonMaxSuppression().maxOutputBoxesPerClass() = (int)src->meta().alpha().i64()[0];
+                else
+                    return false;
+            }
+            if (layer.src().size() > 3)
+            {
+                const LayerParam* src = GetLayer(layers, layer.src()[3]);
+                if (src == NULL || src->type() != LayerTypeConst)
+                    return false;
+                layer.nonMaxSuppression().iouThreshold() = GetWeight<float>(srcBin, src->weight()[0])[0];
+            }
+            if (layer.src().size() > 4)
+            {
+                const LayerParam* src = GetLayer(layers, layer.src()[4]);
+                if (src == NULL || src->type() != LayerTypeConst)
+                    return false;
+                layer.nonMaxSuppression().scoreThreshold() = GetWeight<float>(srcBin, src->weight()[0])[0];
+            }  
+            if (layer.src().size() > 5)
+            {
+                const LayerParam* src = GetLayer(layers, layer.src()[5]);
+                if (src == NULL || src->type() != LayerTypeConst)
+                    return false;
+                layer.nonMaxSuppression().softNmsSigma() = GetWeight<float>(srcBin, src->weight()[0])[0];
+            }
+            layer.src().resize(2);
+            return true;
+        }
+
         bool ConvertParameterLayer(const XmlNode* pLayer, bool trans, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeInput;
@@ -1539,7 +1602,12 @@ namespace Synet
                 return false;
             if (!ConvertValue(pData->FirstAttribute("sort"), layer.topK().sort()))
                 return false;
-            if (!ConvertValue(pData->FirstAttribute("index_element_type"), layer.topK().indexElementType()))
+            String indexElementType;
+            if (!ConvertValue(pData->FirstAttribute("index_element_type"), indexElementType)) 
+                return false;
+            if (indexElementType == "i64")
+                layer.topK().indexElementType() = TensorType64i;
+            else
                 return false;
             return true;
         }
