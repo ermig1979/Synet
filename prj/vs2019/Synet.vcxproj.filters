@@ -324,6 +324,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\TopKLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\NonMaxSuppressionLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

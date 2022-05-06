@@ -82,6 +82,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution8iLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolutionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MetaLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\NonMaxSuppressionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\NormalizeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\PadLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\PermuteLayer.h" />

@@ -53,6 +53,7 @@
 #include "Synet/Layers/MergedConvolution32fLayer.h"
 #include "Synet/Layers/MergedConvolution8iLayer.h"
 #include "Synet/Layers/MetaLayer.h"
+#include "Synet/Layers/NonMaxSuppressionLayer.h"
 #include "Synet/Layers/NormalizeLayer.h"
 #include "Synet/Layers/PadLayer.h"
 #include "Synet/Layers/PermuteLayer.h"
@@ -138,6 +139,7 @@ namespace Synet
                     return new MergedConvolution32fLayer<T>(param, context);
             case LayerTypeMeta: return new MetaLayer<T>(param, context);
             case LayerTypeMish: return new MishLayer<T>(param, context);
+            case LayerTypeNonMaxSuppression: return new NonMaxSuppressionLayer<T>(param, context);
             case LayerTypeNormalize: return new NormalizeLayer<T>(param, context);
             case LayerTypePad: return new PadLayer<T>(param, context);
             case LayerTypePermute: return new PermuteLayer<T>(param, context);

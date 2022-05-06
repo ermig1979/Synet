@@ -111,18 +111,30 @@ namespace Synet
             }
         }
 
-        void ReshapeAdd(const TensorPtrs & src, const TensorPtrs & dst)
+        template<class A> void ReshapeAdd(const Synet::Tensor<A>& src0, const Synet::Tensor<A>& src1, Synet::Tensor<A>& dst0)
         {
-            assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape() && src[0]->GetType() == src[1]->GetType());
-            if (src[0]->GetType() == TensorType32i)
+            dst0.Reshape(src0.Shape());
+            if (src0.Size() == src1.Size())
             {
-                const Synet::Tensor<int32_t> & src0 = src[0]->As32i();
-                const Synet::Tensor<int32_t> & src1 = src[1]->As32i();
-                Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
-                dst0.Reshape(src0.Shape());
                 for (size_t i = 0; i < src0.Size(); ++i)
                     dst0.CpuData()[i] = src0.CpuData()[i] + src1.CpuData()[i];
             }
+            else if (src1.Size() == 1)
+            {
+                for (size_t i = 0; i < src0.Size(); ++i)
+                    dst0.CpuData()[i] = src0.CpuData()[i] + src1.CpuData()[0];
+            }
+            else
+                assert(0);
+        }
+
+        void ReshapeAdd(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            assert(src.size() == 2 && src[0]->Count() == src[1]->Count() && src[0]->GetType() == src[1]->GetType());
+            if (src[0]->GetType() == TensorType32i)
+                ReshapeAdd<int32_t>(src[0]->As32i(), src[1]->As32i(), dst[0]->As32i());
+            else if (src[0]->GetType() == TensorType32f)
+                ReshapeAdd<float>(src[0]->As32f(), src[1]->As32f(), dst[0]->As32f());
             else
                 assert(0);
         }
@@ -371,18 +383,30 @@ namespace Synet
                 assert(0);
         }
 
-        void ReshapeMul(const TensorPtrs & src, const TensorPtrs & dst)
+        template<class A> void ReshapeMul(const Synet::Tensor<A>& src0, const Synet::Tensor<A>& src1, Synet::Tensor<A>& dst0)
         {
-            assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape() && src[0]->GetType() == src[1]->GetType());
-            if (src[0]->GetType() == TensorType32f)
+            dst0.Reshape(src0.Shape());
+            if (src0.Size() == src1.Size())
             {
-                const Synet::Tensor<float> & src0 = src[0]->As32f();
-                const Synet::Tensor<float> & src1 = src[1]->As32f();
-                Synet::Tensor<float> & dst0 = dst[0]->As32f();
-                dst0.Reshape(src0.Shape());
                 for (size_t i = 0; i < src0.Size(); ++i)
                     dst0.CpuData()[i] = src0.CpuData()[i] * src1.CpuData()[i];
             }
+            else if (src1.Size() == 1)
+            {
+                for (size_t i = 0; i < src0.Size(); ++i)
+                    dst0.CpuData()[i] = src0.CpuData()[i] * src1.CpuData()[0];
+            }
+            else
+                assert(0);
+        }
+
+        void ReshapeMul(const TensorPtrs& src, const TensorPtrs& dst)
+        {
+            assert(src.size() == 2 && src[0]->Count() == src[1]->Count() && src[0]->GetType() == src[1]->GetType());
+            if (src[0]->GetType() == TensorType64i)
+                ReshapeMul<int64_t>(src[0]->As64i(), src[1]->As64i(), dst[0]->As64i());
+            else if (src[0]->GetType() == TensorType32f)
+                ReshapeMul<float>(src[0]->As32f(), src[1]->As32f(), dst[0]->As32f());
             else
                 assert(0);
         }
