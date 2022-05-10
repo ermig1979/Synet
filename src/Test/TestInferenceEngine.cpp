@@ -82,6 +82,7 @@ namespace Test
             std::cout << "Can't load file '" << options.testParam << "' !" << std::endl;
             return false;
         }
+        param().optimizer().bf16Enable() = options.bf16;
         return Synet::ConvertInferenceEngineToSynet(options.firstModel, options.firstWeight, 
             options.tensorFormat == 1, options.secondModel, options.secondWeight, param().optimizer());
     }

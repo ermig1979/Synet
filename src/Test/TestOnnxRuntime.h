@@ -161,6 +161,9 @@ namespace Test
                 _output[i].Reshape(shape);
             }
 
+            if (param.detection().decoder() == "ultraface")
+                _ultraface.Init(param.detection().ultraface());
+
             return true;
         }
 
@@ -211,7 +214,31 @@ namespace Test
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
-            return Regions();
+            if (_ultraface.Enable())
+                return _ultraface.GetRegions(_output[0].CpuData(), _output[1].CpuData(), _output[0].Size(1, 2), size.x, size.y, threshold, overlap);
+            else
+            {
+                Regions regions;
+                if (_output[0].Axis(-1) == 7)
+                {
+                    for (size_t i = 0; i < _output[0].Size(); i += 7)
+                    {
+                        const float* output = _output[0].CpuData();
+                        if (output[i + 2] > threshold)
+                        {
+                            Region region;
+                            region.id = (size_t)output[i + 1];
+                            region.prob = output[i + 2];
+                            region.x = size.x * (output[i + 3] + output[i + 5]) / 2.0f;
+                            region.y = size.y * (output[i + 4] + output[i + 6]) / 2.0f;
+                            region.w = size.x * (output[i + 5] - output[i + 3]);
+                            region.h = size.y * (output[i + 6] - output[i + 4]);
+                            regions.push_back(region);
+                        }
+                    }
+                }
+                return regions;
+            }
         }
 
         virtual size_t MemoryUsage() const
@@ -236,6 +263,8 @@ namespace Test
         ValuesPtr _outputValues;
 
         size_t _batchSize;
+
+        Synet::UltrafaceDecoder _ultraface;
 
         struct Env
         {

@@ -114,7 +114,8 @@ namespace Test
             int performanceLog;
             int debugPrint;
             float regionThreshold;
-            Options(String od, size_t wt, bool cs, int bs, int pl, int dp, float rt)
+            bool bf16Test;
+            Options(String od, size_t wt, bool cs, int bs, int pl, int dp, float rt, bool bf)
                 : outputDirectory(od)
                 , workThreads(wt)
                 , consoleSilence(cs)
@@ -122,6 +123,7 @@ namespace Test
                 , performanceLog(pl)
                 , debugPrint(dp)
                 , regionThreshold(rt)
+                , bf16Test(bf)
             {}
         };
 

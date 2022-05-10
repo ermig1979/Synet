@@ -2,6 +2,7 @@ MODE=$1
 DATE_TIME=`date +"%Y_%m_%d__%H_%M"`
 TEST_THREAD=1
 BATCH_SIZE=10
+BF16_TEST=0
 
 function TEST {
 FRAMEWORK=$1
@@ -37,11 +38,11 @@ if [ -f $IMAGE/descript.ion ];then rm $IMAGE/descript.ion; fi
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
 if [ "$BATCH" = "1" ];then
-  "$BIN" -m=convert $PATHES -tf=1 -cs=1 -qm=$METHOD
+  "$BIN" -m=convert $PATHES -tf=1 -cs=1 -qm=$METHOD -bf=$BF16_TEST
   if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -re=1 -et=10.0 -ie=10 -be=10 -st=100.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=0 -wt=1 -tt=$THREAD -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -bf=$BF16_TEST -re=1 -et=10.0 -ie=10 -be=10 -st=100.0 -cs=1 -ln=$LOG -sn="$OUT_SYNC" -hr="$OUT_HTML" -tr="$OUT_TEXT"
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 

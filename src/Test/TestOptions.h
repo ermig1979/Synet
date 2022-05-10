@@ -77,6 +77,7 @@ namespace Test
         float regionThreshold;
         float regionOverlap;
         double statFilter;
+        bool bf16;
 
         mutable bool result;
         mutable size_t firstMemoryUsage,  secondMemoryUsage;
@@ -128,6 +129,7 @@ namespace Test
             regionThreshold = FromString<float>(GetArg("-rt", "0.3"));
             regionOverlap = FromString<float>(GetArg("-ro", "0.5"));
             statFilter = FromString<double>(GetArg("-sf", "0.0"));
+            bf16 = FromString<bool>(GetArg("-bf", "0"));
             if (enable < 1 || enable > 3)
             {
                 std::cout << "Parameter '-e' (enable) must be only 1, 2, 3!" << std::endl;

@@ -36,6 +36,7 @@ namespace Synet
         CPL_PARAM_VALUE(bool, mergeTwoConvolutions, true);
         CPL_PARAM_VALUE(uint32_t, mergeTwoConvolutionsOutputNumMax, 256);
         CPL_PARAM_VALUE(bool, mergeInt8Convolutions, true);
+        CPL_PARAM_VALUE(bool, bf16Enable, false);
     };
 
     CPL_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);
@@ -192,6 +193,7 @@ namespace Synet
             network.layers() = merged;
             if (buf.size())
                 bin.swap(buf);
+            SetBf16Options(network.layers());
             return true;
         }
 
@@ -1792,6 +1794,27 @@ namespace Synet
                 if (!Rename(Change(layer.dst()[0], layer.src()[0]), layers))
                     return false;
                 layers.erase(layers.begin() + i);
+            }
+            return true;
+        }
+
+
+        bool SetBf16Options(LayerParams& layers)
+        {
+            if (!_param.bf16Enable())
+                return true;
+            for (size_t i = 0; i < layers.size(); ++i)
+            {
+                LayerParam &layer = layers[i];
+                if (layer.type() == LayerTypeConvolution)
+                {
+                    if(layer.convolution().group() == 1)
+                        layer.convolution().bf16() = true;
+                }
+                else if (layer.type() == LayerTypeInnerProduct)
+                {
+                    layer.innerProduct().bf16() = true;
+                }
             }
             return true;
         }

@@ -1,6 +1,7 @@
 MODE=$1
 DATE_TIME=`date +"%Y_%m_%d__%H_%M"`
 COUNTER=0
+BF16_TEST=0
 
 function TEST {
 FRAMEWORK=$1
@@ -23,7 +24,7 @@ else
     THRESHOLD=0.011; QUANTILE=0.0 METHOD=0
     echo "Use increased accuracy threshold : $THRESHOLD for INT8."
   else
-    THRESHOLD=0.0016; QUANTILE=0.0 METHOD=-1
+    THRESHOLD=0.0116; QUANTILE=0.0 METHOD=-1
   fi
 fi
 OUT=./test/check/"$DATE_TIME$MODE"
@@ -39,11 +40,11 @@ if [ -f $IMAGE/descript.ion ];then rm $IMAGE/descript.ion; fi
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
 if [ "$BATCH" = "1" ];then
-  "$BIN" -m=convert $PATHES -tf=$FORMAT -cs=1 -qm=$METHOD
+  "$BIN" -m=convert $PATHES -tf=$FORMAT -cs=1 -qm=$METHOD -bf=$BF16_TEST
   if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 fi
 
-"$BIN" -m=compare -e=3 $PATHES -rn=1 -wt=1 -tt=0 -ie=10 -be=10 -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -cs=1 -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -rn=1 -wt=1 -tt=0 -ie=10 -be=10 -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -cs=1 -bf=$BF16_TEST -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 

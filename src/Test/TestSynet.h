@@ -166,6 +166,7 @@ namespace Test
         {
             Synet::Options synOpt;
             synOpt.performanceLog = (Synet::Options::PerfomanceLog)options.performanceLog;
+            synOpt.bf16RoundTest = options.bf16Test;
 
 #ifdef SYNET_TEST_MEMORY_LOAD
             std::ifstream mifs(model, std::ios::binary);

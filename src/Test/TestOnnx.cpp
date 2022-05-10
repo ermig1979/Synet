@@ -42,6 +42,7 @@ namespace Test
             std::cout << "Can't load file '" << options.testParam << "' !" << std::endl;
             return false;
         }
+        param().optimizer().bf16Enable() = options.bf16;
         return Synet::ConvertOnnxToSynet(options.firstModel, options.firstWeight,
             options.tensorFormat == 1, options.secondModel, options.secondWeight, param().onnx(), param().optimizer());
     }

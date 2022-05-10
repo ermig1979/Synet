@@ -250,7 +250,7 @@ namespace Test
 					std::cout << "Unknown framework: " << _options.framework << "!" << std::endl;
 					return false;
 				}
-				Network::Options options(_options.outputDirectory, 1, true, _options.batchSize, _options.performanceLog, 0, 0.5f);
+				Network::Options options(_options.outputDirectory, 1, true, _options.batchSize, _options.performanceLog, 0, 0.5f, false);
 				if (!network->Init(_options.testModel, _options.testWeight, options, _param()))
 				{
 					std::cout << "Can't load " << network->Name() << " from '" << _options.testModel << "' and '" << _options.testWeight << "' !" << std::endl;

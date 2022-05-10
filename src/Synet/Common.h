@@ -37,7 +37,7 @@
 
 #define SYNET_INT8_SAFE_ZERO 1
 
-#define SYNET_BF16_ROUND_TEST
+//#define SYNET_BF16_ROUND_TEST
 
 #include <stddef.h>
 #include <assert.h>
