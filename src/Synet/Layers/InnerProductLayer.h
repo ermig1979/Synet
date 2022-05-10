@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2021 Yermalayeu Ihar.
+* Copyright (c) 2018-2022 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@
 #include "Synet/Quantization/Gemm.h"
 #include "Synet/Quantization/Convert.h"
 #include "Synet/Quantization/Const.h"
+#include "Synet/Quantization/Bf16.h" 
 #include "Synet/Utils/Math.h"
 #include "Synet/Utils/InnerProduct.h"
 
@@ -141,6 +142,13 @@ namespace Synet
                     assert(weight[0].Shape() == Shp(_N, _K));
                 if (_biasTerm)
                     assert(weight[1].Shape() == Shp(_N));
+#if defined(SYNET_BF16_ROUND_TEST)
+                if (this->Param().convolution().bf16() && this->Options().bf16RoundTest)
+                {
+                    RoundAsTo16(weight[0].CpuData(), weight[0].Size(), (float*)weight[0].CpuData());
+                    Base::Extend32f(buf, 1, src[0]->Shape(), src[0]->Format());
+                }
+#endif
             }
             _M = src[0]->Size(0, axis);
             Shape dstShape = src[0]->Shape();
@@ -192,7 +200,15 @@ namespace Synet
             else
             {
                 const float* weight = src.size() > 1 ? src[1]->CpuData() : this->Weight()[0].CpuData();
-                ForwardCpu(src[0]->CpuData(), weight, dst[0]->CpuData());
+#if defined(SYNET_BF16_ROUND_TEST)
+                if (this->Param().convolution().bf16() && this->Options().bf16RoundTest)
+                {
+                    RoundAsTo16(src[0]->CpuData(), src[0]->Size(), Base::Buf32f(buf, 1));
+                    ForwardCpu(Base::Buf32f(buf, 1), weight, dst[0]->CpuData());
+                }
+                else
+#endif
+                    ForwardCpu(src[0]->CpuData(), weight, dst[0]->CpuData());
             }
         }
 

@@ -34,26 +34,11 @@ namespace Synet
     const int QUANT_IE_COMP_SRC_I8_MIN = -128;
     const int QUANT_IE_COMP_WEIGHT_MIN = -128;
     const int QUANT_IE_COMP_WEIGHT_MAX = 127;
-#if 1
+
     const int QUANT_SYMM_NARR_SRC_U8_MIN = 0;
     const int QUANT_SYMM_NARR_SRC_U8_MAX = 180;
     const int QUANT_SYMM_NARR_SRC_I8_MIN = -90;
     const int QUANT_SYMM_NARR_SRC_I8_MAX = 90;
     const int QUANT_SYMM_NARR_WEIGHT_MIN = -90;
     const int QUANT_SYMM_NARR_WEIGHT_MAX = 90;
-#elif 1
-    const int QUANT_SYMM_NARR_SRC_U8_MIN = 0;
-    const int QUANT_SYMM_NARR_SRC_U8_MAX = 255;
-    const int QUANT_SYMM_NARR_SRC_I8_MIN = -128;
-    const int QUANT_SYMM_NARR_SRC_I8_MAX = 127;
-    const int QUANT_SYMM_NARR_WEIGHT_MIN = -64;
-    const int QUANT_SYMM_NARR_WEIGHT_MAX = 64;
-#else
-    const int QUANT_SYMM_NARR_SRC_U8_MIN = 0;
-    const int QUANT_SYMM_NARR_SRC_U8_MAX = 127;
-    const int QUANT_SYMM_NARR_SRC_I8_MIN = -64;
-    const int QUANT_SYMM_NARR_SRC_I8_MAX = 64;
-    const int QUANT_SYMM_NARR_WEIGHT_MIN = -128;
-    const int QUANT_SYMM_NARR_WEIGHT_MAX = 127;
-#endif
 }

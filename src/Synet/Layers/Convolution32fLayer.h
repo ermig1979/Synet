@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2021 Yermalayeu Ihar.
+* Copyright (c) 2018-2022 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Synet/Layers/ConvolutionLayer.h"
+#include "Synet/Quantization/Bf16.h" 
 
 namespace Synet
 {
@@ -61,7 +62,13 @@ namespace Synet
             const Tensors& weight = this->Weight();
             const ConvParam& conv = this->_conv;
             AlgParam & alg = this->_alg;
-
+#if defined(SYNET_BF16_ROUND_TEST)
+            if (this->Param().convolution().bf16() && this->Options().bf16RoundTest)
+            {
+                RoundAsTo16(weight[0].CpuData(), weight[0].Size(), (float*)weight[0].CpuData());
+                Base::Extend32f(buf, 1, src->Shape(), src->Format());
+            }
+#endif
             dst->Reshape(conv.DstShape(alg.batch), src->Format());
             _convolution32f.Init(alg.batch, &conv, SYNET_EXTERNAL_GEMM);
             if (_convolution32f.Enable())
@@ -76,7 +83,15 @@ namespace Synet
 
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-             ForwardCpu(src[0]->CpuData(), Base::Buf32f(buf, 0), dst[0]->CpuData());
+#if defined(SYNET_BF16_ROUND_TEST)
+            if (this->Param().convolution().bf16() && this->Options().bf16RoundTest)
+            {
+                RoundAsTo16(src[0]->CpuData(), src[0]->Size(), Base::Buf32f(buf, 1));
+                ForwardCpu(Base::Buf32f(buf, 1), Base::Buf32f(buf, 0), dst[0]->CpuData());
+            }
+            else
+#endif
+                ForwardCpu(src[0]->CpuData(), Base::Buf32f(buf, 0), dst[0]->CpuData());
         }
 
         void ForwardCpu(const T * src, T * buf, T * dst)

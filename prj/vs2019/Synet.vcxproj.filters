@@ -327,6 +327,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\NonMaxSuppressionLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Quantization\Bf16.h">
+      <Filter>Quantization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

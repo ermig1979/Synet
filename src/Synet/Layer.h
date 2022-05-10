@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2021 Yermalayeu Ihar.
+* Copyright (c) 2018-2022 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -44,7 +44,7 @@ namespace Synet
         typedef std::shared_ptr<Layer> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
 
-        Layer(const LayerParam & param, Context * context)
+        Layer(const LayerParam & param, Synet::Context * context)
             : _param(param)
             , _context(context)
             , _isBack(false)
@@ -251,11 +251,16 @@ namespace Synet
             buf[TensorType8u * BUFFER_COUNT + idx]->As8u().Extend(shape, format);
         }
 
+        inline const Synet::Options& Options() const
+        {
+            return _context->options;
+        }
+
     private:
         template<class U> friend class Network;
 
         const LayerParam & _param;
-        Context* _context;
+        Synet::Context* _context;
         Tensors _weight;
         StatPtrs _stats[3];
         bool _isBack;
