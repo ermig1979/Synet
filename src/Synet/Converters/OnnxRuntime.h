@@ -129,10 +129,11 @@ namespace Synet
 
             Vector original;
             Consts consts;
+            Renames renames;
             for (size_t i = 0; i < graph.initializer_size(); ++i)
             {
                 const onnx::TensorProto& tensor = graph.initializer(i);
-                if (!ConvertInitializer(tensor, network, original))
+                if (!ConvertInitializer(tensor, network, original, renames))
                 {
                     std::cout << "Can't convert initializer '" << tensor.name() << "' !" << std::endl;
                     return false;
@@ -153,7 +154,6 @@ namespace Synet
                 }
             }
 
-            Renames renames;
             for (size_t i = 0; i < graph.node_size(); ++i)
             {
                 const onnx::NodeProto& node = graph.node(i);
@@ -249,11 +249,24 @@ namespace Synet
             return true;
         }
 
-        bool ConvertInitializer(const onnx::TensorProto& tensor, Synet::NetworkParam& network, Vector& weight)
+        String ValidName(const String & src, Renames& renames)
+        {
+            String dst = src;
+            for (size_t i = 0; i < dst.size(); ++i)
+            {
+                if (dst[i] == ':')
+                    dst[i] = '_';
+            }
+            if (dst != src)
+                renames[src] = dst;
+            return dst;
+        }
+
+        bool ConvertInitializer(const onnx::TensorProto& tensor, Synet::NetworkParam& network, Vector& weight, Renames& renames)
         {
             LayerParam layer;
-            layer.name() = tensor.name();
-            layer.dst().push_back(tensor.name());
+            layer.name() = ValidName(tensor.name(), renames);
+            layer.dst().push_back(layer.name());
             if (tensor.data_type() == onnx::TensorProto_DataType_FLOAT)
             {
                 layer.type() = LayerTypeConst;
@@ -350,7 +363,7 @@ namespace Synet
             return true;
         }
 
-        void SetSrcAndDst(const onnx::NodeProto& node, const Renames &renames, LayerParam& layer)
+        void SetSrcAndDst(const onnx::NodeProto& node, Renames &renames, LayerParam& layer)
         {
             layer.name() = node.name();
             for (size_t j = 0; j < node.input_size(); ++j)
@@ -362,7 +375,7 @@ namespace Synet
                 layer.src().push_back(input);
             }
             for (size_t j = 0; j < node.output_size(); ++j)
-                layer.dst().push_back(node.output(j));
+                layer.dst().push_back(ValidName(node.output(j), renames));
             layer.name() = layer.dst()[0];
         }
 
