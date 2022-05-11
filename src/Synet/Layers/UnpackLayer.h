@@ -63,7 +63,7 @@ namespace Synet
                 assert(param.parts().size() == _count);
                 for (size_t i = 0; i < _count; ++i)
                 {
-                    _begins[i] = i ? param.parts()[i - 1] : 0;
+                    _begins[i] = i ? _begins[i - 1] + param.parts()[i - 1] : 0;
                     _sizes[i] = param.parts()[i];
                 }
             }

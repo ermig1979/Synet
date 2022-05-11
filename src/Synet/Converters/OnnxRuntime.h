@@ -194,6 +194,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Mul" && !ConvertMulNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Pow" && !ConvertPowNode(node, network.layers(), original, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "PRelu" && !ConvertPreluNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "ReduceMax" && !ConvertReduceMaxNode(node, trans, network.layers(), layer))
@@ -371,7 +373,12 @@ namespace Synet
                 String input = node.input(j);
                 Renames::const_iterator rename = renames.find(input);
                 if (rename != renames.end())
+                {
                     input = rename->second;
+                    rename = renames.find(input);
+                    if (rename != renames.end())
+                        input = rename->second;
+                }
                 layer.src().push_back(input);
             }
             for (size_t j = 0; j < node.output_size(); ++j)
@@ -528,7 +535,7 @@ namespace Synet
                 layer.type() = Synet::LayerTypeConcat;
                 if (!ConvertAtrributeInt(node, "axis", layer.concat().axis()))
                     return false;
-                if (trans && !PermutedToNchw(layers, false, true, true))
+                if (trans && !PermutedToNchw(layers, layer.src(), false, true, true))
                 {
                     Shape nchw = Shape({ 0, 3, 1, 2 });
                     layer.concat().axis() = (uint32_t)nchw[layer.concat().axis()];
@@ -842,6 +849,26 @@ namespace Synet
                 layer.type() = Synet::LayerTypeEltwise;
                 layer.eltwise().operation() = EltwiseOperationTypeProduct;
             }
+            return true;
+        }
+
+        bool ConvertPowNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
+            if (src1->type() == LayerTypeConst && TensorSize(src1->weight()[0].dim()) == 1)
+            {
+                layer.type() = Synet::LayerTypePower;
+                const float* pPower = GetWeight<float>(original, src1->weight()[0]);
+                layer.power().power() = pPower[0];
+                layer.src().resize(1);
+            }
+            else
+                return false;
             return true;
         }
 
