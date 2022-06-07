@@ -104,6 +104,8 @@ namespace Test
                     _anchor.Init(_net, param.detection().retina());
                 if (param.detection().decoder() == "ultraface")
                     _ultraface.Init(param.detection().ultraface());
+                if (param.detection().decoder() == "yoloV5")
+                    _yoloV5.Init(param.detection().yoloV5());
                 return true;
             }
             return false;
@@ -144,6 +146,8 @@ namespace Test
                 return _anchor.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
             else if (_ultraface.Enable())
                 return _ultraface.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
+            else if (_yoloV5.Enable())
+                return _yoloV5.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
             else
                 return _net.GetRegions(size.x, size.y, threshold, overlap);
         }
@@ -161,6 +165,7 @@ namespace Test
         size_t _synetMemoryUsage;
         Synet::AnchorDecoder _anchor;
         Synet::UltrafaceDecoder _ultraface;
+        Synet::YoloV5Decoder _yoloV5;
 
         bool Load(const String & model, const String & weight, const Options& options)
         {

@@ -31,6 +31,7 @@
 #include "Synet/Converters/OnnxRuntime.h"
 #include "Synet/Decoders/Anchor.h"
 #include "Synet/Decoders/Ultraface.h"
+#include "Synet/Decoders/YoloV5.h"
 
 namespace Test
 {
@@ -61,6 +62,7 @@ namespace Test
         CPL_PARAM_STRUCT_MOD(Synet::AnchorParam, epsilon, Synet::GetEpsilonParam());
         CPL_PARAM_STRUCT_MOD(Synet::AnchorParam, retina, Synet::GetRetinaParam());
         CPL_PARAM_STRUCT(Synet::UltrafaceParam, ultraface);
+        CPL_PARAM_STRUCT(Synet::YoloV5Param, yoloV5);
     };
 
     struct IdParam
