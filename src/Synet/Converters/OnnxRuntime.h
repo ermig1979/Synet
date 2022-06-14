@@ -172,6 +172,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Constant" && !ConvertConstantNode(node, layer, original, reordered))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "ConstantOfShape" && !ConvertConstantOfShapeNode(node, network.layers(), layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Conv" && !ConvertConvNode(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Div" && !ConvertDivNode(node, network.layers(), original, layer, reordered))
@@ -219,6 +221,8 @@ namespace Synet
                 if (node.op_type() == "Softmax" && !ConvertSoftmaxNode(node, trans, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Split" && !ConvertSplitNode(node, trans, network.layers(), layer))
+                    return ErrorMessage(i, node);
+                if (node.op_type() == "Sqrt" && !ConvertSqrtNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Squeeze" && !ConvertSqueezeNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -604,6 +608,42 @@ namespace Synet
             }
             else
                 return false;
+            return true;
+        }
+
+        bool ConvertConstantOfShapeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        {
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            if (src0 == NULL || src0->type() != Synet::LayerTypeMeta)
+                return false;
+            const onnx::AttributeProto * attribute = GetAtrribute(node, "value");
+            if (attribute && attribute->type() == onnx::AttributeProto_AttributeType_TENSOR)
+            {
+                const onnx::TensorProto& tensor = attribute->t();
+                if (tensor.data_type() != onnx::TensorProto_DataType_INT64)
+                    return false;
+                int64_t value;
+                if (tensor.int64_data_size())
+                    value = tensor.int64_data(0);
+                else if (tensor.has_raw_data())
+                    value = ((int64_t*)tensor.raw_data().c_str())[0];
+                else
+                    return false;
+                if (src0->meta().type() != Synet::MetaTypeConst)
+                    return false;
+                if (src0->meta().alpha().type() != Synet::TensorType64i || src0->meta().alpha().shape().size() != 1 || src0->meta().alpha().shape()[0] != 1)
+                    return false;
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeConst;
+                layer.meta().alpha().type() = Synet::TensorType64i;
+                layer.meta().alpha().shape().push_back(src0->meta().alpha().i64()[0]);
+                layer.meta().alpha().i64().resize(src0->meta().alpha().i64()[0], value);
+                layer.src().resize(0);
+            }
+            else
+            {
+                return false;
+            }
             return true;
         }
 
@@ -1148,6 +1188,13 @@ namespace Synet
             return true;
         }
 
+        bool ConvertSqrtNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnaryOperation;
+            layer.unaryOperation().type() = UnaryOperationTypeSqrt;
+            return true;
+        }
+
         bool ConvertSqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1))
@@ -1549,6 +1596,8 @@ namespace Synet
             return true;
         }
     };
+
+    //---------------------------------------------------------------------------------------------
 
     bool ConvertOnnxToSynet(const String& srcParam, const String& srcGraph, bool trans, const String& dstXml, const String& dstBin, 
         const OnnxParam& onnxParam, const OptimizerParam& optParam)
