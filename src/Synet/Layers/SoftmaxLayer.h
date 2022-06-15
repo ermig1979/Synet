@@ -77,6 +77,51 @@ namespace Synet
             }
         }
 
+        template <typename T> void LogSoftmaxLayerForwardCpu(const T * src, size_t outer, size_t count, size_t inner, T * dst)
+        {
+            Synet::Tensor<T> _buffer({ inner });
+            T * buffer = _buffer.CpuData();
+            for (size_t o = 0; o < outer; ++o)
+            {
+                Synet::CpuCopy(src, inner, buffer);
+                const T * s = src + inner;
+                for (size_t i = 1; i < count; ++i)
+                {
+                    Synet::CpuMax(s, buffer, inner, buffer);
+                    s += inner;
+                }
+
+                s = src;
+                T * d = dst;
+                for (size_t i = 0; i < count; ++i)
+                {
+                    Synet::CpuSub(s, buffer, inner, d);
+                    s += inner;
+                    d += inner;
+                }
+
+                Synet::CpuExp(dst, count*inner, dst);
+
+                Synet::CpuCopy(dst, inner, buffer);
+                d = dst + inner;
+                for (size_t i = 1; i < count; ++i)
+                {
+                    Synet::CpuAdd(d, buffer, inner, buffer);
+                    d += inner;
+                }
+
+                d = dst;
+                for (size_t i = 0; i < count; ++i)
+                {
+                    Synet::CpuDiv(d, buffer, inner, d);
+                    Synet::CpuLog(d, inner, d);
+                    d += inner;
+                }
+                src += count*inner;
+                dst += count*inner;
+            }
+    }
+
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         template <> SYNET_INLINE void SoftmaxLayerForwardCpu<float>(const float * src, size_t outer, size_t count, size_t inner, float * dst)
         {
@@ -101,6 +146,7 @@ namespace Synet
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _axis = Min<size_t>(this->Param().softmax().axis(), src[0]->Count() - 1);
+            _log = this->Param().softmax().log();
             _outer = src[0]->Size(0, _axis);
             _count = src[0]->Axis(_axis);
             _inner = src[0]->Size(_axis + 1);
@@ -111,10 +157,14 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            Detail::SoftmaxLayerForwardCpu(src[0]->CpuData(), _outer, _count, _inner, dst[0]->CpuData());
+            if(_log)
+                Detail::LogSoftmaxLayerForwardCpu(src[0]->CpuData(), _outer, _count, _inner, dst[0]->CpuData());
+            else
+                Detail::SoftmaxLayerForwardCpu(src[0]->CpuData(), _outer, _count, _inner, dst[0]->CpuData());
         }
 
     private:
         size_t _outer, _count, _inner, _axis;
+        bool _log;
     };
 }

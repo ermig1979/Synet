@@ -391,5 +391,13 @@ namespace Synet
                     significant++;
             return significant;
         }
+
+        template<class T> static bool AllAreEqualTo(const std::vector<T>& vector, T value)
+        {
+            for (size_t i = 0; i < vector.size(); ++i)
+                if (vector[i] != value)
+                    return false;
+            return true;
+        }
     };
 }

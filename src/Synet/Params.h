@@ -620,6 +620,7 @@ namespace Synet
     struct SoftmaxParam
     {
         CPL_PARAM_VALUE(uint32_t, axis, 1);
+        CPL_PARAM_VALUE(bool, log, false);
     };
 
     struct SoftplusParam

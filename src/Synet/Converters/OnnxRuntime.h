@@ -119,7 +119,7 @@ namespace Synet
         {
             const onnx::GraphProto& graph = model.graph();
 
-            //PrintGraph(graph, std::cout, false, true);
+            //PrintGraph(graph, std::cout, true, true);
 
             network.info().version() = 1;
             network.info().name() = graph.name();
@@ -180,6 +180,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Exp" && !ConvertExpNode(node, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Expand" && !ConvertExpandNode(node, network.layers(), layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Flatten" && !ConvertFlattenNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Gather" && !ConvertGatherNode(node, layer))
@@ -189,6 +191,8 @@ namespace Synet
                 if (node.op_type() == "GlobalAveragePool" && !ConvertGlobalAveragePoolNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "LeakyRelu" && !ConvertLeakyReluNode(node, layer))
+                    return ErrorMessage(i, node);
+                if (node.op_type() == "LogSoftmax" && !ConvertLogSoftmaxNode(node, trans, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "MatMul" && !ConvertMatMulNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -227,6 +231,8 @@ namespace Synet
                 if (node.op_type() == "Squeeze" && !ConvertSqueezeNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Sub" && !ConvertSubNode(node, network.layers(), original, layer, reordered))
+                    return ErrorMessage(i, node);
+                if (node.op_type() == "Tile" && !ConvertTileNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Transpose" && !ConvertTransposeNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -736,6 +742,25 @@ namespace Synet
             return true;
         }
 
+        bool ConvertExpandNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
+            if (src1->type() == LayerTypeMeta && src1->meta().type() == MetaTypeConst && 
+                src1->meta().alpha().type() == TensorType64i  && AllAreEqualTo(src1->meta().alpha().i64(), int64_t(1)))
+            {
+                layer.type() = Synet::LayerTypeStub;
+                layer.src().resize(1);
+            }
+            else
+                return false;
+            return true;
+        }
+
         bool ConvertFlattenNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeFlatten;
@@ -801,6 +826,19 @@ namespace Synet
             layer.type() = Synet::LayerTypeRelu;
             if (!ConvertAtrributeFloat(node, "alpha", layer.relu().negativeSlope()))
                 return false;
+            return true;
+        }
+
+        bool ConvertLogSoftmaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeSoftmax;
+            if (!ConvertAtrributeInt(node, "axis", layer.softmax().axis()))
+                return false;
+            if (trans && !PermutedToNchw(layers, layer.src(), false, false, false))
+            {
+                return false;
+            }
+            layer.softmax().log() = true;
             return true;
         }
 
@@ -1258,6 +1296,38 @@ namespace Synet
                 layer.type() = Synet::LayerTypeBinaryOperation;
                 layer.binaryOperation().type() = BinaryOperationTypeSub;
             }
+            return true;
+        }
+
+        bool ConvertTileNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src1 == NULL)
+                return false;
+            if (src1->type() == LayerTypeMeta && src1->meta().type() == MetaTypeConst && src1->meta().alpha().type() == TensorType64i)
+            {
+                layer.type() = Synet::LayerTypeTile;
+                Longs shape = src1->meta().alpha().i64();
+                if (trans && !PermutedToNchw(layers, false, false, false))
+                {
+                    return false;
+                }                
+                for (size_t i = 0, already = 0; i < shape.size(); ++i)
+                {
+                    if (shape[i] != 1)
+                    {
+                        if (already)
+                            return false;
+                        layer.tile().axis() = i;
+                        layer.tile().tiles() = (uint32_t)shape[i];
+                        already = 1;
+                    }
+                }
+                layer.src().resize(1);
+            }
+
             return true;
         }
 

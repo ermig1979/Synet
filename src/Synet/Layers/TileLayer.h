@@ -45,12 +45,12 @@ namespace Synet
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             assert(src.size() == 1);
+            Shape shape = src[0]->Shape();
             _axis = this->Param().tile().axis();
             _tiles = this->Param().tile().tiles();
+            shape[_axis] *= _tiles;
             _outer = src[0]->Size(0, _axis);
             _inner = src[0]->Size(_axis);
-            Shape shape = src[0]->Shape();
-            shape[_axis] *= _tiles;
             dst[0]->Reshape(shape, src[0]->Format());
             this->UsePerfStat();
         }

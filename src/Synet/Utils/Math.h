@@ -152,6 +152,12 @@ namespace Synet
             dst[i] = ::exp(src[i]);
     }
 
+    template <typename T> void CpuLog(const T* src, size_t size, T* dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = ::log(src[i]);
+    }
+
     template <typename T> void CpuAdd(const T & value, T * dst, size_t size)
     {
         for (size_t i = 0; i < size; ++i)

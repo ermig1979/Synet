@@ -149,6 +149,14 @@ namespace Synet
                         }
                     }
                 }
+                else if (_operation == EltwiseOperationTypeSum && src[1]->Count() == 1)
+                {
+                    _special = SpecialBiasChannel;
+                    _trans = 1;
+                    _batch = 1;
+                    _channels = 1;
+                    _spatial = src[0]->Size();
+                }
                 else
                     assert(0);
             }
