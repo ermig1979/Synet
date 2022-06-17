@@ -237,19 +237,26 @@ namespace Synet
         template <> SYNET_INLINE void PoolingForwardCpuMax2D<float>(const float * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
             size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, TensorFormat format)
         {
-            ::SimdSynetPoolingForwardMax32f(src, channels, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dst, dstH, dstW, (::SimdTensorFormatType)format);
+            ::SimdSynetPoolingMax32f(src, channels, srcH, srcW, 1, kernelY, kernelX, 1, strideY, strideX, 0, padY, padX, dst, channels, dstH, dstW, (::SimdTensorFormatType)format);
+        }
+
+        template <> SYNET_INLINE void PoolingForwardCpuMax3D<float>(const float* src, size_t srcC, size_t srcH, size_t srcW, size_t kernelC, size_t kernelY, size_t kernelX,
+            size_t strideC, size_t strideY, size_t strideX, size_t padC, size_t padY, size_t padX, float* dst, size_t dstC, size_t dstH, size_t dstW, TensorFormat format)
+        {
+            ::SimdSynetPoolingMax32f(src, srcC, srcH, srcW, kernelC, kernelY, kernelX, strideC, strideY, strideX, 
+                padC, padY, padX, dst, dstC, dstH, dstW, (::SimdTensorFormatType)format);
         }
 
         template <> SYNET_INLINE void PoolingForwardCpuMax2D<uint8_t>(const uint8_t* src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
             size_t strideY, size_t strideX, size_t padY, size_t padX, uint8_t* dst, size_t dstH, size_t dstW, TensorFormat format)
         {
-            ::SimdSynetPoolingForwardMax8u(src, channels, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dst, dstH, dstW, (::SimdTensorFormatType)format);
+            ::SimdSynetPoolingMax8u(src, channels, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dst, dstH, dstW, (::SimdTensorFormatType)format);
         }
 
         template <> SYNET_INLINE void PoolingForwardCpuAverage2D<float>(const float * src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
             size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, int excludePad, TensorFormat format)
         {
-            ::SimdSynetPoolingForwardAverage(src, channels, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dst, dstH, dstW, (::SimdBool)excludePad, (::SimdTensorFormatType)format);
+            ::SimdSynetPoolingAverage(src, channels, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dst, dstH, dstW, (::SimdBool)excludePad, (::SimdTensorFormatType)format);
         }
 #endif
     }

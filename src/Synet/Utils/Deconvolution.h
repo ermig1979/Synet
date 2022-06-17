@@ -55,7 +55,7 @@ namespace Synet
                 _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
                 if (_context)
                     ::SimdRelease(_context);
-                _context = ::SimdSynetDeconvolution32fInit(batch, (const SimdConvolutionParameters*)conv, gemm);
+                _context = ::SimdSynetDeconvolution32fInit(batch, (const SimdConvolutionParameters*)conv, SimdSynetCompatibilityDefault);
             }
 #endif
         }
