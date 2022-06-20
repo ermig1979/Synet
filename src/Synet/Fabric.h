@@ -26,6 +26,7 @@
 
 #include "Synet/Layers/ActivationLayers.h"
 #include "Synet/Layers/AddLayer.h"
+#include "Synet/Layers/ArgMaxLayer.h"
 #include "Synet/Layers/BatchNormLayer.h"
 #include "Synet/Layers/BiasLayer.h"
 #include "Synet/Layers/BinaryOperationLayer.h"
@@ -101,6 +102,7 @@ namespace Synet
             switch (param.type())
             {
             case LayerTypeAdd: return new AddLayer<T>(param, context, method);
+            case LayerTypeArgMax: return new ArgMaxLayer<T>(param, context);
             case LayerTypeBatchNorm: return new BatchNormLayer<T>(param, context);
             case LayerTypeBias: return new BiasLayer<T>(param, context);
             case LayerTypeBinaryOperation: return new BinaryOperationLayer<T>(param, context);

@@ -162,6 +162,8 @@ namespace Synet
 
                 if (node.op_type() == "Add" && !ConvertAddNode(node, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "ArgMax" && !ConvertArgMaxNode(node, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "BatchNormalization" && !ConvertBatchNormalizationNode(node, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Cast" && !ConvertCastNode(node, network.layers(), original, layer))
@@ -434,6 +436,18 @@ namespace Synet
                 return false;
             layer.type() = Synet::LayerTypeEltwise;
             layer.eltwise().operation() = EltwiseOperationTypeSum;
+            return true;
+        }
+
+        bool ConvertArgMaxNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 1))
+                return false;
+            layer.type() = Synet::LayerTypeArgMax;
+            if (!ConvertAtrributeInt(node, "axis", layer.argMax().axis()))
+                return false;
+            if (!ConvertAtrributeInt(node, "keepdims", layer.argMax().keepDims()))
+                return false;
             return true;
         }
 

@@ -318,11 +318,26 @@ namespace Test
                 Shape shape = Convert<size_t, int64_t>(_outputValues->at(i).GetTensorTypeAndShapeInfo().GetShape());
                 Shape index(shape.size(), 0);
                 index[0] = b;
-                const float * src = _outputValues->at(i).GetTensorMutableData<float>();
                 float* dst = _output[i].CpuData(index);
                 size_t size = Synet::Detail::Size(shape);
-                for (size_t j = 0; j < size; ++j)
-                    dst[j] = src[j];
+                ONNXTensorElementDataType type = _outputValues->at(i).GetTensorTypeAndShapeInfo().GetElementType();
+                if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT)
+                {
+                    const float * src = _outputValues->at(i).GetTensorMutableData<float>();
+                    for (size_t j = 0; j < size; ++j)
+                        dst[j] = src[j];
+                }
+                else if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64)
+                {
+                    const int64_t * src = _outputValues->at(i).GetTensorMutableData<int64_t>();
+                    for (size_t j = 0; j < size; ++j)
+                        dst[j] = (float)src[j];
+                }
+                else
+                {
+                    std::cout << "OnnxRuntime: unknown format of output tensor: " << type << " !" << std::endl;
+                    assert(0);
+                }
             }
         }
     };

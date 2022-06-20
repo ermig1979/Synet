@@ -290,6 +290,9 @@ namespace Test
             case Synet::TensorType32i:
                 SetOutputT(src.As32i(), back, dst);
                 break;
+            case Synet::TensorType64i:
+                SetOutputT(src.As64i(), back, dst);
+                break;
             default:
                 assert(0);
             }

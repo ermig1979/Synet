@@ -32,6 +32,7 @@
 
 CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeAdd,
+    LayerTypeArgMax,
     LayerTypeBatchNorm,
     LayerTypeBias,
     LayerTypeBinaryOperation,
@@ -287,9 +288,10 @@ namespace Synet
         CPL_PARAM_VALUE(TensorFormat, format, TensorFormatNchw);
     };
 
-    struct CastParam
+    struct ArgMaxParam
     {
-        CPL_PARAM_VALUE(TensorType, type, TensorTypeUnknown);
+        CPL_PARAM_VALUE(int32_t, axis, 0);
+        CPL_PARAM_VALUE(bool, keepDims, true);
     };
 
     struct BatchNormParam
@@ -314,6 +316,11 @@ namespace Synet
     struct BroadcastParam
     {
         CPL_PARAM_VALUE(bool, fixed, false);
+    };
+
+    struct CastParam
+    {
+        CPL_PARAM_VALUE(TensorType, type, TensorTypeUnknown);
     };
 
     struct ConcatParam
@@ -716,6 +723,7 @@ namespace Synet
         CPL_PARAM_VECTOR(WeightParam, weight);
         CPL_PARAM_VALUE(Strings, origin, Strings());
 
+        CPL_PARAM_STRUCT(ArgMaxParam, argMax);
         CPL_PARAM_STRUCT(BatchNormParam, batchNorm);
         CPL_PARAM_STRUCT(BiasParam, bias);
         CPL_PARAM_STRUCT(BinaryOperationParam, binaryOperation);
