@@ -44,8 +44,21 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            const TopKParam & param = this->Param().topK();
             Shape shape = src[0]->Shape();
+            shape[param.axis()] = 1;
+            _outer = src[0]->Size(0, param.axis());
+            _count = src[0]->Axis(param.axis());
+            _inner = src[0]->Size(param.axis() + 1);
+            _type = param.indexElementType();
+
             dst[0]->Reshape(shape, src[0]->Format());
+            if (_type == TensorType32i)
+                dst[1]->As32i().Reshape(shape, src[0]->Format());
+            else if (_type == TensorType64i)
+                dst[1]->As64i().Reshape(shape, src[0]->Format());
+            else
+                assert(0);
             this->UsePerfStat();
         }
 
@@ -54,8 +67,21 @@ namespace Synet
         {
             const T * pSrc = src[0]->CpuData();
             T * pDst = dst[0]->CpuData();
+            switch (_type)
+            {
+            case TensorType32i: ForwardCpu<int32_t>(pSrc, pDst, dst[1]->As32i().CpuData()); break;
+            case TensorType64i: ForwardCpu<int64_t>(pSrc, pDst, dst[1]->As64i().CpuData()); break;
+            default:
+                assert(0);
+            }
+        }
+
+        template<class I> void ForwardCpu(const T * src, T * dst, I * idx)
+        {
         }
 
     private:
+        size_t _outer, _count, _inner;
+        TensorType _type;
     };
 }

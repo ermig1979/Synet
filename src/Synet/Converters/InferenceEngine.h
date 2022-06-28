@@ -35,7 +35,7 @@ namespace Synet
     class InferenceEngineToSynet
     {
     public:
-        bool Convert(const String & srcModel, const String & srcWeight, bool trans, const String & dstModel, const String & dstWeight, const OptimizerParam & optParam)
+        bool Convert(const String & srcModel, const String & srcWeight, bool trans, const String & dstModel, const String & dstWeight, const OnnxParam &onnxParam, const OptimizerParam & optParam)
         {
             if (!Cpl::FileExists(srcModel))
             {
@@ -67,7 +67,7 @@ namespace Synet
             int version;
             Synet::NetworkParamHolder dstXml;
             Vector dstBin = srcBin;
-            if (!ConvertNetwork(srcXml, srcBin, trans, dstXml(), dstBin, version))
+            if (!ConvertNetwork(srcXml, srcBin, trans, onnxParam, dstXml(), dstBin, version))
                 return false;
 
             OptimizerParamHolder param;
@@ -123,7 +123,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertNetwork(const XmlDoc & srcXml, const Vector & srcBin, bool trans, Synet::NetworkParam & dstXml, Vector & dstBin, int & version)
+        bool ConvertNetwork(const XmlDoc & srcXml, const Vector & srcBin, bool trans, const OnnxParam &onnxParam, Synet::NetworkParam & dstXml, Vector & dstBin, int & version)
         {
             const XmlNode * pNet = srcXml.FirstNode("net");
             if (pNet == NULL)
@@ -152,7 +152,7 @@ namespace Synet
             if (version >= 10 && version <= 11)
             {
                 InferenceEngineConverterV10 converterV10;
-                if (!converterV10.Convert(*pNet, srcBin, trans, dstXml, dstBin))
+                if (!converterV10.Convert(*pNet, srcBin, trans, onnxParam, dstXml, dstBin))
                 {
                     std::cout << "Can't convert IE model v" << version << "!" << std::endl;
                     return false;
@@ -168,9 +168,9 @@ namespace Synet
         }
     };
 
-    bool ConvertInferenceEngineToSynet(const String & srcData, const String & srcWeights, bool trans, const String & dstXml, const String & dstBin, const OptimizerParam& optParam = OptimizerParam())
+    bool ConvertInferenceEngineToSynet(const String & srcData, const String & srcWeights, bool trans, const String & dstXml, const String & dstBin, const OnnxParam &onnxParam = OnnxParam(), const OptimizerParam& optParam = OptimizerParam())
     {
         InferenceEngineToSynet ieToSynet;
-        return ieToSynet.Convert(srcData, srcWeights, trans, dstXml, dstBin, optParam);
+        return ieToSynet.Convert(srcData, srcWeights, trans, dstXml, dstBin, onnxParam, optParam);
     }
 }

@@ -84,7 +84,7 @@ namespace Test
         }
         param().optimizer().bf16Enable() = options.bf16;
         return Synet::ConvertInferenceEngineToSynet(options.firstModel, options.firstWeight, 
-            options.tensorFormat == 1, options.secondModel, options.secondWeight, param().optimizer());
+            options.tensorFormat == 1, options.secondModel, options.secondWeight, param().onnx(), param().optimizer());
     }
 }
 

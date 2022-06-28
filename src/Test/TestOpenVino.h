@@ -416,6 +416,9 @@ namespace Test
                     case ov::element::Type_t::i32:
                         SetOutput(dims, strides, 0, _ov->output[o].data<int32_t>(), _output[o].CpuData() + b * size);
                         break;
+                    case ov::element::Type_t::i64:
+                        SetOutput(dims, strides, 0, _ov->output[o].data<int64_t>(), _output[o].CpuData() + b * size);
+                        break;
                     default:
                         assert(0);
                     }
@@ -448,7 +451,8 @@ namespace Test
             Shape dims = src.get_shape();
             Shape strides = src.get_strides();
             Synet::TensorFormat format = Synet::TensorFormatNchw;
-            dims[0] = _ov->batchSize;
+            if(dims[0] == 1)
+                dims[0] = _ov->batchSize;
             ov::element::Type_t type = src.get_element_type();
             switch (type)
             {
@@ -464,6 +468,14 @@ namespace Test
             {
                 Synet::Tensor<int32_t> tensor(dims, format);
                 const int32_t* pOut = (int32_t*)src.data();
+                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
+                break;
+            }
+            case ov::element::Type_t::i64:
+            {
+                Synet::Tensor<int64_t> tensor(dims, format);
+                const int64_t* pOut = (int64_t*)src.data();
                 SetOutput(dims, strides, 0, pOut, tensor.CpuData());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;

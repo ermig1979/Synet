@@ -432,6 +432,9 @@ namespace Test
                     case InferenceEngine::Precision::I32:
                         SetOutput(dims, strides, 0, (const int32_t*)_ieOutput[o]->buffer(), _output[o].CpuData() + b * size);
                         break;
+                    case InferenceEngine::Precision::I64:
+                        SetOutput(dims, strides, 0, (const int64_t*)_ieOutput[o]->buffer(), _output[o].CpuData() + b * size);
+                        break;
                     default:
                         assert(0);
                     }
@@ -526,6 +529,14 @@ namespace Test
             {
                 Synet::Tensor<int32_t> tensor(dims, format);
                 const int32_t* pOut = blob.buffer();
+                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
+                break;
+            }
+            case InferenceEngine::Precision::I64:
+            {
+                Synet::Tensor<int64_t> tensor(dims, format);
+                const int64_t* pOut = blob.buffer();
                 SetOutput(dims, strides, 0, pOut, tensor.CpuData());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;

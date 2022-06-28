@@ -84,6 +84,17 @@ namespace Synet
             return true;
         }
 
+        static String ValidName(const String & src)
+        {
+            String dst = src;
+            for (size_t i = 0; i < dst.size(); ++i)
+            {
+                if (dst[i] == ':')
+                    dst[i] = '_';
+            }
+            return dst;
+        }
+
         static bool ParseInputOutput(const XmlNode &src, const Edges & edges, const LayerParams & layers, LayerParam & dst, IndexMap & index, TensorInfoMap & info)
         {
             size_t layerId;
@@ -91,7 +102,7 @@ namespace Synet
             index[layerId] = layers.size();
             //assert(layerId == layers.size());
 
-            dst.name() = src.FirstAttribute("name")->Value();
+            dst.name() = ValidName(src.FirstAttribute("name")->Value());
 
             const XmlNode* pInput = src.FirstNode("input");
             if (pInput)

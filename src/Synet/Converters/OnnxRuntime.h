@@ -33,14 +33,6 @@
 #include "Synet/Converters/SynetUtils.h"
 #include "Synet/Utils/FileUtils.h"
 
-namespace Synet
-{
-    struct OnnxParam
-    {
-        CPL_PARAM_VALUE(Strings, toNchwHints, Strings());
-    };
-}
-
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
 
 #include "onnx/onnx.pb.h"

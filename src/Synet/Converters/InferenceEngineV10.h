@@ -31,7 +31,7 @@ namespace Synet
     class InferenceEngineConverterV10 : public InferenceEngineConverter
     {
     public:
-        bool Convert(const XmlNode& srcXml, const std::vector<float>& srcBin, bool trans, Synet::NetworkParam & dstXml, std::vector<float>& dstBin)
+        bool Convert(const XmlNode& srcXml, const std::vector<float>& srcBin, bool trans, const OnnxParam &onnxParam, Synet::NetworkParam & dstXml, std::vector<float>& dstBin)
         {
             Edges edges;
             if (!ParseEdges(srcXml, edges))
@@ -138,9 +138,11 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Sigmoid" && !ConvertSigmoidLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
-                if (type == "SoftMax" && !ConvertSoftmaxLayer(pLayer, dstXml.layers(), trans, layer))
+                if ((type == "SoftMax" || type == "LogSoftmax") && !ConvertSoftmaxOrLogSoftmaxLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Split" && !ConvertSplitLayer(pLayer, dstXml.layers(), trans, layer))
+                    return ErrorMessage(pLayer);
+                if (type == "Sqrt" && !ConvertSqrtLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Squeeze" && !ConvertSqueezeLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
@@ -179,6 +181,9 @@ namespace Synet
                     dstXml.layers().push_back(children[c]);
                 pPrevLayer = pLayer;
                 pLayer = pNextLayer;
+
+                if (trans && !ManualInsertToNchwPermute(onnxParam, dstXml.layers()))
+                    return false;
             }
 
             if (!RemoveUnusedConst(dstXml.layers()))
@@ -272,6 +277,13 @@ namespace Synet
             const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
             if (src0 == NULL || src1 == NULL)
                 return false;
+            if (src1->type() == LayerTypeMeta && src1->meta().type() == MetaTypeConst &&
+                src1->meta().alpha().type() == TensorType64i && AllAreEqualTo(src1->meta().alpha().i64(), int64_t(1)))
+            {
+                layer.type() = Synet::LayerTypeStub;
+                layer.src().resize(1);
+                return true;
+            }
             layer.type() = Synet::LayerTypeBroadcast;
             if (src0->type() == LayerTypeConst && src1->type() == LayerTypeMeta)
                 layer.broadcast().fixed() = true;
@@ -1377,7 +1389,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertSoftmaxLayer(const XmlNode* pLayer, const LayerParams& layers, bool trans, LayerParam& layer)
+        bool ConvertSoftmaxOrLogSoftmaxLayer(const XmlNode* pLayer, const LayerParams& layers, bool trans, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeSoftmax;
             const XmlNode* pData = pLayer->FirstNode("data");
@@ -1393,6 +1405,9 @@ namespace Synet
                     layer.softmax().axis() = (int32_t)nchw[layer.softmax().axis()];
                 }
             }
+            String type = pLayer->FirstAttribute("type")->Value();
+            if (type == "LogSoftmax")
+                layer.softmax().log() = true;
             return true;
         }
 
@@ -1450,6 +1465,13 @@ namespace Synet
             }
             else
                 return false;
+            return true;
+        }
+
+        bool ConvertSqrtLayer(const XmlNode* pLayer, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnaryOperation;
+            layer.unaryOperation().type() = UnaryOperationTypeSqrt;
             return true;
         }
 
@@ -1598,7 +1620,7 @@ namespace Synet
             Shape output = ConvertOutputShape(pLayer);
             if (input.size() != output.size())
                 return false;
-            for (size_t i = 0; i < input.size(); ++i)
+            for (size_t i = 0, already = 0; i < input.size(); ++i)
             {
                 if (input[i] != output[i])
                 {
@@ -1619,6 +1641,11 @@ namespace Synet
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
+            const LayerParam* sp1 = GetLayer(layers, layer.src()[1]);
+            if (sp1 == NULL || sp1->type() != LayerTypeMeta || sp1->meta().type() != MetaTypeConst ||
+                sp1->meta().alpha().type() != TensorType64i)
+                return false;
+            int64_t k = sp1->meta().alpha().i64()[0];
             const XmlNode* pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;
@@ -1634,10 +1661,18 @@ namespace Synet
                 return false;
             if (indexElementType == "i64")
                 layer.topK().indexElementType() = TensorType64i;
+            else if (indexElementType == "i32")
+                layer.topK().indexElementType() = TensorType32i;
             else
                 return false;
-            layer.dst().resize(1);
-            layer.dst()[0] = layer.name();
+            if (k == 1 && layer.topK().mode() == TopKModeMax)
+            {
+                layer.type() = LayerTypeArgMax;
+                layer.src().resize(1);
+                layer.dst().resize(1);
+                layer.dst()[0] = layer.name();
+                layer.argMax().axis() = layer.topK().axis();
+            }
             return true;
         }
 
@@ -2026,6 +2061,31 @@ namespace Synet
                 return Cpl::ToVal<int>(version.substr(5));
             else
                 return -1;
+        }
+
+        bool ManualInsertToNchwPermute(const OnnxParam& onnxParam, LayerParams& layers)
+        {
+            LayerParam& layer = layers.back();
+            for (size_t h = 0; h < onnxParam.toNchwHints().size(); ++h)
+            {
+                if (layer.name() == onnxParam.toNchwHints()[h])
+                {
+                    for (size_t d = 0; d < layer.dst().size(); ++d)
+                    {
+                        String old = layer.dst()[d];
+                        layer.dst()[d] = old + "_before_permute_to_nchw";
+                        LayerParam permute;
+                        permute.type() = LayerTypePermute;
+                        permute.src().push_back(layer.dst()[d]);
+                        permute.name() = old + "_permute_to_nchw";
+                        permute.dst().push_back(old);
+                        permute.permute().order() = Shape({ 0, 3, 1, 2 });
+                        permute.permute().format() = TensorFormatNchw;
+                        layers.push_back(permute);
+                    }
+                }
+            }
+            return true;
         }
     };
 }

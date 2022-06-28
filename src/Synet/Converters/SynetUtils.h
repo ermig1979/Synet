@@ -30,6 +30,11 @@
 
 namespace Synet
 {
+    struct OnnxParam
+    {
+        CPL_PARAM_VALUE(Strings, toNchwHints, Strings());
+    };
+
     class SynetUtils
     {
     protected:
@@ -185,12 +190,16 @@ namespace Synet
                 return true;
             for (size_t s = 0; s < layer.src().size(); ++s)
             {
-                Pin src = ParsePin(layer.src()[s]);
+                const String & src = layer.src()[s];
                 for (size_t l = 0; l < current; ++l)
                 {
-                    if (src.name == layers[l].name() && layers[l].type() != LayerTypeMeta && layers[l].type() &&
-                        PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
-                        return true;
+                    for (size_t d = 0; d < layers[l].dst().size(); ++d)
+                    {
+                        const String & dst = layers[l].dst()[d];
+                        if (src == dst && layers[l].type() != LayerTypeMeta && layers[l].type() &&
+                            PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
+                            return true;
+                    }
                 }
             }
             return false;
@@ -208,12 +217,15 @@ namespace Synet
         {
             for (size_t s = 0; s < names.size(); ++s)
             {
-                Pin src = ParsePin(names[s]);
                 for (size_t l = 0; l < layers.size(); ++l)
                 {
-                    if (src.name == layers[l].name() && layers[l].type() != LayerTypeMeta && layers[l].type() &&
-                        PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
-                        return true;
+                    for (size_t d = 0; d < layers[l].dst().size(); ++d)
+                    {
+                        const String & dst = layers[l].dst()[d];
+                        if (names[s] == dst && layers[l].type() != LayerTypeMeta && layers[l].type() &&
+                            PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
+                            return true;
+                    }
                 }
             }
             return false;
@@ -225,15 +237,17 @@ namespace Synet
             int count = 0;
             for (size_t s = 0; s < names.size(); ++s)
             {
-                Pin src = ParsePin(names[s]);
                 for (size_t l = 0; l < layers.size(); ++l)
                 {
-                    if (src.name == layers[l].name() && layers[l].type() != LayerTypeMeta && layers[l].type() &&
-                        PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
+                    for (size_t d = 0; d < layers[l].dst().size(); ++d)
                     {
-                        stat[s] = 1;
-                        count++;
-                        break;
+                        if(names[s] == layers[l].dst()[d] && layers[l].type() != LayerTypeMeta && layers[l].type() &&
+                            PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
+                        {
+                            stat[s] = 1;
+                            count++;
+                            break;
+                        }
                     }
                 }
             }
