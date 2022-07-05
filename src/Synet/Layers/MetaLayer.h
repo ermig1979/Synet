@@ -451,7 +451,7 @@ namespace Synet
                 size_t size = 0;
                 for (size_t i = 0; i < src.size(); ++i)
                 {
-                    assert(src[i]->Count() == 1);
+                    //assert(src[i]->Count() == 1);
                     size += src[i]->Size();
                 }
                 dst0.Reshape({ size });

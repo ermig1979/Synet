@@ -62,6 +62,9 @@ namespace Synet
                     case TensorType64i:
                         remove[i] = (size_t)src[1]->As64i().CpuData()[i];
                         break;
+                    case TensorType64u:
+                        remove[i] = (size_t)src[1]->As64u().CpuData()[i];
+                        break;
                     default:
                         assert(0);
                     }

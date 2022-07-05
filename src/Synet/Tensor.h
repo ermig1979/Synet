@@ -479,7 +479,7 @@ namespace Synet
             case TensorType64u:
             {
                 _type = TensorType64u;
-                As64i().Reshape(param.shape(), param.format());
+                As64u().Reshape(param.shape(), param.format());
                 CpuCopy(param.u64().data(), param.u64().size(), As64u().CpuData());
                 break;
             }
