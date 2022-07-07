@@ -1,0 +1,147 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="Prop.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C809D7A3-6C52-4E36-8582-00CED929317F}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectName>Synet</ProjectName>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">NoExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">NotSet</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <PreBuildEvent>
+      <Command>"$(ProjectDir)..\cmd\GetVersion.cmd" "$(ProjectDir)..\.." "1"</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Args.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Config.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Console.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Defs.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\File.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Html.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Log.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Param.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Performance.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\String.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Table.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Xml.h" />
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Yaml.h" />
+    <ClInclude Include="..\..\src\Synet\Buffer.h" />
+    <ClInclude Include="..\..\src\Synet\Common.h" />
+    <ClInclude Include="..\..\src\Synet\Context.h" />
+    <ClInclude Include="..\..\src\Synet\Converters\Deoptimizer.h" />
+    <ClInclude Include="..\..\src\Synet\Converters\InferenceEngine.h" />
+    <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineBase.h" />
+    <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineV10.h" />
+    <ClInclude Include="..\..\src\Synet\Converters\OnnxRuntime.h" />
+    <ClInclude Include="..\..\src\Synet\Converters\Optimizer.h" />
+    <ClInclude Include="..\..\src\Synet\Converters\SynetUtils.h" />
+    <ClInclude Include="..\..\src\Synet\Decoders\Anchor.h" />
+    <ClInclude Include="..\..\src\Synet\Decoders\Ultraface.h" />
+    <ClInclude Include="..\..\src\Synet\Decoders\YoloV5.h" />
+    <ClInclude Include="..\..\src\Synet\Fabric.h" />
+    <ClInclude Include="..\..\src\Synet\Layer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ActivationLayers.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\AddLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\BatchNormLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\BiasLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\BinaryOperationLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\BroadcastLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\CastLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ConcatLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ConstLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Convolution32fLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Convolution8iLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ConvolutionLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\CtcGreedyDecoderLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\DeconvolutionLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\DetectionOutputLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\EltwiseLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ExpandDimsLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\FillLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\FlattenLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\FusedLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\GatherLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\InnerProductLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\InputLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Interp2Layer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\InterpLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\LogLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\LrnLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution8iLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolutionLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\MetaLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\NonMaxSuppressionLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\NormalizeLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\PadLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\PermuteLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\PoolingLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\PowerLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\PreluLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\PriorBoxClusteredLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\PriorBoxLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\RegionLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ReorgLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ReshapeLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ReverseSequenceLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\RnnGruBdLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ScaleLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ShortcutLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ShuffleLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\SliceLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\SqueezeLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\StridedSliceLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\StubLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\SwitchLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\TensorIteratorLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\TileLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\TopKLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\UnaryOperationLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\UnpackLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\UpsampleLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\YoloLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Network.h" />
+    <ClInclude Include="..\..\src\Synet\Params.h" />
+    <ClInclude Include="..\..\src\Synet\Quantization\Bf16.h" />
+    <ClInclude Include="..\..\src\Synet\Quantization\Const.h" />
+    <ClInclude Include="..\..\src\Synet\Quantization\Convert.h" />
+    <ClInclude Include="..\..\src\Synet\Quantization\Gemm.h" />
+    <ClInclude Include="..\..\src\Synet\Quantization\Stat.h" />
+    <ClInclude Include="..\..\src\Synet\Region.h" />
+    <ClInclude Include="..\..\src\Synet\Synet.h" />
+    <ClInclude Include="..\..\src\Synet\Tensor.h" />
+    <ClCompile Include="..\..\src\Synet\Synet.cpp" />
+    <ClInclude Include="..\..\src\Synet\Utils\Activation.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\Convolution.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\ConvParam.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\DebugPrint.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\Deconvolution.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\Difference.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\FileUtils.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\Gemm.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\InnerProduct.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\Math.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\MergedConvolution.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\SetInput.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\Statistics.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\Winograd.h" />
+    <ClInclude Include="..\..\src\Synet\Version.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>
