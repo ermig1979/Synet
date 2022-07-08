@@ -62,15 +62,8 @@ namespace Synet
             const Tensors& weight = this->Weight();
             const ConvParam& conv = this->_conv;
             AlgParam & alg = this->_alg;
-#if defined(SYNET_BF16_ROUND_TEST)
-            if (this->Param().convolution().bf16() && this->Options().bf16RoundTest)
-            {
-                RoundAsTo16(weight[0].CpuData(), weight[0].Size(), (float*)weight[0].CpuData());
-                Base::Extend32f(buf, 1, src->Shape(), src->Format());
-            }
-#endif
             dst->Reshape(conv.DstShape(alg.batch), src->Format());
-            _convolution32f.Init(alg.batch, &conv, SYNET_EXTERNAL_GEMM);
+            _convolution32f.Init(alg.batch, &conv, this->Param().convolution().bf16());
             if (_convolution32f.Enable())
             {
                 Base::Extend32f(buf, 0, Shp(_convolution32f.ExternalBufferSize()), src->Format());
@@ -83,15 +76,7 @@ namespace Synet
 
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-#if defined(SYNET_BF16_ROUND_TEST)
-            if (this->Param().convolution().bf16() && this->Options().bf16RoundTest)
-            {
-                RoundAsTo16(src[0]->CpuData(), src[0]->Size(), Base::Buf32f(buf, 1));
-                ForwardCpu(Base::Buf32f(buf, 1), Base::Buf32f(buf, 0), dst[0]->CpuData());
-            }
-            else
-#endif
-                ForwardCpu(src[0]->CpuData(), Base::Buf32f(buf, 0), dst[0]->CpuData());
+            ForwardCpu(src[0]->CpuData(), Base::Buf32f(buf, 0), dst[0]->CpuData());
         }
 
         void ForwardCpu(const T * src, T * buf, T * dst)

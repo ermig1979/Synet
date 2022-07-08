@@ -144,7 +144,7 @@ namespace Synet
                 _grD = _siD * _siS;
             }
 
-            _deconvolution32f.Init(_num, &_conv, SYNET_EXTERNAL_GEMM);
+            _deconvolution32f.Init(_num, &_conv);
             if (_deconvolution32f.Enable())
             {
                 buf[TensorType32f*BUFFER_COUNT]->Extend({ _deconvolution32f.ExternalBufferSize() });

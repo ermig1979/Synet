@@ -47,9 +47,7 @@ namespace Synet
 #endif
         }
 
-        typedef void(*Gemm32fNNPtr)(size_t M, size_t N, size_t K, const float* alpha, const float* A, size_t lda, const float* B, size_t ldb, const float* beta, float* C, size_t ldc);
-
-        SYNET_INLINE void Init(size_t batch, const ConvParam * conv, Gemm32fNNPtr gemm)
+        SYNET_INLINE void Init(size_t batch, const ConvParam * conv, bool bf16)
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_batch != batch || _srcH != conv->srcH || _srcW != conv->srcW)
@@ -57,7 +55,16 @@ namespace Synet
                 _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
                 if (_context)
                     ::SimdRelease(_context), _context = NULL;
-                _context = ::SimdSynetConvolution32fInit(batch, (const SimdConvolutionParameters*)conv, SimdSynetCompatibilityDefault);
+                SimdSynetCompatibilityType compatibility = SimdSynetCompatibilityDefault;
+                if (bf16)
+                {
+#if defined(SYNET_BF16_ROUND_TEST)
+                    compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility16bfSoft | SimdSynetCompatibilityFmaUse);
+#else
+                    compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility16bfHard | SimdSynetCompatibilityFmaUse);
+#endif
+                }
+                _context = ::SimdSynetConvolution32fInit(batch, (const SimdConvolutionParameters*)conv, compatibility);
             }
 #endif
         }

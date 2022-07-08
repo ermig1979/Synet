@@ -208,7 +208,7 @@ namespace Synet
             const ConvParam& back = a.conv[a.count - 1];
             dst->Reshape(Shp(a.batch, back.dstH, back.dstW, back.dstC), src->Format());
 
-            _mergedConvolution32f.Init(a.batch, a.conv, a.count, a.add);
+            _mergedConvolution32f.Init(a.batch, a.conv, a.count, a.add, Bf16());
             if (_mergedConvolution32f.Enable())
             {
                 Base::Extend32f(buf, 0, Shp(_mergedConvolution32f.ExternalBufferSize()));
@@ -257,5 +257,16 @@ namespace Synet
         ConvolutionBiasActivationPtr _convolution[Detail::MCC_MAX];
 
         MergedConvolution32f _mergedConvolution32f;
+
+        bool Bf16() const
+        {
+            const MergedConvolutionParam& p = this->Param().mergedConvolution();
+            for (size_t c = 0; c < p.conv().size(); ++c)
+            {
+                if (p.conv()[c].bf16())
+                    return true;
+            }
+            return false;
+        }
     };
 }

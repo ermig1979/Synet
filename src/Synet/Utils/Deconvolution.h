@@ -45,9 +45,7 @@ namespace Synet
 #endif
         }
 
-        typedef void(*Gemm32fNNPtr)(size_t M, size_t N, size_t K, const float * alpha, const float* A, size_t lda, const float* B, size_t ldb, const float* beta, float* C, size_t ldc);
-
-        void Init(size_t batch, const ConvParam * conv, Gemm32fNNPtr gemm)
+        void Init(size_t batch, const ConvParam * conv)
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_batch != batch || _srcH != conv->srcH || _srcW != conv->srcW)
