@@ -17,7 +17,8 @@ if [ ! -d $BUILD_DIR ]; then mkdir $BUILD_DIR; fi
 
 cd $BUILD_DIR
 
-cmake ../prj/cmake -DMODE=$TEST_MODE -DTOOLCHAIN="/usr/bin/c++" -DSYNET_INFO=$ECHO -DSYNET_SIMD=1 -DSIMD_AVX512=1 -DSIMD_AVX512VNNI=1 -DPERF_STAT=1 -DCMAKE_BUILD_TYPE=Release
+cmake ../prj/cmake -DMODE=$TEST_MODE -DTOOLCHAIN="/usr/bin/c++" -DSYNET_INFO=$ECHO -DSYNET_SIMD=1 -DPERF_STAT=1 -DCMAKE_BUILD_TYPE=Release \
+	-DSIMD_AVX512=1 -DSIMD_AVX512VNNI=1 -DSIMD_AVX512BF16=1 -DSIMD_AMX=1 -DSIMD_AMX_EMULATE=0 -DSYNET_BF16_ROUND_TEST=0
 if [ $? -ne 0 ] ; then 	exit; fi
 
 if [ ${HT} == "1" ]; then make "-j$(nproc)"; else make "-j$(grep "^core id" /proc/cpuinfo | sort -u | wc -l)"; fi
