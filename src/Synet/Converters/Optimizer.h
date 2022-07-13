@@ -37,6 +37,7 @@ namespace Synet
         CPL_PARAM_VALUE(uint32_t, mergeTwoConvolutionsOutputNumMax, 256);
         CPL_PARAM_VALUE(bool, mergeInt8Convolutions, true);
         CPL_PARAM_VALUE(bool, bf16Enable, false);
+        CPL_PARAM_VALUE(uint32_t, bf16MinEffectiveSrcC, 4);
     };
 
     CPL_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);
@@ -702,6 +703,10 @@ namespace Synet
                     l3.convolution().outputNum() == l3.convolution().group() && !InsideLink(src, index, 4) &&
                     l2.convolution().outputNum() >= l1.convolution().outputNum())
                     return false;
+            }
+            if (l0.convolution().bf16() != l2.convolution().bf16())
+            {
+                return false;
             }
             LayerParam layer;
             layer.type() = LayerTypeMergedConvolution;
@@ -1798,7 +1803,6 @@ namespace Synet
             return true;
         }
 
-
         bool SetBf16Options(LayerParams& layers)
         {
             if (!_param.bf16Enable())
@@ -1808,15 +1812,28 @@ namespace Synet
                 LayerParam &layer = layers[i];
                 if (layer.type() == LayerTypeConvolution)
                 {
-                    if(layer.convolution().group() == 1)
+                    if(layer.convolution().group() == 1 && EffectiveSrcC(layer) >= _param.bf16MinEffectiveSrcC())
                         layer.convolution().bf16() = true;
                 }
                 else if (layer.type() == LayerTypeInnerProduct)
                 {
-                    layer.innerProduct().bf16() = true;
+                    layer.innerProduct().bf16() = false;
                 }
             }
             return true;
+        }
+
+        size_t EffectiveSrcC(const LayerParam& layer)
+        {
+            if (layer.type() == LayerTypeConvolution)
+            {
+                const WeightParam& weight = layer.weight()[0];
+                if (weight.format() == TensorFormatNhwc)
+                    return weight.dim()[2];
+                else
+                    return weight.dim()[1];
+            }
+            return 0;
         }
     };
 
