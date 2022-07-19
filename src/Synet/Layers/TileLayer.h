@@ -44,13 +44,31 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            assert(src.size() == 1);
             Shape shape = src[0]->Shape();
-            _axis = this->Param().tile().axis();
-            _tiles = this->Param().tile().tiles();
-            shape[_axis] *= _tiles;
-            _outer = src[0]->Size(0, _axis);
-            _inner = src[0]->Size(_axis);
+            size_t axis = 0;
+            if (src.size() == 1)
+            {
+                axis = this->Param().tile().axis();
+                _tiles = this->Param().tile().tiles();
+            }
+            else
+            {
+                assert(src[0]->Count() == src[1]->Size() && src[1]->GetType() == TensorType64i);
+                const int64_t * pSrc1 = src[1]->As64i().CpuData();
+                _tiles = 1;
+                for (size_t a = 0; a < src[1]->Size(); ++a)
+                {
+                    if (pSrc1[a] != src[0]->Axis(a))
+                    {
+                        axis = a;
+                        _tiles = src[1]->Axis(a);
+                        break;
+                    }
+                }
+            }
+            shape[axis] *= _tiles;
+            _outer = src[0]->Size(0, axis);
+            _inner = src[0]->Size(axis);
             dst[0]->Reshape(shape, src[0]->Format());
             this->UsePerfStat();
         }
@@ -80,6 +98,6 @@ namespace Synet
         }
 
     private:
-        size_t _axis, _tiles, _outer, _inner;
+        size_t _tiles, _outer, _inner;
     };
 }

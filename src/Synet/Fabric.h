@@ -51,6 +51,7 @@
 #include "Synet/Layers/Interp2Layer.h"
 #include "Synet/Layers/LogLayer.h"
 #include "Synet/Layers/LrnLayer.h"
+#include "Synet/Layers/LstmLayer.h"
 #include "Synet/Layers/MergedConvolution32fLayer.h"
 #include "Synet/Layers/MergedConvolution8iLayer.h"
 #include "Synet/Layers/MetaLayer.h"
@@ -134,6 +135,7 @@ namespace Synet
             case LayerTypeInterp2: return new Interp2Layer<T>(param, context);
             case LayerTypeLog: return new LogLayer<T>(param, context);
             case LayerTypeLrn: return new LrnLayer<T>(param, context);
+            case LayerTypeLstm: return new LstmLayer<T>(param, context);
             case LayerTypeMergedConvolution:
                 if (Use8i(param.mergedConvolution()))
                     return new MergedConvolution8iLayer<T>(param, context, method);

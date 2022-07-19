@@ -65,10 +65,13 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            assert(src.size() == 1 && src[0]->Count() == 4);
-
             const ConvolutionParam & param = this->Param().convolution();
-            const Tensors & weight = this->Weight();
+            Tensors & weight = (Tensors&)this->Weight();
+
+            bool is1d = src[0]->Count() == 3;
+            if (is1d)
+                To2D(*src[0]), To2D(weight[0]);
+            assert(src.size() == 1 && src[0]->Count() == 4);
 
             _conv.Set(param);
             _conv.Set(*src[0], *dst[0], true, param.autoPad());
@@ -127,6 +130,8 @@ namespace Synet
             }
 
             Reshape(src[0], buf, dst[0]);
+            if (is1d)
+                To1D(*dst[0]);
 
             _alg.sSize = src[0]->Size(1);
             _alg.dSize = dst[0]->Size(1);
@@ -151,5 +156,49 @@ namespace Synet
             size_t batch, sSize, dSize, ldW, ldS, ldD, grW, grS, grD, siW, siS, siD;
             float params[2];
         } _alg;
+
+        static void To2D(const Tensor & tensor)
+        {
+            Shape shape = tensor.Shape();
+            if (shape.size() != 3)
+                return;
+            TensorFormat format = tensor.Format();
+            switch (format)
+            {
+            case TensorFormatUnknown:
+            case TensorFormatNchw:
+                format = TensorFormatNchw;
+                shape = Shp(shape[0], shape[1], shape[2], 1);
+                break;
+            case TensorFormatNhwc:
+                shape = Shp(shape[0], shape[1], 1, shape[2]);
+                break;
+            default:
+                assert(0);
+            }
+            ((Tensor&)tensor).ShareAs(tensor, shape, format);
+        }
+
+        void To1D(const Tensor & tensor)
+        {
+            Shape shape = tensor.Shape();
+            if (shape.size() != 4)
+                return;
+            TensorFormat format = tensor.Format();
+            switch (format)
+            {
+            case TensorFormatNchw:
+                assert(shape[3] == 1);
+                shape = Shp(shape[0], shape[1], shape[2]);
+                break;
+            case TensorFormatNhwc:
+                assert(shape[2] == 1);
+                shape = Shp(shape[0], shape[1], shape[3]);
+                break;
+            default:
+                assert(0);
+            }
+            ((Tensor&)tensor).ShareAs(tensor, shape, format);
+        }
     };
 }

@@ -60,6 +60,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeInterp2,
     LayerTypeLog,
     LayerTypeLrn,
+    LayerTypeLstm,
     LayerTypeMergedConvolution,
     LayerTypeMeta,
     LayerTypeMish,
@@ -137,6 +138,11 @@ CPL_PARAM_ENUM1(Synet, EltwiseOperationType,
 CPL_PARAM_ENUM1(Synet, InterpolationType,
     InterpolationTypeBilinear,
     InterpolationTypeNearest);
+
+CPL_PARAM_ENUM1(Synet, LstmDirectionType,
+    LstmDirectionTypeForward,
+    LstmDirectionTypeReverse,
+    LstmDirectionTypeBidirectional);
 
 CPL_PARAM_ENUM1(Synet, MetaType,
     MetaTypeAdd,
@@ -469,6 +475,12 @@ namespace Synet
         CPL_PARAM_VALUE(float, k, 1.0f);
     };
 
+    struct LstmParam
+    {
+        CPL_PARAM_VALUE(LstmDirectionType, direction, LstmDirectionTypeForward);
+        CPL_PARAM_VALUE(uint32_t, hiddenSize, 0);
+    };
+
     struct MergedConvolutionParam
     {
         CPL_PARAM_VECTOR(ConvolutionParam, conv);
@@ -747,6 +759,7 @@ namespace Synet
         CPL_PARAM_STRUCT(Interp2Param, interp2);
         CPL_PARAM_STRUCT(LogParam, log);
         CPL_PARAM_STRUCT(LrnParam, lrn);
+        CPL_PARAM_STRUCT(LstmParam, lstm);
         CPL_PARAM_STRUCT(MergedConvolutionParam, mergedConvolution);
         CPL_PARAM_STRUCT(MetaParam, meta);
         CPL_PARAM_STRUCT(NonMaxSuppressionParam, nonMaxSuppression);

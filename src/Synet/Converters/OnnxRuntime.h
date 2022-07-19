@@ -111,7 +111,7 @@ namespace Synet
         {
             const onnx::GraphProto& graph = model.graph();
 
-            //PrintGraph(graph, std::cout, true, true);
+            PrintGraph(graph, std::cout, true, true);
 
             network.info().version() = 1;
             network.info().name() = graph.name();
@@ -187,6 +187,8 @@ namespace Synet
                 if (node.op_type() == "LeakyRelu" && !ConvertLeakyReluNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "LogSoftmax" && !ConvertLogSoftmaxNode(node, trans, network.layers(), original, layer))
+                    return ErrorMessage(i, node);
+                if (node.op_type() == "LSTM" && !ConvertLstmNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "MatMul" && !ConvertMatMulNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -375,6 +377,8 @@ namespace Synet
             for (size_t j = 0; j < node.input_size(); ++j)
             {
                 String input = node.input(j);
+                if (input.empty())
+                    continue;
                 Renames::const_iterator rename = renames.find(input);
                 if (rename != renames.end())
                 {
@@ -756,11 +760,18 @@ namespace Synet
             const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
             if (src0 == NULL || src1 == NULL)
                 return false;
-            if (src1->type() == LayerTypeMeta && src1->meta().type() == MetaTypeConst && 
-                src1->meta().alpha().type() == TensorType64i  && AllAreEqualTo(src1->meta().alpha().i64(), int64_t(1)))
+            if (src1->type() == LayerTypeMeta)
             {
-                layer.type() = Synet::LayerTypeStub;
-                layer.src().resize(1);
+                const MetaParam & meta = src1->meta();
+                if (meta.type() == MetaTypeConst && meta.alpha().type() == TensorType64i && AllAreEqualTo(meta.alpha().i64(), int64_t(1)))
+                {
+                    layer.type() = Synet::LayerTypeStub;
+                    layer.src().resize(1);
+                }
+                else
+                {
+                    layer.type() = Synet::LayerTypeTile;
+                }
             }
             else
                 return false;
@@ -845,6 +856,42 @@ namespace Synet
                 return false;
             }
             layer.softmax().log() = true;
+            return true;
+        }
+
+        bool ConvertLstmNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeLstm;
+            if (!ConvertAtrributeInt(node, "hidden_size", layer.lstm().hiddenSize()))
+                return false;
+            String direction;
+            if (!ConvertAtrributeString(node, "direction", direction))
+                return false;
+            if (direction == "forward")
+                layer.lstm().direction() = LstmDirectionTypeForward;
+            else if (direction == "reverse")
+                layer.lstm().direction() = LstmDirectionTypeReverse;
+            else if (direction == "bidirectional")
+                layer.lstm().direction() = LstmDirectionTypeBidirectional;
+            else
+                return false;
+            if (!CheckSourceNumber(layer, 6))
+                return false;
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src1 == NULL || src1->type() != LayerTypeConst)
+                return false;
+            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+            if (src2 == NULL || src2->type() != LayerTypeConst)
+                return false;
+            const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
+            if (src3 == NULL || src3->type() != LayerTypeConst)
+                return false;
+            layer.weight().resize(3);
+            layer.weight()[0] = src1->weight()[0];
+            layer.weight()[1] = src2->weight()[0];           
+            layer.weight()[2] = src3->weight()[0];
+            layer.src().erase(layer.src().begin() + 1, layer.src().begin() + 4);
+            layer.dst().resize(1);
             return true;
         }
 
