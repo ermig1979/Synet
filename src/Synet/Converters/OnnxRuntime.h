@@ -111,7 +111,7 @@ namespace Synet
         {
             const onnx::GraphProto& graph = model.graph();
 
-            PrintGraph(graph, std::cout, true, true);
+            //PrintGraph(graph, std::cout, true, true);
 
             network.info().version() = 1;
             network.info().name() = graph.name();
