@@ -187,12 +187,9 @@ namespace Synet
                     for (size_t k = 0; k < _hidS; ++k)
                         hCurr[k] *= ob[k];
 
-                    xCurr += _hidS;
-                    if (i)
-                    {
-                        hPrev += _hidS;
-                        cPrev += _hidS;
-                    }
+                    xCurr += _hidS4;
+                    hPrev += _hidS;
+                    cPrev += _hidS;
                     hCurr += _hidS;
                     cCurr += _hidS;
                 }
