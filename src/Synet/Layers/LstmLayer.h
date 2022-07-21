@@ -33,6 +33,7 @@ namespace Synet
 {
     template <class T> class LstmLayer : public Synet::Layer<T>
     {
+        static const int IPS = 4;
     public:
         typedef T Type;
         typedef Layer<T> Base;
@@ -43,6 +44,8 @@ namespace Synet
         LstmLayer(const LayerParam & param, Context* context)
             : Base(param, context)
         {
+            for(int i = 0; i < IPS; ++i)
+                _internal[i] = 0;
         }
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
@@ -52,6 +55,7 @@ namespace Synet
             const Tensors & weight = this->Weight();
 
             _hidS = param.hiddenSize();
+            _hidS4 = _hidS * 4;
             _dir = param.direction();
             _dirS = _dir == LstmDirectionTypeBidirectional ? 2 : 1;
 
@@ -65,16 +69,27 @@ namespace Synet
             _w0 = weight[0].CpuData(Shp(0, 0, 0));
             _w1 = _dirS > 1 ? weight[0].CpuData(Shp(1, 0, 0)) : NULL;
 
-            _u0 = weight[1].CpuData(Shp(0, 0, 0));
-            _u1 = _dirS > 1 ? weight[1].CpuData(Shp(1, 0, 0)) : NULL;
+            _r0 = weight[1].CpuData(Shp(0, 0, 0));
+            _r1 = _dirS > 1 ? weight[1].CpuData(Shp(1, 0, 0)) : NULL;
 
             _b0 = weight[2].CpuData(Shp(0, 0));
             _b1 = _dirS > 1 ? weight[2].CpuData(Shp(1, 0)) : NULL;
 
-            buf[0]->Extend(Shp(4, _hidS));
-            buf[1]->Extend(Shp(_seqS, _batch, _hidS));
+            buf[0]->Extend(Shp(_seqS + 2, _batch, _hidS4));
 
             dst[0]->Reshape(Shp(_seqS, _dirS, _batch, _hidS));
+
+            _innerProduct32f[0].Init(_seqS * _batch, _srcS, _hidS4, 1);
+            _innerProduct32f[0].SetParams(_w0, &_internal[0], NULL, NULL);
+            _innerProduct32f[2].Init(1, _hidS, _hidS4, 1);
+            _innerProduct32f[2].SetParams(_r0, &_internal[2], NULL, NULL);
+            if (_dirS > 1)
+            {
+                _innerProduct32f[1].Init(_seqS * _batch, _srcS, _hidS4, 1);
+                _innerProduct32f[1].SetParams(_w1, &_internal[1], NULL, NULL);
+                _innerProduct32f[3].Init(1, _hidS, _hidS4, 1);
+                _innerProduct32f[3].SetParams(_r1, &_internal[3], NULL, NULL);
+            }
 
             std::stringstream desc;
             desc << _seqS << "x" << _dirS << "x" << _batch << "x" << _hidS;
@@ -83,7 +98,23 @@ namespace Synet
 
         virtual int64_t Flop() const
         {
-            return _batch * _dirS * _seqS * _hidS * 4 * (_srcS + _hidS) * 2;
+            return _batch * _dirS * _seqS * _hidS4 * (_srcS + _hidS) * 2;
+        }
+
+        virtual size_t MemoryUsage() const
+        {
+            size_t size = 0;
+            for (int i = 0; i < IPS; ++i)
+                size += _innerProduct32f[i].InternalBufferSize();
+            return Base::MemoryUsage() + size * sizeof(float);
+        }
+
+        virtual void CompactWeight()
+        {
+            if (_internal[0] && _internal[1])
+                ((Tensor&)this->Weight()[0]).Clear();
+            if (_internal[2] && _internal[3])
+                ((Tensor&)this->Weight()[1]).Clear();
         }
 
     protected:
@@ -92,65 +123,61 @@ namespace Synet
             const T * x = src[0]->CpuData();
             const T * h0 = src[1]->CpuData(Shp(0, 0, 0));
             const T * c0 = src[2]->CpuData(Shp(0, 0, 0));
-            T * b = buf[0]->CpuData();
-            T * c = buf[1]->CpuData();
+            T * pBuf = buf[0]->CpuData();
             T * h = dst[0]->CpuData();
             switch (_dir)
             {
             case LstmDirectionTypeForward:
-                ForwardOneDir(x, h0, c0, _w0, _u0, _b0, b, c, h, false);
+                ForwardOneDir(x, h0, c0, _w0, _r0, _b0, pBuf, h, false);
                 break;
             case LstmDirectionTypeReverse:
-                ForwardOneDir(x, h0, c0, _w0, _u0, _b0, b, c, h, true);
+                ForwardOneDir(x, h0, c0, _w0, _r0, _b0, pBuf, h, true);
                 break;
             case LstmDirectionTypeBidirectional:
-                ForwardOneDir(x, h0, c0, _w0, _u0, _b0, b, c, h, false);
+                ForwardOneDir(x, h0, c0, _w0, _r0, _b0, pBuf, h, false);
                 const T * h1 = src[1]->CpuData(Shp(1, 0, 0));
                 const T * c1 = src[2]->CpuData(Shp(1, 0, 0));
-                ForwardOneDir(x, h1, c1, _w1, _u1, _b1, b, c, h + _batch * _hidS, true);
+                ForwardOneDir(x, h1, c1, _w1, _r1, _b1, pBuf, h + _batch * _hidS, true);
                 break;
             }
         }
 
-        virtual void ForwardOneDir(const T * x, const T * h0, const T * c0, const T * w, const T * u, const T * bias, T * buf, T * c, T * h, bool rev)
+        virtual void ForwardOneDir(const T * x, const T * h0, const T * c0, const T * w, const T * r, const T * bias, T * buf, T * h, bool rev)
         {
-            T * ib = buf + 0 * _hidS;
-            T * ob = buf + 1 * _hidS;
-            T * fb = buf + 2 * _hidS;
-            T * cb = buf + 3 * _hidS;
-            ptrdiff_t xStep = (rev ? -1 : 1) * _batch * _srcS;
+            ptrdiff_t xStep = (rev ? -1 : 1) * _batch * _hidS4;
             ptrdiff_t hStep = (rev ? -1 : 1) * _batch * _hidS * _dirS;
             size_t cStep = _batch * _hidS;
-            const T * xBeg = x + (rev ? (1 - _seqS) * xStep : 0);
+
+            T * xBuf = buf;
+            T * cBeg = xBuf + _seqS * _batch * _hidS4;
+            T * buf0 = cBeg + 2 * _batch * _hidS;
+            T * ib = buf0 + 0 * _hidS;
+            T * ob = buf0 + 1 * _hidS;
+            T * fb = buf0 + 2 * _hidS;
+            T * cb = buf0 + 3 * _hidS;
+            T * xBeg = xBuf + (rev ? (1 - _seqS) * xStep : 0);
             T * hBeg = h + (rev ? (1 - _seqS) * hStep : 0);
+            size_t idx = (rev && _dirS == 2) ? 1 : 0;
+
+            memcpy(cBeg + cStep, c0, cStep * sizeof(T));
+            _innerProduct32f[0 + idx].Forward(x, xBuf);
             for (size_t i = 0; i < _seqS; ++i)
             {
-                const T * xCurr = xBeg + i * xStep;
+                T * xCurr = xBeg + i * xStep;
                 T * hCurr = hBeg + i * hStep;
                 const T * hPrev = i ? hCurr - hStep : h0;
-                T * cCurr = c + i * cStep;
-                const T * cPrev = i ? cCurr - cStep : c0;
+                T * cCurr = cBeg + (i&1) * cStep;
+                T * cPrev = cBeg + ((i - 1)&1) * cStep;
                 for (size_t b = 0; b < _batch; ++b)
                 {
-                    for (size_t k = 0; k < _hidS * 4; ++k)
-                        buf[k] = 0;
+                    _innerProduct32f[2 + idx].Forward(hPrev, buf0);
 
-                    Detail::CpuGemvN(_hidS * 4, _srcS, 1.0f, w, xCurr, buf);
+                    for (size_t k = 0; k < _hidS4; ++k)
+                        buf0[k] = xCurr[k] + buf0[k] + bias[k] + bias[_hidS4 + k];
 
-                    Detail::CpuGemvN(_hidS * 4, _hidS, 1.0f, u, hPrev, buf);
-
-                    for (size_t k = 0; k < _hidS * 4; ++k)
-                        buf[k] = buf[k] + bias[k] + bias[_hidS * 4 + k];
-
-                    CpuSigmoid(buf, 3 * _hidS, buf);
+                    CpuSigmoid(buf0, 3 * _hidS, buf0);
 
                     Detail::UnaryOperationLayerForward(cb, _hidS, UnaryOperationTypeTanh, cb);
-
-                    //for (size_t k = 0; k < _hidS; ++k)
-                    //{
-                    //    cCurr[k] = fb[k] * cPrev[k] + ib[k] * cb[k];
-                    //    hCurr[k] = ob[k] * ::tanh(cCurr[k]);
-                    //}
 
                     for (size_t k = 0; k < _hidS; ++k)
                         cCurr[k] = fb[k] * cPrev[k] + ib[k] * cb[k];
@@ -160,10 +187,12 @@ namespace Synet
                     for (size_t k = 0; k < _hidS; ++k)
                         hCurr[k] *= ob[k];
 
-
-                    xCurr += _srcS;
-                    hPrev += _hidS;
-                    cPrev += _hidS;
+                    xCurr += _hidS;
+                    if (i)
+                    {
+                        hPrev += _hidS;
+                        cPrev += _hidS;
+                    }
                     hCurr += _hidS;
                     cCurr += _hidS;
                 }
@@ -171,7 +200,10 @@ namespace Synet
         }
 
         LstmDirectionType _dir;
-        size_t _batch, _seqS, _srcS, _hidS, _dirS;
-        const Type *_w0, *_w1, *_u0, *_u1, *_b0, *_b1;
+        size_t _batch, _seqS, _srcS, _hidS, _dirS, _hidS4;
+        const Type *_w0, *_w1, *_r0, *_r1, *_b0, *_b1;
+
+        int _internal[IPS];
+        InnerProduct32f _innerProduct32f[IPS];
     };
 }

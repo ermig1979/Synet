@@ -61,7 +61,7 @@ namespace Synet
                     if (pSrc1[a] != src[0]->Axis(a))
                     {
                         axis = a;
-                        _tiles = src[1]->Axis(a);
+                        _tiles = src[0]->Axis(a);
                         break;
                     }
                 }
