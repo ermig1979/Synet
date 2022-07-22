@@ -239,10 +239,10 @@ namespace Synet
 
     AnchorParam GetRetinaParam()
     {
-        AnchorParam epsilon;
-        epsilon.names() = Strings({ "classifications", "ldm_regressions", "bbox_regressions" });
-        epsilon.step() = Shape({ 8, 16, 32 });
-        epsilon.minSize() = Shape({ 10, 20, 32, 64, 128, 256 });
-        return epsilon;
+        AnchorParam retina;
+        retina.names() = Strings({ "classifications", "ldm_regressions", "bbox_regressions" });
+        retina.step() = Shape({ 8, 16, 32 });
+        retina.minSize() = Shape({ 10, 20, 32, 64, 128, 256 });
+        return retina;
     }
 }

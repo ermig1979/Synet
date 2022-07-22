@@ -54,6 +54,7 @@
     <ClInclude Include="..\..\src\Synet\Layer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ActivationLayers.h" />
     <ClInclude Include="..\..\src\Synet\Layers\AddLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ArgMaxLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\BatchNormLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\BiasLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\BinaryOperationLayer.h" />
@@ -79,6 +80,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\InterpLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\LogLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\LrnLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\LstmLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution8iLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolutionLayer.h" />
@@ -103,6 +105,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\ShuffleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SliceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\SpaceToDepthLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SqueezeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\StridedSliceLayer.h" />
