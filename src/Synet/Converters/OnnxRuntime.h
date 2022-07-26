@@ -184,6 +184,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "GlobalAveragePool" && !ConvertGlobalAveragePoolNode(node, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "HardSigmoid" && !ConvertHardSigmoidNode(node, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "LeakyRelu" && !ConvertLeakyReluNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "LogSoftmax" && !ConvertLogSoftmaxNode(node, trans, network.layers(), original, layer))
@@ -835,6 +837,15 @@ namespace Synet
             layer.type() = Synet::LayerTypePooling;
             layer.pooling().method() = PoolingMethodTypeAverage;
             layer.pooling().globalPooling() = true;
+            return true;
+        }
+
+
+        bool ConvertHardSigmoidNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeHardSigmoid;
+            if (!ConvertAtrributeFloat(node, "alpha", layer.hardSigmoid().scale()))
+                return false;
             return true;
         }
 

@@ -1722,8 +1722,8 @@ namespace Synet
                 return true;
             if (layer.type() == LayerTypeScale)
                 return true;
-            if (layer.type() == LayerTypeEltwise)
-                return true;
+            //if (layer.type() == LayerTypeEltwise)
+            //    return true;
             if (layer.type() == LayerTypeRelu)
                 return true;
             if (layer.type() == LayerTypeSqueezeExcitation)
