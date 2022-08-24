@@ -74,7 +74,7 @@ namespace Synet
             case MetaTypeSqrt: ReshapeSqrt(src, dst); break;
             case MetaTypeSqueeze: ReshapeSqueeze(src, dst); break;
             case MetaTypeStridedSlice: ReshapeStridedSlice(src, dst); break;
-            case MetaTypeStub: /*dst[0]->Reshape({});*/ break;
+            case MetaTypeStub: ReshapeStub(src, dst); break;
             case MetaTypeSub: ReshapeSub(src, dst); break;
             case MetaTypeSwitch: ReshapeSwitch(src, dst); break;
             case MetaTypeTensorArray: ReshapeTensorArray(src, param.alpha(), dst); break;
@@ -733,6 +733,12 @@ namespace Synet
             }
             else
                 assert(0);
+        }
+
+        void ReshapeStub(const TensorPtrs & src, const TensorPtrs & dst)
+        {
+            assert(src.size() == 1 && dst.size() == 1);
+            dst[0]->Share(*src[0]);
         }
 
         void ReshapeSub(const TensorPtrs & src, const TensorPtrs & dst)

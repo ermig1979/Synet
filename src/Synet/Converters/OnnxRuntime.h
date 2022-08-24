@@ -186,6 +186,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "HardSigmoid" && !ConvertHardSigmoidNode(node, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Identity" && !ConvertIdentityNode(node, network.layers(), layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "LeakyRelu" && !ConvertLeakyReluNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "LogSoftmax" && !ConvertLogSoftmaxNode(node, trans, network.layers(), original, layer))
@@ -840,12 +842,30 @@ namespace Synet
             return true;
         }
 
-
         bool ConvertHardSigmoidNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeHardSigmoid;
             if (!ConvertAtrributeFloat(node, "alpha", layer.hardSigmoid().scale()))
                 return false;
+            return true;
+        }
+
+        bool ConvertIdentityNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 1))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            if (src0 == NULL)
+                return false;
+            if (src0->type() == LayerTypeMeta)
+            {
+                layer.type() = LayerTypeMeta;
+                layer.meta().type() = MetaTypeStub;
+            }
+            else
+            {
+                layer.type() = LayerTypeStub;
+            }
             return true;
         }
 
@@ -1223,7 +1243,10 @@ namespace Synet
                     layer.meta().type() = MetaTypeSlice;
                 }
                 else
+                {
+                    std::cout << "In SliceLayer src[0] is not meta (" << Cpl::ToStr(src0->type()) << ") !" << std::endl;
                     return false;
+                }
             }
             else
             {
