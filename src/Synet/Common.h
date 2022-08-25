@@ -182,6 +182,22 @@ namespace Synet
         return Shape({ axis0, axis1, axis2, axis3 });
     }
 
+    template<class T> SYNET_INLINE Shape Shp(const std::vector<T> & vec)
+    {
+        Shape shape(vec.size());
+        for (size_t i = 0; i < vec.size(); ++i)
+            shape[i] = (size_t)vec[i];
+        return shape;
+    }
+
+    template<class T> SYNET_INLINE Shape Shp(const T * data, size_t size)
+    {
+        Shape shape(size);
+        for (size_t i = 0; i < size; ++i)
+            shape[i] = (size_t)data[i];
+        return shape;
+    }
+
     inline size_t GetThreadNumber()
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)

@@ -44,10 +44,15 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            const StridedSliceParam & param = this->Param().stridedSlice();
+            StridedSliceParam param = this->Param().stridedSlice();
 
             _srcDims = src[0]->Shape();
-
+            if (src.size() == 4)
+            {
+                param.beginDims() = Shp(src[1]->As64i().CpuData(), src[1]->Size());
+                param.endDims() = Shp(src[2]->As64i().CpuData(), src[2]->Size());
+                param.axes() = Shp(src[3]->As64i().CpuData(), src[3]->Size());
+            }
             _axes = param.axes();
             if (param.beginDims().size())
             {

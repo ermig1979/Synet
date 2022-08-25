@@ -202,6 +202,12 @@ namespace Synet
                 for (size_t i = 0; i < src[0]->Size(); ++i)
                     dst[0]->As32f().CpuData()[i] = src[0]->As32f().CpuData()[i] / src[1]->As32f().CpuData()[i];
             }
+            else if (src[0]->GetType() == TensorType64i && src[1]->GetType() == TensorType64i)
+            {
+                dst[0]->As64i().Reshape(src[0]->Shape());
+                for (size_t i = 0; i < src[0]->Size(); ++i)
+                    dst[0]->As64i().CpuData()[i] = src[0]->As64i().CpuData()[i] / src[1]->As64i().CpuData()[i];
+            }
             else
                 assert(0);
         }

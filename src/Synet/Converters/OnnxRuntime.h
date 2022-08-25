@@ -152,7 +152,7 @@ namespace Synet
                 LayerParam layer;
                 SetSrcAndDst(node, renames, layer);
 
-                if (node.op_type() == "Add" && !ConvertAddNode(node, layer))
+                if (node.op_type() == "Add" && !ConvertAddNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "ArgMax" && !ConvertArgMaxNode(node, layer))
                     return ErrorMessage(i, node);
@@ -430,12 +430,24 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertAddNode(const onnx::NodeProto& node, LayerParam& layer)
+        bool ConvertAddNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
-            layer.type() = Synet::LayerTypeEltwise;
-            layer.eltwise().operation() = EltwiseOperationTypeSum;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
+            else if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
+            {
+                layer.type() = LayerTypeMeta;
+                layer.meta().type() = MetaTypeMul;
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeEltwise;
+                layer.eltwise().operation() = EltwiseOperationTypeSum;
+            }
             return true;
         }
 
@@ -1006,6 +1018,11 @@ namespace Synet
                 layer.power().scale() = pScale[0];
                 layer.src().resize(1);
             }
+            else if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
+            {
+                layer.type() = LayerTypeMeta;
+                layer.meta().type() = MetaTypeMul;
+            }
             else
             {
                 layer.type() = Synet::LayerTypeEltwise;
@@ -1229,7 +1246,7 @@ namespace Synet
                     return false;
                 layer.type() = Synet::LayerTypeStridedSlice;
             }
-            else if (layer.src().size() == 4)
+            else if(layer.src().size() >= 4 && layer.src().size() <= 5)
             {
                 const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
                 const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
@@ -1237,49 +1254,48 @@ namespace Synet
                 const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
                 if (src0 == NULL || src1 == NULL || src2 == NULL || src3 == NULL)
                     return false;
+                const LayerParam* src4 = NULL;
+                if (layer.src().size() > 4)
+                {
+                    src4 = GetLayer(layers, layer.src()[4]);
+                    if (src4 == NULL)
+                        return false;
+                }
                 if (src0->type() == LayerTypeMeta)
                 {
+                    if (!CheckSourceNumber(layer, 4))
+                        return false;
                     layer.type() = Synet::LayerTypeMeta;
                     layer.meta().type() = MetaTypeSlice;
                 }
                 else
                 {
-                    std::cout << "In SliceLayer src[0] is not meta (" << Cpl::ToStr(src0->type()) << ") !" << std::endl;
-                    return false;
+                    layer.type() = Synet::LayerTypeStridedSlice;
+                    if (layer.src().size() == 5)
+                    {
+                        if (src1->type() != LayerTypeMeta || src1->meta().type() != Synet::MetaTypeConst || src1->meta().alpha().i64().size() != 1)
+                            return false;
+                        if (src2->type() != LayerTypeMeta || src2->meta().type() != Synet::MetaTypeConst || src2->meta().alpha().i64().size() != 1)
+                            return false;
+                        if (src3->type() != LayerTypeMeta || src3->meta().type() != Synet::MetaTypeConst || src3->meta().alpha().i64().size() != 1)
+                            return false;
+                        if (src4->type() != LayerTypeMeta || src4->meta().type() != Synet::MetaTypeConst || src4->meta().alpha().i64().size() != 1)
+                            return false;
+                        layer.stridedSlice().axes().push_back((size_t)src3->meta().alpha().i64()[0]);
+                        layer.stridedSlice().beginDims().push_back((size_t)src1->meta().alpha().i64()[0]);
+                        layer.stridedSlice().endDims().push_back((size_t)src2->meta().alpha().i64()[0]);
+                        layer.stridedSlice().strideDims().push_back((size_t)src4->meta().alpha().i64()[0]);
+                        if (trans && !PermutedToNchw(layers, false, true, true))
+                        {
+                            Shape nchw = Shape({ 0, 3, 1, 2 });
+                            layer.stridedSlice().axes()[0] = nchw[layer.stridedSlice().axes()[0]];
+                        }
+                        layer.src().resize(1);
+                    }
+                    else
+                    {
+                    }
                 }
-            }
-            else
-            {
-                if (!CheckSourceNumber(layer, 5))
-                    return false;
-                const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-                const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-                const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
-                const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
-                const LayerParam* src4 = GetLayer(layers, layer.src()[4]);
-                if (src0 == NULL || src1 == NULL || src2 == NULL || src3 == NULL || src4 == NULL)
-                    return false;
-                if (src0->type() == LayerTypeMeta)
-                    return false;
-                if (src1->type() != LayerTypeMeta || src1->meta().type() != Synet::MetaTypeConst || src1->meta().alpha().i64().size() != 1)
-                    return false;
-                if (src2->type() != LayerTypeMeta || src2->meta().type() != Synet::MetaTypeConst || src2->meta().alpha().i64().size() != 1)
-                    return false;
-                if (src3->type() != LayerTypeMeta || src3->meta().type() != Synet::MetaTypeConst || src3->meta().alpha().i64().size() != 1)
-                    return false;
-                if (src4->type() != LayerTypeMeta || src4->meta().type() != Synet::MetaTypeConst || src4->meta().alpha().i64().size() != 1)
-                    return false;
-                layer.type() = Synet::LayerTypeStridedSlice;
-                layer.stridedSlice().axes().push_back((size_t)src3->meta().alpha().i64()[0]);
-                layer.stridedSlice().beginDims().push_back((size_t)src1->meta().alpha().i64()[0]);
-                layer.stridedSlice().endDims().push_back((size_t)src2->meta().alpha().i64()[0]);
-                layer.stridedSlice().strideDims().push_back((size_t)src4->meta().alpha().i64()[0]);
-                if (trans && !PermutedToNchw(layers, false, true, true))
-                {
-                    Shape nchw = Shape({ 0, 3, 1, 2 });
-                    layer.stridedSlice().axes()[0] = nchw[layer.stridedSlice().axes()[0]];
-                }
-                layer.src().resize(1);
             }
             return true;
         }
@@ -1289,7 +1305,7 @@ namespace Synet
             layer.type() = Synet::LayerTypeSoftmax;
             if (!ConvertAtrributeInt(node, "axis", layer.softmax().axis()))
                 return false;
-            if (trans && !PermutedToNchw(layers, layer.src(), false, false, false))
+            if (trans && !PermutedToNchw(layers, layer.src(), true, false, true))
             {
                 return false;
             }
