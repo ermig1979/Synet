@@ -128,6 +128,8 @@ namespace Synet
                         continue;
                     if (MergeShuffle1(network.layers(), i, merged, changes))
                         continue;
+                    if (MergeShuffle2(network.layers(), i, merged, changes))
+                        continue;
                     if (MergeSoftmax(network.layers(), i, merged, changes))
                         continue;
                     if (MergeFused0(network.layers(), i, merged, changes))
@@ -944,6 +946,44 @@ namespace Synet
             layer.dst().push_back(src[index + 4].dst()[0]);
             layer.dst().push_back(src[index + 4].dst()[1]);
             index += 4;
+            dst.push_back(layer);
+            return true;
+        }
+
+        bool MergeShuffle2(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            if (src.size() < index + 17)
+                return false;
+            if (src[index + 0].type() != LayerTypeConcat || src[index + 0].src().size() != 2)
+                return false;
+            if (src[index + 1].type() != LayerTypeReshape || src[index + 1].reshape().axis() + src[index + 1].reshape().shape().size() != 5)
+                return false;
+            if (src[index + 2].type() != LayerTypePermute || src[index + 2].permute().order().size() != 5)
+                return false;
+            if (src[index + 3].type() != LayerTypeReshape || src[index + 3].reshape().axis() + src[index + 3].reshape().shape().size() != 4)
+                return false;
+            for (size_t i = 4; i < 14; ++i)
+            {
+                if (src[index + i].type() != LayerTypeMeta)
+                    return false;
+            }
+            if (src[index + 14].type() != LayerTypeStridedSlice || src[index + 14].src().size() != 4)
+                return false;
+            for (size_t i = 15; i < 16; ++i)
+            {
+                if (src[index + i].type() != LayerTypeMeta)
+                    return false;
+            }
+            if (src[index + 17].type() != LayerTypeStridedSlice || src[index + 17].src().size() != 4)
+                return false;
+            LayerParam layer;
+            layer.type() = LayerTypeShuffle;
+            layer.name() = src[index + 0].name();
+            layer.src() = src[index + 0].src();
+            layer.shuffle().type() = 1;
+            layer.dst().push_back(src[index + 14].dst()[0]);
+            layer.dst().push_back(src[index + 17].dst()[0]);
+            index += 17;
             dst.push_back(layer);
             return true;
         }
