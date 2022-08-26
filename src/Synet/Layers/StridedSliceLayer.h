@@ -47,7 +47,7 @@ namespace Synet
             StridedSliceParam param = this->Param().stridedSlice();
 
             _srcDims = src[0]->Shape();
-            if (src.size() == 4)
+            if (src.size() == 4 && param.beginDims().empty() && param.endDims().empty() && param.axes().empty())
             {
                 param.beginDims() = Shp(src[1]->As64i().CpuData(), src[1]->Size());
                 param.endDims() = Shp(src[2]->As64i().CpuData(), src[2]->Size());
