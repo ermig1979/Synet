@@ -182,6 +182,11 @@ namespace Synet
         return Shape({ axis0, axis1, axis2, axis3 });
     }
 
+    SYNET_INLINE Shape Shp(size_t axis0, size_t axis1, size_t axis2, size_t axis3, size_t axis4)
+    {
+        return Shape({ axis0, axis1, axis2, axis3, axis4 });
+    }
+
     template<class T> SYNET_INLINE Shape Shp(const std::vector<T> & vec)
     {
         Shape shape(vec.size());

@@ -956,11 +956,11 @@ namespace Synet
                 return false;
             if (src[index + 0].type() != LayerTypeConcat || src[index + 0].src().size() != 2)
                 return false;
-            if (src[index + 1].type() != LayerTypeReshape || src[index + 1].reshape().axis() + src[index + 1].reshape().shape().size() != 5)
+            if (src[index + 1].type() != LayerTypeReshape)// || src[index + 1].reshape().axis() + src[index + 1].reshape().shape().size() != 5)
                 return false;
             if (src[index + 2].type() != LayerTypePermute || src[index + 2].permute().order().size() != 5)
                 return false;
-            if (src[index + 3].type() != LayerTypeReshape || src[index + 3].reshape().axis() + src[index + 3].reshape().shape().size() != 4)
+            if (src[index + 3].type() != LayerTypeReshape)// || src[index + 3].reshape().axis() + src[index + 3].reshape().shape().size() != 4)
                 return false;
             for (size_t i = 4; i < 14; ++i)
             {
@@ -1820,6 +1820,8 @@ namespace Synet
                 if (type == LayerTypeDetectionOutput)
                     return true;
             }
+            if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeStub)
+                return true;
             if (layer.type() == LayerTypePooling && layer.pooling().method() == PoolingMethodTypeMax &&
                 layer.pooling().kernel() == Shp(1, 1) && layer.pooling().stride() == Shp(1, 1))
                 return true;
@@ -1839,6 +1841,8 @@ namespace Synet
                 if (!Rename(Change(layer.dst()[0], layer.src()[0]), layers))
                     return false;
                 layers.erase(layers.begin() + i);
+                if (i)
+                    i--;
             }
             return true;
         }

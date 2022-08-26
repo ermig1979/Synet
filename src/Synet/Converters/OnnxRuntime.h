@@ -1140,26 +1140,26 @@ namespace Synet
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
-            const LayerParam* first = GetLayer(layers, layer.src()[0]);
-            const LayerParam* second = GetLayer(layers, layer.src()[1]);
-            if (second == NULL || second->type() != LayerTypeMeta)
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL || src1->type() != LayerTypeMeta)
                 return false;
-            if (second->meta().type() == MetaTypeConst)
+            if (src1->meta().type() == MetaTypeStub)
+                src1 = GetLayer(layers, src1->src()[0]);
+            if (src1->meta().type() == MetaTypeConst)
             {
-                if (second->meta().alpha().shape().size() != 1)
+                const TensorParam & alpha = src1->meta().alpha();
+                if (alpha.shape().size() != 1)
                     return false;
                 Shape& shape = layer.reshape().shape();
-                const int64_t* alpha = second->meta().alpha().i64().data();
                 layer.type() = LayerTypeReshape;
-                shape.resize(second->meta().alpha().shape()[0]);
-                for (size_t i = 0; i < shape.size(); ++i)
-                    shape[i] = (size_t)alpha[i];
+                shape = Shp(alpha.i64().data(), alpha.shape()[0]);
                 layer.src().resize(1);
                 if (trans && !PermutedToNchw(layers, layer.src(), true, false, true))
                 {
                     if (shape.size() == 5)
                     {
-                        shape = Shape({ shape[0], shape[3], shape[4], shape[1], shape[2] });
+                        shape = Shp( shape[0], shape[3], shape[4], shape[1], shape[2]);
                     }
                     if (shape.size() == 4)
                     {
@@ -1171,7 +1171,7 @@ namespace Synet
                     }
                 }
             }
-            else if (first->type() == Synet::LayerTypeMeta)
+            else if (src0->type() == Synet::LayerTypeMeta)
             {
                 layer.type() = Synet::LayerTypeMeta;
                 layer.meta().type() = Synet::MetaTypeReshape;
