@@ -33,7 +33,6 @@
 CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeAdd,
     LayerTypeArgMax,
-    LayerTypeBatchNorm,
     LayerTypeBias,
     LayerTypeBinaryOperation,
     LayerTypeBroadcast,
@@ -298,14 +297,6 @@ namespace Synet
     {
         CPL_PARAM_VALUE(int32_t, axis, 0);
         CPL_PARAM_VALUE(bool, keepDims, true);
-    };
-
-    struct BatchNormParam
-    {
-        CPL_PARAM_VALUE(bool, useGlobalStats, true);
-        CPL_PARAM_VALUE(float, movingAverageFraction, 0.999f);
-        CPL_PARAM_VALUE(float, eps, 0.00001f);
-        CPL_PARAM_VALUE(bool, yoloCompatible, false);
     };
 
     struct BiasParam
@@ -736,7 +727,6 @@ namespace Synet
         CPL_PARAM_VALUE(Strings, origin, Strings());
 
         CPL_PARAM_STRUCT(ArgMaxParam, argMax);
-        CPL_PARAM_STRUCT(BatchNormParam, batchNorm);
         CPL_PARAM_STRUCT(BiasParam, bias);
         CPL_PARAM_STRUCT(BinaryOperationParam, binaryOperation);
         CPL_PARAM_STRUCT(BroadcastParam, broadcast);
