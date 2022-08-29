@@ -40,7 +40,6 @@
 #include "Synet/Layers/DetectionOutputLayer.h"
 #include "Synet/Layers/EltwiseLayer.h"
 #include "Synet/Layers/ExpandDimsLayer.h"
-#include "Synet/Layers/FillLayer.h"
 #include "Synet/Layers/FlattenLayer.h"
 #include "Synet/Layers/FusedLayer.h"
 #include "Synet/Layers/GatherLayer.h"
@@ -117,11 +116,9 @@ namespace Synet
             case LayerTypeCtcGreedyDecoder: return new CtcGreedyDecoderLayer<T>(param, context);
             case LayerTypeDeconvolution: return new DeconvolutionLayer<T>(param, context);
             case LayerTypeDetectionOutput: return new DetectionOutputLayer<T>(param, context);
-            case LayerTypeDropout: return new StubLayer<T>(param, context);
             case LayerTypeEltwise: return new EltwiseLayer<T>(param, context);
             case LayerTypeElu: return new EluLayer<T>(param, context);
             case LayerTypeExpandDims: return new ExpandDimsLayer<T>(param, context);
-            case LayerTypeFill: return new FillLayer<T>(param, context);
             case LayerTypeFlatten: return new FlattenLayer<T>(param, context);
             case LayerTypeFused: return new FusedLayer<T>(param, context);
             case LayerTypeGather: return new GatherLayer<T>(param, context);

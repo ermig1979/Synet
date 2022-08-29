@@ -43,11 +43,9 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeCtcGreedyDecoder,
     LayerTypeDeconvolution,
     LayerTypeDetectionOutput,
-    LayerTypeDropout,
     LayerTypeEltwise,
     LayerTypeElu,
     LayerTypeExpandDims,
-    LayerTypeFill,
     LayerTypeFlatten,
     LayerTypeFused,
     LayerTypeGather,
@@ -375,11 +373,6 @@ namespace Synet
     {
         CPL_PARAM_VALUE(float, alpha, 1.0f);
     };
-
-    struct FillParam
-    {
-        CPL_PARAM_VALUE(float, value, 0.0f);
-    }; 
 
     struct FlattenParam
     {
@@ -737,7 +730,6 @@ namespace Synet
         CPL_PARAM_STRUCT(EltwiseParam, eltwise);
         CPL_PARAM_STRUCT(EluParam, elu);
         CPL_PARAM_STRUCT(ExpandDimsParam, expandDims);
-        CPL_PARAM_STRUCT(FillParam, fill);
         CPL_PARAM_STRUCT(FlattenParam, flatten);
         CPL_PARAM_STRUCT(FusedParam, fused);
         CPL_PARAM_STRUCT(GatherParam, gather);
