@@ -129,6 +129,18 @@ namespace Synet
                     else
                         assert(0);
                 }
+                else if (_operation == EltwiseOperationTypeProduct && src[0]->Count() == 5)
+                {
+                    _batch = src[_index[0]]->Axis(0);
+                    _channelsOuter = src[_index[0]]->Axis(1);
+                    _spatial = src[_index[0]]->Size(2, 4);
+                    _channelsInner = src[_index[0]]->Axis(4);
+                    assert(src[_index[1]]->Size(2, 4) == 1);
+                    assert(src[_index[0]]->Size(0, 2) == src[_index[1]]->Size(0, 2));
+                    assert(src[_index[0]]->Size(4, 5) == src[_index[1]]->Size(4, 5));
+                    _special = SpecialScaleComplex;
+                    _channels = _channelsOuter*_channelsInner;
+                }
                 else if (_operation == EltwiseOperationTypeSum && src[0]->Count() == src[1]->Count())
                 {
                     _special = SpecialBiasChannel;
@@ -220,6 +232,21 @@ namespace Synet
                 }
                 break;
             }
+            case SpecialScaleComplex:
+            {
+                const Type * pScale = src[_index[1]]->CpuData();
+                for (size_t b = 0; b < _batch; ++b)
+                {
+                    for (size_t c = 0; c < _channelsOuter; ++c)
+                    {
+                        Detail::ScaleLayerForwardCpu(pSrc0, pScale, pBias, _channelsInner, 1, _spatial, pDst, TensorFormatNhwc, 0);
+                        pSrc0 += _channelsInner*_spatial;
+                        pDst += _channelsInner*_spatial;
+                        pScale += _channelsInner;
+                    }
+                }
+                break;
+            }
             case SpecialBiasChannel:
             {
                 pBias = src[_index[1]]->CpuData();
@@ -259,6 +286,7 @@ namespace Synet
             SpecialNone = 0,
             SpecialScaleChannel,
             SpecialScaleSpatial,
+            SpecialScaleComplex,
             SpecialBiasChannel,
             SpecialBatch
         } _special;
@@ -268,6 +296,7 @@ namespace Synet
         Pointers _src;
         int _trans;
         size_t _batch, _channels, _spatial;
+        size_t _channelsInner, _channelsOuter;
         int _index[2];
     };
 }
