@@ -200,6 +200,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Mul" && !ConvertMulNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "NonMaxSuppression" && !ConvertNonMaxSuppressionNode(node, network.layers(), layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Pow" && !ConvertPowNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "PRelu" && !ConvertPreluNode(node, network.layers(), layer))
@@ -294,6 +296,8 @@ namespace Synet
                 layer.weight()[0].size() = size * sizeof(float);
                 if (size)
                 {
+                    if (size == 1 && layer.weight()[0].dim().empty())
+                        layer.weight()[0].dim().push_back(1);
                     if (tensor.has_raw_data())
                     {
                         weight.resize(offset + size);
@@ -335,6 +339,11 @@ namespace Synet
                     {
                         for (size_t i = 0; i < size; ++i)
                             layer.meta().alpha().i64()[i] = ((int64_t*)tensor.raw_data().c_str())[i];
+                    }
+                    else if (tensor.int64_data_size())
+                    {
+                        for (size_t i = 0; i < size; ++i)
+                            layer.meta().alpha().i64()[i] = tensor.int64_data(i);
                     }
                     else
                     {
@@ -802,10 +811,19 @@ namespace Synet
             return true;
         }
 
-        bool ConvertGatherNode(const onnx::NodeProto& node, LayerParam& layer)
+        bool ConvertGatherNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
-            layer.type() = LayerTypeMeta;
-            layer.meta().type() = MetaTypeGather;
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
+            if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
+            {
+                layer.type() = LayerTypeMeta;
+                layer.meta().type() = MetaTypeGather;
+            }
             return true;
         }
 
@@ -1031,6 +1049,18 @@ namespace Synet
             return true;
         }
 
+        bool ConvertNonMaxSuppressionNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        {
+            //if (!CheckSourceNumber(layer, 2))
+            //    return false;
+            //const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            //const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            //if (src0 == NULL || src1 == NULL)
+            //    return false;
+            layer.type() = Synet::LayerTypeNonMaxSuppression;
+            return true;
+        }
+
         bool ConvertPowNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
@@ -1047,7 +1077,10 @@ namespace Synet
                 layer.src().resize(1);
             }
             else
+            {
+                std::cout << "PowerNode error: src1 { type: " << Cpl::ToStr(src1->type()) << " size: " << TensorSize(src1->weight()[0].dim()) << " }" << std::endl;
                 return false;
+            }
             return true;
         }
 
