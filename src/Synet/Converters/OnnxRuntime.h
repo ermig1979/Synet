@@ -178,7 +178,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Flatten" && !ConvertFlattenNode(node, layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Gather" && !ConvertGatherNode(node, layer))
+                if (node.op_type() == "Gather" && !ConvertGatherNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Gemm" && !ConvertGemmNode(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
