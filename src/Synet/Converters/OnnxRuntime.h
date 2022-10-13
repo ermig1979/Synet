@@ -1417,6 +1417,7 @@ namespace Synet
                     else
                         return false;
                 }
+                layer.src().resize(1);
             }
             return true;
         }
@@ -1577,6 +1578,7 @@ namespace Synet
                     else
                         return false;
                 }
+                layer.src().resize(1);
             }
             return true;
         }

@@ -236,7 +236,8 @@ namespace Synet
             : Base(param, context)
             , _method(method)
         {
-            _is8i = _method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed;
+            _is8i = (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed) &&
+                param.scale().quantizationLevel() != TensorType32f;
         }
 
         virtual bool Is8i() const
