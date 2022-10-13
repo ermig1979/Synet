@@ -1371,21 +1371,52 @@ namespace Synet
 
         bool ConvertSqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
-            if (!CheckSourceNumber(layer, 1))
+            if (!CheckSourceNumber(layer, 1, 2))
                 return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            if (src0 == NULL)
-                return false;
-            if (src0->type() == LayerTypeMeta)
+            if (layer.src().size() == 1)
             {
-                layer.type() = LayerTypeMeta;
-                layer.meta().type() = MetaTypeSqueeze;
-            }
-            else
-            {
-                layer.type() = Synet::LayerTypeSqueeze;
-                if (!ConvertAtrributeInts(node, "axes", layer.squeeze().axes()))
+                const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+                if (src0 == NULL)
                     return false;
+                if (src0->type() == LayerTypeMeta)
+                {
+                    layer.type() = LayerTypeMeta;
+                    layer.meta().type() = MetaTypeSqueeze;
+                }
+                else
+                {
+                    layer.type() = Synet::LayerTypeSqueeze;
+                    if (!ConvertAtrributeInts(node, "axes", layer.squeeze().axes()))
+                        return false;
+                }
+            }
+            else if (layer.src().size() == 2)
+            {
+                const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+                const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+                if (src0 == NULL || src1 == NULL)
+                    return false;
+                if (src1->type() != LayerTypeMeta || src1->meta().type() != MetaTypeConst)
+                    return false;
+                const TensorParam & alpha = src1->meta().alpha();
+                if (src0->type() == LayerTypeMeta)
+                {
+                    layer.type() = LayerTypeMeta;
+                    layer.meta().type() = MetaTypeSqueeze;
+                    layer.meta().alpha() = alpha;
+                }
+                else
+                {
+                    layer.type() = Synet::LayerTypeSqueeze;
+                    if (alpha.type() == TensorType64i)
+                    {
+                        layer.squeeze().axes().resize(alpha.i64().size());
+                        for (size_t i = 0; i < alpha.i64().size(); ++i)
+                            layer.squeeze().axes()[i] = (int)alpha.i64()[i];
+                    }
+                    else
+                        return false;
+                }
             }
             return true;
         }
@@ -1496,25 +1527,56 @@ namespace Synet
 
         bool ConvertUnsqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
-            if (!CheckSourceNumber(layer, 1))
+            if (!CheckSourceNumber(layer, 1, 2))
                 return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            if (src0 == NULL)
-                return false;
-            if (src0->type() == LayerTypeMeta)
+            if (layer.src().size() == 1)
             {
-                layer.type() = Synet::LayerTypeMeta;
-                layer.meta().type() = Synet::MetaTypeExpandDims;
-                layer.meta().alpha().type() = TensorType64i;
-                if (!ConvertAtrributeInts(node, "axes", layer.meta().alpha().i64()))
+                const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+                if (src0 == NULL)
                     return false;
-                layer.meta().alpha().shape().resize(1, layer.meta().alpha().i64().size());
+                if (src0->type() == LayerTypeMeta)
+                {
+                    layer.type() = Synet::LayerTypeMeta;
+                    layer.meta().type() = Synet::MetaTypeExpandDims;
+                    layer.meta().alpha().type() = TensorType64i;
+                    if (!ConvertAtrributeInts(node, "axes", layer.meta().alpha().i64()))
+                        return false;
+                    layer.meta().alpha().shape().resize(1, layer.meta().alpha().i64().size());
+                }
+                else
+                {
+                    layer.type() = Synet::LayerTypeExpandDims;
+                    if (!ConvertAtrributeInts(node, "axes", layer.expandDims().axes()))
+                        return false;
+                }
             }
-            else
+            else if (layer.src().size() == 2)
             {
-                layer.type() = Synet::LayerTypeExpandDims;
-                if (!ConvertAtrributeInts(node, "axes", layer.expandDims().axes()))
+                const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+                const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+                if (src0 == NULL || src1 == NULL)
                     return false;
+                if (src1->type() != LayerTypeMeta || src1->meta().type() != MetaTypeConst)
+                    return false;
+                const TensorParam & alpha = src1->meta().alpha();
+                if (src0->type() == LayerTypeMeta)
+                {
+                    layer.type() = Synet::LayerTypeMeta;
+                    layer.meta().type() = Synet::MetaTypeExpandDims;
+                    layer.meta().alpha() = alpha;
+                }
+                else
+                {
+                    layer.type() = Synet::LayerTypeExpandDims;
+                    if (alpha.type() == TensorType64i)
+                    {
+                        layer.expandDims().axes().resize(alpha.i64().size());
+                        for (size_t i = 0; i < alpha.i64().size(); ++i)
+                            layer.expandDims().axes()[i] = (int)alpha.i64()[i];
+                    }
+                    else
+                        return false;
+                }
             }
             return true;
         }

@@ -65,8 +65,10 @@ namespace Synet
                 {
                     bool insert = true;
                     for (size_t a = 0; a < axes.size() && insert; ++a)
-                        if (axes[a] == i)
+                    {
+                        if (axes[a] >= 0 ? axes[a] == i : axes[a] + shape.size() == i)
                             insert = false;
+                    }
                     if (insert)
                         shape[i] = src[0]->Axis(s++);
                 }
