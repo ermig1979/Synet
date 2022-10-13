@@ -380,7 +380,11 @@ namespace Test
                     if (layer.name() == _quant().skippedLayers()[s])
                         skip = true;
                 if (skip)
+                {
+                    if (layer.type() == Synet::LayerTypeScale)
+                        layer.scale().quantizationLevel() = Synet::TensorType32f;
                     continue;
+                }
                 EltwiseToAdd(layer, network().layers());
                 ScaleToConvolution(layer);
                 QuantizeConvolution(layer);
