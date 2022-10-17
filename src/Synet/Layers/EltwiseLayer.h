@@ -100,6 +100,7 @@ namespace Synet
             _special = SpecialNone;
             _index[0] = 0;
             _index[1] = 1;
+            bool resized = false;
             if (src.size() == 2 && src[0]->Shape() != src[1]->Shape() && src[0]->Size() != src[1]->Size())
             {
                 _index[0] = src[0]->Size() > src[1]->Size() ? 0 : 1;
@@ -112,7 +113,10 @@ namespace Synet
                     Shape shape = src[_index[0]]->Shape();
                     shape[0] = _batch;
                     if (dst[0] != src[_index[0]] && dst[0] != src[_index[1]])
+                    {
                         dst[0]->Reshape(shape, src[_index[0]]->Format());
+                        resized = true;
+                    }
                     assert(shape == dst[0]->Shape());
                 }
                 else if (_operation == EltwiseOperationTypeProduct && src[0]->Count() == 4)
@@ -173,6 +177,19 @@ namespace Synet
                     _channels = 1;
                     _spatial = src[_index[0]]->Size();
                 }
+                else if (_operation == EltwiseOperationTypeSum && src[_index[1]]->Count() == 2)
+                {
+                    _special = SpecialBiasChannelV2;
+                    _trans = 1;
+                    _batch = src[_index[1]]->Axis(0);
+                    _channels = 1;
+                    _spatial = src[_index[0]]->Size();
+                    if (dst[0] != src[_index[0]] && dst[0] != src[_index[1]])
+                    {
+                        dst[0]->Reshape(Shp(_batch, _spatial), src[_index[1]]->Format());
+                        resized = true;
+                    }
+                }
                 else
                     assert(0);
             }
@@ -186,7 +203,7 @@ namespace Synet
                 }
                 _batch = 1, _channels = 1, _spatial = src[_index[0]]->Size();
             }
-            if(dst[0] != src[_index[0]] && _special != SpecialBatch)
+            if(dst[0] != src[_index[0]] && !resized)
                 dst[0]->Reshape(src[_index[0]]->Shape(), src[_index[0]]->Format());
             this->UsePerfStat();
         }
@@ -273,6 +290,17 @@ namespace Synet
                 }
                 break;
             }
+            case SpecialBiasChannelV2:
+            {
+                pBias = src[_index[1]]->CpuData();
+                for (size_t b = 0; b < _batch; ++b)
+                {
+                    Detail::BiasLayerForwardCpu(pSrc0, pBias, _channels, _spatial, pDst, _trans);
+                    pDst += _channels * _spatial;
+                    pBias += _channels;
+                }
+                break;
+            }
             default: assert(0);
             }
         }
@@ -288,7 +316,8 @@ namespace Synet
             SpecialScaleSpatial,
             SpecialScaleComplex,
             SpecialBiasChannel,
-            SpecialBatch
+            SpecialBatch,
+            SpecialBiasChannelV2,
         } _special;
 
         EltwiseOperationType _operation;
