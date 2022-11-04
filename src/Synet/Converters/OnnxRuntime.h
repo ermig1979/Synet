@@ -1218,12 +1218,39 @@ namespace Synet
 
         bool ConvertResizeNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
         {
-            if (layer.src().size() == 3)
+            if (layer.src().size() == 4)
+            {
+                const LayerParam * src1 = GetLayer(layers, layer.src()[1]);
+                if (src1->type() != Synet::LayerTypeConst || src1->weight()[0].dim()[0] != 0)
+                    return false;
+                const LayerParam * src2 = GetLayer(layers, layer.src()[2]);
+                if (src2->type() != Synet::LayerTypeConst || src2->weight()[0].dim()[0] != 0)
+                    return false;
+                layer.src().erase(layer.src().begin() + 1, layer.src().begin() + 3);
+            }           
+            else if (layer.src().size() == 3)
             {
                 const LayerParam * src1 = GetLayer(layers, layer.src()[1]);
                 if (src1->type() != Synet::LayerTypeConst || src1->weight()[0].dim()[0] != 0)
                     return false;
                 layer.src().erase(layer.src().begin() + 1);
+            }
+
+            if (layer.src().size() == 2)
+            {
+                const LayerParam * src1 = GetLayer(layers, layer.src()[1]);
+                if (src1->type() == Synet::LayerTypeMeta && src1->meta().type() == Synet::MetaTypeConst)
+                {
+                    const TensorParam & alpha = src1->meta().alpha();
+                    if (alpha.shape().size() == 1 && alpha.shape()[0] == 4)
+                    {
+                        layer.interp().height() = (int32_t)alpha.i64()[2];
+                        layer.interp().width() = (int32_t)alpha.i64()[3];
+                        layer.src().resize(1);
+                    }
+                    else
+                        return false;
+                }
             }
 
             String mode;
@@ -1507,7 +1534,7 @@ namespace Synet
             Shape order;
             if (!ConvertAtrributeInts(node, "perm", order))
                 return false;
-            if (trans && !PermutedToNchw(layers, true, false, true))
+            if (trans && !PermutedToNchw(layers, layer.src(), true, false, true))
             {
                 if (order == Shape({ 0, 2, 1, 3, 4 }))
                     order = Shape({ 0, 1, 2, 4, 3 });
