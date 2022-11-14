@@ -46,7 +46,9 @@ namespace Test
             String synetWeight;
             String testParam;
             String imageDirectory;
+            size_t imageNumber;
             String outputDirectory;
+            String logName;
             size_t testThreads;
             size_t repeatNumber;
             int batchSize;
@@ -55,6 +57,7 @@ namespace Test
             int debugPrintLast;
             int debugPrintPrecision;
             float compareThreshold;
+            bool compactWeight;
 
             Options(int argc, char* argv[])
                 : ArgsParser(argc, argv, true)
@@ -64,27 +67,39 @@ namespace Test
                 synetWeight = GetArg("-sw", "synet.bin");
                 testParam = GetArg("-tp", "param.xml");
                 imageDirectory = GetArg("-id", "image");
+                imageNumber = Cpl::ToVal<size_t>(GetArg("-in", "10"));
                 outputDirectory = GetArg("-od", "output");
+                logName = GetArg("-ln", "", false);
                 testThreads = Cpl::ToVal<size_t>(GetArg("-tt", "0"));
                 repeatNumber = std::max(0, Cpl::ToVal<int>(GetArg("-rn", "1")));
                 batchSize = Cpl::ToVal<int>(GetArg("-bs", "1"));
-                debugPrint = FromString<int>(GetArg("-dp", "0"));
-                debugPrintFirst = FromString<int>(GetArg("-dpf", "5"));
-                debugPrintLast = FromString<int>(GetArg("-dpl", "2"));
-                debugPrintPrecision = FromString<int>(GetArg("-dpp", "4"));
-                compareThreshold = FromString<float>(GetArg("-ct", "0.001"));
+                debugPrint = Cpl::ToVal<int>(GetArg("-dp", "0"));
+                debugPrintFirst = Cpl::ToVal<int>(GetArg("-dpf", "5"));
+                debugPrintLast = Cpl::ToVal<int>(GetArg("-dpl", "2"));
+                debugPrintPrecision = Cpl::ToVal<int>(GetArg("-dpp", "4"));
+                compareThreshold = Cpl::ToVal<float>(GetArg("-ct", "0.001"));
+                compactWeight = Cpl::ToVal<bool>(GetArg("-cw", "1"));
             }
 
             ~Options()
             {
-                if (result)
-                {
-                    std::stringstream ss;
-                    PrintPerformance(ss, 0.0);
+                std::stringstream ss;
+                PrintPerformance(ss, 0.0);
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-                    ss << SimdPerformanceStatistic();
+                ss << SimdPerformanceStatistic();
 #endif
+                //if (!consoleSilence)
                     std::cout << ss.str();
+                if (!logName.empty())
+                {
+                    if (!CreateOutputDirectory(logName))
+                        return;
+                    std::ofstream log(logName.c_str());
+                    if (log.is_open())
+                    {
+                        log << ss.str();
+                        log.close();
+                    }
                 }
             }
 
@@ -134,6 +149,7 @@ namespace Test
         }
 
     private:
+        typedef std::vector<char> Bytes;
         typedef std::vector<Tensor*> TensorPtrs;
 
         struct Output
@@ -223,19 +239,54 @@ namespace Test
             return false;
         }
 
+        bool LoadBinary(const String& path, String& data) const
+        {
+            std::ifstream ifs(path, std::ios::binary);
+            if (!ifs)
+                return false;
+            ifs.unsetf(std::ios::skipws);
+            ifs.seekg(0, std::ios::end);
+            size_t size = ifs.tellg();
+            ifs.seekg(0);
+            data.resize(size + 1, 0);
+            ifs.read(data.data(), (std::streamsize)size);
+            ifs.close();
+            return true;
+        }
+
+        bool CacheNetwork(const String& model, const String& weight, Thread& thread) const
+        {
+            if (thread.model.empty() || thread.weight.empty())
+            {
+                if (!FileExists(model))
+                {
+                    std::cout << "File '" << model << "' is not exist!" << std::endl;
+                    return false;
+                }
+                if (!FileExists(weight))
+                {
+                    std::cout << "File '" << weight << "' is not exist!" << std::endl;
+                    return false;
+                }
+                if (!LoadBinary(model, thread.model))
+                {
+                    std::cout << "Can't cache model '" << model << "' file!" << std::endl;
+                    return false;
+                }
+                if (!LoadBinary(weight, thread.weight))
+                {
+                    std::cout << "Can't cache weight '" << weight << "' file!" << std::endl;
+                    return false;
+                }
+            }
+            return true;
+        }
+
         bool InitNetwork(const String & model, const String & weight, Thread & thread) const
         {
-            if (!FileExists(model))
-            {
-                std::cout << "File '" << model << "' is not exist!" << std::endl;
+            if (!CacheNetwork(model, weight, thread))
                 return false;
-            }
-            if (!FileExists(weight))
-            {
-                std::cout << "File '" << weight << "' is not exist!" << std::endl;
-                return false;
-            }
-            if (!thread.network.Load(model, weight))
+            if (!thread.network.Load(thread.model.c_str(), thread.model.length(), thread.weight.c_str(), thread.weight.length()))
             {
                 std::cout << "Can't load model '" << model << "' and weight '" << weight << weight << "' to network!" << std::endl;
                 return false;
@@ -255,7 +306,8 @@ namespace Test
                 if (!thread.network.SetBatch(_options.batchSize))
                     return false;
             }
-            thread.network.CompactWeight(); 
+            if(_options.compactWeight)
+                thread.network.CompactWeight(); 
             Shape shape = thread.network.NchwShape();
             thread.lower = _param().lower();
             thread.upper = _param().upper();
@@ -279,7 +331,7 @@ namespace Test
             Strings names;
             names.reserve(images.size());
             size_t curr = 0;
-            for (StringList::const_iterator it = images.begin(); it != images.end(); ++it)
+            for (StringList::const_iterator it = images.begin(); it != images.end() && curr < _options.imageNumber; ++it)
             {
                 if (RequiredExtension(*it))
                 {
@@ -352,9 +404,11 @@ namespace Test
             CPL_PERF_FUNC();
 
             Data& data = *_datas[index];
+            if (!InitNetwork(_options.synetModel, _options.synetWeight, _threads[thread]))
+                return false;
             Copy(data.input, *_threads[thread].network.Src()[0]);
-            _threads[0].network.Forward();
-            Copy(_threads[0].network.Dst(), data.output[thread].current);
+            _threads[thread].network.Forward();
+            Copy(_threads[thread].network.Dst(), data.output[thread].current);
             if (!Compare(data, index, thread))
                 return false;
             return true;

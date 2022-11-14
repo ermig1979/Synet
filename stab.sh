@@ -22,11 +22,11 @@ if [ -f $IMAGE/descript.ion ];then rm $IMAGE/descript.ion; fi
 
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
-"$BIN" $PATHES -ie=10 -rn=$NUMBER -wt=1 -tt=$THREAD -bs=$BATCH -ct=0.001 -dp=1 -dpf=6 -dpl=2 -dpp=6 -ln=$LOG
+"$BIN" $PATHES -ie=10 -rn=$NUMBER -tt=$THREAD -bs=$BATCH -in=10 -ct=0.001 -cw=1 -dp=1 -dpf=6 -dpl=2 -dpp=6 -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
-
-TEST stability fr_age20 face 100 0 1 000
+TEST onnx test_001 faces 100 0 1 000
+#TEST stability fr_age20 face 100 0 1 000
 
 exit
