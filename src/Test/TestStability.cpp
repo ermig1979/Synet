@@ -27,6 +27,7 @@
 #include "TestCommon.h"
 #include "TestUtils.h"
 #include "TestNetwork.h"
+#include "TestPerformance.h"
 
 namespace Test
 {
@@ -53,6 +54,7 @@ namespace Test
             int debugPrintFirst;
             int debugPrintLast;
             int debugPrintPrecision;
+            float compareThreshold;
 
             Options(int argc, char* argv[])
                 : ArgsParser(argc, argv, true)
@@ -70,6 +72,20 @@ namespace Test
                 debugPrintFirst = FromString<int>(GetArg("-dpf", "5"));
                 debugPrintLast = FromString<int>(GetArg("-dpl", "2"));
                 debugPrintPrecision = FromString<int>(GetArg("-dpp", "4"));
+                compareThreshold = FromString<float>(GetArg("-ct", "0.001"));
+            }
+
+            ~Options()
+            {
+                if (result)
+                {
+                    std::stringstream ss;
+                    PrintPerformance(ss, 0.0);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+                    ss << SimdPerformanceStatistic();
+#endif
+                    std::cout << ss.str();
+                }
             }
 
             bool NeedOutputDirectory() const
@@ -85,7 +101,7 @@ namespace Test
 
         //-----------------------------------------------------------------------------------------
 
-        Stability(const Options options)
+        Stability(const Options &options)
             : _options(options)
         {
             _progressMessageSizeMax = 0;
@@ -118,11 +134,19 @@ namespace Test
         }
 
     private:
+        typedef std::vector<Tensor*> TensorPtrs;
+
+        struct Output
+        {
+            Tensors current, control;
+        };
+        typedef std::vector<Output> Outputs;
+
         struct Data
         {
             Strings path;
             Tensor input;
-            Tensors output, control;
+            Outputs output;
         };
         typedef std::shared_ptr<Data> DataPtr;
         typedef std::vector<DataPtr> DataPtrs;
@@ -145,7 +169,7 @@ namespace Test
 
         typedef std::vector<Thread> Threads;
 
-        Options _options;
+        const Options & _options;
         TestParamHolder _param;
         Floats _lower, _upper;
         Threads _threads;
@@ -272,16 +296,16 @@ namespace Test
             }
             _datas.clear();
             _datas.reserve(num);
-            for (size_t t = 0; t < num; ++t)
+            for (size_t i = 0; i < num; ++i)
             {
                 DataPtr data(new Data());
                 data->path.resize(_options.batchSize);
-                data->output.resize(_options.TestThreads());
                 data->input.Reshape(thread.network.Src()[0]->Shape());
+                data->output.resize(_options.TestThreads());
                 float* input = data->input.CpuData();
                 for (size_t b = 0; b < _options.batchSize; ++b)
                 {
-                    data->path[b] = MakePath(directory, names[t * _options.batchSize + b]);
+                    data->path[b] = MakePath(directory, names[i * _options.batchSize + b]);
                     View original;
                     if (!LoadImage(data->path[b], original))
                     {
@@ -315,28 +339,24 @@ namespace Test
                 for (size_t r = 0; r < repeats; ++r, ++current)
                 {
                     std::cout << ProgressString(current, total) << std::flush;
-                    if (!(SingleThread(i, r)))
+                    if (!(RunSingleTest(0, i, r)))
                         return false;
-                    Sleep(100);
-                    //if (!CompareResults(test, i, 0))
-                    //    return false;
                     std::cout << " \r" << std::flush;
                 }
             }
             return true;
         }
 
-        bool SingleThread(size_t index, size_t repeat)
+        bool RunSingleTest(size_t thread, size_t index, size_t repeat)
         {
-            Data& data = *_datas[index];
-            _threads[0].network.Forward();
+            CPL_PERF_FUNC();
 
-            //Copy(_threads[0].Predict(data.input), data.output[0].second);
-            //if (repeat == 0)
-            //{
-            //    if (!DebugPrint(_seconds[0], index))
-            //        return false;
-            //}
+            Data& data = *_datas[index];
+            Copy(data.input, *_threads[thread].network.Src()[0]);
+            _threads[0].network.Forward();
+            Copy(_threads[0].network.Dst(), data.output[thread].current);
+            if (!Compare(data, index, thread))
+                return false;
             return true;
         }
 
@@ -361,6 +381,119 @@ namespace Test
         inline void Sleep(unsigned int miliseconds)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(miliseconds));
+        }
+
+        static inline void Copy(const TensorPtrs& src, Tensors& dst)
+        {
+            dst.resize(src.size());
+            for (size_t i = 0; i < src.size(); ++i)
+                Copy(*src[i], dst[i]);
+        }
+
+        static inline void Copy(const Tensors& src, Tensors& dst)
+        {
+            dst.resize(src.size());
+            for (size_t i = 0; i < src.size(); ++i)
+                Copy(src[i], dst[i]);
+        }
+
+        static inline void Copy(const Tensor& src, Tensor& dst)
+        {
+            if (src.Shape() != dst.Shape())
+                dst.Reshape(src.Shape(), src.Format());
+            memcpy(dst.CpuData(), src.CpuData(), src.RawSize());
+        }
+
+        bool Compare(float a, float b, float t) const
+        {
+            float d = ::fabs(a - b);
+            return d <= t || d / std::max(::fabs(a), ::fabs(b)) <= t;
+        }
+
+        bool Compare(const Tensor& f, const Tensor& s, const Shape& i, size_t d, const String& m) const
+        {
+            using Synet::Detail::DebugPrint;
+            float _f = f.CpuData(i)[0], _s = s.CpuData(i)[0];
+            if (!Compare(_f, _s, _options.compareThreshold))
+            {
+                std::cout << m << std::endl << std::fixed;
+                std::cout << "Dst[" << d << "]" << DebugPrint(f.Shape()) << " at ";
+                std::cout << DebugPrint(i) << " : " << _f << " != " << _s << std::endl;
+                return false;
+            }
+            return true;
+        }
+
+        String TestFailedMessage(const Data& data, size_t index, size_t thread)
+        {
+            std::stringstream ss;
+            ss << "At thread " << thread << " test " << index << " '" << data.path[0];
+            for (size_t k = 1; k < data.path.size(); ++k)
+                ss << ", " << data.path[k];
+            ss << "' is failed!";
+            return ss.str();
+        }
+
+        bool Compare(Data& data, size_t index, size_t thread)
+        {
+            using Synet::Detail::DebugPrint;
+            Output& output = data.output[thread];
+            if (output.control.empty())
+            {
+                Copy(output.current, output.control);
+                return true;
+            }
+            String failed = TestFailedMessage(data, index, thread);
+            if (output.control.size() != output.current.size())
+            {
+                std::cout << failed << std::endl;
+                std::cout << "Dst count : " << output.control.size() << " != " << output.current.size() << std::endl;
+                return false;
+            }
+            for (size_t d = 0; d < output.control.size(); ++d)
+            {
+                const Tensor& control = output.control[d];
+                const Tensor& current = output.current[d];
+                if (control.Shape() != current.Shape())
+                {
+                    std::cout << failed << std::endl;
+                    std::cout << "Dst[" << d << "] shape : " << DebugPrint(control.Shape()) << " != " << DebugPrint(current.Shape()) << std::endl;
+                    return false;
+                }
+                switch (control.Count())
+                {
+                case 1:
+                    for (size_t n = 0; n < control.Axis(0); ++n)
+                        if (!Compare(control, current, Shp(n), d, failed))
+                            return false;
+                    break;
+                case 2:
+                    for (size_t n = 0; n < control.Axis(0); ++n)
+                        for (size_t c = 0; c < control.Axis(1); ++c)
+                            if (!Compare(control, current, Shp(n, c), d, failed))
+                                return false;
+                    break;
+                case 3:
+                    for (size_t n = 0; n < control.Axis(0); ++n)
+                        for (size_t c = 0; c < control.Axis(1); ++c)
+                            for (size_t y = 0; y < control.Axis(2); ++y)
+                                if (!Compare(control, current, Shp(n, c, y), d, failed))
+                                    return false;
+                    break;
+                case 4:
+                    for (size_t n = 0; n < control.Axis(0); ++n)
+                        for (size_t c = 0; c < control.Axis(1); ++c)
+                            for (size_t y = 0; y < control.Axis(2); ++y)
+                                for (size_t x = 0; x < control.Axis(3); ++x)
+                                    if (!Compare(control, current, Shp(n, c, y, x), d, failed))
+                                        return false;
+                    break;
+                default:
+                    std::cout << "Error! Dst has unsupported shape " << Synet::Detail::DebugPrint(control.Shape()) << std::endl;
+                    return false;
+                }
+            }
+            return true;
         }
     };
 }

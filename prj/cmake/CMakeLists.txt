@@ -17,7 +17,8 @@ set(MAX_ERRORS 5)
 if(NOT((MODE STREQUAL "all") OR 
        (MODE STREQUAL "inference_engine") OR (MODE STREQUAL "onnx") OR 
        (MODE STREQUAL "performance_difference") OR (MODE STREQUAL "precision") OR 
-       (MODE STREQUAL "quantization") OR (MODE STREQUAL "use_samples")))
+       (MODE STREQUAL "quantization") OR (MODE OR (MODE STREQUAL "stability") OR
+       (MODE STREQUAL "use_samples"))))
     message(FATAL_ERROR "Unknown value of MODE: '${MODE}'!")
 endif()
 
@@ -128,6 +129,14 @@ if((MODE STREQUAL "quantization") OR (MODE STREQUAL "all"))
 	target_compile_definitions(test_quantization PUBLIC ${SYNET_DEFINITIONS})
 	target_link_libraries(test_quantization ${SIMD_LIB} -ldl -lpthread)
 endif()
+
+if((MODE STREQUAL "stability") OR (MODE STREQUAL "all"))
+	file(GLOB_RECURSE STABILITY_SRC ${ROOT_DIR}/src/Test/TestStability.cpp)
+	set_source_files_properties(${STABILITY_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
+	add_executable(test_stability ${STABILITY_SRC})
+	target_compile_definitions(test_stability PUBLIC ${SYNET_DEFINITIONS})
+	target_link_libraries(test_stability ${SIMD_LIB} -ldl -lpthread)
+endif()
 	
 if((MODE STREQUAL "use_samples") OR (MODE STREQUAL "all"))
 	file(GLOB USE_FD_SRC ${ROOT_DIR}/src/Use/UseFaceDetection.cpp)
@@ -138,4 +147,5 @@ if((MODE STREQUAL "use_samples") OR (MODE STREQUAL "all"))
 	file(GLOB USE_FD_DATA  ${ROOT_DIR}/data/use_samples/face_detection/*.*)
 	file(COPY ${USE_FD_DATA} DESTINATION ${CMAKE_BINARY_DIR})
 endif()
+
 
