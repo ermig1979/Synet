@@ -49,6 +49,7 @@ namespace Test
             size_t imageNumber;
             String outputDirectory;
             String logName;
+            size_t logLevel;
             size_t testThreads;
             size_t repeatNumber;
             int batchSize;
@@ -70,6 +71,7 @@ namespace Test
                 imageNumber = Cpl::ToVal<size_t>(GetArg("-in", "10"));
                 outputDirectory = GetArg("-od", "output");
                 logName = GetArg("-ln", "", false);
+                logLevel = Cpl::ToVal<size_t>(GetArg("-ll", "3"));
                 testThreads = Cpl::ToVal<size_t>(GetArg("-tt", "0"));
                 repeatNumber = std::max(0, Cpl::ToVal<int>(GetArg("-rn", "1")));
                 batchSize = Cpl::ToVal<int>(GetArg("-bs", "1"));
@@ -190,7 +192,7 @@ namespace Test
             {
                 if (!CreateOutputDirectory(_options.logName))
                     return false;
-                Cpl::Log::Global().AddFileWriter(Cpl::Log::Debug, _options.logName);
+                Cpl::Log::Global().AddFileWriter((Cpl::Log::Level)_options.logLevel, _options.logName);
             }
 #endif
             return true;
@@ -407,7 +409,10 @@ namespace Test
                 return false;
             CPL_LOG_SS(Debug, "InitNetwork.");
             Copy(data.input, *_threads[thread].network.Src()[0]);
-            _threads[thread].network.Forward();
+            if(NeedForward())
+                _threads[thread].network.Forward();
+            if (!DebugPrint(thread, index, repeat))
+                return false;
             CPL_LOG_SS(Debug, "network.Forward().");
             Copy(_threads[thread].network.Dst(), data.output[thread].current);
             if (!Compare(data, index, thread))
@@ -543,6 +548,38 @@ namespace Test
                     break;
                 default:
                     CPL_LOG_SS(Error, "Dst has unsupported shape " << Synet::Detail::DebugPrint(control.Shape()));
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        bool NeedForward() const
+        {
+            bool printOutput = (_options.debugPrint & (1 << Synet::DebugPrintOutput)) != 0;
+            bool printLayerDst = (_options.debugPrint & (1 << Synet::DebugPrintLayerDst)) != 0;
+            bool printLayerWeight = (_options.debugPrint & (1 << Synet::DebugPrintLayerWeight)) != 0;
+            bool printInt8Buffers = (_options.debugPrint & (1 << Synet::DebugPrintInt8Buffers)) != 0;
+            bool printLayerInternal = (_options.debugPrint & (1 << Synet::DebugPrintLayerInternal)) != 0;
+            return !(printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal);
+        }
+
+        bool DebugPrint(size_t thread, size_t index, size_t repeat)
+        {
+            if (_options.debugPrint)
+            {
+                String name = String("log_t") + Cpl::ToStr(thread) + "_i" + Cpl::ToStr(index) + "_r" + Cpl::ToStr(repeat) + ".txt";
+                String path = MakePath(_options.outputDirectory, name);
+                std::ofstream log(path);
+                if (log.is_open())
+                {
+                    _threads[thread].network.DebugPrint(log, _options.debugPrint, _options.debugPrintFirst, 
+                        _options.debugPrintLast, _options.debugPrintPrecision);
+                    log.close();
+                }
+                else
+                {
+                    CPL_LOG_SS(Error, "Can't open '" << path << "' file!");
                     return false;
                 }
             }
