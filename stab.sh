@@ -12,7 +12,7 @@ THREAD=$5
 BATCH=$6
 VERSION=$7
 PATHES="-sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
-LOG=./test/stability/s_"$DOMAIN"_"$NAME"_t"$THREAD"_b"$BATCH"_v"$VERSION".txt
+LOG="$DIR"/output/stability_t"$THREAD"_b"$BATCH"_v"$VERSION".txt
 BIN_DIR=./build
 BIN="$BIN_DIR"/test_stability
 
@@ -26,7 +26,7 @@ export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
-TEST onnx test_001 faces 100 0 1 000
+TEST onnx test_001 faces 1000 0 1 000
 #TEST stability fr_age20 face 100 0 1 000
 
 exit

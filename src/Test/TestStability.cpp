@@ -81,28 +81,6 @@ namespace Test
                 compactWeight = Cpl::ToVal<bool>(GetArg("-cw", "1"));
             }
 
-            ~Options()
-            {
-                std::stringstream ss;
-                PrintPerformance(ss, 0.0);
-#if defined(SYNET_SIMD_LIBRARY_ENABLE)
-                ss << SimdPerformanceStatistic();
-#endif
-                //if (!consoleSilence)
-                    std::cout << ss.str();
-                if (!logName.empty())
-                {
-                    if (!CreateOutputDirectory(logName))
-                        return;
-                    std::ofstream log(logName.c_str());
-                    if (log.is_open())
-                    {
-                        log << ss.str();
-                        log.close();
-                    }
-                }
-            }
-
             bool NeedOutputDirectory() const
             {
                 return debugPrint;
@@ -124,8 +102,20 @@ namespace Test
             _threads.resize(_options.TestThreads());
         }
 
+        ~Stability()
+        {
+            std::stringstream ss;
+            PrintPerformance(ss, 0.0);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+            ss << SimdPerformanceStatistic();
+#endif
+            CPL_LOG_SS(Info, std::endl << ss.str());
+        }
+
         bool Run()
         {
+            if (!SetLog())
+                return false;
             PrintStartMessage();
             if (!LoadTestParam())
                 return false;
@@ -193,27 +183,35 @@ namespace Test
 
     protected:
 
-        void PrintStartMessage() const
+        bool SetLog()
         {
-            std::cout << "Start stability test in ";
-            if (_options.testThreads > 0)
-                std::cout << _options.testThreads << "-threads ";
-            else
-                std::cout << "single-thread ";
-            std::cout << ":" << std::endl;
+#if defined(CPL_LOG_ENABLE)
+            if (!_options.logName.empty())
+            {
+                if (!CreateOutputDirectory(_options.logName))
+                    return false;
+                Cpl::Log::Global().AddFileWriter(Cpl::Log::Debug, _options.logName);
+            }
+#endif
+            return true;
         }
 
-        bool PrintFinishMessage() const
+        void PrintStartMessage() const
         {
-            std::cout << Cpl::ExpandRight("Tests are finished successfully!", _progressMessageSizeMax) << std::endl << std::endl;
-            return true;
+            size_t threads = _options.testThreads;
+            CPL_LOG_SS(Info, "Start stability test in " << (threads ? Cpl::ToStr(threads) + "-threads" : "single-thread") << " mode:");
+        }
+
+        void PrintFinishMessage() const
+        {
+            CPL_LOG_SS(Info, Cpl::ExpandRight("Tests are finished successfully!", _progressMessageSizeMax));
         }
 
         bool LoadTestParam()
         {
             if (!_param.Load(_options.testParam))
             {
-                std::cout << "Can't load file '" << _options.testParam << "' !" << std::endl;
+                CPL_LOG_SS(Error, "Can't load file '" << _options.testParam << "' !");
                 return false;
             }
             return true;
@@ -223,7 +221,7 @@ namespace Test
         {
             if (_options.NeedOutputDirectory() && !DirectoryExists(_options.outputDirectory) && !CreatePath(_options.outputDirectory))
             {
-                std::cout << "Can't create output directory '" << _options.outputDirectory << "' !" << std::endl;
+                CPL_LOG_SS(Error, "Can't create output directory '" << _options.outputDirectory << "' !");
                 return false;
             }
             return true;
@@ -260,22 +258,22 @@ namespace Test
             {
                 if (!FileExists(model))
                 {
-                    std::cout << "File '" << model << "' is not exist!" << std::endl;
+                    CPL_LOG_SS(Error, "File '" << model << "' is not exist!");
                     return false;
                 }
                 if (!FileExists(weight))
                 {
-                    std::cout << "File '" << weight << "' is not exist!" << std::endl;
+                    CPL_LOG_SS(Error, "File '" << weight << "' is not exist!");
                     return false;
                 }
                 if (!LoadBinary(model, thread.model))
                 {
-                    std::cout << "Can't cache model '" << model << "' file!" << std::endl;
+                    CPL_LOG_SS(Error, "Can't cache model '" << model << "' file!");
                     return false;
                 }
                 if (!LoadBinary(weight, thread.weight))
                 {
-                    std::cout << "Can't cache weight '" << weight << "' file!" << std::endl;
+                    CPL_LOG_SS(Error, "Can't cache weight '" << weight << "' file!");
                     return false;
                 }
             }
@@ -288,17 +286,18 @@ namespace Test
                 return false;
             if (!thread.network.Load(thread.model.c_str(), thread.model.length(), thread.weight.c_str(), thread.weight.length()))
             {
-                std::cout << "Can't load model '" << model << "' and weight '" << weight << weight << "' to network!" << std::endl;
+                CPL_LOG_SS(Error, "Can't load model '" << model << "' and weight '" << weight << weight << "' to network!");
                 return false;
             }
             if (thread.network.Src().size() != 1)
             {
-                std::cout << "Stability test support only 1 source!" << std::endl;
+                CPL_LOG_SS(Error, "Stability test support only 1 source!");
                 return false;
             }                
             if (thread.network.Format() != Synet::TensorFormatNhwc || thread.network.Src()[0]->Count() != 4)
             {
-                std::cout << "Stability test support only NHWC format!" << std::endl;
+                CPL_LOG_SS(Error, "Stability test support only NHWC format!");
+                thread.network.Save(Cpl::MakePath(_options.outputDirectory, "error_in_model.xml"));
                 return false;
             }
             if (thread.network.NchwShape()[0] != _options.batchSize)
@@ -322,7 +321,7 @@ namespace Test
         {
             if (!DirectoryExists(directory))
             {
-                std::cout << "Test image directory '" << directory << "' is not exists!" << std::endl;
+                CPL_LOG_SS(Error, "Test image directory '" << directory << "' is not exists!");
                 return false;
             }
             StringList images = GetFileList(directory, "*.*", true, false);
@@ -343,7 +342,7 @@ namespace Test
             size_t num = names.size() / _options.batchSize;
             if (num == 0)
             {
-                std::cout << "There is no one image in directory '" << directory << "'!" << std::endl;
+                CPL_LOG_SS(Error, "There are no enough images in directory '" << directory << "'!");
                 return false;
             }
             _datas.clear();
@@ -361,7 +360,7 @@ namespace Test
                     View original;
                     if (!LoadImage(data->path[b], original))
                     {
-                        std::cout << "Can't read '" << data->path[b] << "' image!" << std::endl;
+                        CPL_LOG_SS(Error, "Can't read '" << data->path[b] << "' image!");
                         return false;
                     }
                     Shape shape = thread.network.NchwShape();
@@ -402,12 +401,14 @@ namespace Test
         bool RunSingleTest(size_t thread, size_t index, size_t repeat)
         {
             CPL_PERF_FUNC();
-
             Data& data = *_datas[index];
+            CPL_LOG_SS(Debug, "Run test [t:" << thread << ", i:" << Cpl::GetNameByPath(data.path[0]) << ", r:" << repeat << "]:");
             if (!InitNetwork(_options.synetModel, _options.synetWeight, _threads[thread]))
                 return false;
+            CPL_LOG_SS(Debug, "InitNetwork.");
             Copy(data.input, *_threads[thread].network.Src()[0]);
             _threads[thread].network.Forward();
+            CPL_LOG_SS(Debug, "network.Forward().");
             Copy(_threads[thread].network.Dst(), data.output[thread].current);
             if (!Compare(data, index, thread))
                 return false;
@@ -470,9 +471,8 @@ namespace Test
             float _f = f.CpuData(i)[0], _s = s.CpuData(i)[0];
             if (!Compare(_f, _s, _options.compareThreshold))
             {
-                std::cout << m << std::endl << std::fixed;
-                std::cout << "Dst[" << d << "]" << DebugPrint(f.Shape()) << " at ";
-                std::cout << DebugPrint(i) << " : " << _f << " != " << _s << std::endl;
+                CPL_LOG_SS(Error, m << std::endl << std::fixed << "Dst[" << d << "]" << 
+                    DebugPrint(f.Shape()) << " at " << DebugPrint(i) << " : " << _f << " != " << _s);
                 return false;
             }
             return true;
@@ -500,8 +500,7 @@ namespace Test
             String failed = TestFailedMessage(data, index, thread);
             if (output.control.size() != output.current.size())
             {
-                std::cout << failed << std::endl;
-                std::cout << "Dst count : " << output.control.size() << " != " << output.current.size() << std::endl;
+                CPL_LOG_SS(Error, failed << std::endl << "Dst count : " << output.control.size() << " != " << output.current.size());
                 return false;
             }
             for (size_t d = 0; d < output.control.size(); ++d)
@@ -510,8 +509,8 @@ namespace Test
                 const Tensor& current = output.current[d];
                 if (control.Shape() != current.Shape())
                 {
-                    std::cout << failed << std::endl;
-                    std::cout << "Dst[" << d << "] shape : " << DebugPrint(control.Shape()) << " != " << DebugPrint(current.Shape()) << std::endl;
+                    CPL_LOG_SS(Error, failed << std::endl << "Dst[" << d << "] shape : " << 
+                        DebugPrint(control.Shape()) << " != " << DebugPrint(current.Shape()));
                     return false;
                 }
                 switch (control.Count())
@@ -543,7 +542,7 @@ namespace Test
                                         return false;
                     break;
                 default:
-                    std::cout << "Error! Dst has unsupported shape " << Synet::Detail::DebugPrint(control.Shape()) << std::endl;
+                    CPL_LOG_SS(Error, "Dst has unsupported shape " << Synet::Detail::DebugPrint(control.Shape()));
                     return false;
                 }
             }
@@ -555,6 +554,13 @@ namespace Test
 int main(int argc, char* argv[])
 {
     Test::Stability::Options options(argc, argv);
+
+#if defined(CPL_LOG_ENABLE)
+#if defined(__linux__) && 0
+    Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
+#endif
+    Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
+#endif
 
     Test::Stability stability(options);
 

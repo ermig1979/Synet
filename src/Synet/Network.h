@@ -852,9 +852,10 @@ namespace Synet
         {
             for (size_t i = 0; i < _stages.size(); ++i)
             {
+                const LayerParam& param = _stages[i].layer->Param();
                 _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst);
-                if (_stages[i].layer->_isBack && _stages[i].layer->Param().type() != LayerTypeStub)
-                    _stages[i].dst[0]->SetName(_stages[i].layer->Param().name());
+                if (_stages[i].layer->_isBack && param.type() != LayerTypeStub)
+                    _stages[i].dst[0]->SetName(param.name());
             }
         }
 
