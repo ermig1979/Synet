@@ -59,6 +59,7 @@ namespace Test
             int debugPrintPrecision;
             float compareThreshold;
             bool compactWeight;
+            bool consoleSilence;
 
             Options(int argc, char* argv[])
                 : ArgsParser(argc, argv, true)
@@ -81,6 +82,7 @@ namespace Test
                 debugPrintPrecision = Cpl::ToVal<int>(GetArg("-dpp", "4"));
                 compareThreshold = Cpl::ToVal<float>(GetArg("-ct", "0.001"));
                 compactWeight = Cpl::ToVal<bool>(GetArg("-cw", "1"));
+                consoleSilence = Cpl::ToVal<bool>(GetArg("-cs", "0"));
             }
 
             bool NeedOutputDirectory() const
@@ -106,12 +108,15 @@ namespace Test
 
         ~Stability()
         {
-            std::stringstream ss;
-            PrintPerformance(ss, 0.0);
+            if (!_options.consoleSilence)
+            {
+                std::stringstream ss;
+                PrintPerformance(ss, 0.0);
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-            ss << SimdPerformanceStatistic();
+                ss << SimdPerformanceStatistic();
 #endif
-            CPL_LOG_SS(Info, std::endl << ss.str());
+                CPL_LOG_SS(Info, std::endl << ss.str());
+            }
         }
 
         bool Run()
@@ -152,7 +157,8 @@ namespace Test
 
         struct Data
         {
-            Strings path;
+            Strings paths;
+            Views views;
             Tensor input;
             Outputs output;
         };
@@ -352,17 +358,17 @@ namespace Test
             for (size_t i = 0; i < num; ++i)
             {
                 DataPtr data(new Data());
-                data->path.resize(_options.batchSize);
+                data->paths.resize(_options.batchSize);
+                data->views.resize(_options.batchSize);
                 data->input.Reshape(thread.network.Src()[0]->Shape());
                 data->output.resize(_options.TestThreads());
-                float* input = data->input.CpuData();
                 for (size_t b = 0; b < _options.batchSize; ++b)
                 {
-                    data->path[b] = MakePath(directory, names[i * _options.batchSize + b]);
+                    data->paths[b] = MakePath(directory, names[i * _options.batchSize + b]);
                     View original;
-                    if (!LoadImage(data->path[b], original))
+                    if (!LoadImage(data->paths[b], original))
                     {
-                        CPL_LOG_SS(Error, "Can't read '" << data->path[b] << "' image!");
+                        CPL_LOG_SS(Error, "Can't read '" << data->paths[b] << "' image!");
                         return false;
                     }
                     Shape shape = thread.network.NchwShape();
@@ -375,8 +381,7 @@ namespace Test
 
                     if (_param().order() == "rgb" && shape[1] == 3)
                         (View::Format&)resized.format = View::Rgb24;
-                    Simd::SynetSetInput(resized, thread.lower.data(), thread.upper.data(), input, shape[1], SimdTensorFormatNhwc);
-                    input += shape[1] * shape[2] * shape[3];
+                    data->views[b].Swap(resized);
                 }
                 _datas.push_back(data);
             }
@@ -404,20 +409,35 @@ namespace Test
         {
             CPL_PERF_FUNC();
             Data& data = *_datas[index];
-            CPL_LOG_SS(Debug, "Run test [t:" << thread << ", i:" << Cpl::GetNameByPath(data.path[0]) << ", r:" << repeat << "]:");
+            CPL_LOG_SS(Debug, "Run test [t:" << thread << ", i:" << Cpl::GetNameByPath(data.paths[0]) << ", r:" << repeat << "]:");
             if (!InitNetwork(_options.synetModel, _options.synetWeight, _threads[thread]))
                 return false;
-            CPL_LOG_SS(Debug, "InitNetwork.");
-            Copy(data.input, *_threads[thread].network.Src()[0]);
+            CPL_LOG_SS(Debug, "Re-init.");
+            SetInput(_threads[thread], data);
+            CPL_LOG_SS(Debug, "Set input.");
             if(NeedForward())
                 _threads[thread].network.Forward();
             if (!DebugPrint(thread, index, repeat))
                 return false;
-            CPL_LOG_SS(Debug, "network.Forward().");
+            CPL_LOG_SS(Debug, "Propagate.");
             Copy(_threads[thread].network.Dst(), data.output[thread].current);
             if (!Compare(data, index, thread))
                 return false;
+            CPL_LOG_SS(Debug, "Compare out.");
             return true;
+        }
+
+        void SetInput(Thread& thread, Data& data)
+        {
+            float* input = data.input.CpuData();
+            const Shape &shape = thread.network.NchwShape();
+            for (size_t b = 0; b < _options.batchSize; ++b)
+            {
+                Simd::SynetSetInput(data.views[b], thread.lower.data(), 
+                    thread.upper.data(), input, shape[1], SimdTensorFormatNhwc);
+                input += shape[1] * shape[2] * shape[3];
+            }
+            Copy(data.input, *thread.network.Src()[0]);
         }
 
         String ProgressString(size_t current, size_t total)
@@ -486,9 +506,9 @@ namespace Test
         String TestFailedMessage(const Data& data, size_t index, size_t thread)
         {
             std::stringstream ss;
-            ss << "At thread " << thread << " test " << index << " '" << data.path[0];
-            for (size_t k = 1; k < data.path.size(); ++k)
-                ss << ", " << data.path[k];
+            ss << "At thread " << thread << " test " << index << " '" << data.paths[0];
+            for (size_t k = 1; k < data.paths.size(); ++k)
+                ss << ", " << data.paths[k];
             ss << "' is failed!";
             return ss.str();
         }
