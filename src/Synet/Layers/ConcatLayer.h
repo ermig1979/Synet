@@ -102,9 +102,9 @@ namespace Synet
                 assert(srcSizeSum == dst[0]->Size());
             }
             _dstConcatAxis = dst[0]->Axis(_concatAxis);
-            if (src.size() != 1)// && _fixed)
-                ForwardCpu(src, dst);
             _special2N = (src.size() == 2 && _srcConcatAxis[0] == _srcConcatAxis[1]) ? _srcConcatAxis[0] : 0;
+            if (src.size() != 1)
+                ForwardCpu(src, dst);
 #if 0
             std::stringstream desc;
             desc << _concatNum << "x";

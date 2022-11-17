@@ -28,10 +28,10 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 echo
 }
 
-TEST inference_engine test_010f faces 100 0 1 000
+#TEST inference_engine test_010f faces 100 0 1 000
 
 #TEST onnx test_000 face 100 0 1 000
-#TEST onnx test_001 faces 100 0 1 000
+TEST onnx test_001 faces 1000 0 1 000
 
 #TEST stability fr_age20 face 100 0 1 000
 
