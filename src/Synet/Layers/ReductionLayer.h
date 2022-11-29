@@ -94,6 +94,24 @@ namespace Synet
                 dst += inner;
             }
         }
+
+        template <class T> void ReductionLayerForwardCpuL2(const T * src, size_t outer, size_t count, size_t inner, T * dst)
+        {
+            for (size_t o = 0; o < outer; ++o)
+            {
+                for (size_t i = 0; i < inner; ++i)
+                    dst[i] = T(0);
+                for (size_t c = 0; c < count; ++c)
+                {
+                    for (size_t i = 0; i < inner; ++i)
+                        dst[i] += Square(src[i]);
+                    src += inner;
+                }
+                for (size_t i = 0; i < inner; ++i)
+                    dst[i] = T(::sqrt(dst[i]));
+                dst += inner;
+            }
+        }
     }
 
     template <class T> class ReductionLayer : public Synet::Layer<T>
@@ -125,6 +143,9 @@ namespace Synet
                 break;
             case ReductionTypeProd:
                 _func = Detail::ReductionLayerForwardCpuProd;
+                break;
+            case ReductionTypeL2:
+                _func = Detail::ReductionLayerForwardCpuL2;
                 break;
             default:
                 assert(0);

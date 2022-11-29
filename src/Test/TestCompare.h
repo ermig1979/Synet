@@ -500,7 +500,7 @@ namespace Test
 
         bool AnnotateRegions(const Network& network, const String& inputPath) const
         {
-            if (_options.annotateRegions)
+            if (_options.annotateRegions && _param().inputType() == "images")
             {
                 View image;
                 if (!LoadImage(inputPath, image))

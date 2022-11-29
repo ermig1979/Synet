@@ -160,7 +160,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Cast" && !ConvertCastNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Clip" && !ConvertClipNode(node, layer))
+                if (node.op_type() == "Clip" && !ConvertClipNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Concat" && !ConvertConcatNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -205,6 +205,8 @@ namespace Synet
                 if (node.op_type() == "Pow" && !ConvertPowNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "PRelu" && !ConvertPreluNode(node, network.layers(), layer))
+                    return ErrorMessage(i, node);
+                if (node.op_type() == "ReduceL2" && !ConvertReduceL2Node(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "ReduceMax" && !ConvertReduceMaxNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -554,13 +556,33 @@ namespace Synet
             return true;
         }
 
-        bool ConvertClipNode(const onnx::NodeProto& node, LayerParam& layer)
+        bool ConvertClipNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeRestrictRange;
-            if (!ConvertAtrributeFloat(node, "max", layer.restrictRange().upper()))
-                return false;
-            if (!ConvertAtrributeFloat(node, "min", layer.restrictRange().lower()))
-                return false;
+            if (layer.src().size() > 1)
+            {
+                const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+                if (src1 == NULL || src1->type() != LayerTypeConst || src1->weight().size() != 1)
+                    return false;
+                const float* min = GetWeight<float>(original, src1->weight()[0]);
+                layer.restrictRange().lower() = min[0];
+                if (layer.src().size() > 2)
+                {
+                    const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+                    if (src2 == NULL || src2->type() != LayerTypeConst || src2->weight().size() != 1)
+                        return false;
+                    const float* max = GetWeight<float>(original, src2->weight()[0]);
+                    layer.restrictRange().upper() = max[0];
+                }
+                layer.src().resize(1);
+            }
+            else
+            {
+                if (!ConvertAtrributeFloat(node, "min", layer.restrictRange().lower(), true, -FLT_MAX))
+                    return false;
+                if (!ConvertAtrributeFloat(node, "max", layer.restrictRange().upper(), true, +FLT_MAX))
+                    return false;
+            }
             return true;
         }
 
@@ -1111,6 +1133,23 @@ namespace Synet
             layer.src().resize(1);
             if (!CompactShape(layer.weight()[0].dim()))
                 return false;
+            return true;
+        }
+
+        bool ConvertReduceL2Node(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeReduction;
+            layer.reduction().type() = ReductionTypeL2;
+            if (!ConvertAtrributeInts(node, "axes", layer.reduction().axis()))
+                return false;
+            if (!ConvertAtrributeInt(node, "keepdims", layer.reduction().keepDims()))
+                return false;
+            if (trans && !PermutedToNchw(layers, false, true, true))
+            {
+                Ints nchw = Ints({ 0, 3, 1, 2 }), axis = layer.reduction().axis();
+                for (size_t i = 0; i < axis.size(); ++i)
+                    layer.reduction().axis()[i] = nchw[axis[i]];
+            }
             return true;
         }
 

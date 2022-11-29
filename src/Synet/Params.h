@@ -202,7 +202,8 @@ CPL_PARAM_ENUM1(Synet, ReductionType,
     ReductionTypeMax,
     ReductionTypeMin,
     ReductionTypeSum,
-    ReductionTypeProd);
+    ReductionTypeProd,
+    ReductionTypeL2);
 
 CPL_PARAM_ENUM1(Synet, RoundingType,
     RoundingTypeCeil,
