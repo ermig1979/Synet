@@ -162,6 +162,8 @@ namespace Synet
                         continue;
                     if (MergeSwish(network.layers(), i, merged, changes))
                         continue;
+                    if (MergeNormalize(network.layers(), i, merged, changes))
+                        continue;
                     break;
                 }
                 case 5:
@@ -1589,6 +1591,34 @@ namespace Synet
             layer.dst().push_back(layer.name());
             dst.push_back(layer);
             index += 1;
+            return true;
+        }
+
+        bool MergeNormalize(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            if (src.size() < index + 4)
+                return false;
+            if (src[index + 0].type() != LayerTypeReduction || src[index + 0].reduction().type() != ReductionTypeL2)
+                return false;
+            if (src[index + 1].type() != LayerTypeRestrictRange || src[index + 1].restrictRange().lower() >= 0.0000001f)
+                return false;
+            if (src[index + 2].type() != LayerTypeMeta || src[index + 2].meta().type() != MetaTypeShape)
+                return false;
+            if (src[index + 3].type() != LayerTypeTile)
+                return false;
+            if (src[index + 4].type() != LayerTypeBinaryOperation || src[index + 4].binaryOperation().type() != BinaryOperationTypeDiv)
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeNormalize;
+            layer.name() = src[index + 4].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            layer.normalize().acrossSpatial() = true;
+            layer.normalize().channelShared() = true;
+            layer.normalize().eps() = 0;
+            dst.push_back(layer);
+            index += 4;
             return true;
         }
 

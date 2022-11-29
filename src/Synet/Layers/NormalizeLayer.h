@@ -32,37 +32,43 @@ namespace Synet
 {
     namespace Detail
     {
-        template<class T> void NormalizeLayerForwardCpu(const T * src, size_t channels, size_t spatial, const T * scale, T eps, int acrossSpatial, int trans, T * buf, T * dst)
+        template<class T> void NormalizeLayerForwardCpu(const T * src, size_t batch, size_t channels, size_t spatial, const T * scale, T eps, int acrossSpatial, int trans, T * buf, T * dst)
         {
             if (trans)
             {
                 if (acrossSpatial)
                 {
                     size_t size = channels*spatial;
-                    T sum = 0;
-                    for (size_t i = 0; i < size; ++i)
-                        sum += Square(src[i]);
-                    T k = T(1) / ::sqrt(sum + eps);
-                    for (size_t i = 0; i < spatial; ++i)
-                    { 
-                        for (size_t c = 0; c < channels; ++c)
-                            dst[c] = src[c] * scale[c] * k;
-                        dst += channels;
-                        src += channels;
+                    for (size_t b = 0; b < batch; ++b)
+                    {
+                        T sum = eps;
+                        for (size_t i = 0; i < size; ++i)
+                            sum += Square(src[i]);
+                        T k = T(1) / ::sqrt(sum);
+                        for (size_t i = 0; i < spatial; ++i)
+                        {
+                            for (size_t c = 0; c < channels; ++c)
+                                dst[c] = src[c] * scale[c] * k;
+                            dst += channels;
+                            src += channels;
+                        }
                     }
                 }
                 else
                 {
-                    for (size_t i = 0; i < spatial; ++i)
+                    for (size_t b = 0; b < batch; ++b)
                     {
-                        T sum = eps;
-                        for (size_t c = 0; c < channels; ++c)
-                            sum += Square(src[c]);
-                        T k = T(1) / ::sqrt(sum);
-                        for (size_t c = 0; c < channels; ++c)
-                            dst[c] = src[c] * scale[c] * k;
-                        dst += channels;
-                        src += channels;
+                        for (size_t i = 0; i < spatial; ++i)
+                        {
+                            T sum = eps;
+                            for (size_t c = 0; c < channels; ++c)
+                                sum += Square(src[c]);
+                            T k = T(1) / ::sqrt(sum);
+                            for (size_t c = 0; c < channels; ++c)
+                                dst[c] = src[c] * scale[c] * k;
+                            dst += channels;
+                            src += channels;
+                        }
                     }
                 }
             }
@@ -71,38 +77,44 @@ namespace Synet
                 if (acrossSpatial)
                 {
                     size_t size = channels*spatial;
-                    T sum = 0;
-                    for (size_t i = 0; i < size; ++i)
-                        sum += Square(src[i]);
-                    T k0 = T(1) / ::sqrt(sum + eps);
-                    for (size_t c = 0; c < channels; ++c)
+                    for (size_t b = 0; b < batch; ++b)
                     {
-                        T k = scale[c] * k0;
-                        for (size_t i = 0; i < spatial; ++i)
-                            dst[i] = src[i] * k;
-                        dst += spatial;
-                        src += spatial;
+                        T sum = eps;
+                        for (size_t i = 0; i < size; ++i)
+                            sum += Square(src[i]);
+                        T k0 = T(1) / ::sqrt(sum);
+                        for (size_t c = 0; c < channels; ++c)
+                        {
+                            T k = scale[c] * k0;
+                            for (size_t i = 0; i < spatial; ++i)
+                                dst[i] = src[i] * k;
+                            dst += spatial;
+                            src += spatial;
+                        }
                     }
                 }
                 else
                 {
-                    for (size_t i = 0; i < spatial; ++i)
-                        buf[i] = eps;
-                    for (size_t c = 0; c < channels; ++c)
+                    for (size_t b = 0; b < batch; ++b)
                     {
-                        const T * pSrc = src + c * spatial;
                         for (size_t i = 0; i < spatial; ++i)
-                            buf[i] += Square(pSrc[i]);
-                    }
-                    for (size_t i = 0; i < spatial; ++i)
-                        buf[i] = T(1) / ::sqrt(buf[i]);
-                    for (size_t c = 0; c < channels; ++c)
-                    {
-                        T k = scale[c];
+                            buf[i] = eps;
+                        for (size_t c = 0; c < channels; ++c)
+                        {
+                            const T * pSrc = src + c * spatial;
+                            for (size_t i = 0; i < spatial; ++i)
+                                buf[i] += Square(pSrc[i]);
+                        }
                         for (size_t i = 0; i < spatial; ++i)
-                            dst[i] = src[i] * buf[i] * k;
-                        dst += spatial;
-                        src += spatial;
+                            buf[i] = T(1) / ::sqrt(buf[i]);
+                        for (size_t c = 0; c < channels; ++c)
+                        {
+                            T k = scale[c];
+                            for (size_t i = 0; i < spatial; ++i)
+                                dst[i] = src[i] * buf[i] * k;
+                            dst += spatial;
+                            src += spatial;
+                        }
                     }
                 }
             }
@@ -130,8 +142,13 @@ namespace Synet
             _eps = param.eps();
 
             assert(src[0]->Count() == 3 || src[0]->Count() == 4);
-            _num = src[0]->Axis(0);
-            if (src[0]->Count() == 3)
+            _batch = src[0]->Axis(0);
+            if (src[0]->Count() == 2)
+            {
+                _channels = 1;
+                _spatial = src[0]->Axis(1);
+            }
+            else if (src[0]->Count() == 3)
             {
                 if (_trans)
                 {
@@ -186,19 +203,13 @@ namespace Synet
             Type * pDst = dst[0]->CpuData();
             Type * pBuf = buf[0]->CpuData();
             const Type * pScale = _scale.CpuData();
-
-            for (size_t n = 0; n < _num; ++n)
-            {
-                Detail::NormalizeLayerForwardCpu(pSrc, _channels, _spatial, pScale, _eps, _acrossSpatial, _trans, pBuf, pDst);
-                pSrc += _channels*_spatial;
-                pDst += _channels*_spatial;
-            }
+            Detail::NormalizeLayerForwardCpu(pSrc, _batch, _channels, _spatial, pScale, _eps, _acrossSpatial, _trans, pBuf, pDst);
         }
 
     private:
         typedef typename Base::Tensor Tensor;
 
-        size_t _num, _channels, _spatial;
+        size_t _batch, _channels, _spatial;
         Tensor _scale;
         int _trans, _acrossSpatial, _channelShared;
         Type _eps;
