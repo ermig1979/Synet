@@ -119,6 +119,18 @@ namespace Synet
                 }
             }
         }
+
+        //-----------------------------------------------------------------------------------------
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+
+        template<> SYNET_INLINE void NormalizeLayerForwardCpu<float>(const float* src, size_t batch, size_t channels, 
+            size_t spatial, const float* scale, float eps, int acrossSpatial, int trans, float* buf, float* dst)
+        {
+            ::SimdSynetNormalizeLayerForward(src, batch, channels, spatial, scale, &eps,
+                (SimdBool)acrossSpatial, trans ? SimdTensorFormatNhwc : SimdTensorFormatNchw, buf, dst);
+        }
+#endif
     }
 
     template <class T> class NormalizeLayer : public Synet::Layer<T>
