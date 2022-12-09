@@ -153,7 +153,6 @@ namespace Synet
             _channelShared = param.channelShared() ? 1 : 0;
             _eps = param.eps();
 
-            assert(src[0]->Count() == 3 || src[0]->Count() == 4);
             _batch = src[0]->Axis(0);
             if (src[0]->Count() == 2)
             {
@@ -173,7 +172,7 @@ namespace Synet
                     _spatial = src[0]->Axis(2);
                 }
             }
-            else
+            else if (src[0]->Count() == 4)
             {
                 if (_trans)
                 {
@@ -186,6 +185,8 @@ namespace Synet
                     _spatial = src[0]->Axis(2) * src[0]->Axis(3);
                 }
             }
+            else 
+                assert(0);
 
             if (this->Weight().empty())
             {
