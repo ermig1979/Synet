@@ -61,7 +61,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Simd", "..\..\3rd\Simd\prj\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "amx", "amx", "{4A5F07C0-8A0A-4055-A7CC-566C857D4B7B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Amx", "..\..\3rd\Simd\prj\vs2022\Amx.vcxproj", "{3E68D81A-DBC0-47B4-912B-7C9EFCE28B6F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AmxBf16", "..\..\3rd\Simd\prj\vs2022\AmxBf16.vcxproj", "{3E68D81A-DBC0-47B4-912B-7C9EFCE28B6F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Avx512bf16", "..\..\3rd\Simd\prj\vs2022\Avx512bf16.vcxproj", "{8023D218-C0D2-48AD-AD1B-0D4E6B1DE7BE}"
 EndProject

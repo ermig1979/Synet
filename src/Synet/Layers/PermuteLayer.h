@@ -50,17 +50,19 @@ namespace Synet
         {
             const PermuteParam & param = this->Param().permute();
             _permute = false;
-            _order = param.order();
-            _count = _order.size();
+            _dstOrder = param.order();
+            _count = _dstOrder.size();
             assert(_count >= 2 && _count <= 5);
+            _srcOrder.resize(_count);
             size_t is = 0, os = 0;
             Shape permute;
-            for (size_t i = 0; i < _order.size(); ++i)
+            for (size_t i = 0; i < _dstOrder.size(); ++i)
             {
-                if (_order[i] != i)
+                if (_dstOrder[i] != i)
                     permute.push_back(i);
                 is += i;
-                os += _order[i];
+                os += _dstOrder[i];
+                _srcOrder[_dstOrder[i]] = i;
             }
             assert(is == os);
             _permute = permute.size() > 1;
@@ -74,20 +76,13 @@ namespace Synet
             assert(_srcShape.size() == _count);
             _dstShape.clear();
             for (size_t i = 0; i < _count; ++i)
-                _dstShape.push_back(_srcShape[_order[i]]);
+                _dstShape.push_back(_srcShape[_dstOrder[i]]);
             if (_permute)
             {
-                _srcStride.resize(_count, 1);
-                _dstStride.resize(_count, 1);
-                Shape dstStride(_count, 1);
-                for (ptrdiff_t i = _count - 2; i >= 0; i--)
-                {
-                    _srcStride[i] = _srcStride[i + 1] * _srcShape[i + 1];
-                    dstStride[i] = dstStride[i + 1] * _dstShape[i + 1];
-                }
-                for (size_t i = 0; i < _count; ++i)
-                    _dstStride[_order[i]] = dstStride[i];
                 dst[0]->Reshape(_dstShape, param.format() == TensorFormatUnknown ? src[0]->Format() : param.format());
+                CompactShapes();
+                _srcStride = Stride(_srcShape, _srcOrder);
+                _dstStride = Stride(_dstShape, _dstOrder);
                 this->UsePerfStat();
             }
             else
@@ -104,61 +99,53 @@ namespace Synet
                 switch (_count)
                 {
                 case 2:
-                    for (size_t i = 0; i < _srcShape[0]; ++i)
+                    for (size_t i = 0; i < _dstShape[0]; ++i)
                     {
-                        for (size_t j = 0; j < _srcShape[1]; ++j)
+                        for (size_t j = 0; j < _dstShape[1]; ++j)
                         {
-                            size_t srcOffset = i*_srcStride[0] + j*_srcStride[1];
-                            size_t dstOffset = i*_dstStride[0] + j*_dstStride[1];
-                            pDst[dstOffset] = pSrc[srcOffset];
+                            *pDst++ = pSrc[i * _srcStride[0] + j * _srcStride[1]];
                         }
                     }
                     break;
                 case 3:
-                    for (size_t i = 0; i < _srcShape[0]; ++i)
+                    for (size_t i = 0; i < _dstShape[0]; ++i)
                     {
-                        for (size_t j = 0; j < _srcShape[1]; ++j)
+                        for (size_t j = 0; j < _dstShape[1]; ++j)
                         {
-                            for (size_t k = 0; k < _srcShape[2]; ++k)
+                            for (size_t k = 0; k < _dstShape[2]; ++k)
                             {
-                                size_t srcOffset = i*_srcStride[0] + j*_srcStride[1] + k*_srcStride[2];
-                                size_t dstOffset = i*_dstStride[0] + j*_dstStride[1] + k*_dstStride[2];
-                                pDst[dstOffset] = pSrc[srcOffset];
+                                *pDst++= pSrc[i*_srcStride[0] + j*_srcStride[1] + k*_srcStride[2]];
                             }
                         }
                     }
                     break;
                 case 4:
-                    for (size_t i = 0; i < _srcShape[0]; ++i)
+                    for (size_t i = 0; i < _dstShape[0]; ++i)
                     {
-                        for (size_t j = 0; j < _srcShape[1]; ++j)
+                        for (size_t j = 0; j < _dstShape[1]; ++j)
                         {
-                            for (size_t k = 0; k < _srcShape[2]; ++k)
+                            for (size_t k = 0; k < _dstShape[2]; ++k)
                             {
-                                for (size_t l = 0; l < _srcShape[3]; ++l)
+                                for (size_t l = 0; l < _dstShape[3]; ++l)
                                 {
-                                    size_t srcOffset = i*_srcStride[0] + j*_srcStride[1] + k*_srcStride[2] + l*_srcStride[3];
-                                    size_t dstOffset = i*_dstStride[0] + j*_dstStride[1] + k*_dstStride[2] + l*_dstStride[3];
-                                    pDst[dstOffset] = pSrc[srcOffset];
+                                    *pDst++ = pSrc[i*_srcStride[0] + j*_srcStride[1] + k*_srcStride[2] + l*_srcStride[3]];
                                 }
                             }
                         }
                     }
                     break;
                 case 5:
-                    for (size_t i = 0; i < _srcShape[0]; ++i)
+                    for (size_t i = 0; i < _dstShape[0]; ++i)
                     {
-                        for (size_t j = 0; j < _srcShape[1]; ++j)
+                        for (size_t j = 0; j < _dstShape[1]; ++j)
                         {
-                            for (size_t k = 0; k < _srcShape[2]; ++k)
+                            for (size_t k = 0; k < _dstShape[2]; ++k)
                             {
-                                for (size_t l = 0; l < _srcShape[3]; ++l)
+                                for (size_t l = 0; l < _dstShape[3]; ++l)
                                 {
-                                    for (size_t m = 0; m < _srcShape[4]; ++m)
+                                    for (size_t m = 0; m < _dstShape[4]; ++m)
                                     {
-                                        size_t srcOffset = i*_srcStride[0] + j*_srcStride[1] + k*_srcStride[2] + l*_srcStride[3] + m*_srcStride[4];
-                                        size_t dstOffset = i*_dstStride[0] + j*_dstStride[1] + k*_dstStride[2] + l*_dstStride[3] + m*_dstStride[4];
-                                        pDst[dstOffset] = pSrc[srcOffset];
+                                        *pDst++ = pSrc[i*_srcStride[0] + j*_srcStride[1] + k*_srcStride[2] + l*_srcStride[3] + m*_srcStride[4]];
                                     }
                                 }
                             }
@@ -174,6 +161,61 @@ namespace Synet
     private:
         bool _permute;
         size_t _count;
-        Shape _order, _srcShape, _dstShape, _srcStride, _dstStride;
+        Shape _srcOrder, _dstOrder, _srcShape, _dstShape, _srcStride, _dstStride;
+
+        static Shape Stride(const Shape & shape, const Shape& order)
+        {
+            Shape buf(shape.size(), 1), out(shape.size(), 1);
+            for (ptrdiff_t i = shape.size() - 2; i >= 0; i--)
+                buf[i] = buf[i + 1] * shape[i + 1];
+            for (size_t i = 0; i < shape.size(); ++i)
+               out[order[i]] = buf[i];
+            return out;
+        }
+
+        static Shape CompactOrder(Shape order)
+        {
+            for (size_t i = 1; i < order.size(); ++i)
+            {
+                if (order[i] == order[i - 1] + 1)
+                {
+                    order.erase(order.begin() + i);
+                    for (size_t j = 0; j < order.size(); ++j)
+                        if (order[j] > order[i - 1])
+                            order[j]--;
+                }
+            }
+            return order;
+        }
+
+        static Shape CompactShape(const Shape& shape, const Shape& order)
+        {
+            Shape compact;
+            for (size_t i = 0; i < shape.size(); ++i)
+            {
+                size_t dim = shape[order[i]];
+                if (i && order[i] == order[i - 1] + 1)
+                    compact.back() *= dim;
+                else
+                    compact.push_back(dim);
+            }
+            return compact;
+        }
+
+        void CompactShapes()
+        {
+            size_t count = 0;
+            for (size_t i = 0; i < _count; ++i)
+                if (i == 0 || _dstOrder[i] != _dstOrder[i - 1] + 1)
+                    count++;
+            if (count == _count)
+                return;
+            _count = count;
+            Shape dstShape = _dstShape;
+            _dstShape = CompactShape(_srcShape, _dstOrder);
+            _srcShape = CompactShape(dstShape, _srcOrder);
+            _dstOrder = CompactOrder(_dstOrder);
+            _srcOrder = CompactOrder(_srcOrder);
+        }
     };
 }

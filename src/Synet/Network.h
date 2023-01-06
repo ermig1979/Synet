@@ -374,9 +374,12 @@ namespace Synet
             {
 #if 0
                 std::cout << _stages[i].layer->Param().name() << " : { ";
-                const Shape & shape = _stages[i].src[0]->Shape();
-                for (size_t j = 0; j < shape.size(); ++j)
-                    std::cout << shape[j] << " ";
+                if (_stages[i].src.size())
+                {
+                    const Shape& shape = _stages[i].src[0]->Shape();
+                    for (size_t j = 0; j < shape.size(); ++j)
+                        std::cout << shape[j] << " ";
+                }
                 std::cout << "}" << std::endl;
 #endif
                 _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
