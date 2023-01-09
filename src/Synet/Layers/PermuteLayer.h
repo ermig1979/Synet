@@ -175,7 +175,7 @@ namespace Synet
 
         static Shape CompactOrder(Shape order)
         {
-            for (size_t i = 1; i < order.size(); ++i)
+            for (size_t i = 1; i < order.size();)
             {
                 if (order[i] == order[i - 1] + 1)
                 {
@@ -184,6 +184,8 @@ namespace Synet
                         if (order[j] > order[i - 1])
                             order[j]--;
                 }
+                else
+                    ++i;
             }
             return order;
         }
