@@ -79,15 +79,15 @@ namespace Synet
 
         template <typename T> void LogSoftmaxLayerForwardCpu(const T * src, size_t outer, size_t count, size_t inner, T * dst)
         {
-            Synet::Tensor<T> _buffer({ inner });
-            T * buffer = _buffer.CpuData();
+            Synet::Tensor<T> _buffer({ inner * 2 });
+            T * max = _buffer.CpuData(), *sum = max + inner;
             for (size_t o = 0; o < outer; ++o)
             {
-                Synet::CpuCopy(src, inner, buffer);
+                Synet::CpuCopy(src, inner, max);
                 const T * s = src + inner;
                 for (size_t i = 1; i < count; ++i)
                 {
-                    Synet::CpuMax(s, buffer, inner, buffer);
+                    Synet::CpuMax(s, max, inner, max);
                     s += inner;
                 }
 
@@ -95,26 +95,30 @@ namespace Synet
                 T * d = dst;
                 for (size_t i = 0; i < count; ++i)
                 {
-                    Synet::CpuSub(s, buffer, inner, d);
+                    Synet::CpuSub(s, max, inner, d);
                     s += inner;
                     d += inner;
                 }
 
                 Synet::CpuExp(dst, count*inner, dst);
 
-                Synet::CpuCopy(dst, inner, buffer);
+                Synet::CpuCopy(dst, inner, sum);
                 d = dst + inner;
                 for (size_t i = 1; i < count; ++i)
                 {
-                    Synet::CpuAdd(d, buffer, inner, buffer);
+                    Synet::CpuAdd(d, sum, inner, sum);
                     d += inner;
                 }
 
+                Synet::CpuLog(sum, inner, sum);
+                Synet::CpuAdd(max, sum, inner, sum);
+
+                s = src;
                 d = dst;
                 for (size_t i = 0; i < count; ++i)
                 {
-                    Synet::CpuDiv(d, buffer, inner, d);
-                    Synet::CpuLog(d, inner, d);
+                    Synet::CpuSub(s, sum, inner, d);
+                    s += inner;
                     d += inner;
                 }
                 src += count*inner;
