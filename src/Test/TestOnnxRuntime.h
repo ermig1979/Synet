@@ -97,7 +97,8 @@ namespace Test
 
             _inputNameBuffers.clear();
             _inputNames.clear();
-            for (size_t i = 0, n = _session->GetInputCount(); i < n; i++)
+            _inputNameBuffers.reserve(_session->GetInputCount());
+            for (size_t i = 0; i < _session->GetInputCount(); i++)
             {
                 _inputNameBuffers.push_back(String(_session->GetInputNameAllocated(i, s_env.allocator).get()));
                 _inputNames.push_back(_inputNameBuffers[i].c_str());
@@ -120,6 +121,7 @@ namespace Test
             _outputNameBuffers.clear();
             if (param.output().size())
             {
+                _outputNameBuffers.reserve(param.output().size());
                 for (size_t i = 0; i < param.output().size(); ++i)
                 {
                     _outputNameBuffers.push_back(param.output()[i].name());
@@ -128,7 +130,8 @@ namespace Test
             }
             else
             {
-                for (size_t i = 0, n = _session->GetOutputCount(); i < n; i++)
+                _outputNameBuffers.reserve(_session->GetOutputCount());
+                for (size_t i = 0; i < _session->GetOutputCount(); i++)
                 {
                     _outputNameBuffers.push_back(String(_session->GetOutputNameAllocated(i, s_env.allocator).get()));
                     _outputNames.push_back(_outputNameBuffers[i].c_str());
