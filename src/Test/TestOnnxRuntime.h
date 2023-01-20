@@ -95,9 +95,12 @@ namespace Test
 
             _session.reset(new Ort::Session(s_env.env, weight.c_str(), sessionOptions));
 
+            _inputNameBuffers.clear();
+            _inputNames.clear();
             for (size_t i = 0, n = _session->GetInputCount(); i < n; i++)
             {
-                _inputNames.push_back(_session->GetInputName(i, s_env.allocator));
+                _inputNameBuffers.push_back(String(_session->GetInputNameAllocated(i, s_env.allocator).get()));
+                _inputNames.push_back(_inputNameBuffers[i].c_str());
                 _inputShapes.push_back(Convert<size_t, int64_t>(_session->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape()));
             }
 
@@ -126,7 +129,10 @@ namespace Test
             else
             {
                 for (size_t i = 0, n = _session->GetOutputCount(); i < n; i++)
-                    _outputNames.push_back(_session->GetOutputName(i, s_env.allocator));
+                {
+                    _outputNameBuffers.push_back(String(_session->GetOutputNameAllocated(i, s_env.allocator).get()));
+                    _outputNames.push_back(_outputNameBuffers[i].c_str());
+                }
                 std::sort(_outputNames.begin(), _outputNames.end(), [](const char* a, const char* b) -> bool { return strcmp(a, b) < 1; });
             }
 
@@ -262,7 +268,7 @@ namespace Test
         std::vector<const char*> _inputNames;
         Shapes _inputShapes;
 
-        Strings _outputNameBuffers;
+        Strings _inputNameBuffers, _outputNameBuffers;
         std::vector<const char*> _outputNames;
         ValuesPtr _outputValues;
 
