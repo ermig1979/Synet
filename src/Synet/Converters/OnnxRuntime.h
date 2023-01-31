@@ -846,6 +846,12 @@ namespace Synet
                 layer.type() = LayerTypeMeta;
                 layer.meta().type() = MetaTypeGather;
             }
+            else
+            {
+                layer.type() = LayerTypeGather;
+                if (!ConvertAtrributeInt(node, "axis", layer.gather().axis()))
+                    return false;
+            }
             return true;
         }
 
@@ -1413,11 +1419,28 @@ namespace Synet
 
         bool ConvertSplitNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
         {
-            if (!CheckSourceNumber(layer, 1))
+            if (!CheckSourceNumber(layer, 1, 2))
                 return false;
+            if (layer.src().size() == 1)
+            {
+                if (!ConvertAtrributeInts(node, "split", layer.unpack().parts()))
+                    return false;
+            }
+            else if (layer.src().size() == 2)
+            {
+                const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+                if (src1->type() == LayerTypeMeta &&  src1->meta().type() == Synet::MetaTypeConst)
+                {
+                    const TensorParam & alpha = src1->meta().alpha();
+                    assert(alpha.shape().size() == 1);
+                    for (size_t i = 0; i < alpha.shape()[0]; ++i)
+                        layer.unpack().parts().push_back((int32_t)alpha.i64()[i]);
+                    layer.src().resize(1);
+                }
+                else
+                    assert(0);
+            }
             if (!ConvertAtrributeInt(node, "axis", layer.unpack().axis()))
-                return false;
-            if (!ConvertAtrributeInts(node, "split", layer.unpack().parts()))
                 return false;
             layer.type() = Synet::LayerTypeUnpack;
             if (trans && !PermutedToNchw(layers, true, false, true))
