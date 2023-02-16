@@ -36,26 +36,41 @@ namespace Synet
         typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        GatherLayer(const LayerParam & param, Context* context)
+        GatherLayer(const LayerParam& param, Context* context)
             : Base(param, context)
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
-            assert(src.size() == 2 && src[1]->GetType() == TensorType32i);
+            const GatherParam& param = this->Param().gather();
+            _axis = param.axis();
+            _batch = src[0]->Size(0, _axis);
+            _size = src[0]->Size(_axis);
+            assert(src.size() == 2 && (src[1]->GetType() == TensorType32i || src[1]->GetType() == TensorType64i));
             dst[0]->Reshape(src[1]->Shape(), src[0]->Format());
         }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
-            const Type * pSrc = src[0]->CpuData();
-            const int32_t * pIndex = src[1]->As32i().CpuData();
-            Type * pDst = dst[0]->CpuData();
-            size_t size = dst[0]->Size();
-            for (size_t i = 0; i < size; ++i)
-                pDst[i] = pSrc[pIndex[i]];
+            if (src[1]->GetType() == TensorType32i)
+                Gather(src[0]->CpuData(), src[1]->As32i().CpuData(), dst[0]->CpuData());
+            else
+                Gather(src[0]->CpuData(), src[1]->As64i().CpuData(), dst[0]->CpuData());
         }
+
+        template <class Index> void Gather(const Type* src, const Index* idx, Type* dst)
+        {
+            for (size_t b = 0; b < _batch; ++b)
+            {
+                for (size_t i = 0; i < _size; ++i)
+                    dst[i] = src[idx[i]];
+                src += _size;
+                dst += _size;
+            }
+        }
+
+        size_t _axis, _batch, _size;
     };
 }

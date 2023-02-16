@@ -139,7 +139,14 @@ namespace Synet
                 if (_transB)
                     assert(weight[0].Shape() == Shp(_K, _N));
                 else
+                {
+                    if (weight[0].Shape()[1] != _K)
+                    {
+                        axis = src[0]->Count() - 1;
+                        _K = src[0]->Size(axis);
+                    }
                     assert(weight[0].Shape() == Shp(_N, _K));
+                }
                 if (_biasTerm)
                     assert(weight[1].Shape() == Shp(_N));
 #if defined(SYNET_BF16_ROUND_TEST) && 0
