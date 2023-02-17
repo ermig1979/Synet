@@ -270,9 +270,20 @@ namespace Synet
                 } 
                 else
                 {
-                    const float * factor = src[1]->CpuData();
-                    _dstH = size_t(srcH * factor[2]);
-                    _dstW = size_t(srcW * factor[3]);
+                    if (src[1]->GetType() == TensorType32f)
+                    {
+                        const float * factor = src[1]->CpuData();
+                        _dstH = size_t(srcH * factor[2]);
+                        _dstW = size_t(srcW * factor[3]);
+                    }
+                    else if (src[1]->GetType() == TensorType64i)
+                    {
+                        const int64_t * sizes = src[1]->As64i().CpuData();
+                        _dstH = size_t(sizes[2]);
+                        _dstW = size_t(sizes[3]);
+                    }
+                    else
+                        assert(0);
                 }
             }
             else if (param.shrinkFactor() != 1 && param.zoomFactor() == 1)

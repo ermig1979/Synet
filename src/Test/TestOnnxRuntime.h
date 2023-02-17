@@ -105,6 +105,17 @@ namespace Test
                 _inputShapes.push_back(Convert<size_t, int64_t>(_session->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape()));
             }
 
+            if (_inputShapes[0][2] == -1 && _inputShapes[0][3] == -1)
+            {
+                if (param.input().empty())
+                {
+                    std::cout << "OnnxRuntime model has dynamic size but input size in parameters is absent!" << std::endl;
+                    return false;
+                }
+                _inputShapes[0][2] = param.input()[0].shape()[2].size();
+                _inputShapes[0][3] = param.input()[0].shape()[3].size();
+            }
+
             if (_inputShapes[0][0] == -1)
             {
                 _inputShapes[0][0] = options.batchSize;
