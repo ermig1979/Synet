@@ -300,6 +300,26 @@ namespace Synet
             return true;
         }
 
+        bool Dynamic() const
+        {
+            for (size_t i = 0; i < _param().layers().size(); ++i)
+            {
+                const LayerParam& layer = _param().layers()[i];
+                if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeInput)
+                    return true;
+                if (layer.type() == LayerTypeInput)
+                {
+                    if (layer.input().shape().empty())
+                        return true;
+                    for (size_t j = 0; j < layer.input().shape().size(); ++j)
+                        for (size_t k = 0; k < layer.input().shape()[j].dim().size(); ++k)
+                            if (layer.input().shape()[j].dim()[k] == (size_t)-1)
+                                return true;
+                }
+            }
+            return false;
+        }
+
         bool Resizable() const
         {
             for (size_t i = 0; i < _layers.size(); ++i)
@@ -918,26 +938,6 @@ namespace Synet
             {
                 if (_param().dst()[i] == name)
                     return true;
-            }
-            return false;
-        }
-
-        bool Dynamic()
-        {
-            for (size_t i = 0; i < _param().layers().size(); ++i)
-            {
-                const LayerParam & layer = _param().layers()[i];
-                if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeInput)
-                    return true;
-                if (layer.type() == LayerTypeInput)
-                {
-                    if (layer.input().shape().empty())
-                        return true;
-                    for (size_t j = 0; j < layer.input().shape().size(); ++j)
-                        for (size_t k = 0; k < layer.input().shape()[j].dim().size(); ++k)
-                            if (layer.input().shape()[j].dim()[k] == (size_t)-1)
-                                return true;
-                }
             }
             return false;
         }
