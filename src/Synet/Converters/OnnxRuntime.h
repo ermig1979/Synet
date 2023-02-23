@@ -60,6 +60,25 @@ namespace Synet
             if (!ConvertModel(model, trans, onnxParam, holder(), weight))
                 return false;
 
+            if (optParam.saveUnoptimized())
+            {
+                String uoModelPath = Cpl::GetNameByPath(dstModelPath) == dstModelPath ? 
+                    "unopt.xml" : Cpl::MakePath(Cpl::DirectoryByPath(dstModelPath), "unopt.xml");
+                if (!holder.Save(uoModelPath, false))
+                {
+                    std::cout << "Can't save unoptimized Synet model '" << uoModelPath << "' !" << std::endl;
+                    return false;
+                }
+
+                String uoWeightPath = Cpl::GetNameByPath(dstWeightPath) == dstWeightPath ?
+                    "unopt.bin" : Cpl::MakePath(Cpl::DirectoryByPath(dstWeightPath), "unopt.bin");
+                if (!SaveBinaryData(weight, uoWeightPath))
+                {
+                    std::cout << "Can't save unoptimized Synet weight '" << uoWeightPath << "' !" << std::endl;
+                    return false;
+                }
+            }
+
             Optimizer optimizer(optParam);
             if (!optimizer.Run(holder(), weight))
                 return false;

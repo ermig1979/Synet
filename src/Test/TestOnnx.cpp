@@ -43,6 +43,7 @@ namespace Test
             return false;
         }
         param().optimizer().bf16Enable() = options.bf16;
+        param().optimizer().saveUnoptimized() = options.saveUnoptimized;
         return Synet::ConvertOnnxToSynet(options.firstModel, options.firstWeight,
             options.tensorFormat == 1, options.secondModel, options.secondWeight, param().onnx(), param().optimizer());
     }

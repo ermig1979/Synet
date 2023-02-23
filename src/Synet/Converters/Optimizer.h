@@ -38,6 +38,7 @@ namespace Synet
         CPL_PARAM_VALUE(bool, mergeInt8Convolutions, true);
         CPL_PARAM_VALUE(bool, bf16Enable, false);
         CPL_PARAM_VALUE(uint32_t, bf16MinEffectiveSrcC, 4);
+        CPL_PARAM_VALUE(bool, saveUnoptimized, false);
     };
 
     CPL_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);
@@ -52,7 +53,7 @@ namespace Synet
 
         bool Run(Synet::NetworkParam & network, Floats & bin)
         {
-            for (int stage = 0; stage < 8; stage++)
+            for (int stage = 0; stage < 9; stage++)
             {
                 if (!OptimizeLayers(network, bin, stage))
                     return false;
@@ -185,6 +186,12 @@ namespace Synet
                 case 7:
                 {
                     if (MergeTwoConvolutions(network.layers(), i, method, merged, changes))
+                        continue;
+                    break;
+                }
+                case 8:
+                {
+                    if (MergeParallelConvolutions(network.layers(), i, bin, buf, merged, changes))
                         continue;
                     break;
                 }
@@ -1677,6 +1684,15 @@ namespace Synet
             index += RNN_GRU_BD_SIZE - 1;
             return true;
         }
+
+        bool MergeParallelConvolutions(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        {
+            if (index == 0)
+                return false;
+            return false;
+        }
+
+        //-------------------------------------------------------------------------------------------------
 
         bool IsSub(const LayerParam & layer) const
         {
