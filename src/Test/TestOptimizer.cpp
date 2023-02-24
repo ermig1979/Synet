@@ -22,22 +22,41 @@
 * SOFTWARE.
 */
 
-#define FIRST_MODEL_DEFAULT "synet.xml"
-#define FIRST_WEIGHT_DEFAULT "synet.bin"
-#define SECOND_MODEL_DEFAULT "int8.xml"
-#define IMAGE_DIRECTORY_DEFAULT ""
+#define FIRST_MODEL_DEFAULT "unopt.xml"
+#define FIRST_WEIGHT_DEFAULT "unopt.bin"
 
 #include "TestCompare.h"
 #include "TestReport.h"
-#include "TestQuantization.h"
+
+#include "Synet/Converters/Optimizer.h"
 
 namespace Test
 {
-    struct Synet8iNetwork : public SynetNetwork
+    bool OptimizeSynet(const Test::Options& options)
+    {
+        CPL_PERF_FUNC();
+        Test::TestParamHolder param;
+        if (FileExists(options.testParam) && !param.Load(options.testParam))
+        {
+            std::cout << "Can't load file '" << options.testParam << "' !" << std::endl;
+            return false;
+        }
+        return Synet::OptimizeSynetModel(options.firstModel, options.firstWeight, options.secondModel, options.secondWeight, param().optimizer());
+    }
+
+    struct SynetSrcNetwork : public SynetNetwork
     {
         virtual String Type() const
         {
-            return "int8";
+            return "src";
+        }
+    };
+
+    struct SynetOptNetwork : public SynetNetwork
+    {
+        virtual String Type() const
+        {
+            return "opt";
         }
     };
 }
@@ -48,12 +67,14 @@ int main(int argc, char* argv[])
 
     if (options.mode == "convert")
     {
-        Test::Quantizer quantizer(options);
-        options.result = quantizer.Run();
+        std::cout << "Optimize Synet network : ";
+        options.result = OptimizeSynet(options);
+        std::cout << (options.result ? "OK." : " Optimization finished with errors!") << std::endl;
+
     }
     else if (options.mode == "compare")
     {
-        Test::Comparer<Test::SynetNetwork, Test::Synet8iNetwork> comparer(options);
+        Test::Comparer<Test::SynetSrcNetwork, Test::SynetOptNetwork> comparer(options);
         options.result = comparer.Run();
     }
     else

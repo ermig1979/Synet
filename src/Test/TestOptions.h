@@ -24,6 +24,26 @@
 
 #pragma once
 
+#ifndef FIRST_MODEL_DEFAULT
+#define FIRST_MODEL_DEFAULT "other.dsc"
+#endif
+
+#ifndef FIRST_WEIGHT_DEFAULT
+#define FIRST_WEIGHT_DEFAULT "other.dat"
+#endif
+
+#ifndef SECOND_MODEL_DEFAULT
+#define SECOND_MODEL_DEFAULT "synet.xml"
+#endif
+
+#ifndef SECOND_WEIGHT_DEFAULT
+#define SECOND_WEIGHT_DEFAULT "synet.bin"
+#endif
+
+#ifndef IMAGE_DIRECTORY_DEFAULT
+#define IMAGE_DIRECTORY_DEFAULT "image"
+#endif
+
 #include "Cpl/Args.h"
 
 #include "TestPerformance.h"
@@ -93,13 +113,13 @@ namespace Test
             mode = GetArg2("-m", "-mode");
             enable = FromString<int>(GetArg2("-e", "-enable", "3"));
             textWeight = GetArg("-tw", "other.txt");
-            firstModel = GetArg("-fm", QuantizationTest() ? "synet.xml" : "other.dsc");
-            firstWeight = GetArg("-fw", QuantizationTest() ? "synet.bin" : "other.dat");
-            secondModel = GetArg("-sm", QuantizationTest() ? "int8.xml" : "synet.xml");
-            secondWeight = GetArg("-sw", "synet.bin");
+            firstModel = GetArg("-fm", FIRST_MODEL_DEFAULT);
+            firstWeight = GetArg("-fw", FIRST_WEIGHT_DEFAULT);
+            secondModel = GetArg("-sm", SECOND_MODEL_DEFAULT);
+            secondWeight = GetArg("-sw", SECOND_WEIGHT_DEFAULT);
             testParam = GetArg("-tp", "param.xml");
             quantParam = GetArg("-qp", "quant.xml");
-            imageDirectory = GetArg("-id", QuantizationTest() ? "" : "image");
+            imageDirectory = GetArg("-id", IMAGE_DIRECTORY_DEFAULT);
             imageFilter = GetArg("-if", "*.*");
             imageBegin = FromString<size_t>(GetArg("-ib", "0"));
             imageEnd = FromString<size_t>(GetArg("-ie", "1000000"));
@@ -180,16 +200,6 @@ namespace Test
         size_t TestThreads() const
         {
             return std::max<size_t>(1, testThreads);
-        }
-
-        bool QuantizationTest() const
-        {
-            String app = AppName();
-#ifdef WIN32
-            return app.find("Quantization") != std::string::npos;
-#else
-            return app.find("quantization") != std::string::npos;
-#endif
         }
 
         static inline String FullName(const String& name, const String& type)

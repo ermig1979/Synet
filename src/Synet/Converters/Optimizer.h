@@ -1687,8 +1687,108 @@ namespace Synet
 
         bool MergeParallelConvolutions(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
         {
-            if (index == 0)
+            const LayerParam& l0 = src[index];
+            size_t MinPart = 32, minPart = MinPart;
+            Shape parts;
+            for (; index + parts.size() < src.size();)
+            {
+                const LayerParam& l = src[index + parts.size()];
+                if (l.type() != LayerTypeConvolution)
+                    break;
+                if (l.weight()[0].format() != TensorFormatNhwc)
+                    break;
+                const ConvolutionParam& c = l.convolution();
+                if (c.group() != 1)
+                    break;
+                if (parts.size())
+                {
+                    if (l.src() != l0.src())
+                        break;
+                    if (l.weight().size() != l0.weight().size())
+                        break;
+                    const ConvolutionParam& c0 = l0.convolution();
+                    if (c.kernel() != c0.kernel())
+                        break;
+                    if (c.pad() != c0.pad())
+                        break;
+                    if (c.stride() != c0.stride())
+                        break;
+                    if (c.dilation() != c0.dilation())
+                        break;
+                    if (c.biasTerm() != c0.biasTerm())
+                        break;
+                    if (c.activationType() != c0.activationType())
+                        break;
+                    if (c.activationParam0() != c0.activationParam0())
+                        break;
+                    if (c.activationParam1() != c0.activationParam1())
+                        break;
+                }
+                parts.push_back(c.outputNum());
+                minPart = std::min(parts.back(), minPart);
+            }
+            if (parts.size() < 2 || minPart == MinPart)
                 return false;
+
+            LayerParam conv;
+            conv.type() = LayerTypeConvolution;
+            conv.name() = l0.name();
+            conv.src() = l0.src();
+            conv.convolution() = l0.convolution();
+            conv.weight() = l0.weight();
+            for (size_t p = 1; p < parts.size(); ++p)
+            {
+                const LayerParam& l = src[index + p];
+                conv.convolution().outputNum() += l.convolution().outputNum();
+                conv.name() = conv.name() + "_" + l.name();
+                for (size_t w = 0; w < l0.weight().size(); ++w)
+                {
+                    conv.weight()[w].dim().back() += l.weight()[w].dim().back();
+                    conv.weight()[w].size() += l.weight()[w].size();
+                }
+            }
+            conv.dst().push_back(conv.name());
+
+            if (buf.empty())
+                buf = bin;
+            size_t newSize = buf.size();
+            for (size_t w = 0; w < conv.weight().size(); ++w)
+                newSize += conv.weight()[w].size() / sizeof(float);
+            conv.weight()[0].offset() = buf.size() * sizeof(float);
+            buf.resize(newSize);
+            for (size_t w = 0; w < conv.weight().size(); ++w)
+            {
+                if (w)
+                    conv.weight()[w].offset() = conv.weight()[w - 1].offset() + conv.weight()[w - 1].size();
+                const Shape & dim = conv.weight()[w].dim();
+                size_t outer = w ? 1 : dim[0] * dim[1] * dim[2];
+                std::vector<const float*> pSrc(parts.size());
+                for (size_t p = 0; p < parts.size(); ++p)
+                    pSrc[p] = bin.data() + src[index + p].weight()[w].offset() / sizeof(float);
+                float * pDst = buf.data() + conv.weight()[w].offset() / sizeof(float);
+                for (size_t o = 0; o < outer; ++o)
+                {
+                    for (size_t p = 0; p < parts.size(); ++p)
+                    {
+                        for (size_t i = 0; i < parts[p]; ++i)
+                            *pDst++ = *pSrc[p]++;
+                    }
+                }
+            }
+
+            LayerParam unpack;
+            unpack.type() = LayerTypeUnpack;
+            unpack.name() = conv.name() + "_unpack";
+            unpack.src().push_back(conv.name());
+            unpack.unpack().axis() = 3;
+            unpack.unpack().parts() = parts;
+            for (size_t i = 0; i < parts.size(); ++i)
+                unpack.dst().push_back(src[index + i].dst()[0]);
+
+            index += parts.size();
+            dst.push_back(conv);
+            dst.push_back(unpack);
+
             return false;
         }
 
@@ -1919,7 +2019,7 @@ namespace Synet
         }
     };
 
-    inline bool OptimizeSynetModel(const String& srcXml, const String& srcBin, const String& dstXml, const String & dstBin)
+    inline bool OptimizeSynetModel(const String& srcXml, const String& srcBin, const String& dstXml, const String & dstBin, const OptimizerParam & param = OptimizerParam())
     {
         NetworkParamHolder network;
         if (!network.Load(srcXml))
@@ -1933,8 +2033,7 @@ namespace Synet
             std::cout << "Can't load Synet weight '" << srcBin << "' !" << std::endl;
             return false;
         }
-        OptimizerParamHolder param;
-        Optimizer optimizer(param());
+        Optimizer optimizer(param);
         if (!optimizer.Run(network(), bin))
         {
             std::cout << "Can't optimize Synet model!" << std::endl;
