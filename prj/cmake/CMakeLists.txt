@@ -18,7 +18,7 @@ if(NOT((MODE STREQUAL "all") OR
        (MODE STREQUAL "inference_engine") OR (MODE STREQUAL "onnx") OR 
        (MODE STREQUAL "performance_difference") OR (MODE STREQUAL "precision") OR 
        (MODE STREQUAL "quantization") OR (MODE OR (MODE STREQUAL "stability") OR
-       (MODE STREQUAL "use_samples"))))
+       (MODE STREQUAL "optimizer") OR (MODE STREQUAL "use_samples"))))
     message(FATAL_ERROR "Unknown value of MODE: '${MODE}'!")
 endif()
 
@@ -136,6 +136,14 @@ if((MODE STREQUAL "stability") OR (MODE STREQUAL "all"))
 	add_executable(test_stability ${STABILITY_SRC})
 	target_compile_definitions(test_stability PUBLIC ${SYNET_DEFINITIONS})
 	target_link_libraries(test_stability ${SIMD_LIB} -ldl -lpthread)
+endif()
+
+if((MODE STREQUAL "optimizer") OR (MODE STREQUAL "all"))	
+	file(GLOB_RECURSE OPTIMIZER_SRC ${ROOT_DIR}/src/Test/TestOptimizer.cpp)
+	set_source_files_properties(${OPTIMIZER_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
+	add_executable(test_optimizer ${OPTIMIZER_SRC})
+	target_compile_definitions(test_optimizer PUBLIC ${SYNET_DEFINITIONS})
+	target_link_libraries(test_optimizer ${SIMD_LIB} -ldl -lpthread)
 endif()
 	
 if((MODE STREQUAL "use_samples") OR (MODE STREQUAL "all"))
