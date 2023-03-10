@@ -111,6 +111,8 @@ namespace Synet
                         continue;
                     if (MergeConvolutionAndScale(network.layers(), i, bin, buf, merged, changes))
                         continue;
+                    if (MergeConvolutionAndPower(network.layers(), i, bin, buf, merged, changes))
+                        continue;
                     if (MergeInnerProductAndScale(network.layers(), i, bin, buf, merged, changes))
                         continue;
                     break;
@@ -408,6 +410,37 @@ namespace Synet
             for (size_t i = 0, n = dim[0] * dim[1] * dim[2]; i < n; ++i)
                 for (size_t j = 0, m = dim[3]; j < m; ++j)
                     pDst[i * m + j] = pSrc[i * m + j] * pScale[j];
+            return true;
+        }
+
+        bool MergeConvolutionAndPower(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        {
+            if (index == 0)
+                return false;
+            const LayerParam& conv = src[index - 1];
+            const LayerParam& power = src[index];
+            if (conv.type() != LayerTypeConvolution || 
+                conv.convolution().activationType() != ActivationFunctionTypeIdentity)
+                return false;
+            if (power.type() != LayerTypePower || power.src()[0] != conv.name() ||
+                power.power().power() != 1.0f || power.power().shift() != 0.0f)
+                return false;
+            if (InsideLink(src, index - 1, 2))
+                return false;
+            if (conv.weight()[0].format() != TensorFormatNhwc)
+                return false;
+            if (buf.empty())
+                buf = bin;
+            dst.back().name() = power.name();
+            dst.back().dst() = power.dst();
+            float scale = power.power().scale();
+            for (size_t w = 0; w < conv.weight().size(); ++w)
+            {
+                const float* pSrc = bin.data() + conv.weight()[w].offset() / 4;
+                float* pDst = buf.data() + conv.weight()[w].offset() / 4;
+                for (size_t i = 0, n = conv.weight()[w].size() / 4; i < n; ++i)
+                    pDst[i] = pSrc[i] * scale;
+            }
             return true;
         }
 
