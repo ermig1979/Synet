@@ -175,6 +175,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "ArgMax" && !ConvertArgMaxNode(node, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "AveragePool" && !ConvertAveragePoolNode(node, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "BatchNormalization" && !ConvertBatchNormalizationNode(node, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Cast" && !ConvertCastNode(node, network.layers(), original, layer))
@@ -490,6 +492,29 @@ namespace Synet
                 return false;
             if (!ConvertAtrributeInt(node, "keepdims", layer.argMax().keepDims()))
                 return false;
+            return true;
+        }
+
+        bool ConvertAveragePoolNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypePooling;
+            layer.pooling().method() = PoolingMethodTypeAverage;
+            if (!ConvertAtrributeInts(node, "kernel_shape", layer.pooling().kernel()))
+                return false;
+            if (!ConvertAtrributeInts(node, "pads", layer.pooling().pad()))
+                return false;
+            if (!ConvertAtrributeInts(node, "strides", layer.pooling().stride()))
+                return false;
+
+            if (GetAtrribute(node, "ceil_mode") == NULL)
+                layer.pooling().roundingType() = RoundingTypeFloor;
+            else
+            {
+                int ceilMode;
+                if (!ConvertAtrributeInt(node, "ceil_mode", ceilMode))
+                    return false;
+                layer.pooling().roundingType() = ceilMode ? RoundingTypeCeil : RoundingTypeFloor;
+            }
             return true;
         }
 
