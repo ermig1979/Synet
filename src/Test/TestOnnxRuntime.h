@@ -163,8 +163,7 @@ namespace Test
                 return false;
 
             _outputValues = std::make_shared<Values>();
-            for (size_t i = 0; i < _outputNames.size(); i++)
-                _outputValues->emplace_back(nullptr);
+            ClearOutputValues();
 
             _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), &inputValue, _inputNames.size(),
                 _outputNames.data(), _outputValues->data(), _outputNames.size());
@@ -172,14 +171,9 @@ namespace Test
             if (!(_outputValues->size() == _outputNames.size() && _outputValues->front().IsTensor()))
                 return false;
 
-            _output.resize(_outputNames.size());
-            for (size_t i = 0; i < _outputNames.size(); i++)
-            {
-                Shape shape = Convert<size_t, int64_t>(_outputValues->at(i).GetTensorTypeAndShapeInfo().GetShape());
-                if (_batchSize > 1)
-                    shape[0] = _batchSize;
-                _output[i].Reshape(shape);
-            }
+            _dynamicOutput = IsDynamicOutput();
+            if(!_dynamicOutput)
+                ReshapeOutput();
 
             if (param.detection().decoder() == "ultraface")
                 _ultraface.Init(param.detection().ultraface());
@@ -204,15 +198,21 @@ namespace Test
             if (_batchSize == 1)
             {
                 SetInput(src, 0, inputValues);
+                if (_dynamicOutput)
+                    ClearOutputValues();
                 {
                     CPL_PERF_FUNC();
                     _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), inputValues.data(), _inputNames.size(),
                         _outputNames.data(), _outputValues->data(), _outputNames.size());
                 }
+                if (_dynamicOutput)
+                    ReshapeOutput();
                 SetOutput(0);
             }
             else
             {
+                if (_dynamicOutput)
+                    assert(0);
                 CPL_PERF_BEG("batch emulation");
                 for (size_t b = 0; b < _batchSize; ++b)
                 {
@@ -222,6 +222,7 @@ namespace Test
                     SetOutput(b);
                 }
             }
+
             return _output;
         }
 
@@ -287,6 +288,7 @@ namespace Test
         ValuesPtr _outputValues;
 
         size_t _batchSize;
+        bool _dynamicOutput;
 
         Synet::UltrafaceDecoder _ultraface;
         Synet::YoloV5Decoder _yoloV5;
@@ -358,6 +360,37 @@ namespace Test
                     std::cout << "OnnxRuntime: unknown format of output tensor: " << type << " !" << std::endl;
                     assert(0);
                 }
+            }
+        }
+
+        bool IsDynamicOutput()
+        {
+            for (size_t i = 0; i < _outputNames.size(); i++)
+            {
+                Shape shape = Convert<size_t, int64_t>(_outputValues->at(i).GetTensorTypeAndShapeInfo().GetShape());
+                size_t size = Synet::Detail::Size(shape);
+                if (size == 0)
+                    return true;
+            }
+            return false;
+        }
+
+        void ClearOutputValues()
+        {
+            _outputValues->clear();
+            for (size_t i = 0; i < _outputNames.size(); i++)
+                _outputValues->emplace_back(nullptr);
+        }
+
+        void ReshapeOutput()
+        {
+            _output.resize(_outputNames.size());
+            for (size_t i = 0; i < _outputNames.size(); i++)
+            {
+                Shape shape = Convert<size_t, int64_t>(_outputValues->at(i).GetTensorTypeAndShapeInfo().GetShape());
+                if (_batchSize > 1)
+                    shape[0] = _batchSize;
+                _output[i].Reshape(shape);
             }
         }
     };
