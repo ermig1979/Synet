@@ -195,16 +195,17 @@ namespace Synet
             }
             else
             {
+                _type = src[_index[0]]->GetType();
                 _src.resize(src.size());
                 for (size_t i = 0; i < src.size(); ++i)
                 {
                     assert(src[i]->Size() == src[_index[0]]->Size());
-                    _src[i] = src[i]->CpuData();
+                    _src[i] = src[i]->RawCpuData();
                 }
                 _batch = 1, _channels = 1, _spatial = src[_index[0]]->Size();
             }
             if(dst[0] != src[_index[0]] && !resized)
-                dst[0]->Reshape(src[_index[0]]->Shape(), src[_index[0]]->Format());
+                dst[0]->Reshape(src[_index[0]]->Shape(), src[_index[0]]->GetType(), src[_index[0]]->Format());
             this->UsePerfStat();
         }
 
@@ -216,14 +217,26 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            if (_special == SpecialNone)
+            {
+                switch (_type)
+                {
+                case TensorType32f:
+                    Detail::EltwiseLayerForwardCpu((float const* const*)_src.data(), (const float*)_coefficients.data(), _src.size(), _spatial, _operation, dst[0]->As32f().CpuData());
+                    break;
+                case TensorType64i:
+                    Detail::EltwiseLayerForwardCpu((int64_t const* const*)_src.data(), (const int64_t*)0, _src.size(), _spatial, _operation, dst[0]->As64i().CpuData());
+                    break;
+                default:
+                    assert(0);
+                }
+                return;
+            }
             const Type * pSrc0 = src[_index[0]]->CpuData();
             Type * pDst = dst[0]->CpuData();
             const Type* pBias = NULL;
             switch (_special)
             {
-            case SpecialNone:
-                Detail::EltwiseLayerForwardCpu(_src.data(), _coefficients.data(), _src.size(), _spatial, _operation, pDst);
-                break;
             case SpecialScaleChannel:
             {
                 const Type * pScale = src[_index[1]]->CpuData();
@@ -278,10 +291,10 @@ namespace Synet
             }
             case SpecialBatch:
             {
-                _src = { src[_index[0]]->CpuData(), src[_index[1]]->CpuData() };
+                Type * src01[2] = {src[_index[0]]->CpuData(), src[_index[1]]->CpuData()};
                 for (size_t b = 0; b < _batch; ++b)
                 {
-                    Detail::EltwiseLayerForwardCpu(_src.data(), _coefficients.data(), 2, _spatial, _operation, pDst);
+                    Detail::EltwiseLayerForwardCpu(src01, _coefficients.data(), 2, _spatial, _operation, pDst);
                     if (src[_index[0]]->Axis(0) > 1)
                         _src[_index[0]] += _channels * _spatial;
                     if (src[_index[1]]->Axis(0) > 1)
@@ -307,7 +320,7 @@ namespace Synet
 
     private:
         typedef std::vector<Type> Vector;
-        typedef std::vector<Type*> Pointers;
+        typedef std::vector<uint8_t*> Pointers;
 
         enum Special
         {
@@ -323,6 +336,7 @@ namespace Synet
         EltwiseOperationType _operation;
         Vector _coefficients;
         Pointers _src;
+        TensorType _type;
         int _trans;
         size_t _batch, _channels, _spatial;
         size_t _channelsInner, _channelsOuter;

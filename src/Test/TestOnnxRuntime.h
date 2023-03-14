@@ -179,6 +179,8 @@ namespace Test
                 _ultraface.Init(param.detection().ultraface());
             if (param.detection().decoder() == "yoloV5")
                 _yoloV5.Init(param.detection().yoloV5());
+            if (param.detection().decoder() == "yoloV7")
+                _yoloV7.Init(param.detection().yoloV7());
 
             return true;
         }
@@ -241,6 +243,8 @@ namespace Test
                 return _ultraface.GetRegions(_output[0].CpuData(), _output[1].CpuData(), _output[0].Size(1, 2), size.x, size.y, threshold, overlap);
             else if (_yoloV5.Enable())
                 return _yoloV5.GetRegions(_output[0].CpuData(), _output[0].Size(1, 2), _inputShapes[0][3], _inputShapes[0][2], size.x, size.y, threshold, overlap);
+            else if (_yoloV7.Enable())
+                return _yoloV7.GetRegions(_output[0].CpuData(), _output[0].Size(1, 2), _inputShapes[0][3], _inputShapes[0][2], size.x, size.y, threshold, overlap);
             else
             {
                 Regions regions;
@@ -292,6 +296,7 @@ namespace Test
 
         Synet::UltrafaceDecoder _ultraface;
         Synet::YoloV5Decoder _yoloV5;
+        Synet::YoloV7Decoder _yoloV7;
 
         struct Env
         {

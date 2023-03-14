@@ -358,6 +358,8 @@ namespace Synet
                 layer.meta().alpha().i64().resize(size);
                 if (size)
                 {
+                    if (layer.meta().alpha().shape().empty())
+                        layer.meta().alpha().shape().push_back(1);
                     if (tensor.has_raw_data())
                     {
                         for (size_t i = 0; i < size; ++i)
@@ -681,7 +683,7 @@ namespace Synet
                     size *= tensor.dims(i);
                     layer.meta().alpha().shape().push_back(size_t(tensor.dims(i)));
                 }
-                if (tensor.dims_size() == 0)
+                if (layer.meta().alpha().shape().empty())
                     layer.meta().alpha().shape().push_back(1);
                 layer.meta().alpha().i64().resize(size);
                 if (tensor.has_raw_data())

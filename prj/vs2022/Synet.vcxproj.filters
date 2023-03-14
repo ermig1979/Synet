@@ -342,6 +342,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\SpaceToDepthLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\YoloV7.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
