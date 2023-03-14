@@ -195,6 +195,8 @@ namespace Synet
                 {
                     if (MergeParallelConvolutions(network.layers(), i, bin, buf, merged, changes))
                         continue;
+                    if (MergeYoloV7(network.layers(), i, merged, changes))
+                        continue;
                     break;
                 }
                 default:
@@ -1822,7 +1824,39 @@ namespace Synet
             dst.push_back(conv);
             dst.push_back(unpack);
 
-            return false;
+            return true;
+        }
+
+        bool MergeYoloV7(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (index == 0 || index + 2 >= src.size())
+                return false;
+
+            const LayerParam cc0 = src[index - 1];
+            if (cc0.type() != LayerTypeConcat || cc0.src().size() != 3)
+                return false;
+
+            const LayerParam ss0 = src[index + 0];
+            if (ss0.type() != LayerTypeStridedSlice || ss0.src().size() != 1 || ss0.src()[0] != cc0.dst()[0] ||
+                ss0.stridedSlice().beginDims() != Shp(0) || ss0.stridedSlice().endDims() != Shp(4) ||
+                ss0.stridedSlice().strideDims() != Shp(1) || ss0.stridedSlice().axes() != Shp(2))
+                return false;
+
+            const LayerParam ss1 = src[index + 1];
+            if (ss1.type() != LayerTypeStridedSlice || ss1.src().size() != 1 || ss1.src()[0] != cc0.dst()[0] ||
+                ss1.stridedSlice().beginDims() != Shp(4) || ss1.stridedSlice().endDims() != Shp(5) ||
+                ss1.stridedSlice().strideDims() != Shp(1) || ss1.stridedSlice().axes() != Shp(2))
+                return false;
+
+            LayerParam yoloV7;
+            yoloV7.type() = LayerTypeYoloV7;
+            yoloV7.name() = src.back().dst()[0];
+            yoloV7.src().push_back(cc0.dst()[0]);
+            yoloV7.dst().push_back(src.back().dst()[0]);
+            index += src.size() - 1 - index;
+            dst.push_back(yoloV7);
+
+            return true;
         }
 
         //-------------------------------------------------------------------------------------------------

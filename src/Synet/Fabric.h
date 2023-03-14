@@ -86,6 +86,7 @@
 #include "Synet/Layers/UpsampleLayer.h"
 #include "Synet/Layers/UnpackLayer.h"
 #include "Synet/Layers/YoloLayer.h"
+#include "Synet/Layers/YoloV7Layer.h"
 
 namespace Synet
 {
@@ -176,6 +177,7 @@ namespace Synet
             case LayerTypeUnpack: return new UnpackLayer<T>(param, context);
             case LayerTypeUpsample: return new UpsampleLayer<T>(param, context);
             case LayerTypeYolo: return new YoloLayer<T>(param, context);
+            case LayerTypeYoloV7: return new YoloV7Layer<T>(param, context);
             default:
                 return NULL;
             }

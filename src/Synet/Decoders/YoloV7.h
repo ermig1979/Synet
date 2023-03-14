@@ -28,10 +28,6 @@
 
 namespace Synet
 {
-    struct YoloV7Param
-    {
-    };
-
     class YoloV7Decoder
     {
     public: 
@@ -44,7 +40,7 @@ namespace Synet
         {
         }
 
-        bool Init(const YoloV7Param& param = YoloV7Param())
+        bool Init()
         {
             _enable = true;
             return true;

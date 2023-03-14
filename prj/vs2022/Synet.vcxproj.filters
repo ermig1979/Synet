@@ -345,6 +345,9 @@
     <ClInclude Include="..\..\src\Synet\Decoders\YoloV7.h">
       <Filter>Decoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\YoloV7Layer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

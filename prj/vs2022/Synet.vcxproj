@@ -119,6 +119,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\UnpackLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\UpsampleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\YoloLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\YoloV7Layer.h" />
     <ClInclude Include="..\..\src\Synet\Network.h" />
     <ClInclude Include="..\..\src\Synet\Params.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\Bf16.h" />

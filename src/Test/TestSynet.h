@@ -107,7 +107,7 @@ namespace Test
                 if (param.detection().decoder() == "yoloV5")
                     _yoloV5.Init(param.detection().yoloV5());
                 if (param.detection().decoder() == "yoloV7")
-                    _yoloV7.Init(param.detection().yoloV7());
+                    _yoloV7.Init();
                 return true;
             }
             return false;

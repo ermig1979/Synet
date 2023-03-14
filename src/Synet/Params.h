@@ -98,7 +98,8 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeUnaryOperation,
     LayerTypeUnpack,
     LayerTypeUpsample,
-    LayerTypeYolo); 
+    LayerTypeYolo,
+    LayerTypeYoloV7);
 
 CPL_PARAM_ENUM1(Synet, ActivationFunctionType,
     ActivationFunctionTypeIdentity,
@@ -711,6 +712,15 @@ namespace Synet
         CPL_PARAM_VALUE(Floats, anchors, Floats());
     };
 
+    struct YoloV7Param
+    {
+        CPL_PARAM_VALUE(int, maxOutputBoxesPerClass, 0);
+        CPL_PARAM_VALUE(float, iouThreshold, 0);
+        CPL_PARAM_VALUE(float, scoreThreshold, 0);
+        CPL_PARAM_VALUE(float, softNmsSigma, 0);
+        CPL_PARAM_VALUE(float, scale, 1.0f);
+    };
+
     struct LayerParam
     {
         CPL_PARAM_VALUE(String, parent, String());
@@ -775,6 +785,7 @@ namespace Synet
         CPL_PARAM_STRUCT(UnpackParam, unpack);
         CPL_PARAM_STRUCT(UpsampleParam, upsample);
         CPL_PARAM_STRUCT(YoloParam, yolo);
+        CPL_PARAM_STRUCT(YoloV7Param, yoloV7);
 
         CPL_PARAM_VALUE(Strings, debug, Strings());
     };
