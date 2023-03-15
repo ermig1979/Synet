@@ -49,8 +49,7 @@ namespace Synet
             _maxOutputBoxesPerClass = param.maxOutputBoxesPerClass();
             _iouThreshold = param.iouThreshold();
             _scoreThreshold = param.scoreThreshold();
-            _softNmsSigma = param.softNmsSigma();
-            _scale = param.scale();
+            _oneClass = param.oneClass() ? 1 : 0;
             assert(src.size() == 1 && src[0]->Count() == 3 && src[0]->Axis(0) == 1 && src[0]->Axis(2) >= 6);
             _size = (int)src[0]->Axis(1);
             _num = (int)src[0]->Axis(2);
@@ -72,8 +71,8 @@ namespace Synet
         }
 
     private:
-        int _maxOutputBoxesPerClass, _numClasses, _size, _num;
-        float _scale, _iouThreshold, _scoreThreshold, _softNmsSigma;
+        int _maxOutputBoxesPerClass, _numClasses, _size, _num, _oneClass;
+        float _scale, _iouThreshold, _scoreThreshold;
 
         struct Box
         {
@@ -85,17 +84,25 @@ namespace Synet
             size_t count = 0;
             for (size_t i = 0; i < _size; ++i)
             {
-                dst[count].type = 0.0f;
-                dst[count].score = src[5];
-                for (int c = 1; c < _numClasses; ++c)
+                if (_oneClass)
                 {
-                    if (src[5 + c] > dst[count].score)
-                    {
-                        dst[count].type = (float)c;
-                        dst[count].score = src[5 + c];
-                    }
+                    dst[count].type = 0.0f;
+                    dst[count].score = src[4];
                 }
-                dst[count].score *= src[4];
+                else
+                {
+                    dst[count].type = 0.0f;
+                    dst[count].score = src[5];
+                    for (int c = 1; c < _numClasses; ++c)
+                    {
+                        if (src[5 + c] > dst[count].score)
+                        {
+                            dst[count].type = (float)c;
+                            dst[count].score = src[5 + c];
+                        }
+                    }
+                    dst[count].score *= src[4];
+                }
                 if (dst[count].score >= _scoreThreshold)
                 {
                     dst[count].stub = 0.0f;

@@ -1913,8 +1913,7 @@ namespace Synet
             yoloV7.yoloV7().maxOutputBoxesPerClass() = nms0.nonMaxSuppression().maxOutputBoxesPerClass();
             yoloV7.yoloV7().iouThreshold() = nms0.nonMaxSuppression().iouThreshold();
             yoloV7.yoloV7().scoreThreshold() = nms0.nonMaxSuppression().scoreThreshold();
-            yoloV7.yoloV7().softNmsSigma() = nms0.nonMaxSuppression().softNmsSigma();
-            yoloV7.yoloV7().scale() = p0.power().scale();
+            yoloV7.yoloV7().oneClass() = (start == index + 2);
             index += src.size() - 1 - index;
             dst.push_back(yoloV7);
 

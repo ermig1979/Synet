@@ -717,8 +717,7 @@ namespace Synet
         CPL_PARAM_VALUE(int, maxOutputBoxesPerClass, 0);
         CPL_PARAM_VALUE(float, iouThreshold, 0);
         CPL_PARAM_VALUE(float, scoreThreshold, 0);
-        CPL_PARAM_VALUE(float, softNmsSigma, 0);
-        CPL_PARAM_VALUE(float, scale, 1.0f);
+        CPL_PARAM_VALUE(bool, oneClass, false);
     };
 
     struct LayerParam
