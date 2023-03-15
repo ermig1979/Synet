@@ -275,9 +275,10 @@ namespace Test
             size_t curr = 0;
             for (StringList::const_iterator it = images.begin(); it != images.end(); ++it)
             {
-                if (curr >= _options.imageBegin && curr < _options.imageEnd && RequiredExtension(*it))
+                if (RequiredExtension(*it))
                 {
-                    names.push_back(*it);
+                    if(curr >= _options.imageBegin && curr < _options.imageEnd)
+                        names.push_back(*it);
                     curr++;
                 }
             }

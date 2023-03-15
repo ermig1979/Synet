@@ -1848,7 +1848,7 @@ namespace Synet
                 ss1.stridedSlice().strideDims() != Shp(1) || ss1.stridedSlice().axes() != Shp(2))
                 return false;
 
-            int start = index + 2;
+            size_t start = index + 2;
             const LayerParam & ss2 = src[index + 2];
             if (ss2.type() == LayerTypeStridedSlice)
             {
