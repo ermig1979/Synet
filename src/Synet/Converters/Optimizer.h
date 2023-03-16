@@ -1839,13 +1839,13 @@ namespace Synet
             const LayerParam &ss0 = src[index + 0];
             if (ss0.type() != LayerTypeStridedSlice || ss0.src().size() != 1 || ss0.src()[0] != c0.dst()[0] ||
                 ss0.stridedSlice().beginDims() != Shp(0) || ss0.stridedSlice().endDims() != Shp(4) ||
-                ss0.stridedSlice().strideDims() != Shp(1) || ss0.stridedSlice().axes() != Shp(2))
+                ss0.stridedSlice().strideDims() != Shp(1) || (ss0.stridedSlice().axes() != Shp(2) && ss0.stridedSlice().axes() != Shp(1)))
                 return false;
 
             const LayerParam &ss1 = src[index + 1];
             if (ss1.type() != LayerTypeStridedSlice || ss1.src().size() != 1 || ss1.src()[0] != c0.dst()[0] ||
                 ss1.stridedSlice().beginDims() != Shp(4) || ss1.stridedSlice().endDims() != Shp(5) ||
-                ss1.stridedSlice().strideDims() != Shp(1) || ss1.stridedSlice().axes() != Shp(2))
+                ss1.stridedSlice().strideDims() != Shp(1) || (ss1.stridedSlice().axes() != Shp(2) && ss1.stridedSlice().axes() != Shp(1)))
                 return false;
 
             size_t start = index + 2;
@@ -1853,7 +1853,8 @@ namespace Synet
             if (ss2.type() == LayerTypeStridedSlice)
             {
                 if (ss2.src().size() != 1 || ss2.src()[0] != c0.dst()[0] ||
-                    ss2.stridedSlice().beginDims() != Shp(5) || ss1.stridedSlice().strideDims() != Shp(1) || ss1.stridedSlice().axes() != Shp(2))
+                    ss2.stridedSlice().beginDims() != Shp(5) || ss1.stridedSlice().strideDims() != Shp(1) || 
+                    (ss2.stridedSlice().axes() != Shp(2) && ss2.stridedSlice().axes() != Shp(1)))
                     return false;
 
                 const LayerParam& e0 = src[index + 3];
