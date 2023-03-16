@@ -1820,7 +1820,7 @@ namespace Synet
             for (size_t i = 0; i < parts.size(); ++i)
                 unpack.dst().push_back(src[index + i].dst()[0]);
 
-            index += parts.size();
+            index += parts.size() - 1;
             dst.push_back(conv);
             dst.push_back(unpack);
 
