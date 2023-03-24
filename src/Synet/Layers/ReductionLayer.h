@@ -112,6 +112,25 @@ namespace Synet
                 dst += inner;
             }
         }
+
+        template <class T> void ReductionLayerForwardCpuMean(const T* src, size_t outer, size_t count, size_t inner, T* dst)
+        {
+            T k = T(1) / T(count);
+            for (size_t o = 0; o < outer; ++o)
+            {
+                for (size_t i = 0; i < inner; ++i)
+                    dst[i] = T(0);
+                for (size_t c = 0; c < count; ++c)
+                {
+                    for (size_t i = 0; i < inner; ++i)
+                        dst[i] += src[i];
+                    src += inner;
+                }
+                for (size_t i = 0; i < inner; ++i)
+                    dst[i] = dst[i] * k;
+                dst += inner;
+            }
+        }
     }
 
     template <class T> class ReductionLayer : public Synet::Layer<T>
@@ -146,6 +165,9 @@ namespace Synet
                 break;
             case ReductionTypeL2:
                 _func = Detail::ReductionLayerForwardCpuL2;
+                break;
+            case ReductionTypeMean:
+                _func = Detail::ReductionLayerForwardCpuMean;
                 break;
             default:
                 assert(0);

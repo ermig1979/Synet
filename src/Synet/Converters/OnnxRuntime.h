@@ -193,6 +193,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Div" && !ConvertDivNode(node, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Erf" && !ConvertErfNode(node, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Exp" && !ConvertExpNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Expand" && !ConvertExpandNode(node, network.layers(), layer))
@@ -838,6 +840,13 @@ namespace Synet
             return true;
         }
 
+        bool ConvertErfNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnaryOperation;
+            layer.unaryOperation().type() = UnaryOperationTypeErf;
+            return true;
+        }
+
         bool ConvertExpNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeUnaryOperation;
@@ -1238,16 +1247,21 @@ namespace Synet
 
         bool ConvertReduceMeanNode(const onnx::NodeProto& node, LayerParam& layer)
         {
-            layer.type() = Synet::LayerTypeReduction;
-            layer.reduction().type() = ReductionTypeMax;
             Ints axes;
             if (!ConvertAtrributeInts(node, "axes", axes))
                 return false;
-            if (axes.size() != 2 || axes[0] != 2 || axes[1] != 3)
-                return false;
-            layer.type() = Synet::LayerTypePooling;
-            layer.pooling().method() = PoolingMethodTypeAverage;
-            layer.pooling().globalPooling() = true;
+            if (axes == Ints({ 2, 3 }))
+            {
+                layer.type() = Synet::LayerTypePooling;
+                layer.pooling().method() = PoolingMethodTypeAverage;
+                layer.pooling().globalPooling() = true;
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeReduction;
+                layer.reduction().type() = ReductionTypeMean;
+                ConvertAtrributeInt(node, "keepdims", layer.reduction().keepDims(), true, true);
+            }
             return true;
         }
 

@@ -204,7 +204,8 @@ CPL_PARAM_ENUM1(Synet, ReductionType,
     ReductionTypeMin,
     ReductionTypeSum,
     ReductionTypeProd,
-    ReductionTypeL2);
+    ReductionTypeL2,
+    ReductionTypeMean);
 
 CPL_PARAM_ENUM1(Synet, RoundingType,
     RoundingTypeCeil,
@@ -248,6 +249,7 @@ CPL_PARAM_ENUM1(Synet, TopKSort,
 
 CPL_PARAM_ENUM1(Synet, UnaryOperationType,
     UnaryOperationTypeAbs,
+    UnaryOperationTypeErf,
     UnaryOperationTypeExp,
     UnaryOperationTypeLog,
     UnaryOperationTypeNeg,

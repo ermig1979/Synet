@@ -204,8 +204,16 @@ namespace Synet
                 }
                 _batch = 1, _channels = 1, _spatial = src[_index[0]]->Size();
             }
-            if(dst[0] != src[_index[0]] && !resized)
-                dst[0]->Reshape(src[_index[0]]->Shape(), src[_index[0]]->GetType(), src[_index[0]]->Format());
+            if (dst[0] != src[_index[0]] && !resized)
+            {
+                switch (_type)
+                {
+                case TensorType32f: dst[0]->As32f().Reshape(src[_index[0]]->Shape(), src[_index[0]]->Format()); break;
+                case TensorType64i: dst[0]->As64i().Reshape(src[_index[0]]->Shape(), src[_index[0]]->Format()); break;
+                default:
+                    assert(0);
+                }
+            }
             this->UsePerfStat();
         }
 

@@ -41,6 +41,19 @@ namespace Synet
 
     //-------------------------------------------------------------------------
 
+    template <typename T> SYNET_INLINE T CpuGelu(T value)
+    {
+        return value * (::erf(value * T(M_SQRT1_2)) + T(1)) * T(0.5);
+    }
+
+    template <typename T> void CpuGelu(const T* src, size_t size, T* dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = CpuGelu(src[i]);
+    }
+
+    //-------------------------------------------------------------------------
+
     template <class T> SYNET_INLINE T CpuHardSigmoid(T value, T scale, T shift)
     {
         return Max(T(0), Min(value * scale + shift, T(1)));
