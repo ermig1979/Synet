@@ -225,6 +225,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "NonMaxSuppression" && !ConvertNonMaxSuppressionNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Pad" && !ConvertPadNode(node, network.layers(), layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Pow" && !ConvertPowNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "PRelu" && !ConvertPreluNode(node, network.layers(), layer))
@@ -1155,6 +1157,18 @@ namespace Synet
             layer.type() = Synet::LayerTypeNonMaxSuppression;
             layer.src().resize(2);
 
+            return true;
+        }
+
+        bool ConvertPadNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
+            layer.type() = Synet::LayerTypePad;
             return true;
         }
 
