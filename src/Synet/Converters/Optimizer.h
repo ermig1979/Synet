@@ -285,7 +285,7 @@ namespace Synet
         bool TransposeInnerProduct(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst)
         {
             const LayerParam& ip = src[index];
-            if (ip.type() != LayerTypeInnerProduct || !ip.innerProduct().transposeB())
+            if (ip.type() != LayerTypeInnerProduct || !ip.innerProduct().transposeB() || ip.weight().empty())
                 return false;
             const Shape & dim = ip.weight()[0].dim();
             size_t offset = ip.weight()[0].offset() / 4;
@@ -1616,7 +1616,7 @@ namespace Synet
 
         bool MergeSwish(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
         {
-            if (src.size() < index + 1)
+            if (src.size() < index + 2)
                 return false;
             if (src[index + 0].type() != LayerTypeSigmoid)
                 return false;

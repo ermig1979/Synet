@@ -159,6 +159,7 @@ CPL_PARAM_ENUM1(Synet, MetaType,
     MetaTypeMinimum,
     MetaTypeMul,
     MetaTypePack,
+    MetaTypePermute,
     MetaTypeRange,
     MetaTypeRealDiv,
     MetaTypeReduceMin,
@@ -260,7 +261,7 @@ CPL_PARAM_ENUM1(Synet, UnaryOperationType,
 
 namespace Synet
 {
-    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------
 
     struct TensorParam
     {
@@ -294,6 +295,8 @@ namespace Synet
         CPL_PARAM_VALUE(Shape, dim, Shape());
         CPL_PARAM_VALUE(TensorFormat, format, TensorFormatNchw);
     };
+
+    //-------------------------------------------------------------------------------------------------
 
     struct ArgMaxParam
     {
@@ -721,6 +724,8 @@ namespace Synet
         CPL_PARAM_VALUE(float, scoreThreshold, 0);
         CPL_PARAM_VALUE(bool, oneClass, false);
     };
+
+    //-------------------------------------------------------------------------------------------------
 
     struct LayerParam
     {

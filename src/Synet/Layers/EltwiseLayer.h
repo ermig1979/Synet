@@ -206,6 +206,7 @@ namespace Synet
             }
             if (dst[0] != src[_index[0]] && !resized)
             {
+                _type = src[_index[0]]->GetType();
                 switch (_type)
                 {
                 case TensorType32f: dst[0]->As32f().Reshape(src[_index[0]]->Shape(), src[_index[0]]->Format()); break;

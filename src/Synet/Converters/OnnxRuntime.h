@@ -1061,24 +1061,34 @@ namespace Synet
                 if (!CheckSourceNumber(*src1, 1))
                     return false;
                 const LayerParam* src10 = GetLayer(layers, src1->src()[0]);
-                if (src10 == NULL || src10->type() != LayerTypeConst)
+                if (src10 == NULL) 
                     return false;
-                transB = true;
-                layer.weight() = src10->weight();
-                layers.erase(layers.begin() + (src1 - layers.data()));
+                if (src10->type() == LayerTypeConst)
+                {
+                    layer.weight() = src10->weight();
+                    layers.erase(layers.begin() + (src1 - layers.data()));
+                }
             }
             else
                 return false;
             Shape weight = layer.weight()[0].dim();
-            if (!CheckDims(weight, 2, "inner product weight"))
-                return false;
             layer.innerProduct().transposeB() = !transB;
-            layer.innerProduct().outputNum() = (uint32_t)(transB ? weight[0] : weight[1]);
-            layer.src().resize(1);
-            if (trans && !PermutedToNchw(layers, true, false, true))
+            if (weight.empty())
             {
-                std::cout << "Can 't convert MatMul node for NCHW format!" << std::endl;
-                return false;
+                layer.weight().clear();
+                layer.innerProduct().outputNum() = 0;
+            }
+            else
+            {
+                if (!CheckDims(weight, 2, "inner product weight"))
+                    return false;
+                layer.innerProduct().outputNum() = (uint32_t)(transB ? weight[0] : weight[1]);
+                layer.src().resize(1);
+                if (trans && !PermutedToNchw(layers, true, false, true))
+                {
+                    std::cout << "Can 't convert MatMul node for NCHW format!" << std::endl;
+                    return false;
+                }
             }
             return true;
         }
@@ -1312,7 +1322,12 @@ namespace Synet
                 return false;
             if (src1->meta().type() == MetaTypeStub)
                 src1 = GetLayer(layers, src1->src()[0]);
-            if (src1->meta().type() == MetaTypeConst)
+            if (src0->type() == Synet::LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeReshape;
+            }            
+            else if (src1->meta().type() == MetaTypeConst)
             {
                 const TensorParam & alpha = src1->meta().alpha();
                 if (alpha.shape().size() != 1)
@@ -1336,11 +1351,6 @@ namespace Synet
                         shape = Shape({ shape[0], shape[2] , shape[1] });
                     }
                 }
-            }
-            else if (src0->type() == Synet::LayerTypeMeta)
-            {
-                layer.type() = Synet::LayerTypeMeta;
-                layer.meta().type() = Synet::MetaTypeReshape;
             }
             else
             {
@@ -1456,7 +1466,7 @@ namespace Synet
                 }
                 if (src0->type() == LayerTypeMeta)
                 {
-                    if (!CheckSourceNumber(layer, 4))
+                    if (!CheckSourceNumber(layer, 4, 5))
                         return false;
                     layer.type() = Synet::LayerTypeMeta;
                     layer.meta().type() = MetaTypeSlice;

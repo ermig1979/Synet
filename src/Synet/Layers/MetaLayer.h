@@ -60,8 +60,9 @@ namespace Synet
             case MetaTypeInputWithDefault: ReshapeInputWithDefault(src, dst); break;
             case MetaTypeMaximum: ReshapeMaximum(src, dst); break;
             case MetaTypeMinimum: ReshapeMinimum(src, dst); break;
-            case MetaTypeMul: ReshapeMul(src, dst); break;
+            case MetaTypeMul: ReshapeMul(src, param.alpha(), dst); break;
             case MetaTypePack: ReshapePack(src, dst); break;
+            case MetaTypePermute: ReshapePack(src, dst); break;
             case MetaTypeRange: ReshapeRange(src, dst); break;
             case MetaTypeRealDiv: ReshapeRealDiv(src, dst); break;
             case MetaTypeReduceMin: ReshapeReduceMin(src, dst); break;
@@ -481,6 +482,10 @@ namespace Synet
                 assert(0);
         }
 
+        void ReshapePermute(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst)
+        {
+        }
+
         void ReshapeRange(const TensorPtrs & src, const TensorPtrs & dst)
         {
             assert(src.size() == 3 && src[0]->Size() == 1 && src[1]->Size() == 1 && src[2]->Size() == 1);
@@ -674,14 +679,43 @@ namespace Synet
             }
             else if (src[0]->GetType() == TensorType64i)
             {
-                assert(src.size() == 4 && src[0]->Count() == 1 && src[1]->Size() == 1 && src[2]->Size() == 1 && src[3]->Size() == 1);
                 const Synet::Tensor<int64_t> & src0 = src[0]->As64i();
-                size_t beg = src[1]->As64i().CpuData()[0];
-                size_t end = Min<size_t>(src[2]->As64i().CpuData()[0], src[0]->Size());
-                Synet::Tensor<int64_t> & dst0 = dst[0]->As64i();
-                dst0.Reshape({ end - beg });
-                for (size_t i = beg; i < end; ++i)
-                    dst0.CpuData()[i - beg] = src0.CpuData()[i];
+                Synet::Tensor<int64_t>& dst0 = dst[0]->As64i();                
+                if (src[0]->Count() == 1)
+                {
+                    assert(src.size() == 4 && src[1]->Size() == 1 && src[2]->Size() == 1 && src[3]->Size() == 1);
+                    size_t beg = src[1]->As64i().CpuData()[0];
+                    size_t end = Min<size_t>(src[2]->As64i().CpuData()[0], src[0]->Size());
+                    dst0.Reshape({ end - beg });
+                    for (size_t i = beg; i < end; ++i)
+                        dst0.CpuData()[i - beg] = src0.CpuData()[i];
+                }
+                else if (src[0]->Count() == 2)
+                {
+                    assert(src.size() == 5 && src[1]->Size() == 1 && src[2]->Size() == 1 && src[3]->Size() == 1 && src[4]->Size() == 1);
+                    const Shape& ss = src0.Shape();
+                    int64_t axis = RestrictRange<int64_t>(src[3]->As64i().CpuData()[0] < 0 ? src[3]->As64i().CpuData()[0] + ss.size() : src[3]->As64i().CpuData()[0], 0, ss.size() - 1);
+                    int64_t beg = RestrictRange<int64_t>(src[1]->As64i().CpuData()[0] < 0 ? src[1]->As64i().CpuData()[0] + ss[axis] : src[1]->As64i().CpuData()[0], 0, ss[axis]);
+                    int64_t end = RestrictRange<int64_t>(src[2]->As64i().CpuData()[2] < 0 ? src[2]->As64i().CpuData()[2] + ss[axis] : src[2]->As64i().CpuData()[0], 0, ss[axis]);
+                    int64_t step = src[4]->As64i().CpuData()[0];
+                    int64_t size = 0;
+                    for (int64_t i = beg; step > 0 ? i < end : i >= end; i += step, size++);
+                    Shape ds = ss;
+                    ds[axis] = size;
+                    dst0.Reshape(ds);
+                    //const int64_t* s0 = src0.CpuData();
+                    //int64_t* d0 = dst0.CpuData();
+                    if (axis == 0)
+                    {
+                        for (int64_t i = beg, o = 0; step > 0 ? i < end : i >= end; i += step, o++)
+                            for(size_t j = 0; j < ss[1]; ++j)
+                                *dst0.CpuData(Shp(o, j)) = *src0.CpuData(Shp(i, j));
+                    }
+                    else
+                        assert(0);
+                }
+                else
+                    assert(0);
             }
             else
                 assert(0);
