@@ -52,7 +52,6 @@ namespace Synet
             _permute = false;
             _dstOrder = param.order();
             _count = _dstOrder.size();
-            assert(_count >= 2 && _count <= 5);
             _srcOrder.resize(_count);
             size_t is = 0, os = 0;
             Shape permute;
@@ -81,6 +80,7 @@ namespace Synet
             {
                 dst[0]->Reshape(_dstShape, param.format() == TensorFormatUnknown ? src[0]->Format() : param.format());
                 CompactShapes();
+                assert(_count >= 2 && _count <= 5);
                 _srcStride = Stride(_srcShape, _srcOrder);
                 _dstStride = Stride(_dstShape, _dstOrder);
                 this->UsePerfStat();

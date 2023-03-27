@@ -60,9 +60,9 @@ namespace Synet
             case MetaTypeInputWithDefault: ReshapeInputWithDefault(src, dst); break;
             case MetaTypeMaximum: ReshapeMaximum(src, dst); break;
             case MetaTypeMinimum: ReshapeMinimum(src, dst); break;
-            case MetaTypeMul: ReshapeMul(src, param.alpha(), dst); break;
+            case MetaTypeMul: ReshapeMul(src, dst); break;
             case MetaTypePack: ReshapePack(src, dst); break;
-            case MetaTypePermute: ReshapePack(src, dst); break;
+            case MetaTypePermute: ReshapePermute(src, param.alpha(), dst); break;
             case MetaTypeRange: ReshapeRange(src, dst); break;
             case MetaTypeRealDiv: ReshapeRealDiv(src, dst); break;
             case MetaTypeReduceMin: ReshapeReduceMin(src, dst); break;
@@ -484,6 +484,29 @@ namespace Synet
 
         void ReshapePermute(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst)
         {
+            assert(src[0]->Count() == alpha.i64().size());
+            if (src[0]->GetType() == TensorType64i)
+            {
+                if (alpha.i64().size() == 2)
+                {
+                    Shape order = Shp(alpha.i64()[0], alpha.i64()[1]), shape = src[0]->Shape();
+                    if (order[0] == 1 && order[1] == 0)
+                    {
+                        dst[0]->As64i().Reshape(Shp(shape[1], shape[0]));
+                        for (size_t i = 0; i < shape[0]; ++i)
+                            for (size_t j = 0; j < shape[1]; ++j)
+                                *dst[0]->As64i().CpuData(Shp(j, i)) = *src[0]->As64i().CpuData(Shp(i, j));
+                    }
+                    else
+                    {
+                        dst[0]->Share(*src[0]);
+                    }
+                }
+                else
+                    assert(0);
+            }
+            else
+                assert(0);
         }
 
         void ReshapeRange(const TensorPtrs & src, const TensorPtrs & dst)

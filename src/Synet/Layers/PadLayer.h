@@ -43,20 +43,34 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            assert(src.size() == 2 && src[1]->Count() == src[0]->Count() * 2);
-            Shape raw = src[1]->Shape();
+            assert(src.size() == 2);
             size_t n = src[0]->Count();
             _padB.resize(n);
             _padE.resize(n);
-            for (size_t i = 0; i < n; ++i)
+            if (src[1]->GetType() == TensorType64i)
             {
-                _padB[i] = raw[i * 2 + 0];
-                _padE[i] = raw[i * 2 + 1];
+                assert(src[0]->Count() * 2 == src[1]->Size());
+                const int64_t * raw = src[1]->As64i().CpuData();
+                for (size_t i = 0; i < n; ++i)
+                {
+                    _padB[i] = (size_t)raw[0 + i];
+                    _padE[i] = (size_t)raw[4 + i];
+                }
             }
-            if (n == 4)
+            else
             {
-                _padB = Shape({ _padB[0], _padB[3] , _padB[1] , _padB[2] });
-                _padE = Shape({ _padE[0], _padE[3] , _padE[1] , _padE[2] });
+                assert(src[0]->Count() * 2 == src[1]->Count());
+                Shape raw = src[1]->Shape();
+                for (size_t i = 0; i < n; ++i)
+                {
+                    _padB[i] = raw[i * 2 + 0];
+                    _padE[i] = raw[i * 2 + 1];
+                }                
+                if (n == 4)
+                {
+                    _padB = Shape({ _padB[0], _padB[3] , _padB[1] , _padB[2] });
+                    _padE = Shape({ _padE[0], _padE[3] , _padE[1] , _padE[2] });
+                }            
             }
             Shape dstShape = src[0]->Shape();
             for (size_t i = 0; i < n; ++i)

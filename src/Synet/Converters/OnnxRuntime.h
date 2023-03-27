@@ -1690,26 +1690,41 @@ namespace Synet
         {
             if (!CheckSourceNumber(layer, 1))
                 return false;
-            layer.type() = Synet::LayerTypePermute;
             Shape order;
             if (!ConvertAtrributeInts(node, "perm", order))
                 return false;
-            if (trans && !PermutedToNchw(layers, layer.src(), true, false, true))
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            if (src0 == NULL)
+                return false;
+            if (src0->type() == LayerTypeMeta)
             {
-                if (order == Shape({ 0, 2, 1, 3, 4 }))
-                    order = Shape({ 0, 1, 2, 4, 3 });
-                if (order == Shape({ 0, 2, 3, 1 }))
-                {
-                    order = Shape({ 0, 1, 2, 3 });
-                    layer.permute().format() = TensorFormatNchw;
-                }
-                if (order == Shape({ 0, 2, 1 }))
-                {
-                    order = Shape({ 0, 1, 2 });
-                    layer.permute().format() = TensorFormatNchw;
-                }
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = MetaTypePermute;
+                layer.meta().alpha().shape() = Shp(order.size());
+                layer.meta().alpha().type() = TensorType64i;
+                for (size_t i = 0; i < order.size(); ++i)
+                    layer.meta().alpha().i64().push_back(order[i]);
             }
-            layer.permute().order() = order;
+            else
+            {
+                layer.type() = Synet::LayerTypePermute;
+                if (trans && !PermutedToNchw(layers, layer.src(), true, false, true))
+                {
+                    if (order == Shape({ 0, 2, 1, 3, 4 }))
+                        order = Shape({ 0, 1, 2, 4, 3 });
+                    if (order == Shape({ 0, 2, 3, 1 }))
+                    {
+                        order = Shape({ 0, 1, 2, 3 });
+                        layer.permute().format() = TensorFormatNchw;
+                    }
+                    if (order == Shape({ 0, 2, 1 }))
+                    {
+                        order = Shape({ 0, 1, 2 });
+                        layer.permute().format() = TensorFormatNchw;
+                    }
+                }
+                layer.permute().order() = order;
+            }
             return true;
         }
 
