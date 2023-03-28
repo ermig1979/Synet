@@ -149,7 +149,7 @@ namespace Synet
 
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            _axis = Min<size_t>(this->Param().softmax().axis(), src[0]->Count() - 1);
+            _axis = src[0]->Index(this->Param().softmax().axis());
             _log = this->Param().softmax().log();
             _outer = src[0]->Size(0, _axis);
             _count = src[0]->Axis(_axis);

@@ -1491,7 +1491,7 @@ namespace Synet
                         layer.stridedSlice().beginDims().push_back((size_t)src1->meta().alpha().i64()[0]);
                         layer.stridedSlice().endDims().push_back((size_t)src2->meta().alpha().i64()[0]);
                         layer.stridedSlice().strideDims().push_back((size_t)src4->meta().alpha().i64()[0]);
-                        if (trans && !PermutedToNchw(layers, false, true, true))
+                        if (trans && !PermutedToNchw(layers, layer.src(), false, true, true))
                         {
                             Shape nchw = Shape({ 0, 3, 1, 2 });
                             layer.stridedSlice().axes()[0] = nchw[layer.stridedSlice().axes()[0]];
@@ -1544,7 +1544,7 @@ namespace Synet
             if (!ConvertAtrributeInt(node, "axis", layer.unpack().axis()))
                 return false;
             layer.type() = Synet::LayerTypeUnpack;
-            if (trans && !PermutedToNchw(layers, true, false, true))
+            if (trans && !PermutedToNchw(layers, layer.src(), true, false, true))
             {
                 Shape nchw = Shape({ 0, 3, 1, 2 });
                 layer.unpack().axis() = nchw[layer.unpack().axis()];
