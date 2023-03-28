@@ -1077,6 +1077,7 @@ namespace Synet
             {
                 layer.weight().clear();
                 layer.innerProduct().outputNum() = 0;
+                layer.innerProduct().axis() = -1;
             }
             else
             {
@@ -1284,6 +1285,8 @@ namespace Synet
             {
                 layer.type() = Synet::LayerTypeReduction;
                 layer.reduction().type() = ReductionTypeMean;
+                for (size_t i = 0; i < axes.size(); ++i)
+                    layer.reduction().axis().push_back(axes[i]);
                 ConvertAtrributeInt(node, "keepdims", layer.reduction().keepDims(), true, true);
             }
             return true;

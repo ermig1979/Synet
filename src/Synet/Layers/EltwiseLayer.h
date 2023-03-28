@@ -119,6 +119,15 @@ namespace Synet
                     }
                     assert(shape == dst[0]->Shape());
                 }
+                else if (_operation == EltwiseOperationTypeProduct && src[0]->Count() == 3 && src[1]->Count() == 1 && src[0]->Axis(2) == src[1]->Axis(0))
+                {
+                    _batch = 1;
+                    _channelsOuter = 1;
+                    _spatial = src[_index[0]]->Size(0, 2);
+                    _channelsInner = src[_index[0]]->Axis(2);
+                    _special = SpecialScaleComplex;
+                    _channels = _channelsOuter * _channelsInner;
+                }
                 else if (_operation == EltwiseOperationTypeProduct && src[0]->Count() == 4)
                 {
                     _trans = src[_index[0]]->Format() == TensorFormatNhwc;
@@ -189,6 +198,14 @@ namespace Synet
                         dst[0]->Reshape(Shp(_batch, _spatial), src[_index[1]]->Format());
                         resized = true;
                     }
+                }
+                else if (_operation == EltwiseOperationTypeSum && src[_index[1]]->Count() == 3 && src[_index[0]]->Size(1) == src[_index[1]]->Size(0))
+                {
+                    _special = SpecialBiasChannel;
+                    _trans = 1;
+                    _batch = 1;
+                    _spatial = src[_index[0]]->Axis(0);
+                    _channels = src[_index[0]]->Size(1);
                 }
                 else
                     assert(0);

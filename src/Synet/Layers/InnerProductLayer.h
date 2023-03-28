@@ -120,12 +120,12 @@ namespace Synet
             _biasTerm = param.biasTerm();
             _transA = param.transposeA();
             _transB = param.transposeB();
-            size_t axis = param.axis();
+            int axis = src[0]->Index(param.axis());
             _K = src[0]->Size(axis);
             if (src.size() == 2)
             {
                 assert(_biasTerm == false);
-                assert(_K = src[1]->Size(0, axis));
+                assert(_K = src[1]->Size(axis - 1, axis));
                 _N = src[1]->Axis(axis);
             }
             else

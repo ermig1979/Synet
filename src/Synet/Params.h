@@ -418,7 +418,7 @@ namespace Synet
         CPL_PARAM_VALUE(bool, biasTerm, true);
         CPL_PARAM_VALUE(bool, transposeA, false);
         CPL_PARAM_VALUE(bool, transposeB, false);
-        CPL_PARAM_VALUE(uint32_t, axis, 1);
+        CPL_PARAM_VALUE(int32_t, axis, 1);
         CPL_PARAM_VALUE(TensorType, quantizationLevel, TensorType32f);
         CPL_PARAM_VALUE(bool, bf16, false);
     };
@@ -630,7 +630,7 @@ namespace Synet
 
     struct SoftmaxParam
     {
-        CPL_PARAM_VALUE(uint32_t, axis, 1);
+        CPL_PARAM_VALUE(int32_t, axis, 1);
         CPL_PARAM_VALUE(bool, log, false);
     };
 
