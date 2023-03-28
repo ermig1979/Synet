@@ -61,6 +61,33 @@ namespace Synet
 
     //---------------------------------------------------------------------------------------------
 
+    template <class T> class GeluLayer : public Synet::Layer<T>
+    {
+    public:
+        typedef T Type;
+        typedef Layer<T> Base;
+        typedef typename Base::TensorPtrs TensorPtrs;
+
+        GeluLayer(const LayerParam& param, Context* context)
+            : Base(param, context)
+        {
+        }
+
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
+
+    protected:
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            CpuGelu<Type>(src[0]->CpuData(), src[0]->Size(), dst[0]->CpuData());
+        }
+    };
+
+    //---------------------------------------------------------------------------------------------
+
     template <class T> class HardSigmoidLayer : public Synet::Layer<T>
     {
     public:

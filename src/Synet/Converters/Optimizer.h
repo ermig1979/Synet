@@ -167,6 +167,8 @@ namespace Synet
                         continue;
                     if (MergeNormalize(network.layers(), i, merged, changes))
                         continue;
+                    if (MergeGelu(network.layers(), i, merged, changes))
+                        continue;
                     break;
                 }
                 case 5:
@@ -1664,6 +1666,35 @@ namespace Synet
             return true;
         }
 
+        bool MergeGelu(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 5)
+                return false;
+            if (!IsMulConst(src[index + 0], M_SQRT1_2))
+                return false;
+            if (src[index + 1].type() != LayerTypeUnaryOperation || src[index + 1].unaryOperation().type() != UnaryOperationTypeErf ||
+                src[index + 1].src()[0] != src[index + 0].dst()[0])
+                return false;
+            if (!IsAddConst(src[index + 2], 1.0f) || src[index + 2].src()[0] != src[index + 1].dst()[0])
+                return false;
+            if (src[index + 3].type() != LayerTypeEltwise || src[index + 3].eltwise().operation() != Synet::EltwiseOperationTypeProduct ||
+                src[index + 3].src()[0] != src[index + 0].src()[0] || src[index + 3].src()[1] != src[index + 2].dst()[0])
+                return false;
+            if (!IsMulConst(src[index + 4], 0.5f) || src[index + 4].src()[0] != src[index + 3].dst()[0])
+                return false;
+            if (InsideLink(src, index + 1, 4))
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeGelu;
+            layer.name() = src[index + 4].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            dst.push_back(layer);
+            index += 4;
+            return true;
+        }
+
         bool MergeRnnGruBd(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
         {
             const size_t RNN_GRU_BD_SIZE = 19;
@@ -1928,6 +1959,22 @@ namespace Synet
             if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum && layer.eltwise().coefficients() == Floats({ 1.0f, -1.0f }))
                 return true;
             if (layer.type() == LayerTypeBinaryOperation && layer.binaryOperation().type() == BinaryOperationTypeSub)
+                return true;
+            return false;
+        }
+
+        bool IsMulConst(const LayerParam& layer, float value, float epsilon = 0.000001) const
+        {
+            if (layer.type() == LayerTypePower && layer.power().power() == 1.0f && layer.power().shift() == 0.0f
+                && abs(layer.power().scale() - value) < epsilon)
+                return true;
+            return false;
+        }
+
+        bool IsAddConst(const LayerParam& layer, float value, float epsilon = 0.000001) const
+        {
+            if (layer.type() == LayerTypePower && layer.power().power() == 1.0f && layer.power().scale() == 1.0f
+                && abs(layer.power().shift() - value) < epsilon)
                 return true;
             return false;
         }

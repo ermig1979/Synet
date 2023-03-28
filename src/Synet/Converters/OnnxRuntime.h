@@ -171,7 +171,7 @@ namespace Synet
                 LayerParam layer;
                 SetSrcAndDst(node, renames, layer);
 
-                if (node.op_type() == "Add" && !ConvertAddNode(node, network.layers(), layer))
+                if (node.op_type() == "Add" && !ConvertAddNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "ArgMax" && !ConvertArgMaxNode(node, layer))
                     return ErrorMessage(i, node);
@@ -468,7 +468,7 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertAddNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        bool ConvertAddNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -479,7 +479,16 @@ namespace Synet
             else if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
             {
                 layer.type() = LayerTypeMeta;
-                layer.meta().type() = MetaTypeMul;
+                layer.meta().type() = MetaTypeAdd;
+            }
+            else if(src1->type() == LayerTypeConst && src1->weight()[0].dim() == Shp(1))
+            {
+                const float* shift = GetWeight<float>(original, src1->weight()[0]);
+                layer.type() = Synet::LayerTypePower;
+                layer.power().power() = 1.0f;
+                layer.power().scale() = 1.0f;
+                layer.power().shift() = shift[0];
+                layer.src().resize(1);
             }
             else
             {

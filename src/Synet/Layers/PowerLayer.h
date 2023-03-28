@@ -68,7 +68,7 @@ namespace Synet
             const T* pSrc = src[0]->CpuData();
             T* pDst = dst[0]->CpuData();
             if (_power == 1.0f)
-                Detail::ScaleLayerForwardCpu(pSrc, &_scale, &_shift, 1, 1, _size, pDst, src[0]->Format(), 0);
+                Detail::ScaleLayerForwardCpu(pSrc, &_scale, &_shift, 1, 1, _size, pDst, TensorFormatNchw, 0);
             else if (_scale == 1.0f && _shift == 0.0f)
                 CpuPow(pSrc, _size, _power, pDst);
             else
