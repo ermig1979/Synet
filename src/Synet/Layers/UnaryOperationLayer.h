@@ -78,6 +78,8 @@ namespace Synet
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         template <> SYNET_INLINE void UnaryOperationLayerForward<float>(const float * src, size_t size, UnaryOperationType type, float * dst)
         {
+            if (type > UnaryOperationTypeErf)
+                type = (UnaryOperationType)(type - 1);
             ::SimdSynetUnaryOperation32fLayerForward(src, size, (::SimdSynetUnaryOperation32fType)type, dst);
         }
 #endif
