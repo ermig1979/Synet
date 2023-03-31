@@ -122,6 +122,76 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
+        template<class T> void NormalizeLayerForwardV2Cpu(const T* src, size_t batch, size_t channels, size_t spatial, const T* scale, const T* shift, T eps, int trans, T* buf, T* dst)
+        {
+            T k = T(1) / T(channels);
+            if (trans)
+            {
+                for (size_t b = 0; b < batch; ++b)
+                {
+                    for (size_t i = 0; i < spatial; ++i)
+                    {
+                        T sum = 0;
+                        for (size_t c = 0; c < channels; ++c)
+                            sum += src[c];
+                        T mean = sum * k;
+                        for (size_t c = 0; c < channels; ++c)
+                            dst[c] = src[c] - mean;
+
+                        T sqsum = 0;
+                        for (size_t c = 0; c < channels; ++c)
+                            sqsum += Square(dst[c]);
+                        T norm = T(1) / ::sqrt(sqsum * k + eps);
+                        for (size_t c = 0; c < channels; ++c)
+                            dst[c] = dst[c] * norm * scale[c] + shift[c];
+
+                        dst += channels;
+                        src += channels;
+                    }
+                }
+            }
+            else
+            {
+                for (size_t b = 0; b < batch; ++b)
+                {
+                    for (size_t s = 0; s < spatial; ++s)
+                        buf[s] = 0;
+                    for (size_t c = 0, o = 0; c < channels; ++c)
+                    {
+                        for (size_t s = 0; s < spatial; ++s, ++o)
+                            buf[s] += src[o];
+                    }
+                    for (size_t s = 0; s < spatial; ++s)
+                        buf[s] = buf[s] * k;
+                    for (size_t c = 0, o = 0; c < channels; ++c)
+                    {
+                        for (size_t s = 0; s < spatial; ++s, ++o)
+                            dst[o] = src[o] - buf[s];
+                    }
+
+                    for (size_t s = 0; s < spatial; ++s)
+                        buf[s] = 0;
+                    for (size_t c = 0, o = 0; c < channels; ++c)
+                    {
+                        for (size_t s = 0; s < spatial; ++s, ++o)
+                            buf[s] += Square(src[o]);
+                    }
+                    for (size_t s = 0; s < spatial; ++s)
+                        buf[s] = T(1) / ::sqrt(buf[s] * k + eps);
+                    for (size_t c = 0, o = 0; c < channels; ++c)
+                    {
+                        for (size_t s = 0; s < spatial; ++s, ++o)
+                            dst[o] = dst[o] * buf[s] * scale[c] + shift[c];
+                    }
+
+                    src += channels * spatial;
+                    dst += channels * spatial;
+                }
+            }
+        }
+
+        //-----------------------------------------------------------------------------------------
+
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
 
         template<> SYNET_INLINE void NormalizeLayerForwardCpu<float>(const float* src, size_t batch, size_t channels, 
@@ -148,64 +218,89 @@ namespace Synet
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const NormalizeParam & param = this->Param().normalize();
-            _trans = src[0]->Format() == TensorFormatNhwc ? 1 : 0;
-            _acrossSpatial = param.acrossSpatial() ? 1 : 0;
-            _channelShared = param.channelShared() ? 1 : 0;
+            _version = param.version();
             _eps = param.eps();
+            if (_version == 1)
+            {
+                _trans = src[0]->Format() == TensorFormatNhwc ? 1 : 0;
+                _acrossSpatial = param.acrossSpatial() ? 1 : 0;
+                _channelShared = param.channelShared() ? 1 : 0;
 
-            _batch = src[0]->Axis(0);
-            if (src[0]->Count() == 2)
-            {
-                _channels = 1;
-                _spatial = src[0]->Axis(1);
-            }
-            else if (src[0]->Count() == 3)
-            {
-                if (_trans)
+                _batch = src[0]->Axis(0);
+                if (src[0]->Count() == 2)
                 {
-                    _channels = src[0]->Axis(2);
+                    _channels = 1;
                     _spatial = src[0]->Axis(1);
                 }
+                else if (src[0]->Count() == 3)
+                {
+                    if (_trans)
+                    {
+                        _channels = src[0]->Axis(2);
+                        _spatial = src[0]->Axis(1);
+                    }
+                    else
+                    {
+                        _channels = src[0]->Axis(1);
+                        _spatial = src[0]->Axis(2);
+                    }
+                }
+                else if (src[0]->Count() == 4)
+                {
+                    if (_trans)
+                    {
+                        _channels = src[0]->Axis(3);
+                        _spatial = src[0]->Axis(1) * src[0]->Axis(2);
+                    }
+                    else
+                    {
+                        _channels = src[0]->Axis(1);
+                        _spatial = src[0]->Axis(2) * src[0]->Axis(3);
+                    }
+                }
+                else
+                    assert(0);
+
+                if (this->Weight().empty())
+                {
+                    assert(_channelShared);
+                    _scale.Reshape(Shape({ _channels }), 1.0f);
+                }
                 else
                 {
-                    _channels = src[0]->Axis(1);
-                    _spatial = src[0]->Axis(2);
+                    if (_channelShared)
+                    {
+                        assert(this->Weight()[0].Size() == 1);
+                        _scale.Reshape(Shape({ _channels }), this->Weight()[0].CpuData()[0]);
+                    }
+                    else
+                        _scale.Share(this->Weight()[0]);
                 }
             }
-            else if (src[0]->Count() == 4)
+            else if (_version == 2)
             {
+                int axis = (int)src[0]->Index(param.axis());
+                _channels = src[0]->Axis(axis);
+                _trans = axis == src[0]->Count() - 1 ? 1 : 0;
                 if (_trans)
                 {
-                    _channels = src[0]->Axis(3);
-                    _spatial = src[0]->Axis(1) * src[0]->Axis(2);
+                    _batch = 1;
+                    _spatial = src[0]->Size(0, axis);
                 }
                 else
                 {
-                    _channels = src[0]->Axis(1);
-                    _spatial = src[0]->Axis(2) * src[0]->Axis(3);
+                    _batch = src[0]->Size(0, axis);
+                    _spatial = src[0]->Size(axis + 1);
                 }
-            }
-            else 
-                assert(0);
-
-            if (this->Weight().empty())
-            {
-                assert(_channelShared);
-                _scale.Reshape(Shape({ _channels }), 1.0f);
+                _scale.Share(this->Weight()[0]);
+                _shift.Share(this->Weight()[1]);
             }
             else
-            {
-                if (_channelShared)
-                {
-                    assert(this->Weight()[0].Size() == 1);
-                    _scale.Reshape(Shape({ _channels }), this->Weight()[0].CpuData()[0]);
-                }
-                else
-                    _scale.Share(this->Weight()[0]);
-            }
+                assert(0);
 
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
-            buf[0]->Extend(Shape({ _spatial }));
+            if(_trans)
+                buf[0]->Extend(Shape({ _spatial }));
             this->UsePerfStat();
         }
 
@@ -216,15 +311,21 @@ namespace Synet
             Type * pDst = dst[0]->CpuData();
             Type * pBuf = buf[0]->CpuData();
             const Type * pScale = _scale.CpuData();
-            Detail::NormalizeLayerForwardCpu(pSrc, _batch, _channels, _spatial, pScale, _eps, _acrossSpatial, _trans, pBuf, pDst);
+            const Type* pShift = _shift.CpuData();
+            if (_version == 1)
+                Detail::NormalizeLayerForwardCpu(pSrc, _batch, _channels, _spatial, pScale, _eps, _acrossSpatial, _trans, pBuf, pDst);
+            else if (_version == 2)
+                Detail::NormalizeLayerForwardV2Cpu(pSrc, _batch, _channels, _spatial, pScale, pShift, _eps, _trans, pBuf, pDst);
+            else
+                assert(0);
         }
 
     private:
         typedef typename Base::Tensor Tensor;
 
         size_t _batch, _channels, _spatial;
-        Tensor _scale;
-        int _trans, _acrossSpatial, _channelShared;
+        Tensor _scale, _shift;
+        int _trans, _acrossSpatial, _channelShared, _version;
         Type _eps;
     };
 }

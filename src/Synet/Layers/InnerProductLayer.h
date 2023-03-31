@@ -120,7 +120,7 @@ namespace Synet
             _biasTerm = param.biasTerm();
             _transA = param.transposeA();
             _transB = param.transposeB();
-            int axis = src[0]->Index(param.axis());
+            int axis = (int)src[0]->Index(param.axis());
             _batch = 1;
             _K = src[0]->Size(axis);
             if (src.size() == 2)
@@ -143,7 +143,7 @@ namespace Synet
                 {
                     if (weight[0].Shape()[1] != _K)
                     {
-                        axis = src[0]->Count() - 1;
+                        axis = (int)src[0]->Count() - 1;
                         _K = src[0]->Size(axis);
                     }
                     assert(weight[0].Shape() == Shp(_N, _K));

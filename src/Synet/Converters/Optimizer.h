@@ -113,6 +113,8 @@ namespace Synet
                         continue;
                     if (MergeConvolutionAndPower(network.layers(), i, bin, buf, merged, changes))
                         continue;
+                    if (MergeInnerProductAndPower(network.layers(), i, bin, buf, merged, changes))
+                        continue;
                     if (MergeInnerProductAndScale(network.layers(), i, bin, buf, merged, changes))
                         continue;
                     break;
@@ -166,6 +168,8 @@ namespace Synet
                     if (MergeSwish(network.layers(), i, merged, changes))
                         continue;
                     if (MergeNormalize(network.layers(), i, merged, changes))
+                        continue;
+                    if (MergeNormalizeV2(network.layers(), i, merged, changes))
                         continue;
                     if (MergeGelu(network.layers(), i, merged, changes))
                         continue;
@@ -443,6 +447,34 @@ namespace Synet
                 const float* pSrc = bin.data() + conv.weight()[w].offset() / 4;
                 float* pDst = buf.data() + conv.weight()[w].offset() / 4;
                 for (size_t i = 0, n = conv.weight()[w].size() / 4; i < n; ++i)
+                    pDst[i] = pSrc[i] * scale;
+            }
+            return true;
+        }
+
+        bool MergeInnerProductAndPower(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        {
+            if (index == 0)
+                return false;
+            const LayerParam& ip = src[index - 1];
+            const LayerParam& power = src[index];
+            if (ip.type() != LayerTypeInnerProduct || ip.src().size() != 1)
+                return false;
+            if (power.type() != LayerTypePower || power.src()[0] != ip.name() ||
+                power.power().power() != 1.0f || power.power().shift() != 0.0f)
+                return false;
+            if (InsideLink(src, index - 1, 2))
+                return false;
+            if (buf.empty())
+                buf = bin;
+            dst.back().name() = power.name();
+            dst.back().dst() = power.dst();
+            float scale = power.power().scale();
+            for (size_t w = 0; w < ip.weight().size(); ++w)
+            {
+                const float* pSrc = bin.data() + ip.weight()[w].offset() / 4;
+                float* pDst = buf.data() + ip.weight()[w].offset() / 4;
+                for (size_t i = 0, n = ip.weight()[w].size() / 4; i < n; ++i)
                     pDst[i] = pSrc[i] * scale;
             }
             return true;
@@ -1666,6 +1698,47 @@ namespace Synet
             return true;
         }
 
+        bool MergeNormalizeV2(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 8)
+                return false;
+            if (src[index + 0].type() != LayerTypeReduction || src[index + 0].reduction().type() != ReductionTypeMean)
+                return false;
+            if (src[index + 1].type() != LayerTypeBinaryOperation || src[index + 1].binaryOperation().type() != BinaryOperationTypeSub)
+                return false;
+            if (src[index + 2].type() != LayerTypePower || src[index + 2].power().power() != 2.0f)
+                return false;
+            if (src[index + 3].type() != LayerTypeReduction || src[index + 3].reduction().type() != ReductionTypeMean)
+                return false;
+            if (src[index + 4].type() != LayerTypePower || src[index + 4].power().power() != 1.0f || src[index + 4].power().scale() != 1.0f)
+                return false;
+            if (src[index + 5].type() != LayerTypeUnaryOperation || src[index + 5].unaryOperation().type() != UnaryOperationTypeSqrt)
+                return false;
+            if (src[index + 6].type() != LayerTypeBinaryOperation || src[index + 6].binaryOperation().type() != BinaryOperationTypeDiv)
+                return false;
+            const WeightParam* scale = GetEltwiseWeight(index + 7, src);
+            if (scale == NULL || src[index + 7].eltwise().operation() != EltwiseOperationTypeProduct)
+                return false;
+            const WeightParam* shift = GetEltwiseWeight(index + 8, src);
+            if (shift == NULL || src[index + 8].eltwise().operation() != EltwiseOperationTypeSum)
+                return false;
+            if (InsideLink(src, index + 1, 7))
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeNormalize;
+            layer.name() = src[index + 8].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            layer.normalize().eps() = src[index + 4].power().shift();
+            layer.normalize().version() = 2;
+            layer.weight().push_back(*scale);
+            layer.weight().push_back(*shift);
+            dst.push_back(layer);
+            index += 8;
+            return true;
+        }
+
         bool MergeGelu(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
         {
             if (src.size() < index + 5)
@@ -1977,6 +2050,20 @@ namespace Synet
                 && abs(layer.power().shift() - value) < epsilon)
                 return true;
             return false;
+        }
+
+        const WeightParam* GetEltwiseWeight(size_t index, const LayerParams& layers) const
+        {
+            if (index < layers.size() && layers[index].type() == LayerTypeEltwise && layers[index].src().size() == 2)
+            {
+                const LayerParam* src0 = GetLayer(layers[index].src()[0], layers);
+                if (src0 && src0->type() == LayerTypeConst)
+                    return src0->weight().data() + 0;
+                const LayerParam* src1 = GetLayer(layers[index].src()[1], layers);
+                if (src1 && src1->type() == LayerTypeConst)
+                    return src1->weight().data() + 0;
+            }
+            return NULL;
         }
 
         bool InsideLink(const LayerParams & src, size_t start, size_t count, size_t skip = 0, const LayerTypes & ignored = LayerTypes()) const

@@ -64,6 +64,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeMish,
     LayerTypeNonMaxSuppression,
     LayerTypeNormalize,
+    LayerTypeNormalizeV2,
     LayerTypePad,
     LayerTypePermute,
     LayerTypePooling,
@@ -502,6 +503,8 @@ namespace Synet
         CPL_PARAM_VALUE(bool, acrossSpatial, true);
         CPL_PARAM_VALUE(bool, channelShared, true);
         CPL_PARAM_VALUE(float, eps, 1e-10f);
+        CPL_PARAM_VALUE(int, version, 1);
+        CPL_PARAM_VALUE(int, axis, -1);
     };
 
     struct PermuteParam
