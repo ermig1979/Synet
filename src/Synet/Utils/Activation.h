@@ -164,6 +164,11 @@ namespace Synet
         ::SimdSynetElu32f(src, size, &alpha, dst);
     }  
 
+    template <> SYNET_INLINE void CpuGelu<float>(const float* src, size_t size, float* dst)
+    {
+        ::SimdSynetGelu32f(src, size, dst);
+    }
+
     template <> SYNET_INLINE void CpuHardSigmoid(const float* src, size_t size, float scale, float shift, float* dst)
     {
         ::SimdSynetHardSigmoid32f(src, size, &scale, &shift, dst);

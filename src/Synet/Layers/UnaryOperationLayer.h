@@ -78,9 +78,7 @@ namespace Synet
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         template <> SYNET_INLINE void UnaryOperationLayerForward<float>(const float * src, size_t size, UnaryOperationType type, float * dst)
         {
-            if (type > UnaryOperationTypeErf)
-                type = (UnaryOperationType)(type - 1);
-            ::SimdSynetUnaryOperation32fLayerForward(src, size, (::SimdSynetUnaryOperation32fType)type, dst);
+            ::SimdSynetUnaryOperation32f(src, size, (::SimdSynetUnaryOperation32fType)type, dst);
         }
 #endif
     }
@@ -108,15 +106,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            if (_type == UnaryOperationTypeErf)
-            {
-                const T* s = src[0]->CpuData();
-                T* d = dst[0]->CpuData();
-                for (size_t i = 0, n = src[0]->Size(); i < n; ++i)
-                    d[i] = ::erf(s[i]);
-            }
-            else
-                Detail::UnaryOperationLayerForward(src[0]->CpuData(), src[0]->Size(), _type, dst[0]->CpuData());
+            Detail::UnaryOperationLayerForward(src[0]->CpuData(), src[0]->Size(), _type, dst[0]->CpuData());
         }
 
     private:
