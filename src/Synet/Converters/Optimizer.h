@@ -314,7 +314,12 @@ namespace Synet
                 return false;
             const LayerParam & current = src[index - 1];
             const LayerParam & bias = src[index];
-            if (bias.type() != LayerTypeBias || bias.src()[0] != current.name())
+            const WeightParam* weight = GetEltwiseWeight(index, src);
+            if (bias.type() == LayerTypeBias)
+                weight = &bias.weight()[0];
+            if(weight == NULL)
+                return false;
+            if (!(bias.src()[0] == current.name() || (bias.src().size() == 2 && bias.src()[1] == current.name())))
                 return false;
             if (InsideLink(src, index - 1, 2))
                 return false;
@@ -326,7 +331,7 @@ namespace Synet
                 dst.back().convolution().biasTerm() = true;
                 break;
             case LayerTypeInnerProduct:
-                if (current.innerProduct().biasTerm())
+                if (current.innerProduct().biasTerm() || current.src().size() != 1)
                     return false;
                 dst.back().innerProduct().biasTerm() = true;
                 break;
@@ -335,7 +340,7 @@ namespace Synet
                     return false;
                 dst.back().type() = LayerTypeScale;
                 dst.back().scale().biasTerm() = true;
-                dst.back().weight().push_back(bias.weight()[0]);
+                dst.back().weight().push_back(*weight);
                 dst.back().weight()[0].offset() = bin.size() * sizeof(float);
                 for (size_t i = 0; i < dst.back().weight()[0].dim()[0]; ++i)
                     bin.push_back(current.power().scale());
@@ -351,7 +356,7 @@ namespace Synet
             }
             dst.back().name() = bias.name();
             dst.back().dst() = bias.dst();
-            dst.back().weight().push_back(bias.weight()[0]);
+            dst.back().weight().push_back(*weight);
             return true;
         }
 
