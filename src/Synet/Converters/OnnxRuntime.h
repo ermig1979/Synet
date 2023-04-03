@@ -1074,6 +1074,7 @@ namespace Synet
                     return false;
                 if (src10->type() == LayerTypeConst)
                 {
+                    transB = true;
                     layer.weight() = src10->weight();
                     layers.erase(layers.begin() + (src1 - layers.data()));
                 }
