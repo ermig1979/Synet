@@ -348,6 +348,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\YoloV7Layer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Permute.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

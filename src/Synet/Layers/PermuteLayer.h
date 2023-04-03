@@ -27,6 +27,7 @@
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
 #include "Synet/Utils/Math.h"
+#include "Synet/Utils/Permute.h"
 
 namespace Synet
 {
@@ -49,7 +50,7 @@ namespace Synet
         virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const PermuteParam & param = this->Param().permute();
-            _permute = false;
+            _nontrivial = false;
             _dstOrder = param.order();
             _count = _dstOrder.size();
             _srcOrder.resize(_count);
@@ -64,11 +65,11 @@ namespace Synet
                 _srcOrder[_dstOrder[i]] = i;
             }
             assert(is == os);
-            _permute = permute.size() > 1;
+            _nontrivial = permute.size() > 1;
             if (permute.size() == 2 && permute[0] + 1 == permute[1])
             {
                 if (src[0]->Axis(permute[0]) == 1 || src[0]->Axis(permute[1]) == 1)
-                    _permute = false;
+                    _nontrivial = false;
             }
 
             _srcShape = src[0]->Shape();
@@ -76,13 +77,14 @@ namespace Synet
             _dstShape.clear();
             for (size_t i = 0; i < _count; ++i)
                 _dstShape.push_back(_srcShape[_dstOrder[i]]);
-            if (_permute)
+            if (_nontrivial)
             {
                 dst[0]->Reshape(_dstShape, param.format() == TensorFormatUnknown ? src[0]->Format() : param.format());
                 CompactShapes();
                 assert(_count >= 2 && _count <= 5);
                 _srcStride = Stride(_srcShape, _srcOrder);
                 _dstStride = Stride(_dstShape, _dstOrder);
+                _permute.Init(src[0]->Shape(), param.order(), src[0]->GetType());
                 this->UsePerfStat();
             }
             else
@@ -92,8 +94,13 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            if (_permute)
+            if (_nontrivial)
             {
+                if (_permute.Enable())
+                {
+                    _permute.Forward((uint8_t*)src[0]->CpuData(), (uint8_t*)dst[0]->CpuData());
+                    return;
+                }
                 const Type * pSrc = src[0]->CpuData();
                 Type * pDst = dst[0]->CpuData();
                 switch (_count)
@@ -159,7 +166,8 @@ namespace Synet
         }
 
     private:
-        bool _permute;
+        bool _nontrivial;
+        Permute _permute;
         size_t _count;
         Shape _srcOrder, _dstOrder, _srcShape, _dstShape, _srcStride, _dstStride;
 

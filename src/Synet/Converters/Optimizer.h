@@ -326,17 +326,17 @@ namespace Synet
             switch (current.type())
             {
             case LayerTypeConvolution:
-                if (current.convolution().biasTerm())
+                if (current.convolution().biasTerm() || current.convolution().outputNum() != weight->dim()[0])
                     return false;
                 dst.back().convolution().biasTerm() = true;
                 break;
             case LayerTypeInnerProduct:
-                if (current.innerProduct().biasTerm() || current.src().size() != 1)
+                if (current.innerProduct().biasTerm() || current.src().size() != 1 || current.innerProduct().outputNum() != weight->dim()[0])
                     return false;
                 dst.back().innerProduct().biasTerm() = true;
                 break;
             case LayerTypePower:
-                if (current.power().power() != 1.0f || current.power().shift() != 0.0f)
+                if (current.power().power() != 1.0f || current.power().shift() != 0.0f || bias.type() != LayerTypeBias)
                     return false;
                 dst.back().type() = LayerTypeScale;
                 dst.back().scale().biasTerm() = true;
