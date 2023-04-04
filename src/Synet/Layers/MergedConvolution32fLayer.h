@@ -148,6 +148,7 @@ namespace Synet
             case ActivationFunctionTypeMish: _convolution[directIdx] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeMish, 0>; break;
             case ActivationFunctionTypeHardSigmoid: _convolution[directIdx] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeHardSigmoid, 0>; break;
             case ActivationFunctionTypeSwish: _convolution[directIdx] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeSwish, 0>; break;
+            case ActivationFunctionTypeGelu: _convolution[directIdx] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeGelu, 0>; break;
             default: assert(0);
             }
 
@@ -163,6 +164,7 @@ namespace Synet
             case ActivationFunctionTypeMish: _convolution[depthwiseIdx] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeMish>; break;
             case ActivationFunctionTypeHardSigmoid: _convolution[depthwiseIdx] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeHardSigmoid>; break;
             case ActivationFunctionTypeSwish: _convolution[depthwiseIdx] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeSwish>; break;
+            case ActivationFunctionTypeGelu: _convolution[depthwiseIdx] = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeGelu>; break;
             default: assert(0);
             }
 
@@ -183,6 +185,7 @@ namespace Synet
                     case ActivationFunctionTypeMish: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeMish, 1>; break;
                     case ActivationFunctionTypeHardSigmoid: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeHardSigmoid, 1>; break;
                     case ActivationFunctionTypeSwish: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeSwish, 1>; break;
+                    case ActivationFunctionTypeGelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeGelu, 1>; break;
                     default: assert(0);
                     }
                 }
@@ -200,6 +203,7 @@ namespace Synet
                     case ActivationFunctionTypeMish: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeMish, 0>; break;
                     case ActivationFunctionTypeHardSigmoid: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeHardSigmoid, 0>; break;
                     case ActivationFunctionTypeSwish: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeSwish, 0>; break;
+                    case ActivationFunctionTypeGelu: _convolution[2] = Detail::MergedConvolutionLayerDirect<T, ActivationFunctionTypeGelu, 0>; break;
                     default: assert(0);
                     }
                 }

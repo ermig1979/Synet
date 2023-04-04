@@ -113,7 +113,8 @@ CPL_PARAM_ENUM1(Synet, ActivationFunctionType,
     ActivationFunctionTypeHswish,
     ActivationFunctionTypeMish,
     ActivationFunctionTypeHardSigmoid,
-    ActivationFunctionTypeSwish);
+    ActivationFunctionTypeSwish,
+    ActivationFunctionTypeGelu);
 
 CPL_PARAM_ENUM1(Synet, BinaryOperationType,
     BinaryOperationTypeDiv,

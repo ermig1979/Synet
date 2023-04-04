@@ -250,6 +250,9 @@ namespace Synet
                     case ActivationFunctionTypeSwish:
                         CpuSwish(dst, _dstSize, dst);
                         break;
+                    case ActivationFunctionTypeGelu:
+                        CpuGelu(dst, _dstSize, dst);
+                        break;
                     default:
                         assert(0);
                     }

@@ -271,6 +271,9 @@ namespace Synet
             case ActivationFunctionTypeSwish:
                 CpuSwish(dst, dSize, dst);
                 break;
+            case ActivationFunctionTypeGelu:
+                CpuGelu(dst, dSize, dst);
+                break;
             default:
                 assert(0);
             }
@@ -320,6 +323,7 @@ namespace Synet
             case ActivationFunctionTypeMish: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeMish>; break;
             case ActivationFunctionTypeHardSigmoid: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeHardSigmoid>; break;
             case ActivationFunctionTypeSwish: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeSwish>; break;
+            case ActivationFunctionTypeGelu: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeGelu>; break;
             default: assert(0);
             }
         }

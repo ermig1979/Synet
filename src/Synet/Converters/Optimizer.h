@@ -732,6 +732,11 @@ namespace Synet
                 dst.back().convolution().activationParam0() = 1.0f;
                 result = true;
             }
+            if (act.type() == LayerTypeGelu)
+            {
+                dst.back().convolution().activationType() = ActivationFunctionTypeGelu;
+                result = true;
+            }
             if (result)
             {
                 if (dst.back().convolution().quantizationLevel() == TensorType8i)

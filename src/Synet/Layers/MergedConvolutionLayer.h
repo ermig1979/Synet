@@ -118,6 +118,14 @@ namespace Synet
             }
         };
 
+        template<class T> struct Activation<T, ActivationFunctionTypeGelu>
+        {
+            static SYNET_INLINE T Func(T value, const T* params, size_t offset)
+            {
+                return CpuGelu(value);
+            }
+        };
+
         template<class T, ActivationFunctionType activation> void MergedConvolutionLayerDepthwise(
             const T * src, const ConvParam & conv, const T * weight, const T * bias, const T * params, T * dst)
         {
