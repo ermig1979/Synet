@@ -821,7 +821,7 @@ namespace Synet
             {
                 const LayerParam & l3 = src[index + 1];
                 if (l2.convolution().activationType() == ActivationFunctionTypeIdentity && l3.type() == LayerTypeEltwise && l3.eltwise().operation() == EltwiseOperationTypeSum &&
-                    l3.eltwise().coefficients().empty() && l3.src().size() == 2 && l3.src()[0] == l0.src()[0] && l3.src()[1] == l2.dst()[0] && !InsideLink(src, index - 2, 4))
+                    l3.eltwise().coefficients().empty() && l3.src().size() == 2 && ((l3.src()[0] == l0.src()[0] && l3.src()[1] == l2.dst()[0]) || ((l3.src()[1] == l0.src()[0] && l3.src()[0] == l2.dst()[0]))) && !InsideLink(src, index - 2, 4))
                 {
                     dst.back().mergedConvolution().add() = true;
                     dst.back().name() = l3.name();
@@ -869,6 +869,11 @@ namespace Synet
                             {
                                 dst.back().mergedConvolution().conv()[2].activationType() = ActivationFunctionTypeMish;
                                 dst.back().mergedConvolution().conv()[2].activationParam0() = l4.softplus().threshold();
+                                result = true;
+                            }
+                            if (l4.type() == LayerTypeGelu)
+                            {
+                                dst.back().mergedConvolution().conv()[2].activationType() = ActivationFunctionTypeGelu;
                                 result = true;
                             }
                             if (result)
