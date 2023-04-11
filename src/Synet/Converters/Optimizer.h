@@ -39,6 +39,8 @@ namespace Synet
         CPL_PARAM_VALUE(bool, bf16Enable, false);
         CPL_PARAM_VALUE(uint32_t, bf16MinEffectiveSrcC, 4);
         CPL_PARAM_VALUE(bool, saveUnoptimized, false);
+        CPL_PARAM_VALUE(bool, convToNhwc, false);
+        CPL_PARAM_VALUE(bool, skipPermute, false);
     };
 
     CPL_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);
@@ -53,7 +55,7 @@ namespace Synet
 
         bool Run(Synet::NetworkParam & network, Floats & bin)
         {
-            for (int stage = 0; stage < 9; stage++)
+            for (int stage = 0; stage < 10; stage++)
             {
                 if (!OptimizeLayers(network, bin, stage))
                     return false;
@@ -80,6 +82,7 @@ namespace Synet
         {
             QuantizationMethod method = network.quantization().method();
             const bool is8i = network.quantization().method() != QuantizationMethodUnknown;
+            const bool isNhwc = IsNnwc(network);
             Changes changes;
             LayerParams merged;
             Floats buf;
@@ -185,19 +188,25 @@ namespace Synet
                 }
                 case 6:
                 {
+                    if (_param.convToNhwc() && isNhwc && TransposeConvolutions(network.layers(), i, bin, buf, merged, changes))
+                        continue;
+                    break;
+                }
+                case 7:
+                {
                     if (MergeThreeConvolutions(network.layers(), i, method, merged, changes))
                         continue;
                     if (MergeSqueezeExcitation(network.layers(), i, merged, changes))
                         continue;
                     break;
                 }
-                case 7:
+                case 8:
                 {
                     if (MergeTwoConvolutions(network.layers(), i, method, merged, changes))
                         continue;
                     break;
                 }
-                case 8:
+                case 9:
                 {
                     if (MergeParallelConvolutions(network.layers(), i, bin, buf, merged, changes))
                         continue;
@@ -2040,6 +2049,57 @@ namespace Synet
             return true;
         }
 
+        bool TransposeConvolutions(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        {
+            size_t end = index;
+            if (!PermutedToNchw(src, src[index].src(), true, false, false))
+                return false;
+            if (src[index].type() != LayerTypeConvolution || src[index].weight()[0].format() != TensorFormatNchw)
+                return false;
+            for (size_t i = index + 1; i < src.size(); ++i)
+            {
+                if (src[i].type() != LayerTypeConvolution || src[i].weight()[0].format() != TensorFormatNchw)
+                    break;
+                end = i;
+            }
+
+            LayerParam toNhwc;
+            toNhwc.type() = LayerTypePermute;
+            toNhwc.src().push_back(src[index].src()[0]);
+            toNhwc.name() = src[index].src()[0] + "_permute_to_nhwc";
+            toNhwc.dst().push_back(toNhwc.name());
+            toNhwc.permute().order() = Shape({ 0, 2, 3, 1 });
+            toNhwc.permute().format() = TensorFormatNhwc;
+            dst.push_back(toNhwc);
+
+            if (buf.empty())
+                buf = bin;
+            for (size_t i = index; i <= end; ++i)
+            {
+                dst.push_back(src[i]);
+                if (i == index)
+                    dst.back().src()[0] = toNhwc.name();
+                ReorderWeight(bin, Shape(), dst.back(), buf);
+            }
+            dst.back().name() = dst.back().name() + "_tmp";
+            dst.back().dst()[0] = dst.back().name();
+
+            LayerParam toNchw;
+            toNchw.type() = LayerTypePermute;
+            toNchw.src().push_back(dst.back().dst()[0]);
+            toNchw.name() = dst.back().dst()[0] + "_permute_to_nchw";
+            toNchw.dst().push_back(toNchw.name());
+            toNchw.permute().order() = Shape({ 0, 3, 1, 2 });
+            toNchw.permute().format() = TensorFormatNchw;
+            dst.push_back(toNchw);
+
+            index += end - index;
+            changes.push_back(Change(src[end].dst()[0], toNchw.dst()[0]));
+            return true;
+        }
+
+
+
         //-------------------------------------------------------------------------------------------------
 
         bool IsSub(const LayerParam & layer) const
@@ -2294,6 +2354,16 @@ namespace Synet
                     return weight.dim()[1];
             }
             return 0;
+        }
+
+        bool IsNnwc(const NetworkParam& network)
+        {
+            for (size_t i = 0; i < network.layers().size(); ++i)
+            {
+                if (network.layers()[i].weight().size() && network.layers()[i].weight()[0].format() == TensorFormatNhwc)
+                    return true;
+            }
+            return false;
         }
     };
 

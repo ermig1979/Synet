@@ -512,6 +512,7 @@ namespace Synet
     {
         CPL_PARAM_VALUE(Shape, order, Shape());
         CPL_PARAM_VALUE(TensorFormat, format, TensorFormatUnknown);
+        CPL_PARAM_VALUE(bool, skip, false);
     };
 
     struct PoolingParam

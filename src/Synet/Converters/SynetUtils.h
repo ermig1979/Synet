@@ -33,6 +33,7 @@ namespace Synet
     struct OnnxParam
     {
         CPL_PARAM_VALUE(Strings, toNchwHints, Strings());
+        CPL_PARAM_VALUE(Strings, toNhwcHints, Strings());
     };
 
     class SynetUtils
@@ -176,6 +177,8 @@ namespace Synet
         {
             const LayerParam& layer = layers[current];
             if (layer.type() == LayerTypeConvolution && layer.weight()[0].format() == TensorFormatNhwc)
+                return false;
+            if (layer.type() == LayerTypePermute && layer.permute().format() == TensorFormatNhwc)
                 return false;
             if (layer.type() == LayerTypePermute && layer.permute().format() == TensorFormatNchw)
                 return true;

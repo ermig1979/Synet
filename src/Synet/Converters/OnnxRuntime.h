@@ -282,6 +282,8 @@ namespace Synet
 
                 if (trans && !ManualInsertToNchwPermute(onnxParam, network.layers(), renames))
                     return false;
+                if (trans && !ManualInsertToNhwcPermute(onnxParam, network.layers(), renames))
+                    return false;
             }
 
             if (!RemoveUnusedConst(network.layers()))
@@ -457,6 +459,36 @@ namespace Synet
                         if (renames.find(dst) != renames.end())
                         {
                             std::cout << "Multiple manual NhwcToNchw permute at " << layer.name() << " !" << std::endl;
+                            return false;
+                        }
+                        renames[dst] = permute.name();
+                    }
+                }
+            }
+            return true;
+        }
+
+        bool ManualInsertToNhwcPermute(const OnnxParam& onnxParam, LayerParams& layers, Renames& renames)
+        {
+            LayerParam& layer = layers.back();
+            for (size_t h = 0; h < onnxParam.toNhwcHints().size(); ++h)
+            {
+                if (layer.name() == onnxParam.toNhwcHints()[h])
+                {
+                    for (size_t d = 0; d < layer.dst().size(); ++d)
+                    {
+                        const String& dst = layer.dst()[d];
+                        LayerParam permute;
+                        permute.type() = LayerTypePermute;
+                        permute.src().push_back(dst);
+                        permute.name() = dst + "_permute_to_nhwc";
+                        permute.dst().push_back(permute.name());
+                        permute.permute().order() = Shape({ 0, 2, 3, 1 });
+                        permute.permute().format() = TensorFormatNhwc;
+                        layers.push_back(permute);
+                        if (renames.find(dst) != renames.end())
+                        {
+                            std::cout << "Multiple manual NchwToNhwc permute at " << layer.name() << " !" << std::endl;
                             return false;
                         }
                         renames[dst] = permute.name();

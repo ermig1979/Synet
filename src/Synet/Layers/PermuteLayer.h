@@ -77,6 +77,8 @@ namespace Synet
             _dstShape.clear();
             for (size_t i = 0; i < _count; ++i)
                 _dstShape.push_back(_srcShape[_dstOrder[i]]);
+            if (param.skip())
+                _nontrivial = false;
             if (_nontrivial)
             {
                 dst[0]->Reshape(_dstShape, param.format() == TensorFormatUnknown ? src[0]->Format() : param.format());
