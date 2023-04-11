@@ -174,7 +174,7 @@ namespace Synet
                     for (size_t c = 0, o = 0; c < channels; ++c)
                     {
                         for (size_t s = 0; s < spatial; ++s, ++o)
-                            buf[s] += Square(src[o]);
+                            buf[s] += Square(dst[o]);
                     }
                     for (size_t s = 0; s < spatial; ++s)
                         buf[s] = T(1) / ::sqrt(buf[s] * k + eps);
@@ -199,6 +199,13 @@ namespace Synet
         {
             ::SimdSynetNormalizeLayerForward(src, batch, channels, spatial, scale, &eps,
                 (SimdBool)acrossSpatial, trans ? SimdTensorFormatNhwc : SimdTensorFormatNchw, buf, dst);
+        }
+
+        template<> SYNET_INLINE void NormalizeLayerForwardV2Cpu<float>(const float* src, size_t batch, size_t channels,
+            size_t spatial, const float* scale, const float* shift, float eps, int trans, float* buf, float* dst)
+        {
+            ::SimdSynetNormalizeLayerForwardV2(src, batch, channels, spatial, scale, shift, &eps,
+                trans ? SimdTensorFormatNhwc : SimdTensorFormatNchw, buf, dst);
         }
 #endif
     }
