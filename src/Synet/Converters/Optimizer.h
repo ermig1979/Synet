@@ -198,6 +198,8 @@ namespace Synet
                         continue;
                     if (MergeSqueezeExcitation(network.layers(), i, merged, changes))
                         continue;
+                    if (_param.skipPermute() && SkipTwoPermutes(network.layers(), i, merged))
+                        continue;
                     break;
                 }
                 case 8:
@@ -2098,7 +2100,44 @@ namespace Synet
             return true;
         }
 
+        bool SkipTwoPermutes(const LayerParams& src, size_t& index, LayerParams& dst)
+        {
+            if (src.size() <= index + 1)
+                return false;
+            if (src[index].type() != LayerTypePermute)
+                return false;
+            size_t second = index + 1;
+            for (; second < src.size(); ++second)
+            {
+                if (src[second].type() == LayerTypeMeta)
+                    continue;
+                else if (src[second].type() == LayerTypeReshape)
+                    continue;
+                else if (src[second].type() == LayerTypePermute)
+                    break;
+                else
+                    return false;
+            }
 
+            bool skip = false;
+            if ((src[index].permute().order() == Shp(0, 2, 1) || src[index].permute().order() == Shp(0, 3, 1, 2)) &&
+                src[second].permute().order() == Shp(0, 2, 3, 1) && src[second].permute().format() == TensorFormatNhwc)
+                skip = true;
+            if (src[index].permute().order() == Shp(0, 3, 1, 2) && src[index].permute().format() == TensorFormatNchw && 
+                (src[second].permute().order() == Shp(0, 2, 1) || src[second].permute().order() == Shp(0, 2, 3, 1)))
+                skip = true;
+            if (!skip)
+                return false;
+
+            dst.push_back(src[index]);
+            dst.back().permute().skip() = true;
+            for (size_t i = index + 1; i < second; ++i)
+                dst.push_back(src[i]);
+            dst.push_back(src[second]);
+            dst.back().permute().skip() = true;
+            index = second;
+            return true;
+        }
 
         //-------------------------------------------------------------------------------------------------
 
