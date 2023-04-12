@@ -41,6 +41,7 @@ namespace Synet
         CPL_PARAM_VALUE(bool, saveUnoptimized, false);
         CPL_PARAM_VALUE(bool, convToNhwc, false);
         CPL_PARAM_VALUE(bool, skipPermute, false);
+        CPL_PARAM_VALUE(bool, reiseEltwise, false);
     };
 
     CPL_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);
@@ -60,11 +61,11 @@ namespace Synet
                 if (!OptimizeLayers(network, bin, stage))
                     return false;
             }
-            if (!ReuseLayers(network))
-                return false;
             if (!RemoveStub(network))
                 return false;
             if (!RemoveUnusedConst(network.layers()))
+                return false;
+            if (!ReuseLayers(network))
                 return false;
             return true;
         }
@@ -2277,9 +2278,13 @@ namespace Synet
                 return true;
             if (layer.type() == LayerTypeScale)
                 return true;
-            //if (layer.type() == LayerTypeEltwise)
-            //    return true;
+            if (layer.type() == LayerTypePower)
+                return true;
+            if (_param.reiseEltwise() && layer.type() == LayerTypeEltwise)
+                return true;
             if (layer.type() == LayerTypeRelu)
+                return true;
+            if (layer.type() == LayerTypeGelu)
                 return true;
             if (layer.type() == LayerTypeSqueezeExcitation)
                 return true;
@@ -2308,7 +2313,7 @@ namespace Synet
                 LayerParam & layer = layers[i];
                 if (layer.src().empty())
                     continue;
-                if (Users(layer.src()[0], layers, 0, "") > 1)
+                if (Users(layer.src()[0], layers, i, "") > 1)
                     continue;
                 if (i && layer.src()[0] == layers[i - 1].name() && layers[i - 1].type() == LayerTypeConst)
                     continue;
