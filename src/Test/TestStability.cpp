@@ -255,7 +255,7 @@ namespace Test
             size_t size = ifs.tellg();
             ifs.seekg(0);
             data.resize(size + 1, 0);
-            ifs.read(data.data(), (std::streamsize)size);
+            ifs.read((char*)data.data(), (std::streamsize)size);
             ifs.close();
             return true;
         }
