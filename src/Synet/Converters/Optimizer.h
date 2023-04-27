@@ -2288,7 +2288,7 @@ namespace Synet
                 return true;
             if (layer.type() == LayerTypeSqueezeExcitation)
                 return true;
-            if (layer.type() == LayerTypeSoftmax)
+            if (layer.type() == LayerTypeSoftmax && layer.softmax().log() == 0)
                 return true;
             if (layer.type() == LayerTypePooling && layer.pooling().method() == PoolingMethodTypeMax && 
                 layer.pooling().kernel() == Shp(1, 1) && layer.pooling().stride() == Shp(1, 1))
