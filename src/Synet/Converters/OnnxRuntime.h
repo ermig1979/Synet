@@ -245,6 +245,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Resize" && !ConvertResizeNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "ScatterND" && !ConvertScatterNdNode(node, network.layers(), layer, reordered))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Shape" && !ConvertShapeNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Sigmoid" && !ConvertSigmoidNode(node, layer))
@@ -526,6 +528,10 @@ namespace Synet
             {
                 layer.type() = Synet::LayerTypeEltwise;
                 layer.eltwise().operation() = EltwiseOperationTypeSum;
+                if (src0->type() == LayerTypeConst)
+                {
+                    std::swap(layer.src()[0], layer.src()[1]);
+                }
             }
             return true;
         }
@@ -1465,6 +1471,45 @@ namespace Synet
             }
 
             layer.type() = Synet::LayerTypeInterp;
+            return true;
+        }
+
+        bool ConvertScatterNdNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer, Vector& reordered)
+        {
+            if (!CheckSourceNumber(layer, 3))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+            if (src0 == NULL || src1 == NULL || src2 == NULL)
+                return false;
+            if (src1->type() != LayerTypeMeta || src1->meta().type() != MetaTypeConst)
+            {
+                std::cout << "src[1] type must be meta const!" << std::endl;
+                return false;
+            }
+            const TensorParam & alpha = src1->meta().alpha();
+            size_t size = TensorSize(alpha.shape()), offset = reordered.size();
+            layer.type() = Synet::LayerTypeScatterNd;
+            layer.weight().resize(1);
+            layer.weight()[0].dim() = alpha.shape();
+            layer.weight()[0].type() = TensorType32i;
+            layer.weight()[0].offset() = offset * 4;
+            layer.weight()[0].size() = size * 4;
+            layer.src().erase(layer.src().begin() + 1);
+            reordered.resize(offset + size);
+            if (alpha.type() == TensorType64i)
+            {
+                const int64_t* src = alpha.i64().data();
+                int32_t * dst = (int32_t*)reordered.data() + offset;
+                for (size_t i = 0; i < size; ++i)
+                    dst[i] = (int32_t)src[i];
+            }
+            else
+            {
+                std::cout << "src[1] type must be meta const int64!" << std::endl;
+                return false;
+            }
             return true;
         }
 

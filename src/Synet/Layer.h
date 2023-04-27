@@ -157,18 +157,18 @@ namespace Synet
                 ptrdiff_t size = param.size();
                 if (offset < 0 && size < 0)
                 {
-                    tensor.Reshape(param.dim(), Type(), param.format());
-                    if (!is.read((char*)tensor.CpuData(), tensor.Size() * sizeof(T)))
+                    Reshape(param, tensor);
+                    if (!is.read((char*)tensor.RawCpuData(), tensor.RawSize()))
                         return false;
                 }
                 else
                 {
                     if (!ShareExisted(offset, layers, tensor))
                     {
-                        tensor.Reshape(param.dim(), Type(), param.format());
+                        Reshape(param, tensor);
                         if (!is.seekg(offset, std::ios::beg))
                             return false;
-                        if (!is.read((char*)tensor.CpuData(), size))
+                        if (!is.read((char*)tensor.RawCpuData(), size))
                             return false;
                     }
                 }
@@ -187,11 +187,11 @@ namespace Synet
                 ptrdiff_t length = param.size();
                 if (offset < 0 && length < 0)
                 {
-                    tensor.Reshape(param.dim(), Type(), param.format());
-                    length = tensor.Size() * sizeof(T);
+                    Reshape(param, tensor);
+                    length = tensor.RawSize();
                     if (length > (ptrdiff_t)size)
                         return false;
-                    memcpy((char*)tensor.CpuData(), data, length);
+                    memcpy(tensor.RawCpuData(), data, length);
                     data += length;
                     size -= length;
                 }
@@ -201,8 +201,8 @@ namespace Synet
                     {
                         if (offset + length > (ptrdiff_t)size)
                             return false;
-                        tensor.Reshape(param.dim(), Type(), param.format());
-                        memcpy((char*)tensor.CpuData(), data + offset, length);
+                        Reshape(param, tensor);
+                        memcpy(tensor.RawCpuData(), data + offset, length);
                     }
                 }
             }
@@ -328,6 +328,17 @@ namespace Synet
                 }
             }
             return true;
+        }
+
+        void Reshape(const WeightParam & param, Tensor & tensor) const
+        {
+            switch (param.type())
+            {
+            case TensorType32f: tensor.As32f().Reshape(param.dim(), 0, param.format()); break;
+            case TensorType32i: tensor.As32i().Reshape(param.dim(), 0, param.format()); break;
+            default:
+                assert(0);
+            }
         }
     };
 }

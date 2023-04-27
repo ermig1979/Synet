@@ -158,17 +158,7 @@ namespace Synet
 
     template<class T> inline void DebugPrint(std::ostream & os, const T * data, const Shape& shape, const std::string & name, size_t first = 6, size_t last = 2, size_t precision = 8)
     {
-#if 0
-        {
-            size_t size = Detail::Size(shape);
-            T sum = 0; 
-            for (size_t i = 0; i < size; ++i)
-                sum += data[i];
-            os << name << " " << Detail::DebugPrint(shape) << " " << Detail::TypeID<T>() << " (sum: " << sum << " )" << std::endl;
-        }
-#else
         os << name << " " << Detail::DebugPrint(shape) << " " << Detail::TypeID<T>() << std::endl;
-#endif
         if (data == NULL)
             return;
         size_t n = shape.size();

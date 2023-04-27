@@ -197,6 +197,30 @@ namespace Synet
                     }
                 }
                 break;
+            case 5:
+                for (size_t s0 = _beginDims[0], d0 = 0; d0 < _dstDims[0]; d0 += 1, s0 += _strideDims[0])
+                {
+                    const Type * pSrc1 = pSrc0 + s0 * _srcStrides[1];
+                    Type * pDst1 = pDst0 + d0 * _dstStrides[1];
+                    for (size_t s1 = _beginDims[1], d1 = 0; d1 < _dstDims[1]; d1 += 1, s1 += _strideDims[1])
+                    {
+                        const Type * pSrc2 = pSrc1 + s1 * _srcStrides[2];
+                        Type * pDst2 = pDst1 + d1 * _dstStrides[2];
+                        for (size_t s2 = _beginDims[2], d2 = 0; d2 < _dstDims[2]; d2 += 1, s2 += _strideDims[2])
+                        {
+                            const Type * pSrc3 = pSrc2 + s2 * _srcStrides[3];
+                            Type * pDst3 = pDst2 + d2 * _dstStrides[3];
+                            for (size_t s3 = _beginDims[3], d3 = 0; d3 < _dstDims[3]; d3 += 1, s3 += _strideDims[3])
+                            {
+                                const Type * pSrc4 = pSrc3 + s3 * _srcStrides[4];
+                                Type * pDst4 = pDst3 + d3 * _dstStrides[4];
+                                for (size_t s4 = _beginDims[4], d4 = 0; d4 < _dstDims[4]; d4 += 1, s4 += _strideDims[4])
+                                    pDst4[d4] = pSrc4[s4];
+                            }
+                        }
+                    }
+                }
+                break;
             default:
                 assert(0);
             }
