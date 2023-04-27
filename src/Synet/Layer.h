@@ -189,7 +189,7 @@ namespace Synet
                 {
                     tensor.Reshape(param.dim(), Type(), param.format());
                     length = tensor.Size() * sizeof(T);
-                    if (length > size)
+                    if (length > (ptrdiff_t)size)
                         return false;
                     memcpy((char*)tensor.CpuData(), data, length);
                     data += length;
@@ -199,7 +199,7 @@ namespace Synet
                 {
                     if (!ShareExisted(offset, layers, tensor))
                     {
-                        if (offset + length > size)
+                        if (offset + length > (ptrdiff_t)size)
                             return false;
                         tensor.Reshape(param.dim(), Type(), param.format());
                         memcpy((char*)tensor.CpuData(), data + offset, length);

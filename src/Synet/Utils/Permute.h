@@ -85,7 +85,7 @@ namespace Synet
         void * _context;
         Shape _shape, _order;
 
-        static SYNET_INLINE::SimdTensorDataType Convert(TensorType type)
+        static SYNET_INLINE SimdTensorDataType Convert(TensorType type)
         {
             switch (type)
             {
