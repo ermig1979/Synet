@@ -112,7 +112,7 @@ namespace Synet
             {
                 try
                 {
-                    xml.Parse<0>(file.Data());
+                    xml.Parse<0>(file.Data(), file.Size());
                 }
                 catch (std::exception e)
                 {
