@@ -223,6 +223,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Mul" && !ConvertMulNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Neg" && !ConvertNegNode(node, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "NonMaxSuppression" && !ConvertNonMaxSuppressionNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Pad" && !ConvertPadNode(node, network.layers(), layer))
@@ -1190,6 +1192,13 @@ namespace Synet
                 layer.type() = Synet::LayerTypeEltwise;
                 layer.eltwise().operation() = EltwiseOperationTypeProduct;
             }
+            return true;
+        }
+
+        bool ConvertNegNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnaryOperation;
+            layer.unaryOperation().type() = Synet::UnaryOperationTypeNeg;
             return true;
         }
 
