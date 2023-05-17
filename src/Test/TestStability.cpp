@@ -409,7 +409,7 @@ namespace Test
         {
             CPL_PERF_FUNC();
             Data& data = *_datas[index];
-            CPL_LOG_SS(Debug, "Run test [t:" << thread << ", i:" << Cpl::GetNameByPath(data.paths[0]) << ", r:" << repeat << "]:");
+            CPL_LOG_SS(Debug, "Run test [t:" << thread << ", i:" << Cpl::FileNameByPath(data.paths[0]) << ", r:" << repeat << "]:");
             if (!InitNetwork(_options.synetModel, _options.synetWeight, _threads[thread]))
                 return false;
             CPL_LOG_SS(Debug, "Re-init.");

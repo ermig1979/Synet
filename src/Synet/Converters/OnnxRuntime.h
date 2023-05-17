@@ -62,7 +62,7 @@ namespace Synet
 
             if (optParam.saveUnoptimized())
             {
-                String uoModelPath = Cpl::GetNameByPath(dstModelPath) == dstModelPath ? 
+                String uoModelPath = Cpl::FileNameByPath(dstModelPath) == dstModelPath ? 
                     "unopt.xml" : Cpl::MakePath(Cpl::DirectoryByPath(dstModelPath), "unopt.xml");
                 if (!holder.Save(uoModelPath, false))
                 {
@@ -70,7 +70,7 @@ namespace Synet
                     return false;
                 }
 
-                String uoWeightPath = Cpl::GetNameByPath(dstWeightPath) == dstWeightPath ?
+                String uoWeightPath = Cpl::FileNameByPath(dstWeightPath) == dstWeightPath ?
                     "unopt.bin" : Cpl::MakePath(Cpl::DirectoryByPath(dstWeightPath), "unopt.bin");
                 if (!SaveBinaryData(weight, uoWeightPath))
                 {
@@ -862,7 +862,13 @@ namespace Synet
             }
             else if (src0->type() == LayerTypeConst && TensorSize(src0->weight()[0].dim()) == 1)
             {
-                return false;
+                const float* pSrc0 = GetWeight<float>(original, src0->weight()[0]);
+                if (pSrc0[0] != 1.0f)
+                    return false;
+                layer.type() = Synet::LayerTypeUnaryOperation;
+                layer.unaryOperation().type() = UnaryOperationTypeRcp;
+                layer.src().erase(layer.src().begin());
+                return true;
             }
             else if (src1->type() == LayerTypeConst && SignificantDimsCount(src1->weight()[0].dim()) == 1)
             {
