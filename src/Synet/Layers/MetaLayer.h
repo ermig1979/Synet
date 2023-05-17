@@ -49,6 +49,7 @@ namespace Synet
             case MetaTypeAdd: ReshapeAdd(src, dst); break;
             case MetaTypeCast: ReshapeCast(src, param.alpha(), dst); break;
             case MetaTypeConst: ReshapeConst(param.alpha(), dst); break;
+            case MetaTypeConstOfShape: ReshapeConstOfShape(src, param.alpha(), dst); break;
             case MetaTypeDiv: ReshapeDiv(src, dst); break;
             case MetaTypeEqual: ReshapeEqual(src, dst); break;
             case MetaTypeExpandDims: ReshapeExpandDims(src, dst); break;
@@ -192,6 +193,18 @@ namespace Synet
         void ReshapeConst(const TensorParam & alpha, const TensorPtrs & dst)
         {
             dst[0]->Import(alpha);
+        }
+
+        void ReshapeConstOfShape(const TensorPtrs & src, const TensorParam & alpha, const TensorPtrs & dst)
+        {
+            assert(src.size() == 1 && dst.size() == 1);
+            if (src[0]->GetType() == TensorType64i && alpha.type() == TensorType64i)
+            {
+                dst[0]->As64i().Reshape(Shp(1));
+                dst[0]->As64i().CpuData()[0] = src[0]->As64i().CpuData()[alpha.i64()[0]];
+            }
+            else
+                assert(0);
         }
 
         void ReshapeDiv(const TensorPtrs & src, const TensorPtrs & dst)
