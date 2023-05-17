@@ -189,7 +189,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "ConstantOfShape" && !ConvertConstantOfShapeNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Conv" && !ConvertConvNode(node, trans, network.layers(), original, layer, reordered))
+                if ((node.op_type() == "Conv" || node.op_type() == "ConvTranspose") && !ConvertConvOrConvTransposeNode(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Div" && !ConvertDivNode(node, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
@@ -831,9 +831,14 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConvNode(const onnx::NodeProto & node, bool trans, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin)
+        bool ConvertConvOrConvTransposeNode(const onnx::NodeProto & node, bool trans, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin)
         {
-            layer.type() = Synet::LayerTypeConvolution;
+            if (node.op_type() == "Conv")
+                layer.type() = Synet::LayerTypeConvolution;
+            else if (node.op_type() == "ConvTranspose")
+                layer.type() = Synet::LayerTypeDeconvolution;
+            else
+                return false;
             if (layer.src().size() < 2 || layer.src().size() > 3)
                 return false;
             if (!ConvertAtrributeInts(node, "dilations", layer.convolution().dilation()))
