@@ -39,6 +39,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeCast,
     LayerTypeConcat,
     LayerTypeConst,
+    LayerTypeConstantOfShape,
     LayerTypeConvolution,
     LayerTypeCtcGreedyDecoder,
     LayerTypeDeconvolution,
@@ -150,7 +151,6 @@ CPL_PARAM_ENUM1(Synet, MetaType,
     MetaTypeAdd,
     MetaTypeCast,
     MetaTypeConst,
-    MetaTypeConstOfShape,
     MetaTypeDiv,
     MetaTypeEqual,
     MetaTypeExpandDims,
@@ -265,10 +265,10 @@ CPL_PARAM_ENUM1(Synet, UnaryOperationType,
     UnaryOperationTypeTanh,
     UnaryOperationTypeZero);
 
+//-------------------------------------------------------------------------------------------------
+
 namespace Synet
 {
-    //-------------------------------------------------------------------------------------------------
-
     struct TensorParam
     {
         CPL_PARAM_VALUE(TensorType, type, TensorTypeUnknown);
@@ -336,6 +336,11 @@ namespace Synet
         CPL_PARAM_VALUE(uint32_t, axis, 1);
         CPL_PARAM_VALUE(bool, fixed, false);
         CPL_PARAM_VALUE(bool, can8i, true);
+    };
+
+    struct ConstantOfShapeParam
+    {
+        CPL_PARAM_STRUCT(TensorParam, value);
     };
 
     struct ConvolutionParam
@@ -752,6 +757,7 @@ namespace Synet
         CPL_PARAM_STRUCT(BroadcastParam, broadcast);
         CPL_PARAM_STRUCT(CastParam, cast);
         CPL_PARAM_STRUCT(ConcatParam, concat);
+        CPL_PARAM_STRUCT(ConstantOfShapeParam, constantOfShape);
         CPL_PARAM_STRUCT(ConvolutionParam, convolution);
         CPL_PARAM_STRUCT(DetectionOutputParam, detectionOutput);
         CPL_PARAM_STRUCT(EltwiseParam, eltwise);

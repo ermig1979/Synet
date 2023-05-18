@@ -33,6 +33,7 @@
 #include "Synet/Layers/CastLayer.h"
 #include "Synet/Layers/ConcatLayer.h"
 #include "Synet/Layers/ConstLayer.h"
+#include "Synet/Layers/ConstantOfShapeLayer.h"
 #include "Synet/Layers/Convolution32fLayer.h"
 #include "Synet/Layers/Convolution8iLayer.h"
 #include "Synet/Layers/CtcGreedyDecoderLayer.h"
@@ -110,7 +111,8 @@ namespace Synet
             case LayerTypeCast: return new CastLayer<T>(param, context);
             case LayerTypeConcat: return new ConcatLayer<T>(param, context);
             case LayerTypeConst: return new ConstLayer<T>(param, context);
-            case LayerTypeConvolution: 
+            case LayerTypeConstantOfShape: return new ConstantOfShapeLayer<T>(param, context);
+            case LayerTypeConvolution:
                 if (param.convolution().quantizationLevel() == TensorType8i)
                     return new Convolution8iLayer<T>(param, context, method);
                 else

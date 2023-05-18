@@ -782,29 +782,17 @@ namespace Synet
             if (attribute && attribute->type() == onnx::AttributeProto_AttributeType_TENSOR)
             {
                 const onnx::TensorProto& tensor = attribute->t();
-                int64_t value;
                 if (tensor.data_type() == onnx::TensorProto_DataType_INT64)
                 {
+                    int64_t value;
                     if (tensor.int64_data_size())
                         value = tensor.int64_data(0);
                     else if (tensor.has_raw_data())
                         value = ((int64_t*)tensor.raw_data().c_str())[0];
                     else
                         return false;
-                }
-                else if (tensor.data_type() == onnx::TensorProto_DataType_FLOAT)
-                {
-                    if (tensor.float_data_size())
-                        value = (int64_t)tensor.float_data(0);
-                    else if (tensor.has_raw_data())
-                        value = (int64_t)(((float*)tensor.raw_data().c_str())[0]);
-                    else
+                    if (src0->meta().type() != Synet::MetaTypeConst)
                         return false;
-                }
-                else
-                    return false;
-                if (src0->meta().type() == Synet::MetaTypeConst)
-                {
                     if (src0->meta().alpha().type() != Synet::TensorType64i || src0->meta().alpha().shape().size() != 1 || src0->meta().alpha().shape()[0] != 1)
                         return false;
                     layer.type() = Synet::LayerTypeMeta;
@@ -812,16 +800,24 @@ namespace Synet
                     layer.meta().alpha().type() = Synet::TensorType64i;
                     layer.meta().alpha().shape().push_back(src0->meta().alpha().i64()[0]);
                     layer.meta().alpha().i64().resize(src0->meta().alpha().i64()[0], value);
-                    layer.src().resize(0);
+                    layer.src().resize(0);                
+                }
+                else if (tensor.data_type() == onnx::TensorProto_DataType_FLOAT)
+                {
+                    float value;
+                    if (tensor.float_data_size())
+                        value = tensor.float_data(0);
+                    else if (tensor.has_raw_data())
+                        value = ((float*)tensor.raw_data().c_str())[0];
+                    else
+                        return false;
+                    layer.type() = Synet::LayerTypeConstantOfShape;
+                    layer.constantOfShape().value().type() = TensorType32f;
+                    layer.constantOfShape().value().shape() = Shp(1);
+                    layer.constantOfShape().value().f32().resize(1, value);
                 }
                 else
-                {
-                    layer.type() = Synet::LayerTypeMeta;
-                    layer.meta().type() = Synet::MetaTypeConstOfShape;
-                    layer.meta().alpha().type() = Synet::TensorType64i;
-                    layer.meta().alpha().shape() = Shp(1);
-                    layer.meta().alpha().i64().resize(1, value);
-                }
+                    return false;
             }
             else
             {
