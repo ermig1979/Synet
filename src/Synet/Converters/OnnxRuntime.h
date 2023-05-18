@@ -227,6 +227,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "NonMaxSuppression" && !ConvertNonMaxSuppressionNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Not" && !ConvertNotNode(node, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Pad" && !ConvertPadNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Pow" && !ConvertPowNode(node, network.layers(), original, layer))
@@ -1254,6 +1256,13 @@ namespace Synet
             layer.type() = Synet::LayerTypeNonMaxSuppression;
             layer.src().resize(2);
 
+            return true;
+        }
+
+        bool ConvertNotNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnaryOperation;
+            layer.unaryOperation().type() = Synet::UnaryOperationTypeNot;
             return true;
         }
 

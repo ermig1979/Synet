@@ -63,6 +63,14 @@ namespace Synet
         return a < 0 ? -a : a;
     }
 
+    template <class T> T Not(T f);
+
+    template<> SYNET_INLINE float Not<float>(float f)
+    {
+        int i = ~(int&)f;
+        return (float&)i;
+    }
+
     template <class T> SYNET_INLINE T RestrictRange(T value, T min, T max)
     {
         return Max(min, Min(max, value));

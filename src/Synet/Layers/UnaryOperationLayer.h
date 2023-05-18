@@ -55,6 +55,10 @@ namespace Synet
                 for (size_t i = 0; i < size; ++i)
                     dst[i] = -src[i];
                 break;
+            case UnaryOperationTypeNot:
+                for (size_t i = 0; i < size; ++i)
+                    dst[i] = Not(src[i]);
+                break;
             case UnaryOperationTypeRcp:
                 for (size_t i = 0; i < size; ++i)
                     dst[i] = 1.0f / src[i];
