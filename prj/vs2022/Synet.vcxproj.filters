@@ -360,6 +360,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\ConstantOfShapeLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\WhereLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

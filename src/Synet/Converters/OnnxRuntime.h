@@ -275,6 +275,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Unsqueeze" && !ConvertUnsqueezeNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Where" && !ConvertWhereNode(node, layer))
+                    return ErrorMessage(i, node);
 
 #if defined(SYNET_ONNX_PARSE_STOP_ON_ERROR)
                 if (layer.type() == LayerTypeUnknown)
@@ -1928,6 +1930,12 @@ namespace Synet
                 }
                 layer.src().resize(1);
             }
+            return true;
+        }
+
+        bool ConvertWhereNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeWhere;
             return true;
         }
 

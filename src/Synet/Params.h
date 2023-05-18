@@ -103,6 +103,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeUnaryOperation,
     LayerTypeUnpack,
     LayerTypeUpsample,
+    LayerTypeWhere,
     LayerTypeYolo,
     LayerTypeYoloV7);
 
