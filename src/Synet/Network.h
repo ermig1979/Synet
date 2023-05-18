@@ -220,15 +220,19 @@ namespace Synet
             if (dstNames.size())
             {
                 _dst.clear();
+                _back.clear();
                 for (size_t i = 0; i < dstNames.size(); ++i)
                 {
                     bool found = false;
                     for (size_t j = 0; j < _stages.size(); ++j)
                     {
-                        const LayerParam & param = _stages[j].layer->Param();
+                        Layer * layer = _stages[j].layer;
+                        const LayerParam & param = layer->Param();
                         if (param.name() == dstNames[i])
                         {
                             _dst.push_back(_stages[j].dst[0]);
+                            layer->_isBack = true;
+                            _back.push_back(layer);
                             found = true;
                             break;
                         }
