@@ -37,6 +37,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeBinaryOperation,
     LayerTypeBroadcast,
     LayerTypeCast,
+    LayerTypeCompare,
     LayerTypeConcat,
     LayerTypeConst,
     LayerTypeConstantOfShape,
@@ -122,15 +123,23 @@ CPL_PARAM_ENUM1(Synet, BinaryOperationType,
     BinaryOperationTypeDiv,
     BinaryOperationTypeSub);
 
-CPL_PARAM_ENUM1(Synet, BoxEncodingType,
-    BoxEncodingTypeCorner,
-    BoxEncodingTypeCenter);
+CPL_PARAM_ENUM1(Synet, CompareType,
+    CompareTypeEqual,
+    CompareTypeNotEqual,
+    CompareTypeGreaterThan,
+    CompareTypeGreaterOrEqual,
+    CompareTypeLessThan,
+    CompareTypeLessOrEqual);
 
 CPL_PARAM_ENUM1(Synet, CoordinateTransformType,
     CoordinateTransformTypeLegacy,
     CoordinateTransformTypeHalfPixel,
     CoordinateTransformTypeCaffe,
     CoordinateTransformTypePytorch);
+
+CPL_PARAM_ENUM1(Synet, BoxEncodingType,
+    BoxEncodingTypeCorner,
+    BoxEncodingTypeCenter);
 
 CPL_PARAM_ENUM1(Synet, EltwiseOperationType,
     EltwiseOperationTypeProduct,
@@ -330,6 +339,11 @@ namespace Synet
     struct CastParam
     {
         CPL_PARAM_VALUE(TensorType, type, TensorTypeUnknown);
+    };
+
+    struct CompareParam
+    {
+        CPL_PARAM_VALUE(CompareType, type, CompareTypeUnknown);
     };
 
     struct ConcatParam
@@ -757,6 +771,7 @@ namespace Synet
         CPL_PARAM_STRUCT(BinaryOperationParam, binaryOperation);
         CPL_PARAM_STRUCT(BroadcastParam, broadcast);
         CPL_PARAM_STRUCT(CastParam, cast);
+        CPL_PARAM_STRUCT(CompareParam, compare);
         CPL_PARAM_STRUCT(ConcatParam, concat);
         CPL_PARAM_STRUCT(ConstantOfShapeParam, constantOfShape);
         CPL_PARAM_STRUCT(ConvolutionParam, convolution);

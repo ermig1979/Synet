@@ -61,7 +61,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\BinaryOperationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\BroadcastLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\CastLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\CompareLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ConcatLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ConstantOfShapeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ConstLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Convolution32fLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Convolution8iLayer.h" />

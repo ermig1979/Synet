@@ -31,6 +31,7 @@
 #include "Synet/Layers/BinaryOperationLayer.h"
 #include "Synet/Layers/BroadcastLayer.h"
 #include "Synet/Layers/CastLayer.h"
+#include "Synet/Layers/CompareLayer.h"
 #include "Synet/Layers/ConcatLayer.h"
 #include "Synet/Layers/ConstLayer.h"
 #include "Synet/Layers/ConstantOfShapeLayer.h"
@@ -109,6 +110,7 @@ namespace Synet
             case LayerTypeBinaryOperation: return new BinaryOperationLayer<T>(param, context);
             case LayerTypeBroadcast: return new BroadcastLayer<T>(param, context);
             case LayerTypeCast: return new CastLayer<T>(param, context);
+            case LayerTypeCompare: return new CompareLayer<T>(param, context);
             case LayerTypeConcat: return new ConcatLayer<T>(param, context);
             case LayerTypeConst: return new ConstLayer<T>(param, context);
             case LayerTypeConstantOfShape: return new ConstantOfShapeLayer<T>(param, context);

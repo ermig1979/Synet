@@ -213,6 +213,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "LeakyRelu" && !ConvertLeakyReluNode(node, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Less" && !ConvertLessNode(node, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "LogSoftmax" && !ConvertLogSoftmaxNode(node, trans, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "LSTM" && !ConvertLstmNode(node, network.layers(), layer))
@@ -1069,6 +1071,13 @@ namespace Synet
             layer.type() = Synet::LayerTypeRelu;
             if (!ConvertAtrributeFloat(node, "alpha", layer.relu().negativeSlope()))
                 return false;
+            return true;
+        }
+
+        bool ConvertLessNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeCompare;
+            layer.compare().type() = CompareTypeLessThan;
             return true;
         }
 
