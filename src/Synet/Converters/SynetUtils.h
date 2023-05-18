@@ -329,6 +329,17 @@ namespace Synet
                                 dst.CpuData(Shape({ y, x, i, o }))[0] = *pSrc++;
                 break;
             }
+            case LayerTypeDeconvolution:
+            {
+                shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
+                Tensor dst(pDst, weight.size() / sizeof(float), shape, weight.format());
+                for (size_t i = 0; i < shape[0]; ++i)
+                    for (size_t c = 0; c < shape[3]; ++c)
+                        for (size_t y = 0; y < shape[1]; ++y)
+                            for (size_t x = 0; x < shape[2]; ++x)
+                                dst.CpuData(Shape({ i, y, x, c }))[0] = *pSrc++;
+                break;
+            }
             case LayerTypeInnerProduct:
             {
                 if (layer.innerProduct().transposeB())

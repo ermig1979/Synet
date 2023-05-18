@@ -859,7 +859,7 @@ namespace Synet
                 return false;
             const Shape& shape = weight->weight()[0].dim();
             layer.weight()[0] = weight->weight()[0];
-            layer.convolution().outputNum() = (uint32_t)shape[0];
+            layer.convolution().outputNum() = uint32_t(layer.type() == Synet::LayerTypeConvolution ? shape[0] : shape[1] * layer.convolution().group());
             layer.convolution().biasTerm() = layer.src().size() > 2;
             if (layer.convolution().biasTerm())
             {
