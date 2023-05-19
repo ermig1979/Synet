@@ -566,7 +566,6 @@ namespace Synet
                 return false;
             if (!ConvertAtrributeInts(node, "strides", layer.pooling().stride()))
                 return false;
-
             if (GetAtrribute(node, "ceil_mode") == NULL)
                 layer.pooling().roundingType() = RoundingTypeFloor;
             else
@@ -575,6 +574,13 @@ namespace Synet
                 if (!ConvertAtrributeInt(node, "ceil_mode", ceilMode))
                     return false;
                 layer.pooling().roundingType() = ceilMode ? RoundingTypeCeil : RoundingTypeFloor;
+            }
+            if (GetAtrribute(node, "count_include_pad"))
+            {
+                int64_t countIncludePad;
+                if (!ConvertAtrributeInt(node, "count_include_pad", countIncludePad))
+                    return false;
+                layer.pooling().excludePad() = (countIncludePad == 0);
             }
             return true;
         }
