@@ -606,6 +606,8 @@ namespace Test
             }
             for (size_t d = 0; d < output.first.size(); ++d)
             {
+                if (d < _param().output().size() && _param().output()[d].compare() == false)
+                    continue;
                 const Tensor& f = output.first[d];
                 const Tensor& s = output.second[d];
                 if (f.Shape() != s.Shape())

@@ -53,6 +53,7 @@ namespace Test
         CPL_PARAM_VALUE(String, name, String());
         CPL_PARAM_VECTOR(SizeParam, shape);
         CPL_PARAM_VALUE(int32_t, size, 0);
+        CPL_PARAM_VALUE(bool, compare, true);
     };
 
     struct DetectionParam
