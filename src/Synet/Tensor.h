@@ -382,13 +382,13 @@ namespace Synet
 
         SYNET_INLINE Type * CpuData()
         {
-            assert(_type == Detail::GetTensorType<Type>());
+            assert(_type == Detail::GetTensorType<Type>() || _buffer->data == NULL);
             return _buffer->data;
         }
 
         SYNET_INLINE const Type * CpuData() const
         {
-            assert(_type == Detail::GetTensorType<Type>());
+            assert(_type == Detail::GetTensorType<Type>() || _buffer->data == NULL);
             return _buffer->data;
         }
 
