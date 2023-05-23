@@ -72,6 +72,7 @@ namespace Synet
 
         Regions GetRegions(const float* bin, size_t netW, size_t netH, size_t imgW, size_t imgH) const
         {
+            //SYNET_PERF_FUNC();
             View mask(netW, netH, View::Int32);
             for (size_t y = 0; y < netH; ++y)
             {
@@ -82,7 +83,7 @@ namespace Synet
                         mask.At<int>(x, y) = Seed;
                 }
             }
-            Simd::FillFrame(mask, Rect(1, 1, mask.width - 1, mask.height - 1), Invalid);
+            Simd::FillFrame(mask, Rect(1, 1, mask.width - 1, mask.height - 1), Zero);
 
             float kX = float(imgW) / float(netW);
             float kY = float(imgH) / float(netH);
@@ -153,7 +154,6 @@ namespace Synet
         {
             Zero,
             Seed,
-            Invalid,
             Start,
         };
 
