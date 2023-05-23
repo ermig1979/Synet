@@ -363,6 +363,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\WhereLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Iim.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

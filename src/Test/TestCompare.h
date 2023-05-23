@@ -489,9 +489,12 @@ namespace Test
                 if (_colors.empty())
                 {
                     _colors.push_back(Color(0xFF, 0xFF, 0xFF));
-                    _colors.push_back(Color(0xFF, 0x00, 0x00));
-                    _colors.push_back(Color(0x00, 0xFF, 0x00));
                     _colors.push_back(Color(0x00, 0x00, 0xFF));
+                    _colors.push_back(Color(0x00, 0xFF, 0x00));
+                    _colors.push_back(Color(0xFF, 0x00, 0x00));
+                    _colors.push_back(Color(0x00, 0xFF, 0xFF));
+                    _colors.push_back(Color(0xFF, 0xFF, 0x00));
+                    _colors.push_back(Color(0xFF, 0x00, 0xFF));
                 }
                 while (index >= _colors.size())
                     _colors.push_back(Color(::rand(), ::rand(), ::rand()));

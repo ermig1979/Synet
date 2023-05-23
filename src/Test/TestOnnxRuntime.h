@@ -181,6 +181,8 @@ namespace Test
                 _yoloV5.Init(param.detection().yoloV5());
             if (param.detection().decoder() == "yoloV7")
                 _yoloV7.Init();
+            if (param.detection().decoder() == "iim")
+                _iim.Init(param.detection().iim());
 
             return true;
         }
@@ -245,6 +247,14 @@ namespace Test
                 return _yoloV5.GetRegions(_output[0].CpuData(), _output[0].Size(1, 2), _inputShapes[0][3], _inputShapes[0][2], size.x, size.y, threshold, overlap);
             else if (_yoloV7.Enable())
                 return _yoloV7.GetRegions(_output[0].CpuData(), _output[0].Size(1, 2), _inputShapes[0][3], _inputShapes[0][2], size.x, size.y, threshold, overlap);
+            else if (_iim.Enable())
+            {
+                const float* bin = NULL;
+                for (size_t i = 0; i < _outputNames.size(); ++i)
+                    if (_outputNames[i] == _iim.Name())
+                        bin = _output[0].CpuData();
+                return _iim.GetRegions(bin, _inputShapes[0][3], _inputShapes[0][2], size.x, size.y);
+            }
             else
             {
                 Regions regions;
@@ -297,6 +307,7 @@ namespace Test
         Synet::UltrafaceDecoder _ultraface;
         Synet::YoloV5Decoder _yoloV5;
         Synet::YoloV7Decoder _yoloV7;
+        Synet::IimDecoder _iim;
 
         struct Env
         {

@@ -32,10 +32,12 @@ namespace Synet
 {
     namespace Detail
     {
-        template <class T> void WhereLayerForwardCpu(const T * cond, const T * pos, const T * neg, size_t size, T * dst)
+        template <class T> void WhereLayerForwardCpu(const T* cond, const T* pos, const T* neg, size_t size, T* dst);
+
+        template <> void WhereLayerForwardCpu<float>(const float* cond, const float* pos, const float* neg, size_t size, float* dst)
         {
             for (size_t i = 0; i < size; ++i)
-                dst[i] = cond[i] == T(0) ? neg[i] : pos[0];
+                dst[i] = ((uint32_t*)cond)[i] ? pos[i] : neg[i];
         }
     }
 
