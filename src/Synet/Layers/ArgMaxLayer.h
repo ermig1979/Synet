@@ -47,7 +47,7 @@ namespace Synet
             assert(src.size() == 1);
             const ArgMaxParam & param = this->Param().argMax();
             Shape shape = src[0]->Shape();
-            if (param.keepDims())
+            if (param.keepDims() || shape.size() == 1)
                 shape[param.axis()] = 1;
             else
                 shape.erase(shape.begin() + param.axis());

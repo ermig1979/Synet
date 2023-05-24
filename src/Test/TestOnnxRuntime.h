@@ -354,6 +354,8 @@ namespace Test
             for (size_t i = 0; i < _outputNames.size(); i++)
             {
                 Shape shape = Convert<size_t, int64_t>(_outputValues->at(i).GetTensorTypeAndShapeInfo().GetShape());
+                if (shape.empty())
+                    shape = Shp(1);
                 Shape index(shape.size(), 0);
                 index[0] = b;
                 float* dst = _output[i].CpuData(index);
@@ -404,6 +406,8 @@ namespace Test
             for (size_t i = 0; i < _outputNames.size(); i++)
             {
                 Shape shape = Convert<size_t, int64_t>(_outputValues->at(i).GetTensorTypeAndShapeInfo().GetShape());
+                if (shape.empty())
+                    shape = Shp(1);
                 if (_batchSize > 1)
                     shape[0] = _batchSize;
                 _output[i].Reshape(shape);
