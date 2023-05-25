@@ -34,7 +34,7 @@ namespace Synet
     {
         template <class T> void WhereLayerForwardCpu(const T* cond, const T* pos, const T* neg, size_t size, T* dst);
 
-        template <> void WhereLayerForwardCpu<float>(const float* cond, const float* pos, const float* neg, size_t size, float* dst)
+        template <> SYNET_INLINE void WhereLayerForwardCpu<float>(const float* cond, const float* pos, const float* neg, size_t size, float* dst)
         {
             for (size_t i = 0; i < size; ++i)
                 dst[i] = ((uint32_t*)cond)[i] ? pos[i] : neg[i];
