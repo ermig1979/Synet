@@ -86,6 +86,7 @@ namespace Test
     {
         CPL_PARAM_VALUE(String, inputType, "images");
         CPL_PARAM_VALUE(String, images, String());
+        CPL_PARAM_VALUE(bool, smartResize, false);
         CPL_PARAM_VALUE(Floats, lower, Floats(1, 0.0f));
         CPL_PARAM_VALUE(Floats, upper, Floats(1, 1.0f));
         CPL_PARAM_VALUE(String, model, String());

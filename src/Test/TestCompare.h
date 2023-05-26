@@ -265,6 +265,22 @@ namespace Test
             return false;
         }
 
+        void ResizeImage(const View& src, View& dst) const
+        {
+            if (_param().smartResize())
+            {
+                Simd::Fill(dst, 0);
+                ptrdiff_t d = src.width * dst.height - src.height * dst.width;
+                size_t w = d > 0 ? dst.width : src.width * dst.height / src.height;
+                size_t h = d < 0 ? dst.height : src.height * dst.width / src.width;
+                Simd::Resize(src, dst.Region(Size(w, h), View::MiddleLeft).Ref(), SimdResizeMethodArea);
+            }
+            else
+            {
+                Simd::Resize(src, dst, SimdResizeMethodArea);
+            }
+        }
+
         bool CreateTestListImages(const Network& network, const String & directory)
         {
             StringList images = GetFileList(directory, _options.imageFilter, true, false);
@@ -326,7 +342,7 @@ namespace Test
                             Simd::Convert(original, converted);
 
                             View resized(Size(shape[3], shape[2]), converted.format);
-                            Simd::Resize(converted, resized, SimdResizeMethodArea);
+                            ResizeImage(converted, resized);
 
                             if (_param().order() == "rgb" && shape[1] == 3)
                                 (View::Format&)resized.format = View::Rgb24;
