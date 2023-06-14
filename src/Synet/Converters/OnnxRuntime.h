@@ -47,7 +47,7 @@ namespace Synet
         {
             if (!Cpl::FileExists(srcGraphPath))
             {
-                std::cout << "File '" << srcGraphPath << "' is not exist!" << std::endl;
+                CPL_LOG_SS(Error, "File '" << srcGraphPath << "' is not exist!");
                 return false;
             }
 
@@ -66,7 +66,7 @@ namespace Synet
                     "unopt.xml" : Cpl::MakePath(Cpl::DirectoryByPath(dstModelPath), "unopt.xml");
                 if (!holder.Save(uoModelPath, false))
                 {
-                    std::cout << "Can't save unoptimized Synet model '" << uoModelPath << "' !" << std::endl;
+                    CPL_LOG_SS(Error, "Can't save unoptimized Synet model '" << uoModelPath << "' !");
                     return false;
                 }
 
@@ -74,7 +74,7 @@ namespace Synet
                     "unopt.bin" : Cpl::MakePath(Cpl::DirectoryByPath(dstWeightPath), "unopt.bin");
                 if (!SaveBinaryData(weight, uoWeightPath))
                 {
-                    std::cout << "Can't save unoptimized Synet weight '" << uoWeightPath << "' !" << std::endl;
+                    CPL_LOG_SS(Error, "Can't save unoptimized Synet weight '" << uoWeightPath << "' !");
                     return false;
                 }
             }
@@ -85,13 +85,13 @@ namespace Synet
 
             if (!holder.Save(dstModelPath, false))
             {
-                std::cout << "Can't save Synet model '" << dstModelPath << "' !" << std::endl;
+                CPL_LOG_SS(Error, "Can't save Synet model '" << dstModelPath << "' !");
                 return false;
             }
 
             if (!SaveBinaryData(weight, dstWeightPath))
             {
-                std::cout << "Can't save Synet weight '" << dstWeightPath << "' !" << std::endl;
+                CPL_LOG_SS(Error, "Can't save Synet weight '" << dstWeightPath << "' !");
                 return false;
             }
 
@@ -108,7 +108,7 @@ namespace Synet
             std::ifstream ifs(path.c_str(), std::ios::ate | std::ios_base::binary);
             if (!ifs.is_open())
             {
-                std::cout << "Can't open file '" << path << "' !" << std::endl;
+                CPL_LOG_SS(Error, "Can't open file '" << path << "' !");
                 return false;
             }
             size_t size = ifs.tellg();
@@ -119,7 +119,7 @@ namespace Synet
 
             if (!model.ParseFromArray(buffer.data(), size))
             {
-                std::cout << "Can't parse file '" << path << "' !" << std::endl;
+                CPL_LOG_SS(Error, "Can't parse file '" << path << "' !");
                 return false;
             }
 
@@ -146,7 +146,7 @@ namespace Synet
                 const onnx::TensorProto& tensor = graph.initializer(i);
                 if (!ConvertInitializer(tensor, network, original, renames))
                 {
-                    std::cout << "Can't convert initializer '" << tensor.name() << "' !" << std::endl;
+                    CPL_LOG_SS(Error, "Can't convert initializer '" << tensor.name() << "' !");
                     return false;
                 }
                 consts.insert(tensor.name());
@@ -160,7 +160,7 @@ namespace Synet
                     continue;
                 if (!ConvertInput(input, trans, network))
                 {
-                    std::cout << "Can't convert input '" << input.name() << "' !" << std::endl;
+                    CPL_LOG_SS(Error, "Can't convert input '" << input.name() << "' !");
                     return false;
                 }
             }
@@ -346,7 +346,7 @@ namespace Synet
                     {
                         if (size != tensor.float_data_size())
                         {
-                            std::cout << "Wrong tensor float_data_size " << tensor.float_data_size() << " != " << size << " !" << std::endl;
+                            CPL_LOG_SS(Error, "Wrong tensor float_data_size " << tensor.float_data_size() << " != " << size << " !");
                             return false;
                         }
                         weight.resize(offset + size);
@@ -355,7 +355,7 @@ namespace Synet
                     }
                     else
                     {
-                        std::cout << "Can't parse '" << layer.name() << "' FP32 tensor!" << std::endl;
+                        CPL_LOG_SS(Error, "Can't parse '" << layer.name() << "' FP32 tensor!");
                         return false;
                     }
                 }
@@ -388,14 +388,14 @@ namespace Synet
                     }
                     else
                     {
-                        std::cout << "Can't parse '" << layer.name() << "' INT64 tensor!" << std::endl;
+                        CPL_LOG_SS(Error, "Can't parse '" << layer.name() << "' INT64 tensor!");
                         return false;
                     }
                 }
             }
             else
             {
-                std::cout << " Unknown tensor type " << tensor.data_type() << " !" << std::endl;
+                CPL_LOG_SS(Error, " Unknown tensor type " << tensor.data_type() << " !");
                 return false;
             }
             network.layers().push_back(layer);
@@ -468,7 +468,7 @@ namespace Synet
                         layers.push_back(permute);
                         if (renames.find(dst) != renames.end())
                         {
-                            std::cout << "Multiple manual NhwcToNchw permute at " << layer.name() << " !" << std::endl;
+                            CPL_LOG_SS(Error, "Multiple manual NhwcToNchw permute at " << layer.name() << " !");
                             return false;
                         }
                         renames[dst] = permute.name();
@@ -498,7 +498,7 @@ namespace Synet
                         layers.push_back(permute);
                         if (renames.find(dst) != renames.end())
                         {
-                            std::cout << "Multiple manual NchwToNhwc permute at " << layer.name() << " !" << std::endl;
+                            CPL_LOG_SS(Error, "Multiple manual NchwToNhwc permute at " << layer.name() << " !");
                             return false;
                         }
                         renames[dst] = permute.name();
@@ -1096,6 +1096,7 @@ namespace Synet
                 return false;
             if (trans && !PermutedToNchw(layers, layer.src(), false, false, false))
             {
+                CPL_LOG_SS(Error, "This layer can work only in NCHW format!");
                 return false;
             }
             layer.softmax().log() = true;
@@ -1664,6 +1665,7 @@ namespace Synet
                 return false;
             if (trans && !PermutedToNchw(layers, layer.src(), true, false, true))
             {
+                CPL_LOG_SS(Error, "This layer can work only in NCHW format!");
                 return false;
             }
             return true;
@@ -2125,7 +2127,7 @@ namespace Synet
 
         bool ErrorMessage(size_t index, const onnx::NodeProto& node)
         {
-            std::cout << "Can't convert node[" << index << "]: " << NodeString(node) << " !" << std::endl;
+            CPL_LOG_SS(Error, "Can't convert node[" << index << "]: " << NodeString(node) << " !");
             return false;
         }
 
@@ -2147,12 +2149,12 @@ namespace Synet
                     value = defVal;
                     return true;
                 }
-                std::cout << "Can't find attribute " << name << " !" << std::endl;
+                CPL_LOG_SS(Error, "Can't find attribute " << name << " !");
                 return false;
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_INT)
             {
-                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
+                CPL_LOG_SS(Error, "Attribute " << name << " has wrong type " << attribute->type() << " !");
                 return false;
             }
             value = attribute->i();
@@ -2169,12 +2171,12 @@ namespace Synet
                     value = defVal;
                     return true;
                 }
-                std::cout << "Can't find attribute " << name << " !" << std::endl;
+                CPL_LOG_SS(Error, "Can't find attribute " << name << " !");
                 return false;
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_FLOAT)
             {
-                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
+                CPL_LOG_SS(Error, "Attribute " << name << " has wrong type " << attribute->type() << " !");
                 return false;
             }
             value = attribute->f();
@@ -2191,12 +2193,12 @@ namespace Synet
                     value = defVal;
                     return true;
                 }
-                std::cout << "Can't find attribute " << name << " !" << std::endl;
+                CPL_LOG_SS(Error, "Can't find attribute " << name << " !");
                 return false;
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_STRING)
             {
-                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
+                CPL_LOG_SS(Error, "Attribute " << name << " has wrong type " << attribute->type() << " !");
                 return false;
             }
             value = attribute->s();
@@ -2214,12 +2216,12 @@ namespace Synet
                     values = defVals;
                     return true;
                 }
-                std::cout << "Can't find attribute " << name << " !" << std::endl;
+                CPL_LOG_SS(Error, "Can't find attribute " << name << " !");
                 return false;
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_INTS)
             {
-                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
+                CPL_LOG_SS(Error, "Attribute " << name << " has wrong type " << attribute->type() << " !");
                 return false;
             }
             values.resize(attribute->ints_size());
