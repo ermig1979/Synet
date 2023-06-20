@@ -1566,7 +1566,7 @@ namespace Synet
                     layer.interp().coordinateTransformType() = CoordinateTransformTypeHalfPixel;
                 else if (coordTransf == "asymmetric")
                     layer.interp().coordinateTransformType() = CoordinateTransformTypePytorch;
-                if (coordTransf == "half_pixel")
+                else if (coordTransf == "half_pixel")
                     layer.interp().coordinateTransformType() = CoordinateTransformTypeHalfPixel;
                 else
                     return false;
