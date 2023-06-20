@@ -1197,8 +1197,14 @@ namespace Synet
                     layers.erase(layers.begin() + (src1 - layers.data()));
                 }
             }
+            else if (src1->type() == LayerTypeReshape)
+            {
+            }
             else
+            {
+                CPL_LOG_SS(Error, "Unsupported src[1] type: " << Cpl::ToStr(src1->type()));
                 return false;
+            }
             Shape weight = layer.weight()[0].dim();
             layer.innerProduct().transposeB() = !transB;
             if (weight.empty())
@@ -1215,7 +1221,7 @@ namespace Synet
                 layer.src().resize(1);
                 if (trans && !PermutedToNchw(layers, true, false, true))
                 {
-                    std::cout << "Can 't convert MatMul node for NCHW format!" << std::endl;
+                    CPL_LOG_SS(Error, "Can 't convert MatMul node for NCHW format!");
                     return false;
                 }
             }
@@ -1560,6 +1566,8 @@ namespace Synet
                     layer.interp().coordinateTransformType() = CoordinateTransformTypeHalfPixel;
                 else if (coordTransf == "asymmetric")
                     layer.interp().coordinateTransformType() = CoordinateTransformTypePytorch;
+                if (coordTransf == "half_pixel")
+                    layer.interp().coordinateTransformType() = CoordinateTransformTypeHalfPixel;
                 else
                     return false;
             }

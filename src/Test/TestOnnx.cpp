@@ -39,7 +39,7 @@ namespace Test
         Test::TestParamHolder param;
         if (FileExists(options.testParam) && !param.Load(options.testParam))
         {
-            std::cout << "Can't load file '" << options.testParam << "' !" << std::endl;
+            CPL_LOG_SS(Error, "Can't load file '" << options.testParam << "' !");
             return false;
         }
         param().optimizer().bf16Enable() = options.bf16;
@@ -61,6 +61,9 @@ int main(int argc, char* argv[])
 {
     Test::Options options(argc, argv);
 
+    Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
+    Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
+
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
     if (options.mode == "convert")
     {
@@ -77,7 +80,9 @@ int main(int argc, char* argv[])
         options.result = comparer.Run();
     }
     else
-        std::cout << "Unknown mode : " << options.mode << std::endl;
+    {
+        CPL_LOG_SS(Error, "Unknown mode : " << options.mode);
+    }
 
     return options.result ? 0 : 1;
 }

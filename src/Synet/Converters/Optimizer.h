@@ -39,9 +39,9 @@ namespace Synet
         CPL_PARAM_VALUE(bool, bf16Enable, false);
         CPL_PARAM_VALUE(uint32_t, bf16MinEffectiveSrcC, 4);
         CPL_PARAM_VALUE(bool, saveUnoptimized, false);
-        CPL_PARAM_VALUE(bool, convToNhwc, false);
+        CPL_PARAM_VALUE(int, convToNhwc, 0);
         CPL_PARAM_VALUE(bool, skipPermute, false);
-        CPL_PARAM_VALUE(bool, reiseEltwise, false);
+        CPL_PARAM_VALUE(bool, reuseEltwise, false);
     };
 
     CPL_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);
@@ -2057,14 +2057,21 @@ namespace Synet
             size_t end = index;
             if (!PermutedToNchw(src, src[index].src(), true, false, false))
                 return false;
-            if (src[index].type() != LayerTypeConvolution || src[index].weight()[0].format() != TensorFormatNchw)
+            if (src[index].type() != LayerTypeConvolution || 
+                src[index].weight()[0].format() != TensorFormatNchw || 
+                UserCount(src, index) != 1)
                 return false;
             for (size_t i = index + 1; i < src.size(); ++i)
             {
-                if (src[i].type() != LayerTypeConvolution || src[i].weight()[0].format() != TensorFormatNchw)
+                if (src[i].type() != LayerTypeConvolution || 
+                    src[i].weight()[0].format() != TensorFormatNchw ||
+                    UserCount(src, i) != 1)
                     break;
                 end = i;
             }
+            size_t count = end + 1 - index;
+            if (!(count >= _param.convToNhwc() || (count == 1 && src[index].convolution().group() != 1)))
+                return false;
 
             LayerParam toNhwc;
             toNhwc.type() = LayerTypePermute;
@@ -2280,7 +2287,7 @@ namespace Synet
                 return true;
             if (layer.type() == LayerTypePower)
                 return true;
-            if (_param.reiseEltwise() && layer.type() == LayerTypeEltwise)
+            if (_param.reuseEltwise() && layer.type() == LayerTypeEltwise)
                 return true;
             if (layer.type() == LayerTypeRelu)
                 return true;
