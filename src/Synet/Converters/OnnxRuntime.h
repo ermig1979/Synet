@@ -211,6 +211,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Identity" && !ConvertIdentityNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "InstanceNormalization" && !ConvertInstanceNormalizationNode(node, trans, network.layers(), layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "LeakyRelu" && !ConvertLeakyReluNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Less" && !ConvertLessNode(node, layer))
@@ -1071,6 +1073,33 @@ namespace Synet
             {
                 layer.type() = LayerTypeStub;
             }
+            return true;
+        }
+
+        bool ConvertInstanceNormalizationNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 3))
+                return false;
+            layer.type() = Synet::LayerTypeNormalize;
+            layer.normalize().version() = 3;
+            if (!ConvertAtrributeFloat(node, "epsilon", layer.normalize().eps()))
+                return false;
+            layer.weight().resize(2);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src1 == NULL || src1->type() != LayerTypeConst)
+                return false;
+            layer.weight()[0] = src1->weight()[0];
+            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+            if (src2 == NULL || src2->type() != LayerTypeConst)
+                return false;
+            layer.weight()[1] = src2->weight()[0];
+            layer.src().resize(1);
+            if (trans && !PermutedToNchw(layers, layer.src(), false, false, false))
+            {
+                layer.normalize().axis() = -1;
+            }
+            else
+                layer.normalize().axis() = 1;
             return true;
         }
 
@@ -2127,7 +2156,7 @@ namespace Synet
 
         bool ErrorMessage(size_t index, const onnx::NodeProto& node)
         {
-            CPL_LOG_SS(Error, "Can't convert node[" << index << "]: " << NodeString(node) << " !");
+            std::cout << "Can't convert node[" << index << "]: " << NodeString(node) << " !" << std::endl;
             return false;
         }
 
@@ -2149,12 +2178,12 @@ namespace Synet
                     value = defVal;
                     return true;
                 }
-                CPL_LOG_SS(Error, "Can't find attribute " << name << " !");
+                std::cout << "Can't find attribute " << name << " !" << std::endl;
                 return false;
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_INT)
             {
-                CPL_LOG_SS(Error, "Attribute " << name << " has wrong type " << attribute->type() << " !");
+                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
                 return false;
             }
             value = attribute->i();
@@ -2171,12 +2200,12 @@ namespace Synet
                     value = defVal;
                     return true;
                 }
-                CPL_LOG_SS(Error, "Can't find attribute " << name << " !");
+                std::cout << "Can't find attribute " << name << " !" << std::endl;
                 return false;
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_FLOAT)
             {
-                CPL_LOG_SS(Error, "Attribute " << name << " has wrong type " << attribute->type() << " !");
+                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
                 return false;
             }
             value = attribute->f();
@@ -2193,12 +2222,12 @@ namespace Synet
                     value = defVal;
                     return true;
                 }
-                CPL_LOG_SS(Error, "Can't find attribute " << name << " !");
+                std::cout << "Can't find attribute " << name << " !" << std::endl;
                 return false;
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_STRING)
             {
-                CPL_LOG_SS(Error, "Attribute " << name << " has wrong type " << attribute->type() << " !");
+                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
                 return false;
             }
             value = attribute->s();
@@ -2216,12 +2245,12 @@ namespace Synet
                     values = defVals;
                     return true;
                 }
-                CPL_LOG_SS(Error, "Can't find attribute " << name << " !");
+                std::cout << "Can't find attribute " << name << " !" << std::endl;
                 return false;
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_INTS)
             {
-                CPL_LOG_SS(Error, "Attribute " << name << " has wrong type " << attribute->type() << " !");
+                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
                 return false;
             }
             values.resize(attribute->ints_size());

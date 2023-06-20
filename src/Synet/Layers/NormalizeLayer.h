@@ -190,6 +190,74 @@ namespace Synet
             }
         }
 
+        template<class T> void NormalizeLayerForwardV3Cpu(const T* src, size_t batch, size_t channels, size_t spatial, const T* scale, const T* shift, T eps, int trans, T* buf, T* dst)
+        {
+            T k = T(1) / T(spatial);
+            if (trans)
+            {
+                for (size_t b = 0; b < batch; ++b)
+                {
+                    for (size_t c = 0; c < channels; ++c)
+                        buf[c] = 0;
+                    for (size_t s = 0, o = 0; s < spatial; ++s)
+                    {
+                        for (size_t c = 0; c < channels; ++c, ++o)
+                            buf[c] += src[o];
+                    }
+                    for (size_t c = 0; c < channels; ++c)
+                        buf[c] = buf[c] * k;
+                    for (size_t s = 0, o = 0; s < spatial; ++s)
+                    {
+                        for (size_t c = 0; c < channels; ++c, ++o)
+                            dst[o] = src[o] - buf[c];
+                    }
+
+                    for (size_t c = 0; c < channels; ++c)
+                        buf[c] = 0;
+                    for (size_t s = 0, o = 0; s < spatial; ++s)
+                    {
+                        for (size_t c = 0; c < channels; ++c, ++o)
+                            buf[c] += Square(dst[o]);
+                    }
+                    for (size_t c = 0; c < channels; ++c)
+                        buf[c] = T(1) / ::sqrt(buf[c] * k + eps);
+                    for (size_t s = 0, o = 0; s < spatial; ++s)
+                    {
+                        for (size_t c = 0; c < channels; ++c, ++o)
+                            dst[o] = dst[o] * buf[c] * scale[c] + shift[c];
+                    }
+
+                    src += channels * spatial;
+                    dst += channels * spatial;
+                }
+            }
+            else
+            {
+                for (size_t b = 0; b < batch; ++b)
+                {
+                    for (size_t c = 0; c < channels; ++c)
+                    {
+                        T sum = 0;
+                        for (size_t s = 0; s < spatial; ++s)
+                            sum += src[s];
+                        T mean = sum * k;
+                        for (size_t s = 0; s < spatial; ++s)
+                            dst[s] = src[s] - mean;
+
+                        T sqsum = 0;
+                        for (size_t s = 0; s < spatial; ++s)
+                            sqsum += Square(dst[s]);
+                        T norm = T(1) / ::sqrt(sqsum * k + eps);
+                        for (size_t s = 0; s < spatial; ++s)
+                            dst[s] = dst[s] * norm * scale[c] + shift[c];
+
+                        dst += spatial;
+                        src += spatial;
+                    }
+                }
+            }
+        }
+
         //-----------------------------------------------------------------------------------------
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
@@ -302,6 +370,24 @@ namespace Synet
                 _scale.Share(this->Weight()[0]);
                 _shift.Share(this->Weight()[1]);
             }
+            else if (_version == 3)
+            {
+                int axis = (int)src[0]->Index(param.axis());
+                _channels = src[0]->Axis(axis);
+                _trans = axis == src[0]->Count() - 1 ? 1 : 0;
+                if (_trans)
+                {
+                    _batch = 1;
+                    _spatial = src[0]->Size(0, axis);
+                }
+                else
+                {
+                    _batch = src[0]->Size(0, axis);
+                    _spatial = src[0]->Size(axis + 1);
+                }
+                _scale.Share(this->Weight()[0]);
+                _shift.Share(this->Weight()[1]);
+            }
             else
                 assert(0);
 
@@ -323,6 +409,8 @@ namespace Synet
                 Detail::NormalizeLayerForwardCpu(pSrc, _batch, _channels, _spatial, pScale, _eps, _acrossSpatial, _trans, pBuf, pDst);
             else if (_version == 2)
                 Detail::NormalizeLayerForwardV2Cpu(pSrc, _batch, _channels, _spatial, pScale, pShift, _eps, _trans, pBuf, pDst);
+            else if (_version == 3)
+                Detail::NormalizeLayerForwardV3Cpu(pSrc, _batch, _channels, _spatial, pScale, pShift, _eps, _trans, pBuf, pDst);
             else
                 assert(0);
         }

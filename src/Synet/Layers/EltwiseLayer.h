@@ -128,13 +128,13 @@ namespace Synet
                     _special = SpecialScaleComplex;
                     _channels = _channelsOuter * _channelsInner;
                 }
-                else if (_operation == EltwiseOperationTypeProduct && src[0]->Count() == 4)
+                else if (_operation == EltwiseOperationTypeProduct && src[_index[0]]->Count() == 4)
                 {
                     _trans = src[_index[0]]->Format() == TensorFormatNhwc;
                     _batch = src[_index[0]]->Axis(0);
                     _channels = src[_index[0]]->Axis(_trans ? 3 : 1);
                     _spatial = src[_index[0]]->Size() / _batch / _channels;
-                    size_t size = src[_index[1]]->Size(1);
+                    size_t size = src[_index[1]]->Count() == 4 ? src[_index[1]]->Size(1) : src[_index[1]]->Size(0);
                     if (size == _channels)
                         _special = SpecialScaleChannel;
                     else if (size == _spatial)
@@ -214,6 +214,18 @@ namespace Synet
                     _batch = 1;
                     _spatial = src[_index[0]]->Axis(0) * src[_index[0]]->Axis(1);
                     _channels = src[_index[1]]->Axis(0);
+                }
+                else if (_operation == EltwiseOperationTypeSum && src[_index[0]]->Count() == 4 && src[_index[1]]->Count() == 3)
+                {
+                    _trans = src[_index[0]]->Format() == TensorFormatNhwc;
+                    _batch = src[_index[0]]->Axis(0);
+                    _channels = src[_index[0]]->Axis(_trans ? 3 : 1);
+                    _spatial = src[_index[0]]->Size() / _batch / _channels;
+                    size_t size = src[_index[1]]->Count() == 4 ? src[_index[1]]->Size(1) : src[_index[1]]->Size(0);
+                    if (size == _channels)
+                        _special = SpecialBiasChannel;
+                    else
+                        assert(0);
                 }
                 else
                     assert(0);
