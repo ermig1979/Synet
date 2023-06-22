@@ -177,6 +177,8 @@ namespace Synet
                         continue;
                     if (MergeGelu(network.layers(), i, merged, changes))
                         continue;
+                    if (MergeScale(network.layers(), i, merged, changes))
+                        continue;
                     break;
                 }
                 case 5:
@@ -1795,6 +1797,34 @@ namespace Synet
             return true;
         }
 
+        bool MergeScale(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 2)
+                return false;
+            const WeightParam* scale = GetEltwiseWeight(index + 0, src);
+            if (scale == NULL || src[index + 0].eltwise().operation() != EltwiseOperationTypeProduct)
+                return false;
+            const WeightParam* shift = GetEltwiseWeight(index + 1, src);
+            if (scale == NULL || src[index + 1].eltwise().operation() != EltwiseOperationTypeSum)
+                return false;
+            if(src[index + 1].src()[0] != src[index + 0].dst()[0])
+                return false;
+            if (scale->dim() != shift->dim())
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeScale;
+            layer.name() = src[index + 1].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            layer.scale().biasTerm() = true;
+            layer.weight().push_back(*scale);
+            layer.weight().push_back(*shift);
+            dst.push_back(layer);
+            index += 1;
+            return true;
+        }
+
         bool MergeRnnGruBd(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
         {
             const size_t RNN_GRU_BD_SIZE = 19;
@@ -1861,8 +1891,6 @@ namespace Synet
                 const LayerParam& l = src[index + parts.size()];
                 if (l.type() != LayerTypeConvolution)
                     break;
-                if (l.weight()[0].format() != TensorFormatNhwc)
-                    break;
                 const ConvolutionParam& c = l.convolution();
                 if (c.group() != 1)
                     break;
@@ -1871,6 +1899,8 @@ namespace Synet
                     if (l.src() != l0.src())
                         break;
                     if (l.weight().size() != l0.weight().size())
+                        break;
+                    if (l.weight()[0].format() != l0.weight()[0].format())
                         break;
                     const ConvolutionParam& c0 = l0.convolution();
                     if (c.kernel() != c0.kernel())
@@ -1909,7 +1939,10 @@ namespace Synet
                 conv.name() = conv.name() + "_" + l.name();
                 for (size_t w = 0; w < l0.weight().size(); ++w)
                 {
-                    conv.weight()[w].dim().back() += l.weight()[w].dim().back();
+                    if(l.weight()[0].format() == TensorFormatNhwc)
+                        conv.weight()[w].dim().back() += l.weight()[w].dim().back();
+                    else
+                        conv.weight()[w].dim().front() += l.weight()[w].dim().front();
                     conv.weight()[w].size() += l.weight()[w].size();
                 }
             }
@@ -1927,17 +1960,27 @@ namespace Synet
                 if (w)
                     conv.weight()[w].offset() = conv.weight()[w - 1].offset() + conv.weight()[w - 1].size();
                 const Shape & dim = conv.weight()[w].dim();
-                size_t outer = w ? 1 : dim[0] * dim[1] * dim[2];
                 std::vector<const float*> pSrc(parts.size());
                 for (size_t p = 0; p < parts.size(); ++p)
                     pSrc[p] = bin.data() + src[index + p].weight()[w].offset() / sizeof(float);
                 float * pDst = buf.data() + conv.weight()[w].offset() / sizeof(float);
-                for (size_t o = 0; o < outer; ++o)
+                if (l0.weight()[0].format() == TensorFormatNhwc && w == 0)
+                {
+                    for (size_t o = 0, outer = dim[0] * dim[1] * dim[2]; o < outer; ++o)
+                    {
+                        for (size_t p = 0; p < parts.size(); ++p)
+                        {
+                            for (size_t i = 0; i < parts[p]; ++i)
+                                *pDst++ = *pSrc[p]++;
+                        }
+                    }
+                }
+                else
                 {
                     for (size_t p = 0; p < parts.size(); ++p)
                     {
-                        for (size_t i = 0; i < parts[p]; ++i)
-                            *pDst++ = *pSrc[p]++;
+                        memcpy(pDst, pSrc[p], src[index + p].weight()[w].size());
+                        pDst += src[index + p].weight()[w].size() / sizeof(float);
                     }
                 }
             }
@@ -1946,7 +1989,7 @@ namespace Synet
             unpack.type() = LayerTypeUnpack;
             unpack.name() = conv.name() + "_unpack";
             unpack.src().push_back(conv.name());
-            unpack.unpack().axis() = 3;
+            unpack.unpack().axis() = l0.weight()[0].format() == TensorFormatNhwc ? 3 : 1;
             unpack.unpack().parts() = parts;
             for (size_t i = 0; i < parts.size(); ++i)
                 unpack.dst().push_back(src[index + i].dst()[0]);
