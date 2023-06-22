@@ -275,6 +275,13 @@ namespace Synet
             ::SimdSynetNormalizeLayerForwardV2(src, batch, channels, spatial, scale, shift, &eps,
                 trans ? SimdTensorFormatNhwc : SimdTensorFormatNchw, buf, dst);
         }
+
+        template<> SYNET_INLINE void NormalizeLayerForwardV3Cpu<float>(const float* src, size_t batch, size_t channels,
+            size_t spatial, const float* scale, const float* shift, float eps, int trans, float* buf, float* dst)
+        {
+            ::SimdSynetNormalizeLayerForwardV3(src, batch, channels, spatial, scale, shift, &eps,
+                trans ? SimdTensorFormatNhwc : SimdTensorFormatNchw, buf, dst);
+        }
 #endif
     }
 
@@ -392,8 +399,7 @@ namespace Synet
                 assert(0);
 
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
-            if(_trans)
-                buf[0]->Extend(Shape({ _spatial }));
+            buf[0]->Extend(Shape({ Max(_spatial, _channels) }));
             this->UsePerfStat();
         }
 
