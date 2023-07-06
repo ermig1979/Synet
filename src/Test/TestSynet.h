@@ -228,15 +228,15 @@ namespace Test
                 assert(x[i].Size() == src.Size());
                 if (src.Format() == Synet::TensorFormatNhwc && src.Count() == 4)
                 {
-                    const float * pX = x[i].CpuData();
+                    const float * pX = x[i].Data<float>();
                     for (size_t n = 0; n < src.Axis(0); ++n)
                         for (size_t c = 0; c < src.Axis(3); ++c)
                             for (size_t y = 0; y < src.Axis(1); ++y)
                                 for (size_t x = 0; x < src.Axis(2); ++x)
-                                    src.CpuData(Shape({ n, y, x, c }))[0] = *pX++;
+                                    src.Data<float>(Shape({ n, y, x, c }))[0] = *pX++;
                 }
                 else
-                    memcpy(src.CpuData(), x[i].CpuData(), x[i].Size() * sizeof(float));
+                    memcpy(src.Data<float>(), x[i].Data<float>(), x[i].Size() * sizeof(float));
             }
         }
 
@@ -404,7 +404,7 @@ namespace Test
                             Net::Tensor tensor;
                             if (_net.GetMetaConst(size.name(), tensor) && tensor.GetType() == Synet::TensorType32i && tensor.Size())
                             {
-                                int32_t value = tensor.As32i().CpuData()[0];
+                                int32_t value = tensor.As32i().Data<int>()[0];
                                 if (value > 0)
                                     srcShape.push_back(value);
                                 else

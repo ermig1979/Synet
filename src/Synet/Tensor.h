@@ -365,6 +365,12 @@ namespace Synet
             return offset;
         }
 
+        SYNET_INLINE size_t RawSize() const
+        {
+            return _buffer->size * TypeSize();
+        }
+
+#if defined(SYNET_TENSOR_API_OLD)
         SYNET_INLINE uint8_t* RawCpuData()
         {
             return (uint8_t*)_buffer->data;
@@ -373,11 +379,6 @@ namespace Synet
         SYNET_INLINE const uint8_t * RawCpuData() const
         {
             return (const uint8_t*)_buffer->data;
-        }
-
-        SYNET_INLINE size_t RawSize() const
-        {
-            return _buffer->size * TypeSize();
         }
 
         SYNET_INLINE Type * CpuData()
@@ -411,6 +412,51 @@ namespace Synet
         {
             return CpuData() + Offset(index);
         }
+#endif
+
+#if defined(SYNET_TENSOR_API_NEW)
+        SYNET_INLINE uint8_t* RawData()
+        {
+            return (uint8_t*)_buffer->data;
+        }
+
+        SYNET_INLINE const uint8_t* RawData() const
+        {
+            return (const uint8_t*)_buffer->data;
+        }
+
+        template<class U> SYNET_INLINE U* Data()
+        {
+            assert(_type == Detail::GetTensorType<U>() || _buffer->data == NULL);
+            return (U*)_buffer->data;
+        }
+
+        template<class U> SYNET_INLINE const U* Data() const
+        {
+            assert(_type == Detail::GetTensorType<U>() || _buffer->data == NULL);
+            return (U*)_buffer->data;
+        }
+
+        template<class U> SYNET_INLINE U* Data(const Synet::Index& index)
+        {
+            return Data<U>() + Offset(index);
+        }
+
+        template<class U> SYNET_INLINE const U* Data(const Synet::Index& index) const
+        {
+            return Data<U>() + Offset(index);
+        }
+
+        template<class U> SYNET_INLINE U* Data(std::initializer_list<size_t> index)
+        {
+            return Data<U>() + Offset(index);
+        }
+
+        template<class U> SYNET_INLINE const U* Data(std::initializer_list<size_t> index) const
+        {
+            return Data<U>() + Offset(index);
+        }
+#endif
 
         SYNET_INLINE void Share(const Tensor & tensor)
         {
@@ -459,28 +505,28 @@ namespace Synet
             {
                 _type = TensorType32f;
                 As32f().Reshape(param.shape(), param.format());
-                CpuCopy(param.f32().data(), param.f32().size(), As32f().CpuData());
+                CpuCopy(param.f32().data(), param.f32().size(), Data<float>());
                 break;
             }
             case TensorType32i:
             {
                 _type = TensorType32i;
                 As32i().Reshape(param.shape(), param.format());
-                CpuCopy(param.i32().data(), param.i32().size(), As32i().CpuData());
+                CpuCopy(param.i32().data(), param.i32().size(), Data<int32_t>());
                 break;
             }
             case TensorType64i:
             {
                 _type = TensorType64i;
                 As64i().Reshape(param.shape(), param.format());
-                CpuCopy(param.i64().data(), param.i64().size(), As64i().CpuData());
+                CpuCopy(param.i64().data(), param.i64().size(), Data<int64_t>());
                 break;
             }
             case TensorType64u:
             {
                 _type = TensorType64u;
                 As64u().Reshape(param.shape(), param.format());
-                CpuCopy(param.u64().data(), param.u64().size(), As64u().CpuData());
+                CpuCopy(param.u64().data(), param.u64().size(), Data<uint64_t>());
                 break;
             }
             default:
@@ -498,28 +544,28 @@ namespace Synet
             {
                 const Synet::Tensor<float> & f32 = As32f();
                 param.f32().resize(f32.Size());
-                CpuCopy(f32.CpuData(), f32.Size(), param.f32().data());
+                CpuCopy(f32.Data<float>(), f32.Size(), param.f32().data());
                 break;
             }
             case TensorType32i:
             {
                 const Synet::Tensor<int32_t> & i32 = As32i();
                 param.i32().resize(i32.Size());
-                CpuCopy(i32.CpuData(), i32.Size(), param.i32().data());
+                CpuCopy(i32.Data<int32_t>(), i32.Size(), param.i32().data());
                 break;
             }
             case TensorType64i:
             {
                 const Synet::Tensor<int64_t>& i64 = As64i();
                 param.i64().resize(i64.Size());
-                CpuCopy(i64.CpuData(), i64.Size(), param.i64().data());
+                CpuCopy(i64.Data<int64_t>(), i64.Size(), param.i64().data());
                 break;
             }
             case TensorType64u:
             {
                 const Synet::Tensor<uint64_t>& u64 = As64u();
                 param.u64().resize(u64.Size());
-                CpuCopy(u64.CpuData(), u64.Size(), param.u64().data());
+                CpuCopy(u64.Data<uint64_t>(), u64.Size(), param.u64().data());
                 break;
             }
             default:
@@ -541,12 +587,12 @@ namespace Synet
         {
             switch (_type)
             {
-            case TensorType32f: DebugPrint(os, As32f(), name, weight, first, last, precision); break;
-            case TensorType32i: DebugPrint(os, As32i(), name, weight, first, last, precision); break;
-            case TensorType8i: DebugPrint(os, As8i(), name, weight, first, last, precision); break;
-            case TensorType8u: DebugPrint(os, As8u(), name, weight, first, last, precision); break;
-            case TensorType64i: DebugPrint(os, As64i(), name, weight, first, last, precision); break;
-            case TensorType64u: DebugPrint(os, As64u(), name, weight, first, last, precision); break;
+            case TensorType32f: DebugPrint<float>(os, As32f(), name, weight, first, last, precision); break;
+            case TensorType32i: DebugPrint<int32_t>(os, As32i(), name, weight, first, last, precision); break;
+            case TensorType8i: DebugPrint<int8_t>(os, As8i(), name, weight, first, last, precision); break;
+            case TensorType8u: DebugPrint<uint8_t>(os, As8u(), name, weight, first, last, precision); break;
+            case TensorType64i: DebugPrint<int64_t>(os, As64i(), name, weight, first, last, precision); break;
+            case TensorType64u: DebugPrint<uint64_t>(os, As64u(), name, weight, first, last, precision); break;
             }
         }
 
@@ -576,7 +622,7 @@ namespace Synet
                         for (size_t x = 0; x < shape[1]; ++x)
                             for (size_t i = 0; i < shape[2]; ++i)
                                 for (size_t o = 0; o < shape[3]; ++o)
-                                    trans.CpuData({ o, i, y, x })[0] = tensor.CpuData({ y, x, i, o })[0];
+                                    trans.template Data<U>({ o, i, y, x })[0] = tensor.template Data<U>({ y, x, i, o })[0];
                     std::stringstream ss;
                     ss << name << " HWIO { ";
                     for (size_t i = 0; i < shape.size(); ++i)
@@ -591,7 +637,7 @@ namespace Synet
                         for (size_t c = 0; c < shape[3]; ++c)
                             for (size_t y = 0; y < shape[1]; ++y)
                                 for (size_t x = 0; x < shape[2]; ++x)
-                                    trans.CpuData({ n, c, y, x })[0] = tensor.CpuData({ n, y, x, c })[0];
+                                    trans.template Data<U>({ n, c, y, x })[0] = tensor.template Data<U>({ n, y, x, c })[0];
                     std::stringstream ss;
                     ss << name << " NHWC { ";
                     for (size_t i = 0; i < shape.size(); ++i)
@@ -625,7 +671,6 @@ namespace Synet
             size_t size = Size(0, _shape.size());
             _buffer->Resize(size);
             CpuSet(_buffer->size, Type(), _buffer->data);
-            //CpuTouch(_buffer->data, _buffer->size);
         }
 
         SYNET_INLINE void Extend()

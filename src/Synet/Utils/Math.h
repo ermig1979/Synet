@@ -217,14 +217,6 @@ namespace Synet
         return sum;
     }
 
-    template <typename T> T CpuTouch(const T * data, size_t size)
-    {
-        volatile T touched = 0;
-        for (size_t i = 0; i < size; i += 1024)
-            touched += data[i];
-        return touched;
-    }
-
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
     template <> SYNET_INLINE void CpuSet<float>(size_t size, float value, float * dst)
     {

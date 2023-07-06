@@ -194,7 +194,7 @@ namespace Synet
                                 Synet::Tensor<int32_t> & i32 = _input[j].dst[0]->As32i();
                                 i32.Reshape({ srcShapes[j].size()});
                                 for (size_t l = 0; l < srcShapes[j].size(); ++l)
-                                    i32.CpuData()[l] = (int)srcShapes[j][l];
+                                    i32.Data<int>()[l] = (int)srcShapes[j][l];
                             }
                             else
                                 assert(0);
@@ -542,7 +542,7 @@ namespace Synet
                 {
                     if (_layers[i]->Weight()[j].Size() == 0)
                         continue;
-                    const void * ptr = _layers[i]->Weight()[j].RawCpuData();
+                    const void * ptr = _layers[i]->Weight()[j].RawData();
                     if (unique.find(ptr) == unique.end())
                     {
                         memoryUsage += _layers[i]->Weight()[j].MemoryUsage();
@@ -553,7 +553,7 @@ namespace Synet
             }
             for (size_t i = 0; i < _tensors.size(); ++i)
             {
-                const void * ptr = _tensors[i]->RawCpuData();
+                const void * ptr = _tensors[i]->RawData();
                 if (unique.find(ptr) == unique.end())
                 {
                     memoryUsage += _tensors[i]->MemoryUsage();

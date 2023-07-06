@@ -326,7 +326,7 @@ namespace Synet
                     for (size_t i = 0; i < shape[2]; ++i)
                         for (size_t y = 0; y < shape[0]; ++y)
                             for (size_t x = 0; x < shape[1]; ++x)
-                                dst.CpuData(Shape({ y, x, i, o }))[0] = *pSrc++;
+                                dst.Data<float>(Shape({ y, x, i, o }))[0] = *pSrc++;
                 break;
             }
             case LayerTypeDeconvolution:
@@ -337,7 +337,7 @@ namespace Synet
                     for (size_t c = 0; c < shape[3]; ++c)
                         for (size_t y = 0; y < shape[1]; ++y)
                             for (size_t x = 0; x < shape[2]; ++x)
-                                dst.CpuData(Shape({ i, y, x, c }))[0] = *pSrc++;
+                                dst.Data<float>(Shape({ i, y, x, c }))[0] = *pSrc++;
                 break;
             }
             case LayerTypeInnerProduct:

@@ -89,9 +89,9 @@ namespace Synet
             float kY = float(imgH) / float(netH);
             Regions regions;
             int index = Start;
-            for (ptrdiff_t y = 1; y < mask.height - 1; ++y)
+            for (ptrdiff_t y = 1; y < (ptrdiff_t)mask.height - 1; ++y)
             {
-                for (ptrdiff_t x = 1; x < mask.width - 1; ++x)
+                for (ptrdiff_t x = 1; x < (ptrdiff_t)mask.width - 1; ++x)
                 {
                     int area = 0;
                     if (mask.At<int>(x, y) == Seed)
@@ -137,7 +137,7 @@ namespace Synet
             std::vector<Regions> result(shape[0]);
             size_t netH = shape[2];
             size_t netW = shape[3];
-            const float* bin = net.Dst(_name)->CpuData();
+            const float* bin = net.Dst(_name)->Data<float>();
             for (size_t b = 0; b < result.size(); ++b)
             {
                 size_t size = net.Dst()[0]->Size(0, 1);

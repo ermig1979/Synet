@@ -55,7 +55,7 @@ namespace Synet
                 Shape index;
                 for (size_t a = 0; a < count; ++a, ++i)
                     index.push_back(idx.CpuData()[i]);
-                _offset.CpuData()[o] = src[0]->Offset(index);
+                _offset.CpuData()[o] = (uint32_t)src[0]->Offset(index);
             }
             if (src[0] != dst[0])
                 dst[0]->Reshape(src[0]->Shape(), src[0]->Format());

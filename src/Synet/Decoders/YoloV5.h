@@ -101,7 +101,7 @@ namespace Synet
             std::vector<Regions> result(net.NchwShape()[0]);
             for (size_t b = 0; b < result.size(); ++b)
             {
-                const float* data = net.Dst()[0]->CpuData();
+                const float* data = net.Dst()[0]->Data<float>();
                 size_t size = net.Dst()[0]->Size(1, 2);
                 result[b] = GetRegions(data, size, net.NchwShape()[3], net.NchwShape()[2], imgW, imgH, threshold, overlap);
             }

@@ -146,9 +146,9 @@ namespace Synet
             std::vector<Regions> result(net.NchwShape()[0]);
             for (size_t b = 0; b < result.size(); ++b)
             {
-                const float* conf = net.Dst(_names[0])->CpuData(Shp(b, 0, 0));
-                const float* lms = net.Dst(_names[1])->CpuData(Shp(b, 0, 0));
-                const float* loc = net.Dst(_names[2])->CpuData(Shp(b, 0, 0));
+                const float* conf = net.Dst(_names[0])->Data<float>(Shp(b, 0, 0));
+                const float* lms = net.Dst(_names[1])->Data<float>(Shp(b, 0, 0));
+                const float* loc = net.Dst(_names[2])->Data<float>(Shp(b, 0, 0));
                 result[b] = GetRegions(conf, lms, loc, srcW, srcH, threshold, overlap);
             }
             return result;
