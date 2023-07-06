@@ -1805,7 +1805,7 @@ namespace Synet
             if (scale == NULL || src[index + 0].eltwise().operation() != EltwiseOperationTypeProduct)
                 return false;
             const WeightParam* shift = GetEltwiseWeight(index + 1, src);
-            if (scale == NULL || src[index + 1].eltwise().operation() != EltwiseOperationTypeSum)
+            if (shift == NULL || src[index + 1].eltwise().operation() != EltwiseOperationTypeSum)
                 return false;
             if(src[index + 1].src()[0] != src[index + 0].dst()[0])
                 return false;
