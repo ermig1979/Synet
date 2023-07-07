@@ -164,7 +164,7 @@ namespace Test
         }
 
     private:
-        typedef Synet::Network<float> Net;
+        typedef Synet::Network Net;
         Net _net;
         bool _trans, _sort;
         Floats _lower, _upper;

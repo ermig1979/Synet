@@ -257,7 +257,7 @@ namespace Synet
         }
 
     private:
-        template<class U> friend class Network;
+        friend class Network;
 
         const LayerParam & _param;
         Synet::Context* _context;

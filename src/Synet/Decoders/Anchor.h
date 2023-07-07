@@ -48,7 +48,7 @@ namespace Synet
 
         typedef Synet::Region<float> Region;
         typedef std::vector<Region> Regions;
-        typedef Synet::Network<float> Net;
+        typedef Synet::Network Net;
 
         AnchorDecoder()
         {

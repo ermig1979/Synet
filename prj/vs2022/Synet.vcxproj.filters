@@ -2,6 +2,10 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="..\..\src\Synet\Synet.cpp" />
+    <ClCompile Include="..\..\src\Synet\Network.cpp" />
+    <ClCompile Include="..\..\src\Synet\Utils\SetInput.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />

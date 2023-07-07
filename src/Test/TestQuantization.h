@@ -94,7 +94,7 @@ namespace Test
         const Options& _options;
         String _opt, _deopt, _stats;
         Strings _images;
-        typedef Synet::Network<float> SyNet;
+        typedef Synet::Network SyNet;
         SyNet _synet;
         String _progressMessage;
         typedef std::vector<Synet::LayerParam> LayerParams;
