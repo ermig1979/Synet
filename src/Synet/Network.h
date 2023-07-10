@@ -25,10 +25,7 @@
 
 #pragma once
 
-#include "Synet/Fabric.h"
-
-#include "Synet/Utils/SetInput.h"
-#include "Synet/Utils/Statistics.h"
+#include "Synet/Layer.h"
 
 namespace Synet
 {

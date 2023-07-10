@@ -30,33 +30,22 @@
 
 namespace Synet
 {
-    template <class T> class EluLayer : public Synet::Layer<T>
+    class EluLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        EluLayer(const LayerParam& param, Context* context)
-            : Base(param, context)
-        {
-        }
+        EluLayer(const LayerParam& param, Context* context);
 
-        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            _alpha = this->Param().elu().alpha();
-            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
-            this->UsePerfStat();
-        }
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            CpuElu<Type>(src[0]->CpuData(), src[0]->Size(), _alpha, dst[0]->CpuData());
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        Type _alpha;
+        size_t _size;
+        float _alpha;
     };
 
     //---------------------------------------------------------------------------------------------

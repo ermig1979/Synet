@@ -124,7 +124,7 @@ namespace Synet
             case LayerTypeDeconvolution: return new DeconvolutionLayer<T>(param, context);
             case LayerTypeDetectionOutput: return new DetectionOutputLayer<T>(param, context);
             case LayerTypeEltwise: return new EltwiseLayer<T>(param, context);
-            case LayerTypeElu: return new EluLayer<T>(param, context);
+            case LayerTypeElu: return new EluLayer(param, context);
             case LayerTypeExpandDims: return new ExpandDimsLayer<T>(param, context);
             case LayerTypeFlatten: return new FlattenLayer<T>(param, context);
             case LayerTypeFused: return new FusedLayer<T>(param, context);

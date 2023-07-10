@@ -24,6 +24,8 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\Synet\Layers\ActivationLayers.cpp" />
+    <ClCompile Include="..\..\src\Synet\Utils\Activation.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\SetInput.cpp" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Args.h" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Config.h" />

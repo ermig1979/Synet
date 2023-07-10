@@ -40,7 +40,6 @@
 #define SYNET_BF16_ROUND_TEST
 
 #define SYNET_TENSOR_API_OLD
-#define SYNET_TENSOR_API_NEW
 
 #ifdef _MSC_VER
 #define _USE_MATH_DEFINES

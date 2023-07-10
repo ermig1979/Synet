@@ -75,12 +75,32 @@ namespace Synet
         {
         }
 
+        SYNET_INLINE Tensor(TensorType type, const Synet::Shape& shape, const TensorFormat& format)
+            : _type(type)
+            , _shape(shape)
+            , _buffer(std::make_shared<Buffer>())
+            , _format(format)
+        {
+            Resize();
+        }
+
+        template<class U> SYNET_INLINE Tensor(TensorType type, const Synet::Shape& shape, const TensorFormat& format, const U & value, const String& name = String())
+            : _type(type)
+            , _shape(shape)
+            , _buffer(std::make_shared<Buffer>())
+            , _format(format)
+            , _name(name)
+        {
+            Resize<U>(value);
+        }
+
+#if defined(SYNET_TENSOR_API_OLD)
         SYNET_INLINE Tensor(const Synet::Shape & shape, const TensorFormat & format)
             : _shape(shape)
             , _buffer(std::make_shared<Buffer>())
             , _format(format)
         {
-            Resize();
+            ResizeOld();
         }
 
         SYNET_INLINE Tensor(const Synet::Shape & shape, const Type & value = Type(), const TensorFormat & format = TensorFormatUnknown, const String & name = String())
@@ -89,8 +109,9 @@ namespace Synet
             , _format(format)
             , _name(name)
         {
-            Resize(value);
+            ResizeOld(value);
         }
+#endif
 
         SYNET_INLINE Tensor(const uint8_t * data, size_t size, TensorType type, const Synet::Shape & shape, const TensorFormat & format = TensorFormatUnknown, const String & name = String())
             : _shape(shape)
@@ -107,18 +128,44 @@ namespace Synet
         {
         }
 
-        SYNET_INLINE void Reshape(const Synet::Shape & shape, const TensorFormat & format)
+        SYNET_INLINE void Reshape(TensorType type, const Synet::Shape& shape, const TensorFormat& format)
         {
+            _type = type;
             _shape = shape;
             _format = format;
             Resize();
         }
 
-        SYNET_INLINE void Reshape(std::initializer_list<size_t> shape, const TensorFormat & format)
+        template<class U> SYNET_INLINE void Reshape(TensorType type, const Synet::Shape& shape, const TensorFormat& format, const U& value, const String& name = String())
         {
-            _shape.assign(shape.begin(), shape.end());
+            _type = type;
+            _name = name;
+            _shape = shape;
             _format = format;
-            Resize();
+            Resize<U>(value);
+        }
+
+        SYNET_INLINE void Extend(TensorType type, const Synet::Shape& shape, const TensorFormat& format = TensorFormatUnknown)
+        {
+            if (_type == TensorTypeUnknown)
+                _type = type;
+            else
+                assert(_type == type);
+            assert(_type != TensorTypeUnknown);
+            _shape = shape;
+            _format = format;
+            _size = Size(0, _shape.size());
+            size_t size = _size * TypeSize();
+            if (size > _buffer->size)
+                _buffer->Resize(size);
+        }
+
+#if defined(SYNET_TENSOR_API_OLD)
+        SYNET_INLINE void Reshape(const Synet::Shape & shape, const TensorFormat & format)
+        {
+            _shape = shape;
+            _format = format;
+            ResizeOld();
         }
 
         SYNET_INLINE void Reshape(const Synet::Shape & shape, const Type & value = Type(), const TensorFormat & format = TensorFormatUnknown, const String & name = String())
@@ -126,15 +173,16 @@ namespace Synet
             _name = name;
             _shape = shape;
             _format = format;
-            Resize(value);
+            ResizeOld(value);
         }
 
         SYNET_INLINE void Extend(const Synet::Shape & shape, const TensorFormat & format = TensorFormatUnknown)
         {
             _shape = shape;
             _format = format;
-            Extend();
+            ExtendOld();
         }
+#endif
 
         SYNET_INLINE void Clear(bool saveType = false)
         {
@@ -160,6 +208,7 @@ namespace Synet
 #endif
         }
 
+#if defined(SYNET_TENSOR_API_OLD)
         SYNET_INLINE Tensor<float> & As32f()
         {
             assert(_type == TensorTypeUnknown || _type == TensorType32f);
@@ -231,6 +280,7 @@ namespace Synet
             assert(_type == TensorTypeUnknown || _type == TensorType64u);
             return *(const Tensor<uint64_t>*)this;
         }
+#endif
 
         SYNET_INLINE TensorType GetType() const
         {
@@ -392,7 +442,6 @@ namespace Synet
         }
 #endif
 
-#if defined(SYNET_TENSOR_API_NEW)
         SYNET_INLINE uint8_t* RawData()
         {
             return _buffer->data;
@@ -434,7 +483,6 @@ namespace Synet
         {
             return Data<U>() + Offset(index);
         }
-#endif
 
         SYNET_INLINE void Share(const Tensor & tensor)
         {
@@ -637,7 +685,24 @@ namespace Synet
             Synet::DebugPrint(os, tensor.CpuData(), tensor.Shape(), String(), first, last, precision);
         }
 
-        SYNET_INLINE void Resize(Type value)
+        template<class U> SYNET_INLINE void Resize(U value)
+        {
+            assert(_type != TensorTypeUnknown && _type == GetTensorType<U>());
+            _size = Size(0, _shape.size());
+            _buffer->Resize(_size * TypeSize());
+            CpuSet(_size, value, Data<U>());
+        }
+
+        SYNET_INLINE void Resize()
+        {
+            assert(_type != TensorTypeUnknown);
+            _size = Size(0, _shape.size());
+            _buffer->Resize(_size * TypeSize());
+            memset(_buffer->data, 0, _buffer->size);
+        }
+
+#if defined(SYNET_TENSOR_API_OLD)
+        SYNET_INLINE void ResizeOld(Type value)
         {
             _type = GetTensorType<Type>();
             assert(_type != TensorTypeUnknown);
@@ -646,7 +711,7 @@ namespace Synet
             CpuSet(_size, value, Data<Type>());
         }
 
-        SYNET_INLINE void Resize()
+        SYNET_INLINE void ResizeOld()
         {
             _type = GetTensorType<Type>();
             assert(_type != TensorTypeUnknown);
@@ -655,7 +720,7 @@ namespace Synet
             memset(_buffer->data, 0, _buffer->size);
         }
 
-        SYNET_INLINE void Extend()
+        SYNET_INLINE void ExtendOld()
         {
             if(_type == TensorTypeUnknown)
                 _type = GetTensorType<Type>();
@@ -665,6 +730,7 @@ namespace Synet
             if (size > _buffer->size)
                 _buffer->Resize(size);
         }
+#endif
 
         typedef Synet::Buffer<uint8_t> Buffer;
         typedef std::shared_ptr<Buffer> BufferPtr;
