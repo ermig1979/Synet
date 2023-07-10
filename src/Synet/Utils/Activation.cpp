@@ -44,6 +44,40 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
+    SYNET_INLINE float Gelu32f(float value)
+    {
+        return value * (::erf(value * float(M_SQRT1_2)) + 1.0f) * 0.5f;
+    }
+
+    void Gelu32f(const float* src, size_t size, float* dst)
+    {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        ::SimdSynetGelu32f(src, size, dst);
+#else
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = Gelu32f(src[i]);
+#endif
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    SYNET_INLINE float HardSigmoid32f(float value, float scale, float shift)
+    {
+        return Max(0.0f, Min(value * scale + shift, 1.0f));
+    }
+
+    void HardSigmoid32f(const float* src, size_t size, float scale, float shift, float* dst)
+    {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        ::SimdSynetHardSigmoid32f(src, size, &scale, &shift, dst);
+#else
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = HardSigmoid32f(src[i], scale, shift);
+#endif
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
     template <> void CpuElu<float>(const float * src, size_t size, float alpha, float * dst)
     {

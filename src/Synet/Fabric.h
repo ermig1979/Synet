@@ -129,9 +129,9 @@ namespace Synet
             case LayerTypeFlatten: return new FlattenLayer<T>(param, context);
             case LayerTypeFused: return new FusedLayer<T>(param, context);
             case LayerTypeGather: return new GatherLayer<T>(param, context);
-            case LayerTypeGelu: return new GeluLayer<T>(param, context);
+            case LayerTypeGelu: return new GeluLayer(param, context);
             case LayerTypeHswish: return new HswishLayer<T>(param, context);
-            case LayerTypeHardSigmoid: return new HardSigmoidLayer<T>(param, context);
+            case LayerTypeHardSigmoid: return new HardSigmoidLayer(param, context);
             case LayerTypeInnerProduct: return new InnerProductLayer<T>(param, context, method);
             case LayerTypeInput: return new InputLayer<T>(param, context);
             case LayerTypeInterp: return new InterpLayer<T>(param, context);

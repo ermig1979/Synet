@@ -48,6 +48,7 @@ namespace Synet
             : _param(param)
             , _context(context)
             , _isBack(false)
+            , _const(false)
             , _perfEnable(false)
             , _perfInited(false)
             , _perfFlop(0)
@@ -109,6 +110,11 @@ namespace Synet
             return true;
         }
 
+        bool Const() const
+        {
+            return _const;
+        }
+
         virtual void DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
         {
         }
@@ -140,6 +146,8 @@ namespace Synet
 
         inline void Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            if (_const)
+                return;
             InitPerfStat();
             SYNET_PERF_TEST(_perfComm);
             SYNET_PERF_TEST(_perfSpec);
@@ -255,6 +263,9 @@ namespace Synet
         {
             return _context->options;
         }
+
+    protected:
+        bool _const;
 
     private:
         friend class Network;

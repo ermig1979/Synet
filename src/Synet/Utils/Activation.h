@@ -30,6 +30,10 @@ namespace Synet
 {
     void Elu32f(const float* src, size_t size, float alpha, float* dst);
 
+    void Gelu32f(const float* src, size_t size, float* dst);
+
+    void HardSigmoid32f(const float* src, size_t size, float scale, float shift, float* dst);
+
     //-------------------------------------------------------------------------------------------------
 
     template <typename T> SYNET_INLINE T CpuElu(T value, T alpha)
