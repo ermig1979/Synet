@@ -49,7 +49,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             if (_empty)
             {
@@ -96,6 +96,7 @@ namespace Synet
             std::stringstream desc;
             desc << _srcExt << "x" << _itCount << "x" << _srcInt << "-" << _dstInt;
             this->UsePerfStat(desc.str(), Flop());
+            return true;
         }
 
         virtual void AddChild(const LayerSharedPtr& child)

@@ -42,7 +42,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             assert(src.size() == 1);
             const ArgMaxParam & param = this->Param().argMax();
@@ -57,6 +57,7 @@ namespace Synet
 
             dst[0]->As64i().Reshape(shape, src[0]->Format());
             this->UsePerfStat();
+            return true;
         }
 
     protected:

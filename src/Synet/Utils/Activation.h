@@ -34,6 +34,16 @@ namespace Synet
 
     void HardSigmoid32f(const float* src, size_t size, float scale, float shift, float* dst);
 
+    void Hswish32f(const float* src, size_t size, float shift, float scale, float* dst);
+
+    void Mish32f(const float* src, size_t size, float threshold, float* dst);
+
+    void Relu32f(const float* src, size_t size, float slope, float* dst);
+
+    void RestrictRange32f(const float* src, size_t size, float lower, float upper, float* dst);
+
+    void Sigmoid32f(const float* src, size_t size, float* dst);
+
     //-------------------------------------------------------------------------------------------------
 
     template <typename T> SYNET_INLINE T CpuElu(T value, T alpha)

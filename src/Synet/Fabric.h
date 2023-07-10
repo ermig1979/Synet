@@ -130,7 +130,7 @@ namespace Synet
             case LayerTypeFused: return new FusedLayer<T>(param, context);
             case LayerTypeGather: return new GatherLayer<T>(param, context);
             case LayerTypeGelu: return new GeluLayer(param, context);
-            case LayerTypeHswish: return new HswishLayer<T>(param, context);
+            case LayerTypeHswish: return new HswishLayer(param, context);
             case LayerTypeHardSigmoid: return new HardSigmoidLayer(param, context);
             case LayerTypeInnerProduct: return new InnerProductLayer<T>(param, context, method);
             case LayerTypeInput: return new InputLayer<T>(param, context);
@@ -145,7 +145,7 @@ namespace Synet
                 else
                     return new MergedConvolution32fLayer<T>(param, context);
             case LayerTypeMeta: return new MetaLayer<T>(param, context);
-            case LayerTypeMish: return new MishLayer<T>(param, context);
+            case LayerTypeMish: return new MishLayer(param, context);
             case LayerTypeNonMaxSuppression: return new NonMaxSuppressionLayer<T>(param, context);
             case LayerTypeNormalize: return new NormalizeLayer<T>(param, context);
             case LayerTypePad: return new PadLayer<T>(param, context);
@@ -157,17 +157,17 @@ namespace Synet
             case LayerTypePriorBoxClustered: return new PriorBoxClusteredLayer<T>(param, context);
             case LayerTypeReduction: return new ReductionLayer<T>(param, context);
             case LayerTypeRegion: return new RegionLayer<T>(param, context);
-            case LayerTypeRelu: return new ReluLayer<T>(param, context);
+            case LayerTypeRelu: return new ReluLayer(param, context);
             case LayerTypeReorg: return new ReorgLayer<T>(param, context);
             case LayerTypeReshape: return new ReshapeLayer<T>(param, context);
-            case LayerTypeRestrictRange: return new RestrictRangeLayer<T>(param, context);
+            case LayerTypeRestrictRange: return new RestrictRangeLayer(param, context);
             case LayerTypeReverseSequence: return new ReverseSequenceLayer<T>(param, context);
             case LayerTypeRnnGruBd: return new RnnGruBdLayer<T>(param, context);
             case LayerTypeScale: return new ScaleLayer<T>(param, context, method);
             case LayerTypeScatterNd: return new ScatterNdLayer<T>(param, context);
             case LayerTypeShortcut: return new ShortcutLayer<T>(param, context);
             case LayerTypeShuffle: return new ShuffleLayer<T>(param, context);
-            case LayerTypeSigmoid: return new SigmoidLayer<T>(param, context);
+            case LayerTypeSigmoid: return new SigmoidLayer(param, context);
             case LayerTypeSlice: return new SliceLayer<T>(param, context);
             case LayerTypeSoftmax: return new SoftmaxLayer<T>(param, context);
             case LayerTypeSoftplus: return new SoftplusLayer<T>(param, context);

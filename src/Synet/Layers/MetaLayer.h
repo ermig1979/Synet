@@ -41,7 +41,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const MetaParam & param = this->Param().meta();
             switch (param.type())
@@ -86,6 +86,7 @@ namespace Synet
             default:
                 assert(0);
             }
+            return true;
         }
 
     protected:

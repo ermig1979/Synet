@@ -41,7 +41,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const GatherParam& param = this->Param().gather();
             _axis = param.axis();
@@ -49,6 +49,7 @@ namespace Synet
             _size = src[0]->Size(_axis);
             assert(src.size() == 2 && (src[1]->GetType() == TensorType32i || src[1]->GetType() == TensorType64i));
             dst[0]->Reshape(src[1]->Shape(), src[0]->Format());
+            return true;
         }
 
     protected:

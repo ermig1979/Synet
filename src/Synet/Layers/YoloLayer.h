@@ -43,7 +43,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const YoloParam & param = this->Param().yolo();
             _num = param.num();
@@ -60,6 +60,7 @@ namespace Synet
             dstShape[1] = _num*(_classes + 4 + 1);
             dst[0]->Reshape(dstShape, src[0]->Format());
             this->UsePerfStat();
+            return true;
         }
 
         void GetRegions(const TensorPtrs & src, size_t netW, size_t netH, Type threshold, Regions & dst) const

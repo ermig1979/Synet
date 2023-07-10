@@ -42,11 +42,12 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const NonMaxSuppressionParam& param = this->Param().nonMaxSuppression();
             dst[0]->Reshape(Shp(param.maxOutputBoxesPerClass(), 3), TensorType64i, src[0]->Format());
             this->UsePerfStat();
+            return true;
         }
 
     protected:

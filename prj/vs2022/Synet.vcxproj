@@ -60,7 +60,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\ActivationLayers.h" />
     <ClInclude Include="..\..\src\Synet\Layers\AddLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ArgMaxLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\BatchNormLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\BiasLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\BinaryOperationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\BroadcastLayer.h" />
@@ -77,7 +76,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\DetectionOutputLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\EltwiseLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ExpandDimsLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\FillLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\FlattenLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\FusedLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\GatherLayer.h" />

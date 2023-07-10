@@ -165,7 +165,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const Interp2Param & param = this->Param().interp2();
             if (param.pad().empty())
@@ -225,6 +225,7 @@ namespace Synet
             else
                 dst[0]->Reshape({ _num, _channels, _dstH, _dstW }, TensorFormatNchw);
             this->UsePerfStat();
+            return true;
         }
 
     protected:

@@ -243,7 +243,7 @@ namespace Synet
             return param.interpolationType() == InterpolationTypeNearest;
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const InterpParam & param = this->Param().interp();
             _cropBeg = param.cropBeg();
@@ -323,6 +323,7 @@ namespace Synet
             else
                 dst[0]->As32f().Reshape(dstShape, src[0]->Format());
             this->UsePerfStat();
+            return true;
         }
 
     protected:

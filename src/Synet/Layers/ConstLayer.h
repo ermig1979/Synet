@@ -41,10 +41,11 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             assert(this->Weight().size() == 1 && dst.size() == 1);
             dst[0]->Share(this->Weight()[0]);
+            return true;
         }
 
     protected:

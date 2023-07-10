@@ -42,7 +42,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             _coeff[0] = 1.0f;
             _coeff[1] = 1.0f;
@@ -52,6 +52,7 @@ namespace Synet
             _src[0] = src[0]->CpuData();
             _src[1] = src[1]->CpuData();
             this->UsePerfStat();
+            return true;
         }
 
     protected:

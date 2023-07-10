@@ -51,7 +51,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const PowerParam & param = this->Param().power();
             _power = param.power();
@@ -60,6 +60,7 @@ namespace Synet
             _size = src[0]->Size();
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
             this->UsePerfStat();
+            return true;
         }
 
     protected:

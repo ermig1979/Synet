@@ -32,24 +32,18 @@ namespace Synet
     {
     }
 
-    void EluLayer::Reshape(const TensorPtrs & src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool EluLayer::Reshape(const TensorPtrs & src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         _alpha = this->Param().elu().alpha();
         if (src.size() != 1 && dst.size() != 1)
-        {
-            CPL_LOG_SS(Error, "EluLayer supports only 1 input and 1 output!");
-            assert(0);
-        }
+            SYNET_ERROR("EluLayer supports only 1 input and 1 output!");
         _size = src[0]->Size();
         if (src[0]->GetType() == TensorType32f)
         {
             dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
         }
         else
-        {
-            CPL_LOG_SS(Error, "EluLayer supports only FP32 input and output!");
-            assert(0);
-        }
+            SYNET_ERROR("EluLayer supports only FP32 input and output!");
         if (src[0]->Const())
         {
             ForwardCpu(src, buf, dst);
@@ -61,6 +55,7 @@ namespace Synet
             this->UsePerfStat();
             _const = false;
         }
+        return true;
     }
 
     void EluLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
@@ -75,23 +70,17 @@ namespace Synet
     {
     }
 
-    void GeluLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool GeluLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (src.size() != 1 && dst.size() != 1)
-        {
-            CPL_LOG_SS(Error, "GeluLayer supports only 1 input and 1 output!");
-            assert(0);
-        }
+            SYNET_ERROR("GeluLayer supports only 1 input and 1 output!");
         _size = src[0]->Size();
         if (src[0]->GetType() == TensorType32f)
         {
             dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
         }
         else
-        {
-            CPL_LOG_SS(Error, "GeluLayer supports only FP32 input and output!");
-            assert(0);
-        }
+            SYNET_ERROR("GeluLayer supports only FP32 input and output!");
         if (src[0]->Const())
         {
             ForwardCpu(src, buf, dst);
@@ -103,6 +92,7 @@ namespace Synet
             this->UsePerfStat();
             _const = false;
         }
+        return true;
     }
 
     void GeluLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
@@ -117,26 +107,20 @@ namespace Synet
     {
     }
 
-    void HardSigmoidLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool HardSigmoidLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         HardSigmoidParam hardSigmoid = this->Param().hardSigmoid();
         _scale = hardSigmoid.scale();
         _shift = hardSigmoid.shift();
         if (src.size() != 1 && dst.size() != 1)
-        {
-            CPL_LOG_SS(Error, "HardSigmoidLayer supports only 1 input and 1 output!");
-            assert(0);
-        }
+            SYNET_ERROR("HardSigmoidLayer supports only 1 input and 1 output!");
         _size = src[0]->Size();
         if (src[0]->GetType() == TensorType32f)
         {
             dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
         }
         else
-        {
-            CPL_LOG_SS(Error, "HardSigmoidLayer supports only FP32 input and output!");
-            assert(0);
-        }
+            SYNET_ERROR("HardSigmoidLayer supports only FP32 input and output!");
         if (src[0]->Const())
         {
             ForwardCpu(src, buf, dst);
@@ -148,10 +132,204 @@ namespace Synet
             this->UsePerfStat();
             _const = false;
         }
+        return true;
     }
 
     void HardSigmoidLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         HardSigmoid32f(src[0]->Data<float>(), _size, _scale, _shift, dst[0]->Data<float>());
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    HswishLayer::HswishLayer(const LayerParam& param, Context* context)
+        : Base(param, context)
+    {
+    }
+
+    bool HswishLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        HswishParam hswish = this->Param().hswish();
+        _shift = hswish.shift();
+        _scale = hswish.scale();
+        if (src.size() != 1 && dst.size() != 1)
+            SYNET_ERROR("HswishLayer supports only 1 input and 1 output!");
+        _size = src[0]->Size();
+        if (src[0]->GetType() == TensorType32f)
+        {
+            dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        }
+        else
+            SYNET_ERROR("HswishLayer supports only FP32 input and output!");
+        if (src[0]->Const())
+        {
+            ForwardCpu(src, buf, dst);
+            dst[0]->SetConst(true);
+            _const = true;
+        }
+        else
+        {
+            this->UsePerfStat();
+            _const = false;
+        }
+        return true;
+    }
+
+    void HswishLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        Hswish32f(src[0]->Data<float>(), _size, _shift, _scale, dst[0]->Data<float>());
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    MishLayer::MishLayer(const LayerParam& param, Context* context)
+        : Base(param, context)
+    {
+    }
+
+    bool MishLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        _threshold = this->Param().softplus().threshold(); // threshold to avoid FP32 overflow in exp() function.
+        if (src.size() != 1 && dst.size() != 1)
+            SYNET_ERROR("MishLayer supports only 1 input and 1 output!");
+        _size = src[0]->Size();
+        if (src[0]->GetType() == TensorType32f)
+        {
+            dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        }
+        else
+            SYNET_ERROR("MishLayer supports only FP32 input and output!");
+        if (src[0]->Const())
+        {
+            ForwardCpu(src, buf, dst);
+            dst[0]->SetConst(true);
+            _const = true;
+        }
+        else
+        {
+            this->UsePerfStat();
+            _const = false;
+        }
+        return true;
+    }
+
+    void MishLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        Mish32f(src[0]->Data<float>(), _size, _threshold, dst[0]->Data<float>());
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    ReluLayer::ReluLayer(const LayerParam& param, Context* context)
+        : Base(param, context)
+    {
+    }
+
+    bool ReluLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        _negativeSlope = this->Param().relu().negativeSlope();
+        if (src.size() != 1 && dst.size() != 1)
+            SYNET_ERROR("ReluLayer supports only 1 input and 1 output!");
+        _size = src[0]->Size();
+        if (src[0]->GetType() == TensorType32f)
+        {
+            dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        }
+        else
+            SYNET_ERROR("ReluLayer supports only FP32 input and output!");
+        if (src[0]->Const())
+        {
+            ForwardCpu(src, buf, dst);
+            dst[0]->SetConst(true);
+            _const = true;
+        }
+        else
+        {
+            this->UsePerfStat();
+            _const = false;
+        }
+        return true;
+    }
+
+    void ReluLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        Relu32f(src[0]->Data<float>(), _size, _negativeSlope, dst[0]->Data<float>());
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    RestrictRangeLayer::RestrictRangeLayer(const LayerParam& param, Context* context)
+        : Base(param, context)
+    {
+    }
+
+    bool RestrictRangeLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        const RestrictRangeParam& param = this->Param().restrictRange();
+        _lower = param.lower();
+        _upper = param.upper();
+        if (src.size() != 1 && dst.size() != 1)
+            SYNET_ERROR("RestrictRangeLayer supports only 1 input and 1 output!");
+        _size = src[0]->Size();
+        if (src[0]->GetType() == TensorType32f)
+        {
+            dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        }
+        else
+            SYNET_ERROR("RestrictRangeLayer supports only FP32 input and output!");
+        if (src[0]->Const())
+        {
+            ForwardCpu(src, buf, dst);
+            dst[0]->SetConst(true);
+            _const = true;
+        }
+        else
+        {
+            this->UsePerfStat();
+            _const = false;
+        }
+        return true;
+    }
+
+    void RestrictRangeLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        RestrictRange32f(src[0]->Data<float>(), _size, _lower, _upper, dst[0]->Data<float>());
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    SigmoidLayer::SigmoidLayer(const LayerParam& param, Context* context)
+        : Base(param, context)
+    {
+    }
+
+    bool SigmoidLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        if (src.size() != 1 && dst.size() != 1)
+            SYNET_ERROR("SigmoidLayer supports only 1 input and 1 output!");
+        _size = src[0]->Size();
+        if (src[0]->GetType() == TensorType32f)
+        {
+            dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        }
+        else
+            SYNET_ERROR("SigmoidLayer supports only FP32 input and output!");
+        if (src[0]->Const())
+        {
+            ForwardCpu(src, buf, dst);
+            dst[0]->SetConst(true);
+            _const = true;
+        }
+        else
+        {
+            this->UsePerfStat();
+            _const = false;
+        }
+        return true;
+    }
+
+    void SigmoidLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        Sigmoid32f(src[0]->Data<float>(), _size, dst[0]->Data<float>());
     }
 }

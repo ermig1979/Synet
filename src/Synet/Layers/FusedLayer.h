@@ -334,7 +334,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const FusedParam & fused = this->Param().fused();
             _type = fused.type();
@@ -515,6 +515,7 @@ namespace Synet
             std::stringstream desc;
             desc << src.size() << "->" << dst.size() << " t=" << _type << " c=" << _count << " s=" << _size;
             this->UsePerfStat(desc.str());
+            return true;
         }
 
     protected:

@@ -65,7 +65,7 @@ namespace Synet
                 ((Tensor&)this->Weight()[0]).Clear();
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             assert(src.size() == 1);
 
@@ -176,6 +176,7 @@ namespace Synet
             if (_deconvolution32f.Enable())
                 desc << " " << _deconvolution32f.Info();
             this->UsePerfStat(desc.str(), Flop());
+            return true;
         }
 
     protected:

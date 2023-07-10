@@ -202,7 +202,8 @@ namespace Synet
                 _input[i].layer->Reshape(_input[i].src, _input[i].buf, _input[i].dst);
         }
 
-        ReshapeStages();
+        if (!ReshapeStages())
+            return false;
 
         if (dstNames.size())
         {
@@ -270,8 +271,7 @@ namespace Synet
         else
             return false;
         _input[0].dst[0]->Reshape(shape, Type(0), format);
-        ReshapeStages();
-        return true;
+        return ReshapeStages();
     }
 
     bool Network::SetBatch(size_t batch)
@@ -826,15 +826,20 @@ namespace Synet
         }
     }
 
-    void Network::ReshapeStages()
+    bool Network::ReshapeStages()
     {
         for (size_t i = 0; i < _stages.size(); ++i)
         {
             const LayerParam& param = _stages[i].layer->Param();
-            _stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst);
+            if (!_stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst))
+            {
+                const LayerParam& param = _stages[i].layer->Param();
+                SYNET_ERROR("Can't reshape " << i << " layer (name : " << Cpl::ToStr(param.name()) << ", type : "  << Cpl::ToStr(param.type()) << ") !");
+            }
             if (_stages[i].layer->_isBack && param.type() != LayerTypeStub)
                 _stages[i].dst[0]->SetName(param.name());
         }
+        return true;
     }
 
     void Network::SetBuffers(TensorPtrs & buf)

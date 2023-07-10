@@ -41,7 +41,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             assert(src.size() == 1 && src[0]->GetType() == TensorType64i && src[0]->Count() == 1);
             Shape shape;
@@ -57,6 +57,7 @@ namespace Synet
             }
             else
                 assert(0);
+            return true;
         }
 
     protected:

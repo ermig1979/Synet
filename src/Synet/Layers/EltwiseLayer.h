@@ -85,7 +85,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const EltwiseParam & param = this->Param().eltwise();
             assert(param.coefficients().size() == 0 || param.coefficients().size() == src.size());
@@ -253,6 +253,7 @@ namespace Synet
                 }
             }
             this->UsePerfStat();
+            return true;
         }
 
         virtual int64_t Flop() const

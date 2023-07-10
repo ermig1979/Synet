@@ -63,7 +63,7 @@ namespace Synet
                 ((Tensor&)this->Weight()[0]).Clear();
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const ConvolutionParam & param = this->Param().convolution();
             Tensors & weight = (Tensors&)this->Weight();
@@ -141,6 +141,7 @@ namespace Synet
             desc << "-" << Max(_conv.dilationY, _conv.dilationX) << "-" << Max(_conv.strideY, _conv.strideX);
             desc << "-" << _conv.group << InternalInfo();
             this->UsePerfStat(desc.str(), Flop());
+            return true;
         }
 
     protected:

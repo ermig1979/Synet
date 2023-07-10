@@ -64,7 +64,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const RegionParam & param = this->Param().region();
             _coords = param.coords();
@@ -78,6 +78,7 @@ namespace Synet
             assert(src[0]->Axis(1) == _num*(_coords + _classes + 1));
             dst[0]->Reshape(src[0]->Shape());
             this->UsePerfStat();
+            return true;
         }
 
         void GetRegions(const TensorPtrs & src, Type threshold, Regions & dst)

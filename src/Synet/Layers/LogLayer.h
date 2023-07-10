@@ -51,7 +51,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const LogParam & param = this->Param().log();
             Type base = param.base();
@@ -65,6 +65,7 @@ namespace Synet
             _inputShift = param.shift();            
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
             this->UsePerfStat();
+            return true;
         }
 
     protected:

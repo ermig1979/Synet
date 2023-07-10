@@ -250,7 +250,7 @@ namespace Synet
             return _is8i;
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const ScaleParam & param = this->Param().scale();
             _axis = param.axis();
@@ -313,6 +313,7 @@ namespace Synet
                 dst[0]->Reshape(src[0]->Shape(), _format);
             this->UsePerfStat();
             _compatibility = 1;
+            return true;
         }
 
         virtual size_t MemoryUsage() const

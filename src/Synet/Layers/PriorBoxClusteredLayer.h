@@ -41,7 +41,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const PriorBoxClusteredParam & param = this->Param().priorBoxClustered();
 
@@ -132,6 +132,7 @@ namespace Synet
                     }
                 }
             }
+            return true;
         }
 
     protected:

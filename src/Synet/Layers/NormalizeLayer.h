@@ -297,7 +297,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const NormalizeParam & param = this->Param().normalize();
             _version = param.version();
@@ -401,6 +401,7 @@ namespace Synet
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
             buf[0]->Extend(Shape({ Max(_spatial, _channels) }));
             this->UsePerfStat();
+            return true;
         }
 
     protected:

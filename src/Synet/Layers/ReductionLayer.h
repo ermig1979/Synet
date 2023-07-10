@@ -145,7 +145,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const ReductionParam & param = this->Param().reduction();
             _type = param.type();
@@ -204,6 +204,7 @@ namespace Synet
             assert(_outer*_count*_inner == src[0]->Size());
             dst[0]->Reshape(shape, src[0]->Format());
             this->UsePerfStat();
+            return true;
         }
 
     protected:

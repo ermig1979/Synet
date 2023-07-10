@@ -52,7 +52,7 @@ namespace Synet
             _internal[1] = 0;
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             assert(src.size() == 2 && dst.size() == 2 && src[0]->Count() == 3 && src[1]->Count() == 2);
             assert(src[0]->Axis(0) == src[1]->Axis(0) && src[0]->Axis(1) == 1);
@@ -82,6 +82,7 @@ namespace Synet
             std::stringstream desc;
             desc << _batch << "x" << _input << "-" << _output;
             this->UsePerfStat(desc.str(), Flop());
+            return true;
         }
 
         virtual int64_t Flop() const

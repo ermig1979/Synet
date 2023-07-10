@@ -272,3 +272,9 @@ namespace Synet
         DebugPrintLayerInternal,
     };
 }
+
+#define SYNET_ERROR(message) \
+    { \
+       CPL_LOG_SS(Error, message); \
+       return false; \
+    }

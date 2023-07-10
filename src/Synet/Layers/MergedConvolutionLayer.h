@@ -178,7 +178,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             assert(src.size() == 1 && src[0]->Count() == 4 && src[0]->Format() == TensorFormatNhwc);
 
@@ -246,6 +246,7 @@ namespace Synet
                 desc << "-" << (a.conv[i].IsDepthwise() ? String("") : Cpl::ToStr(a.conv[i].dstC) + "x") << a.conv[i].kernelY << "x" << a.conv[i].strideY;
             desc << InternalInfo();
             this->UsePerfStat(desc.str(), Flop());
+            return true;
         }
 
         virtual void CompactWeight()

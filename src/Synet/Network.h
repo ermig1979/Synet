@@ -159,7 +159,7 @@ namespace Synet
 
         void UnifyStats();
 
-        void ReshapeStages();
+        bool ReshapeStages();
 
         void SetBuffers(TensorPtrs& buf);
 

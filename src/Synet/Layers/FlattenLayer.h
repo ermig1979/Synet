@@ -41,7 +41,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             assert(src[0] != dst[0]);
             const FlattenParam & param = this->Param().flatten();
@@ -55,6 +55,7 @@ namespace Synet
             for (size_t i = endAxis + 1; i < src[0]->Count(); ++i) 
                 shape.push_back(src[0]->Axis(i));
             dst[0]->ShareAs(*src[0], shape, src[0]->Format());
+            return true;
         }
 
     protected:

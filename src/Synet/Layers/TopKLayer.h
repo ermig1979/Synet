@@ -42,7 +42,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const TopKParam & param = this->Param().topK();
             Shape shape = src[0]->Shape();
@@ -60,6 +60,7 @@ namespace Synet
             else
                 assert(0);
             this->UsePerfStat();
+            return true;
         }
 
     protected:

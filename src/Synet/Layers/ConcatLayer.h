@@ -63,7 +63,7 @@ namespace Synet
             return this->Param().concat().can8i();
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             _concatAxis = this->Param().concat().axis();
             _fixed = this->Param().concat().fixed();
@@ -115,6 +115,7 @@ namespace Synet
 #else
             this->UsePerfStat();
 #endif
+            return true;
         }
 
     protected:

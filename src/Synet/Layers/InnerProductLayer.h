@@ -112,7 +112,7 @@ namespace Synet
                 ((Tensor&)this->Weight()[0]).Clear();
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const InnerProductParam& param = this->Param().innerProduct();
             _src8u = src[0]->GetType() == TensorType8u;
@@ -197,6 +197,7 @@ namespace Synet
                 desc << "B=" << _batch << " ";
             desc << "M=" << _M << " N=" << _N << " K=" << _K;
             this->UsePerfStat(desc.str(), Flop());
+            return true;
         }
 
     protected:

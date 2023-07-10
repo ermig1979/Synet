@@ -78,13 +78,14 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape());
             _compareType = this->Param().compare().type();
             _size = src[0]->Size();
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
             this->UsePerfStat();
+            return true;
         }
 
     protected:

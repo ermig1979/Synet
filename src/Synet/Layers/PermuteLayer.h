@@ -47,7 +47,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const PermuteParam & param = this->Param().permute();
             _nontrivial = false;
@@ -91,6 +91,7 @@ namespace Synet
             }
             else
                 dst[0]->ShareAs(*src[0], _dstShape, param.format() == TensorFormatUnknown ? src[0]->Format() : param.format());
+            return true;
         }
 
     protected:

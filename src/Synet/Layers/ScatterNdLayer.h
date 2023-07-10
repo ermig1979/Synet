@@ -42,7 +42,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             _offset.Reshape(src[1]->Shape());
             size_t count = src[1]->Count(), size = src[1]->Size();
@@ -60,6 +60,7 @@ namespace Synet
             if (src[0] != dst[0])
                 dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
             this->UsePerfStat();
+            return true;
         }
 
     protected:

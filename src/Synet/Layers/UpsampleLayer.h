@@ -107,7 +107,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const UpsampleParam & param = this->Param().upsample();
             if (param.stride() < 0)
@@ -160,6 +160,7 @@ namespace Synet
             }
             dst[0]->Reshape(shape, src[0]->Format());
             this->UsePerfStat();
+            return true;
         }
 
     protected:

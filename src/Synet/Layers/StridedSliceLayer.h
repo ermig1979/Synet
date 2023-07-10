@@ -42,7 +42,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             StridedSliceParam param = this->Param().stridedSlice();
 
@@ -142,6 +142,7 @@ namespace Synet
             for (size_t i = 0; i < _dstDims.size(); ++i)
                 _dstStrides[i] = dst[0]->Size(i);
             this->UsePerfStat();
+            return true;
         }
 
     protected:

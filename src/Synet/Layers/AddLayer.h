@@ -55,7 +55,7 @@ namespace Synet
             return _method != QuantizationMethodUnknown;
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape() && src[0]->GetType() == src[1]->GetType() && src[0]->Count() == 4);
             _src8u = src[0]->GetType() == TensorType8u;
@@ -92,6 +92,7 @@ namespace Synet
                     dst[0]->As32f().Reshape(src[0]->Shape(), _format);
             }
             this->UsePerfStat();
+            return true;
         }
 
     protected:

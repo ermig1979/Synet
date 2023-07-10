@@ -43,7 +43,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const YoloV7Param & param = this->Param().yoloV7();
             _maxOutputBoxesPerClass = param.maxOutputBoxesPerClass();
@@ -57,6 +57,7 @@ namespace Synet
             Base::Extend32f(buf, 0, Shp(src[0]->Axis(1) * 7), src[0]->Format());
             dst[0]->Reshape(Shp(0, 7));
             this->UsePerfStat();
+            return true;
         }
 
     protected:

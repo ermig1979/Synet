@@ -47,7 +47,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             assert(src.size() == 2 && src[0]->Count() == 3);
             assert(src[1]->Count() == 2 && src[0]->Axis(0) == src[1]->Axis(0) && src[0]->Axis(1) == src[1]->Axis(1));
@@ -57,6 +57,7 @@ namespace Synet
             _c = src[0]->Axis(2);
             dst[0]->Reshape({ size_t(1), _t, _n, size_t(1) });
             this->UsePerfStat();
+            return true;
         }
 
     protected:
