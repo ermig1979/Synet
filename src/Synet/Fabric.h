@@ -106,7 +106,7 @@ namespace Synet
             switch (param.type())
             {
             case LayerTypeAdd: return new AddLayer<T>(param, context, method);
-            case LayerTypeArgMax: return new ArgMaxLayer<T>(param, context);
+            case LayerTypeArgMax: return new ArgMaxLayer(param, context);
             case LayerTypeBias: return new BiasLayer<T>(param, context);
             case LayerTypeBinaryOperation: return new BinaryOperationLayer<T>(param, context);
             case LayerTypeBroadcast: return new BroadcastLayer<T>(param, context);
