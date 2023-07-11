@@ -513,7 +513,24 @@ namespace Synet
         void ReshapeRange(const TensorPtrs & src, const TensorPtrs & dst)
         {
             assert(src.size() == 3 && src[0]->Size() == 1 && src[1]->Size() == 1 && src[2]->Size() == 1);
-            if (src[0]->GetType() == TensorType32i)
+            if (src[0]->GetType() == TensorType32f)
+            {
+                float begin = src[0]->As32i().CpuData()[0];
+                float end = src[1]->As32i().CpuData()[0];
+                float step = src[2]->As32i().CpuData()[0];
+                Floats result;
+                if (step > 0)
+                    for (float i = begin; i < end; i += step)
+                        result.push_back(i);
+                else
+                    for (float i = begin; i > end; i += step)
+                        result.push_back(i);
+                Synet::Tensor<float>& dst0 = dst[0]->As32f();
+                dst0.Reshape({ result.size() });
+                for (size_t i = 0; i < result.size(); ++i)
+                    dst0.CpuData()[i] = result[i];
+            }
+            else if (src[0]->GetType() == TensorType32i)
             {
                 int32_t begin = src[0]->As32i().CpuData()[0];
                 int32_t end = src[1]->As32i().CpuData()[0];
@@ -528,7 +545,7 @@ namespace Synet
                 Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
                 dst0.Reshape({ result.size() });
                 for (size_t i = 0; i < result.size(); ++i)
-                    dst0.CpuData()[i] = result[0];
+                    dst0.CpuData()[i] = result[i];
             }
             else if (src[0]->GetType() == TensorType64i)
             {
@@ -545,7 +562,7 @@ namespace Synet
                 Synet::Tensor<int64_t> & dst0 = dst[0]->As64i();
                 dst0.Reshape({ result.size() });
                 for (size_t i = 0; i < result.size(); ++i)
-                    dst0.CpuData()[i] = result[0];
+                    dst0.CpuData()[i] = result[i];
             }
             else
                 assert(0);

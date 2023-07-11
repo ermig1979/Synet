@@ -223,6 +223,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Less" && !ConvertLessNode(node, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Log" && !ConvertLogNode(node, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "LogSoftmax" && !ConvertLogSoftmaxNode(node, trans, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "LSTM" && !ConvertLstmNode(node, network.layers(), layer))
@@ -244,6 +246,8 @@ namespace Synet
                 if (node.op_type() == "Pow" && !ConvertPowNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "PRelu" && !ConvertPreluNode(node, network.layers(), layer))
+                    return ErrorMessage(i, node);
+                if (node.op_type() == "Range" && !ConvertRangeNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "ReduceL2" && !ConvertReduceL2Node(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -278,6 +282,8 @@ namespace Synet
                 if (node.op_type() == "Sub" && !ConvertSubNode(node, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Tile" && !ConvertTileNode(node, trans, network.layers(), layer))
+                    return ErrorMessage(i, node);
+                if (node.op_type() == "TopK" && !ConvertTopKNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Transpose" && !ConvertTransposeNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -1171,6 +1177,13 @@ namespace Synet
             return true;
         }
 
+        bool ConvertLogNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnaryOperation;
+            layer.unaryOperation().type() = UnaryOperationTypeLog;
+            return true;
+        }
+
         bool ConvertLogSoftmaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Vector& original, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeSoftmax;
@@ -1434,6 +1447,26 @@ namespace Synet
             layer.src().resize(1);
             if (!CompactShape(layer.weight()[0].dim()))
                 return false;
+            return true;
+        }
+
+        bool ConvertRangeNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 3))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+            if (src0 == NULL || src1 == NULL || src2 == NULL)
+                return false;
+            if (src0->type() != LayerTypeMeta && src0->type() != LayerTypeConst)
+                return false;
+            if (src1->type() != LayerTypeMeta && src1->type() != LayerTypeConst)
+                return false;
+            if (src2->type() != LayerTypeMeta && src2->type() != LayerTypeConst)
+                return false;
+            layer.type() = Synet::LayerTypeMeta;
+            layer.meta().type() = Synet::MetaTypeRange;
             return true;
         }
 
@@ -1946,6 +1979,34 @@ namespace Synet
                 }
                 layer.src().resize(1);
             }
+
+            return true;
+        }
+
+        bool ConvertTopKNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src1 == NULL)
+                return false;
+            if (src1->type() != LayerTypeMeta || src1->meta().type() != MetaTypeConst || src1->meta().alpha().type() != TensorType64i)
+                return false;
+
+            layer.type() = Synet::LayerTypeTopK;
+            layer.topK().k() = src1->meta().alpha().i64()[0];
+            if (!ConvertAtrributeInt(node, "axis", layer.topK().axis()))
+                return false;
+            int64_t largest;
+            if (!ConvertAtrributeInt(node, "largest", largest))
+                return false;
+            layer.topK().mode() = largest ? TopKModeMax : TopKModeMin;
+            int64_t sorted;
+            if (!ConvertAtrributeInt(node, "sorted", sorted))
+                return false;
+            layer.topK().sort() = sorted ? TopKSortValue : TopKSortIndex;
+            layer.topK().indexElementType() = TensorType64i;
+            layer.src().resize(1);
 
             return true;
         }

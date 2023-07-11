@@ -701,6 +701,7 @@ namespace Synet
         CPL_PARAM_VALUE(TopKMode, mode, TopKModeMax);
         CPL_PARAM_VALUE(TopKSort, sort, TopKSortValue); 
         CPL_PARAM_VALUE(TensorType, indexElementType, TensorType64i);
+        CPL_PARAM_VALUE(uint64_t, k, 0);
     };
 
     struct ConnectionParam
