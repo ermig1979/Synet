@@ -26,19 +26,9 @@
 
 #include "TestCommon.h"
 #include "TestPerformance.h"
-
-#if defined(SYNET_PERFORMANCE_STATISTIC) && !defined(SYNET_PERF_FUNC)
-#define SYNET_PERF_FUNC() CPL_PERF_FUNC()
-#define SYNET_PERF_BLOCK(name) CPL_PERF_BEG(name)
-#define SYNET_PERF_BLOCK_END(name) CPL_PERF_END(name)
-#define SYNET_PERF_DECL(name) Cpl::PerformanceMeasurer * name;
-#define SYNET_PERF_SET(name, value) name = value;
-#define SYNET_PERF_INIT(name, desc, flop) name = Cpl::PerformanceStorage::Global().Get(desc, flop);
-#define SYNET_PERF_TEST(name) Cpl::PerformanceHolder CPL_CAT(__pmh,__LINE__)(name);
-#endif
-#include "Synet/Synet.h"
-
 #include "TestNetwork.h"
+
+#include "Synet/Synet.h"
 
 namespace Test
 {

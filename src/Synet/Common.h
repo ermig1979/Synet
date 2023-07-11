@@ -100,31 +100,22 @@
 #error This platform is unsupported!
 #endif
 
-#ifndef SYNET_PERF_FUNC
+#if defined(SYNET_PERFORMANCE_STATISTIC) && !defined(SYNET_PERF_FUNC)
+#include "Cpl/Performance.h"
+#define SYNET_PERF_FUNC() CPL_PERF_FUNC()
+#define SYNET_PERF_BLOCK(name) CPL_PERF_BEG(name)
+#define SYNET_PERF_BLOCK_END(name) CPL_PERF_END(name)
+#define SYNET_PERF_DECL(name) Cpl::PerformanceMeasurer * name;
+#define SYNET_PERF_SET(name, value) name = value;
+#define SYNET_PERF_INIT(name, desc, flop) name = Cpl::PerformanceStorage::Global().Get(desc, flop);
+#define SYNET_PERF_TEST(name) Cpl::PerformanceHolder CPL_CAT(__pmh,__LINE__)(name);
+#elif !defined(SYNET_PERF_FUNC)
 #define SYNET_PERF_FUNC()
-#endif
-
-#ifndef SYNET_PERF_BLOCK
 #define SYNET_PERF_BLOCK(name)
-#endif
-
-#ifndef SYNET_PERF_BLOCK_END
 #define SYNET_PERF_BLOCK_END(name)
-#endif
-
-#ifndef SYNET_PERF_DECL
 #define SYNET_PERF_DECL(name)
-#endif
-
-#ifndef SYNET_PERF_SET
 #define SYNET_PERF_SET(name, value)
-#endif
-
-#ifndef SYNET_PERF_INIT
 #define SYNET_PERF_INIT(name, desc, flop)
-#endif
-
-#ifndef SYNET_PERF_TEST
 #define SYNET_PERF_TEST(name)
 #endif
 
