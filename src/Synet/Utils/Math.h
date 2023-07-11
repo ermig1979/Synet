@@ -71,6 +71,16 @@ namespace Synet
         return (float&)i;
     }
 
+    template <class T> T And(T a, T b);
+
+    template<> SYNET_INLINE float And<float>(float a, float b)
+    {
+        int _a = (int&)a;
+        int _b = (int&)b;
+        int _c = _a & _b;
+        return (float&)(_c);
+    }
+
     template <class T> SYNET_INLINE T RestrictRange(T value, T min, T max)
     {
         return Max(min, Min(max, value));

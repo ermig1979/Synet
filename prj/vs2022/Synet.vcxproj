@@ -26,6 +26,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\Synet\Layers\ActivationLayers.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ArgMaxLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\BinaryOperationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\Activation.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\SetInput.cpp" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Args.h" />

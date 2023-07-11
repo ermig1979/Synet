@@ -121,6 +121,7 @@ CPL_PARAM_ENUM1(Synet, ActivationFunctionType,
     ActivationFunctionTypeGelu);
 
 CPL_PARAM_ENUM1(Synet, BinaryOperationType,
+    BinaryOperationTypeAnd,
     BinaryOperationTypeDiv,
     BinaryOperationTypeSub);
 

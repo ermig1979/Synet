@@ -173,6 +173,8 @@ namespace Synet
 
                 if (node.op_type() == "Add" && !ConvertAddNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "And" && !ConvertAndNode(node, network.layers(), layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "ArgMax" && !ConvertArgMaxNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "AveragePool" && !ConvertAveragePoolNode(node, layer))
@@ -547,6 +549,19 @@ namespace Synet
                     std::swap(layer.src()[0], layer.src()[1]);
                 }
             }
+            return true;
+        }
+
+        bool ConvertAndNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
+            layer.type() = Synet::LayerTypeBinaryOperation;
+            layer.binaryOperation().type() = BinaryOperationTypeAnd;
             return true;
         }
 
