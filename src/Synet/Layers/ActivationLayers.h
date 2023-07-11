@@ -189,62 +189,40 @@ namespace Synet
 
     //---------------------------------------------------------------------------------------------
 
-    template <class T> class SoftplusLayer : public Synet::Layer<T>
+    class SoftplusLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        SoftplusLayer(const LayerParam& param, Context* context)
-            : Base(param, context)
-        {
-        }
+        SoftplusLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            _beta = this->Param().softplus().beta();
-            _threshold = this->Param().softplus().threshold();
-            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
-            this->UsePerfStat();
-            return true;
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            CpuSoftplus<Type>(src[0]->CpuData(), src[0]->Size(), _beta, _threshold, dst[0]->CpuData());
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        Type _beta, _threshold;
+        size_t _size;
+        float _beta, _threshold;
     };
 
     //---------------------------------------------------------------------------------------------
 
-    template <class T> class SwishLayer : public Synet::Layer<T>
+    class SwishLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        SwishLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        SwishLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
-            this->UsePerfStat();
-            return true;
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            CpuSwish(src[0]->CpuData(), src[0]->Size(), dst[0]->CpuData());
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+    private:
+        size_t _size;
     };
 }

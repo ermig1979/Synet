@@ -44,6 +44,10 @@ namespace Synet
 
     void Sigmoid32f(const float* src, size_t size, float* dst);
 
+    void Softplus32f(const float* src, size_t size, float beta, float threshold, float* dst);
+
+    void Swish32f(const float* src, size_t size, float* dst);
+
     //-------------------------------------------------------------------------------------------------
 
     template <typename T> SYNET_INLINE T CpuElu(T value, T alpha)

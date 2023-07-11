@@ -166,6 +166,41 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
+    SYNET_INLINE float Softplus32f(float value, float beta, float threshold)
+    {
+        return value > threshold ? value : ::logf(1.0f + ::expf(value * beta)) / beta;
+    }
+
+    void Softplus32f(const float* src, size_t size, float beta, float threshold, float* dst)
+    {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        ::SimdSynetSoftplus32f(src, size, &beta, &threshold, dst);
+#else
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = Softplus32f(src[i], beta, threshold);
+#endif
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    SYNET_INLINE float Swish32f(float value)
+    {
+        return value / (1.0f + ::expf(-value));
+    }
+
+    void Swish32f(const float* src, size_t size, float* dst)
+    {
+        const float slope = 1.0f;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        ::SimdSynetSwish32f(src, size, &slope, dst);
+#else
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = Swish32f(src[i]);
+#endif
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
     template <> void CpuElu<float>(const float * src, size_t size, float alpha, float * dst)
     {

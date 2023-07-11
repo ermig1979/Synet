@@ -332,4 +332,81 @@ namespace Synet
     {
         Sigmoid32f(src[0]->Data<float>(), _size, dst[0]->Data<float>());
     }
+
+    //-------------------------------------------------------------------------------------------------
+
+    SoftplusLayer::SoftplusLayer(const LayerParam& param, Context* context)
+        : Base(param, context)
+    {
+    }
+
+    bool SoftplusLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        const SoftplusParam& param = this->Param().softplus();
+        _beta = param.beta();
+        _threshold = param.threshold();
+        if (src.size() != 1 && dst.size() != 1)
+            SYNET_ERROR("SoftplusLayer supports only 1 input and 1 output!");
+        _size = src[0]->Size();
+        if (src[0]->GetType() == TensorType32f)
+        {
+            dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        }
+        else
+            SYNET_ERROR("SoftplusLayer supports only FP32 input and output!");
+        if (src[0]->Const())
+        {
+            ForwardCpu(src, buf, dst);
+            dst[0]->SetConst(true);
+            _const = true;
+        }
+        else
+        {
+            this->UsePerfStat();
+            _const = false;
+        }
+        return true;
+    }
+
+    void SoftplusLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        Softplus32f(src[0]->Data<float>(), _size, _beta, _threshold, dst[0]->Data<float>());
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    SwishLayer::SwishLayer(const LayerParam& param, Context* context)
+        : Base(param, context)
+    {
+    }
+
+    bool SwishLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        if (src.size() != 1 && dst.size() != 1)
+            SYNET_ERROR("SwishLayer supports only 1 input and 1 output!");
+        _size = src[0]->Size();
+        if (src[0]->GetType() == TensorType32f)
+        {
+            dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        }
+        else
+            SYNET_ERROR("SwishLayer supports only FP32 input and output!");
+        if (src[0]->Const())
+        {
+            ForwardCpu(src, buf, dst);
+            dst[0]->SetConst(true);
+            _const = true;
+        }
+        else
+        {
+            this->UsePerfStat();
+            _const = false;
+        }
+        return true;
+    }
+
+    void SwishLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        Swish32f(src[0]->Data<float>(), _size, dst[0]->Data<float>());
+    }
 }

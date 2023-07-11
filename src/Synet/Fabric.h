@@ -170,13 +170,13 @@ namespace Synet
             case LayerTypeSigmoid: return new SigmoidLayer(param, context);
             case LayerTypeSlice: return new SliceLayer<T>(param, context);
             case LayerTypeSoftmax: return new SoftmaxLayer<T>(param, context);
-            case LayerTypeSoftplus: return new SoftplusLayer<T>(param, context);
+            case LayerTypeSoftplus: return new SoftplusLayer(param, context);
             case LayerTypeSpaceToDepth: return new SpaceToDepthLayer<T>(param, context);
             case LayerTypeSqueeze: return new SqueezeLayer<T>(param, context);
             case LayerTypeSqueezeExcitation: return new SqueezeExcitationLayer<T>(param, context, method);
             case LayerTypeStridedSlice: return new StridedSliceLayer<T>(param, context);
             case LayerTypeStub: return new StubLayer<T>(param, context);
-            case LayerTypeSwish: return new SwishLayer<T>(param, context);
+            case LayerTypeSwish: return new SwishLayer(param, context);
             case LayerTypeSwitch: return new SwitchLayer<T>(param, context);
             case LayerTypeTensorIterator: return new TensorIteratorLayer<T>(param, context);
             case LayerTypeTile: return new TileLayer<T>(param, context);
