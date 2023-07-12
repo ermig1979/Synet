@@ -41,7 +41,7 @@ export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 "$BIN" -m=convert $PATHES -tf=$FORMAT -cs=0 -qm=$METHOD -bf=$BF16_TEST
 if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -bf=$BF16_TEST -et=10.0 -ie=10 -be=10 -dp=3 -dpf=6 -dpl=2 -dpp=4 -ar=0 -rt=0.5 -ro=0.3 -cs=0 -sf=0.000 -pl=$PERF -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -bf=$BF16_TEST -et=10.0 -ie=10 -be=10 -dp=3 -dpf=4 -dpl=2 -dpp=4 -ar=0 -rt=0.5 -ro=0.3 -cs=0 -sf=0.000 -pl=$PERF -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 

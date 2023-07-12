@@ -181,7 +181,7 @@ namespace Synet
             case LayerTypeTensorIterator: return new TensorIteratorLayer<T>(param, context);
             case LayerTypeTile: return new TileLayer<T>(param, context);
             case LayerTypeTopK: return new TopKLayer<T>(param, context);
-            case LayerTypeUnaryOperation: return new UnaryOperationLayer<T>(param, context);
+            case LayerTypeUnaryOperation: return new UnaryOperationLayer(param, context);
             case LayerTypeUnpack: return new UnpackLayer<T>(param, context);
             case LayerTypeUpsample: return new UpsampleLayer<T>(param, context);
             case LayerTypeWhere: return new WhereLayer<T>(param, context);

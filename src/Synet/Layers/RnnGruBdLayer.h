@@ -129,7 +129,7 @@ namespace Synet
                     buf01[i] = buf10[i]*src1[i];
 
                 _innerProduct32f[1].Forward(buf00, buf2);
-                Detail::UnaryOperationLayerForward(buf2, _output, UnaryOperationTypeTanh, buf2);
+                UnaryOperation32f(buf2, _output, UnaryOperationTypeTanh, buf2);
 
                 for (size_t i = 0; i < _output; ++i)
                     dst0[i] = (1.0f - buf11[i]) * buf2[i] + src1[i]* buf11[i];

@@ -176,14 +176,14 @@ namespace Synet
                     for (size_t k = 0; k < _hidS4; ++k)
                         buf0[k] = xCurr[k] + buf0[k] + bias[k] + bias[_hidS4 + k];
 
-                    CpuSigmoid(buf0, 3 * _hidS, buf0);
+                    Sigmoid32f(buf0, 3 * _hidS, buf0);
 
-                    Detail::UnaryOperationLayerForward(cb, _hidS, UnaryOperationTypeTanh, cb);
+                    UnaryOperation32f(cb, _hidS, UnaryOperationTypeTanh, cb);
 
                     for (size_t k = 0; k < _hidS; ++k)
                         cCurr[k] = fb[k] * cPrev[k] + ib[k] * cb[k];
 
-                    Detail::UnaryOperationLayerForward(cCurr, _hidS, UnaryOperationTypeTanh, hCurr);
+                    UnaryOperation32f(cCurr, _hidS, UnaryOperationTypeTanh, hCurr);
 
                     for (size_t k = 0; k < _hidS; ++k)
                         hCurr[k] *= ob[k];
