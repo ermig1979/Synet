@@ -29,6 +29,8 @@
     <ClCompile Include="..\..\src\Synet\Layers\BinaryOperationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ConcatLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\GridSampleLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\PriorBoxClusteredLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\PriorBoxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\UnaryOperationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\Activation.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\SetInput.cpp" />

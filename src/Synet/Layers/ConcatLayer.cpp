@@ -28,19 +28,16 @@
 
 namespace Synet
 {
-    namespace Detail
+    template <class T, size_t N> void Concat2N(const T * src0, const T * src1, size_t num, T * dst)
     {
-        template <class T, size_t N> void Concat2N(const T * src0, const T * src1, size_t num, T * dst)
+        struct H { T a[N]; };
+        for (size_t n = 0; n < num; ++n)
         {
-            struct H { T a[N]; };
-            for (size_t n = 0; n < num; ++n)
-            {
-                ((H*)dst)[0] = *(H*)src0;
-                ((H*)dst)[1] = *(H*)src1;
-                src0 += N;
-                src1 += N;
-                dst += 2*N;
-            }
+            ((H*)dst)[0] = *(H*)src0;
+            ((H*)dst)[1] = *(H*)src1;
+            src0 += N;
+            src1 += N;
+            dst += 2*N;
         }
     }
 
@@ -105,7 +102,7 @@ namespace Synet
         }
         else
         {
-            ForwardCpu(src, buf, dst);
+            //ForwardCpu(src, buf, dst);
             this->UsePerfStat();
             _const = false;
         }
@@ -152,13 +149,13 @@ namespace Synet
         if (_concatInputSize == 1)
         {
             if (_special2N == 16)
-                Detail::Concat2N<T, 16>(src[0], src[1], _concatNum, dst);
+                Concat2N<T, 16>(src[0], src[1], _concatNum, dst);
             else if (_special2N == 32)
-                Detail::Concat2N<T, 32>(src[0], src[1], _concatNum, dst);
+                Concat2N<T, 32>(src[0], src[1], _concatNum, dst);
             else if (_special2N == 64)
-                Detail::Concat2N<T, 64>(src[0], src[1], _concatNum, dst);
+                Concat2N<T, 64>(src[0], src[1], _concatNum, dst);
             else if (_special2N == 128)
-                Detail::Concat2N<T, 128>(src[0], src[1], _concatNum, dst);
+                Concat2N<T, 128>(src[0], src[1], _concatNum, dst);
             else
             {
                 for (size_t n = 0; n < _concatNum; ++n)

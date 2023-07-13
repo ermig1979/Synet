@@ -155,8 +155,8 @@ namespace Synet
             case LayerTypePooling: return new PoolingLayer<T>(param, context);
             case LayerTypePower: return new PowerLayer<T>(param, context);
             case LayerTypePrelu: return new PreluLayer<T>(param, context);
-            case LayerTypePriorBox: return new PriorBoxLayer<T>(param, context);
-            case LayerTypePriorBoxClustered: return new PriorBoxClusteredLayer<T>(param, context);
+            case LayerTypePriorBox: return new PriorBoxLayer(param, context);
+            case LayerTypePriorBoxClustered: return new PriorBoxClusteredLayer(param, context);
             case LayerTypeReduction: return new ReductionLayer<T>(param, context);
             case LayerTypeRegion: return new RegionLayer<T>(param, context);
             case LayerTypeRelu: return new ReluLayer(param, context);
