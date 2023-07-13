@@ -113,7 +113,7 @@ namespace Synet
             case LayerTypeBroadcast: return new BroadcastLayer<T>(param, context);
             case LayerTypeCast: return new CastLayer<T>(param, context);
             case LayerTypeCompare: return new CompareLayer<T>(param, context);
-            case LayerTypeConcat: return new ConcatLayer<T>(param, context);
+            case LayerTypeConcat: return new ConcatLayer(param, context);
             case LayerTypeConst: return new ConstLayer<T>(param, context);
             case LayerTypeConstantOfShape: return new ConstantOfShapeLayer<T>(param, context);
             case LayerTypeConvolution:
