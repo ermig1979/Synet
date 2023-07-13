@@ -27,6 +27,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\ActivationLayers.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ArgMaxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\BinaryOperationLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\GridSampleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\UnaryOperationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\Activation.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\SetInput.cpp" />
@@ -82,6 +83,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\FlattenLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\FusedLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\GatherLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\GridSampleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InnerProductLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InputLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Interp2Layer.h" />

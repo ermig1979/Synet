@@ -52,6 +52,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeFused,
     LayerTypeGather,
     LayerTypeGelu,
+    LayerTypeGridSample,
     LayerTypeHardSigmoid,
     LayerTypeHswish,
     LayerTypeInnerProduct,
@@ -148,6 +149,16 @@ CPL_PARAM_ENUM1(Synet, EltwiseOperationType,
     EltwiseOperationTypeSum,
     EltwiseOperationTypeMax,
     EltwiseOperationTypeMin);
+
+CPL_PARAM_ENUM1(Synet, GridSampleInterpolationMode,
+    GridSampleInterpolationModeBilinear,
+    GridSampleInterpolationModeNearest,
+    GridSampleInterpolationModeBicubic);
+
+CPL_PARAM_ENUM1(Synet, GridSamplePaddingMode,
+    GridSampleInterpolationModeZeros,
+    GridSampleInterpolationModeBorder,
+    GridSampleInterpolationModeReflection);
 
 CPL_PARAM_ENUM1(Synet, InterpolationType,
     InterpolationTypeBilinear,
@@ -426,6 +437,13 @@ namespace Synet
     {
         CPL_PARAM_VALUE(int, batchDims, 0);
         CPL_PARAM_VALUE(int, axis, 0);
+    };
+
+    struct GridSampleParam
+    {
+        CPL_PARAM_VALUE(bool, alignCorners, false);
+        CPL_PARAM_VALUE(GridSampleInterpolationMode, interpolationMode, GridSampleInterpolationModeBilinear);
+        CPL_PARAM_VALUE(GridSamplePaddingMode, paddingMode, GridSampleInterpolationModeZeros);
     };
 
     struct HardSigmoidParam
@@ -785,6 +803,7 @@ namespace Synet
         CPL_PARAM_STRUCT(FlattenParam, flatten);
         CPL_PARAM_STRUCT(FusedParam, fused);
         CPL_PARAM_STRUCT(GatherParam, gather);
+        CPL_PARAM_STRUCT(GridSampleParam, gridSample);
         CPL_PARAM_STRUCT(HardSigmoidParam, hardSigmoid);
         CPL_PARAM_STRUCT(HswishParam, hswish);
         CPL_PARAM_STRUCT(InnerProductParam, innerProduct);

@@ -45,6 +45,7 @@
 #include "Synet/Layers/FlattenLayer.h"
 #include "Synet/Layers/FusedLayer.h"
 #include "Synet/Layers/GatherLayer.h"
+#include "Synet/Layers/GridSampleLayer.h"
 #include "Synet/Layers/InnerProductLayer.h"
 #include "Synet/Layers/InputLayer.h"
 #include "Synet/Layers/InterpLayer.h"
@@ -130,6 +131,7 @@ namespace Synet
             case LayerTypeFused: return new FusedLayer<T>(param, context);
             case LayerTypeGather: return new GatherLayer<T>(param, context);
             case LayerTypeGelu: return new GeluLayer(param, context);
+            case LayerTypeGridSample: return new GridSampleLayer(param, context);
             case LayerTypeHswish: return new HswishLayer(param, context);
             case LayerTypeHardSigmoid: return new HardSigmoidLayer(param, context);
             case LayerTypeInnerProduct: return new InnerProductLayer<T>(param, context, method);

@@ -515,9 +515,9 @@ namespace Synet
             assert(src.size() == 3 && src[0]->Size() == 1 && src[1]->Size() == 1 && src[2]->Size() == 1);
             if (src[0]->GetType() == TensorType32f)
             {
-                float begin = src[0]->As32i().CpuData()[0];
-                float end = src[1]->As32i().CpuData()[0];
-                float step = src[2]->As32i().CpuData()[0];
+                float begin = src[0]->As32f().CpuData()[0];
+                float end = src[1]->As32f().CpuData()[0];
+                float step = src[2]->As32f().CpuData()[0];
                 Floats result;
                 if (step > 0)
                     for (float i = begin; i < end; i += step)

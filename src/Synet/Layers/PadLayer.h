@@ -75,7 +75,7 @@ namespace Synet
             Shape dstShape = src[0]->Shape();
             for (size_t i = 0; i < n; ++i)
                 dstShape[i] += _padB[i] + _padE[i];
-            dst[0]->Reshape(dstShape, 0);
+            dst[0]->Reshape(dstShape, 0, src[0]->Format());
             this->UsePerfStat();
             return true;
         }
