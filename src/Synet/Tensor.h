@@ -27,6 +27,7 @@
 #include "Synet/Common.h"
 #include "Synet/Params.h"
 #include "Synet/Buffer.h"
+#include "Synet/Utils/Shape.h"
 #include "Synet/Utils/Math.h"
 #include "Synet/Utils/DebugPrint.h"
 

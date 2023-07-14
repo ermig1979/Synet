@@ -552,10 +552,8 @@ namespace Synet
             {
                 layer.type() = Synet::LayerTypeEltwise;
                 layer.eltwise().operation() = EltwiseOperationTypeSum;
-                if (src0->type() == LayerTypeConst)
-                {
+                if (src0->type() == LayerTypeConst && src1->type() != LayerTypeConst)
                     std::swap(layer.src()[0], layer.src()[1]);
-                }
             }
             return true;
         }
@@ -1358,6 +1356,8 @@ namespace Synet
             {
                 layer.type() = Synet::LayerTypeEltwise;
                 layer.eltwise().operation() = EltwiseOperationTypeProduct;
+                if (src0->type() == LayerTypeConst && src1->type() != LayerTypeConst)
+                    std::swap(layer.src()[0], layer.src()[1]);
             }
             return true;
         }

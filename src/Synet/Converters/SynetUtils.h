@@ -55,7 +55,7 @@ namespace Synet
         {
             if (shape.size() != dims)
             {
-                std::cout << "Wrong " << desc << " shape " << ShapeToStr(shape) << " !" << std::endl;
+                std::cout << "Wrong " << desc << " shape " << ToStr(shape) << " !" << std::endl;
                 return false;
             }
             return true;
@@ -104,7 +104,7 @@ namespace Synet
             }
             if (count > 1)
             {
-                std::cout << "Can't compact shape " << ShapeToStr(shape) << " !" << std::endl;
+                std::cout << "Can't compact shape " << ToStr(shape) << " !" << std::endl;
                 return false;
             }
             shape = Shp(value);
@@ -386,38 +386,6 @@ namespace Synet
                 return false;
             }
             return true;
-        }
-
-        static String ShapeToStr(const Shape& shape)
-        {
-            std::stringstream ss;
-            ss << "{";
-            for (size_t i = 0; i < shape.size(); ++i)
-                ss << " " << shape[i];
-            ss << " }";
-            return ss.str();
-        }
-
-        static size_t TensorSize(const Shape& shape)
-        {
-            if (shape.empty())
-                return 0;
-            else
-            {
-                size_t size = 1;
-                for (size_t i = 0; i < shape.size(); ++i)
-                    size *= shape[i];
-                return size;
-            }
-        }
-
-        static size_t SignificantDimsCount(const Shape& shape)
-        {
-            size_t significant = 0;
-            for (size_t i = 0; i < shape.size(); ++i)
-                if (shape[i] > 1)
-                    significant++;
-            return significant;
         }
 
         template<class T> static bool AllAreEqualTo(const std::vector<T>& vector, T value)

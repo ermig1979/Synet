@@ -154,52 +154,6 @@ namespace Synet
         return SYNET_VERSION;
     }
 
-    SYNET_INLINE Shape Shp()
-    {
-        return Shape();
-    }
-
-    SYNET_INLINE Shape Shp(size_t axis0)
-    {
-        return Shape({ axis0 });
-    }
-
-    SYNET_INLINE Shape Shp(size_t axis0, size_t axis1)
-    {
-        return Shape({ axis0, axis1 });
-    }
-
-    SYNET_INLINE Shape Shp(size_t axis0, size_t axis1, size_t axis2)
-    {
-        return Shape({ axis0, axis1, axis2 });
-    }
-
-    SYNET_INLINE Shape Shp(size_t axis0, size_t axis1, size_t axis2, size_t axis3)
-    {
-        return Shape({ axis0, axis1, axis2, axis3 });
-    }
-
-    SYNET_INLINE Shape Shp(size_t axis0, size_t axis1, size_t axis2, size_t axis3, size_t axis4)
-    {
-        return Shape({ axis0, axis1, axis2, axis3, axis4 });
-    }
-
-    template<class T> SYNET_INLINE Shape Shp(const std::vector<T> & vec)
-    {
-        Shape shape(vec.size());
-        for (size_t i = 0; i < vec.size(); ++i)
-            shape[i] = (size_t)vec[i];
-        return shape;
-    }
-
-    template<class T> SYNET_INLINE Shape Shp(const T * data, size_t size)
-    {
-        Shape shape(size);
-        for (size_t i = 0; i < size; ++i)
-            shape[i] = (size_t)data[i];
-        return shape;
-    }
-
     inline size_t GetThreadNumber()
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)

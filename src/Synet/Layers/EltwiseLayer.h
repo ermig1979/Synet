@@ -105,6 +105,7 @@ namespace Synet
             {
                 _index[0] = src[0]->Size() > src[1]->Size() ? 0 : 1;
                 _index[1] = src[0]->Size() > src[1]->Size() ? 1 : 0;
+                size_t signDims1 = SignificantDimsCount(src[_index[1]]->Shape());
                 if (src[0]->Count() > 1 && src[0]->Count() == src[1]->Count() && src[0]->Size(1) == src[1]->Size(1))
                 {
                     _special = SpecialBatch;
@@ -119,12 +120,25 @@ namespace Synet
                     }
                     assert(shape == dst[0]->Shape());
                 }
-                else if (_operation == EltwiseOperationTypeProduct && src[_index[0]]->Count() == 3 && src[_index[1]]->Count() == 1 && src[_index[0]]->Axis(2) == src[_index[1]]->Axis(0))
+                else if (_operation == EltwiseOperationTypeProduct && src[_index[0]]->Count() == 3 && signDims1 == 1)
                 {
-                    _batch = 1;
-                    _channelsOuter = 1;
-                    _spatial = src[_index[0]]->Axis(0) * src[_index[0]]->Axis(1);
-                    _channelsInner = src[_index[0]]->Axis(2);
+                    size_t size1 = src[_index[1]]->Size();
+                    if (src[_index[0]]->Axis(2) == size1)
+                    {
+                        _batch = 1;
+                        _channelsOuter = 1;
+                        _spatial = src[_index[0]]->Axis(0) * src[_index[0]]->Axis(1);
+                        _channelsInner = src[_index[0]]->Axis(2);
+                    }
+                    else if (src[_index[0]]->Axis(1) == size1)
+                    {
+                        _batch = src[_index[0]]->Axis(0);
+                        _channelsOuter = src[_index[0]]->Axis(1);
+                        _spatial = src[_index[0]]->Axis(2);
+                        _channelsInner = 1;
+                    }
+                    else
+                        assert(0);
                     _special = SpecialScaleComplex;
                     _channels = _channelsOuter * _channelsInner;
                 }
@@ -314,12 +328,21 @@ namespace Synet
                 const Type * pScale = src[_index[1]]->CpuData();
                 for (size_t b = 0; b < _batch; ++b)
                 {
-                    for (size_t c = 0; c < _channelsOuter; ++c)
+                    if (_channelsInner == 1)
                     {
-                        Detail::ScaleLayerForwardCpu(pSrc0, pScale, pBias, _channelsInner, 1, _spatial, pDst, TensorFormatNhwc, 0);
-                        pSrc0 += _channelsInner*_spatial;
-                        pDst += _channelsInner*_spatial;
-                        pScale += _channelsInner;
+                        Detail::ScaleLayerForwardCpu(pSrc0, pScale, pBias, _channelsOuter, 1, _spatial, pDst, TensorFormatNchw, 0);
+                        pSrc0 += _channelsOuter * _spatial;
+                        pDst += _channelsOuter * _spatial;
+                    }
+                    else
+                    {
+                        for (size_t c = 0; c < _channelsOuter; ++c)
+                        {
+                            Detail::ScaleLayerForwardCpu(pSrc0, pScale, pBias, _channelsInner, 1, _spatial, pDst, TensorFormatNhwc, 0);
+                            pSrc0 += _channelsInner*_spatial;
+                            pDst += _channelsInner*_spatial;
+                            pScale += _channelsInner;
+                        }
                     }
                 }
                 break;

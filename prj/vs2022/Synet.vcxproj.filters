@@ -394,6 +394,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\GridSampleLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Shape.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
