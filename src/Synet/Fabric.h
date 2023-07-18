@@ -129,7 +129,7 @@ namespace Synet
             case LayerTypeExpandDims: return new ExpandDimsLayer<T>(param, context);
             case LayerTypeFlatten: return new FlattenLayer<T>(param, context);
             case LayerTypeFused: return new FusedLayer<T>(param, context);
-            case LayerTypeGather: return new GatherLayer<T>(param, context);
+            case LayerTypeGather: return new GatherLayer(param, context);
             case LayerTypeGelu: return new GeluLayer(param, context);
             case LayerTypeGridSample: return new GridSampleLayer(param, context);
             case LayerTypeHswish: return new HswishLayer(param, context);

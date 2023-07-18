@@ -24,54 +24,28 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
 
 namespace Synet
 {
-    template <class T> class GatherLayer : public Synet::Layer<T>
+    class GatherLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        GatherLayer(const LayerParam& param, Context* context)
-            : Base(param, context)
-        {
-        }
+        GatherLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            const GatherParam& param = this->Param().gather();
-            _axis = param.axis();
-            _batch = src[0]->Size(0, _axis);
-            _size = src[0]->Size(_axis);
-            assert(src.size() == 2 && (src[1]->GetType() == TensorType32i || src[1]->GetType() == TensorType64i));
-            dst[0]->Reshape(src[1]->Shape(), src[0]->Format());
-            return true;
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+        typedef void (*GatherPtr)(const uint8_t* src8, size_t srcOuter, size_t srcCount, size_t srcInner, uint8_t* idx8, size_t idxOuter, size_t idxCount, uint8_t* dst8);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            if (src[1]->GetType() == TensorType32i)
-                Gather(src[0]->CpuData(), src[1]->As32i().CpuData(), dst[0]->CpuData());
-            else
-                Gather(src[0]->CpuData(), src[1]->As64i().CpuData(), dst[0]->CpuData());
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-        template <class Index> void Gather(const Type* src, const Index* idx, Type* dst)
-        {
-            for (size_t b = 0; b < _batch; ++b)
-            {
-                for (size_t i = 0; i < _size; ++i)
-                    dst[i] = src[idx[i]];
-                src += _size;
-                dst += _size;
-            }
-        }
-
-        size_t _axis, _batch, _size;
+    private:
+        TensorType _srcType, _idxType;
+        size_t _axis, _srcOuter, _srcCount, _srcInner, _idxOuter, _idxCount;
+        GatherPtr _gather;
     };
 }
