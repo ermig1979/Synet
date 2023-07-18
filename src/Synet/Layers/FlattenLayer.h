@@ -29,38 +29,17 @@
 
 namespace Synet
 {
-    template <class T> class FlattenLayer : public Synet::Layer<T>
+    class FlattenLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        FlattenLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        FlattenLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            assert(src[0] != dst[0]);
-            const FlattenParam & param = this->Param().flatten();
-            size_t startAxis = src[0]->Index(param.axis());
-            size_t endAxis = src[0]->Index(param.endAxis());
-            Shape shape;
-            for (size_t i = 0; i < startAxis; ++i)
-                shape.push_back(src[0]->Axis(i));
-            size_t flattenedDim = src[0]->Size(startAxis, endAxis + 1);
-            shape.push_back(flattenedDim);
-            for (size_t i = endAxis + 1; i < src[0]->Count(); ++i) 
-                shape.push_back(src[0]->Axis(i));
-            dst[0]->ShareAs(*src[0], shape, src[0]->Format());
-            return true;
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
     };
 }

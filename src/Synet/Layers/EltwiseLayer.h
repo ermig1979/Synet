@@ -168,6 +168,18 @@ namespace Synet
                     _special = SpecialScaleComplex;
                     _channels = _channelsOuter*_channelsInner;
                 }
+                else if (_operation == EltwiseOperationTypeProduct && src[0]->Count() == 6)
+                {
+                    _batch = src[_index[0]]->Axis(0);
+                    _channelsOuter = src[_index[0]]->Axis(1);
+                    _spatial = src[_index[0]]->Size(2, 5);
+                    _channelsInner = src[_index[0]]->Axis(5);
+                    assert(src[_index[1]]->Size(2, 5) == 1);
+                    assert(src[_index[0]]->Size(0, 2) == src[_index[1]]->Size(0, 2));
+                    assert(src[_index[0]]->Size(5, 6) == src[_index[1]]->Size(5, 6));
+                    _special = SpecialScaleComplex;
+                    _channels = _channelsOuter * _channelsInner;
+                }
                 else if (_operation == EltwiseOperationTypeSum && src[0]->Count() == src[1]->Count())
                 {
                     _special = SpecialBiasChannel;
