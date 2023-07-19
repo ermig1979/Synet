@@ -38,10 +38,13 @@ namespace Synet
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
+        typedef void (*GridSample2dPtr)(const uint8_t* src8, size_t batch, size_t channels, size_t srcH, size_t srcW, const uint8_t* grid8, size_t dstH, size_t dstW, uint8_t* dst8);
+
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        size_t _size;
+        size_t _batch, _channels, _srcH, _srcW, _dstH, _dstW, _rank;
+        GridSample2dPtr _gridSample2d;
     };
 }
