@@ -54,40 +54,28 @@ namespace Synet
         static bool CheckDims(const Shape& shape, size_t dims, const String& desc)
         {
             if (shape.size() != dims)
-            {
-                std::cout << "Wrong " << desc << " shape " << ToStr(shape) << " !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Wrong " << desc << " shape " << ToStr(shape) << " !");
             return true;
         }
 
         static bool CheckSourceNumber(const LayerParam& layer, size_t size)
         {
             if (layer.src().size() != size)
-            {
-                std::cout << "Wrong number of sources (" << layer.src().size() << " instead of " << size << ") !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Wrong number of sources (" << layer.src().size() << " instead of " << size << ") !");
             return true;
         }
 
         static bool CheckSourceNumber(const LayerParam& layer, size_t min, size_t max)
         {
             if (layer.src().size() < min || layer.src().size() > max)
-            {
-                std::cout << "Wrong number of sources (" << layer.src().size() << ". It must be in range [" << min << ", " << max << "] !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Wrong number of sources (" << layer.src().size() << ". It must be in range [" << min << ", " << max << "] !");
             return true;
         }
 
         static bool CheckDestinationNumber(const LayerParam& layer, size_t size)
         {
             if (layer.dst().size() != size)
-            {
-                std::cout << "Wrong number of destinations (" << layer.dst().size() << " instead of " << size << ") !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Wrong number of destinations (" << layer.dst().size() << " instead of " << size << ") !");
             return true;
         }
 
@@ -103,10 +91,7 @@ namespace Synet
                 }
             }
             if (count > 1)
-            {
-                std::cout << "Can't compact shape " << ToStr(shape) << " !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't compact shape " << ToStr(shape) << " !");
             shape = Shp(value);
             return true;
         }
@@ -122,27 +107,20 @@ namespace Synet
                     if (pin.name == layers[i].dst()[d])
                         return &layers[i];
             }
-            std::cout << "Can't found layer " << pin.name << " !" << std::endl;
-            return NULL;
+            SYNET_ERROR("Can't found layer " << pin.name << " !");
         }
 
         template<class T> static T* GetWeight(Vector& bin, size_t offset)
         {
             if (offset >= bin.size() * sizeof(T))
-            {
-                std::cout << "Vector access overflow: " << offset << " >= " << bin.size() * sizeof(T) << " !" << std::endl;
-                return NULL;
-            }
+                SYNET_ERROR("Vector access overflow: " << offset << " >= " << bin.size() * sizeof(T) << " !");
             return (T*)((uint8_t*)bin.data() + offset);
         }
 
         template<class T> static const T* GetWeight(const Vector& bin, size_t offset)
         {
             if (offset >= bin.size() * sizeof(T))
-            {
-                std::cout << "Vector access overflow: " << offset << " >= " << bin.size() * sizeof(T) << " !" << std::endl;
-                return NULL;
-            }
+                SYNET_ERROR("Vector access overflow: " << offset << " >= " << bin.size() * sizeof(T) << " !");
             return (const T*)((const uint8_t*)bin.data() + offset);
         }
 

@@ -46,7 +46,7 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
 #TEST inference_engine test_010f faces 50 0 0 1 002 2
-TEST inference_engine test_011f vehicles 40 1 1 1 004 2
+TEST inference_engine test_011f vehicles 40 0 1 1 004 2
 #TEST inference_engine test_012f persons 10 1 1 1 001 0
 #TEST inference_engine test_013f persons 20 0 0 1 001 0
 #TEST inference_engine test_014f local 200 0 1 1 000h 0 ???

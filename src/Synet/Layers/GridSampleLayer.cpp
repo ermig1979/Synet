@@ -33,7 +33,26 @@ namespace Synet
 
     bool GridSampleLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        SYNET_ERROR("GridSampleLayer is not implemented!");
+        if (src.size() != 2 && dst.size() != 1)
+            SYNET_ERROR("GridSampleLayer supports only 2 inputs and 1 output!");
+        if (src[0]->GetType() != TensorType32f)
+            SYNET_ERROR("GridSampleLayer don't support src[0] type: " << Cpl::ToStr(src[0]->GetType()) << " !");
+        if (src[1]->GetType() != TensorType32f)
+            SYNET_ERROR("GridSampleLayer don't support src[1] type: " << Cpl::ToStr(src[1]->GetType()) << " !");
+
+        Shape srcShape = src[0]->Shape();
+        Shape gridShape = src[1]->Shape();
+        int rank = (int)srcShape.size() - 2;
+        if(srcShape.size() != gridShape.size() || rank < 1 || srcShape[0] != gridShape[0] || gridShape[rank + 1] != rank)
+            SYNET_ERROR("GridSampleLayer has incompatible input shapes: src[0] " << ToStr(srcShape) << " and src[1] " << ToStr(gridShape) << " !");
+
+        Shape dstShape = Shp(srcShape[0], srcShape[1]);
+        for(int r = 1; r <= rank; ++r)
+            dstShape.push_back(gridShape[r]);
+
+        dst[0]->Reshape(src[0]->GetType(), dstShape, src[0]->Format());
+
+        //SYNET_ERROR("GridSampleLayer is not implemented!");
         return true;
     }
 

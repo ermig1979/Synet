@@ -1089,10 +1089,35 @@ namespace Synet
             const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
             if (src0 == NULL || src1 == NULL)
                 return false;
+
             layer.type() = LayerTypeGridSample;
             if (!ConvertAtrributeInt(node, "align_corners", layer.gridSample().alignCorners()))
                 return false;
-            String interpolationMode, paddingMode;
+
+            String interpMode;
+            if (!ConvertAtrributeString(node, "mode", interpMode))
+                return false;
+            if (interpMode == "bilinear")
+                layer.gridSample().interpMode() = GridSampleInterpModeBilinear;
+            else if (interpMode == "nearest")
+                layer.gridSample().interpMode() = GridSampleInterpModeNearest;
+            else if (interpMode == "bicubic")
+                layer.gridSample().interpMode() = GridSampleInterpModeBicubic;
+            else
+                return false;
+
+            String paddingMode;
+            if (!ConvertAtrributeString(node, "padding_mode", paddingMode))
+                return false;
+            if (paddingMode == "zeros")
+                layer.gridSample().paddingMode() = GridSamplePaddingModeZeros;
+            else if (paddingMode == "border")
+                layer.gridSample().paddingMode() = GridSamplePaddingModeBorder;
+            else if (paddingMode == "reflection")
+                layer.gridSample().paddingMode() = GridSamplePaddingModeReflection;
+            else
+                return false;
+
             return true;
         }
 
@@ -1168,12 +1193,20 @@ namespace Synet
                 return false;
             layer.weight()[1] = src2->weight()[0];
             layer.src().resize(1);
-            if (trans && !PermutedToNchw(layers, layer.src(), false, false, false))
+            if (GetAtrribute(node, "axis"))
             {
-                layer.normalize().axis() = -1;
+                if (!ConvertAtrributeInt(node, "axis", layer.normalize().axis()))
+                    return false;
             }
             else
-                layer.normalize().axis() = 1;
+            {
+                if (trans && !PermutedToNchw(layers, layer.src(), false, false, false))
+                {
+                    layer.normalize().axis() = -1;
+                }
+                else
+                    layer.normalize().axis() = 1;
+            }
             return true;
         }
 
@@ -2313,8 +2346,7 @@ namespace Synet
 
         bool ErrorMessage(size_t index, const onnx::NodeProto& node)
         {
-            std::cout << "Can't convert node[" << index << "]: " << NodeString(node) << " !" << std::endl;
-            return false;
+            SYNET_ERROR("Can't convert node[" << index << "]: " << NodeString(node) << " !");
         }
 
         const onnx::AttributeProto * GetAtrribute(const onnx::NodeProto& node, const String& name)
@@ -2335,14 +2367,10 @@ namespace Synet
                     value = defVal;
                     return true;
                 }
-                std::cout << "Can't find attribute " << name << " !" << std::endl;
-                return false;
+                SYNET_ERROR("Can't find attribute " << name << " !");
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_INT)
-            {
-                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Attribute " << name << " has wrong type " << attribute->type() << " !");
             value = attribute->i();
             return true;
         }
@@ -2357,14 +2385,10 @@ namespace Synet
                     value = defVal;
                     return true;
                 }
-                std::cout << "Can't find attribute " << name << " !" << std::endl;
-                return false;
+                SYNET_ERROR("Can't find attribute " << name << " !");
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_FLOAT)
-            {
-                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Attribute " << name << " has wrong type " << attribute->type() << " !");
             value = attribute->f();
             return true;
         }
@@ -2379,14 +2403,10 @@ namespace Synet
                     value = defVal;
                     return true;
                 }
-                std::cout << "Can't find attribute " << name << " !" << std::endl;
-                return false;
+                SYNET_ERROR("Can't find attribute " << name << " !");
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_STRING)
-            {
-                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Attribute " << name << " has wrong type " << attribute->type() << " !");
             value = attribute->s();
             return true;
         }
@@ -2402,14 +2422,10 @@ namespace Synet
                     values = defVals;
                     return true;
                 }
-                std::cout << "Can't find attribute " << name << " !" << std::endl;
-                return false;
+                SYNET_ERROR("Can't find attribute " << name << " !");
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_INTS)
-            {
-                std::cout << "Attribute " << name << " has wrong type " << attribute->type() << " !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Attribute " << name << " has wrong type " << attribute->type() << " !");
             values.resize(attribute->ints_size());
             for(size_t i = 0; i < attribute->ints_size(); ++i)
                 values[i] = (T)attribute->ints(i);

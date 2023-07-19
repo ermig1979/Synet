@@ -690,7 +690,10 @@ namespace Synet
             UnifyStats();
         }
         if (!Dynamic())
-            Reshape();
+        {
+            if (!Reshape())
+                return false;
+        }
         _empty = false;
         return true;
     }

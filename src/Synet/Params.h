@@ -150,15 +150,15 @@ CPL_PARAM_ENUM1(Synet, EltwiseOperationType,
     EltwiseOperationTypeMax,
     EltwiseOperationTypeMin);
 
-CPL_PARAM_ENUM1(Synet, GridSampleInterpolationMode,
-    GridSampleInterpolationModeBilinear,
-    GridSampleInterpolationModeNearest,
-    GridSampleInterpolationModeBicubic);
+CPL_PARAM_ENUM1(Synet, GridSampleInterpMode,
+    GridSampleInterpModeBilinear,
+    GridSampleInterpModeNearest,
+    GridSampleInterpModeBicubic);
 
 CPL_PARAM_ENUM1(Synet, GridSamplePaddingMode,
-    GridSampleInterpolationModeZeros,
-    GridSampleInterpolationModeBorder,
-    GridSampleInterpolationModeReflection);
+    GridSamplePaddingModeZeros,
+    GridSamplePaddingModeBorder,
+    GridSamplePaddingModeReflection);
 
 CPL_PARAM_ENUM1(Synet, InterpolationType,
     InterpolationTypeBilinear,
@@ -442,8 +442,8 @@ namespace Synet
     struct GridSampleParam
     {
         CPL_PARAM_VALUE(bool, alignCorners, false);
-        CPL_PARAM_VALUE(GridSampleInterpolationMode, interpolationMode, GridSampleInterpolationModeBilinear);
-        CPL_PARAM_VALUE(GridSamplePaddingMode, paddingMode, GridSampleInterpolationModeZeros);
+        CPL_PARAM_VALUE(GridSampleInterpMode, interpMode, GridSampleInterpModeBilinear);
+        CPL_PARAM_VALUE(GridSamplePaddingMode, paddingMode, GridSamplePaddingModeZeros);
     };
 
     struct HardSigmoidParam
