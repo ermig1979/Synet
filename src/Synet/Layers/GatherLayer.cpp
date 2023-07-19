@@ -127,8 +127,11 @@ namespace Synet
         Shape dstShape;
         for (size_t i = 0; i < _axis; ++i)
             dstShape.push_back(srcShape[i]);
-        for (size_t i = 0; i < idxShape.size(); ++i)
-            dstShape.push_back(idxShape[i]);
+        if (src[1]->Size() > 1 && !src[1]->Const())
+        {
+            for (size_t i = 0; i < idxShape.size(); ++i)
+                dstShape.push_back(idxShape[i]);
+        }
         for (size_t i = _axis + 1; i < srcShape.size(); ++i)
             dstShape.push_back(srcShape[i]);
 
