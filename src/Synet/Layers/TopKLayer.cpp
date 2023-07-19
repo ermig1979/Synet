@@ -102,8 +102,8 @@ namespace Synet
     {
         switch (sort)
         {
-        case TopKSortValue: return TopK<S, uint32_t, mode, TopKSortValue>;
-        case TopKSortIndex: return TopK<S, uint32_t, mode, TopKSortIndex>;
+        case TopKSortValue: return TopK<S, I, mode, TopKSortValue>;
+        case TopKSortIndex: return TopK<S, I, mode, TopKSortIndex>;
         default:
             return NULL;
         }
@@ -113,8 +113,8 @@ namespace Synet
     {
         switch (mode)
         {
-        case TopKModeMax: return GetTopK<S, uint32_t, TopKModeMax>(sort);
-        case TopKModeMin: return GetTopK<S, uint64_t, TopKModeMin>(sort);
+        case TopKModeMax: return GetTopK<S, I, TopKModeMax>(sort);
+        case TopKModeMin: return GetTopK<S, I, TopKModeMin>(sort);
         default:
             return NULL;
         }

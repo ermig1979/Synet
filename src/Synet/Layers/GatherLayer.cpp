@@ -26,7 +26,7 @@
 
 namespace Synet
 {
-    template <class T, class I> void Gather(const uint8_t* src8, size_t srcOuter, size_t srcCount, size_t srcInner, uint8_t* idx8, size_t idxOuter, size_t idxCount, uint8_t* dst8)    
+    template <class T, class I> void Gather(const uint8_t* src8, size_t srcOuter, size_t srcCount, size_t srcInner, const uint8_t* idx8, size_t idxOuter, size_t idxCount, uint8_t* dst8)    
     {
         const T* src = (const T*)src8;
         const I* idx = (I*)idx8;
