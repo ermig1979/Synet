@@ -137,6 +137,8 @@ namespace Synet
                 ReshapeAdd<int32_t>(src[0]->As32i(), src[1]->As32i(), dst[0]->As32i());
             else if (src[0]->GetType() == TensorType32f)
                 ReshapeAdd<float>(src[0]->As32f(), src[1]->As32f(), dst[0]->As32f());
+            else if (src[0]->GetType() == TensorType64i)
+                ReshapeAdd<int64_t>(src[0]->As64i(), src[1]->As64i(), dst[0]->As64i());
             else
                 assert(0);
         }

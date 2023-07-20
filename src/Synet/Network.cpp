@@ -104,8 +104,11 @@ namespace Synet
 
         if (!_param.Load(modelData, modelSize, Cpl::ParamFormatXml))
             return false;
+
         _context.options = options;
-        CreateLayers();
+
+        if (!CreateLayers())
+            return false;
 
         for (size_t i = 0; i < _layers.size(); ++i)
         {
@@ -582,7 +585,7 @@ namespace Synet
         return NULL;
     }
 
-    void Network::CreateLayers()
+    bool Network::CreateLayers()
     {
         NameIdMap layerId;
         for (size_t i = 0; i < _param().layers().size(); ++i)
@@ -595,11 +598,14 @@ namespace Synet
                 _layers.push_back(layer);
                 if (!param.parent().empty())
                 {
-                    assert(layerId.find(param.parent()) != layerId.end());
+                    if(layerId.find(param.parent()) == layerId.end())
+                        SYNET_ERROR("Can't find parent layer: " << param.parent() << " of layer " << param.name() << " !");
+                    //assert(layerId.find(param.parent()) != layerId.end());
                     _layers[layerId[param.parent()]]->AddChild(layer);
                 }
             }
         }
+        return true;
     }
 
     bool Network::Init()
@@ -627,7 +633,7 @@ namespace Synet
                         available.erase(name);
                 }
                 else
-                    assert(0);
+                    SYNET_ERROR("Can't find tensor with name: " << name << " (See inputs of layer " << param.name() << ") !");
             }
             for (size_t j = 0; j < param.dst().size(); ++j)
             {
@@ -638,7 +644,7 @@ namespace Synet
                 }
                 else  if (_tensorId.find(name) != _tensorId.end())
                 {
-                    assert(0);
+                    SYNET_ERROR("Output tensor with name: " << name << " is already exist (See outputs of layer " << param.name() << ") !");
                 }
                 else
                 {

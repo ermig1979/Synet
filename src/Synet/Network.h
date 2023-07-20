@@ -145,7 +145,7 @@ namespace Synet
         NameIdMap _tensorId, _layerId, _statId;
         NameIdSetMap _srcIds, _dstIds;
 
-        void CreateLayers();
+        bool CreateLayers();
 
         bool Init();
 

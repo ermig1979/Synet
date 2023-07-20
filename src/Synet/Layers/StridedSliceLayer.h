@@ -221,6 +221,7 @@ namespace Synet
                         }
                     }
                 }
+                break;
             case 6:
                 for (size_t s0 = _beginDims[0], d0 = 0; d0 < _dstDims[0]; d0 += 1, s0 += _strideDims[0])
                 {

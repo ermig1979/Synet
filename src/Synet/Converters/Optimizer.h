@@ -139,6 +139,10 @@ namespace Synet
                         continue;
                     if (MergeShuffle2(network.layers(), i, merged, changes))
                         continue;
+                    if (MergeShuffle3(network.layers(), i, merged, changes))
+                        continue;
+                    if (MergeShuffle3cut(network.layers(), i, isNhwc, merged, changes))
+                        continue;
                     if (MergeSoftmax(network.layers(), i, merged, changes))
                         continue;
                     if (MergeFused0(network.layers(), i, merged, changes))
@@ -1059,7 +1063,7 @@ namespace Synet
 
         bool MergeShuffle2(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
         {
-            if (src.size() < index + 17)
+            if (src.size() < index + 18)
                 return false;
             if (src[index + 0].type() != LayerTypeConcat || src[index + 0].src().size() != 2)
                 return false;
@@ -1092,6 +1096,83 @@ namespace Synet
             layer.dst().push_back(src[index + 17].dst()[0]);
             index += 17;
             dst.push_back(layer);
+            return true;
+        }
+
+        bool MergeShuffle3(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 43)
+                return false;
+            if (src[index + 0].type() != LayerTypeConcat || src[index + 0].src().size() != 2)
+                return false;
+            for(size_t i = 1; i < 22; ++i)
+                if (src[index + i].type() != LayerTypeMeta)
+                    return false;
+            if (src[index + 22].type() != LayerTypeReshape)
+                return false;
+            if (src[index + 23].type() != LayerTypePermute || src[index + 23].permute().order().size() != 5)
+                return false;
+            for (size_t i = 24; i < 28; ++i)
+                if (src[index + i].type() != LayerTypeMeta)
+                    return false;
+            if (src[index + 28].type() != LayerTypeReshape)
+                return false;
+            for (size_t i = 29; i < 39; ++i)
+                if (src[index + i].type() != LayerTypeMeta)
+                    return false;
+            if (src[index + 39].type() != LayerTypeStridedSlice || src[index + 39].src().size() != 4)
+                return false;
+            for (size_t i = 40; i < 42; ++i)
+                if (src[index + i].type() != LayerTypeMeta)
+                    return false;
+            if (src[index + 42].type() != LayerTypeStridedSlice || src[index + 42].src().size() != 4)
+                return false;
+            LayerParam layer;
+            layer.type() = LayerTypeShuffle;
+            layer.name() = src[index + 0].name();
+            layer.src() = src[index + 0].src();
+            layer.shuffle().type() = 1;
+            layer.dst().push_back(src[index + 39].dst()[0]);
+            layer.dst().push_back(src[index + 42].dst()[0]);
+            index += 42;
+            dst.push_back(layer);
+            return true;
+        }
+
+        bool MergeShuffle3cut(const LayerParams& src, size_t& index, bool isNhwc, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 29)
+                return false;
+            if (src[index + 0].type() != LayerTypeConcat || src[index + 0].src().size() != 2)
+                return false;
+            for (size_t i = 1; i < 22; ++i)
+                if (src[index + i].type() != LayerTypeMeta)
+                    return false;
+            if (src[index + 22].type() != LayerTypeReshape)
+                return false;
+            if (src[index + 23].type() != LayerTypePermute || src[index + 23].permute().order().size() != 5)
+                return false;
+            for (size_t i = 24; i < 28; ++i)
+                if (src[index + i].type() != LayerTypeMeta)
+                    return false;
+            if (src[index + 28].type() != LayerTypeReshape)
+                return false;
+            LayerParam shuffle;
+            shuffle.type() = LayerTypeShuffle;
+            shuffle.name() = src[index + 0].name();
+            shuffle.src() = src[index + 0].src();
+            shuffle.shuffle().type() = 1;
+            shuffle.dst().push_back(src[index + 28].dst()[0] + "_dst0");
+            shuffle.dst().push_back(src[index + 28].dst()[0] + "_dst1");
+            LayerParam concat;
+            concat.type() = LayerTypeConcat;
+            concat.name() = src[index + 28].name();
+            concat.src() = shuffle.dst();
+            concat.dst().push_back(src[index + 28].dst()[0]);
+            concat.concat().axis() = isNhwc ? -1 : 1;
+            index += 28;
+            dst.push_back(shuffle);
+            dst.push_back(concat);
             return true;
         }
 
