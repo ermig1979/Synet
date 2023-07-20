@@ -44,7 +44,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        size_t _batch, _channels, _srcH, _srcW, _dstH, _dstW, _rank;
+        size_t _batch, _channels, _srcH, _srcW, _dstH, _dstW;
         GridSample2dPtr _gridSample2d;
     };
 }
