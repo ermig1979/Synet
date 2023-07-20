@@ -1197,6 +1197,8 @@ namespace Synet
             {
                 if (!ConvertAtrributeInt(node, "axis", layer.normalize().axis()))
                     return false;
+                if(layer.normalize().axis() == -1)
+                    layer.normalize().version() = 2;
             }
             else
             {
