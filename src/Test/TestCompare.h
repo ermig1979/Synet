@@ -725,14 +725,16 @@ namespace Test
             if (_options.enable & ENABLE_SECOND)
             {
                 TestData& test = *_tests[index];
+#if 0
+                if (repeat == 0)
+                    if (!DebugPrint(_seconds[0], index))
+                        return false;
+#endif
+                Copy(_seconds[0].Predict(test.input), test.output[0].second);
                 if (repeat == 0)
                 {
                     if (!DebugPrint(_seconds[0], index))
                         return false;
-                }                
-                Copy(_seconds[0].Predict(test.input), test.output[0].second);
-                if (repeat == 0)
-                {
                     if (!AnnotateRegions(_seconds[0], test.path[0]))
                         return false;
                 }

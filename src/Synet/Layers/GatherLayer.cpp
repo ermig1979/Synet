@@ -57,7 +57,7 @@ namespace Synet
                 {
                     for (size_t ic = 0; ic < idxCount; ++ic)
                     {
-                        const T* ps = src + pi[ic];
+                        const T* ps = src + pi[ic] * srcInner;
                         for (size_t si = 0; si < srcInner; ++si)
                             dst[si] = ps[si];
                         dst += srcInner;
