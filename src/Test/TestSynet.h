@@ -65,6 +65,7 @@ namespace Test
         {
             CPL_PERF_BEG(Type());
             _regionThreshold = options.regionThreshold;
+            _decoderName = param.detection().decoder();
             Synet::SetThreadNumber(options.workThreads);
             if (Load(model, weight, options))
             {
@@ -321,6 +322,27 @@ namespace Test
                 }
                 SortDetectionOutput(tmp.data(), tmp.size());
                 dst.Reshape(Shp(1, 1, tmp.size()/7, 7));
+                memcpy(dst.CpuData(), tmp.data(), dst.Size() * sizeof(float));
+            }
+            else if (_decoderName == "rtdtr")
+            {
+                assert(src.Axis(0) == 1 && src.Axis(2) == 6);
+                Vector tmp;
+                const T* pSrc = src.CpuData();
+                for (size_t i = 0, n = src.Axis(1); i < n; ++i, pSrc += 6)
+                {
+                    if (pSrc[4] <= _regionThreshold)
+                        continue;
+                    size_t offset = tmp.size();
+                    tmp.resize(offset + 6);
+                    tmp[offset + 0] = (float)pSrc[0];
+                    tmp[offset + 1] = (float)pSrc[1];
+                    tmp[offset + 2] = (float)pSrc[2];
+                    tmp[offset + 3] = (float)pSrc[3];
+                    tmp[offset + 4] = (float)pSrc[4];
+                    tmp[offset + 5] = (float)pSrc[5];
+                }
+                dst.Reshape(Shp(1, tmp.size() / 6, 6));
                 memcpy(dst.CpuData(), tmp.data(), dst.Size() * sizeof(float));
             }
             else

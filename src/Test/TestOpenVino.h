@@ -82,10 +82,11 @@ namespace Test
         virtual bool Init(const String& model, const String& weight, const Options& options, const TestParam& param)
         {
             CPL_PERF_FUNC();
+            _regionThreshold = options.regionThreshold;
+            _decoderName = param.detection().decoder();
 
             ::setenv("OMP_NUM_THREADS", std::to_string(options.workThreads).c_str(), 1);
             ::setenv("OMP_WAIT_POLICY", "PASSIVE", 1);
-            _regionThreshold = options.regionThreshold;
             try
             {
                 if (!InitCore(options))

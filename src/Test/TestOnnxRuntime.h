@@ -76,6 +76,8 @@ namespace Test
         virtual bool Init(const String & model, const String & weight, const Options& options, const TestParam & param)
         {
             CPL_PERF_FUNC();
+            _regionThreshold = options.regionThreshold;
+            _decoderName = param.detection().decoder();
 
             Ort::SessionOptions sessionOptions;
             sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
@@ -364,8 +366,31 @@ namespace Test
                 if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT)
                 {
                     const float * src = _outputValues->at(i).GetTensorMutableData<float>();
-                    for (size_t j = 0; j < size; ++j)
-                        dst[j] = src[j];
+                    if (_decoderName == "rtdtr")
+                    {
+                        assert(shape[0] == 1 && shape[2] == 6);
+                        Vector tmp;
+                        for (size_t j = 0, n = shape[1]; j < n; ++j, src += 6)
+                        {
+                            if (src[4] <= _regionThreshold)
+                                continue;
+                            size_t offset = tmp.size();
+                            tmp.resize(offset + 6);
+                            tmp[offset + 0] = src[0];
+                            tmp[offset + 1] = src[1];
+                            tmp[offset + 2] = src[2];
+                            tmp[offset + 3] = src[3];
+                            tmp[offset + 4] = src[4];
+                            tmp[offset + 5] = src[5];
+                        }
+                        _output[i].Reshape(Shp(1, tmp.size() / 6, 6));
+                        memcpy(_output[i].CpuData(), tmp.data(), _output[i].Size() * sizeof(float));
+                    }
+                    else
+                    {
+                        for (size_t j = 0; j < size; ++j)
+                            dst[j] = src[j];
+                    }
                 }
                 else if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64)
                 {

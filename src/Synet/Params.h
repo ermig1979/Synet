@@ -212,6 +212,12 @@ CPL_PARAM_ENUM1(Synet, MetaType,
 CPL_PARAM_ENUM1(Synet, NormRegionType,
     NormRegionTypeAcrossChannels,
     NormRegionTypeWithinChannel);
+
+CPL_PARAM_ENUM1(Synet, PadMode,
+    PadModeConstant,
+    PadModeReflect,
+    PadModeEdge,
+    PadModeWrap);
     
 CPL_PARAM_ENUM1(Synet, PoolingMethodType,
     PoolingMethodTypeMax,
@@ -551,6 +557,11 @@ namespace Synet
         CPL_PARAM_VALUE(int, axis, -1);
     };
 
+    struct PadParam
+    {
+        CPL_PARAM_VALUE(PadMode, mode, PadModeConstant);
+    };
+
     struct PermuteParam
     {
         CPL_PARAM_VALUE(Shape, order, Shape());
@@ -817,6 +828,7 @@ namespace Synet
         CPL_PARAM_STRUCT(MetaParam, meta);
         CPL_PARAM_STRUCT(NonMaxSuppressionParam, nonMaxSuppression);
         CPL_PARAM_STRUCT(NormalizeParam, normalize);
+        CPL_PARAM_STRUCT(PadParam, pad);
         CPL_PARAM_STRUCT(PermuteParam, permute);
         CPL_PARAM_STRUCT(PoolingParam, pooling);
         CPL_PARAM_STRUCT(PowerParam, power);

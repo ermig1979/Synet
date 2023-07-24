@@ -151,6 +151,7 @@ namespace Test
     protected:
         Tensors _output;
         float _regionThreshold;
+        String _decoderName;
     };
     typedef std::shared_ptr<Network> NetworkPtr;
     typedef std::vector<NetworkPtr> NetworkPtrs;
