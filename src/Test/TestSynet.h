@@ -324,7 +324,7 @@ namespace Test
                 dst.Reshape(Shp(1, 1, tmp.size()/7, 7));
                 memcpy(dst.CpuData(), tmp.data(), dst.Size() * sizeof(float));
             }
-            else if (_decoderName == "rtdtr")
+            else if (_decoderName == "rtdetr")
             {
                 assert(src.Axis(0) == 1 && src.Axis(2) == 6);
                 Vector tmp;

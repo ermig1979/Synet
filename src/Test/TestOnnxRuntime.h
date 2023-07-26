@@ -366,7 +366,7 @@ namespace Test
                 if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT)
                 {
                     const float * src = _outputValues->at(i).GetTensorMutableData<float>();
-                    if (_decoderName == "rtdtr")
+                    if (_decoderName == "rtdetr")
                     {
                         assert(shape[0] == 1 && shape[2] == 6);
                         Vector tmp;

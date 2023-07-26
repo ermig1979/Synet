@@ -36,7 +36,11 @@ namespace Synet
 
         GridSampleLayer(const LayerParam& param, Context* context);
 
+        virtual ~GridSampleLayer();
+
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+        virtual size_t MemoryUsage() const;
 
         typedef void (*GridSample2dPtr)(const uint8_t* src8, size_t batch, size_t channels, size_t srcH, size_t srcW, const uint8_t* grid8, size_t dstH, size_t dstW, uint8_t* dst8);
 
@@ -44,7 +48,14 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
+        TensorType _type;
+        GridSampleInterpMode _interp;
+        GridSamplePaddingMode _padding;
+        bool _align;
         size_t _batch, _channels, _srcH, _srcW, _dstH, _dstW;
         GridSample2dPtr _gridSample2d;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        void* _context;
+#endif
     };
 }

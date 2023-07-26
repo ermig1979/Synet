@@ -237,6 +237,17 @@ namespace Synet
     GridSampleLayer::GridSampleLayer(const LayerParam& param, Context* context)
         : Base(param, context)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        _context = NULL;
+#endif
+    }
+
+    GridSampleLayer::~GridSampleLayer()
+    {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        if (_context)
+            SimdRelease(_context);
+#endif
     }
 
     bool GridSampleLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
@@ -253,6 +264,7 @@ namespace Synet
         if (srcShape.size() != 4 || srcShape.size() != gridShape.size() || srcShape[0] != gridShape[0] || gridShape[3] != 2)
             SYNET_ERROR("GridSampleLayer has incompatible input shapes: src[0] :" << ToStr(srcShape) << " and src[1]: " << ToStr(gridShape) << " !");
 
+        _type = src[0]->GetType();
         _batch = srcShape[0];
         _channels = srcShape[1];
         _srcH = srcShape[2];
@@ -262,18 +274,44 @@ namespace Synet
         Shape dstShape = Shp(_batch, _channels, _dstH, _dstW);
 
         GridSampleParam gridSample = this->Param().gridSample();
-        _gridSample2d = GetGridSample2d(src[0]->GetType(), gridSample.interpMode(), gridSample.paddingMode(), gridSample.alignCorners());
+        _interp = gridSample.interpMode();
+        _padding = gridSample.paddingMode();
+        _align = gridSample.alignCorners();
+
+        _gridSample2d = GetGridSample2d(_type, _interp, _padding, _align);
         if (_gridSample2d == NULL)
             SYNET_ERROR("GridSampleLayer can't get worker!");
 
         dst[0]->Reshape(src[0]->GetType(), dstShape, src[0]->Format());
         this->UsePerfStat();
 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        _context = SimdSynetGridSample2dInit(_batch, _channels, _srcH, _srcW, _dstH, _dstW, (SimdTensorDataType)_type,
+            (SimdGridSampleInterpType)_interp, (SimdGridSamplePaddingType)_padding, _align ? SimdTrue : SimdFalse);
+#endif
+
         return true;
+    }
+
+    size_t GridSampleLayer::MemoryUsage() const
+    {
+        size_t size = Base::MemoryUsage();
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        if (_context)
+            size += SimdSynetGridSample2dInternalBufferSize(_context);
+#endif
+        return size;
     }
 
     void GridSampleLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        if (_context)
+        {
+            SimdSynetGridSample2dForward(_context, src[0]->RawData(), src[1]->RawData(), dst[0]->RawData());
+            return;
+        }
+#endif
         _gridSample2d(src[0]->RawData(), _batch, _channels, _srcH, _srcW, src[1]->RawData(), _dstH, _dstW, dst[0]->RawData());
     }
 }

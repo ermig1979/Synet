@@ -28,7 +28,7 @@ namespace Synet
 {
     void UnaryOperation32f(const float* src, size_t size, UnaryOperationType type, float* dst)
     {
-#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE) && 0
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         ::SimdSynetUnaryOperation32f(src, size, (::SimdSynetUnaryOperation32fType)type, dst);
 #else
         switch (type)
