@@ -38,10 +38,7 @@ namespace Test
         SYNET_PERF_FUNC();
         Test::TestParamHolder param;
         if (FileExists(options.testParam) && !param.Load(options.testParam))
-        {
-            CPL_LOG_SS(Error, "Can't load file '" << options.testParam << "' !");
-            return false;
-        }
+            SYNET_ERROR("Can't load file '" << options.testParam << "' !");
         param().optimizer().bf16Enable() = options.bf16;
         param().optimizer().saveUnoptimized() = options.saveUnoptimized;
         return Synet::ConvertOnnxToSynet(options.firstModel, options.firstWeight,

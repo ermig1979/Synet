@@ -46,6 +46,9 @@ int main(int argc, char* argv[])
 {
     Test::Options options(argc, argv);
 
+    Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
+    Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
+
     if (options.mode == "convert")
     {
         Test::Quantizer quantizer(options);
@@ -57,7 +60,7 @@ int main(int argc, char* argv[])
         options.result = comparer.Run();
     }
     else
-        std::cout << "Unknown mode : " << options.mode << std::endl;
+        CPL_LOG_SS(Error, "Unknown mode : " << options.mode);
 
     return options.result ? 0 : 1;
 }

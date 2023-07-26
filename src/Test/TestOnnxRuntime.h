@@ -84,10 +84,7 @@ namespace Test
             sessionOptions.SetInterOpNumThreads((int)options.workThreads);
             sessionOptions.SetIntraOpNumThreads((int)options.workThreads);
             if (OrtSessionOptionsAppendExecutionProvider_CPU(sessionOptions, 0) != nullptr)
-            {
-                std::cout << "Can not Initialize ONNXRT CPU Session!" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can not Initialize ONNXRT CPU Session!");
             std::stringstream logName;
             logName << "log_";
             logName << std::hex << std::this_thread::get_id();
@@ -110,10 +107,7 @@ namespace Test
             if (_inputShapes[0][2] == -1 && _inputShapes[0][3] == -1)
             {
                 if (param.input().empty())
-                {
-                    std::cout << "OnnxRuntime model has dynamic size but input size in parameters is absent!" << std::endl;
-                    return false;
-                }
+                    SYNET_ERROR("OnnxRuntime model has dynamic size but input size in parameters is absent!");
                 _inputShapes[0][2] = param.input()[0].shape()[2].size();
                 _inputShapes[0][3] = param.input()[0].shape()[3].size();
             }
@@ -127,7 +121,7 @@ namespace Test
             {
                 _batchSize = options.batchSize;
                 if (_batchSize > 1 && !options.consoleSilence)
-                    std::cout << "OnnxRuntime model can't be reshaped, try to emulate batch > 1." << std::endl;
+                    CPL_LOG_SS(Warning, "OnnxRuntime model can't be reshaped, try to emulate batch > 1.");
             }
 
             _outputNames.clear();
@@ -153,10 +147,7 @@ namespace Test
             }
 
             if (_inputShapes.size() != 1)
-            {
-                std::cout << "Current implementation of OnnxRuntimeNetwork supports only 1 input!" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Current implementation of OnnxRuntimeNetwork supports only 1 input!");
 
             Tensor inputTensor(_inputShapes[0]);
             Dim inputDim = Convert<int64_t, size_t>(_inputShapes[0]);
@@ -400,7 +391,7 @@ namespace Test
                 }
                 else
                 {
-                    std::cout << "OnnxRuntime: unknown format of output tensor: " << type << " !" << std::endl;
+                    CPL_LOG_SS(Error, "OnnxRuntime: unknown format of output tensor: " << type << " !");
                     assert(0);
                 }
             }

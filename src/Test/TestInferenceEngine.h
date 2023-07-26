@@ -119,7 +119,7 @@ namespace Test
                     catch (std::exception& e)
                     {
                         if (!options.consoleSilence)
-                            std::cout << "Inference Engine init trouble: '" << e.what() << "', try to emulate batch > 1." << std::endl;
+                            CPL_LOG_SS(Warning, "Inference Engine init trouble: '" << e.what() << "', try to emulate batch > 1.");
                         _batchSize = options.batchSize;
                         _ieNetwork->setBatchSize(1);
                         config.erase(InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_LIMIT);
@@ -134,8 +134,7 @@ namespace Test
             }
             catch (std::exception& e)
             {
-                std::cout << "Inference Engine init error: " << e.what() << std::endl;
-                return false;
+                SYNET_ERROR("Inference Engine init error: " << e.what());
             }
 
             if (options.debugPrint & (1 << Synet::DebugPrintLayerDst))
@@ -251,10 +250,7 @@ namespace Test
             if (!FileExists(dst))
             {
                 if (!FileCopy(src, dst))
-                {
-                    std::cout << "Can't copy file form '" << src << "' to '" << dst << "' !" << std::endl;
-                    return false;
-                }
+                    SYNET_ERROR("Can't copy file form '" << src << "' to '" << dst << "' !");
             }            
             _ieCore = std::make_shared<InferenceEngine::Core>();
             _ieNetwork = std::make_shared<InferenceEngine::CNNNetwork>(_ieCore->ReadNetwork(dst, bin));
@@ -278,10 +274,7 @@ namespace Test
                     const String& name = param.input()[i].name();
                     _inputNames.push_back(name);
                     if (shapes.find(name) == shapes.end())
-                    {
-                        std::cout << "Input with name '" << name << "' is not exist! " << std::endl;
-                        return false;
-                    }
+                        SYNET_ERROR("Input with name '" << name << "' is not exist! ");
                     Shape & shape = shapes[name];
                     shape.clear();
                     for (size_t j = 0; j < param.input()[i].shape().size(); ++j)
@@ -558,7 +551,7 @@ namespace Test
                 break;
             }
             default:
-                std::cout << "Can't debug print for layer '" << name << "' , unknown precision: " << blob.getTensorDesc().getPrecision() << std::endl;
+                CPL_LOG_SS(Error, "Can't debug print for layer '" << name << "' , unknown precision: " << blob.getTensorDesc().getPrecision());
                 break;
             }
         }
