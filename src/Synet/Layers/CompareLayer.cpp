@@ -107,6 +107,8 @@ namespace Synet
         switch (type)
         {
         case TensorType32f: return n1 ? CompareN1<float> : CompareNN<float>;
+        case TensorType32i: return n1 ? CompareN1<int32_t> : CompareNN<int32_t>;
+        case TensorType64i: return n1 ? CompareN1<int64_t> : CompareNN<int64_t>;
         default:
             return NULL;
         }

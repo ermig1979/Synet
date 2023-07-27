@@ -24,200 +24,29 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
 
 namespace Synet
 {
-    namespace Detail
-    {
-        template <class T> void ReductionLayerForwardCpuMax(const T * src, size_t outer, size_t count, size_t inner, T * dst)
-        {
-            for (size_t o = 0; o < outer; ++o)
-            {
-                for (size_t i = 0; i < inner; ++i)
-                    dst[i] = -FLT_MAX;
-                for (size_t c = 0; c < count; ++c)
-                {
-                    for (size_t i = 0; i < inner; ++i)
-                        dst[i] = Max(dst[i], src[i]);
-                    src += inner;
-                }
-                dst += inner;
-            }
-        }
-
-        template <class T> void ReductionLayerForwardCpuMin(const T* src, size_t outer, size_t count, size_t inner, T* dst)
-        {
-            for (size_t o = 0; o < outer; ++o)
-            {
-                for (size_t i = 0; i < inner; ++i)
-                    dst[i] = FLT_MAX;
-                for (size_t c = 0; c < count; ++c)
-                {
-                    for (size_t i = 0; i < inner; ++i)
-                        dst[i] = Min(dst[i], src[i]);
-                    src += inner;
-                }
-                dst += inner;
-            }
-        }
-
-        template <class T> void ReductionLayerForwardCpuSum(const T * src, size_t outer, size_t count, size_t inner, T * dst)
-        {
-            for (size_t o = 0; o < outer; ++o)
-            {
-                for (size_t i = 0; i < inner; ++i)
-                    dst[i] = T(0);
-                for (size_t c = 0; c < count; ++c)
-                {
-                    for (size_t i = 0; i < inner; ++i)
-                        dst[i] += src[i];
-                    src += inner;
-                }
-                dst += inner;
-            }
-        }
-
-        template <class T> void ReductionLayerForwardCpuProd(const T* src, size_t outer, size_t count, size_t inner, T* dst)
-        {
-            for (size_t o = 0; o < outer; ++o)
-            {
-                for (size_t i = 0; i < inner; ++i)
-                    dst[i] = T(1);
-                for (size_t c = 0; c < count; ++c)
-                {
-                    for (size_t i = 0; i < inner; ++i)
-                        dst[i] *= src[i];
-                    src += inner;
-                }
-                dst += inner;
-            }
-        }
-
-        template <class T> void ReductionLayerForwardCpuL2(const T * src, size_t outer, size_t count, size_t inner, T * dst)
-        {
-            for (size_t o = 0; o < outer; ++o)
-            {
-                for (size_t i = 0; i < inner; ++i)
-                    dst[i] = T(0);
-                for (size_t c = 0; c < count; ++c)
-                {
-                    for (size_t i = 0; i < inner; ++i)
-                        dst[i] += Square(src[i]);
-                    src += inner;
-                }
-                for (size_t i = 0; i < inner; ++i)
-                    dst[i] = T(::sqrt(dst[i]));
-                dst += inner;
-            }
-        }
-
-        template <class T> void ReductionLayerForwardCpuMean(const T* src, size_t outer, size_t count, size_t inner, T* dst)
-        {
-            T k = T(1) / T(count);
-            for (size_t o = 0; o < outer; ++o)
-            {
-                for (size_t i = 0; i < inner; ++i)
-                    dst[i] = T(0);
-                for (size_t c = 0; c < count; ++c)
-                {
-                    for (size_t i = 0; i < inner; ++i)
-                        dst[i] += src[i];
-                    src += inner;
-                }
-                for (size_t i = 0; i < inner; ++i)
-                    dst[i] = dst[i] * k;
-                dst += inner;
-            }
-        }
-    }
-
-    template <class T> class ReductionLayer : public Synet::Layer<T>
+    class ReductionLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ReductionLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        ReductionLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            const ReductionParam & param = this->Param().reduction();
-            _type = param.type();
-            switch (_type)
-            {
-            case ReductionTypeMax:
-                _func = Detail::ReductionLayerForwardCpuMax;
-                break;
-            case ReductionTypeMin:
-                _func = Detail::ReductionLayerForwardCpuMin;
-                break;
-            case ReductionTypeSum:
-                _func = Detail::ReductionLayerForwardCpuSum;
-                break;
-            case ReductionTypeProd:
-                _func = Detail::ReductionLayerForwardCpuProd;
-                break;
-            case ReductionTypeL2:
-                _func = Detail::ReductionLayerForwardCpuL2;
-                break;
-            case ReductionTypeMean:
-                _func = Detail::ReductionLayerForwardCpuMean;
-                break;
-            default:
-                assert(0);
-            }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-            Shape shape;
-            _outer = 1, _count = 1, _inner = 1;
-            if (src[0]->Count() > 1)
-            {
-                std::set<size_t> axis;
-                for (size_t i = 0; i < param.axis().size(); ++i)
-                    axis.insert(src[0]->Index(param.axis()[i]));
-                for (size_t i = 0; i < src[0]->Count(); ++i)
-                {
-                    size_t size = src[0]->Axis(i);
-                    if (axis.find(i) != axis.end())
-                    {
-                        _count *= size;
-                        if (param.keepDims())
-                            shape.push_back(1);
-                    }
-                    else
-                    {
-                        (_count > 1 ? _inner : _outer) *= size;
-                        shape.push_back(size);
-                    }
-                }
-            }
-            else
-            {
-                _count = src[0]->Size();
-                shape.push_back(1);
-            }
-            assert(_outer*_count*_inner == src[0]->Size());
-            dst[0]->Reshape(shape, src[0]->Format());
-            this->UsePerfStat();
-            return true;
-        }
+        typedef void(*ReducePtr)(const uint8_t * src, size_t outer, size_t count, size_t inner, uint8_t* dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            _func(src[0]->CpuData(), _outer, _count, _inner, dst[0]->CpuData());
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        typedef void(*FuncPtr)(const Type * src, size_t outer, size_t count, size_t inner, Type * dst);
-
+        TensorType _srcType;
         ReductionType _type;
-        FuncPtr _func;
+        ReducePtr _reduce;
         size_t _outer, _count, _inner;
     };
 }

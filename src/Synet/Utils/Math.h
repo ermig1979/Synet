@@ -63,7 +63,10 @@ namespace Synet
         return a < 0 ? -a : a;
     }
 
-    template <class T> T Not(T f);
+    template <class T> T Not(T i)
+    {
+        return ~i;
+    }
 
     template<> SYNET_INLINE float Not<float>(float f)
     {
@@ -71,7 +74,10 @@ namespace Synet
         return (float&)i;
     }
 
-    template <class T> T And(T a, T b);
+    template <class T> T And(T a, T b)
+    {
+        return a & b;
+    }
 
     template<> SYNET_INLINE float And<float>(float a, float b)
     {
