@@ -112,7 +112,7 @@ namespace Synet
             case LayerTypeBinaryOperation: return new BinaryOperationLayer(param, context);
             case LayerTypeBroadcast: return new BroadcastLayer<T>(param, context);
             case LayerTypeCast: return new CastLayer<T>(param, context);
-            case LayerTypeCompare: return new CompareLayer<T>(param, context);
+            case LayerTypeCompare: return new CompareLayer(param, context);
             case LayerTypeConcat: return new ConcatLayer(param, context);
             case LayerTypeConst: return new ConstLayer<T>(param, context);
             case LayerTypeConstantOfShape: return new ConstantOfShapeLayer<T>(param, context);
