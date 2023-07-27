@@ -134,7 +134,17 @@ namespace Synet
         if(_compare == NULL)
             SYNET_ERROR("CompareLayer don't support " << Cpl::ToStr(_srcType) << " input type !");
         dst[0]->Reshape(_srcType, src[0]->Shape(), src[0]->Format());
-        this->UsePerfStat();
+        if (src[0]->Const() && src[1]->Const())
+        {
+            ForwardCpu(src, buf, dst);
+            dst[0]->SetConst(true);
+            _const = true;
+        }
+        else
+        {
+            this->UsePerfStat();
+            _const = false;
+        }
         return true;
     }
 

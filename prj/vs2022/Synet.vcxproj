@@ -27,6 +27,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\ActivationLayers.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ArgMaxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\BinaryOperationLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\CastLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\CompareLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ConcatLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\FlattenLayer.cpp" />

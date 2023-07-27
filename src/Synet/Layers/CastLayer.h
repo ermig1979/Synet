@@ -24,73 +24,28 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
 
 namespace Synet
 {
-    template <class T> class CastLayer : public Synet::Layer<T>
+    class CastLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        CastLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        CastLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            assert(src.size() == 1 && dst.size() == 1);
-            _srcType = src[0]->GetType();
-            _dstType = this->Param().cast().type();
-            if (_srcType == _dstType)
-                dst[0]->Share(*src[0]);
-            else
-            {
-                switch (_dstType)
-                {
-                case TensorType32f:
-                    dst[0]->As32f().Reshape(src[0]->Shape(), src[0]->Format());
-                    break;
-                case TensorType32i:
-                    dst[0]->As32i().Reshape(src[0]->Shape(), src[0]->Format());
-                    break;
-                default:
-                    assert(0);
-                }
-            }
-            this->UsePerfStat();
-            return true;
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+        typedef void (*CastPtr)(const uint8_t* src8, size_t size, uint8_t* dst8);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            if (_srcType != _dstType)
-            {
-                if (_srcType == TensorType32f && _dstType == TensorType32i)
-                {
-                    const Synet::Tensor<float> & src0 = src[0]->As32f();
-                    Synet::Tensor<int32_t> & dst0 = dst[0]->As32i();
-                    for (size_t i = 0; i < src0.Size(); ++i)
-                        dst0.CpuData()[i] = (int32_t)src0.CpuData()[i];
-                }
-                else if (_srcType == TensorType32i && _dstType == TensorType32f)
-                {
-                    const Synet::Tensor<int32_t> & src0 = src[0]->As32i();
-                    Synet::Tensor<float> & dst0 = dst[0]->As32f();
-                    for (size_t i = 0; i < src0.Size(); ++i)
-                        dst0.CpuData()[i] = (float)src0.CpuData()[i];
-                }
-                else
-                    assert(0);
-            }
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
         TensorType _srcType, _dstType;
+        size_t _size;
+        CastPtr _cast;
     };
 }

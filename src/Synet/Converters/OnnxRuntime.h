@@ -681,7 +681,7 @@ namespace Synet
                 else if (to == onnx::TensorProto_DataType_INT64)
                     layer.meta().alpha().type() = TensorType64i;
                 else
-                    return false;
+                    SYNET_ERROR("Unsupported cast type!");
             }
             else
             {
@@ -690,6 +690,10 @@ namespace Synet
                     layer.cast().type() = TensorType32f;
                 else if (to == onnx::TensorProto_DataType_INT32)
                     layer.cast().type() = TensorType32i;
+                else if (to == onnx::TensorProto_DataType_INT64)
+                    layer.cast().type() = TensorType64i;
+                else
+                    SYNET_ERROR("Unsupported cast type!");
             }
             return true;
         }
