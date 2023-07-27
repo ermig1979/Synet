@@ -165,7 +165,7 @@ namespace Synet
             case LayerTypeRestrictRange: return new RestrictRangeLayer(param, context);
             case LayerTypeReverseSequence: return new ReverseSequenceLayer<T>(param, context);
             case LayerTypeRnnGruBd: return new RnnGruBdLayer<T>(param, context);
-            case LayerTypeScale: return new ScaleLayer<T>(param, context, method);
+            case LayerTypeScale: return new ScaleLayer(param, context, method);
             case LayerTypeScatterNd: return new ScatterNdLayer<T>(param, context);
             case LayerTypeShortcut: return new ShortcutLayer<T>(param, context);
             case LayerTypeShuffle: return new ShuffleLayer<T>(param, context);

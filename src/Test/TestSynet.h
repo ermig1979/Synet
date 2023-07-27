@@ -402,31 +402,17 @@ namespace Test
                 const ShapeParam & shape = param.input()[i];
                 srcNames.push_back(shape.name());
                 Shape srcShape;
-                if (shape.size() > 0)
-                    srcShape.push_back(shape.size());
+                if (shape.dims().size())
+                    srcShape = shape.dims();
                 else
                 {
                     for (size_t j = 0; j < shape.shape().size(); ++j)
                     {
-                        const SizeParam & size = shape.shape()[j];
+                        const SizeParam& size = shape.shape()[j];
                         if (size.size() > 0)
                             srcShape.push_back(size.size());
-                        else if (size.name().size() > 0)
-                        {
-                            Net::Tensor tensor;
-                            if (_net.GetMetaConst(size.name(), tensor) && tensor.GetType() == Synet::TensorType32i && tensor.Size())
-                            {
-                                int32_t value = tensor.As32i().Data<int>()[0];
-                                if (value > 0)
-                                    srcShape.push_back(value);
-                                else
-                                    return false;
-                            }
-                            else
-                                return false;
-                        }
                         else
-                            return false;
+                            SYNET_ERROR("Test parameter input.shape.size must be > 0!");
                     }
                 }
                 if (srcShape.size() > 1)   
@@ -437,7 +423,7 @@ namespace Test
                         srcShape = Shape({ srcShape[0], srcShape[2], srcShape[3], srcShape[1] });
                 }
                 if (srcShape.empty())
-                    return false;
+                    SYNET_ERROR("Test parameter input.shape is empty!");
                 srcShapes.push_back(srcShape);
             }
 

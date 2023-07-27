@@ -356,7 +356,8 @@ namespace Synet
             const int32_t* scale = _norm32i.CpuData();
             const int32_t* shift = scale + _N;
             for (size_t i = 0; i < _M; ++i, dst += _N)
-                Detail::ScaleLayerForwardCpu(dst, scale, shift, _N, 1, 1, dst, TensorFormatNhwc, 1);
+                for (size_t j = 0; j < _N; ++j)
+                    dst[j] = dst[j] * scale[j] + shift[j];
         }
 
     private:

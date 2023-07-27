@@ -556,7 +556,7 @@ namespace Synet
                     Detail::FusedLayerForwardCpu4(src, _t4.bias0.CpuData(), &_t4.scale1, &_t4.bias1, _count, _size, dst, _trans);
                     break;
                 case 10:
-                    Detail::ScaleLayerForwardCpu(src, _t0.scale.CpuData(), _t0.bias.CpuData(), _count, 1, _size, dst, _format, 0);
+                    ScaleForward32f(src, _t0.scale.CpuData(), _t0.bias.CpuData(), _count, 1, _size, dst, _format, 0);
                     break;
                 case 11:
                     Detail::FusedLayerForwardCpu11(src, _count*_size, _t11.params, dst);

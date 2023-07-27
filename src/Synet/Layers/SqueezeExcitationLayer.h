@@ -217,7 +217,7 @@ namespace Synet
                 CpuRelu(norm1, _squeeze, 0.0f, norm1);
                 Detail::InnerProductLayerForwardCpu<float>(norm1, _rWeight[1].data(), NULL, _channels, _squeeze, norm0);
                 CpuSigmoid(norm0, _channels, norm0);
-                Detail::ScaleLayerForwardCpu<float>(src, norm0, NULL, _channels, _height, _width, dst, _format, 0);
+                ScaleForward32f(src, norm0, NULL, _channels, _height, _width, dst, _format, 0);
                 src += _size, dst += _size;
             }
         }

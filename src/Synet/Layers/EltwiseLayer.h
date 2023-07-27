@@ -315,7 +315,7 @@ namespace Synet
                 const Type * pScale = src[_index[1]]->CpuData();
                 for (size_t b = 0; b < _batch; ++b)
                 {
-                    Detail::ScaleLayerForwardCpu(pSrc0, pScale, pBias, _channels, 1, _spatial, pDst, src[_index[0]]->Format(), 0);
+                    ScaleForward32f(pSrc0, pScale, pBias, _channels, 1, _spatial, pDst, src[_index[0]]->Format(), 0);
                     pSrc0 += _channels*_spatial;
                     pDst += _channels*_spatial;
                     pScale += _channels;
@@ -327,7 +327,7 @@ namespace Synet
                 const Type * pScale = src[_index[1]]->CpuData();
                 for (size_t b = 0; b < _batch; ++b)
                 {
-                    Detail::ScaleLayerForwardCpu(pSrc0, pScale, pBias, _spatial, 1, _channels, pDst,
+                    ScaleForward32f(pSrc0, pScale, pBias, _spatial, 1, _channels, pDst,
                         src[_index[0]]->Format() == TensorFormatNhwc ? TensorFormatNchw : TensorFormatNhwc, 0);
                     pSrc0 += _channels*_spatial;
                     pDst += _channels*_spatial;
@@ -342,7 +342,7 @@ namespace Synet
                 {
                     if (_channelsInner == 1)
                     {
-                        Detail::ScaleLayerForwardCpu(pSrc0, pScale, pBias, _channelsOuter, 1, _spatial, pDst, TensorFormatNchw, 0);
+                        ScaleForward32f(pSrc0, pScale, pBias, _channelsOuter, 1, _spatial, pDst, TensorFormatNchw, 0);
                         pSrc0 += _channelsOuter * _spatial;
                         pDst += _channelsOuter * _spatial;
                     }
@@ -350,7 +350,7 @@ namespace Synet
                     {
                         for (size_t c = 0; c < _channelsOuter; ++c)
                         {
-                            Detail::ScaleLayerForwardCpu(pSrc0, pScale, pBias, _channelsInner, 1, _spatial, pDst, TensorFormatNhwc, 0);
+                            ScaleForward32f(pSrc0, pScale, pBias, _channelsInner, 1, _spatial, pDst, TensorFormatNhwc, 0);
                             pSrc0 += _channelsInner*_spatial;
                             pDst += _channelsInner*_spatial;
                             pScale += _channelsInner;

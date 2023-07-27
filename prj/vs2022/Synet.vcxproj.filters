@@ -45,6 +45,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\PadLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\ScaleLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -407,6 +410,9 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\Shape.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Scale.h">
       <Filter>Utils</Filter>
     </ClInclude>
   </ItemGroup>

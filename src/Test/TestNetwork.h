@@ -45,15 +45,14 @@ namespace Test
 
     struct SizeParam
     {
-        CPL_PARAM_VALUE(String, name, String());
         CPL_PARAM_VALUE(int32_t, size, 0);
     };
 
     struct ShapeParam
     {
         CPL_PARAM_VALUE(String, name, String());
+        CPL_PARAM_VALUE(Shape, dims, Shape());
         CPL_PARAM_VECTOR(SizeParam, shape);
-        CPL_PARAM_VALUE(int32_t, size, 0);
         CPL_PARAM_VALUE(bool, compare, true);
     };
 

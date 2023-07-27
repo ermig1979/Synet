@@ -934,16 +934,27 @@ namespace Synet
             }
             else if (src1->type() == LayerTypeConst && SignificantDimsCount(src1->weight()[0].dim()) == 1)
             {
-                layer.type() = Synet::LayerTypeScale;
-                layer.scale().biasTerm() = false;
-                layer.weight() = src1->weight();
-                if (!CompactShape(layer.weight()[0].dim()))
-                    return false;
-                const float* pSrc = GetWeight<float>(original, layer.weight()[0]);
-                float* pDst = GetWeight<float>(reordered, layer.weight()[0]);
-                size_t size = TensorSize(layer.weight()[0].dim());
-                for (size_t i = 0; i < size; ++i)
-                    pDst[i] = 1.0 / pSrc[i];
+                const float* pSrc = GetWeight<float>(original, src1->weight()[0]);
+                size_t size = TensorSize(src1->weight()[0].dim());
+                bool uniform = true;
+                for (size_t i = 1; i < size && uniform; ++i)
+                    uniform = (pSrc[i] == pSrc[0]);
+                if (uniform)
+                {
+                    layer.type() = Synet::LayerTypePower;
+                    layer.power().scale() = 1.0f / pSrc[0];
+                }
+                else
+                {
+                    layer.type() = Synet::LayerTypeScale;
+                    layer.scale().biasTerm() = false;
+                    layer.weight() = src1->weight();
+                    if (!CompactShape(layer.weight()[0].dim()))
+                        return false;
+                    float* pDst = GetWeight<float>(reordered, layer.weight()[0]);
+                    for (size_t i = 0; i < size; ++i)
+                        pDst[i] = 1.0f / pSrc[i];
+                }
                 layer.src().resize(1);
             }
             else if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)

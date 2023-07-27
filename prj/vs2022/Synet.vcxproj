@@ -34,6 +34,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\PadLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PriorBoxClusteredLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PriorBoxLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\ScaleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\TopKLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\UnaryOperationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\Activation.cpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="..\..\src\Synet\Utils\Math.h" />
     <ClInclude Include="..\..\src\Synet\Utils\MergedConvolution.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Permute.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\Scale.h" />
     <ClInclude Include="..\..\src\Synet\Utils\SetInput.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Shape.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Statistics.h" />
