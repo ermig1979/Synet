@@ -33,6 +33,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\FlattenLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\GatherLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\GridSampleLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\MetaLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PadLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PriorBoxClusteredLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PriorBoxLayer.cpp" />

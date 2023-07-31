@@ -298,8 +298,11 @@ namespace Synet
                     Detail::EltwiseLayerForwardCpu((float const* const*)_src.data(), (const float*)_coefficients.data(), _src.size(), _spatial, _operation, dst[0]->As32f().CpuData());
                     break;
                 case TensorType64i:
-                    Detail::EltwiseLayerForwardCpu((int64_t const* const*)_src.data(), (const int64_t*)0, _src.size(), _spatial, _operation, dst[0]->As64i().CpuData());
+                {
+                    int64_t coefficients[2] = { 1, 1 };
+                    Detail::EltwiseLayerForwardCpu((int64_t const* const*)_src.data(), coefficients, _src.size(), _spatial, _operation, dst[0]->As64i().CpuData());
                     break;
+                }
                 default:
                     assert(0);
                 }

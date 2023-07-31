@@ -146,7 +146,7 @@ namespace Synet
                     return new MergedConvolution8iLayer<T>(param, context, method);
                 else
                     return new MergedConvolution32fLayer<T>(param, context);
-            case LayerTypeMeta: return new MetaLayer<T>(param, context);
+            case LayerTypeMeta: return new MetaLayer(param, context);
             case LayerTypeMish: return new MishLayer(param, context);
             case LayerTypeNonMaxSuppression: return new NonMaxSuppressionLayer<T>(param, context);
             case LayerTypeNormalize: return new NormalizeLayer<T>(param, context);
