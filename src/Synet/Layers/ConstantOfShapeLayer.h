@@ -24,45 +24,21 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
 
 namespace Synet
 {
-    template <class T> class ConstantOfShapeLayer : public Synet::Layer<T>
+    class ConstantOfShapeLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ConstantOfShapeLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        ConstantOfShapeLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            assert(src.size() == 1 && src[0]->GetType() == TensorType64i && src[0]->Count() == 1);
-            Shape shape;
-            for (size_t i = 0, n = src[0]->Axis(0); i < n; ++i)
-                shape.push_back((size_t)src[0]->As64i().CpuData()[i]);
-
-            const TensorParam & value = this->Param().constantOfShape().value();
-            assert(value.shape() == Shp(1));
-
-            if (value.type() == TensorType32f)
-            {
-                dst[0]->As32f().Reshape(shape, value.f32()[0]);
-            }
-            else
-                assert(0);
-            return true;
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
     };
 }
