@@ -842,8 +842,12 @@ namespace Synet
             const LayerParam& param = _stages[i].layer->Param();
             if (!_stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst))
             {
-                const LayerParam& param = _stages[i].layer->Param();
-                SYNET_ERROR("Can't reshape " << i << " layer (name : " << Cpl::ToStr(param.name()) << ", type : "  << Cpl::ToStr(param.type()) << ") !");
+                std::stringstream err;
+                err << "Can't reshape " << i << " layer with name: " << Cpl::ToStr(param.name()) << ", type: " << Cpl::ToStr(param.type());
+                for (size_t s = 0; s < param.src().size(); ++s)
+                    err << ", src[" << s << "]: " << Cpl::ToStr(_stages[i].src[s]->GetType()) << " " << ToStr(_stages[i].src[s]->Shape());
+                err << " !";
+                SYNET_ERROR(err.str());
             }
             if (_stages[i].layer->_isBack && param.type() != LayerTypeStub)
                 _stages[i].dst[0]->SetName(param.name());

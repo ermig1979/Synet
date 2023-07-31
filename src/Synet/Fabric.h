@@ -186,7 +186,7 @@ namespace Synet
             case LayerTypeUnaryOperation: return new UnaryOperationLayer(param, context);
             case LayerTypeUnpack: return new UnpackLayer<T>(param, context);
             case LayerTypeUpsample: return new UpsampleLayer<T>(param, context);
-            case LayerTypeWhere: return new WhereLayer<T>(param, context);
+            case LayerTypeWhere: return new WhereLayer(param, context);
             case LayerTypeYolo: return new YoloLayer<T>(param, context);
             case LayerTypeYoloV7: return new YoloV7Layer<T>(param, context);
             default:

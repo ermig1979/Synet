@@ -82,6 +82,30 @@ namespace Synet
 #endif
     }
 
+    void UnaryOperation64i(const int64_t* src, size_t size, UnaryOperationType type, int64_t* dst)
+    {
+        switch (type)
+        {
+        case UnaryOperationTypeAbs:
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = Abs(src[i]);
+            break;
+        case UnaryOperationTypeNeg:
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = -src[i];
+            break;
+        case UnaryOperationTypeNot:
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = Not(src[i]);
+            break;
+        case UnaryOperationTypeZero:
+            ::memset(dst, 0, size * sizeof(int64_t));
+            break;
+        default:
+            assert(0);
+        }
+    }
+
     //-------------------------------------------------------------------------------------------------
 
     UnaryOperationLayer::UnaryOperationLayer(const LayerParam & param, Context* context)
@@ -95,14 +119,18 @@ namespace Synet
             SYNET_ERROR("UnaryOperationLayer supports only 1 input and 1 output!");
 
         _opType = this->Param().unaryOperation().type();
-        if (_opType < UnaryOperationTypeAbs || _opType > UnaryOperationTypeZero)
-            SYNET_ERROR("Unsupported value of UnaryOperation: " << Cpl::ToStr(_opType) << " !");
-
         _size = src[0]->Size();
         _srcType = src[0]->GetType();
         switch (_srcType)
         {
-        case TensorType32f: break;
+        case TensorType32f: 
+            if (_opType < UnaryOperationTypeAbs || _opType > UnaryOperationTypeZero)
+                SYNET_ERROR("Unsupported value of UnaryOperation: " << Cpl::ToStr(_opType) << " for " << Cpl::ToStr(_srcType)  << " src !");
+            break;
+        case TensorType64i:
+            if (_opType != UnaryOperationTypeAbs && _opType != UnaryOperationTypeNeg && _opType != UnaryOperationTypeNot && _opType != UnaryOperationTypeZero)
+                SYNET_ERROR("Unsupported value of UnaryOperation: " << Cpl::ToStr(_opType) << " for " << Cpl::ToStr(_srcType) << " src !");
+            break;
         default:
             SYNET_ERROR("Unsupported input type of UnaryOperationLayer: " << Cpl::ToStr(_srcType) << " !");
         }
@@ -122,12 +150,12 @@ namespace Synet
         return true;
     }
 
-
     void UnaryOperationLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
         switch (_srcType)
         {
         case TensorType32f: UnaryOperation32f(src[0]->Data<float>(), _size, _opType, dst[0]->Data<float>()); break;
+        case TensorType64i: UnaryOperation64i(src[0]->Data<int64_t>(), _size, _opType, dst[0]->Data<int64_t>()); break;
         default:
             assert(0);
         }

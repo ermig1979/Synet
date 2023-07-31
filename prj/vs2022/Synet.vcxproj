@@ -40,6 +40,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\ScaleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\TopKLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\UnaryOperationLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\WhereLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\Activation.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\SetInput.cpp" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Args.h" />

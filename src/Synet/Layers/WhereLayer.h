@@ -24,51 +24,32 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/Utils/Math.h"
 
 namespace Synet
 {
-    namespace Detail
-    {
-        template <class T> void WhereLayerForwardCpu(const T* cond, const T* pos, const T* neg, size_t size, T* dst);
-
-        template <> SYNET_INLINE void WhereLayerForwardCpu<float>(const float* cond, const float* pos, const float* neg, size_t size, float* dst)
-        {
-            for (size_t i = 0; i < size; ++i)
-                dst[i] = ((uint32_t*)cond)[i] ? pos[i] : neg[i];
-        }
-    }
-
-    template <class T> class WhereLayer : public Synet::Layer<T>
+    class WhereLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        WhereLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        WhereLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            assert(src.size() == 3 && src[0]->Size() == src[1]->Size() && src[0]->Size() == src[2]->Size());
-            _size = src[0]->Size();
-            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
-            this->UsePerfStat();
-            return true;
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+        typedef void (*Where1Ptr)(const uint8_t* cnd, const uint8_t* pos, const uint8_t* neg, size_t size, uint8_t* dst);
+        typedef void (*WhereNPtr)(const uint8_t* cnd, const Shape & cndSteps, const uint8_t* pos, const Shape& posSteps, 
+            const uint8_t* neg, const Shape& negSteps, uint8_t* dst, const Shape& dstShape);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            Detail::WhereLayerForwardCpu(src[0]->CpuData(), src[1]->CpuData(), src[2]->CpuData(), _size, dst[0]->CpuData());
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        size_t _size;
+        TensorType _cndType, _dstType;
+        Shape _cndSteps, _posSteps, _negSteps, _dstShape;
+        size_t _size, _count;
+        Where1Ptr _where1;
+        WhereNPtr _whereN;
     };
 }
