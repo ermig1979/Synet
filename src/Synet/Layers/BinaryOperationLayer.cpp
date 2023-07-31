@@ -129,6 +129,11 @@ namespace Synet
             if (_func32f == NULL)
                 SYNET_ERROR("Unsupported BinaryOperationType: " << Cpl::ToStr(_opType) << " !");
             break;
+        case TensorTypeBool:
+            _funcBool = GetBinaryOperation<bool>(_opType);
+            if (_funcBool == NULL)
+                SYNET_ERROR("Unsupported BinaryOperationType: " << Cpl::ToStr(_opType) << " !");
+            break;
         default:
             SYNET_ERROR("Unsupported input type of BinaryOperationLayer: " << Cpl::ToStr(_srcType) << " !");
         }   
@@ -176,6 +181,7 @@ namespace Synet
         switch (_srcType)
         {
         case TensorType32f: _func32f(src[0]->Data<float>(), src[1]->Data<float>(), _outer, _aSize, _bSize, _inner, dst[0]->Data<float>()); break;
+        case TensorTypeBool: _funcBool(src[0]->Data<bool>(), src[1]->Data<bool>(), _outer, _aSize, _bSize, _inner, dst[0]->Data<bool>()); break;
         default:
             assert(0);
         }

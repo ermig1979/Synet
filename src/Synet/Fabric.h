@@ -153,7 +153,7 @@ namespace Synet
             case LayerTypePad: return new PadLayer(param, context);
             case LayerTypePermute: return new PermuteLayer<T>(param, context);
             case LayerTypePooling: return new PoolingLayer<T>(param, context);
-            case LayerTypePower: return new PowerLayer<T>(param, context);
+            case LayerTypePower: return new PowerLayer(param, context);
             case LayerTypePrelu: return new PreluLayer<T>(param, context);
             case LayerTypePriorBox: return new PriorBoxLayer(param, context);
             case LayerTypePriorBoxClustered: return new PriorBoxClusteredLayer(param, context);

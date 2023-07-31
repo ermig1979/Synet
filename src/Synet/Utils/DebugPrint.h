@@ -49,6 +49,7 @@ namespace Synet
         template<> inline String TypeID<int8_t>() { return "8i"; }
         template<> inline String TypeID<int64_t>() { return "64i"; }
         template<> inline String TypeID<uint64_t>() { return "64u"; }
+        template<> inline String TypeID<bool>() { return "Bool"; }
 
         template<class T> void DebugPrint(std::ostream& os, T value, size_t precision)
         {
@@ -58,6 +59,11 @@ namespace Synet
         template<> inline void DebugPrint(std::ostream& os, float value, size_t precision)
         {
             os << std::fixed << std::setprecision(precision) << value;
+        }
+
+        template<> inline void DebugPrint(std::ostream& os, int64_t value, size_t precision)
+        {
+            os << value;
         }
 
         template<class T> std::ostream& DebugPrint(std::ostream& os, T value, size_t precision, size_t padding)

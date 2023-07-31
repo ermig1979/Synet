@@ -64,6 +64,7 @@ namespace Synet
         switch (cnd)
         {
         case TensorType32f: return GetWhere1<float>(dst);
+        case TensorTypeBool: return GetWhere1<bool>(dst);
         default:
             return NULL;
         }
@@ -173,6 +174,7 @@ namespace Synet
         case TensorType32f: return GetWhereN<uint32_t>(dst, dim);
         case TensorType32i: return GetWhereN<uint32_t>(dst, dim);
         case TensorType64i: return GetWhereN<uint64_t>(dst, dim);
+        case TensorTypeBool: return GetWhereN<bool>(dst, dim);
         default:
             return NULL;
         }

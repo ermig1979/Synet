@@ -74,6 +74,11 @@ namespace Synet
         return (float&)i;
     }
 
+    template <> SYNET_INLINE bool Not<bool>(bool i)
+    {
+        return !i;
+    }
+
     template <class T> T And(T a, T b)
     {
         return a & b;
@@ -85,6 +90,11 @@ namespace Synet
         int _b = (int&)b;
         int _c = _a & _b;
         return (float&)(_c);
+    }
+
+    template<> SYNET_INLINE bool And<bool>(bool a, bool b)
+    {
+        return a && b;
     }
 
     template <class T> SYNET_INLINE T RestrictRange(T value, T min, T max)

@@ -26,12 +26,12 @@
 
 namespace Synet
 {
-    template <class T> void CompareNN(const uint8_t* a8, const uint8_t* b8, size_t size, CompareType type, uint8_t* dst8)
+    template <class S, class D> void CompareNN(const uint8_t* a8, const uint8_t* b8, size_t size, CompareType type, uint8_t* dst8)
     {
-        const T* a = (const T*)a8;
-        const T* b = (const T*)b8;
-        T* dst = (T*)dst8;
-        T neg = T(0), pos = Not(neg);
+        const S* a = (const S*)a8;
+        const S* b = (const S*)b8;
+        D* dst = (D*)dst8;
+        D neg = D(0), pos = Not(neg);
         switch (type)
         {
         case CompareTypeEqual:
@@ -63,12 +63,12 @@ namespace Synet
         }
     }
 
-    template <class T> void CompareN1(const uint8_t* a8, const uint8_t* b8, size_t size, CompareType type, uint8_t* dst8)
+    template <class S, class D> void CompareN1(const uint8_t* a8, const uint8_t* b8, size_t size, CompareType type, uint8_t* dst8)
     {
-        const T* a = (const T*)a8;
-        T b = *(const T*)b8;
-        T* dst = (T*)dst8;
-        T neg = T(0), pos = Not(neg);
+        const S* a = (const S*)a8;
+        S b = *(const S*)b8;
+        D* dst = (D*)dst8;
+        D neg = D(0), pos = Not(neg);
         switch (type)
         {
         case CompareTypeEqual:
@@ -102,13 +102,23 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    CompareLayer::ComparePtr GetCompare(TensorType type, bool n1)
+    template<class S> CompareLayer::ComparePtr GetCompare(TensorType dst, bool n1)
     {
-        switch (type)
+        switch (dst)
         {
-        case TensorType32f: return n1 ? CompareN1<float> : CompareNN<float>;
-        case TensorType32i: return n1 ? CompareN1<int32_t> : CompareNN<int32_t>;
-        case TensorType64i: return n1 ? CompareN1<int64_t> : CompareNN<int64_t>;
+        case TensorTypeBool: return n1 ? CompareN1<S, bool> : CompareNN<S, bool>;
+        default:
+            return NULL;
+        }
+    }
+
+    CompareLayer::ComparePtr GetCompare(TensorType src, TensorType dst, bool n1)
+    {
+        switch (src)
+        {
+        case TensorType32f: return GetCompare<float>(dst, n1);
+        case TensorType32i: return GetCompare<int32_t>(dst, n1);
+        case TensorType64i: return GetCompare<int64_t>(dst, n1);
         default:
             return NULL;
         }
@@ -123,19 +133,22 @@ namespace Synet
 
     bool CompareLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
+
         if (src.size() != 2 && dst.size() != 1)
             SYNET_ERROR("CompareLayer supports only 2 inputs and 1 output!");
         if (src[0]->GetType() != src[1]->GetType())
             SYNET_ERROR("CompareLayer src[0] type " << Cpl::ToStr(src[0]->GetType()) << " != src[1] type " << Cpl::ToStr(src[1]->GetType()) << " !");
         if(src[0]->Shape() != src[1]->Shape() && src[1]->Size() != 1)
             SYNET_ERROR("CompareLayer has incompartible input shapes src[0] :" << ToStr(src[0]->Shape()) << " and src[1]: " << ToStr(src[1]->Shape()) << " !");
-        _compareType = this->Param().compare().type();
         _srcType = src[0]->GetType();
         _size = src[0]->Size();
-        _compare = GetCompare(_srcType, src[1]->Size() == 1);
+        const CompareParam& compare = this->Param().compare();
+        _compareType = compare.compareType();
+        _dstType = compare.dstType();
+        _compare = GetCompare(_srcType, _dstType, src[1]->Size() == 1);
         if(_compare == NULL)
-            SYNET_ERROR("CompareLayer don't support " << Cpl::ToStr(_srcType) << " input type !");
-        dst[0]->Reshape(_srcType, src[0]->Shape(), src[0]->Format());
+            SYNET_ERROR("CompareLayer don't support " << Cpl::ToStr(_srcType) << " input type and " << Cpl::ToStr(_dstType)  << " output type!");
+        dst[0]->Reshape(_dstType, src[0]->Shape(), src[0]->Format());
         if (src[0]->Const() && src[1]->Const())
         {
             ForwardCpu(src, buf, dst);

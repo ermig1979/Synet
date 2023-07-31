@@ -397,6 +397,12 @@ namespace Test
                     for (size_t j = 0; j < size; ++j)
                         dst[j] = (float)src[j];
                 }
+                else if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_BOOL)
+                {
+                    const uint8_t* src = _outputValues->at(i).GetTensorMutableData<uint8_t>();
+                    for (size_t j = 0; j < size; ++j)
+                        dst[j] = (float)src[j];
+                }
                 else
                 {
                     CPL_LOG_SS(Error, "OnnxRuntime: unknown format of output tensor: " << type << " !");

@@ -55,6 +55,7 @@ namespace Synet
         case TensorType32f: return GetCast<float>(dst);
         case TensorType32i: return GetCast<int32_t>(dst);
         case TensorType64i: return GetCast<int64_t>(dst);
+        case TensorTypeBool: return GetCast<bool>(dst);
         default:
             return NULL;
         }

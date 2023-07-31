@@ -34,16 +34,16 @@ namespace Synet
     bool ConstantOfShapeLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (src.size() != 1 && dst.size() != 1)
-            SYNET_ERROR("ConstantOfShape supports only 1 input and 1 output!");
+            SYNET_ERROR("ConstantOfShapeLayer supports only 1 input and 1 output!");
         if (src[0]->GetType() != TensorType64i || src[0]->Count() != 1)
-            SYNET_ERROR("ConstantOfShape input must be 64-bit integer 1D!");
+            SYNET_ERROR("ConstantOfShapeLayer input must be 64-bit integer 1D!");
         Shape dstShape;
         for (size_t i = 0, n = src[0]->Axis(0); i < n; ++i)
             dstShape.push_back((size_t)src[0]->Data<int64_t>()[i]);
 
         const TensorParam & value = this->Param().constantOfShape().value();
         if(value.shape() != Shp(1))
-            SYNET_ERROR("ConstantOfShape parameter value mus be scalar!");
+            SYNET_ERROR("ConstantOfShapeLayer parameter value mus be scalar!");
 
         switch (value.type())
         {
@@ -51,7 +51,7 @@ namespace Synet
             dst[0]->Reshape(TensorType32f, dstShape, TensorFormatNchw, value.f32()[0]);
             break;
         default:
-            SYNET_ERROR("ConstantOfShape usupported parameter value type: " << Cpl::ToStr(value.type()) << " !");
+            SYNET_ERROR("ConstantOfShapeLayer usupported parameter value type: " << Cpl::ToStr(value.type()) << " !");
         }
         _const = true;
         dst[0]->SetConst(true);

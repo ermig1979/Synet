@@ -43,10 +43,12 @@ namespace Synet
 
     private:
         typedef void(*Func32fPtr)(const float * a, const float* b, size_t outer, size_t aSize, size_t bSize, size_t inner, float* dst);
+        typedef void(*FuncBoolPtr)(const bool* a, const bool* b, size_t outer, size_t aSize, size_t bSize, size_t inner, bool* dst);
 
         TensorType _srcType;
         BinaryOperationType _opType;
         size_t _outer, _aSize, _bSize, _inner;
         Func32fPtr _func32f;
+        FuncBoolPtr _funcBool;
     };
 }

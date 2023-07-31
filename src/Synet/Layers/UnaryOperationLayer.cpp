@@ -106,6 +106,22 @@ namespace Synet
         }
     }
 
+    void UnaryOperationBool(const bool* src, size_t size, UnaryOperationType type, bool* dst)
+    {
+        switch (type)
+        {
+        case UnaryOperationTypeNot:
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = !src[i];
+            break;
+        case UnaryOperationTypeZero:
+            ::memset(dst, false, size * sizeof(bool));
+            break;
+        default:
+            assert(0);
+        }
+    }
+
     //-------------------------------------------------------------------------------------------------
 
     UnaryOperationLayer::UnaryOperationLayer(const LayerParam & param, Context* context)
@@ -129,6 +145,10 @@ namespace Synet
             break;
         case TensorType64i:
             if (_opType != UnaryOperationTypeAbs && _opType != UnaryOperationTypeNeg && _opType != UnaryOperationTypeNot && _opType != UnaryOperationTypeZero)
+                SYNET_ERROR("Unsupported value of UnaryOperation: " << Cpl::ToStr(_opType) << " for " << Cpl::ToStr(_srcType) << " src !");
+            break;
+        case TensorTypeBool:
+            if (_opType != UnaryOperationTypeNot && _opType != UnaryOperationTypeZero)
                 SYNET_ERROR("Unsupported value of UnaryOperation: " << Cpl::ToStr(_opType) << " for " << Cpl::ToStr(_srcType) << " src !");
             break;
         default:
@@ -156,6 +176,7 @@ namespace Synet
         {
         case TensorType32f: UnaryOperation32f(src[0]->Data<float>(), _size, _opType, dst[0]->Data<float>()); break;
         case TensorType64i: UnaryOperation64i(src[0]->Data<int64_t>(), _size, _opType, dst[0]->Data<int64_t>()); break;
+        case TensorTypeBool: UnaryOperationBool(src[0]->Data<bool>(), _size, _opType, dst[0]->Data<bool>()); break;
         default:
             assert(0);
         }

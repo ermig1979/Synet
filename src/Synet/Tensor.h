@@ -45,6 +45,7 @@ namespace Synet
     template <> SYNET_INLINE TensorType GetTensorType<uint8_t>() { return TensorType8u; }
     template <> SYNET_INLINE TensorType GetTensorType<int64_t>() { return TensorType64i; }
     template <> SYNET_INLINE TensorType GetTensorType<uint64_t>() { return TensorType64u; }
+    template <> SYNET_INLINE TensorType GetTensorType<bool>() { return TensorTypeBool; }
 
     SYNET_INLINE size_t GetTensorTypeSize(TensorType type)
     {
@@ -57,6 +58,7 @@ namespace Synet
         case TensorType8u: return 1;
         case TensorType64i: return 8;
         case TensorType64u: return 8;
+        case TensorTypeBool: return 1;
         default: assert(0); return 0;
         }
     }
@@ -288,6 +290,18 @@ namespace Synet
         {
             assert(_type == TensorTypeUnknown || _type == TensorType64u);
             return *(const Tensor<uint64_t>*)this;
+        }
+
+        SYNET_INLINE Tensor<bool>& AsBool()
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorTypeBool);
+            return *(Tensor<bool>*)this;
+        }
+
+        SYNET_INLINE const Tensor<bool>& AsBool() const
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorTypeBool);
+            return *(const Tensor<bool>*)this;
         }
 #endif
 
@@ -647,6 +661,7 @@ namespace Synet
             case TensorType8u: DebugPrint<uint8_t>(os, As8u(), name, weight, first, last, precision); break;
             case TensorType64i: DebugPrint<int64_t>(os, As64i(), name, weight, first, last, precision); break;
             case TensorType64u: DebugPrint<uint64_t>(os, As64u(), name, weight, first, last, precision); break;
+            case TensorTypeBool: DebugPrint<bool>(os, AsBool(), name, weight, first, last, precision); break;
             }
         }
 
@@ -780,4 +795,5 @@ namespace Synet
     typedef Tensor<uint8_t> Tensor8u;
     typedef Tensor<int64_t> Tensor64i;
     typedef Tensor<uint64_t> Tensor64u;
+    typedef Tensor<bool> TensorBool;
 }

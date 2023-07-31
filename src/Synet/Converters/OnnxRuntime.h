@@ -1092,7 +1092,7 @@ namespace Synet
         bool ConvertGreaterNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeCompare;
-            layer.compare().type() = CompareTypeGreaterThan;
+            layer.compare().compareType() = CompareTypeGreaterThan;
             return true;
         }
 
@@ -1238,7 +1238,7 @@ namespace Synet
         bool ConvertLessNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeCompare;
-            layer.compare().type() = CompareTypeLessThan;
+            layer.compare().compareType() = CompareTypeLessThan;
             return true;
         }
 

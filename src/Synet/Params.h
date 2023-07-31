@@ -270,7 +270,8 @@ CPL_PARAM_ENUM1(Synet, TensorType,
     TensorType8i,
     TensorType8u,
     TensorType64i,
-    TensorType64u);
+    TensorType64u,
+    TensorTypeBool);
 
 CPL_PARAM_ENUM1(Synet, TopKMode,
     TopKModeMax,
@@ -362,7 +363,8 @@ namespace Synet
 
     struct CompareParam
     {
-        CPL_PARAM_VALUE(CompareType, type, CompareTypeUnknown);
+        CPL_PARAM_VALUE(CompareType, compareType, CompareTypeUnknown);
+        CPL_PARAM_VALUE(TensorType, dstType, TensorTypeBool);
     };
 
     struct ConcatParam

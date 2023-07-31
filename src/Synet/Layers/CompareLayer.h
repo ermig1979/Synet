@@ -44,7 +44,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
         CompareType _compareType;
-        TensorType _srcType;
+        TensorType _srcType, _dstType;
         size_t _size;
         ComparePtr _compare;
     };
