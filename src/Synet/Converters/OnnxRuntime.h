@@ -46,10 +46,7 @@ namespace Synet
             const OnnxParam& onnxParam, const OptimizerParam& optParam)
         {
             if (!Cpl::FileExists(srcGraphPath))
-            {
-                CPL_LOG_SS(Error, "File '" << srcGraphPath << "' is not exist!");
-                return false;
-            }
+                SYNET_ERROR("File '" << srcGraphPath << "' is not exist!");
 
             onnx::ModelProto model;
             if (!LoadModel(srcGraphPath, model))
@@ -58,25 +55,26 @@ namespace Synet
             Synet::NetworkParamHolder holder;
             Vector weight;
             if (!ConvertModel(model, trans, onnxParam, holder(), weight))
+            {
+                String errModelPath = Cpl::FileNameByPath(dstModelPath) == dstModelPath ?
+                    "error.xml" : Cpl::MakePath(Cpl::DirectoryByPath(dstModelPath), "error.xml");
+                if (!holder.Save(errModelPath, false))
+                    SYNET_ERROR("Can't save Synet model with conversion error '" << errModelPath << "' !");
+                    return false;
                 return false;
+            }
 
             if (optParam.saveUnoptimized())
             {
                 String uoModelPath = Cpl::FileNameByPath(dstModelPath) == dstModelPath ? 
                     "unopt.xml" : Cpl::MakePath(Cpl::DirectoryByPath(dstModelPath), "unopt.xml");
                 if (!holder.Save(uoModelPath, false))
-                {
-                    CPL_LOG_SS(Error, "Can't save unoptimized Synet model '" << uoModelPath << "' !");
-                    return false;
-                }
+                    SYNET_ERROR("Can't save unoptimized Synet model '" << uoModelPath << "' !");
 
                 String uoWeightPath = Cpl::FileNameByPath(dstWeightPath) == dstWeightPath ?
                     "unopt.bin" : Cpl::MakePath(Cpl::DirectoryByPath(dstWeightPath), "unopt.bin");
                 if (!SaveBinaryData(weight, uoWeightPath))
-                {
-                    CPL_LOG_SS(Error, "Can't save unoptimized Synet weight '" << uoWeightPath << "' !");
-                    return false;
-                }
+                    SYNET_ERROR("Can't save unoptimized Synet weight '" << uoWeightPath << "' !");
             }
 
             Optimizer optimizer(optParam);
@@ -84,16 +82,10 @@ namespace Synet
                 return false;
 
             if (!holder.Save(dstModelPath, false))
-            {
-                CPL_LOG_SS(Error, "Can't save Synet model '" << dstModelPath << "' !");
-                return false;
-            }
+                SYNET_ERROR("Can't save Synet model '" << dstModelPath << "' !");
 
             if (!SaveBinaryData(weight, dstWeightPath))
-            {
-                CPL_LOG_SS(Error, "Can't save Synet weight '" << dstWeightPath << "' !");
-                return false;
-            }
+                SYNET_ERROR("Can't save Synet weight '" << dstWeightPath << "' !");
 
             return true;
         }
@@ -488,6 +480,7 @@ namespace Synet
                             return false;
                         }
                         renames[dst] = permute.name();
+                        //CPL_LOG_SS(Info, "Insert manual NhwcToNchw permute at " << layer.name() << " !");
                     }
                 }
             }
@@ -518,6 +511,7 @@ namespace Synet
                             return false;
                         }
                         renames[dst] = permute.name();
+                        //CPL_LOG_SS(Info, "Insert manual NchwToNhwc permute at " << layer.name() << " !");
                     }
                 }
             }
@@ -744,10 +738,11 @@ namespace Synet
                 layer.type() = Synet::LayerTypeConcat;
                 if (!ConvertAtrributeInt(node, "axis", layer.concat().axis()))
                     return false;
-                if (trans && !PermutedToNchw(layers, layer.src(), false, true, true))
+                if (trans && CurrentTensorFormat(layers, layer.src(), true, true, true) == TensorFormatNhwc)
                 {
                     Shape nchw = Shape({ 0, 3, 1, 2 });
-                    layer.concat().axis() = (uint32_t)nchw[layer.concat().axis()];
+                    if(layer.concat().axis() >= 0 && layer.concat().axis() < 4)
+                        layer.concat().axis() = (uint32_t)nchw[layer.concat().axis()];
                 }
             }
             return true;
@@ -1350,9 +1345,9 @@ namespace Synet
                     return false;
                 layer.innerProduct().outputNum() = (uint32_t)(transB ? weight[0] : weight[1]);
                 layer.src().resize(1);
-                if (trans && !PermutedToNchw(layers, true, false, true))
+                if (trans && CurrentTensorFormat(layers, layer.src(), true, false, true) == TensorFormatNhwc)
                 {
-                    CPL_LOG_SS(Error, "Can 't convert MatMul node for NCHW format!");
+                    CPL_LOG_SS(Error, "Can 't convert MatMul node for NHWC format!");
                     return false;
                 }
             }
@@ -1630,7 +1625,7 @@ namespace Synet
             }
             if (!ConvertAtrributeInt(node, "keepdims", layer.reduction().keepDims()))
                 return false;
-            if (trans && !PermutedToNchw(layers, false, true, true))
+            if (trans && CurrentTensorFormat(layers, layer.src(), false, true, true) == TensorFormatNhwc)
             {
                 Ints nchw = Ints({ 0, 3, 1, 2 }), axis = layer.reduction().axis();
                 for (size_t i = 0; i < axis.size(); ++i)

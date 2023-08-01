@@ -176,9 +176,10 @@ namespace Synet
                 {
                     for (size_t d = 0; d < layers[l].dst().size(); ++d)
                     {
+                        if (layers[l].type() == LayerTypeMeta || layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
+                            continue;
                         const String & dst = layers[l].dst()[d];
-                        if (src == dst && layers[l].type() != LayerTypeMeta && layers[l].type() &&
-                            PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
+                        if (src == dst && PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
                             return true;
                     }
                 }
@@ -203,8 +204,9 @@ namespace Synet
                     for (size_t d = 0; d < layers[l].dst().size(); ++d)
                     {
                         const String & dst = layers[l].dst()[d];
-                        if (names[s] == dst && layers[l].type() != LayerTypeMeta && layers[l].type() &&
-                            PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
+                        if (layers[l].type() == LayerTypeMeta || layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
+                            continue;
+                        if (names[s] == dst && PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
                             return true;
                     }
                 }
@@ -233,6 +235,71 @@ namespace Synet
                 }
             }
             return count;
+        }
+
+        static TensorFormat CurrentTensorFormat(const LayerParams& layers, size_t current, bool checkInnerProduct, bool checkPriorBox, bool globalPooling)
+        {
+            const LayerParam& layer = layers[current];
+            if (layer.type() == LayerTypeConvolution || layer.type() == LayerTypeDeconvolution)
+                return layer.weight()[0].format();
+            if (layer.type() == LayerTypePermute && layer.permute().format() != TensorFormatUnknown)
+                return layer.permute().format();
+            if (layer.type() == LayerTypeInnerProduct)
+            {
+                if (layer.weight().size())
+                    return layer.weight()[0].format();
+                if(checkInnerProduct)
+                    return TensorFormatNchw;
+            }
+            if (checkPriorBox && (layer.type() == LayerTypePriorBox || layer.type() == LayerTypePriorBoxClustered))
+                return TensorFormatNchw;
+            if (globalPooling && layer.type() == LayerTypePooling && layer.pooling().globalPooling())
+                return TensorFormatNchw;
+            if (layer.type() == LayerTypeInput && layer.input().shape().size())
+                return layer.input().shape()[0].format();
+            for (size_t s = 0; s < layer.src().size(); ++s)
+            {
+                const String& src = layer.src()[s];
+                for (size_t l = 0; l < current; ++l)
+                {
+                    for (size_t d = 0; d < layers[l].dst().size(); ++d)
+                    {
+                        if (layers[l].type() == LayerTypeMeta || layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
+                            continue;
+                        const String& dst = layers[l].dst()[d];
+                        if (src == dst)
+                        {
+                            TensorFormat format = CurrentTensorFormat(layers, l, checkInnerProduct, checkPriorBox, globalPooling);
+                            if (format != TensorFormatUnknown)
+                                return format;
+                        }
+                    }
+                }
+            }
+            return TensorFormatUnknown;
+        }
+
+        static TensorFormat CurrentTensorFormat(const LayerParams& layers, const Strings& names, bool checkInnerProduct, bool checkPriorBox, bool globalPooling)
+        {
+            for (size_t s = 0; s < names.size(); ++s)
+            {
+                for (size_t l = 0; l < layers.size(); ++l)
+                {
+                    for (size_t d = 0; d < layers[l].dst().size(); ++d)
+                    {
+                        const String& dst = layers[l].dst()[d];
+                        if (layers[l].type() == LayerTypeMeta || layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
+                            continue;
+                        if (names[s] == dst)
+                        {
+                            TensorFormat format = CurrentTensorFormat(layers, l, checkInnerProduct, checkPriorBox, globalPooling);
+                            if (format != TensorFormatUnknown)
+                                return format;
+                        }
+                    }
+                }
+            }
+            return TensorFormatUnknown;
         }
 
         static size_t UserCount(const LayerParams& layers, size_t index)

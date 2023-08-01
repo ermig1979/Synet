@@ -75,7 +75,7 @@ namespace Synet
                 if (j == _concatAxis)
                     continue;
                 if(dstShape[j] != src[i]->Axis(j))
-                    SYNET_ERROR("Incompartible input shapes: src[0] " << Detail::DebugPrint(src[0]->Shape()) << " and src[" << i << "] " << Detail::DebugPrint(src[i]->Shape()) << " !");
+                    SYNET_ERROR("Incompartible input shapes: src[0] " << Detail::DebugPrint(src[0]->Shape()) << " and src[" << i << "] " << Detail::DebugPrint(src[i]->Shape()) << " for axis " << _concatAxis << " !");
             }
             srcSizeSum += src[i]->Size();
             _srcConcatAxis[i] = src[i]->Axis(_concatAxis);
