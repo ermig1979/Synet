@@ -44,9 +44,9 @@ namespace Synet
     private:
         bool ReshapeAdd(const TensorPtrs& src, const TensorPtrs& dst);
         bool ReshapeCast(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst);
-        void ReshapeConst(const TensorParam& alpha, const TensorPtrs& dst);
-        void ReshapeDiv(const TensorPtrs& src, const TensorPtrs& dst);
-        void ReshapeEqual(const TensorPtrs& src, const TensorPtrs& dst);
+        bool ReshapeConst(const TensorParam& alpha, const TensorPtrs& dst);
+        bool ReshapeDiv(const TensorPtrs& src, const TensorPtrs& dst);
+        bool ReshapeEqual(const TensorPtrs& src, const TensorPtrs& dst);
         void ReshapeExpandDims(const TensorPtrs& src, const TensorPtrs& dst);
         void ReshapeFill(const TensorPtrs& src, const TensorPtrs& dst);
         void ReshapeFloor(const TensorPtrs& src, const TensorPtrs& dst);

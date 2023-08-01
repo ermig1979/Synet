@@ -563,82 +563,36 @@ namespace Synet
             _buffer.reset(tensor._buffer->Clone());
         }
 
-        SYNET_INLINE void Import(const TensorParam & param)
+        SYNET_INLINE bool Import(const TensorParam & param)
         {
-            _buffer->Resize(0);
+            Reshape(param.type(), param.shape(), param.format());
             switch (param.type())
             {
-            case TensorType32f:
-            {
-                _type = TensorType32f;
-                As32f().Reshape(param.shape(), param.format());
-                CpuCopy(param.f32().data(), param.f32().size(), Data<float>());
-                break;
-            }
-            case TensorType32i:
-            {
-                _type = TensorType32i;
-                As32i().Reshape(param.shape(), param.format());
-                CpuCopy(param.i32().data(), param.i32().size(), Data<int32_t>());
-                break;
-            }
-            case TensorType64i:
-            {
-                _type = TensorType64i;
-                As64i().Reshape(param.shape(), param.format());
-                CpuCopy(param.i64().data(), param.i64().size(), Data<int64_t>());
-                break;
-            }
-            case TensorType64u:
-            {
-                _type = TensorType64u;
-                As64u().Reshape(param.shape(), param.format());
-                CpuCopy(param.u64().data(), param.u64().size(), Data<uint64_t>());
-                break;
-            }
+            case TensorType32f: memcpy(RawData(), param.f32().data(), RawSize()); break;
+            case TensorType32i: memcpy(RawData(), param.i32().data(), RawSize()); break;
+            case TensorType64i: memcpy(RawData(), param.i64().data(), RawSize()); break;
+            case TensorType64u: memcpy(RawData(), param.u64().data(), RawSize()); break;
             default:
-                assert(0);
+                SYNET_ERROR("Can't import " << Cpl::ToStr(param.type()) << " tensor!")
             }
             _const = true;
+            return true;
         }
 
-        SYNET_INLINE void Export(TensorParam & param)
+        SYNET_INLINE bool Export(TensorParam & param) const
         {
             param.type() = _type;
             param.shape() = _shape;
             switch (_type)
             {
-            case TensorType32f:
-            {
-                const Synet::Tensor<float> & f32 = As32f();
-                param.f32().resize(f32.Size());
-                CpuCopy(f32.Data<float>(), f32.Size(), param.f32().data());
-                break;
-            }
-            case TensorType32i:
-            {
-                const Synet::Tensor<int32_t> & i32 = As32i();
-                param.i32().resize(i32.Size());
-                CpuCopy(i32.Data<int32_t>(), i32.Size(), param.i32().data());
-                break;
-            }
-            case TensorType64i:
-            {
-                const Synet::Tensor<int64_t>& i64 = As64i();
-                param.i64().resize(i64.Size());
-                CpuCopy(i64.Data<int64_t>(), i64.Size(), param.i64().data());
-                break;
-            }
-            case TensorType64u:
-            {
-                const Synet::Tensor<uint64_t>& u64 = As64u();
-                param.u64().resize(u64.Size());
-                CpuCopy(u64.Data<uint64_t>(), u64.Size(), param.u64().data());
-                break;
-            }
+            case TensorType32f: param.f32().resize(Data<float>(), Data<float>() + Size()); break;
+            case TensorType32i: param.i32().resize(Data<int32_t>(), Data<int32_t>() + Size()); break;
+            case TensorType64i: param.i64().resize(Data<int64_t>(), Data<int64_t>() + Size()); break;
+            case TensorType64u: param.u64().resize(Data<uint64_t>(), Data<uint64_t>() + Size()); break;
             default:
-                assert(0);
+                SYNET_ERROR("Can't export " << Cpl::ToStr(_type) << " tensor!")
             }
+            return true;
         }
 
         SYNET_INLINE size_t MemoryUsage() const
