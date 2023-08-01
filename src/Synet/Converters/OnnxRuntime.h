@@ -1961,7 +1961,12 @@ namespace Synet
             const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
             if (src0 == NULL || src1 == NULL)
                 return false;
-            if (src1->type() == LayerTypeConst && TensorSize(src1->weight()[0].dim()) == 1)
+            if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
+            {
+                layer.type() = LayerTypeMeta;
+                layer.meta().type() = MetaTypeSub;
+            }
+            else if (src1->type() == LayerTypeConst && TensorSize(src1->weight()[0].dim()) == 1)
             {
                 layer.type() = Synet::LayerTypePower;
                 const float* pShift = GetWeight<float>(original, src1->weight()[0]);

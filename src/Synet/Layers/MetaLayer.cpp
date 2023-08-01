@@ -41,38 +41,23 @@ namespace Synet
         case MetaTypeConst: return ReshapeConst(param.alpha(), dst);
         case MetaTypeDiv: return ReshapeDiv(src, dst);
         case MetaTypeEqual: return ReshapeEqual(src, dst);
-        case MetaTypeExpandDims: ReshapeExpandDims(src, dst); break;
-        case MetaTypeGather: ReshapeGather(src, dst); break;
-        case MetaTypeGreater: ReshapeGreater(src, dst); break;
-        case MetaTypeFill: ReshapeFill(src, dst); break;
+        case MetaTypeExpandDims: return ReshapeExpandDims(src, param.alpha(), dst);
         case MetaTypeFloor: ReshapeFloor(src, dst); break;
-        case MetaTypeInput: ReshapeInput(src, dst); break;
-        case MetaTypeInputWithDefault: ReshapeInputWithDefault(src, dst); break;
-        case MetaTypeMaximum: ReshapeMaximum(src, dst); break;
-        case MetaTypeMinimum: ReshapeMinimum(src, dst); break;
+        case MetaTypeGather: ReshapeGather(src, dst); break;
         case MetaTypeMul: ReshapeMul(src, dst); break;
         case MetaTypePack: ReshapePack(src, dst); break;
         case MetaTypePermute: ReshapePermute(src, param.alpha(), dst); break;
         case MetaTypeRange: ReshapeRange(src, dst); break;
-        case MetaTypeRealDiv: ReshapeRealDiv(src, dst); break;
         case MetaTypeReduceMin: ReshapeReduceMin(src, dst); break;
         case MetaTypeReduceProd: ReshapeReduceProd(src, dst); break;
         case MetaTypeReshape: ReshapeReshape(src, dst); break;
-        case MetaTypeRsqrt: ReshapeRsqrt(src, dst); break;
         case MetaTypeSelect: ReshapeSelect(src, dst); break;
         case MetaTypeShape: ReshapeShape(src, param.version(), dst); break;
         case MetaTypeSlice: return ReshapeSlice(src, dst);
-        case MetaTypeSqrt: ReshapeSqrt(src, dst); break;
         case MetaTypeSqueeze: ReshapeSqueeze(src, dst); break;
         case MetaTypeStridedSlice: ReshapeStridedSlice(src, dst); break;
         case MetaTypeStub: ReshapeStub(src, dst); break;
         case MetaTypeSub: ReshapeSub(src, dst); break;
-        case MetaTypeSwitch: ReshapeSwitch(src, dst); break;
-        case MetaTypeTensorArray: ReshapeTensorArray(src, param.alpha(), dst); break;
-        case MetaTypeTensorArrayRead: ReshapeTensorArrayRead(src, dst); break;
-        case MetaTypeTensorArraySize: ReshapeTensorArraySize(src, dst); break;
-        case MetaTypeTile: ReshapeTile(src, dst); break;
-        case MetaTypeUnpack: ReshapeUnpack(src, dst); break;
         default:
             SYNET_ERROR("Unsupported meta type: " << Cpl::ToStr(param.type()) << " !");
         }
@@ -96,8 +81,8 @@ namespace Synet
     {
         switch (tensor.GetType())
         {
-        case TensorType32i: return (D)tensor.As32i().CpuData()[offset];
-        case TensorType64i: return (D)tensor.As64i().CpuData()[offset];
+        case TensorType32i: return (D)tensor.Data<int32_t>()[offset];
+        case TensorType64i: return (D)tensor.Data<int64_t>()[offset];
         default: assert(0); return D(0);
         }
     }
@@ -106,7 +91,7 @@ namespace Synet
 
     template<class T> bool ReshapeAdd(const Synet::Tensor<float>& src0, const Synet::Tensor<float>& src1, Synet::Tensor<float>& dst0)
     {
-        dst0.Reshape(Synet::GetTensorType<T>(), src0.Shape(), TensorFormatUnknown);
+        dst0.Reshape(Synet::GetTensorType<T>(), src0.Shape(), src0.Format());
         if (src0.Size() == src1.Size())
         {
             for (size_t i = 0; i < src0.Size(); ++i)
@@ -189,7 +174,7 @@ namespace Synet
 
     template<class T> bool ReshapeDiv(const Synet::Tensor<float>& src0, const Synet::Tensor<float>& src1, Synet::Tensor<float>& dst0)
     {
-        dst0.Reshape(Synet::GetTensorType<T>(), src0.Shape(), TensorFormatUnknown);
+        dst0.Reshape(Synet::GetTensorType<T>(), src0.Shape(), src0.Format());
         if (src0.Size() == src1.Size())
         {
             for (size_t i = 0; i < src0.Size(); ++i)
@@ -243,20 +228,22 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    void MetaLayer::ReshapeExpandDims(const TensorPtrs& src, const TensorPtrs& dst)
+    bool MetaLayer::ReshapeExpandDims(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst)
     {
-        assert(src.size() == 1 || src.size() == 2);
+        if ((src.size() != 1 && src.size() != 2) || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeExpandDims supports only 1 or 2 inputs and 1 output!");
         ptrdiff_t axis;
         if (src.size() == 2)
         {
-            assert(src[1]->Size() == 1);
-            axis = GetAs<size_t>(*src[1], 0);
+            if(src[1]->Size() != 1 || (src[1]->GetType() != TensorType32i && src[1]->GetType() != TensorType64i))
+                SYNET_ERROR("MetaLayer::ReshapeExpandDims src[1] has wrong type or shape!");
+            axis = GetAs<ptrdiff_t>(*src[1], 0);
         }
         else
         {
-            const TensorParam& alpha = this->Param().meta().alpha();
-            assert(alpha.shape() == Shp(1) && alpha.type() == TensorType64i);
-            axis = alpha.i64()[0];
+            if(alpha.shape() != Shp(1) || alpha.type() != TensorType64i)
+                SYNET_ERROR("MetaLayer::ReshapeExpandDims has wrong alpha parameter!");
+            axis = (ptrdiff_t)alpha.i64()[0];
         }
         if (axis < 0)
             axis += src[0]->Count();
@@ -266,24 +253,11 @@ namespace Synet
         shape.push_back(1);
         for (size_t i = axis; i < src[0]->Count(); ++i)
             shape.push_back(src[0]->Axis(i));
-        dst[0]->ShareAs(*src[0], shape);
+        dst[0]->ShareAs(*src[0], shape, src[0]->Format());
+        return true;
     }
 
-    void MetaLayer::ReshapeFill(const TensorPtrs& src, const TensorPtrs& dst)
-    {
-        assert(src.size() == 2 && src[0]->GetType() == TensorType32i && src[0]->Count() == 1 && src[1]->Size() == 1);
-        const Synet::Tensor<int32_t>& src0 = src[0]->As32i();
-        Shape shape;
-        for (size_t i = 0; i < src0.Size(); ++i)
-            shape.push_back(src0.CpuData()[i]);
-        if (src[1]->GetType() == TensorType32i)
-        {
-            Synet::Tensor<int32_t>& dst0 = dst[0]->As32i();
-            dst0.Reshape(shape, src[1]->As32i().CpuData()[0]);
-        }
-        else
-            assert(0);
-    }
+    //-------------------------------------------------------------------------------------------------
 
     void MetaLayer::ReshapeFloor(const TensorPtrs& src, const TensorPtrs& dst)
     {
@@ -321,87 +295,6 @@ namespace Synet
             dst[0]->As64i().Reshape(src[1]->Shape());
             for (size_t i = 0; i < idx.size(); ++i)
                 dst[0]->As64i().CpuData()[i] = src[0]->As64i().CpuData()[idx[i]];
-        }
-        else
-            assert(0);
-    }
-
-    void MetaLayer::ReshapeGreater(const TensorPtrs& src, const TensorPtrs& dst)
-    {
-        assert(src.size() == 2);
-        Synet::Tensor<int32_t>& dst0 = dst[0]->As32i();
-        dst0.Reshape(src[0]->Shape());
-        if (src[0]->GetType() == TensorType32f)
-        {
-            for (size_t i = 0; i < src[0]->Size(); ++i)
-                dst0.CpuData()[i] = src[0]->As32f().CpuData()[i] > src[1]->As32f().CpuData()[i] ? 1 : 0;
-        }
-        else if (src[0]->GetType() == TensorType32i)
-        {
-            for (size_t i = 0; i < src[0]->Size(); ++i)
-                dst0.CpuData()[i] = src[0]->As32i().CpuData()[i] > src[1]->As32i().CpuData()[i] ? 1 : 0;
-        }
-        else
-            assert(0);
-    }
-
-    void MetaLayer::ReshapeInput(const TensorPtrs& src, const TensorPtrs& dst)
-    {
-        assert(src.size() == 1);
-        if (src[0]->GetType() == TensorType32i)
-        {
-            const Synet::Tensor<int32_t>& src0 = src[0]->As32i();
-            Synet::Tensor<int32_t>& dst0 = dst[0]->As32i();
-            dst0.Reshape(src0.Shape());
-            for (size_t i = 0; i < src0.Size(); ++i)
-                dst0.CpuData()[i] = src0.CpuData()[i];
-        }
-        else
-            assert(0);
-    }
-
-    void MetaLayer::ReshapeInputWithDefault(const TensorPtrs& src, const TensorPtrs& dst)
-    {
-        assert(src.size() == 2);
-        Synet::Tensor<int32_t>* pSrc = NULL;
-        if (src[0]->GetType() == TensorType32i)
-            pSrc = &src[0]->As32i();
-        else if (src[1]->GetType() == TensorType32i)
-            pSrc = &src[1]->As32i();
-        assert(pSrc);
-        Synet::Tensor<int32_t>& dst0 = dst[0]->As32i();
-        dst0.Reshape(pSrc->Shape());
-        for (size_t i = 0; i < dst0.Size(); ++i)
-            dst0.CpuData()[i] = pSrc->CpuData()[i];
-    }
-
-    void MetaLayer::ReshapeMaximum(const TensorPtrs& src, const TensorPtrs& dst)
-    {
-        assert(src.size() == 2);
-        if (src[0]->GetType() == TensorType32i)
-        {
-            const Synet::Tensor<int32_t>& src0 = src[0]->As32i();
-            const Synet::Tensor<int32_t>& src1 = src[1]->As32i();
-            Synet::Tensor<int32_t>& dst0 = dst[0]->As32i();
-            dst0.Reshape(src0.Shape());
-            for (size_t i = 0; i < src0.Size(); ++i)
-                dst0.CpuData()[i] = Max(src0.CpuData()[i], src1.CpuData()[i]);
-        }
-        else
-            assert(0);
-    }
-
-    void MetaLayer::ReshapeMinimum(const TensorPtrs& src, const TensorPtrs& dst)
-    {
-        assert(src.size() == 2);
-        if (src[0]->GetType() == TensorType32i)
-        {
-            const Synet::Tensor<int32_t>& src0 = src[0]->As32i();
-            const Synet::Tensor<int32_t>& src1 = src[1]->As32i();
-            Synet::Tensor<int32_t>& dst0 = dst[0]->As32i();
-            dst0.Reshape(src0.Shape());
-            for (size_t i = 0; i < src0.Size(); ++i)
-                dst0.CpuData()[i] = Min(src0.CpuData()[i], src1.CpuData()[i]);
         }
         else
             assert(0);
@@ -584,22 +477,6 @@ namespace Synet
             assert(0);
     }
 
-    void MetaLayer::ReshapeRealDiv(const TensorPtrs& src, const TensorPtrs& dst)
-    {
-        assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape() && src[0]->GetType() == src[1]->GetType());
-        if (src[0]->GetType() == TensorType32f)
-        {
-            const Synet::Tensor<float>& src0 = src[0]->As32f();
-            const Synet::Tensor<float>& src1 = src[1]->As32f();
-            Synet::Tensor<float>& dst0 = dst[0]->As32f();
-            dst0.Reshape(src0.Shape());
-            for (size_t i = 0; i < src0.Size(); ++i)
-                dst0.CpuData()[i] = src0.CpuData()[i] / src1.CpuData()[i];
-        }
-        else
-            assert(0);
-    }
-
     void MetaLayer::ReshapeReduceMin(const TensorPtrs& src, const TensorPtrs& dst)
     {
         bool keepDims = this->Param().meta().alpha().i32()[0] != 0;
@@ -663,21 +540,6 @@ namespace Synet
             shape[index] = src[0]->Size() / known;
         }
         dst[0]->ShareAs(*src[0], shape);
-    }
-
-    void MetaLayer::ReshapeRsqrt(const TensorPtrs& src, const TensorPtrs& dst)
-    {
-        assert(src.size() == 1);
-        if (src[0]->GetType() == TensorType32f)
-        {
-            const Synet::Tensor<float>& src0 = src[0]->As32f();
-            Synet::Tensor<float>& dst0 = dst[0]->As32f();
-            dst0.Reshape(src0.Shape());
-            for (size_t i = 0; i < src0.Size(); ++i)
-                dst0.CpuData()[i] = 1.0f / ::sqrt(src0.CpuData()[i]);
-        }
-        else
-            assert(0);
     }
 
     void MetaLayer::ReshapeSelect(const TensorPtrs& src, const TensorPtrs& dst)
@@ -799,21 +661,6 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    void MetaLayer::ReshapeSqrt(const TensorPtrs& src, const TensorPtrs& dst)
-    {
-        assert(src.size() == 1);
-        if (src[0]->GetType() == TensorType32f)
-        {
-            const Synet::Tensor<float>& src0 = src[0]->As32f();
-            Synet::Tensor<float>& dst0 = dst[0]->As32f();
-            dst0.Reshape(src0.Shape());
-            for (size_t i = 0; i < src0.Size(); ++i)
-                dst0.CpuData()[i] = ::sqrt(src0.CpuData()[i]);
-        }
-        else
-            assert(0);
-    }
-
     void MetaLayer::ReshapeSqueeze(const TensorPtrs& src, const TensorPtrs& dst)
     {
         assert(src.size() == 2);
@@ -870,127 +717,6 @@ namespace Synet
             dst0.Reshape(src0.Shape());
             for (size_t i = 0; i < src0.Size(); ++i)
                 dst0.CpuData()[i] = src0.CpuData()[i] - src1.CpuData()[i];
-        }
-        else
-            assert(0);
-    }
-
-    void MetaLayer::ReshapeSwitch(const TensorPtrs& src, const TensorPtrs& dst)
-    {
-        assert(src.size() == 2 && src[1]->Size() == 1 && src[1]->GetType() == TensorType32i);
-        int32_t pred = src[1]->As32i().CpuData()[0];
-        if (src[0]->GetType() == TensorType32i)
-        {
-            const Synet::Tensor<int32_t>& src0 = src[0]->As32i();
-            Synet::Tensor<int32_t>& dst0 = dst[0]->As32i();
-            Synet::Tensor<int32_t>& dst1 = dst[1]->As32i();
-            if (pred)
-            {
-                dst1.Reshape(src0.Shape());
-                for (size_t i = 0; i < src0.Size(); ++i)
-                    dst1.CpuData()[i] = src0.CpuData()[i];
-            }
-            else
-            {
-                dst0.Reshape(src0.Shape());
-                for (size_t i = 0; i < src0.Size(); ++i)
-                    dst0.CpuData()[i] = src0.CpuData()[i];
-            }
-        }
-        else
-            assert(0);
-    }
-
-    void MetaLayer::ReshapeTensorArray(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst)
-    {
-        assert(src.size() == 1 && src[0]->Size() == 1 && src[0]->GetType() == TensorType32i && dst.size() == 2);
-        size_t size = src[1]->As32i().CpuData()[0];
-        if (alpha.type() == TensorType32f)
-        {
-            dst[0]->As32f().Reshape({ size });
-            dst[1]->As32f().Reshape({ size });
-        }
-        else if (alpha.type() == TensorType32i)
-        {
-            dst[0]->As32i().Reshape({ size });
-            dst[1]->As32i().Reshape({ size });
-        }
-        else
-            assert(0);
-    }
-
-    void MetaLayer::ReshapeTensorArrayRead(const TensorPtrs& src, const TensorPtrs& dst)
-    {
-        assert(src.size() == 3 && src[1]->Size() == 1 && src[1]->GetType() == TensorType32i && dst.size() == 1);
-        size_t index = src[1]->As32i().CpuData()[0];
-        if (src[0]->GetType() == TensorType32f)
-        {
-            dst[0]->As32f().Reshape({ size_t(1) });
-            dst[0]->As32f().CpuData()[0] = src[0]->As32f().CpuData()[index];
-        }
-        else if (src[0]->GetType() == TensorType32i)
-        {
-            dst[0]->As32i().Reshape({ size_t(1) });
-            dst[0]->As32i().CpuData()[0] = src[0]->As32i().CpuData()[index];
-        }
-        else
-            assert(0);
-    }
-
-    void MetaLayer::ReshapeTensorArraySize(const TensorPtrs& src, const TensorPtrs& dst)
-    {
-        assert(src.size() == 2 && dst.size() == 2);
-        size_t size = src[0]->Size();
-        dst[0]->As32i().Reshape({ size_t(1) });
-        dst[0]->As32i().CpuData()[0] = (int)size;
-        dst[1]->As32i().Reshape({ size_t(1) });
-    }
-
-    void MetaLayer::ReshapeTile(const TensorPtrs& src, const TensorPtrs& dst)
-    {
-        assert(src.size() == 2 && src[1]->GetType() == TensorType32i && src[1]->Count() == 1 && src[1]->Size() == src[0]->Count());
-        const Synet::Tensor<int32_t>& src1 = src[1]->As32i();
-        Shape multiples(src1.CpuData(), src1.CpuData() + src1.Size());
-        if (src[0]->GetType() == TensorType32i)
-        {
-            const Synet::Tensor<int32_t>& src0 = src[0]->As32i();
-            Synet::Tensor<int32_t>& dst0 = dst[0]->As32i();
-            Shape oldShape = src[0]->Shape();
-            Shape newShape = oldShape;
-            for (size_t i = 0; i < multiples.size(); ++i)
-                newShape[i] *= multiples[i];
-            dst0.Reshape(newShape);
-            if (oldShape.size() == 1)
-            {
-                for (size_t i0 = 0; i0 < multiples[0]; ++i0)
-                {
-                    for (size_t j0 = 0; j0 < oldShape[0]; ++j0)
-                    {
-                        size_t srcIdx = i0;
-                        size_t dstIdx = i0 * oldShape[0] + j0;
-                        dst0.CpuData()[dstIdx] = src0.CpuData()[srcIdx];
-                    }
-                }
-            }
-            else
-                assert(0);
-        }
-        else
-            assert(0);
-    }
-
-    void MetaLayer::ReshapeUnpack(const TensorPtrs& src, const TensorPtrs& dst)
-    {
-        if (src[0]->GetType() == TensorType32i)
-        {
-            Synet::Tensor<int32_t>& src0 = src[0]->As32i();
-            assert(src0.Size() == dst.size());
-            for (size_t i = 0; i < dst.size(); ++i)
-            {
-                Synet::Tensor<int32_t>& dsti = dst[i]->As32i();
-                dsti.Reshape({ size_t(1) });
-                dsti.CpuData()[0] = src0.CpuData()[i];
-            }
         }
         else
             assert(0);

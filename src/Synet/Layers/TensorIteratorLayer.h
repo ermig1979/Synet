@@ -229,13 +229,11 @@ namespace Synet
                         stage.dst.push_back(tensor.get());
                     }
                     available.insert(name);
-                    if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && (param.meta().type() == MetaTypeInput || param.meta().type() == MetaTypeInputWithDefault)))
-                    {
+                    if (param.type() == LayerTypeInput)
                         _src.push_back(_tensors.back().get());
-                    }
                 }
                 stage.buf = buf;
-                if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput))
+                if (param.type() == LayerTypeInput)
                     _input.push_back(stage);
                 else
                     _stages.push_back(stage);

@@ -71,26 +71,21 @@ namespace Synet
         Clear();
 
         if (!_param.Load(model))
-        {
-            std::cout << "Can't load model file '" << model << "' !" << std::endl;
-            return false;
-        }
+            SYNET_ERROR("Can't load model file '" << model << "' !");
+
         _context.options = options;
-        CreateLayers();
+        if (!CreateLayers())
+            return false;
 
         std::ifstream ifs(weight.c_str(), std::ifstream::binary);
         if (!ifs.is_open())
-        {
-            std::cout << "Can't open weight file '" << weight << "' !" << std::endl;
-            return false;
-        }
+            SYNET_ERROR("Can't open weight file '" << weight << "' !");
         for (size_t i = 0; i < _layers.size(); ++i)
         {
             if (!_layers[i]->Load(ifs, _layers))
             {
-                std::cout << "Can't load weight from file '" << weight << "' !" << std::endl;
                 ifs.close();
-                return false;
+                SYNET_ERROR("Can't load weight from file '" << weight << "' !");
             }
         }
         ifs.close();
@@ -103,7 +98,7 @@ namespace Synet
         Clear();
 
         if (!_param.Load(modelData, modelSize, Cpl::ParamFormatXml))
-            return false;
+            SYNET_ERROR("Can't load model from memory!");
 
         _context.options = options;
 
@@ -155,10 +150,7 @@ namespace Synet
     bool Network::Reshape(const Strings & srcNames, const Shapes & srcShapes, const Strings & dstNames)
     {
         if (srcNames.size() != srcShapes.size())
-        {
-            std::cout << "srcNames.size() != srcShapes.size() !" << std::endl;
-            return false;
-        }
+            SYNET_ERROR("srcNames.size() != srcShapes.size() !");
 
         for (size_t i = 0; i < _tensors.size(); ++i)
             _tensors[i]->Clear(true);
@@ -179,24 +171,14 @@ namespace Synet
                             _input[j].dst[0]->Reshape(srcShapes[i], Type(0), param.input().shape()[0].format(), param.name());
                             _src.push_back(_input[j].dst[0]);
                         }
-                        else if (param.type() == LayerTypeMeta && (param.meta().type() == MetaTypeInput || param.meta().type() == MetaTypeInputWithDefault))
-                        {
-                            Synet::Tensor<int32_t> & i32 = _input[j].dst[0]->As32i();
-                            i32.Reshape({ srcShapes[j].size()});
-                            for (size_t l = 0; l < srcShapes[j].size(); ++l)
-                                i32.Data<int>()[l] = (int)srcShapes[j][l];
-                        }
                         else
-                            assert(0);
+                            SYNET_ERROR("Unsupported type " << Cpl::ToStr(param.type()) << " of input layer " << param.name() << " !");
                         found = true;
                         break;
                     }
                 }
                 if (!found)
-                {
-                    std::cout << "Input layer '" << srcNames[i] << "' is not found!" << std::endl;
-                    return false;
-                }
+                    SYNET_ERROR("Input layer '" << srcNames[i] << "' is not found!");
             }            
         }
         else
@@ -229,10 +211,7 @@ namespace Synet
                     }
                 }
                 if (!found)
-                {
-                    std::cout << "Output layer '" << dstNames[i] << "' is not found!" << std::endl;
-                    return false;
-                }
+                    SYNET_ERROR("Output layer '" << dstNames[i] << "' is not found!");
             }
         }
 
@@ -299,8 +278,6 @@ namespace Synet
         for (size_t i = 0; i < _param().layers().size(); ++i)
         {
             const LayerParam& layer = _param().layers()[i];
-            if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeInput)
-                return true;
             if (layer.type() == LayerTypeInput)
             {
                 if (layer.input().shape().empty())
@@ -600,10 +577,11 @@ namespace Synet
                 {
                     if(layerId.find(param.parent()) == layerId.end())
                         SYNET_ERROR("Can't find parent layer: " << param.parent() << " of layer " << param.name() << " !");
-                    //assert(layerId.find(param.parent()) != layerId.end());
                     _layers[layerId[param.parent()]]->AddChild(layer);
                 }
             }
+            else
+                SYNET_ERROR("Can't create layer " << param.name() << " of type " << Cpl::ToStr(param.type()) << " !");
         }
         return true;
     }
@@ -655,15 +633,13 @@ namespace Synet
                     stage.dst.push_back(tensor.get());
                 }
                 available.insert(name);
-                if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && (param.meta().type() == MetaTypeInput || param.meta().type() == MetaTypeInputWithDefault)))
-                {
+                if (param.type() == LayerTypeInput)
                     _src.push_back(_tensors.back().get());
-                }
             }
             stage.buf = buf;
             if (Is8i())
                 stage.layer->SetStats(_stats);
-            if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput))
+            if (param.type() == LayerTypeInput)
                 _input.push_back(stage);
             else
             {
