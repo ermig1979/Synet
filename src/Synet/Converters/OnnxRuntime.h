@@ -99,22 +99,14 @@ namespace Synet
         {
             std::ifstream ifs(path.c_str(), std::ios::ate | std::ios_base::binary);
             if (!ifs.is_open())
-            {
-                CPL_LOG_SS(Error, "Can't open file '" << path << "' !");
-                return false;
-            }
+                SYNET_ERROR("Can't open file '" << path << "' !");
             size_t size = ifs.tellg();
             ifs.seekg(0, std::ios::beg);
             std::vector<char> buffer(size);
             ifs.read(buffer.data(), size);
             ifs.close();
-
             if (!model.ParseFromArray(buffer.data(), size))
-            {
-                CPL_LOG_SS(Error, "Can't parse file '" << path << "' !");
-                return false;
-            }
-
+                SYNET_ERROR("Can't parse file '" << path << "' !");
             return true;
         }
 
@@ -137,10 +129,7 @@ namespace Synet
             {
                 const onnx::TensorProto& tensor = graph.initializer(i);
                 if (!ConvertInitializer(tensor, network, original, renames))
-                {
-                    CPL_LOG_SS(Error, "Can't convert initializer '" << tensor.name() << "' !");
-                    return false;
-                }
+                    SYNET_ERROR("Can't convert initializer '" << tensor.name() << "' !");
                 consts.insert(tensor.name());
             }
             reordered = original;
@@ -151,10 +140,7 @@ namespace Synet
                 if (consts.find(input.name()) != consts.end())
                     continue;
                 if (!ConvertInput(input, trans, network))
-                {
-                    CPL_LOG_SS(Error, "Can't convert input '" << input.name() << "' !");
-                    return false;
-                }
+                    SYNET_ERROR("Can't convert input '" << input.name() << "' !");
             }
 
             for (size_t i = 0; i < graph.node_size(); ++i)
@@ -353,19 +339,13 @@ namespace Synet
                     else if (tensor.float_data_size())
                     {
                         if (size != tensor.float_data_size())
-                        {
-                            CPL_LOG_SS(Error, "Wrong tensor float_data_size " << tensor.float_data_size() << " != " << size << " !");
-                            return false;
-                        }
+                            SYNET_ERROR("Wrong tensor float_data_size " << tensor.float_data_size() << " != " << size << " !");
                         weight.resize(offset + size);
                         for (size_t i = 0; i < size; ++i)
                             weight[offset + i] = tensor.float_data(i);
                     }
                     else
-                    {
-                        CPL_LOG_SS(Error, "Can't parse '" << layer.name() << "' FP32 tensor!");
-                        return false;
-                    }
+                        SYNET_ERROR("Can't parse '" << layer.name() << "' FP32 tensor!");
                 }
             }
             else if(tensor.data_type() == onnx::TensorProto_DataType_INT64)
@@ -395,17 +375,11 @@ namespace Synet
                             layer.meta().alpha().i64()[i] = tensor.int64_data(i);
                     }
                     else
-                    {
-                        CPL_LOG_SS(Error, "Can't parse '" << layer.name() << "' INT64 tensor!");
-                        return false;
-                    }
+                        SYNET_ERROR("Can't parse '" << layer.name() << "' INT64 tensor!");
                 }
             }
             else
-            {
-                CPL_LOG_SS(Error, " Unknown tensor type " << tensor.data_type() << " !");
-                return false;
-            }
+                SYNET_ERROR(" Unknown tensor type " << tensor.data_type() << " !");
             network.layers().push_back(layer);
             return true;
         }
