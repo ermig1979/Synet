@@ -53,9 +53,9 @@ namespace Synet
         bool ReshapeMul(const TensorPtrs& src, const TensorPtrs& dst);
         bool ReshapePack(const TensorPtrs& src, const TensorPtrs& dst);
         bool ReshapePermute(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst);
-        void ReshapeRange(const TensorPtrs& src, const TensorPtrs& dst);
-        void ReshapeReduceMin(const TensorPtrs& src, const TensorPtrs& dst);
-        void ReshapeReduceProd(const TensorPtrs& src, const TensorPtrs& dst);
+        bool ReshapeRange(const TensorPtrs& src, const TensorPtrs& dst);
+        bool ReshapeReduceMin(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst);
+        bool ReshapeReduceProd(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst);
         void ReshapeReshape(const TensorPtrs& src, const TensorPtrs& dst);
         void ReshapeSelect(const TensorPtrs& src, const TensorPtrs& dst);
         void ReshapeShape(const TensorPtrs& src, int version, const TensorPtrs& dst);

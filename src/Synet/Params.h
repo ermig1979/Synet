@@ -58,7 +58,6 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeInnerProduct,
     LayerTypeInput,
     LayerTypeInterp,
-    LayerTypeInterp2,//legacy
     LayerTypeLog,//legacy
     LayerTypeLrn,//legacy
     LayerTypeLstm,

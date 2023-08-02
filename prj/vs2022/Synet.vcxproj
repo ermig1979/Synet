@@ -101,7 +101,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\GridSampleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InnerProductLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InputLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\Interp2Layer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InterpLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\LogLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\LrnLayer.h" />

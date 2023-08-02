@@ -47,9 +47,9 @@ namespace Synet
         case MetaTypeMul: return ReshapeMul(src, dst);
         case MetaTypePack: return ReshapePack(src, dst);
         case MetaTypePermute: return ReshapePermute(src, param.alpha(), dst);
-        case MetaTypeRange: ReshapeRange(src, dst); break;
-        case MetaTypeReduceMin: ReshapeReduceMin(src, dst); break;
-        case MetaTypeReduceProd: ReshapeReduceProd(src, dst); break;
+        case MetaTypeRange: return ReshapeRange(src, dst);
+        case MetaTypeReduceMin: return ReshapeReduceMin(src, param.alpha(), dst);
+        case MetaTypeReduceProd: return ReshapeReduceProd(src, param.alpha(), dst);
         case MetaTypeReshape: ReshapeReshape(src, dst); break;
         case MetaTypeSelect: ReshapeSelect(src, dst); break;
         case MetaTypeShape: ReshapeShape(src, param.version(), dst); break;
@@ -439,90 +439,99 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    void MetaLayer::ReshapeRange(const TensorPtrs& src, const TensorPtrs& dst)
+    template<class T> void ReshapeRange(const std::vector<Tensor<float>*> & src, const std::vector<Tensor<float>*> dst)
     {
-        assert(src.size() == 3 && src[0]->Size() == 1 && src[1]->Size() == 1 && src[2]->Size() == 1);
-        if (src[0]->GetType() == TensorType32f)
-        {
-            float begin = src[0]->As32f().CpuData()[0];
-            float end = src[1]->As32f().CpuData()[0];
-            float step = src[2]->As32f().CpuData()[0];
-            Floats result;
-            if (step > 0)
-                for (float i = begin; i < end; i += step)
-                    result.push_back(i);
-            else
-                for (float i = begin; i > end; i += step)
-                    result.push_back(i);
-            Synet::Tensor<float>& dst0 = dst[0]->As32f();
-            dst0.Reshape({ result.size() });
-            for (size_t i = 0; i < result.size(); ++i)
-                dst0.CpuData()[i] = result[i];
-        }
-        else if (src[0]->GetType() == TensorType32i)
-        {
-            int32_t begin = src[0]->As32i().CpuData()[0];
-            int32_t end = src[1]->As32i().CpuData()[0];
-            int32_t step = src[2]->As32i().CpuData()[0];
-            Ints result;
-            if (step > 0)
-                for (int32_t i = begin; i < end; i += step)
-                    result.push_back(i);
-            else
-                for (int32_t i = begin; i > end; i += step)
-                    result.push_back(i);
-            Synet::Tensor<int32_t>& dst0 = dst[0]->As32i();
-            dst0.Reshape({ result.size() });
-            for (size_t i = 0; i < result.size(); ++i)
-                dst0.CpuData()[i] = result[i];
-        }
-        else if (src[0]->GetType() == TensorType64i)
-        {
-            int64_t begin = src[0]->As64i().CpuData()[0];
-            int64_t end = src[1]->As64i().CpuData()[0];
-            int64_t step = src[2]->As64i().CpuData()[0];
-            Ints result;
-            if (step > 0)
-                for (int64_t i = begin; i < end; i += step)
-                    result.push_back((int)i);
-            else
-                for (int64_t i = begin; i > end; i += step)
-                    result.push_back((int)i);
-            Synet::Tensor<int64_t>& dst0 = dst[0]->As64i();
-            dst0.Reshape({ result.size() });
-            for (size_t i = 0; i < result.size(); ++i)
-                dst0.CpuData()[i] = result[i];
-        }
+        T begin = src[0]->Data<T>()[0];
+        T end = src[1]->Data<T>()[0];
+        T step = src[2]->Data<T>()[0];
+        std::vector<T> result;
+        if (step > 0)
+            for (T i = begin; i < end; i += step)
+                result.push_back(i);
         else
-            assert(0);
+            for (T i = begin; i > end; i += step)
+                result.push_back(i);
+        dst[0]->Reshape(GetTensorType<T>(), Shp(result.size()), TensorFormatUnknown);
+        for (size_t i = 0; i < result.size(); ++i)
+            dst[0]->Data<T>()[i] = result[i];
     }
 
-    void MetaLayer::ReshapeReduceMin(const TensorPtrs& src, const TensorPtrs& dst)
+    bool MetaLayer::ReshapeRange(const TensorPtrs& src, const TensorPtrs& dst)
     {
-        bool keepDims = this->Param().meta().alpha().i32()[0] != 0;
-        size_t axis = (size_t)src[1]->As64i().CpuData()[0];
-        assert(src[0]->Count() == 1);
+        if (src.size() != 3 || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeRange supports only 3 inputs and 1 output!");
+        if(src[0]->Size() != 1 || src[1]->Size() != 1 || src[2]->Size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeRange unsupported input shape!");
+        if (src[0]->GetType() != src[1]->GetType() || src[0]->GetType() != src[2]->GetType())
+            SYNET_ERROR("MetaLayer::ReshapeRange has incompatible input types!");
+        switch (src[0]->GetType())
+        {
+        case TensorType32f: Synet::ReshapeRange<float>(src, dst); break;
+        case TensorType32i: Synet::ReshapeRange<int32_t>(src, dst); break;
+        case TensorType64i: Synet::ReshapeRange<int64_t>(src, dst); break;
+        default:
+            SYNET_ERROR("MetaLayer::ReshapeRange unsupported input type!");
+        }
+        return true;
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    bool MetaLayer::ReshapeReduceMin(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst)
+    {
+        if (src.size() != 2 || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeReduceMin supports only 2 inputs and 1 output!");
+        if (src[1]->GetType() != TensorType64i)
+            SYNET_ERROR("MetaLayer::ReshapeReduceMin has unsupported src[1] type!");
+        size_t axis = (size_t)src[1]->Data<int64_t>()[0];
+
+        if (alpha.shape() != Shp(1) || alpha.type() != TensorType32i)
+            SYNET_ERROR("MetaLayer::ReshapeReduceMin has wrong alpha parameter!");
+        bool keepDims = alpha.i32()[0] != 0;
+
+        if(src[0]->Count() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeReduceMin has src[0] unsupported shape!");
         if (src[0]->GetType() == TensorType32i)
         {
             int32_t min = INT_MAX;
             for (size_t i = 0; i < src[0]->Size(); ++i)
-                min = Min(min, src[0]->As32i().CpuData()[i]);
-            dst[0]->As64i().Reshape(Shp(1), min);
+                min = Min(min, src[0]->Data<int32_t>()[i]);
+            dst[0]->Reshape(TensorType64i, Shp(1), TensorFormatUnknown, min);
         }
         else
-            assert(0);
+            SYNET_ERROR("MetaLayer::ReshapeReduceMin has unsupported src[0] type!");
+        return true;
     }
 
-    void MetaLayer::ReshapeReduceProd(const TensorPtrs& src, const TensorPtrs& dst)
+    //-------------------------------------------------------------------------------------------------
+
+    bool MetaLayer::ReshapeReduceProd(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst)
     {
-        bool keepDims = this->Param().meta().alpha().i32()[0] != 0;
-        size_t axis = (size_t)src[1]->As64i().CpuData()[0];
-        assert(src[0]->Count() == 1);
-        int64_t prod = 1;
-        for (size_t i = 0; i < src[0]->Size(); ++i)
-            prod *= src[0]->As64i().CpuData()[i];
-        dst[0]->As64i().Reshape(Shp(1), prod);
+        if (src.size() != 2 || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeReduceProd supports only 2 inputs and 1 output!");
+        if (src[1]->GetType() != TensorType64i)
+            SYNET_ERROR("MetaLayer::ReshapeReduceprod has unsupported src[1] type!");
+        size_t axis = (size_t)src[1]->Data<int64_t>()[0];
+
+        if (alpha.shape() != Shp(1) || alpha.type() != TensorType32i)
+            SYNET_ERROR("MetaLayer::ReshapeReduceProd has wrong alpha parameter!");
+        bool keepDims = alpha.i32()[0] != 0;
+
+        if (src[0]->Count() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeReduceProd has src[0] unsupported shape!");
+        if (src[0]->GetType() == TensorType64i)
+        {
+            int64_t prod = 1;
+            for (size_t i = 0; i < src[0]->Size(); ++i)
+                prod *= src[0]->Data<int64_t>()[i];
+            dst[0]->Reshape(TensorType64i, Shp(1), TensorFormatUnknown, prod);
+        }
+        else
+            SYNET_ERROR("MetaLayer::ReshapeReduceProd has unsupported src[0] type!");
+        return true;
     }
+
+    //-------------------------------------------------------------------------------------------------
 
     void MetaLayer::ReshapeReshape(const TensorPtrs& src, const TensorPtrs& dst)
     {

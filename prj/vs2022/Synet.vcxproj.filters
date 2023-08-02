@@ -124,9 +124,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\InputLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\Interp2Layer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\InterpLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
