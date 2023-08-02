@@ -45,8 +45,8 @@ namespace Synet
         case MetaTypeFloor: return ReshapeFloor(src, dst);
         case MetaTypeGather: return ReshapeGather(src, dst);
         case MetaTypeMul: return ReshapeMul(src, dst);
-        case MetaTypePack: ReshapePack(src, dst); break;
-        case MetaTypePermute: ReshapePermute(src, param.alpha(), dst); break;
+        case MetaTypePack: return ReshapePack(src, dst);
+        case MetaTypePermute: return ReshapePermute(src, param.alpha(), dst);
         case MetaTypeRange: ReshapeRange(src, dst); break;
         case MetaTypeReduceMin: ReshapeReduceMin(src, dst); break;
         case MetaTypeReduceProd: ReshapeReduceProd(src, dst); break;
@@ -69,13 +69,6 @@ namespace Synet
     }
 
     //-------------------------------------------------------------------------------------------------
-
-    template<class S, class D> static void Convert(const Synet::Tensor<S>& src, Synet::Tensor<D>& dst)
-    {
-        dst.Reshape(src.Shape(), src.Format());
-        for (size_t i = 0, n = src.Size(); i < n; ++i)
-            dst.CpuData()[i] = (D)src.CpuData()[i];
-    }
 
     template<class D> static D GetAs(const Synet::Tensor<float>& tensor, size_t offset)
     {
@@ -295,7 +288,7 @@ namespace Synet
         else
             SYNET_ERROR("MetaLayer::ReshapeFloor unsupported src[1] " << src[1]->GetType() << " type!");
 
-        dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        dst[0]->Reshape(src[0]->GetType(), src[1]->Shape(), src[0]->Format());
         if (src[0]->GetType() == TensorType32f)
         {
             for (size_t i = 0; i < idx.size(); ++i)
@@ -355,73 +348,72 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    void MetaLayer::ReshapePack(const TensorPtrs& src, const TensorPtrs& dst)
+    bool MetaLayer::ReshapePack(const TensorPtrs& src, const TensorPtrs& dst)
     {
+        size_t size = 0;
+        for (size_t i = 0; i < src.size(); ++i)
+            size += src[i]->Size();
+        dst[0]->Reshape(src[0]->GetType(), Shp(size), src[0]->Format());
+
         if (src[0]->GetType() == TensorType32f)
         {
-            Synet::Tensor<float>& dst0 = dst[0]->As32f();
-            size_t size = 0;
-            for (size_t i = 0; i < src.size(); ++i)
-            {
-                assert(src[i]->Count() == 1);
-                size += src[i]->Axis(0);
-            }
-            dst0.Reshape({ size });
             for (size_t s = 0, d = 0; s < src.size(); ++s)
             {
-                for (size_t i = 0; i < src[s]->Axis(0); ++i, ++d)
-                    dst0.CpuData()[d] = src[s]->As32f().CpuData()[i];
+                if(src[s]->GetType() != TensorType32f)
+                    SYNET_ERROR("MetaLayer::ReshapePack has incompatible input types!");
+                for (size_t i = 0; i < src[s]->Size(); ++i, ++d)
+                    dst[0]->Data<float>()[d] = src[s]->Data<float>()[i];
             }
         }
         else if (src[0]->GetType() == TensorType32i)
         {
-            Synet::Tensor<int32_t>& dst0 = dst[0]->As32i();
-            dst0.Reshape({ src.size() });
-            for (size_t i = 0; i < src.size(); ++i)
+            for (size_t s = 0, d = 0; s < src.size(); ++s)
             {
-                assert(src[i]->Size() == 1);
-                if (src[i]->GetType() == TensorType32i)
-                    dst0.CpuData()[i] = (int32_t)src[i]->As32i().CpuData()[0];
-                else if (src[i]->GetType() == TensorType64i)
-                    dst0.CpuData()[i] = (int32_t)src[i]->As64i().CpuData()[0];
+                if (src[s]->GetType() == TensorType32i)
+                {
+                    for (size_t i = 0; i < src[s]->Size(); ++i, ++d)
+                        dst[0]->Data<int32_t>()[d] = src[s]->Data<int32_t>()[i];
+                }
+                else if (src[s]->GetType() == TensorType64i)
+                {
+                    for (size_t i = 0; i < src[s]->Size(); ++i, ++d)
+                        dst[0]->Data<int32_t>()[d] = (int32_t)src[s]->Data<int64_t>()[i];
+                }
                 else
-                    assert(0);
-
+                    SYNET_ERROR("MetaLayer::ReshapePack has incompatible input types!");
             }
         }
         else if (src[0]->GetType() == TensorType64i)
         {
-            Synet::Tensor<int64_t>& dst0 = dst[0]->As64i();
-            size_t size = 0;
-            for (size_t i = 0; i < src.size(); ++i)
+            for (size_t s = 0, d = 0; s < src.size(); ++s)
             {
-                //assert(src[i]->Count() == 1);
-                size += src[i]->Size();
-            }
-            dst0.Reshape({ size });
-            for (size_t i = 0, o = 0; i < src.size(); ++i)
-            {
-                if (src[i]->GetType() == TensorType32i)
+                if (src[s]->GetType() == TensorType32i)
                 {
-                    for (size_t j = 0; j < src[i]->Size(); ++j, ++o)
-                        dst0.CpuData()[o] = (int64_t)src[i]->As32i().CpuData()[j];
+                    for (size_t i = 0; i < src[s]->Size(); ++i, ++d)
+                        dst[0]->Data<int64_t>()[d] = (int64_t)src[s]->Data<int32_t>()[i];
                 }
-                else if (src[i]->GetType() == TensorType64i)
+                else if (src[s]->GetType() == TensorType64i)
                 {
-                    for (size_t j = 0; j < src[i]->Size(); ++j, ++o)
-                        dst0.CpuData()[o] = (int64_t)src[i]->As64i().CpuData()[j];
+                    for (size_t i = 0; i < src[s]->Size(); ++i, ++d)
+                        dst[0]->Data<int64_t>()[d] = src[s]->Data<int64_t>()[i];
                 }
                 else
-                    assert(0);
+                    SYNET_ERROR("MetaLayer::ReshapePack has incompatible input types!");
             }
         }
         else
-            assert(0);
+            SYNET_ERROR("MetaLayer::ReshapePack has incompatible input types!");
+        return true;
     }
 
-    void MetaLayer::ReshapePermute(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst)
+    //-------------------------------------------------------------------------------------------------
+
+    bool MetaLayer::ReshapePermute(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst)
     {
-        assert(src[0]->Count() == alpha.i64().size());
+        if (src.size() != 1 || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapePermute supports only 1 input and 1 output!");
+        if(src[0]->Count() != alpha.i64().size())
+            SYNET_ERROR("MetaLayer::ReshapePermute input and alpha parameter are incompatible!");
         if (src[0]->GetType() == TensorType64i)
         {
             if (alpha.i64().size() == 2)
@@ -429,22 +421,23 @@ namespace Synet
                 Shape order = Shp(alpha.i64()[0], alpha.i64()[1]), shape = src[0]->Shape();
                 if (order[0] == 1 && order[1] == 0)
                 {
-                    dst[0]->As64i().Reshape(Shp(shape[1], shape[0]));
+                    dst[0]->Reshape(src[0]->GetType(), Shp(shape[1], shape[0]), TensorFormatUnknown);
                     for (size_t i = 0; i < shape[0]; ++i)
                         for (size_t j = 0; j < shape[1]; ++j)
-                            *dst[0]->As64i().CpuData(Shp(j, i)) = *src[0]->As64i().CpuData(Shp(i, j));
+                            *dst[0]->Data<int64_t>(Shp(j, i)) = *src[0]->Data<int64_t>(Shp(i, j));
                 }
                 else
-                {
                     dst[0]->Share(*src[0]);
-                }
             }
             else
-                assert(0);
+                SYNET_ERROR("MetaLayer::ReshapePermute unsupported input shape!");
         }
         else
-            assert(0);
+            SYNET_ERROR("MetaLayer::ReshapePermute unsupported input type!");
+        return true;
     }
+
+    //-------------------------------------------------------------------------------------------------
 
     void MetaLayer::ReshapeRange(const TensorPtrs& src, const TensorPtrs& dst)
     {
