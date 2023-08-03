@@ -58,7 +58,6 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeInnerProduct,
     LayerTypeInput,
     LayerTypeInterp,
-    LayerTypeLog,//legacy
     LayerTypeLrn,//legacy
     LayerTypeLstm,
     LayerTypeMergedConvolution,
@@ -234,17 +233,7 @@ CPL_PARAM_ENUM1(Synet, QuantizationMethod,
 
 CPL_PARAM_ENUM1(Synet, TensorFormat,
     TensorFormatNchw,
-    TensorFormatNhwc,
-    TensorFormatNchw4c,
-    TensorFormatNchw8c,
-    TensorFormatNchw16c,
-    TensorFormatNchwXc,
-    TensorFormatOiyx,
-    TensorFormatYxio,
-    TensorFormatOyxi4o,
-    TensorFormatOyxi8o,
-    TensorFormatOyxi16o,
-    TensorFormatOyxiXo);
+    TensorFormatNhwc);
 
 CPL_PARAM_ENUM1(Synet, TensorType,
     TensorType32f,
@@ -475,22 +464,6 @@ namespace Synet
         CPL_PARAM_VALUE(bool, useTensorSize, false);
         CPL_PARAM_VALUE(InterpolationType, interpolationType, InterpolationTypeBilinear);
         CPL_PARAM_VALUE(CoordinateTransformType, coordinateTransformType, CoordinateTransformTypeLegacy);
-    };
-
-    struct Interp2Param
-    {
-        CPL_PARAM_VALUE(float, factor, 1.0f);
-        CPL_PARAM_VALUE(int32_t, height, 0);
-        CPL_PARAM_VALUE(int32_t, width, 0);
-        CPL_PARAM_VALUE(Shape, pad, Shape());
-        CPL_PARAM_VALUE(bool, alignCorners, false);
-    };
-
-    struct LogParam
-    {
-        CPL_PARAM_VALUE(float, base, -1.0f);
-        CPL_PARAM_VALUE(float, scale, 1.0f);
-        CPL_PARAM_VALUE(float, shift, 0.0f);
     };
 
     struct LrnParam
@@ -804,8 +777,6 @@ namespace Synet
         CPL_PARAM_STRUCT(InnerProductParam, innerProduct);
         CPL_PARAM_STRUCT(InputParam, input);
         CPL_PARAM_STRUCT(InterpParam, interp);
-        CPL_PARAM_STRUCT(Interp2Param, interp2);
-        CPL_PARAM_STRUCT(LogParam, log);
         CPL_PARAM_STRUCT(LrnParam, lrn);
         CPL_PARAM_STRUCT(LstmParam, lstm);
         CPL_PARAM_STRUCT(MergedConvolutionParam, mergedConvolution);

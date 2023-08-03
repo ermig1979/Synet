@@ -56,13 +56,13 @@ namespace Synet
         bool ReshapeRange(const TensorPtrs& src, const TensorPtrs& dst);
         bool ReshapeReduceMin(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst);
         bool ReshapeReduceProd(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst);
-        void ReshapeReshape(const TensorPtrs& src, const TensorPtrs& dst);
-        void ReshapeSelect(const TensorPtrs& src, const TensorPtrs& dst);
-        void ReshapeShape(const TensorPtrs& src, int version, const TensorPtrs& dst);
+        bool ReshapeReshape(const TensorPtrs& src, const TensorPtrs& dst);
+        bool ReshapeSelect(const TensorPtrs& src, const TensorPtrs& dst);
+        bool ReshapeShape(const TensorPtrs& src, int version, const TensorPtrs& dst);
         bool ReshapeSlice(const TensorPtrs& src, const TensorPtrs& dst);
-        void ReshapeSqueeze(const TensorPtrs& src, const TensorPtrs& dst);
-        void ReshapeStridedSlice(const TensorPtrs& src, const TensorPtrs& dst);
-        void ReshapeStub(const TensorPtrs& src, const TensorPtrs& dst);
-        void ReshapeSub(const TensorPtrs& src, const TensorPtrs& dst);
+        bool ReshapeSqueeze(const TensorPtrs& src, const TensorPtrs& dst);
+        bool ReshapeStridedSlice(const TensorPtrs& src, const TensorPtrs& dst);
+        bool ReshapeStub(const TensorPtrs& src, const TensorPtrs& dst);
+        bool ReshapeSub(const TensorPtrs& src, const TensorPtrs& dst);
     };
 }

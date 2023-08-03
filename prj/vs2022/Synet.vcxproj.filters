@@ -160,9 +160,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\LrnLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\LogLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\InnerProductLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>

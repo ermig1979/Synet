@@ -49,7 +49,6 @@
 #include "Synet/Layers/InnerProductLayer.h"
 #include "Synet/Layers/InputLayer.h"
 #include "Synet/Layers/InterpLayer.h"
-#include "Synet/Layers/LogLayer.h"
 #include "Synet/Layers/LrnLayer.h"
 #include "Synet/Layers/LstmLayer.h"
 #include "Synet/Layers/MergedConvolution32fLayer.h"
@@ -136,7 +135,6 @@ namespace Synet
             case LayerTypeInnerProduct: return new InnerProductLayer<T>(param, context, method);
             case LayerTypeInput: return new InputLayer<T>(param, context);
             case LayerTypeInterp: return new InterpLayer<T>(param, context);
-            case LayerTypeLog: return new LogLayer<T>(param, context);
             case LayerTypeLrn: return new LrnLayer<T>(param, context);
             case LayerTypeLstm: return new LstmLayer<T>(param, context);
             case LayerTypeMergedConvolution:

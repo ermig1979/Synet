@@ -50,14 +50,14 @@ namespace Synet
         case MetaTypeRange: return ReshapeRange(src, dst);
         case MetaTypeReduceMin: return ReshapeReduceMin(src, param.alpha(), dst);
         case MetaTypeReduceProd: return ReshapeReduceProd(src, param.alpha(), dst);
-        case MetaTypeReshape: ReshapeReshape(src, dst); break;
-        case MetaTypeSelect: ReshapeSelect(src, dst); break;
-        case MetaTypeShape: ReshapeShape(src, param.version(), dst); break;
+        case MetaTypeReshape: return ReshapeReshape(src, dst);
+        case MetaTypeSelect: return ReshapeSelect(src, dst);
+        case MetaTypeShape: return ReshapeShape(src, param.version(), dst);
         case MetaTypeSlice: return ReshapeSlice(src, dst);
-        case MetaTypeSqueeze: ReshapeSqueeze(src, dst); break;
-        case MetaTypeStridedSlice: ReshapeStridedSlice(src, dst); break;
-        case MetaTypeStub: ReshapeStub(src, dst); break;
-        case MetaTypeSub: ReshapeSub(src, dst); break;
+        case MetaTypeSqueeze: return ReshapeSqueeze(src, dst);
+        case MetaTypeStridedSlice: return ReshapeStridedSlice(src, dst);
+        case MetaTypeStub: return ReshapeStub(src, dst);
+        case MetaTypeSub: return ReshapeSub(src, dst);
         default:
             SYNET_ERROR("Unsupported meta type: " << Cpl::ToStr(param.type()) << " !");
         }
@@ -533,29 +533,35 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    void MetaLayer::ReshapeReshape(const TensorPtrs& src, const TensorPtrs& dst)
+    bool MetaLayer::ReshapeReshape(const TensorPtrs& src, const TensorPtrs& dst)
     {
-        assert(src.size() == 2 && src[1]->Count() == 1);//&& src[1]->Size() == src[0]->Count());
+        if (src.size() != 2 || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeReshape supports only 2 inputs and 1 output!");
+        if (src[1]->Count() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeReduceProd has src[1] unsupported shape!");
+
         Shape shape(src[1]->Size());
         if (src[1]->GetType() == TensorType32i)
         {
             for (size_t i = 0; i < shape.size(); ++i)
-                shape[i] = (size_t)src[1]->As32i().CpuData()[i];
+                shape[i] = (size_t)src[1]->Data<int32_t>()[i];
         }
-        if (src[1]->GetType() == TensorType64i)
+        else if (src[1]->GetType() == TensorType64i)
         {
             for (size_t i = 0; i < shape.size(); ++i)
-                shape[i] = (size_t)src[1]->As64i().CpuData()[i];
+                shape[i] = (size_t)src[1]->Data<int64_t>()[i];
+
         }
         else
-            assert(0);
+            SYNET_ERROR("MetaLayer::ReshapeReshape has unsupported src[1] type!");
         size_t unknown = 0;
         for (size_t i = 0; i < shape.size(); ++i)
         {
             if (shape[i] == -1)
                 unknown++;
         }
-        assert(unknown <= 1);
+        if(unknown > 1)
+            SYNET_ERROR("MetaLayer::ReshapeReshape src[1] has more then 1 unknown dimensions!");
         if (unknown)
         {
             size_t known = 1, index = shape.size();
@@ -569,74 +575,77 @@ namespace Synet
             shape[index] = src[0]->Size() / known;
         }
         dst[0]->ShareAs(*src[0], shape);
+        return true;
     }
 
-    void MetaLayer::ReshapeSelect(const TensorPtrs& src, const TensorPtrs& dst)
+    //-------------------------------------------------------------------------------------------------
+
+    bool MetaLayer::ReshapeSelect(const TensorPtrs& src, const TensorPtrs& dst)
     {
-        assert(src.size() == 3 && src[0]->Size() == src[1]->Size() == src[2]->Size());
-        if (src[0]->GetType() == TensorType64i && src[1]->GetType() == TensorType64i && src[2]->GetType() == TensorType64i)
+        if (src.size() != 3 || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeSelect supports only 3 inputs and 1 output!");
+        if (src[0]->Shape() != src[1]->Shape() || src[0]->Shape() != src[2]->Shape())
+            SYNET_ERROR("MetaLayer::ReshapeSelect has incompatible input shapes!");
+        if (src[0]->GetType() != src[1]->GetType() || src[0]->GetType() != src[2]->GetType())
+            SYNET_ERROR("MetaLayer::ReshapeSelect has incompatible input types!");
+        dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        switch (src[0]->GetType())
         {
-            dst[0]->As64i().Reshape(src[0]->Shape());
+        case TensorType64i:
             for (size_t i = 0; i < src[0]->Size(); ++i)
-                dst[0]->As64i().CpuData()[i] = src[0]->As64i().CpuData()[i] ?
-                src[1]->As64i().CpuData()[i] : src[2]->As64i().CpuData()[i];
+                dst[0]->Data<int64_t>()[i] = src[0]->Data<int64_t>()[i] ?
+                src[1]->Data<int64_t>()[i] : src[2]->Data<int64_t>()[i];
+            break;
+        default:
+            SYNET_ERROR("MetaLayer::ReshapeSelect has unsupported input type!");
         }
-        else
-            assert(0);
+        return true;
     }
 
-    void MetaLayer::ReshapeShape(const TensorPtrs& src, int version, const TensorPtrs& dst)
+    //-------------------------------------------------------------------------------------------------
+
+    bool MetaLayer::ReshapeShape(const TensorPtrs& src, int version, const TensorPtrs& dst)
     {
-        assert(src.size() == 1);
+        if (src.size() != 1 || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeShape supports only 1 input and 1 output!");
         Shape shape = src[0]->Shape();
         bool trans = src[0]->Format() == TensorFormatNhwc;
-        if (version == 0)
-        {
-            if (!trans && shape.size() == 4)
-                shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
-            if (!trans && shape.size() == 2)
-                shape = Shape({ shape[1], shape[0] });
-            Synet::Tensor<int32_t>& dst0 = dst[0]->As32i();
-            dst0.Reshape({ shape.size() });
-            for (size_t i = 0; i < shape.size(); ++i)
-                dst0.CpuData()[i] = (int32_t)shape[i];
-        }
-        else
+        if(version == 1)
         {
             if (trans && shape.size() == 4)
-                shape = Shape({ shape[0], shape[3], shape[1], shape[2] });
-            Synet::Tensor<int64_t>& dst0 = dst[0]->As64i();
-            dst0.Reshape({ shape.size() }, src[0]->Format());
+                shape = Shp(shape[0], shape[3], shape[1], shape[2]);
+            dst[0]->Reshape(TensorType64i, Shp(shape.size()), src[0]->Format());
             for (size_t i = 0; i < shape.size(); ++i)
-                dst0.CpuData()[i] = (int64_t)shape[i];
+                dst[0]->Data<int64_t>()[i] = (int64_t)shape[i];
         }
+        else
+            SYNET_ERROR("MetaLayer::ReshapeShape unsupported version!");
+        return true;
     }
 
     //-------------------------------------------------------------------------------------------------
 
     bool MetaLayer::ReshapeSlice(const TensorPtrs& src, const TensorPtrs& dst)
     {
+        for(size_t s = 1; s < src.size(); ++s)
+            if (src[0]->GetType() != src[s]->GetType())
+                SYNET_ERROR("MetaLayer::ReshapeSlice has incompatible input types!");
         if (src[0]->GetType() == TensorType32i)
         {
             if (!(src.size() == 3 && src[0]->Count() == 1 && src[1]->Size() == 1 && src[2]->Size() == 1))
                 SYNET_ERROR("MetaLayer::ReshapeSlice: unsupported input shapes!");
-            const Synet::Tensor<int32_t>& src0 = src[0]->As32i();
-            size_t begin = src[1]->As32i().CpuData()[0];
-            size_t size = src[2]->As32i().CpuData()[0];
-            Synet::Tensor<int32_t>& dst0 = dst[0]->As32i();
-            dst0.Reshape({ size });
+            size_t begin = src[1]->Data<int32_t>()[0];
+            size_t size = src[2]->Data<int32_t>()[0];
+            dst[0]->Reshape(src[0]->GetType(), Shp(size), src[0]->Format());
             for (size_t i = 0; i < size; ++i)
-                dst0.CpuData()[i] = src0.CpuData()[begin + i];
+                dst[0]->Data<int32_t>()[i] = src[0]->Data<int32_t>()[begin + i];
         }
         else if (src[0]->GetType() == TensorType64i)
         {
-            const Synet::Tensor<int64_t>& src0 = src[0]->As64i();
-            Synet::Tensor<int64_t>& dst0 = dst[0]->As64i();
             if (src[0]->Count() == 1)
             {
                 if(!(src.size() == 4 && src[1]->Size() == 1 && src[2]->Size() == 1 && src[3]->Size() == 1))
                     SYNET_ERROR("MetaLayer::ReshapeSlice: unsupported input shapes!");
-                const int64_t * src0 = src[0]->Data<int64_t>();
                 int64_t size = src[0]->Size();
                 int64_t beg = src[1]->Data<int64_t>()[0];
                 if (beg < 0)
@@ -648,40 +657,34 @@ namespace Synet
                 if(beg < 0 || beg > size || end < 0 || end > size)
                     SYNET_ERROR("MetaLayer::ReshapeSlice: unsupported input shapes!");
                 dst[0]->Reshape(src[0]->GetType(), Shp(end - beg), src[0]->Format());
-                int64_t* dst0 = dst[0]->Data<int64_t>();
                 for (int64_t i = beg; i < end; ++i)
-                    dst0[i - beg] = src0[i];
-                return true;
+                    dst[0]->Data<int64_t>()[i - beg] = src[0]->Data<int64_t>()[i];
             }
             else if (src[0]->Count() == 2)
             {
-                const Synet::Tensor<int64_t>& src0 = src[0]->As64i();
-                Synet::Tensor<int64_t>& dst0 = dst[0]->As64i();
                 if (!(src.size() == 5 && src[1]->Size() == 1 && src[2]->Size() == 1 && src[3]->Size() == 1 && src[4]->Size() == 1))
                     SYNET_ERROR("MetaLayer::ReshapeSlice: unsupported input shapes!");
-                const Shape& ss = src0.Shape();
-                int64_t axis = RestrictRange<int64_t>(src[3]->As64i().CpuData()[0] < 0 ? src[3]->As64i().CpuData()[0] + ss.size() : src[3]->As64i().CpuData()[0], 0, ss.size() - 1);
-                int64_t beg = RestrictRange<int64_t>(src[1]->As64i().CpuData()[0] < 0 ? src[1]->As64i().CpuData()[0] + ss[axis] : src[1]->As64i().CpuData()[0], 0, ss[axis]);
-                int64_t end = RestrictRange<int64_t>(src[2]->As64i().CpuData()[2] < 0 ? src[2]->As64i().CpuData()[2] + ss[axis] : src[2]->As64i().CpuData()[0], 0, ss[axis]);
-                int64_t step = src[4]->As64i().CpuData()[0];
+                const Shape& ss = src[0]->Shape();
+                int64_t axis = RestrictRange<int64_t>(src[3]->Data<int64_t>()[0] < 0 ? src[3]->Data<int64_t>()[0] + ss.size() : src[3]->Data<int64_t>()[0], 0, ss.size() - 1);
+                int64_t beg = RestrictRange<int64_t>(src[1]->Data<int64_t>()[0] < 0 ? src[1]->Data<int64_t>()[0] + ss[axis] : src[1]->Data<int64_t>()[0], 0, ss[axis]);
+                int64_t end = RestrictRange<int64_t>(src[2]->Data<int64_t>()[2] < 0 ? src[2]->Data<int64_t>()[2] + ss[axis] : src[2]->Data<int64_t>()[0], 0, ss[axis]);
+                int64_t step = src[4]->Data<int64_t>()[0];
                 int64_t size = 0;
                 for (int64_t i = beg; step > 0 ? i < end : i >= end; i += step, size++);
                 Shape ds = ss;
                 ds[axis] = size;
-                dst0.Reshape(ds);
-                //const int64_t* s0 = src0.CpuData();
-                //int64_t* d0 = dst0.CpuData();
+                dst[0]->Reshape(src[0]->GetType(), ds, src[0]->Format());
                 if (axis == 0)
                 {
                     for (int64_t i = beg, o = 0; step > 0 ? i < end : i >= end; i += step, o++)
                         for (size_t j = 0; j < ss[1]; ++j)
-                            *dst0.CpuData(Shp(o, j)) = *src0.CpuData(Shp(i, j));
+                            *dst[0]->Data<int64_t>(Shp(o, j)) = *src[0]->Data<int64_t>(Shp(i, j));
                 }
                 else
-                    assert(0);
+                    SYNET_ERROR("MetaLayer::ReshapeSlice: wrong src[3] value!");
             }
             else
-                assert(0);
+                SYNET_ERROR("MetaLayer::ReshapeSlice: unsupported input shapes!");
         }
         else
             SYNET_ERROR("MetaLayer::ReshapeSlice: unsupported src[0] type: " << Cpl::ToStr(src[0]->GetType()) << " !");
@@ -690,64 +693,99 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    void MetaLayer::ReshapeSqueeze(const TensorPtrs& src, const TensorPtrs& dst)
+    bool MetaLayer::ReshapeSqueeze(const TensorPtrs& src, const TensorPtrs& dst)
     {
-        assert(src.size() == 2);
+        if (src.size() != 2 || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeSqueeze supports only 2 inputs and 1 output!");
+        if (src[0]->GetType() != src[1]->GetType())
+            SYNET_ERROR("MetaLayer::ReshapeSqueeze has incompatible input types!");
         if (src[0]->GetType() == TensorType64i)
         {
-            assert(src[0]->Size() == 1 && src[1]->Size() == 1);
-            dst[0]->As64i().Reshape(src[0]->Shape(), src[0]->Format());
+            if(!(src[0]->Size() == 1 && src[1]->Size() == 1))
+                SYNET_ERROR("MetaLayer::ReshapeSlice: unsupported input shapes!");
+            dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
             for (size_t i = 0; i < src[0]->Size(); ++i)
-                dst[0]->As64i().CpuData()[i] = src[0]->As64i().CpuData()[i];
+                dst[0]->Data<int64_t>()[i] = src[0]->Data<int64_t>()[i];
         }
         else
-            assert(0);
+            SYNET_ERROR("MetaLayer::ReshapeSqueeze: unsupported src[0] type: " << Cpl::ToStr(src[0]->GetType()) << " !");
+        return true;
     }
 
-    void MetaLayer::ReshapeStridedSlice(const TensorPtrs& src, const TensorPtrs& dst)
+    //-------------------------------------------------------------------------------------------------
+
+    bool MetaLayer::ReshapeStridedSlice(const TensorPtrs& src, const TensorPtrs& dst)
     {
-        assert(src.size() >= 3 && src[0]->Count() == 1 && src[1]->Size() == 1 && src[2]->Size() == 1);
+        if (src.size() < 3 || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeStridedSlice supports only 3 or 4 inputs and 1 output!");
+        if (!(src[0]->Count() == 1 && src[1]->Size() == 1 && src[2]->Size() == 1))
+            SYNET_ERROR("MetaLayer::ReshapeStridedSlice has incompatible input shapes!");
         size_t begin = GetAs<size_t>(*src[1], 0);
         size_t end = GetAs<size_t>(*src[2], 0);
         size_t step = src.size() > 3 ? GetAs<size_t>(*src[3], 0) : size_t(1);
         Shape result;
         for (size_t i = begin; i < end; i += step)
             result.push_back(GetAs<size_t>(*src[0], i));
+        dst[0]->As32i().Reshape(src[0]->GetType(), Shp(result.size()), src[0]->Format());
         if (src[0]->GetType() == TensorType32i)
         {
-            dst[0]->As32i().Reshape(Shp(result.size()), src[0]->Format());
             for (size_t i = 0; i < result.size(); ++i)
-                dst[0]->As32i().CpuData()[i] = (int32_t)result[i];
+                dst[0]->Data<int32_t>()[i] = (int32_t)result[i];
         }
         else if (src[0]->GetType() == TensorType64i)
         {
-            dst[0]->As64i().Reshape(Shp(result.size()), src[0]->Format());
             for (size_t i = 0; i < result.size(); ++i)
-                dst[0]->As64i().CpuData()[i] = (int64_t)result[i];
+                dst[0]->Data<int64_t>()[i] = (int64_t)result[i];
         }
         else
-            assert(0);
+            SYNET_ERROR("MetaLayer::ReshapeStridedSlice: unsupported src[0] type: " << Cpl::ToStr(src[0]->GetType()) << " !");
+        return true;
     }
 
-    void MetaLayer::ReshapeStub(const TensorPtrs& src, const TensorPtrs& dst)
+    //-------------------------------------------------------------------------------------------------
+
+    bool MetaLayer::ReshapeStub(const TensorPtrs& src, const TensorPtrs& dst)
     {
-        assert(src.size() == 1 && dst.size() == 1);
+        if (src.size() != 1 || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeStub supports only 1 input and 1 output!");
         dst[0]->Share(*src[0]);
+        return true;
     }
 
-    void MetaLayer::ReshapeSub(const TensorPtrs& src, const TensorPtrs& dst)
+    //-------------------------------------------------------------------------------------------------
+
+    template<class T> bool ReshapeSub(const Synet::Tensor<float>& src0, const Synet::Tensor<float>& src1, Synet::Tensor<float>& dst0)
     {
-        assert(src.size() == 2 && src[0]->Shape() == src[1]->Shape() && src[0]->GetType() == src[1]->GetType());
-        if (src[0]->GetType() == TensorType32i)
+        dst0.Reshape(Synet::GetTensorType<T>(), src0.Shape(), src0.Format());
+        if (src0.Size() == src1.Size())
         {
-            const Synet::Tensor<int32_t>& src0 = src[0]->As32i();
-            const Synet::Tensor<int32_t>& src1 = src[1]->As32i();
-            Synet::Tensor<int32_t>& dst0 = dst[0]->As32i();
-            dst0.Reshape(src0.Shape());
             for (size_t i = 0; i < src0.Size(); ++i)
-                dst0.CpuData()[i] = src0.CpuData()[i] - src1.CpuData()[i];
+                dst0.Data<T>()[i] = src0.Data<T>()[i] - src1.Data<T>()[i];
+        }
+        else if (src1.Size() == 1)
+        {
+            for (size_t i = 0; i < src0.Size(); ++i)
+                dst0.Data<T>()[i] = src0.Data<T>()[i] - src1.Data<T>()[0];
         }
         else
-            assert(0);
+            SYNET_ERROR("MetaLayer::ReshapeSub supported input shapes!");
+        return true;
+    }
+
+    bool MetaLayer::ReshapeSub(const TensorPtrs& src, const TensorPtrs& dst)
+    {
+        if (src.size() != 2 || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeSub supports only 2 inputs and 1 output!");
+        if (src[0]->Count() != src[1]->Count() || src[0]->GetType() != src[1]->GetType())
+            SYNET_ERROR("MetaLayer::ReshapeSub unsupported input shape or type combination!");
+        switch (src[0]->GetType())
+        {
+        case TensorType32f: return Synet::ReshapeSub<float>(*src[0], *src[1], *dst[0]);
+        case TensorType32i: return Synet::ReshapeSub<int32_t>(*src[0], *src[1], *dst[0]);
+        case TensorType64i: return Synet::ReshapeSub<int64_t>(*src[0], *src[1], *dst[0]);
+        default:
+            SYNET_ERROR("MetaLayer::ReshapeSub unsupported input type!");
+        }
+        return true;
     }
 }
