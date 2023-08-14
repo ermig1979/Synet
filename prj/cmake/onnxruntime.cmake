@@ -2,12 +2,12 @@ cmake_minimum_required(VERSION 3.7)
 
 set(ORT_DIR ${ROOT_DIR}/3rd/onnxruntime) 
 set(ORT_BIN ${CMAKE_BINARY_DIR}/3rd/onnxruntime) 
-set(ORT_ONNX ${ORT_BIN}/external/onnx) 
-set(PB_BIN ${ORT_BIN}/external/protobuf/cmake)
+set(ORT_ONNX ${ORT_BIN}/_deps/onnx-build) 
+set(PB_BIN ${ORT_BIN}/_deps/protobuf-build)
  
 set(ORT_LIBS ${ORT_BIN}/libonnxruntime.so ${PB_BIN}/libprotobuf.a)
 
-set(ORT_INCS ${ORT_ONNX} ${ORT_DIR}/cmake/external/protobuf/src ${ORT_DIR}/include ${ORT_DIR}/include/onnxruntime/core/session)
+set(ORT_INCS ${ORT_ONNX} ${ORT_BIN}/_deps/protobuf-src/src ${ORT_DIR}/include ${ORT_DIR}/include/onnxruntime/core/session)
  
 set(ORT_BUILD_OPTIONS
 	-DCMAKE_BUILD_TYPE="Release"
