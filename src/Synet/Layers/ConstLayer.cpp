@@ -22,24 +22,28 @@
 * SOFTWARE.
 */
 
-#pragma once
-
-#include "Synet/Common.h"
-#include "Synet/Layer.h"
+#include "Synet/Layers/ConstLayer.h"
 
 namespace Synet
 {
-    class ConstLayer : public Synet::Layer<float>
+    ConstLayer::ConstLayer(const LayerParam & param, Context* context)
+        : Base(param, context)
     {
-    public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
+    }
 
-        ConstLayer(const LayerParam& param, Context* context);
+    bool ConstLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        if (src.size() != 0 && dst.size() != 1)
+            SYNET_ERROR("ConstLayer supports only 1 output!");
+        if (this->Weight().size() != 1)
+            SYNET_ERROR("ConstLayer mast have 1 weight!");
+        dst[0]->Share(this->Weight()[0]);
+        dst[0]->SetConst(true);
+        _const = true;
+        return true;
+    }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
-
-    protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
-    };
+    void ConstLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    {
+    }
 }

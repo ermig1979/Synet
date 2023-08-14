@@ -112,7 +112,7 @@ namespace Synet
             case LayerTypeCast: return new CastLayer(param, context);
             case LayerTypeCompare: return new CompareLayer(param, context);
             case LayerTypeConcat: return new ConcatLayer(param, context);
-            case LayerTypeConst: return new ConstLayer<T>(param, context);
+            case LayerTypeConst: return new ConstLayer(param, context);
             case LayerTypeConstantOfShape: return new ConstantOfShapeLayer(param, context);
             case LayerTypeConvolution:
                 if (param.convolution().quantizationLevel() == TensorType8i)
