@@ -33,7 +33,21 @@ namespace Synet
 
     bool MetaLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        const MetaParam & param = this->Param().meta();
+        if (!Reshape(src, dst))
+            return false;
+        _const = true;
+        for (size_t d = 0; d < dst.size(); ++d)
+            dst[d]->SetConst(true);
+        return true;
+    }
+
+    void MetaLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    {
+    }
+
+    bool MetaLayer::Reshape(const TensorPtrs& src, const TensorPtrs& dst)
+    {
+        const MetaParam& param = this->Param().meta();
         switch (param.type())
         {
         case MetaTypeAdd: return ReshapeAdd(src, dst);
@@ -62,10 +76,6 @@ namespace Synet
             SYNET_ERROR("Unsupported meta type: " << Cpl::ToStr(param.type()) << " !");
         }
         return true;
-    }
-
-    void MetaLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-    {
     }
 
     //-------------------------------------------------------------------------------------------------

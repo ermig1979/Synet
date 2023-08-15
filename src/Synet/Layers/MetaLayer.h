@@ -42,6 +42,8 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
+        bool Reshape(const TensorPtrs& src, const TensorPtrs& dst);
+
         bool ReshapeAdd(const TensorPtrs& src, const TensorPtrs& dst);
         bool ReshapeCast(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst);
         bool ReshapeConst(const TensorParam& alpha, const TensorPtrs& dst);

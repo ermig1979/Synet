@@ -33,18 +33,8 @@ namespace Synet
         const D* pos = (const D*)pos8;
         const D* neg = (const D*)neg8;
         D* dst = (D*)dst8;
-        if (sizeof(C) == 4)
-        {
-            for (size_t i = 0; i < size; ++i)
-                dst[i] = ((uint32_t*)cnd)[i] ? pos[i] : neg[i];
-        }
-        else if (sizeof(C) == 8)
-        {
-            for (size_t i = 0; i < size; ++i)
-                dst[i] = ((uint64_t*)cnd)[i] ? pos[i] : neg[i];
-        }
-        else
-            assert(0);
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = cnd[i] ? pos[i] : neg[i];
     }
 
     //-------------------------------------------------------------------------------------------------
@@ -63,7 +53,9 @@ namespace Synet
     {
         switch (cnd)
         {
-        case TensorType32f: return GetWhere1<float>(dst);
+        case TensorType32f: return GetWhere1<uint32_t>(dst);
+        case TensorType32i: return GetWhere1<uint32_t>(dst);
+        case TensorType64i: return GetWhere1<uint64_t>(dst);
         case TensorTypeBool: return GetWhere1<bool>(dst);
         default:
             return NULL;
@@ -235,8 +227,8 @@ namespace Synet
             _dstShape.resize(_count, 1);
             for (size_t i = 0; i < _count; ++i)
                 _dstShape[i] = Max(cndShape[i], Max(posShape[i], negShape[i]));
-            if(!(GetSteps(cndShape, _dstShape, _cndSteps) && 
-                GetSteps(posShape, _dstShape, _posSteps) && 
+            if (!(GetSteps(cndShape, _dstShape, _cndSteps) &&
+                GetSteps(posShape, _dstShape, _posSteps) &&
                 GetSteps(negShape, _dstShape, _negSteps)))
                 SYNET_ERROR("WhereLayer has incompatible inputs!");
             dst[0]->Reshape(_dstType, _dstShape, src[0]->Format());

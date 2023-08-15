@@ -162,9 +162,9 @@ namespace Synet
         }
     }
 
-    template<class T> inline void DebugPrint(std::ostream & os, const T * data, const Shape& shape, const std::string & name, size_t first = 6, size_t last = 2, size_t precision = 8)
+    template<class T> inline void DebugPrint(std::ostream & os, const T * data, const Shape& shape, const std::string & name, bool cnst, size_t first = 6, size_t last = 2, size_t precision = 8)
     {
-        os << name << " " << Detail::DebugPrint(shape) << " " << Detail::TypeID<T>() << std::endl;
+        os << name << " " << Detail::DebugPrint(shape) << " " << Detail::TypeID<T>() << (cnst ? " const" : "") << std::endl;
         if (data == NULL)
             return;
         size_t n = shape.size();
@@ -191,17 +191,17 @@ namespace Synet
             os << "\n";
     }
 
-    template<class T> inline void DebugPrint(std::ostream& os, const T* data, size_t size, const std::string& name, size_t first = 6, size_t last = 2, size_t precision = 8)
+    template<class T> inline void DebugPrint(std::ostream& os, const T* data, size_t size, const std::string& name, bool cnst = false, size_t first = 6, size_t last = 2, size_t precision = 8)
     {
-        DebugPrint(os, data, Shape({ size }), name, first, last, precision);
+        DebugPrint(os, data, Shape({ size }), name, cnst, first, last, precision);
     }
 
-    template<class T> void DebugPrint(std::ostream& os, const std::vector<T>& vector, const String& name, size_t first, size_t last, size_t precision)
+    template<class T> inline void DebugPrint(std::ostream& os, const std::vector<T>& vector, const String& name, bool cnst, size_t first, size_t last, size_t precision)
     {
-        DebugPrint(os, vector.data(), Shape({ vector.size() }), name, first, last, precision);
+        DebugPrint(os, vector.data(), Shape({ vector.size() }), name, cnst, first, last, precision);
     }
 
-    template<class T> inline void DebugPrint(const T* data, const Shape& shape, const std::string& name, size_t first = 999, size_t last = 999, size_t precision = 8)
+    template<class T> inline void DebugPrint(const T* data, const Shape& shape, const std::string& name, bool cnst = false, size_t first = 999, size_t last = 999, size_t precision = 8)
     {
         std::stringstream ss;
         ss << name;
@@ -211,7 +211,7 @@ namespace Synet
         std::ofstream ofs(ss.str().c_str());
         if (ofs.is_open())
         {
-            DebugPrint(ofs, data, shape, name, first, last, precision);
+            DebugPrint(ofs, data, shape, name, cnst, first, last, precision);
             ofs.close();
         }
     }

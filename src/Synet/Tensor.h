@@ -675,7 +675,7 @@ namespace Synet
                 os << (format == TensorFormatNchw && shape.size() == 4 ? " OIHW" : (format == TensorFormatNhwc && shape.size() == 4 ? " HWIO" : ""));
             else
                 os << (format == TensorFormatNchw ? " NCHW" : (format == TensorFormatNhwc ? " NHWC" : ""));
-            Synet::DebugPrint(os, tensor.CpuData(), tensor.Shape(), String(), first, last, precision);
+            Synet::DebugPrint(os, tensor.CpuData(), tensor.Shape(), String(), tensor.Const(), first, last, precision);
         }
 
         template<class U> SYNET_INLINE void Resize(U value)
