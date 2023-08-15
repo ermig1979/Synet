@@ -38,37 +38,38 @@ namespace Synet
         bool Convert(const String & srcModel, const String & srcWeight, bool trans, const String & dstModel, const String & dstWeight, const OnnxParam &onnxParam, const OptimizerParam & optParam)
         {
             if (!Cpl::FileExists(srcModel))
-            {
-                std::cout << "File '" << srcModel << "' is not exist!" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("File '" << srcModel << "' is not exist!");
 
             if (!Cpl::FileExists(srcWeight))
-            {
-                std::cout << "File '" << srcWeight << "' is not exist!" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("File '" << srcWeight << "' is not exist!");
 
             XmlDoc srcXml;
             XmlFile file;
             if (!LoadModel(srcModel, file, srcXml))
-            {
-                std::cout << "Can't load Inference Engine model '" << srcModel << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't load Inference Engine model '" << srcModel << "' !");
 
             Vector srcBin;
             if (!LoadBinaryData(srcWeight, srcBin))
-            {
-                std::cout << "Can't load Inference Engine weight '" << srcWeight << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't load Inference Engine weight '" << srcWeight << "' !");
 
             int version;
             Synet::NetworkParamHolder dstXml;
             Vector dstBin = srcBin;
             if (!ConvertNetwork(srcXml, srcBin, trans, onnxParam, dstXml(), dstBin, version))
                 return false;
+
+            if (optParam.saveUnoptimized())
+            {
+                String uoModel = Cpl::FileNameByPath(dstModel) == dstModel ?
+                    "unopt.xml" : Cpl::MakePath(Cpl::DirectoryByPath(dstModel), "unopt.xml");
+                if (!dstXml.Save(uoModel, false))
+                    SYNET_ERROR("Can't save unoptimized Synet model '" << uoModel << "' !");
+
+                String uoWeight = Cpl::FileNameByPath(dstWeight) == dstWeight ?
+                    "unopt.bin" : Cpl::MakePath(Cpl::DirectoryByPath(dstWeight), "unopt.bin");
+                if (!SaveBinaryData(dstBin, uoWeight))
+                    SYNET_ERROR("Can't save unoptimized Synet weight '" << uoWeight << "' !");
+            }
 
             OptimizerParamHolder param;
             Optimizer optimizer(optParam);
@@ -79,16 +80,10 @@ namespace Synet
                 dstXml().dst().clear();
 
             if (!dstXml.Save(dstModel, false))
-            {
-                std::cout << "Can't save Synet model '" << dstModel << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't save Synet model '" << dstModel << "' !");
 
             if (!SaveBinaryData(dstBin, dstWeight))
-            {
-                std::cout << "Can't save Synet weight '" << dstWeight << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't save Synet weight '" << dstWeight << "' !");
 
             return true;
         }

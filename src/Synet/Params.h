@@ -35,7 +35,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeArgMax,
     LayerTypeBias,
     LayerTypeBinaryOperation,
-    LayerTypeBroadcast,
+    LayerTypeBroadcast,//not used?
     LayerTypeCast,
     LayerTypeCompare,
     LayerTypeConcat,
@@ -320,11 +320,6 @@ namespace Synet
     struct BinaryOperationParam
     {
         CPL_PARAM_VALUE(BinaryOperationType, type, BinaryOperationTypeUnknown);
-    };
-
-    struct BroadcastParam
-    {
-        CPL_PARAM_VALUE(bool, fixed, false);
     };
 
     struct CastParam
@@ -758,7 +753,6 @@ namespace Synet
         CPL_PARAM_STRUCT(ArgMaxParam, argMax);
         CPL_PARAM_STRUCT(BiasParam, bias);
         CPL_PARAM_STRUCT(BinaryOperationParam, binaryOperation);
-        CPL_PARAM_STRUCT(BroadcastParam, broadcast);
         CPL_PARAM_STRUCT(CastParam, cast);
         CPL_PARAM_STRUCT(CompareParam, compare);
         CPL_PARAM_STRUCT(ConcatParam, concat);

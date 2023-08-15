@@ -108,7 +108,7 @@ namespace Synet
             case LayerTypeArgMax: return new ArgMaxLayer(param, context);
             case LayerTypeBias: return new BiasLayer<T>(param, context);
             case LayerTypeBinaryOperation: return new BinaryOperationLayer(param, context);
-            case LayerTypeBroadcast: return new BroadcastLayer<T>(param, context);
+            case LayerTypeBroadcast: return new BroadcastLayer(param, context);
             case LayerTypeCast: return new CastLayer(param, context);
             case LayerTypeCompare: return new CompareLayer(param, context);
             case LayerTypeConcat: return new ConcatLayer(param, context);

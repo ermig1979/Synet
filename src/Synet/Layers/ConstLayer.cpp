@@ -37,6 +37,7 @@ namespace Synet
             SYNET_ERROR("ConstLayer supports only 1 output!");
         if (this->Weight().size() != 1)
             SYNET_ERROR("ConstLayer mast have 1 weight!");
+
         dst[0]->Share(this->Weight()[0]);
         dst[0]->SetConst(true);
         _const = true;
