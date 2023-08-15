@@ -53,7 +53,7 @@ namespace Synet
 
     bool PadLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 2 && dst.size() != 1)
+        if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("PadLayer supports only 2 inputs and 1 output!");
 
         _dims = src[0]->Count();

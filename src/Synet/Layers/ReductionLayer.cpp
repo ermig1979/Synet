@@ -179,7 +179,7 @@ namespace Synet
 
     bool ReductionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("ReductionLayer supports only 1 input and 1 output!");
         const ReductionParam & param = this->Param().reduction();
         _srcType = src[0]->GetType();

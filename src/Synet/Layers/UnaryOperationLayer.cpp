@@ -131,7 +131,7 @@ namespace Synet
 
     bool UnaryOperationLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("UnaryOperationLayer supports only 1 input and 1 output!");
 
         _opType = this->Param().unaryOperation().type();

@@ -42,7 +42,7 @@ namespace Synet
 
     bool PowerLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("Power supports only 1 input and 1 output!");
 
         const PowerParam & param = this->Param().power();

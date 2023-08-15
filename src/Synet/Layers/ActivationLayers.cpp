@@ -35,7 +35,7 @@ namespace Synet
     bool EluLayer::Reshape(const TensorPtrs & src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         _alpha = this->Param().elu().alpha();
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("EluLayer supports only 1 input and 1 output!");
         _size = src[0]->Size();
         if (src[0]->GetType() == TensorType32f)
@@ -72,7 +72,7 @@ namespace Synet
 
     bool GeluLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("GeluLayer supports only 1 input and 1 output!");
         _size = src[0]->Size();
         if (src[0]->GetType() == TensorType32f)
@@ -112,7 +112,7 @@ namespace Synet
         HardSigmoidParam hardSigmoid = this->Param().hardSigmoid();
         _scale = hardSigmoid.scale();
         _shift = hardSigmoid.shift();
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("HardSigmoidLayer supports only 1 input and 1 output!");
         _size = src[0]->Size();
         if (src[0]->GetType() == TensorType32f)
@@ -152,7 +152,7 @@ namespace Synet
         HswishParam hswish = this->Param().hswish();
         _shift = hswish.shift();
         _scale = hswish.scale();
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("HswishLayer supports only 1 input and 1 output!");
         _size = src[0]->Size();
         if (src[0]->GetType() == TensorType32f)
@@ -190,7 +190,7 @@ namespace Synet
     bool MishLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         _threshold = this->Param().softplus().threshold(); // threshold to avoid FP32 overflow in exp() function.
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("MishLayer supports only 1 input and 1 output!");
         _size = src[0]->Size();
         if (src[0]->GetType() == TensorType32f)
@@ -228,7 +228,7 @@ namespace Synet
     bool ReluLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         _negativeSlope = this->Param().relu().negativeSlope();
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("ReluLayer supports only 1 input and 1 output!");
         _size = src[0]->Size();
         if (src[0]->GetType() == TensorType32f)
@@ -268,7 +268,7 @@ namespace Synet
         const RestrictRangeParam& param = this->Param().restrictRange();
         _lower = param.lower();
         _upper = param.upper();
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("RestrictRangeLayer supports only 1 input and 1 output!");
         _size = src[0]->Size();
         if (src[0]->GetType() == TensorType32f)
@@ -305,7 +305,7 @@ namespace Synet
 
     bool SigmoidLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("SigmoidLayer supports only 1 input and 1 output!");
         _size = src[0]->Size();
         if (src[0]->GetType() == TensorType32f)
@@ -345,7 +345,7 @@ namespace Synet
         const SoftplusParam& param = this->Param().softplus();
         _beta = param.beta();
         _threshold = param.threshold();
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("SoftplusLayer supports only 1 input and 1 output!");
         _size = src[0]->Size();
         if (src[0]->GetType() == TensorType32f)
@@ -382,7 +382,7 @@ namespace Synet
 
     bool SwishLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("SwishLayer supports only 1 input and 1 output!");
         _size = src[0]->Size();
         if (src[0]->GetType() == TensorType32f)

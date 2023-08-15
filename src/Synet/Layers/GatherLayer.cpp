@@ -101,7 +101,7 @@ namespace Synet
 
     bool GatherLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 2 && dst.size() != 1)
+        if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("TopKLayer supports only 2 inputs and 1 output!");
 
         _srcType = src[0]->GetType();

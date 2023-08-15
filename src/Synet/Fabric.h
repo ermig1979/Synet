@@ -119,7 +119,7 @@ namespace Synet
                     return new Convolution8iLayer<T>(param, context, method);
                 else
                     return new Convolution32fLayer<T>(param, context);
-            case LayerTypeCtcGreedyDecoder: return new CtcGreedyDecoderLayer<T>(param, context);
+            case LayerTypeCtcGreedyDecoder: return new CtcGreedyDecoderLayer(param, context);
             case LayerTypeDeconvolution: return new DeconvolutionLayer(param, context);
             case LayerTypeDetectionOutput: return new DetectionOutputLayer<T>(param, context);
             case LayerTypeEltwise: return new EltwiseLayer<T>(param, context);

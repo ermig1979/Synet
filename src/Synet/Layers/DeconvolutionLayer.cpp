@@ -55,7 +55,7 @@ namespace Synet
 
     bool DeconvolutionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("DeconvolutionLayer supports only 1 input and 1 output!");
         if (src[0]->GetType() != TensorType32f)
             SYNET_ERROR("DeconvolutionLayer supports only 32f input!");
@@ -151,8 +151,8 @@ namespace Synet
         if (_deconvolution32f.Enable())
         {
             buf[TensorType32f*BUFFER_COUNT]->Extend({ _deconvolution32f.ExternalBufferSize() });
-            _deconvolution32f.SetParams(weight[0].CpuData(), &_internal, _biasTerm ? weight[1].CpuData() : NULL,
-                _conv.activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : _params);
+            _deconvolution32f.SetParams(weight[0].Data<float>(), &_internal, _biasTerm ? weight[1].Data<float>() : NULL,
+                _conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : _params);
         }
         else
         {
@@ -162,8 +162,8 @@ namespace Synet
                 const Shape & shape = weight[0].Shape();
                 _weightT.Reshape(TensorType32f, Shp(shape[1], shape[2], shape[3], shape[0]), src[0]->Format());
                 size_t m = shape[0], n = shape[1] * shape[2] * shape[3];
-                const float * s = weight[0].CpuData();
-                float * d = _weightT.CpuData();
+                const float * s = weight[0].Data<float>();
+                float * d = _weightT.Data<float>();
                 for (size_t i = 0; i < m; ++i)
                     for (size_t j = 0; j < n; ++j)
                         d[j*m + i] = s[i * n + j];
@@ -185,7 +185,7 @@ namespace Synet
 
     void DeconvolutionLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
-        ForwardCpu(src[0]->CpuData(), buf[TensorType32f*BUFFER_COUNT]->CpuData(), dst[0]->CpuData());
+        ForwardCpu(src[0]->Data<float>(), buf[TensorType32f*BUFFER_COUNT]->Data<float>(), dst[0]->Data<float>());
     }
 
     void DeconvolutionLayer::ForwardCpu(const float* src, float* buf, float* dst)
@@ -194,10 +194,10 @@ namespace Synet
             _deconvolution32f.Forward(src, buf, dst);
         else
         {
-            const Type* weight = _transW ? _weightT.CpuData() : this->Weight()[0].CpuData();
+            const float* weight = _transW ? _weightT.CpuData() : this->Weight()[0].CpuData();
             for (size_t n = 0; n < _num; ++n)
             {
-                Type* tmp = _is1x1 ? dst : buf;
+                float* tmp = _is1x1 ? dst : buf;
                 if (_trans)
                 {
                     assert(_conv.group == 1);
@@ -215,14 +215,14 @@ namespace Synet
                     if (_trans)
                     {
                         Synet::RowToImg(tmp, _conv.dstH, _conv.dstW, _conv.dstC, _conv.kernelY, _conv.kernelX,
-                            _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, _conv.group, (const Type*)NULL, dst);
+                            _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, _conv.group, (const float*)NULL, dst);
                     }
                     else
                         Synet::ColToImg(tmp, _conv.dstC, _conv.dstH, _conv.dstW, _conv.kernelY, _conv.kernelX,
-                            _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, (const Type*)NULL, dst);
+                            _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, (const float*)NULL, dst);
                 }
                 if (_biasTerm)
-                    CpuAddBias(this->Weight()[1].CpuData(), _conv.dstC, _conv.dstH * _conv.dstW, dst, _trans);
+                    CpuAddBias(this->Weight()[1].Data<float>(), _conv.dstC, _conv.dstH * _conv.dstW, dst, _trans);
                 switch (_conv.activation)
                 {
                 case ActivationFunctionTypeIdentity:
@@ -237,7 +237,7 @@ namespace Synet
                     CpuRestrictRange(dst, _dstSize, _params[0], _params[1], dst);
                     break;
                 case ActivationFunctionTypePrelu:
-                    Detail::PreluLayerForwardCpu(dst, this->Weight().back().CpuData(), _conv.dstC, _conv.dstH * _conv.dstW, dst, _trans);
+                    Detail::PreluLayerForwardCpu(dst, this->Weight().back().Data<float>(), _conv.dstC, _conv.dstH * _conv.dstW, dst, _trans);
                     break;
                 case ActivationFunctionTypeElu:
                     CpuElu(dst, _dstSize, _params[0], dst);

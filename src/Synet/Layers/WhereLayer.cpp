@@ -197,7 +197,7 @@ namespace Synet
 
     bool WhereLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 3 && dst.size() != 1)
+        if (src.size() != 3 || dst.size() != 1)
             SYNET_ERROR("WhereLayer supports only 3 inputs and 1 output!");
         if( src[1]->GetType() != src[2]->GetType())
             SYNET_ERROR("WhereLayer src[1] type " << Cpl::ToStr(src[1]->GetType()) << " and src[2] type " << Cpl::ToStr(src[2]->GetType()) << " are different!");

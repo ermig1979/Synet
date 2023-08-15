@@ -115,7 +115,7 @@ namespace Synet
 
     bool BinaryOperationLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 2 && dst.size() != 1)
+        if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("BinaryOperationLayer supports only 2 inputs and 1 output!");
         if (src[0]->GetType() != src[1]->GetType())
             SYNET_ERROR("BinaryOperation inpus have different types: " << Cpl::ToStr(src[0]->GetType()) << " != " << Cpl::ToStr(src[1]->GetType()) << " !");

@@ -70,7 +70,7 @@ namespace Synet
 
     bool CastLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("CastLayer supports only 1 input and 1 output!");
         _srcType = src[0]->GetType();
         _dstType = this->Param().cast().type();

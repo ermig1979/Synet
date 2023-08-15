@@ -134,7 +134,7 @@ namespace Synet
     bool CompareLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
 
-        if (src.size() != 2 && dst.size() != 1)
+        if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("CompareLayer supports only 2 inputs and 1 output!");
         if (src[0]->GetType() != src[1]->GetType())
             SYNET_ERROR("CompareLayer src[0] type " << Cpl::ToStr(src[0]->GetType()) << " != src[1] type " << Cpl::ToStr(src[1]->GetType()) << " !");

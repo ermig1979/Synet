@@ -33,7 +33,7 @@ namespace Synet
 
     bool ConstLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 0 && dst.size() != 1)
+        if (src.size() != 0 || dst.size() != 1)
             SYNET_ERROR("ConstLayer supports only 1 output!");
         if (this->Weight().size() != 1)
             SYNET_ERROR("ConstLayer mast have 1 weight!");

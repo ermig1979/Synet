@@ -33,7 +33,7 @@ namespace Synet
 
     bool FlattenLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 1 && dst.size() != 1)
+        if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("FlattenLayer supports only 1 input and 1 output!");
         if(src[0] == dst[0])
             SYNET_ERROR("FlattenLayer input and output must be different!");

@@ -33,6 +33,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\ConcatLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ConstantOfShapeLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ConstLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\CtcGreedyDecoderLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\DeconvolutionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\FlattenLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\GatherLayer.cpp" />

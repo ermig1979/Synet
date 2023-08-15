@@ -150,7 +150,7 @@ namespace Synet
 
     bool TopKLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 1 && dst.size() != 2)
+        if (src.size() != 1 || dst.size() != 2)
             SYNET_ERROR("TopKLayer supports only 1 input and 2 outputs!");
         const TopKParam & topK = this->Param().topK();
         _srcType = src[0]->GetType();
