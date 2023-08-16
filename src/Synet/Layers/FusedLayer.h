@@ -285,6 +285,10 @@ namespace Synet
         }
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
         template <> SYNET_INLINE void FusedLayerForwardCpu0<float>(const float * src, const float * bias, const float * scale, size_t count, size_t size, float * dst, int trans)
         {
             ::SimdSynetFusedLayerForward0(src, bias, scale, count, size, dst, (::SimdTensorFormatType)trans);
@@ -319,6 +323,9 @@ namespace Synet
         {
             ::SimdSynetFusedLayerForward9(src0, src1, scale0, bias0, count0, count1, size, dst0, dst1, (::SimdTensorFormatType)trans);
         }
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 #endif
     }
 

@@ -49,7 +49,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeElu,
     LayerTypeExpandDims,
     LayerTypeFlatten,
-    LayerTypeFused,
+    LayerTypeFused,//not used?
     LayerTypeGather,
     LayerTypeGelu,
     LayerTypeGridSample,

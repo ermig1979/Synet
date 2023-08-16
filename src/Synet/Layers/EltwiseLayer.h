@@ -367,7 +367,7 @@ namespace Synet
                 pBias = src[_index[1]]->CpuData();
                 for (size_t b = 0; b < _batch; ++b)
                 {
-                    Detail::BiasLayerForwardCpu(pSrc0, pBias, _channels, _spatial, pDst, _trans);
+                    BiasLayerForward(pSrc0, pBias, _channels, _spatial, pDst, _trans ? TensorFormatNhwc : TensorFormatNchw);
                     pSrc0 += _channels * _spatial;
                     pDst += _channels * _spatial;
                     pBias += _channels;
@@ -393,7 +393,7 @@ namespace Synet
                 pBias = src[_index[1]]->CpuData();
                 for (size_t b = 0; b < _batch; ++b)
                 {
-                    Detail::BiasLayerForwardCpu(pSrc0, pBias, _channels, _spatial, pDst, _trans);
+                    BiasLayerForward(pSrc0, pBias, _channels, _spatial, pDst, _trans ? TensorFormatNhwc : TensorFormatNchw);
                     pDst += _channels * _spatial;
                     pBias += _channels;
                 }
