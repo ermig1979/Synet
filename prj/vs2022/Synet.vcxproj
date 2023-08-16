@@ -45,6 +45,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\PriorBoxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ReductionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ScaleLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\TopKLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\UnaryOperationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\WhereLayer.cpp" />

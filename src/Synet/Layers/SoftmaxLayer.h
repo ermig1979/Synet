@@ -24,149 +24,27 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/Layers/UnaryOperationLayer.h"
-#include "Synet/Utils/Math.h"
 
 namespace Synet
 {
-    namespace Detail
-    {
-        template <typename T> void SoftmaxLayerForwardCpu(const T * src, size_t outer, size_t count, size_t inner, T * dst)
-        {
-            Synet::Tensor<T> _buffer({ inner });
-            T * buffer = _buffer.CpuData();
-            for (size_t o = 0; o < outer; ++o)
-            {
-                Synet::CpuCopy(src, inner, buffer);
-                const T * s = src + inner;
-                for (size_t i = 1; i < count; ++i)
-                {
-                    Synet::CpuMax(s, buffer, inner, buffer);
-                    s += inner;
-                }
+    void SoftmaxLayerForward(const float* src, size_t outer, size_t count, size_t inner, float* dst);
 
-                s = src;
-                T * d = dst;
-                for (size_t i = 0; i < count; ++i)
-                {
-                    Synet::CpuSub(s, buffer, inner, d);
-                    s += inner;
-                    d += inner;
-                }
+    //-------------------------------------------------------------------------------------------------
 
-                Synet::CpuExp(dst, count*inner, dst);
-
-                Synet::CpuCopy(dst, inner, buffer);
-                d = dst + inner;
-                for (size_t i = 1; i < count; ++i)
-                {
-                    Synet::CpuAdd(d, buffer, inner, buffer);
-                    d += inner;
-                }
-
-                d = dst;
-                for (size_t i = 0; i < count; ++i)
-                {
-                    Synet::CpuDiv(d, buffer, inner, d);
-                    d += inner;
-                }
-                src += count*inner;
-                dst += count*inner;
-            }
-        }
-
-        template <typename T> void LogSoftmaxLayerForwardCpu(const T * src, size_t outer, size_t count, size_t inner, T * dst)
-        {
-            Synet::Tensor<T> _buffer({ inner * 2 });
-            T * max = _buffer.CpuData(), *sum = max + inner;
-            for (size_t o = 0; o < outer; ++o)
-            {
-                Synet::CpuCopy(src, inner, max);
-                const T * s = src + inner;
-                for (size_t i = 1; i < count; ++i)
-                {
-                    Synet::CpuMax(s, max, inner, max);
-                    s += inner;
-                }
-
-                s = src;
-                T * d = dst;
-                for (size_t i = 0; i < count; ++i)
-                {
-                    Synet::CpuSub(s, max, inner, d);
-                    s += inner;
-                    d += inner;
-                }
-
-                Synet::CpuExp(dst, count*inner, dst);
-
-                Synet::CpuCopy(dst, inner, sum);
-                d = dst + inner;
-                for (size_t i = 1; i < count; ++i)
-                {
-                    Synet::CpuAdd(d, sum, inner, sum);
-                    d += inner;
-                }
-
-                Synet::CpuLog(sum, inner, sum);
-                Synet::CpuAdd(max, sum, inner, sum);
-
-                s = src;
-                d = dst;
-                for (size_t i = 0; i < count; ++i)
-                {
-                    Synet::CpuSub(s, sum, inner, d);
-                    s += inner;
-                    d += inner;
-                }
-                src += count*inner;
-                dst += count*inner;
-            }
-    }
-
-#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        template <> SYNET_INLINE void SoftmaxLayerForwardCpu<float>(const float * src, size_t outer, size_t count, size_t inner, float * dst)
-        {
-            ::SimdSynetSoftmaxLayerForward(src, outer, count, inner, dst);
-        }
-#endif
-    }
-
-    template <class T> class SoftmaxLayer : public Synet::Layer<T>
+    class SoftmaxLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        SoftmaxLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        SoftmaxLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            _axis = src[0]->Index(this->Param().softmax().axis());
-            _log = this->Param().softmax().log();
-            _outer = src[0]->Size(0, _axis);
-            _count = src[0]->Axis(_axis);
-            _inner = src[0]->Size(_axis + 1);
-            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
-            this->UsePerfStat();
-            return true;
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            if(_log)
-                Detail::LogSoftmaxLayerForwardCpu(src[0]->CpuData(), _outer, _count, _inner, dst[0]->CpuData());
-            else
-                Detail::SoftmaxLayerForwardCpu(src[0]->CpuData(), _outer, _count, _inner, dst[0]->CpuData());
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
         size_t _outer, _count, _inner, _axis;
