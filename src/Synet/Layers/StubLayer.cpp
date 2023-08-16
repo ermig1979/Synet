@@ -22,23 +22,26 @@
 * SOFTWARE.
 */
 
-#pragma once
-
-#include "Synet/Layer.h"
+#include "Synet/Layers/StubLayer.h"
 
 namespace Synet
 {
-    class StubLayer : public Synet::Layer<float>
+    StubLayer::StubLayer(const LayerParam & param, Context* context)
+        : Base(param, context)
     {
-    public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
+    }
 
-        StubLayer(const LayerParam& param, Context* context);
+    bool StubLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        if (src.size() != 1 || dst.size() != 1)
+            SYNET_ERROR("StubLayer supports only 1 input and 1 output!");
+        if(dst[0] != src[0])
+            dst[0]->Share(*src[0]);
+        _const = true;
+        return true;
+    }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
-
-    protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
-    };
+    void StubLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    {
+    }
 }
