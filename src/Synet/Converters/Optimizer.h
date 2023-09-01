@@ -129,6 +129,8 @@ namespace Synet
                 {
                     if (MergeHswish(network.layers(), i, merged, changes))
                         continue;
+                    if (MergeHswishV2(network.layers(), i, merged, changes))
+                        continue;
                     if (MergeMish(network.layers(), i, merged, changes))
                         continue;
                     if (MergePrelu0(network.layers(), i, bin, merged, changes))
@@ -619,6 +621,31 @@ namespace Synet
             layer.hswish().scale() = src[index + 2].power().scale();
             dst.push_back(layer);
             index += 3;
+            return true;
+        }
+
+        bool MergeHswishV2(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            if (src.size() < index + 2)
+                return false;
+            if (src[index + 0].type() != LayerTypeHardSigmoid || src[index + 0].hardSigmoid().scale() != 1.0f / 6.0f ||
+                src[index + 0].hardSigmoid().shift() != 0.5f)
+                return false;
+            if (src[index + 1].type() != LayerTypeEltwise || src[index + 1].eltwise().operation() != EltwiseOperationTypeProduct ||
+                src[index + 1].src().size() != 2 || src[index + 1].src()[0] != src[index + 0].src()[0] || src[index + 1].src()[1] != src[index + 0].dst()[0])
+                return false;
+            if (InsideLink(src, index + 1, 1))
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeHswish;
+            layer.name() = src[index + 1].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            //layer.hswish().shift() = src[index + 0].power().shift();
+            //layer.hswish().scale() = src[index + 2].power().scale();
+            dst.push_back(layer);
+            index += 1;
             return true;
         }
 
