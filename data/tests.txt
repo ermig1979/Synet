@@ -8,5 +8,5 @@ inference_engine root test_017f faces 0
 inference_engine root test_018f license_plates 1
 inference_engine root test_019f face 1
 
-onnx test_000 root face 1
-onnx test_001 root faces 0
+onnx root test_000 face 1
+onnx root test_001 faces 0

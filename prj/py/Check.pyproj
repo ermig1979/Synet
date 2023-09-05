@@ -12,7 +12,7 @@
     <Name>simple</Name>
     <RootNamespace>simple</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>--src=../../data</CommandLineArguments>
+    <CommandLineArguments>--src=../../data --bin=../../build  -e=_000</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
