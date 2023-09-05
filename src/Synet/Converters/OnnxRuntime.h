@@ -301,7 +301,7 @@ namespace Synet
             String dst = src;
             for (size_t i = 0; i < dst.size(); ++i)
             {
-                if (dst[i] == ':')
+                if (dst[i] == ':' || dst[i] == ' ')
                     dst[i] = '_';
             }
             if (dst != src)
