@@ -1,4 +1,5 @@
 import argparse
+from http.server import ThreadingHTTPServer
 import os
 from datetime import datetime
 
@@ -55,15 +56,65 @@ def GetTestList(args):
 
 ###################################################################################################
 
-def RunTest(args, dstPath, test):
+def RunTest(args, dstPath, test, format, batch):
 	binPath = args.bin + os.path.sep + "test_" + test.framework
 	if not os.path.isfile(binPath):
 		print("Binary '{}' is not exist!".format(binPath))
 		return False
+	
 	testPath = args.src + os.path.sep + test.path
 	if not os.path.isdir(testPath):
 		print("Test directory '{}' is not exist!".format(testPath))
 		return False
+	
+	imagePath = ""
+	if test.image == "local" :
+		imagePath = testPath + os.path.sep + "image"
+	else :
+		imagePath = args.src + os.path.sep + "images" + os.path.sep + test.image
+	if not os.path.isdir(imagePath):
+		print("Image directory '{}' is not exist!".format(imagePath))
+		return False
+	
+	logPath = ""
+	if test.group == "root" :
+		logPath = dstPath + os.path.sep + "c{0}_{1}_f{2}_b{3}.txt".format(test.framework[0], test.name, format, batch)
+	else :
+		logPath = dstPath + os.path.sep + "c{0}_{1}__{2}_f{3}_b{4}.txt".format(test.framework[0], test.group, test.name, format, batch)
+
+	threshold = 0.0031
+	pathArgs = "-fm={0}/other.dsc -fw={0}/other.dat -sm={0}/synet{1}.xml -sw={0}/synet{1}.bin -id={2} -od={0}/output -tp={0}/param.xml".format(testPath, format, imagePath)
+	
+	print("Test . log is {0}".format(logPath))
+	
+	trashFile = imagePath + os.path.sep + "descript.ion"
+	if os.path.isfile(trashFile) :
+		os.remove(trashFile)
+		
+	if not args.fast and batch == 1 :
+		cmd = "{0} -m=convert {1} -tf={2} -cs=1".format(binPath, pathArgs, format)
+		result = os.system(cmd)
+		if result != 0:
+			return False
+		
+	num = 10 if args.fast else 2
+	cmd = "{0} -m=compare -e=3 {1} -rn=1 -wt=1 -tt=0 -ie={2} -be={2} -tf={3} -bs={4} -ct={5} -cs=1 -ln={6}".format(binPath, pathArgs, num, format, batch, threshold, logPath)
+	result = os.system(cmd)
+	if result != 0:
+		return False
+	
+	return True
+
+###################################################################################################
+
+def RunTests(args, dstPath, test):
+	if not RunTest(args, dstPath, test, 0, 1) :
+		return False
+	if not RunTest(args, dstPath, test, 1, 1) :
+		return False
+	if test.batch == "1" :
+		if not RunTest(args, dstPath, test, 1, 2) :
+			return False
 	return True
 
 ###################################################################################################
@@ -89,7 +140,7 @@ def main():
 		return 1
 	
 	now = datetime.now();
-	dstPath = args.dst + "_" + str(now.year) + "_" + str(now.month) + "_" + str(now.day) + "__" + str(now.hour) + "_" + str(now.minute)
+	dstPath = "{0}_{1:04d}_{2:02d}_{3:02d}__{4:02d}_{5:02d}".format(args.dst, now.year, now.month, now.day, now.hour, now.minute)
 	print("Test output directory: ", dstPath)
 	if not os.path.isdir(dstPath):
 		try:
@@ -108,7 +159,7 @@ def main():
 	count = 0
 	for test in tests:
 		print("Test {}: {} {} {} {} {} ".format(count, test.framework, test.group, test.name, test.image, test.batch))
-		if not RunTest(args, dstPath, test):
+		if not RunTests(args, dstPath, test):
 			return 1
 		count += 1
 
