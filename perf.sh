@@ -1,6 +1,6 @@
 MODE=$1
 DATE_TIME=`date +"%Y_%m_%d__%H_%M"`
-TEST_THREAD=1
+TEST_THREAD=12
 BATCH_SIZE=10
 BF16_TEST=0
 
@@ -17,7 +17,7 @@ fi
 THREAD=$4
 BATCH=$5
 if [ "$FRAMEWORK" = "quantization" ]; then
-  PATHES="-fm=$DIR/synet.xml -fw=$DIR/synet.bin -sm=$DIR/int8.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
+  PATHES="-fm=$DIR/synet.xml -fw=$DIR/synet.bin -sm=$DIR/int8.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml -qp=$DIR/quant_v0.xml"
   THRESHOLD=0.05; QUANTILE=0.0 METHOD=0
 else
   PATHES="-fm=$DIR/other.dsc -fw=$DIR/other.dat -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
@@ -79,9 +79,9 @@ TEST_O test_000 face 1
 TEST_O test_001 faces 0
 }
 
-function TESTS_Q_ALL {
+function TEST_Q_ALL {
 TEST_Q test_003 faces 0
-TEST_Q test_009 persons 0
+TEST_Q test_010 faces 0
 }
 
 function TEST_ALL {
