@@ -4,16 +4,17 @@ import datetime
 import threading
 import multiprocessing
 import subprocess
+import random
 
 ###################################################################################################
 
 class Test():
-	def __init__(self):
-		self.framework = ""
-		self.group = ""
-		self.name = ""
-		self.image = ""
-		self.batch = False
+	def __init__(self, vals):
+		self.framework = vals[0]
+		self.group = vals[1]
+		self.name = vals[2]
+		self.image = vals[3]
+		self.batch = vals[4]
 		self.path = ""
 		
 ###################################################################################################
@@ -83,12 +84,9 @@ def SetTestList(context : Context):
 		vals = line.split()
 		if len(vals) < 5 :
 			continue
-		test = Test()
-		test.framework = vals[0]
-		test.group = vals[1]
-		test.name = vals[2]
-		test.image = vals[3]
-		test.batch = vals[4]
+		if vals[0][0] == '#' :
+			continue
+		test = Test(vals)
 		
 		if not (test.framework == "onnx" or test.framework == "inference_engine") :
 			return context.Error("Unknown framework: {0} !".format(test.framework))
@@ -206,6 +204,7 @@ def SingleThreadRun(context, beg, end):
 
 def MultiThreadRun(context):
 	threads = []
+	random.shuffle(context.tests)
 	for t in range(context.args.threads) :
 		beg = t * context.block
 		end = min(beg + context.block, len(context.tests))
@@ -240,13 +239,17 @@ def main():
 	
 	print("\nSynet start checking in {0} threads: \n".format(context.args.threads))
 	
+	start = datetime.datetime.now()
+	
 	if context.args.threads == 1 :
 		SingleThreadRun(context, 0, len(context.tests))
 	else :
 		MultiThreadRun(context)
+		
+	elapsed = datetime.datetime.now() - start
 	
 	if not context.error :
-		print("All test finished succefully!\n")
+		print("All test finished succefully in {0}:{1:02d} !\n".format(elapsed.seconds // 60, elapsed.seconds % 60))
 	
 	return 0
 	
