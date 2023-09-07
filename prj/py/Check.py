@@ -249,7 +249,7 @@ def main():
 	elapsed = datetime.datetime.now() - start
 	
 	if not context.error :
-		print("All test finished succefully in {0}:{1:02d} !\n".format(elapsed.seconds // 60, elapsed.seconds % 60))
+		print("All test finished successfully in {0}:{1:02d} !\n".format(elapsed.seconds // 60, elapsed.seconds % 60))
 	
 	return 0
 	
