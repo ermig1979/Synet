@@ -1,9 +1,6 @@
 import argparse
-from asyncio import threads
-from itertools import count
 import os
-from datetime import datetime
-from re import I
+import datetime
 import threading
 import multiprocessing
 import subprocess
@@ -27,25 +24,11 @@ class Context():
 		self.tests = []
 		self.total = 0
 		self.curr = 0
+		self.block = 0
 		self.lock = multiprocessing.Lock()
 		self.dst = ""
 		self.error = False
-		
-	def SetDst(self, args) :
-		now = datetime.now()
-		self.dst = "{0}_{1:04d}_{2:02d}_{3:02d}__{4:02d}_{5:02d}".format(args.dst, now.year, now.month, now.day, now.hour, now.minute)
-		if args.fast :
-			self.dst += "f"
-		if args.include != "" or args.exclude != "" :
-			self.dst += "d"
-		if not os.path.isdir(self.dst):
-			try:
-				os.makedirs(self.dst)
-			except OSError as error: 
-				print("Can't create output directory '" , self.dst, "' !")
-				return False
-		return True
-		
+
 	def UpdateProgress(self, log, out) :
 		if self.error :
 			return
@@ -58,10 +41,36 @@ class Context():
 			print(text)
 		self.error = True
 		return False
+	
+###################################################################################################
+
+def CheckDirs(context : Context) :
+	args = context.args
+	
+	if not os.path.isdir(args.src):
+		return context.Error("Test data directory '{0}' is not exist!".format(args.src))
+	
+	if not os.path.isdir(args.bin):
+		return context.Error("Binary directory '{0}' is not exist!".format(args.bin))
+	
+	context.dst = args.dst + os.path.sep
+	now = datetime.datetime.now()
+	context.dst += "{0:04d}_{1:02d}_{2:02d}__{3:02d}_{4:02d}_{5:02d}".format(now.year, now.month, now.day, now.hour, now.minute, now.second)
+	if args.fast :
+		context.dst += "f"
+	if len(args.include) > 0 :
+		context.dst += "_dbg"
+	if not os.path.isdir(context.dst):
+		try:
+			os.makedirs(context.dst)
+		except OSError as error: 
+			return context.Error("Can't create output directory '{0}' !".format(context.dst))
+	
+	return True
 		
 ###################################################################################################
 
-def GetTestList(context : Context):
+def SetTestList(context : Context):
 	args = context.args
 	listPath = args.src + os.path.sep + "tests.txt"
 	if not os.path.isfile(listPath):
@@ -88,10 +97,22 @@ def GetTestList(context : Context):
 		if test.group != "root" :
 			test.path += os.path.sep + test.group
 		test.path += os.path.sep + test.name
-		if args.include != "" and test.path.find(args.include) == -1:
-			continue
-		if args.exclude != "" and test.path.find(args.exclude) != -1:
-			continue
+		
+		if len(args.include) > 0 :
+			skip = True
+			for include in args.include :
+				if test.path.find(include) != -1 :
+					skip = False
+			if skip :
+				continue
+			
+		if len(args.exclude) > 0 :
+			skip = False
+			for exclude in args.exclude :
+				if test.path.find(exclude) != -1 :
+					skip = True
+			if skip :
+				continue
 		
 		if test.batch == "1" :
 			context.total += 3
@@ -102,6 +123,17 @@ def GetTestList(context : Context):
 	if len(context.tests) == 0 :
 		return context.Error("There are no tests found for given include({0}) and exclude({1}) filters in file '{2}'!".format(args.include, args.exclude, listPath))
 	return True
+
+###################################################################################################
+
+def ValidateThreadNumber(context : Context):
+	args = context.args
+	count = len(context.tests)
+	if args.threads < 1 or args.threads > multiprocessing.cpu_count() :
+		args.threads = multiprocessing.cpu_count()
+	args.threads = min(args.threads, count)
+	context.block = (count + args.threads - 1) // args.threads
+	args.threads = (count + context.block - 1) // context.block
 
 ###################################################################################################
 
@@ -159,9 +191,9 @@ def RunTest(context, test, format, batch):
 
 ###################################################################################################
 
-def SingleThreadRun(context, tests, beg, end):
+def SingleThreadRun(context, beg, end):
 	for i in range(beg, end):
-		test = tests[i]
+		test = context.tests[i]
 		if not RunTest(context, test, 0, 1) :
 			return
 		if not RunTest(context, test, 1, 1) :
@@ -172,21 +204,12 @@ def SingleThreadRun(context, tests, beg, end):
 
 ###################################################################################################
 
-def MultiThreadRun(context, tests):
-	args = context.args
-	count = len(tests)
-	tasks = args.threads
-	if tasks < 1 or tasks > multiprocessing.cpu_count() :
-		tasks = multiprocessing.cpu_count()
-	tasks = min(tasks, count)
-	block = count // tasks
-	tasks = count // block
-	
+def MultiThreadRun(context):
 	threads = []
-	for t in range(tasks) :
-		beg = t * block
-		end = min(beg + block, count)
-		thread = threading.Thread(target=SingleThreadRun, args=(context, tests, beg, end))
+	for t in range(context.args.threads) :
+		beg = t * context.block
+		end = min(beg + context.block, len(context.tests))
+		thread = threading.Thread(target=SingleThreadRun, args=(context, beg, end))
 		threads.append(thread)
 		thread.start()
 	
@@ -201,34 +224,26 @@ def main():
 	parser.add_argument("-s", "--src", help="Tests data path.", required=False, type=str, default="./data")
 	parser.add_argument("-b", "--bin", help="Tests binary path.", required=False, type=str, default="./build")
 	parser.add_argument("-d", "--dst", help="Output tests path.", required=False, type=str, default="../test/check")
-	parser.add_argument("-t", "--threads", help="Tests threads number.", required=False, type=int, default=1)
-	parser.add_argument("-f", "--fast", help="Fast check flag (no conversion, small image count).", required=False, type=bool, default=False)
-	parser.add_argument("-i", "--include", help="Include tests filter.", required=False, type=str, default="")
-	parser.add_argument("-e", "--exclude", help="Exclude tests filter.", required=False, type=str, default="")
+	parser.add_argument("-t", "--threads", help="Tests threads number.", required=False, type=int, default=-1)
+	parser.add_argument("-f", "--fast", help="Fast check flag (no model conversion, small number of test images).", required=False, type=bool, default=False)
+	parser.add_argument("-i", "--include", help="Include tests filter.", required=False, default=[], action="append")
+	parser.add_argument("-e", "--exclude", help="Exclude tests filter.", required=False, default=[], action="append")
 	context = Context(parser.parse_args())
 	
-	args = context.args
-	
-	if not os.path.isdir(args.src):
-		print("Test data directory '", args.src, "' is not exist!")
-		return 1
-
-	if not os.path.isdir(args.bin):
-		print("Binary directory '", args.bin, "' is not exist!")
+	if not CheckDirs(context) :
 		return 1
 	
-	if not context.SetDst(args) :
+	if not SetTestList(context):
 		return 1
 	
-	print("\nSynet start checking in {0} threads: \n".format(args.threads))
+	ValidateThreadNumber(context)
 	
-	if not GetTestList(context):
-		return 1
+	print("\nSynet start checking in {0} threads: \n".format(context.args.threads))
 	
-	if args.threads == 1 :
-		SingleThreadRun(context, context.tests, 0, len(context.tests))
+	if context.args.threads == 1 :
+		SingleThreadRun(context, 0, len(context.tests))
 	else :
-		MultiThreadRun(context, context.tests)
+		MultiThreadRun(context)
 	
 	if not context.error :
 		print("All test finished succefully!\n")
