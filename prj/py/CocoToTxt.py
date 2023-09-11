@@ -32,6 +32,7 @@ def main():
 	parser = argparse.ArgumentParser(prog="CocoToTxt", description="COCO to TXT converter.")
 	parser.add_argument("-s", "--src", help="Path to input COCO(JSON) file.", required=False, type=str, default="src.json")
 	parser.add_argument("-d", "--dst", help="Path to output TXT file.", required=False, type=str, default="dst.txt")
+	parser.add_argument("-a", "--all", help="Path to output file list.", required=False, type=str, default="all.txt")
 	args = parser.parse_args()
 	
 	if not os.path.isfile(args.src):
@@ -63,9 +64,14 @@ def main():
 		dst.write("{0}\n".format(len(img.objects)))
 		o = 0
 		for obj in img.objects:
-			dst.write("{0} {1} {2} {3} {4} 0 0 0 0 {5}\n".format(obj.x, obj.y, obj.w, obj.y, obj.id, o))
+			dst.write("{0} {1} {2} {3} {4} 0 0 0 0 {5}\n".format(obj.x, obj.y, obj.w, obj.h, obj.id, o))
 			o += 1
 	dst.close()
+	
+	all = open(args.all, "w")
+	for img in images:
+		all.write("{0}\n".format(img.name))
+	all.close()
 	
 	print("Conversion is successfull!")
 	
