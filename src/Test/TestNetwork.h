@@ -33,6 +33,7 @@
 #include "Synet/Decoders/Ultraface.h"
 #include "Synet/Decoders/YoloV5.h"
 #include "Synet/Decoders/YoloV7.h"
+#include "Synet/Decoders/YoloV8.h"
 #include "Synet/Decoders/Iim.h"
 
 namespace Test
