@@ -180,7 +180,7 @@ namespace Synet
             case LayerTypeTile: return new TileLayer<T>(param, context);
             case LayerTypeTopK: return new TopKLayer(param, context);
             case LayerTypeUnaryOperation: return new UnaryOperationLayer(param, context);
-            case LayerTypeUnpack: return new UnpackLayer<T>(param, context);
+            case LayerTypeUnpack: return new UnpackLayer(param, context);
             case LayerTypeUpsample: return new UpsampleLayer<T>(param, context);
             case LayerTypeWhere: return new WhereLayer(param, context);
             case LayerTypeYolo: return new YoloLayer<T>(param, context);

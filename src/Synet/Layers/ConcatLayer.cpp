@@ -48,7 +48,7 @@ namespace Synet
     {
     }
 
-    bool ConcatLayer::ConcatLayer::Can8i() const
+    bool ConcatLayer::Can8i() const
     {
         return this->Param().concat().can8i();
     }
