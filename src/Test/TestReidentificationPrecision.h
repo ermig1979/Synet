@@ -58,51 +58,30 @@ namespace Test
 		{
 			path = MakePath(_options.imageDirectory, name + "_" + ToString(index, 4) + ".jpg");
 			if(!FileExists(path))
-			{
-				std::cout << "Test image '" << path << "' is not exist!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Test image '" << path << "' is not exist!");
 			return true;
 		}
 
 		virtual bool LoadTestList()
 		{
 			if (!DirectoryExists(_options.imageDirectory))
-			{
-				std::cout << "Image directory '" << _options.imageDirectory << "' is not exist!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Image directory '" << _options.imageDirectory << "' is not exist!");
 			if (!FileExists(_options.testList))
-			{
-				std::cout << "Test list file '" << _options.testList << "' is not exist!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Test list file '" << _options.testList << "' is not exist!");
 			std::ifstream ifs(_options.testList);
 			if (!ifs.is_open())
-			{
-				std::cout << "Can't open test list file '" << _options.testList << "'!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Can't open test list file '" << _options.testList << "'!");
 			String line;
 			if (!std::getline(ifs, line))
-			{
-				std::cout << "Can't read 1-st file line!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Can't read 1-st file line!");
 			size_t size = FromString<int>(line);
 			if (size > USHRT_MAX)
-			{
-				std::cout << "Wrong test size " << size << " !" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Wrong test size " << size << " !");
 			_tests.resize(size * 2);
 			for (size_t i = 0; i < _tests.size(); ++i)
 			{
 				if (!std::getline(ifs, line))
-				{
-					std::cout << "Can't read " << i + 2 << " file line!" << std::endl;
-					return false;
-				}
+					SYNET_ERROR("Can't read " << i + 2 << " file line!");
 				std::stringstream ss(line);
 				int first, second;
 				if (i < size)
@@ -113,10 +92,7 @@ namespace Test
 				else
 					ss >> _tests[i].objects[0].name >> first >> _tests[i].objects[1].name >> second;
 				if (_tests[i].objects[0].name.empty() || _tests[i].objects[1].name.empty() || first == 0 || second == 0)
-				{
-					std::cout << "Can't parse " << i + 2 << " file line!" << std::endl;
-					return false;
-				}
+					SYNET_ERROR("Can't parse " << i + 2 << " file line!");
 				if (!SetPath(_tests[i].objects[0].name, first, _tests[i].objects[0].path))
 					return false;
 				if (!SetPath(_tests[i].objects[1].name, second, _tests[i].objects[1].path))
@@ -207,10 +183,7 @@ namespace Test
 				}
 			}
 			if (idx >= tests.size() - 1)
-			{
-				std::cout << "Can't process result!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Can't process result!");
 			_options.resume = PrintResume(tests.size(), double(max) / tests.size(), (tests[idx].first + tests[idx + 1].first) / 2);
 			return true;
 		}

@@ -126,25 +126,16 @@ namespace Test
         bool LoadParam()
         {
             if (!_param.Load(_options.testParam))
-            {
-                std::cout << "Can't load file '" << _options.testParam << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't load file '" << _options.testParam << "' !");
             if (!_quant.Load(_options.quantParam))
-            {
-                std::cout << "Can't load file '" << _options.quantParam << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't load file '" << _options.quantParam << "' !");
             return true;
         }
 
         bool CreateDirectories()
         {
             if (_options.NeedOutputDirectory() && !DirectoryExists(_options.outputDirectory) && !CreatePath(_options.outputDirectory))
-            {
-                std::cout << "Can't create output directory '" << _options.outputDirectory << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't create output directory '" << _options.outputDirectory << "' !");
             return true;
         }
 
@@ -189,15 +180,9 @@ namespace Test
         bool InitSynet(const String& model, const String& weight)
         {
             if (!_synet.Load(model, weight))
-            {
-                std::cout << "Can't load Synet model from '" << model << "' and '" << weight << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't load Synet model from '" << model << "' and '" << weight << "' !");
             if (_synet.Format() != Synet::TensorFormatNhwc)
-            {
-                std::cout << "Quantizer supports only models in NHWC format!" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Quantizer supports only models in NHWC format!");
             return true;
         }
 
@@ -207,17 +192,11 @@ namespace Test
             if (directory.empty())
                 directory = Test::MakePath(DirectoryByPath(_options.testParam), _param().images());
             if (!DirectoryExists(directory))
-            {
-                std::cout << "Image directory '" << directory << "' is not exists!" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Image directory '" << directory << "' is not exists!");
             StringList images = GetFileList(directory, _options.imageFilter, true, false);
             images.sort();
             if (images.empty())
-            {
-                std::cout << "There is no one image in '" << directory << "' for '" << _options.imageFilter << "' filter!" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("There is no one image in '" << directory << "' for '" << _options.imageFilter << "' filter!");
 
             _images.reserve(images.size());
             int curr = 0;
@@ -228,11 +207,7 @@ namespace Test
                     _images.push_back(MakePath(directory, *it));
             }
             if (_images.empty())
-            {
-                std::cout << "There is no one image in '" << _options.imageDirectory << "' in range [" 
-                    << _quant().imageBegin() << " .. " << _quant().imageEnd() << "] !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("There is no one image in '" << _options.imageDirectory << "' in range [" << _quant().imageBegin() << " .. " << _quant().imageEnd() << "] !");
 
             return true;
         }
@@ -241,17 +216,11 @@ namespace Test
         {
             View original;
             if (!LoadImage(path, original))
-            {
-                std::cout << "Can't load image in '" << path << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't load image in '" << path << "' !");
             View resized(_synet.NchwShape()[3], _synet.NchwShape()[2], original.format);
             Simd::Resize(original, resized, SimdResizeMethodArea);
             if (!_synet.SetInput(resized, _param().lower(), _param().upper()))
-            {
-                std::cout << "Can't set input for '" << path << "' image !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't set input for '" << path << "' image !");
             _synet.Forward();
             _synet.UpdateStatistics(_quant().truncationQuantile(), 0.000001f);
             return true;
@@ -368,10 +337,7 @@ namespace Test
                 std::cout << "Perform model quantization : ";
             Synet::NetworkParamHolder network;
             if (!network.Load(_stats))
-            {
-                std::cout << "Can't load Synet model '" << _stats << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't load Synet model '" << _stats << "' !");
             for (size_t i = 0; i < network().layers().size(); ++i)
             {
                 Synet::LayerParam& layer = network().layers()[i];
@@ -397,15 +363,9 @@ namespace Test
             Synet::OptimizerParamHolder param;
             Synet::Optimizer optimizer(param());
             if (!optimizer.Run(network(), bin))
-            {
-                std::cout << "Can't optimize Synet model!" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't optimize Synet model!");
             if (!network.Save(_options.secondModel, false))
-            {
-                std::cout << "Can't save Synet model '" << _options.secondModel << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't save Synet model '" << _options.secondModel << "' !");
             if (!_options.consoleSilence)
                 std::cout << " OK." << std::endl;
             return true;

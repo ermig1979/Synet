@@ -37,10 +37,7 @@ namespace Test
         CPL_PERF_FUNC();
         Test::TestParamHolder param;
         if (FileExists(options.testParam) && !param.Load(options.testParam))
-        {
-            std::cout << "Can't load file '" << options.testParam << "' !" << std::endl;
-            return false;
-        }
+            SYNET_ERROR("Can't load file '" << options.testParam << "' !");
         return Synet::OptimizeSynetModel(options.firstModel, options.firstWeight, options.secondModel, options.secondWeight, param().optimizer());
     }
 
@@ -78,7 +75,7 @@ int main(int argc, char* argv[])
         options.result = comparer.Run();
     }
     else
-        std::cout << "Unknown mode : " << options.mode << std::endl;
+        CPL_LOG_SS(Error, "Unknown mode : " << options.mode);
 
     return options.result ? 0 : 1;
 }

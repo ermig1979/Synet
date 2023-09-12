@@ -70,7 +70,7 @@ namespace Test
 			}
 			else
 			{
-				std::cout << "Can't open list file '" << path << "' !" << std::endl;
+				CPL_LOG_SS(Error, "Can't open list file '" << path << "' !");
 				if (!_options.generateIndex)
 					return false;
 			}
@@ -82,10 +82,7 @@ namespace Test
 			String path = _options.testList;
 			std::ofstream ofs(path);
 			if (!ofs.is_open())
-			{
-				std::cout << "Can't open file '" << path << "' !" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Can't open file '" << path << "' !");
 			for (size_t i = 0; i < _tests.size(); ++i)
 			{
 				if (_tests[i].skip)
@@ -163,10 +160,7 @@ namespace Test
 		{
 			XmlNode * pName = object.FirstNode("name");
 			if (pName == NULL)
-			{
-				std::cout << "Can't find <name> node!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Can't find <name> node!");
 			region.id = -1;
 			for (size_t i = 0; i < _param().index().ids().size(); ++i)
 				if (_param().index().ids()[i].name() == pName->Value())
@@ -212,15 +206,11 @@ namespace Test
 				}
 				catch (std::exception& e)
 				{
-					std::cout << "Can't parse xml '" << path << "' file! There is an exception: " << e.what() << std::endl;
-					return false;
+					SYNET_ERROR("Can't parse xml '" << path << "' file! There is an exception: " << e.what());
 				}
 				XmlNode * pAnnotation = doc.FirstNode("annotation");
 				if (pAnnotation == NULL)
-				{
-					std::cout << "Can't find <annotation> node!" << std::endl;
-					return false;
-				}
+					SYNET_ERROR("Can't find <annotation> node!");
 				XmlNode* pObject = pAnnotation->FirstNode("object");
 				while(pObject)
 				{
@@ -232,10 +222,7 @@ namespace Test
 				ifs.close();
 			}
 			else
-			{
-				std::cout << "Can't open '" << path << "' index file!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Can't open '" << path << "' index file!");
 			return true;
 		}
 
@@ -271,10 +258,7 @@ namespace Test
 			String path = MakePath(_options.imageDirectory, _param().index().name());
 			std::ofstream ofs(path);
 			if (!ofs.is_open())
-			{
-				std::cout << "Can't open file '" << path << "' !" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Can't open file '" << path << "' !");
 			for (size_t i = 0; i < _tests.size(); ++i)
 			{
 				const Test& t = _tests[i];
@@ -335,10 +319,7 @@ namespace Test
 		virtual bool PerformBatch(size_t thread, size_t current, size_t batch, size_t& progress)
 		{
 			if (_options.batchSize != 1)
-			{
-				std::cout << "Batch size can be only 1 for detection tests!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Batch size can be only 1 for detection tests!");
 
 			Thread& t = _threads[thread];
 			Size netSize = ToSize(t.input[0].Shape());
@@ -375,20 +356,14 @@ namespace Test
 		{
 			View image;
 			if (!LoadImage(test.path, image))
-			{
-				std::cout << "Can't read '" << test.path << "' image!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Can't read '" << test.path << "' image!");
 			for (size_t j = 0; j < test.control.size(); ++j)
 				Annotate(test.control[j], j, 0xFFFF0000, 2, NULL, image);
 			for (size_t j = 0; j < test.current.size(); ++j)
 				Annotate(test.current[j], j, 0xFF00FF00, 1, &font, image);
 			String path = MakePath(_options.outputDirectory, GetNameByPath(test.name));
 			if (!SaveImage(image, path))
-			{
-				std::cout << "Can't write '" << path << "' image!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Can't write '" << path << "' image!");
 			return true;
 		}
 

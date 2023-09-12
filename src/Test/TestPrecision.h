@@ -216,25 +216,16 @@ namespace Test
 		bool CreateDirectories()
 		{
 			if (_options.NeedOutputDirectory() && !DirectoryExists(_options.outputDirectory) && !CreatePath(_options.outputDirectory))
-			{
-				std::cout << "Can't create output directory '" << _options.outputDirectory << "' !" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Can't create output directory '" << _options.outputDirectory << "' !");
 			return true;
 		}
 
 		bool InitNetwork()
 		{
 			if (!FileExists(_options.testModel))
-			{
-				std::cout << "Model file '" << _options.testModel << "' is not exist!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Model file '" << _options.testModel << "' is not exist!");
 			if (!FileExists(_options.testWeight))
-			{
-				std::cout << "Weight file '" << _options.testWeight << "' is not exist!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Weight file '" << _options.testWeight << "' is not exist!");
 			_threads.resize(_options.testThreads);
 			for (size_t t = 0; t < _threads.size(); ++t)
 			{
@@ -246,22 +237,13 @@ namespace Test
 					network = std::make_shared<InferenceEngineNetwork>();
 #endif
 				else
-				{
-					std::cout << "Unknown framework: " << _options.framework << "!" << std::endl;
-					return false;
-				}
+					SYNET_ERROR("Unknown framework: " << _options.framework << "!");
 				Network::Options options(_options.outputDirectory, 1, true, _options.batchSize, _options.performanceLog, 0, 0.5f, false);
 				if (!network->Init(_options.testModel, _options.testWeight, options, _param()))
-				{
-					std::cout << "Can't load " << network->Name() << " from '" << _options.testModel << "' and '" << _options.testWeight << "' !" << std::endl;
-					return false;
-				}
+					SYNET_ERROR("Can't load " << network->Name() << " from '" << _options.testModel << "' and '" << _options.testWeight << "' !");
 				Shape shape = network->SrcShape(0);
 				if (shape.size() != 4 || (shape[1] != 3 && shape[1] != 1))
-				{
-					std::cout << "Wrong " << network->Name() << " classifier input shape: " << Synet::Detail::DebugPrint(shape) << " !" << std::endl;
-					return false;
-				}
+					SYNET_ERROR("Wrong " << network->Name() << " classifier input shape: " << Synet::Detail::DebugPrint(shape) << " !");
 				_threads[t].input.resize(1, Tensor(shape));
 				if (_param().lower().size() == 1)
 					_param().lower().resize(shape[1], _param().lower()[0]);
@@ -276,10 +258,7 @@ namespace Test
 			StringList names = GetFileList(_options.imageDirectory, "*.jpg", true, false);
 			tests.clear();
 			if (names.empty())
-			{
-				std::cout << "Directory '" << _options.imageDirectory << "' is empty!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Directory '" << _options.imageDirectory << "' is empty!");
 			for (StringList::const_iterator it = names.begin(); it != names.end(); ++it)
 			{
 				Test test;
@@ -298,10 +277,7 @@ namespace Test
 
 			View original;
 			if (!LoadImage(path, original))
-			{
-				std::cout << "Can't read '" << path << "' image!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Can't read '" << path << "' image!");
 			if (pSize)
 				*pSize = original.Size();
 
@@ -356,7 +332,7 @@ namespace Test
 				current += batch;
 			}
 			if (!result)
-				std::cout << "Error at " << current << " test!" << std::endl;
+				CPL_LOG_SS(Error, "Error at " << current << " test!");
 		}
 
 		bool PerformTests()
