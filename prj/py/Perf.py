@@ -25,24 +25,37 @@ class Context():
 		self.tests = []
 		self.total = 0
 		self.curr = 0
-		self.block = 0
-		self.lock = multiprocessing.Lock()
 		self.dst = ""
-		self.error = False
 
-	def UpdateProgress(self, log, out) :
-		if self.error :
-			return
-		with self.lock:
-			self.curr += 1;
-			print("Test {0} of {1} log to : {2} \n{3}".format(self.curr, self.total, log, out))
+	def UpdateProgress(self, log) :
+		self.curr += 1;
+		print("Test {0} of {1} log to : {2}".format(self.curr, self.total, log))		
 			
 	def Error(self, text="") -> bool :
 		if text != "" :
 			print(text)
-		self.error = True
 		return False
 	
+###################################################################################################
+
+def ValidateParameters(context : Context):
+	args = context.args
+	if args.framework == "i" :
+		args.framework = "inference_engine"
+	elif args.framework == "o" :
+		args.framework = "onnx"
+	elif args.framework == "q" :
+		args.framework = "quantization"
+	else :
+		print("Unknown parameter -f={0}!".format(args.framework))
+		return False
+	
+	if args.threads == 0 :
+		args.threads = 1
+	if args.threads < 0 :
+		args.threads = max(1, multiprocessing.cpu_count() // abs(args.threads))
+	return True
+
 ###################################################################################################
 
 def CheckDirs(context : Context) :
@@ -56,9 +69,7 @@ def CheckDirs(context : Context) :
 	
 	context.dst = args.dst + os.path.sep
 	now = datetime.datetime.now()
-	context.dst += "{0:04d}_{1:02d}_{2:02d}__{3:02d}_{4:02d}_{5:02d}".format(now.year, now.month, now.day, now.hour, now.minute, now.second)
-	if args.fast :
-		context.dst += "f"
+	context.dst += "{0:04d}_{1:02d}_{2:02d}__{3:02d}_{4:02d}{5}_t{6}".format(now.year, now.month, now.day, now.hour, now.minute, args.framework[0], args.threads)
 	if len(args.include) > 0 :
 		context.dst += "_dbg"
 	if not os.path.isdir(context.dst):
@@ -88,8 +99,8 @@ def SetTestList(context : Context):
 			continue
 		test = Test(vals)
 		
-		if not (test.framework == "onnx" or test.framework == "inference_engine") :
-			return context.Error("Unknown framework: {0} !".format(test.framework))
+		if test.framework != args.framework :
+			continue
 		
 		test.path = test.framework
 		if test.group != "root" :
@@ -113,9 +124,9 @@ def SetTestList(context : Context):
 				continue
 		
 		if test.batch == "1" :
-			context.total += 3
-		else :
 			context.total += 2
+		else :
+			context.total += 1
 		context.tests.append(test)
 	listFile.close()
 	if len(context.tests) == 0 :
@@ -124,20 +135,7 @@ def SetTestList(context : Context):
 
 ###################################################################################################
 
-def ValidateThreadNumber(context : Context):
-	args = context.args
-	count = len(context.tests)
-	if args.threads < 1 or args.threads > multiprocessing.cpu_count() :
-		args.threads = multiprocessing.cpu_count()
-	args.threads = min(args.threads, count)
-	context.block = (count + args.threads - 1) // args.threads
-	args.threads = (count + context.block - 1) // context.block
-
-###################################################################################################
-
-def RunTest(context, test, format, batch):
-	if context.error :
-		return False
+def RunTest(context, test, batch):
 	args = context.args
 	binPath = args.bin + os.path.sep + "test_" + test.framework
 	if not os.path.isfile(binPath):
@@ -157,77 +155,63 @@ def RunTest(context, test, format, batch):
 	
 	log = ""
 	if test.group == "root" :
-		log = context.dst + os.path.sep + "c{0}_{1}_f{2}_b{3}.txt".format(test.framework[0], test.name, format, batch)
+		log = context.dst + os.path.sep + "p{0}_{1}_t{2}_b{3}.txt".format(test.framework[0], test.name, args.threads, batch)
 	else :
-		log = context.dst + os.path.sep + "c{0}_{1}__{2}_f{3}_b{4}.txt".format(test.framework[0], test.group, test.name, format, batch)
+		log = context.dst + os.path.sep + "p{0}_{1}__{2}_t{3}_b{4}.txt".format(test.framework[0], test.group, test.name, args.threads, batch)
 
-	threshold = 0.0031
-	pathArgs = "-fm={0}/other.dsc -fw={0}/other.dat -sm={0}/synet{1}.xml -sw={0}/synet{1}.bin -id={2} -od={0}/output -tp={0}/param.xml".format(testPath, format, imagePath)
+	if args.framework == "quantization" :
+		threshold = 0.02
+		pathArgs = "-fm={0}/synet.xml -fw={0}/synet.bin -sm={0}/int8.xml".format(testPath)
+	else:
+		threshold = 0.0031
+		pathArgs = "-fm={0}/other.dsc -fw={0}/other.dat -sm={0}/synet.xml".format(testPath)
+	pathArgs += " -sw={0}/synet.bin -id={1} -od={0}/output -tp={0}/param.xml -sn={2}/sync.txt -hr={2}/_report.html -tr={2}/_report.txt".format(testPath, imagePath, context.dst)
 	
 	trashFile = imagePath + os.path.sep + "descript.ion"
 	if os.path.isfile(trashFile) :
 		os.remove(trashFile)
 	
-	out = ""
-	if not args.fast and batch == 1 :
-		cmd = "{0} -m=convert {1} -tf={2} -cs=1".format(binPath, pathArgs, format)
-		result = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
-		out += result.stdout.decode('utf-8')
-		if result.returncode != 0 :
-			return context.Error("Error in test {0} :\n{1}".format(log, out))
-		
-	num = 2 if args.fast else 10
-	cmd = "{0} -m=compare -e=3 {1} -rn=1 -wt=1 -tt=0 -ie={2} -be={2} -tf={3} -bs={4} -ct={5} -cs=1 -ln={6}".format(binPath, pathArgs, num, format, batch, threshold, log)
-	result = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
-	out += result.stdout.decode('utf-8')
-	if result.returncode != 0 :
-		return context.Error("Error in test {0} :\n{1}".format(log, out))
-
-	context.UpdateProgress(log, out[:len(out)-1])
+	context.UpdateProgress(log)
 	
+	if batch == 1 :
+		cmd = "{0} -m=convert {1} -tf=1 -cs=1".format(binPath, pathArgs)
+		result = subprocess.run(cmd.split())
+		if result.returncode != 0 :
+			return context.Error("Error in test {0} !".format(log))
+		
+	cmd = "{0} -m=compare -e=3 {1} -rn=0 -et=10.0 -wt=1 -tt={2} -ie=10 -be=10 -tf=1 -bs={3} -ct={4} -cs=1 -ln={5}".format(binPath, pathArgs, args.threads, batch, threshold, log)
+	result = subprocess.run(cmd.split())
+	if result.returncode != 0 :
+		return context.Error("Error in test {0} !".format(log))
+
 	return True
 
 ###################################################################################################
 
-def SingleThreadRun(context, beg, end):
-	for i in range(beg, end):
-		test = context.tests[i]
-		if not RunTest(context, test, 0, 1) :
-			return
-		if not RunTest(context, test, 1, 1) :
-			return
+def RunAllTests(context):
+	for test in context.tests:
+		if not RunTest(context, test, 1) :
+			return False
 		if test.batch == "1" :
-			if not RunTest(context, test, 1, 2) :
-				return
-
-###################################################################################################
-
-def MultiThreadRun(context):
-	threads = []
-	random.shuffle(context.tests)
-	for t in range(context.args.threads) :
-		beg = t * context.block
-		end = min(beg + context.block, len(context.tests))
-		thread = threading.Thread(target=SingleThreadRun, args=(context, beg, end))
-		threads.append(thread)
-		thread.start()
-	
-	for thread in threads :
-		thread.join()
+			if not RunTest(context, test, 10) :
+				return False
+	return True
 
 ###################################################################################################
 
 def main():
 
-	parser = argparse.ArgumentParser(prog="Check", description="Synet tests check script.")
+	parser = argparse.ArgumentParser(prog="Perf", description="Synet performance test script.")
 	parser.add_argument("-s", "--src", help="Tests data path.", required=False, type=str, default="./data")
 	parser.add_argument("-b", "--bin", help="Tests binary path.", required=False, type=str, default="./build")
-	parser.add_argument("-d", "--dst", help="Output tests path.", required=False, type=str, default="../test/check")
-	parser.add_argument("-t", "--threads", help="Tests threads number.", required=False, type=int, default=-1)
-	parser.add_argument("-f", "--fast", help="Fast check flag (no model conversion, small number of test images).", required=False, type=bool, default=False)
+	parser.add_argument("-d", "--dst", help="Output tests path.", required=False, type=str, default="../test/perf")
+	parser.add_argument("-t", "--threads", help="Tests threads number.", required=False, type=int, default=1)
+	parser.add_argument("-f", "--framework", help="Framework to test. It can be i(inference_engine), o(onnx), or q(quantization).", required=False, type=str, default="o", choices=["i", "o", "q"])
 	parser.add_argument("-i", "--include", help="Include tests filter.", required=False, default=[], action="append")
 	parser.add_argument("-e", "--exclude", help="Exclude tests filter.", required=False, default=[], action="append")
 	context = Context(parser.parse_args())
+	
+	ValidateParameters(context)
 	
 	if not CheckDirs(context) :
 		return 1
@@ -235,21 +219,16 @@ def main():
 	if not SetTestList(context):
 		return 1
 	
-	ValidateThreadNumber(context)
-	
-	print("\nSynet start checking in {0} threads: \n".format(context.args.threads))
+	print("\nSynet start performance tests in {0} threads: \n".format(context.args.threads))
 	
 	start = datetime.datetime.now()
 	
-	if context.args.threads == 1 :
-		SingleThreadRun(context, 0, len(context.tests))
-	else :
-		MultiThreadRun(context)
+	if not RunAllTests(context) :
+		return 1
 		
 	elapsed = datetime.datetime.now() - start
 	
-	if not context.error :
-		print("All tests finished successfully in {0}:{1:02d}:{2:02d} !\n".format(elapsed.seconds // 3600, elapsed.seconds % 3600 // 60, elapsed.seconds % 60))
+	print("All tests finished successfully in {0}:{1:02d}:{2:02d} !\n".format(elapsed.seconds // 3600, elapsed.seconds % 3600 // 60, elapsed.seconds % 60))
 	
 	return 0
 	

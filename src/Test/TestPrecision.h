@@ -104,7 +104,6 @@ namespace Test
 					ss << resume << std::endl;
 					if (memoryUsage)
 						ss << "Memory usage: " << MemoryUsageString(memoryUsage, testThreads) << std::endl;
-					ss << SystemInfo() << std::endl;
 					PrintPerformance(ss, statFilter);
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 					if (framework == "synet")
