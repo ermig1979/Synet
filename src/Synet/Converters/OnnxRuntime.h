@@ -1359,11 +1359,24 @@ namespace Synet
             const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
             if (src0 == NULL || src1 == NULL)
                 return false;
+            if (src0->type() == LayerTypeConst)
+            {
+                std::swap(src0, src1);
+                std::swap(layer.src()[0], layer.src()[1]);
+            }
             if (src1->type() == LayerTypeConst && TensorSize(src1->weight()[0].dim()) == 1)
             {
                 layer.type() = Synet::LayerTypePower;
                 const float* pScale = GetWeight<float>(original, src1->weight()[0]);
                 layer.power().scale() = pScale[0];
+                layer.src().resize(1);
+            }
+            else if (src1->type() == LayerTypeConst && SignificantDimsCount(src1->weight()[0].dim()))
+            {
+                layer.type() = Synet::LayerTypeScale;
+                layer.weight() = src1->weight();
+                if (!CompactShape(layer.weight()[0].dim()))
+                    return false;
                 layer.src().resize(1);
             }
             else if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)

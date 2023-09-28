@@ -463,8 +463,7 @@ namespace Synet
                 return false;
             const LayerParam& conv = src[index - 1];
             const LayerParam& scale = src[index];
-            if (conv.type() != LayerTypeConvolution || conv.convolution().biasTerm() || 
-                conv.convolution().activationType() != ActivationFunctionTypeIdentity)
+            if (conv.type() != LayerTypeConvolution || conv.convolution().activationType() != ActivationFunctionTypeIdentity)
                 return false;
             if (scale.type() != LayerTypeScale || scale.src()[0] != conv.name())
                 return false;
@@ -474,13 +473,8 @@ namespace Synet
                 buf = bin;
             dst.back().name() = scale.name();
             dst.back().dst() = scale.dst();
-            if (scale.scale().biasTerm())
-            {
-                dst.back().convolution().biasTerm() = true;
-                dst.back().weight().push_back(scale.weight()[1]);
-            }
-            const float* pSrc = bin.data() + conv.weight()[0].offset() / 4;
             const float* pScale = bin.data() + scale.weight()[0].offset() / 4;
+            const float* pSrc = bin.data() + conv.weight()[0].offset() / 4;
             float * pDst = buf.data() + conv.weight()[0].offset() / 4;
             const Shape & dim = conv.weight()[0].dim();
             if (conv.weight()[0].format() == TensorFormatNhwc)
@@ -497,6 +491,25 @@ namespace Synet
             }
             else
                 return false;
+            if (conv.convolution().biasTerm())
+            {
+                const Shape & dim = conv.weight()[1].dim();
+                const float* pSrc = bin.data() + conv.weight()[1].offset() / 4;
+                float * pDst = buf.data() + conv.weight()[1].offset() / 4;
+                for (size_t i = 0, n = dim[0]; i < n; ++i)
+                     pDst[i] = pSrc[i] * pScale[i];
+                if (scale.scale().biasTerm())
+                {
+                    const float* pShift = bin.data() + scale.weight()[1].offset() / 4;
+                    for (size_t i = 0, n = dim[0]; i < n; ++i)
+                        pDst[i] += pShift[i];
+                }
+            }
+            else if (scale.scale().biasTerm())
+            {
+                dst.back().convolution().biasTerm() = true;
+                dst.back().weight().push_back(scale.weight()[1]);
+            }            
             return true;
         }
 
