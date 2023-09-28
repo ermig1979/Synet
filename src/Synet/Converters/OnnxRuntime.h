@@ -1371,12 +1371,12 @@ namespace Synet
                 layer.power().scale() = pScale[0];
                 layer.src().resize(1);
             }
-            else if (src1->type() == LayerTypeConst && SignificantDimsCount(src1->weight()[0].dim()))
+            else if (src1->type() == LayerTypeConst && SignificantDimsCount(src1->weight()[0].dim()) == 1 && src1->weight()[0].dim().size() == 3)
             {
                 layer.type() = Synet::LayerTypeScale;
                 layer.weight() = src1->weight();
-                if (!CompactShape(layer.weight()[0].dim()))
-                    return false;
+                //if (!CompactShape(layer.weight()[0].dim()))
+                //    return false;
                 layer.src().resize(1);
             }
             else if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
