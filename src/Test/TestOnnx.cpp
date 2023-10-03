@@ -41,8 +41,7 @@ namespace Test
             SYNET_ERROR("Can't load file '" << options.testParam << "' !");
         param().optimizer().bf16Enable() = options.bf16;
         param().optimizer().saveUnoptimized() = options.saveUnoptimized;
-        return Synet::ConvertOnnxToSynet(options.firstModel, options.firstWeight,
-            options.tensorFormat == 1, options.secondModel, options.secondWeight, param().onnx(), param().optimizer());
+        return Synet::ConvertOnnxToSynet(options.firstWeight, options.tensorFormat == 1, options.secondModel, options.secondWeight, param().onnx(), param().optimizer());
     }
 }
 #else

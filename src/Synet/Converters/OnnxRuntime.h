@@ -42,7 +42,7 @@ namespace Synet
     class OnnxToSynet : public SynetUtils
     {
     public:
-        bool Convert(const String& srcParamPath, const String& srcGraphPath, bool trans, const String & dstModelPath, const String & dstWeightPath, 
+        bool Convert(const String& srcGraphPath, bool trans, const String & dstModelPath, const String & dstWeightPath, 
             const OnnxParam& onnxParam, const OptimizerParam& optParam)
         {
             if (!Cpl::FileExists(srcGraphPath))
@@ -2450,11 +2450,11 @@ namespace Synet
 
     //---------------------------------------------------------------------------------------------
 
-    bool ConvertOnnxToSynet(const String& srcParam, const String& srcGraph, bool trans, const String& dstXml, const String& dstBin, 
+    bool ConvertOnnxToSynet(const String& srcGraph, bool trans, const String& dstXml, const String& dstBin, 
         const OnnxParam& onnxParam, const OptimizerParam& optParam)
     {
         OnnxToSynet onnxToSynet;
-        return onnxToSynet.Convert(srcParam, srcGraph, trans, dstXml, dstBin, onnxParam, optParam);
+        return onnxToSynet.Convert(srcGraph, trans, dstXml, dstBin, onnxParam, optParam);
     }
 }
 

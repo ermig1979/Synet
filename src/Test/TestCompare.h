@@ -145,8 +145,11 @@ namespace Test
 
         bool InitNetwork(const String& model, const String& weight, Network& network) const
         {
-            if (!FileExists(model))
-                SYNET_ERROR("File '" << model << "' is not exist!");
+            if (network.Name() != "OnnxRuntime")
+            {
+                if (!FileExists(model))
+                    SYNET_ERROR("File '" << model << "' is not exist!");
+            }
             if (!FileExists(weight))
                 SYNET_ERROR("File '" << weight << "' is not exist!");
             Network::Options options(_options.outputDirectory, _options.workThreads, _options.consoleSilence, _options.batchSize, 
