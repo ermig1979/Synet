@@ -42,11 +42,21 @@ namespace Synet
     class OnnxToSynet : public SynetUtils
     {
     public:
-        bool Convert(const String& srcGraphPath, bool trans, const String & dstModelPath, const String & dstWeightPath, 
+        bool Convert(String srcGraphPath, bool trans, const String & dstModelPath, const String & dstWeightPath, 
             const OnnxParam& onnxParam, const OptimizerParam& optParam)
         {
             if (!Cpl::FileExists(srcGraphPath))
-                SYNET_ERROR("File '" << srcGraphPath << "' is not exist!");
+            {
+                String altGraphPath = Cpl::ChangeExtension(srcGraphPath, ".dat");
+                if (altGraphPath != srcGraphPath)
+                {
+                    if(!Cpl::FileExists(altGraphPath))
+                        SYNET_ERROR("Files '" << srcGraphPath << "' and '" << altGraphPath << "' are not exist!");
+                    srcGraphPath = altGraphPath;
+                }
+                else
+                    SYNET_ERROR("File '" << srcGraphPath << "' is not exist!");
+            }
 
             onnx::ModelProto model;
             if (!LoadModel(srcGraphPath, model))

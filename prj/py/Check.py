@@ -162,7 +162,12 @@ def RunTest(context, test, format, batch):
 		log = context.dst + os.path.sep + "c{0}_{1}__{2}_f{3}_b{4}.txt".format(test.framework[0], test.group, test.name, format, batch)
 
 	threshold = 0.0031
-	pathArgs = "-fm={0}/other.dsc -fw={0}/other.dat -sm={0}/synet{1}.xml -sw={0}/synet{1}.bin -id={2} -od={0}/output -tp={0}/param.xml".format(testPath, format, imagePath)
+	pathArgs = ""
+	if test.framework == "inference_engine" :
+		pathArgs += "-fm={0}/other.xml -fw={0}/other.bin".format(testPath)
+	elif test.framework == "onnx" :
+		pathArgs += "-fw={0}/other.onnx".format(testPath)
+	pathArgs += " -sm={0}/synet{1}.xml -sw={0}/synet{1}.bin -id={2} -od={0}/output -tp={0}/param.xml".format(testPath, format, imagePath)
 	
 	trashFile = imagePath + os.path.sep + "descript.ion"
 	if os.path.isfile(trashFile) :

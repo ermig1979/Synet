@@ -10,18 +10,21 @@ if [ "$3" = "local" ]; then
 else
   IMAGE=./data/images/$3
 fi
-if [ "$FRAMEWORK" = "quantization" ]; then
-  PATHES="-fm=$DIR/synet.xml -fw=$DIR/synet.bin -sm=$DIR/int8.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
-  THRESHOLD=0.01; QUANTILE=0.0 METHOD=0
+if [ "${BF16_TEST}" = "1" ]; then
+  THRESHOLD=0.02; QUANTILE=0.0; METHOD=-1
+  echo "Use increased accuracy threshold : $THRESHOLD for BF16."
 else
-  PATHES="-fm=$DIR/other.dsc -fw=$DIR/other.dat -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
-  if [ "${BF16_TEST}" = "1" ]; then
-    THRESHOLD=0.02; QUANTILE=0.0 METHOD=-1
-    echo "Use increased accuracy threshold : $THRESHOLD for BF16."
-  else
-    THRESHOLD=0.002; QUANTILE=0.0 METHOD=-1
-  fi
+  THRESHOLD=0.002; QUANTILE=0.0; METHOD=-1
 fi
+if [ "$FRAMEWORK" = "quantization" ]; then
+  PATHES="-fm=$DIR/synet.xml -fw=$DIR/synet.bin -sm=$DIR/int8.xml"
+  THRESHOLD=0.01; QUANTILE=0.0; METHOD=0
+elif [ "$FRAMEWORK" = "inference_engine" ]; then 
+  PATHES="-fm=$DIR/other.xml -fw=$DIR/other.bin -sm=$DIR/synet.xml"
+elif [ "$FRAMEWORK" = "onnx" ]; then 
+  PATHES="-fw=$DIR/other.onnx -sm=$DIR/synet.xml"
+fi
+PATHES="$PATHES -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
 NUMBER=$4
 THREAD=$5
 FORMAT=$6

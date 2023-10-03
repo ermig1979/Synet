@@ -22,6 +22,9 @@
 * SOFTWARE.
 */
 
+#define FIRST_MODEL_DEFAULT "other.onnx"
+#define FIRST_WEIGHT_DEFAULT "other.onnx"
+
 #include "TestCompare.h"
 #include "TestReport.h"
 

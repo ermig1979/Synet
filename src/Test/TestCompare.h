@@ -143,15 +143,35 @@ namespace Test
             return true;
         }
 
-        bool InitNetwork(const String& model, const String& weight, Network& network) const
+        bool InitNetwork(String model, String weight, Network& network) const
         {
             if (network.Name() != "OnnxRuntime")
             {
-                if (!FileExists(model))
-                    SYNET_ERROR("File '" << model << "' is not exist!");
+                if (!Cpl::FileExists(model))
+                {
+                    String alt = Cpl::ChangeExtension(model, ".dsc");
+                    if (alt != model && network.Name() != "Synet")
+                    {
+                        if (!Cpl::FileExists(alt))
+                            SYNET_ERROR("Files '" << model << "' and '" << alt << "' are not exist!");
+                        model = alt;
+                    }
+                    else
+                        SYNET_ERROR("File '" << model << "' is not exist!");
+                }
             }
-            if (!FileExists(weight))
-                SYNET_ERROR("File '" << weight << "' is not exist!");
+            if (!Cpl::FileExists(weight))
+            {
+                String alt = Cpl::ChangeExtension(weight, ".dat");
+                if (alt != weight && network.Name() != "Synet")
+                {
+                    if (!Cpl::FileExists(alt))
+                        SYNET_ERROR("Files '" << weight << "' and '" << alt << "' are not exist!");
+                    weight = alt;
+                }
+                else
+                    SYNET_ERROR("File '" << weight << "' is not exist!");
+            }
             Network::Options options(_options.outputDirectory, _options.workThreads, _options.consoleSilence, _options.batchSize, 
                 _options.performanceLog, _options.debugPrint, _options.regionThreshold, _options.bf16);
             if (!network.Init(model, weight, options, _param()))

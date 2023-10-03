@@ -22,6 +22,9 @@
 * SOFTWARE.
 */
 
+#define FIRST_MODEL_DEFAULT "other.xml"
+#define FIRST_WEIGHT_DEFAULT "other.bin"
+
 #include "TestCompare.h"
 #include "TestReport.h"
 

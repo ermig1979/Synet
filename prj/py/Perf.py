@@ -159,12 +159,17 @@ def RunTest(context, test, batch):
 	else :
 		log = context.dst + os.path.sep + "p{0}_{1}__{2}_t{3}_b{4}.txt".format(test.framework[0], test.group, test.name, args.threads, batch)
 
+	pathArgs = ""
 	if args.framework == "quantization" :
 		threshold = 0.02
-		pathArgs = "-fm={0}/synet.xml -fw={0}/synet.bin -sm={0}/int8.xml".format(testPath)
+		pathArgs += "-fm={0}/synet.xml -fw={0}/synet.bin -sm={0}/int8.xml".format(testPath)
 	else:
 		threshold = 0.0031
-		pathArgs = "-fm={0}/other.dsc -fw={0}/other.dat -sm={0}/synet.xml".format(testPath)
+		if test.framework == "inference_engine" :
+			pathArgs += "-fm={0}/other.xml -fw={0}/other.bin".format(testPath)
+		elif test.framework == "onnx" :
+			pathArgs += "-fw={0}/other.onnx".format(testPath)
+		pathArgs = " -sm={0}/synet.xml".format(testPath)
 	pathArgs += " -sw={0}/synet.bin -id={1} -od={0}/output -tp={0}/param.xml -sn={2}/sync.txt -hr={2}/_report.html -tr={2}/_report.txt".format(testPath, imagePath, context.dst)
 	
 	trashFile = imagePath + os.path.sep + "descript.ion"

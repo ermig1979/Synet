@@ -35,13 +35,33 @@ namespace Synet
     class InferenceEngineToSynet
     {
     public:
-        bool Convert(const String & srcModel, const String & srcWeight, bool trans, const String & dstModel, const String & dstWeight, const OnnxParam &onnxParam, const OptimizerParam & optParam)
+        bool Convert(String srcModel, String srcWeight, bool trans, const String & dstModel, const String & dstWeight, const OnnxParam &onnxParam, const OptimizerParam & optParam)
         {
             if (!Cpl::FileExists(srcModel))
-                SYNET_ERROR("File '" << srcModel << "' is not exist!");
+            {
+                String altModel = Cpl::ChangeExtension(srcModel, ".dsc");
+                if (altModel != srcModel)
+                {
+                    if (!Cpl::FileExists(altModel))
+                        SYNET_ERROR("Files '" << srcModel << "' and '" << altModel << "' are not exist!");
+                    srcModel = altModel;
+                }
+                else
+                    SYNET_ERROR("File '" << srcModel << "' is not exist!");
+            }
 
             if (!Cpl::FileExists(srcWeight))
-                SYNET_ERROR("File '" << srcWeight << "' is not exist!");
+            {
+                String altWeight = Cpl::ChangeExtension(srcWeight, ".dat");
+                if (altWeight != srcWeight)
+                {
+                    if (!Cpl::FileExists(altWeight))
+                        SYNET_ERROR("Files '" << srcWeight << "' and '" << altWeight << "' are not exist!");
+                    srcWeight = altWeight;
+                }
+                else
+                    SYNET_ERROR("File '" << srcWeight << "' is not exist!");
+            }
 
             XmlDoc srcXml;
             XmlFile file;
