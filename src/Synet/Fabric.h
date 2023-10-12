@@ -145,7 +145,7 @@ namespace Synet
             case LayerTypeMeta: return new MetaLayer(param, context);
             case LayerTypeMish: return new MishLayer(param, context);
             case LayerTypeNonMaxSuppression: return new NonMaxSuppressionLayer<T>(param, context);
-            case LayerTypeNormalize: return new NormalizeLayer<T>(param, context);
+            case LayerTypeNormalize: return new NormalizeLayer(param, context);
             case LayerTypePad: return new PadLayer(param, context);
             case LayerTypePermute: return new PermuteLayer<T>(param, context);
             case LayerTypePooling: return new PoolingLayer<T>(param, context);
