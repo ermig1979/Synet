@@ -132,6 +132,8 @@ namespace Synet
             network.info().when() = Cpl::CurrentDateTimeString();
             network.info().synet() = Synet::Version();
 
+            network.layers().reserve(graph.initializer_size() + graph.input_size() + graph.node_size() * 2);
+
             Vector original;
             Consts consts;
             Renames renames;
@@ -419,7 +421,6 @@ namespace Synet
 
         void SetSrcAndDst(const onnx::NodeProto& node, Renames &renames, LayerParam& layer)
         {
-            layer.name() = node.name();
             for (size_t j = 0; j < node.input_size(); ++j)
             {
                 String input = node.input(j);
@@ -455,16 +456,13 @@ namespace Synet
                         permute.src().push_back(dst);
                         permute.name() = dst + "_permute_to_nchw";
                         permute.dst().push_back(permute.name());
-                        permute.permute().order() = Shape({ 0, 3, 1, 2 });
+                        permute.permute().order() = Shp(0, 3, 1, 2);
                         permute.permute().format() = TensorFormatNchw;
-                        layers.push_back(permute);
                         if (renames.find(dst) != renames.end())
-                        {
-                            CPL_LOG_SS(Error, "Multiple manual NhwcToNchw permute at " << layer.name() << " !");
-                            return false;
-                        }
+                            SYNET_ERROR("Multiple manual NhwcToNchw permute at " << layer.name() << " !");
                         renames[dst] = permute.name();
                         //CPL_LOG_SS(Info, "Insert manual NhwcToNchw permute at " << layer.name() << " !");
+                        layers.push_back(permute);
                     }
                 }
             }
@@ -486,16 +484,13 @@ namespace Synet
                         permute.src().push_back(dst);
                         permute.name() = dst + "_permute_to_nhwc";
                         permute.dst().push_back(permute.name());
-                        permute.permute().order() = Shape({ 0, 2, 3, 1 });
+                        permute.permute().order() = Shp(0, 2, 3, 1);
                         permute.permute().format() = TensorFormatNhwc;
-                        layers.push_back(permute);
                         if (renames.find(dst) != renames.end())
-                        {
-                            CPL_LOG_SS(Error, "Multiple manual NchwToNhwc permute at " << layer.name() << " !");
-                            return false;
-                        }
+                            SYNET_ERROR("Multiple manual NchwToNhwc permute at " << layer.name() << " !");
                         renames[dst] = permute.name();
                         //CPL_LOG_SS(Info, "Insert manual NchwToNhwc permute at " << layer.name() << " !");
+                        layers.push_back(permute);
                     }
                 }
             }
