@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar,
+* Copyright (c) 2018-2023 Yermalayeu Ihar,
 *               2019-2019 Artur Voronkov.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -85,7 +85,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const EltwiseParam & param = this->Param().eltwise();
             assert(param.coefficients().size() == 0 || param.coefficients().size() == src.size());
@@ -105,6 +105,7 @@ namespace Synet
             {
                 _index[0] = src[0]->Size() > src[1]->Size() ? 0 : 1;
                 _index[1] = src[0]->Size() > src[1]->Size() ? 1 : 0;
+                size_t signDims1 = SignificantDimsCount(src[_index[1]]->Shape());
                 if (src[0]->Count() > 1 && src[0]->Count() == src[1]->Count() && src[0]->Size(1) == src[1]->Size(1))
                 {
                     _special = SpecialBatch;
@@ -119,13 +120,35 @@ namespace Synet
                     }
                     assert(shape == dst[0]->Shape());
                 }
-                else if (_operation == EltwiseOperationTypeProduct && src[0]->Count() == 4)
+                else if (_operation == EltwiseOperationTypeProduct && src[_index[0]]->Count() == 3 && signDims1 == 1)
+                {
+                    size_t size1 = src[_index[1]]->Size();
+                    if (src[_index[0]]->Axis(2) == size1)
+                    {
+                        _batch = 1;
+                        _channelsOuter = 1;
+                        _spatial = src[_index[0]]->Axis(0) * src[_index[0]]->Axis(1);
+                        _channelsInner = src[_index[0]]->Axis(2);
+                    }
+                    else if (src[_index[0]]->Axis(1) == size1)
+                    {
+                        _batch = src[_index[0]]->Axis(0);
+                        _channelsOuter = src[_index[0]]->Axis(1);
+                        _spatial = src[_index[0]]->Axis(2);
+                        _channelsInner = 1;
+                    }
+                    else
+                        assert(0);
+                    _special = SpecialScaleComplex;
+                    _channels = _channelsOuter * _channelsInner;
+                }
+                else if (_operation == EltwiseOperationTypeProduct && src[_index[0]]->Count() == 4)
                 {
                     _trans = src[_index[0]]->Format() == TensorFormatNhwc;
                     _batch = src[_index[0]]->Axis(0);
                     _channels = src[_index[0]]->Axis(_trans ? 3 : 1);
                     _spatial = src[_index[0]]->Size() / _batch / _channels;
-                    size_t size = src[_index[1]]->Size(1);
+                    size_t size = src[_index[1]]->Count() == 4 ? src[_index[1]]->Size(1) : src[_index[1]]->Size(0);
                     if (size == _channels)
                         _special = SpecialScaleChannel;
                     else if (size == _spatial)
@@ -144,6 +167,18 @@ namespace Synet
                     assert(src[_index[0]]->Size(4, 5) == src[_index[1]]->Size(4, 5));
                     _special = SpecialScaleComplex;
                     _channels = _channelsOuter*_channelsInner;
+                }
+                else if (_operation == EltwiseOperationTypeProduct && src[0]->Count() == 6)
+                {
+                    _batch = src[_index[0]]->Axis(0);
+                    _channelsOuter = src[_index[0]]->Axis(1);
+                    _spatial = src[_index[0]]->Size(2, 5);
+                    _channelsInner = src[_index[0]]->Axis(5);
+                    assert(src[_index[1]]->Size(2, 5) == 1);
+                    assert(src[_index[0]]->Size(0, 2) == src[_index[1]]->Size(0, 2));
+                    assert(src[_index[0]]->Size(5, 6) == src[_index[1]]->Size(5, 6));
+                    _special = SpecialScaleComplex;
+                    _channels = _channelsOuter * _channelsInner;
                 }
                 else if (_operation == EltwiseOperationTypeSum && src[0]->Count() == src[1]->Count())
                 {
@@ -169,7 +204,7 @@ namespace Synet
                         }
                     }
                 }
-                else if (_operation == EltwiseOperationTypeSum && src[_index[1]]->Count() == 1)
+                else if (_operation == EltwiseOperationTypeSum && src[_index[1]]->Size() == 1)
                 {
                     _special = SpecialBiasChannel;
                     _trans = 1;
@@ -190,22 +225,61 @@ namespace Synet
                         resized = true;
                     }
                 }
+                else if (_operation == EltwiseOperationTypeSum && src[_index[1]]->Count() == 3 && src[_index[0]]->Size(1) == src[_index[1]]->Size(0))
+                {
+                    _special = SpecialBiasChannel;
+                    _trans = 1;
+                    _batch = 1;
+                    _spatial = src[_index[0]]->Axis(0);
+                    _channels = src[_index[0]]->Size(1);
+                }
+                else if (_operation == EltwiseOperationTypeSum && src[_index[0]]->Count() == 3 && src[_index[1]]->Count() == 1 && src[_index[0]]->Axis(2) == src[_index[1]]->Axis(0))
+                {
+                    _special = SpecialBiasChannel;
+                    _trans = 1;
+                    _batch = 1;
+                    _spatial = src[_index[0]]->Axis(0) * src[_index[0]]->Axis(1);
+                    _channels = src[_index[1]]->Axis(0);
+                }
+                else if (_operation == EltwiseOperationTypeSum && src[_index[0]]->Count() == 4 && src[_index[1]]->Count() == 3)
+                {
+                    _trans = src[_index[0]]->Format() == TensorFormatNhwc;
+                    _batch = src[_index[0]]->Axis(0);
+                    _channels = src[_index[0]]->Axis(_trans ? 3 : 1);
+                    _spatial = src[_index[0]]->Size() / _batch / _channels;
+                    size_t size = src[_index[1]]->Count() == 4 ? src[_index[1]]->Size(1) : src[_index[1]]->Size(0);
+                    if (size == _channels)
+                        _special = SpecialBiasChannel;
+                    else
+                        assert(0);
+                }
                 else
                     assert(0);
             }
             else
             {
+                _type = src[_index[0]]->GetType();
                 _src.resize(src.size());
                 for (size_t i = 0; i < src.size(); ++i)
                 {
                     assert(src[i]->Size() == src[_index[0]]->Size());
-                    _src[i] = src[i]->CpuData();
+                    _src[i] = src[i]->RawCpuData();
                 }
                 _batch = 1, _channels = 1, _spatial = src[_index[0]]->Size();
             }
-            if(dst[0] != src[_index[0]] && !resized)
-                dst[0]->Reshape(src[_index[0]]->Shape(), src[_index[0]]->Format());
+            if (dst[0] != src[_index[0]] && !resized)
+            {
+                _type = src[_index[0]]->GetType();
+                switch (_type)
+                {
+                case TensorType32f: dst[0]->As32f().Reshape(src[_index[0]]->Shape(), src[_index[0]]->Format()); break;
+                case TensorType64i: dst[0]->As64i().Reshape(src[_index[0]]->Shape(), src[_index[0]]->Format()); break;
+                default:
+                    assert(0);
+                }
+            }
             this->UsePerfStat();
+            return true;
         }
 
         virtual int64_t Flop() const
@@ -216,20 +290,35 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
+            if (_special == SpecialNone)
+            {
+                switch (_type)
+                {
+                case TensorType32f:
+                    Detail::EltwiseLayerForwardCpu((float const* const*)_src.data(), (const float*)_coefficients.data(), _src.size(), _spatial, _operation, dst[0]->As32f().CpuData());
+                    break;
+                case TensorType64i:
+                {
+                    int64_t coefficients[2] = { 1, 1 };
+                    Detail::EltwiseLayerForwardCpu((int64_t const* const*)_src.data(), coefficients, _src.size(), _spatial, _operation, dst[0]->As64i().CpuData());
+                    break;
+                }
+                default:
+                    assert(0);
+                }
+                return;
+            }
             const Type * pSrc0 = src[_index[0]]->CpuData();
             Type * pDst = dst[0]->CpuData();
             const Type* pBias = NULL;
             switch (_special)
             {
-            case SpecialNone:
-                Detail::EltwiseLayerForwardCpu(_src.data(), _coefficients.data(), _src.size(), _spatial, _operation, pDst);
-                break;
             case SpecialScaleChannel:
             {
                 const Type * pScale = src[_index[1]]->CpuData();
                 for (size_t b = 0; b < _batch; ++b)
                 {
-                    Detail::ScaleLayerForwardCpu(pSrc0, pScale, pBias, _channels, 1, _spatial, pDst, src[_index[0]]->Format(), 0);
+                    ScaleForward32f(pSrc0, pScale, pBias, _channels, 1, _spatial, pDst, src[_index[0]]->Format(), 0);
                     pSrc0 += _channels*_spatial;
                     pDst += _channels*_spatial;
                     pScale += _channels;
@@ -241,7 +330,7 @@ namespace Synet
                 const Type * pScale = src[_index[1]]->CpuData();
                 for (size_t b = 0; b < _batch; ++b)
                 {
-                    Detail::ScaleLayerForwardCpu(pSrc0, pScale, pBias, _spatial, 1, _channels, pDst,
+                    ScaleForward32f(pSrc0, pScale, pBias, _spatial, 1, _channels, pDst,
                         src[_index[0]]->Format() == TensorFormatNhwc ? TensorFormatNchw : TensorFormatNhwc, 0);
                     pSrc0 += _channels*_spatial;
                     pDst += _channels*_spatial;
@@ -254,12 +343,21 @@ namespace Synet
                 const Type * pScale = src[_index[1]]->CpuData();
                 for (size_t b = 0; b < _batch; ++b)
                 {
-                    for (size_t c = 0; c < _channelsOuter; ++c)
+                    if (_channelsInner == 1)
                     {
-                        Detail::ScaleLayerForwardCpu(pSrc0, pScale, pBias, _channelsInner, 1, _spatial, pDst, TensorFormatNhwc, 0);
-                        pSrc0 += _channelsInner*_spatial;
-                        pDst += _channelsInner*_spatial;
-                        pScale += _channelsInner;
+                        ScaleForward32f(pSrc0, pScale, pBias, _channelsOuter, 1, _spatial, pDst, TensorFormatNchw, 0);
+                        pSrc0 += _channelsOuter * _spatial;
+                        pDst += _channelsOuter * _spatial;
+                    }
+                    else
+                    {
+                        for (size_t c = 0; c < _channelsOuter; ++c)
+                        {
+                            ScaleForward32f(pSrc0, pScale, pBias, _channelsInner, 1, _spatial, pDst, TensorFormatNhwc, 0);
+                            pSrc0 += _channelsInner*_spatial;
+                            pDst += _channelsInner*_spatial;
+                            pScale += _channelsInner;
+                        }
                     }
                 }
                 break;
@@ -269,7 +367,7 @@ namespace Synet
                 pBias = src[_index[1]]->CpuData();
                 for (size_t b = 0; b < _batch; ++b)
                 {
-                    Detail::BiasLayerForwardCpu(pSrc0, pBias, _channels, _spatial, pDst, _trans);
+                    BiasLayerForward(pSrc0, pBias, _channels, _spatial, pDst, _trans ? TensorFormatNhwc : TensorFormatNchw);
                     pSrc0 += _channels * _spatial;
                     pDst += _channels * _spatial;
                     pBias += _channels;
@@ -278,10 +376,10 @@ namespace Synet
             }
             case SpecialBatch:
             {
-                _src = { src[_index[0]]->CpuData(), src[_index[1]]->CpuData() };
+                Type * src01[2] = {src[_index[0]]->CpuData(), src[_index[1]]->CpuData()};
                 for (size_t b = 0; b < _batch; ++b)
                 {
-                    Detail::EltwiseLayerForwardCpu(_src.data(), _coefficients.data(), 2, _spatial, _operation, pDst);
+                    Detail::EltwiseLayerForwardCpu(src01, _coefficients.data(), 2, _spatial, _operation, pDst);
                     if (src[_index[0]]->Axis(0) > 1)
                         _src[_index[0]] += _channels * _spatial;
                     if (src[_index[1]]->Axis(0) > 1)
@@ -295,7 +393,7 @@ namespace Synet
                 pBias = src[_index[1]]->CpuData();
                 for (size_t b = 0; b < _batch; ++b)
                 {
-                    Detail::BiasLayerForwardCpu(pSrc0, pBias, _channels, _spatial, pDst, _trans);
+                    BiasLayerForward(pSrc0, pBias, _channels, _spatial, pDst, _trans ? TensorFormatNhwc : TensorFormatNchw);
                     pDst += _channels * _spatial;
                     pBias += _channels;
                 }
@@ -307,7 +405,7 @@ namespace Synet
 
     private:
         typedef std::vector<Type> Vector;
-        typedef std::vector<Type*> Pointers;
+        typedef std::vector<uint8_t*> Pointers;
 
         enum Special
         {
@@ -323,6 +421,7 @@ namespace Synet
         EltwiseOperationType _operation;
         Vector _coefficients;
         Pointers _src;
+        TensorType _type;
         int _trans;
         size_t _batch, _channels, _spatial;
         size_t _channelsInner, _channelsOuter;

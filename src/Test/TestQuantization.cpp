@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,11 @@
 * SOFTWARE.
 */
 
+#define FIRST_MODEL_DEFAULT "synet.xml"
+#define FIRST_WEIGHT_DEFAULT "synet.bin"
+#define SECOND_MODEL_DEFAULT "int8.xml"
+#define IMAGE_DIRECTORY_DEFAULT ""
+
 #include "TestCompare.h"
 #include "TestReport.h"
 #include "TestQuantization.h"
@@ -41,6 +46,9 @@ int main(int argc, char* argv[])
 {
     Test::Options options(argc, argv);
 
+    Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
+    Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
+
     if (options.mode == "convert")
     {
         Test::Quantizer quantizer(options);
@@ -52,7 +60,7 @@ int main(int argc, char* argv[])
         options.result = comparer.Run();
     }
     else
-        std::cout << "Unknown mode : " << options.mode << std::endl;
+        CPL_LOG_SS(Error, "Unknown mode : " << options.mode);
 
     return options.result ? 0 : 1;
 }

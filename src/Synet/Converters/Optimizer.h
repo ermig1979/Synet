@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -38,6 +38,10 @@ namespace Synet
         CPL_PARAM_VALUE(bool, mergeInt8Convolutions, true);
         CPL_PARAM_VALUE(bool, bf16Enable, false);
         CPL_PARAM_VALUE(uint32_t, bf16MinEffectiveSrcC, 4);
+        CPL_PARAM_VALUE(bool, saveUnoptimized, false);
+        CPL_PARAM_VALUE(int, convToNhwc, 0);
+        CPL_PARAM_VALUE(bool, skipPermute, false);
+        CPL_PARAM_VALUE(bool, reuseEltwise, false);
     };
 
     CPL_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);
@@ -52,16 +56,16 @@ namespace Synet
 
         bool Run(Synet::NetworkParam & network, Floats & bin)
         {
-            for (int stage = 0; stage < 8; stage++)
+            for (int stage = 0; stage < 10; stage++)
             {
                 if (!OptimizeLayers(network, bin, stage))
                     return false;
             }
-            if (!ReuseLayers(network))
-                return false;
             if (!RemoveStub(network))
                 return false;
             if (!RemoveUnusedConst(network.layers()))
+                return false;
+            if (!ReuseLayers(network))
                 return false;
             return true;
         }
@@ -79,6 +83,7 @@ namespace Synet
         {
             QuantizationMethod method = network.quantization().method();
             const bool is8i = network.quantization().method() != QuantizationMethodUnknown;
+            const bool isNhwc = IsNnwc(network);
             Changes changes;
             LayerParams merged;
             Floats buf;
@@ -106,9 +111,15 @@ namespace Synet
                 }
                 case 3:
                 {
+                    //if (MergePowerAndScaleAndPower(network.layers(), i, bin, buf, merged, changes))
+                    //    continue;
                     if (MergeBiasAndScale(network.layers(), i, bin, buf, merged, changes))
                         continue;
                     if (MergeConvolutionAndScale(network.layers(), i, bin, buf, merged, changes))
+                        continue;
+                    if (MergeConvolutionAndPower(network.layers(), i, bin, buf, merged, changes))
+                        continue;
+                    if (MergeInnerProductAndPower(network.layers(), i, bin, buf, merged, changes))
                         continue;
                     if (MergeInnerProductAndScale(network.layers(), i, bin, buf, merged, changes))
                         continue;
@@ -117,6 +128,8 @@ namespace Synet
                 case 4:
                 {
                     if (MergeHswish(network.layers(), i, merged, changes))
+                        continue;
+                    if (MergeHswishV2(network.layers(), i, merged, changes))
                         continue;
                     if (MergeMish(network.layers(), i, merged, changes))
                         continue;
@@ -129,6 +142,10 @@ namespace Synet
                     if (MergeShuffle1(network.layers(), i, merged, changes))
                         continue;
                     if (MergeShuffle2(network.layers(), i, merged, changes))
+                        continue;
+                    if (MergeShuffle3(network.layers(), i, merged, changes))
+                        continue;
+                    if (MergeShuffle3cut(network.layers(), i, isNhwc, merged, changes))
                         continue;
                     if (MergeSoftmax(network.layers(), i, merged, changes))
                         continue;
@@ -150,8 +167,8 @@ namespace Synet
                         continue;
                     if (MergeFused9(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeFused10(network.layers(), i, merged, changes))
-                        continue;
+                    //if (MergeFused10(network.layers(), i, merged, changes))
+                    //    continue;
                     if (MergeFused11(network.layers(), i, merged, changes))
                         continue;
                     if (MergePermute(network.layers(), i, merged, changes))
@@ -163,6 +180,12 @@ namespace Synet
                     if (MergeSwish(network.layers(), i, merged, changes))
                         continue;
                     if (MergeNormalize(network.layers(), i, merged, changes))
+                        continue;
+                    if (MergeNormalizeV2(network.layers(), i, merged, changes))
+                        continue;
+                    if (MergeGelu(network.layers(), i, merged, changes))
+                        continue;
+                    if (MergeScale(network.layers(), i, merged, changes))
                         continue;
                     break;
                 }
@@ -176,15 +199,31 @@ namespace Synet
                 }
                 case 6:
                 {
-                    if (MergeThreeConvolutions(network.layers(), i, method, merged, changes))
-                        continue;
-                    if (MergeSqueezeExcitation(network.layers(), i, merged, changes))
+                    if (_param.convToNhwc() && isNhwc && TransposeConvolutions(network.layers(), i, bin, buf, merged, changes))
                         continue;
                     break;
                 }
                 case 7:
                 {
+                    if (MergeThreeConvolutions(network.layers(), i, method, merged, changes))
+                        continue;
+                    if (MergeSqueezeExcitation(network.layers(), i, merged, changes))
+                        continue;
+                    if (_param.skipPermute() && SkipTwoPermutes(network.layers(), i, merged))
+                        continue;
+                    break;
+                }
+                case 8:
+                {
                     if (MergeTwoConvolutions(network.layers(), i, method, merged, changes))
+                        continue;
+                    break;
+                }
+                case 9:
+                {
+                    if (MergeParallelConvolutions(network.layers(), i, bin, buf, merged, changes))
+                        continue;
+                    if (MergeYoloV7(network.layers(), i, merged, changes))
                         continue;
                     break;
                 }
@@ -274,7 +313,7 @@ namespace Synet
         bool TransposeInnerProduct(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst)
         {
             const LayerParam& ip = src[index];
-            if (ip.type() != LayerTypeInnerProduct || !ip.innerProduct().transposeB())
+            if (ip.type() != LayerTypeInnerProduct || !ip.innerProduct().transposeB() || ip.weight().empty())
                 return false;
             const Shape & dim = ip.weight()[0].dim();
             size_t offset = ip.weight()[0].offset() / 4;
@@ -297,28 +336,33 @@ namespace Synet
                 return false;
             const LayerParam & current = src[index - 1];
             const LayerParam & bias = src[index];
-            if (bias.type() != LayerTypeBias || bias.src()[0] != current.name())
+            const WeightParam* weight = GetEltwiseWeight(index, src);
+            if (bias.type() == LayerTypeBias)
+                weight = &bias.weight()[0];
+            if(weight == NULL)
+                return false;
+            if (!(bias.src()[0] == current.name() || (bias.src().size() == 2 && bias.src()[1] == current.name())))
                 return false;
             if (InsideLink(src, index - 1, 2))
                 return false;
             switch (current.type())
             {
             case LayerTypeConvolution:
-                if (current.convolution().biasTerm())
+                if (current.convolution().biasTerm() || current.convolution().outputNum() != weight->dim()[0])
                     return false;
                 dst.back().convolution().biasTerm() = true;
                 break;
             case LayerTypeInnerProduct:
-                if (current.innerProduct().biasTerm())
+                if (current.innerProduct().biasTerm() || current.src().size() != 1 || current.innerProduct().outputNum() != weight->dim()[0])
                     return false;
                 dst.back().innerProduct().biasTerm() = true;
                 break;
             case LayerTypePower:
-                if (current.power().power() != 1.0f || current.power().shift() != 0.0f)
+                if (current.power().power() != 1.0f || current.power().shift() != 0.0f || bias.type() != LayerTypeBias)
                     return false;
                 dst.back().type() = LayerTypeScale;
                 dst.back().scale().biasTerm() = true;
-                dst.back().weight().push_back(bias.weight()[0]);
+                dst.back().weight().push_back(*weight);
                 dst.back().weight()[0].offset() = bin.size() * sizeof(float);
                 for (size_t i = 0; i < dst.back().weight()[0].dim()[0]; ++i)
                     bin.push_back(current.power().scale());
@@ -334,7 +378,50 @@ namespace Synet
             }
             dst.back().name() = bias.name();
             dst.back().dst() = bias.dst();
-            dst.back().weight().push_back(bias.weight()[0]);
+            dst.back().weight().push_back(*weight);
+            return true;
+        }
+
+        bool MergePowerAndScaleAndPower(const LayerParams& src, size_t& index, Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        {
+            bool pre = false, scale = false, post = false;
+            if (src.size() > index + 0 && src[index + 0].type() == LayerTypePower && src[index + 0].power().power() == 1.0f)
+                pre = true;
+            if (src.size() > index + 1 && src[index + 1].type() == LayerTypeScale && (pre ? src[index + 1].src()[0] == src[index + 0].name() : true) && src[index + 1].scale().biasTerm())
+                scale = true;
+            if (src.size() > index + 2 && src[index + 2].type() == LayerTypePower && src[index + 2].power().power() == 1.0f && src[index + 2].src()[0] == src[index + 1].name())
+                post = true;
+            if (!(scale && (pre || post)))
+                return false;
+            if (InsideLink(src, index + (pre ? 0 : 1), 1 + (pre ? 1 : 0) + (post ? 1 : 0), 0, LayerTypes({ LayerTypePriorBox, LayerTypePriorBoxClustered, LayerTypeMeta })))
+                return false;
+            LayerParam layer;
+            layer.type() = LayerTypeScale;
+            layer.name() = src[index + 1].name();
+            layer.src().push_back(pre ? src[index + 0].src()[0] : src[index + 1].src()[0]);
+            layer.dst().push_back(post ? src[index + 2].dst()[0] : src[index + 1].dst()[0]);
+            layer.scale() = src[index + 1].scale();
+            layer.weight() = src[index + 1].weight();
+            float preScale = pre ? src[index + 0].power().scale() : 1.0f;
+            float preBias = pre ? src[index + 0].power().shift() : 0.0f;
+            float postScale = post ? src[index + 2].power().scale() : 1.0f;
+            float postBias = post ? src[index + 2].power().shift() : 0.0f;
+            if (buf.empty())
+                buf = bin;
+            float* pScale = GetWeight<float>(buf, layer.weight()[0]);
+            float* pShift = GetWeight<float>(buf, layer.weight()[1]);
+            size_t size = TensorSize(layer.weight()[0].dim());
+            for (size_t i = 0; i < size; ++i)
+            {
+                pShift[i] = (preBias * pScale[i] + pShift[i]) * postScale + postBias;
+                pScale[i] = preScale * pScale[i] * postScale;
+            }
+            if (pre)
+                changes.push_back(Change(src[index + 0].dst()[0], layer.dst()[0]));
+            else
+                dst.push_back(src[index + 0]);
+            index += (pre ? 1 : 0) + (post ? 1 : 0);
+            dst.push_back(layer);
             return true;
         }
 
@@ -376,10 +463,67 @@ namespace Synet
                 return false;
             const LayerParam& conv = src[index - 1];
             const LayerParam& scale = src[index];
-            if (conv.type() != LayerTypeConvolution || conv.convolution().biasTerm() || 
-                conv.convolution().activationType() != ActivationFunctionTypeIdentity)
+            if (conv.type() != LayerTypeConvolution || conv.convolution().activationType() != ActivationFunctionTypeIdentity)
                 return false;
             if (scale.type() != LayerTypeScale || scale.src()[0] != conv.name())
+                return false;
+            if (InsideLink(src, index - 1, 2))
+                return false;
+            if (buf.empty())
+                buf = bin;
+            dst.back().name() = scale.name();
+            dst.back().dst() = scale.dst();
+            const float* pScale = bin.data() + scale.weight()[0].offset() / 4;
+            const float* pSrc = bin.data() + conv.weight()[0].offset() / 4;
+            float * pDst = buf.data() + conv.weight()[0].offset() / 4;
+            const Shape & dim = conv.weight()[0].dim();
+            if (conv.weight()[0].format() == TensorFormatNhwc)
+            {
+                for (size_t i = 0, n = dim[0] * dim[1] * dim[2]; i < n; ++i)
+                    for (size_t j = 0, m = dim[3]; j < m; ++j)
+                        pDst[i * m + j] = pSrc[i * m + j] * pScale[j];
+            }
+            else if (conv.weight()[0].format() == TensorFormatNchw)
+            {
+                for (size_t j = 0, m = dim[0]; j < m; ++j)
+                    for (size_t i = 0, n = dim[1] * dim[2] * dim[3]; i < n; ++i)
+                        pDst[j * n + i] = pSrc[j * n + i] * pScale[j];
+            }
+            else
+                return false;
+            if (conv.convolution().biasTerm())
+            {
+                const Shape & dim = conv.weight()[1].dim();
+                const float* pSrc = bin.data() + conv.weight()[1].offset() / 4;
+                float * pDst = buf.data() + conv.weight()[1].offset() / 4;
+                for (size_t i = 0, n = dim[0]; i < n; ++i)
+                     pDst[i] = pSrc[i] * pScale[i];
+                if (scale.scale().biasTerm())
+                {
+                    const float* pShift = bin.data() + scale.weight()[1].offset() / 4;
+                    for (size_t i = 0, n = dim[0]; i < n; ++i)
+                        pDst[i] += pShift[i];
+                }
+            }
+            else if (scale.scale().biasTerm())
+            {
+                dst.back().convolution().biasTerm() = true;
+                dst.back().weight().push_back(scale.weight()[1]);
+            }            
+            return true;
+        }
+
+        bool MergeConvolutionAndPower(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        {
+            if (index == 0)
+                return false;
+            const LayerParam& conv = src[index - 1];
+            const LayerParam& power = src[index];
+            if (conv.type() != LayerTypeConvolution || 
+                conv.convolution().activationType() != ActivationFunctionTypeIdentity)
+                return false;
+            if (power.type() != LayerTypePower || power.src()[0] != conv.name() ||
+                power.power().power() != 1.0f || power.power().shift() != 0.0f)
                 return false;
             if (InsideLink(src, index - 1, 2))
                 return false;
@@ -387,20 +531,44 @@ namespace Synet
                 return false;
             if (buf.empty())
                 buf = bin;
-            dst.back().name() = scale.name();
-            dst.back().dst() = scale.dst();
-            if (scale.scale().biasTerm())
+            dst.back().name() = power.name();
+            dst.back().dst() = power.dst();
+            float scale = power.power().scale();
+            for (size_t w = 0; w < conv.weight().size(); ++w)
             {
-                dst.back().convolution().biasTerm() = true;
-                dst.back().weight().push_back(scale.weight()[1]);
+                const float* pSrc = bin.data() + conv.weight()[w].offset() / 4;
+                float* pDst = buf.data() + conv.weight()[w].offset() / 4;
+                for (size_t i = 0, n = conv.weight()[w].size() / 4; i < n; ++i)
+                    pDst[i] = pSrc[i] * scale;
             }
-            const float* pSrc = bin.data() + conv.weight()[0].offset() / 4;
-            const float* pScale = bin.data() + scale.weight()[0].offset() / 4;
-            float * pDst = buf.data() + conv.weight()[0].offset() / 4;
-            const Shape & dim = conv.weight()[0].dim();
-            for (size_t i = 0, n = dim[0] * dim[1] * dim[2]; i < n; ++i)
-                for (size_t j = 0, m = dim[3]; j < m; ++j)
-                    pDst[i * m + j] = pSrc[i * m + j] * pScale[j];
+            return true;
+        }
+
+        bool MergeInnerProductAndPower(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        {
+            if (index == 0)
+                return false;
+            const LayerParam& ip = src[index - 1];
+            const LayerParam& power = src[index];
+            if (ip.type() != LayerTypeInnerProduct || ip.src().size() != 1)
+                return false;
+            if (power.type() != LayerTypePower || power.src()[0] != ip.name() ||
+                power.power().power() != 1.0f || power.power().shift() != 0.0f)
+                return false;
+            if (InsideLink(src, index - 1, 2))
+                return false;
+            if (buf.empty())
+                buf = bin;
+            dst.back().name() = power.name();
+            dst.back().dst() = power.dst();
+            float scale = power.power().scale();
+            for (size_t w = 0; w < ip.weight().size(); ++w)
+            {
+                const float* pSrc = bin.data() + ip.weight()[w].offset() / 4;
+                float* pDst = buf.data() + ip.weight()[w].offset() / 4;
+                for (size_t i = 0, n = ip.weight()[w].size() / 4; i < n; ++i)
+                    pDst[i] = pSrc[i] * scale;
+            }
             return true;
         }
 
@@ -466,6 +634,31 @@ namespace Synet
             layer.hswish().scale() = src[index + 2].power().scale();
             dst.push_back(layer);
             index += 3;
+            return true;
+        }
+
+        bool MergeHswishV2(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+        {
+            if (src.size() < index + 2)
+                return false;
+            if (src[index + 0].type() != LayerTypeHardSigmoid || src[index + 0].hardSigmoid().scale() != 1.0f / 6.0f ||
+                src[index + 0].hardSigmoid().shift() != 0.5f)
+                return false;
+            if (src[index + 1].type() != LayerTypeEltwise || src[index + 1].eltwise().operation() != EltwiseOperationTypeProduct ||
+                src[index + 1].src().size() != 2 || src[index + 1].src()[0] != src[index + 0].src()[0] || src[index + 1].src()[1] != src[index + 0].dst()[0])
+                return false;
+            if (InsideLink(src, index + 1, 1))
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeHswish;
+            layer.name() = src[index + 1].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            //layer.hswish().shift() = src[index + 0].power().shift();
+            //layer.hswish().scale() = src[index + 2].power().scale();
+            dst.push_back(layer);
+            index += 1;
             return true;
         }
 
@@ -651,6 +844,11 @@ namespace Synet
                 dst.back().convolution().activationParam0() = 1.0f;
                 result = true;
             }
+            if (act.type() == LayerTypeGelu)
+            {
+                dst.back().convolution().activationType() = ActivationFunctionTypeGelu;
+                result = true;
+            }
             if (result)
             {
                 if (dst.back().convolution().quantizationLevel() == TensorType8i)
@@ -735,7 +933,7 @@ namespace Synet
             {
                 const LayerParam & l3 = src[index + 1];
                 if (l2.convolution().activationType() == ActivationFunctionTypeIdentity && l3.type() == LayerTypeEltwise && l3.eltwise().operation() == EltwiseOperationTypeSum &&
-                    l3.eltwise().coefficients().empty() && l3.src().size() == 2 && l3.src()[0] == l0.src()[0] && l3.src()[1] == l2.dst()[0] && !InsideLink(src, index - 2, 4))
+                    l3.eltwise().coefficients().empty() && l3.src().size() == 2 && ((l3.src()[0] == l0.src()[0] && l3.src()[1] == l2.dst()[0]) || ((l3.src()[1] == l0.src()[0] && l3.src()[0] == l2.dst()[0]))) && !InsideLink(src, index - 2, 4))
                 {
                     dst.back().mergedConvolution().add() = true;
                     dst.back().name() = l3.name();
@@ -783,6 +981,11 @@ namespace Synet
                             {
                                 dst.back().mergedConvolution().conv()[2].activationType() = ActivationFunctionTypeMish;
                                 dst.back().mergedConvolution().conv()[2].activationParam0() = l4.softplus().threshold();
+                                result = true;
+                            }
+                            if (l4.type() == LayerTypeGelu)
+                            {
+                                dst.back().mergedConvolution().conv()[2].activationType() = ActivationFunctionTypeGelu;
                                 result = true;
                             }
                             if (result)
@@ -954,7 +1157,7 @@ namespace Synet
 
         bool MergeShuffle2(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
         {
-            if (src.size() < index + 17)
+            if (src.size() < index + 18)
                 return false;
             if (src[index + 0].type() != LayerTypeConcat || src[index + 0].src().size() != 2)
                 return false;
@@ -987,6 +1190,83 @@ namespace Synet
             layer.dst().push_back(src[index + 17].dst()[0]);
             index += 17;
             dst.push_back(layer);
+            return true;
+        }
+
+        bool MergeShuffle3(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 43)
+                return false;
+            if (src[index + 0].type() != LayerTypeConcat || src[index + 0].src().size() != 2)
+                return false;
+            for(size_t i = 1; i < 22; ++i)
+                if (src[index + i].type() != LayerTypeMeta)
+                    return false;
+            if (src[index + 22].type() != LayerTypeReshape)
+                return false;
+            if (src[index + 23].type() != LayerTypePermute || src[index + 23].permute().order().size() != 5)
+                return false;
+            for (size_t i = 24; i < 28; ++i)
+                if (src[index + i].type() != LayerTypeMeta)
+                    return false;
+            if (src[index + 28].type() != LayerTypeReshape)
+                return false;
+            for (size_t i = 29; i < 39; ++i)
+                if (src[index + i].type() != LayerTypeMeta)
+                    return false;
+            if (src[index + 39].type() != LayerTypeStridedSlice || src[index + 39].src().size() != 4)
+                return false;
+            for (size_t i = 40; i < 42; ++i)
+                if (src[index + i].type() != LayerTypeMeta)
+                    return false;
+            if (src[index + 42].type() != LayerTypeStridedSlice || src[index + 42].src().size() != 4)
+                return false;
+            LayerParam layer;
+            layer.type() = LayerTypeShuffle;
+            layer.name() = src[index + 0].name();
+            layer.src() = src[index + 0].src();
+            layer.shuffle().type() = 1;
+            layer.dst().push_back(src[index + 39].dst()[0]);
+            layer.dst().push_back(src[index + 42].dst()[0]);
+            index += 42;
+            dst.push_back(layer);
+            return true;
+        }
+
+        bool MergeShuffle3cut(const LayerParams& src, size_t& index, bool isNhwc, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 29)
+                return false;
+            if (src[index + 0].type() != LayerTypeConcat || src[index + 0].src().size() != 2)
+                return false;
+            for (size_t i = 1; i < 22; ++i)
+                if (src[index + i].type() != LayerTypeMeta)
+                    return false;
+            if (src[index + 22].type() != LayerTypeReshape)
+                return false;
+            if (src[index + 23].type() != LayerTypePermute || src[index + 23].permute().order().size() != 5)
+                return false;
+            for (size_t i = 24; i < 28; ++i)
+                if (src[index + i].type() != LayerTypeMeta)
+                    return false;
+            if (src[index + 28].type() != LayerTypeReshape)
+                return false;
+            LayerParam shuffle;
+            shuffle.type() = LayerTypeShuffle;
+            shuffle.name() = src[index + 0].name();
+            shuffle.src() = src[index + 0].src();
+            shuffle.shuffle().type() = 1;
+            shuffle.dst().push_back(src[index + 28].dst()[0] + "_dst0");
+            shuffle.dst().push_back(src[index + 28].dst()[0] + "_dst1");
+            LayerParam concat;
+            concat.type() = LayerTypeConcat;
+            concat.name() = src[index + 28].name();
+            concat.src() = shuffle.dst();
+            concat.dst().push_back(src[index + 28].dst()[0]);
+            concat.concat().axis() = isNhwc ? -1 : 1;
+            index += 28;
+            dst.push_back(shuffle);
+            dst.push_back(concat);
             return true;
         }
 
@@ -1440,6 +1720,8 @@ namespace Synet
             layer.fused().type() = 10;
             if(pre)
                 changes.push_back(Change(src[index + 0].dst()[0], layer.dst()[0]));
+            else
+                dst.push_back(src[index + 0]);
             index += (pre ? 1 : 0) + (post ? 1 : 0);
             dst.push_back(layer);
             return true;
@@ -1574,7 +1856,7 @@ namespace Synet
 
         bool MergeSwish(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
         {
-            if (src.size() < index + 1)
+            if (src.size() < index + 2)
                 return false;
             if (src[index + 0].type() != LayerTypeSigmoid)
                 return false;
@@ -1619,6 +1901,104 @@ namespace Synet
             layer.normalize().eps() = 0;
             dst.push_back(layer);
             index += 4;
+            return true;
+        }
+
+        bool MergeNormalizeV2(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 8)
+                return false;
+            if (src[index + 0].type() != LayerTypeReduction || src[index + 0].reduction().type() != ReductionTypeMean)
+                return false;
+            if (src[index + 1].type() != LayerTypeBinaryOperation || src[index + 1].binaryOperation().type() != BinaryOperationTypeSub)
+                return false;
+            if (src[index + 2].type() != LayerTypePower || src[index + 2].power().power() != 2.0f)
+                return false;
+            if (src[index + 3].type() != LayerTypeReduction || src[index + 3].reduction().type() != ReductionTypeMean)
+                return false;
+            if (src[index + 4].type() != LayerTypePower || src[index + 4].power().power() != 1.0f || src[index + 4].power().scale() != 1.0f)
+                return false;
+            if (src[index + 5].type() != LayerTypeUnaryOperation || src[index + 5].unaryOperation().type() != UnaryOperationTypeSqrt)
+                return false;
+            if (src[index + 6].type() != LayerTypeBinaryOperation || src[index + 6].binaryOperation().type() != BinaryOperationTypeDiv)
+                return false;
+            const WeightParam* scale = GetEltwiseWeight(index + 7, src);
+            if (scale == NULL || src[index + 7].eltwise().operation() != EltwiseOperationTypeProduct)
+                return false;
+            const WeightParam* shift = GetEltwiseWeight(index + 8, src);
+            if (shift == NULL || src[index + 8].eltwise().operation() != EltwiseOperationTypeSum)
+                return false;
+            if (InsideLink(src, index + 1, 7))
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeNormalize;
+            layer.name() = src[index + 8].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            layer.normalize().eps() = src[index + 4].power().shift();
+            layer.normalize().version() = 2;
+            layer.weight().push_back(*scale);
+            layer.weight().push_back(*shift);
+            dst.push_back(layer);
+            index += 8;
+            return true;
+        }
+
+        bool MergeGelu(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 5)
+                return false;
+            if (!IsMulConst(src[index + 0], M_SQRT1_2))
+                return false;
+            if (src[index + 1].type() != LayerTypeUnaryOperation || src[index + 1].unaryOperation().type() != UnaryOperationTypeErf ||
+                src[index + 1].src()[0] != src[index + 0].dst()[0])
+                return false;
+            if (!IsAddConst(src[index + 2], 1.0f) || src[index + 2].src()[0] != src[index + 1].dst()[0])
+                return false;
+            if (src[index + 3].type() != LayerTypeEltwise || src[index + 3].eltwise().operation() != Synet::EltwiseOperationTypeProduct ||
+                src[index + 3].src()[0] != src[index + 0].src()[0] || src[index + 3].src()[1] != src[index + 2].dst()[0])
+                return false;
+            if (!IsMulConst(src[index + 4], 0.5f) || src[index + 4].src()[0] != src[index + 3].dst()[0])
+                return false;
+            if (InsideLink(src, index + 1, 4))
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeGelu;
+            layer.name() = src[index + 4].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            dst.push_back(layer);
+            index += 4;
+            return true;
+        }
+
+        bool MergeScale(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 2)
+                return false;
+            const WeightParam* scale = GetEltwiseWeight(index + 0, src);
+            if (scale == NULL || src[index + 0].eltwise().operation() != EltwiseOperationTypeProduct)
+                return false;
+            const WeightParam* shift = GetEltwiseWeight(index + 1, src);
+            if (shift == NULL || src[index + 1].eltwise().operation() != EltwiseOperationTypeSum)
+                return false;
+            if(src[index + 1].src()[0] != src[index + 0].dst()[0])
+                return false;
+            if (scale->dim() != shift->dim())
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeScale;
+            layer.name() = src[index + 1].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            layer.scale().biasTerm() = true;
+            layer.weight().push_back(*scale);
+            layer.weight().push_back(*shift);
+            dst.push_back(layer);
+            index += 1;
             return true;
         }
 
@@ -1678,6 +2058,317 @@ namespace Synet
             return true;
         }
 
+        bool MergeParallelConvolutions(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        {
+            const LayerParam& l0 = src[index];
+            size_t MinPart = 32, minPart = MinPart;
+            Shape parts;
+            for (; index + parts.size() < src.size();)
+            {
+                const LayerParam& l = src[index + parts.size()];
+                if (l.type() != LayerTypeConvolution)
+                    break;
+                const ConvolutionParam& c = l.convolution();
+                if (c.group() != 1)
+                    break;
+                if (parts.size())
+                {
+                    if (l.src() != l0.src())
+                        break;
+                    if (l.weight().size() != l0.weight().size())
+                        break;
+                    if (l.weight()[0].format() != l0.weight()[0].format())
+                        break;
+                    const ConvolutionParam& c0 = l0.convolution();
+                    if (c.kernel() != c0.kernel())
+                        break;
+                    if (c.pad() != c0.pad())
+                        break;
+                    if (c.stride() != c0.stride())
+                        break;
+                    if (c.dilation() != c0.dilation())
+                        break;
+                    if (c.biasTerm() != c0.biasTerm())
+                        break;
+                    if (c.activationType() != c0.activationType())
+                        break;
+                    if (c.activationParam0() != c0.activationParam0())
+                        break;
+                    if (c.activationParam1() != c0.activationParam1())
+                        break;
+                }
+                parts.push_back(c.outputNum());
+                minPart = std::min(parts.back(), minPart);
+            }
+            if (parts.size() < 2 || minPart == MinPart)
+                return false;
+
+            LayerParam conv;
+            conv.type() = LayerTypeConvolution;
+            conv.name() = l0.name();
+            conv.src() = l0.src();
+            conv.convolution() = l0.convolution();
+            conv.weight() = l0.weight();
+            for (size_t p = 1; p < parts.size(); ++p)
+            {
+                const LayerParam& l = src[index + p];
+                conv.convolution().outputNum() += l.convolution().outputNum();
+                conv.name() = conv.name() + "_" + l.name();
+                for (size_t w = 0; w < l0.weight().size(); ++w)
+                {
+                    if(l.weight()[0].format() == TensorFormatNhwc)
+                        conv.weight()[w].dim().back() += l.weight()[w].dim().back();
+                    else
+                        conv.weight()[w].dim().front() += l.weight()[w].dim().front();
+                    conv.weight()[w].size() += l.weight()[w].size();
+                }
+            }
+            conv.dst().push_back(conv.name());
+
+            if (buf.empty())
+                buf = bin;
+            size_t newSize = buf.size();
+            for (size_t w = 0; w < conv.weight().size(); ++w)
+                newSize += conv.weight()[w].size() / sizeof(float);
+            conv.weight()[0].offset() = buf.size() * sizeof(float);
+            buf.resize(newSize);
+            for (size_t w = 0; w < conv.weight().size(); ++w)
+            {
+                if (w)
+                    conv.weight()[w].offset() = conv.weight()[w - 1].offset() + conv.weight()[w - 1].size();
+                const Shape & dim = conv.weight()[w].dim();
+                std::vector<const float*> pSrc(parts.size());
+                for (size_t p = 0; p < parts.size(); ++p)
+                    pSrc[p] = bin.data() + src[index + p].weight()[w].offset() / sizeof(float);
+                float * pDst = buf.data() + conv.weight()[w].offset() / sizeof(float);
+                if (l0.weight()[0].format() == TensorFormatNhwc && w == 0)
+                {
+                    for (size_t o = 0, outer = dim[0] * dim[1] * dim[2]; o < outer; ++o)
+                    {
+                        for (size_t p = 0; p < parts.size(); ++p)
+                        {
+                            for (size_t i = 0; i < parts[p]; ++i)
+                                *pDst++ = *pSrc[p]++;
+                        }
+                    }
+                }
+                else
+                {
+                    for (size_t p = 0; p < parts.size(); ++p)
+                    {
+                        memcpy(pDst, pSrc[p], src[index + p].weight()[w].size());
+                        pDst += src[index + p].weight()[w].size() / sizeof(float);
+                    }
+                }
+            }
+
+            LayerParam unpack;
+            unpack.type() = LayerTypeUnpack;
+            unpack.name() = conv.name() + "_unpack";
+            unpack.src().push_back(conv.name());
+            unpack.unpack().axis() = l0.weight()[0].format() == TensorFormatNhwc ? 3 : 1;
+            unpack.unpack().parts() = parts;
+            for (size_t i = 0; i < parts.size(); ++i)
+                unpack.dst().push_back(src[index + i].dst()[0]);
+
+            index += parts.size() - 1;
+            dst.push_back(conv);
+            dst.push_back(unpack);
+
+            return true;
+        }
+
+        bool MergeYoloV7(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (index == 0 || index + 4 >= src.size())
+                return false;
+
+            const LayerParam &c0 = src[index - 1];
+            if (c0.type() != LayerTypeConcat || c0.src().size() != 3)
+                return false;
+
+            const LayerParam &ss0 = src[index + 0];
+            if (ss0.type() != LayerTypeStridedSlice || ss0.src().size() != 1 || ss0.src()[0] != c0.dst()[0] ||
+                ss0.stridedSlice().beginDims() != Shp(0) || ss0.stridedSlice().endDims() != Shp(4) ||
+                ss0.stridedSlice().strideDims() != Shp(1) || (ss0.stridedSlice().axes() != Shp(2) && ss0.stridedSlice().axes() != Shp(1)))
+                return false;
+
+            const LayerParam &ss1 = src[index + 1];
+            if (ss1.type() != LayerTypeStridedSlice || ss1.src().size() != 1 || ss1.src()[0] != c0.dst()[0] ||
+                ss1.stridedSlice().beginDims() != Shp(4) || ss1.stridedSlice().endDims() != Shp(5) ||
+                ss1.stridedSlice().strideDims() != Shp(1) || (ss1.stridedSlice().axes() != Shp(2) && ss1.stridedSlice().axes() != Shp(1)))
+                return false;
+
+            size_t start = index + 2;
+            const LayerParam & ss2 = src[index + 2];
+            if (ss2.type() == LayerTypeStridedSlice)
+            {
+                if (ss2.src().size() != 1 || ss2.src()[0] != c0.dst()[0] ||
+                    ss2.stridedSlice().beginDims() != Shp(5) || ss1.stridedSlice().strideDims() != Shp(1) || 
+                    (ss2.stridedSlice().axes() != Shp(2) && ss2.stridedSlice().axes() != Shp(1)))
+                    return false;
+
+                const LayerParam& e0 = src[index + 3];
+                if (e0.type() != LayerTypeEltwise || e0.eltwise().operation() != EltwiseOperationTypeProduct || e0.src().size() != 2 || 
+                    (e0.src()[0] != ss1.dst()[0] && e0.src()[0] != ss2.dst()[0]) || (e0.src()[1] != ss1.dst()[0] && e0.src()[1] != ss2.dst()[0]))
+                    return false;
+
+                start = index + 4;
+            }
+
+            const LayerParam& ip0 = src[start + 0];
+            if (ip0.type() != LayerTypeInnerProduct || ip0.src().size() != 1 || ip0.src()[0] != ss0.dst()[0] ||
+                ip0.innerProduct().outputNum() != 4 || ip0.innerProduct().biasTerm() != false ||
+                ip0.weight()[0].dim() != Shp(4, 4))
+                return false;
+
+            const LayerParam& r0 = src[start + 1];
+            if (r0.type() != LayerTypeReduction || r0.reduction().axis() != Ints({ 2 }) || r0.reduction().type() != ReductionTypeMax ||
+                r0.src().size() != 1 || r0.src()[0] != src[start - 1].dst()[0])
+                return false;
+
+            const LayerParam& am0 = src[start + 2];
+            if (am0.type() != LayerTypeArgMax || am0.argMax().axis() != 2 || 
+                am0.src().size() != 1 || am0.src()[0] != src[start - 1].dst()[0])
+                return false;
+
+            const LayerParam& c1 = src[start + 3];
+            if (c1.type() != LayerTypeCast || c1.cast().type() != TensorType32f || 
+                c1.src().size() != 1 || c1.src()[0] != am0.dst()[0])
+                return false;
+
+            const LayerParam& p0 = src[start + 4];
+            if (p0.type() != LayerTypePower || p0.power().power() != 1.0f || p0.power().shift() != 0.0f ||
+                p0.src().size() != 1 || p0.src()[0] != c1.dst()[0])
+                return false;
+
+            const LayerParam& e1 = src[start + 5];
+            if (e1.type() != LayerTypeEltwise || e1.eltwise().operation() != EltwiseOperationTypeSum || e1.src().size() != 2 ||
+                (e1.src()[0] != ip0.dst()[0] && e1.src()[0] != p0.dst()[0]) || (e1.src()[1] != ip0.dst()[0] && e1.src()[1] != p0.dst()[0]))
+                return false;
+
+            const LayerParam& p1 = src[start + 6];
+            if (p1.type() != LayerTypePermute || p1.permute().order() != Shp(0, 2, 1) ||
+                p1.src().size() != 1 || p1.src()[0] != r0.dst()[0])
+                return false;
+
+            const LayerParam& nms0 = src[start + 7];
+            if (nms0.type() != LayerTypeNonMaxSuppression || nms0.src().size() != 2 ||
+                (nms0.src()[0] != e1.dst()[0] && nms0.src()[0] != p1.dst()[0]) || (nms0.src()[1] != e1.dst()[0] && nms0.src()[1] != p1.dst()[0]))
+                return false;
+
+            LayerParam yoloV7;
+            yoloV7.type() = LayerTypeYoloV7;
+            yoloV7.name() = src.back().dst()[0];
+            yoloV7.src().push_back(c0.dst()[0]);
+            yoloV7.dst().push_back(src.back().dst()[0]);
+            yoloV7.yoloV7().maxOutputBoxesPerClass() = nms0.nonMaxSuppression().maxOutputBoxesPerClass();
+            yoloV7.yoloV7().iouThreshold() = nms0.nonMaxSuppression().iouThreshold();
+            yoloV7.yoloV7().scoreThreshold() = nms0.nonMaxSuppression().scoreThreshold();
+            yoloV7.yoloV7().oneClass() = (start == index + 2);
+            index += src.size() - 1 - index;
+            dst.push_back(yoloV7);
+
+            return true;
+        }
+
+        bool TransposeConvolutions(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        {
+            size_t end = index;
+            if (!PermutedToNchw(src, src[index].src(), true, false, false))
+                return false;
+            if (src[index].type() != LayerTypeConvolution || 
+                src[index].weight()[0].format() != TensorFormatNchw || 
+                UserCount(src, index) != 1)
+                return false;
+            for (size_t i = index + 1; i < src.size(); ++i)
+            {
+                if (src[i].type() != LayerTypeConvolution || 
+                    src[i].weight()[0].format() != TensorFormatNchw ||
+                    UserCount(src, i) != 1)
+                    break;
+                end = i;
+            }
+            size_t count = end + 1 - index;
+            if (!(count >= _param.convToNhwc() || (count == 1 && src[index].convolution().group() != 1)))
+                return false;
+
+            LayerParam toNhwc;
+            toNhwc.type() = LayerTypePermute;
+            toNhwc.src().push_back(src[index].src()[0]);
+            toNhwc.name() = src[index].src()[0] + "_permute_to_nhwc";
+            toNhwc.dst().push_back(toNhwc.name());
+            toNhwc.permute().order() = Shape({ 0, 2, 3, 1 });
+            toNhwc.permute().format() = TensorFormatNhwc;
+            dst.push_back(toNhwc);
+
+            if (buf.empty())
+                buf = bin;
+            for (size_t i = index; i <= end; ++i)
+            {
+                dst.push_back(src[i]);
+                if (i == index)
+                    dst.back().src()[0] = toNhwc.name();
+                ReorderWeight(bin, Shape(), dst.back(), buf);
+            }
+            dst.back().name() = dst.back().name() + "_tmp";
+            dst.back().dst()[0] = dst.back().name();
+
+            LayerParam toNchw;
+            toNchw.type() = LayerTypePermute;
+            toNchw.src().push_back(dst.back().dst()[0]);
+            toNchw.name() = dst.back().dst()[0] + "_permute_to_nchw";
+            toNchw.dst().push_back(toNchw.name());
+            toNchw.permute().order() = Shape({ 0, 3, 1, 2 });
+            toNchw.permute().format() = TensorFormatNchw;
+            dst.push_back(toNchw);
+
+            index += end - index;
+            changes.push_back(Change(src[end].dst()[0], toNchw.dst()[0]));
+            return true;
+        }
+
+        bool SkipTwoPermutes(const LayerParams& src, size_t& index, LayerParams& dst)
+        {
+            if (src.size() <= index + 1)
+                return false;
+            if (src[index].type() != LayerTypePermute)
+                return false;
+            size_t second = index + 1;
+            for (; second < src.size(); ++second)
+            {
+                if (src[second].type() == LayerTypeMeta)
+                    continue;
+                else if (src[second].type() == LayerTypeReshape)
+                    continue;
+                else if (src[second].type() == LayerTypePermute)
+                    break;
+                else
+                    return false;
+            }
+
+            bool skip = false;
+            if ((src[index].permute().order() == Shp(0, 2, 1) || src[index].permute().order() == Shp(0, 3, 1, 2)) &&
+                src[second].permute().order() == Shp(0, 2, 3, 1) && src[second].permute().format() == TensorFormatNhwc)
+                skip = true;
+            if (src[index].permute().order() == Shp(0, 3, 1, 2) && src[index].permute().format() == TensorFormatNchw && 
+                (src[second].permute().order() == Shp(0, 2, 1) || src[second].permute().order() == Shp(0, 2, 3, 1)))
+                skip = true;
+            if (!skip)
+                return false;
+
+            dst.push_back(src[index]);
+            dst.back().permute().skip() = true;
+            for (size_t i = index + 1; i < second; ++i)
+                dst.push_back(src[i]);
+            dst.push_back(src[second]);
+            dst.back().permute().skip() = true;
+            index = second;
+            return true;
+        }
+
+        //-------------------------------------------------------------------------------------------------
+
         bool IsSub(const LayerParam & layer) const
         {
             if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum && layer.eltwise().coefficients() == Floats({ 1.0f, -1.0f }))
@@ -1685,6 +2376,36 @@ namespace Synet
             if (layer.type() == LayerTypeBinaryOperation && layer.binaryOperation().type() == BinaryOperationTypeSub)
                 return true;
             return false;
+        }
+
+        bool IsMulConst(const LayerParam& layer, float value, float epsilon = 0.000001) const
+        {
+            if (layer.type() == LayerTypePower && layer.power().power() == 1.0f && layer.power().shift() == 0.0f
+                && abs(layer.power().scale() - value) < epsilon)
+                return true;
+            return false;
+        }
+
+        bool IsAddConst(const LayerParam& layer, float value, float epsilon = 0.000001) const
+        {
+            if (layer.type() == LayerTypePower && layer.power().power() == 1.0f && layer.power().scale() == 1.0f
+                && abs(layer.power().shift() - value) < epsilon)
+                return true;
+            return false;
+        }
+
+        const WeightParam* GetEltwiseWeight(size_t index, const LayerParams& layers) const
+        {
+            if (index < layers.size() && layers[index].type() == LayerTypeEltwise && layers[index].src().size() == 2)
+            {
+                const LayerParam* src0 = GetLayer(layers[index].src()[0], layers);
+                if (src0 && src0->type() == LayerTypeConst)
+                    return src0->weight().data() + 0;
+                const LayerParam* src1 = GetLayer(layers[index].src()[1], layers);
+                if (src1 && src1->type() == LayerTypeConst)
+                    return src1->weight().data() + 0;
+            }
+            return NULL;
         }
 
         bool InsideLink(const LayerParams & src, size_t start, size_t count, size_t skip = 0, const LayerTypes & ignored = LayerTypes()) const
@@ -1784,11 +2505,17 @@ namespace Synet
                 return true;
             if (layer.type() == LayerTypeScale)
                 return true;
-            //if (layer.type() == LayerTypeEltwise)
-            //    return true;
+            if (layer.type() == LayerTypePower)
+                return true;
+            if (_param.reuseEltwise() && layer.type() == LayerTypeEltwise)
+                return true;
             if (layer.type() == LayerTypeRelu)
                 return true;
+            if (layer.type() == LayerTypeGelu)
+                return true;
             if (layer.type() == LayerTypeSqueezeExcitation)
+                return true;
+            if (layer.type() == LayerTypeSoftmax && layer.softmax().log() == 0)
                 return true;
             if (layer.type() == LayerTypePooling && layer.pooling().method() == PoolingMethodTypeMax && 
                 layer.pooling().kernel() == Shp(1, 1) && layer.pooling().stride() == Shp(1, 1))
@@ -1815,7 +2542,7 @@ namespace Synet
                 LayerParam & layer = layers[i];
                 if (layer.src().empty())
                     continue;
-                if (Users(layer.src()[0], layers, 0, "") > 1)
+                if (Users(layer.src()[0], layers, i, "") > 1)
                     continue;
                 if (i && layer.src()[0] == layers[i - 1].name() && layers[i - 1].type() == LayerTypeConst)
                     continue;
@@ -1901,9 +2628,19 @@ namespace Synet
             }
             return 0;
         }
+
+        bool IsNnwc(const NetworkParam& network)
+        {
+            for (size_t i = 0; i < network.layers().size(); ++i)
+            {
+                if (network.layers()[i].weight().size() && network.layers()[i].weight()[0].format() == TensorFormatNhwc)
+                    return true;
+            }
+            return false;
+        }
     };
 
-    inline bool OptimizeSynetModel(const String& srcXml, const String& srcBin, const String& dstXml, const String & dstBin)
+    inline bool OptimizeSynetModel(const String& srcXml, const String& srcBin, const String& dstXml, const String & dstBin, const OptimizerParam & param = OptimizerParam())
     {
         NetworkParamHolder network;
         if (!network.Load(srcXml))
@@ -1917,8 +2654,7 @@ namespace Synet
             std::cout << "Can't load Synet weight '" << srcBin << "' !" << std::endl;
             return false;
         }
-        OptimizerParamHolder param;
-        Optimizer optimizer(param());
+        Optimizer optimizer(param);
         if (!optimizer.Run(network(), bin))
         {
             std::cout << "Can't optimize Synet model!" << std::endl;

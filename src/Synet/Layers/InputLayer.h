@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2021 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -24,38 +24,21 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
 
 namespace Synet
 {
-    template <class T> class InputLayer : public Synet::Layer<T>
+    class InputLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        InputLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        InputLayer(const LayerParam& param, Context* context);
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            const InputParam & input = this->Param().input();
-            size_t size = input.shape().size();
-            assert(size == 0 || size == 1 || size == dst.size());
-            if (size > 0)
-            {
-                for (size_t i = 0; i < dst.size(); ++i)
-                    dst[i]->Reshape(size == 1 ? input.shape()[0].dim() : input.shape()[i].dim(), input.shape()[i].format());
-            }
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
     };
 }

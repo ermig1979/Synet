@@ -53,41 +53,54 @@ namespace Synet
         size_t group;
         ActivationFunctionType activation;
 
-        void Set(const ConvolutionParam & conv)
+        bool Set(const ConvolutionParam & conv)
         {
             const Shape & kernel = conv.kernel();
-            assert(kernel.size() == 1 || kernel.size() == 2);
+            if(kernel.size() != 1 && kernel.size() != 2)
+                SYNET_ERROR("ConvParam: Invalid kernel parameter!");
             kernelY = kernel[0];
             kernelX = kernel.size() > 1 ? kernel[1] : kernelY;
-            assert(kernelY > 0 && kernelX > 0);
+            if(kernelY == 0 || kernelX == 0)
+                SYNET_ERROR("ConvParam: Invalid kernel parameter!");
 
             const Shape & stride = conv.stride();
-            assert(stride.size() <= 2);
+            if (stride.size() > 2)
+                SYNET_ERROR("ConvParam: Invalid stride parameter!");
             strideY = stride.size() > 0 ? stride[0] : 1;
             strideX = stride.size() > 1 ? stride[1] : strideY;
-            assert(strideY > 0 && strideX > 0);
+            if (strideY == 0 || strideX == 0)
+                SYNET_ERROR("ConvParam: Invalid stride parameter!");
 
             const Shape & dilation = conv.dilation();
-            assert(dilation.size() <= 2);
+            if (dilation.size() > 2)
+                SYNET_ERROR("ConvParam: Invalid dilation parameter!");
             dilationY = dilation.size() > 0 ? dilation[0] : 1;
             dilationX = dilation.size() > 1 ? dilation[1] : dilationY;
-            assert(dilationY > 0 && dilationX > 0);
+            if (dilationY == 0 || dilationX == 0)
+                SYNET_ERROR("ConvParam: Invalid dilation parameter!");
 
             const Shape & pad = conv.pad();
-            assert(pad.size() <= 4 && pad.size() != 3);
+            if (pad.size() > 4 || pad.size() == 3)
+                SYNET_ERROR("ConvParam: Invalid pad parameter!");
             padY = !conv.autoPad() && pad.size() > 0 ? pad[0] : 0;
             padX = !conv.autoPad() && pad.size() > 1 ? pad[1] : padY;
             padH = !conv.autoPad() && pad.size() > 2 ? pad[2] : padY;
             padW = !conv.autoPad() && pad.size() > 3 ? pad[3] : padX;
-            assert(padY >= 0 && padX >= 0 && padH >= 0 && padW >= 0);
+            if (padY > 999 || padX > 999 || padH > 999 || padW > 999)
+                SYNET_ERROR("ConvParam: Invalid pad parameter!");
 
             activation = conv.activationType();
+            if(!ValidActivation())
+                SYNET_ERROR("ConvParam: Invalid activation parameter!");
             group = conv.group();
             dstC = conv.outputNum();
-            assert(dstC > 0 && dstC % group == 0);
+            if(dstC == 0 || dstC % group != 0)
+                SYNET_ERROR("ConvParam: Invalid dstC " << dstC << " for given group " << group << " !");
+
+            return true;
         }
 
-        template<class T> void Set(const Tensor<T> & src, const Tensor<T>& dst, bool conv, bool autoPad)
+        template<class T> bool Set(const Tensor<T> & src, const Tensor<T>& dst, bool conv, bool autoPad)
         {
             if (src.Format() == TensorFormatNhwc)
             {
@@ -105,10 +118,10 @@ namespace Synet
             srcF = src.Format();
             dstT = dst.GetType() == TensorTypeUnknown ? srcT : dst.GetType();
             dstF = dst.Format() == TensorFormatUnknown ? srcF : dst.Format();
-            SetDst(conv, autoPad);
+            return SetDst(conv, autoPad);
         }
 
-        void Set(const ConvParam & src, bool conv, bool autoPad)
+        bool Set(const ConvParam & src, bool conv, bool autoPad)
         {
             srcC = src.dstC;
             srcH = src.dstH;
@@ -117,14 +130,15 @@ namespace Synet
             srcF = src.srcF;
             dstT = src.dstT;
             dstF = src.dstF;
-            SetDst(conv, autoPad);
+            return SetDst(conv, autoPad);
         }
 
-        void SetDst(bool conv, bool autoPad)
+        bool SetDst(bool conv, bool autoPad)
         {
             if (autoPad)
             {
-                assert(conv);
+                if (conv == false)
+                    SYNET_ERROR("ConvParam::SetDst() can't make auto padding for deconvolution!");
                 SetAutoPad(srcH, kernelY, dilationY, strideY, dstH, padY, padH);
                 SetAutoPad(srcW, kernelX, dilationX, strideX, dstW, padX, padW);
             }
@@ -141,6 +155,7 @@ namespace Synet
                     dstW = strideX * (srcW - 1) + dilationX * (kernelX - 1) + 1 - padX - padW;
                 }
             }
+            return true;
         }
 
         bool Trans() const
@@ -211,6 +226,26 @@ namespace Synet
                     beg++;
                 else
                     end++;
+            }
+        }
+
+        bool ValidActivation() const
+        {
+            switch (activation)
+            {
+            case ActivationFunctionTypeIdentity: return true;
+            case ActivationFunctionTypeRelu: return true;
+            case ActivationFunctionTypeLeakyRelu: return true;
+            case ActivationFunctionTypeRestrictRange: return true;
+            case ActivationFunctionTypePrelu: return true;
+            case ActivationFunctionTypeElu: return true;
+            case ActivationFunctionTypeHswish: return true;
+            case ActivationFunctionTypeMish: return true;
+            case ActivationFunctionTypeHardSigmoid: return true;
+            case ActivationFunctionTypeSwish: return true;
+            case ActivationFunctionTypeGelu: return true;
+            default:
+                return false;
             }
         }
     };

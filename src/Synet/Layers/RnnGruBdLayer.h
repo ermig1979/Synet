@@ -52,7 +52,7 @@ namespace Synet
             _internal[1] = 0;
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             assert(src.size() == 2 && dst.size() == 2 && src[0]->Count() == 3 && src[1]->Count() == 2);
             assert(src[0]->Axis(0) == src[1]->Axis(0) && src[0]->Axis(1) == 1);
@@ -82,6 +82,7 @@ namespace Synet
             std::stringstream desc;
             desc << _batch << "x" << _input << "-" << _output;
             this->UsePerfStat(desc.str(), Flop());
+            return true;
         }
 
         virtual int64_t Flop() const
@@ -128,7 +129,7 @@ namespace Synet
                     buf01[i] = buf10[i]*src1[i];
 
                 _innerProduct32f[1].Forward(buf00, buf2);
-                Detail::UnaryOperationLayerForward(buf2, _output, UnaryOperationTypeTanh, buf2);
+                UnaryOperation32f(buf2, _output, UnaryOperationTypeTanh, buf2);
 
                 for (size_t i = 0; i < _output; ++i)
                     dst0[i] = (1.0f - buf11[i]) * buf2[i] + src1[i]* buf11[i];

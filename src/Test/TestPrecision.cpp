@@ -30,6 +30,9 @@ int main(int argc, char* argv[])
 {
     Test::Precision::Options options(argc, argv);
 
+    Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
+    Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
+
     if (options.mode == "classification")
     {
         Test::ClassificationPrecision precision(options);
@@ -47,7 +50,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        std::cout << "Unknown mode: " << options.mode << " !" << std::endl;
+        CPL_LOG_SS(Error, "Unknown mode : " << options.mode);
         return 2;
     }
 

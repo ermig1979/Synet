@@ -82,10 +82,11 @@ namespace Test
         virtual bool Init(const String& model, const String& weight, const Options& options, const TestParam& param)
         {
             CPL_PERF_FUNC();
+            _regionThreshold = options.regionThreshold;
+            _decoderName = param.detection().decoder();
 
             ::setenv("OMP_NUM_THREADS", std::to_string(options.workThreads).c_str(), 1);
             ::setenv("OMP_WAIT_POLICY", "PASSIVE", 1);
-            _regionThreshold = options.regionThreshold;
             try
             {
                 if (!InitCore(options))
@@ -105,13 +106,12 @@ namespace Test
                 {
                     if (_ov->model->is_dynamic())
                     {
-                        std::cout << "Inference Engine model is dynamic. This case is not implemented!" << std::endl;
-                        return false;
+                        SYNET_ERROR("Inference Engine model is dynamic. This case is not implemented!");
                     }
                     else
                     {
                         if (!options.consoleSilence)
-                            std::cout << "Inference Engine model is static. Try to emulate batch > 1." << std::endl;
+                            CPL_LOG_SS(Warning, "Inference Engine model is static. Try to emulate batch > 1.");
                         _ov->batchSize = options.batchSize;
                         CreateCompiledModelAndInferRequest();
                     }
@@ -123,8 +123,7 @@ namespace Test
             }
             catch (std::exception& e)
             {
-                std::cout << "Inference Engine init error: " << e.what() << std::endl;
-                return false;
+                SYNET_ERROR("Inference Engine init error: " << e.what());
             }
             return true;
         }
@@ -250,10 +249,7 @@ namespace Test
             if (param.input().size())
             {
                 if (_ov->model->inputs().size() != param.input().size())
-                {
-                    std::cout << "Incorrect input count :" << param.input().size() << std::endl;
-                    return false;
-                }
+                    SYNET_ERROR("Incorrect input count :" << param.input().size());
                 for (size_t i = 0; i < param.input().size(); ++i)
                 {
                     const String & name = param.input()[i].name();
@@ -268,10 +264,7 @@ namespace Test
                         }
                     }
                     if (!found)
-                    {
-                        std::cout << "Input with name '" << name << "' is not exist! " << std::endl;
-                        return false;
-                    }
+                        SYNET_ERROR("Input with name '" << name << "' is not exist! ");
                 }
             }
             else
@@ -420,6 +413,7 @@ namespace Test
                         SetOutput(dims, strides, 0, _ov->output[o].data<int64_t>(), _output[o].CpuData() + b * size);
                         break;
                     default:
+                        CPL_LOG_SS(Error, "OpenVino wrapper: unknown type of output tensor!");
                         assert(0);
                     }
                 }
@@ -497,7 +491,7 @@ namespace Test
                 break;
             }
             default:
-                std::cout << "Can't debug print for layer '" << name << "' , unknown type: " << src.get_element_type() << std::endl;
+                CPL_LOG_SS(Error, "Can't debug print for layer '" << name << "' , unknown type: " << src.get_element_type());
                 break;
             }
         }

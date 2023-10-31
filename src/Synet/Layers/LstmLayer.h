@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2021 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -48,7 +48,7 @@ namespace Synet
                 _internal[i] = 0;
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             assert(src.size() == 3 && src[0]->Count() == 3 && src[1]->Count() == 3 && src[2]->Count() == 3);
             const LstmParam & param = this->Param().lstm();
@@ -94,6 +94,7 @@ namespace Synet
             std::stringstream desc;
             desc << _seqS << "x" << _dirS << "x" << _batch << "x" << _hidS;
             this->UsePerfStat(desc.str(), Flop());
+            return true;
         }
 
         virtual int64_t Flop() const
@@ -175,14 +176,14 @@ namespace Synet
                     for (size_t k = 0; k < _hidS4; ++k)
                         buf0[k] = xCurr[k] + buf0[k] + bias[k] + bias[_hidS4 + k];
 
-                    CpuSigmoid(buf0, 3 * _hidS, buf0);
+                    Sigmoid32f(buf0, 3 * _hidS, buf0);
 
-                    Detail::UnaryOperationLayerForward(cb, _hidS, UnaryOperationTypeTanh, cb);
+                    UnaryOperation32f(cb, _hidS, UnaryOperationTypeTanh, cb);
 
                     for (size_t k = 0; k < _hidS; ++k)
                         cCurr[k] = fb[k] * cPrev[k] + ib[k] * cb[k];
 
-                    Detail::UnaryOperationLayerForward(cCurr, _hidS, UnaryOperationTypeTanh, hCurr);
+                    UnaryOperation32f(cCurr, _hidS, UnaryOperationTypeTanh, hCurr);
 
                     for (size_t k = 0; k < _hidS; ++k)
                         hCurr[k] *= ob[k];

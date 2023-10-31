@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,28 @@
 
 namespace Synet
 {
+    void Elu32f(const float* src, size_t size, float alpha, float* dst);
+
+    void Gelu32f(const float* src, size_t size, float* dst);
+
+    void HardSigmoid32f(const float* src, size_t size, float scale, float shift, float* dst);
+
+    void Hswish32f(const float* src, size_t size, float shift, float scale, float* dst);
+
+    void Mish32f(const float* src, size_t size, float threshold, float* dst);
+
+    void Relu32f(const float* src, size_t size, float slope, float* dst);
+
+    void RestrictRange32f(const float* src, size_t size, float lower, float upper, float* dst);
+
+    void Sigmoid32f(const float* src, size_t size, float* dst);
+
+    void Softplus32f(const float* src, size_t size, float beta, float threshold, float* dst);
+
+    void Swish32f(const float* src, size_t size, float* dst);
+
+    //-------------------------------------------------------------------------------------------------
+
     template <typename T> SYNET_INLINE T CpuElu(T value, T alpha)
     {
         return value >= T(0) ? value : alpha * (exp(value) - T(1));
@@ -39,7 +61,20 @@ namespace Synet
             dst[i] = CpuElu(src[i], alpha);
     }
 
-    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------
+
+    template <typename T> SYNET_INLINE T CpuGelu(T value)
+    {
+        return value * (::erf(value * T(M_SQRT1_2)) + T(1)) * T(0.5);
+    }
+
+    template <typename T> void CpuGelu(const T* src, size_t size, T* dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = CpuGelu(src[i]);
+    }
+
+    //-------------------------------------------------------------------------------------------------
 
     template <class T> SYNET_INLINE T CpuHardSigmoid(T value, T scale, T shift)
     {
@@ -52,7 +87,7 @@ namespace Synet
             dst[i] = CpuHardSigmoid(src[i], scale, shift);
     }
 
-    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------
 
     template <class T> SYNET_INLINE T CpuHswish(T value, T shift, T scale)
     {
@@ -65,7 +100,7 @@ namespace Synet
             dst[i] = CpuHswish(src[i], shift, scale);
     }
 
-    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------
 
     template <typename T> SYNET_INLINE T CpuMish(T value, T threshold)
     {
@@ -78,7 +113,7 @@ namespace Synet
             dst[i] = CpuMish(src[i], threshold);
     }
 
-    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------
 
     template <typename T> SYNET_INLINE T CpuRelu(T value, T slope)
     {
@@ -91,7 +126,7 @@ namespace Synet
             dst[i] = CpuRelu(src[i], slope);
     }      
     
-    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------
 
     template<class T> SYNET_INLINE T CpuRestrictRange(T value, T lower, T upper)
     {
@@ -104,7 +139,7 @@ namespace Synet
             dst[i] = CpuRestrictRange(src[i], lower, upper);
     }
 
-    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------
 
     template <typename T> SYNET_INLINE T CpuSigmoid(T value)
     {
@@ -117,7 +152,7 @@ namespace Synet
             dst[i] = CpuSigmoid(src[i]);
     }
     
-    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------
 
     template <typename T> SYNET_INLINE T CpuSoftplus(T value, T beta, T threshold)
     {
@@ -130,7 +165,7 @@ namespace Synet
             dst[i] = CpuSoftplus(src[i], beta, threshold);
     }
 
-    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------
 
     template <typename T> SYNET_INLINE T CpuSwish(T value)
     {
@@ -143,20 +178,26 @@ namespace Synet
             dst[i] = CpuSwish(src[i]);
     }
 
-    //-------------------------------------------------------------------------
+
+    //-------------------------------------------------------------------------------------------------
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-    template <> SYNET_INLINE void CpuElu<float>(const float * src, size_t size, float alpha, float * dst)
+    template <> SYNET_INLINE void CpuElu<float>(const float* src, size_t size, float alpha, float* dst)
     {
         ::SimdSynetElu32f(src, size, &alpha, dst);
-    }  
+    }
+
+    template <> SYNET_INLINE void CpuGelu<float>(const float* src, size_t size, float* dst)
+    {
+        ::SimdSynetGelu32f(src, size, dst);
+    }
 
     template <> SYNET_INLINE void CpuHardSigmoid(const float* src, size_t size, float scale, float shift, float* dst)
     {
         ::SimdSynetHardSigmoid32f(src, size, &scale, &shift, dst);
     }
 
-    template <> SYNET_INLINE void CpuHswish<float>(const float * src, size_t size, float shift, float scale, float * dst)
+    template <> SYNET_INLINE void CpuHswish<float>(const float* src, size_t size, float shift, float scale, float* dst)
     {
         ::SimdSynetHswish32f(src, size, &shift, &scale, dst);
     }
@@ -166,17 +207,17 @@ namespace Synet
         ::SimdSynetMish32f(src, size, &threshold, dst);
     }
 
-    template <> SYNET_INLINE void CpuRelu<float>(const float * src, size_t size, float negativeSlope, float * dst)
+    template <> SYNET_INLINE void CpuRelu<float>(const float* src, size_t size, float negativeSlope, float* dst)
     {
         ::SimdSynetRelu32f(src, size, &negativeSlope, dst);
     }
 
-    template<> SYNET_INLINE void CpuRestrictRange<float>(const float * src, size_t size, float lower, float upper, float * dst)
+    template<> SYNET_INLINE void CpuRestrictRange<float>(const float* src, size_t size, float lower, float upper, float* dst)
     {
         ::SimdSynetRestrictRange32f(src, size, &lower, &upper, dst);
-    } 
+    }
 
-    template <> SYNET_INLINE void CpuSigmoid<float>(const float * src, size_t size, float * dst)
+    template <> SYNET_INLINE void CpuSigmoid<float>(const float* src, size_t size, float* dst)
     {
         float slope = 1.0f;
         ::SimdSynetSigmoid32f(src, size, &slope, dst);
@@ -187,7 +228,7 @@ namespace Synet
         ::SimdSynetSoftplus32f(src, size, &beta, &threshold, dst);
     }
 
-    template <> SYNET_INLINE void CpuSwish<float>(const float * src, size_t size, float * dst)
+    template <> SYNET_INLINE void CpuSwish<float>(const float* src, size_t size, float* dst)
     {
         float slope = 1.0f;
         ::SimdSynetSwish32f(src, size, &slope, dst);

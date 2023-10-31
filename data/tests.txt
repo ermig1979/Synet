@@ -1,0 +1,12 @@
+inference_engine root test_010f faces 0
+inference_engine root test_011f vehicles 0
+inference_engine root test_012f persons 0
+inference_engine root test_013f persons 0
+inference_engine root test_015f license_plates 0
+inference_engine root test_016f face 1
+inference_engine root test_017f faces 0
+inference_engine root test_018f license_plates 1
+inference_engine root test_019f face 1
+
+onnx root test_000 face 1
+onnx root test_001 faces 0

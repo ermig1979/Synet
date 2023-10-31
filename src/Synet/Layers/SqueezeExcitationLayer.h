@@ -109,7 +109,7 @@ namespace Synet
             return (_sumScale.size() + _sumShift.size() + _rWeight[0].size() + _rWeight[1].size())*sizeof(float) + _scale8i.InternalBufferSize();
         }
 
-        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const Tensors& weight = this->Weight();
             assert(weight[0].Count() == 4 && weight[1].Count() == 4);
@@ -178,6 +178,7 @@ namespace Synet
                 }
             }
             this->UsePerfStat();
+            return true;
         }
 
         virtual bool Can8i() const
@@ -216,7 +217,7 @@ namespace Synet
                 CpuRelu(norm1, _squeeze, 0.0f, norm1);
                 Detail::InnerProductLayerForwardCpu<float>(norm1, _rWeight[1].data(), NULL, _channels, _squeeze, norm0);
                 CpuSigmoid(norm0, _channels, norm0);
-                Detail::ScaleLayerForwardCpu<float>(src, norm0, NULL, _channels, _height, _width, dst, _format, 0);
+                ScaleForward32f(src, norm0, NULL, _channels, _height, _width, dst, _format, 0);
                 src += _size, dst += _size;
             }
         }

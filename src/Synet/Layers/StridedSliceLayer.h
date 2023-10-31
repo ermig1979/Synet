@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2021 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             StridedSliceParam param = this->Param().stridedSlice();
 
@@ -142,6 +142,7 @@ namespace Synet
             for (size_t i = 0; i < _dstDims.size(); ++i)
                 _dstStrides[i] = dst[0]->Size(i);
             this->UsePerfStat();
+            return true;
         }
 
     protected:
@@ -193,6 +194,59 @@ namespace Synet
                             Type * pDst3 = pDst2 + d2 * _dstStrides[3];
                             for (size_t s3 = _beginDims[3], d3 = 0; d3 < _dstDims[3]; d3 += 1, s3 += _strideDims[3])
                                 pDst3[d3] = pSrc3[s3];
+                        }
+                    }
+                }
+                break;
+            case 5:
+                for (size_t s0 = _beginDims[0], d0 = 0; d0 < _dstDims[0]; d0 += 1, s0 += _strideDims[0])
+                {
+                    const Type * pSrc1 = pSrc0 + s0 * _srcStrides[1];
+                    Type * pDst1 = pDst0 + d0 * _dstStrides[1];
+                    for (size_t s1 = _beginDims[1], d1 = 0; d1 < _dstDims[1]; d1 += 1, s1 += _strideDims[1])
+                    {
+                        const Type * pSrc2 = pSrc1 + s1 * _srcStrides[2];
+                        Type * pDst2 = pDst1 + d1 * _dstStrides[2];
+                        for (size_t s2 = _beginDims[2], d2 = 0; d2 < _dstDims[2]; d2 += 1, s2 += _strideDims[2])
+                        {
+                            const Type * pSrc3 = pSrc2 + s2 * _srcStrides[3];
+                            Type * pDst3 = pDst2 + d2 * _dstStrides[3];
+                            for (size_t s3 = _beginDims[3], d3 = 0; d3 < _dstDims[3]; d3 += 1, s3 += _strideDims[3])
+                            {
+                                const Type * pSrc4 = pSrc3 + s3 * _srcStrides[4];
+                                Type * pDst4 = pDst3 + d3 * _dstStrides[4];
+                                for (size_t s4 = _beginDims[4], d4 = 0; d4 < _dstDims[4]; d4 += 1, s4 += _strideDims[4])
+                                    pDst4[d4] = pSrc4[s4];
+                            }
+                        }
+                    }
+                }
+                break;
+            case 6:
+                for (size_t s0 = _beginDims[0], d0 = 0; d0 < _dstDims[0]; d0 += 1, s0 += _strideDims[0])
+                {
+                    const Type* pSrc1 = pSrc0 + s0 * _srcStrides[1];
+                    Type* pDst1 = pDst0 + d0 * _dstStrides[1];
+                    for (size_t s1 = _beginDims[1], d1 = 0; d1 < _dstDims[1]; d1 += 1, s1 += _strideDims[1])
+                    {
+                        const Type* pSrc2 = pSrc1 + s1 * _srcStrides[2];
+                        Type* pDst2 = pDst1 + d1 * _dstStrides[2];
+                        for (size_t s2 = _beginDims[2], d2 = 0; d2 < _dstDims[2]; d2 += 1, s2 += _strideDims[2])
+                        {
+                            const Type* pSrc3 = pSrc2 + s2 * _srcStrides[3];
+                            Type* pDst3 = pDst2 + d2 * _dstStrides[3];
+                            for (size_t s3 = _beginDims[3], d3 = 0; d3 < _dstDims[3]; d3 += 1, s3 += _strideDims[3])
+                            {
+                                const Type* pSrc4 = pSrc3 + s3 * _srcStrides[4];
+                                Type* pDst4 = pDst3 + d3 * _dstStrides[4];
+                                for (size_t s4 = _beginDims[4], d4 = 0; d4 < _dstDims[4]; d4 += 1, s4 += _strideDims[4])
+                                {
+                                    const Type* pSrc5 = pSrc4 + s4 * _srcStrides[5];
+                                    Type* pDst5 = pDst4 + d4 * _dstStrides[5];
+                                    for (size_t s5 = _beginDims[5], d5 = 0; d5 < _dstDims[5]; d5 += 1, s5 += _strideDims[5])
+                                        pDst5[d5] = pSrc5[s5];
+                                }
+                            }
                         }
                     }
                 }

@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2021 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -24,38 +24,28 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
 
 namespace Synet
 {
-    template <class T> class GatherLayer : public Synet::Layer<T>
+    class GatherLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        GatherLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        GatherLayer(const LayerParam& param, Context* context);
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            assert(src.size() == 2 && src[1]->GetType() == TensorType32i);
-            dst[0]->Reshape(src[1]->Shape(), src[0]->Format());
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+        typedef void (*GatherPtr)(const uint8_t* src8, size_t srcOuter, size_t srcCount, size_t srcInner, const uint8_t* idx8, size_t idxOuter, size_t idxCount, uint8_t* dst8);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            const Type * pSrc = src[0]->CpuData();
-            const int32_t * pIndex = src[1]->As32i().CpuData();
-            Type * pDst = dst[0]->CpuData();
-            size_t size = dst[0]->Size();
-            for (size_t i = 0; i < size; ++i)
-                pDst[i] = pSrc[pIndex[i]];
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+    private:
+        TensorType _srcType, _idxType;
+        size_t _axis, _srcOuter, _srcCount, _srcInner, _idxOuter, _idxCount;
+        GatherPtr _gather;
     };
 }

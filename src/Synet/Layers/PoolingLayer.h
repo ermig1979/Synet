@@ -289,7 +289,7 @@ namespace Synet
             return _padC || _padY || _padH || _padD || _padH || _padW;
         }
         
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const PoolingParam & param = this->Param().pooling();
 
@@ -520,6 +520,7 @@ namespace Synet
                 desc << (_method ? " avg" : " max");
                 this->UsePerfStat(desc.str(), Flop());
             }
+            return true;
         }
 
     protected:

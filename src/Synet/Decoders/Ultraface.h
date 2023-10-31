@@ -38,7 +38,7 @@ namespace Synet
     public: 
         typedef Synet::Region<float> Region;
         typedef std::vector<Region> Regions;
-        typedef Synet::Network<float> Net;
+        typedef Synet::Network Net;
 
         UltrafaceDecoder()
         {
@@ -94,8 +94,8 @@ namespace Synet
             std::vector<Regions> result(net.NchwShape()[0]);
             for (size_t b = 0; b < result.size(); ++b)
             {
-                const float* boxes = net.Dst(_names[0])->CpuData(Shp(b, 0, 0));
-                const float* scores = net.Dst(_names[1])->CpuData(Shp(b, 0, 0));
+                const float* boxes = net.Dst(_names[0])->Data<float>(Shp(b, 0, 0));
+                const float* scores = net.Dst(_names[1])->Data<float>(Shp(b, 0, 0));
                 size_t size = net.Dst(_names[0])->Size(1, 2);
                 result[b] = GetRegions(boxes, scores, size, srcW, srcH, threshold, overlap);
             }

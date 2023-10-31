@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,9 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 */
+
+#define FIRST_MODEL_DEFAULT "other.xml"
+#define FIRST_WEIGHT_DEFAULT "other.bin"
 
 #include "TestCompare.h"
 #include "TestReport.h"
@@ -50,14 +53,11 @@ namespace Test
     {
         std::ifstream ifs(src.c_str());
         if (!ifs.is_open())
-        {
-            std::cout << "Can't open input text file '" << src << "' with weight!" << std::endl;
-            return false;
-        }
+            SYNET_ERROR("Can't open input text file '" << src << "' with weight!");
         std::ofstream ofs(dst.c_str(), std::ofstream::binary);
         if (!ofs.is_open())
         {
-            std::cout << "Can't open output binary file '" << dst << "' with weight!" << std::endl;
+            CPL_LOG_SS(Error, "Can't open output binary file '" << dst << "' with weight!");
             ifs.close();
             return false;
         }
@@ -78,11 +78,9 @@ namespace Test
         CPL_PERF_FUNC();
         Test::TestParamHolder param;
         if (FileExists(options.testParam) && !param.Load(options.testParam))
-        {
-            std::cout << "Can't load file '" << options.testParam << "' !" << std::endl;
-            return false;
-        }
+            SYNET_ERROR("Can't load file '" << options.testParam << "' !");
         param().optimizer().bf16Enable() = options.bf16;
+        param().optimizer().saveUnoptimized() = options.saveUnoptimized;
         return Synet::ConvertInferenceEngineToSynet(options.firstModel, options.firstWeight, 
             options.tensorFormat == 1, options.secondModel, options.secondWeight, param().onnx(), param().optimizer());
     }
@@ -91,6 +89,9 @@ namespace Test
 int main(int argc, char* argv[])
 {
     Test::Options options(argc, argv);
+
+    Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
+    Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
 
     if (options.mode == "convert")
     {
@@ -110,7 +111,7 @@ int main(int argc, char* argv[])
         std::cout << (options.result ? "OK." : " Conversion finished with errors!") << std::endl;
     }
     else
-        std::cout << "Unknown mode : " << options.mode << std::endl;
+        CPL_LOG_SS(Error, "Unknown mode : " << options.mode);
 
     return options.result ? 0 : 1;
 }

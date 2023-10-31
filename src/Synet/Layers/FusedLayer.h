@@ -285,6 +285,10 @@ namespace Synet
         }
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
         template <> SYNET_INLINE void FusedLayerForwardCpu0<float>(const float * src, const float * bias, const float * scale, size_t count, size_t size, float * dst, int trans)
         {
             ::SimdSynetFusedLayerForward0(src, bias, scale, count, size, dst, (::SimdTensorFormatType)trans);
@@ -319,6 +323,9 @@ namespace Synet
         {
             ::SimdSynetFusedLayerForward9(src0, src1, scale0, bias0, count0, count1, size, dst0, dst1, (::SimdTensorFormatType)trans);
         }
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 #endif
     }
 
@@ -334,7 +341,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const FusedParam & fused = this->Param().fused();
             _type = fused.type();
@@ -515,6 +522,7 @@ namespace Synet
             std::stringstream desc;
             desc << src.size() << "->" << dst.size() << " t=" << _type << " c=" << _count << " s=" << _size;
             this->UsePerfStat(desc.str());
+            return true;
         }
 
     protected:
@@ -555,7 +563,7 @@ namespace Synet
                     Detail::FusedLayerForwardCpu4(src, _t4.bias0.CpuData(), &_t4.scale1, &_t4.bias1, _count, _size, dst, _trans);
                     break;
                 case 10:
-                    Detail::ScaleLayerForwardCpu(src, _t0.scale.CpuData(), _t0.bias.CpuData(), _count, 1, _size, dst, _format, 0);
+                    ScaleForward32f(src, _t0.scale.CpuData(), _t0.bias.CpuData(), _count, 1, _size, dst, _format, 0);
                     break;
                 case 11:
                     Detail::FusedLayerForwardCpu11(src, _count*_size, _t11.params, dst);

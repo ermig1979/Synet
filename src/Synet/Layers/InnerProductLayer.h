@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -97,7 +97,7 @@ namespace Synet
 
         virtual int64_t Flop() const
         {
-            return _M * _N * _K * 2;
+            return _batch * _M * _N * _K * 2;
         }
 
         virtual size_t MemoryUsage() const
@@ -112,7 +112,7 @@ namespace Synet
                 ((Tensor&)this->Weight()[0]).Clear();
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const InnerProductParam& param = this->Param().innerProduct();
             _src8u = src[0]->GetType() == TensorType8u;
@@ -120,12 +120,13 @@ namespace Synet
             _biasTerm = param.biasTerm();
             _transA = param.transposeA();
             _transB = param.transposeB();
-            size_t axis = param.axis();
+            int axis = (int)src[0]->Index(param.axis());
+            _batch = 1;
             _K = src[0]->Size(axis);
             if (src.size() == 2)
             {
                 assert(_biasTerm == false);
-                assert(_K = src[1]->Size(0, axis));
+                assert(_K = src[1]->Size(axis - 1, axis));
                 _N = src[1]->Axis(axis);
             }
             else
@@ -139,7 +140,14 @@ namespace Synet
                 if (_transB)
                     assert(weight[0].Shape() == Shp(_K, _N));
                 else
+                {
+                    if (weight[0].Shape()[1] != _K)
+                    {
+                        axis = (int)src[0]->Count() - 1;
+                        _K = src[0]->Size(axis);
+                    }
                     assert(weight[0].Shape() == Shp(_N, _K));
+                }
                 if (_biasTerm)
                     assert(weight[1].Shape() == Shp(_N));
 #if defined(SYNET_BF16_ROUND_TEST) && 0
@@ -150,7 +158,16 @@ namespace Synet
                 }
 #endif
             }
-            _M = src[0]->Size(0, axis);
+            if (src.size() > 1)
+            {
+                _M = src[0]->Size(Max(0, axis - 1), axis);
+                _batch = axis > 0 ? src[0]->Size(0, axis - 1) : 1;
+            }
+            else
+            {
+                _M = src[0]->Size(0, axis);
+                _batch = 1;
+            }
             Shape dstShape = src[0]->Shape();
             dstShape.resize(axis + 1);
             dstShape[axis] = _N;
@@ -176,8 +193,11 @@ namespace Synet
                 }
             }
             std::stringstream desc;
+            if (_batch > 1)
+                desc << "B=" << _batch << " ";
             desc << "M=" << _M << " N=" << _N << " K=" << _K;
             this->UsePerfStat(desc.str(), Flop());
+            return true;
         }
 
     protected:
@@ -199,16 +219,31 @@ namespace Synet
                 _innerProduct32f.Forward(src[0]->CpuData(), dst[0]->CpuData());
             else
             {
-                const float* weight = src.size() > 1 ? src[1]->CpuData() : this->Weight()[0].CpuData();
-#if defined(SYNET_BF16_ROUND_TEST) && 0
-                if (this->Param().convolution().bf16() && this->Options().bf16RoundTest)
+                if (src.size() > 1)
                 {
-                    RoundAsTo16(src[0]->CpuData(), src[0]->Size(), Base::Buf32f(buf, 1));
-                    ForwardCpu(Base::Buf32f(buf, 1), weight, dst[0]->CpuData());
+                    const float* src0 = src[0]->CpuData();
+                    const float* src1 = src[1]->CpuData();
+                    float* dst0 = dst[0]->CpuData();
+                    for(size_t b = 0; b < _batch; ++b)
+                    {
+                        ForwardCpu(src0, src1, dst0);
+                        src0 += _M * _K;
+                        src1 += _K * _N;
+                        dst0 += _M * _N;
+                    }
                 }
                 else
+                {
+#if defined(SYNET_BF16_ROUND_TEST) && 0
+                    if (this->Param().convolution().bf16() && this->Options().bf16RoundTest)
+                    {
+                        RoundAsTo16(src[0]->CpuData(), src[0]->Size(), Base::Buf32f(buf, 1));
+                        ForwardCpu(Base::Buf32f(buf, 1), this->Weight()[0].CpuData(), dst[0]->CpuData());
+                    }
+                    else
 #endif
-                    ForwardCpu(src[0]->CpuData(), weight, dst[0]->CpuData());
+                        ForwardCpu(src[0]->CpuData(), this->Weight()[0].CpuData(), dst[0]->CpuData());
+                }
             }
         }
 
@@ -321,12 +356,13 @@ namespace Synet
             const int32_t* scale = _norm32i.CpuData();
             const int32_t* shift = scale + _N;
             for (size_t i = 0; i < _M; ++i, dst += _N)
-                Detail::ScaleLayerForwardCpu(dst, scale, shift, _N, 1, 1, dst, TensorFormatNhwc, 1);
+                for (size_t j = 0; j < _N; ++j)
+                    dst[j] = dst[j] * scale[j] + shift[j];
         }
 
     private:
         QuantizationMethod _method;
-        size_t _M, _N, _K;
+        size_t _batch, _M, _N, _K;
         bool _biasTerm, _transA, _transB, _src8u, _dst8u, _is8i;
         int _internal;
         InnerProduct32f _innerProduct32f;

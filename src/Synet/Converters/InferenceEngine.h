@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -35,40 +35,61 @@ namespace Synet
     class InferenceEngineToSynet
     {
     public:
-        bool Convert(const String & srcModel, const String & srcWeight, bool trans, const String & dstModel, const String & dstWeight, const OnnxParam &onnxParam, const OptimizerParam & optParam)
+        bool Convert(String srcModel, String srcWeight, bool trans, const String & dstModel, const String & dstWeight, const OnnxParam &onnxParam, const OptimizerParam & optParam)
         {
             if (!Cpl::FileExists(srcModel))
             {
-                std::cout << "File '" << srcModel << "' is not exist!" << std::endl;
-                return false;
+                String altModel = Cpl::ChangeExtension(srcModel, ".dsc");
+                if (altModel != srcModel)
+                {
+                    if (!Cpl::FileExists(altModel))
+                        SYNET_ERROR("Files '" << srcModel << "' and '" << altModel << "' are not exist!");
+                    srcModel = altModel;
+                }
+                else
+                    SYNET_ERROR("File '" << srcModel << "' is not exist!");
             }
 
             if (!Cpl::FileExists(srcWeight))
             {
-                std::cout << "File '" << srcWeight << "' is not exist!" << std::endl;
-                return false;
+                String altWeight = Cpl::ChangeExtension(srcWeight, ".dat");
+                if (altWeight != srcWeight)
+                {
+                    if (!Cpl::FileExists(altWeight))
+                        SYNET_ERROR("Files '" << srcWeight << "' and '" << altWeight << "' are not exist!");
+                    srcWeight = altWeight;
+                }
+                else
+                    SYNET_ERROR("File '" << srcWeight << "' is not exist!");
             }
 
             XmlDoc srcXml;
             XmlFile file;
             if (!LoadModel(srcModel, file, srcXml))
-            {
-                std::cout << "Can't load Inference Engine model '" << srcModel << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't load Inference Engine model '" << srcModel << "' !");
 
             Vector srcBin;
             if (!LoadBinaryData(srcWeight, srcBin))
-            {
-                std::cout << "Can't load Inference Engine weight '" << srcWeight << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't load Inference Engine weight '" << srcWeight << "' !");
 
             int version;
             Synet::NetworkParamHolder dstXml;
             Vector dstBin = srcBin;
             if (!ConvertNetwork(srcXml, srcBin, trans, onnxParam, dstXml(), dstBin, version))
                 return false;
+
+            if (optParam.saveUnoptimized())
+            {
+                String uoModel = Cpl::FileNameByPath(dstModel) == dstModel ?
+                    "unopt.xml" : Cpl::MakePath(Cpl::DirectoryByPath(dstModel), "unopt.xml");
+                if (!dstXml.Save(uoModel, false))
+                    SYNET_ERROR("Can't save unoptimized Synet model '" << uoModel << "' !");
+
+                String uoWeight = Cpl::FileNameByPath(dstWeight) == dstWeight ?
+                    "unopt.bin" : Cpl::MakePath(Cpl::DirectoryByPath(dstWeight), "unopt.bin");
+                if (!SaveBinaryData(dstBin, uoWeight))
+                    SYNET_ERROR("Can't save unoptimized Synet weight '" << uoWeight << "' !");
+            }
 
             OptimizerParamHolder param;
             Optimizer optimizer(optParam);
@@ -79,16 +100,10 @@ namespace Synet
                 dstXml().dst().clear();
 
             if (!dstXml.Save(dstModel, false))
-            {
-                std::cout << "Can't save Synet model '" << dstModel << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't save Synet model '" << dstModel << "' !");
 
             if (!SaveBinaryData(dstBin, dstWeight))
-            {
-                std::cout << "Can't save Synet weight '" << dstWeight << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't save Synet weight '" << dstWeight << "' !");
 
             return true;
         }
@@ -112,7 +127,7 @@ namespace Synet
             {
                 try
                 {
-                    xml.Parse<0>(file.Data());
+                    xml.Parse<0>(file.Data(), file.Size());
                 }
                 catch (std::exception e)
                 {

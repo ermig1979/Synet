@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2021 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -24,59 +24,25 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/Layers/ScaleLayer.h"
 
 namespace Synet
 {
-    namespace Detail
-    {
-        template <typename T> void PowerForwardCpu(const T* src, size_t size, T scale, T shift, T power, T* dst)
-        {
-            for (size_t i = 0; i < size; ++i)
-                dst[i] = ::pow(src[i] * scale + shift, power);
-        }
-    }
-
-    template <class T> class PowerLayer : public Synet::Layer<T>
+    class PowerLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        PowerLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        PowerLayer(const LayerParam& param, Context* context);
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            const PowerParam & param = this->Param().power();
-            _power = param.power();
-            _scale = param.scale();
-            _shift = param.shift();
-            _size = src[0]->Size();
-            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
-            this->UsePerfStat();
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            const T* pSrc = src[0]->CpuData();
-            T* pDst = dst[0]->CpuData();
-            if (_power == 1.0f)
-                Detail::ScaleLayerForwardCpu(pSrc, &_scale, &_shift, 1, 1, _size, pDst, src[0]->Format(), 0);
-            else if (_scale == 1.0f && _shift == 0.0f)
-                CpuPow(pSrc, _size, _power, pDst);
-            else
-                Detail::PowerForwardCpu(pSrc, _size, _scale, _shift, _power, pDst);
-        }
+        void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        Type _power, _scale, _shift;
+        float _power, _scale, _shift;
         size_t _size;
     };
 }

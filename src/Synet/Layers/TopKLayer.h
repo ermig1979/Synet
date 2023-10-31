@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -24,64 +24,30 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/Utils/Math.h"
 
 namespace Synet
 {
-    template <class T> class TopKLayer : public Synet::Layer<T>
+    class TopKLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        TopKLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        TopKLayer(const LayerParam& param, Context* context);
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            const TopKParam & param = this->Param().topK();
-            Shape shape = src[0]->Shape();
-            shape[param.axis()] = 1;
-            _outer = src[0]->Size(0, param.axis());
-            _count = src[0]->Axis(param.axis());
-            _inner = src[0]->Size(param.axis() + 1);
-            _type = param.indexElementType();
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-            dst[0]->Reshape(shape, src[0]->Format());
-            if (_type == TensorType32i)
-                dst[1]->As32i().Reshape(shape, src[0]->Format());
-            else if (_type == TensorType64i)
-                dst[1]->As64i().Reshape(shape, src[0]->Format());
-            else
-                assert(0);
-            this->UsePerfStat();
-        }
+        typedef void (*TopKPtr)(const uint8_t* src8, size_t outer, size_t count, size_t inner, size_t k, uint8_t* buf8, uint8_t* dst8, uint8_t* idx8);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            const T * pSrc = src[0]->CpuData();
-            T * pDst = dst[0]->CpuData();
-            switch (_type)
-            {
-            case TensorType32i: ForwardCpu<int32_t>(pSrc, pDst, dst[1]->As32i().CpuData()); break;
-            case TensorType64i: ForwardCpu<int64_t>(pSrc, pDst, dst[1]->As64i().CpuData()); break;
-            default:
-                assert(0);
-            }
-        }
-
-        template<class I> void ForwardCpu(const T * src, T * dst, I * idx)
-        {
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        size_t _outer, _count, _inner;
-        TensorType _type;
+        size_t _axis, _outer, _count, _inner, _k;
+        TensorType _srcType, _idxType;
+        TopKMode _mode;
+        TopKSort _sort;
+        TopKPtr _topK;
     };
 }

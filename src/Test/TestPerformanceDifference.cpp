@@ -27,6 +27,7 @@
 
 #include "Cpl/Args.h"
 #include "Cpl/Table.h"
+#include "Cpl/Log.h"
 
 namespace Test
 {
@@ -442,6 +443,11 @@ namespace Test
 int main(int argc, char* argv[])
 {
     Test::PerformanceDifference::Options options(argc, argv);
+
+    Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
+    Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
+
     Test::PerformanceDifference difference(options);
+
     return difference.Estimate() ? 0 : 1;
 }

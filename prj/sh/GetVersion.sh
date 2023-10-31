@@ -35,7 +35,7 @@ else
 	NEED_TO_UPDATE="1"
 fi
 
-if [ ! -f "$SYNET_VERSION_H" ]; then 
+if [ ! -f "$VERSION_H" ]; then 
 	NEED_TO_UPDATE="1"
 fi
 

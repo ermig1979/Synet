@@ -42,7 +42,7 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
             const SliceParam & param = this->Param().slice();
             _sliceAxis = param.axis();            
@@ -86,6 +86,7 @@ namespace Synet
             if (dst.size() == 1) 
                 dst[0]->Share(*src[0]);
             this->UsePerfStat();
+            return true;
         }
 
     protected:

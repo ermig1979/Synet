@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -42,11 +42,12 @@ namespace Synet
         {
         }
 
-        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
         {
-            Shape shape = src[0]->Shape();
-            dst[0]->Reshape(shape, src[0]->Format());
+            const NonMaxSuppressionParam& param = this->Param().nonMaxSuppression();
+            dst[0]->Reshape(Shp(param.maxOutputBoxesPerClass(), 3), TensorType64i, src[0]->Format());
             this->UsePerfStat();
+            return true;
         }
 
     protected:
