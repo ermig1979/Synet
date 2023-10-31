@@ -64,7 +64,7 @@ namespace Synet
         {
         }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const RegionParam & param = this->Param().region();
             _coords = param.coords();
@@ -78,7 +78,6 @@ namespace Synet
             assert(src[0]->Axis(1) == _num*(_coords + _classes + 1));
             dst[0]->Reshape(src[0]->Shape());
             this->UsePerfStat();
-            return true;
         }
 
         void GetRegions(const TensorPtrs & src, Type threshold, Regions & dst)
@@ -149,7 +148,7 @@ namespace Synet
                     for (size_t i = 0; i < height*width*_num; ++i)
                     {
                         size_t index = size*i + b*outputs;
-                        SoftmaxLayerForward(pDst + index + 5, 1, _classes, 1, pDst + index + 5);
+                        Detail::SoftmaxLayerForwardCpu(pDst + index + 5, 1, _classes, 1, pDst + index + 5);
                     }
                 }
             }

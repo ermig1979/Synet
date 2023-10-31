@@ -39,7 +39,7 @@ namespace Synet
     public: 
         typedef Synet::Region<float> Region;
         typedef std::vector<Region> Regions;
-        typedef Synet::Network Net;
+        typedef Synet::Network<float> Net;
 
         YoloV5Decoder()
             : _classes(0)
@@ -101,7 +101,7 @@ namespace Synet
             std::vector<Regions> result(net.NchwShape()[0]);
             for (size_t b = 0; b < result.size(); ++b)
             {
-                const float* data = net.Dst()[0]->Data<float>();
+                const float* data = net.Dst()[0]->CpuData();
                 size_t size = net.Dst()[0]->Size(1, 2);
                 result[b] = GetRegions(data, size, net.NchwShape()[3], net.NchwShape()[2], imgW, imgH, threshold, overlap);
             }

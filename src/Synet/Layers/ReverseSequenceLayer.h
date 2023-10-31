@@ -42,7 +42,7 @@ namespace Synet
         {
         }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             size_t seqAxis = this->Param().reverseSequence().seqAxis(), i = 0;
             const Shape & shape = src[0]->Shape();
@@ -54,7 +54,6 @@ namespace Synet
                 _inner *= shape[i];
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
             this->UsePerfStat();
-            return true;
         }
 
     protected:

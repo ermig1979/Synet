@@ -41,7 +41,7 @@ namespace Synet
         {
         }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             assert(src[0] != dst[0]);
             const ReshapeParam & param = this->Param().reshape();
@@ -144,7 +144,6 @@ namespace Synet
                 }
                 dst[0]->ShareAs(*src[0], shape, src[0]->Format());
             }
-            return true;
         }
 
     protected:

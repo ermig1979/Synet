@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2023 Yermalayeu Ihar.
+* Copyright (c) 2018-2022 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -32,9 +32,6 @@
 #include "Synet/Decoders/Anchor.h"
 #include "Synet/Decoders/Ultraface.h"
 #include "Synet/Decoders/YoloV5.h"
-#include "Synet/Decoders/YoloV7.h"
-#include "Synet/Decoders/YoloV8.h"
-#include "Synet/Decoders/Iim.h"
 
 namespace Test
 {
@@ -46,15 +43,15 @@ namespace Test
 
     struct SizeParam
     {
+        CPL_PARAM_VALUE(String, name, String());
         CPL_PARAM_VALUE(int32_t, size, 0);
     };
 
     struct ShapeParam
     {
         CPL_PARAM_VALUE(String, name, String());
-        CPL_PARAM_VALUE(Shape, dims, Shape());
         CPL_PARAM_VECTOR(SizeParam, shape);
-        CPL_PARAM_VALUE(bool, compare, true);
+        CPL_PARAM_VALUE(int32_t, size, 0);
     };
 
     struct DetectionParam
@@ -66,7 +63,6 @@ namespace Test
         CPL_PARAM_STRUCT_MOD(Synet::AnchorParam, retina, Synet::GetRetinaParam());
         CPL_PARAM_STRUCT(Synet::UltrafaceParam, ultraface);
         CPL_PARAM_STRUCT(Synet::YoloV5Param, yoloV5);
-        CPL_PARAM_STRUCT(Synet::IimParam, iim);
     };
 
     struct IdParam
@@ -86,7 +82,6 @@ namespace Test
     {
         CPL_PARAM_VALUE(String, inputType, "images");
         CPL_PARAM_VALUE(String, images, String());
-        CPL_PARAM_VALUE(bool, smartResize, false);
         CPL_PARAM_VALUE(Floats, lower, Floats(1, 0.0f));
         CPL_PARAM_VALUE(Floats, upper, Floats(1, 1.0f));
         CPL_PARAM_VALUE(String, model, String());
@@ -151,7 +146,6 @@ namespace Test
     protected:
         Tensors _output;
         float _regionThreshold;
-        String _decoderName;
     };
     typedef std::shared_ptr<Network> NetworkPtr;
     typedef std::vector<NetworkPtr> NetworkPtrs;

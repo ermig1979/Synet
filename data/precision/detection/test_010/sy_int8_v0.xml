@@ -17,10 +17,10 @@
 			</input>
 		</item>
 		<item>
-			<type>Scale</type>
+			<type>Fused</type>
 			<name>Add1_8474/Fused_Add_</name>
 			<src>input.1</src>
-			<dst>input.1</dst>
+			<dst>Add1_8474/Fused_Add_</dst>
 			<weight>
 				<item>
 					<dim>3</dim>
@@ -33,9 +33,10 @@
 					<size>12</size>
 				</item>
 			</weight>
-			<scale>
-				<biasTerm>1</biasTerm>
-			</scale>
+			<fused>
+				<type>10</type>
+				<floats>0.003922 0.000000 1.000000 0.000000</floats>
+			</fused>
 		</item>
 		<item>
 			<type>MergedConvolution</type>

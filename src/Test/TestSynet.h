@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2023 Yermalayeu Ihar.
+* Copyright (c) 2018-2022 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +26,19 @@
 
 #include "TestCommon.h"
 #include "TestPerformance.h"
-#include "TestNetwork.h"
 
+#if defined(SYNET_PERFORMANCE_STATISTIC) && !defined(SYNET_PERF_FUNC)
+#define SYNET_PERF_FUNC() CPL_PERF_FUNC()
+#define SYNET_PERF_BLOCK(name) CPL_PERF_BEG(name)
+#define SYNET_PERF_BLOCK_END(name) CPL_PERF_END(name)
+#define SYNET_PERF_DECL(name) Cpl::PerformanceMeasurer * name;
+#define SYNET_PERF_SET(name, value) name = value;
+#define SYNET_PERF_INIT(name, desc, flop) name = Cpl::PerformanceStorage::Global().Get(desc, flop);
+#define SYNET_PERF_TEST(name) Cpl::PerformanceHolder CPL_CAT(__pmh,__LINE__)(name);
+#endif
 #include "Synet/Synet.h"
+
+#include "TestNetwork.h"
 
 namespace Test
 {
@@ -65,7 +75,6 @@ namespace Test
         {
             CPL_PERF_BEG(Type());
             _regionThreshold = options.regionThreshold;
-            _decoderName = param.detection().decoder();
             Synet::SetThreadNumber(options.workThreads);
             if (Load(model, weight, options))
             {
@@ -97,12 +106,6 @@ namespace Test
                     _ultraface.Init(param.detection().ultraface());
                 if (param.detection().decoder() == "yoloV5")
                     _yoloV5.Init(param.detection().yoloV5());
-                if (param.detection().decoder() == "yoloV7")
-                    _yoloV7.Init();
-                if (param.detection().decoder() == "yoloV8")
-                    _yoloV8.Init();
-                if (param.detection().decoder() == "iim")
-                    _iim.Init(param.detection().iim());
                 return true;
             }
             return false;
@@ -145,12 +148,6 @@ namespace Test
                 return _ultraface.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
             else if (_yoloV5.Enable())
                 return _yoloV5.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
-            else if (_yoloV7.Enable())
-                return _yoloV7.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
-            else if (_yoloV8.Enable())
-                return _yoloV8.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
-            else if (_iim.Enable())
-                return _iim.GetRegions(_net, size.x, size.y)[0];
             else
                 return _net.GetRegions(size.x, size.y, threshold, overlap);
         }
@@ -161,7 +158,7 @@ namespace Test
         }
 
     private:
-        typedef Synet::Network Net;
+        typedef Synet::Network<float> Net;
         Net _net;
         bool _trans, _sort;
         Floats _lower, _upper;
@@ -169,9 +166,6 @@ namespace Test
         Synet::AnchorDecoder _anchor;
         Synet::UltrafaceDecoder _ultraface;
         Synet::YoloV5Decoder _yoloV5;
-        Synet::YoloV7Decoder _yoloV7;
-        Synet::YoloV8Decoder _yoloV8;
-        Synet::IimDecoder _iim;
 
         bool Load(const String & model, const String & weight, const Options& options)
         {
@@ -226,15 +220,15 @@ namespace Test
                 assert(x[i].Size() == src.Size());
                 if (src.Format() == Synet::TensorFormatNhwc && src.Count() == 4)
                 {
-                    const float * pX = x[i].Data<float>();
+                    const float * pX = x[i].CpuData();
                     for (size_t n = 0; n < src.Axis(0); ++n)
                         for (size_t c = 0; c < src.Axis(3); ++c)
                             for (size_t y = 0; y < src.Axis(1); ++y)
                                 for (size_t x = 0; x < src.Axis(2); ++x)
-                                    src.Data<float>(Shape({ n, y, x, c }))[0] = *pX++;
+                                    src.CpuData(Shape({ n, y, x, c }))[0] = *pX++;
                 }
                 else
-                    memcpy(src.Data<float>(), x[i].Data<float>(), x[i].Size() * sizeof(float));
+                    memcpy(src.CpuData(), x[i].CpuData(), x[i].Size() * sizeof(float));
             }
         }
 
@@ -331,27 +325,6 @@ namespace Test
                 dst.Reshape(Shp(1, 1, tmp.size()/7, 7));
                 memcpy(dst.CpuData(), tmp.data(), dst.Size() * sizeof(float));
             }
-            else if (_decoderName == "rtdetr")
-            {
-                assert(src.Axis(0) == 1 && src.Axis(2) == 6);
-                Vector tmp;
-                const T* pSrc = src.CpuData();
-                for (size_t i = 0, n = src.Axis(1); i < n; ++i, pSrc += 6)
-                {
-                    if (pSrc[4] <= _regionThreshold)
-                        continue;
-                    size_t offset = tmp.size();
-                    tmp.resize(offset + 6);
-                    tmp[offset + 0] = (float)pSrc[0];
-                    tmp[offset + 1] = (float)pSrc[1];
-                    tmp[offset + 2] = (float)pSrc[2];
-                    tmp[offset + 3] = (float)pSrc[3];
-                    tmp[offset + 4] = (float)pSrc[4];
-                    tmp[offset + 5] = (float)pSrc[5];
-                }
-                dst.Reshape(Shp(1, tmp.size() / 6, 6));
-                memcpy(dst.CpuData(), tmp.data(), dst.Size() * sizeof(float));
-            }
             else
             {
                 bool trans = src.Format() == Synet::TensorFormatNhwc;
@@ -409,17 +382,31 @@ namespace Test
                 const ShapeParam & shape = param.input()[i];
                 srcNames.push_back(shape.name());
                 Shape srcShape;
-                if (shape.dims().size())
-                    srcShape = shape.dims();
+                if (shape.size() > 0)
+                    srcShape.push_back(shape.size());
                 else
                 {
                     for (size_t j = 0; j < shape.shape().size(); ++j)
                     {
-                        const SizeParam& size = shape.shape()[j];
+                        const SizeParam & size = shape.shape()[j];
                         if (size.size() > 0)
                             srcShape.push_back(size.size());
+                        else if (size.name().size() > 0)
+                        {
+                            Net::Tensor tensor;
+                            if (_net.GetMetaConst(size.name(), tensor) && tensor.GetType() == Synet::TensorType32i && tensor.Size())
+                            {
+                                int32_t value = tensor.As32i().CpuData()[0];
+                                if (value > 0)
+                                    srcShape.push_back(value);
+                                else
+                                    return false;
+                            }
+                            else
+                                return false;
+                        }
                         else
-                            SYNET_ERROR("Test parameter input.shape.size must be > 0!");
+                            return false;
                     }
                 }
                 if (srcShape.size() > 1)   
@@ -430,7 +417,7 @@ namespace Test
                         srcShape = Shape({ srcShape[0], srcShape[2], srcShape[3], srcShape[1] });
                 }
                 if (srcShape.empty())
-                    SYNET_ERROR("Test parameter input.shape is empty!");
+                    return false;
                 srcShapes.push_back(srcShape);
             }
 

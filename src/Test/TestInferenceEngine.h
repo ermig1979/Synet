@@ -82,11 +82,11 @@ namespace Test
         virtual bool Init(const String& model, const String& weight, const Options& options, const TestParam& param)
         {
             CPL_PERF_FUNC();
-            _regionThreshold = options.regionThreshold;
-            _decoderName = param.detection().decoder();
 
             ::setenv("OMP_NUM_THREADS", std::to_string(options.workThreads).c_str(), 1);
             ::setenv("OMP_WAIT_POLICY", "PASSIVE", 1);
+
+            _regionThreshold = options.regionThreshold;
             try
             {
                 if (!ReadNetwork(model, weight, param.model() == "onnx"))
@@ -119,7 +119,7 @@ namespace Test
                     catch (std::exception& e)
                     {
                         if (!options.consoleSilence)
-                            CPL_LOG_SS(Warning, "Inference Engine init trouble: '" << e.what() << "', try to emulate batch > 1.");
+                            std::cout << "Inference Engine init trouble: '" << e.what() << "', try to emulate batch > 1." << std::endl;
                         _batchSize = options.batchSize;
                         _ieNetwork->setBatchSize(1);
                         config.erase(InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_LIMIT);
@@ -134,7 +134,8 @@ namespace Test
             }
             catch (std::exception& e)
             {
-                SYNET_ERROR("Inference Engine init error: " << e.what());
+                std::cout << "Inference Engine init error: " << e.what() << std::endl;
+                return false;
             }
 
             if (options.debugPrint & (1 << Synet::DebugPrintLayerDst))
@@ -250,7 +251,10 @@ namespace Test
             if (!FileExists(dst))
             {
                 if (!FileCopy(src, dst))
-                    SYNET_ERROR("Can't copy file form '" << src << "' to '" << dst << "' !");
+                {
+                    std::cout << "Can't copy file form '" << src << "' to '" << dst << "' !" << std::endl;
+                    return false;
+                }
             }            
             _ieCore = std::make_shared<InferenceEngine::Core>();
             _ieNetwork = std::make_shared<InferenceEngine::CNNNetwork>(_ieCore->ReadNetwork(dst, bin));
@@ -274,7 +278,10 @@ namespace Test
                     const String& name = param.input()[i].name();
                     _inputNames.push_back(name);
                     if (shapes.find(name) == shapes.end())
-                        SYNET_ERROR("Input with name '" << name << "' is not exist! ");
+                    {
+                        std::cout << "Input with name '" << name << "' is not exist! " << std::endl;
+                        return false;
+                    }
                     Shape & shape = shapes[name];
                     shape.clear();
                     for (size_t j = 0; j < param.input()[i].shape().size(); ++j)
@@ -551,7 +558,7 @@ namespace Test
                 break;
             }
             default:
-                CPL_LOG_SS(Error, "Can't debug print for layer '" << name << "' , unknown precision: " << blob.getTensorDesc().getPrecision());
+                std::cout << "Can't debug print for layer '" << name << "' , unknown precision: " << blob.getTensorDesc().getPrecision() << std::endl;
                 break;
             }
         }

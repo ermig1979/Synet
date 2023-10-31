@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2023 Yermalayeu Ihar.
+* Copyright (c) 2018-2022 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -243,7 +243,7 @@ namespace Synet
             return param.interpolationType() == InterpolationTypeNearest;
         }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const InterpParam & param = this->Param().interp();
             _cropBeg = param.cropBeg();
@@ -270,20 +270,9 @@ namespace Synet
                 } 
                 else
                 {
-                    if (src[1]->GetType() == TensorType32f)
-                    {
-                        const float * factor = src[1]->CpuData();
-                        _dstH = size_t(srcH * factor[2]);
-                        _dstW = size_t(srcW * factor[3]);
-                    }
-                    else if (src[1]->GetType() == TensorType64i)
-                    {
-                        const int64_t * sizes = src[1]->As64i().CpuData();
-                        _dstH = size_t(sizes[2]);
-                        _dstW = size_t(sizes[3]);
-                    }
-                    else
-                        assert(0);
+                    const float * factor = src[1]->CpuData();
+                    _dstH = size_t(srcH * factor[2]);
+                    _dstW = size_t(srcW * factor[3]);
                 }
             }
             else if (param.shrinkFactor() != 1 && param.zoomFactor() == 1)
@@ -323,7 +312,6 @@ namespace Synet
             else
                 dst[0]->As32f().Reshape(dstShape, src[0]->Format());
             this->UsePerfStat();
-            return true;
         }
 
     protected:

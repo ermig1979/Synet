@@ -49,7 +49,7 @@ namespace Synet
         {
         }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             if (_empty)
             {
@@ -96,7 +96,6 @@ namespace Synet
             std::stringstream desc;
             desc << _srcExt << "x" << _itCount << "x" << _srcInt << "-" << _dstInt;
             this->UsePerfStat(desc.str(), Flop());
-            return true;
         }
 
         virtual void AddChild(const LayerSharedPtr& child)
@@ -229,11 +228,13 @@ namespace Synet
                         stage.dst.push_back(tensor.get());
                     }
                     available.insert(name);
-                    if (param.type() == LayerTypeInput)
+                    if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && (param.meta().type() == MetaTypeInput || param.meta().type() == MetaTypeInputWithDefault)))
+                    {
                         _src.push_back(_tensors.back().get());
+                    }
                 }
                 stage.buf = buf;
-                if (param.type() == LayerTypeInput)
+                if (param.type() == LayerTypeInput || (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeInput))
                     _input.push_back(stage);
                 else
                     _stages.push_back(stage);

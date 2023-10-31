@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2023 Yermalayeu Ihar.
+* Copyright (c) 2018-2022 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,6 @@ namespace Synet
     struct OnnxParam
     {
         CPL_PARAM_VALUE(Strings, toNchwHints, Strings());
-        CPL_PARAM_VALUE(Strings, toNhwcHints, Strings());
     };
 
     class SynetUtils
@@ -54,28 +53,40 @@ namespace Synet
         static bool CheckDims(const Shape& shape, size_t dims, const String& desc)
         {
             if (shape.size() != dims)
-                SYNET_ERROR("Wrong " << desc << " shape " << ToStr(shape) << " !");
+            {
+                std::cout << "Wrong " << desc << " shape " << ShapeToStr(shape) << " !" << std::endl;
+                return false;
+            }
             return true;
         }
 
         static bool CheckSourceNumber(const LayerParam& layer, size_t size)
         {
             if (layer.src().size() != size)
-                SYNET_ERROR("Wrong number of sources (" << layer.src().size() << " instead of " << size << ") !");
+            {
+                std::cout << "Wrong number of sources (" << layer.src().size() << " instead of " << size << ") !" << std::endl;
+                return false;
+            }
             return true;
         }
 
         static bool CheckSourceNumber(const LayerParam& layer, size_t min, size_t max)
         {
             if (layer.src().size() < min || layer.src().size() > max)
-                SYNET_ERROR("Wrong number of sources (" << layer.src().size() << ". It must be in range [" << min << ", " << max << "] !");
+            {
+                std::cout << "Wrong number of sources (" << layer.src().size() << ". It must be in range [" << min << ", " << max << "] !" << std::endl;
+                return false;
+            }
             return true;
         }
 
         static bool CheckDestinationNumber(const LayerParam& layer, size_t size)
         {
             if (layer.dst().size() != size)
-                SYNET_ERROR("Wrong number of destinations (" << layer.dst().size() << " instead of " << size << ") !");
+            {
+                std::cout << "Wrong number of destinations (" << layer.dst().size() << " instead of " << size << ") !" << std::endl;
+                return false;
+            }
             return true;
         }
 
@@ -91,7 +102,10 @@ namespace Synet
                 }
             }
             if (count > 1)
-                SYNET_ERROR("Can't compact shape " << ToStr(shape) << " !");
+            {
+                std::cout << "Can't compact shape " << ShapeToStr(shape) << " !" << std::endl;
+                return false;
+            }
             shape = Shp(value);
             return true;
         }
@@ -107,20 +121,27 @@ namespace Synet
                     if (pin.name == layers[i].dst()[d])
                         return &layers[i];
             }
-            SYNET_ERROR("Can't found layer " << pin.name << " !");
+            std::cout << "Can't found layer " << pin.name << " !" << std::endl;
+            return NULL;
         }
 
         template<class T> static T* GetWeight(Vector& bin, size_t offset)
         {
             if (offset >= bin.size() * sizeof(T))
-                SYNET_ERROR("Vector access overflow: " << offset << " >= " << bin.size() * sizeof(T) << " !");
+            {
+                std::cout << "Vector access overflow: " << offset << " >= " << bin.size() * sizeof(T) << " !" << std::endl;
+                return NULL;
+            }
             return (T*)((uint8_t*)bin.data() + offset);
         }
 
         template<class T> static const T* GetWeight(const Vector& bin, size_t offset)
         {
             if (offset >= bin.size() * sizeof(T))
-                SYNET_ERROR("Vector access overflow: " << offset << " >= " << bin.size() * sizeof(T) << " !");
+            {
+                std::cout << "Vector access overflow: " << offset << " >= " << bin.size() * sizeof(T) << " !" << std::endl;
+                return NULL;
+            }
             return (const T*)((const uint8_t*)bin.data() + offset);
         }
 
@@ -156,8 +177,6 @@ namespace Synet
             const LayerParam& layer = layers[current];
             if (layer.type() == LayerTypeConvolution && layer.weight()[0].format() == TensorFormatNhwc)
                 return false;
-            if (layer.type() == LayerTypePermute && layer.permute().format() == TensorFormatNhwc)
-                return false;
             if (layer.type() == LayerTypePermute && layer.permute().format() == TensorFormatNchw)
                 return true;
             if (checkInnerProduct && layer.type() == LayerTypeInnerProduct)
@@ -176,10 +195,9 @@ namespace Synet
                 {
                     for (size_t d = 0; d < layers[l].dst().size(); ++d)
                     {
-                        if (layers[l].type() == LayerTypeMeta || layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
-                            continue;
                         const String & dst = layers[l].dst()[d];
-                        if (src == dst && PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
+                        if (src == dst && layers[l].type() != LayerTypeMeta && layers[l].type() &&
+                            PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
                             return true;
                     }
                 }
@@ -204,9 +222,8 @@ namespace Synet
                     for (size_t d = 0; d < layers[l].dst().size(); ++d)
                     {
                         const String & dst = layers[l].dst()[d];
-                        if (layers[l].type() == LayerTypeMeta || layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
-                            continue;
-                        if (names[s] == dst && PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
+                        if (names[s] == dst && layers[l].type() != LayerTypeMeta && layers[l].type() &&
+                            PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
                             return true;
                     }
                 }
@@ -235,71 +252,6 @@ namespace Synet
                 }
             }
             return count;
-        }
-
-        static TensorFormat CurrentTensorFormat(const LayerParams& layers, size_t current, bool checkInnerProduct, bool checkPriorBox, bool globalPooling)
-        {
-            const LayerParam& layer = layers[current];
-            if (layer.type() == LayerTypeConvolution || layer.type() == LayerTypeDeconvolution)
-                return layer.weight()[0].format();
-            if (layer.type() == LayerTypePermute && layer.permute().format() != TensorFormatUnknown)
-                return layer.permute().format();
-            if (layer.type() == LayerTypeInnerProduct)
-            {
-                if (layer.weight().size())
-                    return layer.weight()[0].format();
-                if(checkInnerProduct)
-                    return TensorFormatNchw;
-            }
-            if (checkPriorBox && (layer.type() == LayerTypePriorBox || layer.type() == LayerTypePriorBoxClustered))
-                return TensorFormatNchw;
-            if (globalPooling && layer.type() == LayerTypePooling && layer.pooling().globalPooling())
-                return TensorFormatNchw;
-            if (layer.type() == LayerTypeInput && layer.input().shape().size())
-                return layer.input().shape()[0].format();
-            for (size_t s = 0; s < layer.src().size(); ++s)
-            {
-                const String& src = layer.src()[s];
-                for (size_t l = 0; l < current; ++l)
-                {
-                    for (size_t d = 0; d < layers[l].dst().size(); ++d)
-                    {
-                        if (layers[l].type() == LayerTypeMeta || layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
-                            continue;
-                        const String& dst = layers[l].dst()[d];
-                        if (src == dst)
-                        {
-                            TensorFormat format = CurrentTensorFormat(layers, l, checkInnerProduct, checkPriorBox, globalPooling);
-                            if (format != TensorFormatUnknown)
-                                return format;
-                        }
-                    }
-                }
-            }
-            return TensorFormatUnknown;
-        }
-
-        static TensorFormat CurrentTensorFormat(const LayerParams& layers, const Strings& names, bool checkInnerProduct, bool checkPriorBox, bool globalPooling)
-        {
-            for (size_t s = 0; s < names.size(); ++s)
-            {
-                for (size_t l = 0; l < layers.size(); ++l)
-                {
-                    for (size_t d = 0; d < layers[l].dst().size(); ++d)
-                    {
-                        const String& dst = layers[l].dst()[d];
-                        if (layers[l].type() == LayerTypeMeta || layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
-                            continue;
-                        if (names[s] == dst)
-                        {
-                            TensorFormat format = CurrentTensorFormat(layers, l, checkInnerProduct, checkPriorBox, globalPooling);
-                            if (format != TensorFormatUnknown)
-                                return format;
-                        }
-                    }
-                }
-            }
-            return TensorFormatUnknown;
         }
 
         static size_t UserCount(const LayerParams& layers, size_t index)
@@ -366,23 +318,12 @@ namespace Synet
             case LayerTypeConvolution:
             {
                 shape = Shape({ shape[2], shape[3], shape[1], shape[0] });
-                Tensor dst((uint8_t*)pDst, weight.size(), TensorType32f, shape, weight.format());
+                Tensor dst(pDst, weight.size() / sizeof(float), shape, weight.format());
                 for (size_t o = 0; o < shape[3]; ++o)
                     for (size_t i = 0; i < shape[2]; ++i)
                         for (size_t y = 0; y < shape[0]; ++y)
                             for (size_t x = 0; x < shape[1]; ++x)
-                                dst.Data<float>(Shape({ y, x, i, o }))[0] = *pSrc++;
-                break;
-            }
-            case LayerTypeDeconvolution:
-            {
-                shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
-                Tensor dst((uint8_t*)pDst, weight.size(), TensorType32f, shape, weight.format());
-                for (size_t i = 0; i < shape[0]; ++i)
-                    for (size_t c = 0; c < shape[3]; ++c)
-                        for (size_t y = 0; y < shape[1]; ++y)
-                            for (size_t x = 0; x < shape[2]; ++x)
-                                dst.Data<float>(Shape({ i, y, x, c }))[0] = *pSrc++;
+                                dst.CpuData(Shape({ y, x, i, o }))[0] = *pSrc++;
                 break;
             }
             case LayerTypeInnerProduct:
@@ -427,9 +368,42 @@ namespace Synet
                 break;
             }
             default:
-                SYNET_ERROR("Unsupported layer type " << Cpl::ToStr(layer.type()) << " to convert weight !");
+                std::cout << "Unsupported layer type " << Cpl::ToStr(layer.type()) << " to convert weight !" << std::endl;
+                return false;
             }
             return true;
+        }
+
+        static String ShapeToStr(const Shape& shape)
+        {
+            std::stringstream ss;
+            ss << "{";
+            for (size_t i = 0; i < shape.size(); ++i)
+                ss << " " << shape[i];
+            ss << " }";
+            return ss.str();
+        }
+
+        static size_t TensorSize(const Shape& shape)
+        {
+            if (shape.empty())
+                return 0;
+            else
+            {
+                size_t size = 1;
+                for (size_t i = 0; i < shape.size(); ++i)
+                    size *= shape[i];
+                return size;
+            }
+        }
+
+        static size_t SignificantDimsCount(const Shape& shape)
+        {
+            size_t significant = 0;
+            for (size_t i = 0; i < shape.size(); ++i)
+                if (shape[i] > 1)
+                    significant++;
+            return significant;
         }
 
         template<class T> static bool AllAreEqualTo(const std::vector<T>& vector, T value)

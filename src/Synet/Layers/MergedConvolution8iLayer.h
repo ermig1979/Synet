@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2023 Yermalayeu Ihar.
+* Copyright (c) 2018-2022 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -271,9 +271,6 @@ namespace Synet
             case ActivationFunctionTypeSwish:
                 CpuSwish(dst, dSize, dst);
                 break;
-            case ActivationFunctionTypeGelu:
-                CpuGelu(dst, dSize, dst);
-                break;
             default:
                 assert(0);
             }
@@ -323,7 +320,6 @@ namespace Synet
             case ActivationFunctionTypeMish: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeMish>; break;
             case ActivationFunctionTypeHardSigmoid: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeHardSigmoid>; break;
             case ActivationFunctionTypeSwish: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeSwish>; break;
-            case ActivationFunctionTypeGelu: _depthwise = Detail::MergedConvolutionLayerDepthwise<T, ActivationFunctionTypeGelu>; break;
             default: assert(0);
             }
         }

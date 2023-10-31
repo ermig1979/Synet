@@ -374,6 +374,32 @@ namespace Test
 
     //---------------------------------------------------------------------------------------------
 
+    inline String SystemInfo()
+    {
+        String cpu = "Unknown", mem = "Unknown";
+#ifdef __linux__
+        ::FILE* c = ::popen("lscpu | grep 'Model name:' | sed -r 's/Model name:\\s{1,}//g'", "r");
+        if (c)
+        {
+            char buf[PATH_MAX];
+            while (::fgets(buf, PATH_MAX, c));
+            cpu = buf;
+            cpu = cpu.substr(0, cpu.find('\n'));
+            ::pclose(c);
+        }
+        ::FILE* m = ::popen("grep MemTotal /proc/meminfo | awk '{print $2 / 1024}'", "r");
+        if (m)
+        {
+            char buf[PATH_MAX];
+            while (::fgets(buf, PATH_MAX, m));
+            mem = buf;
+            mem = mem.substr(0, mem.find('\n'));
+            ::pclose(m);
+        }
+#endif
+        return String("CPU: ") + cpu + ", Memory: " + mem + " MB";
+    }
+
     inline String MemoryUsageString(size_t usage, size_t count)
     {
         double total = usage / (1024.0 * 1024.0);

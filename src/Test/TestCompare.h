@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2023 Yermalayeu Ihar.
+* Copyright (c) 2018-2022 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -139,46 +139,38 @@ namespace Test
         bool LoadTestParam()
         {
             if (!_param.Load(_options.testParam))
-                SYNET_ERROR("Can't load file '" << _options.testParam << "' !");
+            {
+                std::cout << "Can't load file '" << _options.testParam << "' !" << std::endl;
+                return false;
+            }
             return true;
         }
 
-        bool InitNetwork(String model, String weight, Network& network) const
+        bool InitNetwork(const String& model, const String& weight, Network& network) const
         {
-            if (network.Name() != "OnnxRuntime")
+            if (!FileExists(model))
             {
-                if (!Cpl::FileExists(model))
-                {
-                    String alt = Cpl::ChangeExtension(model, ".dsc");
-                    if (alt != model && network.Name() != "Synet")
-                    {
-                        if (!Cpl::FileExists(alt))
-                            SYNET_ERROR("Files '" << model << "' and '" << alt << "' are not exist!");
-                        model = alt;
-                    }
-                    else
-                        SYNET_ERROR("File '" << model << "' is not exist!");
-                }
+                std::cout << "File '" << model << "' is not exist!" << std::endl;
+                return false;
             }
-            if (!Cpl::FileExists(weight))
+            if (!FileExists(weight))
             {
-                String alt = Cpl::ChangeExtension(weight, ".dat");
-                if (alt != weight && network.Name() != "Synet")
-                {
-                    if (!Cpl::FileExists(alt))
-                        SYNET_ERROR("Files '" << weight << "' and '" << alt << "' are not exist!");
-                    weight = alt;
-                }
-                else
-                    SYNET_ERROR("File '" << weight << "' is not exist!");
+                std::cout << "File '" << weight << "' is not exist!" << std::endl;
+                return false;
             }
             Network::Options options(_options.outputDirectory, _options.workThreads, _options.consoleSilence, _options.batchSize, 
                 _options.performanceLog, _options.debugPrint, _options.regionThreshold, _options.bf16);
             if (!network.Init(model, weight, options, _param()))
-                SYNET_ERROR("Can't load " << network.Name() << " from '" << model << "' and '" << weight << "' !");
+            {
+                std::cout << "Can't load " << network.Name() << " from '" << model << "' and '" << weight << "' !" << std::endl;
+                return false;
+            }
             Shape shape = network.SrcShape(0);
             if (!(shape[1] == 1 || shape[1] == 3 || _param().inputType() == "binary"))
-                SYNET_ERROR("Wrong " << network.Name() << " classifier channels count '" << shape[1] << " !");
+            {
+                std::cout << "Wrong " << network.Name() << " classifier channels count '" << shape[1] << " !" << std::endl;
+                return false;
+            }
             return true;
         }
 
@@ -226,23 +218,26 @@ namespace Test
             if (_options.enable == (ENABLE_FIRST | ENABLE_SECOND))
             {
                 if (_firsts[0].SrcCount() != _seconds[0].SrcCount())
-                    SYNET_ERROR("Networks have difference source number: " << _firsts[0].SrcCount() << " != " << _seconds[0].SrcCount());
+                {
+                    std::cout << "Networks have difference source number: " <<
+                        _firsts[0].SrcCount() << " != " << _seconds[0].SrcCount() << std::endl;
+                    return false;
+                }
                 for (size_t s = 0; s < _firsts[0].SrcCount(); ++s)
                 {
                     const Shape& os = _firsts[0].SrcShape(s);
                     const Shape& ss = _seconds[0].SrcShape(s);
                     if (os != ss)
                     {
-                        std::stringstream err;
-                        err << "Networks have difference Src[" << s << "] size: ";
-                        err << _firsts[0].Name() << " {" << os[0];
+                        std::cout << "Networks have difference Src[" << s << "] size: ";
+                        std::cout << _firsts[0].Name() << " {" << os[0];
                         for (size_t j = 1; j < os.size(); ++j)
-                            err << ", " << os[j];
-                        err << "} != " << _seconds[0].Name() << " {" << ss[0];
+                            std::cout << ", " << os[j];
+                        std::cout << "} != " << _seconds[0].Name() << " {" << ss[0];
                         for (size_t j = 1; j < ss.size(); ++j)
-                            err << ", " << ss[j];
-                        err << "} !";
-                        SYNET_ERROR(err.str());
+                            std::cout << ", " << ss[j];
+                        std::cout << "} ! " << std::endl;
+                        return false;
                     }
                 }
             }
@@ -253,7 +248,10 @@ namespace Test
         bool CreateDirectories()
         {
             if (_options.NeedOutputDirectory() && !DirectoryExists(_options.outputDirectory) && !CreatePath(_options.outputDirectory))
-                SYNET_ERROR("Can't create output directory '" << _options.outputDirectory << "' !");
+            {
+                std::cout << "Can't create output directory '" << _options.outputDirectory << "' !" << std::endl;
+                return false;
+            }
             return true;
         }
 
@@ -267,22 +265,6 @@ namespace Test
             return false;
         }
 
-        void ResizeImage(const View& src, View& dst) const
-        {
-            if (_param().smartResize())
-            {
-                Simd::Fill(dst, 0);
-                ptrdiff_t d = src.width * dst.height - src.height * dst.width;
-                size_t w = d > 0 ? dst.width : src.width * dst.height / src.height;
-                size_t h = d < 0 ? dst.height : src.height * dst.width / src.width;
-                Simd::Resize(src, dst.Region(Size(w, h), View::MiddleLeft).Ref(), SimdResizeMethodArea);
-            }
-            else
-            {
-                Simd::Resize(src, dst, SimdResizeMethodArea);
-            }
-        }
-
         bool CreateTestListImages(const Network& network, const String & directory)
         {
             StringList images = GetFileList(directory, _options.imageFilter, true, false);
@@ -293,10 +275,9 @@ namespace Test
             size_t curr = 0;
             for (StringList::const_iterator it = images.begin(); it != images.end(); ++it)
             {
-                if (RequiredExtension(*it))
+                if (curr >= _options.imageBegin && curr < _options.imageEnd && RequiredExtension(*it))
                 {
-                    if(curr >= _options.imageBegin && curr < _options.imageEnd)
-                        names.push_back(*it);
+                    names.push_back(*it);
                     curr++;
                 }
             }
@@ -304,7 +285,10 @@ namespace Test
             size_t sN = network.SrcCount(), bN = _options.batchSize;
             size_t tN = names.size() / bN / sN;
             if (tN == 0)
-                SYNET_ERROR("There is no one image in '" << directory << "' for '" << _options.imageFilter << "' filter!");
+            {
+                std::cout << "There is no one image in '" << directory << "' for '" << _options.imageFilter << "' filter!" << std::endl;
+                return false;
+            }
 
             Floats lower = _param().lower(), upper = _param().upper();
             _tests.clear();
@@ -325,7 +309,10 @@ namespace Test
                         test->path[p] = MakePath(directory, names[(t * bN + b) * sN + s]);
                         View original;
                         if (!LoadImage(test->path[p], original))
-                            SYNET_ERROR("Can't read '" << test->path[p] << "' image!");
+                        {
+                            std::cout << "Can't read '" << test->path[p] << "' image!" << std::endl;
+                            return false;
+                        }
                         Shape shape = network.SrcShape(s);
                         if (shape.size() == 4)
                         {
@@ -338,7 +325,7 @@ namespace Test
                             Simd::Convert(original, converted);
 
                             View resized(Size(shape[3], shape[2]), converted.format);
-                            ResizeImage(converted, resized);
+                            Simd::Resize(converted, resized, SimdResizeMethodArea);
 
                             if (_param().order() == "rgb" && shape[1] == 3)
                                 (View::Format&)resized.format = View::Rgb24;
@@ -348,7 +335,10 @@ namespace Test
                         else if (shape.size() == 2)
                         {
                             if (shape[0] != original.height || shape[1] != original.width)
-                                SYNET_ERROR("Incompatible size of '" << test->path[p] << "' image!");
+                            {
+                                std::cout << "Incompatible size of '" << test->path[p] << "' image!" << std::endl;
+                                return false;
+                            }
                             for (size_t y = 0; y < original.height; ++y)
                             {
                                 const uint8_t* row = original.Row<uint8_t>(y);
@@ -358,7 +348,10 @@ namespace Test
                             }
                         }
                         else
-                            SYNET_ERROR("Can't map to source '" << test->path[p] << "' image!");
+                        {
+                            std::cout << "Can't map to source '" << test->path[p] << "' image!" << std::endl;
+                            return false;
+                        }
                     }
                 }
                 _tests.push_back(test);
@@ -379,7 +372,10 @@ namespace Test
 
             size_t sN = network.SrcCount(), bN = _options.batchSize;
             if (names.size() != sN)
-                SYNET_ERROR("The number of binary files " << names.size() << " is differ from number of network sources " << sN << " in '" << directory << "' !");
+            {
+                std::cout << "The number of binary files " << names.size() << " is differ from number of network sources " << sN << " in '" << directory << "' !" << std::endl;
+                return false;
+            }
 
             _tests.clear();
             for (size_t n = 0; n < sN; ++n)
@@ -388,17 +384,29 @@ namespace Test
                 Vector data;
                 String path = MakePath(directory, names[n]);
                 if (!Synet::LoadBinaryData(path, data))
-                    SYNET_ERROR("Can't load binary file '" << path << "' !");
+                {
+                    std::cout << "Can't load binary file '" << path << "' !" << std::endl;
+                    return false;
+                }
                 size_t tN = data.size() / sS, tB = _options.binaryBegin / _options.batchSize, tE = std::min(_options.binaryEnd / _options.batchSize, tN);
                 if (tB >= tE)
-                    SYNET_ERROR("Wrong parameters: -bb=" << _options.binaryBegin << ", -be=" << _options.binaryEnd << ", binary size = " << tN << " !");
+                {
+                    std::cout << "Wrong parameters: -bb=" << _options.binaryBegin << ", -be=" << _options.binaryEnd << ", binary size = " << tN << " !" << std::endl;
+                    return false;
+                }
                 tN = tE - tB;
                 if (tN == 0)
-                    SYNET_ERROR("The binary file '" << path << "' is too small!");
+                {
+                    std::cout << "The binary file '" << path << "' is too small!" << std::endl;
+                    return false;
+                }
                 if (n == 0)
                     _tests.resize(tN);
                 else if(_tests.size() != tN)
-                    SYNET_ERROR("The binary files are not compartible!");
+                {
+                    std::cout << "The binary files are not compartible!" << std::endl;
+                    return false;
+                }
                 for (size_t i = 0; i < tN; i += 1)
                 {
                     size_t offs = (tB + i) * sS;
@@ -423,13 +431,19 @@ namespace Test
             if (imageDirectory.empty())
                 imageDirectory = Test::MakePath(DirectoryByPath(_options.testParam), _param().images());
             if (!DirectoryExists(imageDirectory))
-                SYNET_ERROR("Test image directory '" << imageDirectory << "' is not exists!");
+            {
+                std::cout << "Test image directory '" << imageDirectory << "' is not exists!" << std::endl;
+                return false;
+            }
             if (_param().inputType() == "images")
                 return CreateTestListImages(network, imageDirectory);
             else if(_param().inputType() == "binary")
                 return CreateTestListBinary(network, imageDirectory);
             else
-                SYNET_ERROR("Unknown input type '" << _param().inputType() << "' !");
+            {
+                std::cout << "Unknown input type '" << _param().inputType() << "' !" << std::endl;
+                return false;
+            }
         }
 
         bool CreateTestList()
@@ -459,7 +473,10 @@ namespace Test
                     log.close();
                 }
                 else
-                    SYNET_ERROR("Can't open '" << path << "' file!");
+                {
+                    std::cout << "Can't open '" << path << "' file!" << std::endl;
+                    return false;
+                }
             }
             return true;
         }
@@ -471,12 +488,9 @@ namespace Test
                 if (_colors.empty())
                 {
                     _colors.push_back(Color(0xFF, 0xFF, 0xFF));
-                    _colors.push_back(Color(0x00, 0x00, 0xFF));
-                    _colors.push_back(Color(0x00, 0xFF, 0x00));
                     _colors.push_back(Color(0xFF, 0x00, 0x00));
-                    _colors.push_back(Color(0x00, 0xFF, 0xFF));
-                    _colors.push_back(Color(0xFF, 0xFF, 0x00));
-                    _colors.push_back(Color(0xFF, 0x00, 0xFF));
+                    _colors.push_back(Color(0x00, 0xFF, 0x00));
+                    _colors.push_back(Color(0x00, 0x00, 0xFF));
                 }
                 while (index >= _colors.size())
                     _colors.push_back(Color(::rand(), ::rand(), ::rand()));
@@ -490,7 +504,10 @@ namespace Test
             {
                 View image;
                 if (!LoadImage(inputPath, image))
-                    SYNET_ERROR("Can't read '" << inputPath << "' image!");
+                {
+                    std::cout << "Can't read '" << inputPath << "' image!" << std::endl;
+                    return false;
+                }
                 Regions regions = network.GetRegions(image.Size(), _options.regionThreshold, _options.regionOverlap);
                 for (size_t i = 0; i < regions.size(); ++i)
                 {
@@ -503,7 +520,10 @@ namespace Test
                 }
                 String outputPath = MakePath(_options.outputDirectory, Options::FullName(network.Name(), network.Type()) + "_" + GetNameByPath(inputPath));
                 if (!SaveImage(image, outputPath))
-                    SYNET_ERROR("Can't write '" << outputPath << "' image!");
+                {
+                    std::cout << "Can't write '" << outputPath << "' image!" << std::endl;
+                    return false;
+                }
             }
             return true;
         }
@@ -529,7 +549,12 @@ namespace Test
             using Synet::Detail::DebugPrint;
             float _f = f.CpuData(i)[0], _s = s.CpuData(i)[0];
             if (!Compare(_f, _s, _options.compareThreshold))
-                SYNET_ERROR(m << std::endl << std::fixed << "Dst[" << d << "]" << DebugPrint(f.Shape()) << " at " << DebugPrint(i) << " : " << _f << " != " << _s);
+            {
+                std::cout << m << std::endl << std::fixed;
+                std::cout << "Dst[" << d << "]" << DebugPrint(f.Shape()) << " at ";
+                std::cout << DebugPrint(i) << " : " << _f << " != " << _s << std::endl;
+                return false;
+            }
             return true;
         }
 
@@ -573,15 +598,21 @@ namespace Test
             const Output& output = test.output[thread];
             String failed = TestFailedMessage(test, index, thread);
             if (output.first.size() != output.second.size())
-                SYNET_ERROR(failed << std::endl << "Dst count : " << output.first.size() << " != " << output.second.size());
+            {
+                std::cout << failed << std::endl;
+                std::cout << "Dst count : " << output.first.size() << " != " << output.second.size() << std::endl;
+                return false;
+            }
             for (size_t d = 0; d < output.first.size(); ++d)
             {
-                if (d < _param().output().size() && _param().output()[d].compare() == false)
-                    continue;
                 const Tensor& f = output.first[d];
                 const Tensor& s = output.second[d];
                 if (f.Shape() != s.Shape())
-                    SYNET_ERROR(failed << std::endl << "Dst[" << d << "] shape : " << DebugPrint(f.Shape()) << " != " << DebugPrint(s.Shape()));
+                {
+                    std::cout << failed << std::endl;
+                    std::cout << "Dst[" << d << "] shape : " << DebugPrint(f.Shape()) << " != " << DebugPrint(s.Shape()) << std::endl;
+                    return false;
+                }
                 Difference difference(f, s);
                 if (difference.Valid())
                 {
@@ -622,7 +653,8 @@ namespace Test
                                         return false;
                     break;
                 default:
-                    SYNET_ERROR("Error! Dst has unsupported shape " << Synet::Detail::DebugPrint(f.Shape()));
+                    std::cout << "Error! Dst has unsupported shape " << Synet::Detail::DebugPrint(f.Shape()) << std::endl;
+                    return false;
                 }
             }
             return true;
@@ -671,11 +703,6 @@ namespace Test
             if (_options.enable & ENABLE_SECOND)
             {
                 TestData& test = *_tests[index];
-#if 0
-                if (repeat == 0)
-                    if (!DebugPrint(_seconds[0], index))
-                        return false;
-#endif
                 Copy(_seconds[0].Predict(test.input), test.output[0].second);
                 if (repeat == 0)
                 {

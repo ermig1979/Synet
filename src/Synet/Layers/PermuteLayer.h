@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2023 Yermalayeu Ihar.
+* Copyright (c) 2018-2021 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,6 @@
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
 #include "Synet/Utils/Math.h"
-#include "Synet/Utils/Permute.h"
 
 namespace Synet
 {
@@ -47,12 +46,13 @@ namespace Synet
         {
         }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const PermuteParam & param = this->Param().permute();
-            _nontrivial = false;
+            _permute = false;
             _dstOrder = param.order();
             _count = _dstOrder.size();
+            assert(_count >= 2 && _count <= 5);
             _srcOrder.resize(_count);
             size_t is = 0, os = 0;
             Shape permute;
@@ -65,11 +65,11 @@ namespace Synet
                 _srcOrder[_dstOrder[i]] = i;
             }
             assert(is == os);
-            _nontrivial = permute.size() > 1;
+            _permute = permute.size() > 1;
             if (permute.size() == 2 && permute[0] + 1 == permute[1])
             {
                 if (src[0]->Axis(permute[0]) == 1 || src[0]->Axis(permute[1]) == 1)
-                    _nontrivial = false;
+                    _permute = false;
             }
 
             _srcShape = src[0]->Shape();
@@ -77,33 +77,23 @@ namespace Synet
             _dstShape.clear();
             for (size_t i = 0; i < _count; ++i)
                 _dstShape.push_back(_srcShape[_dstOrder[i]]);
-            if (param.skip())
-                _nontrivial = false;
-            if (_nontrivial)
+            if (_permute)
             {
                 dst[0]->Reshape(_dstShape, param.format() == TensorFormatUnknown ? src[0]->Format() : param.format());
                 CompactShapes();
-                assert(_count >= 2 && _count <= 5);
                 _srcStride = Stride(_srcShape, _srcOrder);
                 _dstStride = Stride(_dstShape, _dstOrder);
-                _permute.Init(src[0]->Shape(), param.order(), src[0]->GetType());
                 this->UsePerfStat();
             }
             else
                 dst[0]->ShareAs(*src[0], _dstShape, param.format() == TensorFormatUnknown ? src[0]->Format() : param.format());
-            return true;
         }
 
     protected:
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            if (_nontrivial)
+            if (_permute)
             {
-                if (_permute.Enable())
-                {
-                    _permute.Forward((uint8_t*)src[0]->CpuData(), (uint8_t*)dst[0]->CpuData());
-                    return;
-                }
                 const Type * pSrc = src[0]->CpuData();
                 Type * pDst = dst[0]->CpuData();
                 switch (_count)
@@ -169,8 +159,7 @@ namespace Synet
         }
 
     private:
-        bool _nontrivial;
-        Permute _permute;
+        bool _permute;
         size_t _count;
         Shape _srcOrder, _dstOrder, _srcShape, _dstShape, _srcStride, _dstStride;
 

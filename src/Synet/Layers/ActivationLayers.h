@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2023 Yermalayeu Ihar.
+* Copyright (c) 2018-2022 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -30,199 +30,281 @@
 
 namespace Synet
 {
-    class EluLayer : public Synet::Layer<float>
+    template <class T> class EluLayer : public Synet::Layer<T>
     {
     public:
-        typedef Layer<float> Base;
+        typedef T Type;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        EluLayer(const LayerParam& param, Context* context);
+        EluLayer(const LayerParam& param, Context* context)
+            : Base(param, context)
+        {
+        }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            _alpha = this->Param().elu().alpha();
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            CpuElu<Type>(src[0]->CpuData(), src[0]->Size(), _alpha, dst[0]->CpuData());
+        }
 
     private:
-        size_t _size;
-        float _alpha;
+        Type _alpha;
     };
 
     //---------------------------------------------------------------------------------------------
 
-    class GeluLayer : public Synet::Layer<float>
+    template <class T> class HardSigmoidLayer : public Synet::Layer<T>
     {
     public:
-        typedef Layer<float> Base;
+        typedef T Type;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        GeluLayer(const LayerParam& param, Context* context);
+        HardSigmoidLayer(const LayerParam& param, Context* context)
+            : Base(param, context)
+        {
+        }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            HardSigmoidParam hardSigmoid = this->Param().hardSigmoid();
+            _scale = hardSigmoid.scale();
+            _shift = hardSigmoid.shift();
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            CpuHardSigmoid(src[0]->CpuData(), src[0]->Size(), _scale, _shift, dst[0]->CpuData());
+        }
 
     private:
-        size_t _size;
+        Type _scale, _shift;
     };
 
     //---------------------------------------------------------------------------------------------
 
-    class HardSigmoidLayer : public Synet::Layer<float>
+    template <class T> class HswishLayer : public Synet::Layer<T>
     {
     public:
-        typedef Layer<float> Base;
+        typedef T Type;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        HardSigmoidLayer(const LayerParam& param, Context* context);
+        HswishLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
+        {
+        }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        {
+            HswishParam hswish = this->Param().hswish();
+            _shift = hswish.shift();
+            _scale = hswish.scale();
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        {
+            CpuHswish(src[0]->CpuData(), src[0]->Size(), _shift, _scale, dst[0]->CpuData());
+        }
 
     private:
-        size_t _size;
-        float _scale, _shift;
+        Type _shift, _scale;
     };
 
     //---------------------------------------------------------------------------------------------
 
-    class HswishLayer : public Synet::Layer<float>
+    template <class T> class MishLayer : public Synet::Layer<T>
     {
     public:
-        typedef Layer<float> Base;
+        typedef T Type;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        HswishLayer(const LayerParam& param, Context* context);
+        MishLayer(const LayerParam& param, Context* context)
+            : Base(param, context)
+        {
+        }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            _threshold = this->Param().softplus().threshold();
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            CpuMish<Type>(src[0]->CpuData(), src[0]->Size(), _threshold, dst[0]->CpuData());
+        }
 
     private:
-        size_t _size;
-        float _shift, _scale;
+        Type _threshold;
     };
 
     //---------------------------------------------------------------------------------------------
 
-    class MishLayer : public Synet::Layer<float>
+    template <class T> class ReluLayer : public Synet::Layer<T>
     {
     public:
-
-        typedef Layer<float> Base;
+        typedef T Type;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        MishLayer(const LayerParam& param, Context* context);
+        ReluLayer(const LayerParam& param, Context* context)
+            : Base(param, context)
+        {
+        }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            _negativeSlope = this->Param().relu().negativeSlope();
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            CpuRelu<Type>(src[0]->CpuData(), src[0]->Size(), _negativeSlope, dst[0]->CpuData());
+        }
 
     private:
-        size_t _size;
-        float _threshold;
+        Type _negativeSlope;
     };
 
     //---------------------------------------------------------------------------------------------
 
-    class ReluLayer : public Synet::Layer<float>
+    template <class T> class RestrictRangeLayer : public Synet::Layer<T>
     {
     public:
-        typedef Layer<float> Base;
+        typedef T Type;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ReluLayer(const LayerParam& param, Context* context);
+        RestrictRangeLayer(const LayerParam& param, Context* context)
+            : Base(param, context)
+        {
+        }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            const RestrictRangeParam& param = this->Param().restrictRange();
+            _lower = param.lower();
+            _upper = param.upper();
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            CpuRestrictRange<Type>(src[0]->CpuData(), src[0]->Size(), _lower, _upper, dst[0]->CpuData());
+        }
 
     private:
-        size_t _size;
-        float _negativeSlope;
+        Type _lower, _upper;
     };
 
     //---------------------------------------------------------------------------------------------
 
-    class RestrictRangeLayer : public Synet::Layer<float>
+    template <class T> class SigmoidLayer : public Synet::Layer<T>
     {
     public:
-        typedef Layer<float> Base;
+        typedef T Type;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        RestrictRangeLayer(const LayerParam& param, Context* context);
+        SigmoidLayer(const LayerParam& param, Context* context)
+            : Base(param, context)
+        {
+        }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            CpuSigmoid<Type>(src[0]->CpuData(), src[0]->Size(), dst[0]->CpuData());
+        }
 
     private:
-        size_t _size;
-        float _lower, _upper;
     };
 
     //---------------------------------------------------------------------------------------------
 
-    class SigmoidLayer : public Synet::Layer<float>
+    template <class T> class SoftplusLayer : public Synet::Layer<T>
     {
     public:
-        typedef Layer<float> Base;
+        typedef T Type;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        SigmoidLayer(const LayerParam& param, Context* context);
+        SoftplusLayer(const LayerParam& param, Context* context)
+            : Base(param, context)
+        {
+        }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            _beta = this->Param().softplus().beta();
+            _threshold = this->Param().softplus().threshold();
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        {
+            CpuSoftplus<Type>(src[0]->CpuData(), src[0]->Size(), _beta, _threshold, dst[0]->CpuData());
+        }
 
     private:
-        size_t _size;
+        Type _beta, _threshold;
     };
 
     //---------------------------------------------------------------------------------------------
 
-    class SoftplusLayer : public Synet::Layer<float>
+    template <class T> class SwishLayer : public Synet::Layer<T>
     {
     public:
-        typedef Layer<float> Base;
+        typedef T Type;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        SoftplusLayer(const LayerParam& param, Context* context);
+        SwishLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
+        {
+        }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
-
-    protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
-
-    private:
-        size_t _size;
-        float _beta, _threshold;
-    };
-
-    //---------------------------------------------------------------------------------------------
-
-    class SwishLayer : public Synet::Layer<float>
-    {
-    public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
-        SwishLayer(const LayerParam& param, Context* context);
-
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        {
+            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
+            this->UsePerfStat();
+        }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
-
-    private:
-        size_t _size;
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        {
+            CpuSwish(src[0]->CpuData(), src[0]->Size(), dst[0]->CpuData());
+        }
     };
 }

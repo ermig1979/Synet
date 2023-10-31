@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2023 Yermalayeu Ihar.
+* Copyright (c) 2018-2022 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -118,14 +118,6 @@ namespace Synet
             }
         };
 
-        template<class T> struct Activation<T, ActivationFunctionTypeGelu>
-        {
-            static SYNET_INLINE T Func(T value, const T* params, size_t offset)
-            {
-                return CpuGelu(value);
-            }
-        };
-
         template<class T, ActivationFunctionType activation> void MergedConvolutionLayerDepthwise(
             const T * src, const ConvParam & conv, const T * weight, const T * bias, const T * params, T * dst)
         {
@@ -178,7 +170,7 @@ namespace Synet
         {
         }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             assert(src.size() == 1 && src[0]->Count() == 4 && src[0]->Format() == TensorFormatNhwc);
 
@@ -246,7 +238,6 @@ namespace Synet
                 desc << "-" << (a.conv[i].IsDepthwise() ? String("") : Cpl::ToStr(a.conv[i].dstC) + "x") << a.conv[i].kernelY << "x" << a.conv[i].strideY;
             desc << InternalInfo();
             this->UsePerfStat(desc.str(), Flop());
-            return true;
         }
 
         virtual void CompactWeight()

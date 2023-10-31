@@ -41,13 +41,12 @@ namespace Synet
         {
         }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             assert(src.size() == 2 && src[1]->GetType() == TensorType32i && dst.size() == 2);
             dst[0]->Reshape(src[0]->Shape());
             dst[1]->Reshape(src[0]->Shape());
             this->UsePerfStat();
-            return true;
         }
 
     protected:

@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2023 Yermalayeu Ihar.
+* Copyright (c) 2018-2022 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -61,40 +61,6 @@ namespace Synet
     template <class T> SYNET_INLINE T Abs(T a)
     {
         return a < 0 ? -a : a;
-    }
-
-    template <class T> T Not(T i)
-    {
-        return ~i;
-    }
-
-    template<> SYNET_INLINE float Not<float>(float f)
-    {
-        int i = ~(int&)f;
-        return (float&)i;
-    }
-
-    template <> SYNET_INLINE bool Not<bool>(bool i)
-    {
-        return !i;
-    }
-
-    template <class T> T And(T a, T b)
-    {
-        return a & b;
-    }
-
-    template<> SYNET_INLINE float And<float>(float a, float b)
-    {
-        int _a = (int&)a;
-        int _b = (int&)b;
-        int _c = _a & _b;
-        return (float&)(_c);
-    }
-
-    template<> SYNET_INLINE bool And<bool>(bool a, bool b)
-    {
-        return a && b;
     }
 
     template <class T> SYNET_INLINE T RestrictRange(T value, T min, T max)
@@ -241,6 +207,14 @@ namespace Synet
         for (size_t i = 0; i < size; ++i)
            sum += a[i]*b[i];
         return sum;
+    }
+
+    template <typename T> T CpuTouch(const T * data, size_t size)
+    {
+        volatile T touched = 0;
+        for (size_t i = 0; i < size; i += 1024)
+            touched += data[i];
+        return touched;
     }
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)

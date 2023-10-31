@@ -103,7 +103,7 @@ namespace Synet
         {
         }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             _normRegion = this->Param().lrn().normRegion();
             _size = this->Param().lrn().localSize();
@@ -148,7 +148,6 @@ namespace Synet
                 break;
             }
             this->UsePerfStat();
-            return true;
         }
 
         virtual size_t MemoryUsage() const

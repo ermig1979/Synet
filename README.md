@@ -6,6 +6,7 @@ Synet is a small framework to infer neural network on CPU. Synet uses models pre
 The main advantages  of Synet are:
 
 * Synet is faster then most other DNN original frameworks (has great single thread CPU performance).
+* Synet is header only, small C++ library.
 * Synet has next external dependencies - [Cpl](https://github.com/ermig1979/Cpl) and [Simd Library](https://github.com/ermig1979/Simd).
 
 Building of test applications for Linux

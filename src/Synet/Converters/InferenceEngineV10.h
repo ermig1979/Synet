@@ -285,8 +285,8 @@ namespace Synet
                 return true;
             }
             layer.type() = Synet::LayerTypeBroadcast;
-            //if (src0->type() == LayerTypeConst && src1->type() == LayerTypeMeta)
-            //    layer.broadcast().fixed() = true;
+            if (src0->type() == LayerTypeConst && src1->type() == LayerTypeMeta)
+                layer.broadcast().fixed() = true;
             return true;
         }
 

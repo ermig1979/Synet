@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2023 Yermalayeu Ihar.
+* Copyright (c) 2018-2022 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -48,7 +48,6 @@ namespace Synet
             : _param(param)
             , _context(context)
             , _isBack(false)
-            , _const(false)
             , _perfEnable(false)
             , _perfInited(false)
             , _perfFlop(0)
@@ -110,11 +109,6 @@ namespace Synet
             return true;
         }
 
-        bool Const() const
-        {
-            return _const;
-        }
-
         virtual void DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
         {
         }
@@ -142,12 +136,10 @@ namespace Synet
             return result;
         }
 
-        virtual bool Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
 
         inline void Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
-            if (_const)
-                return;
             InitPerfStat();
             SYNET_PERF_TEST(_perfComm);
             SYNET_PERF_TEST(_perfSpec);
@@ -165,18 +157,18 @@ namespace Synet
                 ptrdiff_t size = param.size();
                 if (offset < 0 && size < 0)
                 {
-                    Reshape(param, tensor);
-                    if (!is.read((char*)tensor.RawCpuData(), tensor.RawSize()))
+                    tensor.Reshape(param.dim(), Type(), param.format());
+                    if (!is.read((char*)tensor.CpuData(), tensor.Size() * sizeof(T)))
                         return false;
                 }
                 else
                 {
                     if (!ShareExisted(offset, layers, tensor))
                     {
-                        Reshape(param, tensor);
+                        tensor.Reshape(param.dim(), Type(), param.format());
                         if (!is.seekg(offset, std::ios::beg))
                             return false;
-                        if (!is.read((char*)tensor.RawCpuData(), size))
+                        if (!is.read((char*)tensor.CpuData(), size))
                             return false;
                     }
                 }
@@ -195,11 +187,11 @@ namespace Synet
                 ptrdiff_t length = param.size();
                 if (offset < 0 && length < 0)
                 {
-                    Reshape(param, tensor);
-                    length = tensor.RawSize();
-                    if (length > (ptrdiff_t)size)
+                    tensor.Reshape(param.dim(), Type(), param.format());
+                    length = tensor.Size() * sizeof(T);
+                    if (length > size)
                         return false;
-                    memcpy(tensor.RawCpuData(), data, length);
+                    memcpy((char*)tensor.CpuData(), data, length);
                     data += length;
                     size -= length;
                 }
@@ -207,10 +199,10 @@ namespace Synet
                 {
                     if (!ShareExisted(offset, layers, tensor))
                     {
-                        if (offset + length > (ptrdiff_t)size)
+                        if (offset + length > size)
                             return false;
-                        Reshape(param, tensor);
-                        memcpy(tensor.RawCpuData(), data + offset, length);
+                        tensor.Reshape(param.dim(), Type(), param.format());
+                        memcpy((char*)tensor.CpuData(), data + offset, length);
                     }
                 }
             }
@@ -264,11 +256,8 @@ namespace Synet
             return _context->options;
         }
 
-    protected:
-        bool _const;
-
     private:
-        friend class Network;
+        template<class U> friend class Network;
 
         const LayerParam & _param;
         Synet::Context* _context;
@@ -339,17 +328,6 @@ namespace Synet
                 }
             }
             return true;
-        }
-
-        void Reshape(const WeightParam & param, Tensor & tensor) const
-        {
-            switch (param.type())
-            {
-            case TensorType32f: tensor.As32f().Reshape(param.dim(), 0, param.format()); break;
-            case TensorType32i: tensor.As32i().Reshape(param.dim(), 0, param.format()); break;
-            default:
-                assert(0);
-            }
         }
     };
 }

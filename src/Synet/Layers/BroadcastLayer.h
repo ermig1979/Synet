@@ -24,28 +24,53 @@
 
 #pragma once
 
+#include "Synet/Common.h"
 #include "Synet/Layer.h"
+#include "Synet/Utils/Math.h"
 
 namespace Synet
 {
-    class BroadcastLayer : public Synet::Layer<float>
+    template <class T> class BroadcastLayer : public Synet::Layer<T>
     {
     public:
-        typedef Layer<float> Base;
+        typedef T Type;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        BroadcastLayer(const LayerParam& param, Context* context);
+        BroadcastLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
+        {
+        }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
-
-        typedef void (*BroadcastPtr)(const uint8_t* src, size_t size, uint8_t* dst);
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        {
+            assert(src.size() == 2 && src[0]->Size() == 1 && src[1]->Count() == 1);
+            _fixed = this->Param().broadcast().fixed();
+            Shape shape(src[1]->Size());
+            if (src[1]->GetType() == TensorType64i)
+            {
+                for (size_t i = 0; i < src[1]->Size(); ++i)
+                    shape[i] = (size_t)src[1]->As64i().CpuData()[i];
+            }
+            else if (src[1]->GetType() == TensorType32i)
+            {
+                for (size_t i = 0; i < src[1]->Size(); ++i)
+                    shape[i] = (size_t)src[1]->As32i().CpuData()[i];
+            }
+            else
+                assert(0);
+            dst[0]->Reshape(shape, src[0]->CpuData()[0], src[0]->Format());
+        }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        {
+            if (_fixed)
+                return;
+            CpuSet(dst[0]->Size(), src[0]->CpuData()[0], dst[0]->CpuData());
+        }
 
     private:
-        TensorType _type;
-        size_t _size;
-        BroadcastPtr _broadcast;
+        bool _fixed;
     };
 }

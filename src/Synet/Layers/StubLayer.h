@@ -24,21 +24,31 @@
 
 #pragma once
 
+#include "Synet/Common.h"
 #include "Synet/Layer.h"
 
 namespace Synet
 {
-    class StubLayer : public Synet::Layer<float>
+    template <class T> class StubLayer : public Synet::Layer<T>
     {
     public:
-        typedef Layer<float> Base;
+        typedef T Type;
+        typedef Layer<T> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        StubLayer(const LayerParam& param, Context* context);
+        StubLayer(const LayerParam & param, Context* context)
+            : Base(param, context)
+        {
+        }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        {
+            dst[0]->Share(*src[0]);
+        }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        {
+        }
     };
 }

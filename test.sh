@@ -10,21 +10,18 @@ if [ "$3" = "local" ]; then
 else
   IMAGE=./data/images/$3
 fi
-if [ "${BF16_TEST}" = "1" ]; then
-  THRESHOLD=0.02; QUANTILE=0.0; METHOD=-1
-  echo "Use increased accuracy threshold : $THRESHOLD for BF16."
-else
-  THRESHOLD=0.002; QUANTILE=0.0; METHOD=-1
-fi
 if [ "$FRAMEWORK" = "quantization" ]; then
-  PATHES="-fm=$DIR/synet.xml -fw=$DIR/synet.bin -sm=$DIR/int8.xml"
-  THRESHOLD=0.01; QUANTILE=0.0; METHOD=0
-elif [ "$FRAMEWORK" = "inference_engine" ]; then 
-  PATHES="-fm=$DIR/other.xml -fw=$DIR/other.bin -sm=$DIR/synet.xml"
-elif [ "$FRAMEWORK" = "onnx" ]; then 
-  PATHES="-fw=$DIR/other.onnx -sm=$DIR/synet.xml"
+  PATHES="-fm=$DIR/synet.xml -fw=$DIR/synet.bin -sm=$DIR/int8.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
+  THRESHOLD=0.01; QUANTILE=0.0 METHOD=0
+else
+  PATHES="-fm=$DIR/other.dsc -fw=$DIR/other.dat -sm=$DIR/synet.xml -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
+  if [ "${BF16_TEST}" = "1" ]; then
+    THRESHOLD=0.02; QUANTILE=0.0 METHOD=-1
+    echo "Use increased accuracy threshold : $THRESHOLD for BF16."
+  else
+    THRESHOLD=0.002; QUANTILE=0.0 METHOD=-1
+  fi
 fi
-PATHES="$PATHES -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
 NUMBER=$4
 THREAD=$5
 FORMAT=$6
@@ -44,13 +41,13 @@ export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 "$BIN" -m=convert $PATHES -tf=$FORMAT -cs=0 -qm=$METHOD -bf=$BF16_TEST
 if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -bf=$BF16_TEST -et=10.0 -ie=10 -be=10 -dp=3 -dpf=6 -dpl=2 -dpp=6 -ar=0 -rt=0.5 -ro=0.3 -cs=0 -sf=0.000 -pl=$PERF -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -bf=$BF16_TEST -et=10.0 -ie=10 -be=10 -dp=0 -dpf=6 -dpl=2 -dpp=4 -ar=0 -rt=0.5 -ro=0.3 -cs=0 -sf=0.000 -pl=$PERF -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
-#TEST inference_engine test_010f faces 50 0 0 1 002 2
-#TEST inference_engine test_011f vehicles 40 0 1 1 004 2
-#TEST inference_engine test_012f persons 10 1 1 1 001 0
+TEST inference_engine test_010f faces 50 0 0 1 002 2
+#TEST inference_engine test_011f vehicles 40 0 0 1 003 2
+#TEST inference_engine test_012f persons 10 0 0 1 001 0
 #TEST inference_engine test_013f persons 20 0 0 1 001 0
 #TEST inference_engine test_014f local 200 0 1 1 000h 0 ???
 #TEST inference_engine test_015f license_plates 100 1 1 1 000h 0
@@ -60,8 +57,10 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 #TEST inference_engine test_019f face 500 1 1 1 000 2
 #TEST inference_engine test_020f persons 1 0 0 1 000 2 ???
 
-#TEST onnx test_000 face 80 1 1 1 005 2
-TEST onnx test_001 faces 30 1 1 1 003 2
+#TEST onnx test_000 face 100 1 1 1 004 2
+#TEST onnx test_001 faces 20 1 1 1 001 2
+#TEST onnx test_002 faces 10 1 1 1 000 2
+#TEST onnx test_003 local 1 0 1 1 000 2
 
 #TEST quantization test_003 faces 100 1 1 1 000t 0
 #TEST quantization test_009 persons 1 0 1 1 000t 0

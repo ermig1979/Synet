@@ -43,7 +43,7 @@ namespace Synet
         {
         }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const DetectionOutputParam & param = this->Param().detectionOutput();
             _shareLocation = param.shareLocation();
@@ -78,7 +78,6 @@ namespace Synet
             shape.push_back(7);
             dst[0]->Reshape(shape);
             this->UsePerfStat();
-            return true;
         }
 
         virtual size_t MemoryUsage() const

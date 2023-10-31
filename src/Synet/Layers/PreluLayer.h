@@ -76,7 +76,7 @@ namespace Synet
         {
         }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+        virtual void Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
         {
             const PreluParam & param = this->Param().prelu();
             _axis = param.axis();
@@ -88,7 +88,6 @@ namespace Synet
             assert(_batch*_spatial*_channels == src[0]->Size());
             dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
             this->UsePerfStat();
-            return true;
         }
 
     protected:

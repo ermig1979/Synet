@@ -28,7 +28,7 @@
 #include "Synet/Converters/InferenceEngine.h"
 #include "Simd/SimdDrawing.hpp"
 
-typedef Synet::Network Net;
+typedef Synet::Network<float> Net;
 typedef Synet::View View;
 typedef Synet::Shape Shape;
 typedef Synet::Region<float> Region;

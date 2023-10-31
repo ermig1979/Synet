@@ -23,7 +23,3 @@
 */
 
 #include "Synet/Synet.h"
-
-namespace Synet
-{
-}

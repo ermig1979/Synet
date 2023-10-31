@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2023 Yermalayeu Ihar.
+* Copyright (c) 2018-2022 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,6 @@
 * SOFTWARE.
 */
 
-#define FIRST_MODEL_DEFAULT "other.onnx"
-#define FIRST_WEIGHT_DEFAULT "other.onnx"
-
 #include "TestCompare.h"
 #include "TestReport.h"
 
@@ -41,10 +38,13 @@ namespace Test
         SYNET_PERF_FUNC();
         Test::TestParamHolder param;
         if (FileExists(options.testParam) && !param.Load(options.testParam))
-            SYNET_ERROR("Can't load file '" << options.testParam << "' !");
+        {
+            std::cout << "Can't load file '" << options.testParam << "' !" << std::endl;
+            return false;
+        }
         param().optimizer().bf16Enable() = options.bf16;
-        param().optimizer().saveUnoptimized() = options.saveUnoptimized;
-        return Synet::ConvertOnnxToSynet(options.firstWeight, options.tensorFormat == 1, options.secondModel, options.secondWeight, param().onnx(), param().optimizer());
+        return Synet::ConvertOnnxToSynet(options.firstModel, options.firstWeight,
+            options.tensorFormat == 1, options.secondModel, options.secondWeight, param().onnx(), param().optimizer());
     }
 }
 #else
@@ -59,9 +59,6 @@ namespace Test
 int main(int argc, char* argv[])
 {
     Test::Options options(argc, argv);
-
-    Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
-    Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
 
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
     if (options.mode == "convert")
@@ -79,9 +76,7 @@ int main(int argc, char* argv[])
         options.result = comparer.Run();
     }
     else
-    {
-        CPL_LOG_SS(Error, "Unknown mode : " << options.mode);
-    }
+        std::cout << "Unknown mode : " << options.mode << std::endl;
 
     return options.result ? 0 : 1;
 }
