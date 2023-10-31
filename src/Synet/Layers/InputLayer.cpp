@@ -22,23 +22,32 @@
 * SOFTWARE.
 */
 
-#pragma once
-
-#include "Synet/Layer.h"
+#include "Synet/Layers/InputLayer.h"
 
 namespace Synet
 {
-    class InputLayer : public Synet::Layer<float>
+    InputLayer::InputLayer(const LayerParam & param, Context* context)
+        : Base(param, context)
     {
-    public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
+    }
 
-        InputLayer(const LayerParam& param, Context* context);
+    bool InputLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        if (src.size() != 0 || dst.size() != 1)
+            SYNET_ERROR("InputLayer supports only 1 output!");
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        const InputParam & input = this->Param().input();
+        if(input.shape().size() != dst.size())
+            SYNET_ERROR("Check InputLayer shape parameter!");
 
-    protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
-    };
+        for (size_t i = 0; i < dst.size(); ++i)
+            dst[i]->Reshape(TensorType32f, input.shape()[i].dim(), input.shape()[i].format());
+
+        _const = true;
+        return true;
+    }
+
+    void InputLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    {
+    }    
 }

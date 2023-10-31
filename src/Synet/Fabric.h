@@ -133,7 +133,7 @@ namespace Synet
             case LayerTypeHswish: return new HswishLayer(param, context);
             case LayerTypeHardSigmoid: return new HardSigmoidLayer(param, context);
             case LayerTypeInnerProduct: return new InnerProductLayer<T>(param, context, method);
-            case LayerTypeInput: return new InputLayer<T>(param, context);
+            case LayerTypeInput: return new InputLayer(param, context);
             case LayerTypeInterp: return new InterpLayer<T>(param, context);
             case LayerTypeLrn: return new LrnLayer<T>(param, context);
             case LayerTypeLstm: return new LstmLayer<T>(param, context);
