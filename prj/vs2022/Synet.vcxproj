@@ -187,5 +187,10 @@
     <ClInclude Include="..\..\src\Synet\Utils\Winograd.h" />
     <ClInclude Include="..\..\src\Synet\Version.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\3rd\Simd\prj\vs2022\Simd.vcxproj">
+      <Project>{c809d7a3-6c52-4e36-8582-00ced929317d}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
