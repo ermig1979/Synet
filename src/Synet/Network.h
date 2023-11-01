@@ -29,7 +29,7 @@
 
 namespace Synet
 {
-    class Network
+    class Network : public Deletable
     {
     public:
         typedef float Type;
@@ -42,6 +42,8 @@ namespace Synet
         typedef std::vector<Region> Regions;
 
         Network();
+
+        virtual ~Network();
 
         bool Empty() const;
 

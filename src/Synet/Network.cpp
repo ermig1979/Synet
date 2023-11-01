@@ -36,6 +36,11 @@ namespace Synet
     {
     }
 
+    Network::~Network()
+    {
+        Clear();
+    }
+
     bool Network::Empty() const
     { 
         return _empty; 

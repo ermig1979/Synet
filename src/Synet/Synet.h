@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2020 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,59 @@
 * SOFTWARE.
 */
 
-#pragma once
+#ifndef __Synet_h__
+#define __Synet_h__
 
-#include "Synet/Network.h"
-#include "Synet/Utils/Difference.h"
+#include <stdint.h>
+
+/*! @ingroup c_api
+    Describes boolean type.
+*/
+typedef enum
+{
+    SynetFalse = 0, /*!< False value. */
+    SynetTrue = 1, /*!< True value. */
+} SynetBool;
+
+#if defined(_WIN32) && !defined(SYNET_STATIC)
+#  ifdef SYNET_EXPORTS
+#    define SYNET_API __declspec(dllexport)
+#  else
+#    define SYNET_API __declspec(dllimport)
+#  endif
+#elif defined(__GNUC__) && defined(SYNET_HIDE_INTERNAL)
+#    define SYNET_API __attribute__ ((visibility ("default")))
+#else
+#    define SYNET_API
+#endif
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif//__cplusplus
+
+    /*! @ingroup c_api
+
+        \fn const char * SynetVersion();
+
+        \short Gets version of %Synet Framework.
+
+        \return string with version of %Synet.
+    */
+    SYNET_API const char* SynetVersion();
+
+    /*! @ingroup c_api
+
+        \fn void SiynetRelease(void * context);
+
+        \short Releases context created with using of Synet Framework API.
+
+        \param [in] context - a context to be released.
+    */ 
+    SYNET_API void SynetRelease(void* context);
+
+#ifdef __cplusplus
+}
+#endif//__cplusplus
+
+#endif //__Synet_h__

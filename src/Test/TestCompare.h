@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include "Synet/Utils/Difference.h"
+
 #include "TestCommon.h"
 #include "TestUtils.h"
 #include "TestOptions.h"

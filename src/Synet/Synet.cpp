@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2018 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,38 @@
 * SOFTWARE.
 */
 
+#include "Synet/Network.h"
+
+#if defined(_WIN32) && !defined(SYNET_STATIC)
+
+#define SYNET_EXPORTS
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReasonForCall, LPVOID lpReserved)
+{
+    switch (dwReasonForCall)
+    {
+    case DLL_PROCESS_DETACH:
+    case DLL_PROCESS_ATTACH:
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+        return TRUE;
+    }
+    return TRUE;
+}
+#endif//_WIN32
+
 #include "Synet/Synet.h"
 
-namespace Synet
+SYNET_API const char* SynetVersion()
 {
+    return SYNET_VERSION;
+}
+
+SYNET_API void SynetRelease(void* context)
+{
+    delete (Synet::Deletable*)context;
 }

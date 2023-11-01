@@ -216,6 +216,13 @@ namespace Synet
         DebugPrintInt8Buffers,
         DebugPrintLayerInternal,
     };
+
+    //---------------------------------------------------------------------------------------------
+
+    struct Deletable
+    {
+        virtual ~Deletable() {}
+    };
 }
 
 #define SYNET_ERROR(message) \

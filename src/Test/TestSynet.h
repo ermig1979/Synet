@@ -28,7 +28,7 @@
 #include "TestPerformance.h"
 #include "TestNetwork.h"
 
-#include "Synet/Synet.h"
+#include "Synet/Network.h"
 
 namespace Test
 {

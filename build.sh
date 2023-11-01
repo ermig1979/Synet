@@ -1,4 +1,4 @@
-ECHO="1"
+ECHO="0"
 HT="1"
 
 TEST_MODE=$1
