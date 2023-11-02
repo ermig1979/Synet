@@ -1,1 +1,1 @@
-python3 ./prj/py/Check.py $1 $2 
+python3 ./py/Scripts/Check.py $1 $2 
