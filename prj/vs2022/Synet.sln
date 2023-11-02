@@ -75,6 +75,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "py", "py", "{C4BD77A0-77B3-
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Scripts", "..\..\py\Scripts\Scripts.pyproj", "{88714303-76F4-44A7-96F1-D7B5084BE739}"
 EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Wrap", "..\..\py\Wrap\Wrap.pyproj", "{EF99B7C7-798D-448F-A21C-3BE4E9AF55C1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -355,6 +357,12 @@ Global
 		{88714303-76F4-44A7-96F1-D7B5084BE739}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{88714303-76F4-44A7-96F1-D7B5084BE739}.Release|Win32.ActiveCfg = Release|Any CPU
 		{88714303-76F4-44A7-96F1-D7B5084BE739}.Release|x64.ActiveCfg = Release|Any CPU
+		{EF99B7C7-798D-448F-A21C-3BE4E9AF55C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF99B7C7-798D-448F-A21C-3BE4E9AF55C1}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{EF99B7C7-798D-448F-A21C-3BE4E9AF55C1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EF99B7C7-798D-448F-A21C-3BE4E9AF55C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF99B7C7-798D-448F-A21C-3BE4E9AF55C1}.Release|Win32.ActiveCfg = Release|Any CPU
+		{EF99B7C7-798D-448F-A21C-3BE4E9AF55C1}.Release|x64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -391,6 +399,7 @@ Global
 		{F4B32DF8-0820-419E-B80A-6B3D4522910C} = {AFFDA6C0-D2CE-421C-8B55-7A55284D9427}
 		{CC300A30-5BEB-42F0-8DD9-D652FA5662AB} = {302014D6-E119-4F87-89FE-58B605B21254}
 		{88714303-76F4-44A7-96F1-D7B5084BE739} = {C4BD77A0-77B3-4938-AA0C-CB1D63076EA9}
+		{EF99B7C7-798D-448F-A21C-3BE4E9AF55C1} = {C4BD77A0-77B3-4938-AA0C-CB1D63076EA9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8D0544B9-1F3D-447C-B071-0078E50D9328}
