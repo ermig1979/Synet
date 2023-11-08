@@ -57,3 +57,13 @@ SYNET_API void SynetRelease(void* context)
 {
     delete (Synet::Deletable*)context;
 }
+
+SYNET_API void* SynetNetworkInit()
+{
+    return new Synet::Network();
+}
+
+SYNET_API SynetBool SynetNetworkLoad(void* network, const char* model, const char* weight)
+{
+    return ((Synet::Network*)network)->Load(model, weight) ? SynetTrue : SynetFalse;
+}

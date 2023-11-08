@@ -65,13 +65,36 @@ extern "C"
 
     /*! @ingroup c_api
 
-        \fn void SiynetRelease(void * context);
+        \fn void SynetRelease(void * context);
 
         \short Releases context created with using of Synet Framework API.
 
         \param [in] context - a context to be released.
     */ 
     SYNET_API void SynetRelease(void* context);
+
+    /*! @ingroup c_api
+
+        \fn void * SynetNetworkInit();
+
+        \short Creates Synet Network.
+
+        \return a pointer to Network. It must be released with using of function ::SynetRelease.
+    */
+    SYNET_API void * SynetNetworkInit();
+
+    /*! @ingroup c_api
+
+        \fn SynetBool SynetNetworkLoad(void * network, const char * model, const char* weight);
+
+        \short Loads Synet model from files.
+
+        \param [in,out] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+        \param [in] model - a path to Synet model description (in XML format).
+        \param [in] weight - a path to Synet model binary weights.
+        \return result of model loading.
+    */
+    SYNET_API SynetBool SynetNetworkLoad(void * network, const char * model, const char* weight);
 
 #ifdef __cplusplus
 }

@@ -5,7 +5,7 @@
     <ProjectGuid>{ef99b7c7-798d-448f-a21c-3be4e9af55c1}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>Synet.py</StartupFile>
+    <StartupFile>Test.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>../../bin/v143/x64/Debug</WorkingDirectory>
@@ -13,8 +13,7 @@
     <Name>Wrap</Name>
     <RootNamespace>simple</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>
-    </CommandLineArguments>
+    <CommandLineArguments>-m=../../../../data/onnx/test_000/synet.xml -w=../../../../data/onnx/test_000/synet.bin</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
@@ -28,6 +27,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Synet.py" />
+    <Compile Include="Test.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
