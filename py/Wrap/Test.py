@@ -17,18 +17,23 @@ def main():
 	
 	synet = Synet.Synet(args.bin)
 	
-	print("Synet version: {0} \n".format(synet.Version()))
+	print("Synet version: {0}. \n".format(synet.Version()))
 	
 	network = Synet.Network(synet)
 	
 	if not network.Load(args.model, args.weight) :
 		return 1
+	print("Load network from {0} and {1}.".format(args.model, args.weight))
 	
-	#network = synet.NetworkInit()
+	print("Network inputs:")
+	for src in range(network.SrcCount()) :
+		print(" {0}: {1}".format(src, network.SrcShape(src)))
 	
-	#synet.Release(network)
+	print("Network outputs:")
+	for dst in range(network.DstCount()) :
+		print(" {0}: {1}".format(dst, network.DstShape(dst)))
 	
-	print("Synet Python Wrapper ended successfully!")
+	print("\nSynet Python Wrapper ended successfully!")
 	
 	return 0
 	

@@ -96,6 +96,78 @@ extern "C"
     */
     SYNET_API SynetBool SynetNetworkLoad(void * network, const char * model, const char* weight);
 
+    /*! @ingroup c_api
+
+        \fn size_t SynetNetworkSrcCount(void* network);
+
+        \short Gets number of network inputs.
+
+        \param [in,out] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+        \return a number of network inputs.
+    */
+    SYNET_API size_t SynetNetworkSrcCount(void* network);
+
+    /*! @ingroup c_api
+
+        \fn size_t SynetNetworkSrcDimCount(void* network, size_t srcIndex);
+
+        \short Gets number of dimensions of given input of network.
+
+        \param [in,out] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+        \param [in] srcIndex - an index of input.
+        \return a number of dimensions of given input of network.
+    */
+    SYNET_API size_t SynetNetworkSrcDimCount(void* network, size_t srcIndex);
+
+    /*! @ingroup c_api
+
+        \fn size_t SynetNetworkSrcDimValue(void* network, size_t srcIndex, size_t dimIndex);
+
+        \short Gets size of given dimension of given input of network.
+
+        \param [in,out] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+        \param [in] srcIndex - an index of input.
+        \param [in] dimIndex - an index of dimension in input.
+        \return a size of given dimension of given input of network.
+    */
+    SYNET_API size_t SynetNetworkSrcDimValue(void* network, size_t srcIndex, size_t dimIndex);
+
+    /*! @ingroup c_api
+
+        \fn size_t SynetNetworkDstCount(void* network);
+
+        \short Gets number of network outputs.
+
+        \param [in,out] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+        \return a number of network outputs.
+    */
+    SYNET_API size_t SynetNetworkDstCount(void* network);
+
+    /*! @ingroup c_api
+
+        \fn size_t SynetNetworkDstDimCount(void* network, size_t dstIndex);
+
+        \short Gets number of dimensions of given output of network.
+
+        \param [in,out] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+        \param [in] dstIndex - an index of output.
+        \return a number of dimensions of given output of network.
+    */
+    SYNET_API size_t SynetNetworkDstDimCount(void* network, size_t dstIndex);
+
+    /*! @ingroup c_api
+
+        \fn size_t SynetNetworkDstDimValue(void* network, size_t dstIndex, size_t dimIndex);
+
+        \short Gets size of given dimension of given output of network.
+
+        \param [in,out] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+        \param [in] dstIndex - an index of output.
+        \param [in] dimIndex - an index of dimension in output.
+        \return a size of given dimension of given output of network.
+    */
+    SYNET_API size_t SynetNetworkDstDimValue(void* network, size_t dstIndex, size_t dimIndex);
+
 #ifdef __cplusplus
 }
 #endif//__cplusplus

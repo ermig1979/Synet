@@ -67,3 +67,33 @@ SYNET_API SynetBool SynetNetworkLoad(void* network, const char* model, const cha
 {
     return ((Synet::Network*)network)->Load(model, weight) ? SynetTrue : SynetFalse;
 }
+
+SYNET_API size_t SynetNetworkSrcCount(void* network)
+{
+    return ((Synet::Network*)network)->Src().size();
+}
+
+SYNET_API size_t SynetNetworkSrcDimCount(void* network, size_t srcIndex)
+{
+    return ((Synet::Network*)network)->Src()[srcIndex]->Shape().size();
+}
+
+SYNET_API size_t SynetNetworkSrcDimValue(void* network, size_t srcIndex, size_t dimIndex)
+{
+    return ((Synet::Network*)network)->Src()[srcIndex]->Shape()[dimIndex];
+}
+
+SYNET_API size_t SynetNetworkDstCount(void* network)
+{
+    return ((Synet::Network*)network)->Dst().size();
+}
+
+SYNET_API size_t SynetNetworkDstDimCount(void* network, size_t dstIndex)
+{
+    return ((Synet::Network*)network)->Dst()[dstIndex]->Shape().size();
+}
+
+SYNET_API size_t SynetNetworkDstDimValue(void* network, size_t dstIndex, size_t dimIndex)
+{
+    return ((Synet::Network*)network)->Dst()[dstIndex]->Shape()[dimIndex];
+}
