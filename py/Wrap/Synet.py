@@ -4,6 +4,7 @@ import ctypes
 import pathlib
 import sys
 import array
+import enum
 
 ###################################################################################################
 
@@ -35,26 +36,66 @@ class Synet():
 		self.lib.SynetNetworkLoad.argtypes = [ ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p ]
 		self.lib.SynetNetworkLoad.restype = ctypes.c_bool 
 		
-		self.lib.SynetNetworkSrcCount.argtypes = [ ctypes.c_void_p ]
-		self.lib.SynetNetworkSrcCount.restype = ctypes.c_size_t 
+		self.lib.SynetNetworkSrcSize.argtypes = [ ctypes.c_void_p ]
+		self.lib.SynetNetworkSrcSize.restype = ctypes.c_size_t 
 
-		self.lib.SynetNetworkSrcDimCount.argtypes = [ ctypes.c_void_p, ctypes.c_size_t ]
-		self.lib.SynetNetworkSrcDimCount.restype = ctypes.c_size_t 
+		self.lib.SynetNetworkSrc.argtypes = [ ctypes.c_void_p, ctypes.c_size_t ]
+		self.lib.SynetNetworkSrc.restype = ctypes.c_void_p 
 		
-		self.lib.SynetNetworkSrcDimValue.argtypes = [ ctypes.c_void_p, ctypes.c_size_t, ctypes.c_size_t ]
-		self.lib.SynetNetworkSrcDimValue.restype = ctypes.c_size_t 
+		self.lib.SynetNetworkDstSize.argtypes = [ ctypes.c_void_p ]
+		self.lib.SynetNetworkDstSize.restype = ctypes.c_size_t 
 
-		self.lib.SynetNetworkDstCount.argtypes = [ ctypes.c_void_p ]
-		self.lib.SynetNetworkDstCount.restype = ctypes.c_size_t 
+		self.lib.SynetNetworkDst.argtypes = [ ctypes.c_void_p, ctypes.c_size_t ]
+		self.lib.SynetNetworkDst.restype = ctypes.c_void_p 
 		
-		self.lib.SynetNetworkDstDimCount.argtypes = [ ctypes.c_void_p, ctypes.c_size_t ]
-		self.lib.SynetNetworkDstDimCount.restype = ctypes.c_size_t 
+		self.lib.SynetTensorCount.argtypes = [ ctypes.c_void_p ]
+		self.lib.SynetTensorCount.restype = ctypes.c_size_t 
 		
-		self.lib.SynetNetworkDstDimValue.argtypes = [ ctypes.c_void_p, ctypes.c_size_t, ctypes.c_size_t ]
-		self.lib.SynetNetworkDstDimValue.restype = ctypes.c_size_t 
+		self.lib.SynetTensorAxis.argtypes = [ ctypes.c_void_p, ctypes.c_size_t ]
+		self.lib.SynetTensorAxis.restype = ctypes.c_size_t
+		
+		self.lib.SynetTensorFormat.argtypes = [ ctypes.c_void_p ]
+		self.lib.SynetTensorFormat.restype = ctypes.c_int
+		
+		self.lib.SynetTensorName.argtypes = [ ctypes.c_void_p ]
+		self.lib.SynetTensorName.restype = ctypes.c_char_p
 		
 	def Version(self) -> str: 
 		ptr = self.lib.SynetVersion()
+		return str(ptr, encoding='utf-8')
+	
+###################################################################################################
+
+class TensorFormat(enum.Enum) :
+	Unknown = -1
+	NCHW = 0
+	NHWC = 1
+	
+	
+###################################################################################################
+
+class Tensor():
+	lib : ctypes.CDLL
+	tensor : ctypes.c_void_p
+	
+	def __init__(self, tensor: ctypes.c_void_p, lib: ctypes.CDLL):
+		self.lib = lib
+		self.tensor = tensor
+	
+	def Format(self) -> int:
+		return self.lib.SynetTensorFormat(self.tensor)
+	
+	def Shape(self):
+		shape = []
+		for axis in range(self.lib.SynetTensorCount(self.tensor)) :
+			shape.append(self.lib.SynetTensorAxis(self.tensor, axis))
+		return shape
+	
+	def Format(self) -> TensorFormat:
+		return TensorFormat(self.lib.SynetTensorFormat(self.tensor))
+	
+	def Name(self) -> str:
+		ptr = self.lib.SynetTensorName(self.tensor)
 		return str(ptr, encoding='utf-8')
 	
 
@@ -82,23 +123,17 @@ class Network():
 			return False
 		return self.lib.SynetNetworkLoad(self.net, model.encode('utf-8'), weight.encode('utf-8'))
 	
-	def SrcCount(self) -> int:
-		return self.lib.SynetNetworkSrcCount(self.net)
+	def SrcSize(self) -> int:
+		return self.lib.SynetNetworkSrcSize(self.net)
 	
-	def SrcShape(self, index: int):
-		shape = []
-		for dim in range(self.lib.SynetNetworkSrcDimCount(self.net, index)) :
-			shape.append(self.lib.SynetNetworkSrcDimValue(self.net, index, dim))
-		return shape
+	def Src(self, index: int) -> Tensor:
+		return Tensor(self.lib.SynetNetworkSrc(self.net, index), self.lib)
 	
-	def DstCount(self) -> int:
-		return self.lib.SynetNetworkDstCount(self.net)
+	def DstSize(self) -> int:
+		return self.lib.SynetNetworkDstSize(self.net)
 	
-	def DstShape(self, index: int):
-		shape = []
-		for dim in range(self.lib.SynetNetworkDstDimCount(self.net, index)) :
-			shape.append(self.lib.SynetNetworkDstDimValue(self.net, index, dim))
-		return shape
+	def Dst(self, index: int):
+		return Tensor(self.lib.SynetNetworkDst(self.net, index), self.lib)
 
 			
 ###################################################################################################

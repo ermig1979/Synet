@@ -58,6 +58,8 @@ SYNET_API void SynetRelease(void* context)
     delete (Synet::Deletable*)context;
 }
 
+//-------------------------------------------------------------------------------------------------
+
 SYNET_API void* SynetNetworkInit()
 {
     return new Synet::Network();
@@ -68,32 +70,44 @@ SYNET_API SynetBool SynetNetworkLoad(void* network, const char* model, const cha
     return ((Synet::Network*)network)->Load(model, weight) ? SynetTrue : SynetFalse;
 }
 
-SYNET_API size_t SynetNetworkSrcCount(void* network)
+SYNET_API size_t SynetNetworkSrcSize(void* network)
 {
     return ((Synet::Network*)network)->Src().size();
 }
 
-SYNET_API size_t SynetNetworkSrcDimCount(void* network, size_t srcIndex)
+SYNET_API void* SynetNetworkSrc(void* network, size_t index)
 {
-    return ((Synet::Network*)network)->Src()[srcIndex]->Shape().size();
+    return ((Synet::Network*)network)->Src()[index];
 }
 
-SYNET_API size_t SynetNetworkSrcDimValue(void* network, size_t srcIndex, size_t dimIndex)
-{
-    return ((Synet::Network*)network)->Src()[srcIndex]->Shape()[dimIndex];
-}
-
-SYNET_API size_t SynetNetworkDstCount(void* network)
+SYNET_API size_t SynetNetworkDstSize(void* network)
 {
     return ((Synet::Network*)network)->Dst().size();
 }
 
-SYNET_API size_t SynetNetworkDstDimCount(void* network, size_t dstIndex)
+SYNET_API void* SynetNetworkDst(void* network, size_t index)
 {
-    return ((Synet::Network*)network)->Dst()[dstIndex]->Shape().size();
+    return ((Synet::Network*)network)->Dst()[index];
 }
 
-SYNET_API size_t SynetNetworkDstDimValue(void* network, size_t dstIndex, size_t dimIndex)
+//-------------------------------------------------------------------------------------------------
+
+SYNET_API size_t SynetTensorCount(void* tensor)
 {
-    return ((Synet::Network*)network)->Dst()[dstIndex]->Shape()[dimIndex];
+    return ((Synet::Tensor<float>*)tensor)->Count();
+}
+
+SYNET_API size_t SynetTensorAxis(void* tensor, ptrdiff_t axis)
+{
+    return ((Synet::Tensor<float>*)tensor)->Axis(axis);
+}
+
+SYNET_API SynetTensorFormatType SynetTensorFormat(void* tensor)
+{
+    return (SynetTensorFormatType)((Synet::Tensor<float>*)tensor)->Format();
+}
+
+SYNET_API const char* SynetTensorName(void* tensor)
+{
+    return ((Synet::Tensor<float>*)tensor)->Name().c_str();
 }

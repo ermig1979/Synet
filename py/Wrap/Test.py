@@ -26,12 +26,14 @@ def main():
 	print("Load network from {0} and {1}.".format(args.model, args.weight))
 	
 	print("Network inputs:")
-	for src in range(network.SrcCount()) :
-		print(" {0}: {1}".format(src, network.SrcShape(src)))
+	for src in range(network.SrcSize()) :
+		tensor = network.Src(src)
+		print(" {0}: {1} {2} {3}".format(src, tensor.Name(), tensor.Shape(), tensor.Format().name))
 	
 	print("Network outputs:")
-	for dst in range(network.DstCount()) :
-		print(" {0}: {1}".format(dst, network.DstShape(dst)))
+	for dst in range(network.DstSize()) :
+		tensor = network.Dst(dst)
+		print(" {0}: {1} {2} {3}".format(dst, tensor.Name(), tensor.Shape(), tensor.Format().name))
 	
 	print("\nSynet Python Wrapper ended successfully!")
 	

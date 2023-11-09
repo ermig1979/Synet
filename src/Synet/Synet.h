@@ -27,15 +27,6 @@
 
 #include <stdint.h>
 
-/*! @ingroup c_api
-    Describes boolean type.
-*/
-typedef enum
-{
-    SynetFalse = 0, /*!< False value. */
-    SynetTrue = 1, /*!< True value. */
-} SynetBool;
-
 #if defined(_WIN32) && !defined(SYNET_STATIC)
 #  ifdef SYNET_EXPORTS
 #    define SYNET_API __declspec(dllexport)
@@ -52,6 +43,25 @@ typedef enum
 extern "C"
 {
 #endif//__cplusplus
+
+    /*! @ingroup c_api
+        Describes boolean type.
+    */
+    typedef enum
+    {
+        SynetFalse = 0, /*!< False value. */
+        SynetTrue = 1, /*!< True value. */
+    } SynetBool;
+
+    /*! @ingroup c_api
+        Describes tensor format.
+    */
+    typedef enum
+    {
+        SynetTensorFormatUnknown = -1, /*!< Unknown format. */
+        SynetTensorFormatNchw = 0, /*!< NCHW format. */
+        SynetTensorFormatNhwc= 1, /*!< NHWC format. */
+    } SynetTensorFormatType;
 
     /*! @ingroup c_api
 
@@ -89,7 +99,7 @@ extern "C"
 
         \short Loads Synet model from files.
 
-        \param [in,out] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+        \param [in, out] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
         \param [in] model - a path to Synet model description (in XML format).
         \param [in] weight - a path to Synet model binary weights.
         \return result of model loading.
@@ -98,75 +108,94 @@ extern "C"
 
     /*! @ingroup c_api
 
-        \fn size_t SynetNetworkSrcCount(void* network);
+        \fn size_t SynetNetworkSrcSize(void* network);
 
         \short Gets number of network inputs.
 
-        \param [in,out] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+        \param [in] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
         \return a number of network inputs.
     */
-    SYNET_API size_t SynetNetworkSrcCount(void* network);
+    SYNET_API size_t SynetNetworkSrcSize(void* network);
 
     /*! @ingroup c_api
 
-        \fn size_t SynetNetworkSrcDimCount(void* network, size_t srcIndex);
+        \fn void * SynetNetworkSrc(void* network, size_t index);
 
-        \short Gets number of dimensions of given input of network.
+        \short Gets pointer to given input tensor.
 
-        \param [in,out] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
-        \param [in] srcIndex - an index of input.
-        \return a number of dimensions of given input of network.
+        \param [in] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+        \param [in] index - an index of input tensor.
+        \return a pointer to given input tensor. It valid until ...
     */
-    SYNET_API size_t SynetNetworkSrcDimCount(void* network, size_t srcIndex);
+    SYNET_API void * SynetNetworkSrc(void* network, size_t index);
 
     /*! @ingroup c_api
 
-        \fn size_t SynetNetworkSrcDimValue(void* network, size_t srcIndex, size_t dimIndex);
-
-        \short Gets size of given dimension of given input of network.
-
-        \param [in,out] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
-        \param [in] srcIndex - an index of input.
-        \param [in] dimIndex - an index of dimension in input.
-        \return a size of given dimension of given input of network.
-    */
-    SYNET_API size_t SynetNetworkSrcDimValue(void* network, size_t srcIndex, size_t dimIndex);
-
-    /*! @ingroup c_api
-
-        \fn size_t SynetNetworkDstCount(void* network);
+        \fn size_t SynetNetworkDstSize(void* network);
 
         \short Gets number of network outputs.
 
         \param [in,out] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
         \return a number of network outputs.
     */
-    SYNET_API size_t SynetNetworkDstCount(void* network);
+    SYNET_API size_t SynetNetworkDstSize(void* network);
 
     /*! @ingroup c_api
 
-        \fn size_t SynetNetworkDstDimCount(void* network, size_t dstIndex);
+        \fn void * SynetNetworkDst(void* network, size_t index);
 
-        \short Gets number of dimensions of given output of network.
+        \short Gets pointer to given output tensor.
 
-        \param [in,out] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
-        \param [in] dstIndex - an index of output.
-        \return a number of dimensions of given output of network.
+        \param [in] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+        \param [in] index - an index of output tensor.
+        \return a pointer to given output tensor. It valid until ...
     */
-    SYNET_API size_t SynetNetworkDstDimCount(void* network, size_t dstIndex);
+    SYNET_API void* SynetNetworkDst(void* network, size_t index);
 
     /*! @ingroup c_api
 
-        \fn size_t SynetNetworkDstDimValue(void* network, size_t dstIndex, size_t dimIndex);
+        \fn size_t SynetTensorCount(void* tensor);
 
-        \short Gets size of given dimension of given output of network.
+        \short Gets number of dimensions of tensor.
 
-        \param [in,out] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
-        \param [in] dstIndex - an index of output.
-        \param [in] dimIndex - an index of dimension in output.
-        \return a size of given dimension of given output of network.
+        \param [in] tensor - a tensor context. It is getted by functions ::SynetNetworkSrc or ::SynetNetworkDst.
+        \return a number of dimensions of tensor.
     */
-    SYNET_API size_t SynetNetworkDstDimValue(void* network, size_t dstIndex, size_t dimIndex);
+    SYNET_API size_t SynetTensorCount(void* tensor);
+
+    /*! @ingroup c_api
+
+        \fn size_t SynetTensorAxis(void* tensor, ptrdiff_t axis);
+
+        \short Gets size of given dimension of tensor.
+
+        \param [in] tensor - a tensor context. It is getted by functions ::SynetNetworkSrc or ::SynetNetworkDst.
+        \param [in] axis - an index of tensor dimension. Can be negative.
+        \return a size of given dimension of tensor.
+    */
+    SYNET_API size_t SynetTensorAxis(void* tensor, ptrdiff_t axis);
+
+    /*! @ingroup c_api
+
+        \fn SynetTensorFormatType SynetTensorFormat(void*  tensor);
+
+        \short Gets size of given dimension of tensor.
+
+        \param [in] tensor - a tensor context. It is getted by functions ::SynetNetworkSrc or ::SynetNetworkDst.
+        \return a tensor format.
+    */
+    SYNET_API SynetTensorFormatType SynetTensorFormat(void* tensor);
+
+    /*! @ingroup c_api
+
+        \fn const char * SynetTensorName(void* tensor);
+
+        \short Gets tensor name.
+
+        \param [in] tensor - a tensor context. It is getted by functions ::SynetNetworkSrc or ::SynetNetworkDst.
+        \return a tensor name.
+    */
+    SYNET_API const char * SynetTensorName(void* tensor);
 
 #ifdef __cplusplus
 }
