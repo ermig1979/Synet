@@ -70,6 +70,21 @@ SYNET_API SynetBool SynetNetworkLoad(void* network, const char* model, const cha
     return ((Synet::Network*)network)->Load(model, weight) ? SynetTrue : SynetFalse;
 }
 
+SYNET_API SynetBool SynetNetworkEmpty(void* network)
+{
+    return ((Synet::Network*)network)->Empty() ? SynetTrue : SynetFalse;
+}
+
+SYNET_API SynetBool SynetNetworkReshape(void* network, size_t width, size_t height, size_t batch)
+{
+    return ((Synet::Network*)network)->Reshape(width, height, batch) ? SynetTrue : SynetFalse;
+}
+
+SYNET_API SynetBool SynetNetworkSetBatch(void* network, size_t batch)
+{
+    return ((Synet::Network*)network)->SetBatch(batch) ? SynetTrue : SynetFalse;
+}
+
 SYNET_API size_t SynetNetworkSrcSize(void* network)
 {
     return ((Synet::Network*)network)->Src().size();

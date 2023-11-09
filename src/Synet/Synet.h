@@ -123,6 +123,43 @@ extern "C"
 
     /*! @ingroup c_api
 
+        \fn SynetBool SynetNetworkEmpty(void * network);
+
+        \short Checks is network model loaded.
+
+        \param [in] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+        \return result of checking.
+    */
+    SYNET_API SynetBool SynetNetworkEmpty(void* network);
+
+    /*! @ingroup c_api
+
+        \fn SynetBool SynetNetworkReshape(void* network, size_t width, size_t height, size_t batch);
+
+        \short Reshapes previously loaded network model.
+
+        \param [in] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+        \param [in] width - a width of input tensor.
+        \param [in] height - a height of input tensor.
+        \param [in] batch - a batch size of input tensor.
+        \return result of the operation.
+    */
+    SYNET_API SynetBool SynetNetworkReshape(void* network, size_t width, size_t height, size_t batch);
+
+    /*! @ingroup c_api
+
+        \fn  SynetBool SynetNetworkSetBatch(void* network, size_t batch);
+
+        \short Sets batch in previously loaded network model.
+
+        \param [in] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+        \param [in] batch - a batch size of input tensor.
+        \return result of the operation.
+    */
+    SYNET_API SynetBool SynetNetworkSetBatch(void* network, size_t batch);
+
+    /*! @ingroup c_api
+
         \fn size_t SynetNetworkSrcSize(void* network);
 
         \short Gets number of network inputs.

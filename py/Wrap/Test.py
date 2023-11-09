@@ -35,6 +35,11 @@ def main():
 		tensor = network.Dst(dst)
 		print(" {0}: {1} {2} {3} {4}".format(dst, tensor.Name(), tensor.Shape(), tensor.Type().name, tensor.Format().name))
 
+	print("Set network input:")	
+	src = network.Src(0).As32f()
+	for offs in range(10) :
+		src[offs] = 1.0
+	
 	print("Network inference:")		
 	network.Forward()
 	

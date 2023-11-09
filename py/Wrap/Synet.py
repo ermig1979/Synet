@@ -36,6 +36,15 @@ class Synet():
 		self.lib.SynetNetworkLoad.argtypes = [ ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p ]
 		self.lib.SynetNetworkLoad.restype = ctypes.c_bool 
 		
+		self.lib.SynetNetworkEmpty.argtypes = [ ctypes.c_void_p ]
+		self.lib.SynetNetworkEmpty.restype = ctypes.c_bool 
+		
+		self.lib.SynetNetworkReshape.argtypes = [ ctypes.c_void_p, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t ]
+		self.lib.SynetNetworkReshape.restype = ctypes.c_bool 
+		
+		self.lib.SynetNetworkSetBatch.argtypes = [ ctypes.c_void_p, ctypes.c_size_t ]
+		self.lib.SynetNetworkSetBatch.restype = ctypes.c_bool 
+		
 		self.lib.SynetNetworkSrcSize.argtypes = [ ctypes.c_void_p ]
 		self.lib.SynetNetworkSrcSize.restype = ctypes.c_size_t 
 
@@ -53,7 +62,7 @@ class Synet():
 		self.lib.SynetTensorCount.argtypes = [ ctypes.c_void_p ]
 		self.lib.SynetTensorCount.restype = ctypes.c_size_t 
 		
-		self.lib.SynetTensorAxis.argtypes = [ ctypes.c_void_p, ctypes.c_size_t ]
+		self.lib.SynetTensorAxis.argtypes = [ ctypes.c_void_p, ctypes.c_ssize_t ]
 		self.lib.SynetTensorAxis.restype = ctypes.c_size_t
 		
 		self.lib.SynetTensorFormatGet.argtypes = [ ctypes.c_void_p ]
@@ -149,6 +158,15 @@ class Network():
 			print("Weight file '{0}' is not exist!".format(weight))
 			return False
 		return self.lib.SynetNetworkLoad(self.net, model.encode('utf-8'), weight.encode('utf-8'))
+	
+	def Empty(self) -> bool:
+		return self.lib.SynetNetworkEmpty(self.net)
+	
+	def Reshape(self, width: int, height: int, batch = 1) -> bool:
+		return self.lib.SynetNetworkReshape(self.net, width, height, batch)
+	
+	def SetBatch(self, batch: int) -> bool:
+		return self.lib.SynetNetworkSetBatch(self.net, batch)
 	
 	def SrcSize(self) -> int:
 		return self.lib.SynetNetworkSrcSize(self.net)
