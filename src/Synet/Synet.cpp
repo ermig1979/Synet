@@ -90,6 +90,11 @@ SYNET_API void* SynetNetworkDst(void* network, size_t index)
     return ((Synet::Network*)network)->Dst()[index];
 }
 
+SYNET_API void SynetNetworkForward(void* network)
+{
+    ((Synet::Network*)network)->Forward();
+}
+
 //-------------------------------------------------------------------------------------------------
 
 SYNET_API size_t SynetTensorCount(void* tensor)
@@ -102,12 +107,22 @@ SYNET_API size_t SynetTensorAxis(void* tensor, ptrdiff_t axis)
     return ((Synet::Tensor<float>*)tensor)->Axis(axis);
 }
 
-SYNET_API SynetTensorFormatType SynetTensorFormat(void* tensor)
+SYNET_API SynetTensorFormat SynetTensorFormatGet(void* tensor)
 {
-    return (SynetTensorFormatType)((Synet::Tensor<float>*)tensor)->Format();
+    return (SynetTensorFormat)((Synet::Tensor<float>*)tensor)->Format();
+}
+
+SYNET_API SynetTensorType SynetTensorTypeGet(void* tensor)
+{
+    return (SynetTensorType)((Synet::Tensor<float>*)tensor)->GetType();
 }
 
 SYNET_API const char* SynetTensorName(void* tensor)
 {
     return ((Synet::Tensor<float>*)tensor)->Name().c_str();
+}
+
+SYNET_API uint8_t* SynetTensorData(void* tensor)
+{
+    return ((Synet::Tensor<float>*)tensor)->RawData();
 }

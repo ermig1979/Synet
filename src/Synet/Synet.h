@@ -60,8 +60,23 @@ extern "C"
     {
         SynetTensorFormatUnknown = -1, /*!< Unknown format. */
         SynetTensorFormatNchw = 0, /*!< NCHW format. */
-        SynetTensorFormatNhwc= 1, /*!< NHWC format. */
-    } SynetTensorFormatType;
+        SynetTensorFormatNhwc, /*!< NHWC format. */
+    } SynetTensorFormat;
+
+    /*! @ingroup c_api
+        Describes tensor data type.
+    */
+    typedef enum
+    {
+        SynetTensorTypeUnknown = -1, /*!< Unknown tensor data type. */
+        SynetTensorType32f = 0, /*!< FP32 tensor data type. */
+        SynetTensorType32i, /*!< Signed INT32 tensor data type. */
+        SynetTensorType8i, /*!< Signed INT8 tensor data type. */
+        SynetTensorType8u, /*!< Unsigned INT8 tensor data type. */
+        SynetTensorType64i, /*!< Signed INT64 tensor data type. */
+        SynetTensorType64u, /*!< Unsigned INT64 tensor data type. */
+        SynetTensorTypeBool, /*!< Boolean (1-byte) tensor data type. */
+    } SynetTensorType;
 
     /*! @ingroup c_api
 
@@ -154,6 +169,16 @@ extern "C"
 
     /*! @ingroup c_api
 
+        \fn void SynetNetworkForward(void* network);
+
+        \short Performs network model inference.
+
+        \param [in] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+    */
+    SYNET_API void SynetNetworkForward(void* network);
+
+    /*! @ingroup c_api
+
         \fn size_t SynetTensorCount(void* tensor);
 
         \short Gets number of dimensions of tensor.
@@ -177,14 +202,25 @@ extern "C"
 
     /*! @ingroup c_api
 
-        \fn SynetTensorFormatType SynetTensorFormat(void*  tensor);
+        \fn SynetTensorFormat SynetTensorFormatGet(void* tensor);
 
-        \short Gets size of given dimension of tensor.
+        \short Gets tensor format.
 
         \param [in] tensor - a tensor context. It is getted by functions ::SynetNetworkSrc or ::SynetNetworkDst.
         \return a tensor format.
     */
-    SYNET_API SynetTensorFormatType SynetTensorFormat(void* tensor);
+    SYNET_API SynetTensorFormat SynetTensorFormatGet(void* tensor);
+
+    /*! @ingroup c_api
+
+        \fn SynetTensorType SynetTensorTypeGet(void* tensor);
+
+        \short Gets tensor data type.
+
+        \param [in] tensor - a tensor context. It is getted by functions ::SynetNetworkSrc or ::SynetNetworkDst.
+        \return a tensor data type.
+    */
+    SYNET_API SynetTensorType SynetTensorTypeGet(void* tensor);
 
     /*! @ingroup c_api
 
@@ -196,6 +232,17 @@ extern "C"
         \return a tensor name.
     */
     SYNET_API const char * SynetTensorName(void* tensor);
+
+    /*! @ingroup c_api
+
+        \fn uint8_t * SynetTensorData(void* tensor);
+
+        \short Gets pointer to tensor data.
+
+        \param [in] tensor - a tensor context. It is getted by functions ::SynetNetworkSrc or ::SynetNetworkDst.
+        \return a pointer to tensor data.
+    */
+    SYNET_API uint8_t * SynetTensorData(void* tensor);
 
 #ifdef __cplusplus
 }

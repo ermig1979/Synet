@@ -28,12 +28,20 @@ def main():
 	print("Network inputs:")
 	for src in range(network.SrcSize()) :
 		tensor = network.Src(src)
-		print(" {0}: {1} {2} {3}".format(src, tensor.Name(), tensor.Shape(), tensor.Format().name))
+		print(" {0}: {1} {2} {3} {4}".format(src, tensor.Name(), tensor.Shape(), tensor.Type().name, tensor.Format().name))
 	
 	print("Network outputs:")
 	for dst in range(network.DstSize()) :
 		tensor = network.Dst(dst)
-		print(" {0}: {1} {2} {3}".format(dst, tensor.Name(), tensor.Shape(), tensor.Format().name))
+		print(" {0}: {1} {2} {3} {4}".format(dst, tensor.Name(), tensor.Shape(), tensor.Type().name, tensor.Format().name))
+
+	print("Network inference:")		
+	network.Forward()
+	
+	print("Network output:")	
+	dst = network.Dst(0).As32f()
+	for offs in range(10) :
+		print(" {0} ".format(dst[offs]))
 	
 	print("\nSynet Python Wrapper ended successfully!")
 	

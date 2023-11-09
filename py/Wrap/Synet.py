@@ -48,17 +48,25 @@ class Synet():
 		self.lib.SynetNetworkDst.argtypes = [ ctypes.c_void_p, ctypes.c_size_t ]
 		self.lib.SynetNetworkDst.restype = ctypes.c_void_p 
 		
+		self.lib.SynetNetworkForward.argtypes = [ ctypes.c_void_p]
+		
 		self.lib.SynetTensorCount.argtypes = [ ctypes.c_void_p ]
 		self.lib.SynetTensorCount.restype = ctypes.c_size_t 
 		
 		self.lib.SynetTensorAxis.argtypes = [ ctypes.c_void_p, ctypes.c_size_t ]
 		self.lib.SynetTensorAxis.restype = ctypes.c_size_t
 		
-		self.lib.SynetTensorFormat.argtypes = [ ctypes.c_void_p ]
-		self.lib.SynetTensorFormat.restype = ctypes.c_int
+		self.lib.SynetTensorFormatGet.argtypes = [ ctypes.c_void_p ]
+		self.lib.SynetTensorFormatGet.restype = ctypes.c_int
+		
+		self.lib.SynetTensorTypeGet.argtypes = [ ctypes.c_void_p ]
+		self.lib.SynetTensorTypeGet.restype = ctypes.c_int
 		
 		self.lib.SynetTensorName.argtypes = [ ctypes.c_void_p ]
 		self.lib.SynetTensorName.restype = ctypes.c_char_p
+		
+		self.lib.SynetTensorData.argtypes = [ ctypes.c_void_p ]
+		self.lib.SynetTensorData.restype = ctypes.c_void_p
 		
 	def Version(self) -> str: 
 		ptr = self.lib.SynetVersion()
@@ -71,6 +79,17 @@ class TensorFormat(enum.Enum) :
 	NCHW = 0
 	NHWC = 1
 	
+###################################################################################################
+
+class TensorType(enum.Enum) :
+	Unknown = -1
+	FP32 = 0
+	INT32 = 1
+	INT8 = 2
+	UINT8 = 3
+	INT64 = 4
+	UINT64 = 5
+	BOOL = 6
 	
 ###################################################################################################
 
@@ -92,12 +111,20 @@ class Tensor():
 		return shape
 	
 	def Format(self) -> TensorFormat:
-		return TensorFormat(self.lib.SynetTensorFormat(self.tensor))
+		return TensorFormat(self.lib.SynetTensorFormatGet(self.tensor))
+	
+	def Type(self) -> TensorType:
+		return TensorType(self.lib.SynetTensorTypeGet(self.tensor))
 	
 	def Name(self) -> str:
 		ptr = self.lib.SynetTensorName(self.tensor)
 		return str(ptr, encoding='utf-8')
 	
+	def As32f(self) -> ctypes.POINTER(ctypes.c_float):
+		if self.Type() != TensorType.FP32 :
+			raise Exception("Tensor data type is not FP32!")
+		return ctypes.cast(self.lib.SynetTensorData(self.tensor), ctypes.POINTER(ctypes.c_float))
+
 
 ###################################################################################################
 
@@ -134,6 +161,8 @@ class Network():
 	
 	def Dst(self, index: int):
 		return Tensor(self.lib.SynetNetworkDst(self.net, index), self.lib)
-
+	
+	def Forward(self):
+		self.lib.SynetNetworkForward(self.net)
 			
 ###################################################################################################
