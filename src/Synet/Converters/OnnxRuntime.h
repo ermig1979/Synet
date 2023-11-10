@@ -2028,9 +2028,9 @@ namespace Synet
             const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
             if (src1 == NULL)
                 return false;
+            layer.type() = Synet::LayerTypeTile;
             if (src1->type() == LayerTypeMeta && src1->meta().type() == MetaTypeConst && src1->meta().alpha().type() == TensorType64i)
             {
-                layer.type() = Synet::LayerTypeTile;
                 Longs shape = src1->meta().alpha().i64();
                 if (trans && !PermutedToNchw(layers, false, false, false))
                 {
@@ -2049,7 +2049,6 @@ namespace Synet
                 }
                 layer.src().resize(1);
             }
-
             return true;
         }
 

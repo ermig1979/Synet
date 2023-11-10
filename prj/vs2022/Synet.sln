@@ -75,7 +75,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "py", "py", "{C4BD77A0-77B3-
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Scripts", "..\..\py\Scripts\Scripts.pyproj", "{88714303-76F4-44A7-96F1-D7B5084BE739}"
 EndProject
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Wrap", "..\..\py\Wrap\Wrap.pyproj", "{EF99B7C7-798D-448F-A21C-3BE4E9AF55C1}"
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "SynetPy", "..\..\py\SynetPy\SynetPy.pyproj", "{EF99B7C7-798D-448F-A21C-3BE4E9AF55C1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
