@@ -105,6 +105,16 @@ SYNET_API void* SynetNetworkDst(void* network, size_t index)
     return ((Synet::Network*)network)->Dst()[index];
 }
 
+SYNET_API void* SynetNetworkDstByName(void* network, const char* name)
+{
+    return (void*)(((Synet::Network*)network)->Dst(name));
+}
+
+SYNET_API void SynetNetworkCompactWeight(void* network)
+{
+    ((Synet::Network*)network)->CompactWeight();
+}
+
 SYNET_API void SynetNetworkForward(void* network)
 {
     ((Synet::Network*)network)->Forward();

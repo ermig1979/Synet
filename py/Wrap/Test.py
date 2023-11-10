@@ -24,6 +24,9 @@ def main():
 	if not network.Load(args.model, args.weight) :
 		return 1
 	print("Load network from {0} and {1}.".format(args.model, args.weight))
+
+	print("Set batch = 2.")	
+	network.SetBatch(2)
 	
 	print("Network inputs:")
 	for src in range(network.SrcSize()) :
@@ -44,7 +47,7 @@ def main():
 	network.Forward()
 	
 	print("Network output:")	
-	dst = network.Dst(0).As32f()
+	dst = network.DstByName("output").As32f()
 	for offs in range(10) :
 		print(" {0} ".format(dst[offs]))
 	

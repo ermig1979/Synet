@@ -177,7 +177,7 @@ extern "C"
 
         \param [in] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
         \param [in] index - an index of input tensor.
-        \return a pointer to given input tensor. It valid until ...
+        \return a pointer to given input tensor. It is valid until you reload or reshape model.
     */
     SYNET_API void * SynetNetworkSrc(void* network, size_t index);
 
@@ -200,9 +200,31 @@ extern "C"
 
         \param [in] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
         \param [in] index - an index of output tensor.
-        \return a pointer to given output tensor. It valid until ...
+        \return a pointer to given output tensor. It is valid until you reload or reshape model. Inference rewrites output tensors.
     */
     SYNET_API void* SynetNetworkDst(void* network, size_t index);
+
+    /*! @ingroup c_api
+
+        \fn void * SynetNetworkDstByName(void* network, const char * name);
+
+        \short Gets pointer to output tensor with given name.
+
+        \param [in] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+        \param [in] name - an output tensor name.
+        \return a pointer to given output tensor. It is valid until you reload or reshape model. Inference rewrites output tensors.
+    */
+    SYNET_API void* SynetNetworkDstByName(void* network, const char * name);
+
+    /*! @ingroup c_api
+
+        \fn void SynetNetworkCompactWeight(void* network);
+
+        \short Reduces memory usage by model network. After calling of this function model can't be reshaped.
+
+        \param [in] network - a network context. It is creted by function ::SynetNetworkInit and released by function ::SynetRelease.
+    */
+    SYNET_API void SynetNetworkCompactWeight(void* network);
 
     /*! @ingroup c_api
 

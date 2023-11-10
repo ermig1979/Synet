@@ -57,6 +57,11 @@ class Synet():
 		self.lib.SynetNetworkDst.argtypes = [ ctypes.c_void_p, ctypes.c_size_t ]
 		self.lib.SynetNetworkDst.restype = ctypes.c_void_p 
 		
+		self.lib.SynetNetworkDstByName.argtypes = [ ctypes.c_void_p, ctypes.c_char_p ]
+		self.lib.SynetNetworkDstByName.restype = ctypes.c_void_p 
+
+		self.lib.SynetNetworkCompactWeight.argtypes = [ ctypes.c_void_p]
+		
 		self.lib.SynetNetworkForward.argtypes = [ ctypes.c_void_p]
 		
 		self.lib.SynetTensorCount.argtypes = [ ctypes.c_void_p ]
@@ -174,11 +179,25 @@ class Network():
 	def Src(self, index: int) -> Tensor:
 		return Tensor(self.lib.SynetNetworkSrc(self.net, index), self.lib)
 	
+	def NchwShape(self) :
+		if self.SrcSize() != 1:
+			raise Exception("NchwShape works only for model with 1 input!")
+		shape = self.Src(0).Shape()
+		if len(shape) == 4 and self.Src(0).Format() == TensorFormat.NHWC:
+			shape = [shape[0], shape[3] , shape[1] , shape[2]]
+		return shape
+	
 	def DstSize(self) -> int:
 		return self.lib.SynetNetworkDstSize(self.net)
 	
 	def Dst(self, index: int):
 		return Tensor(self.lib.SynetNetworkDst(self.net, index), self.lib)
+	
+	def DstByName(self, name: str):
+		return Tensor(self.lib.SynetNetworkDstByName(self.net, name.encode('utf-8')), self.lib)
+	
+	def CompactWeight(self):
+		self.lib.SynetNetworkCompactWeight(self.net)
 	
 	def Forward(self):
 		self.lib.SynetNetworkForward(self.net)
