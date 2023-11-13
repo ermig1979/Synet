@@ -33,15 +33,15 @@ namespace Synet
 
     bool InputLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 0 || dst.size() != 1)
-            SYNET_ERROR("InputLayer supports only 1 output!");
+        if (src.size() != 0 || dst.size() == 0)
+            SYNET_ERROR("InputLayer supports only outputs!");
 
         const InputParam & input = this->Param().input();
         if(input.shape().size() != dst.size())
             SYNET_ERROR("Check InputLayer shape parameter!");
 
         for (size_t i = 0; i < dst.size(); ++i)
-            dst[i]->Reshape(TensorType32f, input.shape()[i].dim(), input.shape()[i].format());
+            dst[i]->Reshape(input.shape()[i].type(), input.shape()[i].dim(), input.shape()[i].format());
 
         _const = true;
         return true;

@@ -208,11 +208,26 @@ namespace Test
 #endif
         }
 
-        void SetInput(const Tensors& x)
+        template<class T> static void SetInput(const Tensor & src, Tensor & dst)
         {
-            assert(x.size() == _net.Src().size());
+            assert(src.Size() == dst.Size() && src.GetType() == dst.GetType());
+            if (dst.Format() == Synet::TensorFormatNhwc && dst.Count() == 4)
+            {
+                for (size_t n = 0; n < src.Axis(0); ++n)
+                    for (size_t c = 0; c < src.Axis(1); ++c)
+                        for (size_t y = 0; y < src.Axis(2); ++y)
+                            for (size_t x = 0; x < src.Axis(3); ++x)
+                                dst.Data<T>(Shape({ n, y, x, c }))[0] = src.Data<T>(Shape({ n, c, y, x }))[0];
+            }
+            else
+                memcpy(dst.RawData(), src.RawData(), src.RawSize());
+        }
+
+        void SetInput(const Tensors& src)
+        {
+            assert(src.size() == _net.Src().size());
 #ifdef SYNET_TEST_SET_INPUT
-            if (_net.Src().size() == 1 && _net.Src()[0]->Count() == 4)
+            if (_net.Src().size() == 1 && _net.Src()[0]->Count() == 4 && _netSrc().GetType() == Synet::TensorType32f)
             {
                 Views views;
                 InputToViews(x[0], views);
@@ -220,21 +235,16 @@ namespace Test
                 return;
             }
 #endif
-            for (size_t i = 0; i < x.size(); ++i)
+            for (size_t i = 0; i < src.size(); ++i)
             {
-                Net::Tensor & src = *_net.Src()[i];
-                assert(x[i].Size() == src.Size());
-                if (src.Format() == Synet::TensorFormatNhwc && src.Count() == 4)
+                switch (src[i].GetType())
                 {
-                    const float * pX = x[i].Data<float>();
-                    for (size_t n = 0; n < src.Axis(0); ++n)
-                        for (size_t c = 0; c < src.Axis(3); ++c)
-                            for (size_t y = 0; y < src.Axis(1); ++y)
-                                for (size_t x = 0; x < src.Axis(2); ++x)
-                                    src.Data<float>(Shape({ n, y, x, c }))[0] = *pX++;
+                case Synet::TensorType32f: SetInput<float>(src[i], *_net.Src()[i]); break;
+                case Synet::TensorType32i: SetInput<int32_t>(src[i], *_net.Src()[i]); break;
+                case Synet::TensorType64i: SetInput<int64_t>(src[i], *_net.Src()[i]); break;
+                default:
+                    assert(0);
                 }
-                else
-                    memcpy(src.Data<float>(), x[i].Data<float>(), x[i].Size() * sizeof(float));
             }
         }
 
@@ -255,7 +265,7 @@ namespace Test
                     for (size_t y = 0; y < shape[2]; ++y)
                         for (size_t x = 0; x < shape[3]; ++x)
                             dst[b].data[dst[b].stride*y + x * (shape[1] == 1 ? 1 : 4) + c] = 
-                            Float32ToUint8(src.CpuData(Shp( b, c, y, x ))[0], _lower[c], _upper[c]);
+                            Float32ToUint8(src.Data<float>(Shp( b, c, y, x ))[0], _lower[c], _upper[c]);
             }
         }
 
@@ -406,7 +416,7 @@ namespace Test
             Shapes srcShapes;
             for (size_t i = 0; i < param.input().size(); ++i)
             {
-                const ShapeParam & shape = param.input()[i];
+                const InputParam & shape = param.input()[i];
                 srcNames.push_back(shape.name());
                 Shape srcShape;
                 if (shape.dims().size())

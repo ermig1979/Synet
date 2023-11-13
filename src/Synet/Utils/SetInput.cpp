@@ -172,6 +172,8 @@ namespace Synet
 
         if (network.Src().size() != 1 || views.empty() || lower.size() != upper.size())
             return false;
+        if (network.Src()[0]->GetType() != TensorType32f)
+            return false;
         const Shape & shape = network.NchwShape();
         if (shape.size() != 4 || shape[0] != views.size())
             return false;

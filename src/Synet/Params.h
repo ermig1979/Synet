@@ -301,8 +301,8 @@ namespace Synet
     struct ShapeParam
     {
         CPL_PARAM_VALUE(Shape, dim, Shape());
-        //CPL_PARAM_VALUE(TensorType, type, TensorType32f);
         CPL_PARAM_VALUE(TensorFormat, format, TensorFormatNchw);
+        CPL_PARAM_VALUE(TensorType, type, TensorType32f);
     };
 
     //-------------------------------------------------------------------------------------------------

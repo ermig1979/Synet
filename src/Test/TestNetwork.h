@@ -49,13 +49,26 @@ namespace Test
         CPL_PARAM_VALUE(int32_t, size, 0);
     };
 
-    struct ShapeParam
+    struct InputParam
     {
         CPL_PARAM_VALUE(String, name, String());
         CPL_PARAM_VALUE(Shape, dims, Shape());
         CPL_PARAM_VECTOR(SizeParam, shape);
+    };
+
+    struct OutputParam
+    {
+        CPL_PARAM_VALUE(String, name, String());
         CPL_PARAM_VALUE(bool, compare, true);
     };
+
+    //struct ShapeParam
+    //{
+    //    CPL_PARAM_VALUE(String, name, String());
+    //    CPL_PARAM_VALUE(Shape, dims, Shape());
+    //    CPL_PARAM_VECTOR(SizeParam, shape);
+    //    CPL_PARAM_VALUE(bool, compare, true);
+    //};
 
     struct DetectionParam
     {
@@ -91,8 +104,8 @@ namespace Test
         CPL_PARAM_VALUE(Floats, upper, Floats(1, 1.0f));
         CPL_PARAM_VALUE(String, model, String());
         CPL_PARAM_VALUE(String, order, String());
-        CPL_PARAM_VECTOR(ShapeParam, input);
-        CPL_PARAM_VECTOR(ShapeParam, output);
+        CPL_PARAM_VECTOR(InputParam, input);
+        CPL_PARAM_VECTOR(OutputParam, output);
         CPL_PARAM_STRUCT(DetectionParam, detection);
         CPL_PARAM_STRUCT(IndexParam, index);
         CPL_PARAM_STRUCT(Synet::OptimizerParam, optimizer);
