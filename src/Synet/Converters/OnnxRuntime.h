@@ -193,7 +193,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Flatten" && !ConvertFlattenNode(node, layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Gather" && !ConvertGatherNode(node, network.layers(), layer))
+                if ((node.op_type() == "Gather" || node.op_type() == "GatherElements") && !ConvertGatherNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Gemm" && !ConvertGemmNode(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
@@ -224,6 +224,8 @@ namespace Synet
                 if (node.op_type() == "MatMul" && !ConvertMatMulNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "MaxPool" && !ConvertMaxPoolNode(node, layer))
+                    return ErrorMessage(i, node);
+                if (node.op_type() == "Mod" && !ConvertModNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Mul" && !ConvertMulNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
@@ -1014,6 +1016,7 @@ namespace Synet
                 layer.type() = LayerTypeGather;
                 if (!ConvertAtrributeInt(node, "axis", layer.gather().axis()))
                     return false;
+                layer.gather().version() = node.op_type() == "GatherElements" ? 1 : 0;
             }
             return true;
         }
@@ -1353,6 +1356,19 @@ namespace Synet
                     return false;
                 layer.pooling().roundingType() = ceilMode ? RoundingTypeCeil : RoundingTypeFloor;
             }
+            return true;
+        }
+
+        bool ConvertModNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
+            layer.type() = Synet::LayerTypeBinaryOperation;
+            layer.binaryOperation().type() = BinaryOperationTypeMod;
             return true;
         }
 

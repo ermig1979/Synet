@@ -39,13 +39,16 @@ namespace Synet
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
         typedef void (*GatherPtr)(const uint8_t* src8, size_t srcOuter, size_t srcCount, size_t srcInner, const uint8_t* idx8, size_t idxOuter, size_t idxCount, uint8_t* dst8);
+        typedef void (*GatherElementsPtr)(const uint8_t* src8, size_t srcOuter, size_t srcCount, size_t srcInner, const uint8_t* idx8, size_t idxCount, uint8_t* dst8);
 
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
+        int _version;
         TensorType _srcType, _idxType;
-        size_t _axis, _srcOuter, _srcCount, _srcInner, _idxOuter, _idxCount;
+        size_t _axis, _srcOuter, _srcCount, _srcInner, _idxOuter, _idxCount, _idxInner;
         GatherPtr _gather;
+        GatherElementsPtr _gatherElements;
     };
 }

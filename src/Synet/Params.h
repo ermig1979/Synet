@@ -121,6 +121,7 @@ CPL_PARAM_ENUM1(Synet, ActivationFunctionType,
 CPL_PARAM_ENUM1(Synet, BinaryOperationType,
     BinaryOperationTypeAnd,
     BinaryOperationTypeDiv,
+    BinaryOperationTypeMod,
     BinaryOperationTypeSub);
 
 CPL_PARAM_ENUM1(Synet, CompareType,
@@ -300,6 +301,7 @@ namespace Synet
     struct ShapeParam
     {
         CPL_PARAM_VALUE(Shape, dim, Shape());
+        //CPL_PARAM_VALUE(TensorType, type, TensorType32f);
         CPL_PARAM_VALUE(TensorFormat, format, TensorFormatNchw);
     };
 
@@ -411,6 +413,7 @@ namespace Synet
     {
         CPL_PARAM_VALUE(int, batchDims, 0);
         CPL_PARAM_VALUE(int, axis, 0);
+        CPL_PARAM_VALUE(int, version, 0);
     };
 
     struct GridSampleParam
@@ -678,7 +681,7 @@ namespace Synet
 
     struct TopKParam
     {
-        CPL_PARAM_VALUE(uint32_t, axis, 0);
+        CPL_PARAM_VALUE(int32_t, axis, 0);
         CPL_PARAM_VALUE(TopKMode, mode, TopKModeMax);
         CPL_PARAM_VALUE(TopKSort, sort, TopKSortValue); 
         CPL_PARAM_VALUE(TensorType, indexElementType, TensorType64i);

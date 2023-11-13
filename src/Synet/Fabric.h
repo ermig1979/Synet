@@ -177,7 +177,7 @@ namespace Synet
             case LayerTypeSwish: return new SwishLayer(param, context);
             case LayerTypeSwitch: return new SwitchLayer<T>(param, context);
             case LayerTypeTensorIterator: return new TensorIteratorLayer<T>(param, context);
-            case LayerTypeTile: return new TileLayer<T>(param, context);
+            case LayerTypeTile: return new TileLayer(param, context);
             case LayerTypeTopK: return new TopKLayer(param, context);
             case LayerTypeUnaryOperation: return new UnaryOperationLayer(param, context);
             case LayerTypeUnpack: return new UnpackLayer(param, context);

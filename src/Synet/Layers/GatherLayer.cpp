@@ -94,6 +94,63 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
+    template <class T, class I> void GatherElements(const uint8_t* src8, size_t srcOuter, size_t srcCount, size_t srcInner, const uint8_t* idx8, size_t idxCount, uint8_t* dst8)
+    {
+        const T* src = (const T*)src8;
+        const I* idx = (I*)idx8;
+        T* dst = (T*)dst8;
+        if (srcInner == 1)
+        {
+            for (size_t o = 0; o < srcOuter; ++o)
+            {
+                for (size_t c = 0; c < idxCount; ++c)
+                    dst[c] = src[idx[c]];
+                src += srcCount;
+                idx += idxCount;
+                dst += idxCount;
+            }
+        }
+        else
+        {
+            for (size_t o = 0; o < srcOuter; ++o)
+            {
+                for (size_t c = 0; c < idxCount; ++c)
+                {
+                    for (size_t i = 0; i < srcInner; ++i)
+                        dst[i] = src[idx[i]*srcInner + i];
+                    idx += srcInner;
+                    dst += srcInner;
+                }
+                src += srcCount * srcInner;
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    template<class T> GatherLayer::GatherElementsPtr GetGatherElements(TensorType idx)
+    {
+        switch (idx)
+        {
+        case TensorType32i: return GatherElements<T, uint32_t>;
+        case TensorType64i: return GatherElements<T, uint64_t>;
+        default:
+            return NULL;
+        }
+    }
+
+    GatherLayer::GatherElementsPtr GetGatherElements(TensorType src, TensorType idx)
+    {
+        switch (src)
+        {
+        case TensorType32f: return GetGatherElements<float>(idx);
+        default:
+            return NULL;
+        }
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     GatherLayer::GatherLayer(const LayerParam& param, Context* context)
         : Base(param, context)
     {
@@ -102,7 +159,7 @@ namespace Synet
     bool GatherLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (src.size() != 2 || dst.size() != 1)
-            SYNET_ERROR("TopKLayer supports only 2 inputs and 1 output!");
+            SYNET_ERROR("GatherLayer supports only 2 inputs and 1 output!");
 
         _srcType = src[0]->GetType();
         if (_srcType != TensorType32f)
@@ -112,10 +169,6 @@ namespace Synet
         if (_idxType != TensorType32i && _idxType != TensorType64i)
             SYNET_ERROR("GatherLayer has wrong src[1] type: " << Cpl::ToStr(_idxType) << " !");
 
-        _gather = GetGather(_srcType, _idxType);
-        if (_gather == NULL)
-            SYNET_ERROR("GatherLayer can't get worker!");
-
         Shape srcShape = src[0]->Shape();
         Shape idxShape = src[1]->Shape();
 
@@ -123,23 +176,45 @@ namespace Synet
         _axis = src[0]->Index(gather.axis());
         if(_axis >= srcShape.size())
             SYNET_ERROR("GatherLayer parameter axis: " << _axis << " has wrong value for input " << ToStr(srcShape) << " !");
+        _version = gather.version();
 
         Shape dstShape;
-        for (size_t i = 0; i < _axis; ++i)
-            dstShape.push_back(srcShape[i]);
-        if (src[1]->Size() > 1 && !src[1]->Const())
+        if (_version == 0)
         {
-            for (size_t i = 0; i < idxShape.size(); ++i)
-                dstShape.push_back(idxShape[i]);
-        }
-        for (size_t i = _axis + 1; i < srcShape.size(); ++i)
-            dstShape.push_back(srcShape[i]);
+            _gather = GetGather(_srcType, _idxType);
+            if (_gather == NULL)
+                SYNET_ERROR("GatherLayer can't get 'gather' worker!");
 
+            for (size_t i = 0; i < _axis; ++i)
+                dstShape.push_back(srcShape[i]);
+            if (src[1]->Size() > 1 && !src[1]->Const())
+            {
+                for (size_t i = 0; i < idxShape.size(); ++i)
+                    dstShape.push_back(idxShape[i]);
+            }
+            for (size_t i = _axis + 1; i < srcShape.size(); ++i)
+                dstShape.push_back(srcShape[i]);
+
+            _idxOuter = src[1]->Size(0, -1);
+            _idxCount = src[1]->Size(-1);
+        }
+        else if(_version == 1)
+        {
+            _gatherElements = GetGatherElements(_srcType, _idxType);
+            if (_gatherElements == NULL)
+                SYNET_ERROR("GatherLayer can't get 'gatherElements' worker!");
+
+            dstShape = idxShape;
+
+            _idxOuter = src[1]->Size(0, _axis);
+            _idxCount = src[1]->Axis(_axis);
+            _idxInner = src[1]->Size(_axis + 1);
+        }
+        else
+            SYNET_ERROR("GatherLayer parameter version: " << _version << " is unsupported!");
         _srcOuter = src[0]->Size(0, _axis);
         _srcCount = src[0]->Axis(_axis);
         _srcInner = src[0]->Size(_axis + 1);
-        _idxOuter = src[1]->Size(0, -1);
-        _idxCount = src[1]->Size(-1);
         dst[0]->Reshape(_srcType, dstShape, src[0]->Format());
         if (src[0]->Const() && src[1]->Const())
         {
@@ -157,6 +232,16 @@ namespace Synet
 
     void GatherLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        _gather(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, src[1]->RawData(), _idxOuter, _idxCount, dst[0]->RawData());
+        switch (_version)
+        {
+        case 0:
+            _gather(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, src[1]->RawData(), _idxOuter, _idxCount, dst[0]->RawData());
+            break;
+        case 1:
+            _gatherElements(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, src[1]->RawData(), _idxCount, dst[0]->RawData());
+            break;
+        default:
+            assert(0);
+        }
     }
 }

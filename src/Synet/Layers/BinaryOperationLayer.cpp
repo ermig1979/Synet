@@ -25,6 +25,8 @@
 
 #include "Synet/Utils/Math.h"
 
+#include <cmath>
+
 namespace Synet
 {
     template <BinaryOperationType type, class T> struct BinaryOperation;
@@ -36,6 +38,8 @@ namespace Synet
             return And(a, b);
         }
     };
+
+    //-------------------------------------------------------------------------------------------------
         
     template <class T> struct BinaryOperation<BinaryOperationTypeDiv, T>
     {
@@ -45,6 +49,42 @@ namespace Synet
         }
     };
 
+    template <> struct BinaryOperation<BinaryOperationTypeDiv, bool>
+    {
+        static bool Run(bool a, bool b)
+        {
+            return false;
+        }
+    };
+
+    //-------------------------------------------------------------------------------------------------
+
+    template <class T> struct BinaryOperation<BinaryOperationTypeMod, T>
+    {
+        static T Run(T a, T b)
+        {
+            return a % b;
+        }
+    };
+
+    template <> struct BinaryOperation<BinaryOperationTypeMod, bool>
+    {
+        static bool Run(bool a, bool b)
+        {
+            return false;
+        }
+    };
+
+    template <> struct BinaryOperation<BinaryOperationTypeMod, float>
+    {
+        static float Run(float a, float b)
+        {
+            return ::fmodf(a, b);
+        }
+    };
+
+    //-------------------------------------------------------------------------------------------------
+
     template <class T> struct BinaryOperation<BinaryOperationTypeSub, T>
     {
         static T Run(T a, T b)
@@ -52,6 +92,16 @@ namespace Synet
             return a - b;
         }
     };
+
+    template <> struct BinaryOperation<BinaryOperationTypeSub, bool>
+    {
+        static bool Run(bool a, bool b)
+        {
+            return false;
+        }
+    };
+
+    //-------------------------------------------------------------------------------------------------
 
     template <BinaryOperationType type, class T> void BinaryOperationRun(const T * a, const T * b, size_t outer, size_t aSize, size_t bSize, size_t inner, T * dst)
     {
@@ -93,6 +143,8 @@ namespace Synet
             assert(0);
     }
 
+    //-------------------------------------------------------------------------------------------------
+
     template<typename T> using BinaryOperationPtr = void(*)(const T* a, const T* b, size_t outer, size_t aSize, size_t bSize, size_t inner, T* dst);
 
     template <class T> BinaryOperationPtr<T> GetBinaryOperation(BinaryOperationType type)
@@ -100,8 +152,9 @@ namespace Synet
         switch (type)
         {
         case BinaryOperationTypeAnd: return BinaryOperationRun<BinaryOperationTypeAnd, T>;
-        case BinaryOperationTypeDiv: return BinaryOperationRun<BinaryOperationTypeDiv, T>;
-        case BinaryOperationTypeSub: return BinaryOperationRun<BinaryOperationTypeSub, T>;
+        case BinaryOperationTypeDiv: return std::is_same<T, bool>::value ? NULL : BinaryOperationRun<BinaryOperationTypeDiv, T>;
+        case BinaryOperationTypeMod: return std::is_same<T, bool>::value ? NULL : BinaryOperationRun<BinaryOperationTypeMod, T>;
+        case BinaryOperationTypeSub: return std::is_same<T, bool>::value ? NULL : BinaryOperationRun<BinaryOperationTypeSub, T>;
         default: return NULL;
         }
     }
@@ -134,6 +187,11 @@ namespace Synet
             if (_funcBool == NULL)
                 SYNET_ERROR("Unsupported BinaryOperationType: " << Cpl::ToStr(_opType) << " !");
             break;
+        case TensorType64i:
+            _func64i = GetBinaryOperation<int64_t>(_opType);
+            if (_func64i == NULL)
+                SYNET_ERROR("Unsupported BinaryOperationType: " << Cpl::ToStr(_opType) << " !");
+            break;
         default:
             SYNET_ERROR("Unsupported input type of BinaryOperationLayer: " << Cpl::ToStr(_srcType) << " !");
         }   
@@ -142,7 +200,7 @@ namespace Synet
         _outer = 1, _aSize = 1, _bSize = 1, _inner = 1;
         for (size_t i = 0; i < src[0]->Count(); ++i)
         {
-            if (src[0]->Axis(i) == src[1]->Axis(i))
+            if (i < src[1]->Count() && src[0]->Axis(i) == src[1]->Axis(i))
             {
                 (_aSize*_bSize > 1 ? _inner : _outer) *= src[0]->Axis(i);
                 shape.push_back(src[0]->Axis(i));
@@ -152,7 +210,7 @@ namespace Synet
                 _bSize *= src[1]->Axis(i);
                 shape.push_back(src[1]->Axis(i));
             }
-            else if (src[1]->Axis(i) == 1)
+            else if (src[1]->Size() == 1 || src[1]->Axis(i) == 1)
             {
                 _aSize *= src[0]->Axis(i);
                 shape.push_back(src[0]->Axis(i));
@@ -182,6 +240,7 @@ namespace Synet
         {
         case TensorType32f: _func32f(src[0]->Data<float>(), src[1]->Data<float>(), _outer, _aSize, _bSize, _inner, dst[0]->Data<float>()); break;
         case TensorTypeBool: _funcBool(src[0]->Data<bool>(), src[1]->Data<bool>(), _outer, _aSize, _bSize, _inner, dst[0]->Data<bool>()); break;
+        case TensorType64i: _func64i(src[0]->Data<int64_t>(), src[1]->Data<int64_t>(), _outer, _aSize, _bSize, _inner, dst[0]->Data<int64_t>()); break;
         default:
             assert(0);
         }

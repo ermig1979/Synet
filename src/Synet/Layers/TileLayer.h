@@ -24,81 +24,25 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/Utils/Math.h"
 
 namespace Synet
 {
-    template <class T> class TileLayer : public Synet::Layer<T>
+    class TileLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        TileLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        TileLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            Shape shape = src[0]->Shape();
-            size_t axis = 0;
-            if (src.size() == 1)
-            {
-                axis = this->Param().tile().axis();
-                _tiles = this->Param().tile().tiles();
-            }
-            else
-            {
-                assert(src[0]->Count() == src[1]->Size() && src[1]->GetType() == TensorType64i);
-                const int64_t * pSrc1 = src[1]->As64i().CpuData();
-                _tiles = 1;
-                for (size_t a = 0; a < src[1]->Size(); ++a)
-                {
-                    if (pSrc1[a] != src[0]->Axis(a))
-                    {
-                        axis = a;
-                        _tiles = (size_t)pSrc1[a];
-                        break;
-                    }
-                }
-            }
-            shape[axis] *= _tiles;
-            _outer = src[0]->Size(0, axis);
-            _inner = src[0]->Size(axis);
-            dst[0]->Reshape(shape, src[0]->Format());
-            this->UsePerfStat();
-            return true;
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            const T * pSrc = src[0]->CpuData();
-            T * pDst = dst[0]->CpuData();
-            if (_inner == 1)
-            {
-                for (size_t o = 0; o < _outer; ++o, pDst += _tiles)
-                    CpuSet(_tiles, pSrc[o], pDst);
-            }
-            else
-            {
-                for (size_t o = 0; o < _outer; ++o)
-                {
-                    for (size_t t = 0; t < _tiles; ++t)
-                    {
-                        CpuCopy(pSrc, _inner, pDst);
-                        pDst += _inner;
-                    }
-                    pSrc += _inner;
-                }
-            }
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
+        TensorType _srcType;
         size_t _tiles, _outer, _inner;
     };
 }

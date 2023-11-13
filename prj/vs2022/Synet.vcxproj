@@ -50,6 +50,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\ScaleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\StubLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\TileLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\TopKLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\UnaryOperationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\UnpackLayer.cpp" />
