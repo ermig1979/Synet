@@ -78,6 +78,7 @@ namespace Test
 
     typedef Simd::Point<ptrdiff_t> Point;
     typedef Point Size;
+    typedef std::vector<Point> Points;
 
     typedef std::vector<float> Vector;
     typedef std::vector<Vector> Vectors;

@@ -24,94 +24,21 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
 
 namespace Synet
 {
-    template <class T> class SqueezeLayer : public Synet::Layer<T>
+    class SqueezeLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        SqueezeLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        SqueezeLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            assert(src[0] != dst[0]);
-            Shape shape;
-            if (src.size() > 1)
-            {
-                size_t nhwc[4] = { 0, 3, 1, 2 };
-                Shape remove(src[1]->Size());
-                for (size_t i = 0; i < src[1]->Size(); ++i)
-                {
-                    switch (src[1]->GetType())
-                    {
-                    case TensorType32f:
-                        remove[i] = ((int*)src[1]->CpuData())[i];
-                        break;
-                    case TensorType32i:
-                        remove[i] = src[1]->As32i().CpuData()[i];
-                        break;
-                    case TensorType64i:
-                        remove[i] = (size_t)src[1]->As64i().CpuData()[i];
-                        break;
-                    case TensorType64u:
-                        remove[i] = (size_t)src[1]->As64u().CpuData()[i];
-                        break;
-                    default:
-                        assert(0);
-                    }
-                    if (src[0]->Format() == TensorFormatNhwc && src[0]->Count() == 4)
-                        remove[i] = nhwc[remove[i]];
-                }
-                for (size_t i = 0; i < src[0]->Count(); ++i)
-                {
-                    bool exist = false;
-                    for (size_t j = 0; j < remove.size(); ++j)
-                        if (remove[j] == i)
-                            exist = true;
-                    if(!exist || src[0]->Axis(i) != 1)
-                        shape.push_back(src[0]->Axis(i));
-                }
-            }
-            else
-            {
-                Ints axes = this->Param().squeeze().axes();
-                if (axes.empty())
-                {
-                    for (size_t i = 0; i < src[0]->Count(); ++i)
-                    {
-                        if (src[0]->Axis(i) != 1 || (i == 0 && !this->IsBack()))
-                            shape.push_back(src[0]->Axis(i));
-                    }
-                }
-                else
-                {
-                    for (size_t i = 0; i < src[0]->Count(); ++i)
-                    {
-                        bool leave = true;
-                        for (size_t a = 0; a < axes.size() && leave; ++a)
-                            if (axes[a] == i)
-                                leave = false;
-                        if (src[0]->Axis(i) != 1 || leave)
-                            shape.push_back(src[0]->Axis(i));
-                    }
-                }
-            }
-            dst[0]->ShareAs(*src[0], shape, src[0]->Format());
-            return true;
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
     };
 }

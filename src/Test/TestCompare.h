@@ -341,6 +341,7 @@ namespace Test
                 {
                     Tensor& tensor = test->input[s];
                     tensor.Reshape(network.SrcType(s), network.SrcShape(s), Synet::TensorFormatUnknown);
+                    Points imageSizes;
                     if (RequiredInput(s))
                     {
                         float* input = tensor.Data<float>();
@@ -351,6 +352,7 @@ namespace Test
                             View original;
                             if (!LoadImage(test->path[p], original))
                                 SYNET_ERROR("Can't read '" << test->path[p] << "' image!");
+                            imageSizes.push_back(original.Size());
                             Shape shape = network.SrcShape(s);
                             if (shape.size() == 4)
                             {
@@ -386,6 +388,17 @@ namespace Test
                                 SYNET_ERROR("Can't map to source '" << test->path[p] << "' image!");
                         }                        
                         r++;
+                    }
+                    else if (_param().input().size() && _param().input()[s].from() == "image_size")
+                    {
+                        if(tensor.GetType() == Synet::TensorType32i)
+                        {
+                            for (size_t b = 0; b < bN; ++b)
+                            {
+                                tensor.Data<int32_t>(Shp(b, 0))[0] = (int32_t)imageSizes[b].y;
+                                tensor.Data<int32_t>(Shp(b, 0))[1] = (int32_t)imageSizes[b].x;
+                            }
+                        }
                     }
                     else
                     {

@@ -200,6 +200,9 @@ namespace Synet
         }
         else if(_version == 1)
         {
+            if (srcShape.size() != idxShape.size())
+                SYNET_ERROR("GatherLayer (version=1) inputs are incompatible!");
+
             _gatherElements = GetGatherElements(_srcType, _idxType);
             if (_gatherElements == NULL)
                 SYNET_ERROR("GatherLayer can't get 'gatherElements' worker!");

@@ -54,7 +54,6 @@ namespace Test
         CPL_PARAM_VALUE(String, name, String());
         CPL_PARAM_VALUE(Shape, dims, Shape());
         CPL_PARAM_VECTOR(SizeParam, shape);
-        CPL_PARAM_VALUE(Synet::TensorType, type, Synet::TensorType32f);
         CPL_PARAM_VALUE(String, from, String());
         CPL_PARAM_VALUE(Floats, data, Floats());
     };

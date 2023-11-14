@@ -816,6 +816,8 @@ namespace Synet
         }
     }
 
+//#define SYNET_RESHAPE_LOG
+
     bool Network::ReshapeStages()
     {
         for (size_t i = 0; i < _stages.size(); ++i)
@@ -830,6 +832,19 @@ namespace Synet
                 err << " !";
                 SYNET_ERROR(err.str());
             }
+#ifdef SYNET_RESHAPE_LOG
+            {
+                std::stringstream msg;
+                msg << "Layer " << i << " with name: " << Cpl::ToStr(param.name()) << ", type: " << Cpl::ToStr(param.type());
+                for (size_t s = 0; s < param.src().size(); ++s)
+                    msg << ", src[" << s << "]: " << Cpl::ToStr(_stages[i].src[s]->GetType()) << " " << ToStr(_stages[i].src[s]->Shape());
+                msg << " -> ";
+                for (size_t d = 0; d < param.dst().size(); ++d)
+                    msg << ", dst[" << d << "]: " << Cpl::ToStr(_stages[i].dst[d]->GetType()) << " " << ToStr(_stages[i].dst[d]->Shape());
+                msg << ".";
+                CPL_LOG_SS(Info, msg.str());
+            }
+#endif
             if (_stages[i].layer->_isBack && param.type() != LayerTypeStub)
                 _stages[i].dst[0]->SetName(param.name());
         }
