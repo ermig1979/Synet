@@ -54,6 +54,9 @@ namespace Test
         CPL_PARAM_VALUE(String, name, String());
         CPL_PARAM_VALUE(Shape, dims, Shape());
         CPL_PARAM_VECTOR(SizeParam, shape);
+        CPL_PARAM_VALUE(Synet::TensorType, type, Synet::TensorType32f);
+        CPL_PARAM_VALUE(String, from, String());
+        CPL_PARAM_VALUE(Floats, data, Floats());
     };
 
     struct OutputParam
@@ -61,14 +64,6 @@ namespace Test
         CPL_PARAM_VALUE(String, name, String());
         CPL_PARAM_VALUE(bool, compare, true);
     };
-
-    //struct ShapeParam
-    //{
-    //    CPL_PARAM_VALUE(String, name, String());
-    //    CPL_PARAM_VALUE(Shape, dims, Shape());
-    //    CPL_PARAM_VECTOR(SizeParam, shape);
-    //    CPL_PARAM_VALUE(bool, compare, true);
-    //};
 
     struct DetectionParam
     {
@@ -153,6 +148,7 @@ namespace Test
         virtual String Type() const { return String(); }
         virtual size_t SrcCount() const { return 0; }
         virtual Shape SrcShape(size_t index) const { return Shape(); }
+        virtual Synet::TensorType SrcType(size_t index) const { return Synet::TensorType32f; }
         virtual size_t SrcSize(size_t index) const { return 0; }
         virtual bool Init(const String & model, const String & weight, const Options & options, const TestParam & param) { return false; }
         virtual void Free() { _output.clear(); }

@@ -41,6 +41,8 @@ namespace Test
     {
         OnnxRuntimeNetwork()
         {
+            _inputValues = std::make_shared<Values>();
+            _outputValues = std::make_shared<Values>();
         }
 
         virtual ~OnnxRuntimeNetwork()
@@ -68,6 +70,11 @@ namespace Test
             return shape;
         }
 
+        virtual Synet::TensorType SrcType(size_t index) const
+        {
+            return _inputTypes[index];
+        }
+
         virtual size_t SrcSize(size_t index) const
         {
             return Synet::Detail::Size(SrcShape(index));
@@ -76,6 +83,7 @@ namespace Test
         virtual bool Init(const String & model, const String & weight, const Options& options, const TestParam & param)
         {
             CPL_PERF_FUNC();
+            Free();
             _regionThreshold = options.regionThreshold;
             _decoderName = param.detection().decoder();
 
@@ -94,15 +102,18 @@ namespace Test
 
             _session.reset(new Ort::Session(s_env.env, weight.c_str(), sessionOptions));
 
-            _inputNameBuffers.clear();
-            _inputNames.clear();
             _inputNameBuffers.reserve(_session->GetInputCount());
             for (size_t i = 0; i < _session->GetInputCount(); i++)
             {
                 _inputNameBuffers.push_back(String(_session->GetInputNameAllocated(i, s_env.allocator).get()));
                 _inputNames.push_back(_inputNameBuffers[i].c_str());
                 _inputShapes.push_back(Convert<size_t, int64_t>(_session->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape()));
+                _inputTypes.push_back(Convert(_session->GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetElementType()));
+                _inputValues->emplace_back(nullptr);
             }
+
+            if(param.input().size() && _session->GetInputCount() != param.input().size())
+                SYNET_ERROR("Check parameter 'input' size!");
 
             if (_inputShapes[0][2] == -1 && _inputShapes[0][3] == -1)
             {
@@ -132,8 +143,6 @@ namespace Test
                     CPL_LOG_SS(Warning, "OnnxRuntime model can't be reshaped, try to emulate batch > 1.");
             }
 
-            _outputNames.clear();
-            _outputNameBuffers.clear();
             if (param.output().size())
             {
                 _outputNameBuffers.reserve(param.output().size());
@@ -154,23 +163,24 @@ namespace Test
                 std::sort(_outputNames.begin(), _outputNames.end(), [](const char* a, const char* b) -> bool { return strcmp(a, b) < 1; });
             }
 
-            if (_inputShapes.size() != 1)
-                SYNET_ERROR("Current implementation of OnnxRuntimeNetwork supports only 1 input!");
+            //if (_inputShapes.size() != 1)
+            //    SYNET_ERROR("Current implementation of OnnxRuntimeNetwork supports only 1 input!");
 
-            Tensor inputTensor(_inputShapes[0]);
-            Dim inputDim = Convert<int64_t, size_t>(_inputShapes[0]);
-            Ort::Value inputValue = Ort::Value::CreateTensor<float>(s_env.memoryInfo, inputTensor.CpuData(), inputTensor.Size(), inputDim.data(), inputDim.size());
-            if (!inputValue.IsTensor())
-                return false;
+            Tensors stubInput(SrcCount());
+            for (size_t s = 0; s < stubInput.size(); ++s)
+            {
+                stubInput[s].Reshape(_inputTypes[s], _inputShapes[s], Synet::TensorFormatUnknown);
+                if (!TensorToValue(stubInput[s], _inputValues->at(s)))
+                    SYNET_ERROR("Can't create stub input tensors for first Ort session run!");
+            }
 
-            _outputValues = std::make_shared<Values>();
             ClearOutputValues();
 
-            _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), &inputValue, _inputNames.size(),
+            _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), _inputValues->data(), _inputNames.size(),
                 _outputNames.data(), _outputValues->data(), _outputNames.size());
 
             if (!(_outputValues->size() == _outputNames.size() && _outputValues->front().IsTensor()))
-                return false;
+                SYNET_ERROR("Check parameter 'output' size!");
 
             _dynamicOutput = IsDynamicOutput();
             if(!_dynamicOutput)
@@ -193,23 +203,26 @@ namespace Test
         virtual void Free()
         {
             _session.reset();
+            _inputNameBuffers.clear();
             _inputNames.clear();
             _inputShapes.clear();
+            _inputTypes.clear();
+            _inputValues->clear();
+            _outputNameBuffers.clear();
             _outputNames.clear();
             _outputValues->clear();
         }
 
         virtual const Tensors & Predict(const Tensors& src)
         {
-            Values inputValues;
             if (_batchSize == 1)
             {
-                SetInput(src, 0, inputValues);
+                SetInput(src, 0);
                 if (_dynamicOutput)
                     ClearOutputValues();
                 {
                     CPL_PERF_FUNC();
-                    _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), inputValues.data(), _inputNames.size(),
+                    _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), _inputValues->data(), _inputNames.size(),
                         _outputNames.data(), _outputValues->data(), _outputNames.size());
                 }
                 if (_dynamicOutput)
@@ -223,8 +236,8 @@ namespace Test
                 CPL_PERF_BEG("batch emulation");
                 for (size_t b = 0; b < _batchSize; ++b)
                 {
-                    SetInput(src, b, inputValues);
-                    _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), inputValues.data(), _inputNames.size(),
+                    SetInput(src, b);
+                    _session->Run(Ort::RunOptions{ nullptr }, _inputNames.data(), _inputValues->data(), _inputNames.size(),
                         _outputNames.data(), _outputValues->data(), _outputNames.size());
                     SetOutput(b);
                 }
@@ -299,10 +312,12 @@ namespace Test
 
         std::shared_ptr<Ort::Session> _session;
 
+        Strings _inputNameBuffers, _outputNameBuffers;
         std::vector<const char*> _inputNames;
         Shapes _inputShapes;
+        std::vector<Synet::TensorType> _inputTypes;
+        ValuesPtr _inputValues;
 
-        Strings _inputNameBuffers, _outputNameBuffers;
         std::vector<const char*> _outputNames;
         ValuesPtr _outputValues;
 
@@ -329,6 +344,29 @@ namespace Test
         };
         static Env s_env;
 
+        Synet::TensorType Convert(const ONNXTensorElementDataType &src)
+        {
+            switch (src)
+            {
+            case ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT: return Synet::TensorType32f;
+            case ONNX_TENSOR_ELEMENT_DATA_TYPE_INT32: return Synet::TensorType32i;
+            default: return Synet::TensorTypeUnknown;
+            }
+        }
+
+        bool TensorToValue(Tensor& src, Value& dst)
+        {
+            Dim dim = Convert<int64_t, size_t>(src.Shape());
+            switch (src.GetType())
+            {
+            case Synet::TensorType32f: dst = Ort::Value::CreateTensor<float>(s_env.memoryInfo, src.Data<float>(), src.Size(), dim.data(), dim.size()); break;
+            case Synet::TensorType32i: dst = Ort::Value::CreateTensor<int32_t>(s_env.memoryInfo, src.Data<int32_t>(), src.Size(), dim.data(), dim.size()); break;
+            default:
+                return false;
+            }
+            return dst.IsTensor();
+        }
+
         template<class D, class S> std::vector<D> Convert(const std::vector<S>& src)
         {
             std::vector<D> dst(src.size());
@@ -337,7 +375,7 @@ namespace Test
             return dst;
         }
 
-        void SetInput(const Tensors& src, size_t b, Values & inputs)
+        void SetInput(const Tensors& src, size_t b)
         {
             assert(_inputNames.size() == src.size());
             for (size_t i = 0; i < src.size(); i++)
@@ -348,9 +386,14 @@ namespace Test
                     shape[0] = _batchSize;
                 size_t size = Synet::Detail::Size(shape);
                 assert(src[i].Shape() == shape);
-                inputs.emplace_back(nullptr);
                 Dim dim = Convert<int64_t, size_t>(_inputShapes[i]);
-                inputs[i] = Ort::Value::CreateTensor<float>(s_env.memoryInfo, (float*)src[i].CpuData(index), size, dim.data(), dim.size());
+                switch (_inputTypes[i])
+                {
+                case Synet::TensorType32f: _inputValues->at(i) = Ort::Value::CreateTensor<float>(s_env.memoryInfo, (float*)src[i].Data<float>(index), size, dim.data(), dim.size()); break;
+                case Synet::TensorType32i: _inputValues->at(i) = Ort::Value::CreateTensor<int32_t>(s_env.memoryInfo, (int32_t*)src[i].Data<int32_t>(index), size, dim.data(), dim.size()); break;
+                default:
+                    break;
+                }
             }
         }
 

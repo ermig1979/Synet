@@ -56,6 +56,11 @@ namespace Test
             return shape.size() == 4 && format == Synet::TensorFormatNhwc ? Shp(shape[0], shape[3], shape[1], shape[2]) : shape;
         }
 
+        virtual Synet::TensorType SrcType(size_t index) const
+        {
+            return _net.Src()[index]->GetType();
+        }
+
         virtual size_t SrcSize(size_t index) const
         {
             return _net.Src()[index]->Size();

@@ -180,7 +180,7 @@ namespace Test
                 SYNET_ERROR("Can't load " << network.Name() << " from '" << model << "' and '" << weight << "' !");
             Shape shape = network.SrcShape(0);
             if (!(shape[1] == 1 || shape[1] == 3 || _param().inputType() == "binary"))
-                SYNET_ERROR("Wrong " << network.Name() << " classifier channels count '" << shape[1] << " !");
+                SYNET_ERROR("Wrong " << network.Name() << " network model channels count '" << shape[1] << " !");
             return true;
         }
 
@@ -285,6 +285,26 @@ namespace Test
             }
         }
 
+        bool RequiredInput(size_t index) const
+        {
+            if (_param().input().size())
+                return _param().input()[index].from().empty();
+            return true;
+        }
+
+        size_t RequiredInputNumber(const Network& network) const
+        {
+            if (_param().input().size())
+            {
+                size_t count = 0;
+                for (size_t i = 0; i < _param().input().size(); ++i)
+                    if (_param().input()[i].from().empty())
+                        count++;
+                return count;
+            }
+            return network.SrcCount();
+        }
+
         bool CreateTestListImages(const Network& network, const String & directory)
         {
             StringList images = GetFileList(directory, _options.imageFilter, true, false);
@@ -303,8 +323,8 @@ namespace Test
                 }
             }
 
-            size_t sN = network.SrcCount(), bN = _options.batchSize;
-            size_t tN = names.size() / bN / sN;
+            size_t sN = network.SrcCount(), bN = _options.batchSize, rN = RequiredInputNumber(network);
+            size_t tN = names.size() / bN / rN;
             if (tN == 0)
                 SYNET_ERROR("There is no one image in '" << directory << "' for '" << _options.imageFilter << "' filter!");
 
@@ -314,53 +334,62 @@ namespace Test
             for (size_t t = 0; t < tN; ++t)
             {
                 TestDataPtr test(new TestData());
-                test->path.resize(bN * sN);
+                test->path.resize(bN * rN);
                 test->input.resize(sN);
                 test->output.resize(_options.TestThreads());
-                for (size_t s = 0; s < sN; ++s)
+                for (size_t s = 0, r = 0; s < sN; ++s)
                 {
-                    test->input[s].Reshape(network.SrcShape(s));
-                    float* input = test->input[s].CpuData();
-                    for (size_t b = 0; b < bN; ++b)
+                    Tensor& tensor = test->input[s];
+                    tensor.Reshape(network.SrcType(s), network.SrcShape(s), Synet::TensorFormatUnknown);
+                    if (RequiredInput(s))
                     {
-                        size_t p = s * bN + b;
-                        test->path[p] = MakePath(directory, names[(t * bN + b) * sN + s]);
-                        View original;
-                        if (!LoadImage(test->path[p], original))
-                            SYNET_ERROR("Can't read '" << test->path[p] << "' image!");
-                        Shape shape = network.SrcShape(s);
-                        if (shape.size() == 4)
+                        float* input = tensor.Data<float>();
+                        for (size_t b = 0; b < bN; ++b)
                         {
-                            if (lower.size() == 1)
-                                lower.resize(shape[1], lower[0]);
-                            if (upper.size() == 1)
-                                upper.resize(shape[1], upper[0]);
-
-                            View converted(original.Size(), shape[1] == 1 ? View::Gray8 : View::Bgr24);
-                            Simd::Convert(original, converted);
-
-                            View resized(Size(shape[3], shape[2]), converted.format);
-                            ResizeImage(converted, resized);
-
-                            if (_param().order() == "rgb" && shape[1] == 3)
-                                (View::Format&)resized.format = View::Rgb24;
-                            Simd::SynetSetInput(resized, lower.data(), upper.data(), input, shape[1], SimdTensorFormatNchw);
-                            input += shape[1] * shape[2] * shape[3];
-                        }
-                        else if (shape.size() == 2)
-                        {
-                            if (shape[0] != original.height || shape[1] != original.width)
-                                SYNET_ERROR("Incompatible size of '" << test->path[p] << "' image!");
-                            for (size_t y = 0; y < original.height; ++y)
+                            size_t p = r * bN + b;
+                            test->path[p] = MakePath(directory, names[(t * bN + b) * rN + r]);
+                            View original;
+                            if (!LoadImage(test->path[p], original))
+                                SYNET_ERROR("Can't read '" << test->path[p] << "' image!");
+                            Shape shape = network.SrcShape(s);
+                            if (shape.size() == 4)
                             {
-                                const uint8_t* row = original.Row<uint8_t>(y);
-                                const float lo = 0.0f, hi = 255.0f;
-                                ::SimdUint8ToFloat32(row, original.width, &lo, &hi, input);
-                                input += original.width;
+                                if (lower.size() == 1)
+                                    lower.resize(shape[1], lower[0]);
+                                if (upper.size() == 1)
+                                    upper.resize(shape[1], upper[0]);
+
+                                View converted(original.Size(), shape[1] == 1 ? View::Gray8 : View::Bgr24);
+                                Simd::Convert(original, converted);
+
+                                View resized(Size(shape[3], shape[2]), converted.format);
+                                ResizeImage(converted, resized);
+
+                                if (_param().order() == "rgb" && shape[1] == 3)
+                                    (View::Format&)resized.format = View::Rgb24;
+                                Simd::SynetSetInput(resized, lower.data(), upper.data(), input, shape[1], SimdTensorFormatNchw);
+                                input += shape[1] * shape[2] * shape[3];
                             }
-                        }
-                        else
-                            SYNET_ERROR("Can't map to source '" << test->path[p] << "' image!");
+                            else if (shape.size() == 2)
+                            {
+                                if (shape[0] != original.height || shape[1] != original.width)
+                                    SYNET_ERROR("Incompatible size of '" << test->path[p] << "' image!");
+                                for (size_t y = 0; y < original.height; ++y)
+                                {
+                                    const uint8_t* row = original.Row<uint8_t>(y);
+                                    const float lo = 0.0f, hi = 255.0f;
+                                    ::SimdUint8ToFloat32(row, original.width, &lo, &hi, input);
+                                    input += original.width;
+                                }
+                            }
+                            else
+                                SYNET_ERROR("Can't map to source '" << test->path[p] << "' image!");
+                        }                        
+                        r++;
+                    }
+                    else
+                    {
+                        SYNET_ERROR("Can't process input parameter 'from'!");
                     }
                 }
                 _tests.push_back(test);
@@ -412,8 +441,9 @@ namespace Test
                         test->input.resize(sN);
                         test->output.resize(_options.TestThreads());
                     }
-                    test->input[n].Reshape(network.SrcShape(n));
-                    memcpy(test->input[n].CpuData(), data.data() + offs, sS * sizeof(float));
+                    Tensor& tensor = test->input[n];
+                    tensor.Reshape(Synet::TensorType32f, network.SrcShape(n), Synet::TensorFormatUnknown);
+                    memcpy(tensor.Data<float>(), data.data() + offs, sS * sizeof(float));
                 }
             }
             return true;
