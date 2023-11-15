@@ -337,11 +337,11 @@ namespace Test
                 test->path.resize(bN * rN);
                 test->input.resize(sN);
                 test->output.resize(_options.TestThreads());
+                Points imageSizes;
                 for (size_t s = 0, r = 0; s < sN; ++s)
                 {
                     Tensor& tensor = test->input[s];
                     tensor.Reshape(network.SrcType(s), network.SrcShape(s), Synet::TensorFormatUnknown);
-                    Points imageSizes;
                     if (RequiredInput(s))
                     {
                         float* input = tensor.Data<float>();

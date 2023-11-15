@@ -40,7 +40,10 @@ namespace Synet
                 {
                     for (size_t ic = 0; ic < idxCount; ++ic)
                     {
-                        dst[ic] = src[pi[ic]];
+                        I sc = pi[ic];
+                        if (sc < 0)
+                            sc += I(srcCount);
+                        dst[ic] = src[sc];
                     }
                     pi += idxCount;
                     dst += idxCount;
@@ -57,7 +60,10 @@ namespace Synet
                 {
                     for (size_t ic = 0; ic < idxCount; ++ic)
                     {
-                        const T* ps = src + pi[ic] * srcInner;
+                        I sc = pi[ic];
+                        if (sc < 0)
+                            sc += I(srcCount);
+                        const T* ps = src + sc * srcInner;
                         for (size_t si = 0; si < srcInner; ++si)
                             dst[si] = ps[si];
                         dst += srcInner;
@@ -75,8 +81,8 @@ namespace Synet
     {
         switch (idx)
         {
-        case TensorType32i: return Gather<T, uint32_t>;
-        case TensorType64i: return Gather<T, uint64_t>;
+        case TensorType32i: return Gather<T, int32_t>;
+        case TensorType64i: return Gather<T, int64_t>;
         default:
             return NULL;
         }

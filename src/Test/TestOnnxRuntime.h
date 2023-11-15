@@ -131,16 +131,19 @@ namespace Test
                 }
             }
 
-            if (_inputShapes[0][0] == -1)
+            for (size_t i = 0; i < _inputShapes.size(); ++i)
             {
-                _inputShapes[0][0] = options.batchSize;
-                _batchSize = 1;
-            }
-            else
-            {
-                _batchSize = options.batchSize;
-                if (_batchSize > 1 && !options.consoleSilence)
-                    CPL_LOG_SS(Warning, "OnnxRuntime model can't be reshaped, try to emulate batch > 1.");
+                if (_inputShapes[i][0] == -1)
+                {
+                    _inputShapes[i][0] = options.batchSize;
+                    _batchSize = 1;
+                }
+                else
+                {
+                    _batchSize = options.batchSize;
+                    if (_batchSize > 1 && !options.consoleSilence && i == 0)
+                        CPL_LOG_SS(Warning, "OnnxRuntime model can't be reshaped, try to emulate batch > 1.");
+                }
             }
 
             if (param.output().size())
@@ -163,12 +166,9 @@ namespace Test
                 std::sort(_outputNames.begin(), _outputNames.end(), [](const char* a, const char* b) -> bool { return strcmp(a, b) < 1; });
             }
 
-            //if (_inputShapes.size() != 1)
-            //    SYNET_ERROR("Current implementation of OnnxRuntimeNetwork supports only 1 input!");
-
             Tensors stubInput(SrcCount());
             for (size_t s = 0; s < stubInput.size(); ++s)
-            {
+            { 
                 stubInput[s].Reshape(_inputTypes[s], _inputShapes[s], Synet::TensorFormatUnknown);
                 if (!TensorToValue(stubInput[s], _inputValues->at(s)))
                     SYNET_ERROR("Can't create stub input tensors for first Ort session run!");
@@ -242,7 +242,6 @@ namespace Test
                     SetOutput(b);
                 }
             }
-
             return _output;
         }
 
