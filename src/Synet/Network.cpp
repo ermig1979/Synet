@@ -173,7 +173,8 @@ namespace Synet
                     {
                         if (param.type() == LayerTypeInput)
                         {
-                            _input[j].dst[0]->Reshape(srcShapes[i], Type(0), param.input().shape()[0].format(), param.name());
+                            _input[j].dst[0]->Reshape(param.input().shape()[0].type(), srcShapes[i], param.input().shape()[0].format());
+                            _input[j].dst[0]->SetName(param.name());
                             _src.push_back(_input[j].dst[0]);
                         }
                         else

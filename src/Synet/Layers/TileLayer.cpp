@@ -60,7 +60,7 @@ namespace Synet
             SYNET_ERROR("TileLayer supports only 1-2 inputs and 1 output!");
 
         _srcType = src[0]->GetType();
-        if (_srcType != TensorType32f && _srcType != TensorType64i)
+        if (_srcType != TensorType32f && _srcType != TensorType64i && _srcType != TensorType32i)
             SYNET_ERROR("TileLayer has wrong src[0] type!");
         Shape shape = src[0]->Shape();
         size_t axis = 0;
@@ -112,6 +112,9 @@ namespace Synet
             break;
         case TensorType64i:
             Tile<int64_t>(src[0]->Data<int64_t>(), _outer, _tiles, _inner, dst[0]->Data<int64_t>());
+            break;
+        case TensorType32i:
+            Tile<int32_t>(src[0]->Data<int32_t>(), _outer, _tiles, _inner, dst[0]->Data<int32_t>());
             break;
         default:
             assert(0);

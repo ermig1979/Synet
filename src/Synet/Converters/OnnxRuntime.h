@@ -417,6 +417,13 @@ namespace Synet
             if (shape.size() > 1 && shape[0] == -1)
                 shape[0] = 1;
             layer.input().shape()[0].dim() = shape;
+            switch (input.type().tensor_type().elem_type())
+            {
+            case onnx::TensorProto_DataType_FLOAT: layer.input().shape()[0].type() = Synet::TensorType32f; break;
+            case onnx::TensorProto_DataType_INT32: layer.input().shape()[0].type() = Synet::TensorType32i; break;
+            default:
+                SYNET_ERROR(" Unknown input tensor type " << input.type().tensor_type().elem_type() << " !");
+            }
             network.layers().push_back(layer);
             return true;
         }
