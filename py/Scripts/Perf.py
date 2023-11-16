@@ -169,7 +169,7 @@ def RunTest(context, test, batch):
 			pathArgs += "-fm={0}/other.xml -fw={0}/other.bin".format(testPath)
 		elif test.framework == "onnx" :
 			pathArgs += "-fw={0}/other.onnx".format(testPath)
-		pathArgs = " -sm={0}/synet.xml".format(testPath)
+		pathArgs += " -sm={0}/synet.xml".format(testPath)
 	pathArgs += " -sw={0}/synet.bin -id={1} -od={0}/output -tp={0}/param.xml -sn={2}/sync.txt -hr={2}/_report.html -tr={2}/_report.txt".format(testPath, imagePath, context.dst)
 	
 	trashFile = imagePath + os.path.sep + "descript.ion"

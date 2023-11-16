@@ -13,7 +13,7 @@
     <Name>Scripts</Name>
     <RootNamespace>simple</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>-f=o -t=-2</CommandLineArguments>
+    <CommandLineArguments>-f=o -t=1</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
