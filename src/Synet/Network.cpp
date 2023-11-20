@@ -433,9 +433,9 @@ namespace Synet
                 {
                     const Tensor& src = *_stages[i].src[0];
                     if (src.GetType() == TensorType32f)
-                        _stages[i].buf[TensorType8u * BUFFER_COUNT + 1]->As8u().DebugPrint(os, src.Shape(), src.Format(), String("src"), false, first, last, precision);
+                        _stages[i].buf[TensorType8u * BUFFER_COUNT + 1]->DebugPrint(os, src.Shape(), src.Format(), String("src"), false, first, last, precision);
                     const Tensor& dst = *_stages[i].dst[0];
-                    _stages[i].buf[TensorType32i * BUFFER_COUNT + 0]->As32i().DebugPrint(os, dst.Shape(), dst.Format(), String("sum"), false, first, last, precision);
+                    _stages[i].buf[TensorType32i * BUFFER_COUNT + 0]->DebugPrint(os, dst.Shape(), dst.Format(), String("sum"), false, first, last, precision);
                 }
                 if (printLayerInternal)
                 {

@@ -231,32 +231,35 @@ namespace Synet
 
         static float * Buf32f(const TensorPtrs& buf, size_t idx)
         {
-            return buf[TensorType32f * BUFFER_COUNT + idx]->As32f().CpuData();
+            Synet::Tensor<float>* b = buf[TensorType32f * BUFFER_COUNT + idx];
+            return b->Data<float>();
         }
 
         static int32_t * Buf32i(const TensorPtrs& buf, size_t idx)
         {
-            return buf[TensorType32i * BUFFER_COUNT + idx]->As32i().CpuData();
+            Synet::Tensor<float>* b = buf[TensorType32i * BUFFER_COUNT + idx];
+            return b->Data<int32_t>();
         }
 
         static uint8_t* Buf8u(const TensorPtrs& buf, size_t idx)
         {
-            return buf[TensorType8u * BUFFER_COUNT + idx]->As8u().CpuData();
+            Synet::Tensor<float>* b = buf[TensorType8u * BUFFER_COUNT + idx];
+            return b->Data<uint8_t>();
         }
 
         static void Extend32f(const TensorPtrs& buf, size_t idx, const Shape & shape, TensorFormat format = TensorFormatUnknown)
         {
-            buf[TensorType32f * BUFFER_COUNT + idx]->As32f().Extend(shape, format);
+            buf[TensorType32f * BUFFER_COUNT + idx]->Extend(TensorType32f, shape, format);
         }
 
         static void Extend32i(const TensorPtrs& buf, size_t idx, const Shape& shape, TensorFormat format = TensorFormatUnknown)
         {
-            buf[TensorType32i * BUFFER_COUNT + idx]->As32i().Extend(shape, format);
+            buf[TensorType32i * BUFFER_COUNT + idx]->Extend(TensorType32i, shape, format);
         }
 
         static void Extend8u(const TensorPtrs& buf, size_t idx, const Shape& shape, TensorFormat format = TensorFormatUnknown)
         {
-            buf[TensorType8u * BUFFER_COUNT + idx]->As8u().Extend(shape, format);
+            buf[TensorType8u * BUFFER_COUNT + idx]->Extend(TensorType8u, shape, format);
         }
 
         inline const Synet::Options& Options() const
