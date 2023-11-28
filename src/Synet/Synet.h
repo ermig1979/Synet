@@ -76,6 +76,8 @@ extern "C"
         SynetTensorType64i, /*!< Signed INT64 tensor data type. */
         SynetTensorType64u, /*!< Unsigned INT64 tensor data type. */
         SynetTensorTypeBool, /*!< Boolean (1-byte) tensor data type. */
+        SynetTensorType16b, /*!< 16-bit BFloat16 (Brain Floating Point). */
+        SynetTensorType16f, /*!< 16-bit floating point (Half Precision). */
     } SynetTensorType;
 
     /*! @ingroup c_api

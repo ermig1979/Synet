@@ -243,7 +243,9 @@ CPL_PARAM_ENUM1(Synet, TensorType,
     TensorType8u,
     TensorType64i,
     TensorType64u,
-    TensorTypeBool);
+    TensorTypeBool,
+    TensorType16b,
+    TensorType16f);
 
 CPL_PARAM_ENUM1(Synet, TopKMode,
     TopKModeMax,

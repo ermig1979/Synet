@@ -6,14 +6,13 @@
     <ProjectHome>
     </ProjectHome>
     <StartupFile>Test.py</StartupFile>
-    <SearchPath>
-    </SearchPath>
+    <SearchPath>..\..\3rd\Simd\py\SimdPy</SearchPath>
     <WorkingDirectory>../../bin/v143/x64/Debug</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>SynetPy</Name>
     <RootNamespace>simple</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>-m=../../../../data/onnx/test_000/synet.xml -w=../../../../data/onnx/test_000/synet.bin</CommandLineArguments>
+    <CommandLineArguments>-m=../../../../data/onnx/test_000/synet.xml -w=../../../../data/onnx/test_000/synet.bin  -i=../../../../data/images/face/face_000.jpg</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>

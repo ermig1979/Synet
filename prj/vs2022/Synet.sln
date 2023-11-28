@@ -77,6 +77,8 @@ Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Scripts", "..\..\py\Scripts
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "SynetPy", "..\..\py\SynetPy\SynetPy.pyproj", "{EF99B7C7-798D-448F-A21C-3BE4E9AF55C1}"
 EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "SimdPy", "..\..\3rd\Simd\py\SimdPy\SimdPy.pyproj", "{B1AFCBE7-30B6-4B97-A3AD-FF23C10A1AC4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -363,6 +365,12 @@ Global
 		{EF99B7C7-798D-448F-A21C-3BE4E9AF55C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EF99B7C7-798D-448F-A21C-3BE4E9AF55C1}.Release|Win32.ActiveCfg = Release|Any CPU
 		{EF99B7C7-798D-448F-A21C-3BE4E9AF55C1}.Release|x64.ActiveCfg = Release|Any CPU
+		{B1AFCBE7-30B6-4B97-A3AD-FF23C10A1AC4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1AFCBE7-30B6-4B97-A3AD-FF23C10A1AC4}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{B1AFCBE7-30B6-4B97-A3AD-FF23C10A1AC4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B1AFCBE7-30B6-4B97-A3AD-FF23C10A1AC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1AFCBE7-30B6-4B97-A3AD-FF23C10A1AC4}.Release|Win32.ActiveCfg = Release|Any CPU
+		{B1AFCBE7-30B6-4B97-A3AD-FF23C10A1AC4}.Release|x64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -400,6 +408,7 @@ Global
 		{CC300A30-5BEB-42F0-8DD9-D652FA5662AB} = {302014D6-E119-4F87-89FE-58B605B21254}
 		{88714303-76F4-44A7-96F1-D7B5084BE739} = {C4BD77A0-77B3-4938-AA0C-CB1D63076EA9}
 		{EF99B7C7-798D-448F-A21C-3BE4E9AF55C1} = {C4BD77A0-77B3-4938-AA0C-CB1D63076EA9}
+		{B1AFCBE7-30B6-4B97-A3AD-FF23C10A1AC4} = {C4BD77A0-77B3-4938-AA0C-CB1D63076EA9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8D0544B9-1F3D-447C-B071-0078E50D9328}

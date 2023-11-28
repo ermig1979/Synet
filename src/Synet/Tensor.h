@@ -46,6 +46,8 @@ namespace Synet
     template <> SYNET_INLINE TensorType GetTensorType<int64_t>() { return TensorType64i; }
     template <> SYNET_INLINE TensorType GetTensorType<uint64_t>() { return TensorType64u; }
     template <> SYNET_INLINE TensorType GetTensorType<bool>() { return TensorTypeBool; }
+    template <> SYNET_INLINE TensorType GetTensorType<uint16_t>() { return TensorType16b; }
+    template <> SYNET_INLINE TensorType GetTensorType<int16_t>() { return TensorType16f; }
 
     SYNET_INLINE size_t GetTensorTypeSize(TensorType type)
     {
@@ -59,6 +61,8 @@ namespace Synet
         case TensorType64i: return 8;
         case TensorType64u: return 8;
         case TensorTypeBool: return 1;
+        case TensorType16b: return 2;
+        case TensorType16f: return 2;
         default: assert(0); return 0;
         }
     }
