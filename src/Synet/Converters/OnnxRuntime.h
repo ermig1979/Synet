@@ -802,7 +802,7 @@ namespace Synet
         bool ConvertConstantOfShapeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            if (src0 == NULL || src0->type() != Synet::LayerTypeMeta)
+            if (src0 == NULL)// || src0->type() != Synet::LayerTypeMeta)
                 return false;
             const onnx::AttributeProto * attribute = GetAtrribute(node, "value");
             if (attribute && attribute->type() == onnx::AttributeProto_AttributeType_TENSOR)
