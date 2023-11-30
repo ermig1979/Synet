@@ -173,6 +173,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Cast" && !ConvertCastNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Ceil" && !ConvertCeilNode(node, network.layers(), layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Clip" && !ConvertClipNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Concat" && !ConvertConcatNode(node, trans, network.layers(), layer))
@@ -232,6 +234,8 @@ namespace Synet
                 if (node.op_type() == "Neg" && !ConvertNegNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "NonMaxSuppression" && !ConvertNonMaxSuppressionNode(node, network.layers(), original, layer))
+                    return ErrorMessage(i, node);
+                if (node.op_type() == "NonZero" && !ConvertNonZeroNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Not" && !ConvertNotNode(node, layer))
                     return ErrorMessage(i, node);
@@ -676,6 +680,25 @@ namespace Synet
                     layer.cast().type() = TensorType64i;
                 else
                     SYNET_ERROR("Unsupported cast type!");
+            }
+            return true;
+        }
+
+        bool ConvertCeilNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 1))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            if (src0 == NULL)
+                return false;
+            if (src0->type() == LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeCeil;
+            }
+            else
+            {
+                SYNET_ERROR("Unsupported src type!");
             }
             return true;
         }
@@ -1452,6 +1475,24 @@ namespace Synet
             layer.type() = Synet::LayerTypeNonMaxSuppression;
             layer.src().resize(2);
 
+            return true;
+        }
+
+        bool ConvertNonZeroNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 1))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            if (src0 == NULL)
+                return false;
+            if (src0->type() == LayerTypeMeta || src0->type() == LayerTypeConstantOfShape)
+            {
+                layer.type() = Synet::LayerTypeNonZero;
+            }
+            else
+            {
+                SYNET_ERROR("Unsupported src type!");
+            }
             return true;
         }
 

@@ -52,6 +52,7 @@ namespace Synet
         {
         case MetaTypeAdd: return ReshapeAdd(src, dst);
         case MetaTypeCast: return ReshapeCast(src, param.alpha(), dst);
+        case MetaTypeCeil: return ReshapeCeil(src, dst);
         case MetaTypeConst: return ReshapeConst(param.alpha(), dst);
         case MetaTypeDiv: return ReshapeDiv(src, dst);
         case MetaTypeEqual: return ReshapeEqual(src, dst);
@@ -168,6 +169,23 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
+    bool MetaLayer::ReshapeCeil(const TensorPtrs& src, const TensorPtrs& dst)
+    {
+        if (src.size() != 1 || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeCeil supports only 1 input and 1 output!");
+        if (src[0]->GetType() == TensorType32f)
+        {
+            dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+            for (size_t i = 0; i < src[0]->Size(); ++i)
+                dst[0]->Data<float>()[i] = ::ceil(src[0]->Data<float>()[i]);
+        }
+        else
+            SYNET_ERROR("MetaLayer::ReshapeCeil unsupported input type!");
+        return true;
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     bool MetaLayer::ReshapeConst(const TensorParam& alpha, const TensorPtrs& dst)
     {
         return dst[0]->Import(alpha);
@@ -266,7 +284,6 @@ namespace Synet
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("MetaLayer::ReshapeFloor supports only 1 input and 1 output!");
-
         if (src[0]->GetType() == TensorType32f)
         {
             dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());

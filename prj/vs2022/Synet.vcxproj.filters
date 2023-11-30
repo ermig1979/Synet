@@ -104,6 +104,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\SqueezeLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\NonZeroLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -466,6 +469,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\YoloV8.h">
       <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\NonZeroLayer.h">
+      <Filter>Layers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -35,10 +35,10 @@ namespace Synet
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("ConstantOfShapeLayer supports only 1 input and 1 output!");
-        if (src[0]->GetType() != TensorType64i || src[0]->Count() != 1)
+        if (src[0]->GetType() != TensorType64i || SignificantDimsCount(src[0]->Shape()) > 1)
             SYNET_ERROR("ConstantOfShapeLayer input must be 64-bit integer 1D!");
         Shape dstShape;
-        for (size_t i = 0, n = src[0]->Axis(0); i < n; ++i)
+        for (size_t i = 0, n = src[0]->Size(); i < n; ++i)
             dstShape.push_back((size_t)src[0]->Data<int64_t>()[i]);
 
         const TensorParam & value = this->Param().constantOfShape().value();
