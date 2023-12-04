@@ -259,6 +259,7 @@ namespace Synet
         else
             return false;
         _input[0].dst[0]->Reshape(shape, Type(0), format);
+        _input[0].dst[0]->SetName(param.name());
         return ReshapeStages();
     }
 
@@ -275,6 +276,7 @@ namespace Synet
             return false;
         shape[0] = batch;
         _input[0].dst[0]->Reshape(shape, Type(0), format);
+        _input[0].dst[0]->SetName(param.name());
         ReshapeStages();
         return true;
     }

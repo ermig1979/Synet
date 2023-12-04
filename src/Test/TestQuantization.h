@@ -181,6 +181,11 @@ namespace Test
         {
             if (!_synet.Load(model, weight))
                 SYNET_ERROR("Can't load Synet model from '" << model << "' and '" << weight << "' !");
+            if (_param().input().size())
+            {
+                const Shape& dims = _param().input()[0].dims();
+                _synet.Reshape(dims[3], dims[2], dims[0]);
+            }
             if (_synet.Format() != Synet::TensorFormatNhwc)
                 SYNET_ERROR("Quantizer supports only models in NHWC format!");
             return true;
