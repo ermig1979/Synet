@@ -102,7 +102,7 @@ namespace Synet
 
         bool Init(const Tensor& first, const Tensor& second)
         {
-            if (first.Format() != second.Format() || first.Shape() != second.Shape())
+            if ((first.Shape().size() == 4 && first.Format() != second.Format()) || first.Shape() != second.Shape())
                 return false;
             _format = first.Format();
             _shape = first.Shape();
@@ -127,6 +127,7 @@ namespace Synet
             }
             else if (_shape.size() == 2)
             {
+                _format = TensorFormatNchw;
                 _batch = _shape[0];
                 _channels = 1;
                 _height = 1;

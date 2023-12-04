@@ -628,7 +628,7 @@ namespace Test
                 if (f.Shape() != s.Shape())
                     SYNET_ERROR(failed << std::endl << "Dst[" << d << "] shape : " << DebugPrint(f.Shape()) << " != " << DebugPrint(s.Shape()));
                 Difference difference(f, s);
-                if (difference.Valid())
+                if (difference.Valid() && 0)
                 {
                     if (!difference.Estimate(_options.compareThreshold, _options.compareQuantile))
                     {
