@@ -193,10 +193,8 @@ namespace Synet
 		for(size_t i = 1; i < src.size(); ++i)
 			if(src[i]->GetType() != TensorType64i)
 				SYNET_ERROR("StridedSliceLayer has wrong type of src[" << i << "] type !");
-        if (src.size() == 4)
+        if (src.size() == 4 && param.beginDims().empty() && param.endDims().empty() && param.axes().empty())
         {
-			if(param.beginDims().size() || param.endDims().size() || param.axes().size())
-				SYNET_ERROR("Check StridedSliceLayer parameters!");
             param.beginDims() = Shp(src[1]->Data<int64_t>(), src[1]->Size());
             param.endDims() = Shp(src[2]->As64i().CpuData(), src[2]->Size());
             param.axes() = Shp(src[3]->As64i().CpuData(), src[3]->Size());

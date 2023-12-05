@@ -835,7 +835,7 @@ namespace Synet
                 err << " !";
                 SYNET_ERROR(err.str());
             }
-            if (_stages[i].dst.size() && _stages[i].dst[0]->Size() == 0)
+            if (_stages[i].dst.size() && _stages[i].dst[0]->Size() == 0 && !_stages[i].layer->_isBack && _stages[i].dst[0]->Count() > 1)
             {
                 std::stringstream err;
                 err << "Reshape " << i << " layer with name: " << Cpl::ToStr(param.name()) << ", type: " << Cpl::ToStr(param.type());

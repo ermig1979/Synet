@@ -1937,8 +1937,6 @@ namespace Synet
                             layer.src().resize(1);
                         }
                     }
-                    else
-                        return false;
                 }
             }
             return true;
