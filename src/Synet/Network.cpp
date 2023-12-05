@@ -835,6 +835,15 @@ namespace Synet
                 err << " !";
                 SYNET_ERROR(err.str());
             }
+            if (_stages[i].dst.size() && _stages[i].dst[0]->Size() == 0)
+            {
+                std::stringstream err;
+                err << "Reshape " << i << " layer with name: " << Cpl::ToStr(param.name()) << ", type: " << Cpl::ToStr(param.type());
+                for (size_t s = 0; s < param.src().size(); ++s)
+                    err << ", src[" << s << "]: " << Cpl::ToStr(_stages[i].src[s]->GetType()) << " " << ToStr(_stages[i].src[s]->Shape());
+                err << " gets dst[0]: " << Cpl::ToStr(_stages[i].dst[0]->GetType()) << " " << ToStr(_stages[i].dst[0]->Shape()) << " !";
+                SYNET_ERROR(err.str());
+            }
 #ifdef SYNET_RESHAPE_LOG
             {
                 std::stringstream msg;

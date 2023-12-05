@@ -51,6 +51,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\ScaleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SqueezeLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\StridedSliceLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\StubLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\TileLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\TopKLayer.cpp" />

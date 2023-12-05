@@ -59,6 +59,7 @@ namespace Synet
         case MetaTypeExpandDims: return ReshapeExpandDims(src, param.alpha(), dst);
         case MetaTypeFloor: return ReshapeFloor(src, dst);
         case MetaTypeGather: return ReshapeGather(src, dst);
+        case MetaTypeMod: return ReshapeMod(src, dst);
         case MetaTypeMul: return ReshapeMul(src, dst);
         case MetaTypePack: return ReshapePack(src, dst);
         case MetaTypePermute: return ReshapePermute(src, param.alpha(), dst);
@@ -333,6 +334,42 @@ namespace Synet
         }
         else
             SYNET_ERROR("MetaLayer::ReshapeFloor unsupported src[0] " << src[0]->GetType() << " type!");
+        return true;
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    template<class T> bool ReshapeMod(const Synet::Tensor<float>& src0, const Synet::Tensor<float>& src1, Synet::Tensor<float>& dst0)
+    {
+        dst0.Reshape(Synet::GetTensorType<T>(), src0.Shape(), src0.Format());
+        if (src0.Size() == src1.Size())
+        {
+            for (size_t i = 0; i < src0.Size(); ++i)
+                dst0.Data<T>()[i] = src0.Data<T>()[i] % src1.Data<T>()[i];
+        }
+        else if (src1.Size() == 1)
+        {
+            for (size_t i = 0; i < src0.Size(); ++i)
+                dst0.Data<T>()[i] = src0.Data<T>()[i] % src1.Data<T>()[0];
+        }
+        else
+            SYNET_ERROR("MetaLayer::ReshapeMod supported input shapes!");
+        return true;
+    }
+
+    bool MetaLayer::ReshapeMod(const TensorPtrs& src, const TensorPtrs& dst)
+    {
+        if (src.size() != 2 || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeMod supports only 2 inputs and 1 output!");
+        if (src[0]->Count() != src[1]->Count() || src[0]->GetType() != src[1]->GetType())
+            SYNET_ERROR("MetaLayer::ReshapeMod unsupported input shape or type combination!");
+        switch (src[0]->GetType())
+        {
+        case TensorType32i: return Synet::ReshapeMod<int32_t>(*src[0], *src[1], *dst[0]);
+        case TensorType64i: return Synet::ReshapeMod<int64_t>(*src[0], *src[1], *dst[0]);
+        default:
+            SYNET_ERROR("MetaLayer::ReshapeMod unsupported input type!");
+        }
         return true;
     }
 

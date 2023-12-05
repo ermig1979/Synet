@@ -174,7 +174,7 @@ namespace Synet
             case LayerTypeSpaceToDepth: return new SpaceToDepthLayer<T>(param, context);
             case LayerTypeSqueeze: return new SqueezeLayer(param, context);
             case LayerTypeSqueezeExcitation: return new SqueezeExcitationLayer<T>(param, context, method);
-            case LayerTypeStridedSlice: return new StridedSliceLayer<T>(param, context);
+            case LayerTypeStridedSlice: return new StridedSliceLayer(param, context);
             case LayerTypeStub: return new StubLayer(param, context);
             case LayerTypeSwish: return new SwishLayer(param, context);
             case LayerTypeSwitch: return new SwitchLayer<T>(param, context);

@@ -53,6 +53,7 @@ namespace Synet
         bool ReshapeExpandDims(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst);
         bool ReshapeFloor(const TensorPtrs& src, const TensorPtrs& dst);
         bool ReshapeGather(const TensorPtrs& src, const TensorPtrs& dst);
+        bool ReshapeMod(const TensorPtrs& src, const TensorPtrs& dst);
         bool ReshapeMul(const TensorPtrs& src, const TensorPtrs& dst);
         bool ReshapePack(const TensorPtrs& src, const TensorPtrs& dst);
         bool ReshapePermute(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst);
