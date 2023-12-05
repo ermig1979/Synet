@@ -171,8 +171,13 @@ namespace Synet
         {
             if (this->Weight().size() < 2)
                 SYNET_ERROR("ScaleLayer bias weight is absent!");
-            if(this->Weight()[0].Shape() != this->Weight()[1].Shape())
-                SYNET_ERROR("ScaleLayer scale and bias weights have different shapes: " << ToStr(this->Weight()[0].Shape()) << " != " << ToStr(this->Weight()[1].Shape()) << "!");
+            if (this->Weight()[0].Shape() != this->Weight()[1].Shape())
+            {
+                if (SignificantDimsCount(this->Weight()[0].Shape()) != 1 || 
+                    SignificantDimsCount(this->Weight()[1].Shape()) != 1 ||
+                    this->Weight()[0].Size() != this->Weight()[1].Size())
+                    SYNET_ERROR("ScaleLayer scale and bias weights have different shapes: " << ToStr(this->Weight()[0].Shape()) << " != " << ToStr(this->Weight()[1].Shape()) << "!");
+            }
         }
         const Tensor & scale = this->Weight()[0];
         _channels = scale.Size();

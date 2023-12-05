@@ -161,6 +161,8 @@ namespace Synet
                 LayerParam layer;
                 SetSrcAndDst(node, renames, layer);
 
+                if (node.op_type() == "Abs" && !ConvertAbsNode(node, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Add" && !ConvertAddNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "And" && !ConvertAndNode(node, network.layers(), layer))
@@ -511,6 +513,13 @@ namespace Synet
         }
 
         //-----------------------------------------------------------------------------------------
+
+        bool ConvertAbsNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnaryOperation;
+            layer.unaryOperation().type() = UnaryOperationTypeAbs;
+            return true;
+        }
 
         bool ConvertAddNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
         {
