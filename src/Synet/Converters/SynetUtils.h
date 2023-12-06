@@ -34,6 +34,8 @@ namespace Synet
     {
         CPL_PARAM_VALUE(Strings, toNchwHints, Strings());
         CPL_PARAM_VALUE(Strings, toNhwcHints, Strings());
+        CPL_PARAM_VALUE(bool, transpose0312PermuteToNhwc, false);
+        CPL_PARAM_VALUE(bool, globalPoolingPermuteToNchw, true);
     };
 
     class SynetUtils

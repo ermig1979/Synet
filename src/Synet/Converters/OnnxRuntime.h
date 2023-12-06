@@ -253,7 +253,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "ReduceMax" && !ConvertReduceMaxNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "ReduceMean" && !ConvertReduceMeanNode(node, layer))
+                if (node.op_type() == "ReduceMean" && !ConvertReduceMeanNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "ReduceSum" && !ConvertReduceSumNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -285,7 +285,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "TopK" && !ConvertTopKNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Transpose" && !ConvertTransposeNode(node, trans, network.layers(), layer))
+                if (node.op_type() == "Transpose" && !ConvertTransposeNode(node, trans, network.layers(), onnxParam, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Unsqueeze" && !ConvertUnsqueezeNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -1658,7 +1658,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertReduceMeanNode(const onnx::NodeProto& node, LayerParam& layer)
+        bool ConvertReduceMeanNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
         {
             Ints axes;
             if (!ConvertAtrributeInts(node, "axes", axes))
@@ -1676,6 +1676,12 @@ namespace Synet
                 for (size_t i = 0; i < axes.size(); ++i)
                     layer.reduction().axis().push_back(axes[i]);
                 ConvertAtrributeInt(node, "keepdims", layer.reduction().keepDims(), true, true);
+                if (trans && CurrentTensorFormat(layers, layer.src(), false, true, true) == TensorFormatNhwc)
+                {
+                    Ints nchw = Ints({ 0, 3, 1, 2 }), axis = layer.reduction().axis();
+                    for (size_t i = 0; i < axis.size(); ++i)
+                        layer.reduction().axis()[i] = nchw[axis[i]];
+                }
             }
             return true;
         }
@@ -2167,7 +2173,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertTransposeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
+        bool ConvertTransposeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const OnnxParam& onnxParam, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1))
                 return false;
@@ -2189,19 +2195,31 @@ namespace Synet
             else
             {
                 layer.type() = Synet::LayerTypePermute;
-                if (trans && !PermutedToNchw(layers, layer.src(), true, false, true))
+                if (trans)
                 {
-                    if (order == Shape({ 0, 2, 1, 3, 4 }))
-                        order = Shape({ 0, 1, 2, 4, 3 });
-                    if (order == Shape({ 0, 2, 3, 1 }))
+                    bool permutedToNchw = PermutedToNchw(layers, layer.src(), true, false, onnxParam.globalPoolingPermuteToNchw());
+                    if (!permutedToNchw)
                     {
-                        order = Shape({ 0, 1, 2, 3 });
-                        layer.permute().format() = TensorFormatNchw;
+                        if (order == Shape({ 0, 2, 1, 3, 4 }))
+                            order = Shape({ 0, 1, 2, 4, 3 });
+                        if (order == Shape({ 0, 2, 3, 1 }))
+                        {
+                            order = Shape({ 0, 1, 2, 3 });
+                            layer.permute().format() = TensorFormatNchw;
+                        }
+                        if (order == Shape({ 0, 2, 1 }))
+                        {
+                            order = Shape({ 0, 1, 2 });
+                            layer.permute().format() = TensorFormatNchw;
+                        }
                     }
-                    if (order == Shape({ 0, 2, 1 }))
+                    else 
                     {
-                        order = Shape({ 0, 1, 2 });
-                        layer.permute().format() = TensorFormatNchw;
+                        if (order == Shape({ 0, 3, 1, 2 }) && onnxParam.transpose0312PermuteToNhwc())
+                        {
+                            order = Shape({ 0, 1, 2, 3 });
+                            layer.permute().format() = TensorFormatNhwc;
+                        }
                     }
                 }
                 layer.permute().order() = order;
