@@ -181,7 +181,9 @@ namespace Synet
                         continue;
                     if (MergeNormalize(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeNormalizeV2(network.layers(), i, merged, changes))
+                    if (MergeNormalizeV2(network.layers(), i, isNhwc, merged, changes))
+                        continue;
+                    if (MergeNormalizeV4(network.layers(), i, isNhwc, merged, changes))
                         continue;
                     if (MergeGelu(network.layers(), i, merged, changes))
                         continue;
@@ -1904,7 +1906,7 @@ namespace Synet
             return true;
         }
 
-        bool MergeNormalizeV2(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        bool MergeNormalizeV2(const LayerParams& src, size_t& index, bool isNhwc, LayerParams& dst, Changes& changes)
         {
             if (src.size() < index + 8)
                 return false;
@@ -1940,8 +1942,55 @@ namespace Synet
             layer.normalize().version() = 2;
             layer.weight().push_back(*scale);
             layer.weight().push_back(*shift);
+            if (isNhwc && !PermutedToNchw(src, layer.src(), false, false, false))
+                layer.normalize().axis() = 1;
+            else
+                layer.normalize().axis() = -1;
             dst.push_back(layer);
             index += 8;
+            return true;
+        }
+
+        bool MergeNormalizeV4(const LayerParams& src, size_t& index, bool isNhwc, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 9)
+                return false;
+            if (src[index + 0].type() != LayerTypeUnaryOperation || src[index + 0].unaryOperation().type() != UnaryOperationTypeAbs)
+                return false;
+            if (src[index + 1].type() != LayerTypePower || src[index + 1].power().power() != 2.0f)
+                return false;
+            if (src[index + 2].type() != LayerTypeReduction || src[index + 2].reduction().type() != ReductionTypeSum)
+                return false;
+            if (src[index + 3].type() != LayerTypePower || src[index + 3].power().power() != 0.5f)
+                return false;
+            if (src[index + 4].type() != LayerTypeReduction || src[index + 4].reduction().type() != ReductionTypeMean)
+                return false;
+            if (src[index + 5].type() != LayerTypePower || src[index + 5].power().power() != 1.0f || src[index + 5].power().scale() != 1.0f)
+                return false;
+            if (src[index + 6].type() != LayerTypeBinaryOperation || src[index + 6].binaryOperation().type() != BinaryOperationTypeDiv)
+                return false;
+            if (src[index + 7].type() != LayerTypeEltwise || src[index + 7].eltwise().operation() != EltwiseOperationTypeProduct)
+                return false;
+            if (src[index + 8].type() != LayerTypeScale || !src[index + 8].scale().biasTerm())
+                return false;
+            if (src[index + 9].type() != LayerTypeEltwise || src[index + 9].eltwise().operation() != EltwiseOperationTypeSum)
+                return false;
+            if (InsideLink(src, index + 1, 8))
+                return false;
+            LayerParam layer;
+            layer.type() = LayerTypeNormalize;
+            layer.name() = src[index + 9].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            layer.normalize().eps() = src[index + 5].power().shift();
+            layer.normalize().version() = 4;
+            layer.weight() = src[index + 8].weight();
+            if (isNhwc && !PermutedToNchw(src, layer.src(), false, false, false))
+                layer.normalize().axis() = -1;
+            else
+                layer.normalize().axis() = 1;
+            dst.push_back(layer);
+            index += 9;
             return true;
         }
 

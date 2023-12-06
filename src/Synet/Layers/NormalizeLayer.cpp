@@ -268,6 +268,66 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
+    void NormalizeLayerForwardV4Cpu(const float* src, size_t batch, size_t channels, size_t spatial, const float* scale, const float* shift, float eps, int trans, float* buf, float* dst)
+    {
+        float k = 1.0f / float(channels);
+        if (trans)
+        {
+            for (size_t b = 0; b < batch; ++b)
+            {
+                float sum = 0;
+                for (size_t c = 0; c < channels; ++c)
+                    buf[c] = 0;
+                for (size_t s = 0, o = 0; s < spatial; ++s)
+                {
+                    for (size_t c = 0; c < channels; ++c, ++o)
+                        buf[c] += Square(src[o]);
+                }
+                for (size_t c = 0; c < channels; ++c)
+                {
+                    buf[c] = sqrt(buf[c]);
+                    sum += buf[c];
+                }
+                float norm = 1.0f / (sum * k + eps);
+                for (size_t c = 0; c < channels; ++c)
+                    buf[c] = 1.0f + scale[c] * buf[c] * norm;
+                for (size_t s = 0, o = 0; s < spatial; ++s)
+                {
+                    for (size_t c = 0; c < channels; ++c, ++o)
+                        dst[o] = src[o]*buf[c] + shift[c];
+                }
+                src += channels * spatial;
+                dst += channels * spatial;
+            }
+        }
+        else
+        {
+            for (size_t b = 0; b < batch; ++b)
+            {
+                float sum = 0;
+                for (size_t c = 0, o = 0; c < channels; ++c)
+                {
+                    float sqsum = 0;
+                    for (size_t s = 0; s < spatial; ++s, ++o)
+                        sqsum += Square(src[o]);
+                    buf[c] = sqrt(sqsum);
+                    sum += buf[c];
+                }
+                float norm = 1.0f / (sum * k + eps);
+                for (size_t c = 0; c < channels; ++c)
+                {
+                    float alpha = 1.0f + scale[c] * buf[c] * norm;
+                    for (size_t s = 0; s < spatial; ++s)
+                        dst[s] = src[s] * alpha + shift[c];
+                    dst += spatial;
+                    src += spatial;
+                }
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     NormalizeLayer::NormalizeLayer(const LayerParam & param, Context* context)
         : Base(param, context)
     {
@@ -348,7 +408,7 @@ namespace Synet
                     _scale.Share(weight[0]);
             }
         }
-        else if (_version == 2)
+        else if (_version >= 2 && _version <= 4)
         {
             int axis = (int)src[0]->Index(param.axis());
             _channels = src[0]->Axis(axis);
@@ -363,32 +423,15 @@ namespace Synet
                 _batch = src[0]->Size(0, axis);
                 _spatial = src[0]->Size(axis + 1);
             }
-            if (weight.size() != 2)
+            if (this->Weight().size() != 2)
                 SYNET_ERROR("NormalizeLayer has wrong number of weights!");
-            if (weight[0].Shape() != weight[1].Shape())
-                SYNET_ERROR("NormalizeLayer has wrong weight shapes!");
-            _scale.Share(weight[0]);
-            _shift.Share(weight[1]);
-        }
-        else if (_version == 3)
-        {
-            int axis = (int)src[0]->Index(param.axis());
-            _channels = src[0]->Axis(axis);
-            _trans = axis == src[0]->Count() - 1 ? 1 : 0;
-            if (_trans)
+            if (this->Weight()[0].Shape() != this->Weight()[1].Shape())
             {
-                _batch = 1;
-                _spatial = src[0]->Size(0, axis);
+                if (SignificantDimsCount(this->Weight()[0].Shape()) != 1 ||
+                    SignificantDimsCount(this->Weight()[1].Shape()) != 1 ||
+                    this->Weight()[0].Size() != this->Weight()[1].Size())
+                    SYNET_ERROR("NormalizeLayer scale and bias weights have different shapes: " << ToStr(this->Weight()[0].Shape()) << " != " << ToStr(this->Weight()[1].Shape()) << "!");
             }
-            else
-            {
-                _batch = src[0]->Size(0, axis);
-                _spatial = src[0]->Size(axis + 1);
-            }
-            if (weight.size() != 2)
-                SYNET_ERROR("NormalizeLayer has wrong number of weights!");
-            if (weight[0].Shape() != weight[1].Shape())
-                SYNET_ERROR("NormalizeLayer has wrong weight shapes!");
             _scale.Share(weight[0]);
             _shift.Share(weight[1]);
         }
@@ -415,6 +458,8 @@ namespace Synet
             NormalizeLayerForwardV2Cpu(pSrc, _batch, _channels, _spatial, pScale, pShift, _eps, _trans, pBuf, pDst);
         else if (_version == 3)
             NormalizeLayerForwardV3Cpu(pSrc, _batch, _channels, _spatial, pScale, pShift, _eps, _trans, pBuf, pDst);
+        else if (_version == 4)
+            NormalizeLayerForwardV4Cpu(pSrc, _batch, _channels, _spatial, pScale, pShift, _eps, _trans, pBuf, pDst);
         else
             assert(0);
     }
