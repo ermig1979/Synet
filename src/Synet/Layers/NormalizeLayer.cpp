@@ -270,6 +270,9 @@ namespace Synet
 
     void NormalizeLayerForwardV4Cpu(const float* src, size_t batch, size_t channels, size_t spatial, const float* scale, const float* shift, float eps, int trans, float* buf, float* dst)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        SimdSynetNormalizeLayerForwardV4(src, batch, channels, spatial, scale, shift, &eps, trans ? SimdTensorFormatNhwc : SimdTensorFormatNchw, buf, dst);
+#else
         float k = 1.0f / float(channels);
         if (trans)
         {
@@ -294,7 +297,7 @@ namespace Synet
                 for (size_t s = 0, o = 0; s < spatial; ++s)
                 {
                     for (size_t c = 0; c < channels; ++c, ++o)
-                        dst[o] = src[o]*buf[c] + shift[c];
+                        dst[o] = src[o] * buf[c] + shift[c];
                 }
                 src += channels * spatial;
                 dst += channels * spatial;
@@ -324,6 +327,7 @@ namespace Synet
                 }
             }
         }
+#endif
     }
 
     //-------------------------------------------------------------------------------------------------
