@@ -37,6 +37,10 @@ namespace Synet
             for (size_t i = 0; i < size; ++i)
                 dst[i] = Abs(src[i]);
             break;
+        case UnaryOperationTypeCeil:
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = ::ceil(src[i]);
+            break;
         case UnaryOperationTypeErf:
             for (size_t i = 0; i < size; ++i)
                 dst[i] = ::erff(src[i]);
@@ -44,6 +48,10 @@ namespace Synet
         case UnaryOperationTypeExp:
             for (size_t i = 0; i < size; ++i)
                 dst[i] = ::exp(src[i]);
+            break;
+        case UnaryOperationTypeFloor:
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = ::floor(src[i]);
             break;
         case UnaryOperationTypeLog:
             for (size_t i = 0; i < size; ++i)
