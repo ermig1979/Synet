@@ -284,7 +284,7 @@ namespace Synet
                 dst[i] = FusedLayerForward11(src[i], params[0], params[1], params[2], params[3]);
         }
 
-#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE) && 0
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
