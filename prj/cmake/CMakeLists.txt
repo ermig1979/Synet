@@ -7,6 +7,7 @@ option(SYNET_SIMD "Use Simd Library to accelerate Synet" ON)
 option(SYNET_BF16_ROUND_TEST "Test BF16 rounding error" OFF)
 option(SYNET_SHARED "Build as SHARED library" OFF)
 option(SYNET_PERF "Performance statistics level: 0 - no statistics, 1 - Synet statistics, 2 - Simd statistics" OFF)
+option(SYNET_PYTHON "Enabling of Synet Python wrapper" ON)
 option(SIMD_AVX512 "Use AVX-512 (AVX-512F, AVX-512CD, AVX-512VL, AVX-512DQ, AVX-512BW)" OFF)
 option(SIMD_AVX512VNNI "Use AVX-512VNNI" OFF)
 option(SIMD_AVX512BF16 "Use AVX-512BF16" OFF)
@@ -74,6 +75,11 @@ endif()
 
 include(${ROOT_DIR}/prj/cmake/Simd.cmake)
 include(${ROOT_DIR}/prj/cmake/Synet.cmake)
+
+if(SYNET_PYTHON)
+	add_custom_command(TARGET Synet POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy 
+		${ROOT_DIR}/py/SynetPy/*.py ${CMAKE_BINARY_DIR})
+endif()
 
 if((SYNET_TEST STREQUAL "inference_engine") OR (SYNET_TEST STREQUAL "all"))
 	include(${ROOT_DIR}/prj/cmake/openvino.cmake)
