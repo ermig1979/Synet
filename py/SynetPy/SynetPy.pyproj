@@ -12,7 +12,7 @@
     <Name>SynetPy</Name>
     <RootNamespace>simple</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>-m=../../../../data/onnx/test_000/synet.xml -w=../../../../data/onnx/test_000/synet.bin  -i=../../../../data/images/face/face_000.jpg</CommandLineArguments>
+    <CommandLineArguments>-b=. -m=../../../../data/precision/detection/test_003/sy_fp32_v0.xml -w=../../../../data/precision/detection/test_003/synet.bin  -i=../../../../data/images/faces/faces_000.jpg</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>

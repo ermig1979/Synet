@@ -30,12 +30,52 @@ import Simd
 
 ###################################################################################################
 
+def DrawRectangle(image : Simd.Image, left : int, top : int, right : int, bottom : int, color: int) :
+	if image.Format() != Simd.PixelFormat.Bgra32 :
+		raise Exception("DrawRectangle can annotate only for BGRA-32 image!")
+	bgra = ctypes.c_uint32(color)
+	data = ctypes.cast(image.Data(), ctypes.POINTER(ctypes.c_uint32))
+	stride = image.Stride() // 4
+	if top >= 0 and top < image.Height() :
+		beg = top * stride + max(0, left)
+		end = top * stride + min(right, image.Width())
+		for offs in range(beg, end) :
+			data[offs] = bgra
+	if bottom > 0 and bottom <= image.Height() :
+		beg = (bottom - 1) * stride + max(0, left)
+		end = (bottom - 1) * stride + min(right, image.Width())
+		for offs in range(beg, end) :
+			data[offs] = bgra
+	if left >= 0 and left < image.Width() :
+		beg = max(0, top) * stride + left
+		end = min(bottom, image.Height()) * stride + left
+		for offs in range(beg, end, stride) :
+			data[offs] = bgra
+	if right > 0 and right < image.Width() :
+		beg = max(0, top) * stride + right - 1
+		end = min(bottom, image.Height()) * stride + right - 1
+		for offs in range(beg, end, stride) :
+			data[offs] = bgra
+	
+###################################################################################################
+
+def AnnotateDetection(image : Simd.Image, ptr : ctypes.POINTER(ctypes.c_float), offs : int) :
+	color = int("ff00ff00", 16)
+	left = int(ptr[offs + 3] * image.Width())
+	top = int(ptr[offs + 4] * image.Height())
+	right = int(ptr[offs + 5] * image.Width())
+	bottom = int(ptr[offs + 6] * image.Height())
+	DrawRectangle(image, left, top, right, bottom, color)
+
+###################################################################################################
+
 def main():
-	parser = argparse.ArgumentParser(prog="Synet", description="Synet Python Wrapper.")
+	parser = argparse.ArgumentParser(prog="Synet", description="Synet Python Wrapper Tests.")
 	parser.add_argument("-b", "--bin", help="Directory with binary files.", required=False, type=str, default="")
 	parser.add_argument("-m", "--model", help="Path to model file.", required=False, type=str, default="./data/precision/detection/test_003/sy_fp32_v0.xml")
 	parser.add_argument("-w", "--weight", help="Path to weight file.", required=False, type=str, default="./data/precision/detection/test_003/synet.bin")
 	parser.add_argument("-i", "--image", help="Path to image file.", required=False, type=str, default="./data/images/faces/faces_000.jpg")
+	parser.add_argument("-o", "--output", help="Output directory.", required=False, type=str, default=pathlib.Path(__file__).parent.resolve())
 	args = parser.parse_args()
 
 	Simd.Lib.Init(args.bin)
@@ -83,16 +123,21 @@ def main():
 	network.Forward()
 	print("Network inference.")		
 	
+	annotated = image.Converted(Simd.PixelFormat.Bgra32)
 	dst = network.Dst(0)
 	shp = dst.Shape()
-	print("Network output {0} :".format(shp))	
 	ptr = dst.As32f()
+	faces  = 0;
 	for i in range(shp[2]) :
 		if ptr[i * 7 + 2] < 0.5 :
 			break
-		print(" {0} : {1} {2} {3} {4} {5} {6} {7} ".format(i, ptr[i*7 + 0], ptr[i*7 + 1], ptr[i*7 + 2], ptr[i*7 + 3], ptr[i*7 + 4], ptr[i*7 + 5], ptr[i*7 + 6]))
-	
-	print("\nSynet Python Wrapper ended successfully!\n")
+		faces += 1
+		AnnotateDetection(annotated, ptr, i * 7)
+	outPath = "{0}/annotated_faces.jpg".format(args.output)
+	print("There are {0} faces were found. See image {1}.".format(faces, outPath))	
+	annotated.Save(outPath)	
+
+	print("\nSynet Python Wrapper Tests ended successfully!\n")
 	
 	return 0
 	
