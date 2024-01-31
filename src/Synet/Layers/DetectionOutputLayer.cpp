@@ -71,7 +71,7 @@ namespace Synet
         Shape shape(2, 1);
         shape.push_back(1);
         shape.push_back(7);
-        dst[0]->Reshape(shape);
+        dst[0]->Reshape(TensorType32f, shape, TensorFormatUnknown);
         this->UsePerfStat();
         return true;
     }

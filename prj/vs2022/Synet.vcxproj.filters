@@ -113,6 +113,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\DetectionOutputLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\PermuteLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -445,9 +448,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\YoloV7Layer.h">
       <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Permute.h">
-      <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ScatterNdLayer.h">
       <Filter>Layers</Filter>
