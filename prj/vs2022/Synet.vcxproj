@@ -36,6 +36,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\ConstLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\CtcGreedyDecoderLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\DeconvolutionLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\DetectionOutputLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\FlattenLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\GatherLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\GridSampleLayer.cpp" />

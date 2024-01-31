@@ -149,24 +149,24 @@ namespace Synet
                         continue;
                     if (MergeSoftmax(network.layers(), i, merged, changes))
                         continue;
-                    if (MergeFused0(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeFused1(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeFused3(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeFused4(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeFused5(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeFused6(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeFused7(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeFused8(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeFused9(network.layers(), i, merged, changes))
-                        continue;
+                    //if (MergeFused0(network.layers(), i, merged, changes))
+                    //    continue;
+                    //if (MergeFused1(network.layers(), i, merged, changes))
+                    //    continue;
+                    //if (MergeFused3(network.layers(), i, merged, changes))
+                    //    continue;
+                    //if (MergeFused4(network.layers(), i, merged, changes))
+                    //    continue;
+                    //if (MergeFused5(network.layers(), i, merged, changes))
+                    //    continue;
+                    //if (MergeFused6(network.layers(), i, merged, changes))
+                    //    continue;
+                    //if (MergeFused7(network.layers(), i, merged, changes))
+                    //    continue;
+                    //if (MergeFused8(network.layers(), i, merged, changes))
+                    //    continue;
+                    //if (MergeFused9(network.layers(), i, merged, changes))
+                    //    continue;
                     //if (MergeFused10(network.layers(), i, merged, changes))
                     //    continue;
                     if (MergeFused11(network.layers(), i, merged, changes))
