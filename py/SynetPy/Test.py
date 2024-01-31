@@ -81,6 +81,8 @@ def main():
 	Simd.Lib.Init(args.bin)
 	Synet.Lib.Init(args.bin)
 	
+	Synet.Lib.SetConsoleLogLevel(Synet.LogLevel.Info)
+	
 	print("Synet: {0}; {1} \n".format(Synet.Lib.Version(), Simd.Lib.SysInfo()))
 	
 	network = Synet.Network()

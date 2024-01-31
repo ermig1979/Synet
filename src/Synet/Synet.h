@@ -54,6 +54,19 @@ extern "C"
     } SynetBool;
 
     /*! @ingroup c_api
+        Describes logger level type.
+    */
+    typedef enum
+    {
+        SynetLogNone = 0, /*!< Silence mode. */
+        SynetLogError,  /*!< Log errors. */
+        SynetLogWarning, /*!< Log warings. */
+        SynetLogInfo, /*!< Log info messages. */
+        SynetLogVerbose, /*!< Log verbose messages. */
+        SynetLogDebug, /*!< Log full debug information. */
+    } SynetLogLevel;
+
+    /*! @ingroup c_api
         Describes tensor format.
     */
     typedef enum
@@ -89,6 +102,16 @@ extern "C"
         \return string with version of %Synet.
     */
     SYNET_API const char* SynetVersion();
+
+    /*! @ingroup c_api
+
+        \fn void SynetSetConsoleLogLevel(SynetLogLevel level);
+
+        \short Sets level of console(std::cout) logger of %Synet Framework.
+
+        \param [in] level - a level of console(std::cout) logger.
+    */
+    SYNET_API void SynetSetConsoleLogLevel(SynetLogLevel level);
 
     /*! @ingroup c_api
 

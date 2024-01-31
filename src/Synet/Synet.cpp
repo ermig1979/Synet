@@ -53,6 +53,15 @@ SYNET_API const char* SynetVersion()
     return SYNET_VERSION;
 }
 
+SYNET_API void SynetSetConsoleLogLevel(SynetLogLevel level)
+{
+    static int id = -1;
+    if (id >= 0)
+        Cpl::Log::Global().RemoveWriter(id);
+    id = Cpl::Log::Global().AddStdWriter((Cpl::Log::Level)level);
+    Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
+}
+
 SYNET_API void SynetRelease(void* context)
 {
     delete (Synet::Deletable*)context;

@@ -34,6 +34,24 @@ Synet = sys.modules[__name__]
 ###################################################################################################
 
 ## @ingroup python
+# Describes logging level type.
+class LogLevel(enum.Enum) :
+	## Silence mode.	
+	Silence = 0
+	## Log errors.
+	Error = 1
+	## Log warings.
+	Warning = 2
+	## Log info messages.
+	Info = 3
+	## Log verbose messages.
+	Verbose = 4
+	## Log full debug information.
+	Debug = 5
+
+###################################################################################################
+
+## @ingroup python
 # A wrapper around %Synet Library API.
 class Lib():
 	lib : ctypes.CDLL
@@ -59,6 +77,9 @@ class Lib():
 		
 		Lib.lib.SynetVersion.argtypes = []
 		Lib.lib.SynetVersion.restype = ctypes.c_char_p 
+		
+		Lib.lib.SynetSetConsoleLogLevel.argtypes = [ ctypes.c_int ]
+		Lib.lib.SynetSetConsoleLogLevel.restype = None 
 		
 		Lib.lib.SynetRelease.argtypes = [ ctypes.c_void_p ]
 		Lib.lib.SynetRelease.restype = None 
@@ -122,6 +143,11 @@ class Lib():
 	def Version() -> str: 
 		ptr = Lib.lib.SynetVersion()
 		return str(ptr, encoding='utf-8')
+	
+	## Sets console logger level of %Synet Framework.
+	# @param level - a level of console logger.
+	def SetConsoleLogLevel(level: Synet.LogLevel) : 
+		Lib.lib.SynetSetConsoleLogLevel(level.value)
 	
 ###################################################################################################
 
