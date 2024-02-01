@@ -47,6 +47,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\PadLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PermuteLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PowerLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\PreluLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PriorBoxClusteredLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PriorBoxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ReductionLayer.cpp" />

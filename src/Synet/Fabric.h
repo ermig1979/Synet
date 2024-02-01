@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2023 Yermalayeu Ihar.
+* Copyright (c) 2018-2024 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -152,7 +152,7 @@ namespace Synet
             case LayerTypePermute: return new PermuteLayer(param, context);
             case LayerTypePooling: return new PoolingLayer<T>(param, context);
             case LayerTypePower: return new PowerLayer(param, context);
-            case LayerTypePrelu: return new PreluLayer<T>(param, context);
+            case LayerTypePrelu: return new PreluLayer(param, context);
             case LayerTypePriorBox: return new PriorBoxLayer(param, context);
             case LayerTypePriorBoxClustered: return new PriorBoxClusteredLayer(param, context);
             case LayerTypeReduction: return new ReductionLayer(param, context);

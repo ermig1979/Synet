@@ -237,7 +237,7 @@ namespace Synet
                     CpuRestrictRange(dst, _dstSize, _params[0], _params[1], dst);
                     break;
                 case ActivationFunctionTypePrelu:
-                    Detail::PreluLayerForwardCpu(dst, this->Weight().back().Data<float>(), _conv.dstC, _conv.dstH * _conv.dstW, dst, _trans);
+                    PreluLayerForward(dst, this->Weight().back().Data<float>(), _conv.dstC, _conv.dstH * _conv.dstW, dst, _trans ? TensorFormatNhwc : TensorFormatNchw);
                     break;
                 case ActivationFunctionTypeElu:
                     CpuElu(dst, _dstSize, _params[0], dst);
