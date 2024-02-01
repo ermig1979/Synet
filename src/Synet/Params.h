@@ -206,8 +206,7 @@ CPL_PARAM_ENUM1(Synet, PadMode,
     
 CPL_PARAM_ENUM1(Synet, PoolingMethodType,
     PoolingMethodTypeMax,
-    PoolingMethodTypeAverage,
-    PoolingMethodTypeStochastic);
+    PoolingMethodTypeAverage);
 
 CPL_PARAM_ENUM1(Synet, PoolingPadType,
     PoolingPadTypeTensorflowSame);

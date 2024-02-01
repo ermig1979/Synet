@@ -119,6 +119,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\PreluLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\PoolingLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />

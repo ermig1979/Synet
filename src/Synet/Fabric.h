@@ -150,7 +150,7 @@ namespace Synet
             case LayerTypeNormalize: return new NormalizeLayer(param, context);
             case LayerTypePad: return new PadLayer(param, context);
             case LayerTypePermute: return new PermuteLayer(param, context);
-            case LayerTypePooling: return new PoolingLayer<T>(param, context);
+            case LayerTypePooling: return new PoolingLayer(param, context);
             case LayerTypePower: return new PowerLayer(param, context);
             case LayerTypePrelu: return new PreluLayer(param, context);
             case LayerTypePriorBox: return new PriorBoxLayer(param, context);
