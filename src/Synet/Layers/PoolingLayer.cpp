@@ -280,8 +280,8 @@ namespace Synet
         
     bool PoolingLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 1 || dst.size() != 1)
-            SYNET_ERROR("PoolingLayer supports only 1 input and 1 output!");
+        if ((src.size() != 1 && src.size() != 2) || dst.size() != 1)
+            SYNET_ERROR("PoolingLayer supports only 1-2 inputs and 1 output!");
 
         const PoolingParam & param = this->Param().pooling();
 
