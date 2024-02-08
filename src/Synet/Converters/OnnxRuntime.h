@@ -155,6 +155,9 @@ namespace Synet
                     SYNET_ERROR("Can't convert input '" << input.name() << "' !");
             }
 
+            //for (size_t i = 0; i < graph.output_size(); ++i)
+            //    network.dst().push_back(graph.output(i).name());
+
             for (size_t i = 0; i < graph.node_size(); ++i)
             {
                 const onnx::NodeProto& node = graph.node(i);

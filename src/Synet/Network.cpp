@@ -660,7 +660,7 @@ namespace Synet
         }
         IdNameMap sorted;
         for (NameSet::const_iterator it = available.begin(); it != available.end(); ++it)
-            sorted[_layerId[*it]] = *it;
+            sorted[_tensorId[*it]] = *it;
         for (IdNameMap::const_iterator it = sorted.begin(); it != sorted.end(); ++it)
         {
             if (InsertDst(it->second))
