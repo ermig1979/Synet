@@ -164,6 +164,8 @@ namespace Synet
                 LayerParam layer;
                 SetSrcAndDst(node, renames, layer);
 
+                //std::cout << "Convert node[" << i << "]: " << NodeString(node) << std::endl;
+
                 if (node.op_type() == "Abs" && !ConvertAbsNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Add" && !ConvertAddNode(node, network.layers(), original, layer))
@@ -750,7 +752,7 @@ namespace Synet
             const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
             if (src0 == NULL)
                 return false;
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            const LayerParam* src1 = layer.src().size() < 2 ? 0 : GetLayer(layers, layer.src()[1]);
             if (src0->type() == Synet::LayerTypeMeta || (src1 && src1->type() == Synet::LayerTypeMeta))
             {
                 layer.type() = Synet::LayerTypeMeta;
@@ -2155,11 +2157,13 @@ namespace Synet
             const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
             if (src1 == NULL)
                 return false;
-            if (src1->type() != LayerTypeMeta || src1->meta().type() != MetaTypeConst || src1->meta().alpha().type() != TensorType64i)
-                return false;
 
             layer.type() = Synet::LayerTypeTopK;
-            layer.topK().k() = src1->meta().alpha().i64()[0];
+            if (src1->type() == LayerTypeMeta && src1->meta().type() == MetaTypeConst && src1->meta().alpha().type() == TensorType64i)
+            {
+                layer.topK().k() = src1->meta().alpha().i64()[0];
+                layer.src().resize(1);
+            }
             if (!ConvertAtrributeInt(node, "axis", layer.topK().axis()))
                 return false;
             int64_t largest;
@@ -2171,7 +2175,6 @@ namespace Synet
                 return false;
             layer.topK().sort() = sorted ? TopKSortValue : TopKSortIndex;
             layer.topK().indexElementType() = TensorType64i;
-            layer.src().resize(1);
 
             return true;
         }

@@ -150,15 +150,22 @@ namespace Synet
 
     bool TopKLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 1 || dst.size() != 2)
-            SYNET_ERROR("TopKLayer supports only 1 input and 2 outputs!");
+        if ((src.size() != 1 && src.size() != 2) || dst.size() != 2)
+            SYNET_ERROR("TopKLayer supports only 1-2 inputs and 2 outputs!");
         const TopKParam & topK = this->Param().topK();
         _srcType = src[0]->GetType();
         _axis = src[0]->Index(topK.axis());
         Shape shape = src[0]->Shape();
         if(_axis >= shape.size())
             SYNET_ERROR("TopKLayer parameter axis: " << _axis << " has wrong value for input " << ToStr(shape) <<  " !");
-        _k = topK.k();
+        if (src.size() == 2)
+        {
+            if(src[1]->GetType() != TensorType64i || src[1]->Size() != 1)
+                SYNET_ERROR("TopKLayer src[1] has wrong type or size!");
+            _k = src[1]->Data<int64_t>()[0];
+        }
+        else
+            _k = topK.k();
         if (_k > shape[_axis])
             SYNET_ERROR("TopKLayer parameter k: " << _k << " has wrong value for input " << ToStr(shape) << " !");
         shape[_axis] = _k;
