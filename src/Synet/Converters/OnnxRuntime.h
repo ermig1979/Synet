@@ -164,7 +164,7 @@ namespace Synet
                 LayerParam layer;
                 SetSrcAndDst(node, renames, layer);
 
-                //std::cout << "Convert node[" << i << "]: " << NodeString(node) << std::endl;
+                //CPL_LOG_SS(Verbose, "Convert node[" << i << "]: " << NodeString(node));
 
                 if (node.op_type() == "Abs" && !ConvertAbsNode(node, layer))
                     return ErrorMessage(i, node);
@@ -304,7 +304,7 @@ namespace Synet
                 if (layer.type() == LayerTypeUnknown)
                 {
                     NotImplemented(node, layer);
-                    std::cout << "Not implemented node[" << i << "]: " << NodeString(node) << std::endl;
+                    CPL_LOG_SS(Warning, "Not implemented node[" << i << "]: " << NodeString(node));
                 }
 #endif
                 network.layers().push_back(layer);
@@ -619,22 +619,26 @@ namespace Synet
 
             const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
             if (src1 == NULL || src1->type() != LayerTypeConst)
-                return false;
+                SYNET_ERROR("BatchNormalization src[1] must be Const type!");
             const float* gamma = GetWeight<float>(original, src1->weight()[0]);
 
             const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
             if (src2 == NULL || src2->type() != LayerTypeConst)
-                return false;
+                SYNET_ERROR("BatchNormalization src[2] must be Const type!");
             const float* beta = GetWeight<float>(original, src2->weight()[0]);
 
             const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
+            if (src3 && src3->type() == LayerTypeStub)
+                src3 = GetLayer(layers, src3->src()[0]);
             if (src3 == NULL || src3->type() != LayerTypeConst)
-                return false;
+                SYNET_ERROR("BatchNormalization src[3] must be Const type!");
             const float* mean = GetWeight<float>(original, src3->weight()[0]);
 
             const LayerParam* src4 = GetLayer(layers, layer.src()[4]);
+            if (src4 && src4->type() == LayerTypeStub)
+                src4 = GetLayer(layers, src4->src()[0]);
             if (src4 == NULL || src4->type() != LayerTypeConst)
-                return false;
+                SYNET_ERROR("BatchNormalization src[4] must be Const type!");
             const float* var = GetWeight<float>(original, src4->weight()[0]);
 
             float epsilon, momentum;
@@ -829,6 +833,33 @@ namespace Synet
                     reordered.resize(offset + size);
                     memcpy(original.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
                     memcpy(reordered.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                }
+            }
+            else if (tensor.data_type() == onnx::TensorProto_DataType_DOUBLE)
+            {
+                layer.type() = LayerTypeConst;
+                layer.weight().resize(1);
+                layer.weight()[0].type() = TensorType32f;
+                uint64_t size = 1, offset = original.size();
+                for (size_t i = 0; i < tensor.dims_size(); ++i)
+                {
+                    size *= tensor.dims(i);
+                    layer.weight()[0].dim().push_back(size_t(tensor.dims(i)));
+                }
+                if (layer.weight()[0].dim().empty())
+                    layer.weight()[0].dim().push_back(1);
+                layer.weight()[0].offset() = offset * sizeof(float);
+                layer.weight()[0].size() = size * sizeof(float);
+                if (tensor.has_raw_data() && size)
+                {
+                    original.resize(offset + size);
+                    reordered.resize(offset + size);
+                    for (size_t i = 0; i < size; ++i)
+                    {
+                        float value = float(((double*)tensor.raw_data().c_str())[i]);
+                        original[offset + i] = value;
+                        reordered[offset + i] = value;
+                    }
                 }
             }
             else
@@ -2355,6 +2386,7 @@ namespace Synet
             {
             case onnx::TensorProto_DataType_FLOAT: ss << "f32"; break;
             case onnx::TensorProto_DataType_INT64: ss << "i64"; break;
+            case onnx::TensorProto_DataType_DOUBLE: ss << "f64"; break;
             default: ss << " unknown-" << tensor.data_type();
             }
             if (tensor.data_location() == onnx::TensorProto_DataLocation_EXTERNAL)
@@ -2398,6 +2430,20 @@ namespace Synet
                 {
                     for (size_t i = 0; i < printSize; ++i)
                         ss << " " << ((int64_t*)tensor.raw_data().c_str())[i];
+                }
+                break;
+            }
+            case onnx::TensorProto_DataType_DOUBLE:
+            {
+                if (tensor.double_data_size())
+                {
+                    for (size_t i = 0; i < printSize; ++i)
+                        ss << " " << tensor.double_data(i);
+                }
+                if (tensor.has_raw_data())
+                {
+                    for (size_t i = 0; i < printSize; ++i)
+                        ss << " " << ((double*)tensor.raw_data().c_str())[i];
                 }
                 break;
             }
