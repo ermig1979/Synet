@@ -71,6 +71,7 @@
 #include "Synet/Layers/ReverseSequenceLayer.h"
 #include "Synet/Layers/RnnGruBdLayer.h"
 #include "Synet/Layers/ScaleLayer.h"
+#include "Synet/Layers/ScaledDotProductAttentionLayer.h"
 #include "Synet/Layers/ScatterNdLayer.h"
 #include "Synet/Layers/ShortcutLayer.h"
 #include "Synet/Layers/ShuffleLayer.h"
@@ -164,6 +165,7 @@ namespace Synet
             case LayerTypeReverseSequence: return new ReverseSequenceLayer<T>(param, context);
             case LayerTypeRnnGruBd: return new RnnGruBdLayer<T>(param, context);
             case LayerTypeScale: return new ScaleLayer(param, context, method);
+            case LayerTypeScaledDotProductAttention: return new ScaledDotProductAttentionLayer(param, context);
             case LayerTypeScatterNd: return new ScatterNdLayer<T>(param, context);
             case LayerTypeShortcut: return new ShortcutLayer<T>(param, context);
             case LayerTypeShuffle: return new ShuffleLayer<T>(param, context);

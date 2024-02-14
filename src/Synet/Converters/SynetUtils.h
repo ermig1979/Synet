@@ -98,6 +98,20 @@ namespace Synet
             return true;
         }
 
+        static size_t GetLayerIndex(const LayerParams& layers, const String& name)
+        {
+            Pin pin = ParsePin(name);
+            for (size_t i = 0; i < layers.size(); ++i)
+            {
+                if (pin.name == layers[i].name())
+                    return i;
+                for (size_t d = 0; d < layers[i].dst().size(); ++d)
+                    if (pin.name == layers[i].dst()[d])
+                        return i;
+            }
+            return layers.size();
+        }
+
         static const LayerParam* GetLayer(const LayerParams& layers, const String& name)
         {
             Pin pin = ParsePin(name);
@@ -346,6 +360,24 @@ namespace Synet
                                 layers.erase(layers.begin() + i - 2, layers.begin() + i + 1), i -= 3;
                         }
                     }
+                }
+                if (curr.type() == LayerTypeStub)
+                {
+                    if (UserCount(layers, i) == 0)
+                    {
+                        size_t p = GetLayerIndex(layers, curr.src()[0]);
+                        if (p < layers.size())
+                        {
+                            if (layers[p].type() == LayerTypeConst && UserCount(layers, p) == 1)
+                            {
+                                layers.erase(layers.begin() + i);
+                                layers.erase(layers.begin() + p);
+                                i -= 2;
+                                continue;
+                            }
+                        }
+                    }
+                    continue;
                 }
             }
             return true;

@@ -52,6 +52,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\PriorBoxClusteredLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PriorBoxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ReductionLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ScaleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SqueezeLayer.cpp" />
@@ -143,6 +144,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\ReshapeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ReverseSequenceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\RnnGruBdLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ScaleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ScatterNdLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ShortcutLayer.h" />

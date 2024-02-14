@@ -268,6 +268,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Resize" && !ConvertResizeNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "ScaledDotProductAttention" && !ConvertScaledDotProductAttentionNode(node, network.layers(), layer, reordered))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "ScatterND" && !ConvertScatterNdNode(node, network.layers(), layer, reordered))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Shape" && !ConvertShapeNode(node, layer))
@@ -1873,6 +1875,18 @@ namespace Synet
             }
 
             layer.type() = Synet::LayerTypeInterp;
+            return true;
+        }
+
+        bool ConvertScaledDotProductAttentionNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer, Vector& reordered)
+        {
+            if (!CheckSourceNumber(layer, 4))
+                return false;
+            const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
+            if (src3 == NULL || src3->type() != LayerTypeConst || src3->weight()[0].type() != TensorType32f || src3->weight()[0].dim() != Shp(1))
+                return false;
+            layer.type() = Synet::LayerTypeScaledDotProductAttention;
+            layer.src().resize(3);
             return true;
         }
 

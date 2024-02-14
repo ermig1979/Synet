@@ -122,6 +122,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\PoolingLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -483,6 +486,9 @@
       <Filter>Decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\NonZeroLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
   </ItemGroup>
