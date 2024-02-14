@@ -653,8 +653,8 @@ namespace Synet
             layer.src().resize(1);
             layer.scale().biasTerm() = true;
             layer.weight().resize(2);
-            layer.weight()[0] = src3->weight()[0];
-            layer.weight()[1] = src4->weight()[0];
+            layer.weight()[0] = src1->weight()[0];
+            layer.weight()[1] = src2->weight()[0];
             float* scale = GetWeight<float>(reordered, layer.weight()[0]);
             float* shift = GetWeight<float>(reordered, layer.weight()[1]);
             size_t channels = layer.weight()[0].dim()[0];
