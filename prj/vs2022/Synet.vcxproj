@@ -188,6 +188,7 @@
     <ClInclude Include="..\..\src\Synet\Utils\InnerProduct.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Math.h" />
     <ClInclude Include="..\..\src\Synet\Utils\MergedConvolution.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\Permute.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Scale.h" />
     <ClInclude Include="..\..\src\Synet\Utils\SetInput.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Shape.h" />

@@ -23,82 +23,10 @@
 */
 
 #include "Synet/Layers/PermuteLayer.h"
+#include "Synet/Utils/Permute.h"
 
 namespace Synet
 {
-    struct SimdPermute
-    {
-        SimdPermute()
-            : _context(NULL)
-        {
-        }
-
-        virtual ~SimdPermute()
-        {
-#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-            if (_context)
-                ::SimdRelease(_context);
-#endif
-        }
-
-        void Init(const Shape& shape, const Shape& order, TensorType type)
-        {
-#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-            if (_shape != shape || _order != order)
-            {
-                assert(shape.size() == order.size());
-                _shape = shape;
-                _order = order;
-                if (_context)
-                    ::SimdRelease(_context);
-                _context = ::SimdSynetPermuteInit(_shape.data(), _order.data(), _shape.size(), Convert(type));
-            }
-#endif
-        }
-
-        bool Enable()
-        {
-            return _context != NULL;
-        }
-
-        size_t InternalBufferSize() const
-        {
-#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-            return _context ? ::SimdSynetPermuteInternalBufferSize(_context) : 0;
-#else
-            return 0;
-#endif
-        }
-
-        void Forward(const uint8_t* src, uint8_t* dst)
-        {
-#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-            if (_context)
-                ::SimdSynetPermuteForward(_context, src, dst);
-#endif
-        }
-
-    private:
-        void* _context;
-        Shape _shape, _order;
-
-        static SYNET_INLINE SimdTensorDataType Convert(TensorType type)
-        {
-            switch (type)
-            {
-            case TensorType32f: return SimdTensorData32f;
-            case TensorType32i: return SimdTensorData32i;
-            case TensorType8i: return SimdTensorData8i;
-            case TensorType8u: return SimdTensorData8u;
-            default:
-                assert(0);
-                return SimdTensorData32f;
-            }
-        }
-    };
-
-    //-----------------------------------------------------------------------------------------------------
-
     static Shape Stride(const Shape& shape, const Shape& order)
     {
         Shape buf(shape.size(), 1), out(shape.size(), 1);

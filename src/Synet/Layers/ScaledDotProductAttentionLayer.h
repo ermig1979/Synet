@@ -38,7 +38,17 @@ namespace Synet
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
+        virtual int64_t Flop() const;
+
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+        void Attention(const float* query, const float* key, const float* value, float* buf, float* dst);
+
+        size_t _batch, _prev, _last;
+        float _scale;
+        bool _fast;
+
+        std::shared_ptr<struct SimdPermute> _simdPermute;
     };
 }

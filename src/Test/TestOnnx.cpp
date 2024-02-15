@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
     if (options.mode == "convert")
     {
         SYNET_PERF_FUNC();
-        std::cout << "Convert network from Onnx to Synet : ";
+        std::cout << "Convert network from Onnx to Synet : " << std::flush;
         options.result = Test::ConvertOnnxToSynet(options);
         std::cout << (options.result ? "OK." : " Conversion finished with errors!") << std::endl;
     }
