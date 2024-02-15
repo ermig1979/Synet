@@ -45,6 +45,7 @@ namespace Synet
         typedef Synet::Tensor<float> Tensor;
         typedef std::vector<Tensor> Tensors;
         typedef std::vector<float> Vector;
+        typedef std::map<String, bool> PermuteMap;
 
         struct Pin
         {
@@ -167,24 +168,33 @@ namespace Synet
             return pin;
         }
 
-        static bool PermutedToNchw(const LayerParams& layers, size_t current, bool checkInnerProduct, bool checkPriorBox, bool globalPooling)
+        static bool Cache(const LayerParam& layer, bool value, PermuteMap* permuteMap = NULL)
+        {
+            if (permuteMap)
+                (*permuteMap)[layer.name()] = value;
+            return value;
+        }
+
+        static bool PermutedToNchw(const LayerParams& layers, size_t current, bool checkInnerProduct, bool checkPriorBox, bool globalPooling, PermuteMap *permuteMap = NULL)
         {
             const LayerParam& layer = layers[current];
+            if (permuteMap && permuteMap->find(layer.name()) != permuteMap->end())
+                return (*permuteMap)[layer.name()];
             if (layer.type() == LayerTypeConvolution && layer.weight()[0].format() == TensorFormatNhwc)
-                return false;
+                return Cache(layer, false, permuteMap);
             if (layer.type() == LayerTypePermute && layer.permute().format() == TensorFormatNhwc)
-                return false;
+                return Cache(layer, false, permuteMap);
             if (layer.type() == LayerTypePermute && layer.permute().format() == TensorFormatNchw)
-                return true;
+                return Cache(layer, true, permuteMap);
             if (checkInnerProduct && layer.type() == LayerTypeInnerProduct)
-                return true;
+                return Cache(layer, true, permuteMap);
             if (checkPriorBox && (layer.type() == LayerTypePriorBox || layer.type() == LayerTypePriorBoxClustered))
-                return true;
+                return Cache(layer, true, permuteMap);
             if (globalPooling && layer.type() == LayerTypePooling && layer.pooling().globalPooling())
-                return true;
+                return Cache(layer, true, permuteMap);
             if (layer.type() == LayerTypeInput && layer.input().shape().size() > 0 &&
                 layer.input().shape()[0].format() == TensorFormatNchw)
-                return true;
+                return Cache(layer, true, permuteMap);
             for (size_t s = 0; s < layer.src().size(); ++s)
             {
                 const String & src = layer.src()[s];
@@ -195,23 +205,23 @@ namespace Synet
                         if (layers[l].type() == LayerTypeMeta || layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
                             continue;
                         const String & dst = layers[l].dst()[d];
-                        if (src == dst && PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
-                            return true;
+                        if (src == dst && PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling, permuteMap))
+                            return Cache(layer, true, permuteMap);
                     }
                 }
             }
-            return false;
+            return Cache(layer, false, permuteMap);
         }
 
-        static bool PermutedToNchw(const LayerParams& layers, bool checkInnerProduct, bool checkPriorBox, bool globalPooling)
+        static bool PermutedToNchw(const LayerParams& layers, bool checkInnerProduct, bool checkPriorBox, bool globalPooling, PermuteMap* permuteMap = NULL)
         {
             size_t start = layers.size() - 1;
             if (layers[start].type() == LayerTypeConst && start)
                 start--;
-            return PermutedToNchw(layers, start, checkInnerProduct, checkPriorBox, globalPooling);
+            return PermutedToNchw(layers, start, checkInnerProduct, checkPriorBox, globalPooling, permuteMap);
         }
 
-        static bool PermutedToNchw(const LayerParams& layers, const Strings & names, bool checkInnerProduct, bool checkPriorBox, bool globalPooling)
+        static bool PermutedToNchw(const LayerParams& layers, const Strings & names, bool checkInnerProduct, bool checkPriorBox, bool globalPooling, PermuteMap* permuteMap = NULL)
         {
             for (size_t s = 0; s < names.size(); ++s)
             {
@@ -222,7 +232,7 @@ namespace Synet
                         const String & dst = layers[l].dst()[d];
                         if (layers[l].type() == LayerTypeMeta || layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
                             continue;
-                        if (names[s] == dst && PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
+                        if (names[s] == dst && PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling, permuteMap))
                             return true;
                     }
                 }
@@ -230,7 +240,7 @@ namespace Synet
             return false;
         }
 
-        static int PermutedToNchw(const LayerParams& layers, const Strings& names, bool checkInnerProduct, bool checkPriorBox, bool globalPooling, Ints & stat)
+        static int PermutedToNchw(const LayerParams& layers, const Strings& names, bool checkInnerProduct, bool checkPriorBox, bool globalPooling, Ints & stat, PermuteMap* permuteMap = NULL)
         {
             stat.resize(names.size(), 0);
             int count = 0;
@@ -241,7 +251,7 @@ namespace Synet
                     for (size_t d = 0; d < layers[l].dst().size(); ++d)
                     {
                         if(names[s] == layers[l].dst()[d] && layers[l].type() != LayerTypeMeta && layers[l].type() &&
-                            PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling))
+                            PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling, permuteMap))
                         {
                             stat[s] = 1;
                             count++;

@@ -137,6 +137,7 @@ namespace Synet
             Vector original;
             Consts consts;
             Renames renames;
+            PermuteMap permuteMap;
             for (size_t i = 0; i < graph.initializer_size(); ++i)
             {
                 const onnx::TensorProto& tensor = graph.initializer(i);
@@ -164,7 +165,7 @@ namespace Synet
                 LayerParam layer;
                 SetSrcAndDst(node, renames, layer);
 
-                //CPL_LOG_SS(Verbose, "Convert node[" << i << "]: " << NodeString(node));
+                //CPL_LOG_SS(Info, "Convert node[" << i << "]: " << NodeString(node));
 
                 if (node.op_type() == "Abs" && !ConvertAbsNode(node, layer))
                     return ErrorMessage(i, node);
@@ -190,7 +191,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "ConstantOfShape" && !ConvertConstantOfShapeNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
-                if ((node.op_type() == "Conv" || node.op_type() == "ConvTranspose") && !ConvertConvOrConvTransposeNode(node, trans, network.layers(), original, layer, reordered))
+                if ((node.op_type() == "Conv" || node.op_type() == "ConvTranspose") && !ConvertConvOrConvTransposeNode(node, trans, network.layers(), original, layer, reordered, &permuteMap))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Div" && !ConvertDivNode(node, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
@@ -923,7 +924,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConvOrConvTransposeNode(const onnx::NodeProto & node, bool trans, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin)
+        bool ConvertConvOrConvTransposeNode(const onnx::NodeProto & node, bool trans, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin, PermuteMap* permuteMap)
         {
             if (node.op_type() == "Conv")
                 layer.type() = Synet::LayerTypeConvolution;
@@ -959,7 +960,7 @@ namespace Synet
                 layer.weight()[1] = bias->weight()[0];
             }
             layer.src().resize(1);
-            if (trans && !PermutedToNchw(layers, layer.src(), true, false, false))
+            if (trans && !PermutedToNchw(layers, layer.src(), true, false, false, permuteMap))
                 return ReorderWeight(srcBin, Shape(), layer, dstBin);
             return true;
         }
