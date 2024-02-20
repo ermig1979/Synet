@@ -37,7 +37,8 @@ namespace Synet
         CPL_PARAM_VALUE(uint32_t, mergeTwoConvolutionsOutputNumMax, 256);
         CPL_PARAM_VALUE(bool, mergeInt8Convolutions, true);
         CPL_PARAM_VALUE(bool, bf16Enable, false);
-        CPL_PARAM_VALUE(uint32_t, bf16MinEffectiveSrcC, 4);
+        CPL_PARAM_VALUE(uint32_t, bf16MinSrcC, 64);
+        CPL_PARAM_VALUE(uint32_t, bf16MinDstC, 16);
         CPL_PARAM_VALUE(bool, saveUnoptimized, false);
         CPL_PARAM_VALUE(int, convToNhwc, 0);
         CPL_PARAM_VALUE(bool, skipPermute, false);
@@ -2173,7 +2174,7 @@ namespace Synet
                 LayerParam &layer = layers[i];
                 if (layer.type() == LayerTypeConvolution)
                 {
-                    if(layer.convolution().group() == 1 && EffectiveSrcC(layer) >= _param.bf16MinEffectiveSrcC())
+                    if(layer.convolution().group() == 1 && EffectiveSrcC(layer) >= _param.bf16MinSrcC() && layer.convolution().outputNum() >= _param.bf16MinDstC())
                         layer.convolution().bf16() = true;
                 }
                 else if (layer.type() == LayerTypeInnerProduct)

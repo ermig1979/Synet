@@ -60,8 +60,8 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 #TEST inference_engine test_019f face 500 1 1 1 000 2
 #TEST inference_engine test_020f persons 1 0 0 1 000 2 ???
 
-#TEST onnx test_000 face 80 1 1 1 005 2
-TEST onnx test_001 faces 30 1 1 1 003 2
+TEST onnx test_000 face 80 0 1 1 005 2
+#TEST onnx test_001 faces 30 0 1 1 003 2
 
 #TEST quantization test_003 faces 100 1 1 1 000t 0
 #TEST quantization test_009 persons 1 0 1 1 000t 0

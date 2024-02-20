@@ -10,8 +10,7 @@ option(SYNET_PERF "Performance statistics level: 0 - no statistics, 1 - Synet st
 option(SYNET_PYTHON "Enabling of Synet Python wrapper" ON)
 option(SIMD_AVX512 "Use AVX-512 (AVX-512F, AVX-512CD, AVX-512VL, AVX-512DQ, AVX-512BW)" OFF)
 option(SIMD_AVX512VNNI "Use AVX-512VNNI" OFF)
-option(SIMD_AVX512BF16 "Use AVX-512BF16" OFF)
-option(SIMD_AMX "Use AMX" OFF)
+option(SIMD_AMXBF16 "Use AMX-INT8, AMX-BF16 and AVX-512BF16" OFF)
 option(SIMD_AMX_EMULATE "Emulate AMX" OFF)
 set(MAX_ERRORS 5)
 
