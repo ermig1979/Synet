@@ -54,6 +54,7 @@ namespace Synet
         case MetaTypeCast: return ReshapeCast(src, param.alpha(), dst);
         case MetaTypeCeil: return ReshapeCeil(src, dst);
         case MetaTypeConst: return ReshapeConst(param.alpha(), dst);
+        case MetaTypeConstantOfShape: return ReshapeConstantOfShape(src, param.alpha(), dst);
         case MetaTypeDiv: return ReshapeDiv(src, dst);
         case MetaTypeEqual: return ReshapeEqual(src, dst);
         case MetaTypeExpandDims: return ReshapeExpandDims(src, param.alpha(), dst);
@@ -190,6 +191,23 @@ namespace Synet
     bool MetaLayer::ReshapeConst(const TensorParam& alpha, const TensorPtrs& dst)
     {
         return dst[0]->Import(alpha);
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    bool MetaLayer::ReshapeConstantOfShape(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst)
+    {
+        if (src.size() != 1 || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeConstantOfShape supports only 1 input and 1 output!");
+        if (src[0]->Count() != 1 || src[0]->GetType() != TensorType64i)
+            SYNET_ERROR("MetaLayer::ReshapeConstantOfShape src[0] must be 1D 64-bit tensor!");
+        if (alpha.shape() != Shp(1) || alpha.type() != TensorType64i)
+            SYNET_ERROR("MetaLayer::ReshapeConstantOfShape has wrong alpha parameter!");
+        Shape shape;
+        for (size_t a = 0; a < src[0]->Axis(0); ++a)
+            shape.push_back((size_t)(src[0]->Data<int64_t>()[a]));
+        dst[0]->Reshape(TensorType64i, shape, TensorFormatUnknown, alpha.i64()[0]);
+        return true;
     }
 
     //-------------------------------------------------------------------------------------------------
