@@ -197,6 +197,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Erf" && !ConvertErfNode(node, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Equal" && !ConvertEqualNode(node, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Exp" && !ConvertExpNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Expand" && !ConvertExpandNode(node, network.layers(), layer))
@@ -1043,6 +1045,13 @@ namespace Synet
         {
             layer.type() = Synet::LayerTypeUnaryOperation;
             layer.unaryOperation().type() = UnaryOperationTypeErf;
+            return true;
+        }
+
+        bool ConvertEqualNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeCompare;
+            layer.compare().compareType() = CompareTypeEqual;
             return true;
         }
 
