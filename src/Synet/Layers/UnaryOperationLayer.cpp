@@ -41,6 +41,10 @@ namespace Synet
             for (size_t i = 0; i < size; ++i)
                 dst[i] = ::ceil(src[i]);
             break;
+        case UnaryOperationTypeCos:
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = ::cosf(src[i]);
+            break;
         case UnaryOperationTypeErf:
             for (size_t i = 0; i < size; ++i)
                 dst[i] = ::erff(src[i]);
@@ -72,6 +76,10 @@ namespace Synet
         case UnaryOperationTypeRsqrt:
             for (size_t i = 0; i < size; ++i)
                 dst[i] = 1.0f / ::sqrt(src[i]);
+            break;
+        case UnaryOperationTypeSin:
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = ::sinf(src[i]);
             break;
         case UnaryOperationTypeSqrt:
             for (size_t i = 0; i < size; ++i)

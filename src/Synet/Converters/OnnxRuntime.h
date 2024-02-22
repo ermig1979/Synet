@@ -193,6 +193,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if ((node.op_type() == "Conv" || node.op_type() == "ConvTranspose") && !ConvertConvOrConvTransposeNode(node, trans, network.layers(), original, layer, reordered, &permuteMap))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Cos" && !ConvertCosNode(node, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Div" && !ConvertDivNode(node, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Erf" && !ConvertErfNode(node, layer))
@@ -278,6 +280,8 @@ namespace Synet
                 if (node.op_type() == "Shape" && !ConvertShapeNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Sigmoid" && !ConvertSigmoidNode(node, layer))
+                    return ErrorMessage(i, node);
+                if (node.op_type() == "Sin" && !ConvertSinNode(node, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Slice" && !ConvertSliceNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -978,6 +982,13 @@ namespace Synet
             return true;
         }
 
+        bool ConvertCosNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnaryOperation;
+            layer.unaryOperation().type() = UnaryOperationTypeCos;
+            return true;
+        }
+
         bool ConvertDivNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer, Vector& reordered)
         {
             if (!CheckSourceNumber(layer, 2))
@@ -1403,14 +1414,14 @@ namespace Synet
                     layers.erase(layers.begin() + (src1 - layers.data()));
                 }
             }
-            else if (src1->type() == LayerTypeReshape)
-            {
-            }
-            else
-            {
-                CPL_LOG_SS(Error, "Unsupported src[1] type: " << Cpl::ToStr(src1->type()));
-                return false;
-            }
+            //else if (src1->type() == LayerTypeReshape)
+            //{
+            //}
+            //else
+            //{
+            //    CPL_LOG_SS(Error, "Unsupported src[1] type: " << Cpl::ToStr(src1->type()));
+            //    return false;
+            //}
             Shape weight = layer.weight()[0].dim();
             layer.innerProduct().transposeB() = !transB;
             if (weight.empty())
@@ -1961,6 +1972,13 @@ namespace Synet
         bool ConvertSigmoidNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeSigmoid;
+            return true;
+        }
+
+        bool ConvertSinNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnaryOperation;
+            layer.unaryOperation().type() = UnaryOperationTypeSin;
             return true;
         }
 
