@@ -44,6 +44,7 @@ namespace Synet
         switch (dst)
         {
         case TensorType32f: return Where1<C, float>;
+        case TensorType64i: return Where1<C, uint64_t>;
         default:
             return NULL;
         }

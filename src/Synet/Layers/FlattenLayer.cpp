@@ -40,7 +40,7 @@ namespace Synet
 
         const FlattenParam & flatten = this->Param().flatten();
         size_t begAxis = src[0]->Index(flatten.axis());
-        if (begAxis >= src[0]->Count())
+        if (begAxis > src[0]->Count())
             SYNET_ERROR("FlattenLayer parameter axis: " << begAxis << " has wrong value for input " << ToStr(src[0]->Shape()) << " !");
 
         size_t endAxis = src[0]->Index(flatten.endAxis());
