@@ -25,6 +25,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Synet\Layers\ActivationLayers.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\AddLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ArgMaxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\BiasLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\BinaryOperationLayer.cpp" />

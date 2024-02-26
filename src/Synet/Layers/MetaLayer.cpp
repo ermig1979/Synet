@@ -415,7 +415,7 @@ namespace Synet
     {
         if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("MetaLayer::ReshapeMul supports only 2 inputs and 1 output!");
-        if (SignificantDimsCount(src[0]->Shape()) != SignificantDimsCount(src[1]->Shape()) || src[0]->GetType() != src[1]->GetType())
+        if (!(src[0]->Size() == src[1]->Size() || src[1]->Size() == 1) || src[0]->GetType() != src[1]->GetType())
             SYNET_ERROR("MetaLayer::ReshapeMul unsupported input shape or type combination!");
         switch (src[0]->GetType())
         {

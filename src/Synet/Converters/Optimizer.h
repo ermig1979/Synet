@@ -728,9 +728,7 @@ namespace Synet
                 return false;
             if (src[index + 3].type() != LayerTypeRelu)
                 return false;
-            if (src[index + 4].type() != LayerTypeEltwise || src[index + 4].src().size() != 2 ||
-                src[index + 4].src()[0] != src[index + 2].name() || src[index + 4].src()[1] != src[index + 3].name() ||
-                src[index + 4].eltwise().operation() != EltwiseOperationTypeSum)
+            if (!IsAdd(src[index + 4]) || src[index + 4].src()[0] != src[index + 2].name() || src[index + 4].src()[1] != src[index + 3].name())
                 return false;
             if (InsideLink(src, index + 1, 5))
                 return false;
@@ -913,8 +911,8 @@ namespace Synet
             if (src.size() > index + 1 && method == QuantizationMethodUnknown)
             {
                 const LayerParam & l3 = src[index + 1];
-                if (l2.convolution().activationType() == ActivationFunctionTypeIdentity && l3.type() == LayerTypeEltwise && l3.eltwise().operation() == EltwiseOperationTypeSum &&
-                    l3.eltwise().coefficients().empty() && l3.src().size() == 2 && ((l3.src()[0] == l0.src()[0] && l3.src()[1] == l2.dst()[0]) || ((l3.src()[1] == l0.src()[0] && l3.src()[0] == l2.dst()[0]))) && !InsideLink(src, index - 2, 4))
+                if (l2.convolution().activationType() == ActivationFunctionTypeIdentity && IsAdd(l3) && ((l3.src()[0] == l0.src()[0] && l3.src()[1] == l2.dst()[0]) || 
+                    ((l3.src()[1] == l0.src()[0] && l3.src()[0] == l2.dst()[0]))) && !InsideLink(src, index - 2, 4))
                 {
                     dst.back().mergedConvolution().add() = true;
                     dst.back().name() = l3.name();
@@ -1448,7 +1446,7 @@ namespace Synet
             if (scale == NULL || src[index + 7].eltwise().operation() != EltwiseOperationTypeProduct)
                 return false;
             const WeightParam* shift = GetEltwiseWeight(index + 8, src);
-            if (shift == NULL || src[index + 8].eltwise().operation() != EltwiseOperationTypeSum)
+            if (shift == NULL || !IsAdd(src[index + 8]))
                 return false;
             if (InsideLink(src, index + 1, 7))
                 return false;
@@ -1493,7 +1491,7 @@ namespace Synet
                 return false;
             if (src[index + 8].type() != LayerTypeScale || !src[index + 8].scale().biasTerm())
                 return false;
-            if (src[index + 9].type() != LayerTypeEltwise || src[index + 9].eltwise().operation() != EltwiseOperationTypeSum)
+            if (!IsAdd(src[index + 9]))
                 return false;
             if (InsideLink(src, index + 1, 8))
                 return false;
@@ -1551,7 +1549,7 @@ namespace Synet
             if (scale == NULL || src[index + 0].eltwise().operation() != EltwiseOperationTypeProduct)
                 return false;
             const WeightParam* shift = GetEltwiseWeight(index + 1, src);
-            if (shift == NULL || src[index + 1].eltwise().operation() != EltwiseOperationTypeSum)
+            if (shift == NULL || !IsAdd(src[index + 1]))
                 return false;
             if(src[index + 1].src()[0] != src[index + 0].dst()[0])
                 return false;
@@ -1812,8 +1810,7 @@ namespace Synet
                 return false;
 
             const LayerParam& e1 = src[start + 5];
-            if (e1.type() != LayerTypeEltwise || e1.eltwise().operation() != EltwiseOperationTypeSum || e1.src().size() != 2 ||
-                (e1.src()[0] != ip0.dst()[0] && e1.src()[0] != p0.dst()[0]) || (e1.src()[1] != ip0.dst()[0] && e1.src()[1] != p0.dst()[0]))
+            if (!IsAdd(e1) || (e1.src()[0] != ip0.dst()[0] && e1.src()[0] != p0.dst()[0]) || (e1.src()[1] != ip0.dst()[0] && e1.src()[1] != p0.dst()[0]))
                 return false;
 
             const LayerParam& p1 = src[start + 6];
@@ -1938,9 +1935,20 @@ namespace Synet
 
         //-------------------------------------------------------------------------------------------------
 
+        bool IsAdd(const LayerParam& layer) const
+        {
+            if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum && 
+                (layer.eltwise().coefficients().empty() || layer.eltwise().coefficients() == Floats({ 1.0f, 1.0f })) && layer.src().size() == 2)
+                return true;
+            if (layer.type() == LayerTypeAdd)
+                return true;
+            return false;
+        }
+
         bool IsSub(const LayerParam & layer) const
         {
-            if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum && layer.eltwise().coefficients() == Floats({ 1.0f, -1.0f }))
+            if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum && 
+                layer.eltwise().coefficients() == Floats({ 1.0f, -1.0f }) && layer.src().size() == 2)
                 return true;
             if (layer.type() == LayerTypeBinaryOperation && layer.binaryOperation().type() == BinaryOperationTypeSub)
                 return true;
@@ -1965,7 +1973,7 @@ namespace Synet
 
         const WeightParam* GetEltwiseWeight(size_t index, const LayerParams& layers) const
         {
-            if (index < layers.size() && layers[index].type() == LayerTypeEltwise && layers[index].src().size() == 2)
+            if (index < layers.size() && (layers[index].type() == LayerTypeEltwise && layers[index].src().size() == 2) || layers[index].type() == LayerTypeAdd)
             {
                 const LayerParam* src0 = GetLayer(layers[index].src()[0], layers);
                 if (src0 && src0->type() == LayerTypeConst)

@@ -559,8 +559,9 @@ namespace Synet
             }
             else
             {
-                layer.type() = Synet::LayerTypeEltwise;
-                layer.eltwise().operation() = EltwiseOperationTypeSum;
+                layer.type() = Synet::LayerTypeAdd;
+                //layer.type() = Synet::LayerTypeEltwise;
+                //layer.eltwise().operation() = EltwiseOperationTypeSum;
                 if (src0->type() == LayerTypeConst && src1->type() != LayerTypeConst)
                     std::swap(layer.src()[0], layer.src()[1]);
             }
