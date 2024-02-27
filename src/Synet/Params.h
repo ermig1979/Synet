@@ -287,6 +287,7 @@ namespace Synet
         CPL_PARAM_VALUE(TensorType, type, TensorTypeUnknown);
         CPL_PARAM_VALUE(TensorFormat, format, TensorFormatUnknown);
         CPL_PARAM_VALUE(Shape, shape, Shape());
+        CPL_PARAM_VALUE(bool, scalar, false);
         CPL_PARAM_VALUE(Ints, i32, Ints());
         CPL_PARAM_VALUE(Floats, f32, Floats());
         CPL_PARAM_VALUE(Longs, i64, Longs());
@@ -298,6 +299,7 @@ namespace Synet
         CPL_PARAM_VALUE(Shape, dim, Shape());
         CPL_PARAM_VALUE(TensorType, type, TensorType32f);
         CPL_PARAM_VALUE(TensorFormat, format, TensorFormatNchw);
+        CPL_PARAM_VALUE(bool, scalar, false);
         CPL_PARAM_VALUE(size_t, offset, -1);
         CPL_PARAM_VALUE(size_t, size, -1);
     };
@@ -314,6 +316,7 @@ namespace Synet
         CPL_PARAM_VALUE(Shape, dim, Shape());
         CPL_PARAM_VALUE(TensorFormat, format, TensorFormatNchw);
         CPL_PARAM_VALUE(TensorType, type, TensorType32f);
+        CPL_PARAM_VALUE(bool, scalar, false);
     };
 
     //-------------------------------------------------------------------------------------------------

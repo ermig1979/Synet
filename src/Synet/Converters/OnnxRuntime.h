@@ -364,7 +364,10 @@ namespace Synet
                 if (size)
                 {
                     if (size == 1 && layer.weight()[0].dim().empty())
+                    {
                         layer.weight()[0].dim().push_back(1);
+                        layer.weight()[0].scalar() = true;
+                    }
                     if (tensor.has_raw_data())
                     {
                         weight.resize(offset + size);
@@ -397,7 +400,10 @@ namespace Synet
                 if (size)
                 {
                     if (layer.meta().alpha().shape().empty())
+                    {
                         layer.meta().alpha().shape().push_back(1);
+                        layer.meta().alpha().scalar() = true;
+                    }
                     if (tensor.has_raw_data())
                     {
                         for (size_t i = 0; i < size; ++i)

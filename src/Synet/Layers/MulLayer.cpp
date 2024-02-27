@@ -135,6 +135,7 @@ namespace Synet
         {
             _index[0] = src[0]->Size() > src[1]->Size() ? 0 : 1;
             _index[1] = src[0]->Size() > src[1]->Size() ? 1 : 0;
+            _format = src[_index[0]]->Format();
             size_t signDims1 = SignificantDimsCount(src[_index[1]]->Shape());
             if (src[0]->Count() > 1 && src[0]->Count() == src[1]->Count() && src[0]->Size(1) == src[1]->Size(1))
             {
@@ -175,7 +176,6 @@ namespace Synet
             }
             else if (src[_index[0]]->Count() == 4)
             {
-                _format = src[_index[0]]->Format();
                 _batch = src[_index[0]]->Axis(0);
                 _channels = src[_index[0]]->Axis(_format == TensorFormatNhwc ? 3 : 1);
                 _spatial = src[_index[0]]->Size() / _batch / _channels;
@@ -210,6 +210,13 @@ namespace Synet
                 assert(src[_index[0]]->Size(5, 6) == src[_index[1]]->Size(5, 6));
                 _special = SpecialScaleComplex;
                 _channels = _channelsOuter * _channelsInner;
+            }
+            else if (src[_index[1]]->Size() == 1)
+            {
+                _batch = 1;
+                _channels = 1;
+                _spatial = src[_index[0]]->Size();
+                _special = SpecialScaleChannel;
             }
             else
                 SYNET_ERROR("MulLayer can't process inputs with this shape!");

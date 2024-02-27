@@ -155,6 +155,7 @@ namespace Synet
         switch (dst)
         {
         case TensorType32f: return GetWhereN<C, float>(dim);
+        case TensorType64i: return GetWhereN<C, int64_t>(dim);
         default:
             return NULL;
         }

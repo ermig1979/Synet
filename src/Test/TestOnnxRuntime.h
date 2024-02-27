@@ -182,7 +182,7 @@ namespace Test
             if (!(_outputValues->size() == _outputNames.size() && _outputValues->front().IsTensor()))
                 SYNET_ERROR("Check parameter 'output' size!");
 
-            _dynamicOutput = IsDynamicOutput();
+            _dynamicOutput = IsDynamicOutput() || param.dynamicOutput();
             if(!_dynamicOutput)
                 ReshapeOutput();
 

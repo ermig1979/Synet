@@ -87,7 +87,7 @@ namespace Synet
         else
         {
             _srcType = src[0]->GetType();
-            if(_srcType != TensorType32f && _srcType != TensorType8u && _srcType != TensorType8i)
+            if(_srcType != TensorType32f && _srcType != TensorType8u && _srcType != TensorType8i && _srcType != TensorType64i)
                 SYNET_ERROR("Unsupported input type: " << Cpl::ToStr(_srcType) << " !");
             dst[0]->Reshape(_srcType, dstShape, src[0]->Format());
             assert(srcSizeSum == dst[0]->Size());
@@ -137,6 +137,14 @@ namespace Synet
             for (size_t i = 0; i < src.size(); ++i)
                 pSrc[i] = src[i]->Data<int8_t>();
             Concat(pSrc, dst[0]->Data<int8_t>());
+            break;
+        }
+        case TensorType64i:
+        {
+            std::vector<int64_t*> pSrc(src.size());
+            for (size_t i = 0; i < src.size(); ++i)
+                pSrc[i] = src[i]->Data<int64_t>();
+            Concat(pSrc, dst[0]->Data<int64_t>());
             break;
         }
         default:

@@ -133,7 +133,6 @@ namespace Synet
 
     bool CompareLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-
         if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("CompareLayer supports only 2 inputs and 1 output!");
         if (src[0]->GetType() != src[1]->GetType())
@@ -148,7 +147,12 @@ namespace Synet
         _compare = GetCompare(_srcType, _dstType, src[1]->Size() == 1);
         if(_compare == NULL)
             SYNET_ERROR("CompareLayer don't support " << Cpl::ToStr(_srcType) << " input type and " << Cpl::ToStr(_dstType)  << " output type!");
-        dst[0]->Reshape(_dstType, src[0]->Shape(), src[0]->Format());
+        const Shape &shp0 = src[0]->Shape();
+        const Shape &shp1 = src[1]->Shape();
+        Shape shpD = shp0;
+        if (shp0.size() == 1 && shp0[0] > 1 && shp1 == Shp(1, 1))
+            shpD = Shp(1, shp0[0]);
+        dst[0]->Reshape(_dstType, shpD, src[0]->Format());
         if (src[0]->Const() && src[1]->Const())
         {
             ForwardCpu(src, buf, dst);
