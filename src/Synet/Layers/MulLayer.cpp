@@ -177,6 +177,8 @@ namespace Synet
             else if (src[_index[0]]->Count() == 4)
             {
                 _batch = src[_index[0]]->Axis(0);
+                if (src[_index[0]]->Axis(3) == src[_index[1]]->Size(0))
+                    _format = TensorFormatNhwc;
                 _channels = src[_index[0]]->Axis(_format == TensorFormatNhwc ? 3 : 1);
                 _spatial = src[_index[0]]->Size() / _batch / _channels;
                 size_t size = src[_index[1]]->Count() == 4 ? src[_index[1]]->Size(1) : src[_index[1]]->Size(0);

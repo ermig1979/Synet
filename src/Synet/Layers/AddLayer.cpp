@@ -261,6 +261,14 @@ namespace Synet
                     else
                         SYNET_ERROR("AddLayer can't process inputs with this shape!");
                 }
+                else if (src[_index[0]]->Count() == 2 && src[_index[1]]->Count() == 1)
+                {
+                    _special = SpecialBiasChannel;
+                    _batch = 1;
+                    _channels = src[_index[1]]->Axis(0);
+                    _spatial = src[_index[0]]->Size() / _channels;
+                    _format = src[_index[0]]->Axis(0) == src[_index[1]]->Axis(0) ? TensorFormatNchw : TensorFormatNhwc;
+                }
                 else
                     SYNET_ERROR("AddLayer can't process inputs with this shape!");
             }
