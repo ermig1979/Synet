@@ -169,7 +169,7 @@ namespace Synet
 
                 if (node.op_type() == "Abs" && !ConvertAbsNode(node, layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Add" && !ConvertAddNode(node, network.layers(), original, layer))
+                if (node.op_type() == "Add" && !ConvertAddNode(node, network.layers(), original, onnxParam, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "And" && !ConvertAndNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -241,7 +241,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Mod" && !ConvertModNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Mul" && !ConvertMulNode(node, network.layers(), original, layer))
+                if (node.op_type() == "Mul" && !ConvertMulNode(node, network.layers(), original, onnxParam, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Neg" && !ConvertNegNode(node, layer))
                     return ErrorMessage(i, node);
@@ -535,7 +535,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertAddNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        bool ConvertAddNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, const OnnxParam& onnxParam, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -559,9 +559,13 @@ namespace Synet
             }
             else
             {
-                layer.type() = Synet::LayerTypeAdd;
-                //layer.type() = Synet::LayerTypeEltwise;
-                //layer.eltwise().operation() = EltwiseOperationTypeSum;
+                if (onnxParam.addToEltwise())
+                {
+                    layer.type() = Synet::LayerTypeEltwise;
+                    layer.eltwise().operation() = EltwiseOperationTypeSum;
+                }
+                else
+                    layer.type() = Synet::LayerTypeAdd;
                 if (src0->type() == LayerTypeConst && src1->type() != LayerTypeConst)
                     std::swap(layer.src()[0], layer.src()[1]);
             }
@@ -1085,7 +1089,7 @@ namespace Synet
             if (src1->type() == LayerTypeMeta)
             {
                 const MetaParam & meta = src1->meta();
-                if (meta.type() == MetaTypeConst && meta.alpha().type() == TensorType64i && AllAreEqualTo(meta.alpha().i64(), int64_t(1)))
+                if (meta.type() == MetaTypeConst && meta.alpha().type() == TensorType64i && AllEqualTo(meta.alpha().i64(), int64_t(1)))
                 {
                     layer.type() = Synet::LayerTypeStub;
                     layer.src().resize(1);
@@ -1490,7 +1494,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertMulNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        bool ConvertMulNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, const OnnxParam& onnxParam, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1533,8 +1537,13 @@ namespace Synet
             }
             else
             {
-                layer.type() = Synet::LayerTypeEltwise;
-                layer.eltwise().operation() = EltwiseOperationTypeProduct;
+                if (onnxParam.mulToEltwise())
+                {
+                    layer.type() = Synet::LayerTypeEltwise;
+                    layer.eltwise().operation() = EltwiseOperationTypeProduct;
+                }
+                else
+                    layer.type() = Synet::LayerTypeMul;
                 if (src0->type() == LayerTypeConst && src1->type() != LayerTypeConst)
                     std::swap(layer.src()[0], layer.src()[1]);
             }

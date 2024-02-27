@@ -1935,26 +1935,6 @@ namespace Synet
 
         //-------------------------------------------------------------------------------------------------
 
-        bool IsAdd(const LayerParam& layer) const
-        {
-            if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum && 
-                (layer.eltwise().coefficients().empty() || layer.eltwise().coefficients() == Floats({ 1.0f, 1.0f })) && layer.src().size() == 2)
-                return true;
-            if (layer.type() == LayerTypeAdd)
-                return true;
-            return false;
-        }
-
-        bool IsSub(const LayerParam & layer) const
-        {
-            if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum && 
-                layer.eltwise().coefficients() == Floats({ 1.0f, -1.0f }) && layer.src().size() == 2)
-                return true;
-            if (layer.type() == LayerTypeBinaryOperation && layer.binaryOperation().type() == BinaryOperationTypeSub)
-                return true;
-            return false;
-        }
-
         bool IsMulConst(const LayerParam& layer, float value, float epsilon = 0.000001) const
         {
             if (layer.type() == LayerTypePower && layer.power().power() == 1.0f && layer.power().shift() == 0.0f
@@ -2005,11 +1985,6 @@ namespace Synet
                 }
             }
             return false;
-        }
-
-        bool Equal(float a, float b, float e = 0.000001f)
-        {
-            return abs(a - b) < e;
         }
 
         bool Rename(const Change & change, LayerParams & layers)

@@ -54,6 +54,7 @@
 #include "Synet/Layers/MergedConvolution32fLayer.h"
 #include "Synet/Layers/MergedConvolution8iLayer.h"
 #include "Synet/Layers/MetaLayer.h"
+#include "Synet/Layers/MulLayer.h"
 #include "Synet/Layers/NonMaxSuppressionLayer.h"
 #include "Synet/Layers/NonZeroLayer.h"
 #include "Synet/Layers/NormalizeLayer.h"
@@ -93,6 +94,8 @@
 #include "Synet/Layers/YoloLayer.h"
 #include "Synet/Layers/YoloV7Layer.h"
 
+#include "Synet/Converters/SynetUtils.h"
+
 namespace Synet
 {
     template <class T> class Fabric
@@ -124,7 +127,13 @@ namespace Synet
             case LayerTypeCtcGreedyDecoder: return new CtcGreedyDecoderLayer(param, context);
             case LayerTypeDeconvolution: return new DeconvolutionLayer(param, context);
             case LayerTypeDetectionOutput: return new DetectionOutputLayer(param, context);
-            case LayerTypeEltwise: return new EltwiseLayer<T>(param, context);
+            case LayerTypeEltwise: 
+                if(SynetUtils::IsAdd(param))
+                    return new AddLayer(param, context, method);
+                else if (SynetUtils::IsMul(param))
+                    return new MulLayer(param, context);
+                else
+                    return new EltwiseLayer<T>(param, context);
             case LayerTypeElu: return new EluLayer(param, context);
             case LayerTypeExpandDims: return new ExpandDimsLayer<T>(param, context);
             case LayerTypeFlatten: return new FlattenLayer(param, context);
@@ -146,6 +155,7 @@ namespace Synet
                     return new MergedConvolution32fLayer<T>(param, context);
             case LayerTypeMeta: return new MetaLayer(param, context);
             case LayerTypeMish: return new MishLayer(param, context);
+            case LayerTypeMul: return new MulLayer(param, context);
             case LayerTypeNonMaxSuppression: return new NonMaxSuppressionLayer<T>(param, context);
             case LayerTypeNonZero: return new NonZeroLayer(param, context);
             case LayerTypeNormalize: return new NormalizeLayer(param, context);

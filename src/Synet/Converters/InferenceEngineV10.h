@@ -278,7 +278,7 @@ namespace Synet
             if (src0 == NULL || src1 == NULL)
                 return false;
             if (src1->type() == LayerTypeMeta && src1->meta().type() == MetaTypeConst &&
-                src1->meta().alpha().type() == TensorType64i && AllAreEqualTo(src1->meta().alpha().i64(), int64_t(1)))
+                src1->meta().alpha().type() == TensorType64i && AllEqualTo(src1->meta().alpha().i64(), int64_t(1)))
             {
                 layer.type() = Synet::LayerTypeStub;
                 layer.src().resize(1);

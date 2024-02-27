@@ -29,7 +29,7 @@
 
 namespace Synet
 {
-    template <typename T> void Uniform(const uint8_t* a8, const uint8_t* b8, size_t size, uint8_t* dst8)
+    template <typename T> static void Uniform(const uint8_t* a8, const uint8_t* b8, size_t size, uint8_t* dst8)
     {
         const T* a = (const T*)a8;
         const T* b = (const T*)b8;
@@ -39,7 +39,7 @@ namespace Synet
     }
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-    template <> void inline Uniform<float>(const uint8_t* a8, const uint8_t* b8, size_t size, uint8_t* dst8)
+    template <> void Uniform<float>(const uint8_t* a8, const uint8_t* b8, size_t size, uint8_t* dst8)
     {
         float weight[2] = { 1.0f, 1.0f };
         const float *src[] = {(const float*)a8, (const float*)b8};
@@ -47,7 +47,7 @@ namespace Synet
     }
 #endif
 
-    AddLayer::UniformPtr GetUniform(TensorType type)
+    static AddLayer::UniformPtr GetUniform(TensorType type)
     {
         switch (type)
         {
@@ -276,7 +276,17 @@ namespace Synet
                 SYNET_ERROR("AddLayer can't process input type!");
         }
 
-        this->UsePerfStat();
+        if (src[0]->Const() && src[1]->Const())
+        {
+            ForwardCpu(src, buf, dst);
+            dst[0]->SetConst(true);
+            _const = true;
+        }
+        else
+        {
+            this->UsePerfStat();
+            _const = false;
+        }
 
         return true;
     }

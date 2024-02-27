@@ -43,6 +43,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\GridSampleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\InputLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MetaLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\MulLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\NonZeroLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\NormalizeLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PadLayer.cpp" />
@@ -129,6 +130,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution8iLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolutionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MetaLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\MulLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\NonMaxSuppressionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\NonZeroLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\NormalizeLayer.h" />

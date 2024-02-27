@@ -1,8 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2024 Yermalayeu Ihar,
-*               2019-2019 Artur Voronkov.
+* Copyright (c) 2018-2024 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -29,50 +28,39 @@
 
 namespace Synet
 {
-    class AddLayer : public Synet::Layer<float>
+    class MulLayer : public Synet::Layer<float>
     {
     public:
         typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        AddLayer(const LayerParam& param, Context* context, QuantizationMethod method);
-
-        virtual bool Can8i() const;
-
-        virtual bool Is8i() const;
+        MulLayer(const LayerParam& param, Context* context);
 
         virtual int64_t Flop() const;
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
         typedef void (*UniformPtr)(const uint8_t* a, const uint8_t* b, size_t size, uint8_t* dst);
-        typedef void (*AddBiasPtr)(const uint8_t* a, const uint8_t* b, size_t count, size_t size, uint8_t* dst, TensorFormat format);
+        typedef void (*ScalePtr)(const uint8_t* a, const uint8_t* b, size_t count, size_t size, uint8_t* dst, TensorFormat format);
 
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
-        
-        void Add8i(const uint8_t* src0, const uint8_t* src1, uint8_t* dst);
-
-        void Add8i(const uint8_t* src0, const uint8_t* src1, float* dst);
-
-        void Add8i(const float* src0, const float* src1, uint8_t* dst);
 
     private:
-       enum Special
+        enum Special
         {
             SpecialNone = 0,
-            SpecialBiasChannel,
+            SpecialScaleChannel,
+            SpecialScaleSpatial,
+            SpecialScaleComplex,
             SpecialBatch,
-            SpecialBiasChannelV2,
         } _special;
-        bool _quant;
-        QuantizationMethod _method;
         TensorFormat _format;
-        TensorType _srcT, _dstT;
+        TensorType _type;
         size_t _batch, _channels, _spatial, _sizeT;
         size_t _channelsInner, _channelsOuter;
         int _index[2];
         UniformPtr _uniform;
-        AddBiasPtr _addBias;
+        ScalePtr _scale;
     };
 }

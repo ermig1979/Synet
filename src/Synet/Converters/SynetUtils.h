@@ -36,6 +36,8 @@ namespace Synet
         CPL_PARAM_VALUE(Strings, toNhwcHints, Strings());
         CPL_PARAM_VALUE(bool, transpose0312PermuteToNhwc, false);
         CPL_PARAM_VALUE(bool, globalPoolingPermuteToNchw, true);
+        CPL_PARAM_VALUE(bool, addToEltwise, true);
+        CPL_PARAM_VALUE(bool, mulToEltwise, true);
     };
 
     class SynetUtils
@@ -476,12 +478,52 @@ namespace Synet
             return true;
         }
 
-        template<class T> static bool AllAreEqualTo(const std::vector<T>& vector, T value)
+        //-------------------------------------------------------------------------------------------------
+
+    public:
+
+        template<class T> static bool AllEqualTo(const std::vector<T>& vector, T value)
         {
             for (size_t i = 0; i < vector.size(); ++i)
                 if (vector[i] != value)
                     return false;
             return true;
+        }
+
+        bool Equal(float a, float b, float e = 0.000001f)
+        {
+            return abs(a - b) < e;
+        }
+
+        //-------------------------------------------------------------------------------------------------
+
+        static SYNET_INLINE bool IsAdd(const LayerParam& layer)
+        {
+            if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum &&
+                (layer.eltwise().coefficients().empty() || layer.eltwise().coefficients() == Floats({ 1.0f, 1.0f })) && layer.src().size() == 2)
+                return true;
+            if (layer.type() == LayerTypeAdd)
+                return true;
+            return false;
+        }
+
+        static SYNET_INLINE bool IsMul(const LayerParam& layer)
+        {
+            if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeProduct && layer.src().size() == 2)
+                return true;
+            if (layer.type() == LayerTypeMul)
+                return true;
+            return false;
+        }
+
+        static SYNET_INLINE bool IsSub(const LayerParam& layer)
+        {
+            if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum &&
+                layer.eltwise().coefficients() == Floats({ 1.0f, -1.0f }) && layer.src().size() == 2)
+                return true;
+            if (layer.type() == LayerTypeBinaryOperation && layer.binaryOperation().type() == BinaryOperationTypeSub)
+                return true;
+            return false;
         }
     };
 }
