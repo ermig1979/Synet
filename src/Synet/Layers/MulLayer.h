@@ -42,6 +42,7 @@ namespace Synet
 
         typedef void (*UniformPtr)(const uint8_t* a, const uint8_t* b, size_t size, uint8_t* dst);
         typedef void (*ScalePtr)(const uint8_t* a, const uint8_t* b, size_t count, size_t size, uint8_t* dst, TensorFormat format);
+        typedef void (*UniversalPtr)(const uint8_t* a, const Shape& aSteps, const uint8_t* b, const Shape& bSteps, uint8_t* dst, const Shape& dstShape);
 
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -54,13 +55,17 @@ namespace Synet
             SpecialScaleSpatial,
             SpecialScaleComplex,
             SpecialBatch,
+            SpecialUniversal,
         } _special;
+        TensorPtrs _src;
         TensorFormat _format;
         TensorType _type;
         size_t _batch, _channels, _spatial, _sizeT;
         size_t _channelsInner, _channelsOuter;
+        Shape _aSteps, _bSteps, _dstShape;
         int _index[2];
         UniformPtr _uniform;
         ScalePtr _scale;
+        UniversalPtr _universal;
     };
 }

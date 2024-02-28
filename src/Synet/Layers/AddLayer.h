@@ -47,6 +47,7 @@ namespace Synet
 
         typedef void (*UniformPtr)(const uint8_t* a, const uint8_t* b, size_t size, uint8_t* dst);
         typedef void (*AddBiasPtr)(const uint8_t* a, const uint8_t* b, size_t count, size_t size, uint8_t* dst, TensorFormat format);
+        typedef void (*UniversalPtr)(const uint8_t* a, const Shape& aSteps, const uint8_t* b, const Shape& bSteps, uint8_t* dst, const Shape& dstShape);
 
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -64,7 +65,9 @@ namespace Synet
             SpecialBiasChannel,
             SpecialBatch,
             SpecialBiasChannelV2,
+            SpecialUniversal,
         } _special;
+        TensorPtrs _src;
         bool _quant;
         QuantizationMethod _method;
         TensorFormat _format;
@@ -72,7 +75,9 @@ namespace Synet
         size_t _batch, _channels, _spatial, _sizeT;
         size_t _channelsInner, _channelsOuter;
         int _index[2];
+        Shape _aSteps, _bSteps, _dstShape;
         UniformPtr _uniform;
         AddBiasPtr _addBias;
+        UniversalPtr _universal;
     };
 }

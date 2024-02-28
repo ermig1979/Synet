@@ -1039,11 +1039,19 @@ namespace Synet
                 }
                 else
                 {
-                    layer.type() = Synet::LayerTypeScale;
-                    layer.scale().biasTerm() = false;
                     layer.weight() = src1->weight();
-                    if (!CompactShape(layer.weight()[0].dim()))
-                        return false;
+                    const Shape& dim = src1->weight()[0].dim();
+                    if ((dim.size() == 4 && dim[1] != 1) || (dim.size() == 3 && dim[0] != 1) || dim.size() == 1)
+                    {
+                        layer.type() = Synet::LayerTypeScale;
+                        layer.scale().biasTerm() = false;
+                        if (!CompactShape(layer.weight()[0].dim()))
+                            return false;                    
+                    }
+                    else
+                    {
+                        layer.type() = Synet::LayerTypeMul;
+                    }
                     float* pDst = GetWeight<float>(reordered, layer.weight()[0]);
                     for (size_t i = 0; i < size; ++i)
                         pDst[i] = 1.0f / pSrc[i];
@@ -1520,7 +1528,7 @@ namespace Synet
                 layer.power().scale() = pScale[0];
                 layer.src().resize(1);
             }
-            else if (src1->type() == LayerTypeConst && SignificantDimsCount(src1->weight()[0].dim()) == 1 && src1->weight()[0].dim().size() == 3)
+            else if (src1->type() == LayerTypeConst && SignificantDimsCount(src1->weight()[0].dim()) == 1 && src1->weight()[0].dim().size() == 3 && src1->weight()[0].dim()[0] != 1)
             {
                 layer.type() = Synet::LayerTypeScale;
                 layer.weight() = src1->weight();
