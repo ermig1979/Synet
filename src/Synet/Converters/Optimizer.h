@@ -2174,7 +2174,7 @@ namespace Synet
             {
                 const WeightParam& weight = layer.weight()[0];
                 if (weight.format() == TensorFormatNhwc)
-                    return weight.dim()[2];
+                    return weight.dim()[2] * layer.convolution().kernel()[0] * layer.convolution().kernel()[1];
                 else
                     return weight.dim()[1];
             }
