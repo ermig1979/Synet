@@ -621,7 +621,8 @@ namespace Test
                 SYNET_ERROR(failed << std::endl << "Dst count : " << output.first.size() << " != " << output.second.size());
             for (size_t d = 0; d < output.first.size(); ++d)
             {
-                if (d < _param().output().size() && _param().output()[d].compare() == false)
+                String compType = _param().output().size() ? _param().output()[d].compare() : "";
+                if (compType == "0" || compType == "skip")
                     continue;
                 const Tensor& f = output.first[d];
                 const Tensor& s = output.second[d];
@@ -646,10 +647,23 @@ namespace Test
                             return false;
                     break;
                 case 2:
-                    for (size_t n = 0; n < f.Axis(0); ++n)
-                        for (size_t c = 0; c < f.Axis(1); ++c)
-                            if (!Compare(f, s, Shp(n, c), d, failed))
-                                return false;
+                    if (compType == "cos_dist" && _options.bf16)
+                    {
+                        for (size_t n = 0; n < f.Axis(0); ++n)
+                        {
+                            float cd;
+                            SimdCosineDistance32f(f.Data<float>(Shp(n, 0)), s.Data<float>(Shp(n, 0)), f.Axis(1), &cd);
+                            if (cd > _options.compareThreshold)
+                                SYNET_ERROR(failed << std::endl << std::fixed << "Dst[" << d << "] " << DebugPrint(f.Shape()) << " at " << DebugPrint(Shp(n, 0)) << " : cosine distance " << cd << " > " << _options.compareThreshold);
+                        }
+                    }
+                    else
+                    {
+                        for (size_t n = 0; n < f.Axis(0); ++n)
+                            for (size_t c = 0; c < f.Axis(1); ++c)
+                                if (!Compare(f, s, Shp(n, c), d, failed))
+                                    return false;
+                    }
                     break;
                 case 3:
                     for (size_t n = 0; n < f.Axis(0); ++n)

@@ -34,6 +34,7 @@
     <ClInclude Include="..\..\src\Test\TestNetwork.h" />
     <ClInclude Include="..\..\src\Test\TestOnnxRuntime.h" />
     <ClInclude Include="..\..\src\Test\TestOptions.h" />
+    <ClInclude Include="..\..\src\Test\TestParams.h" />
     <ClInclude Include="..\..\src\Test\TestPerformance.h" />
     <ClInclude Include="..\..\src\Test\TestReport.h" />
     <ClInclude Include="..\..\src\Test\TestSynet.h" />
