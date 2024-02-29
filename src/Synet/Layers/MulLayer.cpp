@@ -239,6 +239,8 @@ namespace Synet
 
     int64_t MulLayer::Flop() const
     {
+        if (_dstShape.size())
+            return Detail::Size(_dstShape);
         return _batch * _channels * _spatial;
     }
 
@@ -315,6 +317,9 @@ namespace Synet
                         SYNET_ERROR("MulLayer has incompatible inputs!");
                     _universal = GetUniversal(_type, 3);
                     _special = SpecialUniversal;
+                    if (dst[0] != _src[_index[0]])
+                        dst[0]->Reshape(_type, _dstShape, _src[_index[0]]->Format());
+                    resized = true;
                 }
                 else
                     SYNET_ERROR("MulLayer can't process inputs with this shape!");

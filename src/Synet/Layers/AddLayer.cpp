@@ -245,6 +245,8 @@ namespace Synet
 
     int64_t AddLayer::Flop() const
     {
+        if (_dstShape.size())
+            return Detail::Size(_dstShape);
         return _batch * _channels * _spatial;
     }
 
@@ -410,6 +412,22 @@ namespace Synet
                         _special = SpecialBiasChannel;
                     else
                         SYNET_ERROR("AddLayer can't process inputs with this shape!");
+                }
+                else if (_src[_index[0]]->Count() == 4 && _src[_index[1]]->Count() == 1 && _src[_index[0]]->Axis(-1) == _src[_index[1]]->Axis(0))
+                {
+                    Shape aShape = _src[0]->Shape(), bShape = Shp(1, 1, 1, _src[_index[1]]->Axis(0));
+                    _dstShape.resize(_src[0]->Count(), 1);
+                    for (size_t i = 0; i < _src[0]->Count(); ++i)
+                        _dstShape[i] = Max(aShape[i], bShape[i]);
+                    if (!(GetSteps(aShape, _dstShape, _aSteps) && GetSteps(bShape, _dstShape, _bSteps)))
+                        SYNET_ERROR("AddLayer has incompatible inputs!");
+                    _universal = GetUniversal(_srcT, _src[0]->Count());
+                    if (_universal == NULL)
+                        SYNET_ERROR("AddLayer can create universal worker!");
+                    _special = SpecialUniversal;
+                    if (dst[0] != _src[_index[0]])
+                        dst[0]->Reshape(_srcT, _dstShape, _src[_index[0]]->Format());
+                    resized = true;
                 }
                 else if (_src[_index[0]]->Count() == 2 && _src[_index[1]]->Count() == 1)
                 {
