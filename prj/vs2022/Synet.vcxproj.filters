@@ -503,6 +503,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\MulLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Rtdetr.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

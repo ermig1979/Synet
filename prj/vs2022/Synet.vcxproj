@@ -92,6 +92,7 @@
     <ClInclude Include="..\..\src\Synet\Converters\SynetUtils.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Anchor.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Iim.h" />
+    <ClInclude Include="..\..\src\Synet\Decoders\Rtdetr.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Ultraface.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\YoloV5.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\YoloV7.h" />

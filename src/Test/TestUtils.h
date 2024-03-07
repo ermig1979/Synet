@@ -344,6 +344,32 @@ namespace Test
 
     //---------------------------------------------------------------------------------------------
 
+    inline void SortRtdetr(float* data, size_t size)
+    {
+        struct Tmp { float val[6]; };
+        std::vector<Tmp> tmp(size / 6);
+        for (size_t i = 0; i < tmp.size(); ++i)
+            for (size_t j = 0; j < 6; ++j)
+                tmp[i].val[j] = data[i * 6 + j];
+        std::sort(tmp.begin(), tmp.end(), [](const Tmp& t1, const Tmp& t2)
+            {
+                if (abs(t1.val[0] - t2.val[0]) > 0.01f)
+                    return t1.val[0] < t2.val[0];
+                const float thr = 0.01f;
+                if (abs(t1.val[1] - t2.val[1]) > 0.01f)
+                    return t1.val[2] < t2.val[2];
+                else if (abs(t1.val[2] - t2.val[2]) > 0.01f)
+                    return t1.val[2] < t2.val[2];
+                else
+                    return t1.val[3] < t2.val[3];
+            });
+        for (size_t i = 0; i < tmp.size(); ++i)
+            for (size_t j = 0; j < 6; ++j)
+                data[i * 6 + j] = tmp[i].val[j];
+    }
+
+    //---------------------------------------------------------------------------------------------
+
 #ifdef LoadImage
 #undef LoadImage
 #endif

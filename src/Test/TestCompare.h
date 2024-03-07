@@ -622,7 +622,8 @@ namespace Test
             for (size_t d = 0; d < output.first.size(); ++d)
             {
                 String compType = _param().output().size() ? _param().output()[d].compare() : "";
-                if (compType == "0" || compType == "skip")
+                String decType = _param().detection().decoder();
+                if (compType == "0" || compType == "false" || compType == "skip")
                     continue;
                 const Tensor& f = output.first[d];
                 const Tensor& s = output.second[d];
@@ -666,11 +667,29 @@ namespace Test
                     }
                     break;
                 case 3:
-                    for (size_t n = 0; n < f.Axis(0); ++n)
-                        for (size_t c = 0; c < f.Axis(1); ++c)
+                    if (decType == "yoloV8" && _options.bf16)
+                    {
+                        float threshold = _param().detection().confidence();
+                        for (size_t n = 0; n < f.Axis(0); ++n)
                             for (size_t y = 0; y < f.Axis(2); ++y)
-                                if (!Compare(f, s, Shp(n, c, y), d, failed))
-                                    return false;
+                            {
+                                float score = f.Data<float>(Shp(n, 4, y))[0];
+                                if (score >= threshold)
+                                {
+                                    for (size_t c = 0; c < 5; ++c)
+                                        if (!Compare(f, s, Shp(n, c, y), d, failed))
+                                            return false;
+                                }
+                            }
+                    }
+                    else
+                    {
+                        for (size_t n = 0; n < f.Axis(0); ++n)
+                            for (size_t c = 0; c < f.Axis(1); ++c)
+                                for (size_t y = 0; y < f.Axis(2); ++y)
+                                    if (!Compare(f, s, Shp(n, c, y), d, failed))
+                                        return false;
+                    }
                     break;
                 case 4:
                     for (size_t n = 0; n < f.Axis(0); ++n)

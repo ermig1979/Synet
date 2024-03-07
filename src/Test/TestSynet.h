@@ -108,6 +108,8 @@ namespace Test
                     _yoloV8.Init();
                 if (param.detection().decoder() == "iim")
                     _iim.Init(param.detection().iim());
+                if (param.detection().decoder() == "rtdetr")
+                    _rtdetr.Init();
                 return true;
             }
             return false;
@@ -156,6 +158,8 @@ namespace Test
                 return _yoloV8.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
             else if (_iim.Enable())
                 return _iim.GetRegions(_net, size.x, size.y)[0];
+            else if (_rtdetr.Enable())
+                return _rtdetr.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
             else
                 return _net.GetRegions(size.x, size.y, threshold, overlap);
         }
@@ -177,6 +181,7 @@ namespace Test
         Synet::YoloV7Decoder _yoloV7;
         Synet::YoloV8Decoder _yoloV8;
         Synet::IimDecoder _iim;
+        Synet::RtdetrDecoder _rtdetr;
 
         bool Load(const String & model, const String & weight, const Options& options)
         {
@@ -364,6 +369,7 @@ namespace Test
                     tmp[offset + 4] = (float)pSrc[4];
                     tmp[offset + 5] = (float)pSrc[5];
                 }
+                SortRtdetr(tmp.data(), tmp.size());
                 dst.Reshape(Shp(1, tmp.size() / 6, 6));
                 memcpy(dst.CpuData(), tmp.data(), dst.Size() * sizeof(float));
             }

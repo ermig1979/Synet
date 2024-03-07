@@ -36,6 +36,7 @@
 #include "Synet/Decoders/YoloV7.h"
 #include "Synet/Decoders/YoloV8.h"
 #include "Synet/Decoders/Iim.h"
+#include "Synet/Decoders/Rtdetr.h"
 
 namespace Test
 {

@@ -9,5 +9,11 @@
 			<dims>1 3 224 224</dims>
 		</item>
 	</input>
+	<output>
+		<item>
+			<name>output</name>
+			<compare>cos_dist</compare>
+		</item>
+	</output>
 </test>
 

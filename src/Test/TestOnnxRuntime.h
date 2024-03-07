@@ -196,6 +196,8 @@ namespace Test
                 _yoloV8.Init();            
             if (param.detection().decoder() == "iim")
                 _iim.Init(param.detection().iim());
+            if (param.detection().decoder() == "rtdetr")
+                _rtdetr.Init();
 
             return true;
         }
@@ -272,6 +274,8 @@ namespace Test
                         bin = _output[0].CpuData();
                 return _iim.GetRegions(bin, _inputShapes[0][3], _inputShapes[0][2], size.x, size.y);
             }
+            else if (_rtdetr.Enable())
+                return _rtdetr.GetRegions(_output[0].CpuData(), _output[0].Axis(1), size.x, size.y, threshold, overlap);
             else
             {
                 Regions regions;
@@ -328,6 +332,7 @@ namespace Test
         Synet::YoloV7Decoder _yoloV7;
         Synet::YoloV8Decoder _yoloV8;
         Synet::IimDecoder _iim;
+        Synet::RtdetrDecoder _rtdetr;
 
         struct Env
         {
@@ -429,6 +434,7 @@ namespace Test
                             tmp[offset + 4] = src[4];
                             tmp[offset + 5] = src[5];
                         }
+                        SortRtdetr(tmp.data(), tmp.size());
                         _output[i].Reshape(Shp(1, tmp.size() / 6, 6));
                         memcpy(_output[i].CpuData(), tmp.data(), _output[i].Size() * sizeof(float));
                     }
