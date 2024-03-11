@@ -355,7 +355,6 @@ namespace Test
             {
                 if (abs(t1.val[0] - t2.val[0]) > 0.01f)
                     return t1.val[0] < t2.val[0];
-                const float thr = 0.01f;
                 if (abs(t1.val[1] - t2.val[1]) > 0.01f)
                     return t1.val[2] < t2.val[2];
                 else if (abs(t1.val[2] - t2.val[2]) > 0.01f)
