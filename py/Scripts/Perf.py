@@ -9,12 +9,16 @@ import random
 ###################################################################################################
 
 class Test():
-	def __init__(self, vals):
+	def __init__(self, vals, args):
 		self.framework = vals[0]
 		self.group = vals[1]
 		self.name = vals[2]
 		self.image = vals[3]
 		self.batch = vals[4]
+		if len(vals) > 5 and args.bf16 :
+			self.bf16 = vals[5]
+		else :
+			self.bf16 = "0"
 		self.path = ""
 		
 ###################################################################################################
@@ -97,7 +101,7 @@ def SetTestList(context : Context):
 			continue
 		if vals[0][0] == '#' :
 			continue
-		test = Test(vals)
+		test = Test(vals, args)
 		
 		if test.framework != args.framework :
 			continue
@@ -123,7 +127,11 @@ def SetTestList(context : Context):
 			if skip :
 				continue
 		
-		if test.batch == "1" :
+		if test.batch == "1" and test.bf16 == "1":
+			context.total += 4
+		elif test.batch == "1" and test.bf16 == "0" :
+			context.total += 2
+		elif test.batch == "0" and test.bf16 == "1" :
 			context.total += 2
 		else :
 			context.total += 1
@@ -135,7 +143,7 @@ def SetTestList(context : Context):
 
 ###################################################################################################
 
-def RunTest(context, test, batch):
+def RunTest(context, test, batch, bf16):
 	args = context.args
 	binPath = args.bin + os.path.sep + "test_" + test.framework
 	if not os.path.isfile(binPath):
@@ -153,23 +161,31 @@ def RunTest(context, test, batch):
 	if not os.path.isdir(imagePath):
 		return context.Error("Image directory '{0}' is not exist!".format(imagePath))
 	
-	log = ""
+	log = context.dst + os.path.sep
 	if test.group == "root" :
-		log = context.dst + os.path.sep + "p{0}_{1}_t{2}_b{3}.txt".format(test.framework[0], test.name, args.threads, batch)
+		log = log + "c{0}_{1}_t{2}_b{3}".format(test.framework[0], test.name, args.threads, batch)
 	else :
-		log = context.dst + os.path.sep + "p{0}_{1}__{2}_t{3}_b{4}.txt".format(test.framework[0], test.group, test.name, args.threads, batch)
+		log = log + "c{0}_{1}__{2}_t{3}_b{4}".format(test.framework[0], test.group, test.name, args.threads, batch)
+	if bf16 == "1" :
+		log = log + "_bf16.txt"
+	else :
+		log = log + "_fp32.txt"
 
 	pathArgs = ""
 	if args.framework == "quantization" :
 		threshold = 0.02
 		pathArgs += "-fm={0}/synet.xml -fw={0}/synet.bin -sm={0}/int8.xml".format(testPath)
 	else:
-		threshold = 0.0031
 		if test.framework == "inference_engine" :
 			pathArgs += "-fm={0}/other.xml -fw={0}/other.bin".format(testPath)
 		elif test.framework == "onnx" :
 			pathArgs += "-fw={0}/other.onnx".format(testPath)
-		pathArgs += " -sm={0}/synet.xml".format(testPath)
+		if bf16 :
+			threshold = 0.02
+			pathArgs += " -sm={0}/synet2.xml".format(testPath)
+		else :
+			threshold = 0.0031
+			pathArgs += " -sm={0}/synet.xml".format(testPath)
 	pathArgs += " -sw={0}/synet.bin -id={1} -od={0}/output -tp={0}/param.xml -sn={2}/sync.txt -hr={2}/_report.html -tr={2}/_report.txt".format(testPath, imagePath, context.dst)
 	
 	trashFile = imagePath + os.path.sep + "descript.ion"
@@ -179,12 +195,12 @@ def RunTest(context, test, batch):
 	context.UpdateProgress(log)
 	
 	if batch == 1 :
-		cmd = "{0} -m=convert {1} -tf=1 -cs=1".format(binPath, pathArgs)
+		cmd = "{0} -m=convert {1} -tf=1 -cs=1 -bf={2}".format(binPath, pathArgs, bf16)
 		result = subprocess.run(cmd.split())
 		if result.returncode != 0 :
 			return context.Error("Error in test {0} !".format(log))
 		
-	cmd = "{0} -m=compare -e=3 {1} -rn=0 -et=10.0 -wt=1 -tt={2} -ie=10 -be=10 -tf=1 -bs={3} -ct={4} -cs=1 -ln={5}".format(binPath, pathArgs, args.threads, batch, threshold, log)
+	cmd = "{0} -m=compare -e=3 {1} -rn=0 -et=10.0 -wt=1 -tt={2} -ie=10 -be=10 -tf=1 -bs={3} -ct={4} -cs=1 -ln={5} -bf={6}".format(binPath, pathArgs, args.threads, batch, threshold, log, bf16)
 	result = subprocess.run(cmd.split())
 	if result.returncode != 0 :
 		return context.Error("Error in test {0} !".format(log))
@@ -195,10 +211,16 @@ def RunTest(context, test, batch):
 
 def RunAllTests(context):
 	for test in context.tests:
-		if not RunTest(context, test, 1) :
+		if not RunTest(context, test, 1, "0") :
 			return False
 		if test.batch == "1" :
-			if not RunTest(context, test, 10) :
+			if not RunTest(context, test, 10, "0") :
+				return False
+		if test.bf16 == "1" :
+			if not RunTest(context, test, 1, "1") :
+				return False
+		if test.batch == "1" and test.bf16 == "1" :
+			if not RunTest(context, test, 10, "1") :
 				return False
 	return True
 
@@ -214,6 +236,7 @@ def main():
 	parser.add_argument("-f", "--framework", help="Framework to test. It can be i(inference_engine), o(onnx), or q(quantization).", required=False, type=str, default="o", choices=["i", "o", "q"])
 	parser.add_argument("-i", "--include", help="Include tests filter.", required=False, default=[], action="append")
 	parser.add_argument("-e", "--exclude", help="Exclude tests filter.", required=False, default=[], action="append")
+	parser.add_argument("-bf", "--bf16", help="Run BF16 tests.", required=False, type=bool, default=False)
 	context = Context(parser.parse_args())
 	
 	ValidateParameters(context)

@@ -107,9 +107,9 @@ namespace Test
 		struct Test
 		{
 			String name, desc, link;
-			int batch, count, skip;
+			int batch, count, skip, bf16;
 			Data<double> first, second;
-			Test(const String & n = "", int b = 0) : name(n), batch(b), count(0), skip(0) {}
+			Test(const String & n = "", int b = 0, int bf = 0) : name(n), batch(b), count(0), skip(0), bf16(bf) {}
 		};
 		typedef std::vector<Test> Tests;
 
@@ -132,16 +132,17 @@ namespace Test
 					{
 						Test test;
 						Cpl::ToVal(values[0], test.name);
-						Cpl::ToVal(values[1], test.batch);
-						Cpl::ToVal(values[2], test.first.time);
-						Cpl::ToVal(values[3], test.second.time);
-						Cpl::ToVal(values[4], test.first.flops);
-						Cpl::ToVal(values[5], test.second.flops);
-						Cpl::ToVal(values[6], test.first.memory);
-						Cpl::ToVal(values[7], test.second.memory);
-						Cpl::ToVal(values[8], test.desc);
-						Cpl::ToVal(values[9], test.link);
-						Cpl::ToVal(values[10], test.skip);
+						Cpl::ToVal(values[1], test.bf16);
+						Cpl::ToVal(values[2], test.batch);
+						Cpl::ToVal(values[3], test.first.time);
+						Cpl::ToVal(values[4], test.second.time);
+						Cpl::ToVal(values[5], test.first.flops);
+						Cpl::ToVal(values[6], test.second.flops);
+						Cpl::ToVal(values[7], test.first.memory);
+						Cpl::ToVal(values[8], test.second.memory);
+						Cpl::ToVal(values[9], test.desc);
+						Cpl::ToVal(values[10], test.link);
+						Cpl::ToVal(values[11], test.skip);
 						_tests.push_back(test);
 					}
 				}
@@ -166,6 +167,7 @@ namespace Test
 				for (size_t i = 0; i < _tests.size(); ++i)
 				{
 					ofs << _tests[i].name << _separator;
+					ofs << _tests[i].bf16 << _separator;
 					ofs << _tests[i].batch << _separator;
 					ofs << _tests[i].first.time << _separator;
 					ofs << _tests[i].second.time << _separator;
@@ -191,6 +193,7 @@ namespace Test
 			Test test;
 			test.name = TestName(_options.logName);
 			test.batch = _options.batchSize;
+			test.bf16 = _options.bf16;
 			test.first.time = NetworkPredictPm(_options.firstName, _options.firstType).Average() / test.batch;
 			test.second.time = NetworkPredictPm(_options.secondName, _options.secondType).Average() / test.batch;
 			test.first.flops = NetworkPredictPm(_options.firstName, _options.firstType).GFlops();
@@ -278,7 +281,7 @@ namespace Test
 
 		Size TableSize()
 		{
-			size_t col = 3;
+			size_t col = 4;
 			if (_other.time)
 				col++;
 			if (_synet.time)
@@ -303,6 +306,7 @@ namespace Test
 			String second = Options::FullName(_options.secondName, _options.secondType);
 			size_t col = 0;
 			table.SetHeader(col++, "Test", true, Cpl::Table::Center);
+			table.SetHeader(col++, "Format", true, Cpl::Table::Center);
 			table.SetHeader(col++, "Batch", true, Cpl::Table::Center);
 			if (_other.time)
 				table.SetHeader(col++, first + ", ms", true, Cpl::Table::Center);
@@ -327,7 +331,11 @@ namespace Test
 			{
 				const Test& test = tests[i];
 				size_t col = 0;
-				table.SetCell(col++, row, test.name, Cpl::Table::Black, test.link);
+				if (test.link.empty())
+					table.SetCell(col++, row, test.name, Cpl::Table::Black);
+				else
+					table.SetCell(col++, row, test.name + (test.bf16 == 0 ? String("_fp32_") : String("_bf16_")) + ToString(test.batch), Cpl::Table::Black, test.link);
+				table.SetCell(col++, row, test.bf16 < 0 ? String("-") : test.bf16 == 0 ? String("FP32") : String("BF16"));
 				table.SetCell(col++, row, test.batch ? ToString(test.batch) : String("-"));
 				if (_other.time)
 					table.SetCell(col++, row, ToString(test.first.time, 3), test.skip == 1 ? Cpl::Table::Red : Cpl::Table::Black);
@@ -356,7 +364,11 @@ namespace Test
 			for (size_t i = 0; i < _tests.size(); ++i)
 			{
 				const Test& test = _tests[i];
-				if ((summary.batch && test.batch != summary.batch) || test.skip)
+				if (test.skip)
+					continue;
+				if (summary.batch && test.batch != summary.batch)
+					continue;
+				if (summary.bf16 >= 0 && test.bf16 != summary.bf16)
 					continue;
 				summary.count++;
 				if (_other.time)
@@ -381,13 +393,22 @@ namespace Test
 		void FillSummary()
 		{
 			typedef std::set<int> Set;
-			Set batch;
+			Set batch, bf16;
 			for (size_t i = 0; i < _tests.size(); ++i)
+			{
 				batch.insert(_tests[i].batch);
+				bf16.insert(_tests[i].bf16);
+			}
 			_summary.clear();
-			_summary.push_back(Test("Common", 0));
-			for (Set::const_iterator it = batch.begin(); it != batch.end(); ++it)
-				_summary.push_back(Test(String("Batch-") + ToString(*it), *it));
+			if(bf16.size() > 1)
+				_summary.push_back(Test("Common", 0, -1));
+			for (Set::const_iterator f = bf16.begin(); f != bf16.end(); ++f)
+			{
+				String format = *f ? String("BF16") : String("FP32");
+				_summary.push_back(Test(format + "-Common", 0, *f));
+				for (Set::const_iterator b = batch.begin(); b != batch.end(); ++b)
+					_summary.push_back(Test(format + "-Batch-" + ToString(*b), *b, *f));
+			}
 			for (size_t i = 0; i < _summary.size(); ++i)
 				FillSummary(_summary[i]);
 		}

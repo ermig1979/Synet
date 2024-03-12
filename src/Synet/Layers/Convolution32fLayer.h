@@ -63,7 +63,7 @@ namespace Synet
             const ConvParam& conv = this->_conv;
             AlgParam & alg = this->_alg;
             dst->Reshape(conv.DstShape(alg.batch), src->Format());
-            _convolution32f.Init(alg.batch, &conv, this->Param().convolution().bf16());
+            _convolution32f.Init(alg.batch, &conv, this->Param().convolution().bf16(), this->Options().bf16RoundTest);
             if (_convolution32f.Enable())
             {
                 Base::Extend32f(buf, 0, Shp(_convolution32f.ExternalBufferSize()), src->Format());

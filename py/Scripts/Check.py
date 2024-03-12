@@ -9,12 +9,16 @@ import random
 ###################################################################################################
 
 class Test():
-	def __init__(self, vals):
+	def __init__(self, vals, args):
 		self.framework = vals[0]
 		self.group = vals[1]
 		self.name = vals[2]
 		self.image = vals[3]
 		self.batch = vals[4]
+		if len(vals) > 5 and args.bf16 :
+			self.bf16 = vals[5]
+		else :
+			self.bf16 = "0"
 		self.path = ""
 		
 ###################################################################################################
@@ -86,7 +90,7 @@ def SetTestList(context : Context):
 			continue
 		if vals[0][0] == '#' :
 			continue
-		test = Test(vals)
+		test = Test(vals, args)
 		
 		if not (test.framework == "onnx" or test.framework == "inference_engine") :
 			return context.Error("Unknown framework: {0} !".format(test.framework))
@@ -112,7 +116,11 @@ def SetTestList(context : Context):
 			if skip :
 				continue
 		
-		if test.batch == "1" :
+		if test.batch == "1" and test.bf16 == "1":
+			context.total += 5
+		elif test.batch == "1" and test.bf16 == "0" :
+			context.total += 3
+		elif test.batch == "0" and test.bf16 == "1" :
 			context.total += 3
 		else :
 			context.total += 2
@@ -135,7 +143,7 @@ def ValidateThreadNumber(context : Context):
 
 ###################################################################################################
 
-def RunTest(context, test, format, batch):
+def RunTest(context, test, format, batch, bf16):
 	if context.error :
 		return False
 	args = context.args
@@ -155,19 +163,30 @@ def RunTest(context, test, format, batch):
 	if not os.path.isdir(imagePath):
 		return context.Error("Image directory '{0}' is not exist!".format(imagePath))
 	
-	log = ""
+	log = context.dst + os.path.sep
 	if test.group == "root" :
-		log = context.dst + os.path.sep + "c{0}_{1}_f{2}_b{3}.txt".format(test.framework[0], test.name, format, batch)
+		log = log + "c{0}_{1}_f{2}_b{3}".format(test.framework[0], test.name, format, batch)
 	else :
-		log = context.dst + os.path.sep + "c{0}_{1}__{2}_f{3}_b{4}.txt".format(test.framework[0], test.group, test.name, format, batch)
+		log = log + "c{0}_{1}__{2}_f{3}_b{4}".format(test.framework[0], test.group, test.name, format, batch)
+	if bf16 == "1" :
+		log = log + "_bf16.txt"
+	else :
+		log = log + "_fp32.txt"
 
-	threshold = 0.0031
+	if bf16 == "1" :
+		threshold = 0.02
+	else :	
+		threshold = 0.0031
 	pathArgs = ""
 	if test.framework == "inference_engine" :
 		pathArgs += "-fm={0}/other.xml -fw={0}/other.bin".format(testPath)
 	elif test.framework == "onnx" :
 		pathArgs += "-fw={0}/other.onnx".format(testPath)
-	pathArgs += " -sm={0}/synet{1}.xml -sw={0}/synet{1}.bin -id={2} -od={0}/output -tp={0}/param.xml".format(testPath, format, imagePath)
+	if bf16 == "1" :
+		pathArgs += " -sm={0}/synet2.xml -sw={0}/synet2.bin".format(testPath)
+	else :
+		pathArgs += " -sm={0}/synet{1}.xml -sw={0}/synet{1}.bin".format(testPath, format)
+	pathArgs += " -id={1} -od={0}/output -tp={0}/param.xml".format(testPath, imagePath)
 	
 	trashFile = imagePath + os.path.sep + "descript.ion"
 	if os.path.isfile(trashFile) :
@@ -175,14 +194,14 @@ def RunTest(context, test, format, batch):
 	
 	out = ""
 	if not args.fast and batch == 1 :
-		cmd = "{0} -m=convert {1} -tf={2} -cs=1".format(binPath, pathArgs, format)
+		cmd = "{0} -m=convert {1} -tf={2} -cs=1 -bf={3}".format(binPath, pathArgs, format, bf16)
 		result = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
 		out += result.stdout.decode('utf-8')
 		if result.returncode != 0 :
 			return context.Error("Error in test {0} :\n{1}".format(log, out))
 		
 	num = 2 if args.fast else 10
-	cmd = "{0} -m=compare -e=3 {1} -rn=1 -wt=1 -tt=0 -ie={2} -be={2} -tf={3} -bs={4} -ct={5} -cs=1 -ln={6} -pl={7}".format(binPath, pathArgs, num, format, batch, threshold, log, args.performanceLog)
+	cmd = "{0} -m=compare -e=3 {1} -rn=1 -wt=1 -tt=0 -ie={2} -be={2} -tf={3} -bs={4} -ct={5} -cs=1 -ln={6} -pl={7} -bf={8}".format(binPath, pathArgs, num, format, batch, threshold, log, args.performanceLog, bf16)
 	result = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
 	out += result.stdout.decode('utf-8')
 	if result.returncode != 0 :
@@ -197,12 +216,18 @@ def RunTest(context, test, format, batch):
 def SingleThreadRun(context, beg, end):
 	for i in range(beg, end):
 		test = context.tests[i]
-		if not RunTest(context, test, 0, 1) :
+		if not RunTest(context, test, 0, 1, "0") :
 			return
-		if not RunTest(context, test, 1, 1) :
+		if not RunTest(context, test, 1, 1, "0") :
 			return
 		if test.batch == "1" :
-			if not RunTest(context, test, 1, 2) :
+			if not RunTest(context, test, 1, 2, "0") :
+				return
+		if test.bf16 == "1" :
+			if not RunTest(context, test, 1, 1, "1") :
+				return
+		if test.batch == "1" and test.bf16 == "1" :
+			if not RunTest(context, test, 1, 2, "1") :
 				return
 
 ###################################################################################################
@@ -233,6 +258,7 @@ def main():
 	parser.add_argument("-i", "--include", help="Include tests filter.", required=False, default=[], action="append")
 	parser.add_argument("-e", "--exclude", help="Exclude tests filter.", required=False, default=[], action="append")
 	parser.add_argument("-pl", "--performanceLog", help="Level of performance log: (0 - no statistics, 1 - averaged, 2 - detailed).", required=False, type=int, default="0")
+	parser.add_argument("-bf", "--bf16", help="Run BF16 tests.", required=False, type=bool, default=False)
 	context = Context(parser.parse_args())
 	
 	if not CheckDirs(context) :

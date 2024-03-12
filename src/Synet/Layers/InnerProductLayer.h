@@ -150,7 +150,7 @@ namespace Synet
                 }
                 if (_biasTerm)
                     assert(weight[1].Shape() == Shp(_N));
-#if defined(SYNET_BF16_ROUND_TEST) && 0
+#if defined(SYNET_BF16_ROUND_TEST)
                 if (this->Param().convolution().bf16() && this->Options().bf16RoundTest)
                 {
                     RoundAsTo16(weight[0].CpuData(), weight[0].Size(), (float*)weight[0].CpuData());
@@ -234,7 +234,7 @@ namespace Synet
                 }
                 else
                 {
-#if defined(SYNET_BF16_ROUND_TEST) && 0
+#if defined(SYNET_BF16_ROUND_TEST)
                     if (this->Param().convolution().bf16() && this->Options().bf16RoundTest)
                     {
                         RoundAsTo16(src[0]->CpuData(), src[0]->Size(), Base::Buf32f(buf, 1));

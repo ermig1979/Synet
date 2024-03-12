@@ -1,1 +1,1 @@
-python3 ./py/Scripts/Perf.py -f=$1 -t=$2 
+python3 ./py/Scripts/Perf.py -f=$1 -t=$2 $3

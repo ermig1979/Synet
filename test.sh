@@ -56,24 +56,24 @@ export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 "$BIN" -m=convert $PATHES -tf=$FORMAT -cs=1 -qm=$METHOD -qq=0.0001 -dp=0 -su=1 -bf=$BF16
 if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -bf=$BF16 -re=0 -et=10.0 -ie=10 -be=100 -dp=1 -dpf=6 -dpl=2 -dpp=4 -ar=1 -rt=0.3 -cs=0 -pl=$PERF -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -bf=$BF16 -re=0 -et=10.0 -ie=10 -be=100 -dp=3 -dpf=6 -dpl=2 -dpp=4 -ar=1 -rt=0.3 -cs=0 -pl=$PERF -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
-#TEST inference_engine "" test_010f faces 50 0 0 1 0 002 2
+#TEST inference_engine "" test_010f faces 50 0 1 1 1 002 2
 #TEST inference_engine "" test_011f vehicles 40 0 1 1 0 004 2
-#TEST inference_engine "" test_012f persons 10 1 1 1 0 001 0
-#TEST inference_engine "" test_013f persons 20 0 0 1 0 001 0
+#TEST inference_engine "" test_012f persons 10 0 1 1 1 001 2
+#TEST inference_engine "" test_013f persons 20 0 1 1 1 001 2
 #TEST inference_engine "" test_014f local 200 0 1 1 0 000h 0 ???
-#TEST inference_engine "" test_015f license_plates 100 1 1 1 0 000h 0
-#TEST inference_engine "" test_016f face 500 1 1 1 0  0
-#TEST inference_engine "" test_017f faces 100 1 1 1 0 000 0
-#TEST inference_engine "" test_018f license_plates 100 0 0 1 0 001 2
-#TEST inference_engine "" test_019f face 500 1 1 1 0 000 2
-#TEST inference_engine "" test_020f persons 1 0 0 1 0 000 2 ???
+#TEST inference_engine "" test_015f license_plates 100 0 1 1 1 000 2
+TEST inference_engine "" test_016f face 500 0 1 2 1 000 2
+#TEST inference_engine "" test_017f faces 100 0 1 1 1 000 2
+#TEST inference_engine "" test_018f license_plates 100 0 1 1 1 001 2
+#TEST inference_engine "" test_019f face 500 0 1 1 1 000 2
+#TEST inference_engine "" test_020f persons 1 0 1 1 0 000 2 ???
 
 #TEST onnx "" test_000 face 80 0 1 1 1 005 2
-TEST onnx "" test_001 faces 30 0 1 1 1 003 2
+#TEST onnx "" test_001 faces 30 0 1 1 1 003 2
 
 #TEST quantization "" test_003 faces 100 1 1 1 0 000t 0
 #TEST quantization "" test_009 persons 1 0 1 1 0 000t 0

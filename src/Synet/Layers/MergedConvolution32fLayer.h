@@ -212,7 +212,7 @@ namespace Synet
             const ConvParam& back = a.conv[a.count - 1];
             dst->Reshape(Shp(a.batch, back.dstH, back.dstW, back.dstC), src->Format());
 
-            _mergedConvolution32f.Init(a.batch, a.conv, a.count, a.add, Bf16());
+            _mergedConvolution32f.Init(a.batch, a.conv, a.count, a.add, Bf16(), this->Options().bf16RoundTest);
             if (_mergedConvolution32f.Enable())
             {
                 Base::Extend32f(buf, 0, Shp(_mergedConvolution32f.ExternalBufferSize()));
