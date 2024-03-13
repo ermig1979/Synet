@@ -76,8 +76,11 @@ include(${ROOT_DIR}/prj/cmake/Simd.cmake)
 include(${ROOT_DIR}/prj/cmake/Synet.cmake)
 
 if(SYNET_PYTHON)
-	add_custom_command(TARGET Synet POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy 
-		${ROOT_DIR}/py/SynetPy/*.py ${CMAKE_BINARY_DIR})
+	add_custom_command(TARGET Synet POST_BUILD 
+		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/SynetPy/*.py ${CMAKE_BINARY_DIR}
+		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/Scripts/Check.py ${CMAKE_BINARY_DIR}
+		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/Scripts/Perf.py ${CMAKE_BINARY_DIR}
+		)
 endif()
 
 if((SYNET_TEST STREQUAL "inference_engine") OR (SYNET_TEST STREQUAL "all"))

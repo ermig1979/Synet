@@ -77,7 +77,10 @@ def CheckDirs(context : Context) :
 
 def SetTestList(context : Context):
 	args = context.args
-	listPath = args.src + os.path.sep + "tests.txt"
+	if args.list == "" :
+		listPath = args.src + os.path.sep + "tests.txt"
+	else :
+		listPath = args.list
 	if not os.path.isfile(listPath):
 		return context.Error("Test list '{}' is not exist!".format(listPath))
 	listFile = open(listPath, "r")
@@ -192,6 +195,8 @@ def RunTest(context, test, format, batch, bf16):
 	if os.path.isfile(trashFile) :
 		os.remove(trashFile)
 	
+	os.system("export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{0}".format(args.bin))
+	
 	out = ""
 	if not args.fast and batch == 1 :
 		cmd = "{0} -m=convert {1} -tf={2} -cs=1 -bf={3}".format(binPath, pathArgs, format, bf16)
@@ -251,6 +256,7 @@ def main():
 
 	parser = argparse.ArgumentParser(prog="Check", description="Synet tests check script.")
 	parser.add_argument("-s", "--src", help="Tests data path.", required=False, type=str, default="./data")
+	parser.add_argument("-l", "--list", help="Alternative test list path.", required=False, type=str, default="")	
 	parser.add_argument("-b", "--bin", help="Tests binary path.", required=False, type=str, default="./build")
 	parser.add_argument("-d", "--dst", help="Output tests path.", required=False, type=str, default="../test/check")
 	parser.add_argument("-t", "--threads", help="Tests threads number.", required=False, type=int, default=-1)
