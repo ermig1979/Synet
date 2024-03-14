@@ -85,7 +85,6 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeScale,
     LayerTypeScaledDotProductAttention,
     LayerTypeScatterNd,
-    LayerTypeShortcut,//legacy
     LayerTypeShuffle,
     LayerTypeSigmoid,
     LayerTypeSlice,//legacy

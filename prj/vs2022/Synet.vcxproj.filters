@@ -266,9 +266,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\ScaleLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ShortcutLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ShuffleLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>

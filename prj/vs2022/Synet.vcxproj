@@ -151,7 +151,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ScaleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ScatterNdLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\ShortcutLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ShuffleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SliceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h" />

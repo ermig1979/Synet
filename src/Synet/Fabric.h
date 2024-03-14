@@ -74,7 +74,6 @@
 #include "Synet/Layers/ScaleLayer.h"
 #include "Synet/Layers/ScaledDotProductAttentionLayer.h"
 #include "Synet/Layers/ScatterNdLayer.h"
-#include "Synet/Layers/ShortcutLayer.h"
 #include "Synet/Layers/ShuffleLayer.h"
 #include "Synet/Layers/SliceLayer.h"
 #include "Synet/Layers/SoftmaxLayer.h"
@@ -177,7 +176,6 @@ namespace Synet
             case LayerTypeScale: return new ScaleLayer(param, context, method);
             case LayerTypeScaledDotProductAttention: return new ScaledDotProductAttentionLayer(param, context);
             case LayerTypeScatterNd: return new ScatterNdLayer<T>(param, context);
-            case LayerTypeShortcut: return new ShortcutLayer<T>(param, context);
             case LayerTypeShuffle: return new ShuffleLayer<T>(param, context);
             case LayerTypeSigmoid: return new SigmoidLayer(param, context);
             case LayerTypeSlice: return new SliceLayer<T>(param, context);

@@ -262,7 +262,7 @@ namespace Test
         bool RequiredExtension(const String & name)
         {
             String ext = ExtensionByPath(name);
-            static const char * EXTS[] = { "JPG", "jpg", "png", "ppm", "pgm", "bin" };
+            static const char * EXTS[] = { "JPG", "jpeg", "jpg", "png", "ppm", "pgm", "bin" };
             for (size_t i = 0, n = sizeof(EXTS) / sizeof(EXTS[0]); i < n; ++i)
                 if (ext == EXTS[i])
                     return true;
