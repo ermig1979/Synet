@@ -45,7 +45,7 @@ namespace Synet
     template <class T> struct Region
     {
         T x, y, w, h, prob;
-        size_t id;
+        int id;
 
         Region() : x(0), y(0), w(0), h(0), prob(0), id(0){}
     };

@@ -417,6 +417,7 @@ namespace Test
                         assert(0);
                     }
                 }
+                _output[o].SetName(_ov->outputNames[o]);
             }
         }
 

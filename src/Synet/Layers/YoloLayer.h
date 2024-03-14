@@ -86,7 +86,7 @@ namespace Synet
                             region.h = ::exp(src[0]->CpuData({ b, n*(_classes + 5) + 3, y, x })[0])*_anchors[2*_mask[n] + 1] / netH;
                             for (size_t i = 0; i < _classes; ++i)
                             {
-                                region.id = i;
+                                region.id = (int)i;
                                 region.prob = objectness*src[0]->CpuData({ b, n*(_classes + 5) + 5 + i, y, x })[0];
                                 if (region.prob > threshold)
                                     dst.push_back(region);

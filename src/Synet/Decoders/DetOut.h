@@ -28,68 +28,46 @@
 
 namespace Synet
 {
-    struct YoloV5Param
-    {
-        CPL_PARAM_VALUE(int, classes, 2);
-        CPL_PARAM_VALUE(int, background, 1);
-    };
-
-    class YoloV5Decoder
+    class DetOutDecoder
     {
     public: 
         typedef Synet::Region<float> Region;
         typedef std::vector<Region> Regions;
         typedef Synet::Network Net;
 
-        YoloV5Decoder()
-            : _classes(0)
-            , _background(-1)
+        DetOutDecoder()
+            : _enable(false)
         {
         }
 
-        bool Init(const YoloV5Param& param = YoloV5Param())
+        bool Init()
         {
-            _classes = param.classes();
-            _background = param.background();
+            _enable = true;
             return true;
         }
 
         bool Enable() const
         {
-            return _classes != 0;
+            return _enable;
         }
 
-        Regions GetRegions(const float* data, size_t size, size_t netW, size_t netH, size_t imgW, size_t imgH, float threshold, float overlap) const
+        Regions GetRegions(const float* data, size_t size, size_t imgW, size_t imgH, float threshold, float overlap) const
         {
-            float kX = float(imgW) / float(netW);
-            float kY = float(imgH) / float(netH);
+            float kX = float(imgW);
+            float kY = float(imgH);
             Regions regions;
-            for (size_t i = 0; i < size; ++i, data += _classes + 5) 
+            for (size_t i = 0; i < size; ++i, data += 7) 
             {
-                float score = data[4];
+                float score = data[2];
                 if (score < threshold)
                     continue;
                 Region region;
                 region.prob = score;
-                float classMax = 0;
-                for (size_t c = 0; c < _classes; ++c)
-                {
-                    if (data[5 + c] > classMax)
-                    {
-                        classMax = data[5 + c];
-                        region.id = (int)c;
-                    }
-                }
-                if (region.id == _background)
-                    continue;
-                float xMin = std::max(0.0f, (data[0] - data[2] / 2) * kX);
-                float xMax = std::min((float)imgW, (data[0] + data[2] / 2) * kX);
-                float yMin = std::max(0.0f, (data[1] - data[3] / 2) * kY);
-                float yMax = std::min((float)imgH, (data[1] + data[3] / 2) * kY);
-                region.x = (xMin + xMax) / 2.0f;
-                region.y = (yMin + yMax) / 2.0f;
-                region.w = xMax - xMin;
-                region.h = yMax - yMin;
+                region.id = (int)data[1];
+                region.x = (data[5] + data[3]) * kX / 2.0f;
+                region.y = (data[6] + data[4]) * kY / 2.0f;
+                region.w = (data[5] - data[3]) * kX;
+                region.h = (data[6] - data[4]) * kY;
                 regions.push_back(region);
             }
             Synet::Filter(regions, overlap);
@@ -101,15 +79,15 @@ namespace Synet
             std::vector<Regions> result(net.NchwShape()[0]);
             for (size_t b = 0; b < result.size(); ++b)
             {
-                const float* data = net.Dst()[0]->Data<float>();
-                size_t size = net.Dst()[0]->Size(1, 2);
-                result[b] = GetRegions(data, size, net.NchwShape()[3], net.NchwShape()[2], imgW, imgH, threshold, overlap);
+                const float* data = net.Dst()[0]->Data<float>(Shp(b, 0, 0, 0));
+                size_t size = net.Dst()[0]->Axis(2);
+                result[b] = GetRegions(data, size, imgW, imgH, threshold, overlap);
             }
             return result;
         }
 
     private:
-        size_t _classes, _background;
+        bool _enable;
     };
 }
 

@@ -93,7 +93,7 @@ namespace Synet
             if (pSrc[2] > threshold)
             {
                 Region r;
-                r.id = (size_t)pSrc[1];
+                r.id = (int)pSrc[1];
                 r.prob = pSrc[2];
                 r.w = pSrc[5] - pSrc[3];
                 r.h = pSrc[6] - pSrc[4];

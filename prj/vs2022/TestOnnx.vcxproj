@@ -36,6 +36,7 @@
     <ClInclude Include="..\..\src\Test\TestOptions.h" />
     <ClInclude Include="..\..\src\Test\TestParams.h" />
     <ClInclude Include="..\..\src\Test\TestPerformance.h" />
+    <ClInclude Include="..\..\src\Test\TestRegionDecoder.h" />
     <ClInclude Include="..\..\src\Test\TestReport.h" />
     <ClInclude Include="..\..\src\Test\TestSynet.h" />
     <ClInclude Include="..\..\src\Test\TestUtils.h" />

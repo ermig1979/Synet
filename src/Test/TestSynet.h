@@ -27,6 +27,7 @@
 #include "TestCommon.h"
 #include "TestPerformance.h"
 #include "TestNetwork.h"
+#include "TestRegionDecoder.h"
 
 #include "Synet/Network.h"
 
@@ -94,22 +95,7 @@ namespace Test
                 _lower = param.lower();
                 _upper = param.upper();
                 _synetMemoryUsage = _net.MemoryUsage();
-                if(param.detection().decoder() == "epsilon")
-                    _anchor.Init(_net, param.detection().epsilon());
-                if (param.detection().decoder() == "retina")
-                    _anchor.Init(_net, param.detection().retina());
-                if (param.detection().decoder() == "ultraface")
-                    _ultraface.Init(param.detection().ultraface());
-                if (param.detection().decoder() == "yoloV5")
-                    _yoloV5.Init(param.detection().yoloV5());
-                if (param.detection().decoder() == "yoloV7")
-                    _yoloV7.Init();
-                if (param.detection().decoder() == "yoloV8")
-                    _yoloV8.Init();
-                if (param.detection().decoder() == "iim")
-                    _iim.Init(param.detection().iim());
-                if (param.detection().decoder() == "rtdetr")
-                    _rtdetr.Init();
+                _regionDecoder.Init(_net, param);
                 return true;
             }
             return false;
@@ -146,22 +132,7 @@ namespace Test
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
-            if (_anchor.Enable())
-                return _anchor.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
-            else if (_ultraface.Enable())
-                return _ultraface.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
-            else if (_yoloV5.Enable())
-                return _yoloV5.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
-            else if (_yoloV7.Enable())
-                return _yoloV7.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
-            else if (_yoloV8.Enable())
-                return _yoloV8.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
-            else if (_iim.Enable())
-                return _iim.GetRegions(_net, size.x, size.y)[0];
-            else if (_rtdetr.Enable())
-                return _rtdetr.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
-            else
-                return _net.GetRegions(size.x, size.y, threshold, overlap);
+            return _regionDecoder.GetRegions(_net, size, threshold, overlap);
         }
 
         virtual size_t MemoryUsage() const
@@ -175,13 +146,7 @@ namespace Test
         bool _trans, _sort;
         Floats _lower, _upper;
         size_t _synetMemoryUsage;
-        Synet::AnchorDecoder _anchor;
-        Synet::UltrafaceDecoder _ultraface;
-        Synet::YoloV5Decoder _yoloV5;
-        Synet::YoloV7Decoder _yoloV7;
-        Synet::YoloV8Decoder _yoloV8;
-        Synet::IimDecoder _iim;
-        Synet::RtdetrDecoder _rtdetr;
+        RegionDecoder _regionDecoder;
 
         bool Load(const String & model, const String & weight, const Options& options)
         {
@@ -419,6 +384,7 @@ namespace Test
                         dst.CpuData()[i] = (float)src.CpuData()[i];
                 }
             }
+            dst.SetName(src.Name());
         }
 
         bool Reshape(const TestParam & param, size_t batchSize)

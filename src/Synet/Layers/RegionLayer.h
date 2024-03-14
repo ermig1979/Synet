@@ -113,7 +113,7 @@ namespace Synet
                         if (prob > threshold)
                         {
                             r.prob = prob;
-                            r.id = id;
+                            r.id = (int)id;
                             dst.push_back(r);
                         }
                     }

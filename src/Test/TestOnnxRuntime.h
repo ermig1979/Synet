@@ -411,7 +411,7 @@ namespace Test
                     shape = Shp(1);
                 Shape index(shape.size(), 0);
                 index[0] = b;
-                float* dst = _output[i].CpuData(index);
+                float* dst = _output[i].Data<float>(index);
                 size_t size = Synet::Detail::Size(shape);
                 ONNXTensorElementDataType type = _outputValues->at(i).GetTensorTypeAndShapeInfo().GetElementType();
                 if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT)
@@ -461,6 +461,7 @@ namespace Test
                     CPL_LOG_SS(Error, "OnnxRuntime: unknown format of output tensor: " << type << " !");
                     assert(0);
                 }
+                _output[i].SetName(_outputNames[i]);
             }
         }
 
