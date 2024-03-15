@@ -132,7 +132,10 @@ namespace Test
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
-            return _regionDecoder.GetRegions(_net, size, threshold, overlap);
+            if(_regionDecoder.Enable())
+                return _regionDecoder.GetRegions(_net, size, threshold, overlap);
+            else
+                return _net.GetRegions(size.x, size.y, threshold, overlap);
         }
 
         virtual size_t MemoryUsage() const

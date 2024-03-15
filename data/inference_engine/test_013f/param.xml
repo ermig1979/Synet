@@ -5,21 +5,11 @@
 	<input>
 		<item>
 			<name>input.1</name>
-			<shape>
-				<item>
-					<size>1</size>
-				</item>
-				<item>
-					<size>3</size>
-				</item>
-				<item>
-					<size>512</size>
-				</item>
-				<item>
-					<size>512</size>
-				</item>
-			</shape>
+			<dims>1 3 512 512</dims>
 		</item>
 	</input>
+	<detection>
+		<decoder>detOut</decoder>
+	</detection>
 </test>
 

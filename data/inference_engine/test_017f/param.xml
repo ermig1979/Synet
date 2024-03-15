@@ -2,5 +2,8 @@
 <test>
 	<lower>0</lower>
 	<upper>255</upper>
+	<detection>
+		<decoder>detOut</decoder>
+	</detection>
 </test>
 

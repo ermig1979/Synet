@@ -32,8 +32,8 @@ namespace Test
 {
     class RegionDecoder
     {
+        Shape _shape;
         Strings _names;
-        size_t _srcW, _srcH;
         bool _enable;
 
         Synet::AnchorDecoder _anchor;
@@ -52,30 +52,28 @@ namespace Test
 
         RegionDecoder()
             : _enable(false)
-            , _srcW(0)
-            , _srcH(0)
         {
         }
 
         bool Init(const Net & net, const TestParam& param)
         {
-            const Shape& shape = net.NchwShape();
             Strings names;
             for(size_t i = 0; i < net.Dst().size(); ++i)
                 names.push_back(net.Dst()[i]->Name());
-            return Init(shape[3], shape[2], names, param);
+            return Init(net.NchwShape(), names, param);
         }
 
-        bool Init(size_t srcW, size_t srcH, const Strings & names, const TestParam& param)
+        bool Init(const Shape & shape, const Strings & names, const TestParam& param)
         {
-            _srcW = srcW;
-            _srcH = srcH;
+            if (shape.size() != 4)
+                return false;
+            _shape = shape;
             _names = names;
             const String& decoder = param.detection().decoder();
             if (decoder == "epsilon")
-                _enable = _anchor.Init(_srcW, _srcH, param.detection().epsilon());
+                _enable = _anchor.Init(_shape[3], _shape[2], param.detection().epsilon());
             else if (decoder == "retina")
-                _enable = _anchor.Init(_srcW, _srcH, param.detection().retina());
+                _enable = _anchor.Init(_shape[3], _shape[2], param.detection().retina());
             else if (decoder == "ultraface")
                 _enable = _ultraface.Init(param.detection().ultraface());
             else if (decoder == "yoloV5")
@@ -118,6 +116,29 @@ namespace Test
                 return _detOut.GetRegions(net, size.x, size.y, threshold, overlap)[0];
             else
                 return net.GetRegions(size.x, size.y, threshold, overlap);
+        }
+
+        Regions GetRegions(const Tensors & dst, const Size& size, float threshold, float overlap) const
+        {
+            //if (_anchor.Enable())
+            //    return _anchor.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+            //else if (_ultraface.Enable())
+            //    return _ultraface.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+            //else if (_yoloV5.Enable())
+            //    return _yoloV5.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+            //else if (_yoloV7.Enable())
+            //    return _yoloV7.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+            //else if (_yoloV8.Enable())
+            //    return _yoloV8.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+            //else if (_iim.Enable())
+            //    return _iim.GetRegions(net, size.x, size.y)[0];
+            //else if (_rtdetr.Enable())
+            //    return _rtdetr.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+            //else 
+            if (_detOut.Enable())
+                return _detOut.GetRegions(dst[0], size.x, size.y, threshold, overlap)[0];
+            else
+                return Regions();
         }
     };
 }

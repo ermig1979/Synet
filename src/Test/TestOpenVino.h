@@ -27,6 +27,7 @@
 #include "TestCommon.h"
 #include "TestPerformance.h"
 #include "TestNetwork.h"
+#include "TestRegionDecoder.h"
 
 #include <openvino/openvino.hpp>
 
@@ -120,6 +121,7 @@ namespace Test
                     CreateCompiledModelAndInferRequest();
                 GetTensors();
                 StubInfer();
+                _ov->regionDecoder.Init(Shape(_ov->model->input(0).get_shape()), _ov->outputNames, param);
             }
             catch (std::exception& e)
             {
@@ -160,26 +162,31 @@ namespace Test
 
         virtual Regions GetRegions(const Size& size, float threshold, float overlap) const
         {
-            Regions regions;
-            if (_output[0].Axis(-1) == 7)
+            if (_ov->regionDecoder.Enable())
+                return _ov->regionDecoder.GetRegions(_output, size, threshold, overlap);
+            else
             {
-                for (size_t i = 0; i < _output[0].Size(); i += 7)
+                Regions regions;
+                if (_output[0].Axis(-1) == 7)
                 {
-                    const float* output = _output[0].CpuData();
-                    if (output[i + 2] > threshold)
+                    for (size_t i = 0; i < _output[0].Size(); i += 7)
                     {
-                        Region region;
-                        region.id = (size_t)output[i + 1];
-                        region.prob = output[i + 2];
-                        region.x = size.x * (output[i + 3] + output[i + 5]) / 2.0f;
-                        region.y = size.y * (output[i + 4] + output[i + 6]) / 2.0f;
-                        region.w = size.x * (output[i + 5] - output[i + 3]);
-                        region.h = size.y * (output[i + 6] - output[i + 4]);
-                        regions.push_back(region);
+                        const float* output = _output[0].CpuData();
+                        if (output[i + 2] > threshold)
+                        {
+                            Region region;
+                            region.id = (size_t)output[i + 1];
+                            region.prob = output[i + 2];
+                            region.x = size.x * (output[i + 3] + output[i + 5]) / 2.0f;
+                            region.y = size.y * (output[i + 4] + output[i + 6]) / 2.0f;
+                            region.w = size.x * (output[i + 5] - output[i + 3]);
+                            region.h = size.y * (output[i + 6] - output[i + 4]);
+                            regions.push_back(region);
+                        }
                     }
                 }
+                return regions;
             }
-            return regions;
         }
 
         virtual void Free()
@@ -200,6 +207,7 @@ namespace Test
             std::vector<ov::Tensor> input, output;
             Strings inputNames, outputNames;
             size_t batchSize;
+            RegionDecoder regionDecoder;
         };
         typedef std::shared_ptr<Ov> OvPtr;
         OvPtr _ov;
