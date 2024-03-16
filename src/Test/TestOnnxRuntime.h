@@ -27,6 +27,7 @@
 #include "TestCommon.h"
 #include "TestPerformance.h"
 #include "TestNetwork.h"
+#include "TestRegionDecoder.h"
 
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
 
@@ -186,8 +187,7 @@ namespace Test
             if(!_dynamicOutput)
                 ReshapeOutput();
 
-            if (param.detection().decoder() == "ultraface")
-                _ultraface.Init(param.detection().ultraface());
+            _regionDecoder.Init(_inputShapes[0], _outputNameBuffers, param);
             if (param.detection().decoder() == "yoloV5")
                 _yoloV5.Init(param.detection().yoloV5());
             if (param.detection().decoder() == "yoloV7")
@@ -258,8 +258,8 @@ namespace Test
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
-            if (_ultraface.Enable())
-                return _ultraface.GetRegions(_output[0].CpuData(), _output[1].CpuData(), _output[0].Axis(1), size.x, size.y, threshold, overlap);
+            if (_regionDecoder.Enable())
+                return _regionDecoder.GetRegions(_output, size, threshold, overlap);
             else if (_yoloV5.Enable())
                 return _yoloV5.GetRegions(_output[0].CpuData(), _output[0].Axis(1), _inputShapes[0][3], _inputShapes[0][2], size.x, size.y, threshold, overlap);
             else if (_yoloV7.Enable())
@@ -327,7 +327,7 @@ namespace Test
         size_t _batchSize;
         bool _dynamicOutput;
 
-        Synet::UltrafaceDecoder _ultraface;
+        RegionDecoder _regionDecoder;
         Synet::YoloV5Decoder _yoloV5;
         Synet::YoloV7Decoder _yoloV7;
         Synet::YoloV8Decoder _yoloV8;

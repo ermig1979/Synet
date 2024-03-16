@@ -48,6 +48,8 @@ namespace Test
     public:
         typedef Synet::Region<float> Region;
         typedef std::vector<Region> Regions;
+        typedef Synet::Tensor<float> Tensor;
+        typedef std::vector<Tensor> Tensors;
         typedef Synet::Network Net;
 
         RegionDecoder()
@@ -122,8 +124,9 @@ namespace Test
         {
             //if (_anchor.Enable())
             //    return _anchor.GetRegions(net, size.x, size.y, threshold, overlap)[0];
-            //else if (_ultraface.Enable())
-            //    return _ultraface.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+            //else 
+            if (_ultraface.Enable())
+                return _ultraface.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
             //else if (_yoloV5.Enable())
             //    return _yoloV5.GetRegions(net, size.x, size.y, threshold, overlap)[0];
             //else if (_yoloV7.Enable())
@@ -134,8 +137,7 @@ namespace Test
             //    return _iim.GetRegions(net, size.x, size.y)[0];
             //else if (_rtdetr.Enable())
             //    return _rtdetr.GetRegions(net, size.x, size.y, threshold, overlap)[0];
-            //else 
-            if (_detOut.Enable())
+            else if (_detOut.Enable())
                 return _detOut.GetRegions(dst[0], size.x, size.y, threshold, overlap)[0];
             else
                 return Regions();
