@@ -177,9 +177,11 @@ def RunTest(context, test, format, batch, bf16):
 		log = log + "_fp32.txt"
 
 	if bf16 == "1" :
-		threshold = 0.02
+		threshold = args.bf16Threshold
+	elif test.framework == "inference_engine" :
+		threshold = args.inferenceEngineThreshold
 	else :	
-		threshold = 0.0031
+		threshold = args.onnxThreshold
 	pathArgs = ""
 	if test.framework == "inference_engine" :
 		pathArgs += "-fm={0}/other.xml -fw={0}/other.bin".format(testPath)
@@ -194,8 +196,8 @@ def RunTest(context, test, format, batch, bf16):
 	trashFile = imagePath + os.path.sep + "descript.ion"
 	if os.path.isfile(trashFile) :
 		os.remove(trashFile)
-	
-	os.system("export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{0}".format(args.bin))
+
+	os.environ['LD_LIBRARY_PATH'] = args.bin
 	
 	out = ""
 	if not args.fast and batch == 1 :
@@ -265,6 +267,9 @@ def main():
 	parser.add_argument("-e", "--exclude", help="Exclude tests filter.", required=False, default=[], action="append")
 	parser.add_argument("-pl", "--performanceLog", help="Level of performance log: (0 - no statistics, 1 - averaged, 2 - detailed).", required=False, type=int, default="0")
 	parser.add_argument("-bf", "--bf16", help="Run BF16 tests.", required=False, type=bool, default=False)
+	parser.add_argument("-it", "--inferenceEngineThreshold", help="Threshold for Inference Engine tests.", required=False, type=float, default=0.000270)
+	parser.add_argument("-ot", "--onnxThreshold", help="Threshold for OnnxRuntime tests.", required=False, type=float, default=0.001317)
+	parser.add_argument("-bt", "--bf16Threshold", help="Threshold for BF16 tests.", required=False, type=float, default=0.001317)
 	context = Context(parser.parse_args())
 	
 	if not CheckDirs(context) :

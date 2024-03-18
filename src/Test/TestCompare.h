@@ -31,6 +31,7 @@
 #include "TestOptions.h"
 #include "TestPerformance.h"
 #include "TestSynet.h"
+#include "TestOutputComparer.h"
 
 namespace Test
 {
@@ -563,18 +564,19 @@ namespace Test
             return ss.str();
         }
 
-        bool Compare(float a, float b, float t) const
+        bool Compare(float a, float b, float t, float &e) const
         {
             float d = ::fabs(a - b);
-            return d <= t || d / std::max(::fabs(a), ::fabs(b)) <= t;
+            e = std::min(d, d / std::max(::fabs(a), ::fabs(b)));
+            return e <= t;
         }
 
         bool Compare(const Tensor& f, const Tensor& s, const Shape & i, size_t d, const String & m) const
         {
             using Synet::Detail::DebugPrint;
-            float _f = f.CpuData(i)[0], _s = s.CpuData(i)[0];
-            if (!Compare(_f, _s, _options.compareThreshold))
-                SYNET_ERROR(m << std::endl << std::fixed << "Dst[" << d << "]" << DebugPrint(f.Shape()) << " at " << DebugPrint(i) << " : " << _f << " != " << _s);
+            float _f = f.CpuData(i)[0], _s = s.CpuData(i)[0], _t = _options.compareThreshold, _e = 0;
+            if (!Compare(_f, _s, _t, _e))
+                SYNET_ERROR(m << std::endl << std::fixed << "Dst[" << d << "]" << DebugPrint(f.Shape()) << " at " << DebugPrint(i) << " : " << _f << " != " << _s << " ( " << _e << " > " << _t << " )");
             return true;
         }
 

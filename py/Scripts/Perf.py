@@ -197,7 +197,7 @@ def RunTest(context, test, batch, bf16):
 	
 	context.UpdateProgress(log)
 	
-	os.system("export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{0}".format(args.bin))
+	os.environ['LD_LIBRARY_PATH'] = args.bin
 	
 	if batch == 1 :
 		cmd = "{0} -m=convert {1} -tf=1 -cs=1 -bf={2}".format(binPath, pathArgs, bf16)
