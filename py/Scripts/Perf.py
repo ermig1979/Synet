@@ -174,9 +174,14 @@ def RunTest(context, test, batch, bf16):
 	else :
 		log = log + "_fp32.txt"
 
+	if bf16 == "1" :
+		threshold = args.bf16Threshold
+	elif test.framework == "inference_engine" :
+		threshold = args.inferenceEngineThreshold
+	else :	
+		threshold = args.onnxThreshold
 	pathArgs = ""
 	if args.framework == "quantization" :
-		threshold = 0.02
 		pathArgs += "-fm={0}/synet.xml -fw={0}/synet.bin -sm={0}/int8.xml".format(testPath)
 	else:
 		if test.framework == "inference_engine" :
@@ -184,10 +189,8 @@ def RunTest(context, test, batch, bf16):
 		elif test.framework == "onnx" :
 			pathArgs += "-fw={0}/other.onnx".format(testPath)
 		if bf16 :
-			threshold = 0.02
 			pathArgs += " -sm={0}/synet2.xml".format(testPath)
 		else :
-			threshold = 0.0031
 			pathArgs += " -sm={0}/synet.xml".format(testPath)
 	pathArgs += " -sw={0}/synet.bin -id={1} -od={0}/output -tp={0}/param.xml -sn={2}/sync.txt -hr={2}/_report.html -tr={2}/_report.txt".format(testPath, imagePath, context.dst)
 	
@@ -243,6 +246,9 @@ def main():
 	parser.add_argument("-i", "--include", help="Include tests filter.", required=False, default=[], action="append")
 	parser.add_argument("-e", "--exclude", help="Exclude tests filter.", required=False, default=[], action="append")
 	parser.add_argument("-bf", "--bf16", help="Run BF16 tests.", required=False, type=bool, default=False)
+	parser.add_argument("-it", "--inferenceEngineThreshold", help="Threshold for Inference Engine tests.", required=False, type=float, default=0.000270)
+	parser.add_argument("-ot", "--onnxThreshold", help="Threshold for OnnxRuntime tests.", required=False, type=float, default=0.001317)
+	parser.add_argument("-bt", "--bf16Threshold", help="Threshold for BF16 tests.", required=False, type=float, default=0.011654)
 	context = Context(parser.parse_args())
 	
 	ValidateParameters(context)

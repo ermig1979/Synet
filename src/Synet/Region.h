@@ -90,4 +90,12 @@ namespace Synet
         }
         src.swap(dst);
     }
+
+    template<class T> SYNET_INLINE String ToStr(const Region<T> & r)
+    {
+        std::stringstream ss;
+        ss << " { " << r.id << " " << r.prob << " ";
+        ss << r.x << " " << r.y << " " << r.w << " " << r.h << " }";
+       return ss.str();
+    }
 }

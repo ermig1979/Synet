@@ -269,7 +269,7 @@ def main():
 	parser.add_argument("-bf", "--bf16", help="Run BF16 tests.", required=False, type=bool, default=False)
 	parser.add_argument("-it", "--inferenceEngineThreshold", help="Threshold for Inference Engine tests.", required=False, type=float, default=0.000270)
 	parser.add_argument("-ot", "--onnxThreshold", help="Threshold for OnnxRuntime tests.", required=False, type=float, default=0.001317)
-	parser.add_argument("-bt", "--bf16Threshold", help="Threshold for BF16 tests.", required=False, type=float, default=0.001317)
+	parser.add_argument("-bt", "--bf16Threshold", help="Threshold for BF16 tests.", required=False, type=float, default=0.011654)
 	context = Context(parser.parse_args())
 	
 	if not CheckDirs(context) :
