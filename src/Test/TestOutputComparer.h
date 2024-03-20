@@ -143,7 +143,7 @@ namespace Test
         {
             using Synet::Detail::DebugPrint;
             const String & compType = _param.output().size() ? _param.output()[d].compare() : "";
-            if (compType == "cos_dist" && _options.bf16)
+            if (compType == "cos_dist" && (_options.bf16 || !_options.comparePrecise))
             {
                 for (size_t n = 0; n < f.Axis(0); ++n)
                 {
@@ -166,7 +166,7 @@ namespace Test
         bool Compare3d(const Tensor& f, const Tensor& s, size_t d, const String& failed) const
         {
             String decType = _param.detection().decoder();
-            if (decType == "yoloV8" && _options.bf16)
+            if (decType == "yoloV8" && (_options.bf16 || !_options.comparePrecise))
             {
                 float threshold = _param.detection().confidence();
                 for (size_t n = 0; n < f.Axis(0); ++n)

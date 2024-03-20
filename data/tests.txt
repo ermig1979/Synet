@@ -1,5 +1,5 @@
 inference_engine root test_010f faces 0 1
-inference_engine root test_011f vehicles 0 0
+inference_engine root test_011f vehicles 0 1
 inference_engine root test_012f persons 0 1
 inference_engine root test_013f persons 0 1
 inference_engine root test_015f license_plates 0 1

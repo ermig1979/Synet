@@ -208,7 +208,7 @@ def RunTest(context, test, batch, bf16):
 		if result.returncode != 0 :
 			return context.Error("Error in test {0} !".format(log))
 		
-	cmd = "{0} -m=compare -e=3 {1} -rn=0 -et=10.0 -wt=1 -tt={2} -ie=10 -be=10 -tf=1 -bs={3} -ct={4} -cs=1 -ln={5} -bf={6}".format(binPath, pathArgs, args.threads, batch, threshold, log, bf16)
+	cmd = "{0} -m=compare -e=3 {1} -rn=0 -et=10.0 -wt=1 -tt={2} -ie=10 -be=10 -tf=1 -bs={3} -ct={4} -cs=1 -ln={5} -bf={6} -cp={7}".format(binPath, pathArgs, args.threads, batch, threshold, log, bf16, args.comparePrecise)
 	result = subprocess.run(cmd.split())
 	if result.returncode != 0 :
 		return context.Error("Error in test {0} !".format(log))
@@ -249,6 +249,7 @@ def main():
 	parser.add_argument("-it", "--inferenceEngineThreshold", help="Threshold for Inference Engine tests.", required=False, type=float, default=0.000270)
 	parser.add_argument("-ot", "--onnxThreshold", help="Threshold for OnnxRuntime tests.", required=False, type=float, default=0.001317)
 	parser.add_argument("-bt", "--bf16Threshold", help="Threshold for BF16 tests.", required=False, type=float, default=0.011654)
+	parser.add_argument("-cp", "--comparePrecise", help="Compare output precise (element-wise).", required=False, type=bool, default=True)
 	context = Context(parser.parse_args())
 	
 	ValidateParameters(context)

@@ -79,6 +79,7 @@ namespace Test
         size_t testThreads;
         float compareThreshold;
         double compareQuantile;
+        bool comparePrecise;
         String logName;
         bool consoleSilence;
         bool reverseExecution;
@@ -132,6 +133,7 @@ namespace Test
             testThreads = FromString<size_t>(GetArg("-tt", "0"));
             compareThreshold = FromString<float>(GetArg("-ct", "0.001"));
             compareQuantile = FromString<double>(GetArg("-cq", "0.0"));
+            comparePrecise = FromString<bool>(GetArg("-cp", "1"));
             logName = GetArg("-ln", "", false);
             consoleSilence = FromString<bool>(GetArg("-cs", "0"));
             reverseExecution = FromString<bool>(GetArg("-re", "0"));
