@@ -122,10 +122,9 @@ namespace Test
 
         Regions GetRegions(const Tensors & dst, const Size& size, float threshold, float overlap) const
         {
-            //if (_anchor.Enable())
-            //    return _anchor.GetRegions(net, size.x, size.y, threshold, overlap)[0];
-            //else 
-            if (_ultraface.Enable())
+            if (_anchor.Enable())
+                return _anchor.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
+            else if (_ultraface.Enable())
                 return _ultraface.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
             //else if (_yoloV5.Enable())
             //    return _yoloV5.GetRegions(net, size.x, size.y, threshold, overlap)[0];

@@ -48,6 +48,8 @@ namespace Synet
 
         typedef Synet::Region<float> Region;
         typedef std::vector<Region> Regions;
+        typedef Synet::Tensor<float> Tensor;
+        typedef std::vector<Tensor> Tensors;
         typedef Synet::Network Net;
 
         AnchorDecoder()
@@ -154,6 +156,20 @@ namespace Synet
             return result;
         }
 
+        std::vector<Regions> GetRegions(const Tensors& dst, size_t srcW, size_t srcH, float threshold, float overlap) const
+        {
+            std::vector<Regions> result(dst[0].Axis(0));
+            for (size_t b = 0; b < result.size(); ++b)
+            {
+                const float* conf = GetPtr(dst, _names[0], b);
+                const float* lms = GetPtr(dst, _names[1], b);
+                const float* loc = GetPtr(dst, _names[2], b);
+                if (conf && lms && loc)
+                    result[b] = GetRegions(conf, lms, loc, srcW, srcH, threshold, overlap);
+            }
+            return result;
+        }
+
     private:
         Strings _names;
         Floats _prior, _variance;
@@ -223,6 +239,14 @@ namespace Synet
                     dst.push_back(src[s]);
             }
             src.swap(dst);
+        }
+
+        SYNET_INLINE const float* GetPtr(const Tensors& dst, const String& name, size_t b) const
+        {
+            for (size_t d = 0; d < dst.size(); d++)
+                if (dst[d].Name() == name)
+                    return dst[d].Data<float>(Shp(b, 0, 0));
+            return NULL;
         }
     };
 
