@@ -506,6 +506,9 @@
     <ClInclude Include="..\..\src\Synet\Decoders\DetOut.h">
       <Filter>Decoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Yolo.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

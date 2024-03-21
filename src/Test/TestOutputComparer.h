@@ -153,6 +153,18 @@ namespace Test
                         SYNET_ERROR(failed << std::endl << std::fixed << "Dst[" << d << "] " << DebugPrint(f.Shape()) << " at " << DebugPrint(Shp(n, 0)) << " : cosine distance " << cd << " > " << _options.compareThreshold);
                 }
             }
+            else if (compType == "softmax" && (_options.bf16 || !_options.comparePrecise))
+            {
+                Tensor _f, _s;
+                _f.Clone(f);
+                _s.Clone(s);
+                SimdSynetSoftmaxLayerForward(f.Data<float>(), f.Axis(0), f.Axis(1), 1, _f.Data<float>());
+                SimdSynetSoftmaxLayerForward(s.Data<float>(), s.Axis(0), s.Axis(1), 1, _s.Data<float>());
+                for (size_t n = 0; n < f.Axis(0); ++n)
+                    for (size_t c = 0; c < f.Axis(1); ++c)
+                        if (!Compare(_f, _s, Shp(n, c), d, failed))
+                            return false;
+            }
             else
             {
                 for (size_t n = 0; n < f.Axis(0); ++n)

@@ -735,6 +735,7 @@ namespace Synet
 
     struct YoloParam
     {
+        CPL_PARAM_VALUE(String, name, String());
         CPL_PARAM_VALUE(uint32_t, classes, 20);
         CPL_PARAM_VALUE(uint32_t, num, 1);
         CPL_PARAM_VALUE(uint32_t, total, 1);
