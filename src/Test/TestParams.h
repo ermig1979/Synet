@@ -39,6 +39,7 @@
 #include "Synet/Decoders/Rtdetr.h"
 #include "Synet/Decoders/DetOut.h"
 #include "Synet/Decoders/Yolo.h"
+#include "Synet/Decoders/Scrfd.h"
 
 namespace Test
 {
@@ -79,6 +80,7 @@ namespace Test
         CPL_PARAM_STRUCT(Synet::YoloV5Param, yoloV5);
         CPL_PARAM_STRUCT(Synet::IimParam, iim);
         CPL_PARAM_VECTOR(Synet::YoloParam, yolo);
+        CPL_PARAM_STRUCT(Synet::ScrfdParam, scrfd);
     };
 
     struct IdParam

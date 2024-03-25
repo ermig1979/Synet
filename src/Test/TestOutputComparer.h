@@ -178,6 +178,7 @@ namespace Test
         bool Compare3d(const Tensor& f, const Tensor& s, size_t d, const String& failed) const
         {
             String decType = _param.detection().decoder();
+            const String& compType = _param.output().size() ? _param.output()[d].compare() : "";
             if (decType == "yoloV8" && (_options.bf16 || !_options.comparePrecise))
             {
                 float threshold = _param.detection().confidence();
@@ -192,6 +193,27 @@ namespace Test
                                     return false;
                         }
                     }
+            }
+            else if ((compType == "softmax-1" || compType == "softmax-2") && (_options.bf16 || !_options.comparePrecise))
+            {
+                Tensor _f, _s;
+                _f.Clone(f);
+                _s.Clone(s);
+                if (compType == "softmax-1")
+                {
+                    SimdSynetSoftmaxLayerForward(f.Data<float>(), f.Axis(0), f.Axis(1), f.Axis(2), _f.Data<float>());
+                    SimdSynetSoftmaxLayerForward(s.Data<float>(), s.Axis(0), s.Axis(1), s.Axis(2), _s.Data<float>());
+                }
+                else if (compType == "softmax-2")
+                {
+                    SimdSynetSoftmaxLayerForward(f.Data<float>(), f.Size(0, 2), f.Axis(2), 1, _f.Data<float>());
+                    SimdSynetSoftmaxLayerForward(s.Data<float>(), s.Size(0, 2), s.Axis(2), 1, _s.Data<float>());
+                }
+                for (size_t n = 0; n < _f.Axis(0); ++n)
+                    for (size_t c = 0; c < _f.Axis(1); ++c)
+                        for (size_t y = 0; y < _f.Axis(2); ++y)
+                            if (!Compare(_f, _s, Shp(n, c, y), d, failed))
+                                return false;
             }
             else
             {

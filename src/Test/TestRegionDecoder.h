@@ -45,6 +45,7 @@ namespace Test
         Synet::RtdetrDecoder _rtdetr;
         Synet::DetOutDecoder _detOut;
         Synet::YoloDecoder _yolo;
+        Synet::ScrfdDecoder _scrfd;
 
     public:
         typedef Synet::Region<float> Region;
@@ -93,6 +94,8 @@ namespace Test
                 _enable = _detOut.Init();
             else if (decoder == "yolo")
                 _enable = _yolo.Init(_shape[3], _shape[2], param.detection().yolo());
+            else if (decoder == "scrfd")
+                _enable = _scrfd.Init(_shape[3], _shape[2], param.detection().scrfd());
             return _enable;
         }
 
@@ -121,6 +124,8 @@ namespace Test
                 return _detOut.GetRegions(net, size.x, size.y, threshold, overlap)[0];
             else if (_yolo.Enable())
                 return _yolo.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+            else if (_scrfd.Enable())
+                return _scrfd.GetRegions(net, size.x, size.y, threshold, overlap)[0];
             else
                 return net.GetRegions(size.x, size.y, threshold, overlap);
         }
@@ -145,6 +150,8 @@ namespace Test
                 return _detOut.GetRegions(dst[0], size.x, size.y, threshold, overlap)[0];
             else if (_yolo.Enable())
                 return _yolo.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
+            else if (_scrfd.Enable())
+                return _scrfd.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
             else
                 return Regions();
         }
