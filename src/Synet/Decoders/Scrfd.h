@@ -30,11 +30,9 @@ namespace Synet
 {
     struct ScrfdParam
     {
-        CPL_PARAM_VALUE(Strings, names, Strings({ "score_8", "score_16", "score_32", "bbox_8", "bbox_16", "bbox_32", "kps_8", "kps_16", "kps_32" }));
-        CPL_PARAM_VALUE(Floats, variance, Floats({ 0.1f, 0.2f }));
+        CPL_PARAM_VALUE(Strings, names, Strings({ "score_8", "score_16", "score_32", "bbox_8", "bbox_16", "bbox_32" }));
         CPL_PARAM_VALUE(Shape, step, Shape({ 8, 16, 32 }));
         CPL_PARAM_VALUE(Shape, minSize, Shape({ 1, 2, 1, 2, 1, 2 }));
-        CPL_PARAM_VALUE(bool, clip, false);
     };
 
     class ScrfdDecoder
@@ -85,11 +83,10 @@ namespace Synet
             {
                 for (size_t s = 0, n = _step.size(); s < n; ++s)
                 {
-                    const float* conf = GetPtr(net, _names[0 * n + s], b);
-                    const float* loc = GetPtr(net, _names[1 * n + s], b);
-                    const float* lms = GetPtr(net, _names[2 * n + s], b);
-                    if (conf && lms && loc)
-                        GetRegions(conf, loc, s, imgW, imgH, threshold, overlap, result[b]);
+                    const float* score = GetPtr(net, _names[0 * n + s], b);
+                    const float* bbox = GetPtr(net, _names[1 * n + s], b);
+                    if (score && bbox)
+                        GetRegions(score, bbox, s, imgW, imgH, threshold, overlap, result[b]);
                 }
                 Synet::Filter(result[b], overlap);
             }
@@ -103,11 +100,10 @@ namespace Synet
             {
                 for (size_t s = 0, n = _step.size(); s < n; ++s)
                 {
-                    const float* conf = GetPtr(dst, _names[0 * n + s], b);
-                    const float* loc = GetPtr(dst, _names[1 * n + s], b);
-                    const float* lms = GetPtr(dst, _names[2 * n + s], b);
-                    if (conf && lms && loc)
-                        GetRegions(conf, loc, s, imgW, imgH, threshold, overlap, result[b]);
+                    const float* score = GetPtr(dst, _names[0 * n + s], b);
+                    const float* bbox = GetPtr(dst, _names[1 * n + s], b);
+                    if (score && bbox)
+                        GetRegions(score, bbox, s, imgW, imgH, threshold, overlap, result[b]);
                 }
                 Synet::Filter(result[b], overlap);
             }
