@@ -33,28 +33,32 @@ namespace Synet
     public: 
         typedef Synet::Region<float> Region;
         typedef std::vector<Region> Regions;
+        typedef Synet::Tensor<float> Tensor;
+        typedef std::vector<Tensor> Tensors;
         typedef Synet::Network Net;
 
         YoloV7Decoder()
-            : _enable(false)
+            : _netW(0)
+            , _netH(0)
         {
         }
 
-        bool Init()
+        bool Init(size_t netW, size_t netH)
         {
-            _enable = true;
-            return true;
+            _netW = netW;
+            _netH = netH;
+            return _netW && _netH;
         }
 
         bool Enable() const
         {
-            return _enable;
+            return _netW && _netH;
         }
 
-        Regions GetRegions(const float* data, size_t size, size_t netW, size_t netH, size_t imgW, size_t imgH, float threshold, float overlap) const
+        Regions GetRegions(const float* data, size_t size, size_t imgW, size_t imgH, float threshold, float overlap) const
         {
-            float kX = float(imgW) / float(netW);
-            float kY = float(imgH) / float(netH);
+            float kX = float(imgW) / float(_netW);
+            float kY = float(imgH) / float(_netH);
             Regions regions;
             for (size_t i = 0; i < size; ++i, data += 7) 
             {
@@ -81,13 +85,26 @@ namespace Synet
             {
                 const float* data = net.Dst()[0]->Data<float>();
                 size_t size = net.Dst()[0]->Size(0, 1);
-                result[b] = GetRegions(data, size, net.NchwShape()[3], net.NchwShape()[2], imgW, imgH, threshold, overlap);
+                result[b] = GetRegions(data, size, imgW, imgH, threshold, overlap);
+            }
+            return result;
+        }
+
+        std::vector<Regions> GetRegions(const Tensors& dst, size_t imgW, size_t imgH, float threshold, float overlap) const
+        {
+            std::vector<Regions> result(dst[0].Axis(0));
+            for (size_t b = 0; b < result.size(); ++b)
+            {
+                const float* data = dst[0].Data<float>();
+                size_t size = dst[0].Size(0, 1);
+                result[b] = GetRegions(data, size, imgW, imgH, threshold, overlap);
             }
             return result;
         }
 
     private:
         bool _enable;
+        size_t _netW, _netH;
     };
 }
 

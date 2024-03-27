@@ -122,12 +122,12 @@ namespace Test
             return e <= t;
         }
 
-        bool Compare(const Tensor& f, const Tensor& s, const Shape& i, size_t d, const String& m) const
+        bool Compare(const Tensor& f, const Tensor& s, const Shape& i, size_t d, const String& m, const String & c = String()) const
         {
             using Synet::Detail::DebugPrint;
             float _f = f.CpuData(i)[0], _s = s.CpuData(i)[0], _t = _options.compareThreshold, _e = 0;
             if (!Compare(_f, _s, _t, _e))
-                SYNET_ERROR(m << std::endl << std::fixed << "Dst[" << d << "]" << DebugPrint(f.Shape()) << " at " << DebugPrint(i) << " : " << _f << " != " << _s << " ( " << _e << " > " << _t << " )");
+                SYNET_ERROR(m << std::endl << std::fixed << "Dst[" << d << "]" << DebugPrint(f.Shape()) << " at " << DebugPrint(i) << " : " << _f << " != " << _s << " ( " << _e << " > " << _t << " ) " << c);
             return true;
         }
 
@@ -162,7 +162,20 @@ namespace Test
                 SimdSynetSoftmaxLayerForward(s.Data<float>(), s.Axis(0), s.Axis(1), 1, _s.Data<float>());
                 for (size_t n = 0; n < f.Axis(0); ++n)
                     for (size_t c = 0; c < f.Axis(1); ++c)
-                        if (!Compare(_f, _s, Shp(n, c), d, failed))
+                        if (!Compare(_f, _s, Shp(n, c), d, failed, compType))
+                            return false;
+            }
+            else if (compType == "sigmoid" && (_options.bf16 || !_options.comparePrecise))
+            {
+                Tensor _f, _s;
+                _f.Clone(f);
+                _s.Clone(s);
+                float _1 = 1.0;
+                SimdSynetSigmoid32f(f.Data<float>(), f.Size(), &_1, _f.Data<float>());
+                SimdSynetSigmoid32f(s.Data<float>(), s.Size(), &_1, _s.Data<float>());
+                for (size_t n = 0; n < f.Axis(0); ++n)
+                    for (size_t c = 0; c < f.Axis(1); ++c)
+                        if (!Compare(_f, _s, Shp(n, c), d, failed, compType))
                             return false;
             }
             else
@@ -212,7 +225,7 @@ namespace Test
                 for (size_t n = 0; n < _f.Axis(0); ++n)
                     for (size_t c = 0; c < _f.Axis(1); ++c)
                         for (size_t y = 0; y < _f.Axis(2); ++y)
-                            if (!Compare(_f, _s, Shp(n, c, y), d, failed))
+                            if (!Compare(_f, _s, Shp(n, c, y), d, failed, compType))
                                 return false;
             }
             else
