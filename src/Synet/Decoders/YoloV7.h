@@ -103,7 +103,6 @@ namespace Synet
         }
 
     private:
-        bool _enable;
         size_t _netW, _netH;
     };
 }
