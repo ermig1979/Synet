@@ -144,8 +144,8 @@ namespace Test
                 return _yoloV8.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
             //else if (_iim.Enable())
             //    return _iim.GetRegions(net, size.x, size.y)[0];
-            //else if (_rtdetr.Enable())
-            //    return _rtdetr.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+            else if (_rtdetr.Enable())
+                return _rtdetr.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
             else if (_detOut.Enable())
                 return _detOut.GetRegions(dst[0], size.x, size.y, threshold, overlap)[0];
             else if (_yolo.Enable())

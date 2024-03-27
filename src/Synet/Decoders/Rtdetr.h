@@ -33,6 +33,8 @@ namespace Synet
     public: 
         typedef Synet::Region<float> Region;
         typedef std::vector<Region> Regions;
+        typedef Synet::Tensor<float> Tensor;
+        typedef std::vector<Tensor> Tensors;
         typedef Synet::Network Net;
 
         RtdetrDecoder()
@@ -80,6 +82,19 @@ namespace Synet
             for (size_t b = 0; b < result.size(); ++b)
             {
                 const float* data = dst.Data<float>();
+                result[b] = GetRegions(data, size, imgW, imgH, threshold, overlap);
+            }
+            return result;
+        }
+
+        std::vector<Regions> GetRegions(const Tensors & dst, size_t imgW, size_t imgH, float threshold, float overlap) const
+        {
+            std::vector<Regions> result(dst[0].Axis(0));
+            assert(dst[0].Count() == 3 && dst[0].Axis(2) == 6);
+            size_t size = dst[0].Axis(1);
+            for (size_t b = 0; b < result.size(); ++b)
+            {
+                const float* data = dst[0].Data<float>();
                 result[b] = GetRegions(data, size, imgW, imgH, threshold, overlap);
             }
             return result;

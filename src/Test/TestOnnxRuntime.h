@@ -190,8 +190,6 @@ namespace Test
             _regionDecoder.Init(_inputShapes[0], _outputNameBuffers, param);
             if (param.detection().decoder() == "iim")
                 _iim.Init(param.detection().iim());
-            if (param.detection().decoder() == "rtdetr")
-                _rtdetr.Init();
 
             return true;
         }
@@ -262,8 +260,6 @@ namespace Test
                         bin = _output[0].CpuData();
                 return _iim.GetRegions(bin, _inputShapes[0][3], _inputShapes[0][2], size.x, size.y);
             }
-            else if (_rtdetr.Enable())
-                return _rtdetr.GetRegions(_output[0].CpuData(), _output[0].Axis(1), size.x, size.y, threshold, overlap);
             else
             {
                 Regions regions;
@@ -317,7 +313,6 @@ namespace Test
 
         RegionDecoder _regionDecoder;
         Synet::IimDecoder _iim;
-        Synet::RtdetrDecoder _rtdetr;
 
         struct Env
         {
