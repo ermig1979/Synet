@@ -188,8 +188,6 @@ namespace Test
                 ReshapeOutput();
 
             _regionDecoder.Init(_inputShapes[0], _outputNameBuffers, param);
-            if (param.detection().decoder() == "yoloV5")
-                _yoloV5.Init(param.detection().yoloV5());
             if (param.detection().decoder() == "iim")
                 _iim.Init(param.detection().iim());
             if (param.detection().decoder() == "rtdetr")
@@ -256,8 +254,6 @@ namespace Test
         {
             if (_regionDecoder.Enable())
                 return _regionDecoder.GetRegions(_output, size, threshold, overlap);
-            else if (_yoloV5.Enable())
-                return _yoloV5.GetRegions(_output[0].CpuData(), _output[0].Axis(1), _inputShapes[0][3], _inputShapes[0][2], size.x, size.y, threshold, overlap);
             else if (_iim.Enable())
             {
                 const float* bin = NULL;
@@ -320,7 +316,6 @@ namespace Test
         bool _dynamicOutput;
 
         RegionDecoder _regionDecoder;
-        Synet::YoloV5Decoder _yoloV5;
         Synet::IimDecoder _iim;
         Synet::RtdetrDecoder _rtdetr;
 
