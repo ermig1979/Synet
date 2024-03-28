@@ -2155,7 +2155,7 @@ namespace Synet
             for (size_t i = 0; i < layers.size(); ++i)
             {
                 LayerParam &layer = layers[i];
-                if (layer.type() == LayerTypeConvolution)
+                if (layer.type() == LayerTypeConvolution && layer.weight()[0].format() == TensorFormatNhwc)
                 {
                     if(layer.convolution().group() == 1 && EffectiveSrcC(layer) >= _param.bf16MinSrcC() && layer.convolution().outputNum() >= _param.bf16MinDstC())
                         layer.convolution().bf16() = true;

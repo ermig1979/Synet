@@ -512,6 +512,9 @@
     <ClInclude Include="..\..\src\Synet\Decoders\Scrfd.h">
       <Filter>Decoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\RtdetrV2.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
