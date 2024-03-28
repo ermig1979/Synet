@@ -42,14 +42,20 @@ namespace Synet
     public: 
         typedef Synet::Region<float> Region;
         typedef std::vector<Region> Regions;
+        typedef Synet::Tensor<float> Tensor;
+        typedef std::vector<Tensor> Tensors;
         typedef Synet::Network Net;
 
         IimDecoder()
+            : _netW(0)
+            , _netH(0)
         {
         }
 
-        bool Init(const IimParam& param = IimParam())
+        bool Init(size_t netW, size_t netH, const IimParam& param = IimParam())
         {
+            _netW = netW;
+            _netH = netH;
             _name = param.name();
             _threshold = param.threshold();
             _minArea = param.minArea();
@@ -70,23 +76,14 @@ namespace Synet
             return _name;
         }
 
-        Regions GetRegions(const float* bin, size_t netW, size_t netH, size_t imgW, size_t imgH) const
+        Regions GetRegions(const float* bin, size_t imgW, size_t imgH) const
         {
             //SYNET_PERF_FUNC();
-            View mask(netW, netH, View::Int32);
-            for (size_t y = 0; y < netH; ++y)
-            {
-                for (size_t x = 0; x < netW; ++x, bin++)
-                {
-                    mask.At<int>(x, y) = Zero;
-                    if(bin[0] > _threshold)
-                        mask.At<int>(x, y) = Seed;
-                }
-            }
-            Simd::FillFrame(mask, Rect(1, 1, mask.width - 1, mask.height - 1), Zero);
+            View mask(_netW, _netH, View::Int32);
+            InitMask(bin, mask);
 
-            float kX = float(imgW) / float(netW);
-            float kY = float(imgH) / float(netH);
+            float kX = float(imgW) / float(_netW);
+            float kY = float(imgH) / float(_netH);
             Regions regions;
             int index = Start;
             for (ptrdiff_t y = 1; y < (ptrdiff_t)mask.height - 1; ++y)
@@ -133,16 +130,25 @@ namespace Synet
 
         std::vector<Regions> GetRegions(const Net& net, size_t imgW, size_t imgH) const
         {
-            const Shape& shape = net.NchwShape();
-            std::vector<Regions> result(shape[0]);
-            size_t netH = shape[2];
-            size_t netW = shape[3];
-            const float* bin = net.Dst(_name)->Data<float>();
+            const Tensor* dst = net.Dst(_name);
+            const float* bin = dst->Data<float>();
+            std::vector<Regions> result(dst->Axis(0));
             for (size_t b = 0; b < result.size(); ++b)
             {
-                size_t size = net.Dst()[0]->Size(0, 1);
-                result[b] = GetRegions(bin, netW, netH, imgW, imgH);
-                bin += netH * netW;
+                result[b] = GetRegions(bin, imgW, imgH);
+                bin += _netH * _netW;
+            }
+            return result;
+        }
+
+        std::vector<Regions> GetRegions(const Tensors& dst, size_t imgW, size_t imgH) const
+        {
+            const float* bin = GetPtr(dst, _name, 0);
+            std::vector<Regions> result(dst[0].Axis(0));
+            for (size_t b = 0; b < result.size(); ++b)
+            {
+                result[b] = GetRegions(bin, imgW, imgH);
+                bin += _netH * _netW;
             }
             return result;
         }
@@ -161,9 +167,28 @@ namespace Synet
         float _threshold;
         int _minArea;
         Point _neighbours[4];
+        size_t _netW, _netH;
 
         void InitMask(const float* bin, View & mask) const
         {
+            for (size_t y = 0; y < _netH; ++y)
+            {
+                for (size_t x = 0; x < _netW; ++x, bin++)
+                {
+                    mask.At<int>(x, y) = Zero;
+                    if (bin[0] > _threshold)
+                        mask.At<int>(x, y) = Seed;
+                }
+            }
+            Simd::FillFrame(mask, Rect(1, 1, mask.width - 1, mask.height - 1), Zero);
+        }
+
+        SYNET_INLINE const float* GetPtr(const Tensors& dst, const String& name, size_t b) const
+        {
+            for (size_t d = 0; d < dst.size(); d++)
+                if (dst[d].Name() == name)
+                    return dst[d].Data<float>(Shp(b, 0, 0, 0));
+            return NULL;
         }
     };
 }

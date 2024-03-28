@@ -88,7 +88,7 @@ namespace Test
             else if (decoder == "yoloV8")
                 _enable = _yoloV8.Init(_shape[3], _shape[2]);
             else if (decoder == "iim")
-                _enable = _iim.Init(param.detection().iim());
+                _enable = _iim.Init(_shape[3], _shape[2], param.detection().iim());
             else if (decoder == "rtdetr")
                 _enable = _rtdetr.Init();
             else if (decoder == "detOut")
@@ -147,8 +147,8 @@ namespace Test
                 return _yoloV7.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
             else if (_yoloV8.Enable())
                 return _yoloV8.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
-            //else if (_iim.Enable())
-            //    return _iim.GetRegions(net, size.x, size.y)[0];
+            else if (_iim.Enable())
+                return _iim.GetRegions(dst, size.x, size.y)[0];
             else if (_rtdetr.Enable())
                 return _rtdetr.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
             else if (_detOut.Enable())

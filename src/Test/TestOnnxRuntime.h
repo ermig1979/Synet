@@ -188,8 +188,6 @@ namespace Test
                 ReshapeOutput();
 
             _regionDecoder.Init(_inputShapes[0], _outputNameBuffers, param);
-            if (param.detection().decoder() == "iim")
-                _iim.Init(param.detection().iim());
 
             return true;
         }
@@ -252,14 +250,6 @@ namespace Test
         {
             if (_regionDecoder.Enable())
                 return _regionDecoder.GetRegions(_output, size, threshold, overlap);
-            else if (_iim.Enable())
-            {
-                const float* bin = NULL;
-                for (size_t i = 0; i < _outputNames.size(); ++i)
-                    if (_outputNames[i] == _iim.Name())
-                        bin = _output[0].CpuData();
-                return _iim.GetRegions(bin, _inputShapes[0][3], _inputShapes[0][2], size.x, size.y);
-            }
             else
             {
                 Regions regions;
@@ -312,7 +302,6 @@ namespace Test
         bool _dynamicOutput;
 
         RegionDecoder _regionDecoder;
-        Synet::IimDecoder _iim;
 
         struct Env
         {
