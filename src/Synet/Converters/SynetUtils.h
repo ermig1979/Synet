@@ -129,6 +129,22 @@ namespace Synet
             SYNET_ERROR("Can't found layer " << pin.name << " !");
         }
 
+        static const LayerParam* GetWeightLayer(const LayerParams& layers, const String& name)
+        {
+            const LayerParam* curr = GetLayer(layers, name);
+            if (curr == NULL || curr->type() == LayerTypeConst)
+                return curr;
+            if (curr->type() == LayerTypeStub)
+            {
+                if(curr->src().size() != 1)
+                    SYNET_ERROR("Stub layer " << name << " has wrong inputs number!");
+                const LayerParam* next = GetLayer(layers, curr->src()[0]);
+                if (next == NULL || next->type() == LayerTypeConst)
+                    return next;
+            }
+            SYNET_ERROR("Can't found weight " << name << " !");
+        }
+
         template<class T> static T* GetWeight(Vector& bin, size_t offset)
         {
             if (offset >= bin.size() * sizeof(T))

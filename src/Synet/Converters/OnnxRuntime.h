@@ -637,26 +637,22 @@ namespace Synet
             if (!CheckSourceNumber(layer, 5))
                 return false;
 
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            const LayerParam* src1 = GetWeightLayer(layers, layer.src()[1]);
             if (src1 == NULL || src1->type() != LayerTypeConst)
                 SYNET_ERROR("BatchNormalization src[1] must be Const type!");
             const float* gamma = GetWeight<float>(original, src1->weight()[0]);
 
-            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+            const LayerParam* src2 = GetWeightLayer(layers, layer.src()[2]);
             if (src2 == NULL || src2->type() != LayerTypeConst)
                 SYNET_ERROR("BatchNormalization src[2] must be Const type!");
             const float* beta = GetWeight<float>(original, src2->weight()[0]);
 
-            const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
-            if (src3 && src3->type() == LayerTypeStub)
-                src3 = GetLayer(layers, src3->src()[0]);
+            const LayerParam* src3 = GetWeightLayer(layers, layer.src()[3]);
             if (src3 == NULL || src3->type() != LayerTypeConst)
                 SYNET_ERROR("BatchNormalization src[3] must be Const type!");
             const float* mean = GetWeight<float>(original, src3->weight()[0]);
 
-            const LayerParam* src4 = GetLayer(layers, layer.src()[4]);
-            if (src4 && src4->type() == LayerTypeStub)
-                src4 = GetLayer(layers, src4->src()[0]);
+            const LayerParam* src4 = GetWeightLayer(layers, layer.src()[4]);
             if (src4 == NULL || src4->type() != LayerTypeConst)
                 SYNET_ERROR("BatchNormalization src[4] must be Const type!");
             const float* var = GetWeight<float>(original, src4->weight()[0]);
@@ -973,7 +969,7 @@ namespace Synet
             if (!ConvertAtrributeInts(node, "strides", layer.convolution().stride()))
                 return false;
             layer.weight().resize(layer.src().size() - 1);
-            const LayerParam* weight = GetLayer(layers, layer.src()[1]);
+            const LayerParam* weight = GetWeightLayer(layers, layer.src()[1]);
             if (weight == NULL || weight->type() != LayerTypeConst)
                 return false;
             const Shape& shape = weight->weight()[0].dim();
@@ -982,7 +978,7 @@ namespace Synet
             layer.convolution().biasTerm() = layer.src().size() > 2;
             if (layer.convolution().biasTerm())
             {
-                const LayerParam* bias = GetLayer(layers, layer.src()[2]);
+                const LayerParam* bias = GetWeightLayer(layers, layer.src()[2]);
                 if (bias == NULL || bias->type() != LayerTypeConst)
                     return false;
                 layer.weight()[1] = bias->weight()[0];
