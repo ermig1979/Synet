@@ -1736,11 +1736,20 @@ namespace Synet
             unpack.unpack().axis() = l0.weight()[0].format() == TensorFormatNhwc ? 3 : 1;
             unpack.unpack().parts() = parts;
             for (size_t i = 0; i < parts.size(); ++i)
-                unpack.dst().push_back(src[index + i].dst()[0]);
+                unpack.dst().push_back(src[index + i].dst()[0] + "_unpacked");
 
-            index += parts.size() - 1;
             dst.push_back(conv);
             dst.push_back(unpack);
+            for (size_t i = 0; i < parts.size(); ++i)
+            {
+                LayerParam stub;
+                stub.type() = LayerTypeStub;
+                stub.name() = src[index + i].dst()[0];
+                stub.dst().push_back(stub.name());
+                stub.src().push_back(unpack.dst()[i]);
+                dst.push_back(stub);
+            }
+            index += parts.size() - 1;
 
             return true;
         }
@@ -2117,8 +2126,8 @@ namespace Synet
             {
                 if (Users(layer.dst()[0], network.layers(), 0, layer.parent()) > 0)// && !HasOutput(network, layer))
                     return true;
-                LayerType type = GetLayer(layer.src()[0], network.layers())->type();
-                if (type == LayerTypeDetectionOutput)
+                const LayerParam* prev = GetLayer(layer.src()[0], network.layers());
+                if (prev && prev->type() == LayerTypeDetectionOutput)
                     return true;
             }
             if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeStub)

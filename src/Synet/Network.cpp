@@ -665,7 +665,12 @@ namespace Synet
         {
             if (InsertDst(it->second))
             {
-                LayerPtr layer = _layers[_layerId[it->second]].get();
+                LayerPtr layer = NULL;
+                if(_layerId.find(it->second) != _layerId.end())
+                    layer = _layers[_layerId[it->second]].get();
+                assert(layer);
+                //if (_dstIds.find(it->second) != _dstIds.end())
+                //    layer = _stages[*_dstIds[it->second].begin()].layer;
                 if (layer->Param().type() != LayerTypeMeta)
                 {
                     _dst.push_back(_tensors[_tensorId[it->second]].get());
