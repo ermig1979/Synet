@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Synet/Common.h"
+#include "Synet/Quantization/Bf16.h"
 
 namespace Synet
 {
@@ -45,6 +46,11 @@ namespace Synet
         {
             performanceLog = PerfomanceLogEmpty;
             bf16RoundTest = false;
+        }
+
+        bool BFloat16Enable() const
+        {
+            return bf16RoundTest || BFloat16HardwareSupport();
         }
     };
 

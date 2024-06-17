@@ -67,12 +67,6 @@ namespace Synet
             return true;
         }
 
-        virtual bool HasZero() const
-        {
-            const ConvParam& conv = this->_conv;
-            return conv.padY || conv.padH || conv.padH || conv.padW;
-        }
-
         virtual void DebugPrint(std::ostream& os, int flag, int first, int last, int precision)
         {
             Synet::DebugPrint(os, _srcCvt.scale, _srcCvt.channels, "_srcCvt.scale", first, last, precision);

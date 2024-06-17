@@ -562,6 +562,26 @@ namespace Synet
         return _param().quantization().method() != QuantizationMethodUnknown;
     }  
 
+    bool Network::Is16b() const
+    {
+        bool has16b = false, enable = _context.options.BFloat16Enable();
+        for (size_t i = 0; i < _param().layers().size() && !has16b && enable; ++i)
+        {
+            const LayerParam& layer = _param().layers()[i];
+            if (layer.type() == LayerTypeConvolution && layer.convolution().bf16())
+                has16b = true;
+            if (layer.type() == LayerTypeInnerProduct && layer.innerProduct().bf16())
+                has16b = true;
+            if (layer.type() == LayerTypeMergedConvolution)
+            {
+                for (size_t c = 0; c < layer.mergedConvolution().conv().size(); ++c)
+                    if (layer.mergedConvolution().conv()[c].bf16())
+                        has16b = true;
+            }
+        }
+        return has16b && enable;
+    }
+
     const Network::Tensor* Network::GetInternalTensor(const String& name) const
     {
         NameIdMap::const_iterator it = _tensorId.find(name);

@@ -109,6 +109,8 @@ namespace Synet
 
         bool Is8i() const;
 
+        bool Is16b() const;
+
         const Tensor* GetInternalTensor(const String& name) const;
 
     private:

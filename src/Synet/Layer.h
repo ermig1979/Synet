@@ -100,11 +100,6 @@ namespace Synet
             return false;
         }
 
-        virtual bool HasZero() const
-        {
-            return false;
-        }
-
         virtual bool Resizable() const
         {
             return true;

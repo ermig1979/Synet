@@ -50,4 +50,13 @@ namespace Synet
         for (size_t i = 0; i < size; ++i)
             dst[i] = RoundToBf16(src[i]);
     }
+
+    SYNET_INLINE bool BFloat16HardwareSupport()
+    {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        return SimdCpuInfo(SimdCpuInfoAmxBf16) != 0;
+#else
+        return false;
+#endif
+    }
 }

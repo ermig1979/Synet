@@ -272,11 +272,6 @@ namespace Synet
     {
         return _method == PoolingMethodTypeMax;
     }
-
-    bool PoolingLayer::HasZero() const
-    {
-        return _padC || _padY || _padH || _padD || _padH || _padW;
-    }
         
     bool PoolingLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
