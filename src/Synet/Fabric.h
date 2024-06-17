@@ -120,9 +120,9 @@ namespace Synet
             case LayerTypeConstantOfShape: return new ConstantOfShapeLayer(param, context);
             case LayerTypeConvolution:
                 if (param.convolution().quantizationLevel() == TensorType8i)
-                    return new Convolution8iLayer<T>(param, context, method);
+                    return new Convolution8iLayer(param, context, method);
                 else
-                    return new Convolution32fLayer<T>(param, context);
+                    return new Convolution32fLayer(param, context);
             case LayerTypeCtcGreedyDecoder: return new CtcGreedyDecoderLayer(param, context);
             case LayerTypeDeconvolution: return new DeconvolutionLayer(param, context);
             case LayerTypeDetectionOutput: return new DetectionOutputLayer(param, context);

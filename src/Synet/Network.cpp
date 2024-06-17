@@ -699,9 +699,10 @@ namespace Synet
                 }
             }
         }
+        SetTensorType32f();
         if (Is8i())
         {
-            SetTensorTypes();
+            SetTensorType8i();
             UnifyStats();
         }
         if (!Dynamic())
@@ -711,6 +712,22 @@ namespace Synet
         }
         _empty = false;
         return true;
+    }
+
+    void Network::SetTensorType32f()
+    {
+        for (size_t s = 0; s < _stages.size(); ++s)
+        {
+            const LayerParam& param = _stages[s].layer->Param();
+            if (param.type() == LayerTypeMeta)
+                continue;
+            for (size_t d = 0; d < param.dst().size(); ++d)
+            {
+                Tensor& tensor = *_tensors[_tensorId[param.dst()[d]]];
+                if (tensor.GetType() == TensorTypeUnknown)
+                    tensor.SetType(TensorType32f);
+            }
+        }
     }
 
     bool Network::Is8iInSubGraph(const Stage & stage)
@@ -760,20 +777,8 @@ namespace Synet
         }
     }
 
-    void Network::SetTensorTypes()
+    void Network::SetTensorType8i()
     {
-        for (size_t s = 0; s < _stages.size(); ++s)
-        {
-            const LayerParam & param = _stages[s].layer->Param();
-            if (param.type() == LayerTypeMeta)
-                continue;
-            for (size_t d = 0; d < param.dst().size(); ++d)
-            {
-                Tensor & tensor = *_tensors[_tensorId[param.dst()[d]]];
-                if (tensor.GetType() == TensorTypeUnknown)
-                    tensor.SetType(TensorType32f);
-            }
-        }
         for (size_t s = 0; s < _stages.size(); ++s)
         {
             const Layer & layer = *_stages[s].layer;

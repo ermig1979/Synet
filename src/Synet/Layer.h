@@ -100,6 +100,16 @@ namespace Synet
             return false;
         }
 
+        virtual bool Can16b() const
+        {
+            return false;
+        }
+
+        virtual bool Is16b() const
+        {
+            return false;
+        }
+
         virtual bool Resizable() const
         {
             return true;

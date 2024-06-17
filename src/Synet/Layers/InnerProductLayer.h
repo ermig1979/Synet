@@ -33,6 +33,7 @@
 #include "Synet/Quantization/Bf16.h" 
 #include "Synet/Utils/Math.h"
 #include "Synet/Utils/InnerProduct.h"
+#include "Synet/Utils/Gemm.h"
 
 #ifdef _N
 #undef _N

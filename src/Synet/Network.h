@@ -153,11 +153,13 @@ namespace Synet
 
         bool Init();
 
+        void SetTensorType32f();
+
         bool Is8iInSubGraph(const Stage& stage);
 
         void Set8iInSubGraph(const Stage& stage);
 
-        void SetTensorTypes();
+        void SetTensorType8i();
 
         bool IsSubGraphEndConv(size_t s);
 
