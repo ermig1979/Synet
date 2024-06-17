@@ -705,6 +705,10 @@ namespace Synet
             SetTensorType8i();
             UnifyStats();
         }
+        if (Is16b())
+        {
+            SetTensorType16b();
+        }
         if (!Dynamic())
         {
             if (!Reshape())
@@ -786,6 +790,65 @@ namespace Synet
                 continue;
             if (Is8iInSubGraph(_stages[s]))
                 Set8iInSubGraph(_stages[s]);
+        }
+    }
+
+    bool Network::Is16bInSubGraph(const Stage& stage)
+    {
+        const Layer& layer = *stage.layer;
+        if (layer._isBack)
+            return false;
+        const LayerParam& param = layer.Param();
+        for (size_t d = 0; d < param.dst().size(); ++d)
+        {
+            const String& name = param.dst()[d];
+            const IdSet& ids = _srcIds[name];
+            for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
+            {
+                const Stage& dst = _stages[*id];
+                if (&dst == &stage)
+                    continue;
+                if (dst.layer->Is16b())
+                    continue;
+                if (dst.layer->Param().type() == LayerTypePriorBox)
+                    continue;
+                if (dst.layer->Can16b() && Is16bInSubGraph(dst))
+                    continue;
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void Network::Set16bInSubGraph(const Stage& stage)
+    {
+        const LayerParam& param = stage.layer->Param();
+        for (size_t d = 0; d < param.dst().size(); ++d)
+        {
+            const String& name = param.dst()[d];
+            _tensors[_tensorId[name]]->SetType(TensorType16b);
+            const IdSet& ids = _srcIds[name];
+            for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
+            {
+                const Stage& dst = _stages[*id];
+                if (&dst == &stage)
+                    continue;
+                if (dst.layer->Is16b())
+                    continue;
+                Set16bInSubGraph(dst);
+            }
+        }
+    }
+
+    void Network::SetTensorType16b()
+    {
+        for (size_t s = 0; s < _stages.size(); ++s)
+        {
+            const Layer& layer = *_stages[s].layer;
+            if (!layer.Is16b())
+                continue;
+            if (Is16bInSubGraph(_stages[s]))
+                Set16bInSubGraph(_stages[s]);
         }
     }
 

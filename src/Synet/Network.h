@@ -161,6 +161,12 @@ namespace Synet
 
         void SetTensorType8i();
 
+        bool Is16bInSubGraph(const Stage& stage);
+
+        void Set16bInSubGraph(const Stage& stage);
+
+        void SetTensorType16b();
+
         bool IsSubGraphEndConv(size_t s);
 
         void UnifyStats();
