@@ -92,4 +92,91 @@ namespace Synet
         void * _context;
         size_t _batch;
     };
+
+    //-------------------------------------------------------------------------------------------------
+
+    class InnerProduct16b
+    {
+    public:
+        InnerProduct16b()
+            : _context(NULL)
+            , _M(0)
+        {
+        }
+
+        virtual ~InnerProduct16b()
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_context)
+                ::SimdRelease(_context), _context = NULL;
+#endif
+        }
+
+        SYNET_INLINE void Init(size_t M, size_t N, size_t K, TensorType typeA, TensorType typeB, TensorType typeC, int transB, int constB, int bias)
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_M != M)
+            {
+                _M = M;
+                if (_context)
+                    ::SimdRelease(_context), _context = NULL;
+                _context = ::SimdSynetInnerProduct16bInit(M, N, K, (SimdTensorDataType)typeA, (SimdTensorDataType)typeB, (SimdTensorDataType)typeC, 
+                    transB ? SimdTrue : SimdFalse, constB ? SimdTrue : SimdFalse, bias ? SimdTrue : SimdFalse);
+            }
+#endif
+        }
+
+        SYNET_INLINE bool Enable() const
+        {
+            return _context != NULL;
+        }
+
+        SYNET_INLINE size_t InternalBufferSize() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return _context ? ::SimdSynetInnerProduct16bInternalBufferSize(_context) : 0;
+#else
+            return 0;
+#endif
+        }
+
+        SYNET_INLINE size_t ExternalBufferSize() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return _context ? ::SimdSynetInnerProduct16bExternalBufferSize(_context) : 0;
+#else
+            return 0;
+#endif
+        }
+
+        String Info() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return _context ? ::SimdSynetInnerProduct16bInfo(_context) : String();
+#else
+            return String();
+#endif
+        }
+
+        SYNET_INLINE void SetParams(const float* weight, const float* bias)
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_context)
+                ::SimdSynetInnerProduct16bSetParams(_context, weight, bias);
+#endif
+        }
+
+        SYNET_INLINE void Forward(const uint8_t* A, const uint8_t* B, uint8_t* buf, uint8_t* C)
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_context)
+                ::SimdSynetInnerProduct16bForward(_context, A, B, buf, C);
+#endif
+        }
+
+    private:
+        void* _context;
+        size_t _M;
+    };
+
 }
