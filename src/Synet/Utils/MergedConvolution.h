@@ -122,7 +122,96 @@ namespace Synet
         size_t _batch, _srcH, _srcW;
     };
 
-    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------
+
+    class MergedConvolution16b
+    {
+    public:
+        MergedConvolution16b()
+            : _context(NULL)
+            , _batch(0)
+            , _srcH(0)
+            , _srcW(0)
+        {
+        }
+
+        virtual ~MergedConvolution16b()
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_context)
+                ::SimdRelease(_context), _context = NULL;
+#endif
+        }
+
+        void Init(size_t batch, const ConvParam* convs, size_t count)
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_batch != batch || _srcH != convs[0].srcH || _srcW != convs[0].srcW)
+            {
+                _batch = batch, _srcH = convs[0].srcH, _srcW = convs[0].srcW;
+                if (_context)
+                    ::SimdRelease(_context), _context = NULL;
+                SimdSynetCompatibilityType compatibility = SimdSynetCompatibilityDefault;
+                if (convs[1].dstH > 1 && convs[1].dstW > 1)
+                    _context = ::SimdSynetMergedConvolution16bInit(batch, (const SimdConvolutionParameters*)convs, count, compatibility);
+            }
+#endif
+        }
+
+        bool Enable() const
+        {
+            return _context != NULL;
+        }
+
+        size_t ExternalBufferSize() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return _context ? ::SimdSynetMergedConvolution16bExternalBufferSize(_context) : 1;
+#else
+            return 1;
+#endif
+        }
+
+        size_t InternalBufferSize() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return _context ? ::SimdSynetMergedConvolution16bInternalBufferSize(_context) : 0;
+#else
+            return 0;
+#endif
+        }
+
+        String Info() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return _context ? ::SimdSynetMergedConvolution16bInfo(_context) : String();
+#else
+            return String();
+#endif
+        }
+
+        void SetParams(const float* const* weight, int* internal, const float* const* bias, const float* const* params)
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_context)
+                ::SimdSynetMergedConvolution16bSetParams(_context, weight, (::SimdBool*)internal, bias, params);
+#endif
+        }
+
+        void Forward(const uint8_t* src, uint8_t* buf, uint8_t* dst)
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_context)
+                ::SimdSynetMergedConvolution16bForward(_context, src, buf, dst);
+#endif
+        }
+
+    private:
+        void* _context;
+        size_t _batch, _srcH, _srcW;
+    };
+
+    //-------------------------------------------------------------------------------------------------
 
     class MergedConvolution8i
     {
