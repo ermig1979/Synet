@@ -307,6 +307,18 @@ namespace Synet
             assert(_type == TensorTypeUnknown || _type == TensorTypeBool);
             return *(const Tensor<bool>*)this;
         }
+
+        SYNET_INLINE Tensor<uint16_t>& As16b()
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType16b);
+            return *(Tensor<uint16_t>*)this;
+        }
+
+        SYNET_INLINE const Tensor<uint16_t>& As16b() const
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType16b);
+            return *(const Tensor<uint16_t>*)this;
+        }
 #endif
 
         SYNET_INLINE TensorType GetType() const
@@ -620,6 +632,7 @@ namespace Synet
             case TensorType64i: DebugPrint<int64_t>(os, As64i(), name, weight, first, last, precision); break;
             case TensorType64u: DebugPrint<uint64_t>(os, As64u(), name, weight, first, last, precision); break;
             case TensorTypeBool: DebugPrint<bool>(os, AsBool(), name, weight, first, last, precision); break;
+            case TensorType16b: DebugPrint<uint16_t>(os, As16b(), name, weight, first, last, precision); break;
             }
         }
 
@@ -644,7 +657,7 @@ namespace Synet
             {
                 if (weight)
                 {
-                    Tensor<U> trans({ shape[3], shape[2], shape[0], shape[1] }, 0, TensorFormatNchw);
+                    Tensor<U> trans(tensor.GetType(), Shp(shape[3], shape[2], shape[0], shape[1]), TensorFormatNchw);
                     for (size_t y = 0; y < shape[0]; ++y)
                         for (size_t x = 0; x < shape[1]; ++x)
                             for (size_t i = 0; i < shape[2]; ++i)
@@ -659,7 +672,7 @@ namespace Synet
                 }
                 else
                 {
-                    Tensor<U> trans({ shape[0], shape[3], shape[1], shape[2] }, 0, TensorFormatNchw);
+                    Tensor<U> trans(tensor.GetType(), Shp(shape[0], shape[3], shape[1], shape[2]), TensorFormatNchw);
                     for (size_t n = 0; n < shape[0]; ++n)
                         for (size_t c = 0; c < shape[3]; ++c)
                             for (size_t y = 0; y < shape[1]; ++y)
@@ -679,7 +692,7 @@ namespace Synet
                 os << (format == TensorFormatNchw && shape.size() == 4 ? " OIHW" : (format == TensorFormatNhwc && shape.size() == 4 ? " HWIO" : ""));
             else
                 os << (format == TensorFormatNchw ? " NCHW" : (format == TensorFormatNhwc ? " NHWC" : ""));
-            Synet::DebugPrint(os, tensor.CpuData(), tensor.Shape(), String(), tensor.Const(), first, last, precision);
+            Synet::DebugPrint<U>(os, tensor.template Data<U>(), tensor.Shape(), String(), tensor.Const(), first, last, precision);
         }
 
         template<class U> SYNET_INLINE void Resize(U value)

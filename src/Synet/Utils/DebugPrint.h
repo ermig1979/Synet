@@ -34,6 +34,8 @@
 
 #include <assert.h>
 
+#include "Synet/Quantization/Bf16.h"
+
 namespace Synet
 {
     typedef std::vector<size_t> Shape;
@@ -50,6 +52,7 @@ namespace Synet
         template<> inline String TypeID<int64_t>() { return "64i"; }
         template<> inline String TypeID<uint64_t>() { return "64u"; }
         template<> inline String TypeID<bool>() { return "Bool"; }
+        template<> inline String TypeID<uint16_t>() { return "16b"; }
 
         template<class T> void DebugPrint(std::ostream& os, T value, size_t precision)
         {
@@ -64,6 +67,11 @@ namespace Synet
         template<> inline void DebugPrint(std::ostream& os, int64_t value, size_t precision)
         {
             os << value;
+        }
+
+        template<> inline void DebugPrint(std::ostream& os, uint16_t value, size_t precision)
+        {
+            os << std::fixed << std::setprecision(precision) << BFloat16ToFloat32(value);
         }
 
         template<class T> std::ostream& DebugPrint(std::ostream& os, T value, size_t precision, size_t padding)

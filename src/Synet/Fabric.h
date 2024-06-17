@@ -36,6 +36,7 @@
 #include "Synet/Layers/ConstLayer.h"
 #include "Synet/Layers/ConstantOfShapeLayer.h"
 #include "Synet/Layers/Convolution32fLayer.h"
+#include "Synet/Layers/Convolution16bLayer.h"
 #include "Synet/Layers/Convolution8iLayer.h"
 #include "Synet/Layers/CtcGreedyDecoderLayer.h"
 #include "Synet/Layers/DeconvolutionLayer.h"
@@ -121,6 +122,8 @@ namespace Synet
             case LayerTypeConvolution:
                 if (param.convolution().quantizationLevel() == TensorType8i)
                     return new Convolution8iLayer(param, context, method);
+                else if (context->options.BFloat16Enable() && param.convolution().bf16())
+                    return new Convolution16bLayer(param, context);
                 else
                     return new Convolution32fLayer(param, context);
             case LayerTypeCtcGreedyDecoder: return new CtcGreedyDecoderLayer(param, context);

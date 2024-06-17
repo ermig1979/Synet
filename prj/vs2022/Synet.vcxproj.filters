@@ -140,6 +140,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\Convolution8iLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Convolution16bLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -523,6 +526,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\RtdetrV2.h">
       <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Convolution16bLayer.h">
+      <Filter>Layers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

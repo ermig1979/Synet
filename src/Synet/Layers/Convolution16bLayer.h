@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2024 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -24,44 +24,38 @@
 
 #pragma once
 
-#include "Synet/Common.h"
+#include "Synet/Layers/ConvolutionLayer.h"
+#include "Synet/Utils/Convolution.h"
 
 namespace Synet
 {
-    namespace Detail
+    class Convolution16bLayer : public Synet::ConvolutionLayer
     {
-        union F32
-        {
-            SYNET_INLINE F32(float val) : f32{ val } {   }
-            SYNET_INLINE F32(uint32_t val) : u32{ val } {  }
+    public:
+        typedef typename Base::Tensor Tensor;
+        typedef std::vector<Tensor> Tensors;
+        typedef typename Base::TensorPtr TensorPtr;
+        typedef typename Base::TensorPtrs TensorPtrs;
 
-            float f32;
-            uint32_t u32;
-        };
-    }
+        Convolution16bLayer(const LayerParam& param, Context* context);
 
-    SYNET_INLINE float RoundToBf16(float value)
-    {
-        return Detail::F32((Detail::F32(value).u32 + 0x8000) & 0xFFFF0000).f32;
-    }
+        virtual bool Can16b() const;
 
-    inline void RoundAsTo16(const float * src, size_t size, float * dst)
-    {
-        for (size_t i = 0; i < size; ++i)
-            dst[i] = RoundToBf16(src[i]);
-    }
+        virtual bool Is16b() const;
 
-    SIMD_INLINE float BFloat16ToFloat32(uint16_t value)
-    {
-        return Detail::F32(uint32_t(value) << 16).f32;
-    }
+        virtual size_t MemoryUsage() const;
 
-    SYNET_INLINE bool BFloat16HardwareSupport()
-    {
-#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        return SimdCpuInfo(SimdCpuInfoAmxBf16) != 0;
-#else
-        return false;
-#endif
-    }
+    protected:
+        typedef typename ConvolutionLayer::AlgParam AlgParam;
+
+        virtual String InternalInfo() const;
+
+        virtual bool Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst);
+
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+    private:
+        bool _src16b, _dst16b;
+        Convolution16b _convolution16b;
+    };
 }

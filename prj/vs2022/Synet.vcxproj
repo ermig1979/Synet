@@ -35,6 +35,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\ConcatLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ConstantOfShapeLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ConstLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Convolution16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Convolution32fLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Convolution8iLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ConvolutionLayer.cpp" />
@@ -117,6 +118,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\ConcatLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ConstantOfShapeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ConstLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Convolution16bLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Convolution32fLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Convolution8iLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ConvolutionLayer.h" />
