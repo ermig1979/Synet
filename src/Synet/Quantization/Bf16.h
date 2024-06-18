@@ -51,9 +51,14 @@ namespace Synet
             dst[i] = RoundToBf16(src[i]);
     }
 
-    SIMD_INLINE float BFloat16ToFloat32(uint16_t value)
+    SYNET_INLINE float BFloat16ToFloat32(uint16_t value)
     {
         return Detail::F32(uint32_t(value) << 16).f32;
+    }
+
+    SYNET_INLINE uint16_t Float32ToBFloat16(float value)
+    {
+        return uint16_t((Detail::F32(value).u32 + 0x8000) >> 16);
     }
 
     SYNET_INLINE bool BFloat16HardwareSupport()
