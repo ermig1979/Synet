@@ -114,7 +114,7 @@ namespace Test
             return true;
         }
 
-        private:
+     private:
         bool Compare(float a, float b, float t, float& e) const
         {
             float d = ::fabs(a - b);
