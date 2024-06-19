@@ -47,6 +47,10 @@ namespace Synet
 
         bool Can8i() const;
 
+        bool Is16b() const;
+
+        bool Can16b() const;
+
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
         virtual size_t MemoryUsage() const;
@@ -67,7 +71,7 @@ namespace Synet
         TensorFormat _format;
         size_t _axis, _batch, _channels, _height, _width;
         int _compatibility, _lower, _upper;
-        bool _biasTerm, _src8u, _dst8u, _is8i;
+        bool _biasTerm, _src8u, _dst8u, _is8i, _src16b, _dst16b;
         Tensor _scale, _shift;
         Scale8i _scale8i;
     };

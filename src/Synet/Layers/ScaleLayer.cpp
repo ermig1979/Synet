@@ -24,6 +24,8 @@
 
 #include "Synet/Layers/ScaleLayer.h"
 
+#include "Synet/Quantization/Bf16.h"
+
 #include "Synet/Utils/Math.h"
 
 namespace Synet
@@ -142,6 +144,61 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
+    template <class S, class D> SYNET_INLINE D Convert(const S& src)
+    {
+        return (D)src;
+    }
+
+    template <> SYNET_INLINE float Convert(const uint16_t& src)
+    {
+        return BFloat16ToFloat32(src);
+    }
+
+    template <> SYNET_INLINE uint16_t Convert(const float& src)
+    {
+        return Float32ToBFloat16(src);
+    }
+
+    template<class S, class D> void ScaleForward16b(const S* src, size_t batch, size_t channels, size_t spatial,
+        TensorFormat format, const float* scale, const float* shift, D* dst)
+    {
+        for (size_t b = 0; b < batch; ++b)
+        {
+            if (format == TensorFormatNchw)
+            {
+                for (size_t c = 0; c < channels; ++c)
+                {
+                    float _scale = scale[c];
+                    float _shift = shift[c];
+                    for (size_t s = 0; s < spatial; ++s)
+                    {
+                        float value = Convert<S, float>(src[s]);
+                        dst[s] = Convert<float, D>(value * _scale + _shift);
+                    }
+                    src += spatial;
+                    dst += spatial;
+                }
+            }
+            else if (format == TensorFormatNhwc)
+            {
+                for (size_t s = 0; s < spatial; ++s)
+                {
+                    for (size_t c = 0; c < channels; ++c)
+                    {
+                        float value = Convert<S, float>(src[c]);
+                        dst[c] = Convert<float, D>(value * scale[c] + shift[c]);
+                    }
+                    src += channels;
+                    dst += channels;
+                }
+            }
+            else
+                assert(0);
+        }
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     ScaleLayer::ScaleLayer(const LayerParam & param, Context* context, QuantizationMethod method)
         : Base(param, context)
         , _method(method)
@@ -160,11 +217,32 @@ namespace Synet
         return _is8i;
     }
 
+    bool ScaleLayer::Can16b() const
+    {
+        return Options().BFloat16Enable();
+    }
+
+    bool ScaleLayer::Is16b() const
+    {
+        return Options().BFloat16Enable();
+    }
+
     bool ScaleLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         const ScaleParam & param = this->Param().scale();
         _axis = param.axis();
         _biasTerm = param.biasTerm();
+        if (src.size() != 1 || dst.size() != 1)
+            SYNET_ERROR("ScaleLayer supports only 1 input and 1 output!");
+        if (src[0]->GetType() != TensorType32f && src[0]->GetType() != TensorType16b && src[0]->GetType() != TensorType8u)
+            SYNET_ERROR("ScaleLayer input must have FP32, BF16 or INT8 type!");
+        if (dst[0]->GetType() != TensorType32f && dst[0]->GetType() != TensorType16b && dst[0]->GetType() != TensorType8u)
+            SYNET_ERROR("ScaleLayer output must have FP32, BF16 or INT8 type!");
+        _src8u = src[0]->GetType() == TensorType8u;
+        _dst8u = dst[0]->GetType() == TensorType8u;
+        _src16b = src[0]->GetType() == TensorType16b;
+        _dst16b = dst[0]->GetType() == TensorType16b;
+        _format = src[0]->Format();
         if (this->Weight().empty())
             SYNET_ERROR("ScaleLayer weights are absent!");
         if (_biasTerm)
@@ -179,11 +257,16 @@ namespace Synet
                     SYNET_ERROR("ScaleLayer scale and bias weights have different shapes: " << ToStr(this->Weight()[0].Shape()) << " != " << ToStr(this->Weight()[1].Shape()) << "!");
             }
         }
+        if (_src16b || _dst16b)
+        {
+            if (_biasTerm)
+                _shift.Share(this->Weight()[1]);
+            else
+                _shift.Reshape(TensorType32f, Shp(_channels), TensorFormatUnknown, Type(0));
+        }
+
         const Tensor & scale = this->Weight()[0];
         _channels = scale.Size();
-        _src8u = src[0]->GetType() == TensorType8u;
-        _dst8u = dst[0]->GetType() == TensorType8u;
-        _format = src[0]->Format();
         if (scale.Size() == src[0]->Size())
         {
             _batch = 1;
@@ -229,7 +312,12 @@ namespace Synet
                 dst[0]->Reshape(TensorType32f, src[0]->Shape(), _format);
         }
         else if (src[0] != dst[0])
-            dst[0]->Reshape(TensorType32f, src[0]->Shape(), _format);
+        {
+            if(_dst16b)
+                dst[0]->Reshape(TensorType16b, src[0]->Shape(), _format);
+            else
+                dst[0]->Reshape(TensorType32f, src[0]->Shape(), _format);
+        }
         this->UsePerfStat();
         _compatibility = 1;
         return true;
@@ -274,6 +362,17 @@ namespace Synet
                 else
                     ScaleForward8i(src[0]->Data<float>(), _batch, _channels, _height * _width, _format, scale, shift, _lower, _upper, dst[0]->Data<float>());
             }
+        }
+        else if (_src16b || _dst16b)
+        {
+            const float* scale = this->Weight()[0].Data<float>();
+            const float* shift = _shift.CpuData();
+            if (_src16b && _dst16b)
+                ScaleForward16b(src[0]->Data<uint16_t>(), _batch, _channels, _height * _width, _format, scale, shift, dst[0]->Data<uint16_t>());
+            else if (!_src16b && _dst16b)
+                ScaleForward16b(src[0]->Data<float>(), _batch, _channels, _height * _width, _format, scale, shift, dst[0]->Data<uint16_t>());
+            else if (_src16b && !_dst16b)
+                ScaleForward16b(src[0]->Data<uint16_t>(), _batch, _channels, _height * _width, _format, scale, shift, dst[0]->Data<float>());
         }
         else
             Scale32f(src[0]->Data<float>(), dst[0]->Data<float>());
