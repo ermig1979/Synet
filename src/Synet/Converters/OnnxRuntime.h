@@ -609,8 +609,11 @@ namespace Synet
             layer.pooling().method() = PoolingMethodTypeAverage;
             if (!ConvertAtrributeInts(node, "kernel_shape", layer.pooling().kernel()))
                 return false;
-            if (!ConvertAtrributeInts(node, "pads", layer.pooling().pad()))
-                return false;
+            if (GetAtrribute(node, "pads")
+            {
+                if (!ConvertAtrributeInts(node, "pads", layer.pooling().pad()))
+                    return false;
+            }
             if (!ConvertAtrributeInts(node, "strides", layer.pooling().stride()))
                 return false;
             if (GetAtrribute(node, "ceil_mode") == NULL)
