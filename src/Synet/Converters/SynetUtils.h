@@ -396,11 +396,20 @@ namespace Synet
                         size_t p = GetLayerIndex(layers, curr.src()[0]);
                         if (p < layers.size())
                         {
-                            if (layers[p].type() == LayerTypeConst && UserCount(layers, p) == 1)
+                            if (layers[p].type() == LayerTypeConst)
                             {
-                                layers.erase(layers.begin() + i);
-                                layers.erase(layers.begin() + p);
-                                i -= 2;
+                                size_t constUserCount = UserCount(layers, p);
+                                if (constUserCount > 1)
+                                {
+                                    layers.erase(layers.begin() + i);
+                                    i -= 1;
+                                }
+                                else if(constUserCount == 1)
+                                {
+                                    layers.erase(layers.begin() + i);
+                                    layers.erase(layers.begin() + p);
+                                    i -= 2;
+                                }  
                                 continue;
                             }
                         }

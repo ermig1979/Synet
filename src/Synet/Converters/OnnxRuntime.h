@@ -671,7 +671,19 @@ namespace Synet
             layer.scale().biasTerm() = true;
             layer.weight().resize(2);
             layer.weight()[0] = src1->weight()[0];
+            if(src1->name() != layer.src()[1])
+            {
+                size_t size = TensorSize(layer.weight()[0].dim()), offset = reordered.size();
+                reordered.resize(offset + size);
+                layer.weight()[0].offset() = offset * 4;
+            }
             layer.weight()[1] = src2->weight()[0];
+            if (src2->name() != layer.src()[2])
+            {
+                size_t size = TensorSize(layer.weight()[1].dim()), offset = reordered.size();
+                reordered.resize(offset + size);
+                layer.weight()[1].offset() = offset * 4;
+            }
             float* scale = GetWeight<float>(reordered, layer.weight()[0]);
             float* shift = GetWeight<float>(reordered, layer.weight()[1]);
             size_t channels = layer.weight()[0].dim()[0];
