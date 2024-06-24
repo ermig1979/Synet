@@ -640,12 +640,13 @@ namespace Synet
             if (!CheckSourceNumber(layer, 5))
                 return false;
 
-            const LayerParam* src1 = GetWeightLayer(layers, layer.src()[1]);
+            bool shared1, shared2;
+            const LayerParam* src1 = GetWeightLayer(layers, layer.src()[1], &shared1);
             if (src1 == NULL || src1->type() != LayerTypeConst)
                 SYNET_ERROR("BatchNormalization src[1] must be Const type!");
             const float* gamma = GetWeight<float>(original, src1->weight()[0]);
 
-            const LayerParam* src2 = GetWeightLayer(layers, layer.src()[2]);
+            const LayerParam* src2 = GetWeightLayer(layers, layer.src()[2], &shared2);
             if (src2 == NULL || src2->type() != LayerTypeConst)
                 SYNET_ERROR("BatchNormalization src[2] must be Const type!");
             const float* beta = GetWeight<float>(original, src2->weight()[0]);
@@ -671,14 +672,14 @@ namespace Synet
             layer.scale().biasTerm() = true;
             layer.weight().resize(2);
             layer.weight()[0] = src1->weight()[0];
-            if(src1->name() != layer.src()[1])
+            if(shared1)
             {
                 size_t size = TensorSize(layer.weight()[0].dim()), offset = reordered.size();
                 reordered.resize(offset + size);
                 layer.weight()[0].offset() = offset * 4;
             }
             layer.weight()[1] = src2->weight()[0];
-            if (src2->name() != layer.src()[2])
+            if (shared2)
             {
                 size_t size = TensorSize(layer.weight()[1].dim()), offset = reordered.size();
                 reordered.resize(offset + size);
