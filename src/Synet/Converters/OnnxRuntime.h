@@ -1938,6 +1938,8 @@ namespace Synet
                     layer.interp().coordinateTransformType() = CoordinateTransformTypePytorch;
                 else if (coordTransf == "half_pixel")
                     layer.interp().coordinateTransformType() = CoordinateTransformTypeHalfPixel;
+                else if (coordTransf == "align_corners")
+                    layer.interp().coordinateTransformType() = CoordinateTransformTypeCaffe;
                 else
                     return false;
             }
