@@ -164,6 +164,8 @@ namespace Synet
                         continue;
                     if (MergeNormalizeV4(network.layers(), i, isNhwc, merged, changes))
                         continue;
+                    if (MergeNormalizeV5(network.layers(), i, merged, changes))
+                        continue;
                     if (MergeGelu(network.layers(), i, merged, changes))
                         continue;
                     if (MergeScale(network.layers(), i, merged, changes))
@@ -1509,6 +1511,32 @@ namespace Synet
                 layer.normalize().axis() = 1;
             dst.push_back(layer);
             index += 9;
+            return true;
+        }
+
+        bool MergeNormalizeV5(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 4)
+                return false;
+            if (src[index + 0].type() != LayerTypeReshape || src[index + 0].reshape().shape().size() != 3)
+                return false;
+            if (src[index + 1].type() != LayerTypeNormalize || src[index + 1].normalize().version() != 3 || src[index + 1].src()[0] != src[index + 0].dst()[0])
+                return false;
+            if (src[index + 2].type() != LayerTypeMeta || src[index + 2].meta().type() != MetaTypeShape || src[index + 2].src()[0] != src[index + 0].src()[0])
+                return false;
+            if (src[index + 3].type() != LayerTypeReshape || src[index + 3].src()[0] != src[index + 1].dst()[0] || src[index + 3].src()[1] != src[index + 2].dst()[0])
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeNormalize;
+            layer.name() = src[index + 3].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            layer.normalize() = src[index + 1].normalize();
+            layer.normalize().version() = 5;
+            layer.weight() = src[index + 1].weight();
+            dst.push_back(layer);
+            index += 3;
             return true;
         }
 

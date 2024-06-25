@@ -46,7 +46,7 @@ namespace Synet
     private:
         typedef typename Base::Tensor Tensor;
 
-        size_t _batch, _channels, _spatial;
+        size_t _batch, _channels, _spatial, _group;
         Tensor _scale, _shift;
         int _trans, _acrossSpatial, _channelShared, _version;
         Type _eps;

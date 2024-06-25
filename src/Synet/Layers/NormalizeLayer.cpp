@@ -332,6 +332,96 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
+    void NormalizeLayerForwardV5Cpu(const float* src, size_t batch, size_t channels, size_t spatial, size_t group, const float* scale, const float* shift, float eps, int trans, float* buf0, float* dst)
+    {
+        assert(channels % group == 0);
+        size_t size = spatial * group;
+        float k = 1.0f / float(size);
+        if (trans)
+        {
+            float* buf1 = buf0 + channels;
+            for (size_t b = 0; b < batch; ++b)
+            {
+                for (size_t c = 0; c < channels; ++c)
+                    buf0[c] = 0;
+                for (size_t s = 0, o = 0; s < spatial; ++s)
+                {
+                    for (size_t c = 0; c < channels; ++c, ++o)
+                        buf0[c] += src[o];
+                }
+                for (size_t c = 0; c < channels; c += group)
+                {
+                    float bias = 0;
+                    for (size_t g = 0; g < group; g += 1)
+                        bias += buf0[c + g];
+                    bias *= k;
+                    for (size_t g = 0; g < group; g += 1)
+                        buf0[c + g] = bias;
+                }
+                for (size_t s = 0, o = 0; s < spatial; ++s)
+                {
+                    for (size_t c = 0; c < channels; ++c, ++o)
+                        dst[o] = src[o] - buf0[c];
+                }
+
+                for (size_t c = 0; c < channels; ++c)
+                    buf0[c] = 0;
+                for (size_t s = 0, o = 0; s < spatial; ++s)
+                {
+                    for (size_t c = 0; c < channels; ++c, ++o)
+                        buf0[c] += Square(dst[o]);
+                }
+                for (size_t c = 0, p = 0; c < channels; c += group, p++)
+                {
+                    float norm = 0;
+                    for (size_t g = 0; g < group; g += 1)
+                        norm += buf0[c + g];
+                    norm = scale[p] / ::sqrt(norm * k + eps);
+                    for (size_t g = 0; g < group; g += 1)
+                    {
+                        buf0[c + g] = norm;
+                        buf1[c + g] = shift[p];
+                    }
+                }
+                for (size_t s = 0, o = 0; s < spatial; ++s)
+                {
+                    for (size_t c = 0; c < channels; c += 1, ++o)
+                        dst[o] = dst[o] * buf0[c] + buf1[c];
+                }
+
+                src += channels * spatial;
+                dst += channels * spatial;
+            }
+        }
+        else
+        {
+            for (size_t b = 0; b < batch; ++b)
+            {
+                for (size_t c = 0, p = 0; c < channels; c += group, p++)
+                {
+                    float sum = 0;
+                    for (size_t s = 0; s < size; ++s)
+                        sum += src[s];
+                    float mean = sum * k;
+                    for (size_t s = 0; s < size; ++s)
+                        dst[s] = src[s] - mean;
+
+                    float sqsum = 0;
+                    for (size_t s = 0; s < size; ++s)
+                        sqsum += Square(dst[s]);
+                    float norm = scale[p] / ::sqrt(sqsum * k + eps), bias = shift[p];
+                    for (size_t s = 0; s < size; ++s)
+                        dst[s] = dst[s] * norm + bias;
+
+                    dst += size;
+                    src += size;
+                }
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     NormalizeLayer::NormalizeLayer(const LayerParam & param, Context* context)
         : Base(param, context)
     {
@@ -412,7 +502,7 @@ namespace Synet
                     _scale.Share(weight[0]);
             }
         }
-        else if (_version >= 2 && _version <= 4)
+        else if (_version >= 2 && _version <= 5)
         {
             int axis = (int)src[0]->Index(param.axis());
             _channels = src[0]->Axis(axis);
@@ -438,12 +528,19 @@ namespace Synet
             }
             _scale.Share(weight[0]);
             _shift.Share(weight[1]);
+            if (_version == 5)
+            {
+                size_t groups = _scale.Size();
+                if(groups == 0 || _channels % groups)
+                    SYNET_ERROR("NormalizeLayer groups " << groups << " incompatible with channels " << _channels << " for V5 !");
+                _group = _channels / groups;
+            }
         }
         else
             SYNET_ERROR("Unsupported version " << _version << " of NormalizeLayer!");
 
         dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
-        buf[0]->Extend(Shp(Max(_spatial, _channels)));
+        buf[0]->Extend(Shp(Max(_spatial, _channels * 2)));
         _const = false;
         this->UsePerfStat();
         return true;
@@ -464,6 +561,8 @@ namespace Synet
             NormalizeLayerForwardV3Cpu(pSrc, _batch, _channels, _spatial, pScale, pShift, _eps, _trans, pBuf, pDst);
         else if (_version == 4)
             NormalizeLayerForwardV4Cpu(pSrc, _batch, _channels, _spatial, pScale, pShift, _eps, _trans, pBuf, pDst);
+        else if (_version == 5)
+            NormalizeLayerForwardV5Cpu(pSrc, _batch, _channels, _spatial, _group, pScale, pShift, _eps, _trans, pBuf, pDst);
         else
             assert(0);
     }
