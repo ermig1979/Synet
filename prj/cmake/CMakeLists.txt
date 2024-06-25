@@ -117,7 +117,7 @@ if((SYNET_TEST STREQUAL "performance_difference") OR (SYNET_TEST STREQUAL "all")
 	set_source_files_properties(${PERF_DIFF_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
 	add_executable(test_performance_difference ${PERF_DIFF_SRC})
 	target_compile_definitions(test_performance_difference PUBLIC ${SYNET_DEFINITIONS})
-	target_link_libraries(test_performance_difference ${SIMD_LIB} Synet -ldl -lpthread)
+	target_link_libraries(test_performance_difference ${SIMD_LIB} Synet -ldl -lpthread -pthread)
 endif()
 
 if((SYNET_TEST STREQUAL "precision") OR (SYNET_TEST STREQUAL "all"))	
