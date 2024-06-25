@@ -124,6 +124,8 @@ namespace Synet
                         continue;
                     if (MergeInnerProductAndScale(network.layers(), i, bin, buf, merged, changes))
                         continue;
+                    if (SimplifyInterp(network.layers(), i, merged, changes))
+                        continue;
                     break;
                 }
                 case 4:
@@ -1967,6 +1969,37 @@ namespace Synet
             dst.push_back(src[second]);
             dst.back().permute().skip() = true;
             index = second;
+            return true;
+        }
+
+        bool SimplifyInterp(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (index + 7 >= src.size())
+                return false;
+            if (src[index + 0].type() != LayerTypeMeta || src[index + 0].meta().type() != MetaTypeShape)
+                return false;
+            if (src[index + 1].type() != LayerTypeMeta || src[index + 1].meta().type() != MetaTypeConst)
+                return false;
+            if (src[index + 2].type() != LayerTypeMeta || src[index + 2].meta().type() != MetaTypeConst)
+                return false;
+            if (src[index + 3].type() != LayerTypeMeta || src[index + 3].meta().type() != MetaTypeConst)
+                return false;
+            if (src[index + 4].type() != LayerTypeMeta || src[index + 4].meta().type() != MetaTypeSlice)
+                return false;
+            if (src[index + 5].type() != LayerTypeMeta || src[index + 5].meta().type() != MetaTypeConst || src[index + 5].meta().alpha().shape() != Shp(2))
+                return false;
+            if (src[index + 6].type() != LayerTypeMeta || src[index + 6].meta().type() != MetaTypePack)
+                return false;
+            if (src[index + 7].type() != LayerTypeInterp || src[index + 7].src().size() != 2)
+                return false;
+
+            LayerParam layer = src[index + 7];
+            layer.src().resize(1);
+            layer.interp().height() = (int)src[index + 5].meta().alpha().i64()[0];
+            layer.interp().width() = (int)src[index + 5].meta().alpha().i64()[1];
+            dst.push_back(layer);
+
+            index += 7;
             return true;
         }
 
