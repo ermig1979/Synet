@@ -53,6 +53,7 @@
 #include "Synet/Layers/LrnLayer.h"
 #include "Synet/Layers/LstmLayer.h"
 #include "Synet/Layers/MergedConvolution32fLayer.h"
+#include "Synet/Layers/MergedConvolution16bLayer.h"
 #include "Synet/Layers/MergedConvolution8iLayer.h"
 #include "Synet/Layers/MetaLayer.h"
 #include "Synet/Layers/MulLayer.h"
@@ -153,6 +154,8 @@ namespace Synet
             case LayerTypeMergedConvolution:
                 if (Use8i(param.mergedConvolution()))
                     return new MergedConvolution8iLayer(param, context, method);
+                //else if (Use16b(param.mergedConvolution()))
+                //    return new MergedConvolution16bLayer(param, context);
                 else
                     return new MergedConvolution32fLayer(param, context);
             case LayerTypeMeta: return new MetaLayer(param, context);
@@ -212,6 +215,14 @@ namespace Synet
                 return param.conv()[0].quantizationLevel() == TensorType8i && param.conv()[2].quantizationLevel() == TensorType8i;
             else
                 return param.conv()[0].quantizationLevel() == TensorType8i || param.conv()[1].quantizationLevel() == TensorType8i;
+        }
+
+        static inline bool Use16b(const MergedConvolutionParam& param)
+        {
+            if (param.conv().size() == 3)
+                return param.conv()[0].bf16() && param.conv()[2].bf16();
+            else
+                return param.conv()[0].bf16() || param.conv()[1].bf16();
         }
     };
 }

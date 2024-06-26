@@ -78,6 +78,9 @@ namespace Synet
 
     bool MergedConvolution8iLayer::Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
     {
+        if ((src->GetType() != TensorType32f && src->GetType() != TensorType8u) ||
+            (dst->GetType() != TensorType32f && dst->GetType() != TensorType8u))
+            SYNET_ERROR("MergedConvolution8iLayer supports only FP32 or INT8 input and output!");
         AlgParam& a = this->_alg;
         if(a.add != 0)
             SYNET_ERROR("MergedConvolution8iLayer support only add=0 case!");
@@ -86,10 +89,7 @@ namespace Synet
         _dst8u = dst->GetType() == TensorType8u;
         _dw0 = a.conv[0].IsDepthwise();
         Shape shape = back.DstShape(a.batch);
-        if (_dst8u)
-            dst->As8u().Reshape(shape, src->Format());
-        else
-            dst->As32f().Reshape(shape, src->Format());
+        dst->Reshape(dst->GetType(), shape, src->Format());
 
         _mergedConvolution8i.Init(a.batch, a.conv, a.count, _method);
         if (_mergedConvolution8i.Enable())

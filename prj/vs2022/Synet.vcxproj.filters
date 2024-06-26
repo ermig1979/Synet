@@ -155,6 +155,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution16bLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -540,6 +543,9 @@
       <Filter>Decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Convolution16bLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution16bLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2023 Yermalayeu Ihar.
+* Copyright (c) 2018-2024 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -111,6 +111,8 @@ namespace Synet
 
     bool MergedConvolution32fLayer::Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
     {
+        if (src->GetType() != TensorType32f || dst->GetType() != TensorType32f)
+            SYNET_ERROR("MergedConvolution32fLayer supports only FP32 input and output!");
         AlgParam& a = this->_alg;
         size_t directIdx, depthwiseIdx;
         if (a.conv[0].group == 1 && a.conv[1].IsDepthwise())
@@ -194,7 +196,7 @@ namespace Synet
         }
 
         const ConvParam& back = a.conv[a.count - 1];
-        dst->Reshape(Shp(a.batch, back.dstH, back.dstW, back.dstC), src->Format());
+        dst->Reshape(TensorType32f, Shp(a.batch, back.dstH, back.dstW, back.dstC), src->Format());
 
         _mergedConvolution32f.Init(a.batch, a.conv, a.count, a.add, Bf16(), this->Options().bf16RoundTest);
         if (_mergedConvolution32f.Enable())

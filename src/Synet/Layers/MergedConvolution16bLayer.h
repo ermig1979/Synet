@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2024 Yermalayeu Ihar.
+* Copyright (c) 2018-2023 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -24,42 +24,39 @@
 
 #pragma once
 
-#include "Synet/Common.h"
-#include "Synet/Quantization/Bf16.h"
+#include "Synet/Utils/MergedConvolution.h"
+#include "Synet/Layers/MergedConvolutionLayer.h"
 
 namespace Synet
 {
-    struct Options
+    class MergedConvolution16bLayer : public MergedConvolutionLayer
     {
-        enum PerfomanceLog
-        {
-            PerfomanceLogEmpty = 0,
-            PerfomanceLogLayer,
-            PerfomanceLogSize,
-            PerfomanceLogSubnet,
-        };
+    public:
+        typedef Layer<float> Base;       
+        typedef typename Base::TensorPtr TensorPtr;
+        typedef typename Base::TensorPtrs TensorPtrs;
+        typedef typename Base::Tensor Tensor;
+        typedef typename Base::Tensors Tensors;
 
-        PerfomanceLog performanceLog;
-        bool bf16RoundTest;
+        MergedConvolution16bLayer(const LayerParam& param, Context* context);
 
-        Options()
-        {
-            performanceLog = PerfomanceLogEmpty;
-            bf16RoundTest = false;
-        }
+        virtual bool Can16b() const;
 
-        bool BFloat16Enable() const
-        {
-            return bf16RoundTest || BFloat16HardwareSupport();
-        }
-    };
+        virtual bool Is16b() const;
 
-    struct Context
-    {
-        Options options;
+        virtual size_t MemoryUsage() const;
 
-        Context()
-        {
-        }
+    protected:
+        typedef MergedConvolutionLayer::AlgParam AlgParam;
+
+        virtual String InternalInfo() const;
+
+        virtual bool Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst);
+
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+    private:
+        bool _src16b, _dst16b;
+        MergedConvolution16b _mergedConvolution16b;
     };
 }
