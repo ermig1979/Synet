@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Synet/Params.h"
+#include "Synet/Tensor.h"
 
 namespace Synet
 {

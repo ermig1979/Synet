@@ -24,8 +24,6 @@
 
 #pragma once
 
-#include "Synet/Common.h"
-#include "Synet/Layer.h"
 #include "Synet/Utils/MergedConvolution.h"
 #include "Synet/Quantization/Convert.h"
 #include "Synet/Layers/MergedConvolutionLayer.h"

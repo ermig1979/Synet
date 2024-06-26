@@ -154,7 +154,7 @@ namespace Synet
                 if (Use8i(param.mergedConvolution()))
                     return new MergedConvolution8iLayer(param, context, method);
                 else
-                    return new MergedConvolution32fLayer<T>(param, context);
+                    return new MergedConvolution32fLayer(param, context);
             case LayerTypeMeta: return new MetaLayer(param, context);
             case LayerTypeMish: return new MishLayer(param, context);
             case LayerTypeMul: return new MulLayer(param, context);
