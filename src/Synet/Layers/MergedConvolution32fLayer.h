@@ -97,18 +97,17 @@ namespace Synet
         }
     }
 
-    template <class T> class MergedConvolution32fLayer : public MergedConvolutionLayer<T>
+    template <class T> class MergedConvolution32fLayer : public MergedConvolutionLayer
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;       
+        typedef Layer<float> Base;       
         typedef typename Base::TensorPtr TensorPtr;
         typedef typename Base::TensorPtrs TensorPtrs;
         typedef typename Base::Tensor Tensor;
         typedef typename Base::Tensors Tensors;
 
         MergedConvolution32fLayer(const LayerParam & param, Context* context)
-            : MergedConvolutionLayer<T>(param, context)
+            : MergedConvolutionLayer(param, context)
         {
         }
 
@@ -118,7 +117,7 @@ namespace Synet
         }
 
     protected:
-        typedef typename MergedConvolutionLayer<T>::AlgParam AlgParam;
+        typedef MergedConvolutionLayer::AlgParam AlgParam;
 
         virtual String InternalInfo() const
         {
