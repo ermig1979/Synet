@@ -152,7 +152,7 @@ namespace Synet
             case LayerTypeLstm: return new LstmLayer<T>(param, context);
             case LayerTypeMergedConvolution:
                 if (Use8i(param.mergedConvolution()))
-                    return new MergedConvolution8iLayer<T>(param, context, method);
+                    return new MergedConvolution8iLayer(param, context, method);
                 else
                     return new MergedConvolution32fLayer<T>(param, context);
             case LayerTypeMeta: return new MetaLayer(param, context);

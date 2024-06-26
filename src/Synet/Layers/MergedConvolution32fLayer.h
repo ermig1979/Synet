@@ -124,7 +124,7 @@ namespace Synet
             return String(" fp32") + (_mergedConvolution32f.Enable() ? String(" ") + _mergedConvolution32f.Info() : String());
         }
 
-        virtual void Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
+        virtual bool Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
         {
             AlgParam& a = this->_alg;
             size_t directIdx, depthwiseIdx;
@@ -223,6 +223,8 @@ namespace Synet
                 if (a.count > 2)
                     Base::Extend32f(buf, 1, a.conv[1].DstShape(1));
             }
+
+            return true;
         }
 
         virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)

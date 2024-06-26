@@ -46,6 +46,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\GatherLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\GridSampleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\InputLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution8iLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolutionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MetaLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MulLayer.cpp" />

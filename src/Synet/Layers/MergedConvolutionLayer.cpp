@@ -101,7 +101,8 @@ namespace Synet
         a.add = (!this->Is8i() && a.count == 3 && p.add()) ? 1 : 0;
         a.batch = src[0]->Axis(0);
 
-        Reshape(src[0], buf, dst[0]);
+        if (!Reshape(src[0], buf, dst[0]))
+            return false;
 
         a.sSize = src[0]->Size(1);
         a.dSize = dst[0]->Size(1);

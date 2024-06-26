@@ -186,7 +186,7 @@ namespace Synet
 
     protected:
 
-        virtual void Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst) = 0;
+        virtual bool Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst) = 0;
         virtual String InternalInfo() const = 0;
 
         struct AlgParam
