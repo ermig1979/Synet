@@ -152,7 +152,7 @@ namespace Synet
                 if (_context)
                     ::SimdRelease(_context), _context = NULL;
                 SimdSynetCompatibilityType compatibility = SimdSynetCompatibilityDefault;
-                if (convs[1].dstH > 1 && convs[1].dstW > 1)
+                if (convs[1].dstH >= 1 && convs[1].dstW >= 1)
                     _context = ::SimdSynetMergedConvolution16bInit(batch, (const SimdConvolutionParameters*)convs, count, compatibility);
             }
 #endif

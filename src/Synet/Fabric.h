@@ -154,8 +154,8 @@ namespace Synet
             case LayerTypeMergedConvolution:
                 if (Use8i(param.mergedConvolution()))
                     return new MergedConvolution8iLayer(param, context, method);
-                //else if (Use16b(param.mergedConvolution()))
-                //    return new MergedConvolution16bLayer(param, context);
+                else if (context->options.BFloat16Enable() && Use16b(param.mergedConvolution()))
+                    return new MergedConvolution16bLayer(param, context);
                 else
                     return new MergedConvolution32fLayer(param, context);
             case LayerTypeMeta: return new MetaLayer(param, context);
