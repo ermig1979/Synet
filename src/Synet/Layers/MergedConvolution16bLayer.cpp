@@ -33,7 +33,7 @@ namespace Synet
 
     size_t MergedConvolution16bLayer::MemoryUsage() const
     {
-        return Base::MemoryUsage() + _mergedConvolution16b.InternalBufferSize() * sizeof(float);
+        return Base::MemoryUsage() + _mergedConvolution16b.InternalBufferSize();
     }
 
     bool MergedConvolution16bLayer::Can16b() const
