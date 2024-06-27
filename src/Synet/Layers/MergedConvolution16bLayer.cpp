@@ -66,6 +66,11 @@ namespace Synet
         AlgParam& a = this->_alg;
         if (a.add != 0)
             SYNET_ERROR("MergedConvolution16bLayer support only add=0 case!");
+        if (a.conv[1].group != 1)
+        {
+            a.conv[0].dstT = TensorType32f;
+            a.conv[1].srcT = TensorType32f;
+        }
 
         const ConvParam& back = a.conv[a.count - 1];
         dst->Reshape(dst->GetType(), Shp(a.batch, back.dstH, back.dstW, back.dstC), src->Format());
