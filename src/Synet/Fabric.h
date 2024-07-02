@@ -47,7 +47,9 @@
 #include "Synet/Layers/FusedLayer.h"
 #include "Synet/Layers/GatherLayer.h"
 #include "Synet/Layers/GridSampleLayer.h"
-#include "Synet/Layers/InnerProductLayer.h"
+#include "Synet/Layers/InnerProduct32fLayer.h"
+#include "Synet/Layers/InnerProduct16bLayer.h"
+#include "Synet/Layers/InnerProduct8iLayer.h"
 #include "Synet/Layers/InputLayer.h"
 #include "Synet/Layers/InterpLayer.h"
 #include "Synet/Layers/LrnLayer.h"
@@ -146,7 +148,13 @@ namespace Synet
             case LayerTypeGridSample: return new GridSampleLayer(param, context);
             case LayerTypeHswish: return new HswishLayer(param, context);
             case LayerTypeHardSigmoid: return new HardSigmoidLayer(param, context);
-            case LayerTypeInnerProduct: return new InnerProductLayer<T>(param, context, method);
+            case LayerTypeInnerProduct: 
+                if (param.innerProduct().quantizationLevel() == TensorType8i)
+                    return new InnerProduct8iLayer(param, context, method);
+                else if (context->options.BFloat16Enable() && param.innerProduct().bf16())
+                    return new InnerProduct16bLayer(param, context);
+                else
+                    return new InnerProduct32fLayer(param, context);
             case LayerTypeInput: return new InputLayer(param, context);
             case LayerTypeInterp: return new InterpLayer<T>(param, context);
             case LayerTypeLrn: return new LrnLayer<T>(param, context);

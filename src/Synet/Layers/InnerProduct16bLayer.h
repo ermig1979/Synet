@@ -24,31 +24,35 @@
 
 #pragma once
 
-#include "Synet/Layer.h"
-
-#ifdef _N
-#undef _N
-#endif
+#include "Synet/Layers/InnerProductLayer.h"
+#include "Synet/Utils/InnerProduct.h"
 
 namespace Synet
 {
-    class InnerProductLayer : public Synet::Layer<float>
+    class InnerProduct16bLayer : public Synet::InnerProductLayer
     {
     public:
         typedef Layer<float> Base;
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        InnerProductLayer(const LayerParam& param, Context* context);
+        InnerProduct16bLayer(const LayerParam& param, Context* context);
 
-        virtual bool Resizable() const;
+        virtual bool Is16b() const;
 
-        virtual int64_t Flop() const;
+        virtual bool Can16b() const;
+
+        virtual size_t MemoryUsage() const;
+
+        virtual void CompactWeight();
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        size_t _axis, _batch, _M, _N, _K;
-        bool _biasTerm, _transA, _transB;
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+    private:
+        size_t _sizeA, _sizeB, _sizeC;
+        InnerProduct16b _innerProduct16b;
     };
 }

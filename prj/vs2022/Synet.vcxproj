@@ -45,6 +45,10 @@
     <ClCompile Include="..\..\src\Synet\Layers\FlattenLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\GatherLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\GridSampleLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\InnerProduct16bLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\InnerProduct32fLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\InnerProduct8iLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\InnerProductLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\InputLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.cpp" />
@@ -136,6 +140,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\FusedLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\GatherLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\GridSampleLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\InnerProduct16bLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\InnerProduct32fLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\InnerProduct8iLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InnerProductLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InputLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InterpLayer.h" />

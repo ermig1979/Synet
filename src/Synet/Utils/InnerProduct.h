@@ -178,5 +178,4 @@ namespace Synet
         void* _context;
         size_t _M;
     };
-
 }

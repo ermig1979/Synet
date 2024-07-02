@@ -24,31 +24,43 @@
 
 #pragma once
 
-#include "Synet/Layer.h"
-
-#ifdef _N
-#undef _N
-#endif
+#include "Synet/Layers/InnerProductLayer.h"
+#include "Synet/Quantization/Convert.h"
 
 namespace Synet
 {
-    class InnerProductLayer : public Synet::Layer<float>
+    class InnerProduct8iLayer : public Synet::InnerProductLayer
     {
     public:
         typedef Layer<float> Base;
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        InnerProductLayer(const LayerParam& param, Context* context);
+        InnerProduct8iLayer(const LayerParam& param, Context* context, QuantizationMethod method);
 
-        virtual bool Resizable() const;
+        virtual bool Is8i() const;
 
-        virtual int64_t Flop() const;
+        virtual bool Can8i() const;
+
+        virtual size_t MemoryUsage() const;
+
+        virtual void CompactWeight();
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        size_t _axis, _batch, _M, _N, _K;
-        bool _biasTerm, _transA, _transB;
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+        void Quantize();
+
+        void ForwardCpu(const uint8_t* src, int32_t* dst);
+
+    private:
+        QuantizationMethod _method;
+        bool _src8u, _dst8u;
+        Converter _srcCvt, _dstCvt;
+        Tensor8i _weight8i;
+        Tensor32i _norm32i;
+        Tensor32f _norm32f;
     };
 }
