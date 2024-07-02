@@ -48,7 +48,8 @@ namespace Synet
 
     void InnerProduct16bLayer::CompactWeight()
     {
-        ((Tensor&)this->Weight()[0]).Clear();
+        if(this->Weight().size())
+            ((Tensor&)this->Weight()[0]).Clear();
     }
 
     bool InnerProduct16bLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
