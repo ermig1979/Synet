@@ -889,7 +889,7 @@ namespace Synet
                     l2.convolution().outputNum() >= l1.convolution().outputNum())
                     return false;
             }
-            if (l0.convolution().bf16() != l2.convolution().bf16())
+            if (l0.convolution().quantizationLevel() != l2.convolution().quantizationLevel())
             {
                 return false;
             }
@@ -912,7 +912,7 @@ namespace Synet
             }
             index += 2;
             dst.push_back(layer);
-            if (src.size() > index + 1 && method == QuantizationMethodUnknown && !l0.convolution().bf16())
+            if (src.size() > index + 1 && method == QuantizationMethodUnknown && !l0.convolution().quantizationLevel() == TensorType16b)
             {
                 const LayerParam & l3 = src[index + 1];
                 if (l2.convolution().activationType() == ActivationFunctionTypeIdentity && IsAdd(l3) && ((l3.src()[0] == l0.src()[0] && l3.src()[1] == l2.dst()[0]) || 
@@ -2228,12 +2228,12 @@ namespace Synet
                 if (layer.type() == LayerTypeConvolution && layer.weight()[0].format() == TensorFormatNhwc)
                 {
                     if(layer.convolution().group() == 1 && EffectiveSrcC(layer) >= _param.bf16MinSrcC() && layer.convolution().outputNum() >= _param.bf16MinDstC())
-                        layer.convolution().bf16() = true;
+                        layer.convolution().quantizationLevel() = TensorType16b;
                 }
                 else if (layer.type() == LayerTypeInnerProduct)
                 {
                     if ((EffectiveSrcC(layer) >= _param.bf16MinSrcC() && layer.innerProduct().outputNum() >= _param.bf16MinDstC()) || layer.src().size() > 1)
-                        layer.innerProduct().bf16() = true;
+                        layer.innerProduct().quantizationLevel() = TensorType16b;
                 }
             }
             return true;

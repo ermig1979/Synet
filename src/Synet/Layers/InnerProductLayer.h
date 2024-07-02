@@ -48,6 +48,7 @@ namespace Synet
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
+
         size_t _axis, _batch, _M, _N, _K;
         bool _biasTerm, _transA, _transB;
     };

@@ -97,7 +97,7 @@ namespace Synet
         std::stringstream desc;
         if (_batch > 1)
             desc << "B=" << _batch << " ";
-        desc << "M=" << _M << " N=" << _N << " K=" << _K;
+        desc << "M=" << _M << " N=" << _N << " K=" << _K << " " << Cpl::ToStr(param.quantizationLevel());
         this->UsePerfStat(desc.str(), Flop());
         return true;
     }

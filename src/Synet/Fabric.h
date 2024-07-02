@@ -125,7 +125,7 @@ namespace Synet
             case LayerTypeConvolution:
                 if (param.convolution().quantizationLevel() == TensorType8i)
                     return new Convolution8iLayer(param, context, method);
-                else if (context->options.BFloat16Enable() && param.convolution().bf16())
+                else if (context->options.BFloat16Enable() && param.convolution().quantizationLevel() == TensorType16b)
                     return new Convolution16bLayer(param, context);
                 else
                     return new Convolution32fLayer(param, context);
@@ -151,7 +151,7 @@ namespace Synet
             case LayerTypeInnerProduct: 
                 if (param.innerProduct().quantizationLevel() == TensorType8i)
                     return new InnerProduct8iLayer(param, context, method);
-                else if (context->options.BFloat16Enable() && param.innerProduct().bf16())
+                else if (context->options.BFloat16Enable() && param.innerProduct().quantizationLevel() == TensorType16b)
                     return new InnerProduct16bLayer(param, context);
                 else
                     return new InnerProduct32fLayer(param, context);
@@ -228,9 +228,9 @@ namespace Synet
         static inline bool Use16b(const MergedConvolutionParam& param)
         {
             if (param.conv().size() == 3)
-                return param.conv()[0].bf16() && param.conv()[2].bf16();
+                return param.conv()[0].quantizationLevel() == TensorType16b && param.conv()[2].quantizationLevel() == TensorType16b;
             else
-                return param.conv()[0].bf16() || param.conv()[1].bf16();
+                return param.conv()[0].quantizationLevel() == TensorType16b || param.conv()[1].quantizationLevel() == TensorType16b;
         }
     };
 }

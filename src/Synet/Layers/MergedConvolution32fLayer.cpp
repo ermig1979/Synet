@@ -249,7 +249,7 @@ namespace Synet
         const MergedConvolutionParam& p = this->Param().mergedConvolution();
         for (size_t c = 0; c < p.conv().size(); ++c)
         {
-            if (p.conv()[c].bf16())
+            if (p.conv()[c].quantizationLevel() == TensorType16b)
                 return true;
         }
         return false;
