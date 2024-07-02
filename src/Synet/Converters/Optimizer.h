@@ -2232,7 +2232,8 @@ namespace Synet
                 }
                 else if (layer.type() == LayerTypeInnerProduct)
                 {
-                    layer.innerProduct().bf16() = false;
+                    if ((EffectiveSrcC(layer) >= _param.bf16MinSrcC() && layer.innerProduct().outputNum() >= _param.bf16MinDstC()) || layer.src().size() > 1)
+                        layer.innerProduct().bf16() = true;
                 }
             }
             return true;
@@ -2245,6 +2246,14 @@ namespace Synet
                 const WeightParam& weight = layer.weight()[0];
                 if (weight.format() == TensorFormatNhwc)
                     return weight.dim()[2] * layer.convolution().kernel()[0] * layer.convolution().kernel()[1];
+                else
+                    return weight.dim()[1];
+            }
+            if (layer.type() == LayerTypeInnerProduct && layer.src().size() == 1)
+            {
+                const WeightParam& weight = layer.weight()[0];
+                if (layer.innerProduct().transposeB())
+                    return weight.dim()[0];
                 else
                     return weight.dim()[1];
             }

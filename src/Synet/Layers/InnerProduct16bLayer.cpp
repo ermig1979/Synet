@@ -68,7 +68,7 @@ namespace Synet
         dstShape.resize(_axis + 1);
         dstShape[_axis] = _N;
         dst[0]->Reshape(dst[0]->GetType(), dstShape, TensorFormatNchw);
-        _innerProduct16b.Init(_M, _K, _N, src[0]->GetType(), src.size() > 1 ? src[1]->GetType() : TensorType32f,
+        _innerProduct16b.Init(_M, _N, _K, src[0]->GetType(), src.size() > 1 ? src[1]->GetType() : TensorType32f,
             dst[0]->GetType(), _transB ? 0 : 1, src.size() == 1 ? 1 : 0, _biasTerm ? 1 : 0);
         if(!_innerProduct16b.Enable())
             SYNET_ERROR("InnerProduct16bLayer can't create SimdSynetInnerProduct16b backend!");
