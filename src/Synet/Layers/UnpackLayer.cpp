@@ -37,11 +37,16 @@ namespace Synet
         return true;
     }
 
+    bool UnpackLayer::Can16b() const
+    {
+        return true;
+    }
+
     bool UnpackLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         const UnpackParam & param = this->Param().unpack();
         _srcType = src[0]->GetType();
-        if(_srcType != TensorType32f && _srcType != TensorType8u)
+        if(_srcType != TensorType32f && _srcType != TensorType8u && _srcType != TensorType16b)
             SYNET_ERROR("Unsupported src type in UnpackLayer!");
         _axis = src[0]->Index(param.axis());
         _size = src[0]->Axis(_axis);
@@ -131,6 +136,14 @@ namespace Synet
             for (size_t i = 0; i < dst.size(); ++i)
                 pDst[i] = dst[i]->Data<uint8_t>();
             Unpack(src[0]->Data<uint8_t>(), pDst);
+            break;
+        }
+        case TensorType16b:
+        {
+            std::vector<uint16_t*> pDst(dst.size());
+            for (size_t i = 0; i < dst.size(); ++i)
+                pDst[i] = dst[i]->Data<uint16_t>();
+            Unpack(src[0]->Data<uint16_t>(), pDst);
             break;
         }
         default:

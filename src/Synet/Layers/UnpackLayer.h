@@ -38,6 +38,8 @@ namespace Synet
 
         virtual bool Can8i() const;
 
+        virtual bool Can16b() const;
+
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
