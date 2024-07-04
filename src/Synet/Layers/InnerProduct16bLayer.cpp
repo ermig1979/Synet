@@ -80,6 +80,7 @@ namespace Synet
             _innerProduct16b.SetParams(weight, bias);
         }
         Base::Extend8u(buf, 0, Shp(_innerProduct16b.ExternalBufferSize()), src[0]->Format());
+        this->UsePerfStat(_desc + " " + _innerProduct16b.Info(), Flop());
         return true;
     }
 

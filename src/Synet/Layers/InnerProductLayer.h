@@ -49,6 +49,7 @@ namespace Synet
 
     protected:
 
+        String _desc;
         size_t _axis, _batch, _M, _N, _K;
         bool _biasTerm, _transA, _transB;
     };

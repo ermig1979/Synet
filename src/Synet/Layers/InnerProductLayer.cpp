@@ -95,10 +95,11 @@ namespace Synet
             _batch = 1;
         }
         std::stringstream desc;
-        if (_batch > 1)
-            desc << "B=" << _batch << " ";
-        desc << "M=" << _M << " N=" << _N << " K=" << _K << " " << Cpl::ToStr(param.quantizationLevel());
-        this->UsePerfStat(desc.str(), Flop());
+        desc << _batch << "x" << _M << "x" << _K << "-" << _N << " ";
+        desc << ToChar(src[0]->GetType()) << (src.size() > 1 ? ToChar(src[1]->GetType()) : "0") << ToChar(dst[0]->GetType()) << "-";
+        desc << (_transB ? "n" : "t") << (_biasTerm ? "b" : "o") << "-" << Cpl::ToStr(param.quantizationLevel());
+        _desc = desc.str();
+        this->UsePerfStat(_desc, Flop());
         return true;
     }
 }
