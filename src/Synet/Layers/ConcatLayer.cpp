@@ -53,6 +53,11 @@ namespace Synet
         return this->Param().concat().can8i();
     }
 
+    bool ConcatLayer::Can16b() const
+    {
+        return true;
+    }
+
     bool ConcatLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         _concatAxis = src[0]->Index((int32_t)this->Param().concat().axis());
@@ -87,7 +92,7 @@ namespace Synet
         else
         {
             _srcType = src[0]->GetType();
-            if(_srcType != TensorType32f && _srcType != TensorType8u && _srcType != TensorType8i && _srcType != TensorType64i)
+            if(_srcType != TensorType32f && _srcType != TensorType8u && _srcType != TensorType8i && _srcType != TensorType64i && _srcType != TensorType16b)
                 SYNET_ERROR("Unsupported input type: " << Cpl::ToStr(_srcType) << " !");
             dst[0]->Reshape(_srcType, dstShape, src[0]->Format());
             assert(srcSizeSum == dst[0]->Size());
@@ -145,6 +150,14 @@ namespace Synet
             for (size_t i = 0; i < src.size(); ++i)
                 pSrc[i] = src[i]->Data<int64_t>();
             Concat(pSrc, dst[0]->Data<int64_t>());
+            break;
+        }
+        case TensorType16b:
+        {
+            std::vector<uint16_t*> pSrc(src.size());
+            for (size_t i = 0; i < src.size(); ++i)
+                pSrc[i] = src[i]->Data<uint16_t>();
+            Concat(pSrc, dst[0]->Data<uint16_t>());
             break;
         }
         default:

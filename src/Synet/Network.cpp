@@ -793,35 +793,76 @@ namespace Synet
         }
     }
 
-    bool Network::Is16bInSubGraph(const Stage& stage)
+    bool Network::Is16bInSubGraph(size_t current, IdSet& visited, bool back)
     {
+        visited.insert(current);
+        const Stage& stage = _stages[current];
         const Layer& layer = *stage.layer;
         if (layer._isBack)
             return false;
         const LayerParam& param = layer.Param();
+        if (param.type() == LayerTypeInput)
+            return false;
         for (size_t d = 0; d < param.dst().size(); ++d)
         {
             const String& name = param.dst()[d];
             const IdSet& ids = _srcIds[name];
             for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
             {
-                const Stage& dst = _stages[*id];
-                if (&dst == &stage)
+                if (visited.find(*id) != visited.end())
                     continue;
+                const Stage& dst = _stages[*id];
                 if (dst.layer->Is16b())
                     continue;
                 if (dst.layer->Param().type() == LayerTypePriorBox)
                     continue;
-                if (dst.layer->Can16b() && Is16bInSubGraph(dst))
+                if (dst.layer->Can16b() && Is16bInSubGraph(*id, visited, true))
                     continue;
                 return false;
+            }
+        }
+        if (back)
+        {
+            for (size_t s = 0; s < param.src().size(); ++s)
+            {
+                const String& name = param.src()[s];
+                const IdSet& dstIds = _dstIds[name];
+                for (IdSet::const_iterator id = dstIds.begin(); id != dstIds.end(); ++id)
+                {
+                    if (visited.find(*id) != visited.end())
+                        continue;
+                    const Stage& src = _stages[*id];
+                    if (src.layer->Is16b())
+                        continue;
+                    if (src.layer->Param().type() == LayerTypePriorBox)
+                        continue;
+                    if (src.layer->Can16b() && Is16bInSubGraph(*id, visited, true))
+                        continue;
+                    return false;
+                }
+                const IdSet& srcIds = _srcIds[name];
+                for (IdSet::const_iterator id = srcIds.begin(); id != srcIds.end(); ++id)
+                {
+                    if (visited.find(*id) != visited.end())
+                        continue;
+                    const Stage& dst = _stages[*id];
+                    if (dst.layer->Is16b())
+                        continue;
+                    if (dst.layer->Param().type() == LayerTypePriorBox)
+                        continue;
+                    if (dst.layer->Can16b() && Is16bInSubGraph(*id, visited, true))
+                        continue;
+                    return false;
+                }
             }
         }
         return true;
     }
 
-    void Network::Set16bInSubGraph(const Stage& stage)
+    void Network::Set16bInSubGraph(size_t current, IdSet& visited, bool back)
     {
+        visited.insert(current);
+        const Stage& stage = _stages[current];
         const LayerParam& param = stage.layer->Param();
         for (size_t d = 0; d < param.dst().size(); ++d)
         {
@@ -830,12 +871,28 @@ namespace Synet
             const IdSet& ids = _srcIds[name];
             for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
             {
-                const Stage& dst = _stages[*id];
-                if (&dst == &stage)
+                if (visited.find(*id) != visited.end())
                     continue;
-                if (dst.layer->Is16b())
+                if (_stages[*id].layer->Is16b())
                     continue;
-                Set16bInSubGraph(dst);
+                Set16bInSubGraph(*id, visited, true);
+            }
+        }
+        if (back)
+        {
+            for (size_t s = 0; s < param.src().size(); ++s)
+            {
+                const String& name = param.src()[s];
+                _tensors[_tensorId[name]]->SetType(TensorType16b);
+                const IdSet& ids = _dstIds[name];
+                for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
+                {
+                    if (visited.find(*id) != visited.end())
+                        continue;
+                    if (_stages[*id].layer->Is16b())
+                        continue;
+                    Set16bInSubGraph(*id, visited, true);
+                }
             }
         }
     }
@@ -845,10 +902,12 @@ namespace Synet
         for (size_t s = 0; s < _stages.size(); ++s)
         {
             const Layer& layer = *_stages[s].layer;
-            if (!layer.Is16b())
-                continue;
-            if (Is16bInSubGraph(_stages[s]))
-                Set16bInSubGraph(_stages[s]);
+            if (layer.Is16b())
+            {
+                IdSet checked, setted;
+                if (Is16bInSubGraph(s, checked, false))
+                    Set16bInSubGraph(s, setted, false);
+            }
         }
     }
 

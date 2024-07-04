@@ -161,9 +161,9 @@ namespace Synet
 
         void SetTensorType8i();
 
-        bool Is16bInSubGraph(const Stage& stage);
+        bool Is16bInSubGraph(size_t current, IdSet & visited, bool back);
 
-        void Set16bInSubGraph(const Stage& stage);
+        void Set16bInSubGraph(size_t current, IdSet& visited, bool back);
 
         void SetTensorType16b();
 
