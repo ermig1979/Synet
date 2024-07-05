@@ -160,10 +160,17 @@ namespace Synet
         _simdPermute = std::make_shared<SimdPermute>();
     }
 
+    bool PermuteLayer::Can16b() const
+    {
+        return Options().BFloat16Enable();
+    }
+
     bool PermuteLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("PermuteLayer supports only 1 input and 1 output!");
+        if (src[0]->GetType() != dst[0]->GetType())
+            SYNET_ERROR("PermuteLayer input and output must have the same type!");
 
         const PermuteParam & param = this->Param().permute();
         _dstOrder = param.order();

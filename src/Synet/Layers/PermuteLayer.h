@@ -37,6 +37,8 @@ namespace Synet
 
         PermuteLayer(const LayerParam& param, Context* context);
 
+        virtual bool Can16b() const;
+
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
