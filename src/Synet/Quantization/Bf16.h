@@ -69,4 +69,21 @@ namespace Synet
         return false;
 #endif
     }
+
+    //-------------------------------------------------------------------------------------------------
+
+    template <class S, class D> SYNET_INLINE D Convert(const S& src)
+    {
+        return (D)src;
+    }
+
+    template <> SYNET_INLINE float Convert(const uint16_t& src)
+    {
+        return BFloat16ToFloat32(src);
+    }
+
+    template <> SYNET_INLINE uint16_t Convert(const float& src)
+    {
+        return Float32ToBFloat16(src);
+    }
 }

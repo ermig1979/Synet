@@ -92,6 +92,8 @@ namespace Synet
             case TensorType32i: return SimdTensorData32i;
             case TensorType8i: return SimdTensorData8i;
             case TensorType8u: return SimdTensorData8u;
+            case TensorType16b: return SimdTensorData16b;
+            case TensorType16f: return SimdTensorData16f;
             default:
                 assert(0);
                 return SimdTensorData32f;

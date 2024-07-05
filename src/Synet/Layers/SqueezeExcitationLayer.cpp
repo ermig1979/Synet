@@ -31,16 +31,6 @@
 
 namespace Synet
 {
-    template <class T, class S> SYNET_INLINE S Convert(const T& src)
-    {
-        return (S)src;
-    }
-
-    template <> SYNET_INLINE float Convert(const uint16_t& src)
-    {
-        return BFloat16ToFloat32(src);
-    }
-
     template <class T, class S> void ChannelSum(const T* src, size_t channels, size_t height, size_t width, TensorFormat format, S * sum)
     {
         //SYNET_PERF_FUNC();
@@ -388,7 +378,7 @@ namespace Synet
             CpuRelu(norm1, _squeeze, 0.0f, norm1);
             Detail::InnerProductLayerForwardCpu<float>(norm1, _rWeight[1].data(), NULL, _channels, _squeeze, norm0);
             CpuSigmoid(norm0, _channels, norm0);
-            if (_dst8u)
+            if (_dst16b)
                 Scale16b(src, norm0, dst16b), dst16b += _size;
             else
                 Scale16b(src, norm0, dst32f), dst32f += _size;

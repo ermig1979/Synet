@@ -41,6 +41,10 @@ namespace Synet
 
         virtual bool Is8i() const;
 
+        virtual bool Can16b() const;
+
+        virtual bool Is16b() const;
+
         virtual int64_t Flop() const;
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -71,10 +75,9 @@ namespace Synet
         bool _quant;
         QuantizationMethod _method;
         TensorFormat _format;
-        TensorType _srcT, _dstT;
-        size_t _batch, _channels, _spatial, _sizeT;
+        TensorType _typeA, _typeB, _typeD;
+        size_t _batch, _channels, _spatial, _elemA, _elemB, _elemD;
         size_t _channelsInner, _channelsOuter;
-        int _index[2];
         Shape _aSteps, _bSteps, _dstShape;
         UniformPtr _uniform;
         AddBiasPtr _addBias;

@@ -144,21 +144,6 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template <class S, class D> SYNET_INLINE D Convert(const S& src)
-    {
-        return (D)src;
-    }
-
-    template <> SYNET_INLINE float Convert(const uint16_t& src)
-    {
-        return BFloat16ToFloat32(src);
-    }
-
-    template <> SYNET_INLINE uint16_t Convert(const float& src)
-    {
-        return Float32ToBFloat16(src);
-    }
-
     template<class S, class D> void ScaleForward16b(const S* src, size_t batch, size_t channels, size_t spatial,
         TensorFormat format, const float* scale, const float* shift, D* dst)
     {
@@ -224,7 +209,7 @@ namespace Synet
 
     bool ScaleLayer::Is16b() const
     {
-        return Options().BFloat16Enable();
+        return Options().BFloat16Enable() && !_is8i;
     }
 
     bool ScaleLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
