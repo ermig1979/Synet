@@ -201,7 +201,8 @@ namespace Synet
 
     bool SqueezeExcitationLayer::Is16b() const
     {
-        return Options().BFloat16Enable();
+        const LayerParam& p = this->Param();
+        return Options().BFloat16Enable() && _method == QuantizationMethodUnknown && p.src()[0] != p.dst()[0];
     }
 
     void SqueezeExcitationLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)

@@ -31,18 +31,24 @@
 
 namespace Synet
 {
+    struct Bf16OptParam
+    {
+        CPL_PARAM_VALUE(bool, enable, false);
+        CPL_PARAM_VALUE(uint32_t, minSrcC, 64);
+        CPL_PARAM_VALUE(uint32_t, minDstC, 16);
+        CPL_PARAM_VALUE(LowPrecisionType, addType, LowPrecisionTypePassive);
+    };
+
     struct OptimizerParam
     {
         CPL_PARAM_VALUE(bool, mergeTwoConvolutions, true);
         CPL_PARAM_VALUE(uint32_t, mergeTwoConvolutionsOutputNumMax, 256);
         CPL_PARAM_VALUE(bool, mergeInt8Convolutions, true);
-        CPL_PARAM_VALUE(bool, bf16Enable, false);
-        CPL_PARAM_VALUE(uint32_t, bf16MinSrcC, 64);
-        CPL_PARAM_VALUE(uint32_t, bf16MinDstC, 16);
         CPL_PARAM_VALUE(bool, saveUnoptimized, false);
         CPL_PARAM_VALUE(int, convToNhwc, 0);
         CPL_PARAM_VALUE(bool, skipPermute, false);
         CPL_PARAM_VALUE(bool, reuseEltwise, false);
+        CPL_PARAM_STRUCT(Bf16OptParam, bf16);
     };
 
     CPL_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);
@@ -57,6 +63,8 @@ namespace Synet
 
         bool Run(Synet::NetworkParam & network, Floats & bin)
         {
+            if (!SetBf16Options(network.layers()))
+                return false;
             for (int stage = 0; stage < 10; stage++)
             {
                 if (!OptimizeLayers(network, bin, stage))
@@ -222,7 +230,6 @@ namespace Synet
             network.layers() = merged;
             if (buf.size())
                 bin.swap(buf);
-            SetBf16Options(network.layers());
             return true;
         }
 
@@ -889,7 +896,7 @@ namespace Synet
                     l2.convolution().outputNum() >= l1.convolution().outputNum())
                     return false;
             }
-            if (l0.convolution().quantizationLevel() != l2.convolution().quantizationLevel())
+            if (l0.convolution().quantizationLevel() != l2.convolution().quantizationLevel() || l0.lowPrecision().bf16Type() != l2.lowPrecision().bf16Type())
             {
                 return false;
             }
@@ -910,9 +917,13 @@ namespace Synet
                 layer.origin().push_back(l0.name());
                 layer.origin().push_back(l1.name());
             }
+            if (l0.lowPrecision().bf16Type() != LowPrecisionTypeNone)
+                layer.lowPrecision().bf16Type() = l0.lowPrecision().bf16Type();
+            if (l1.lowPrecision().bf16Type() != LowPrecisionTypeNone)
+                layer.lowPrecision().bf16Type() = l1.lowPrecision().bf16Type();
             index += 2;
             dst.push_back(layer);
-            if (src.size() > index + 1 && method == QuantizationMethodUnknown && !l0.convolution().quantizationLevel() == TensorType16b)
+            if (src.size() > index + 1 && method == QuantizationMethodUnknown && l0.lowPrecision().bf16Type() == LowPrecisionTypeNone)
             {
                 const LayerParam & l3 = src[index + 1];
                 if (l2.convolution().activationType() == ActivationFunctionTypeIdentity && IsAdd(l3) && ((l3.src()[0] == l0.src()[0] && l3.src()[1] == l2.dst()[0]) || 
@@ -1032,6 +1043,10 @@ namespace Synet
             if (layer.mergedConvolution().conv()[0].quantizationLevel() == TensorType8i || 
                 layer.mergedConvolution().conv()[1].quantizationLevel() == TensorType8i)
                 layer.origin().push_back(l0.name());
+            if (l0.lowPrecision().bf16Type() != LowPrecisionTypeNone)
+                layer.lowPrecision().bf16Type() = l0.lowPrecision().bf16Type();
+            if (l1.lowPrecision().bf16Type() != LowPrecisionTypeNone)
+                layer.lowPrecision().bf16Type() = l1.lowPrecision().bf16Type();
             index += 1;
             dst.push_back(layer);
             return true;
@@ -2220,20 +2235,27 @@ namespace Synet
 
         bool SetBf16Options(LayerParams& layers)
         {
-            if (!_param.bf16Enable())
+            if (!_param.bf16().enable())
                 return true;
             for (size_t i = 0; i < layers.size(); ++i)
             {
                 LayerParam &layer = layers[i];
                 if (layer.type() == LayerTypeConvolution && layer.weight()[0].format() == TensorFormatNhwc)
                 {
-                    if(layer.convolution().group() == 1 && EffectiveSrcC(layer) >= _param.bf16MinSrcC() && layer.convolution().outputNum() >= _param.bf16MinDstC())
-                        layer.convolution().quantizationLevel() = TensorType16b;
+                    if(layer.convolution().group() == 1 && EffectiveSrcC(layer) >= _param.bf16().minSrcC() && layer.convolution().outputNum() >= _param.bf16().minDstC())
+                        layer.lowPrecision().bf16Type() = LowPrecisionTypeActive;
                 }
                 else if (layer.type() == LayerTypeInnerProduct)
                 {
-                    if ((EffectiveSrcC(layer) >= _param.bf16MinSrcC() && layer.innerProduct().outputNum() >= _param.bf16MinDstC()) || layer.src().size() > 1)
-                        layer.innerProduct().quantizationLevel() = TensorType16b;
+                    if ((EffectiveSrcC(layer) >= _param.bf16().minSrcC() && layer.innerProduct().outputNum() >= _param.bf16().minDstC()) || layer.src().size() > 1)
+                        layer.lowPrecision().bf16Type() = LowPrecisionTypeActive;
+                }
+                else if (layer.type() == Synet::LayerTypeEltwise && 
+                    layer.eltwise().operation() == Synet::EltwiseOperationTypeSum && layer.src().size() <= 2)
+                {
+                    layer.type() = LayerTypeAdd;
+                    layer.eltwise() = EltwiseParam();
+                    layer.lowPrecision().bf16Type() = _param.bf16().addType();
                 }
             }
             return true;

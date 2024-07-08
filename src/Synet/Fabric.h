@@ -125,7 +125,7 @@ namespace Synet
             case LayerTypeConvolution:
                 if (param.convolution().quantizationLevel() == TensorType8i)
                     return new Convolution8iLayer(param, context, method);
-                else if (context->options.BFloat16Enable() && param.convolution().quantizationLevel() == TensorType16b)
+                else if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
                     return new Convolution16bLayer(param, context);
                 else
                     return new Convolution32fLayer(param, context);
@@ -151,7 +151,7 @@ namespace Synet
             case LayerTypeInnerProduct: 
                 if (param.innerProduct().quantizationLevel() == TensorType8i)
                     return new InnerProduct8iLayer(param, context, method);
-                else if (context->options.BFloat16Enable() && param.innerProduct().quantizationLevel() == TensorType16b)
+                else if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
                     return new InnerProduct16bLayer(param, context);
                 else
                     return new InnerProduct32fLayer(param, context);
@@ -162,7 +162,7 @@ namespace Synet
             case LayerTypeMergedConvolution:
                 if (Use8i(param.mergedConvolution()))
                     return new MergedConvolution8iLayer(param, context, method);
-                else if (context->options.BFloat16Enable() && Use16b(param.mergedConvolution()))
+                else if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
                     return new MergedConvolution16bLayer(param, context);
                 else
                     return new MergedConvolution32fLayer(param, context);

@@ -120,6 +120,12 @@ CPL_PARAM_ENUM1(Synet, ActivationFunctionType,
     ActivationFunctionTypeSwish,
     ActivationFunctionTypeGelu);
 
+CPL_PARAM_ENUM1(Synet, LowPrecisionType,
+    LowPrecisionTypeNone,
+    LowPrecisionTypeInternal,
+    LowPrecisionTypeActive,
+    LowPrecisionTypePassive);
+
 CPL_PARAM_ENUM1(Synet, BinaryOperationType,
     BinaryOperationTypeAnd,
     BinaryOperationTypeDiv,
@@ -316,6 +322,11 @@ namespace Synet
         CPL_PARAM_VALUE(TensorFormat, format, TensorFormatNchw);
         CPL_PARAM_VALUE(TensorType, type, TensorType32f);
         CPL_PARAM_VALUE(bool, scalar, false);
+    };
+
+    struct LowPrecisionParam
+    {
+        CPL_PARAM_VALUE(LowPrecisionType, bf16Type, LowPrecisionTypeNone);
     };
 
     //-------------------------------------------------------------------------------------------------
@@ -764,6 +775,7 @@ namespace Synet
         CPL_PARAM_VALUE(Strings, dst, Strings());
         CPL_PARAM_VECTOR(WeightParam, weight);
         CPL_PARAM_VALUE(Strings, origin, Strings());
+        CPL_PARAM_STRUCT(LowPrecisionParam, lowPrecision);
 
         CPL_PARAM_STRUCT(ArgMaxParam, argMax);
         CPL_PARAM_STRUCT(BiasParam, bias);

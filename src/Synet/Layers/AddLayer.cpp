@@ -352,12 +352,15 @@ namespace Synet
 
     bool AddLayer::Can16b() const
     {
-        return Options().BFloat16Enable();
+        const LayerParam& p = this->Param();
+        return Options().BFloat16Enable() && (p.lowPrecision().bf16Type() == LowPrecisionTypePassive || p.lowPrecision().bf16Type() == LowPrecisionTypeActive);
     }
 
     bool AddLayer::Is16b() const
     {
-        return false;// Options().BFloat16Enable() && _method == QuantizationMethodUnknown;
+        const LayerParam& p = this->Param();
+        return Options().BFloat16Enable() && _method == QuantizationMethodUnknown &&
+            p.src()[0] != p.dst()[0] && (p.src().size() == 1 || p.src()[1] != p.dst()[0]) && p.lowPrecision().bf16Type() == LowPrecisionTypeActive;
     }
 
     int64_t AddLayer::Flop() const

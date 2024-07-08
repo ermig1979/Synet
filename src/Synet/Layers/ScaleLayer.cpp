@@ -209,7 +209,8 @@ namespace Synet
 
     bool ScaleLayer::Is16b() const
     {
-        return Options().BFloat16Enable() && !_is8i;
+        const LayerParam& p = this->Param();
+        return Options().BFloat16Enable() && !_is8i && p.src()[0] != p.dst()[0];
     }
 
     bool ScaleLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
