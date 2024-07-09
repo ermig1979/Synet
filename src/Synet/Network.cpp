@@ -568,16 +568,8 @@ namespace Synet
         for (size_t i = 0; i < _param().layers().size() && !has16b && enable; ++i)
         {
             const LayerParam& layer = _param().layers()[i];
-            if (layer.type() == LayerTypeConvolution && layer.convolution().quantizationLevel() == TensorType16b)
+            if (layer.lowPrecision().bf16Type() == LowPrecisionTypeActive)
                 has16b = true;
-            if (layer.type() == LayerTypeInnerProduct && layer.innerProduct().quantizationLevel() == TensorType16b)
-                has16b = true;
-            if (layer.type() == LayerTypeMergedConvolution)
-            {
-                for (size_t c = 0; c < layer.mergedConvolution().conv().size(); ++c)
-                    if (layer.mergedConvolution().conv()[c].quantizationLevel() == TensorType16b)
-                        has16b = true;
-            }
         }
         return has16b && enable;
     }

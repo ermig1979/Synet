@@ -36,7 +36,8 @@ namespace Synet
         CPL_PARAM_VALUE(bool, enable, false);
         CPL_PARAM_VALUE(uint32_t, minSrcC, 64);
         CPL_PARAM_VALUE(uint32_t, minDstC, 16);
-        CPL_PARAM_VALUE(LowPrecisionType, addType, LowPrecisionTypePassive);
+        CPL_PARAM_VALUE(LowPrecisionType, addType, LowPrecisionTypeActive);
+        CPL_PARAM_VALUE(LowPrecisionType, reluType, LowPrecisionTypePassive);
     };
 
     struct OptimizerParam
@@ -2256,6 +2257,10 @@ namespace Synet
                     layer.type() = LayerTypeAdd;
                     layer.eltwise() = EltwiseParam();
                     layer.lowPrecision().bf16Type() = _param.bf16().addType();
+                }
+                else if (layer.type() == Synet::LayerTypeRelu)
+                {
+                    layer.lowPrecision().bf16Type() = _param.bf16().reluType();
                 }
             }
             return true;

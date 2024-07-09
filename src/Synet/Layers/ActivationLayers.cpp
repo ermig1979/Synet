@@ -225,18 +225,22 @@ namespace Synet
     {
     }
 
+    bool ReluLayer::Can16b() const
+    {
+        const LayerParam& p = this->Param();
+        return p.lowPrecision().bf16Type() == LowPrecisionTypePassive;
+    }
+
     bool ReluLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         _negativeSlope = this->Param().relu().negativeSlope();
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("ReluLayer supports only 1 input and 1 output!");
         _size = src[0]->Size();
-        if (src[0]->GetType() == TensorType32f)
-        {
-            dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
-        }
-        else
-            SYNET_ERROR("ReluLayer supports only FP32 input and output!");
+        _type = src[0]->GetType();
+        if (_type != TensorType32f && _type != TensorType16b)
+            SYNET_ERROR("ReluLayer supports only FP32 and BF16 input and output!");
+        dst[0]->Reshape(_type, src[0]->Shape(), src[0]->Format());
         if (src[0]->Const())
         {
             ForwardCpu(src, buf, dst);
@@ -245,7 +249,7 @@ namespace Synet
         }
         else
         {
-            this->UsePerfStat();
+            this->UsePerfStat(Cpl::ToStr(_type), _size);
             _const = false;
         }
         return true;
@@ -253,7 +257,17 @@ namespace Synet
 
     void ReluLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        Relu32f(src[0]->Data<float>(), _size, _negativeSlope, dst[0]->Data<float>());
+        switch (_type)
+        {
+        case TensorType32f:
+            Relu32f(src[0]->Data<float>(), _size, _negativeSlope, dst[0]->Data<float>());
+            break;
+        case TensorType16b:
+            Relu16b(src[0]->Data<uint16_t>(), _size, _negativeSlope, dst[0]->Data<uint16_t>());
+            break;
+        default:
+            assert(0);
+        }
     }
 
     //-------------------------------------------------------------------------------------------------

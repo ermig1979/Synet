@@ -50,6 +50,10 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
+    void Relu16b(const uint16_t* src, size_t size, float slope, uint16_t* dst);
+
+    //-------------------------------------------------------------------------------------------------
+
     template <typename T> SYNET_INLINE T CpuElu(T value, T alpha)
     {
         return value >= T(0) ? value : alpha * (exp(value) - T(1));

@@ -140,11 +140,14 @@ namespace Synet
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
+        virtual bool Can16b() const;
+
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
         size_t _size;
+        TensorType _type;
         float _negativeSlope;
     };
 

@@ -25,6 +25,8 @@
 #include "Synet/Utils/Math.h"
 #include "Synet/Utils/Activation.h"
 
+#include "Synet/Quantization/Bf16.h"
+
 //#define SYNET_SIMD_SYNET_DISABLE
 
 namespace Synet
@@ -126,6 +128,25 @@ namespace Synet
 #else
         for (size_t i = 0; i < size; ++i)
             dst[i] = Relu32f(src[i], slope);
+#endif
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    SYNET_INLINE uint16_t Relu16b(uint16_t value, float slope)
+    {
+        float src = BFloat16ToFloat32(value);
+        float dst = Max(src, 0.0f) + slope * Min(src, 0.0f);
+        return Float32ToBFloat16(dst);
+    }
+
+    void Relu16b(const uint16_t* src, size_t size, float slope, uint16_t* dst)
+    {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        ::SimdSynetRelu16b(src, size, &slope, dst);
+#else
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = Relu16b(src[i], slope);
 #endif
     }
 
