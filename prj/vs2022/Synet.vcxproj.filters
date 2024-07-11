@@ -572,6 +572,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\InnerProduct32fLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Alpha.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

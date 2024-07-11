@@ -144,6 +144,7 @@ namespace Synet
     typedef std::vector<int64_t> Longs;
     typedef std::vector<uint64_t> ULongs;
     typedef std::vector<float> Floats;
+    typedef std::vector<float*> FloatPtrs;
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
     typedef Simd::View<Simd::Allocator> View;
     typedef std::vector<View> Views;

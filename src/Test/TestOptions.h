@@ -149,7 +149,7 @@ namespace Test
             debugPrintLast = FromString<int>(GetArg("-dpl", "2"));
             debugPrintPrecision = FromString<int>(GetArg("-dpp", "4"));
             annotateRegions = FromString<int>(GetArg("-ar", "0"));
-            regionThreshold = FromString<float>(GetArg("-rt", "0.3"));
+            regionThreshold = FromString<float>(GetArg("-rt", "0.5"));
             regionOverlap = FromString<float>(GetArg("-ro", "0.5"));
             statFilter = FromString<double>(GetArg("-sf", "0.0"));
             bf16 = FromString<bool>(GetArg("-bf", "0"));

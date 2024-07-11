@@ -164,10 +164,10 @@ namespace Synet
 
         SYNET_INLINE void DecodeXY(float x, float y, const float* bbox, float step, float* xy) const
         {
-            xy[0] = RestrictRange<float>(x - bbox[0] * step, 0, _netW);
-            xy[1] = RestrictRange<float>(y - bbox[1] * step, 0, _netH);
-            xy[2] = RestrictRange<float>(x + bbox[2] * step, 0, _netW);
-            xy[3] = RestrictRange<float>(y + bbox[3] * step, 0, _netH);
+            xy[0] = RestrictRange<float>(x - bbox[0] * step, 0, (float)_netW);
+            xy[1] = RestrictRange<float>(y - bbox[1] * step, 0, (float)_netH);
+            xy[2] = RestrictRange<float>(x + bbox[2] * step, 0, (float)_netW);
+            xy[3] = RestrictRange<float>(y + bbox[3] * step, 0, (float)_netH);
         }
     };
 }
