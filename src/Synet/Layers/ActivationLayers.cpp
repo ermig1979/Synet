@@ -249,7 +249,8 @@ namespace Synet
         }
         else
         {
-            this->UsePerfStat(Cpl::ToStr(_type), _size);
+            //this->UsePerfStat(Cpl::ToStr(_size) + "-" + Cpl::ToStr(_type), _size);
+            this->UsePerfStat(Cpl::ToStr(_type));
             _const = false;
         }
         return true;
