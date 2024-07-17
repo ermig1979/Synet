@@ -34,10 +34,11 @@ namespace Synet
     struct Bf16OptParam
     {
         CPL_PARAM_VALUE(bool, enable, false);
-        CPL_PARAM_VALUE(uint32_t, minSrcC, 64);
+        CPL_PARAM_VALUE(uint32_t, minSrcC, 32);
         CPL_PARAM_VALUE(uint32_t, minDstC, 16);
         CPL_PARAM_VALUE(LowPrecisionType, addType, LowPrecisionTypeActive);
         CPL_PARAM_VALUE(LowPrecisionType, reluType, LowPrecisionTypePassive);
+        CPL_PARAM_VALUE(Strings, exclude, Strings());
     };
 
     struct OptimizerParam
@@ -2241,6 +2242,12 @@ namespace Synet
             for (size_t i = 0; i < layers.size(); ++i)
             {
                 LayerParam &layer = layers[i];
+                bool exclude = false;
+                for (size_t e = 0; e < _param.bf16().exclude().size() && !exclude; ++e)
+                    if (layer.name() == _param.bf16().exclude()[e])
+                        exclude = true;
+                if (exclude)
+                    continue;
                 if (layer.type() == LayerTypeConvolution && layer.weight()[0].format() == TensorFormatNhwc)
                 {
                     if(layer.convolution().group() == 1 && EffectiveSrcC(layer) >= _param.bf16().minSrcC() && layer.convolution().outputNum() >= _param.bf16().minDstC())

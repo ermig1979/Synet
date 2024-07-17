@@ -77,7 +77,7 @@ namespace Test
                 const Tensor& s = second[d];
 
                 if (f.Shape() != s.Shape())
-                    SYNET_ERROR(failed << std::endl << "Dst[" << d << "] shape : " << DebugPrint(f.Shape()) << " != " << DebugPrint(s.Shape()));
+                    SYNET_ERROR(failed << std::endl << "Dst[" << d << "] " << s.Name() << " shape : " << DebugPrint(f.Shape()) << " != " << DebugPrint(s.Shape()));
                 Difference difference(f, s);
                 if (difference.Valid() && 0)
                 {
@@ -127,7 +127,7 @@ namespace Test
             using Synet::Detail::DebugPrint;
             float _f = f.CpuData(i)[0], _s = s.CpuData(i)[0], _t = _options.compareThreshold, _e = 0;
             if (!Compare(_f, _s, _t, _e))
-                SYNET_ERROR(m << std::endl << std::fixed << "Dst[" << d << "]" << DebugPrint(f.Shape()) << " at " << DebugPrint(i) << " : " << _f << " != " << _s << " ( " << _e << " > " << _t << " ) " << c);
+                SYNET_ERROR(m << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape()) << " at " << DebugPrint(i) << " : " << _f << " != " << _s << " ( " << _e << " > " << _t << " ) " << c);
             return true;
         }
 
@@ -150,7 +150,7 @@ namespace Test
                     float cd;
                     SimdCosineDistance32f(f.Data<float>(Shp(n, 0)), s.Data<float>(Shp(n, 0)), f.Axis(1), &cd);
                     if (cd > _options.compareThreshold)
-                        SYNET_ERROR(failed << std::endl << std::fixed << "Dst[" << d << "] " << DebugPrint(f.Shape()) << " at " << DebugPrint(Shp(n, 0)) << " : cosine distance " << cd << " > " << _options.compareThreshold);
+                        SYNET_ERROR(failed << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape()) << " at " << DebugPrint(Shp(n, 0)) << " : cosine distance " << cd << " > " << _options.compareThreshold);
                 }
             }
             else if (compType == "softmax" && (_options.bf16 || !_options.comparePrecise))
