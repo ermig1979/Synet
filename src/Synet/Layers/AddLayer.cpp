@@ -573,6 +573,8 @@ namespace Synet
             _addBias = GetAddBias(_typeA, _typeB, _typeD);
             if(_uniform == NULL || _addBias == NULL)
                 SYNET_ERROR("AddLayer can't process input type!");
+            if(_src[0]->Shape() == _src[1]->Shape())
+                _add16b.Init(_src[0]->Shape(), _typeA, _src[1]->Shape(), _typeB, _typeD, _src[0]->Format());
         }
 
         if (_src[0]->Const() && _src[1]->Const())
@@ -608,6 +610,11 @@ namespace Synet
             const uint8_t* srcA = _src[0]->RawData();
             const uint8_t* srcB = _src[1]->RawData();
             uint8_t* dst0 = dst[0]->RawData();
+            if (_add16b.Enable())
+            {
+                _add16b.Forward(srcA, srcB, dst0);
+                return;
+            }
             switch (_special)
             {
             case SpecialNone:

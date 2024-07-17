@@ -26,6 +26,7 @@
 #pragma once
 
 #include "Synet/Layer.h"
+#include "Synet/Utils/Add.h"
 
 namespace Synet
 {
@@ -82,5 +83,6 @@ namespace Synet
         UniformPtr _uniform;
         AddBiasPtr _addBias;
         UniversalPtr _universal;
+        Add16b _add16b;
     };
 }
