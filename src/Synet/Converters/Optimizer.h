@@ -1031,6 +1031,8 @@ namespace Synet
                     return false;
                 if (k1.size() < 2 || (k1[0] != k1[1] || (k1[0] != 3 && k1[0] != 5 && k1[0] != 7)))
                     return false;
+                if (l0.lowPrecision().bf16Type() == LowPrecisionTypeActive && k0[0] != 1)
+                    return false;
             }
             LayerParam layer;
             layer.type() = LayerTypeMergedConvolution;
