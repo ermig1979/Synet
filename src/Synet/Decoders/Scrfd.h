@@ -118,16 +118,28 @@ namespace Synet
         SYNET_INLINE const float* GetPtr(const Tensors& dst, const String& name, size_t b) const
         {
             for (size_t d = 0; d < dst.size(); d++)
+            {
                 if (dst[d].Name() == name)
-                    return dst[d].Data<float>(Shp(b, 0, 0));
+                {
+                    if (dst[d].Count() == 4)
+                        return dst[d].Data<float>(Shp(b, 0, 0, 0));
+                    if (dst[d].Count() == 3)
+                        return dst[d].Data<float>(Shp(b, 0, 0));
+                }
+            }
             return NULL;
         }
 
         SYNET_INLINE const float* GetPtr(const Net& net, const String& name, size_t b) const
         {
             const Tensor* dst = net.Dst(name);
-            if(dst)
-                return dst->Data<float>(Shp(b, 0, 0));
+            if (dst)
+            {
+                if(dst->Count() == 4)
+                    return dst->Data<float>(Shp(b, 0, 0, 0));
+                if (dst->Count() == 3)
+                    return dst->Data<float>(Shp(b, 0, 0));
+            }
             return NULL;
         }
 
