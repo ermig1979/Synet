@@ -1001,7 +1001,7 @@ namespace Synet
                 CPL_LOG_SS(Info, msg.str());
             }
 #endif
-            if (_stages[i].layer->_isBack && param.type() != LayerTypeStub)
+            if (_stages[i].layer->_isBack && /*param.type() != LayerTypeStub &&*/ param.name().find("/sink_port") == String::npos)
                 _stages[i].dst[0]->SetName(param.name());
         }
         return true;
