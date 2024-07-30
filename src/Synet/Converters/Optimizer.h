@@ -2283,7 +2283,7 @@ namespace Synet
                         exclude = true;
                 if (exclude)
                     continue;
-                if (layer.type() == LayerTypeConvolution && layer.weight()[0].format() == TensorFormatNhwc)
+                if (layer.type() == LayerTypeConvolution && (layer.weight()[0].format() == TensorFormatNhwc || (layer.convolution().kernel()[0] == 1 && layer.convolution().kernel()[1] == 1)))
                 {
                     if(layer.convolution().group() == 1 && EffectiveSrcC(layer) >= _param.bf16().minSrcC() && layer.convolution().outputNum() >= _param.bf16().minDstC())
                         layer.lowPrecision().bf16Type() = LowPrecisionTypeActive;
