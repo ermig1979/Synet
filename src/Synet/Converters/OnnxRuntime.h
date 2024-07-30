@@ -2057,7 +2057,29 @@ namespace Synet
                 else
                 {
                     layer.type() = Synet::LayerTypeStridedSlice;
-                    if (layer.src().size() == 5)
+                    if (layer.src().size() == 4)
+                    {
+                        if (src1->type() != LayerTypeMeta || src2->type() != LayerTypeMeta || src3->type() != LayerTypeMeta)
+                            return false;
+                        if (src1->meta().type() == Synet::MetaTypeConst && src2->meta().type() == Synet::MetaTypeConst &&
+                            src3->meta().type() == Synet::MetaTypeConst)
+                        {
+                            if (src1->meta().alpha().i64().size() != 1 || src2->meta().alpha().i64().size() != 1 ||
+                                src3->meta().alpha().i64().size() != 1)
+                                return false;
+                            layer.stridedSlice().axes().push_back((size_t)src3->meta().alpha().i64()[0]);
+                            layer.stridedSlice().beginDims().push_back((size_t)src1->meta().alpha().i64()[0]);
+                            layer.stridedSlice().endDims().push_back((size_t)src2->meta().alpha().i64()[0]);
+                            //layer.stridedSlice().strideDims().push_back((size_t)src4->meta().alpha().i64()[0]);
+                            if (trans && !PermutedToNchw(layers, layer.src(), false, true, true))
+                            {
+                                Shape nchw = Shape({ 0, 3, 1, 2 });
+                                layer.stridedSlice().axes()[0] = nchw[layer.stridedSlice().axes()[0]];
+                            }
+                            layer.src().resize(1);
+                        }
+                    }
+                    else if (layer.src().size() == 5)
                     {
                         if (src1->type() != LayerTypeMeta || src2->type() != LayerTypeMeta || src3->type() != LayerTypeMeta || src4->type() != LayerTypeMeta)
                             return false;
@@ -2330,7 +2352,9 @@ namespace Synet
                     {
                         if (order == Shape({ 0, 2, 1, 3, 4 }))
                             order = Shape({ 0, 1, 2, 4, 3 });
-                        if (order == Shape({ 0, 2, 3, 1 }))
+                        if (order == Shp(0, 1, 3, 2))
+                            order = Shp(0, 2, 1, 3);
+                        else if (order == Shape({ 0, 2, 3, 1 }))
                         {
                             order = Shape({ 0, 1, 2, 3 });
                             layer.permute().format() = TensorFormatNchw;

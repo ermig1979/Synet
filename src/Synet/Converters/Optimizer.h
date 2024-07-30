@@ -182,6 +182,8 @@ namespace Synet
                         continue;
                     if (MergeScale(network.layers(), i, merged, changes))
                         continue;
+                    if (MergeTiledScale2D(network.layers(), i, merged, changes))
+                        continue;
                     break;
                 }
                 case 5:
@@ -1618,6 +1620,35 @@ namespace Synet
             return true;
         }
 
+        bool MergeTiledScale2D(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 4)
+                return false;
+            if (src[index + 0].type() != LayerTypeTile || src[index + 0].src().size() != 2)
+                return false;
+            if (src[index + 1].type() != LayerTypeTile || src[index + 1].src().size() != 2)
+                return false;
+            if (!IsMul(src[index + 2]) || src[index + 2].src().size() != 2)
+                return false;
+            if (!IsMul(src[index + 3]) || src[index + 3].src().size() != 2)
+                return false;
+            if (src[index + 0].src()[1] != src[index + 1].src()[1] || 
+                src[index + 2].src()[1] != src[index + 1].dst()[0] ||
+                src[index + 3].src()[1] != src[index + 0].dst()[0])
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeTiledScale2D;
+            layer.name() = src[index + 3].name();
+            layer.src().push_back(src[index + 2].src()[0]);
+            layer.src().push_back(src[index + 1].src()[0]);
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.dst().push_back(layer.name());
+            dst.push_back(layer);
+            index += 3;
+            return true;
+        }
+
         bool MergeRnnGruBd(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
         {
             const size_t RNN_GRU_BD_SIZE = 19;
@@ -2160,6 +2191,8 @@ namespace Synet
                 return true;
             if (layer.type() == LayerTypePooling && layer.pooling().method() == PoolingMethodTypeMax && 
                 layer.pooling().kernel() == Shp(1, 1) && layer.pooling().stride() == Shp(1, 1))
+                return true;
+            if (layer.type() == LayerTypeTiledScale2D)
                 return true;
             return false;
         }

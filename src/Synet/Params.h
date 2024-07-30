@@ -99,6 +99,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeSwitch,//legacy
     LayerTypeTensorIterator,
     LayerTypeTile,
+    LayerTypeTiledScale2D,
     LayerTypeTopK,
     LayerTypeUnaryOperation,
     LayerTypeUnpack,

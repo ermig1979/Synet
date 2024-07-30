@@ -89,6 +89,7 @@
 #include "Synet/Layers/SwitchLayer.h"
 #include "Synet/Layers/TensorIteratorLayer.h"
 #include "Synet/Layers/TileLayer.h"
+#include "Synet/Layers/TiledScale2DLayer.h"
 #include "Synet/Layers/TopKLayer.h"
 #include "Synet/Layers/UnaryOperationLayer.h"
 #include "Synet/Layers/UpsampleLayer.h"
@@ -204,6 +205,7 @@ namespace Synet
             case LayerTypeSwitch: return new SwitchLayer<T>(param, context);
             case LayerTypeTensorIterator: return new TensorIteratorLayer<T>(param, context);
             case LayerTypeTile: return new TileLayer(param, context);
+            case LayerTypeTiledScale2D: return new TiledScale2DLayer(param, context);
             case LayerTypeTopK: return new TopKLayer(param, context);
             case LayerTypeUnaryOperation: return new UnaryOperationLayer(param, context);
             case LayerTypeUnpack: return new UnpackLayer(param, context);
