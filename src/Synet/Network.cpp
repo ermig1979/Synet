@@ -726,49 +726,106 @@ namespace Synet
         }
     }
 
-    bool Network::Is8iInSubGraph(const Stage & stage)
+    bool Network::Is8iInSubGraph(size_t current, IdSet& visited, bool back)
     {
-        const Layer & layer = *stage.layer;
+        visited.insert(current);
+        const Stage& stage = _stages[current];
+        const Layer& layer = *stage.layer;
         if (layer._isBack)
             return false;
-        const LayerParam & param = layer.Param();
+        const LayerParam& param = layer.Param();
+        if (param.type() == LayerTypeInput)
+            return false;
         for (size_t d = 0; d < param.dst().size(); ++d)
         {
-            const String & name = param.dst()[d];
-            const IdSet & ids = _srcIds[name];
+            const String& name = param.dst()[d];
+            const IdSet& ids = _srcIds[name];
             for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
             {
-                const Stage & dst = _stages[*id];
-                if (&dst == &stage)
+                if (visited.find(*id) != visited.end())
                     continue;
+                const Stage& dst = _stages[*id];
                 if (dst.layer->Is8i())
                     continue;
                 if (dst.layer->Param().type() == LayerTypePriorBox)
                     continue;
-                if (dst.layer->Can8i() && Is8iInSubGraph(dst))
+                if (dst.layer->Can8i() && Is8iInSubGraph(*id, visited, true))
                     continue;
                 return false;
+            }
+        }
+        if (back)
+        {
+            for (size_t s = 0; s < param.src().size(); ++s)
+            {
+                const String& name = param.src()[s];
+                const IdSet& dstIds = _dstIds[name];
+                for (IdSet::const_iterator id = dstIds.begin(); id != dstIds.end(); ++id)
+                {
+                    if (visited.find(*id) != visited.end())
+                        continue;
+                    const Stage& src = _stages[*id];
+                    if (src.layer->Is8i())
+                        continue;
+                    if (src.layer->Param().type() == LayerTypePriorBox)
+                        continue;
+                    if (src.layer->Can8i() && Is8iInSubGraph(*id, visited, true))
+                        continue;
+                    return false;
+                }
+                const IdSet& srcIds = _srcIds[name];
+                for (IdSet::const_iterator id = srcIds.begin(); id != srcIds.end(); ++id)
+                {
+                    if (visited.find(*id) != visited.end())
+                        continue;
+                    const Stage& dst = _stages[*id];
+                    if (dst.layer->Is8i())
+                        continue;
+                    if (dst.layer->Param().type() == LayerTypePriorBox)
+                        continue;
+                    if (dst.layer->Can8i() && Is8iInSubGraph(*id, visited, true))
+                        continue;
+                    return false;
+                }
             }
         }
         return true;
     }
 
-    void Network::Set8iInSubGraph(const Stage & stage)
+    void Network::Set8iInSubGraph(size_t current, IdSet& visited, bool back)
     {
-        const LayerParam & param = stage.layer->Param();
+        visited.insert(current);
+        const Stage& stage = _stages[current];
+        const LayerParam& param = stage.layer->Param();
         for (size_t d = 0; d < param.dst().size(); ++d)
         {
-            const String & name = param.dst()[d];
+            const String& name = param.dst()[d];
             _tensors[_tensorId[name]]->SetType(TensorType8u);
-            const IdSet & ids = _srcIds[name];
+            const IdSet& ids = _srcIds[name];
             for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
             {
-                const Stage & dst = _stages[*id];
-                if (&dst == &stage)
+                if (visited.find(*id) != visited.end())
                     continue;
-                if (dst.layer->Is8i())
+                if (_stages[*id].layer->Is8i())
                     continue;
-                Set8iInSubGraph(dst);
+                Set8iInSubGraph(*id, visited, true);
+            }
+        }
+        if (back)
+        {
+            for (size_t s = 0; s < param.src().size(); ++s)
+            {
+                const String& name = param.src()[s];
+                _tensors[_tensorId[name]]->SetType(TensorType8u);
+                const IdSet& ids = _dstIds[name];
+                for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
+                {
+                    if (visited.find(*id) != visited.end())
+                        continue;
+                    if (_stages[*id].layer->Is8i())
+                        continue;
+                    Set8iInSubGraph(*id, visited, true);
+                }
             }
         }
     }
@@ -778,10 +835,12 @@ namespace Synet
         for (size_t s = 0; s < _stages.size(); ++s)
         {
             const Layer & layer = *_stages[s].layer;
-            if (!layer.Is8i())
-                continue;
-            if (Is8iInSubGraph(_stages[s]))
-                Set8iInSubGraph(_stages[s]);
+            if (layer.Is8i())
+            {
+                IdSet checked, setted;
+                if (Is8iInSubGraph(s, checked, false))
+                    Set8iInSubGraph(s, setted, false);
+            }
         }
     }
 

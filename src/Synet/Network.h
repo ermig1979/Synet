@@ -155,9 +155,9 @@ namespace Synet
 
         void SetTensorType32f();
 
-        bool Is8iInSubGraph(const Stage& stage);
+        bool Is8iInSubGraph(size_t current, IdSet& visited, bool back);
 
-        void Set8iInSubGraph(const Stage& stage);
+        void Set8iInSubGraph(size_t current, IdSet& visited, bool back);
 
         void SetTensorType8i();
 
