@@ -36,6 +36,7 @@ namespace Test
     public:
         struct Options : public Cpl::ArgsParser
         {
+            String mode;
             Strings inputFirsts;
             Strings inputSeconds;
             String outputDirectory;
@@ -46,11 +47,11 @@ namespace Test
             Options(int argc, char* argv[])
                 : ArgsParser(argc, argv, true)
             {
+                mode = GetArg("-m", "pair", true, Strings({ "pair", "bf16" }));
                 inputFirsts = GetArgs("-if", Strings());
-                inputSeconds = GetArgs("-is", Strings());
+                inputSeconds = GetArgs("-is", Strings(), false);
                 outputDirectory = GetArg("-od", "diff");
                 reportName = GetArg("-rn", "_diff");
-                autoCorrection = FromString<bool>(GetArg("-ac", "1"));
                 significantDifference = FromString<double>(GetArg("-sd", "0.05"));
             }
         };
@@ -65,8 +66,6 @@ namespace Test
             if (!LoadInput())
                 return false;
             if (!SetDiffMap())
-                return false;
-            if (!AutoCorrection())
                 return false;
             if (!SetAverage())
                 return false;
@@ -84,6 +83,20 @@ namespace Test
         {
             T time, flops, memory;
             Data() : time(0), flops(0), memory(0) {}
+
+            inline void AddLog(const Data & data)
+            {
+                time += ::log(data.time);
+                flops += ::log(data.flops);
+                memory += ::log(data.memory);
+            }
+
+            inline void ExpAvg(int count)
+            {
+                time = count > 0 ? ::exp(time / count) : 0;
+                flops = count > 0 ? ::exp(flops / count) : 0;
+                memory = count > 0 ? ::exp(memory / count) : 0;
+            }
         };
 
         struct Test
@@ -136,12 +149,15 @@ namespace Test
                     return false;
                 _first.push_back(first);
             }
-            for (size_t i = 0; i < _options.inputSeconds.size(); ++i)
+            if (_options.mode == "pair")
             {
-                Set second;
-                if (!Load(_options.inputSeconds[i], second))
-                    return false;
-                _second.push_back(second);
+                for (size_t i = 0; i < _options.inputSeconds.size(); ++i)
+                {
+                    Set second;
+                    if (!Load(_options.inputSeconds[i], second))
+                        return false;
+                    _second.push_back(second);
+                }
             }
             return true;
         }
@@ -192,83 +208,58 @@ namespace Test
         bool SetDiffMap()
         {
             _full.clear();
-            for (size_t i = 0; i < _first.size(); ++i)
+            if (_options.mode == "pair")
             {
-                const Set& set = _first[i];
-                for (size_t j = 0; j < set.tests.size(); ++j)
+                for (size_t i = 0; i < _first.size(); ++i)
                 {
-                    const Test& test = set.tests[j];
-                    _full[Id(test.name, test.format, test.batch)].firsts.push_back(test);
+                    const Set& set = _first[i];
+                    for (size_t j = 0; j < set.tests.size(); ++j)
+                    {
+                        const Test& test = set.tests[j];
+                        _full[Id(test.name, test.format, test.batch)].firsts.push_back(test);
+                    }
+                }
+                for (size_t i = 0; i < _second.size(); ++i)
+                {
+                    const Set& set = _second[i];
+                    for (size_t j = 0; j < set.tests.size(); ++j)
+                    {
+                        const Test& test = set.tests[j];
+                        _full[Id(test.name, test.format, test.batch)].seconds.push_back(test);
+                    }
+                }
+                for (DiffMap::iterator it = _full.begin(); it != _full.end();)
+                {
+                    if (it->second.firsts.size() < _options.inputFirsts.size() ||
+                        it->second.seconds.size() < _options.inputSeconds.size())
+                        it = _full.erase(it);
+                    else
+                        ++it;
                 }
             }
-            for (size_t i = 0; i < _second.size(); ++i)
+            else
             {
-                const Set& set = _second[i];
-                for (size_t j = 0; j < set.tests.size(); ++j)
+                for (size_t i = 0; i < _first.size(); ++i)
                 {
-                    const Test& test = set.tests[j];
-                    _full[Id(test.name, test.format, test.batch)].seconds.push_back(test);
+                    const Set& set = _first[i];
+                    for (size_t j = 0; j < set.tests.size(); ++j)
+                    {
+                        const Test& test = set.tests[j];
+                        if(test.format == 0)
+                            _full[Id(test.name, -1, test.batch)].firsts.push_back(test);
+                        else
+                            _full[Id(test.name, -1, test.batch)].seconds.push_back(test);
+                    }
+                }            
+                for (DiffMap::iterator it = _full.begin(); it != _full.end();)
+                {
+                    if (it->second.firsts.size() == 0 || it->second.seconds.size() == 0)
+                        it = _full.erase(it);
+                    else
+                        ++it;
                 }
-            }
-            for (DiffMap::iterator it = _full.begin(); it != _full.end();)
-            {
-                if (it->second.firsts.size() < _options.inputFirsts.size() ||
-                    it->second.seconds.size() < _options.inputSeconds.size())
-                    it = _full.erase(it);
-                else
-                    ++it;
             }
             return !_full.empty();
-        }
-
-        bool AutoCorrection()
-        {
-            if (!_options.autoCorrection)
-                return true;
-
-            Doubles first(_options.inputFirsts.size(), 0), second(_options.inputSeconds.size(), 0);
-            for (DiffMap::iterator it = _full.begin(); it != _full.end(); ++it)
-            {
-                for(size_t i = 0; i < first.size(); ++i)
-                    first[i] += ::log(it->second.firsts[i].second.time);
-                for (size_t i = 0; i < second.size(); ++i)
-                    second[i] += ::log(it->second.seconds[i].second.time);
-            }
-
-            for (size_t i = 0; i < first.size(); ++i)
-                first[i] = ::exp(first[i] / _full.size());
-            for (size_t i = 0; i < second.size(); ++i)
-                second[i] = ::exp(second[i] / _full.size());
-
-            Doubles firstK(first.size(), 1.0), secondK(second.size(), 1.0);
-            for (size_t i = 0; i < first.size(); ++i)
-            {
-                for (size_t j = 0; j < first.size(); ++j)
-                    if (first[i] * 0.01 > first[j])
-                        firstK[i] = 0.001;
-                for (size_t j = 0; j < second.size(); ++j)
-                    if (first[i] * 0.01 > second[j])
-                        firstK[i] = 0.001;
-            }
-            for (size_t i = 0; i < second.size(); ++i)
-            {
-                for (size_t j = 0; j < first.size(); ++j)
-                    if (second[i] * 0.01 > first[j])
-                        secondK[i] = 0.001;
-                for (size_t j = 0; j < second.size(); ++j)
-                    if (second[i] * 0.01 > second[j])
-                        secondK[i] = 0.001;
-            }
-
-            for (DiffMap::iterator it = _full.begin(); it != _full.end(); ++it)
-            {
-                for (size_t i = 0; i < first.size(); ++i)
-                    it->second.firsts[i].second.time *= firstK[i];
-                for (size_t i = 0; i < second.size(); ++i)
-                    it->second.seconds[i].second.time *= secondK[i];
-            }
-
-            return true;
         }
 
         bool SetAverage()
@@ -303,10 +294,8 @@ namespace Test
             summary.firsts.resize(1);
             summary.seconds.resize(1);
             summary.first.count++;
-            summary.first.second.time += ::log(first.second.time);
-            summary.first.second.flops += ::log(first.second.flops);
-            summary.second.second.time += ::log(second.second.time);
-            summary.second.second.flops += ::log(second.second.flops);
+            summary.first.second.AddLog(first.second);
+            summary.second.second.AddLog(second.second);
         }
 
         bool FillSummary()
@@ -316,13 +305,22 @@ namespace Test
                 const Test& first = it->second.first;
                 const Test& second = it->second.second;
 
-                Diff & common = _summ[Id("  Common", -1, -1)];
-                Diff& format = _summ[Id(first.format ? "BF16-Common" : "FP32-Common", first.format, -1)];
-                Diff & batch = _summ[Id((first.format ? "BF16-Batch-" : "FP32-Batch-") + std::to_string(first.batch), first.format, first.batch)];
-
-                UpdateSummary(first, second, batch);
-                UpdateSummary(first, second, format);
-                UpdateSummary(first, second, common);
+                if (_options.mode == "pair")
+                {
+                    Diff& common = _summ[Id("  Common", -1, -1)];
+                    Diff& format = _summ[Id(first.format ? "BF16-Common" : "FP32-Common", first.format, -1)];
+                    Diff& batch = _summ[Id((first.format ? "BF16-Batch-" : "FP32-Batch-") + std::to_string(first.batch), first.format, first.batch)];
+                    UpdateSummary(first, second, batch);
+                    UpdateSummary(first, second, format);
+                    UpdateSummary(first, second, common);
+                }
+                else
+                {
+                    Diff& common = _summ[Id("  Common", -1, -1)];
+                    Diff& batch = _summ[Id((first.format ? "Batch-" : "Batch-") + std::to_string(first.batch), -1, first.batch)];
+                    UpdateSummary(first, second, batch);
+                    UpdateSummary(first, second, common);
+                }
             }
 
             for (DiffMap::iterator it = _summ.begin(); it != _summ.end(); ++it)
@@ -331,10 +329,8 @@ namespace Test
                 comp.first.name = std::get<0>(it->first);
                 comp.first.format = std::get<1>(it->first);
                 comp.first.batch = std::get<2>(it->first);
-                comp.first.second.time = comp.first.count > 0 ? ::exp(comp.first.second.time / comp.first.count) : 0;
-                comp.first.second.flops = comp.first.count > 0 ? ::exp(comp.first.second.flops / comp.first.count) : 0;
-                comp.second.second.time = comp.first.count > 0 ? ::exp(comp.second.second.time / comp.first.count) : 0;
-                comp.second.second.flops = comp.first.count > 0 ? ::exp(comp.second.second.flops / comp.first.count) : 0;
+                comp.first.second.ExpAvg(comp.first.count);
+                comp.second.second.ExpAvg(comp.first.count);
             }
             return true;
         }
@@ -369,7 +365,7 @@ namespace Test
                 if (text)
                 {
                     ofs << "~~~~~~~~~~~~~~~~~~~~~ Synet Performance Difference ~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-                    ofs << "Difference generation time: " + Cpl::CurrentDateTimeString() << std::endl;
+                    ofs << "Difference generation time: " + Cpl::CurrentDateTimeString() << ". Compare " << _full.size() << " tests." << std::endl;
                     ofs << table.GenerateText();
                 }
                 else
@@ -382,7 +378,7 @@ namespace Test
 
                     html.WriteValue("h1", Cpl::Html::Attr("id", "home"), "Synet Performance Difference", true);
 
-                    html.WriteValue("h4", Cpl::Html::Attr(), String("Difference generation time: ") + Cpl::CurrentDateTimeString(), true);
+                    html.WriteValue("h4", Cpl::Html::Attr(), String("Difference generation time: ") + Cpl::CurrentDateTimeString() + String(". Compare ") + ToString(_full.size()) + String(" tests."), true);
 
                     ofs << table.GenerateHtml(html.Indent());
 
@@ -397,7 +393,7 @@ namespace Test
 
         Size TableSize()
         {
-            size_t col = 9;
+            size_t col = _options.mode == "pair" ? 9 : 11;
             size_t row = _summ.size() + _full.size();
             return Size(col, row);
         }
@@ -419,17 +415,32 @@ namespace Test
 
         void SetHeader(Cpl::Table& table)
         {
-            String first = UnitedName(_options.inputFirsts);
-            String second = UnitedName(_options.inputSeconds);
             size_t col = 0;
             table.SetHeader(col++, "Test", true, Cpl::Table::Center);
-            table.SetHeader(col++, "Format", true, Cpl::Table::Center);
-            table.SetHeader(col++, "Batch", true, Cpl::Table::Center);
-            table.SetHeader(col++, first + ", ms", true, Cpl::Table::Center);
-            table.SetHeader(col++, second + ", ms", true, Cpl::Table::Center);
-            table.SetHeader(col++, "Relation", true, Cpl::Table::Center);
-            table.SetHeader(col++, "Performance, GFLOPS", true, Cpl::Table::Center);
-            table.SetHeader(col++, "Size, MB", true, Cpl::Table::Center);
+            if (_options.mode == "pair")
+            {
+                String first = UnitedName(_options.inputFirsts);
+                String second = UnitedName(_options.inputSeconds);
+                table.SetHeader(col++, "Format", true, Cpl::Table::Center);
+                table.SetHeader(col++, "Batch", true, Cpl::Table::Center);
+                table.SetHeader(col++, first + ", ms", true, Cpl::Table::Center);
+                table.SetHeader(col++, second + ", ms", true, Cpl::Table::Center);
+                table.SetHeader(col++, "Relation", true, Cpl::Table::Center);
+                table.SetHeader(col++, "Performance, GFLOPS", true, Cpl::Table::Center);
+                table.SetHeader(col++, "Size, MB", true, Cpl::Table::Center);
+            }
+            else
+            {
+                table.SetHeader(col++, "Batch", true, Cpl::Table::Center);
+                table.SetHeader(col++, "FP32 time, ms", true, Cpl::Table::Center);
+                table.SetHeader(col++, "BF16 time, ms", true, Cpl::Table::Center);
+                table.SetHeader(col++, "Time relation", true, Cpl::Table::Center);
+                table.SetHeader(col++, "FP32 perf, GFLOPS", true, Cpl::Table::Center);
+                table.SetHeader(col++, "BF16 perf, GFLOPS", true, Cpl::Table::Center);
+                table.SetHeader(col++, "FP32 size, MB", true, Cpl::Table::Center);
+                table.SetHeader(col++, "BF16 size, MB", true, Cpl::Table::Center);
+                table.SetHeader(col++, "Memory relation", true, Cpl::Table::Center);
+            }
             table.SetHeader(col++, "Description", true, Cpl::Table::Center);
         }
 
@@ -439,15 +450,34 @@ namespace Test
             const Test& second = comp.second;
             size_t col = 0;
             table.SetCell(col++, row, first.name, Cpl::Table::Black);
-            table.SetCell(col++, row, first.FormatStr(), Cpl::Table::Black);
-            table.SetCell(col++, row, first.BatchStr(), Cpl::Table::Black);
-            table.SetCell(col++, row, ToString(first.second.time, 3), Cpl::Table::Black);
-            table.SetCell(col++, row, ToString(second.second.time, 3), Cpl::Table::Black);
-            double relation = first.second.time / second.second.time;
-            double threshold = 1.0 - _options.significantDifference;
-            table.SetCell(col++, row, ToString(relation, 2), relation < threshold ? Cpl::Table::Red : Cpl::Table::Black);
-            table.SetCell(col++, row, ToString(second.second.flops, 1));
-            table.SetCell(col++, row, summary ? String("-") : ToString(second.second.memory, 1));
+            if (_options.mode == "pair")
+            {
+                table.SetCell(col++, row, first.FormatStr(), Cpl::Table::Black);
+                table.SetCell(col++, row, first.BatchStr(), Cpl::Table::Black);
+                table.SetCell(col++, row, ToString(first.second.time, 3), Cpl::Table::Black);
+                table.SetCell(col++, row, ToString(second.second.time, 3), Cpl::Table::Black);
+                double relation = first.second.time / second.second.time;
+                double threshold = 1.0 - _options.significantDifference;
+                table.SetCell(col++, row, ToString(relation, 2), relation < threshold ? Cpl::Table::Red : Cpl::Table::Black);
+                table.SetCell(col++, row, ToString(second.second.flops, 1));
+                table.SetCell(col++, row, summary ? String("-") : ToString(second.second.memory, 1));
+            }
+            else
+            {
+                table.SetCell(col++, row, first.BatchStr(), Cpl::Table::Black);
+                table.SetCell(col++, row, ToString(first.second.time, 3), Cpl::Table::Black);
+                table.SetCell(col++, row, ToString(second.second.time, 3), Cpl::Table::Black);
+                double timeR = first.second.time / second.second.time;
+                double timeT = 1.0 - _options.significantDifference;
+                table.SetCell(col++, row, ToString(timeR, 2), timeR < timeT ? Cpl::Table::Red : Cpl::Table::Black);
+                table.SetCell(col++, row, ToString(first.second.flops, 1), Cpl::Table::Black);
+                table.SetCell(col++, row, ToString(second.second.flops, 1), Cpl::Table::Black);
+                table.SetCell(col++, row, ToString(first.second.memory, 1), Cpl::Table::Black);
+                table.SetCell(col++, row, ToString(second.second.memory, 1), Cpl::Table::Black);
+                double memoryR = first.second.memory / second.second.memory;
+                double memoryT = 1.0 - _options.significantDifference;
+                table.SetCell(col++, row, ToString(memoryR, 2), memoryR < memoryT ? Cpl::Table::Red : Cpl::Table::Black);
+            }
             table.SetCell(col++, row, summary ? String("-") : first.desc);
             table.SetRowProp(row, summary && row == (summary ? _summ.size() : _full.size()) - 1, summary);
         }

@@ -135,15 +135,15 @@ namespace Synet
                                 bottom -= top;
                                 top = 0;
                             }
-                            if (right > imgW)
+                            if (right > (int)imgW)
                             {
-                                left -= right - imgW;
-                                right = imgW;
+                                left -= right - (int)imgW;
+                                right = (int)imgW;
                             }
-                            if (bottom > imgH)
+                            if (bottom > (int)imgH)
                             {
-                                top -= bottom - imgH;
-                                bottom = imgH;
+                                top -= bottom - (int)imgH;
+                                bottom = (int)imgH;
                             }
                             Region region;
                             region.prob = score;
