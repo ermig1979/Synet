@@ -269,12 +269,13 @@ namespace Test
 					layers.insert(model().layers()[i].type());
 				if (layers.find(Synet::LayerTypeConvolution) != layers.end()) desc.push_back('C');
 				if (layers.find(Synet::LayerTypePooling) != layers.end()) desc.push_back('P');
-				if (layers.find(Synet::LayerTypeMergedConvolution) != layers.end()) desc.push_back('G');
-                if (layers.find(Synet::LayerTypeInnerProduct) != layers.end()) desc.push_back('I');
-                if (layers.find(Synet::LayerTypeTensorIterator) != layers.end()) desc.push_back('T');
-				if (layers.find(Synet::LayerTypeDetectionOutput) != layers.end()) desc.push_back('D');
+				if (layers.find(Synet::LayerTypeDeconvolution) != layers.end()) desc.push_back('D');
+				if (layers.find(Synet::LayerTypeMergedConvolution) != layers.end()) desc.push_back('Mc');
+                if (layers.find(Synet::LayerTypeInnerProduct) != layers.end()) desc.push_back('Ip');
+                if (layers.find(Synet::LayerTypeTensorIterator) != layers.end()) desc.push_back('Ti');
+				if (layers.find(Synet::LayerTypeDetectionOutput) != layers.end()) desc.push_back('Do');
                 if (layers.find(Synet::LayerTypeYolo) != layers.end()) desc.push_back('Y');
-                if (layers.find(Synet::LayerTypeRegion) != layers.end()) desc.push_back('R');
+                if (layers.find(Synet::LayerTypeInterp) != layers.end()) desc.push_back('I');
             }
 			return desc;
 		}

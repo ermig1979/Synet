@@ -89,13 +89,23 @@ namespace Test
         struct Test
         {
             String name, desc, link;
-            int batch, count, skip;
+            int format, batch, count, skip;
             Data<double> first, second;
-            Test(const String & n = "", int b = 0) : name(n), batch(b), count(0), skip(0) {}
+            Test(const String & n = "", int f = 0, int b = 0) : name(n), format(f), batch(b), count(0), skip(0) {}
             bool operator < (const Test& other)
             {
-                return name == other.name ? batch < other.batch : name < other.name;
-            }        
+                return name == other.name ? (format == other.format ? batch < other.batch : format < other.format) : name < other.name;
+            } 
+
+            String FormatStr() const
+            {
+                return format < 0 ? "-" : format == 0 ? "FP32" : "BF16";
+            }
+
+            String BatchStr() const
+            {
+                return batch < 0 ? "-" : ToString(batch);
+            }
         };
         typedef std::vector<Test> Tests;
 
@@ -108,7 +118,7 @@ namespace Test
         Sets _first, _second;
 
         typedef std::vector<double> Doubles;
-        typedef std::pair<String, int> Id;
+        typedef std::tuple<String, int, int> Id;
         struct Diff
         {
             Tests firsts, seconds;
@@ -149,20 +159,22 @@ namespace Test
                     String line;
                     std::getline(ifs, line);
                     Strings values = Cpl::Separate(line, separator);
-                    if (values.size() > 10)
+                    if (values.size() > 11)
                     {
                         Test test;
-                        Cpl::ToVal(values[0], test.name);
-                        Cpl::ToVal(values[1], test.batch);
-                        Cpl::ToVal(values[2], test.first.time);
-                        Cpl::ToVal(values[3], test.second.time);
-                        Cpl::ToVal(values[4], test.first.flops);
-                        Cpl::ToVal(values[5], test.second.flops);
-                        Cpl::ToVal(values[6], test.first.memory);
-                        Cpl::ToVal(values[7], test.second.memory);
-                        Cpl::ToVal(values[8], test.desc);
-                        Cpl::ToVal(values[9], test.link);
-                        Cpl::ToVal(values[10], test.skip);
+                        int col = 0;
+                        Cpl::ToVal(values[col++], test.name);
+                        Cpl::ToVal(values[col++], test.format);
+                        Cpl::ToVal(values[col++], test.batch);
+                        Cpl::ToVal(values[col++], test.first.time);
+                        Cpl::ToVal(values[col++], test.second.time);
+                        Cpl::ToVal(values[col++], test.first.flops);
+                        Cpl::ToVal(values[col++], test.second.flops);
+                        Cpl::ToVal(values[col++], test.first.memory);
+                        Cpl::ToVal(values[col++], test.second.memory);
+                        Cpl::ToVal(values[col++], test.desc);
+                        Cpl::ToVal(values[col++], test.link);
+                        Cpl::ToVal(values[col++], test.skip);
                         set.tests.push_back(test);
                     }
                 }
@@ -186,7 +198,7 @@ namespace Test
                 for (size_t j = 0; j < set.tests.size(); ++j)
                 {
                     const Test& test = set.tests[j];
-                    _full[Id(test.name, test.batch)].firsts.push_back(test);
+                    _full[Id(test.name, test.format, test.batch)].firsts.push_back(test);
                 }
             }
             for (size_t i = 0; i < _second.size(); ++i)
@@ -195,7 +207,7 @@ namespace Test
                 for (size_t j = 0; j < set.tests.size(); ++j)
                 {
                     const Test& test = set.tests[j];
-                    _full[Id(test.name, test.batch)].seconds.push_back(test);
+                    _full[Id(test.name, test.format, test.batch)].seconds.push_back(test);
                 }
             }
             for (DiffMap::iterator it = _full.begin(); it != _full.end();)
@@ -286,39 +298,39 @@ namespace Test
             return true;
         }
 
+        static inline void UpdateSummary(const Test& first, const Test& second, Diff& summary)
+        {
+            summary.firsts.resize(1);
+            summary.seconds.resize(1);
+            summary.first.count++;
+            summary.first.second.time += ::log(first.second.time);
+            summary.first.second.flops += ::log(first.second.flops);
+            summary.second.second.time += ::log(second.second.time);
+            summary.second.second.flops += ::log(second.second.flops);
+        }
+
         bool FillSummary()
         {
             for (DiffMap::iterator it = _full.begin(); it != _full.end(); ++it)
             {
                 const Test& first = it->second.first;
                 const Test& second = it->second.second;
-                Diff & common = _summ[Id(" Common", 0)];
-                Diff & batch = _summ[Id("Batch-" + std::to_string(first.batch), first.batch)];
-                batch.firsts.resize(1);
-                common.firsts.resize(1);
-                batch.seconds.resize(1);
-                common.seconds.resize(1);
-                batch.first.count++;
-                common.first.count++;
 
-                batch.first.second.time += ::log(first.second.time);
-                common.first.second.time += ::log(first.second.time);
+                Diff & common = _summ[Id("  Common", -1, -1)];
+                Diff& format = _summ[Id(first.format ? "BF16-Common" : "FP32-Common", first.format, -1)];
+                Diff & batch = _summ[Id((first.format ? "BF16-Batch-" : "FP32-Batch-") + std::to_string(first.batch), first.format, first.batch)];
 
-                batch.first.second.flops += ::log(first.second.flops);
-                common.first.second.flops += ::log(first.second.flops);
-
-                batch.second.second.time += ::log(second.second.time);
-                common.second.second.time += ::log(second.second.time);
-
-                batch.second.second.flops += ::log(second.second.flops);
-                common.second.second.flops += ::log(second.second.flops);
+                UpdateSummary(first, second, batch);
+                UpdateSummary(first, second, format);
+                UpdateSummary(first, second, common);
             }
 
             for (DiffMap::iterator it = _summ.begin(); it != _summ.end(); ++it)
             {
                 Diff& comp = it->second;
-                comp.first.name = it->first.first;
-                comp.first.batch = it->first.second;
+                comp.first.name = std::get<0>(it->first);
+                comp.first.format = std::get<1>(it->first);
+                comp.first.batch = std::get<2>(it->first);
                 comp.first.second.time = comp.first.count > 0 ? ::exp(comp.first.second.time / comp.first.count) : 0;
                 comp.first.second.flops = comp.first.count > 0 ? ::exp(comp.first.second.flops / comp.first.count) : 0;
                 comp.second.second.time = comp.first.count > 0 ? ::exp(comp.second.second.time / comp.first.count) : 0;
@@ -385,7 +397,7 @@ namespace Test
 
         Size TableSize()
         {
-            size_t col = 8;
+            size_t col = 9;
             size_t row = _summ.size() + _full.size();
             return Size(col, row);
         }
@@ -411,6 +423,7 @@ namespace Test
             String second = UnitedName(_options.inputSeconds);
             size_t col = 0;
             table.SetHeader(col++, "Test", true, Cpl::Table::Center);
+            table.SetHeader(col++, "Format", true, Cpl::Table::Center);
             table.SetHeader(col++, "Batch", true, Cpl::Table::Center);
             table.SetHeader(col++, first + ", ms", true, Cpl::Table::Center);
             table.SetHeader(col++, second + ", ms", true, Cpl::Table::Center);
@@ -426,7 +439,8 @@ namespace Test
             const Test& second = comp.second;
             size_t col = 0;
             table.SetCell(col++, row, first.name, Cpl::Table::Black);
-            table.SetCell(col++, row, first.batch ? ToString(first.batch) : String("-"));
+            table.SetCell(col++, row, first.FormatStr(), Cpl::Table::Black);
+            table.SetCell(col++, row, first.BatchStr(), Cpl::Table::Black);
             table.SetCell(col++, row, ToString(first.second.time, 3), Cpl::Table::Black);
             table.SetCell(col++, row, ToString(second.second.time, 3), Cpl::Table::Black);
             double relation = first.second.time / second.second.time;
