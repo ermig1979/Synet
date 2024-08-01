@@ -29,6 +29,10 @@
 #include "Cpl/Table.h"
 #include "Cpl/Log.h"
 
+#ifdef _stat
+#undef _stat
+#endif
+
 namespace Test
 {
     class PerformanceDifference
@@ -41,7 +45,7 @@ namespace Test
             Strings inputSeconds;
             String outputDirectory;
             String reportName;
-            bool autoCorrection;
+            String sortType;
             double significantDifference;
 
             Options(int argc, char* argv[])
@@ -52,7 +56,13 @@ namespace Test
                 inputSeconds = GetArgs("-is", Strings(), false);
                 outputDirectory = GetArg("-od", "diff");
                 reportName = GetArg("-rn", "_diff");
+                sortType = GetArg("-st", "name_format_batch", true, Strings({ "name_format_batch", "time_relation" }));
                 significantDifference = FromString<double>(GetArg("-sd", "0.05"));
+            }
+
+            bool PairMode() const
+            {
+                return mode == "pair";
             }
         };
 
@@ -70,6 +80,8 @@ namespace Test
             if (!SetAverage())
                 return false;
             if (!FillSummary())
+                return false;
+            if (!SortBy())
                 return false;
             if (!PrintReport())
                 return false;
@@ -138,7 +150,9 @@ namespace Test
             Test first, second;
         };
         typedef std::map<Id, Diff> DiffMap;
+        typedef std::vector<Diff> Diffs;
         DiffMap _full, _summ;
+        Diffs _sorted;
 
         bool LoadInput()
         {
@@ -149,7 +163,7 @@ namespace Test
                     return false;
                 _first.push_back(first);
             }
-            if (_options.mode == "pair")
+            if (_options.PairMode())
             {
                 for (size_t i = 0; i < _options.inputSeconds.size(); ++i)
                 {
@@ -195,7 +209,7 @@ namespace Test
                     }
                 }
                 ifs.close();
-                std::sort(set.tests.begin(), set.tests.end());
+                //std::sort(set.tests.begin(), set.tests.end());
                 return true;
             }
             else
@@ -208,7 +222,7 @@ namespace Test
         bool SetDiffMap()
         {
             _full.clear();
-            if (_options.mode == "pair")
+            if (_options.PairMode())
             {
                 for (size_t i = 0; i < _first.size(); ++i)
                 {
@@ -304,8 +318,7 @@ namespace Test
             {
                 const Test& first = it->second.first;
                 const Test& second = it->second.second;
-
-                if (_options.mode == "pair")
+                if (_options.PairMode())
                 {
                     Diff& common = _summ[Id("  Common", -1, -1)];
                     Diff& format = _summ[Id(first.format ? "BF16-Common" : "FP32-Common", first.format, -1)];
@@ -322,7 +335,6 @@ namespace Test
                     UpdateSummary(first, second, common);
                 }
             }
-
             for (DiffMap::iterator it = _summ.begin(); it != _summ.end(); ++it)
             {
                 Diff& comp = it->second;
@@ -332,6 +344,16 @@ namespace Test
                 comp.first.second.ExpAvg(comp.first.count);
                 comp.second.second.ExpAvg(comp.first.count);
             }
+            return true;
+        }
+
+        bool SortBy()
+        {
+            _sorted.reserve(_full.size());
+            for (DiffMap::iterator it = _full.begin(); it != _full.end(); ++it)
+                _sorted.push_back(it->second);
+            if(_options.sortType == "time_relation")
+                std::sort(_sorted.begin(), _sorted.end(), [](const Diff& a, const Diff& b) { return a.first.second.time / a.second.second.time < b.first.second.time / b.second.second.time; });
             return true;
         }
 
@@ -360,12 +382,14 @@ namespace Test
                 size_t row = 0;
                 for (DiffMap::iterator it = _summ.begin(); it != _summ.end(); ++it, ++row)
                     SetCells(table, it->second, row, true);
-                for (DiffMap::iterator it = _full.begin(); it != _full.end(); ++it, ++row)
-                    SetCells(table, it->second, row, false);
+                for (size_t i = 0; i < _sorted.size(); ++i, ++row)
+                    SetCells(table, _sorted[i], row, false);
                 if (text)
                 {
-                    ofs << "~~~~~~~~~~~~~~~~~~~~~ Synet Performance Difference ~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-                    ofs << "Difference generation time: " + Cpl::CurrentDateTimeString() << ". Compare " << _full.size() << " tests." << std::endl;
+                    ofs << "~~~~~~~~~~~~~~~~~~~~~ " << CapionStr() << " ~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+                    ofs << GenTimeStr() << std::endl;
+                    ofs << SourceStr() << std::endl;
+                    ofs << TestNumStr() << std::endl;
                     ofs << table.GenerateText();
                 }
                 else
@@ -373,12 +397,14 @@ namespace Test
                     Cpl::Html html(ofs);
 
                     html.WriteBegin("html", Cpl::Html::Attr(), true, true);
-                    html.WriteValue("title", Cpl::Html::Attr(), "Synet Performance Difference", true);
+                    html.WriteValue("title", Cpl::Html::Attr(), CapionStr(), true);
                     html.WriteBegin("body", Cpl::Html::Attr(), true, true);
 
-                    html.WriteValue("h1", Cpl::Html::Attr("id", "home"), "Synet Performance Difference", true);
+                    html.WriteValue("h1", Cpl::Html::Attr("id", "home"), CapionStr(), true);
 
-                    html.WriteValue("h4", Cpl::Html::Attr(), String("Difference generation time: ") + Cpl::CurrentDateTimeString() + String(". Compare ") + ToString(_full.size()) + String(" tests."), true);
+                    html.WriteValue("h4", Cpl::Html::Attr(), GenTimeStr(), true);
+                    html.WriteValue("h4", Cpl::Html::Attr(), SourceStr(), true);
+                    html.WriteValue("h4", Cpl::Html::Attr(), TestNumStr(), true);
 
                     ofs << table.GenerateHtml(html.Indent());
 
@@ -391,9 +417,39 @@ namespace Test
             return false;
         }
 
+        String CapionStr() const
+        {
+            return String("Synet Performance Difference");
+        }
+
+        String GenTimeStr() const
+        {
+            return String("Report generation time: ") + Cpl::CurrentDateTimeString();
+        }
+
+        String SourceStr() const
+        {
+            std::stringstream ss;
+            ss << "Generated on base: ";
+            for (size_t i = 0; i < _options.inputFirsts.size(); ++i)
+                ss << _options.inputFirsts[i] << " (" << _first[i].tests.size() << " tests) ";
+            if (_options.inputSeconds.size())
+            {
+                ss << "and ";
+                for (size_t i = 0; i < _options.inputSeconds.size(); ++i)
+                    ss << _options.inputSeconds[i] << " (" << _second[i].tests.size() << " tests) ";
+            }
+            return ss.str();
+        }
+
+        String TestNumStr() const
+        {
+            return String("Relevant tests to compare: ") + ToString(_full.size());
+        }
+
         Size TableSize()
         {
-            size_t col = _options.mode == "pair" ? 9 : 11;
+            size_t col = _options.PairMode() ? 9 : 11;
             size_t row = _summ.size() + _full.size();
             return Size(col, row);
         }
@@ -417,7 +473,7 @@ namespace Test
         {
             size_t col = 0;
             table.SetHeader(col++, "Test", true, Cpl::Table::Center);
-            if (_options.mode == "pair")
+            if (_options.PairMode())
             {
                 String first = UnitedName(_options.inputFirsts);
                 String second = UnitedName(_options.inputSeconds);
@@ -450,7 +506,7 @@ namespace Test
             const Test& second = comp.second;
             size_t col = 0;
             table.SetCell(col++, row, first.name, Cpl::Table::Black);
-            if (_options.mode == "pair")
+            if (_options.PairMode())
             {
                 table.SetCell(col++, row, first.FormatStr(), Cpl::Table::Black);
                 table.SetCell(col++, row, first.BatchStr(), Cpl::Table::Black);
