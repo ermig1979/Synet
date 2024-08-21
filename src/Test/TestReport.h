@@ -94,7 +94,7 @@ namespace Test
 
 					Cpl::Table tests(ColNum(), _tests.size());
 					SetHeader(tests);
-					SetCells(tests, _tests, 0, true);
+					SetCells(tests, _tests, 0, false);
 					html.WriteValue("h3", Cpl::Html::Attr(), String("Tests:"), true);
 					ofs << tests.GenerateHtml(0, false, true, true);
 
