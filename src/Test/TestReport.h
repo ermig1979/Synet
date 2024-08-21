@@ -52,12 +52,12 @@ namespace Test
 			if (ofs.is_open())
 			{
 				FillSummary();
-				Cpl::Table table(TableSize().x, TableSize().y);
-				SetHeader(table);
-				SetCells(table, _summary, 0, true);
-				SetCells(table, _tests, _summary.size(), false);
 				if (text)
 				{
+					Cpl::Table table(ColNum(), _summary.size() + _tests.size());
+					SetHeader(table);
+					SetCells(table, _summary, 0, true);
+					SetCells(table, _tests, _summary.size(), false);
 					ofs << "~~~~~~~~~~~~~~~~~~~~~ Synet Performance Report ~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 					ofs << "Test generation time: " + Cpl::CurrentDateTimeString() << std::endl;
 					ofs << "Synet version: " + Synet::Version() << std::endl;
@@ -86,7 +86,17 @@ namespace Test
 					html.WriteEnd("h4", true, true);
 #endif
 
-					ofs << table.GenerateHtml(html.Indent());
+					Cpl::Table summary(ColNum(), _summary.size());
+					SetHeader(summary);
+					SetCells(summary, _summary, 0, true);
+					html.WriteValue("h3", Cpl::Html::Attr(), String("Summary:"), true);
+					ofs << summary.GenerateHtml(0, true, true, true);
+
+					Cpl::Table tests(ColNum(), _tests.size());
+					SetHeader(tests);
+					SetCells(tests, _tests, 0, true);
+					html.WriteValue("h3", Cpl::Html::Attr(), String("Tests:"), true);
+					ofs << tests.GenerateHtml(0, false, true, true);
 
 					html.WriteEnd("body", true, true);
 					html.WriteEnd("html", true, true);
@@ -267,20 +277,20 @@ namespace Test
 				std::set<Synet::LayerType> layers;
 				for (size_t i = 0; i < model().layers().size(); ++i)
 					layers.insert(model().layers()[i].type());
-				if (layers.find(Synet::LayerTypeConvolution) != layers.end()) desc.push_back('C');
-				if (layers.find(Synet::LayerTypePooling) != layers.end()) desc.push_back('P');
-				if (layers.find(Synet::LayerTypeDeconvolution) != layers.end()) desc.push_back('D');
-				if (layers.find(Synet::LayerTypeMergedConvolution) != layers.end()) desc.push_back('Mc');
-                if (layers.find(Synet::LayerTypeInnerProduct) != layers.end()) desc.push_back('Ip');
-                if (layers.find(Synet::LayerTypeTensorIterator) != layers.end()) desc.push_back('Ti');
-				if (layers.find(Synet::LayerTypeDetectionOutput) != layers.end()) desc.push_back('Do');
-                if (layers.find(Synet::LayerTypeYolo) != layers.end()) desc.push_back('Y');
-                if (layers.find(Synet::LayerTypeInterp) != layers.end()) desc.push_back('I');
+				if (layers.find(Synet::LayerTypeConvolution) != layers.end()) desc += String("C");
+				if (layers.find(Synet::LayerTypePooling) != layers.end()) desc += String("P");
+				if (layers.find(Synet::LayerTypeDeconvolution) != layers.end()) desc += String("D");
+				if (layers.find(Synet::LayerTypeMergedConvolution) != layers.end()) desc += String("Mc");
+                if (layers.find(Synet::LayerTypeInnerProduct) != layers.end()) desc += String("Ip");
+                if (layers.find(Synet::LayerTypeTensorIterator) != layers.end()) desc += String("Ti");
+				if (layers.find(Synet::LayerTypeDetectionOutput) != layers.end()) desc += String("Do");
+                if (layers.find(Synet::LayerTypeYolo) != layers.end()) desc += String("Y");
+                if (layers.find(Synet::LayerTypeInterp) != layers.end()) desc += String("I");
             }
 			return desc;
 		}
 
-		Size TableSize()
+		size_t ColNum() const
 		{
 			size_t col = 4;
 			if (_other.time)
@@ -297,8 +307,7 @@ namespace Test
 				col++;
 			if (_synet.memory)
 				col++;
-			size_t row = _summary.size() + _tests.size();
-			return Size(col, row);
+			return col;
 		}
 
 		void SetHeader(Cpl::Table& table)
