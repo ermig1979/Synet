@@ -45,7 +45,6 @@ namespace Test
             Strings inputSeconds;
             String outputDirectory;
             String reportName;
-            String sortType;
             double significantDifference;
 
             Options(int argc, char* argv[])
@@ -56,7 +55,6 @@ namespace Test
                 inputSeconds = GetArgs("-is", Strings(), false);
                 outputDirectory = GetArg("-od", "diff");
                 reportName = GetArg("-rn", "_diff");
-                sortType = GetArg("-st", "name_format_batch", true, Strings({ "name_format_batch", "time_relation" }));
                 significantDifference = FromString<double>(GetArg("-sd", "0.05"));
             }
 
@@ -80,8 +78,6 @@ namespace Test
             if (!SetAverage())
                 return false;
             if (!FillSummary())
-                return false;
-            if (!SortBy())
                 return false;
             if (!PrintReport())
                 return false;
@@ -152,7 +148,6 @@ namespace Test
         typedef std::map<Id, Diff> DiffMap;
         typedef std::vector<Diff> Diffs;
         DiffMap _full, _summ;
-        Diffs _sorted;
 
         bool LoadInput()
         {
@@ -347,16 +342,6 @@ namespace Test
             return true;
         }
 
-        bool SortBy()
-        {
-            _sorted.reserve(_full.size());
-            for (DiffMap::iterator it = _full.begin(); it != _full.end(); ++it)
-                _sorted.push_back(it->second);
-            if(_options.sortType == "time_relation")
-                std::sort(_sorted.begin(), _sorted.end(), [](const Diff& a, const Diff& b) { return a.first.second.time / a.second.second.time < b.first.second.time / b.second.second.time; });
-            return true;
-        }
-
         bool PrintReport()
         {
             if (!CreateOutputDirectory(_options.outputDirectory))
@@ -377,19 +362,19 @@ namespace Test
             std::ofstream ofs(name);
             if (ofs.is_open())
             {
-                Cpl::Table table(TableSize().x, TableSize().y);
-                SetHeader(table);
-                size_t row = 0;
-                for (DiffMap::iterator it = _summ.begin(); it != _summ.end(); ++it, ++row)
-                    SetCells(table, it->second, row, true);
-                for (size_t i = 0; i < _sorted.size(); ++i, ++row)
-                    SetCells(table, _sorted[i], row, false);
                 if (text)
                 {
                     ofs << "~~~~~~~~~~~~~~~~~~~~~ " << CapionStr() << " ~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
                     ofs << GenTimeStr() << std::endl;
                     ofs << SourceStr() << std::endl;
                     ofs << TestNumStr() << std::endl;
+                    Cpl::Table table(ColNum(), _summ.size() + _full.size());
+                    SetHeader(table);
+                    size_t row = 0;
+                    for (DiffMap::iterator it = _summ.begin(); it != _summ.end(); ++it, ++row)
+                        SetCells(table, it->second, row, true);
+                    for (DiffMap::iterator it = _full.begin(); it != _full.end(); ++it, ++row)
+                        SetCells(table, it->second, row, false);
                     ofs << table.GenerateText();
                 }
                 else
@@ -406,7 +391,21 @@ namespace Test
                     html.WriteValue("h4", Cpl::Html::Attr(), SourceStr(), true);
                     html.WriteValue("h4", Cpl::Html::Attr(), TestNumStr(), true);
 
-                    ofs << table.GenerateHtml(html.Indent());
+                    html.WriteValue("h3", Cpl::Html::Attr(), "Summary:", true);
+                    Cpl::Table summ(ColNum(), _summ.size());
+                    SetHeader(summ);
+                    size_t row = 0;
+                    for (DiffMap::iterator it = _summ.begin(); it != _summ.end(); ++it, ++row)
+                        SetCells(summ, it->second, row, true);
+                    ofs << summ.GenerateHtml(0, true, true, true);
+
+                    html.WriteValue("h3", Cpl::Html::Attr(), "Full list:", true);
+                    Cpl::Table full(ColNum(), _full.size());
+                    SetHeader(full);
+                    row = 0;
+                    for (DiffMap::iterator it = _full.begin(); it != _full.end(); ++it, ++row)
+                        SetCells(full, it->second, row, false);
+                    ofs << full.GenerateHtml(0, false, true, true);
 
                     html.WriteEnd("body", true, true);
                     html.WriteEnd("html", true, true);
@@ -447,11 +446,9 @@ namespace Test
             return String("Relevant tests to compare: ") + ToString(_full.size());
         }
 
-        Size TableSize()
+        size_t ColNum() const
         {
-            size_t col = _options.PairMode() ? 9 : 11;
-            size_t row = _summ.size() + _full.size();
-            return Size(col, row);
+            return _options.PairMode() ? 9 : 11;
         }
 
         String UnitedName(const Strings& names)
