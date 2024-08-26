@@ -50,6 +50,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\InnerProduct8iLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\InnerProductLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\InputLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\InterpLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution8iLayer.cpp" />
