@@ -814,15 +814,9 @@ namespace Synet
             String name = "value";
             const onnx::AttributeProto * value = GetAtrribute(node, name);
             if (value == NULL)
-            {
-                std::cout << "Can't find attribute " << name << " !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't find attribute " << name << " !");
             if (value->type() != onnx::AttributeProto_AttributeType_TENSOR)
-            {
-                std::cout << "Attribute has wrong type " << value->type() << " !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Attribute has wrong type " << value->type() << " !");
             const onnx::TensorProto& tensor = value->t();
             if (tensor.data_type() == onnx::TensorProto_DataType_INT64)
             {
@@ -895,7 +889,7 @@ namespace Synet
                 }
             }
             else
-                return false;
+                SYNET_ERROR("Unsupported format of Constant node!");
             return true;
         }
 

@@ -217,7 +217,7 @@ namespace Synet
                 if(_permute == NULL)
                     SYNET_ERROR("PermuteLayer can't set permute worker!");
             }
-            this->UsePerfStat();
+            this->UsePerfStat(Cpl::ToStr(src[0]->GetType()));
             _const = false;
         }
         else

@@ -431,10 +431,7 @@ namespace Synet
         static bool ReorderWeight(const Vector& srcBin, const Shape& input, LayerParam& layer, Vector& dstBin)
         {
             if (layer.weight().size() < 1)
-            {
-                std::cout << "There is no weight to reorder!" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("There is no weight to reorder!");
             WeightParam& weight = layer.weight()[0];
             const float* pSrc = srcBin.data() + weight.offset() / sizeof(float);
             float* pDst = dstBin.data() + weight.offset() / sizeof(float);
