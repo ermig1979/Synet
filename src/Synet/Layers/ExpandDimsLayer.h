@@ -24,62 +24,21 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
 
 namespace Synet
 {
-    template <class T> class ExpandDimsLayer : public Synet::Layer<T>
+    class ExpandDimsLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ExpandDimsLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        ExpandDimsLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            assert(src[0] != dst[0]);
-            const ExpandDimsParam & param = this->Param().expandDims();
-            const Ints & axes = param.axes();
-            Shape shape;
-            if (axes.empty())
-            {
-                ptrdiff_t axis = param.axis();
-                if (axis < 0)
-                    axis += src[0]->Count();
-                for (ptrdiff_t i = 0; i < axis; ++i)
-                    shape.push_back(src[0]->Axis(i));
-                shape.push_back(1);
-                for (size_t i = axis; i < src[0]->Count(); ++i)
-                    shape.push_back(src[0]->Axis(i));
-            }
-            else
-            {
-                shape.resize(src[0]->Count() + axes.size(), 1);
-                for (size_t i = 0, s = 0; i < shape.size(); ++i)
-                {
-                    bool insert = true;
-                    for (size_t a = 0; a < axes.size() && insert; ++a)
-                    {
-                        if (axes[a] >= 0 ? axes[a] == i : axes[a] + shape.size() == i)
-                            insert = false;
-                    }
-                    if (insert)
-                        shape[i] = src[0]->Axis(s++);
-                }
-            }
-            dst[0]->ShareAs(*src[0], shape, src[0]->Format());
-            return true;
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
     };
 }

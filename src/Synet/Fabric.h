@@ -141,7 +141,7 @@ namespace Synet
                 else
                     return new EltwiseLayer(param, context);
             case LayerTypeElu: return new EluLayer(param, context);
-            case LayerTypeExpandDims: return new ExpandDimsLayer<T>(param, context);
+            case LayerTypeExpandDims: return new ExpandDimsLayer(param, context);
             case LayerTypeFlatten: return new FlattenLayer(param, context);
             case LayerTypeFused: return new FusedLayer<T>(param, context);
             case LayerTypeGather: return new GatherLayer(param, context);
