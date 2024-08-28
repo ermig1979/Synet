@@ -139,7 +139,7 @@ namespace Synet
                 else if (SynetUtils::IsMul(param))
                     return new MulLayer(param, context);
                 else
-                    return new EltwiseLayer<T>(param, context);
+                    return new EltwiseLayer(param, context);
             case LayerTypeElu: return new EluLayer(param, context);
             case LayerTypeExpandDims: return new ExpandDimsLayer<T>(param, context);
             case LayerTypeFlatten: return new FlattenLayer(param, context);

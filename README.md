@@ -16,14 +16,15 @@ To build test applications you can run following bash script:
     cd clone
     ./build.sh
 
-And applications `test_inference_engine`, `test_onnx`, `test_precision`, `test_quantization`, `use_face_detection` will be created in directory `build`.
+And applications `test_inference_engine`, `test_onnx`, `test_optimizer`, `test_precision`, `test_performance_difference`, 
+`test_quantization`, `test_stability`, `use_face_detection` will be created in directory `build`.
 There is a detail description of these test applications below.
 
 OpenVINO test application
 ========================
 The test application `test_inference_engine` is used for [OpenVINO](https://github.com/openvinotoolkit/openvino) to Synet model conversion:
 
-    /build/test_inference_engine -m convert -fm ie_model.xml -fw ie_weigths.bin -sm synet_model.xml -sw synet_weigths.bin
+    ./build/test_inference_engine -m=convert -fm=ie_model.xml -fw=ie_weigths.bin -sm=synet_model.xml -sw=synet_weigths.bin
 
 Also it is used in order to compare performance and accuracy of OpenVINO and Synet frameworks.
 The current Synet and OpenVINO frameworks support only Inference Engine models version 10. 
@@ -39,7 +40,7 @@ ONNX test application
 ========================
 The test application `test_onnx` is used for ONNX to Synet model conversion:
 
-    /build/test_onnx -m convert -fw onnx_model.onnx -sm synet_model.xml -sw synet_weigths.bin
+    ./build/test_onnx -m=convert -fw=onnx_model.onnx -sm=synet_model.xml -sw=synet_weigths.bin
 
 Also it is used in order to compare performance and accuracy of OpenVINO (it is used to infer ONNX models) and Synet frameworks.
 There are several test scripts:
