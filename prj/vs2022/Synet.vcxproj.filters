@@ -71,9 +71,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\ConstLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\BroadcastLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\DeconvolutionLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -185,6 +182,12 @@
     <ClCompile Include="..\..\src\Synet\Layers\ExpandDimsLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.cpp">
+      <Filter>Layers\Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\LrnLayer.cpp">
+      <Filter>Layers\Legacy</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -270,9 +273,6 @@
       <Filter>Converters</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolutionLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\LrnLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\InnerProductLayer.h">
@@ -418,9 +418,6 @@
     <ClInclude Include="..\..\src\Synet\Region.h" />
     <ClInclude Include="..\..\src\Synet\Converters\SynetUtils.h">
       <Filter>Converters</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\BroadcastLayer.h">
-      <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ReverseSequenceLayer.h">
       <Filter>Layers</Filter>
@@ -593,6 +590,12 @@
     <ClInclude Include="..\..\src\Synet\Layers\TiledScale2DLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.h">
+      <Filter>Layers\Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\LrnLayer.h">
+      <Filter>Layers\Legacy</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -612,6 +615,9 @@
     </Filter>
     <Filter Include="Cpl">
       <UniqueIdentifier>{61106982-3cf0-4d97-94af-941102a58b36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Legacy">
+      <UniqueIdentifier>{bd4270e8-bca4-4558-be00-ce82d571c796}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

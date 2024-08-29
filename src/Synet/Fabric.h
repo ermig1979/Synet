@@ -24,12 +24,14 @@
 
 #pragma once
 
+#include "Synet/Layers/Legacy/BroadcastLayer.h"
+#include "Synet/Layers/Legacy/LrnLayer.h"
+
 #include "Synet/Layers/ActivationLayers.h"
 #include "Synet/Layers/AddLayer.h"
 #include "Synet/Layers/ArgMaxLayer.h"
 #include "Synet/Layers/BiasLayer.h"
 #include "Synet/Layers/BinaryOperationLayer.h"
-#include "Synet/Layers/BroadcastLayer.h"
 #include "Synet/Layers/CastLayer.h"
 #include "Synet/Layers/CompareLayer.h"
 #include "Synet/Layers/ConcatLayer.h"
@@ -52,7 +54,6 @@
 #include "Synet/Layers/InnerProduct8iLayer.h"
 #include "Synet/Layers/InputLayer.h"
 #include "Synet/Layers/InterpLayer.h"
-#include "Synet/Layers/LrnLayer.h"
 #include "Synet/Layers/LstmLayer.h"
 #include "Synet/Layers/MergedConvolution32fLayer.h"
 #include "Synet/Layers/MergedConvolution16bLayer.h"
@@ -158,7 +159,7 @@ namespace Synet
                     return new InnerProduct32fLayer(param, context);
             case LayerTypeInput: return new InputLayer(param, context);
             case LayerTypeInterp: return new InterpLayer(param, context);
-            case LayerTypeLrn: return new LrnLayer<T>(param, context);
+            case LayerTypeLrn: return new LrnLayer(param, context);
             case LayerTypeLstm: return new LstmLayer<T>(param, context);
             case LayerTypeMergedConvolution:
                 if (Use8i(param.mergedConvolution()))

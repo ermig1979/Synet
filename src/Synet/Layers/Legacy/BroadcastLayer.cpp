@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/BroadcastLayer.h"
+#include "Synet/Layers/Legacy/BroadcastLayer.h"
 
 namespace Synet
 {

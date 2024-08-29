@@ -29,7 +29,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\ArgMaxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\BiasLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\BinaryOperationLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\BroadcastLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\CastLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\CompareLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ConcatLayer.cpp" />
@@ -53,6 +52,8 @@
     <ClCompile Include="..\..\src\Synet\Layers\InnerProductLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\InputLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\InterpLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\LrnLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution8iLayer.cpp" />
@@ -127,7 +128,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\ArgMaxLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\BiasLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\BinaryOperationLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\BroadcastLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\CastLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\CompareLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ConcatLayer.h" />
@@ -152,7 +152,8 @@
     <ClInclude Include="..\..\src\Synet\Layers\InnerProductLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InputLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InterpLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\LrnLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\LrnLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\LstmLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution16bLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.h" />

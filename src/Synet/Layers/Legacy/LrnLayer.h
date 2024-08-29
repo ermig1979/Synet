@@ -28,17 +28,28 @@
 
 namespace Synet
 {
-    class ExpandDimsLayer : public Synet::Layer<float>
+    class LrnLayer : public Synet::Layer<float>
     {
     public:
         typedef Layer<float> Base;
+        typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ExpandDimsLayer(const LayerParam& param, Context* context);
+        LrnLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
+        virtual size_t MemoryUsage() const;
+
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+    
+    private:
+
+        NormRegionType _normRegion;
+        size_t _size, _prePad, _batch, _channels, _width, _height;
+        float _alpha, _beta, _k;
+        int _trans;
+        Tensor _buffer;
     };
 }
