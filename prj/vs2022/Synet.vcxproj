@@ -53,6 +53,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\InputLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\InterpLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\FusedLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\LrnLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.cpp" />
@@ -143,7 +144,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\EltwiseLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ExpandDimsLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\FlattenLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\FusedLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\GatherLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\GridSampleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InnerProduct16bLayer.h" />
@@ -153,6 +153,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\InputLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InterpLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\FusedLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\LrnLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\LstmLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution16bLayer.h" />

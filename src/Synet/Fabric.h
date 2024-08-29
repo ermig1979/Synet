@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Synet/Layers/Legacy/BroadcastLayer.h"
+#include "Synet/Layers/Legacy/FusedLayer.h"
 #include "Synet/Layers/Legacy/LrnLayer.h"
 
 #include "Synet/Layers/ActivationLayers.h"
@@ -46,7 +47,6 @@
 #include "Synet/Layers/EltwiseLayer.h"
 #include "Synet/Layers/ExpandDimsLayer.h"
 #include "Synet/Layers/FlattenLayer.h"
-#include "Synet/Layers/FusedLayer.h"
 #include "Synet/Layers/GatherLayer.h"
 #include "Synet/Layers/GridSampleLayer.h"
 #include "Synet/Layers/InnerProduct32fLayer.h"
@@ -144,7 +144,7 @@ namespace Synet
             case LayerTypeElu: return new EluLayer(param, context);
             case LayerTypeExpandDims: return new ExpandDimsLayer(param, context);
             case LayerTypeFlatten: return new FlattenLayer(param, context);
-            case LayerTypeFused: return new FusedLayer<T>(param, context);
+            case LayerTypeFused: return new FusedLayer(param, context);
             case LayerTypeGather: return new GatherLayer(param, context);
             case LayerTypeGelu: return new GeluLayer(param, context);
             case LayerTypeGridSample: return new GridSampleLayer(param, context);
