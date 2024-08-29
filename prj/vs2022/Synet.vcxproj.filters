@@ -200,6 +200,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\ReorgLayer.cpp">
       <Filter>Layers\Legacy</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\ReshapeLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />

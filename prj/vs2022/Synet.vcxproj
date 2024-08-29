@@ -74,6 +74,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\PriorBoxClusteredLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PriorBoxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ReductionLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\ReshapeLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ScaleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ShuffleLayer.cpp" />

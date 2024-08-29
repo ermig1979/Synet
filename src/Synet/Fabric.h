@@ -185,7 +185,7 @@ namespace Synet
             case LayerTypeRegion: return new RegionLayer(param, context);
             case LayerTypeRelu: return new ReluLayer(param, context);
             case LayerTypeReorg: return new ReorgLayer(param, context);
-            case LayerTypeReshape: return new ReshapeLayer<T>(param, context);
+            case LayerTypeReshape: return new ReshapeLayer(param, context);
             case LayerTypeRestrictRange: return new RestrictRangeLayer(param, context);
             case LayerTypeReverseSequence: return new ReverseSequenceLayer<T>(param, context);
             case LayerTypeRnnGruBd: return new RnnGruBdLayer<T>(param, context);
