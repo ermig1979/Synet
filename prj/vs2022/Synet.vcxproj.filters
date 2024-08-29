@@ -374,9 +374,6 @@
     <ClInclude Include="..\..\src\Synet\Converters\Optimizer.h">
       <Filter>Converters</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Winograd.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Common.h" />
     <ClInclude Include="..\..\src\Synet\Buffer.h" />
     <ClInclude Include="..\..\src\Synet\Converters\Deoptimizer.h">

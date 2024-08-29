@@ -124,8 +124,8 @@ namespace Synet
             if(weight[1].Axis(0) != _channels)
                 SYNET_ERROR("SqueezeExcitationLayer: check weight[1] axis 0!");
             assert(weight[1].Axis(0) == _channels);
-            _rWeight[0].assign(weight[0].CpuData(), weight[0].CpuData() + _squeeze * _channels);
-            _rWeight[1].assign(weight[1].CpuData(), weight[1].CpuData() + _squeeze * _channels);
+            _rWeight[0].assign(weight[0].Data<float>(), weight[0].Data<float>() + _squeeze * _channels);
+            _rWeight[1].assign(weight[1].Data<float>(), weight[1].Data<float>() + _squeeze * _channels);
         }
         else if (_format == TensorFormatNhwc)
         {
@@ -138,11 +138,11 @@ namespace Synet
             _rWeight[0].resize(_squeeze * _channels);
             for (size_t s = 0; s < _squeeze; ++s)
                 for (size_t c = 0; c < _channels; ++c)
-                    _rWeight[0][s * _channels + c] = weight[0].CpuData()[c * _squeeze + s];
+                    _rWeight[0][s * _channels + c] = weight[0].Data<float>()[c * _squeeze + s];
             _rWeight[1].resize(_squeeze * _channels);
             for (size_t c = 0; c < _channels; ++c)
                 for (size_t s = 0; s < _squeeze; ++s)
-                    _rWeight[1][c * _squeeze + s] = weight[1].CpuData()[s * _channels + c];
+                    _rWeight[1][c * _squeeze + s] = weight[1].Data<float>()[s * _channels + c];
         }
         else
             assert(0);
