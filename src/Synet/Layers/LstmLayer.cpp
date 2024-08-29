@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2023 Yermalayeu Ihar.
+* Copyright (c) 2018-2024 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,13 @@ namespace Synet
 
     bool LstmLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        assert(src.size() == 3 && src[0]->Count() == 3 && src[1]->Count() == 3 && src[2]->Count() == 3);
+        if (src.size() != 3 || dst.size() != 1)
+            SYNET_ERROR("LstmLayer supports 3 input1 and 1 output!");
+        if (src[0]->GetType() != TensorType32f || src[1]->GetType() != TensorType32f || src[2]->GetType() != TensorType32f)
+            SYNET_ERROR("LstmLayer supports only FP32 type!");
+        if (src[0]->Count() != 3 || src[1]->Count() != 3 || src[2]->Count() != 3)
+            SYNET_ERROR("LstmLayer supports only 3D input tensors!");
+
         const LstmParam & param = this->Param().lstm();
         const Tensors & weight = this->Weight();
 

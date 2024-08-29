@@ -25,38 +25,30 @@
 #pragma once
 
 #include "Synet/Layer.h"
-#include "Synet/Utils/InnerProduct.h"
 
 namespace Synet
 {
-    class LstmLayer : public Synet::Layer<float>
+    class RegionLayer : public Synet::Layer<float>
     {
-        static const int IPS = 4;
     public:
         typedef Layer<float> Base;
         typedef typename Base::Tensor Tensor;
-        typedef typename Base::Tensors Tensors;
         typedef typename Base::TensorPtrs TensorPtrs;
+        typedef Synet::Region<float> Region;
+        typedef std::vector<Region> Regions;
 
-        LstmLayer(const LayerParam& param, Context* context);
+        RegionLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-        virtual int64_t Flop() const;
-
-        virtual size_t MemoryUsage() const;
-
-        virtual void CompactWeight();
+        void GetRegions(const TensorPtrs& src, Type threshold, Regions& dst) const;
 
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-        void ForwardOneDir(const float* x, const float* h0, const float* c0, const float* w, const float* r, const float* bias, float* buf, float* h, bool rev);
-
-        LstmDirectionType _dir;
-        size_t _batch, _seqS, _srcS, _hidS, _dirS, _hidS4;
-        const float*_w0, *_w1, *_r0, *_r1, *_b0, *_b1;
-        int _internal[IPS];
-        InnerProduct32f _innerProduct32f[IPS];
+    private:
+        size_t _coords, _classes, _num, _classfix;
+        bool _softmax;
+        Floats _anchors;
     };
 }
