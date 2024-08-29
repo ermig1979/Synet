@@ -160,7 +160,7 @@ namespace Synet
             case LayerTypeInput: return new InputLayer(param, context);
             case LayerTypeInterp: return new InterpLayer(param, context);
             case LayerTypeLrn: return new LrnLayer(param, context);
-            case LayerTypeLstm: return new LstmLayer<T>(param, context);
+            case LayerTypeLstm: return new LstmLayer(param, context);
             case LayerTypeMergedConvolution:
                 if (Use8i(param.mergedConvolution()))
                     return new MergedConvolution8iLayer(param, context, method);

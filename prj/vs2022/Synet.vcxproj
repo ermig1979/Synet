@@ -55,6 +55,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\FusedLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\LrnLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\LstmLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution8iLayer.cpp" />
