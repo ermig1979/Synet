@@ -197,6 +197,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\RegionLayer.cpp">
       <Filter>Layers\Legacy</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\ReorgLayer.cpp">
+      <Filter>Layers\Legacy</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -312,9 +315,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ReorgLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ReshapeLayer.h">
@@ -603,6 +603,9 @@
       <Filter>Layers\Legacy</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\RegionLayer.h">
+      <Filter>Layers\Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\ReorgLayer.h">
       <Filter>Layers\Legacy</Filter>
     </ClInclude>
   </ItemGroup>

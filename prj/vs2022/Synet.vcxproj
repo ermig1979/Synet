@@ -56,6 +56,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\FusedLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\LrnLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\RegionLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\ReorgLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\LstmLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.cpp" />
@@ -158,6 +159,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\FusedLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\LrnLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\RegionLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\ReorgLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\LstmLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution16bLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.h" />
@@ -176,7 +178,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\PriorBoxClusteredLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\PriorBoxLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\ReorgLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ReshapeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ReverseSequenceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\RnnGruBdLayer.h" />

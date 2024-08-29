@@ -28,6 +28,7 @@
 #include "Synet/Layers/Legacy/FusedLayer.h"
 #include "Synet/Layers/Legacy/LrnLayer.h"
 #include "Synet/Layers/Legacy/RegionLayer.h"
+#include "Synet/Layers/Legacy/ReorgLayer.h"
 
 #include "Synet/Layers/ActivationLayers.h"
 #include "Synet/Layers/AddLayer.h"
@@ -72,7 +73,6 @@
 #include "Synet/Layers/PriorBoxLayer.h"
 #include "Synet/Layers/PriorBoxClusteredLayer.h"
 #include "Synet/Layers/ReductionLayer.h"
-#include "Synet/Layers/ReorgLayer.h"
 #include "Synet/Layers/ReshapeLayer.h"
 #include "Synet/Layers/ReverseSequenceLayer.h"
 #include "Synet/Layers/RnnGruBdLayer.h"
@@ -184,7 +184,7 @@ namespace Synet
             case LayerTypeReduction: return new ReductionLayer(param, context);
             case LayerTypeRegion: return new RegionLayer(param, context);
             case LayerTypeRelu: return new ReluLayer(param, context);
-            case LayerTypeReorg: return new ReorgLayer<T>(param, context);
+            case LayerTypeReorg: return new ReorgLayer(param, context);
             case LayerTypeReshape: return new ReshapeLayer<T>(param, context);
             case LayerTypeRestrictRange: return new RestrictRangeLayer(param, context);
             case LayerTypeReverseSequence: return new ReverseSequenceLayer<T>(param, context);
