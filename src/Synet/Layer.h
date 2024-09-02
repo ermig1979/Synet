@@ -171,7 +171,7 @@ namespace Synet
                 if (offset < 0 && size < 0)
                 {
                     Reshape(param, tensor);
-                    if (!is.read((char*)tensor.RawCpuData(), tensor.RawSize()))
+                    if (!is.read((char*)tensor.RawData(), tensor.RawSize()))
                         return false;
                 }
                 else
@@ -181,7 +181,7 @@ namespace Synet
                         Reshape(param, tensor);
                         if (!is.seekg(offset, std::ios::beg))
                             return false;
-                        if (!is.read((char*)tensor.RawCpuData(), size))
+                        if (!is.read((char*)tensor.RawData(), size))
                             return false;
                     }
                 }
@@ -204,7 +204,7 @@ namespace Synet
                     length = tensor.RawSize();
                     if (length > (ptrdiff_t)size)
                         return false;
-                    memcpy(tensor.RawCpuData(), data, length);
+                    memcpy(tensor.RawData(), data, length);
                     data += length;
                     size -= length;
                 }
@@ -215,7 +215,7 @@ namespace Synet
                         if (offset + length > (ptrdiff_t)size)
                             return false;
                         Reshape(param, tensor);
-                        memcpy(tensor.RawCpuData(), data + offset, length);
+                        memcpy(tensor.RawData(), data + offset, length);
                     }
                 }
             }

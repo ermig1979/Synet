@@ -78,7 +78,7 @@ namespace Synet
             if (weight.back().Size() == 1)
             {
                 _conv.activation = ActivationFunctionTypeLeakyRelu;
-                _alg.params[0] = weight.back().CpuData()[0];
+                _alg.params[0] = weight.back().Data<float>()[0];
             }
             else
             {

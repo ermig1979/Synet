@@ -149,7 +149,7 @@ namespace Synet
         {
             const float * pSrc = src[0]->Data<float>({ b, 0, 0, 0 });
             float* pDst = dst[0]->Data<float>({ b, 0, 0, 0 });
-            LrnLayerCrossChannelsCpu(pSrc, _channels, _size, _width*_height, alpha, _beta, _k, _buffer.CpuData(), pDst, _trans);
+            LrnLayerCrossChannelsCpu(pSrc, _channels, _size, _width*_height, alpha, _beta, _k, _buffer.Data<float>(), pDst, _trans);
         }            
     }
 }

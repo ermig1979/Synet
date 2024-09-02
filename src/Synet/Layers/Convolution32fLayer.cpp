@@ -56,8 +56,8 @@ namespace Synet
         if (_convolution32f.Enable())
         {
             Base::Extend32f(buf, 0, Shp(_convolution32f.ExternalBufferSize()), src->Format());
-            _convolution32f.SetParams(weight[0].CpuData(), &alg.internal, alg.bias ? weight[1].CpuData() : NULL,
-                conv.activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : alg.params);
+            _convolution32f.SetParams(weight[0].Data<float>(), &alg.internal, alg.bias ? weight[1].Data<float>() : NULL,
+                conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : alg.params);
         }
         else
             Base::Extend32f(buf, 0, Shp(conv.ImgSize()), src->Format());
@@ -75,39 +75,39 @@ namespace Synet
             _convolution32f.Forward(src, buf, dst);
         else
         {
-            const Type * weight = this->Weight()[0].CpuData();
+            const float * weight = this->Weight()[0].Data<float>();
             const ConvParam& conv = this->_conv;
             const AlgParam& alg = this->_alg;
             for (size_t b = 0; b < alg.batch; ++b)
             {
-                const Type * tmp = src;
+                const float * tmp = src;
                 if (!alg.is1x1)
                 {
                     if (alg.trans)
                         Synet::ImgToRow(tmp, conv.srcH, conv.srcW, conv.srcC, conv.kernelY, conv.kernelX, 
                             conv.padY, conv.padX, conv.padH, conv.padW, conv.strideY, conv.strideX, 
-                            conv.dilationY, conv.dilationX, conv.group, (const Type*)NULL, buf);
+                            conv.dilationY, conv.dilationX, conv.group, (const float*)NULL, buf);
                     else
                         Synet::ImgToCol(tmp, conv.srcC, conv.srcH, conv.srcW, conv.kernelY, conv.kernelX, 
                             conv.padY, conv.padX, conv.padH, conv.padW, conv.strideY, conv.strideX, 
-                            conv.dilationY, conv.dilationX, (const Type*)NULL, buf);
+                            conv.dilationY, conv.dilationX, (const float*)NULL, buf);
                     tmp = buf;
                 }
                 if (alg.trans)
                 {
                     assert(conv.group == 1 || conv.group == conv.srcC);
                     for (size_t g = 0; g < conv.group; ++g)
-                        CpuGemm(CblasNoTrans, CblasNoTrans, alg.siS, alg.siD, alg.siW, Type(1), tmp + alg.grS * g, alg.ldS,
-                            weight + alg.grW * g, alg.ldW, Type(0), dst + alg.grD * g, alg.ldD);
+                        CpuGemm(CblasNoTrans, CblasNoTrans, alg.siS, alg.siD, alg.siW, 1.0f, tmp + alg.grS * g, alg.ldS,
+                            weight + alg.grW * g, alg.ldW, 0.0f, dst + alg.grD * g, alg.ldD);
                 }
                 else
                 {
                     for (size_t g = 0; g < conv.group; ++g)
-                        CpuGemm(CblasNoTrans, CblasNoTrans, alg.siD, alg.siS, alg.siW, Type(1), weight + alg.grW * g, alg.ldW,
-                            tmp + alg.grS * g, alg.ldS, Type(0), dst + alg.grD * g, alg.ldD);
+                        CpuGemm(CblasNoTrans, CblasNoTrans, alg.siD, alg.siS, alg.siW, 1.0f, weight + alg.grW * g, alg.ldW,
+                            tmp + alg.grS * g, alg.ldS, 0.0f, dst + alg.grD * g, alg.ldD);
                 }
                 if (alg.bias)
-                    CpuAddBias(this->Weight()[1].CpuData(), conv.dstC, conv.dstH*conv.dstW, dst, alg.trans);
+                    CpuAddBias(this->Weight()[1].Data<float>(), conv.dstC, conv.dstH*conv.dstW, dst, alg.trans);
                 switch (conv.activation)
                 {
                 case ActivationFunctionTypeIdentity:
@@ -122,7 +122,7 @@ namespace Synet
                     CpuRestrictRange(dst, alg.dSize, alg.params[0], alg.params[1], dst);
                     break;
                 case ActivationFunctionTypePrelu:
-                    PreluLayerForward(dst, this->Weight().back().CpuData(), conv.dstC, conv.dstH * conv.dstW, dst, alg.trans ? TensorFormatNhwc : TensorFormatNchw);
+                    PreluLayerForward(dst, this->Weight().back().Data<float>(), conv.dstC, conv.dstH * conv.dstW, dst, alg.trans ? TensorFormatNhwc : TensorFormatNchw);
                     break;
                 case ActivationFunctionTypeElu:
                     CpuElu(dst, alg.dSize, alg.params[0], dst);

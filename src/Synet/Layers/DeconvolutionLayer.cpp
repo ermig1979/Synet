@@ -86,7 +86,7 @@ namespace Synet
             if (weight.back().Size() == 1)
             {
                 _conv.activation = ActivationFunctionTypeLeakyRelu;
-                _params[0] = weight.back().CpuData()[0];
+                _params[0] = weight.back().Data<float>()[0];
             }
             else
             {
@@ -194,7 +194,7 @@ namespace Synet
             _deconvolution32f.Forward(src, buf, dst);
         else
         {
-            const float* weight = _transW ? _weightT.CpuData() : this->Weight()[0].CpuData();
+            const float* weight = _transW ? _weightT.Data<float>() : this->Weight()[0].Data<float>();
             for (size_t n = 0; n < _num; ++n)
             {
                 float* tmp = _is1x1 ? dst : buf;

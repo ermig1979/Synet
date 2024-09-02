@@ -92,7 +92,7 @@ namespace Synet
 
     void InnerProduct32fLayer::ForwardCpu(const float * src, const float* wgt, float* dst)
     {
-        const float* bias = _biasTerm ? this->Weight()[1].CpuData() : NULL;
+        const float* bias = _biasTerm ? this->Weight()[1].Data<float>() : NULL;
         if (!_transB && _M == 1)
             Detail::InnerProductLayerForwardCpu(src, wgt, bias, _N, _K, dst);
         else

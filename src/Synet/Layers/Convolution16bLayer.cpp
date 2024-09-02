@@ -75,8 +75,8 @@ namespace Synet
         if (_convolution16b.Enable())
         {
             Base::Extend8u(buf, 0, Shp(_convolution16b.ExternalBufferSize()), src->Format());
-            _convolution16b.SetParams(weight[0].CpuData(), alg.bias ? weight[1].CpuData() : NULL,
-                conv.activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : alg.params);
+            _convolution16b.SetParams(weight[0].Data<float>(), alg.bias ? weight[1].Data<float>() : NULL,
+                conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : alg.params);
             alg.internal = 1;
         }
         else

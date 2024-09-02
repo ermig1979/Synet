@@ -155,10 +155,10 @@ namespace Synet
             int32_t* buf4 = Base::Buf32i(buf, 0);
 
             const AlgParam& a = this->_alg;
-            float* src32f = _src8u ? (_dw0 ? buf0 : NULL) : src[0]->As32f().CpuData();
-            uint8_t* src8u = _src8u ? src[0]->As8u().CpuData() : (_dw0 ? NULL : buf2);
-            float* dst32f = _dst8u ? buf1 : dst[0]->As32f().CpuData();
-            uint8_t* dst8u = _dst8u ? dst[0]->As8u().CpuData() : NULL;
+            float* src32f = _src8u ? (_dw0 ? buf0 : NULL) : src[0]->Data<float>();
+            uint8_t* src8u = _src8u ? src[0]->Data<uint8_t>() : (_dw0 ? NULL : buf2);
+            float* dst32f = _dst8u ? buf1 : dst[0]->Data<float>();
+            uint8_t* dst8u = _dst8u ? dst[0]->Data<uint8_t>() : NULL;
             for (size_t b = 0; b < a.batch; ++b)
             {
                 if (_dw0)

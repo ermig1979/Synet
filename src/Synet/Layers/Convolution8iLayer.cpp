@@ -99,14 +99,14 @@ namespace Synet
         if (_convolution8i.Enable())
         {
             Base::Extend8u(buf, 0, Shp(_convolution8i.ExternalBufferSize()));
-            const float* bias = alg.bias ? weight[1].CpuData() : NULL;
-            const float* params = conv.activation == ActivationFunctionTypePrelu ? weight.back().CpuData() : alg.params;
+            const float* bias = alg.bias ? weight[1].Data<float>() : NULL;
+            const float* params = conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : alg.params;
             const float* stats[4] = {
                 this->Stats(0).empty() ? NULL : this->Stats(0)[0]->min.data(),
                 this->Stats(0).empty() ? NULL : this->Stats(0)[0]->max.data(),
                 this->Stats(2).empty() ? NULL : this->Stats(2)[0]->min.data(),
                 this->Stats(2).empty() ? NULL : this->Stats(2)[0]->max.data() };
-            _convolution8i.SetParams(weight[0].CpuData(), bias, params, stats);
+            _convolution8i.SetParams(weight[0].Data<float>(), bias, params, stats);
         }
         else
         {
@@ -126,16 +126,16 @@ namespace Synet
     void Convolution8iLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (_convolution8i.Enable())
-            _convolution8i.Forward(src[0]->RawCpuData(), Base::Buf8u(buf, 0), dst[0]->RawCpuData());
+            _convolution8i.Forward(src[0]->RawData(), Base::Buf8u(buf, 0), dst[0]->RawData());
         else
         {
             const AlgParam& alg = this->_alg;
-            const float* src32f = _src8u ? NULL : src[0]->As32f().CpuData();
-            uint8_t* src8u = _src8u ? src[0]->As8u().CpuData() : Base::Buf8u(buf, 0);
+            const float* src32f = _src8u ? NULL : src[0]->Data<float>();
+            uint8_t* src8u = _src8u ? src[0]->Data<uint8_t>() : Base::Buf8u(buf, 0);
             uint8_t* buf8u = Base::Buf8u(buf, 1);
             int32_t* sum32i = Base::Buf32i(buf, 0);
-            float* dst32f = _dst8u ? Base::Buf32f(buf, 0) : dst[0]->As32f().CpuData();
-            uint8_t* dst8u = _dst8u ? dst[0]->As8u().CpuData() : NULL;
+            float* dst32f = _dst8u ? Base::Buf32f(buf, 0) : dst[0]->Data<float>();
+            uint8_t* dst8u = _dst8u ? dst[0]->Data<uint8_t>() : NULL;
             for (size_t b = 0; b < alg.batch; ++b)
             {
                 if(!_src8u)
@@ -201,14 +201,14 @@ namespace Synet
         _bias32f.Reshape(Shp(conv.dstC));
         size_t G = conv.group, D = conv.dstC / G, C = conv.srcC / G, K = conv.kernelY * conv.kernelX, CK = C * K, GD = G * D;
         Floats normW(CK);
-        const float* pSrcW = this->Weight()[0].CpuData();
-        const float* pSrcB = alg.bias ? this->Weight()[1].CpuData() : NULL;
+        const float* pSrcW = this->Weight()[0].Data<float>();
+        const float* pSrcB = alg.bias ? this->Weight()[1].Data<float>() : NULL;
         const float* pScale = statS.scale32fTo8u.data();
         const float* pShift = statS.shift32fTo8u.data();
         float* pNormW = normW.data();
-        int8_t* pDstW = _weight8i.CpuData();
-        float* pNorm = _norm32f.CpuData();
-        float* pBias = _bias32f.CpuData();
+        int8_t* pDstW = _weight8i.Data<int8_t>();
+        float* pNorm = _norm32f.Data<float>();
+        float* pBias = _bias32f.Data<float>();
         bool avoidOverflow16i = statS.negative && _method == QuantizationMethodIECompatible;
         _srcCvt.Init(1, conv.srcC, conv.srcH, conv.srcW, (TensorFormat)alg.trans, statS.scale32fTo8u.data(), statS.shift32fTo8u.data(), _method);
         _dstCvt.Init(1, conv.dstC, conv.dstH, conv.dstW, (TensorFormat)alg.trans, statD.scale32fTo8u.data(), statD.shift32fTo8u.data(), _method);
@@ -293,9 +293,9 @@ namespace Synet
         const ConvParam& conv = this->_conv;
         const AlgParam& alg = this->_alg;
         const uint8_t* zero = this->Stats(0)[0]->zero8u.data();
-        const int8_t* weight = _weight8i.CpuData();
-        const float* norm = _norm32f.CpuData();
-        const float* bias = _bias32f.CpuData();
+        const int8_t* weight = _weight8i.Data<int8_t>();
+        const float* norm = _norm32f.Data<float>();
+        const float* bias = _bias32f.Data<float>();
         const uint8_t* tmp = src;
         if (!alg.is1x1)
         {
@@ -339,7 +339,7 @@ namespace Synet
             CpuRestrictRange(dst, alg.dSize, alg.params[0], alg.params[1], dst);
             break;
         case ActivationFunctionTypePrelu:
-            PreluLayerForward(dst, this->Weight().back().CpuData(), conv.dstC, conv.dstH * conv.dstW, dst, alg.trans ? TensorFormatNhwc : TensorFormatNchw);
+            PreluLayerForward(dst, this->Weight().back().Data<float>(), conv.dstC, conv.dstH * conv.dstW, dst, alg.trans ? TensorFormatNhwc : TensorFormatNchw);
             break;
         case ActivationFunctionTypeElu:
             CpuElu(dst, alg.dSize, alg.params[0], dst);
