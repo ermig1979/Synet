@@ -61,19 +61,19 @@ namespace Synet
 
     bool ReverseSequenceLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 1 || dst.size() != 1)
-            SYNET_ERROR("ReverseSequenceLayer supports only 1 input and 1 output!");
+        if ((src.size() != 1 && src.size() != 2) || dst.size() != 1)
+            SYNET_ERROR("ReverseSequenceLayer supports only 1 or 2 inputs and 1 output!");
         if (src[0] == dst[0])
             SYNET_ERROR("ReverseSequenceLayer input and output can't be the same tensor!");
 
-        size_t seqAxis = src[0]->Index(this->Param().reverseSequence().seqAxis());
+        size_t seqAxis = src[0]->Index(this->Param().reverseSequence().seqAxis()), i;
         const Shape & shape = src[0]->Shape();
         if(seqAxis >= shape.size())
             SYNET_ERROR("ReverseSequenceLayer has wrong parameter: reverseSequence().seqAxis()!");
-        for (size_t i = 0, _outer = 1; i < seqAxis; i++)
+        for (i = 0, _outer = 1; i < seqAxis; i++)
             _outer *= shape[i];
         _reverse = shape[seqAxis];
-        for (size_t i = seqAxis + 1, _inner = 1; i < shape.size(); ++i)
+        for (i = seqAxis + 1, _inner = 1; i < shape.size(); ++i)
             _inner *= shape[i];
         switch (src[0]->GetType())
         {
