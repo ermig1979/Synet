@@ -24,69 +24,26 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/Utils/Math.h"
 
 namespace Synet
 {
-    template <class T> class ReverseSequenceLayer : public Synet::Layer<T>
+    class ReverseSequenceLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ReverseSequenceLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        ReverseSequenceLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            size_t seqAxis = this->Param().reverseSequence().seqAxis(), i = 0;
-            const Shape & shape = src[0]->Shape();
-            assert(seqAxis < shape.size());
-            for (i = 0, _outer = 1; i < seqAxis; i++)
-                _outer *= shape[i];
-            _reverse = shape[seqAxis];
-            for (i = seqAxis + 1, _inner = 1; i < shape.size(); ++i)
-                _inner *= shape[i];
-            dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
-            this->UsePerfStat();
-            return true;
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            const T* pSrc = src[0]->CpuData();
-            T * pDst = dst[0]->CpuData();
-            if (_inner == 1)
-            {
-                for (size_t o = 0; o < _outer; ++o)
-                {
-                    for (size_t r = 0; r < _reverse; ++r)
-                        pDst[r] = pSrc[_reverse - 1 - r];
-                    pDst += _reverse;
-                    pSrc += _reverse;
-                }
-            }
-            else
-            {
-                for (size_t o = 0; o < _outer; ++o)
-                {
-                    for (size_t r = 0; r < _reverse; ++r)
-                    {
-                        memcpy(pDst + r * _inner, pSrc + (_reverse - 1 - r) * _inner, _inner * sizeof(T));
-                    }
-                    pDst += _reverse * _inner;
-                    pSrc += _reverse * _inner;
-                }
-            }
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
+        typedef void (*ReverseSequencePtr)(const uint8_t* src8, size_t outer, size_t reverse, size_t inner, uint8_t* dst8);
+        ReverseSequencePtr _reverseSequence;
         size_t _outer, _reverse, _inner;
     };
 }
