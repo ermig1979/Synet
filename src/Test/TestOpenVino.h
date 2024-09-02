@@ -171,7 +171,7 @@ namespace Test
                 {
                     for (size_t i = 0; i < _output[0].Size(); i += 7)
                     {
-                        const float* output = _output[0].CpuData();
+                        const float* output = _output[0].Data<float>();
                         if (output[i + 2] > threshold)
                         {
                             Region region;
@@ -334,7 +334,7 @@ namespace Test
             assert(_ov->input.size() == x.size());
             for (size_t i = 0; i < x.size(); ++i)
             {
-                const float* src = x[i].CpuData() + b * x[i].Size() / _ov->batchSize;
+                const float* src = x[i].Data<float>() + b * x[i].Size() / _ov->batchSize;
                 const ov::Shape& dims = _ov->input[i].get_shape();
                 const ov::Strides & strides = _ov->input[i].get_strides();
                 uint8_t* dst = (uint8_t*)_ov->input[i].data();
@@ -390,7 +390,7 @@ namespace Test
                     }
                     SortDetectionOutput(tmp.data(), tmp.size());
                     _output[o].Reshape(Shp(1, 1, tmp.size() / 7, 7), Synet::TensorFormatNchw);
-                    memcpy(_output[o].CpuData(), tmp.data(), _output[o].Size() * sizeof(float));
+                    memcpy(_output[o].Data<float>(), tmp.data(), _output[o].RawSize());
                 }
                 else
                 {
@@ -412,13 +412,13 @@ namespace Test
                     switch (type)
                     {
                     case ov::element::Type_t::f32:
-                        SetOutput(dims, strides, 0, _ov->output[o].data<float>(), _output[o].CpuData() + b * size);
+                        SetOutput(dims, strides, 0, _ov->output[o].data<float>(), _output[o].Data<float>() + b * size);
                         break;
                     case ov::element::Type_t::i32:
-                        SetOutput(dims, strides, 0, _ov->output[o].data<int32_t>(), _output[o].CpuData() + b * size);
+                        SetOutput(dims, strides, 0, _ov->output[o].data<int32_t>(), _output[o].Data<float>() + b * size);
                         break;
                     case ov::element::Type_t::i64:
-                        SetOutput(dims, strides, 0, _ov->output[o].data<int64_t>(), _output[o].CpuData() + b * size);
+                        SetOutput(dims, strides, 0, _ov->output[o].data<int64_t>(), _output[o].Data<float>() + b * size);
                         break;
                     default:
                         CPL_LOG_SS(Error, "OpenVino wrapper: unknown type of output tensor!");
@@ -463,7 +463,7 @@ namespace Test
             {
                 Synet::Tensor<float> tensor(dims, format);
                 const float* pOut = (float*)src.data();
-                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }
@@ -471,7 +471,7 @@ namespace Test
             {
                 Synet::Tensor<int32_t> tensor(dims, format);
                 const int32_t* pOut = (int32_t*)src.data();
-                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }
@@ -479,7 +479,7 @@ namespace Test
             {
                 Synet::Tensor<int64_t> tensor(dims, format);
                 const int64_t* pOut = (int64_t*)src.data();
-                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }
@@ -487,7 +487,7 @@ namespace Test
             {
                 Synet::Tensor<uint8_t> tensor(dims, format);
                 const uint8_t* pOut = (uint8_t*)src.data();
-                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }
@@ -495,7 +495,7 @@ namespace Test
             {
                 Synet::Tensor<int8_t> tensor(dims, format);
                 const int8_t* pOut = (int8_t*)src.data();
-                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }

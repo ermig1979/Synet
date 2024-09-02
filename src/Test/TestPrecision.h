@@ -296,7 +296,7 @@ namespace Test
 			else
 				channels[0] = resized;
 
-			float* ptr = input.CpuData(Shp(index, 0, 0, 0));
+			float* ptr = input.Data<float>(Shp(index, 0, 0, 0));
 			for (size_t c = 0; c < channels.size(); ++c)
 			{
 				for (size_t y = 0; y < channels[c].height; ++y)

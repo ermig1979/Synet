@@ -176,7 +176,7 @@ namespace Test
 			for(int i = 0; i < _options.repeatNumber; ++i, progress += batch)
 				t.output = t.network->Predict(t.input);
 			size_t size = t.output[0].Size(1);
-			const float* data = t.output[0].CpuData();
+			const float* data = t.output[0].Data<float>();
 			for (size_t b = 0; b < batch; ++b, data += size)
 			{
 				Test& test = _tests[current + b];

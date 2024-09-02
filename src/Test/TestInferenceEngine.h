@@ -183,7 +183,7 @@ namespace Test
             {
                 for (size_t i = 0; i < _output[0].Size(); i += 7)
                 {
-                    const float* output = _output[0].CpuData();
+                    const float* output = _output[0].Data<float>();
                     if (output[i + 2] > threshold)
                     {
                         Region region;
@@ -344,7 +344,7 @@ namespace Test
             {
                 const InferenceEngine::SizeVector& dims = _ieInput[i]->getTensorDesc().getDims();
                 const InferenceEngine::SizeVector& strides = _ieInput[i]->getTensorDesc().getBlockingDesc().getStrides();
-                const float* src = x[i].CpuData() + b * x[i].Size() / _batchSize;
+                const float* src = x[i].Data<float>() + b * x[i].Size() / _batchSize;
                 float* dst = (float*)_ieInput[i]->buffer();
                 SetInput(dims, strides, 0, src, dst);
             }
@@ -398,7 +398,7 @@ namespace Test
                     }
                     SortDetectionOutput(tmp.data(), tmp.size());
                     _output[o].Reshape(Shp(1, 1, tmp.size() / 7, 7), Synet::TensorFormatNchw);
-                    memcpy(_output[o].CpuData(), tmp.data(), _output[o].Size() * sizeof(float));
+                    memcpy(_output[o].Data<float>(), tmp.data(), _output[o].Size() * sizeof(float));
                 }
                 else
                 {
@@ -420,13 +420,13 @@ namespace Test
                     switch (precision)
                     {
                     case InferenceEngine::Precision::FP32:
-                        SetOutput(dims, strides, 0, (const float*)_ieOutput[o]->buffer(), _output[o].CpuData() + b * size);
+                        SetOutput(dims, strides, 0, (const float*)_ieOutput[o]->buffer(), _output[o].Data<float>() + b * size);
                         break;
                     case InferenceEngine::Precision::I32:
-                        SetOutput(dims, strides, 0, (const int32_t*)_ieOutput[o]->buffer(), _output[o].CpuData() + b * size);
+                        SetOutput(dims, strides, 0, (const int32_t*)_ieOutput[o]->buffer(), _output[o].Data<float>() + b * size);
                         break;
                     case InferenceEngine::Precision::I64:
-                        SetOutput(dims, strides, 0, (const int64_t*)_ieOutput[o]->buffer(), _output[o].CpuData() + b * size);
+                        SetOutput(dims, strides, 0, (const int64_t*)_ieOutput[o]->buffer(), _output[o].Data<float>() + b * size);
                         break;
                     default:
                         assert(0);
@@ -514,7 +514,7 @@ namespace Test
             {
                 Synet::Tensor<float> tensor(dims, format);
                 const float* pOut = blob.buffer();
-                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }
@@ -522,7 +522,7 @@ namespace Test
             {
                 Synet::Tensor<int32_t> tensor(dims, format);
                 const int32_t* pOut = blob.buffer();
-                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }
@@ -530,7 +530,7 @@ namespace Test
             {
                 Synet::Tensor<int64_t> tensor(dims, format);
                 const int64_t* pOut = blob.buffer();
-                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }
@@ -538,7 +538,7 @@ namespace Test
             {
                 Synet::Tensor<uint8_t> tensor(dims, format);
                 const uint8_t* pOut = blob.buffer();
-                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }
@@ -546,7 +546,7 @@ namespace Test
             {
                 Synet::Tensor<int8_t> tensor(dims, format);
                 const int8_t* pOut = blob.buffer();
-                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }

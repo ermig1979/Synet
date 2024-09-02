@@ -257,7 +257,7 @@ namespace Test
                 {
                     for (size_t i = 0; i < _output[0].Size(); i += 7)
                     {
-                        const float* output = _output[0].CpuData();
+                        const float* output = _output[0].Data<float>();
                         if (output[i + 2] > threshold)
                         {
                             Region region;
@@ -405,7 +405,7 @@ namespace Test
                         }
                         SortRtdetr(tmp.data(), tmp.size());
                         _output[i].Reshape(Shp(1, tmp.size() / 6, 6));
-                        memcpy(_output[i].CpuData(), tmp.data(), _output[i].Size() * sizeof(float));
+                        memcpy(_output[i].Data<float>(), tmp.data(), _output[i].Size() * sizeof(float));
                     }
                     else
                     {

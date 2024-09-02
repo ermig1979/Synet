@@ -399,7 +399,7 @@ namespace Test
 
         void SetInput(Thread& thread, Data& data)
         {
-            float* input = data.input.CpuData();
+            float* input = data.input.Data<float>();
             const Shape &shape = thread.network.NchwShape();
             for (size_t b = 0; b < _options.batchSize; ++b)
             {
@@ -451,7 +451,7 @@ namespace Test
         {
             if (src.Shape() != dst.Shape())
                 dst.Reshape(src.Shape(), src.Format());
-            memcpy(dst.CpuData(), src.CpuData(), src.RawSize());
+            memcpy(dst.RawData(), src.RawData(), src.RawSize());
         }
 
         bool Compare(float a, float b, float t) const
@@ -463,7 +463,7 @@ namespace Test
         bool Compare(const Tensor& f, const Tensor& s, const Shape& i, size_t d, const String& m) const
         {
             using Synet::Detail::DebugPrint;
-            float _f = f.CpuData(i)[0], _s = s.CpuData(i)[0];
+            float _f = f.Data<float>(i)[0], _s = s.Data<float>(i)[0];
             if (!Compare(_f, _s, _options.compareThreshold))
                 SYNET_ERROR(m << std::endl << std::fixed << "Dst[" << d << "]" << DebugPrint(f.Shape()) << " at " << DebugPrint(i) << " : " << _f << " != " << _s);
             return true;

@@ -66,7 +66,7 @@ namespace Synet
             if (src[1]->GetType() == TensorType32i)
             {
                 for (size_t i = 0; i < src[1]->Size(); ++i)
-                    shape.push_back((size_t)src[1]->As32i().CpuData()[i]);
+                    shape.push_back((size_t)src[1]->Data<int32_t>()[i]);
                 if (!trans && shape.size() == 2 && shape[0] != -1)
                     shape = Shape({ shape[1], shape[0] });
                 if (!trans && shape.size() == 4)
@@ -75,7 +75,7 @@ namespace Synet
             else if (src[1]->GetType() == TensorType64i)
             {
                 for (size_t i = 0; i < src[1]->Size(); ++i)
-                    shape.push_back((size_t)src[1]->As64i().CpuData()[i]);
+                    shape.push_back((size_t)src[1]->Data<int64_t>()[i]);
             }
             else
                 SYNET_ERROR("ReshapeLayer src[1] must be INT32 or INT64 type tensor!");

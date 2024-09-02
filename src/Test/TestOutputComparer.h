@@ -125,7 +125,7 @@ namespace Test
         bool Compare(const Tensor& f, const Tensor& s, const Shape& i, size_t d, const String& m, const String & c = String()) const
         {
             using Synet::Detail::DebugPrint;
-            float _f = f.CpuData(i)[0], _s = s.CpuData(i)[0], _t = _options.compareThreshold, _e = 0;
+            float _f = f.Data<float>(i)[0], _s = s.Data<float>(i)[0], _t = _options.compareThreshold, _e = 0;
             if (!Compare(_f, _s, _t, _e))
                 SYNET_ERROR(m << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape()) << " at " << DebugPrint(i) << " : " << _f << " != " << _s << " ( " << _e << " > " << _t << " ) " << c);
             return true;
@@ -269,7 +269,7 @@ namespace Test
             for (int y = Synet::Max(0, (int)m[2] - n), h = (int)Synet::Min(t.Axis(2), m[2] + n + 1); y < h; y++)
             {
                 for (int x = Synet::Max(0, (int)m[3] - n), w = (int)Synet::Min(t.Axis(3), m[3] + n + 1); x < w; x++)
-                    os << ExpandLeft(ToString(t.CpuData(Shp(m[0], m[1], y, x))[0], 3), 8) << " ";
+                    os << ExpandLeft(ToString(t.Data<float>(Shp(m[0], m[1], y, x))[0], 3), 8) << " ";
                 os << std::endl;
             }
             os << std::endl;

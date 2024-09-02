@@ -123,7 +123,7 @@ namespace Test
 			{
 				Object& o = tests[b].objects[index];
 				o.desc.Reshape(Shp(size));
-				memcpy(o.desc.CpuData(), t.output[0].CpuData() + b * size, o.desc.RawSize());
+				memcpy(o.desc.Data<float>(), t.output[0].Data<float>() + b * size, o.desc.RawSize());
 			}
 			return true;
 		}
@@ -133,7 +133,7 @@ namespace Test
 			for (size_t b = 0; b < batch; ++b)
 			{
 				Object* o = tests[b].objects;
-				SimdCosineDistance32f(o[0].desc.CpuData(), o[1].desc.CpuData(), o[0].desc.Size(), &tests[b].distance);
+				SimdCosineDistance32f(o[0].desc.Data<float>(), o[1].desc.Data<float>(), o[0].desc.Size(), &tests[b].distance);
 			}
 			return true;
 		}
