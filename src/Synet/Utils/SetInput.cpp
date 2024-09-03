@@ -193,7 +193,7 @@ namespace Synet
             lower.resize(shape[1], lower[0]);
         if (upper.size() == 1)
             upper.resize(shape[1], upper[0]);
-        float * dst = network.Src()[0]->CpuData();
+        float * dst = network.Src()[0]->Data<float>();
         for (size_t i = 0; i < views.size(); ++i)
         {
 #if defined(SYNET_SIMD_SYNET_DISABLE)

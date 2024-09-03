@@ -150,7 +150,7 @@ namespace Synet
     {
         if (src->GetType() == TensorType64i)
         {
-            const int64_t* data = src->As64i().CpuData();
+            const int64_t* data = src->Data<int64_t>();
             h = (size_t)data[0];
             w = (size_t)data[1];
         }
@@ -189,7 +189,7 @@ namespace Synet
             stepH = _stepH;
             stepW = _stepW;
         }
-        Type * pDst = dst[0]->CpuData();
+        float * pDst = dst[0]->Data<float>();
         size_t dim = layerH * layerW * _numPriors * 4;
         size_t index = 0;
         for (size_t h = 0; h < layerH; ++h)
@@ -235,7 +235,7 @@ namespace Synet
         if (_clip)
         {
             for (size_t d = 0; d < dim; ++d)
-                pDst[d] = Min<Type>(Max<Type>(pDst[d], Type(0)), Type(1));
+                pDst[d] = Min(Max(pDst[d], 0.0f), 1.0f);
         }
         pDst += dst[0]->Size(2);
         if (_variance.size() == 1)
@@ -274,7 +274,7 @@ namespace Synet
             stepH = _stepH;
             stepW = _stepW;
         }
-        Type * pDst = dst[0]->CpuData();
+        float * pDst = dst[0]->Data<float>();
         size_t dim = layerH * layerW * _numPriors * 4;
         size_t index = 0;
         for (size_t h = 0; h < layerH; ++h)
@@ -336,11 +336,11 @@ namespace Synet
         if (_clip)
         {
             for (size_t d = 0; d < dim; ++d)
-                pDst[d] = Min<Type>(Max<Type>(pDst[d], Type(0)), Type(1));
+                pDst[d] = Min(Max(pDst[d], 0.0f), 1.0f);
         }
         pDst += dst[0]->Size(2);
         if (_variance.size() == 1)
-            CpuSet(dim, Type(_variance[0]), pDst);
+            CpuSet(dim, _variance[0], pDst);
         else
         {
             size_t offset = 0;
@@ -375,7 +375,7 @@ namespace Synet
             stepH = _stepH;
             stepW = _stepW;
         }
-        Type * pDst = dst[0]->CpuData();
+        float * pDst = dst[0]->Data<float>();
         size_t dim = layerH * layerW * _numPriors * 4;
         size_t index = 0;
         for (size_t h = 0; h < layerH; ++h)
@@ -423,11 +423,11 @@ namespace Synet
         if (_clip)
         {
             for (size_t d = 0; d < dim; ++d)
-                pDst[d] = Min<Type>(Max<Type>(pDst[d], Type(0)), Type(1));
+                pDst[d] = Min(Max(pDst[d], 0.0f), 1.0f);
         }
         pDst += dst[0]->Size(2);
         if (_variance.size() == 1)
-            CpuSet(dim, Type(_variance[0]), pDst);
+            CpuSet(dim, _variance[0], pDst);
         else
         {
             size_t offset = 0;

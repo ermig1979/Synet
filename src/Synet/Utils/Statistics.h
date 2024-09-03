@@ -181,16 +181,16 @@ namespace Synet
         size_t threshold = Round(quntile * count);
         if (threshold == 0)
         {
-            Detail::UpdateChannelsMinMax(tensor.CpuData(), batch, channels, height, width, tensor.Format(), lower, upper);
+            Detail::UpdateChannelsMinMax(tensor. template Data<T>(), batch, channels, height, width, tensor.Format(), lower, upper);
             return;
         }
         std::vector<T> min(channels, std::numeric_limits<T>::max());
         std::vector<T> max(channels, std::numeric_limits<T>::lowest());
-        Detail::UpdateChannelsMinMax(tensor.CpuData(), batch, channels, height, width, tensor.Format(), min.data(), max.data());
+        Detail::UpdateChannelsMinMax(tensor. template Data<T>(), batch, channels, height, width, tensor.Format(), min.data(), max.data());
         Detail::ValidateMinMax(min.data(), max.data(), channels, epsilon);
         const size_t SIZE = 256;
         std::vector<uint32_t> histogram(channels * SIZE, 0);
-        Detail::UpdateChannelsHistogram(tensor.CpuData(), batch, channels, height, width, tensor.Format(), min.data(), max.data(), histogram.data(), SIZE);
+        Detail::UpdateChannelsHistogram(tensor. template Data<T>(), batch, channels, height, width, tensor.Format(), min.data(), max.data(), histogram.data(), SIZE);
         Detail::UpdateMinMax(min.data(), max.data(), channels, histogram.data(), SIZE, threshold, lower, upper);
     }
 }

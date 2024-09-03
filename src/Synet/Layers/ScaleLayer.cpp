@@ -282,13 +282,13 @@ namespace Synet
             _scale8i.Init(_batch, _channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, _method);
             if (_scale8i.Enable())
             {
-                const float* bias = _biasTerm ? this->Weight()[1].CpuData() : NULL;
+                const float* bias = _biasTerm ? this->Weight()[1].Data<float>() : NULL;
                 const float* stats[4] = {
                     this->Stats(0).empty() ? NULL : this->Stats(0)[0]->min.data(),
                     this->Stats(0).empty() ? NULL : this->Stats(0)[0]->max.data(),
                     this->Stats(2).empty() ? NULL : this->Stats(2)[0]->min.data(),
                     this->Stats(2).empty() ? NULL : this->Stats(2)[0]->max.data() };
-                _scale8i.SetParams(this->Weight()[0].CpuData(), bias, stats);
+                _scale8i.SetParams(this->Weight()[0].Data<float>(), bias, stats);
             }
             else
                 Init8i();
@@ -337,8 +337,8 @@ namespace Synet
                 _scale8i.Forward(src[0]->RawData(), dst[0]->RawData());
             else
             {
-                const float* scale = _scale.CpuData();
-                const float* shift = _shift.CpuData();
+                const float* scale = _scale.Data<float>();
+                const float* shift = _shift.Data<float>();
                 if (_src8u && _dst8u)
                     ScaleForward8i(src[0]->Data<uint8_t>(), _batch, _channels, _height * _width, _format, scale, shift, _lower, _upper, dst[0]->Data<uint8_t>());
                 else if (!_src8u && _dst8u)
@@ -352,7 +352,7 @@ namespace Synet
         else if (_src16b || _dst16b)
         {
             const float* scale = this->Weight()[0].Data<float>();
-            const float* shift = _shift.CpuData();
+            const float* shift = _shift.Data<float>();
             if (_src16b && _dst16b)
                 ScaleForward16b(src[0]->Data<uint16_t>(), _batch, _channels, _height * _width, _format, scale, shift, dst[0]->Data<uint16_t>());
             else if (!_src16b && _dst16b)
@@ -388,35 +388,35 @@ namespace Synet
         {
             for (size_t c = 0; c < _channels; ++c)
             {
-                _scale.CpuData()[c] = statS.scale8uTo32f[c];
-                _shift.CpuData()[c] = statS.shift8uTo32f[c];
+                _scale.Data<float>()[c] = statS.scale8uTo32f[c];
+                _shift.Data<float>()[c] = statS.shift8uTo32f[c];
             }
         }
-        const float* scale = this->Weight()[0].CpuData();            
+        const float* scale = this->Weight()[0].Data<float>();
         if (_biasTerm)
         {
 
-            const float* bias = this->Weight()[1].CpuData();
+            const float* bias = this->Weight()[1].Data<float>();
             for (size_t c = 0; c < _channels; ++c)
             {
-                _scale.CpuData()[c] = _scale.CpuData()[c] * scale[c];
-                _shift.CpuData()[c] = _shift.CpuData()[c] * scale[c] + bias[c];
+                _scale.Data<float>()[c] = _scale.Data<float>()[c] * scale[c];
+                _shift.Data<float>()[c] = _shift.Data<float>()[c] * scale[c] + bias[c];
             }
         }
         else
         {
             for (size_t c = 0; c < _channels; ++c)
             {
-                _scale.CpuData()[c] = _scale.CpuData()[c] * scale[c];
-                _shift.CpuData()[c] = _shift.CpuData()[c] * scale[c];
+                _scale.Data<float>()[c] = _scale.Data<float>()[c] * scale[c];
+                _shift.Data<float>()[c] = _shift.Data<float>()[c] * scale[c];
             }
         }
         if (_dst8u)
         {
             for (size_t c = 0; c < _channels; ++c)
             {
-                _scale.CpuData()[c] = _scale.CpuData()[c] * statD.scale32fTo8u[c];
-                _shift.CpuData()[c] = _shift.CpuData()[c] * statD.scale32fTo8u[c] + statD.shift32fTo8u[c];
+                _scale.Data<float>()[c] = _scale.Data<float>()[c] * statD.scale32fTo8u[c];
+                _shift.Data<float>()[c] = _shift.Data<float>()[c] * statD.scale32fTo8u[c] + statD.shift32fTo8u[c];
             }
         }
         if (_method == QuantizationMethodIECompatible)

@@ -145,7 +145,7 @@ namespace Synet
     void MergedConvolution8iLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
         if (_mergedConvolution8i.Enable())
-            _mergedConvolution8i.Forward(src[0]->RawCpuData(), Base::Buf8u(buf, 0), dst[0]->RawCpuData());
+            _mergedConvolution8i.Forward(src[0]->RawData(), Base::Buf8u(buf, 0), dst[0]->RawData());
         else
         {
             float* buf0 = Base::Buf32f(buf, 0);
@@ -207,9 +207,9 @@ namespace Synet
         const AlgParam& a = this->_alg;
         const bool overflow16i = true;
         const ConvParam & conv = a.conv[cIdx];
-        const int8_t* weight = _weight8i[wIdx].CpuData();
-        const float* norm = _norm32f[wIdx].CpuData();
-        const float* bias = _bias32f[wIdx].CpuData();
+        const int8_t* weight = _weight8i[wIdx].Data<int8_t>();
+        const float* norm = _norm32f[wIdx].Data<float>();
+        const float* bias = _bias32f[wIdx].Data<float>();
         const float* params = a.params[wIdx];
         const uint8_t* tmp = src;
         if (!conv.Is1x1())
@@ -321,14 +321,14 @@ namespace Synet
         _bias32f[dstIdx].Reshape(Shp(conv.dstC));
         size_t D = conv.dstC, C = conv.srcC, K = conv.kernelY * conv.kernelX, CK = C * K;
         Floats normW(CK);
-        const float* pSrcW = weight[0].CpuData();
-        const float* pSrcB = a.biasTerm[srcIdx] ? weight[1].CpuData() : NULL;
+        const float* pSrcW = weight[0].Data<float>();
+        const float* pSrcB = a.biasTerm[srcIdx] ? weight[1].Data<float>() : NULL;
         const float* pScale = stat.scale32fTo8u.data();
         const float* pShift = stat.shift32fTo8u.data();
         float* pNormW = normW.data();
-        int8_t* pDstW = _weight8i[dstIdx].CpuData();
-        float* pNorm = _norm32f[dstIdx].CpuData();
-        float* pBias = _bias32f[dstIdx].CpuData();
+        int8_t* pDstW = _weight8i[dstIdx].Data<int8_t>();
+        float* pNorm = _norm32f[dstIdx].Data<float>();
+        float* pBias = _bias32f[dstIdx].Data<float>();
         bool avoidOverflow16i = stat.negative && _method == QuantizationMethodIECompatible;
         for (size_t d = 0; d < conv.dstC; ++d)
         {

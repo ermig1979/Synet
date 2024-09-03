@@ -47,8 +47,8 @@ namespace Synet
         size_t layerH, layerW;
         if (src[0]->GetType() == TensorType64i)
         {
-            const int64_t* src0 = src[0]->As64i().CpuData();
-            const int64_t* src1 = src[1]->As64i().CpuData();
+            const int64_t* src0 = src[0]->Data<int64_t>();
+            const int64_t* src1 = src[1]->Data<int64_t>();
             layerH = src0[0];
             layerW = src0[1];
             _imgH = param.imgH() ? param.imgH() : src1[0];

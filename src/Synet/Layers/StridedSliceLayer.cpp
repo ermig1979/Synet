@@ -196,17 +196,17 @@ namespace Synet
         if (src.size() == 4 && param.beginDims().empty() && param.endDims().empty() && param.axes().empty())
         {
             param.beginDims() = Shp(src[1]->Data<int64_t>(), src[1]->Size());
-            param.endDims() = Shp(src[2]->As64i().CpuData(), src[2]->Size());
-            param.axes() = Shp(src[3]->As64i().CpuData(), src[3]->Size());
+            param.endDims() = Shp(src[2]->Data<int64_t>(), src[2]->Size());
+            param.axes() = Shp(src[3]->Data<int64_t>(), src[3]->Size());
         }
 		if (src.size() == 5)
 		{
 			if (param.beginDims().size() || param.endDims().size() || param.axes().size() || param.strideDims().size())
 				SYNET_ERROR("Check StridedSliceLayer parameters!");
-			param.beginDims() = Shp(src[1]->As64i().CpuData(), src[1]->Size());
-			param.endDims() = Shp(src[2]->As64i().CpuData(), src[2]->Size());
-			param.axes() = Shp(src[3]->As64i().CpuData(), src[3]->Size());
-			param.strideDims() = Shp(src[4]->As64i().CpuData(), src[4]->Size());
+			param.beginDims() = Shp(src[1]->Data<int64_t>(), src[1]->Size());
+			param.endDims() = Shp(src[2]->Data<int64_t>(), src[2]->Size());
+			param.axes() = Shp(src[3]->Data<int64_t>(), src[3]->Size());
+			param.strideDims() = Shp(src[4]->Data<int64_t>(), src[4]->Size());
 		}
         _axes = param.axes();
         if (param.beginDims().size())

@@ -135,8 +135,8 @@ namespace Synet
             }
             else
                 return false;
-            _first = first.CpuData();
-            _second = second.CpuData();
+            _first = first. template Data<Type>();
+            _second = second. template Data<Type>();
             return true;
         }
 

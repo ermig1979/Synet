@@ -64,7 +64,7 @@ namespace Synet
             const Tensor & w = weight[a.index[i]];
             if(w.Shape() != a.conv[i].WeightShape(true, true) || w.Format() != src[0]->Format())
                 SYNET_ERROR("MergedConvolutionLayer: check weight[" << a.index[i] << "] size or format!");
-            a.weight[i] = w.CpuData();
+            a.weight[i] = w.Data<float>();
 
             a.biasTerm[i] = conv[i].biasTerm();
             if (a.biasTerm[i])
@@ -72,7 +72,7 @@ namespace Synet
                 const Tensor & b = weight[next++];
                 if(b.Size() != a.conv[i].dstC)
                     SYNET_ERROR("MergedConvolutionLayer has wrong bias[" << i << "] (weight[" << next - 1 << "]) size!");
-                a.bias[i] = b.CpuData();
+                a.bias[i] = b.Data<float>();
             }
             else
                 a.bias[i] = NULL;
@@ -87,7 +87,7 @@ namespace Synet
                     if(p.Size() != a.conv[i].dstC)
                         SYNET_ERROR("MergedConvolutionLayer has wrong weight[" << next - 1 << "] size!");
                 }
-                a.params[i] = p.CpuData();
+                a.params[i] = p.Data<float>();
             }
             else
             {

@@ -53,7 +53,7 @@ namespace Synet
             const T * src, const ConvParam & conv, const T * weight, const T * bias, const T * params, T * dst)
         {
             Tensor<T> buffer({ conv.dstC });
-            T * buf = buffer.CpuData();
+            T * buf = buffer. template Data<T>();
             for (size_t dy = 0; dy < conv.dstH; ++dy)
             {
                 for (size_t dx = 0; dx < conv.dstW; ++dx)
@@ -216,7 +216,7 @@ namespace Synet
 
     void MergedConvolution32fLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
-            ForwardCpu(src[0]->CpuData(), Base::Buf32f(buf, 0), Base::Buf32f(buf, 1), dst[0]->CpuData());
+        ForwardCpu(src[0]->Data<float>(), Base::Buf32f(buf, 0), Base::Buf32f(buf, 1), dst[0]->Data<float>());
     }
 
     void MergedConvolution32fLayer::ForwardCpu(const float * src, float* buf0, float* buf1, float* dst)
