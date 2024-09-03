@@ -194,7 +194,7 @@ namespace Synet
             case LayerTypeScatterNd: return new ScatterNdLayer(param, context);
             case LayerTypeShuffle: return new ShuffleLayer(param, context);
             case LayerTypeSigmoid: return new SigmoidLayer(param, context);
-            case LayerTypeSlice: return new SliceLayer<T>(param, context);
+            case LayerTypeSlice: return new SliceLayer(param, context);
             case LayerTypeSoftmax: return new SoftmaxLayer(param, context);
             case LayerTypeSoftplus: return new SoftplusLayer(param, context);
             case LayerTypeSpaceToDepth: return new SpaceToDepthLayer<T>(param, context);

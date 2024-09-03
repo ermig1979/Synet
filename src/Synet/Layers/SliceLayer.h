@@ -24,92 +24,22 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/Utils/Math.h"
 
 namespace Synet
 {
-    template <class T> class SliceLayer : public Synet::Layer<T>
+    class SliceLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        SliceLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        SliceLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            const SliceParam & param = this->Param().slice();
-            _sliceAxis = param.axis();            
-            _slicePoint = param.slicePoint();
-            Shape dstShape = src[0]->Shape();
-            size_t srcSliceAxis = src[0]->Axis(_sliceAxis);
-            _numSlices = src[0]->Size(0, _sliceAxis);
-            _sliceSize = src[0]->Size(_sliceAxis + 1);
-            size_t size = 0;
-            if (_slicePoint.size() != 0)
-            {
-                assert(_slicePoint.size() == dst.size() - 1);
-                assert(dst.size() <= srcSliceAxis);
-                size_t prev = 0;
-                Shape slices;
-                for (size_t i = 0; i < _slicePoint.size(); ++i)
-                {
-                    assert(_slicePoint[i] > prev);
-                    slices.push_back(_slicePoint[i] - prev);
-                    prev = _slicePoint[i];
-                }
-                slices.push_back(srcSliceAxis - prev);
-                for (size_t i = 0; i < dst.size(); ++i)
-                {
-                    dstShape[_sliceAxis] = slices[i];
-                    dst[i]->Reshape(dstShape);
-                    size += dst[i]->Size();
-                }
-            }
-            else
-            {
-                assert(srcSliceAxis % dst.size() == 0);
-                dstShape[_sliceAxis] = srcSliceAxis / dst.size();
-                for (int i = 0; i < dst.size(); ++i) 
-                {
-                    dst[i]->Reshape(dstShape);
-                    size += dst[i]->Size();
-                }
-            }
-            assert(size == src[0]->Size());
-            if (dst.size() == 1) 
-                dst[0]->Share(*src[0]);
-            this->UsePerfStat();
-            return true;
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            if (dst.size() == 1) 
-                return;
-            size_t offsetSliceAxis = 0;
-            const Type * pSrc = src[0]->CpuData();
-            size_t srcSliceAxis = src[0]->Axis(_sliceAxis);
-            for (size_t i = 0; i < dst.size(); ++i)
-            {
-                Type * pDst = dst[i]->CpuData();
-                size_t dstSliceAxis = dst[i]->Axis(_sliceAxis);
-                for (int n = 0; n < _numSlices; ++n)
-                {
-                    size_t dstOffset = n * dstSliceAxis * _sliceSize;
-                    size_t srcOffset = (n * srcSliceAxis + offsetSliceAxis) * _sliceSize;
-                    CpuCopy(pSrc + srcOffset, dstSliceAxis * _sliceSize, pDst + dstOffset);
-                }
-                offsetSliceAxis += dstSliceAxis;
-            }
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
         size_t _numSlices, _sliceSize, _sliceAxis;
