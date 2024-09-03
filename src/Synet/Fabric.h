@@ -29,6 +29,7 @@
 #include "Synet/Layers/Legacy/LrnLayer.h"
 #include "Synet/Layers/Legacy/RegionLayer.h"
 #include "Synet/Layers/Legacy/ReorgLayer.h"
+#include "Synet/Layers/Legacy/SwitchLayer.h"
 
 #include "Synet/Layers/ActivationLayers.h"
 #include "Synet/Layers/AddLayer.h"
@@ -87,7 +88,6 @@
 #include "Synet/Layers/SqueezeExcitationLayer.h"
 #include "Synet/Layers/StridedSliceLayer.h"
 #include "Synet/Layers/StubLayer.h"
-#include "Synet/Layers/SwitchLayer.h"
 #include "Synet/Layers/TensorIteratorLayer.h"
 #include "Synet/Layers/TileLayer.h"
 #include "Synet/Layers/TiledScale2DLayer.h"
@@ -203,7 +203,7 @@ namespace Synet
             case LayerTypeStridedSlice: return new StridedSliceLayer(param, context);
             case LayerTypeStub: return new StubLayer(param, context);
             case LayerTypeSwish: return new SwishLayer(param, context);
-            case LayerTypeSwitch: return new SwitchLayer<T>(param, context);
+            case LayerTypeSwitch: return new SwitchLayer(param, context);
             case LayerTypeTensorIterator: return new TensorIteratorLayer<T>(param, context);
             case LayerTypeTile: return new TileLayer(param, context);
             case LayerTypeTiledScale2D: return new TiledScale2DLayer(param, context);

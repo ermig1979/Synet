@@ -22,42 +22,34 @@
 * SOFTWARE.
 */
 
-#pragma once
-
-#include "Synet/Common.h"
-#include "Synet/Layer.h"
+#include "Synet/Layers/Legacy/SwitchLayer.h"
 
 namespace Synet
 {
-    template <class T> class SwitchLayer : public Synet::Layer<T>
+    SwitchLayer::SwitchLayer(const LayerParam & param, Context* context)
+        : Base(param, context)
     {
-    public:
-        typedef T Type;
-        typedef Layer<T> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
+    }
 
-        SwitchLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+    bool SwitchLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    {
+        if (src.size() != 2 || dst.size() != 2)
+            SYNET_ERROR("SwitchLayer supports only 2 inputs and 2 outputs!");
+        if (src[1]->GetType() == TensorType32i)
+            SYNET_ERROR("SwitchLayer src[1] must have INT32 type!");
+        dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        dst[1]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        this->UsePerfStat();
+        _const = false;
+        return true;
+    }
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            assert(src.size() == 2 && src[1]->GetType() == TensorType32i && dst.size() == 2);
-            dst[0]->Reshape(src[0]->Shape());
-            dst[1]->Reshape(src[0]->Shape());
-            this->UsePerfStat();
-            return true;
-        }
-
-    protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            int pred = src[1]->As32i().CpuData()[0];
-            if (pred)
-                CpuCopy(src[0]->CpuData(), src[0]->Size(), dst[1]->CpuData());
-            else
-                CpuCopy(src[0]->CpuData(), src[0]->Size(), dst[0]->CpuData());
-        }
-    };
+    void SwitchLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    {
+        int pred = src[1]->Data<int32_t>()[0];
+        if (pred)
+            memcpy(dst[1]->RawData(), src[0]->RawData(), src[0]->RawSize());
+        else
+            memcpy(dst[0]->RawData(), src[0]->RawData(), src[0]->RawSize());
+    }
 }

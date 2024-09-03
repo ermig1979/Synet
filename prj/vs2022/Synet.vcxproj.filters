@@ -218,6 +218,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\SpaceToDepthLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\SwitchLayer.cpp">
+      <Filter>Layers\Legacy</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -357,9 +360,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\StubLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\SwitchLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\UnaryOperationLayer.h">
@@ -621,6 +621,9 @@
       <Filter>Layers\Legacy</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\ReorgLayer.h">
+      <Filter>Layers\Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\SwitchLayer.h">
       <Filter>Layers\Legacy</Filter>
     </ClInclude>
   </ItemGroup>

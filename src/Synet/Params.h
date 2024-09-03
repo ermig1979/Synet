@@ -87,7 +87,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeScatterNd,
     LayerTypeShuffle,
     LayerTypeSigmoid,
-    LayerTypeSlice,//legacy
+    LayerTypeSlice,
     LayerTypeSoftmax,
     LayerTypeSoftplus,
     LayerTypeSpaceToDepth,

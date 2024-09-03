@@ -57,6 +57,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\LrnLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\RegionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\ReorgLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\SwitchLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\LstmLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.cpp" />
@@ -166,6 +167,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\LrnLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\RegionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\ReorgLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\SwitchLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\LstmLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution16bLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.h" />
@@ -198,7 +200,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\SqueezeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\StridedSliceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\StubLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\SwitchLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\TensorIteratorLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\TiledScale2DLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\TileLayer.h" />
