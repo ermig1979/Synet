@@ -215,6 +215,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\SliceLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\SpaceToDepthLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />

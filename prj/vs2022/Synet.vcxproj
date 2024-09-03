@@ -83,6 +83,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\ShuffleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SliceLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\SpaceToDepthLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SqueezeLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\StridedSliceLayer.cpp" />
