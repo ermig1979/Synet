@@ -221,6 +221,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\SwitchLayer.cpp">
       <Filter>Layers\Legacy</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\TensorIteratorLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />

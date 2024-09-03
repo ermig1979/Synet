@@ -204,7 +204,7 @@ namespace Synet
             case LayerTypeStub: return new StubLayer(param, context);
             case LayerTypeSwish: return new SwishLayer(param, context);
             case LayerTypeSwitch: return new SwitchLayer(param, context);
-            case LayerTypeTensorIterator: return new TensorIteratorLayer<T>(param, context);
+            case LayerTypeTensorIterator: return new TensorIteratorLayer(param, context);
             case LayerTypeTile: return new TileLayer(param, context);
             case LayerTypeTiledScale2D: return new TiledScale2DLayer(param, context);
             case LayerTypeTopK: return new TopKLayer(param, context);

@@ -89,6 +89,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\SqueezeLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\StridedSliceLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\StubLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\TensorIteratorLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\TiledScale2DLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\TileLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\TopKLayer.cpp" />
