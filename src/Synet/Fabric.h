@@ -191,7 +191,7 @@ namespace Synet
             case LayerTypeRnnGruBd: return new RnnGruBdLayer(param, context);
             case LayerTypeScale: return new ScaleLayer(param, context, method);
             case LayerTypeScaledDotProductAttention: return new ScaledDotProductAttentionLayer(param, context);
-            case LayerTypeScatterNd: return new ScatterNdLayer<T>(param, context);
+            case LayerTypeScatterNd: return new ScatterNdLayer(param, context);
             case LayerTypeShuffle: return new ShuffleLayer(param, context);
             case LayerTypeSigmoid: return new SigmoidLayer(param, context);
             case LayerTypeSlice: return new SliceLayer<T>(param, context);

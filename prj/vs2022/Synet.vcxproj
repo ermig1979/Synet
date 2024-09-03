@@ -79,6 +79,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\RnnGruBdLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ScaleLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\ScatterNdLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ShuffleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.cpp" />

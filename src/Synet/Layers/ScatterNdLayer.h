@@ -24,59 +24,29 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
 
 namespace Synet
 {
-    template <class T> class ScatterNdLayer : public Synet::Layer<T>
+    class ScatterNdLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::Tensor Tensor;
         typedef typename Base::TensorPtrs TensorPtrs;
 
-        ScatterNdLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        ScatterNdLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            _offset.Reshape(src[1]->Shape());
-            size_t count = src[1]->Count(), size = src[1]->Size();
-            const Synet::Tensor<int32_t> &idx = this->Weight()[0].As32i();
-            assert(idx.Axis(-1) == count);
-            for (size_t a = 0; a < count; ++a)
-                assert(idx.Axis(a) == _offset.Axis(a));
-            for (size_t o = 0, i = 0; o < size; ++o)
-            {
-                Shape index;
-                for (size_t a = 0; a < count; ++a, ++i)
-                    index.push_back(idx.CpuData()[i]);
-                _offset.CpuData()[o] = (uint32_t)src[0]->Offset(index);
-            }
-            if (src[0] != dst[0])
-                dst[0]->Reshape(src[0]->Shape(), src[0]->Format());
-            this->UsePerfStat();
-            return true;
-        }
+        virtual size_t MemoryUsage() const;
+
+        virtual void CompactWeight();
+
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            if (src[0] != dst[0])
-                memcpy(dst[0]->RawCpuData(), src[0]->RawCpuData(), src[0]->RawSize());
-            const int32_t * pOffs = _offset.CpuData();
-            const T * pSrc = src[1]->CpuData();
-            T * pDst = dst[0]->CpuData();
-            size_t size = src[1]->Size();
-            for (size_t i = 0; i < size; ++i)
-                pDst[pOffs[i]] = pSrc[i];
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        Synet::Tensor<int32_t> _offset;
+        Tensor _offset;
     };
 }
