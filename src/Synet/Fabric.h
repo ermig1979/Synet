@@ -213,7 +213,7 @@ namespace Synet
             case LayerTypeUpsample: return new UpsampleLayer(param, context);
             case LayerTypeWhere: return new WhereLayer(param, context);
             case LayerTypeYolo: return new YoloLayer(param, context);
-            case LayerTypeYoloV7: return new YoloV7Layer<T>(param, context);
+            case LayerTypeYoloV7: return new YoloV7Layer(param, context);
             default:
                 return NULL;
             }
