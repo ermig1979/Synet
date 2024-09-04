@@ -79,6 +79,8 @@ namespace Synet
                 for (size_t o = 0; o < _output.size(); ++o)
                 {
                     const Tensor* dst = net.Dst(_output[o].name);
+                    if (dst == NULL)
+                        dst = net.GetInternalTensor(_output[o].name);
                     if (dst)
                         AppendRegions(_output[o], *dst, b, imgW, imgH, threshold, overlap, result[b]);
                 }

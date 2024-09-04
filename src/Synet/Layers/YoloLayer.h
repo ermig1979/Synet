@@ -29,100 +29,26 @@
 
 namespace Synet
 {
-    template <class T> class YoloLayer : public Synet::Layer<T>
+    class YoloLayer : public Synet::Layer<float>
     {
     public:
-        typedef T Type;
-        typedef Layer<T> Base;
+        typedef Layer<float> Base;
         typedef typename Base::TensorPtrs TensorPtrs;
-        typedef Synet::Region<T> Region;
+        typedef Synet::Region<float> Region;
         typedef std::vector<Region> Regions;
 
-        YoloLayer(const LayerParam & param, Context* context)
-            : Base(param, context)
-        {
-        }
+        YoloLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
-        {
-            const YoloParam & param = this->Param().yolo();
-            _num = param.num();
-            _total = param.total();
-            _classes = param.classes();
-            _anchors.resize(param.anchors().size());
-            for (size_t i = 0; i < param.anchors().size(); ++i)
-                _anchors[i] = param.anchors()[i];
-            _mask.resize(param.mask().size());
-            for (size_t i = 0; i < param.mask().size(); ++i)
-                _mask[i] = param.mask()[i];            
-            
-            Shape dstShape = src[0]->Shape();
-            dstShape[1] = _num*(_classes + 4 + 1);
-            dst[0]->Reshape(dstShape, src[0]->Format());
-            this->UsePerfStat();
-            return true;
-        }
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-        void GetRegions(const TensorPtrs & src, size_t netW, size_t netH, Type threshold, Regions & dst) const
-        {
-            SYNET_PERF_FUNC();
-            dst.clear();
-            size_t b = 0;
-            size_t layerH = src[0]->Axis(2);
-            size_t layerW = src[0]->Axis(3);
-            for (size_t y = 0; y < layerH; ++y)
-            {
-                for (size_t x = 0; x < layerW; ++x)
-                {
-                    for (size_t n = 0; n < _num; ++n)
-                    {
-                        Type objectness = src[0]->CpuData({ b, n*(_classes + 5) + 4, y, x })[0];
-                        if (objectness > threshold)
-                        {
-                            Region region;
-                            region.x = (x + src[0]->CpuData({ b, n*(_classes + 5) + 0, y, x })[0]) / layerW;
-                            region.y = (y + src[0]->CpuData({ b, n*(_classes + 5) + 1, y, x })[0]) / layerH;
-                            region.w = ::exp(src[0]->CpuData({ b, n*(_classes + 5) + 2, y, x })[0])*_anchors[2*_mask[n] + 0] / netW;
-                            region.h = ::exp(src[0]->CpuData({ b, n*(_classes + 5) + 3, y, x })[0])*_anchors[2*_mask[n] + 1] / netH;
-                            for (size_t i = 0; i < _classes; ++i)
-                            {
-                                region.id = (int)i;
-                                region.prob = objectness*src[0]->CpuData({ b, n*(_classes + 5) + 5 + i, y, x })[0];
-                                if (region.prob > threshold)
-                                    dst.push_back(region);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        void GetRegions(const TensorPtrs& src, size_t netW, size_t netH, Type threshold, Regions& dst) const;
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-        {
-            size_t batch = src[0]->Axis(0);
-            size_t area = src[0]->Axis(2)*src[0]->Axis(3);
-            Index index(4, 0);
-            for (index[0] = 0; index[0] < batch; ++index[0])
-            {
-                for (size_t n = 0; n < _num; ++n)
-                {
-                    index[1] = n*(_classes + 4 + 1);
-                    CpuSigmoid(src[0]->CpuData(index), 2 * area, dst[0]->CpuData(index));
-                    index[1] += 2;
-                    CpuCopy(src[0]->CpuData(index), 2 * area, dst[0]->CpuData(index));
-                    index[1] += 2;
-                    CpuSigmoid(src[0]->CpuData(index), (_classes + 1) * area, dst[0]->CpuData(index));
-                }
-            }
-        }
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        typedef std::vector<Type> VectorF;
-        typedef std::vector<size_t> VectorI;
-
-        size_t _total, _num, _classes;
-        VectorF _anchors;
-        VectorI _mask;
+        size_t _num, _classes, _batch, _channels, _height, _width;
+        Floats _anchors;
+        Index _mask;
     };
 }

@@ -97,6 +97,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\UnaryOperationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\UnpackLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\WhereLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\YoloLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\Activation.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\SetInput.cpp" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Args.h" />

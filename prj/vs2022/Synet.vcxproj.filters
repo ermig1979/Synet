@@ -227,6 +227,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\UpsampleLayer.cpp">
       <Filter>Layers\Legacy</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\YoloLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
