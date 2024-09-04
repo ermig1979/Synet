@@ -30,6 +30,7 @@
 #include "Synet/Layers/Legacy/RegionLayer.h"
 #include "Synet/Layers/Legacy/ReorgLayer.h"
 #include "Synet/Layers/Legacy/SwitchLayer.h"
+#include "Synet/Layers/Legacy/UpsampleLayer.h"
 
 #include "Synet/Layers/ActivationLayers.h"
 #include "Synet/Layers/AddLayer.h"
@@ -93,7 +94,6 @@
 #include "Synet/Layers/TiledScale2DLayer.h"
 #include "Synet/Layers/TopKLayer.h"
 #include "Synet/Layers/UnaryOperationLayer.h"
-#include "Synet/Layers/UpsampleLayer.h"
 #include "Synet/Layers/UnpackLayer.h"
 #include "Synet/Layers/WhereLayer.h"
 #include "Synet/Layers/YoloLayer.h"
@@ -210,7 +210,7 @@ namespace Synet
             case LayerTypeTopK: return new TopKLayer(param, context);
             case LayerTypeUnaryOperation: return new UnaryOperationLayer(param, context);
             case LayerTypeUnpack: return new UnpackLayer(param, context);
-            case LayerTypeUpsample: return new UpsampleLayer<T>(param, context);
+            case LayerTypeUpsample: return new UpsampleLayer(param, context);
             case LayerTypeWhere: return new WhereLayer(param, context);
             case LayerTypeYolo: return new YoloLayer<T>(param, context);
             case LayerTypeYoloV7: return new YoloV7Layer<T>(param, context);
