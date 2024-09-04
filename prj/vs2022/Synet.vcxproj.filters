@@ -233,6 +233,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\YoloV7Layer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Fabric.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />

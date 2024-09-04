@@ -60,11 +60,11 @@ namespace Synet
     void YoloV7Layer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
         Box* boxes = (Box*)Base::Buf32f(buf, 0);
-        size_t candidates = FindCandidates(src[0]->CpuData(), boxes);
+        size_t candidates = FindCandidates(src[0]->Data<float>(), boxes);
         size_t detections = FilterByIou(boxes, candidates);
         SortByThreshold(boxes, detections);
         dst[0]->Reshape(TensorType32f, Shp(detections, 7), TensorFormatUnknown);
-        memcpy(dst[0]->CpuData(), boxes, detections * sizeof(Box));
+        memcpy(dst[0]->RawData(), boxes, detections * sizeof(Box));
     }
 
     size_t YoloV7Layer::FindCandidates(const float* src, Box* dst) const

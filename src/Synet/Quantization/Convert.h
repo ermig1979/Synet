@@ -118,6 +118,7 @@ namespace Synet
             , method(QuantizationMethodUnknown)
             , lower(INT_MIN)
             , upper(INT_MAX)
+            , compatibility(SimdSynetCompatibilityDefault)
         {
         }
 

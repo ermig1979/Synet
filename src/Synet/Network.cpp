@@ -29,6 +29,10 @@
 #include "Synet/Utils/SetInput.h"
 #include "Synet/Utils/Statistics.h"
 
+#include "Synet/Layers/Legacy/RegionLayer.h"
+#include "Synet/Layers/DetectionOutputLayer.h"
+#include "Synet/Layers/YoloLayer.h"
+
 namespace Synet
 {
     Network::Network()
@@ -588,7 +592,7 @@ namespace Synet
         for (size_t i = 0; i < _param().layers().size(); ++i)
         {
             const LayerParam& param = _param().layers()[i];
-            LayerSharedPtr layer(Fabric<Type>::Create(param, &_context, _param().quantization().method()));
+            LayerSharedPtr layer(Fabric::Create(param, &_context, _param().quantization().method()));
             if (layer)
             {
                 layerId[param.name()] = _layers.size();

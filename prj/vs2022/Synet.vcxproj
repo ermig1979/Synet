@@ -24,6 +24,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\Synet\Fabric.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ActivationLayers.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\AddLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ArgMaxLayer.cpp" />
