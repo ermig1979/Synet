@@ -64,7 +64,6 @@
 #include "Synet/Layers/MergedConvolution8iLayer.h"
 #include "Synet/Layers/MetaLayer.h"
 #include "Synet/Layers/MulLayer.h"
-#include "Synet/Layers/NonMaxSuppressionLayer.h"
 #include "Synet/Layers/NonZeroLayer.h"
 #include "Synet/Layers/NormalizeLayer.h"
 #include "Synet/Layers/PadLayer.h"
@@ -171,7 +170,7 @@ namespace Synet
             case LayerTypeMeta: return new MetaLayer(param, context);
             case LayerTypeMish: return new MishLayer(param, context);
             case LayerTypeMul: return new MulLayer(param, context);
-            case LayerTypeNonMaxSuppression: return new NonMaxSuppressionLayer<T>(param, context);
+            case LayerTypeNonMaxSuppression: return new StubLayer(param, context);
             case LayerTypeNonZero: return new NonZeroLayer(param, context);
             case LayerTypeNormalize: return new NormalizeLayer(param, context);
             case LayerTypePad: return new PadLayer(param, context);

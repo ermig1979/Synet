@@ -180,7 +180,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolutionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MetaLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MulLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\NonMaxSuppressionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\NonZeroLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\NormalizeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\PadLayer.h" />
