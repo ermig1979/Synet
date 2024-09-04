@@ -808,7 +808,7 @@ namespace Synet
         Shape result;
         for (size_t i = begin; i < end; i += step)
             result.push_back(GetAs<size_t>(*src[0], i));
-        dst[0]->As32i().Reshape(src[0]->GetType(), Shp(result.size()), src[0]->Format());
+        dst[0]->Reshape(src[0]->GetType(), Shp(result.size()), src[0]->Format());
         if (src[0]->GetType() == TensorType32i)
         {
             for (size_t i = 0; i < result.size(); ++i)

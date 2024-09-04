@@ -404,7 +404,7 @@ namespace Test
                             tmp[offset + 5] = src[5];
                         }
                         SortRtdetr(tmp.data(), tmp.size());
-                        _output[i].Reshape(Shp(1, tmp.size() / 6, 6));
+                        _output[i].Reshape(Synet::TensorType32f, Shp(1, tmp.size() / 6, 6));
                         memcpy(_output[i].Data<float>(), tmp.data(), _output[i].Size() * sizeof(float));
                     }
                     else
@@ -463,7 +463,7 @@ namespace Test
                     shape = Shp(1);
                 if (_batchSize > 1)
                     shape[0] = _batchSize;
-                _output[i].Reshape(shape);
+                _output[i].Reshape(Synet::TensorType32f, shape);
             }
         }
     };

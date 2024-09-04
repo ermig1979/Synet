@@ -110,27 +110,6 @@ namespace Synet
             Resize<U>(value);
         }
 
-#if defined(SYNET_TENSOR_API_OLD)
-        SYNET_DEPRECATED SYNET_INLINE Tensor(const Synet::Shape & shape, const TensorFormat & format)
-            : _shape(shape)
-            , _buffer(std::make_shared<Buffer>())
-            , _format(format)
-            , _const(false)
-        {
-            ResizeOld();
-        }
-
-        SYNET_DEPRECATED SYNET_INLINE Tensor(const Synet::Shape & shape, const Type & value = Type(), const TensorFormat & format = TensorFormatUnknown, const String & name = String())
-            : _shape(shape)
-            , _buffer(std::make_shared<Buffer>())
-            , _format(format)
-            , _name(name)
-            , _const(false)
-        {
-            ResizeOld(value);
-        }
-#endif
-
         SYNET_INLINE Tensor(const uint8_t * data, size_t size, TensorType type, const Synet::Shape & shape, const TensorFormat & format = TensorFormatUnknown, const String & name = String())
             : _shape(shape)
             , _buffer(std::make_shared<Buffer>(data, size))
@@ -180,30 +159,6 @@ namespace Synet
                 _buffer->Resize(size);
         }
 
-#if defined(SYNET_TENSOR_API_OLD)
-        SYNET_DEPRECATED SYNET_INLINE void Reshape(const Synet::Shape & shape, const TensorFormat & format)
-        {
-            _shape = shape;
-            _format = format;
-            ResizeOld();
-        }
-
-        SYNET_DEPRECATED SYNET_INLINE void Reshape(const Synet::Shape & shape, const Type & value = Type(), const TensorFormat & format = TensorFormatUnknown, const String & name = String())
-        {
-            _name = name;
-            _shape = shape;
-            _format = format;
-            ResizeOld(value);
-        }
-
-        SYNET_DEPRECATED SYNET_INLINE void Extend(const Synet::Shape & shape, const TensorFormat & format = TensorFormatUnknown)
-        {
-            _shape = shape;
-            _format = format;
-            ExtendOld();
-        }
-#endif
-
         SYNET_INLINE void Clear(bool saveType = false)
         {
             if(!saveType)
@@ -228,104 +183,6 @@ namespace Synet
             }
 #endif
         }
-
-#if defined(SYNET_TENSOR_API_OLD)
-        SYNET_INLINE Tensor<float> & As32f()
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorType32f);
-            return *(Tensor<float>*)this;
-        }
-
-        SYNET_INLINE const Tensor<float> & As32f() const
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorType32f);
-            return *(const Tensor<float>*)this;
-        }
-
-        SYNET_INLINE Tensor<int32_t> & As32i()
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorType32i);
-            return *(Tensor<int32_t>*)this;
-        }
-
-        SYNET_INLINE const Tensor<int32_t> & As32i() const
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorType32i);
-            return *(const Tensor<int32_t>*)this;
-        }
-
-        SYNET_INLINE Tensor<int8_t> & As8i()
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorType8i);
-            return *(Tensor<int8_t>*)this;
-        }
-
-        SYNET_INLINE const Tensor<int8_t> & As8i() const
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorType8i);
-            return *(const Tensor<int8_t>*)this;
-        }
-
-        SYNET_INLINE Tensor<uint8_t> & As8u()
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorType8u);
-            return *(Tensor<uint8_t>*)this;
-        }
-
-        SYNET_INLINE const Tensor<uint8_t> & As8u() const
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorType8u);
-            return *(const Tensor<uint8_t>*)this;
-        }
-
-        SYNET_INLINE Tensor<int64_t>& As64i()
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorType64i);
-            return *(Tensor<int64_t>*)this;
-        }
-
-        SYNET_INLINE const Tensor<int64_t>& As64i() const
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorType64i);
-            return *(const Tensor<int64_t>*)this;
-        }
-
-        SYNET_INLINE Tensor<uint64_t>& As64u()
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorType64u);
-            return *(Tensor<uint64_t>*)this;
-        }
-
-        SYNET_INLINE const Tensor<uint64_t>& As64u() const
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorType64u);
-            return *(const Tensor<uint64_t>*)this;
-        }
-
-        SYNET_INLINE Tensor<bool>& AsBool()
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorTypeBool);
-            return *(Tensor<bool>*)this;
-        }
-
-        SYNET_INLINE const Tensor<bool>& AsBool() const
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorTypeBool);
-            return *(const Tensor<bool>*)this;
-        }
-
-        SYNET_INLINE Tensor<uint16_t>& As16b()
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorType16b);
-            return *(Tensor<uint16_t>*)this;
-        }
-
-        SYNET_INLINE const Tensor<uint16_t>& As16b() const
-        {
-            assert(_type == TensorTypeUnknown || _type == TensorType16b);
-            return *(const Tensor<uint16_t>*)this;
-        }
-#endif
 
         SYNET_INLINE TensorType GetType() const
         {
@@ -452,50 +309,6 @@ namespace Synet
         {
             return _buffer->size;
         }
-
-#if defined(SYNET_TENSOR_API_OLD)
-        SYNET_INLINE uint8_t* RawCpuData()
-        {
-            return _buffer->data;
-        }
-
-        SYNET_INLINE const uint8_t * RawCpuData() const
-        {
-            return _buffer->data;
-        }
-
-        SYNET_INLINE Type * CpuData()
-        {
-            assert(_type == GetTensorType<Type>() || _buffer->data == NULL);
-            return (Type*)_buffer->data;
-        }
-
-        SYNET_INLINE const Type * CpuData() const
-        {
-            assert(_type == GetTensorType<Type>() || _buffer->data == NULL);
-            return (const Type*)_buffer->data;
-        }
-
-        SYNET_INLINE Type * CpuData(const Synet::Index & index)
-        {
-            return CpuData() + Offset(index);
-        }
-
-        SYNET_INLINE const Type * CpuData(const Synet::Index & index) const
-        {
-            return CpuData() + Offset(index);
-        }
-
-        SYNET_INLINE Type * CpuData(std::initializer_list<size_t> index)
-        {
-            return CpuData() + Offset(index);
-        }
-
-        SYNET_INLINE const Type * CpuData(std::initializer_list<size_t> index) const
-        {
-            return CpuData() + Offset(index);
-        }
-#endif
 
         SYNET_INLINE uint8_t* RawData()
         {
@@ -631,14 +444,14 @@ namespace Synet
         {
             switch (_type)
             {
-            case TensorType32f: DebugPrint<float>(os, As32f(), name, weight, first, last, precision); break;
-            case TensorType32i: DebugPrint<int32_t>(os, As32i(), name, weight, first, last, precision); break;
-            case TensorType8i: DebugPrint<int8_t>(os, As8i(), name, weight, first, last, precision); break;
-            case TensorType8u: DebugPrint<uint8_t>(os, As8u(), name, weight, first, last, precision); break;
-            case TensorType64i: DebugPrint<int64_t>(os, As64i(), name, weight, first, last, precision); break;
-            case TensorType64u: DebugPrint<uint64_t>(os, As64u(), name, weight, first, last, precision); break;
-            case TensorTypeBool: DebugPrint<bool>(os, AsBool(), name, weight, first, last, precision); break;
-            case TensorType16b: DebugPrint<uint16_t>(os, As16b(), name, weight, first, last, precision); break;
+            case TensorType32f: DebugPrint<float>(os, *this, name, weight, first, last, precision); break;
+            case TensorType32i: DebugPrint<int32_t>(os, *this, name, weight, first, last, precision); break;
+            case TensorType8i: DebugPrint<int8_t>(os, *this, name, weight, first, last, precision); break;
+            case TensorType8u: DebugPrint<uint8_t>(os, *this, name, weight, first, last, precision); break;
+            case TensorType64i: DebugPrint<int64_t>(os, *this, name, weight, first, last, precision); break;
+            case TensorType64u: DebugPrint<uint64_t>(os, *this, name, weight, first, last, precision); break;
+            case TensorTypeBool: DebugPrint<bool>(os, *this, name, weight, first, last, precision); break;
+            case TensorType16b: DebugPrint<uint16_t>(os, *this, name, weight, first, last, precision); break;
             }
         }
 
@@ -655,7 +468,7 @@ namespace Synet
 
     private:
 
-        template <class U> static void DebugPrint(std::ostream& os, const Tensor<U> & tensor, const String& name, bool weight, size_t first, size_t last, size_t precision)
+        template <class U> static void DebugPrint(std::ostream& os, const Tensor<T> & tensor, const String& name, bool weight, size_t first, size_t last, size_t precision)
         {
             const Synet::Shape& shape = tensor.Shape();
             TensorFormat format = tensor.Format();
@@ -719,7 +532,199 @@ namespace Synet
             _const = false;
         }
 
+        typedef Synet::Buffer<uint8_t> Buffer;
+        typedef std::shared_ptr<Buffer> BufferPtr;
+
+        Synet::String _name;
+        TensorType _type;
+        TensorFormat _format;
+        Synet::Shape _shape;
+        size_t _size;
+        BufferPtr _buffer;
+        bool _const;
+
+    public:
 #if defined(SYNET_TENSOR_API_OLD)
+        SYNET_DEPRECATED SYNET_INLINE Tensor(const Synet::Shape& shape, const TensorFormat& format)
+            : _shape(shape)
+            , _buffer(std::make_shared<Buffer>())
+            , _format(format)
+            , _const(false)
+        {
+            ResizeOld();
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE Tensor(const Synet::Shape& shape, const Type& value = Type(), const TensorFormat& format = TensorFormatUnknown, const String& name = String())
+            : _shape(shape)
+            , _buffer(std::make_shared<Buffer>())
+            , _format(format)
+            , _name(name)
+            , _const(false)
+        {
+            ResizeOld(value);
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE void Reshape(const Synet::Shape& shape, const TensorFormat& format)
+        {
+            _shape = shape;
+            _format = format;
+            ResizeOld();
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE void Reshape(const Synet::Shape& shape, const Type& value = Type(), const TensorFormat& format = TensorFormatUnknown, const String& name = String())
+        {
+            _name = name;
+            _shape = shape;
+            _format = format;
+            ResizeOld(value);
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE void Extend(const Synet::Shape& shape, const TensorFormat& format = TensorFormatUnknown)
+        {
+            _shape = shape;
+            _format = format;
+            ExtendOld();
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE Tensor<float>& As32f()
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType32f);
+            return *(Tensor<float>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE const Tensor<float>& As32f() const
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType32f);
+            return *(const Tensor<float>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE Tensor<int32_t>& As32i()
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType32i);
+            return *(Tensor<int32_t>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE const Tensor<int32_t>& As32i() const
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType32i);
+            return *(const Tensor<int32_t>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE Tensor<int8_t>& As8i()
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType8i);
+            return *(Tensor<int8_t>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE const Tensor<int8_t>& As8i() const
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType8i);
+            return *(const Tensor<int8_t>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE Tensor<uint8_t>& As8u()
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType8u);
+            return *(Tensor<uint8_t>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE const Tensor<uint8_t>& As8u() const
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType8u);
+            return *(const Tensor<uint8_t>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE Tensor<int64_t>& As64i()
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType64i);
+            return *(Tensor<int64_t>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE const Tensor<int64_t>& As64i() const
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType64i);
+            return *(const Tensor<int64_t>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE Tensor<uint64_t>& As64u()
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType64u);
+            return *(Tensor<uint64_t>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE const Tensor<uint64_t>& As64u() const
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType64u);
+            return *(const Tensor<uint64_t>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE Tensor<bool>& AsBool()
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorTypeBool);
+            return *(Tensor<bool>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE const Tensor<bool>& AsBool() const
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorTypeBool);
+            return *(const Tensor<bool>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE Tensor<uint16_t>& As16b()
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType16b);
+            return *(Tensor<uint16_t>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE const Tensor<uint16_t>& As16b() const
+        {
+            assert(_type == TensorTypeUnknown || _type == TensorType16b);
+            return *(const Tensor<uint16_t>*)this;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE uint8_t* RawCpuData()
+        {
+            return _buffer->data;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE const uint8_t* RawCpuData() const
+        {
+            return _buffer->data;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE Type* CpuData()
+        {
+            assert(_type == GetTensorType<Type>() || _buffer->data == NULL);
+            return (Type*)_buffer->data;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE const Type* CpuData() const
+        {
+            assert(_type == GetTensorType<Type>() || _buffer->data == NULL);
+            return (const Type*)_buffer->data;
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE Type* CpuData(const Synet::Index& index)
+        {
+            return CpuData() + Offset(index);
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE const Type* CpuData(const Synet::Index& index) const
+        {
+            return CpuData() + Offset(index);
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE Type* CpuData(std::initializer_list<size_t> index)
+        {
+            return CpuData() + Offset(index);
+        }
+
+        SYNET_DEPRECATED SYNET_INLINE const Type* CpuData(std::initializer_list<size_t> index) const
+        {
+            return CpuData() + Offset(index);
+        }
+
+    private:
         SYNET_INLINE void ResizeOld(Type value)
         {
             _type = GetTensorType<Type>();
@@ -742,7 +747,7 @@ namespace Synet
 
         SYNET_INLINE void ExtendOld()
         {
-            if(_type == TensorTypeUnknown)
+            if (_type == TensorTypeUnknown)
                 _type = GetTensorType<Type>();
             assert(_type != TensorTypeUnknown && _type == GetTensorType<Type>());
             _size = Size(0, _shape.size());
@@ -752,17 +757,6 @@ namespace Synet
             _const = false;
         }
 #endif
-
-        typedef Synet::Buffer<uint8_t> Buffer;
-        typedef std::shared_ptr<Buffer> BufferPtr;
-
-        Synet::String _name;
-        TensorType _type;
-        TensorFormat _format;
-        Synet::Shape _shape;
-        size_t _size;
-        BufferPtr _buffer;
-        bool _const;
     };
 
     typedef Tensor<Unknown> TensorAny;
