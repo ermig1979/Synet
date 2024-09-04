@@ -52,8 +52,8 @@ namespace Synet
         template<class T, ActivationFunctionType activation, int update> void MergedConvolutionLayerDirect(
             const T * src, const ConvParam & conv, const T * weight, const T * bias, const T * params, T * dst)
         {
-            Tensor<T> buffer({ conv.dstC });
-            T * buf = buffer. template Data<T>();
+            Buffer<T> buffer(conv.dstC);
+            T * buf = buffer.data;
             for (size_t dy = 0; dy < conv.dstH; ++dy)
             {
                 for (size_t dx = 0; dx < conv.dstW; ++dx)

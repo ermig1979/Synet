@@ -320,7 +320,7 @@ namespace Synet
                 SYNET_ERROR("FusedLayer V0 needs 3 weights!");
             _t0.bias.Share(weight[0]);
             _count = _t0.bias.Size();
-            _t0.scale.Reshape(_t0.bias.Shape());
+            _t0.scale.Reshape(TensorType32f, _t0.bias.Shape());
             if (weight[1].Size() != _count && weight[1].Size() != 1)
                 SYNET_ERROR("FusedLayer V0: chaeck weight[1] size!");
             if (weight[1].Size() == _count)
@@ -367,8 +367,8 @@ namespace Synet
             assert(weight.size() == 4 && weight[0].Count() == 1);
             assert(weight[0].Shape() == weight[1].Shape() && weight[0].Shape() == weight[2].Shape() && weight[0].Shape() == weight[3].Shape());
             assert(fused.floats().size() == 2);
-            _t2.scale.Reshape(weight[0].Shape());
-            _t2.bias.Reshape(weight[0].Shape());
+            _t2.scale.Reshape(TensorType32f, weight[0].Shape());
+            _t2.bias.Reshape(TensorType32f, weight[0].Shape());
             _count = _t2.scale.Size();
             for (size_t i = 0; i < _count; ++i)
             {
@@ -406,8 +406,8 @@ namespace Synet
                 SYNET_ERROR("FusedLayer V5 supports 1 input and 1 output!");
             assert(weight.size() == 4);
             assert(weight[0].Shape() == weight[1].Shape() && weight[0].Shape() == weight[2].Shape() && weight[0].Shape() == weight[3].Shape());
-            _t2.scale.Reshape(weight[0].Shape());
-            _t2.bias.Reshape(weight[0].Shape());
+            _t2.scale.Reshape(TensorType32f, weight[0].Shape());
+            _t2.bias.Reshape(TensorType32f, weight[0].Shape());
             _count = _t2.scale.Size();
             for (size_t i = 0; i < _count; ++i)
             {
@@ -463,8 +463,8 @@ namespace Synet
                 SYNET_ERROR("FusedLayer V10 supports 1 input and 1 output!");
             assert(weight.size() == 2);
             assert(weight[0].Shape() == weight[1].Shape());
-            _t0.scale.Reshape(weight[0].Shape());
-            _t0.bias.Reshape(weight[0].Shape());
+            _t0.scale.Reshape(TensorType32f, weight[0].Shape());
+            _t0.bias.Reshape(TensorType32f, weight[0].Shape());
             _count = _t0.scale.Size();
             assert(fused.floats().size() == 4);
             float preScale = fused.floats()[0];

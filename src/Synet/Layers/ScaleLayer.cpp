@@ -382,8 +382,8 @@ namespace Synet
         Stat& statD = *this->Stats(2)[0];
         statS.Init8u(_method);
         statD.Init8u(_method);
-        _scale.Reshape(Shp(_channels), 1.0f);
-        _shift.Reshape(Shp(_channels), 0.0f);
+        _scale.Reshape(TensorType32f, Shp(_channels), TensorFormatUnknown, 1.0f);
+        _shift.Reshape(TensorType32f, Shp(_channels), TensorFormatUnknown, 0.0f);
         if (_src8u)
         {
             for (size_t c = 0; c < _channels; ++c)

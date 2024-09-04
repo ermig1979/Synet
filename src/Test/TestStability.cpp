@@ -332,7 +332,7 @@ namespace Test
                 DataPtr data(new Data());
                 data->paths.resize(_options.batchSize);
                 data->views.resize(_options.batchSize);
-                data->input.Reshape(thread.network.Src()[0]->Shape());
+                data->input.Reshape(Synet::TensorType32f, thread.network.Src()[0]->Shape());
                 data->output.resize(_options.TestThreads());
                 for (size_t b = 0; b < _options.batchSize; ++b)
                 {
@@ -450,7 +450,7 @@ namespace Test
         static inline void Copy(const Tensor& src, Tensor& dst)
         {
             if (src.Shape() != dst.Shape())
-                dst.Reshape(src.Shape(), src.Format());
+                dst.Reshape(Synet::TensorType32f, src.Shape(), src.Format());
             memcpy(dst.RawData(), src.RawData(), src.RawSize());
         }
 

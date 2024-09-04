@@ -150,13 +150,13 @@ namespace Synet
         _deconvolution32f.Init(_num, &_conv);
         if (_deconvolution32f.Enable())
         {
-            buf[TensorType32f*BUFFER_COUNT]->Extend({ _deconvolution32f.ExternalBufferSize() });
+            buf[TensorType32f*BUFFER_COUNT]->Extend(TensorType32f, Shp(_deconvolution32f.ExternalBufferSize()));
             _deconvolution32f.SetParams(weight[0].Data<float>(), &_internal, _biasTerm ? weight[1].Data<float>() : NULL,
                 _conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : _params);
         }
         else
         {
-            buf[TensorType32f*BUFFER_COUNT]->Extend(Shape({ _conv.dstC * _conv.kernelY * _conv.kernelX * _conv.srcH * _conv.srcW }));
+            buf[TensorType32f*BUFFER_COUNT]->Extend(TensorType32f, Shp(_conv.dstC * _conv.kernelY * _conv.kernelX * _conv.srcH * _conv.srcW));
             if (_transW)
             {
                 const Shape & shape = weight[0].Shape();

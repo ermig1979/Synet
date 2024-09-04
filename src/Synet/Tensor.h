@@ -89,7 +89,7 @@ namespace Synet
         {
         }
 
-        SYNET_INLINE Tensor(TensorType type, const Synet::Shape& shape, const TensorFormat& format)
+        SYNET_INLINE Tensor(TensorType type, const Synet::Shape& shape, const TensorFormat& format = TensorFormatUnknown)
             : _type(type)
             , _shape(shape)
             , _buffer(std::make_shared<Buffer>())
@@ -111,7 +111,7 @@ namespace Synet
         }
 
 #if defined(SYNET_TENSOR_API_OLD)
-        SYNET_INLINE Tensor(const Synet::Shape & shape, const TensorFormat & format)
+        SYNET_DEPRECATED SYNET_INLINE Tensor(const Synet::Shape & shape, const TensorFormat & format)
             : _shape(shape)
             , _buffer(std::make_shared<Buffer>())
             , _format(format)
@@ -120,7 +120,7 @@ namespace Synet
             ResizeOld();
         }
 
-        SYNET_INLINE Tensor(const Synet::Shape & shape, const Type & value = Type(), const TensorFormat & format = TensorFormatUnknown, const String & name = String())
+        SYNET_DEPRECATED SYNET_INLINE Tensor(const Synet::Shape & shape, const Type & value = Type(), const TensorFormat & format = TensorFormatUnknown, const String & name = String())
             : _shape(shape)
             , _buffer(std::make_shared<Buffer>())
             , _format(format)
@@ -147,7 +147,7 @@ namespace Synet
         {
         }
 
-        SYNET_INLINE void Reshape(TensorType type, const Synet::Shape& shape, const TensorFormat& format)
+        SYNET_INLINE void Reshape(TensorType type, const Synet::Shape& shape, const TensorFormat& format = TensorFormatUnknown)
         {
             _type = type;
             _shape = shape;
@@ -181,14 +181,14 @@ namespace Synet
         }
 
 #if defined(SYNET_TENSOR_API_OLD)
-        SYNET_INLINE void Reshape(const Synet::Shape & shape, const TensorFormat & format)
+        SYNET_DEPRECATED SYNET_INLINE void Reshape(const Synet::Shape & shape, const TensorFormat & format)
         {
             _shape = shape;
             _format = format;
             ResizeOld();
         }
 
-        SYNET_INLINE void Reshape(const Synet::Shape & shape, const Type & value = Type(), const TensorFormat & format = TensorFormatUnknown, const String & name = String())
+        SYNET_DEPRECATED SYNET_INLINE void Reshape(const Synet::Shape & shape, const Type & value = Type(), const TensorFormat & format = TensorFormatUnknown, const String & name = String())
         {
             _name = name;
             _shape = shape;
@@ -196,7 +196,7 @@ namespace Synet
             ResizeOld(value);
         }
 
-        SYNET_INLINE void Extend(const Synet::Shape & shape, const TensorFormat & format = TensorFormatUnknown)
+        SYNET_DEPRECATED SYNET_INLINE void Extend(const Synet::Shape & shape, const TensorFormat & format = TensorFormatUnknown)
         {
             _shape = shape;
             _format = format;

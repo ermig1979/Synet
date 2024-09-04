@@ -488,7 +488,7 @@ namespace Synet
             {
                 if(_channelShared == 0)
                     SYNET_ERROR("NormalizeLayer has wrong parameter channelShared!");
-                _scale.Reshape(Shape({ _channels }), 1.0f);
+                _scale.Reshape(TensorType32f, Shp(_channels), TensorFormatUnknown, 1.0f);
             }
             else
             {
@@ -540,7 +540,7 @@ namespace Synet
             SYNET_ERROR("Unsupported version " << _version << " of NormalizeLayer!");
 
         dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
-        buf[0]->Extend(Shp(Max(_spatial, _channels * 2)));
+        buf[0]->Extend(TensorType32f, Shp(Max(_spatial, _channels * 2)));
         _const = false;
         this->UsePerfStat();
         return true;

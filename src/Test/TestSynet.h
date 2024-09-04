@@ -316,7 +316,7 @@ namespace Test
                     tmp[offset + 6] = (float)pSrc[6];
                 }
                 SortDetectionOutput(tmp.data(), tmp.size());
-                dst.Reshape(Shp(1, 1, tmp.size()/7, 7));
+                dst.Reshape(Synet::TensorType32f, Shp(1, 1, tmp.size()/7, 7));
                 memcpy(dst.RawData(), tmp.data(), dst.RawSize());
             }
             else if (_decoderName == "rtdetr")
@@ -338,7 +338,7 @@ namespace Test
                     tmp[offset + 5] = (float)pSrc[5];
                 }
                 SortRtdetr(tmp.data(), tmp.size());
-                dst.Reshape(Shp(1, tmp.size() / 6, 6));
+                dst.Reshape(Synet::TensorType32f, Shp(1, tmp.size() / 6, 6));
                 memcpy(dst.RawData(), tmp.data(), dst.RawSize());
             }
             else
@@ -347,7 +347,7 @@ namespace Test
                 bool batch = _net.Src()[0]->Axis(0) != 1;
                 if (trans && src.Count() == 4)
                 {
-                    dst.Reshape(Shp(src.Axis(0), src.Axis(3), src.Axis(1), src.Axis(2)), Synet::TensorFormatNchw);
+                    dst.Reshape(Synet::TensorType32f, Shp(src.Axis(0), src.Axis(3), src.Axis(1), src.Axis(2)), Synet::TensorFormatNchw);
                     for (size_t n = 0; n < src.Axis(0); ++n)
                         for (size_t c = 0; c < src.Axis(3); ++c)
                             for (size_t y = 0; y < src.Axis(1); ++y)
@@ -358,7 +358,7 @@ namespace Test
                 {
                     if (batch)
                     {
-                        dst.Reshape(Shp(src.Axis(0), src.Axis(2), src.Axis(1)), Synet::TensorFormatNchw);
+                        dst.Reshape(Synet::TensorType32f, Shp(src.Axis(0), src.Axis(2), src.Axis(1)), Synet::TensorFormatNchw);
                         for (size_t n = 0; n < src.Axis(0); ++n)
                             for (size_t c = 0; c < src.Axis(2); ++c)
                                 for (size_t s = 0; s < src.Axis(1); ++s)
@@ -366,7 +366,7 @@ namespace Test
                     }
                     else
                     {
-                        dst.Reshape(Shp(src.Axis(2), src.Axis(0), src.Axis(1)), Synet::TensorFormatNchw);
+                        dst.Reshape(Synet::TensorType32f, Shp(src.Axis(2), src.Axis(0), src.Axis(1)), Synet::TensorFormatNchw);
                         for (size_t c = 0; c < src.Axis(2); ++c)
                             for (size_t y = 0; y < src.Axis(0); ++y)
                                 for (size_t x = 0; x < src.Axis(1); ++x)
@@ -375,14 +375,14 @@ namespace Test
                 }
                 else if (trans && src.Count() == 2 && (src.Axis(0) == 1 || src.Format() == Synet::TensorFormatNhwc))
                 {
-                    dst.Reshape(Shp(src.Axis(1), src.Axis(0)), Synet::TensorFormatNchw);
+                    dst.Reshape(Synet::TensorType32f, Shp(src.Axis(1), src.Axis(0)), Synet::TensorFormatNchw);
                     for (size_t c = 0; c < src.Axis(1); ++c)
                         for (size_t s = 0; s < src.Axis(0); ++s)
                             dst.Data<float>(Shp(c, s))[0] = (float)src.Data<T>(Shp(s, c))[0];
                 }
                 else
                 {
-                    dst.Reshape(src.Shape(), Synet::TensorFormatNchw);
+                    dst.Reshape(Synet::TensorType32f, src.Shape(), Synet::TensorFormatNchw);
                     for (size_t i = 0; i < src.Size(); ++i)
                         dst.Data<float>()[i] = (float)src.Data<T>()[i];
                 }

@@ -69,7 +69,7 @@ namespace Synet
         _b0 = weight[2].Data<float>(Shp(0, 0));
         _b1 = _dirS > 1 ? weight[2].Data<float>(Shp(1, 0)) : NULL;
 
-        buf[0]->Extend(Shp(_seqS + 2, _batch, _hidS4));
+        buf[0]->Extend(TensorType32f, Shp(_seqS + 2, _batch, _hidS4));
 
         dst[0]->Reshape(TensorType32f, Shp(_seqS, _dirS, _batch, _hidS), TensorFormatUnknown);
 

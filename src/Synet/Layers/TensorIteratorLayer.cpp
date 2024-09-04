@@ -81,7 +81,7 @@ namespace Synet
         _dstExt = itDst->Size(0, _dstAxis);
         dstShape[_dstAxis] = _itCount;
         _dstInt = itDst->Size(_dstAxis + 1);
-        dst[_itDst.second]->Reshape(dstShape, itDst->Format());
+        dst[_itDst.second]->Reshape(itDst->GetType(), dstShape, itDst->Format());
 
         std::stringstream desc;
         desc << _srcExt << "x" << _itCount << "x" << _srcInt << "-" << _dstInt;

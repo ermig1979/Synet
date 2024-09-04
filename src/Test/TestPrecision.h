@@ -243,7 +243,7 @@ namespace Test
 				Shape shape = network->SrcShape(0);
 				if (shape.size() != 4 || (shape[1] != 3 && shape[1] != 1))
 					SYNET_ERROR("Wrong " << network->Name() << " classifier input shape: " << Synet::Detail::DebugPrint(shape) << " !");
-				_threads[t].input.resize(1, Tensor(shape));
+				_threads[t].input.resize(1, Tensor(Synet::TensorType32f, shape));
 				if (_param().lower().size() == 1)
 					_param().lower().resize(shape[1], _param().lower()[0]);
 				if (_param().upper().size() == 1)

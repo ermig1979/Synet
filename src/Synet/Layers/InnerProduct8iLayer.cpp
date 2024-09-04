@@ -102,9 +102,9 @@ namespace Synet
         Stat& statD = *this->Stats(2)[0];
         statS.Init8u(_method);
         statD.Init8u(_method);
-        _weight8i.Reshape(this->Weight()[0].Shape(), TensorFormatNchw);
-        _norm32i.Reshape(Shp(2, _N));
-        _norm32f.Reshape(Shp(2, _N));
+        _weight8i.Reshape(TensorType8i, this->Weight()[0].Shape(), TensorFormatNchw);
+        _norm32i.Reshape(TensorType32i, Shp(2, _N));
+        _norm32f.Reshape(TensorType32f, Shp(2, _N));
         Floats normW(_K);
         const float* pSrcW = this->Weight()[0].Data<float>();
         const float* pSrcB = _biasTerm ? this->Weight()[1].Data<float>() : NULL;

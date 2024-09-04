@@ -127,9 +127,9 @@ namespace Synet
         {
             dst[0]->Reshape(TensorType32f, src[0]->Shape(), src[0]->Format());
             if(_trans)
-                _buffer.Reshape({ _height, _width, _channels * 2 + _size - 1 });
+                _buffer.Reshape(TensorType32f, Shp(_height, _width, _channels * 2 + _size - 1));
             else
-                _buffer.Reshape({ _channels * 2 + _size - 1});        
+                _buffer.Reshape(TensorType32f, Shp(_channels * 2 + _size - 1));
         }
         else
             SYNET_ERROR("LrnLayer supports only NormRegionTypeAcrossChannels!")

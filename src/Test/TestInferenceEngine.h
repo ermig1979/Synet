@@ -512,7 +512,7 @@ namespace Test
             {
             case InferenceEngine::Precision::FP32:
             {
-                Synet::Tensor<float> tensor(dims, format);
+                Synet::Tensor<float> tensor(Synet::TensorType32f, dims, format);
                 const float* pOut = blob.buffer();
                 SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
@@ -520,7 +520,7 @@ namespace Test
             }
             case InferenceEngine::Precision::I32:
             {
-                Synet::Tensor<int32_t> tensor(dims, format);
+                Synet::Tensor<int32_t> tensor(Synet::TensorType32i, dims, format);
                 const int32_t* pOut = blob.buffer();
                 SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
@@ -528,7 +528,7 @@ namespace Test
             }
             case InferenceEngine::Precision::I64:
             {
-                Synet::Tensor<int64_t> tensor(dims, format);
+                Synet::Tensor<int64_t> tensor(Synet::TensorType64i, dims, format);
                 const int64_t* pOut = blob.buffer();
                 SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
@@ -536,7 +536,7 @@ namespace Test
             }
             case InferenceEngine::Precision::U8:
             {
-                Synet::Tensor<uint8_t> tensor(dims, format);
+                Synet::Tensor<uint8_t> tensor(Synet::TensorType8u, dims, format);
                 const uint8_t* pOut = blob.buffer();
                 SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
@@ -544,7 +544,7 @@ namespace Test
             }
             case InferenceEngine::Precision::I8:
             {
-                Synet::Tensor<int8_t> tensor(dims, format);
+                Synet::Tensor<int8_t> tensor(Synet::TensorType8i, dims, format);
                 const int8_t* pOut = blob.buffer();
                 SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);

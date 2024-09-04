@@ -324,7 +324,7 @@ namespace Test
         {
             Tensors stub(SrcCount());
             for (size_t i = 0; i < SrcCount(); ++i)
-                stub[i].Reshape(SrcShape(i));
+                stub[i].Reshape(Synet::TensorType32f, SrcShape(i));
             SetInput(stub, 0);
             _ov->inferRequest.infer();
         }
@@ -389,7 +389,7 @@ namespace Test
                         tmp[size + 6] = pOut[6];
                     }
                     SortDetectionOutput(tmp.data(), tmp.size());
-                    _output[o].Reshape(Shp(1, 1, tmp.size() / 7, 7), Synet::TensorFormatNchw);
+                    _output[o].Reshape(Synet::TensorType32f, Shp(1, 1, tmp.size() / 7, 7), Synet::TensorFormatNchw);
                     memcpy(_output[o].Data<float>(), tmp.data(), _output[o].RawSize());
                 }
                 else
@@ -404,7 +404,7 @@ namespace Test
                             else
                                 shape.insert(shape.begin(), _ov->batchSize);
                         }
-                        _output[o].Reshape(shape, Synet::TensorFormatNchw);
+                        _output[o].Reshape(Synet::TensorType32f, shape, Synet::TensorFormatNchw);
                     }
                     size_t size = 1;
                     for (size_t i = 0; i < dims.size(); ++i)
@@ -461,7 +461,7 @@ namespace Test
             {
             case ov::element::Type_t::f32:
             {
-                Synet::Tensor<float> tensor(dims, format);
+                Synet::Tensor<float> tensor(Synet::TensorType32f, dims, format);
                 const float* pOut = (float*)src.data();
                 SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
@@ -469,7 +469,7 @@ namespace Test
             }
             case ov::element::Type_t::i32:
             {
-                Synet::Tensor<int32_t> tensor(dims, format);
+                Synet::Tensor<int32_t> tensor(Synet::TensorType32i, dims, format);
                 const int32_t* pOut = (int32_t*)src.data();
                 SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
@@ -477,7 +477,7 @@ namespace Test
             }
             case ov::element::Type_t::i64:
             {
-                Synet::Tensor<int64_t> tensor(dims, format);
+                Synet::Tensor<int64_t> tensor(Synet::TensorType64i, dims, format);
                 const int64_t* pOut = (int64_t*)src.data();
                 SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
@@ -485,7 +485,7 @@ namespace Test
             }
             case ov::element::Type_t::u8:
             {
-                Synet::Tensor<uint8_t> tensor(dims, format);
+                Synet::Tensor<uint8_t> tensor(Synet::TensorType8u, dims, format);
                 const uint8_t* pOut = (uint8_t*)src.data();
                 SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
@@ -493,7 +493,7 @@ namespace Test
             }
             case ov::element::Type_t::i8:
             {
-                Synet::Tensor<int8_t> tensor(dims, format);
+                Synet::Tensor<int8_t> tensor(Synet::TensorType8i, dims, format);
                 const int8_t* pOut = (int8_t*)src.data();
                 SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);

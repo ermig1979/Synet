@@ -316,9 +316,9 @@ namespace Synet
         const ConvParam & conv = a.conv[srcIdx];
         assert(conv.group == 1);
         const Tensor* weight = this->Weight().data() + a.index[srcIdx];
-        _weight8i[dstIdx].Reshape(weight[0].Shape(), TensorFormatNhwc);
-        _norm32f[dstIdx].Reshape(Shp(conv.dstC));
-        _bias32f[dstIdx].Reshape(Shp(conv.dstC));
+        _weight8i[dstIdx].Reshape(TensorType8i, weight[0].Shape(), TensorFormatNhwc);
+        _norm32f[dstIdx].Reshape(TensorType32f, Shp(conv.dstC));
+        _bias32f[dstIdx].Reshape(TensorType32f, Shp(conv.dstC));
         size_t D = conv.dstC, C = conv.srcC, K = conv.kernelY * conv.kernelX, CK = C * K;
         Floats normW(CK);
         const float* pSrcW = weight[0].Data<float>();

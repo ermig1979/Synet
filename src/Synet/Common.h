@@ -100,6 +100,14 @@
 #error This platform is unsupported!
 #endif
 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#define SYNET_DEPRECATED SIMD_DEPRECATED
+#define SYNET_DEPRECATED_EX(message) SIMD_DEPRECATED_EX(message)
+#else
+#define SYNET_DEPRECATED
+#define SYNET_DEPRECATED_EX(message)
+#endif
+
 #if defined(SYNET_PERFORMANCE_STATISTIC) && !defined(SYNET_PERF_FUNC)
 #include "Cpl/Performance.h"
 #define SYNET_PERF_FUNC() CPL_PERF_FUNC()

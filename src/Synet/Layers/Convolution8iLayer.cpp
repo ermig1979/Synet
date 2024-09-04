@@ -196,9 +196,9 @@ namespace Synet
         Stat& statD = *this->Stats(2)[0];
         statS.Init8u(_method);
         statD.Init8u(_method);
-        _weight8i.Reshape(this->Weight()[0].Shape(), alg.trans ? TensorFormatNhwc : TensorFormatNchw);
-        _norm32f.Reshape(Shp(conv.dstC));
-        _bias32f.Reshape(Shp(conv.dstC));
+        _weight8i.Reshape(TensorType8i, this->Weight()[0].Shape(), alg.trans ? TensorFormatNhwc : TensorFormatNchw);
+        _norm32f.Reshape(TensorType32f, Shp(conv.dstC));
+        _bias32f.Reshape(TensorType32f, Shp(conv.dstC));
         size_t G = conv.group, D = conv.dstC / G, C = conv.srcC / G, K = conv.kernelY * conv.kernelX, CK = C * K, GD = G * D;
         Floats normW(CK);
         const float* pSrcW = this->Weight()[0].Data<float>();

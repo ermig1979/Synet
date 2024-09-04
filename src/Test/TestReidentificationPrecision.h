@@ -122,7 +122,7 @@ namespace Test
 			for (size_t b = 0; b < batch; ++b)
 			{
 				Object& o = tests[b].objects[index];
-				o.desc.Reshape(Shp(size));
+				o.desc.Reshape(Synet::TensorType32f, Shp(size));
 				memcpy(o.desc.Data<float>(), t.output[0].Data<float>() + b * size, o.desc.RawSize());
 			}
 			return true;
