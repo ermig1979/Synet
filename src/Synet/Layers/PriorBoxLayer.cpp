@@ -239,7 +239,7 @@ namespace Synet
         }
         pDst += dst[0]->Size(2);
         if (_variance.size() == 1)
-            CpuSet(dim, Type(_variance[0]), pDst);
+            CpuSet(dim, _variance[0], pDst);
         else
         {
             size_t offset = 0;

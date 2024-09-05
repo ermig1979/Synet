@@ -107,7 +107,6 @@ namespace Synet
         }
         else
         {
-            //ForwardCpu(src, buf, dst);
             this->UsePerfStat();
             _const = false;
         }

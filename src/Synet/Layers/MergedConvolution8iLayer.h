@@ -62,8 +62,7 @@ namespace Synet
         QuantizationMethod _method;
         bool _src8u, _dst8u, _dw0;
         Converter _srcCvt, _intCvt, _dstCvt;
-        Tensor8i _weight8i[2];
-        Tensor32f _norm32f[2], _bias32f[2];
+        Tensor _weight8i[2], _norm32f[2], _bias32f[2];
         typedef void(*DepthwiseConvolution32fPtr)(const float* src, const ConvParam& conv, const float* weight, const float* bias, const float* params, float* dst);
         DepthwiseConvolution32fPtr _depthwise;
 

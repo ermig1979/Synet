@@ -44,6 +44,6 @@ namespace Synet
         size_t _batch, _channels, _spatial, _group;
         Tensor _scale, _shift;
         int _trans, _acrossSpatial, _channelShared, _version;
-        Type _eps;
+        float _eps;
     };
 }

@@ -248,7 +248,7 @@ namespace Synet
             if (_biasTerm)
                 _shift.Share(this->Weight()[1]);
             else
-                _shift.Reshape(TensorType32f, Shp(_channels), TensorFormatUnknown, Type(0));
+                _shift.Reshape(TensorType32f, Shp(_channels), TensorFormatUnknown, 0.0f);
         }
 
         const Tensor & scale = this->Weight()[0];

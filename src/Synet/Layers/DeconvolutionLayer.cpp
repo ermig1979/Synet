@@ -39,7 +39,7 @@ namespace Synet
 
     size_t DeconvolutionLayer::MemoryUsage() const
     {
-        return Layer::MemoryUsage() + (_deconvolution32f.InternalBufferSize() + _weightT.Size())*sizeof(Type);
+        return Layer::MemoryUsage() + (_deconvolution32f.InternalBufferSize() + _weightT.Size())*sizeof(float);
     }
 
     int64_t DeconvolutionLayer::Flop() const

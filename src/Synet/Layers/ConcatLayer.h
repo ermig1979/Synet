@@ -45,7 +45,6 @@ namespace Synet
         template <class T> void Concat(std::vector<T*> src, T* dst);
 
     private:
-        typedef std::vector<Type*> Ptrs;
         size_t _concatNum, _concatInputSize, _concatAxis, _dstConcatAxis, _special2N;
         Index _srcConcatAxis;
         TensorType _srcType;

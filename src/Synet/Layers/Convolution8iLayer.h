@@ -62,8 +62,7 @@ namespace Synet
         QuantizationMethod _method;
         bool _src8u, _dst8u;
         Converter _srcCvt, _dstCvt;
-        Tensor8i _weight8i;
-        Tensor32f _norm32f, _bias32f;
+        Tensor _weight8i, _norm32f, _bias32f;
 
         Convolution8i _convolution8i;
     };

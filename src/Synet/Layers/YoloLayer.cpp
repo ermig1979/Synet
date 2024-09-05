@@ -64,7 +64,7 @@ namespace Synet
         return true;
     }
 
-    void YoloLayer::GetRegions(const TensorPtrs & src, size_t netW, size_t netH, Type threshold, Regions & dst) const
+    void YoloLayer::GetRegions(const TensorPtrs & src, size_t netW, size_t netH, float threshold, Regions & dst) const
     {
         SYNET_PERF_FUNC();
         dst.clear();
@@ -75,7 +75,7 @@ namespace Synet
             {
                 for (size_t n = 0; n < _num; ++n)
                 {
-                    Type objectness = src[0]->Data<float>(Shp(b, n*(_classes + 5) + 4, y, x))[0];
+                    float objectness = src[0]->Data<float>(Shp(b, n*(_classes + 5) + 4, y, x))[0];
                     if (objectness > threshold)
                     {
                         Region region;

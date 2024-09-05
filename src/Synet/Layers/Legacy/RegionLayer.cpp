@@ -74,7 +74,7 @@ namespace Synet
         return true;
     }
 
-    void RegionLayer::GetRegions(const TensorPtrs & src, Type threshold, Regions & dst) const
+    void RegionLayer::GetRegions(const TensorPtrs & src, float threshold, Regions & dst) const
     {
         SYNET_PERF_FUNC();
         dst.clear();
@@ -90,9 +90,9 @@ namespace Synet
             {
                 size_t index = i*_num + n;
                 size_t predictIndex = index * (_classes + 5) + 4;
-                Type scale = pPredict[predictIndex];
-                if (_classfix == -1 && scale < Type(0.5)) 
-                    scale = Type(0);
+                float scale = pPredict[predictIndex];
+                if (_classfix == -1 && scale < 0.5f) 
+                    scale = 0.0f;
                 size_t regionIndex = index * (_classes + 5);
                 Region r;
                 r.x = (col + CpuSigmoid(pPredict[regionIndex + 0])) / width;
@@ -102,7 +102,7 @@ namespace Synet
                 size_t classIndex = index * (_classes + 5) + 5;
                 for (size_t id = 0; id < _classes; ++id)
                 {
-                    Type prob = scale*pPredict[classIndex + id];
+                    float prob = scale*pPredict[classIndex + id];
                     if (prob > threshold)
                     {
                         r.prob = prob;

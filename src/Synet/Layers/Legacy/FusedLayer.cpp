@@ -372,9 +372,9 @@ namespace Synet
             _count = _t2.scale.Size();
             for (size_t i = 0; i < _count; ++i)
             {
-                Type eps = fused.floats()[0];
-                Type scale = Type(1) / (::sqrt(weight[1].Data<float>()[i]) + eps);
-                Type bias = -weight[0].Data<float>()[i] * scale;
+                float eps = fused.floats()[0];
+                float scale = 1.0f / (::sqrt(weight[1].Data<float>()[i]) + eps);
+                float bias = -weight[0].Data<float>()[i] * scale;
                 _t2.scale.Data<float>()[i] = scale*weight[2].Data<float>()[i];
                 _t2.bias.Data<float>()[i] = bias*weight[2].Data<float>()[i] + weight[3].Data<float>()[i];
             }
@@ -414,7 +414,7 @@ namespace Synet
                 _t2.scale.Data<float>()[i] = weight[0].Data<float>()[i] * weight[2].Data<float>()[i];
                 _t2.bias.Data<float>()[i] = weight[1].Data<float>()[i] * weight[2].Data<float>()[i] + weight[3].Data<float>()[i];
             }
-            _t2.slope = Type(0);
+            _t2.slope = 0.0f;
             break;
         case 6:
             if (src.size() != 1 || dst.size() != 1)
@@ -424,7 +424,7 @@ namespace Synet
             _t2.scale.Share(weight[0]);
             _t2.bias.Share(weight[1]);
             _count = _t2.scale.Size();
-            _t2.slope = Type(0);
+            _t2.slope = 0.0f;
             break;
         case 7:
         {

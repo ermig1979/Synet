@@ -45,7 +45,6 @@ namespace Synet
         template <class T> void Unpack(const T* src, std::vector<T*> dst);
 
     private:
-        typedef std::vector<Type*> Ptrs;
         size_t _axis, _outer, _count, _size, _inner;
         Shape _begins, _sizes;
         TensorType _srcType;

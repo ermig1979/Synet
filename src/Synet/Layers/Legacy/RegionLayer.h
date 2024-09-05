@@ -38,7 +38,7 @@ namespace Synet
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-        void GetRegions(const TensorPtrs& src, Type threshold, Regions& dst) const;
+        void GetRegions(const TensorPtrs& src, float threshold, Regions& dst) const;
 
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
