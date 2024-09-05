@@ -74,7 +74,7 @@ namespace Synet
         _convolution16b.Init(alg.batch, &conv);
         if (_convolution16b.Enable())
         {
-            Base::Extend8u(buf, 0, Shp(_convolution16b.ExternalBufferSize()), src->Format());
+            Layer::Extend8u(buf, 0, Shp(_convolution16b.ExternalBufferSize()), src->Format());
             _convolution16b.SetParams(weight[0].Data<float>(), alg.bias ? weight[1].Data<float>() : NULL,
                 conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : alg.params);
             alg.internal = 1;
@@ -87,6 +87,6 @@ namespace Synet
     void Convolution16bLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
         if (_convolution16b.Enable())
-            _convolution16b.Forward(src[0]->RawData(), Base::Buf8u(buf, 0), dst[0]->RawData());
+            _convolution16b.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());
     }
 }

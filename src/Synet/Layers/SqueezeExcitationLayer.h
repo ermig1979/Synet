@@ -29,14 +29,9 @@
 
 namespace Synet
 {
-    class SqueezeExcitationLayer : public Synet::Layer<float>
+    class SqueezeExcitationLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::Tensors Tensors;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         SqueezeExcitationLayer(const LayerParam& param, Context* context, QuantizationMethod method);
 
         virtual void CompactWeight();

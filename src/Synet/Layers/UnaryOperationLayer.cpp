@@ -141,7 +141,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     UnaryOperationLayer::UnaryOperationLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 

@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class ScaledDotProductAttentionLayer : public Synet::Layer<float>
+    class ScaledDotProductAttentionLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         ScaledDotProductAttentionLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

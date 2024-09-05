@@ -27,7 +27,7 @@
 namespace Synet
 {
     CtcGreedyDecoderLayer::CtcGreedyDecoderLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 

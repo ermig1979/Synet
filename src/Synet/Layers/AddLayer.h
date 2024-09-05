@@ -30,12 +30,9 @@
 
 namespace Synet
 {
-    class AddLayer : public Synet::Layer<float>
+    class AddLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         AddLayer(const LayerParam& param, Context* context, QuantizationMethod method);
 
         virtual bool Can8i() const;

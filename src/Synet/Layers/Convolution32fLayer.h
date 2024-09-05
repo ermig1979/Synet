@@ -32,11 +32,6 @@ namespace Synet
     class Convolution32fLayer : public Synet::ConvolutionLayer
     {
     public:
-        typedef typename Base::Tensor Tensor;
-        typedef std::vector<Tensor> Tensors;
-        typedef typename Base::TensorPtr TensorPtr;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         Convolution32fLayer(const LayerParam& param, Context* context);
 
         virtual size_t MemoryUsage() const;

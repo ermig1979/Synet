@@ -47,7 +47,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     PadLayer::PadLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 

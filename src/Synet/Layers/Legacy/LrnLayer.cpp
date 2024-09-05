@@ -87,7 +87,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     LrnLayer::LrnLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 
@@ -139,7 +139,7 @@ namespace Synet
 
     size_t LrnLayer::MemoryUsage() const
     {
-        return Base::MemoryUsage() + _buffer.RawSize();
+        return Layer::MemoryUsage() + _buffer.RawSize();
     }
 
     void LrnLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)

@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class RegionLayer : public Synet::Layer<float>
+    class RegionLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::TensorPtrs TensorPtrs;
         typedef Synet::Region<float> Region;
         typedef std::vector<Region> Regions;
 

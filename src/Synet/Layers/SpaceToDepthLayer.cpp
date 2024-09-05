@@ -97,7 +97,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     SpaceToDepthLayer::SpaceToDepthLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
         _spaceToDepth = NULL;
     }

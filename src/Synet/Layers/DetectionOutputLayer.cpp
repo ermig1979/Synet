@@ -27,7 +27,7 @@
 namespace Synet
 {
     DetectionOutputLayer::DetectionOutputLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 
@@ -78,7 +78,7 @@ namespace Synet
 
     size_t DetectionOutputLayer::MemoryUsage() const
     {
-        return Base::MemoryUsage() +
+        return Layer::MemoryUsage() +
             _priorBboxes.size() * sizeof(NormalizedBBox) +
             _priorVariances.size() * sizeof(float*);
     }

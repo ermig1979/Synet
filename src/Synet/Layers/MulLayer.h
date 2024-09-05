@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class MulLayer : public Synet::Layer<float>
+    class MulLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         MulLayer(const LayerParam& param, Context* context);
 
         virtual int64_t Flop() const;

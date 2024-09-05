@@ -32,11 +32,6 @@ namespace Synet
     class Convolution16bLayer : public Synet::ConvolutionLayer
     {
     public:
-        typedef typename Base::Tensor Tensor;
-        typedef std::vector<Tensor> Tensors;
-        typedef typename Base::TensorPtr TensorPtr;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         Convolution16bLayer(const LayerParam& param, Context* context);
 
         virtual bool Can16b() const;

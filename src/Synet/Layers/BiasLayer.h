@@ -32,13 +32,9 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    class BiasLayer : public Synet::Layer<float>
+    class BiasLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         BiasLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class NonZeroLayer : public Synet::Layer<float>
+    class NonZeroLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         NonZeroLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

@@ -58,10 +58,6 @@ namespace Synet
     class InnerProduct32fLayer : public Synet::InnerProductLayer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         InnerProduct32fLayer(const LayerParam& param, Context* context);
 
         virtual size_t MemoryUsage() const;

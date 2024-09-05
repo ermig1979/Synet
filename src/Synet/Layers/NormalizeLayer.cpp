@@ -423,7 +423,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     NormalizeLayer::NormalizeLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 
@@ -440,7 +440,7 @@ namespace Synet
             SYNET_ERROR("NormalizeLayer has unsupported input types!");
 
         const NormalizeParam& param = this->Param().normalize();
-        const Base::Tensors& weight = this->Weight();
+        const Tensors& weight = this->Weight();
         _version = param.version();
         _eps = param.eps();
         if (_version == 1)

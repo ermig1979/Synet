@@ -235,7 +235,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     GridSampleLayer::GridSampleLayer(const LayerParam& param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         _context = NULL;
@@ -295,7 +295,7 @@ namespace Synet
 
     size_t GridSampleLayer::MemoryUsage() const
     {
-        size_t size = Base::MemoryUsage();
+        size_t size = Layer::MemoryUsage();
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         if (_context)
             size += SimdSynetGridSample2dInternalBufferSize(_context);

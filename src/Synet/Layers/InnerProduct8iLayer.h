@@ -32,10 +32,6 @@ namespace Synet
     class InnerProduct8iLayer : public Synet::InnerProductLayer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         InnerProduct8iLayer(const LayerParam& param, Context* context, QuantizationMethod method);
 
         virtual bool Is8i() const;

@@ -167,15 +167,9 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    class MergedConvolutionLayer : public Synet::Layer<float>
+    class MergedConvolutionLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtr TensorPtr;
-        typedef typename Base::TensorPtrs TensorPtrs;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::Tensors Tensors;
-
         MergedConvolutionLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

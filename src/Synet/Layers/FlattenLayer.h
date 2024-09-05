@@ -24,17 +24,13 @@
 
 #pragma once
 
-#include "Synet/Common.h"
 #include "Synet/Layer.h"
 
 namespace Synet
 {
-    class FlattenLayer : public Synet::Layer<float>
+    class FlattenLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         FlattenLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

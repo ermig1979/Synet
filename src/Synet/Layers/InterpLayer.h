@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class InterpLayer : public Synet::Layer<float>
+    class InterpLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         InterpLayer(const LayerParam& param, Context* context);
 
         virtual bool Resizable() const;

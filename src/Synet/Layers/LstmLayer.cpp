@@ -30,7 +30,7 @@
 namespace Synet
 {
     LstmLayer::LstmLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
         for(int i = 0; i < IPS; ++i)
             _internal[i] = 0;
@@ -101,7 +101,7 @@ namespace Synet
         size_t size = 0;
         for (int i = 0; i < IPS; ++i)
             size += _innerProduct32f[i].InternalBufferSize();
-        return Base::MemoryUsage() + size * sizeof(float);
+        return Layer::MemoryUsage() + size * sizeof(float);
     }
 
     void LstmLayer::CompactWeight()

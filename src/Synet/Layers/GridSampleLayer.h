@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class GridSampleLayer : public Synet::Layer<float>
+    class GridSampleLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         GridSampleLayer(const LayerParam& param, Context* context);
 
         virtual ~GridSampleLayer();

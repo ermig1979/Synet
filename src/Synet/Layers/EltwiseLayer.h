@@ -29,12 +29,9 @@
 
 namespace Synet
 {
-    class EltwiseLayer : public Synet::Layer<float>
+    class EltwiseLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         EltwiseLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

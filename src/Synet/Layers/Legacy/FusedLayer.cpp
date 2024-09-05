@@ -296,7 +296,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     FusedLayer::FusedLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 

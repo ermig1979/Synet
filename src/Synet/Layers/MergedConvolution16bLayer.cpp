@@ -33,7 +33,7 @@ namespace Synet
 
     size_t MergedConvolution16bLayer::MemoryUsage() const
     {
-        return Base::MemoryUsage() + _mergedConvolution16b.InternalBufferSize();
+        return Layer::MemoryUsage() + _mergedConvolution16b.InternalBufferSize();
     }
 
     bool MergedConvolution16bLayer::Can16b() const
@@ -78,7 +78,7 @@ namespace Synet
         _mergedConvolution16b.Init(a.batch, a.conv, a.count);
         if (_mergedConvolution16b.Enable())
         {
-            Base::Extend8u(buf, 0, Shp(_mergedConvolution16b.ExternalBufferSize()));
+            Layer::Extend8u(buf, 0, Shp(_mergedConvolution16b.ExternalBufferSize()));
             _mergedConvolution16b.SetParams(a.weight, a.internal, a.bias, a.params);
         }
         else
@@ -90,6 +90,6 @@ namespace Synet
     void MergedConvolution16bLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
         if(_mergedConvolution16b.Enable())
-            _mergedConvolution16b.Forward(src[0]->RawData(), Base::Buf8u(buf, 0), dst[0]->RawData());
+            _mergedConvolution16b.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());
     }
 }

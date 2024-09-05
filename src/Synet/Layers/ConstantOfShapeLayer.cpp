@@ -27,7 +27,7 @@
 namespace Synet
 {
     ConstantOfShapeLayer::ConstantOfShapeLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 

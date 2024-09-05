@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class PoolingLayer : public Synet::Layer<float>
+    class PoolingLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         PoolingLayer(const LayerParam& param, Context* context);
 
         virtual int64_t Flop() const;

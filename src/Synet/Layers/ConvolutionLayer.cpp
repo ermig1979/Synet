@@ -27,7 +27,7 @@
 namespace Synet
 {
     ConvolutionLayer::ConvolutionLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
         _alg.internal = 0;
     }

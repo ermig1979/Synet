@@ -71,7 +71,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     EltwiseLayer::EltwiseLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 

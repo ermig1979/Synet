@@ -28,11 +28,9 @@
 
 namespace Synet
 {
-    class DetectionOutputLayer : public Synet::Layer<float>
+    class DetectionOutputLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
         typedef Synet::Region<float> Region;
         typedef std::vector<Region> Regions;
 
@@ -66,7 +64,6 @@ namespace Synet
             }
         };
 
-        typedef typename Base::Tensor Tensor;
         typedef std::map<int, std::vector<NormalizedBBox>> LabelBBox;
         typedef std::vector<LabelBBox> LabelBBoxes;
         typedef std::map<int, Floats> LabelPred;

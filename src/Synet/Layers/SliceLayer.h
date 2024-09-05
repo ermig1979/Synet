@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class SliceLayer : public Synet::Layer<float>
+    class SliceLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         SliceLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

@@ -29,14 +29,9 @@
 
 namespace Synet
 {
-    class DeconvolutionLayer : public Synet::Layer<float>
+    class DeconvolutionLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef std::vector<Tensor> Tensors;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         DeconvolutionLayer(const LayerParam& param, Context* context);
 
         virtual size_t MemoryUsage() const;

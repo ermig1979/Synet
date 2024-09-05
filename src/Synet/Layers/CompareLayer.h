@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class CompareLayer : public Synet::Layer<float>
+    class CompareLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         CompareLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

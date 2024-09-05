@@ -30,7 +30,7 @@
 namespace Synet
 {
     RnnGruBdLayer::RnnGruBdLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
         _internal[0] = 0;
         _internal[1] = 0;
@@ -91,7 +91,7 @@ namespace Synet
 
     size_t RnnGruBdLayer::MemoryUsage() const
     {
-        return Base::MemoryUsage() + (_buffer[0].Size() + _buffer[1].Size() + _buffer[2].Size() + 
+        return Layer::MemoryUsage() + (_buffer[0].Size() + _buffer[1].Size() + _buffer[2].Size() + 
             _innerProduct32f[0].InternalBufferSize() + _innerProduct32f[1].InternalBufferSize()) * sizeof(float);
     }
 

@@ -33,12 +33,6 @@ namespace Synet
     class MergedConvolution8iLayer : public MergedConvolutionLayer
     {
     public:
-        typedef Layer<float> Base;       
-        typedef typename Base::TensorPtr TensorPtr;
-        typedef typename Base::TensorPtrs TensorPtrs;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::Tensors Tensors;
-
         MergedConvolution8iLayer(const LayerParam& param, Context* context, QuantizationMethod method);
 
         virtual bool Can8i() const;

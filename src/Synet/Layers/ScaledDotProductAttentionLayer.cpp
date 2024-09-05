@@ -31,7 +31,7 @@
 namespace Synet
 {
     ScaledDotProductAttentionLayer::ScaledDotProductAttentionLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
         _simdPermute = std::make_shared<SimdPermute>();
     }
@@ -56,7 +56,7 @@ namespace Synet
         dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), dst[0]->Format());
 
         size_t size = _prev * _last * 2 + _prev * _prev;
-        Base::Extend32f(buf, 0, Shp(size), src[0]->Format());
+        Layer::Extend32f(buf, 0, Shp(size), src[0]->Format());
 
         _simdPermute->Init(Shp(_prev, _last), Shp(1, 0), TensorType32f);
 
@@ -77,7 +77,7 @@ namespace Synet
         const float* query = src[0]->Data<float>();
         const float* key = src[1]->Data<float>();
         const float* value = src[2]->Data<float>();
-        float *buf0 = Base::Buf32f(buf, 0);
+        float *buf0 = Layer::Buf32f(buf, 0);
         float *dst0 = dst[0]->Data<float>();
         for (size_t b = 0, o = 0; b < _batch; ++b, o += _prev * _last)
             Attention(query + o, key + o, value + o, buf0, dst0 + o);

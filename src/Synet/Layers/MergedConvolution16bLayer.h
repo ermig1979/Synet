@@ -32,12 +32,6 @@ namespace Synet
     class MergedConvolution16bLayer : public MergedConvolutionLayer
     {
     public:
-        typedef Layer<float> Base;       
-        typedef typename Base::TensorPtr TensorPtr;
-        typedef typename Base::TensorPtrs TensorPtrs;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::Tensors Tensors;
-
         MergedConvolution16bLayer(const LayerParam& param, Context* context);
 
         virtual bool Can16b() const;

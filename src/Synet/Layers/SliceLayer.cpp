@@ -28,7 +28,7 @@
 namespace Synet
 {
     SliceLayer::SliceLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 

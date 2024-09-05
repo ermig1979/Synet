@@ -44,7 +44,7 @@ namespace Synet
 
     size_t Convolution8iLayer::MemoryUsage() const
     {
-        return Base::MemoryUsage() + _convolution8i.InternalBufferSize()
+        return Layer::MemoryUsage() + _convolution8i.InternalBufferSize()
             + _weight8i.MemoryUsage() + _norm32f.MemoryUsage() + _bias32f.MemoryUsage();
     }
 
@@ -98,7 +98,7 @@ namespace Synet
         _convolution8i.Init(alg.batch, &conv, _method);
         if (_convolution8i.Enable())
         {
-            Base::Extend8u(buf, 0, Shp(_convolution8i.ExternalBufferSize()));
+            Layer::Extend8u(buf, 0, Shp(_convolution8i.ExternalBufferSize()));
             const float* bias = alg.bias ? weight[1].Data<float>() : NULL;
             const float* params = conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : alg.params;
             const float* stats[4] = {
@@ -111,12 +111,12 @@ namespace Synet
         else
         {
             if (!_src8u)
-                Base::Extend8u(buf, 0, conv.SrcShape(1));
+                Layer::Extend8u(buf, 0, conv.SrcShape(1));
             if(!conv.Is1x1())
-                Base::Extend8u(buf, 1, Shp(conv.ImgSize()));
-            Base::Extend32i(buf, 0, conv.DstShape(1));
+                Layer::Extend8u(buf, 1, Shp(conv.ImgSize()));
+            Layer::Extend32i(buf, 0, conv.DstShape(1));
             if(_dst8u)
-                Base::Extend32f(buf, 0, conv.DstShape(1));
+                Layer::Extend32f(buf, 0, conv.DstShape(1));
             Quantize();
         }
         alg.internal = 1;
@@ -126,15 +126,15 @@ namespace Synet
     void Convolution8iLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (_convolution8i.Enable())
-            _convolution8i.Forward(src[0]->RawData(), Base::Buf8u(buf, 0), dst[0]->RawData());
+            _convolution8i.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());
         else
         {
             const AlgParam& alg = this->_alg;
             const float* src32f = _src8u ? NULL : src[0]->Data<float>();
-            uint8_t* src8u = _src8u ? src[0]->Data<uint8_t>() : Base::Buf8u(buf, 0);
-            uint8_t* buf8u = Base::Buf8u(buf, 1);
-            int32_t* sum32i = Base::Buf32i(buf, 0);
-            float* dst32f = _dst8u ? Base::Buf32f(buf, 0) : dst[0]->Data<float>();
+            uint8_t* src8u = _src8u ? src[0]->Data<uint8_t>() : Layer::Buf8u(buf, 0);
+            uint8_t* buf8u = Layer::Buf8u(buf, 1);
+            int32_t* sum32i = Layer::Buf32i(buf, 0);
+            float* dst32f = _dst8u ? Layer::Buf32f(buf, 0) : dst[0]->Data<float>();
             uint8_t* dst8u = _dst8u ? dst[0]->Data<uint8_t>() : NULL;
             for (size_t b = 0; b < alg.batch; ++b)
             {

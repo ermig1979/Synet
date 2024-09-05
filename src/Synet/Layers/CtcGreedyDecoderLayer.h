@@ -28,13 +28,9 @@
 
 namespace Synet
 {
-    class CtcGreedyDecoderLayer : public Synet::Layer<float>
+    class CtcGreedyDecoderLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         CtcGreedyDecoderLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

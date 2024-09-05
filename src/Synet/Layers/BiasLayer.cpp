@@ -54,7 +54,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     BiasLayer::BiasLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 

@@ -28,11 +28,9 @@
 
 namespace Synet
 {
-    class PermuteLayer : public Synet::Layer<float>
+    class PermuteLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
         typedef void (*PermutePtr)(const uint8_t* src8, const Shape& shape, const Shape& stride, uint8_t* dst8);    
 
         PermuteLayer(const LayerParam& param, Context* context);

@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class PriorBoxLayer : public Synet::Layer<float>
+    class PriorBoxLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         PriorBoxLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -42,8 +39,6 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        typedef typename Base::TensorPtr TensorPtr;
-
         void GetSize(const TensorPtr& src, size_t& h, size_t& w);
 
         void CalculatePriorBoxV0(const TensorPtrs& src, const TensorPtrs& dst);

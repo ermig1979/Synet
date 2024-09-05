@@ -27,7 +27,7 @@
 namespace Synet
 {
     InnerProductLayer::InnerProductLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 
@@ -64,7 +64,7 @@ namespace Synet
         else
         {
             _N = this->Param().innerProduct().outputNum();
-            const typename Base::Tensors & weight = this->Weight();
+            const Tensors & weight = this->Weight();
             if (weight.size() != (_biasTerm ? 2 : 1))
                 SYNET_ERROR("InnerProductLayer has wrong weight number!");
             if (_transB && weight[0].Shape() != Shp(_K, _N))

@@ -27,7 +27,7 @@
 namespace Synet
 {
     ConstLayer::ConstLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 

@@ -28,11 +28,9 @@
 
 namespace Synet
 {
-    class YoloV7Layer : public Synet::Layer<float>
+    class YoloV7Layer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
         typedef Synet::Region<float> Region;
         typedef std::vector<Region> Regions;
 

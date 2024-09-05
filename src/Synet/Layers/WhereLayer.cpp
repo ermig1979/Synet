@@ -177,7 +177,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     WhereLayer::WhereLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
         , _where1(NULL)
         , _whereN(NULL)
     {

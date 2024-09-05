@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class NormalizeLayer : public Synet::Layer<float>
+    class NormalizeLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         NormalizeLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -44,8 +41,6 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        typedef typename Base::Tensor Tensor;
-
         size_t _batch, _channels, _spatial, _group;
         Tensor _scale, _shift;
         int _trans, _acrossSpatial, _channelShared, _version;

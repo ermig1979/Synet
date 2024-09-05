@@ -32,13 +32,9 @@
 
 namespace Synet
 {
-    class InnerProductLayer : public Synet::Layer<float>
+    class InnerProductLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         InnerProductLayer(const LayerParam& param, Context* context);
 
         virtual bool Resizable() const;

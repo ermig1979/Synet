@@ -43,7 +43,7 @@ namespace Synet
 
     size_t InnerProduct16bLayer::MemoryUsage() const
     {
-        return Base::MemoryUsage() + _innerProduct16b.InternalBufferSize();
+        return Layer::MemoryUsage() + _innerProduct16b.InternalBufferSize();
     }
 
     void InnerProduct16bLayer::CompactWeight()
@@ -79,7 +79,7 @@ namespace Synet
             const float* bias = _biasTerm ? this->Weight()[1].Data<float>() : NULL;
             _innerProduct16b.SetParams(weight, bias);
         }
-        Base::Extend8u(buf, 0, Shp(_innerProduct16b.ExternalBufferSize()), src[0]->Format());
+        Layer::Extend8u(buf, 0, Shp(_innerProduct16b.ExternalBufferSize()), src[0]->Format());
         this->UsePerfStat(_desc + " " + _innerProduct16b.Info(), Flop());
         return true;
     }
@@ -93,7 +93,7 @@ namespace Synet
             uint8_t* C = dst[0]->RawData();
             for (size_t b = 0; b < _batch; ++b)
             {
-                _innerProduct16b.Forward(A, B, Base::Buf8u(buf, 0), C);
+                _innerProduct16b.Forward(A, B, Layer::Buf8u(buf, 0), C);
                 A += _sizeA;
                 B += _sizeB;
                 C += _sizeC;

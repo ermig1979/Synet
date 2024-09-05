@@ -33,14 +33,9 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    class ScaleLayer : public Synet::Layer<float>
+    class ScaleLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::Tensors Tensors;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         ScaleLayer(const LayerParam& param, Context* context, QuantizationMethod method);
 
         bool Is8i() const;

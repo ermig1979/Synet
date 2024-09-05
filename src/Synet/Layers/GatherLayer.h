@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class GatherLayer : public Synet::Layer<float>
+    class GatherLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         GatherLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

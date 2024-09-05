@@ -33,10 +33,10 @@
 
 namespace Synet
 {
-    template <class T> class Layer
+    class Layer
     {
     public:
-        typedef T Type;
+        typedef float Type;
         typedef Synet::Tensor<Type> Tensor;
         typedef std::vector<Tensor> Tensors;
         typedef Tensor* TensorPtr;

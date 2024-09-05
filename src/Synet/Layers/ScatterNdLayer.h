@@ -28,13 +28,9 @@
 
 namespace Synet
 {
-    class ScatterNdLayer : public Synet::Layer<float>
+    class ScatterNdLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         ScatterNdLayer(const LayerParam& param, Context* context);
 
         virtual size_t MemoryUsage() const;

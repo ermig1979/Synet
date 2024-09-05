@@ -36,7 +36,7 @@ namespace Synet
 
     size_t InnerProduct32fLayer::MemoryUsage() const
     {
-        return Base::MemoryUsage() + _innerProduct32f.InternalBufferSize() * sizeof(float);
+        return Layer::MemoryUsage() + _innerProduct32f.InternalBufferSize() * sizeof(float);
     }
 
     void InnerProduct32fLayer::CompactWeight()

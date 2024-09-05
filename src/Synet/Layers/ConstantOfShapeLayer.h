@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class ConstantOfShapeLayer : public Synet::Layer<float>
+    class ConstantOfShapeLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         ConstantOfShapeLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

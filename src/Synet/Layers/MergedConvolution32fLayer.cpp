@@ -101,7 +101,7 @@ namespace Synet
 
     size_t MergedConvolution32fLayer::MemoryUsage() const
     {
-        return Base::MemoryUsage() + _mergedConvolution32f.InternalBufferSize() * sizeof(float);
+        return Layer::MemoryUsage() + _mergedConvolution32f.InternalBufferSize() * sizeof(float);
     }
 
     String MergedConvolution32fLayer::InternalInfo() const
@@ -201,14 +201,14 @@ namespace Synet
         _mergedConvolution32f.Init(a.batch, a.conv, a.count, a.add, Bf16(), this->Options().bf16RoundTest);
         if (_mergedConvolution32f.Enable())
         {
-            Base::Extend32f(buf, 0, Shp(_mergedConvolution32f.ExternalBufferSize()));
+            Layer::Extend32f(buf, 0, Shp(_mergedConvolution32f.ExternalBufferSize()));
             _mergedConvolution32f.SetParams(a.weight, a.internal, a.bias, a.params);
         }
         else
         {
-            Base::Extend32f(buf, 0, a.conv[0].DstShape(1));
+            Layer::Extend32f(buf, 0, a.conv[0].DstShape(1));
             if (a.count > 2)
-                Base::Extend32f(buf, 1, a.conv[1].DstShape(1));
+                Layer::Extend32f(buf, 1, a.conv[1].DstShape(1));
         }
 
         return true;
@@ -216,7 +216,7 @@ namespace Synet
 
     void MergedConvolution32fLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
-        ForwardCpu(src[0]->Data<float>(), Base::Buf32f(buf, 0), Base::Buf32f(buf, 1), dst[0]->Data<float>());
+        ForwardCpu(src[0]->Data<float>(), Layer::Buf32f(buf, 0), Layer::Buf32f(buf, 1), dst[0]->Data<float>());
     }
 
     void MergedConvolution32fLayer::ForwardCpu(const float * src, float* buf0, float* buf1, float* dst)

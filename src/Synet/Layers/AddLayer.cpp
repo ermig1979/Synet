@@ -334,7 +334,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     AddLayer::AddLayer(const LayerParam & param, Context* context, QuantizationMethod method)
-        : Base(param, context)
+        : Layer(param, context)
         , _method(method)
         , _quant(false)
     {

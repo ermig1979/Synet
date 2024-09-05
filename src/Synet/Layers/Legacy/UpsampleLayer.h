@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class UpsampleLayer : public Synet::Layer<float>
+    class UpsampleLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         UpsampleLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class TiledScale2DLayer : public Synet::Layer<float>
+    class TiledScale2DLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         TiledScale2DLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

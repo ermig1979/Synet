@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class ReverseSequenceLayer : public Synet::Layer<float>
+    class ReverseSequenceLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         ReverseSequenceLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

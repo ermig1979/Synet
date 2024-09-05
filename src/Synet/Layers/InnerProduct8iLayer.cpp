@@ -55,7 +55,7 @@ namespace Synet
 
     size_t InnerProduct8iLayer::MemoryUsage() const
     {
-        return Base::MemoryUsage() + _weight8i.MemoryUsage() + _norm32i.MemoryUsage() + _norm32f.MemoryUsage();
+        return Layer::MemoryUsage() + _weight8i.MemoryUsage() + _norm32i.MemoryUsage() + _norm32f.MemoryUsage();
     }
 
     void InnerProduct8iLayer::CompactWeight()
@@ -77,16 +77,16 @@ namespace Synet
         dstShape[_axis] = _N;
         dst[0]->Reshape(_dst8u ? TensorType8u : TensorType32f, dstShape, TensorFormatNchw);
         if (!_src8u)
-            Base::Extend8u(buf, 0, src[0]->Shape(), src[0]->Format());
-        Base::Extend32i(buf, 0, dstShape, TensorFormatNchw);
+            Layer::Extend8u(buf, 0, src[0]->Shape(), src[0]->Format());
+        Layer::Extend32i(buf, 0, dstShape, TensorFormatNchw);
         Quantize();
         return true;
     }
 
     void InnerProduct8iLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
-        uint8_t* tmp = _src8u ? src[0]->Data<uint8_t>() : Base::Buf8u(buf, 0);
-        int32_t* sum = Base::Buf32i(buf, 0);
+        uint8_t* tmp = _src8u ? src[0]->Data<uint8_t>() : Layer::Buf8u(buf, 0);
+        int32_t* sum = Layer::Buf32i(buf, 0);
         if (!_src8u)
             _srcCvt.Convert(src[0]->Data<float>(), tmp);
         ForwardCpu(tmp, sum);

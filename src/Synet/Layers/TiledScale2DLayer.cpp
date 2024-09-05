@@ -64,7 +64,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     TiledScale2DLayer::TiledScale2DLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 

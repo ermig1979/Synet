@@ -33,11 +33,6 @@ namespace Synet
     class Convolution8iLayer : public Synet::ConvolutionLayer
     {
     public:
-        typedef typename Base::Tensor Tensor;
-        typedef std::vector<Tensor> Tensors;
-        typedef typename Base::TensorPtr TensorPtr;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         Convolution8iLayer(const LayerParam& param, Context* context, QuantizationMethod method);
 
         virtual size_t MemoryUsage() const;

@@ -35,7 +35,7 @@ namespace Synet
         typedef float Type;
         typedef Synet::Tensor<Type> Tensor;
         typedef std::vector<Tensor*> TensorPtrs;
-        typedef Synet::Layer<Type> Layer;
+        typedef Synet::Layer Layer;
         typedef Layer * LayerPtr;
         typedef std::vector<LayerPtr> LayerPtrs;
         typedef Synet::Region<Type> Region;

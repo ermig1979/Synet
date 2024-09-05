@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class SwitchLayer : public Synet::Layer<float>
+    class SwitchLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         SwitchLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

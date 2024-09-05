@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class BroadcastLayer : public Synet::Layer<float>
+    class BroadcastLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         BroadcastLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

@@ -30,12 +30,9 @@
 
 namespace Synet
 {
-    class EluLayer : public Synet::Layer<float>
+    class EluLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         EluLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -50,12 +47,9 @@ namespace Synet
 
     //---------------------------------------------------------------------------------------------
 
-    class GeluLayer : public Synet::Layer<float>
+    class GeluLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         GeluLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -69,12 +63,9 @@ namespace Synet
 
     //---------------------------------------------------------------------------------------------
 
-    class HardSigmoidLayer : public Synet::Layer<float>
+    class HardSigmoidLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         HardSigmoidLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -89,12 +80,9 @@ namespace Synet
 
     //---------------------------------------------------------------------------------------------
 
-    class HswishLayer : public Synet::Layer<float>
+    class HswishLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         HswishLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -109,13 +97,9 @@ namespace Synet
 
     //---------------------------------------------------------------------------------------------
 
-    class MishLayer : public Synet::Layer<float>
+    class MishLayer : public Layer
     {
     public:
-
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         MishLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -130,12 +114,9 @@ namespace Synet
 
     //---------------------------------------------------------------------------------------------
 
-    class ReluLayer : public Synet::Layer<float>
+    class ReluLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         ReluLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -153,12 +134,9 @@ namespace Synet
 
     //---------------------------------------------------------------------------------------------
 
-    class RestrictRangeLayer : public Synet::Layer<float>
+    class RestrictRangeLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         RestrictRangeLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -173,12 +151,9 @@ namespace Synet
 
     //---------------------------------------------------------------------------------------------
 
-    class SigmoidLayer : public Synet::Layer<float>
+    class SigmoidLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         SigmoidLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -192,12 +167,9 @@ namespace Synet
 
     //---------------------------------------------------------------------------------------------
 
-    class SoftplusLayer : public Synet::Layer<float>
+    class SoftplusLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         SoftplusLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -212,12 +184,9 @@ namespace Synet
 
     //---------------------------------------------------------------------------------------------
 
-    class SwishLayer : public Synet::Layer<float>
+    class SwishLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         SwishLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

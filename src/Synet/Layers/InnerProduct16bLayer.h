@@ -32,10 +32,6 @@ namespace Synet
     class InnerProduct16bLayer : public Synet::InnerProductLayer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         InnerProduct16bLayer(const LayerParam& param, Context* context);
 
         virtual bool Is16b() const;

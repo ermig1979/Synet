@@ -29,15 +29,9 @@
 
 namespace Synet
 {
-    class ConvolutionLayer : public Synet::Layer<float>
+    class ConvolutionLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef std::vector<Tensor> Tensors;
-        typedef typename Base::TensorPtr TensorPtr;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         ConvolutionLayer(const LayerParam& param, Context* context);
 
         virtual int64_t Flop() const;

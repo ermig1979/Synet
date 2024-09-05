@@ -258,7 +258,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     PoolingLayer::PoolingLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
         _method = this->Param().pooling().method();
     }

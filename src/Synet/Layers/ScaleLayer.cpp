@@ -185,7 +185,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     ScaleLayer::ScaleLayer(const LayerParam & param, Context* context, QuantizationMethod method)
-        : Base(param, context)
+        : Layer(param, context)
         , _method(method)
     {
         _is8i = (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed) &&
@@ -311,7 +311,7 @@ namespace Synet
 
     size_t ScaleLayer::MemoryUsage() const
     { 
-        return Base::MemoryUsage() + _scale.MemoryUsage() + _shift.MemoryUsage() + _scale8i.InternalBufferSize();
+        return Layer::MemoryUsage() + _scale.MemoryUsage() + _shift.MemoryUsage() + _scale8i.InternalBufferSize();
     }
 
     void ScaleLayer::CompactWeight()

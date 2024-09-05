@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class ExpandDimsLayer : public Synet::Layer<float>
+    class ExpandDimsLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         ExpandDimsLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

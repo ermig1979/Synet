@@ -31,7 +31,7 @@
 namespace Synet
 {
     DeconvolutionLayer::DeconvolutionLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
         _transW = false;
         _internal = 0;
@@ -39,7 +39,7 @@ namespace Synet
 
     size_t DeconvolutionLayer::MemoryUsage() const
     {
-        return Base::MemoryUsage() + (_deconvolution32f.InternalBufferSize() + _weightT.Size())*sizeof(Type);
+        return Layer::MemoryUsage() + (_deconvolution32f.InternalBufferSize() + _weightT.Size())*sizeof(Type);
     }
 
     int64_t DeconvolutionLayer::Flop() const

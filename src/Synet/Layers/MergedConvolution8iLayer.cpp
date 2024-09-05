@@ -46,7 +46,7 @@ namespace Synet
 
     size_t MergedConvolution8iLayer::MemoryUsage() const
     {
-        return Base::MemoryUsage() + _mergedConvolution8i.InternalBufferSize() +
+        return Layer::MemoryUsage() + _mergedConvolution8i.InternalBufferSize() +
             + _weight8i[0].MemoryUsage() + _norm32f[0].MemoryUsage() + _bias32f[0].MemoryUsage()
             + _weight8i[1].MemoryUsage() + _norm32f[1].MemoryUsage() + _bias32f[1].MemoryUsage();
     }
@@ -94,7 +94,7 @@ namespace Synet
         _mergedConvolution8i.Init(a.batch, a.conv, a.count, _method);
         if (_mergedConvolution8i.Enable())
         {
-            Base::Extend8u(buf, 0, Shp(_mergedConvolution8i.ExternalBufferSize()));
+            Layer::Extend8u(buf, 0, Shp(_mergedConvolution8i.ExternalBufferSize()));
             if (!this->Stats(1).empty() && (_method == QuantizationMethodIECompatible || 
                 _method == QuantizationMethodUnifiedNarrowed))
                 this->Stats(1).back()->Unify();
@@ -112,31 +112,31 @@ namespace Synet
             if (_dw0)
             {
                 if (_src8u)
-                    Base::Extend32f(buf, 0, a.conv[0].SrcShape(1));
-                Base::Extend32f(buf, 1, a.conv[0].DstShape(1));
-                Base::Extend8u(buf, 0, a.conv[1].SrcShape(1));
-                Base::Extend32i(buf, 0, a.conv[1].DstShape(1));
+                    Layer::Extend32f(buf, 0, a.conv[0].SrcShape(1));
+                Layer::Extend32f(buf, 1, a.conv[0].DstShape(1));
+                Layer::Extend8u(buf, 0, a.conv[1].SrcShape(1));
+                Layer::Extend32i(buf, 0, a.conv[1].DstShape(1));
                 a.internal[1] = 1;
             }
             else
             {
                 if (!_src8u)
-                    Base::Extend8u(buf, 0, a.conv[0].SrcShape(1));
+                    Layer::Extend8u(buf, 0, a.conv[0].SrcShape(1));
                 if(!a.conv[0].Is1x1())
-                    Base::Extend8u(buf, 1, Shp(a.conv[0].ImgSize()));
-                Base::Extend32i(buf, 0, a.conv[0].DstShape(1));
-                Base::Extend32f(buf, 0, a.conv[0].DstShape(1));
+                    Layer::Extend8u(buf, 1, Shp(a.conv[0].ImgSize()));
+                Layer::Extend32i(buf, 0, a.conv[0].DstShape(1));
+                Layer::Extend32f(buf, 0, a.conv[0].DstShape(1));
                 if (a.count == 3)
                 {
-                    Base::Extend32f(buf, 1, a.conv[1].DstShape(1));
-                    Base::Extend8u(buf, 1, a.conv[1].DstShape(1));
-                    Base::Extend32i(buf, 0, a.conv[2].DstShape(1));
+                    Layer::Extend32f(buf, 1, a.conv[1].DstShape(1));
+                    Layer::Extend8u(buf, 1, a.conv[1].DstShape(1));
+                    Layer::Extend32i(buf, 0, a.conv[2].DstShape(1));
                     a.internal[2] = 1;
                 }
                 a.internal[0] = 1;
             }
             if(_dst8u)
-                Base::Extend32f(buf, 1, back.DstShape(1));
+                Layer::Extend32f(buf, 1, back.DstShape(1));
             Init();
         }
         return true;
@@ -145,14 +145,14 @@ namespace Synet
     void MergedConvolution8iLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
         if (_mergedConvolution8i.Enable())
-            _mergedConvolution8i.Forward(src[0]->RawData(), Base::Buf8u(buf, 0), dst[0]->RawData());
+            _mergedConvolution8i.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());
         else
         {
-            float* buf0 = Base::Buf32f(buf, 0);
-            float* buf1 = Base::Buf32f(buf, 1);
-            uint8_t* buf2 = Base::Buf8u(buf, 0);
-            uint8_t* buf3 = Base::Buf8u(buf, 1);
-            int32_t* buf4 = Base::Buf32i(buf, 0);
+            float* buf0 = Layer::Buf32f(buf, 0);
+            float* buf1 = Layer::Buf32f(buf, 1);
+            uint8_t* buf2 = Layer::Buf8u(buf, 0);
+            uint8_t* buf3 = Layer::Buf8u(buf, 1);
+            int32_t* buf4 = Layer::Buf32i(buf, 0);
 
             const AlgParam& a = this->_alg;
             float* src32f = _src8u ? (_dw0 ? buf0 : NULL) : src[0]->Data<float>();

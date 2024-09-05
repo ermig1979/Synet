@@ -32,12 +32,9 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    class PreluLayer : public Layer<float>
+    class PreluLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         PreluLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

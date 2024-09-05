@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class SpaceToDepthLayer : public Synet::Layer<float>
+    class SpaceToDepthLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         SpaceToDepthLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

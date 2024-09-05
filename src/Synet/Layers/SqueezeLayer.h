@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class SqueezeLayer : public Synet::Layer<float>
+    class SqueezeLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         SqueezeLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

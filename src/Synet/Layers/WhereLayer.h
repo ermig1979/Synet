@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class WhereLayer : public Synet::Layer<float>
+    class WhereLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         WhereLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

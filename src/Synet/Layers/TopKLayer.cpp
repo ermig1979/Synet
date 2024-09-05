@@ -144,7 +144,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     TopKLayer::TopKLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 

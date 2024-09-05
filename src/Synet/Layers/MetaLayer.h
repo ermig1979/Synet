@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class MetaLayer : public Synet::Layer<float>
+    class MetaLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         MetaLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

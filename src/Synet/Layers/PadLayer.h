@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class PadLayer : public Synet::Layer<float>
+    class PadLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         PadLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

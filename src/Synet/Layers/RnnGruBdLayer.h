@@ -29,14 +29,9 @@
 
 namespace Synet
 {
-    class RnnGruBdLayer : public Synet::Layer<float>
+    class RnnGruBdLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::Tensors Tensors;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         RnnGruBdLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

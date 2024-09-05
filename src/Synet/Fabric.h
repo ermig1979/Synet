@@ -31,9 +31,6 @@ namespace Synet
     class Fabric
     {
     public:
-        typedef Synet::Layer<float> Layer;
-        typedef Layer * LayerPtr;
-
-        static LayerPtr Create(const LayerParam& param, Context* context, QuantizationMethod method);
+        static Layer * Create(const LayerParam& param, Context* context, QuantizationMethod method);
     };
 }

@@ -117,7 +117,7 @@ namespace Synet
             return param.conv()[0].quantizationLevel() == TensorType16b || param.conv()[1].quantizationLevel() == TensorType16b;
     }
 
-    Fabric::LayerPtr Fabric::Create(const LayerParam & param, Context* context, QuantizationMethod method)
+    Layer* Fabric::Create(const LayerParam & param, Context* context, QuantizationMethod method)
     {
         switch (param.type())
         {

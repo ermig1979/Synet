@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class CastLayer : public Synet::Layer<float>
+    class CastLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         CastLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

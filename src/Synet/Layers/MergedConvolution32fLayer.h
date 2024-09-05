@@ -32,12 +32,6 @@ namespace Synet
     class MergedConvolution32fLayer : public MergedConvolutionLayer
     {
     public:
-        typedef Layer<float> Base;       
-        typedef typename Base::TensorPtr TensorPtr;
-        typedef typename Base::TensorPtrs TensorPtrs;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::Tensors Tensors;
-
         MergedConvolution32fLayer(const LayerParam& param, Context* context);
 
         virtual size_t MemoryUsage() const;

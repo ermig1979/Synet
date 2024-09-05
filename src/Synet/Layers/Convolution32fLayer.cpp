@@ -55,18 +55,18 @@ namespace Synet
         _convolution32f.Init(alg.batch, &conv, this->Param().convolution().quantizationLevel() == TensorType16b, this->Options().bf16RoundTest);
         if (_convolution32f.Enable())
         {
-            Base::Extend32f(buf, 0, Shp(_convolution32f.ExternalBufferSize()), src->Format());
+            Layer::Extend32f(buf, 0, Shp(_convolution32f.ExternalBufferSize()), src->Format());
             _convolution32f.SetParams(weight[0].Data<float>(), &alg.internal, alg.bias ? weight[1].Data<float>() : NULL,
                 conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : alg.params);
         }
         else
-            Base::Extend32f(buf, 0, Shp(conv.ImgSize()), src->Format());
+            Layer::Extend32f(buf, 0, Shp(conv.ImgSize()), src->Format());
         return true;
     }
 
     void Convolution32fLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
-        ForwardCpu(src[0]->Data<float>(), Base::Buf32f(buf, 0), dst[0]->Data<float>());
+        ForwardCpu(src[0]->Data<float>(), Layer::Buf32f(buf, 0), dst[0]->Data<float>());
     }
 
     void Convolution32fLayer::ForwardCpu(const float * src, float* buf, float* dst)

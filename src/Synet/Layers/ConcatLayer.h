@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class ConcatLayer : public Synet::Layer<float>
+    class ConcatLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         ConcatLayer(const LayerParam& param, Context* context);
 
         virtual bool Can8i() const;

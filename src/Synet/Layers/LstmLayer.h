@@ -29,15 +29,10 @@
 
 namespace Synet
 {
-    class LstmLayer : public Synet::Layer<float>
+    class LstmLayer : public Layer
     {
         static const int IPS = 4;
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::Tensors Tensors;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         LstmLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

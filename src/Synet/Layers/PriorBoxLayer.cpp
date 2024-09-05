@@ -27,7 +27,7 @@
 namespace Synet
 {
     PriorBoxLayer::PriorBoxLayer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 

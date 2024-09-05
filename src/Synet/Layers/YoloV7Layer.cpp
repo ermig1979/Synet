@@ -27,7 +27,7 @@
 namespace Synet
 {
     YoloV7Layer::YoloV7Layer(const LayerParam & param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 
@@ -50,7 +50,7 @@ namespace Synet
         _size = (int)src[0]->Axis(1);
         _num = (int)src[0]->Axis(2);
         _numClasses = _num - 5;
-        Base::Extend32f(buf, 0, Shp(src[0]->Axis(1) * 7), src[0]->Format());
+        Layer::Extend32f(buf, 0, Shp(src[0]->Axis(1) * 7), src[0]->Format());
         dst[0]->Reshape(TensorType32f, Shp(0, 7), TensorFormatUnknown);
         _const = false;
         this->UsePerfStat();
@@ -59,7 +59,7 @@ namespace Synet
 
     void YoloV7Layer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
-        Box* boxes = (Box*)Base::Buf32f(buf, 0);
+        Box* boxes = (Box*)Layer::Buf32f(buf, 0);
         size_t candidates = FindCandidates(src[0]->Data<float>(), boxes);
         size_t detections = FilterByIou(boxes, candidates);
         SortByThreshold(boxes, detections);

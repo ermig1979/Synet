@@ -28,16 +28,13 @@
 
 namespace Synet
 {
-    class TensorIteratorLayer : public Synet::Layer<float>
+    class TensorIteratorLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::TensorPtrs TensorPtrs;
         typedef std::shared_ptr<Tensor> TensorSharedPtr;
         typedef std::vector<TensorSharedPtr> TensorSharedPtrs;
-        typedef Base* LayerPtr;
-        typedef std::shared_ptr<Base> LayerSharedPtr;
+        typedef Layer* LayerPtr;
+        typedef std::shared_ptr<Layer> LayerSharedPtr;
         typedef std::vector<LayerSharedPtr> LayerSharedPtrs;
 
         TensorIteratorLayer(const LayerParam& param, Context* context);

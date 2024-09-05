@@ -32,13 +32,9 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    class SoftmaxLayer : public Synet::Layer<float>
+    class SoftmaxLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         SoftmaxLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);

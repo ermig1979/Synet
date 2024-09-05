@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class ShuffleLayer : public Synet::Layer<float>
+    class ShuffleLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         ShuffleLayer(const LayerParam& param, Context* context);
 
         virtual bool Can16b() const;

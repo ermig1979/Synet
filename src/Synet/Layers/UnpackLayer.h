@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class UnpackLayer : public Synet::Layer<float>
+    class UnpackLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         UnpackLayer(const LayerParam& param, Context* context);
 
         virtual bool Can8i() const;

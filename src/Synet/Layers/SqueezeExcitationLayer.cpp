@@ -81,7 +81,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     SqueezeExcitationLayer::SqueezeExcitationLayer(const LayerParam& param, Context* context, QuantizationMethod method)
-        : Base(param, context)
+        : Layer(param, context)
         , _method(method)
     {
     }
@@ -151,12 +151,12 @@ namespace Synet
 
         if (_src8u)
         {
-            Base::Extend32i(buf, 0, Shp(_channels));
+            Layer::Extend32i(buf, 0, Shp(_channels));
             Init8i();
         }
         else
-            Base::Extend32f(buf, 0, Shp(_channels));
-        Base::Extend32f(buf, 1, Shp(_channels + _squeeze));
+            Layer::Extend32f(buf, 0, Shp(_channels));
+        Layer::Extend32f(buf, 1, Shp(_channels + _squeeze));
 
         if (src[0] != dst[0])
         {
@@ -207,24 +207,24 @@ namespace Synet
 
     void SqueezeExcitationLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        float * norm0 = Base::Buf32f(buf, 1);
+        float * norm0 = Layer::Buf32f(buf, 1);
         float * norm1 = norm0 + _channels;
         if (_src8u)
         {
             if(_dst8u)
-                Forward8i(src[0]->Data<uint8_t>(), Base::Buf32i(buf, 0), norm0, norm1, dst[0]->Data<uint8_t>(), NULL);
+                Forward8i(src[0]->Data<uint8_t>(), Layer::Buf32i(buf, 0), norm0, norm1, dst[0]->Data<uint8_t>(), NULL);
             else
-                Forward8i(src[0]->Data<uint8_t>(), Base::Buf32i(buf, 0), norm0, norm1, NULL, dst[0]->Data<float>());
+                Forward8i(src[0]->Data<uint8_t>(), Layer::Buf32i(buf, 0), norm0, norm1, NULL, dst[0]->Data<float>());
         }
         else if (_src16b)
         {
             if (_dst16b)
-                Forward16b(src[0]->Data<uint16_t>(), Base::Buf32f(buf, 0), norm0, norm1, dst[0]->Data<uint16_t>(), NULL);
+                Forward16b(src[0]->Data<uint16_t>(), Layer::Buf32f(buf, 0), norm0, norm1, dst[0]->Data<uint16_t>(), NULL);
             else
-                Forward16b(src[0]->Data<uint16_t>(), Base::Buf32f(buf, 0), norm0, norm1, NULL, dst[0]->Data<float>());
+                Forward16b(src[0]->Data<uint16_t>(), Layer::Buf32f(buf, 0), norm0, norm1, NULL, dst[0]->Data<float>());
         }
         else
-            Forward32f(src[0]->Data<float>(), Base::Buf32f(buf, 0), norm0, norm1, dst[0]->Data<float>());
+            Forward32f(src[0]->Data<float>(), Layer::Buf32f(buf, 0), norm0, norm1, dst[0]->Data<float>());
     }
 
     void SqueezeExcitationLayer::Forward32f(const float * src, float * sum, float * norm0, float * norm1, float * dst)

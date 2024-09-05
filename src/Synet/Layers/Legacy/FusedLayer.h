@@ -28,12 +28,9 @@
 
 namespace Synet
 {
-    class FusedLayer : public Synet::Layer<float>
+    class FusedLayer : public Layer
     {
     public:
-        typedef Layer<float> Base;
-        typedef typename Base::TensorPtrs TensorPtrs;
-
         FusedLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -48,8 +45,8 @@ namespace Synet
         void ForwardCpu31(const float* src0, const float* src1, const float* src2, float* dst);
 
     private:
-        typedef typename Base::Tensor Tensor;
-        typedef typename Base::Tensors Tensors;
+        typedef Layer::Tensor Tensor;
+        typedef Layer::Tensors Tensors;
 
         TensorFormat _format;
         int _type, _trans;

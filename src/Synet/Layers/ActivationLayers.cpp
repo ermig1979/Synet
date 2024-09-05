@@ -28,7 +28,7 @@
 namespace Synet
 {
     EluLayer::EluLayer(const LayerParam& param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 
@@ -66,7 +66,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     GeluLayer::GeluLayer(const LayerParam& param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 
@@ -103,7 +103,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     HardSigmoidLayer::HardSigmoidLayer(const LayerParam& param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 
@@ -143,7 +143,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     HswishLayer::HswishLayer(const LayerParam& param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 
@@ -183,7 +183,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     MishLayer::MishLayer(const LayerParam& param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 
@@ -221,7 +221,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     ReluLayer::ReluLayer(const LayerParam& param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 
@@ -274,7 +274,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     RestrictRangeLayer::RestrictRangeLayer(const LayerParam& param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 
@@ -314,7 +314,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     SigmoidLayer::SigmoidLayer(const LayerParam& param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 
@@ -351,7 +351,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     SoftplusLayer::SoftplusLayer(const LayerParam& param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 
@@ -391,7 +391,7 @@ namespace Synet
     //-------------------------------------------------------------------------------------------------
 
     SwishLayer::SwishLayer(const LayerParam& param, Context* context)
-        : Base(param, context)
+        : Layer(param, context)
     {
     }
 
