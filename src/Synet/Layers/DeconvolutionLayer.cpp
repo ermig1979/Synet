@@ -33,13 +33,7 @@ namespace Synet
     DeconvolutionLayer::DeconvolutionLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
     {
-        _transW = false;
         _internal = 0;
-    }
-
-    size_t DeconvolutionLayer::MemoryUsage() const
-    {
-        return Layer::MemoryUsage() + (_deconvolution32f.InternalBufferSize() + _weightT.Size())*sizeof(float);
     }
 
     int64_t DeconvolutionLayer::Flop() const
@@ -49,7 +43,7 @@ namespace Synet
 
     void DeconvolutionLayer::CompactWeight()
     {
-        if (_internal || _transW)
+        if (_internal)
             ((Tensor&)this->Weight()[0]).Clear();
     }
 
@@ -104,72 +98,9 @@ namespace Synet
         if(weight[0].Shape() != _conv.WeightShape(_trans != 0, false) || weight[0].Format() != src[0]->Format())
             SYNET_ERROR("DeconvolutionLayer has invalid input weigth[0] size " << ToStr(weight[0].Shape()) << " instead of " << ToStr(_conv.WeightShape(_trans != 0, false)) << " !");
 
-        Shape dstShape(src[0]->Shape().begin(), src[0]->Shape().begin() + _axis);
-        if (_trans)
-        {
-            if(_conv.group != 1)
-                SYNET_ERROR("DeconvolutionLayer does not support group != 1 for NHWC format!");
+        if (!Reshape(src[0], buf, dst[0]))
+            return false;
 
-            dstShape.push_back(_conv.dstH);
-            dstShape.push_back(_conv.dstW);
-            dstShape.push_back(_conv.dstC);
-
-            _siW = _conv.srcC / _conv.group;
-            _ldW = _conv.kernelY * _conv.kernelX * _conv.dstC / _conv.group;
-            _grW = 0;// _conv.dstC / _conv.group;
-
-            _siS = _conv.srcH * _conv.srcW;
-            _ldS = _siW;
-            _grS = 0;//_siS * _siW;
-
-            _siD = _conv.kernelY * _conv.kernelX * _conv.dstC / _conv.group;
-            _ldD = _siD;
-            _grD = 0;//_siD;
-        }
-        else
-        {
-            dstShape.push_back(_conv.dstC);
-            dstShape.push_back(_conv.dstH);
-            dstShape.push_back(_conv.dstW);
-
-            _transW = true;
-
-            _siW = _conv.srcC / _conv.group;
-            _ldW = _transW ? _siW : _conv.dstC * _conv.kernelY * _conv.kernelX / _conv.group;
-            _grW = _siW * _conv.dstC * _conv.kernelY * _conv.kernelX / _conv.group;
-
-            _siS = _conv.srcH * _conv.srcW;
-            _ldS = _siS;
-            _grS = _siS * _siW;
-
-            _siD = _conv.dstC * _conv.kernelY * _conv.kernelX / _conv.group;
-            _ldD = _conv.srcH * _conv.srcW;
-            _grD = _siD * _siS;
-        }
-
-        _deconvolution32f.Init(_num, &_conv);
-        if (_deconvolution32f.Enable())
-        {
-            buf[TensorType32f*BUFFER_COUNT]->Extend(TensorType32f, Shp(_deconvolution32f.ExternalBufferSize()));
-            _deconvolution32f.SetParams(weight[0].Data<float>(), &_internal, _biasTerm ? weight[1].Data<float>() : NULL,
-                _conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : _params);
-        }
-        else
-        {
-            buf[TensorType32f*BUFFER_COUNT]->Extend(TensorType32f, Shp(_conv.dstC * _conv.kernelY * _conv.kernelX * _conv.srcH * _conv.srcW));
-            if (_transW)
-            {
-                const Shape & shape = weight[0].Shape();
-                _weightT.Reshape(TensorType32f, Shp(shape[1], shape[2], shape[3], shape[0]), src[0]->Format());
-                size_t m = shape[0], n = shape[1] * shape[2] * shape[3];
-                const float * s = weight[0].Data<float>();
-                float * d = _weightT.Data<float>();
-                for (size_t i = 0; i < m; ++i)
-                    for (size_t j = 0; j < n; ++j)
-                        d[j*m + i] = s[i * n + j];
-            }
-        }
-        dst[0]->Reshape(TensorType32f, dstShape, src[0]->Format());
         _srcSize = src[0]->Size(_axis);
         _dstSize = dst[0]->Size(_axis);
 
@@ -177,92 +108,8 @@ namespace Synet
         desc << _num << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW;
         desc << "-" << _conv.dstC << "x" << _conv.kernelY << "x" << _conv.kernelX;
         desc << "-" << Max(_conv.strideY, _conv.strideX) << "-" << _conv.group;
-        if (_deconvolution32f.Enable())
-            desc << " " << _deconvolution32f.Info();
+        desc << InternalInfo();
         this->UsePerfStat(desc.str(), Flop());
         return true;
-    }
-
-    void DeconvolutionLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
-    {
-        ForwardCpu(src[0]->Data<float>(), buf[TensorType32f*BUFFER_COUNT]->Data<float>(), dst[0]->Data<float>());
-    }
-
-    void DeconvolutionLayer::ForwardCpu(const float* src, float* buf, float* dst)
-    {
-        if (_deconvolution32f.Enable())
-            _deconvolution32f.Forward(src, buf, dst);
-        else
-        {
-            const float* weight = _transW ? _weightT.Data<float>() : this->Weight()[0].Data<float>();
-            for (size_t n = 0; n < _num; ++n)
-            {
-                float* tmp = _is1x1 ? dst : buf;
-                if (_trans)
-                {
-                    assert(_conv.group == 1);
-                    for (size_t g = 0; g < _conv.group; ++g)
-                        CpuGemm(CblasNoTrans, CblasNoTrans, _siS, _siD, _siW, 1.0f, src + _grS * g, _ldS, weight + _grW * g, _ldW, 0.0f, tmp + _grD * g, _ldD);
-                }
-                else
-                {
-                    for (size_t g = 0; g < _conv.group; ++g)
-                        CpuGemm(_transW ? CblasNoTrans : CblasTrans, CblasNoTrans, _siD, _siS, _siW,
-                            1.0f, weight + _grW * g, _ldW, src + _grS * g, _ldS, 0.0f, tmp + _grD * g, _ldD);
-                }
-                if (!_is1x1)
-                {
-                    if (_trans)
-                    {
-                        Synet::RowToImg(tmp, _conv.dstH, _conv.dstW, _conv.dstC, _conv.kernelY, _conv.kernelX,
-                            _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, _conv.group, (const float*)NULL, dst);
-                    }
-                    else
-                        Synet::ColToImg(tmp, _conv.dstC, _conv.dstH, _conv.dstW, _conv.kernelY, _conv.kernelX,
-                            _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, (const float*)NULL, dst);
-                }
-                if (_biasTerm)
-                    CpuAddBias(this->Weight()[1].Data<float>(), _conv.dstC, _conv.dstH * _conv.dstW, dst, _trans);
-                switch (_conv.activation)
-                {
-                case ActivationFunctionTypeIdentity:
-                    break;
-                case ActivationFunctionTypeRelu:
-                    CpuRelu(dst, _dstSize, 0.0f, dst);
-                    break;
-                case ActivationFunctionTypeLeakyRelu:
-                    CpuRelu(dst, _dstSize, _params[0], dst);
-                    break;
-                case ActivationFunctionTypeRestrictRange:
-                    CpuRestrictRange(dst, _dstSize, _params[0], _params[1], dst);
-                    break;
-                case ActivationFunctionTypePrelu:
-                    PreluLayerForward(dst, this->Weight().back().Data<float>(), _conv.dstC, _conv.dstH * _conv.dstW, dst, _trans ? TensorFormatNhwc : TensorFormatNchw);
-                    break;
-                case ActivationFunctionTypeElu:
-                    CpuElu(dst, _dstSize, _params[0], dst);
-                    break;
-                case ActivationFunctionTypeHswish:
-                    CpuHswish(dst, _dstSize, _params[0], _params[1], dst);
-                    break;
-                case ActivationFunctionTypeMish:
-                    CpuMish(dst, _dstSize, _params[0], dst);
-                    break;
-                case ActivationFunctionTypeHardSigmoid:
-                    CpuHardSigmoid(dst, _dstSize, _params[0], _params[1], dst);
-                    break;
-                case ActivationFunctionTypeSwish:
-                    CpuSwish(dst, _dstSize, dst);
-                    break;
-                case ActivationFunctionTypeGelu:
-                    CpuGelu(dst, _dstSize, dst);
-                    break;
-                default:
-                    assert(0);
-                }
-                src += _srcSize;
-                dst += _dstSize;
-            }
-        }
     }
 }

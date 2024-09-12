@@ -44,7 +44,7 @@
 #include "Synet/Layers/Convolution16bLayer.h"
 #include "Synet/Layers/Convolution8iLayer.h"
 #include "Synet/Layers/CtcGreedyDecoderLayer.h"
-#include "Synet/Layers/DeconvolutionLayer.h"
+#include "Synet/Layers/DeconvolutionLayer32f.h"
 #include "Synet/Layers/DetectionOutputLayer.h"
 #include "Synet/Layers/EltwiseLayer.h"
 #include "Synet/Layers/ExpandDimsLayer.h"
@@ -139,7 +139,11 @@ namespace Synet
             else
                 return new Convolution32fLayer(param, context);
         case LayerTypeCtcGreedyDecoder: return new CtcGreedyDecoderLayer(param, context);
-        case LayerTypeDeconvolution: return new DeconvolutionLayer(param, context);
+        case LayerTypeDeconvolution: 
+            if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
+                return NULL;// new Deconvolution16bLayer(param, context);
+            else
+                return new DeconvolutionLayer32f(param, context);
         case LayerTypeDetectionOutput: return new DetectionOutputLayer(param, context);
         case LayerTypeEltwise: 
             if(SynetUtils::IsAdd(param))

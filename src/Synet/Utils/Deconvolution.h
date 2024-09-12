@@ -58,7 +58,7 @@ namespace Synet
 #endif
         }
 
-        bool Enable()
+        bool Enable() const
         {
             return _context != NULL;
         }
@@ -108,6 +108,94 @@ namespace Synet
 
     private:
         void * _context;
+        size_t _batch, _srcH, _srcW;
+    };
+
+    //-------------------------------------------------------------------------------------------------
+
+    class Deconvolution16b
+    {
+    public:
+        Deconvolution16b()
+            : _context(NULL)
+            , _batch(0)
+            , _srcH(0)
+            , _srcW(0)
+        {
+        }
+
+        virtual ~Deconvolution16b()
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_context)
+                ::SimdRelease(_context), _context = NULL;
+#endif
+        }
+
+        SYNET_INLINE void Init(size_t batch, const ConvParam* conv)
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_batch != batch || _srcH != conv->srcH || _srcW != conv->srcW)
+            {
+                _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
+                if (_context)
+                    ::SimdRelease(_context), _context = NULL;
+                SimdSynetCompatibilityType compatibility = SimdSynetCompatibilityDefault;
+                _context = ::SimdSynetDeconvolution16bInit(batch, (const SimdConvolutionParameters*)conv, compatibility);
+            }
+#endif
+        }
+
+        SYNET_INLINE bool Enable() const
+        {
+            return _context != NULL;
+        }
+
+        SYNET_INLINE size_t ExternalBufferSize() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return _context ? ::SimdSynetDeconvolution16bExternalBufferSize(_context) : 1;
+#else
+            return 1;
+#endif
+        }
+
+        SYNET_INLINE size_t InternalBufferSize() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return _context ? ::SimdSynetDeconvolution16bInternalBufferSize(_context) : 0;
+#else
+            return 0;
+#endif
+        }
+
+        String Info() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return _context ? ::SimdSynetDeconvolution16bInfo(_context) : String();
+#else
+            return String();
+#endif
+        }
+
+        SYNET_INLINE void SetParams(const float* weight, const float* bias, const float* params)
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_context)
+                ::SimdSynetDeconvolution16bSetParams(_context, weight, bias, params);
+#endif
+        }
+
+        SYNET_INLINE void Forward(const uint8_t* src, uint8_t* buf, uint8_t* dst)
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_context)
+                ::SimdSynetDeconvolution16bForward(_context, src, buf, dst);
+#endif
+        }
+
+    private:
+        void* _context;
         size_t _batch, _srcH, _srcW;
     };
 }

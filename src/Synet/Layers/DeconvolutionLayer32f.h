@@ -24,31 +24,31 @@
 
 #pragma once
 
-#include "Synet/Layer.h"
-#include "Synet/Utils/Deconvolution.h"
+#include "Synet/Layers/DeconvolutionLayer.h"
 
 namespace Synet
 {
-    class DeconvolutionLayer : public Layer
+    class DeconvolutionLayer32f : public DeconvolutionLayer
     {
     public:
-        DeconvolutionLayer(const LayerParam& param, Context* context);
+        DeconvolutionLayer32f(const LayerParam& param, Context* context);
 
-        virtual int64_t Flop() const;
-
-        virtual void CompactWeight();
-
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual size_t MemoryUsage() const;
 
     protected:
+        virtual bool Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst);
 
-        virtual bool Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst) = 0;
-        virtual String InternalInfo() const = 0;
+        virtual String InternalInfo() const;
 
-        bool _is1x1, _biasTerm;
-        int _trans, _internal;
-        ConvParam _conv;
-        size_t _axis, _num, _srcSize, _dstSize;
-        float _params[2];
+        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+        void ForwardCpu(const float* src, float* buf, float* dst);
+
+    private:
+        bool _transW;
+        size_t _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
+
+        Deconvolution32f _deconvolution32f;
+        Tensor _weightT;
     };
 }

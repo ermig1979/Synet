@@ -41,6 +41,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\ConvolutionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\CtcGreedyDecoderLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\DeconvolutionLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\DeconvolutionLayer32f.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\DetectionOutputLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\EltwiseLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ExpandDimsLayer.cpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\ConvolutionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\CtcGreedyDecoderLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\DeconvolutionLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\DeconvolutionLayer32f.h" />
     <ClInclude Include="..\..\src\Synet\Layers\DetectionOutputLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\EltwiseLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ExpandDimsLayer.h" />
