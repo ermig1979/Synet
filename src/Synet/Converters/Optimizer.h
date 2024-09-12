@@ -2304,6 +2304,11 @@ namespace Synet
                 {
                     layer.lowPrecision().bf16Type() = _param.bf16().reluType();
                 }
+                else if (layer.type() == LayerTypeDeconvolution && layer.weight()[0].format() == TensorFormatNhwc)
+                {
+                    if (layer.convolution().group() == 1 && EffectiveSrcC(layer) >= _param.bf16().minSrcC() && layer.convolution().outputNum() >= _param.bf16().minDstC())
+                        layer.lowPrecision().bf16Type() = LowPrecisionTypeActive;
+                }
             }
             return true;
         }
@@ -2325,6 +2330,27 @@ namespace Synet
                     return weight.dim()[0];
                 else
                     return weight.dim()[1];
+            }
+            if (layer.type() == LayerTypeDeconvolution)
+            {
+                const WeightParam& weight = layer.weight()[0];
+                if (weight.format() == TensorFormatNhwc)
+                    return weight.dim()[0];
+                else
+                    return weight.dim()[0];
+            }
+            return 0;
+        }
+
+        size_t EffectiveDstC(const LayerParam& layer)
+        {
+            if (layer.type() == LayerTypeDeconvolution)
+            {
+                const WeightParam& weight = layer.weight()[0];
+                if (weight.format() == TensorFormatNhwc)
+                    return weight.dim()[3] * layer.convolution().kernel()[0] * layer.convolution().kernel()[1];
+                else
+                    return weight.dim()[1] * layer.convolution().kernel()[0] * layer.convolution().kernel()[1];
             }
             return 0;
         }

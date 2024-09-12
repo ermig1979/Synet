@@ -51,8 +51,6 @@ namespace Synet
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("DeconvolutionLayer supports only 1 input and 1 output!");
-        if (src[0]->GetType() != TensorType32f)
-            SYNET_ERROR("DeconvolutionLayer supports only 32f input!");
 
         const ConvolutionParam & param = this->Param().convolution();
         const Tensors & weight = this->Weight();

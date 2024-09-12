@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/DeconvolutionLayer32f.h"
+#include "Synet/Layers/Deconvolution32fLayer.h"
 #include "Synet/Layers/PreluLayer.h"
 #include "Synet/Utils/Gemm.h"
 #include "Synet/Utils/ImgToCol.h"
@@ -30,18 +30,18 @@
 
 namespace Synet
 {
-    DeconvolutionLayer32f::DeconvolutionLayer32f(const LayerParam & param, Context* context)
+    Deconvolution32fLayer::Deconvolution32fLayer(const LayerParam & param, Context* context)
         : DeconvolutionLayer(param, context)
     {
         _transW = false;
     }
 
-    size_t DeconvolutionLayer32f::MemoryUsage() const
+    size_t Deconvolution32fLayer::MemoryUsage() const
     {
         return Layer::MemoryUsage() + (_deconvolution32f.InternalBufferSize() + _weightT.Size())*sizeof(float);
     }
 
-    bool DeconvolutionLayer32f::Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
+    bool Deconvolution32fLayer::Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
     {
         if (src->GetType() != TensorType32f)
             SYNET_ERROR("DeconvolutionLayer supports only 32f input!");
@@ -119,17 +119,17 @@ namespace Synet
         return true;
     }
 
-    String DeconvolutionLayer32f::InternalInfo() const
+    String Deconvolution32fLayer::InternalInfo() const
     {
         return String(" fp32") + (_deconvolution32f.Enable() ? String(" ") + _deconvolution32f.Info() : String());
     }
 
-    void DeconvolutionLayer32f::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void Deconvolution32fLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
         ForwardCpu(src[0]->Data<float>(), buf[TensorType32f*BUFFER_COUNT]->Data<float>(), dst[0]->Data<float>());
     }
 
-    void DeconvolutionLayer32f::ForwardCpu(const float* src, float* buf, float* dst)
+    void Deconvolution32fLayer::ForwardCpu(const float* src, float* buf, float* dst)
     {
         if (_deconvolution32f.Enable())
             _deconvolution32f.Forward(src, buf, dst);

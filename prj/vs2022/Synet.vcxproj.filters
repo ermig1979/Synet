@@ -234,7 +234,10 @@
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Fabric.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\DeconvolutionLayer32f.cpp">
+    <ClCompile Include="..\..\src\Synet\Layers\Deconvolution16bLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Deconvolution32fLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
   </ItemGroup>
@@ -639,7 +642,10 @@
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\UpsampleLayer.h">
       <Filter>Layers\Legacy</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\DeconvolutionLayer32f.h">
+    <ClInclude Include="..\..\src\Synet\Layers\Deconvolution16bLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Deconvolution32fLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
   </ItemGroup>
