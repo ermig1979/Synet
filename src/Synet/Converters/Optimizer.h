@@ -28,19 +28,10 @@
 #include "Synet/Params.h"
 #include "Synet/Utils/FileUtils.h"
 #include "Synet/Converters/SynetUtils.h"
+#include "Synet/Converters/Bf16OptSetter.h"
 
 namespace Synet
 {
-    struct Bf16OptParam
-    {
-        CPL_PARAM_VALUE(bool, enable, false);
-        CPL_PARAM_VALUE(uint32_t, minSrcC, 32);
-        CPL_PARAM_VALUE(uint32_t, minDstC, 16);
-        CPL_PARAM_VALUE(LowPrecisionType, addType, LowPrecisionTypeActive);
-        CPL_PARAM_VALUE(LowPrecisionType, reluType, LowPrecisionTypePassive);
-        CPL_PARAM_VALUE(Strings, exclude, Strings());
-    };
-
     struct OptimizerParam
     {
         CPL_PARAM_VALUE(bool, mergeTwoConvolutions, true);
@@ -60,12 +51,13 @@ namespace Synet
     public:
         Optimizer(const OptimizerParam& param)
             : _param(param)
+            , _bf16OptSetter(param.bf16())
         {
         }
 
         bool Run(Synet::NetworkParam & network, Floats & bin)
         {
-            if (!SetBf16Options(network.layers()))
+            if (!_bf16OptSetter.Run(network, bin))
                 return false;
             for (int stage = 0; stage < 10; stage++)
             {
@@ -89,6 +81,7 @@ namespace Synet
         typedef std::set<String> StringSet;
 
         const OptimizerParam & _param;
+        Bf16OptSetter _bf16OptSetter;
 
         bool OptimizeLayers(Synet::NetworkParam& network, Floats& bin, int stage)
         {
@@ -747,7 +740,7 @@ namespace Synet
                 return false;
             if (InsideLink(src, index + 1, 5))
                 return false;
-            size_t tile = GetIndex(src[index + 2].src()[1], src);
+            size_t tile = GetIndexByName(src, src[index + 2].src()[1]);
             if (tile == src.size() || tile < 2)
                 return false;
             if (src[tile - 0].type() != LayerTypeTile || src[tile - 0].src()[0] != src[tile - 1].name())
@@ -2055,30 +2048,14 @@ namespace Synet
 
         //-------------------------------------------------------------------------------------------------
 
-        bool IsMulConst(const LayerParam& layer, float value, float epsilon = 0.000001) const
-        {
-            if (layer.type() == LayerTypePower && layer.power().power() == 1.0f && layer.power().shift() == 0.0f
-                && abs(layer.power().scale() - value) < epsilon)
-                return true;
-            return false;
-        }
-
-        bool IsAddConst(const LayerParam& layer, float value, float epsilon = 0.000001) const
-        {
-            if (layer.type() == LayerTypePower && layer.power().power() == 1.0f && layer.power().scale() == 1.0f
-                && abs(layer.power().shift() - value) < epsilon)
-                return true;
-            return false;
-        }
-
         const WeightParam* GetEltwiseWeight(size_t index, const LayerParams& layers) const
         {
             if (index < layers.size() && (layers[index].type() == LayerTypeEltwise && layers[index].src().size() == 2) || layers[index].type() == LayerTypeAdd)
             {
-                const LayerParam* src0 = GetLayer(layers[index].src()[0], layers);
+                const LayerParam* src0 = GetLayerByName(layers, layers[index].src()[0]);
                 if (src0 && src0->type() == LayerTypeConst)
                     return src0->weight().data() + 0;
-                const LayerParam* src1 = GetLayer(layers[index].src()[1], layers);
+                const LayerParam* src1 = GetLayerByName(layers, layers[index].src()[1]);
                 if (src1 && src1->type() == LayerTypeConst)
                     return src1->weight().data() + 0;
             }
@@ -2148,25 +2125,6 @@ namespace Synet
                 }
             }
             return users;
-        }
-
-        const LayerParam * GetLayer(const String& name, const LayerParams& layers) const
-        {
-            for (size_t i = 0; i < layers.size(); ++i)
-            {
-                if (layers[i].name() == name)
-                    return &layers[i];
-            }
-            return NULL;
-        }
-
-        size_t GetIndex(const String& name, const LayerParams& layers) const
-        {
-            size_t i = 0;
-            for (; i < layers.size(); ++i)
-                if (layers[i].name() == name)
-                    break;
-            return i;
         }
 
         bool CanReuse(const LayerParam & layer)
@@ -2239,7 +2197,7 @@ namespace Synet
             {
                 if (Users(layer.dst()[0], network.layers(), 0, layer.parent()) > 0)// && !HasOutput(network, layer))
                     return true;
-                const LayerParam* prev = GetLayer(layer.src()[0], network.layers());
+                const LayerParam* prev = GetLayerByName(network.layers(), layer.src()[0]);
                 if (prev && prev->type() == LayerTypeDetectionOutput)
                     return true;
             }
@@ -2268,91 +2226,6 @@ namespace Synet
                     i--;
             }
             return true;
-        }
-
-        bool SetBf16Options(LayerParams& layers)
-        {
-            if (!_param.bf16().enable())
-                return true;
-            for (size_t i = 0; i < layers.size(); ++i)
-            {
-                LayerParam &layer = layers[i];
-                bool exclude = false;
-                for (size_t e = 0; e < _param.bf16().exclude().size() && !exclude; ++e)
-                    if (layer.name() == _param.bf16().exclude()[e])
-                        exclude = true;
-                if (exclude)
-                    continue;
-                if (layer.type() == LayerTypeConvolution && (layer.weight()[0].format() == TensorFormatNhwc || (layer.convolution().kernel()[0] == 1 && layer.convolution().kernel()[1] == 1)))
-                {
-                    if(layer.convolution().group() == 1 && EffectiveSrcC(layer) >= _param.bf16().minSrcC() && layer.convolution().outputNum() >= _param.bf16().minDstC())
-                        layer.lowPrecision().bf16Type() = LowPrecisionTypeActive;
-                }
-                else if (layer.type() == LayerTypeInnerProduct)
-                {
-                    if ((EffectiveSrcC(layer) >= _param.bf16().minSrcC() && layer.innerProduct().outputNum() >= _param.bf16().minDstC()) || layer.src().size() > 1)
-                        layer.lowPrecision().bf16Type() = LowPrecisionTypeActive;
-                }
-                else if (layer.type() == Synet::LayerTypeEltwise && 
-                    layer.eltwise().operation() == Synet::EltwiseOperationTypeSum && layer.src().size() <= 2)
-                {
-                    layer.type() = LayerTypeAdd;
-                    layer.eltwise() = EltwiseParam();
-                    layer.lowPrecision().bf16Type() = _param.bf16().addType();
-                }
-                else if (layer.type() == Synet::LayerTypeRelu)
-                {
-                    layer.lowPrecision().bf16Type() = _param.bf16().reluType();
-                }
-                else if (layer.type() == LayerTypeDeconvolution && layer.weight()[0].format() == TensorFormatNhwc)
-                {
-                    if (layer.convolution().group() == 1 && EffectiveSrcC(layer) >= _param.bf16().minSrcC() && layer.convolution().outputNum() >= _param.bf16().minDstC())
-                        layer.lowPrecision().bf16Type() = LowPrecisionTypeActive;
-                }
-            }
-            return true;
-        }
-
-        size_t EffectiveSrcC(const LayerParam& layer)
-        {
-            if (layer.type() == LayerTypeConvolution)
-            {
-                const WeightParam& weight = layer.weight()[0];
-                if (weight.format() == TensorFormatNhwc)
-                    return weight.dim()[2] * layer.convolution().kernel()[0] * layer.convolution().kernel()[1];
-                else
-                    return weight.dim()[1];
-            }
-            if (layer.type() == LayerTypeInnerProduct && layer.src().size() == 1)
-            {
-                const WeightParam& weight = layer.weight()[0];
-                if (layer.innerProduct().transposeB())
-                    return weight.dim()[0];
-                else
-                    return weight.dim()[1];
-            }
-            if (layer.type() == LayerTypeDeconvolution)
-            {
-                const WeightParam& weight = layer.weight()[0];
-                if (weight.format() == TensorFormatNhwc)
-                    return weight.dim()[0];
-                else
-                    return weight.dim()[0];
-            }
-            return 0;
-        }
-
-        size_t EffectiveDstC(const LayerParam& layer)
-        {
-            if (layer.type() == LayerTypeDeconvolution)
-            {
-                const WeightParam& weight = layer.weight()[0];
-                if (weight.format() == TensorFormatNhwc)
-                    return weight.dim()[3] * layer.convolution().kernel()[0] * layer.convolution().kernel()[1];
-                else
-                    return weight.dim()[1] * layer.convolution().kernel()[0] * layer.convolution().kernel()[1];
-            }
-            return 0;
         }
 
         bool IsNnwc(const NetworkParam& network)

@@ -120,6 +120,7 @@
     <ClInclude Include="..\..\src\Synet\Buffer.h" />
     <ClInclude Include="..\..\src\Synet\Common.h" />
     <ClInclude Include="..\..\src\Synet\Context.h" />
+    <ClInclude Include="..\..\src\Synet\Converters\Bf16OptSetter.h" />
     <ClInclude Include="..\..\src\Synet\Converters\Deoptimizer.h" />
     <ClInclude Include="..\..\src\Synet\Converters\InferenceEngine.h" />
     <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineBase.h" />

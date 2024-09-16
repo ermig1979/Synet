@@ -648,6 +648,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\Deconvolution32fLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Converters\Bf16OptSetter.h">
+      <Filter>Converters</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

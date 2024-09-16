@@ -177,6 +177,25 @@ namespace Synet
             return GetWeight<T>(bin, param.offset());
         }
 
+        static const LayerParam* GetLayerByName(const LayerParams& layers, const String& name)
+        {
+            for (size_t i = 0; i < layers.size(); ++i)
+            {
+                if (layers[i].name() == name)
+                    return &layers[i];
+            }
+            return NULL;
+        }
+
+        static size_t GetIndexByName(const LayerParams& layers, const String& name)
+        {
+            size_t i = 0;
+            for (; i < layers.size(); ++i)
+                if (layers[i].name() == name)
+                    break;
+            return i;
+        }
+
         static String NotImplementedMarker()
         {
             return "~~~NOT_IMPLEMENTED~~~";
@@ -552,6 +571,22 @@ namespace Synet
                 layer.eltwise().coefficients() == Floats({ 1.0f, -1.0f }) && layer.src().size() == 2)
                 return true;
             if (layer.type() == LayerTypeBinaryOperation && layer.binaryOperation().type() == BinaryOperationTypeSub)
+                return true;
+            return false;
+        }
+
+        static SYNET_INLINE bool IsMulConst(const LayerParam& layer, float value, float epsilon = 0.000001)
+        {
+            if (layer.type() == LayerTypePower && layer.power().power() == 1.0f && layer.power().shift() == 0.0f
+                && abs(layer.power().scale() - value) < epsilon)
+                return true;
+            return false;
+        }
+
+        static SYNET_INLINE bool IsAddConst(const LayerParam& layer, float value, float epsilon = 0.000001)
+        {
+            if (layer.type() == LayerTypePower && layer.power().power() == 1.0f && layer.power().scale() == 1.0f
+                && abs(layer.power().shift() - value) < epsilon)
                 return true;
             return false;
         }
