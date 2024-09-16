@@ -749,6 +749,8 @@ namespace Synet
                 if (visited.find(*id) != visited.end())
                     continue;
                 const Stage& dst = _stages[*id];
+                if (dst.layer->LowPrecision(TensorType8u) == LowPrecisionTypeActive)
+                    continue;
                 if (dst.layer->Is8i())
                     continue;
                 if (dst.layer->Param().type() == LayerTypePriorBox)
@@ -769,6 +771,8 @@ namespace Synet
                     if (visited.find(*id) != visited.end())
                         continue;
                     const Stage& src = _stages[*id];
+                    if (src.layer->LowPrecision(TensorType8u) == LowPrecisionTypeActive)
+                        continue;
                     if (src.layer->Is8i())
                         continue;
                     if (src.layer->Param().type() == LayerTypePriorBox)
@@ -783,6 +787,8 @@ namespace Synet
                     if (visited.find(*id) != visited.end())
                         continue;
                     const Stage& dst = _stages[*id];
+                    if (dst.layer->LowPrecision(TensorType8u) == LowPrecisionTypeActive)
+                        continue;
                     if (dst.layer->Is8i())
                         continue;
                     if (dst.layer->Param().type() == LayerTypePriorBox)
@@ -810,6 +816,8 @@ namespace Synet
             {
                 if (visited.find(*id) != visited.end())
                     continue;
+                if (_stages[*id].layer->LowPrecision(TensorType8u) == LowPrecisionTypeActive)
+                    continue;
                 if (_stages[*id].layer->Is8i())
                     continue;
                 Set8iInSubGraph(*id, visited, true);
@@ -826,6 +834,8 @@ namespace Synet
                 {
                     if (visited.find(*id) != visited.end())
                         continue;
+                    if (_stages[*id].layer->LowPrecision(TensorType8u) == LowPrecisionTypeActive)
+                        continue;
                     if (_stages[*id].layer->Is8i())
                         continue;
                     Set8iInSubGraph(*id, visited, true);
@@ -839,7 +849,7 @@ namespace Synet
         for (size_t s = 0; s < _stages.size(); ++s)
         {
             const Layer & layer = *_stages[s].layer;
-            if (layer.Is8i())
+            if (layer.Is8i() || layer.LowPrecision(TensorType8u) == LowPrecisionTypeActive)
             {
                 IdSet checked, setted;
                 if (Is8iInSubGraph(s, checked, false))
@@ -867,6 +877,8 @@ namespace Synet
                 if (visited.find(*id) != visited.end())
                     continue;
                 const Stage& dst = _stages[*id];
+                if (dst.layer->LowPrecision(TensorType16b) == LowPrecisionTypeActive)
+                    continue;
                 if (dst.layer->Is16b())
                     continue;
                 if (dst.layer->Param().type() == LayerTypePriorBox)
@@ -887,6 +899,8 @@ namespace Synet
                     if (visited.find(*id) != visited.end())
                         continue;
                     const Stage& src = _stages[*id];
+                    if (src.layer->LowPrecision(TensorType16b) == LowPrecisionTypeActive)
+                        continue;
                     if (src.layer->Is16b())
                         continue;
                     if (src.layer->Param().type() == LayerTypePriorBox)
@@ -901,6 +915,8 @@ namespace Synet
                     if (visited.find(*id) != visited.end())
                         continue;
                     const Stage& dst = _stages[*id];
+                    if (dst.layer->LowPrecision(TensorType16b) == LowPrecisionTypeActive)
+                        continue;
                     if (dst.layer->Is16b())
                         continue;
                     if (dst.layer->Param().type() == LayerTypePriorBox)
@@ -928,6 +944,8 @@ namespace Synet
             {
                 if (visited.find(*id) != visited.end())
                     continue;
+                if (_stages[*id].layer->LowPrecision(TensorType16b) == LowPrecisionTypeActive)
+                    continue;
                 if (_stages[*id].layer->Is16b())
                     continue;
                 Set16bInSubGraph(*id, visited, true);
@@ -944,6 +962,8 @@ namespace Synet
                 {
                     if (visited.find(*id) != visited.end())
                         continue;
+                    if (_stages[*id].layer->LowPrecision(TensorType16b) == LowPrecisionTypeActive)
+                        continue;
                     if (_stages[*id].layer->Is16b())
                         continue;
                     Set16bInSubGraph(*id, visited, true);
@@ -957,7 +977,7 @@ namespace Synet
         for (size_t s = 0; s < _stages.size(); ++s)
         {
             const Layer& layer = *_stages[s].layer;
-            if (layer.Is16b())
+            if (layer.Is16b() || layer.LowPrecision(TensorType16b) == LowPrecisionTypeActive)
             {
                 IdSet checked, setted;
                 if (Is16bInSubGraph(s, checked, false))

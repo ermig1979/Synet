@@ -58,6 +58,13 @@ namespace Synet
         return true;
     }
 
+    LowPrecisionType Convolution8iLayer::LowPrecision(TensorType type) const
+    {
+        if (type == TensorType8u)
+            return LowPrecisionTypeActive;
+        return LowPrecisionTypeNone;
+    }
+
     void Convolution8iLayer::DebugPrint(std::ostream& os, int flag, int first, int last, int precision)
     {
         Synet::DebugPrint(os, _srcCvt.scale, _srcCvt.channels, "_srcCvt.scale", first, last, precision);

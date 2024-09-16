@@ -38,6 +38,8 @@ namespace Synet
 
         virtual bool Is16b() const;
 
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
+
         virtual size_t MemoryUsage() const;
 
     protected:

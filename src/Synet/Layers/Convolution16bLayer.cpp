@@ -40,6 +40,13 @@ namespace Synet
         return true;
     }
 
+    LowPrecisionType Convolution16bLayer::LowPrecision(TensorType type) const
+    {
+        if (type == TensorType16b)
+            return LowPrecisionTypeActive;
+        return LowPrecisionTypeNone;
+    }
+
     size_t Convolution16bLayer::MemoryUsage() const
     {
         return ConvolutionLayer::MemoryUsage() + _convolution16b.InternalBufferSize();

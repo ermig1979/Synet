@@ -41,6 +41,8 @@ namespace Synet
 
         virtual bool Is8i() const;
 
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
+
         virtual void DebugPrint(std::ostream& os, int flag, int first, int last, int precision);
 
     protected:

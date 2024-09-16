@@ -109,6 +109,11 @@ namespace Synet
             return false;
         }
 
+        virtual LowPrecisionType LowPrecision(TensorType type) const
+        {
+            return LowPrecisionTypeNone;
+        }
+
         virtual bool Resizable() const
         {
             return true;
