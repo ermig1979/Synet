@@ -192,25 +192,14 @@ namespace Synet
             param.scale().quantizationLevel() != TensorType32f;
     }
 
-    bool ScaleLayer::Is8i() const
-    {
-        return _is8i;
-    }
-
-    bool ScaleLayer::Can8i() const
-    {
-        return _is8i;
-    }
-
-    bool ScaleLayer::Can16b() const
-    {
-        return Options().BFloat16Enable();
-    }
-
-    bool ScaleLayer::Is16b() const
+    LowPrecisionType ScaleLayer::LowPrecision(TensorType type) const
     {
         const LayerParam& p = this->Param();
-        return Options().BFloat16Enable() && !_is8i && p.src()[0] != p.dst()[0];
+        if (type == TensorType8u && _is8i)
+            return LowPrecisionTypeActive;
+        if (type == TensorType16b && Options().BFloat16Enable())
+            return p.src()[0] != p.dst()[0] ? LowPrecisionTypeActive : LowPrecisionTypePassive;
+        return LowPrecisionTypeNone;
     }
 
     bool ScaleLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)

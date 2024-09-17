@@ -435,7 +435,7 @@ namespace Synet
                     for (size_t j = 0; j < layer.Weight().size(); ++j)
                         layer.Weight()[j].DebugPrint(os, String("weight[") + Cpl::ToStr(j) + "]", true, first, last, precision);
                 }
-                if (printInt8Buffers && layer.Is8i())
+                if (printInt8Buffers && (layer.LowPrecision(TensorType8u) == LowPrecisionTypeActive))
                 {
                     const Tensor& src = *_stages[i].src[0];
                     if (src.GetType() == TensorType32f)
@@ -751,11 +751,9 @@ namespace Synet
                 const Stage& dst = _stages[*id];
                 if (dst.layer->LowPrecision(TensorType8u) == LowPrecisionTypeActive)
                     continue;
-                if (dst.layer->Is8i())
-                    continue;
                 if (dst.layer->Param().type() == LayerTypePriorBox)
                     continue;
-                if (dst.layer->Can8i() && Is8iInSubGraph(*id, visited, true))
+                if ((dst.layer->Can8i() || dst.layer->LowPrecision(TensorType8u) == LowPrecisionTypePassive) && Is8iInSubGraph(*id, visited, true))
                     continue;
                 return false;
             }
@@ -773,11 +771,9 @@ namespace Synet
                     const Stage& src = _stages[*id];
                     if (src.layer->LowPrecision(TensorType8u) == LowPrecisionTypeActive)
                         continue;
-                    if (src.layer->Is8i())
-                        continue;
                     if (src.layer->Param().type() == LayerTypePriorBox)
                         continue;
-                    if (src.layer->Can8i() && Is8iInSubGraph(*id, visited, true))
+                    if ((src.layer->Can8i() || src.layer->LowPrecision(TensorType8u) == LowPrecisionTypePassive) && Is8iInSubGraph(*id, visited, true))
                         continue;
                     return false;
                 }
@@ -789,11 +785,9 @@ namespace Synet
                     const Stage& dst = _stages[*id];
                     if (dst.layer->LowPrecision(TensorType8u) == LowPrecisionTypeActive)
                         continue;
-                    if (dst.layer->Is8i())
-                        continue;
                     if (dst.layer->Param().type() == LayerTypePriorBox)
                         continue;
-                    if (dst.layer->Can8i() && Is8iInSubGraph(*id, visited, true))
+                    if ((dst.layer->Can8i() || dst.layer->LowPrecision(TensorType8u) == LowPrecisionTypePassive) && Is8iInSubGraph(*id, visited, true))
                         continue;
                     return false;
                 }
@@ -818,8 +812,6 @@ namespace Synet
                     continue;
                 if (_stages[*id].layer->LowPrecision(TensorType8u) == LowPrecisionTypeActive)
                     continue;
-                if (_stages[*id].layer->Is8i())
-                    continue;
                 Set8iInSubGraph(*id, visited, true);
             }
         }
@@ -836,8 +828,6 @@ namespace Synet
                         continue;
                     if (_stages[*id].layer->LowPrecision(TensorType8u) == LowPrecisionTypeActive)
                         continue;
-                    if (_stages[*id].layer->Is8i())
-                        continue;
                     Set8iInSubGraph(*id, visited, true);
                 }
             }
@@ -849,7 +839,7 @@ namespace Synet
         for (size_t s = 0; s < _stages.size(); ++s)
         {
             const Layer & layer = *_stages[s].layer;
-            if (layer.Is8i() || layer.LowPrecision(TensorType8u) == LowPrecisionTypeActive)
+            if (layer.LowPrecision(TensorType8u) == LowPrecisionTypeActive)
             {
                 IdSet checked, setted;
                 if (Is8iInSubGraph(s, checked, false))
@@ -879,11 +869,9 @@ namespace Synet
                 const Stage& dst = _stages[*id];
                 if (dst.layer->LowPrecision(TensorType16b) == LowPrecisionTypeActive)
                     continue;
-                if (dst.layer->Is16b())
-                    continue;
                 if (dst.layer->Param().type() == LayerTypePriorBox)
                     continue;
-                if (dst.layer->Can16b() && Is16bInSubGraph(*id, visited, true))
+                if ((dst.layer->Can16b() || dst.layer->LowPrecision(TensorType16b) == LowPrecisionTypePassive) && Is16bInSubGraph(*id, visited, true))
                     continue;
                 return false;
             }
@@ -901,11 +889,9 @@ namespace Synet
                     const Stage& src = _stages[*id];
                     if (src.layer->LowPrecision(TensorType16b) == LowPrecisionTypeActive)
                         continue;
-                    if (src.layer->Is16b())
-                        continue;
                     if (src.layer->Param().type() == LayerTypePriorBox)
                         continue;
-                    if (src.layer->Can16b() && Is16bInSubGraph(*id, visited, true))
+                    if ((src.layer->Can16b() || src.layer->LowPrecision(TensorType16b) == LowPrecisionTypePassive) && Is16bInSubGraph(*id, visited, true))
                         continue;
                     return false;
                 }
@@ -917,11 +903,9 @@ namespace Synet
                     const Stage& dst = _stages[*id];
                     if (dst.layer->LowPrecision(TensorType16b) == LowPrecisionTypeActive)
                         continue;
-                    if (dst.layer->Is16b())
-                        continue;
                     if (dst.layer->Param().type() == LayerTypePriorBox)
                         continue;
-                    if (dst.layer->Can16b() && Is16bInSubGraph(*id, visited, true))
+                    if ((dst.layer->Can16b() || dst.layer->LowPrecision(TensorType16b) == LowPrecisionTypePassive) && Is16bInSubGraph(*id, visited, true))
                         continue;
                     return false;
                 }
@@ -946,8 +930,6 @@ namespace Synet
                     continue;
                 if (_stages[*id].layer->LowPrecision(TensorType16b) == LowPrecisionTypeActive)
                     continue;
-                if (_stages[*id].layer->Is16b())
-                    continue;
                 Set16bInSubGraph(*id, visited, true);
             }
         }
@@ -964,8 +946,6 @@ namespace Synet
                         continue;
                     if (_stages[*id].layer->LowPrecision(TensorType16b) == LowPrecisionTypeActive)
                         continue;
-                    if (_stages[*id].layer->Is16b())
-                        continue;
                     Set16bInSubGraph(*id, visited, true);
                 }
             }
@@ -977,7 +957,7 @@ namespace Synet
         for (size_t s = 0; s < _stages.size(); ++s)
         {
             const Layer& layer = *_stages[s].layer;
-            if (layer.Is16b() || layer.LowPrecision(TensorType16b) == LowPrecisionTypeActive)
+            if (layer.LowPrecision(TensorType16b) == LowPrecisionTypeActive)
             {
                 IdSet checked, setted;
                 if (Is16bInSubGraph(s, checked, false))

@@ -340,27 +340,18 @@ namespace Synet
     {
     }
 
-    bool AddLayer::Can8i() const
-    {
-        return _method != QuantizationMethodUnknown;
-    }
-
-    bool AddLayer::Is8i() const
-    {
-        return _method != QuantizationMethodUnknown;
-    }
-
-    bool AddLayer::Can16b() const
+    LowPrecisionType AddLayer::LowPrecision(TensorType type) const
     {
         const LayerParam& p = this->Param();
-        return Options().BFloat16Enable() && (p.lowPrecision().bf16Type() == LowPrecisionTypePassive || p.lowPrecision().bf16Type() == LowPrecisionTypeActive);
-    }
-
-    bool AddLayer::Is16b() const
-    {
-        const LayerParam& p = this->Param();
-        return Options().BFloat16Enable() && _method == QuantizationMethodUnknown &&
-            p.src()[0] != p.dst()[0] && (p.src().size() == 1 || p.src()[1] != p.dst()[0]) && p.lowPrecision().bf16Type() == LowPrecisionTypeActive;
+        if (type == TensorType8u && _method != QuantizationMethodUnknown)
+            return LowPrecisionTypeActive;
+        if (type == TensorType16b && Options().BFloat16Enable() && _method == QuantizationMethodUnknown && p.lowPrecision().bf16Type() >= LowPrecisionTypePassive)
+        {
+            if (p.src()[0] != p.dst()[0] && (p.src().size() == 1 || p.src()[1] != p.dst()[0]))
+                return p.lowPrecision().bf16Type();
+            return LowPrecisionTypePassive;
+        }
+        return LowPrecisionTypeNone;
     }
 
     int64_t AddLayer::Flop() const

@@ -98,7 +98,7 @@ namespace Synet
             a.internal[i] = 0;
         }
 
-        a.add = (!this->Is8i() && a.count == 3 && p.add()) ? 1 : 0;
+        a.add = (this->LowPrecision(TensorType8u) != LowPrecisionTypeActive && a.count == 3 && p.add()) ? 1 : 0;
         a.batch = src[0]->Axis(0);
 
         if (!Reshape(src[0], buf, dst[0]))

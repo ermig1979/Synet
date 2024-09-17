@@ -184,25 +184,14 @@ namespace Synet
         return true;
     }
 
-    bool SqueezeExcitationLayer::Can8i() const
-    {
-        return _method != QuantizationMethodUnknown;
-    }
-
-    bool SqueezeExcitationLayer::Is8i() const
-    {
-        return _method != QuantizationMethodUnknown;
-    }
-
-    bool SqueezeExcitationLayer::Can16b() const
-    {
-        return Options().BFloat16Enable();
-    }
-
-    bool SqueezeExcitationLayer::Is16b() const
+    LowPrecisionType SqueezeExcitationLayer::LowPrecision(TensorType type) const
     {
         const LayerParam& p = this->Param();
-        return Options().BFloat16Enable() && _method == QuantizationMethodUnknown && p.src()[0] != p.dst()[0];
+        if (type == TensorType8u && _method != QuantizationMethodUnknown)
+            return LowPrecisionTypeActive;
+        if (type == TensorType16b && Options().BFloat16Enable() && _method == QuantizationMethodUnknown)
+            return p.src()[0] != p.dst()[0] ? LowPrecisionTypeActive : LowPrecisionTypePassive;
+        return LowPrecisionTypeNone;
     }
 
     void SqueezeExcitationLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)

@@ -38,13 +38,7 @@ namespace Synet
     public:
         ScaleLayer(const LayerParam& param, Context* context, QuantizationMethod method);
 
-        bool Is8i() const;
-
-        bool Can8i() const;
-
-        bool Is16b() const;
-
-        bool Can16b() const;
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 

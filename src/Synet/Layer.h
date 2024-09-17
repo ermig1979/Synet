@@ -94,17 +94,7 @@ namespace Synet
             return false;
         }
 
-        virtual bool Is8i() const
-        {
-            return false;
-        }
-
         virtual bool Can16b() const
-        {
-            return false;
-        }
-
-        virtual bool Is16b() const
         {
             return false;
         }
@@ -142,7 +132,7 @@ namespace Synet
         bool SetStats(const StatSharedPtrs & stats)
         {
             bool result = true;
-            if (Is8i())
+            if (LowPrecision(TensorType8u) == LowPrecisionTypeActive)
             {
                 result = result && SetStats(stats, _param.src(), _stats[0]);
                 result = result && SetStats(stats, _param.origin(), _stats[1]);
@@ -319,7 +309,8 @@ namespace Synet
                 if (_context->options.performanceLog >= Options::PerfomanceLogLayer)
                 {
                     String type = Cpl::ToStr(_param.type());
-                    SYNET_PERF_INIT(_perfComm, "void Synet::" + type + "Layer::Forward() {  " + (Is8i() ? "int8" : Is16b() ? "bf16" :  "fp32") + " } ", 0);
+                    SYNET_PERF_INIT(_perfComm, "void Synet::" + type + "Layer::Forward() {  " + 
+                       (LowPrecision(TensorType8u) == LowPrecisionTypeActive ? "int8" : LowPrecision(TensorType16b) == LowPrecisionTypeActive ? "bf16" :  "fp32") + " } ", 0);
                     if (_context->options.performanceLog >= Options::PerfomanceLogSize && _perfDesc.size())
                     {
                         SYNET_PERF_INIT(_perfSpec, "void Synet::" + type + "Layer::Forward() { " + _perfDesc + " } ", _perfFlop);

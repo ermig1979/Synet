@@ -35,13 +35,7 @@ namespace Synet
     public:
         AddLayer(const LayerParam& param, Context* context, QuantizationMethod method);
 
-        virtual bool Can8i() const;
-
-        virtual bool Is8i() const;
-
-        virtual bool Can16b() const;
-
-        virtual bool Is16b() const;
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
 
         virtual int64_t Flop() const;
 
