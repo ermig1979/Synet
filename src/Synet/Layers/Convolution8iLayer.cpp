@@ -48,16 +48,6 @@ namespace Synet
             + _weight8i.MemoryUsage() + _norm32f.MemoryUsage() + _bias32f.MemoryUsage();
     }
 
-    bool Convolution8iLayer::Can8i() const
-    {
-        return true;
-    }
-
-    bool Convolution8iLayer::Is8i() const
-    {
-        return true;
-    }
-
     LowPrecisionType Convolution8iLayer::LowPrecision(TensorType type) const
     {
         if (type == TensorType8u)

@@ -36,14 +36,11 @@ namespace Synet
         return Layer::MemoryUsage() + _mergedConvolution16b.InternalBufferSize();
     }
 
-    bool MergedConvolution16bLayer::Can16b() const
+    LowPrecisionType MergedConvolution16bLayer::LowPrecision(TensorType type) const
     {
-        return true;
-    }
-
-    bool MergedConvolution16bLayer::Is16b() const
-    {
-        return true;
+        if (type == TensorType16b)
+            return LowPrecisionTypeActive;
+        return LowPrecisionTypeNone;
     }
 
     String MergedConvolution16bLayer::InternalInfo() const

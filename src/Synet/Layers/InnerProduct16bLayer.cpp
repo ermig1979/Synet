@@ -31,14 +31,11 @@ namespace Synet
     {
     }
 
-    bool InnerProduct16bLayer::Is16b() const
+    LowPrecisionType InnerProduct16bLayer::LowPrecision(TensorType type) const
     {
-        return true;
-    }
-
-    bool InnerProduct16bLayer::Can16b() const
-    {
-        return true;
+        if (type == TensorType16b)
+            return LowPrecisionTypeActive;
+        return LowPrecisionTypeNone;
     }
 
     size_t InnerProduct16bLayer::MemoryUsage() const

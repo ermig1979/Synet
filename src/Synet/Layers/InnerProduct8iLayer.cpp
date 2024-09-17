@@ -43,14 +43,11 @@ namespace Synet
     {
     }
 
-    bool InnerProduct8iLayer::Is8i() const
+    LowPrecisionType InnerProduct8iLayer::LowPrecision(TensorType type) const
     {
-        return true;
-    }
-
-    bool InnerProduct8iLayer::Can8i() const
-    {
-        return true;
+        if (type == TensorType8u)
+            return LowPrecisionTypeActive;
+        return LowPrecisionTypeNone;
     }
 
     size_t InnerProduct8iLayer::MemoryUsage() const

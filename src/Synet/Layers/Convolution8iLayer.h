@@ -37,10 +37,6 @@ namespace Synet
 
         virtual size_t MemoryUsage() const;
 
-        virtual bool Can8i() const;
-
-        virtual bool Is8i() const;
-
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
         virtual void DebugPrint(std::ostream& os, int flag, int first, int last, int precision);

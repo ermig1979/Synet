@@ -30,16 +30,6 @@ namespace Synet
     {
     }
 
-    bool Convolution16bLayer::Can16b() const
-    {
-        return true;
-    }
-
-    bool Convolution16bLayer::Is16b() const
-    {
-        return true;
-    }
-
     LowPrecisionType Convolution16bLayer::LowPrecision(TensorType type) const
     {
         if (type == TensorType16b)

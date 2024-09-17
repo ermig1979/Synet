@@ -35,9 +35,7 @@ namespace Synet
     public:
         MergedConvolution8iLayer(const LayerParam& param, Context* context, QuantizationMethod method);
 
-        virtual bool Can8i() const;
-
-        virtual bool Is8i() const;
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
 
         virtual size_t MemoryUsage() const;
 

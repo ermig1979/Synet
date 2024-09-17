@@ -30,14 +30,11 @@ namespace Synet
     {
     }
 
-    bool Deconvolution16bLayer::Can16b() const
+    LowPrecisionType Deconvolution16bLayer::LowPrecision(TensorType type) const
     {
-        return true;
-    }
-
-    bool Deconvolution16bLayer::Is16b() const
-    {
-        return true;
+        if (type == TensorType16b)
+            return LowPrecisionTypeActive;
+        return LowPrecisionTypeNone;
     }
 
     size_t Deconvolution16bLayer::MemoryUsage() const

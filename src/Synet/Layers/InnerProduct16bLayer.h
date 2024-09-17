@@ -34,9 +34,7 @@ namespace Synet
     public:
         InnerProduct16bLayer(const LayerParam& param, Context* context);
 
-        virtual bool Is16b() const;
-
-        virtual bool Can16b() const;
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
 
         virtual size_t MemoryUsage() const;
 

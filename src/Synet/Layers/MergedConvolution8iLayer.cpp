@@ -34,14 +34,11 @@ namespace Synet
     {
     }
 
-    bool MergedConvolution8iLayer::Can8i() const
+    LowPrecisionType MergedConvolution8iLayer::LowPrecision(TensorType type) const
     {
-        return true;
-    }
-
-    bool MergedConvolution8iLayer::Is8i() const
-    {
-        return true;
+        if (type == TensorType8u)
+            return LowPrecisionTypeActive;
+        return LowPrecisionTypeNone;
     }
 
     size_t MergedConvolution8iLayer::MemoryUsage() const
