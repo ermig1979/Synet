@@ -33,6 +33,8 @@ namespace Synet
     public:
         ExpandDimsLayer(const LayerParam& param, Context* context);
 
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
+
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:

@@ -510,7 +510,7 @@ namespace Synet
                 desc << "-" << _kernelC << "x" << _kernelY << "x" << _kernelX << "-" << _strideC << "x" << _strideY << "x" << _strideX;
             else
                 desc << "-" << _kernelY << "x" << _kernelX << "-" << _strideY << "x" << _strideX;
-            desc << (_method ? " avg" : " max");
+            desc << (_method ? " avg" : " max") << "-" << Cpl::ToStr(_type);
             this->UsePerfStat(desc.str(), Flop());
             _const = false;
         }

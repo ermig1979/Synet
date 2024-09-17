@@ -576,7 +576,10 @@ namespace Synet
         }
         else
         {
-            this->UsePerfStat();
+            if(Options().BFloat16Enable())
+                this->UsePerfStat(ToChar(_typeA) + ToChar(_typeB) + ToChar(_typeD));
+            else
+                this->UsePerfStat();
             _const = false;
         }
 

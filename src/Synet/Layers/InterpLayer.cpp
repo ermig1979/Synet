@@ -342,7 +342,10 @@ namespace Synet
             Shp(_batch, _dstH, _dstW, _channels) : Shp(_batch, _channels, _dstH, _dstW);
         dst[0]->Reshape(_type, dstShape, src[0]->Format());
         _const = false;
-        this->UsePerfStat(Cpl::ToStr(_type));
+        if(Options().BFloat16Enable())
+            this->UsePerfStat(Cpl::ToStr(_type));
+        else
+            this->UsePerfStat(Cpl::ToStr(_type));
         return true;
     }
 

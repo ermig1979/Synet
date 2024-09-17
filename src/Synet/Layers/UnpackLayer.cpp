@@ -92,7 +92,10 @@ namespace Synet
             else
             {
                 _const = false;
-                this->UsePerfStat();
+                if (Options().BFloat16Enable())
+                    UsePerfStat(Cpl::ToStr(_srcType));
+                else
+                    UsePerfStat();
             }
         }
         else

@@ -155,6 +155,8 @@ namespace Synet
 
         void SetTensorType32f();
 
+        bool CanIgnoreInSubGraph(TensorType type, const Layer * layer) const;
+
         bool IsLowPrecisionInSubGraph(TensorType type, size_t current, IdSet& visited, bool back);
 
         void SetLowPrecisionInSubGraph(TensorType type, size_t current, IdSet& visited, bool back);

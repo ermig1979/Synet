@@ -31,6 +31,11 @@ namespace Synet
     {
     }
 
+    LowPrecisionType ExpandDimsLayer::LowPrecision(TensorType type) const
+    {
+        return LowPrecisionTypePassive;
+    }
+
     bool ExpandDimsLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (src.size() != 1 || dst.size() != 1)

@@ -730,6 +730,20 @@ namespace Synet
         }
     }
 
+    bool Network::CanIgnoreInSubGraph(TensorType type, const Layer* layer) const
+    {
+        const LayerParam& param = layer->Param();
+        if (layer->LowPrecision(type) == LowPrecisionTypeActive)
+            return true;
+        if (param.type() == LayerTypePriorBox)
+            return true;
+        if (param.type() == LayerTypeMeta && param.meta().type() == MetaTypeShape)
+            return true;
+        if (param.type() == LayerTypeMeta && param.meta().type() == MetaTypePack)
+            return true;
+        return false;
+    }
+
     bool Network::IsLowPrecisionInSubGraph(TensorType type, size_t current, IdSet& visited, bool back)
     {
         visited.insert(current);
@@ -749,9 +763,7 @@ namespace Synet
                 if (visited.find(*id) != visited.end())
                     continue;
                 const Stage& dst = _stages[*id];
-                if (dst.layer->LowPrecision(type) == LowPrecisionTypeActive)
-                    continue;
-                if (dst.layer->Param().type() == LayerTypePriorBox)
+                if (CanIgnoreInSubGraph(type, dst.layer))
                     continue;
                 if (dst.layer->LowPrecision(type) == LowPrecisionTypePassive && IsLowPrecisionInSubGraph(type, *id, visited, true))
                     continue;
@@ -769,9 +781,7 @@ namespace Synet
                     if (visited.find(*id) != visited.end())
                         continue;
                     const Stage& src = _stages[*id];
-                    if (src.layer->LowPrecision(type) == LowPrecisionTypeActive)
-                        continue;
-                    if (src.layer->Param().type() == LayerTypePriorBox)
+                    if (CanIgnoreInSubGraph(type, src.layer))
                         continue;
                     if (src.layer->LowPrecision(type) == LowPrecisionTypePassive && IsLowPrecisionInSubGraph(type, *id, visited, true))
                         continue;
@@ -783,9 +793,7 @@ namespace Synet
                     if (visited.find(*id) != visited.end())
                         continue;
                     const Stage& dst = _stages[*id];
-                    if (dst.layer->LowPrecision(type) == LowPrecisionTypeActive)
-                        continue;
-                    if (dst.layer->Param().type() == LayerTypePriorBox)
+                    if (CanIgnoreInSubGraph(type, dst.layer))
                         continue;
                     if (dst.layer->LowPrecision(type) == LowPrecisionTypePassive && IsLowPrecisionInSubGraph(type, *id, visited, true))
                         continue;
@@ -810,7 +818,7 @@ namespace Synet
             {
                 if (visited.find(*id) != visited.end())
                     continue;
-                if (_stages[*id].layer->LowPrecision(type) == LowPrecisionTypeActive)
+                if (CanIgnoreInSubGraph(type, _stages[*id].layer))
                     continue;
                 SetLowPrecisionInSubGraph(type, *id, visited, true);
             }
@@ -826,7 +834,7 @@ namespace Synet
                 {
                     if (visited.find(*id) != visited.end())
                         continue;
-                    if (_stages[*id].layer->LowPrecision(type) == LowPrecisionTypeActive)
+                    if (CanIgnoreInSubGraph(type, _stages[*id].layer))
                         continue;
                     SetLowPrecisionInSubGraph(type, *id, visited, true);
                 }

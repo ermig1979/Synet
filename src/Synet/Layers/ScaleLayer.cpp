@@ -293,6 +293,10 @@ namespace Synet
             else
                 dst[0]->Reshape(TensorType32f, src[0]->Shape(), _format);
         }
+        if (Options().BFloat16Enable())
+            UsePerfStat(ToChar(src[0]->GetType()) + ToChar(dst[0]->GetType()));
+        else
+            UsePerfStat();
         this->UsePerfStat();
         _compatibility = 1;
         return true;

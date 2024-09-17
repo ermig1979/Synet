@@ -225,10 +225,11 @@ namespace Synet
     {
     }
 
-    bool ReluLayer::Can16b() const
+    LowPrecisionType ReluLayer::LowPrecision(TensorType type) const
     {
-        const LayerParam& p = this->Param();
-        return p.lowPrecision().bf16Type() == LowPrecisionTypePassive;
+        if (type == TensorType16b)
+            return LowPrecisionTypePassive;
+        return LowPrecisionTypeNone;
     }
 
     bool ReluLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
@@ -249,8 +250,10 @@ namespace Synet
         }
         else
         {
-            //this->UsePerfStat(Cpl::ToStr(_size) + "-" + Cpl::ToStr(_type), _size);
-            this->UsePerfStat(Cpl::ToStr(_type));
+            if(Options().BFloat16Enable())
+                UsePerfStat(Cpl::ToStr(_type));
+            else
+                UsePerfStat();
             _const = false;
         }
         return true;
