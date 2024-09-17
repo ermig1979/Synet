@@ -228,14 +228,14 @@ namespace Synet
         return !(param.height() && param.width());
     }
 
-    bool InterpLayer::Can8i() const
+    LowPrecisionType InterpLayer::LowPrecision(TensorType type) const
     {
-        return this->Param().interp().interpolationType() == InterpolationTypeNearest;
-    }
-
-    bool InterpLayer::Can16b() const
-    {
-        return this->Param().interp().interpolationType() == InterpolationTypeNearest;
+        const LayerParam& p = this->Param();
+        if (type == TensorType8u && p.interp().interpolationType() == InterpolationTypeNearest)
+            return LowPrecisionTypePassive;
+        if (type == TensorType16b && p.interp().interpolationType() == InterpolationTypeNearest)
+            return LowPrecisionTypePassive;
+        return LowPrecisionTypeNone;
     }
 
     bool InterpLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)

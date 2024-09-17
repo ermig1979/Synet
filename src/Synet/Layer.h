@@ -89,16 +89,6 @@ namespace Synet
         {
         }
 
-        virtual bool Can8i() const
-        {
-            return false;
-        }
-
-        virtual bool Can16b() const
-        {
-            return false;
-        }
-
         virtual LowPrecisionType LowPrecision(TensorType type) const
         {
             return LowPrecisionTypeNone;

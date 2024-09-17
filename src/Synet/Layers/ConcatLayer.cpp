@@ -48,14 +48,14 @@ namespace Synet
     {
     }
 
-    bool ConcatLayer::Can8i() const
+    LowPrecisionType ConcatLayer::LowPrecision(TensorType type) const
     {
-        return this->Param().concat().can8i();
-    }
-
-    bool ConcatLayer::Can16b() const
-    {
-        return true;
+        const LayerParam& p = this->Param();
+        if (type == TensorType8u && this->Param().concat().can8i())
+            return LowPrecisionTypePassive;
+        if (type == TensorType16b)
+            return LowPrecisionTypePassive;
+        return LowPrecisionTypeNone;
     }
 
     bool ConcatLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)

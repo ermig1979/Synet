@@ -753,7 +753,7 @@ namespace Synet
                     continue;
                 if (dst.layer->Param().type() == LayerTypePriorBox)
                     continue;
-                if ((dst.layer->Can8i() || dst.layer->LowPrecision(TensorType8u) == LowPrecisionTypePassive) && Is8iInSubGraph(*id, visited, true))
+                if (dst.layer->LowPrecision(TensorType8u) == LowPrecisionTypePassive && Is8iInSubGraph(*id, visited, true))
                     continue;
                 return false;
             }
@@ -773,7 +773,7 @@ namespace Synet
                         continue;
                     if (src.layer->Param().type() == LayerTypePriorBox)
                         continue;
-                    if ((src.layer->Can8i() || src.layer->LowPrecision(TensorType8u) == LowPrecisionTypePassive) && Is8iInSubGraph(*id, visited, true))
+                    if (src.layer->LowPrecision(TensorType8u) == LowPrecisionTypePassive && Is8iInSubGraph(*id, visited, true))
                         continue;
                     return false;
                 }
@@ -787,7 +787,7 @@ namespace Synet
                         continue;
                     if (dst.layer->Param().type() == LayerTypePriorBox)
                         continue;
-                    if ((dst.layer->Can8i() || dst.layer->LowPrecision(TensorType8u) == LowPrecisionTypePassive) && Is8iInSubGraph(*id, visited, true))
+                    if (dst.layer->LowPrecision(TensorType8u) == LowPrecisionTypePassive && Is8iInSubGraph(*id, visited, true))
                         continue;
                     return false;
                 }
@@ -871,7 +871,7 @@ namespace Synet
                     continue;
                 if (dst.layer->Param().type() == LayerTypePriorBox)
                     continue;
-                if ((dst.layer->Can16b() || dst.layer->LowPrecision(TensorType16b) == LowPrecisionTypePassive) && Is16bInSubGraph(*id, visited, true))
+                if (dst.layer->LowPrecision(TensorType16b) == LowPrecisionTypePassive && Is16bInSubGraph(*id, visited, true))
                     continue;
                 return false;
             }
@@ -891,7 +891,7 @@ namespace Synet
                         continue;
                     if (src.layer->Param().type() == LayerTypePriorBox)
                         continue;
-                    if ((src.layer->Can16b() || src.layer->LowPrecision(TensorType16b) == LowPrecisionTypePassive) && Is16bInSubGraph(*id, visited, true))
+                    if (src.layer->LowPrecision(TensorType16b) == LowPrecisionTypePassive && Is16bInSubGraph(*id, visited, true))
                         continue;
                     return false;
                 }
@@ -905,7 +905,7 @@ namespace Synet
                         continue;
                     if (dst.layer->Param().type() == LayerTypePriorBox)
                         continue;
-                    if ((dst.layer->Can16b() || dst.layer->LowPrecision(TensorType16b) == LowPrecisionTypePassive) && Is16bInSubGraph(*id, visited, true))
+                    if (dst.layer->LowPrecision(TensorType16b) == LowPrecisionTypePassive && Is16bInSubGraph(*id, visited, true))
                         continue;
                     return false;
                 }

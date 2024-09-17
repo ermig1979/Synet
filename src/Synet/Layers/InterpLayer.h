@@ -35,9 +35,7 @@ namespace Synet
 
         virtual bool Resizable() const;
 
-        virtual bool Can8i() const;
-
-        virtual bool Can16b() const;
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 

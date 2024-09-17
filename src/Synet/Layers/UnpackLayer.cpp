@@ -31,15 +31,13 @@ namespace Synet
     {
     }
 
-    bool UnpackLayer::Can8i() const
+    LowPrecisionType UnpackLayer::LowPrecision(TensorType type) const
     {
-        //return this->Param().concat().can8i();
-        return true;
-    }
-
-    bool UnpackLayer::Can16b() const
-    {
-        return true;
+        if (type == TensorType8u)
+            return LowPrecisionTypePassive;
+        if (type == TensorType16b)
+            return LowPrecisionTypePassive;
+        return LowPrecisionTypeNone;
     }
 
     bool UnpackLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)

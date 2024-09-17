@@ -268,9 +268,11 @@ namespace Synet
         return _const ? int64_t(0) : _batch * _kernelC * _kernelY * _kernelX * _dstC * _dstH * _dstW;
     }
 
-    bool PoolingLayer::Can8i() const
+    LowPrecisionType PoolingLayer::LowPrecision(TensorType type) const
     {
-        return _method == PoolingMethodTypeMax;
+        if (type == TensorType8u && _method == PoolingMethodTypeMax)
+            return LowPrecisionTypePassive;
+        return LowPrecisionTypeNone;
     }
         
     bool PoolingLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)

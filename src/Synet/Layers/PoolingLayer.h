@@ -35,7 +35,7 @@ namespace Synet
 
         virtual int64_t Flop() const;
 
-        virtual bool Can8i() const;
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
         
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
