@@ -155,17 +155,11 @@ namespace Synet
 
         void SetTensorType32f();
 
-        bool Is8iInSubGraph(size_t current, IdSet& visited, bool back);
+        bool IsLowPrecisionInSubGraph(TensorType type, size_t current, IdSet& visited, bool back);
 
-        void Set8iInSubGraph(size_t current, IdSet& visited, bool back);
+        void SetLowPrecisionInSubGraph(TensorType type, size_t current, IdSet& visited, bool back);
 
-        void SetTensorType8i();
-
-        bool Is16bInSubGraph(size_t current, IdSet & visited, bool back);
-
-        void Set16bInSubGraph(size_t current, IdSet& visited, bool back);
-
-        void SetTensorType16b();
+        void SetLowPrecisionTensorType(TensorType type);
 
         bool IsSubGraphEndConv(size_t s);
 

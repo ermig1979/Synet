@@ -698,12 +698,12 @@ namespace Synet
         SetTensorType32f();
         if (Is8i())
         {
-            SetTensorType8i();
+            SetLowPrecisionTensorType(TensorType8u);
             UnifyStats();
         }
         if (Is16b())
         {
-            SetTensorType16b();
+            SetLowPrecisionTensorType(TensorType16b);
         }
         if (!Dynamic())
         {
@@ -730,7 +730,7 @@ namespace Synet
         }
     }
 
-    bool Network::Is8iInSubGraph(size_t current, IdSet& visited, bool back)
+    bool Network::IsLowPrecisionInSubGraph(TensorType type, size_t current, IdSet& visited, bool back)
     {
         visited.insert(current);
         const Stage& stage = _stages[current];
@@ -749,11 +749,11 @@ namespace Synet
                 if (visited.find(*id) != visited.end())
                     continue;
                 const Stage& dst = _stages[*id];
-                if (dst.layer->LowPrecision(TensorType8u) == LowPrecisionTypeActive)
+                if (dst.layer->LowPrecision(type) == LowPrecisionTypeActive)
                     continue;
                 if (dst.layer->Param().type() == LayerTypePriorBox)
                     continue;
-                if (dst.layer->LowPrecision(TensorType8u) == LowPrecisionTypePassive && Is8iInSubGraph(*id, visited, true))
+                if (dst.layer->LowPrecision(type) == LowPrecisionTypePassive && IsLowPrecisionInSubGraph(type, *id, visited, true))
                     continue;
                 return false;
             }
@@ -769,11 +769,11 @@ namespace Synet
                     if (visited.find(*id) != visited.end())
                         continue;
                     const Stage& src = _stages[*id];
-                    if (src.layer->LowPrecision(TensorType8u) == LowPrecisionTypeActive)
+                    if (src.layer->LowPrecision(type) == LowPrecisionTypeActive)
                         continue;
                     if (src.layer->Param().type() == LayerTypePriorBox)
                         continue;
-                    if (src.layer->LowPrecision(TensorType8u) == LowPrecisionTypePassive && Is8iInSubGraph(*id, visited, true))
+                    if (src.layer->LowPrecision(type) == LowPrecisionTypePassive && IsLowPrecisionInSubGraph(type, *id, visited, true))
                         continue;
                     return false;
                 }
@@ -783,11 +783,11 @@ namespace Synet
                     if (visited.find(*id) != visited.end())
                         continue;
                     const Stage& dst = _stages[*id];
-                    if (dst.layer->LowPrecision(TensorType8u) == LowPrecisionTypeActive)
+                    if (dst.layer->LowPrecision(type) == LowPrecisionTypeActive)
                         continue;
                     if (dst.layer->Param().type() == LayerTypePriorBox)
                         continue;
-                    if (dst.layer->LowPrecision(TensorType8u) == LowPrecisionTypePassive && Is8iInSubGraph(*id, visited, true))
+                    if (dst.layer->LowPrecision(type) == LowPrecisionTypePassive && IsLowPrecisionInSubGraph(type, *id, visited, true))
                         continue;
                     return false;
                 }
@@ -796,7 +796,7 @@ namespace Synet
         return true;
     }
 
-    void Network::Set8iInSubGraph(size_t current, IdSet& visited, bool back)
+    void Network::SetLowPrecisionInSubGraph(TensorType type, size_t current, IdSet& visited, bool back)
     {
         visited.insert(current);
         const Stage& stage = _stages[current];
@@ -804,15 +804,15 @@ namespace Synet
         for (size_t d = 0; d < param.dst().size(); ++d)
         {
             const String& name = param.dst()[d];
-            _tensors[_tensorId[name]]->SetType(TensorType8u);
+            _tensors[_tensorId[name]]->SetType(type);
             const IdSet& ids = _srcIds[name];
             for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
             {
                 if (visited.find(*id) != visited.end())
                     continue;
-                if (_stages[*id].layer->LowPrecision(TensorType8u) == LowPrecisionTypeActive)
+                if (_stages[*id].layer->LowPrecision(type) == LowPrecisionTypeActive)
                     continue;
-                Set8iInSubGraph(*id, visited, true);
+                SetLowPrecisionInSubGraph(type, *id, visited, true);
             }
         }
         if (back)
@@ -820,148 +820,30 @@ namespace Synet
             for (size_t s = 0; s < param.src().size(); ++s)
             {
                 const String& name = param.src()[s];
-                _tensors[_tensorId[name]]->SetType(TensorType8u);
+                _tensors[_tensorId[name]]->SetType(type);
                 const IdSet& ids = _dstIds[name];
                 for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
                 {
                     if (visited.find(*id) != visited.end())
                         continue;
-                    if (_stages[*id].layer->LowPrecision(TensorType8u) == LowPrecisionTypeActive)
+                    if (_stages[*id].layer->LowPrecision(type) == LowPrecisionTypeActive)
                         continue;
-                    Set8iInSubGraph(*id, visited, true);
+                    SetLowPrecisionInSubGraph(type, *id, visited, true);
                 }
             }
         }
     }
 
-    void Network::SetTensorType8i()
-    {
-        for (size_t s = 0; s < _stages.size(); ++s)
-        {
-            const Layer & layer = *_stages[s].layer;
-            if (layer.LowPrecision(TensorType8u) == LowPrecisionTypeActive)
-            {
-                IdSet checked, setted;
-                if (Is8iInSubGraph(s, checked, false))
-                    Set8iInSubGraph(s, setted, false);
-            }
-        }
-    }
-
-    bool Network::Is16bInSubGraph(size_t current, IdSet& visited, bool back)
-    {
-        visited.insert(current);
-        const Stage& stage = _stages[current];
-        const Layer& layer = *stage.layer;
-        if (layer._isBack)
-            return false;
-        const LayerParam& param = layer.Param();
-        if (param.type() == LayerTypeInput)
-            return false;
-        for (size_t d = 0; d < param.dst().size(); ++d)
-        {
-            const String& name = param.dst()[d];
-            const IdSet& ids = _srcIds[name];
-            for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
-            {
-                if (visited.find(*id) != visited.end())
-                    continue;
-                const Stage& dst = _stages[*id];
-                if (dst.layer->LowPrecision(TensorType16b) == LowPrecisionTypeActive)
-                    continue;
-                if (dst.layer->Param().type() == LayerTypePriorBox)
-                    continue;
-                if (dst.layer->LowPrecision(TensorType16b) == LowPrecisionTypePassive && Is16bInSubGraph(*id, visited, true))
-                    continue;
-                return false;
-            }
-        }
-        if (back)
-        {
-            for (size_t s = 0; s < param.src().size(); ++s)
-            {
-                const String& name = param.src()[s];
-                const IdSet& dstIds = _dstIds[name];
-                for (IdSet::const_iterator id = dstIds.begin(); id != dstIds.end(); ++id)
-                {
-                    if (visited.find(*id) != visited.end())
-                        continue;
-                    const Stage& src = _stages[*id];
-                    if (src.layer->LowPrecision(TensorType16b) == LowPrecisionTypeActive)
-                        continue;
-                    if (src.layer->Param().type() == LayerTypePriorBox)
-                        continue;
-                    if (src.layer->LowPrecision(TensorType16b) == LowPrecisionTypePassive && Is16bInSubGraph(*id, visited, true))
-                        continue;
-                    return false;
-                }
-                const IdSet& srcIds = _srcIds[name];
-                for (IdSet::const_iterator id = srcIds.begin(); id != srcIds.end(); ++id)
-                {
-                    if (visited.find(*id) != visited.end())
-                        continue;
-                    const Stage& dst = _stages[*id];
-                    if (dst.layer->LowPrecision(TensorType16b) == LowPrecisionTypeActive)
-                        continue;
-                    if (dst.layer->Param().type() == LayerTypePriorBox)
-                        continue;
-                    if (dst.layer->LowPrecision(TensorType16b) == LowPrecisionTypePassive && Is16bInSubGraph(*id, visited, true))
-                        continue;
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    void Network::Set16bInSubGraph(size_t current, IdSet& visited, bool back)
-    {
-        visited.insert(current);
-        const Stage& stage = _stages[current];
-        const LayerParam& param = stage.layer->Param();
-        for (size_t d = 0; d < param.dst().size(); ++d)
-        {
-            const String& name = param.dst()[d];
-            _tensors[_tensorId[name]]->SetType(TensorType16b);
-            const IdSet& ids = _srcIds[name];
-            for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
-            {
-                if (visited.find(*id) != visited.end())
-                    continue;
-                if (_stages[*id].layer->LowPrecision(TensorType16b) == LowPrecisionTypeActive)
-                    continue;
-                Set16bInSubGraph(*id, visited, true);
-            }
-        }
-        if (back)
-        {
-            for (size_t s = 0; s < param.src().size(); ++s)
-            {
-                const String& name = param.src()[s];
-                _tensors[_tensorId[name]]->SetType(TensorType16b);
-                const IdSet& ids = _dstIds[name];
-                for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
-                {
-                    if (visited.find(*id) != visited.end())
-                        continue;
-                    if (_stages[*id].layer->LowPrecision(TensorType16b) == LowPrecisionTypeActive)
-                        continue;
-                    Set16bInSubGraph(*id, visited, true);
-                }
-            }
-        }
-    }
-
-    void Network::SetTensorType16b()
+    void Network::SetLowPrecisionTensorType(TensorType type)
     {
         for (size_t s = 0; s < _stages.size(); ++s)
         {
             const Layer& layer = *_stages[s].layer;
-            if (layer.LowPrecision(TensorType16b) == LowPrecisionTypeActive)
+            if (layer.LowPrecision(type) == LowPrecisionTypeActive)
             {
                 IdSet checked, setted;
-                if (Is16bInSubGraph(s, checked, false))
-                    Set16bInSubGraph(s, setted, false);
+                if (IsLowPrecisionInSubGraph(type, s, checked, false))
+                    SetLowPrecisionInSubGraph(type, s, setted, false);
             }
         }
     }
