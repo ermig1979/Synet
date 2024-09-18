@@ -39,6 +39,7 @@ namespace Synet
         CPL_PARAM_VALUE(LowPrecisionType, addType, LowPrecisionTypeActive);
         CPL_PARAM_VALUE(LowPrecisionType, reluType, LowPrecisionTypePassive);
         CPL_PARAM_VALUE(Strings, exclude, Strings());
+        CPL_PARAM_VALUE(Strings, manualActive, Strings());
     };
 
     class Bf16OptSetter : public SynetUtils
@@ -54,6 +55,8 @@ namespace Synet
             if (!_param.enable())
                 return true;            
             if (!SetSimpleCase(network.layers()))
+                return false;
+            if (!SetManualActive(network.layers()))
                 return false;
             //if (!SetConvAddReluCase(network.layers()))
             //    return false;
@@ -104,6 +107,21 @@ namespace Synet
                     if (layer.convolution().group() == 1 && EffectiveSrcC(layer) >= _param.minSrcC() && layer.convolution().outputNum() >= _param.minDstC())
                         layer.lowPrecision().bf16Type() = LowPrecisionTypeActive;
                 }
+            }
+            return true;
+        }
+
+        bool SetManualActive(LayerParams& layers)
+        {
+            for (size_t i = 0; i < layers.size(); ++i)
+            {
+                const LayerParam & layer = layers[i];
+                bool set = false;
+                for (size_t m = 0; m < _param.manualActive().size() && !set; ++m)
+                    if (layer.name() == _param.manualActive()[m])
+                        set = true;
+                if(set)
+                    ((LayerParam&)layer).lowPrecision().bf16Type() = LowPrecisionTypeActive;
             }
             return true;
         }
