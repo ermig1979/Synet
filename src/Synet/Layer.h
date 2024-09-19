@@ -338,7 +338,7 @@ namespace Synet
         {
             switch (param.type())
             {
-            case TensorType32f: tensor.Reshape(TensorType32f, param.dim(), param.format(), 0); break;
+            case TensorType32f: tensor.Reshape(TensorType32f, param.dim(), param.format(), 0.0f); break;
             case TensorType32i: tensor.Reshape(TensorType32i, param.dim(), param.format(), 0); break;
             default:
                 assert(0);
