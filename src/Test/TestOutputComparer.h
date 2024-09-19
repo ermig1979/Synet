@@ -228,6 +228,20 @@ namespace Test
                             if (!Compare(_f, _s, Shp(n, c, y), d, failed, compType))
                                 return false;
             }
+            else if (compType == "sigmoid" && (_options.bf16 || !_options.comparePrecise))
+            {
+                Tensor _f, _s;
+                _f.Clone(f);
+                _s.Clone(s);
+                float _1 = 1.0;
+                SimdSynetSigmoid32f(f.Data<float>(), f.Size(), &_1, _f.Data<float>());
+                SimdSynetSigmoid32f(s.Data<float>(), s.Size(), &_1, _s.Data<float>());
+                for (size_t n = 0; n < _f.Axis(0); ++n)
+                    for (size_t c = 0; c < _f.Axis(1); ++c)
+                        for (size_t y = 0; y < _f.Axis(2); ++y)
+                            if (!Compare(_f, _s, Shp(n, c, y), d, failed, compType))
+                                return false;
+            }
             else
             {
                 for (size_t n = 0; n < f.Axis(0); ++n)
