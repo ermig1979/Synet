@@ -916,8 +916,8 @@ namespace Synet
             }
             if (l0.lowPrecision().bf16Type() != LowPrecisionTypeNone)
                 layer.lowPrecision().bf16Type() = l0.lowPrecision().bf16Type();
-            if (l1.lowPrecision().bf16Type() != LowPrecisionTypeNone)
-                layer.lowPrecision().bf16Type() = l1.lowPrecision().bf16Type();
+            if (l2.lowPrecision().bf16Type() != LowPrecisionTypeNone)
+                layer.lowPrecision().bf16Type() = l2.lowPrecision().bf16Type();
             index += 2;
             dst.push_back(layer);
             if (src.size() > index + 1 && method == QuantizationMethodUnknown && l0.lowPrecision().bf16Type() == LowPrecisionTypeNone)

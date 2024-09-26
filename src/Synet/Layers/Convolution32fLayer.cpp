@@ -52,7 +52,7 @@ namespace Synet
         if(src->GetType() != TensorType32f || dst->GetType() != TensorType32f)
             SYNET_ERROR("Convolution32fLayer supports only FP32 input and output!");
         dst->Reshape(TensorType32f, conv.DstShape(alg.batch), src->Format());
-        _convolution32f.Init(alg.batch, &conv, this->Param().convolution().quantizationLevel() == TensorType16b, this->Options().bf16RoundTest);
+        _convolution32f.Init(alg.batch, &conv);
         if (_convolution32f.Enable())
         {
             Layer::Extend32f(buf, 0, Shp(_convolution32f.ExternalBufferSize()), src->Format());

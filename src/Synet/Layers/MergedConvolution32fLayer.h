@@ -52,7 +52,5 @@ namespace Synet
         ConvolutionBiasActivationPtr _convolution[Detail::MCC_MAX];
 
         MergedConvolution32f _mergedConvolution32f;
-
-        bool Bf16() const;
     };
 }

@@ -47,7 +47,7 @@ namespace Synet
 #endif
         }
 
-        SYNET_INLINE void Init(size_t batch, const ConvParam * conv, bool bf16, bool bf16test)
+        SYNET_INLINE void Init(size_t batch, const ConvParam * conv)
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_batch != batch || _srcH != conv->srcH || _srcW != conv->srcW)
@@ -55,15 +55,7 @@ namespace Synet
                 _batch = batch, _srcH = conv->srcH, _srcW = conv->srcW;
                 if (_context)
                     ::SimdRelease(_context), _context = NULL;
-                SimdSynetCompatibilityType compatibility = SimdSynetCompatibilityDefault;
-                if (bf16)
-                {
-                    if(bf16test)
-                        compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility16bfSoft | SimdSynetCompatibilityFmaUse);
-                    else
-                        compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility16bfHard | SimdSynetCompatibilityFmaUse);
-                }
-                _context = ::SimdSynetConvolution32fInit(batch, (const SimdConvolutionParameters*)conv, compatibility);
+                _context = ::SimdSynetConvolution32fInit(batch, (const SimdConvolutionParameters*)conv);
             }
 #endif
         }

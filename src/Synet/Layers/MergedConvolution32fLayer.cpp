@@ -198,7 +198,7 @@ namespace Synet
         const ConvParam& back = a.conv[a.count - 1];
         dst->Reshape(TensorType32f, Shp(a.batch, back.dstH, back.dstW, back.dstC), src->Format());
 
-        _mergedConvolution32f.Init(a.batch, a.conv, a.count, a.add, Bf16(), this->Options().bf16RoundTest);
+        _mergedConvolution32f.Init(a.batch, a.conv, a.count, a.add);
         if (_mergedConvolution32f.Enable())
         {
             Layer::Extend32f(buf, 0, Shp(_mergedConvolution32f.ExternalBufferSize()));
@@ -242,16 +242,5 @@ namespace Synet
                 dst += a.dSize;
             }
         }
-    }
-
-    bool MergedConvolution32fLayer::Bf16() const
-    {
-        const MergedConvolutionParam& p = this->Param().mergedConvolution();
-        for (size_t c = 0; c < p.conv().size(); ++c)
-        {
-            if (p.conv()[c].quantizationLevel() == TensorType16b)
-                return true;
-        }
-        return false;
     }
 }

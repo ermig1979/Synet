@@ -677,6 +677,8 @@ namespace Synet
                         return false;
                     if (sp2->meta().alpha().type() == TensorType64i)
                         layer.gather().axis() = (int)sp2->meta().alpha().i64()[0];
+                    else if (sp2->meta().alpha().type() == TensorType32i)
+                        layer.gather().axis() = (int)sp2->meta().alpha().i32()[0];
                     else
                         return false;
                 }
