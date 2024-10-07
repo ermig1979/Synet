@@ -28,37 +28,45 @@
 
 namespace Synet
 {
-    namespace Detail
+    namespace Bf16
     {
-        union F32
+        union Bits
         {
-            SYNET_INLINE F32(float val) : f32{ val } {   }
-            SYNET_INLINE F32(uint32_t val) : u32{ val } {  }
-
             float f32;
             uint32_t u32;
+
+            SYNET_INLINE Bits(float val) : f32(val) { }
+            SYNET_INLINE Bits(uint32_t val) : u32(val) { }
         };
+
+        const int SHIFT = 16;
+        const uint32_t MASK = 0xFFFF0000;
+        const uint32_t ROUND = 0x00007FFF;
     }
 
-    SYNET_INLINE float RoundToBf16(float value)
+    SYNET_INLINE float RoundToBFloat16(float value)
     {
-        return Detail::F32((Detail::F32(value).u32 + 0x8000) & 0xFFFF0000).f32;
-    }
-
-    inline void RoundAsTo16(const float * src, size_t size, float * dst)
-    {
-        for (size_t i = 0; i < size; ++i)
-            dst[i] = RoundToBf16(src[i]);
-    }
-
-    SYNET_INLINE float BFloat16ToFloat32(uint16_t value)
-    {
-        return Detail::F32(uint32_t(value) << 16).f32;
+        uint32_t u32 = Bf16::Bits(value).u32;
+        uint32_t round = Bf16::ROUND + ((u32 >> Bf16::SHIFT) & 1);
+        return Bf16::Bits((u32 + round) & Bf16::MASK).f32;
     }
 
     SYNET_INLINE uint16_t Float32ToBFloat16(float value)
     {
-        return uint16_t((Detail::F32(value).u32 + 0x8000) >> 16);
+        uint32_t u32 = Bf16::Bits(value).u32;
+        uint32_t round = Bf16::ROUND + ((u32 >> Bf16::SHIFT) & 1);
+        return uint16_t((u32 + round) >> Bf16::SHIFT);
+    }
+
+    SYNET_INLINE float BFloat16ToFloat32(uint16_t value)
+    {
+        return Bf16::Bits(uint32_t(value) << Bf16::SHIFT).f32;
+    }
+
+    inline void RoundToBFloat16(const float * src, size_t size, float * dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = RoundToBFloat16(src[i]);
     }
 
     SYNET_INLINE bool BFloat16HardwareSupport()

@@ -730,10 +730,12 @@ namespace Synet
         }
     }
 
-    bool Network::CanIgnoreInSubGraph(TensorType type, const Layer* layer) const
+    bool Network::CanIgnoreInSubGraph(TensorType type, const Layer* layer, bool fromDst) const
     {
         const LayerParam& param = layer->Param();
         if (layer->LowPrecision(type) == LowPrecisionTypeActive)
+            return true;
+        if (!fromDst && layer->LowPrecision(type) == LowPrecisionTypeHybrid)
             return true;
         if (param.type() == LayerTypePriorBox)
             return true;
@@ -742,6 +744,11 @@ namespace Synet
         if (param.type() == LayerTypeMeta && param.meta().type() == MetaTypePack)
             return true;
         return false;
+    }
+
+    bool Network::ParseSubGraph(TensorType type, const Layer* layer) const
+    {
+        return layer->LowPrecision(type) == LowPrecisionTypePassive;
     }
 
     bool Network::IsLowPrecisionInSubGraph(TensorType type, size_t current, IdSet& visited, bool back)
@@ -763,9 +770,9 @@ namespace Synet
                 if (visited.find(*id) != visited.end())
                     continue;
                 const Stage& dst = _stages[*id];
-                if (CanIgnoreInSubGraph(type, dst.layer))
+                if (CanIgnoreInSubGraph(type, dst.layer, true))
                     continue;
-                if (dst.layer->LowPrecision(type) == LowPrecisionTypePassive && IsLowPrecisionInSubGraph(type, *id, visited, true))
+                if (ParseSubGraph(type, dst.layer) && IsLowPrecisionInSubGraph(type, *id, visited, true))
                     continue;
                 return false;
             }
@@ -781,9 +788,9 @@ namespace Synet
                     if (visited.find(*id) != visited.end())
                         continue;
                     const Stage& src = _stages[*id];
-                    if (CanIgnoreInSubGraph(type, src.layer))
+                    if (CanIgnoreInSubGraph(type, src.layer, false))
                         continue;
-                    if (src.layer->LowPrecision(type) == LowPrecisionTypePassive && IsLowPrecisionInSubGraph(type, *id, visited, true))
+                    if (ParseSubGraph(type, src.layer) && IsLowPrecisionInSubGraph(type, *id, visited, true))
                         continue;
                     return false;
                 }
@@ -793,9 +800,9 @@ namespace Synet
                     if (visited.find(*id) != visited.end())
                         continue;
                     const Stage& dst = _stages[*id];
-                    if (CanIgnoreInSubGraph(type, dst.layer))
+                    if (CanIgnoreInSubGraph(type, dst.layer, true))
                         continue;
-                    if (dst.layer->LowPrecision(type) == LowPrecisionTypePassive && IsLowPrecisionInSubGraph(type, *id, visited, true))
+                    if (ParseSubGraph(type, dst.layer) && IsLowPrecisionInSubGraph(type, *id, visited, true))
                         continue;
                     return false;
                 }
@@ -818,7 +825,7 @@ namespace Synet
             {
                 if (visited.find(*id) != visited.end())
                     continue;
-                if (CanIgnoreInSubGraph(type, _stages[*id].layer))
+                if (CanIgnoreInSubGraph(type, _stages[*id].layer, true))
                     continue;
                 SetLowPrecisionInSubGraph(type, *id, visited, true);
             }
@@ -834,7 +841,7 @@ namespace Synet
                 {
                     if (visited.find(*id) != visited.end())
                         continue;
-                    if (CanIgnoreInSubGraph(type, _stages[*id].layer))
+                    if (CanIgnoreInSubGraph(type, _stages[*id].layer, false))
                         continue;
                     SetLowPrecisionInSubGraph(type, *id, visited, true);
                 }

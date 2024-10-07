@@ -125,7 +125,7 @@ CPL_PARAM_ENUM1(Synet, LowPrecisionType,
     LowPrecisionTypeNone,
     LowPrecisionTypeInternal,
     LowPrecisionTypePassive,
-    LowPrecisionTypeHybride,
+    LowPrecisionTypeHybrid,
     LowPrecisionTypeActive);
 
 CPL_PARAM_ENUM1(Synet, BinaryOperationType,
