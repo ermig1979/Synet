@@ -33,7 +33,7 @@ namespace Synet
     LowPrecisionType Convolution16bLayer::LowPrecision(TensorType type) const
     {
         if (type == TensorType16b)
-            return LowPrecisionTypeActive;
+            return Param().lowPrecision().bf16Type();
         return LowPrecisionTypeNone;
     }
 

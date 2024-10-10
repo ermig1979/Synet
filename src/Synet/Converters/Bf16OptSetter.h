@@ -38,6 +38,7 @@ namespace Synet
         CPL_PARAM_VALUE(uint32_t, minDstC, 16);
         CPL_PARAM_VALUE(LowPrecisionType, addType, LowPrecisionTypeActive);
         CPL_PARAM_VALUE(LowPrecisionType, reluType, LowPrecisionTypePassive);
+        CPL_PARAM_VALUE(LowPrecisionType, depthwiseType, LowPrecisionTypeNone);
         CPL_PARAM_VALUE(Strings, exclude, Strings());
         CPL_PARAM_VALUE(Strings, manualActive, Strings());
     };
@@ -85,6 +86,8 @@ namespace Synet
                 {
                     if(layer.convolution().group() == 1 && EffectiveSrcC(layer) >= _param.minSrcC() && layer.convolution().outputNum() >= _param.minDstC())
                         layer.lowPrecision().bf16Type() = LowPrecisionTypeActive;
+                    else if (IsDwepthwiseNhwc(layer) && EffectiveSrcC(layer) >= _param.minSrcC() && layer.convolution().outputNum() >= _param.minDstC())
+                        layer.lowPrecision().bf16Type() = _param.depthwiseType();
                 }
                 else if (layer.type() == LayerTypeInnerProduct)
                 {
@@ -197,6 +200,12 @@ namespace Synet
                     return weight.dim()[1] * layer.convolution().kernel()[0] * layer.convolution().kernel()[1];
             }
             return 0;
+        }
+
+        size_t IsDwepthwiseNhwc(const LayerParam& layer)
+        {
+            return layer.type() == LayerTypeConvolution && layer.weight()[0].format() == TensorFormatNhwc &&
+                layer.convolution().outputNum() == layer.convolution().group();
         }
     };
 }

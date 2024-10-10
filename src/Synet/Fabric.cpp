@@ -110,14 +110,6 @@ namespace Synet
             return param.conv()[0].quantizationLevel() == TensorType8i || param.conv()[1].quantizationLevel() == TensorType8i;
     }
 
-    inline bool Use16b(const MergedConvolutionParam& param)
-    {
-        if (param.conv().size() == 3)
-            return param.conv()[0].quantizationLevel() == TensorType16b && param.conv()[2].quantizationLevel() == TensorType16b;
-        else
-            return param.conv()[0].quantizationLevel() == TensorType16b || param.conv()[1].quantizationLevel() == TensorType16b;
-    }
-
     Layer* Fabric::Create(const LayerParam & param, Context* context, QuantizationMethod method)
     {
         switch (param.type())
@@ -135,7 +127,7 @@ namespace Synet
         case LayerTypeConvolution:
             if (param.convolution().quantizationLevel() == TensorType8i)
                 return new Convolution8iLayer(param, context, method);
-            else if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
+            else if (context->options.BFloat16Enable() && (param.lowPrecision().bf16Type() == LowPrecisionTypeActive || param.lowPrecision().bf16Type() == LowPrecisionTypeHybrid))
                 return new Convolution16bLayer(param, context);
             else
                 return new Convolution32fLayer(param, context);
