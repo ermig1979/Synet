@@ -53,13 +53,36 @@ namespace Synet
 
     bool PadLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 2 || dst.size() != 1)
-            SYNET_ERROR("PadLayer supports only 2 inputs and 1 output!");
+        if ((src.size() != 1 && src.size() != 2) || dst.size() != 1)
+            SYNET_ERROR("PadLayer supports only 1-2 inputs and 1 output!");
+
+        const PadParam& pad = this->Param().pad();
 
         _dims = src[0]->Count();
         _padB.resize(_dims);
         _padE.resize(_dims);
-        if (src[1]->GetType() == TensorType64i)
+        if (src.size() == 1)
+        {
+            if (src[0]->Count() * 2 != pad.pads().size())
+                SYNET_ERROR("PadLayer parameter pad().pads() has wrong size: " << pad.pads().size() << " instead of " << src[0]->Count() * 2 << " !");
+            const int64_t* raw = pad.pads().data();
+            for (size_t i = 0; i < _dims; ++i)
+            {
+                _padB[i] = (size_t)raw[0 + i];
+                _padE[i] = (size_t)raw[_dims + i];
+            }
+            if (src[0]->Format() == TensorFormatNhwc)
+            {
+                if (_dims == 4)
+                {
+                    _padB = Shp(_padB[0], _padB[2], _padB[3], _padB[1]);
+                    _padE = Shp(_padB[0], _padE[2], _padE[3], _padE[1]);
+                }
+                else
+                    SYNET_ERROR("PadLayer can process only 4D NHWC tensor!");
+            }
+        }
+        else if (src[1]->GetType() == TensorType64i)
         {
             if (src[0]->Count() * 2 != src[1]->Size())
                 SYNET_ERROR("PadLayer src[1] has wrong size: " << src[1]->Size() << " instead of " << src[0]->Count() * 2 << " !");
@@ -85,21 +108,31 @@ namespace Synet
         Shape dstShape = src[0]->Shape();
         for (size_t i = 0; i < _dims; ++i)
             dstShape[i] += _padB[i] + _padE[i];
-        _mode = this->Param().pad().mode();
+        _mode = pad.mode();
         if(_mode != PadModeConstant)
             SYNET_ERROR("PadLayer supports only: " << Cpl::ToStr(_mode) << " mode!");
         if (_dims != 4)
             SYNET_ERROR("PadLayer can process only 4D tensor!");
-        _type = src[0]->GetType();
-        switch (_type)
+        if (dstShape == src[0]->Shape())
         {
-        case TensorType32f:
-            dst[0]->Reshape(_type, dstShape, src[0]->Format(), 0.0f);
-            break;
-        default:
-            SYNET_ERROR("PadLayer does not support: " << Cpl::ToStr(_type) << " src[0] type!");
+            dst[0]->Share(*src[0]);
+            _const = true;
         }
-        this->UsePerfStat();
+        else
+        {
+            _type = src[0]->GetType();
+            switch (_type)
+            {
+            case TensorType32f:
+                dst[0]->Reshape(_type, dstShape, src[0]->Format(), 0.0f);
+                break;
+            default:
+                SYNET_ERROR("PadLayer does not support: " << Cpl::ToStr(_type) << " src[0] type!");
+            }
+            _const = false;
+            this->UsePerfStat();
+        }
+
         return true;
     }
 

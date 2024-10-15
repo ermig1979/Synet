@@ -539,6 +539,8 @@ namespace Synet
     struct PadParam
     {
         CPL_PARAM_VALUE(PadMode, mode, PadModeConstant);
+        CPL_PARAM_VALUE(Longs, pads, Longs());
+        CPL_PARAM_STRUCT(TensorParam, value);
     };
 
     struct PermuteParam

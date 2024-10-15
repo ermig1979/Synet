@@ -1630,7 +1630,7 @@ namespace Synet
 
         bool ConvertPadNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
-            if (!CheckSourceNumber(layer, 2, 3))
+            if (!CheckSourceNumber(layer, 1, 3))
                 return false;
 
             layer.type() = Synet::LayerTypePad;
@@ -1647,6 +1647,18 @@ namespace Synet
                 layer.pad().mode() = PadModeWrap;
             else
                 SYNET_ERROR("Unknown type of pad mode: " << mode << " !");
+            
+            if (layer.src().size() > 1)
+            {
+                const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+                if (src1 == NULL || src1->type() != LayerTypeMeta)
+                    return false;
+            }  
+            else
+            {
+                if (!ConvertAtrributeInts(node, "pads", layer.pad().pads()))
+                    return false;
+            }
 
             return true;
         }
