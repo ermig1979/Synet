@@ -77,7 +77,7 @@ namespace Synet
 
     bool EltwiseLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (_src.size() < 2 || dst.size() != 1)
+        if (src.size() < 2 || dst.size() != 1)
             SYNET_ERROR("EltwiseLayer supports 2 or more inputs and 1 output!");
         const EltwiseParam & param = this->Param().eltwise();
         if (param.coefficients().size() != 0 && param.coefficients().size() != src.size())

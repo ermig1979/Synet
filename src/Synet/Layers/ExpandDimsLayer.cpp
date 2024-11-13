@@ -38,8 +38,8 @@ namespace Synet
 
     bool ExpandDimsLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 1 || dst.size() != 1)
-            SYNET_ERROR("ExpandDimsLayer supports 1 input and 1 output!");
+        if (src.size() > 2 || dst.size() != 1)
+            SYNET_ERROR("ExpandDimsLayer supports 1 or 2 inputs and 1 output!");
         if (src[0] == dst[0])
             SYNET_ERROR("ExpandDimsLayer input and output can't be the same!");
         const ExpandDimsParam & param = this->Param().expandDims();
