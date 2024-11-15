@@ -119,7 +119,7 @@ def main():
 	lower = [0.0, 0.0, 0.0]
 	upper = [255.0, 255.0, 255.0]
 	input = network.Src(0)
-	Simd.SynetSetInput(resized, lower, upper, input.Data(), shape[1], input.Format())
+	Simd.SynetSetInput(resized, lower, upper, input.Data(), shape[1], input.Format(), False)
 	print("OK.")	
 	
 	network.Forward()

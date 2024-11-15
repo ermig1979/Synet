@@ -321,24 +321,24 @@ namespace Synet
     }
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-    bool Network::SetInput(const View & view, float lower, float upper)
+    bool Network::SetInput(const View & view, float lower, float upper, bool rgb)
     {
-        return Synet::SetInput(*this, Views({ view }), Floats({ lower }), Floats({ upper }));
+        return Synet::SetInput(*this, Views({ view }), Floats({ lower }), Floats({ upper }), rgb);
     }
 
-    bool Network::SetInput(const View & view, const Floats & lower, const Floats & upper)
+    bool Network::SetInput(const View & view, const Floats & lower, const Floats & upper, bool rgb)
     {
-        return Synet::SetInput(*this, Views({ view }), lower, upper);
+        return Synet::SetInput(*this, Views({ view }), lower, upper, rgb);
     }
 
-    bool Network::SetInput(const Views & views, float lower, float upper)
+    bool Network::SetInput(const Views & views, float lower, float upper, bool rgb)
     {
-        return Synet::SetInput(*this, views, Floats({ lower }), Floats({ upper }));
+        return Synet::SetInput(*this, views, Floats({ lower }), Floats({ upper }), rgb);
     }
 
-    bool Network::SetInput(const Views & views, const Floats & lower, const Floats & upper)
+    bool Network::SetInput(const Views & views, const Floats & lower, const Floats & upper, bool rgb)
     {
-        return Synet::SetInput(*this, views, lower, upper);
+        return Synet::SetInput(*this, views, lower, upper, rgb);
     }
 #endif
 

@@ -368,9 +368,7 @@ namespace Test
                                 View resized(Size(shape[3], shape[2]), converted.format);
                                 ResizeImage(converted, resized);
 
-                                if (_param().order() == "rgb" && shape[1] == 3)
-                                    (View::Format&)resized.format = View::Rgb24;
-                                Simd::SynetSetInput(resized, lower.data(), upper.data(), input, shape[1], SimdTensorFormatNchw);
+                                Simd::SynetSetInput(resized, lower.data(), upper.data(), input, shape[1], SimdTensorFormatNchw, _param().order() == "rgb");
                                 input += shape[1] * shape[2] * shape[3];
                             }
                             else if (shape.size() == 2)

@@ -80,13 +80,13 @@ namespace Synet
         Shape NchwShape() const;
 
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-        bool SetInput(const View& view, float lower, float upper);
+        bool SetInput(const View& view, float lower, float upper, bool rgb = false);
 
-        bool SetInput(const View& view, const Floats& lower, const Floats& upper);
+        bool SetInput(const View& view, const Floats& lower, const Floats& upper, bool rgb = false);
 
-        bool SetInput(const Views& views, float lower, float upper);
+        bool SetInput(const Views& views, float lower, float upper, bool rgb = false);
 
-        bool SetInput(const Views& views, const Floats& lower, const Floats& upper);
+        bool SetInput(const Views& views, const Floats& lower, const Floats& upper, bool rgb = false);
 #endif
 
         bool GetMetaConst(const String& name, Tensor& value) const;
