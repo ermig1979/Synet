@@ -11,6 +11,7 @@ if [ "${TEST_MODE}" == "p" ]; then TEST_MODE="precision"; fi
 if [ "${TEST_MODE}" == "q" ]; then TEST_MODE="quantization"; fi
 if [ "${TEST_MODE}" == "s" ]; then TEST_MODE="stability"; fi
 if [ "${TEST_MODE}" == "op" ]; then TEST_MODE="optimizer"; fi
+if [ "${TEST_MODE}" == "b" ]; then TEST_MODE="bf16"; fi
 if [ "${TEST_MODE}" == "u" ]; then TEST_MODE="use_samples"; fi
 
 BUILD_DIR=build

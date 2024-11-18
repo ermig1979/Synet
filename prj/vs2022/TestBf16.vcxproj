@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="Prop.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{74C9BEB2-2C87-4833-8438-33DAF0705C50}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>TestOptimizer</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_CONSOLE;SYNET_TEST_FIRST_RUN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>
+		%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\3rd\Simd\prj\vs2022\Simd.vcxproj">
+      <Project>{c809d7a3-6c52-4e36-8582-00ced929317d}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Synet.vcxproj">
+      <Project>{c809d7a3-6c52-4e36-8582-00ced929317f}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\Test\TestBf16.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\Test\TestCommon.h" />
+    <ClInclude Include="..\..\src\Test\TestCompare.h" />
+    <ClInclude Include="..\..\src\Test\TestNetwork.h" />
+    <ClInclude Include="..\..\src\Test\TestOptions.h" />
+    <ClInclude Include="..\..\src\Test\TestOutputComparer.h" />
+    <ClInclude Include="..\..\src\Test\TestParams.h" />
+    <ClInclude Include="..\..\src\Test\TestPerformance.h" />
+    <ClInclude Include="..\..\src\Test\TestRegionDecoder.h" />
+    <ClInclude Include="..\..\src\Test\TestReport.h" />
+    <ClInclude Include="..\..\src\Test\TestSynet.h" />
+    <ClInclude Include="..\..\src\Test\TestUtils.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>
