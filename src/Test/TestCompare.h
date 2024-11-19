@@ -176,7 +176,7 @@ namespace Test
                     SYNET_ERROR("File '" << weight << "' is not exist!");
             }
             Network::Options options(_options.outputDirectory, _options.workThreads, _options.consoleSilence, _options.batchSize, 
-                _options.performanceLog, _options.debugPrint, _options.regionThreshold, _options.bf16);
+                (_options.performanceLog & network.PerfLogMask()), _options.debugPrint, _options.regionThreshold, _options.bf16);
             if (!network.Init(model, weight, options, _param()))
                 SYNET_ERROR("Can't load " << network.Name() << " from '" << model << "' and '" << weight << "' !");
             Shape shape = network.SrcShape(0);

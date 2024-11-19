@@ -55,6 +55,11 @@ namespace Test
         {
             return "fp32";
         }
+
+        virtual int PerfLogMask() const
+        {
+            return 0;
+        }
     };
 
     struct SynetBf16Network : public SynetNetwork

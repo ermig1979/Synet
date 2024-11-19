@@ -73,6 +73,7 @@ namespace Test
         virtual void DebugPrint(const Tensors& src, std::ostream & os, int flag, int first, int last, int precision) { }
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const { return Regions(); }
         virtual size_t MemoryUsage() const { return 0; }
+        virtual int PerfLogMask() const { return -1; }
 
     protected:
         Tensors _output;
