@@ -220,7 +220,8 @@ namespace Test
 		String TestName(const String & path)
 		{
 			String name = GetNameByPath(path);
-			size_t beg = name.find("_") + 1, end = name.rfind(String("_t"));
+			size_t beg = 1;// name.find("_") + 1;
+			size_t end = name.rfind(String("_t"));
 			return name.substr(beg, end - beg);
 		}
 
