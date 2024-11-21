@@ -75,6 +75,11 @@ namespace Synet
 
         //-------------------------------------------------------------------------------------------------
 
+        Shape AtLeast2D(const Shape& shape) const
+        {
+            return shape.size() > 1 ? shape : Shp(shape[0], shape[0]);
+        }
+
         bool SetSimpleCase(LayerParams& layers)
         {
             for (size_t i = 0; i < layers.size(); ++i)
@@ -82,7 +87,7 @@ namespace Synet
                 LayerParam &layer = layers[i];
                 if (IsExclude(layers, layer.name()))
                     continue;
-                if (layer.type() == LayerTypeConvolution && (layer.weight()[0].format() == TensorFormatNhwc || (layer.convolution().kernel()[0] == 1 && layer.convolution().kernel()[1] == 1)))
+                if (layer.type() == LayerTypeConvolution && (layer.weight()[0].format() == TensorFormatNhwc || AtLeast2D(layer.convolution().kernel()) == Shp(1, 1)))
                 {
                     if(layer.convolution().group() == 1 && EffectiveSrcC(layer) >= _param.minSrcC() && layer.convolution().outputNum() >= _param.minDstC())
                         layer.lowPrecision().bf16Type() = LowPrecisionTypeActive;
@@ -166,7 +171,7 @@ namespace Synet
             {
                 const WeightParam& weight = layer.weight()[0];
                 if (weight.format() == TensorFormatNhwc)
-                    return weight.dim()[2] * layer.convolution().kernel()[0] * layer.convolution().kernel()[1];
+                    return weight.dim()[2] * AtLeast2D(layer.convolution().kernel())[0] * AtLeast2D(layer.convolution().kernel())[1];
                 else
                     return weight.dim()[1];
             }
@@ -194,10 +199,12 @@ namespace Synet
             if (layer.type() == LayerTypeDeconvolution)
             {
                 const WeightParam& weight = layer.weight()[0];
+                const Shape& kernel = AtLeast2D(layer.convolution().kernel());
+                size_t kernelArea = kernel[0] * kernel[1];
                 if (weight.format() == TensorFormatNhwc)
-                    return weight.dim()[3] * layer.convolution().kernel()[0] * layer.convolution().kernel()[1];
+                    return weight.dim()[3] * kernelArea;
                 else
-                    return weight.dim()[1] * layer.convolution().kernel()[0] * layer.convolution().kernel()[1];
+                    return weight.dim()[1] * kernelArea;
             }
             return 0;
         }

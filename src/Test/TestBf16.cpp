@@ -41,12 +41,12 @@ namespace Test
         Test::TestParamHolder param;
         if (FileExists(options.testParam) && !param.Load(options.testParam))
             SYNET_ERROR("Can't load file '" << options.testParam << "' !");
-        String deopt = Test::MakePath(options.outputDirectory, "deopt.xml");
-        if (!Synet::DeoptimizeSynetModel(options.firstModel, deopt))
+        String deoptPath = Test::MakePath(options.outputDirectory, "deopt.xml");
+        if (!CreateOutputDirectory(deoptPath) || !Synet::DeoptimizeSynetModel(options.firstModel, deoptPath))
             SYNET_ERROR("Can't perform model deoptimizations!");
         param().optimizer().bf16().enable() = true;
         param().optimizer().saveUnoptimized() = options.saveUnoptimized;
-        return Synet::OptimizeSynetModel(deopt, options.firstWeight, options.secondModel, options.secondWeight, param().optimizer());
+        return Synet::OptimizeSynetModel(deoptPath, options.firstWeight, options.secondModel, options.secondWeight, param().optimizer());
     }
 
     struct SynetFp32Network : public SynetNetwork
