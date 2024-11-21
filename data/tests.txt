@@ -11,3 +11,5 @@ inference_engine root test_021f persons 0 1
 
 onnx root test_000 face 1 1
 onnx root test_001 faces 0 1
+
+synet root dn_test_000 human_vehicle 1 1

@@ -202,7 +202,7 @@ def RunTest(context, test, batch):
 		if result.returncode != 0 :
 			return context.Error("Error in test {0} !".format(log))
 		
-	cmd = "{0} -m=compare -e=3 {1} -rn=0 -et=10.0 -wt=1 -tt={2} -ie=10 -be=10 -tf=1 -bs={3} -ct={4} -cs=1 -ln={5} -bf={6} -cp={7}".format(binTest, pathArgs, args.threads, batch, args.bf16Threshold, log, int(args.bf16 == True), args.comparePrecise)
+	cmd = "{0} -m=compare -e=3 {1} -rn=0 -et=10.0 -wt=1 -tt={2} -ie=10 -be=10 -tf=1 -bs={3} -ct={4} -cs=1 -ln={5} -bf={6} -cp={7}".format(binTest, pathArgs, args.threads, batch, args.bf16Threshold, log, args.bf16, args.comparePrecise)
 	result = subprocess.run(cmd.split())
 	if result.returncode != 0 :
 		return context.Error("Error in test {0} !".format(log))
@@ -233,7 +233,7 @@ def main():
 	parser.add_argument("-f", "--framework", help="Framework to test. It can be i(inference_engine), o(onnx), s(synet), or a(all).", required=False, type=str, default="o", choices=["i", "o", "s", "a"])
 	parser.add_argument("-i", "--include", help="Include tests filter.", required=False, default=[], action="append")
 	parser.add_argument("-e", "--exclude", help="Exclude tests filter.", required=False, default=[], action="append")
-	parser.add_argument("-bf", "--bf16", help="Run with BF16 emulation.", required=False, type=bool, default=False)
+	parser.add_argument("-bf", "--bf16", help="Run with BF16 emulation.", required=False, type=int, default=0, choices=[0, 1])
 	parser.add_argument("-bt", "--bf16Threshold", help="Threshold for BF16 tests.", required=False, type=float, default=0.011654)
 	parser.add_argument("-cp", "--comparePrecise", help="Compare output precise (element-wise).", required=False, type=bool, default=True)
 	context = Context(parser.parse_args())

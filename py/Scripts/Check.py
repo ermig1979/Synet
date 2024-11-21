@@ -21,6 +21,29 @@ class Test():
 			self.bf16 = "0"
 		self.path = ""
 		
+	def TestNum(self) -> int :
+		if self.framework == "synet" :
+			if self.bf16 == "1" and self.batch == "0" :
+				return 1
+			elif self.bf16 == "1" and self.batch == "1" :
+				return 2
+			else :
+				return 0
+		else:
+			if self.batch == "1" and self.bf16 == "1":
+				return 5
+			elif self.batch == "1" and self.bf16 == "0" :
+				return 3
+			elif self.batch == "0" and self.bf16 == "1" :
+				return 3
+			else :
+				return 2
+	def Bin(self) -> str :
+		if self.framework == "synet" :
+			return "test_bf16"
+		else :
+			return "test_" + self.framework
+		
 ###################################################################################################
 
 class Context():
@@ -95,7 +118,7 @@ def SetTestList(context : Context):
 			continue
 		test = Test(vals, args)
 		
-		if not (test.framework == "onnx" or test.framework == "inference_engine") :
+		if not (test.framework == "onnx" or test.framework == "inference_engine" or test.framework == "synet") :
 			return context.Error("Unknown framework: {0} !".format(test.framework))
 		
 		test.path = test.framework
@@ -119,14 +142,7 @@ def SetTestList(context : Context):
 			if skip :
 				continue
 		
-		if test.batch == "1" and test.bf16 == "1":
-			context.total += 5
-		elif test.batch == "1" and test.bf16 == "0" :
-			context.total += 3
-		elif test.batch == "0" and test.bf16 == "1" :
-			context.total += 3
-		else :
-			context.total += 2
+		context.total += test.TestNum()
 		context.tests.append(test)
 	listFile.close()
 	if len(context.tests) == 0 :
@@ -150,7 +166,7 @@ def RunTest(context, test, format, batch, bf16):
 	if context.error :
 		return False
 	args = context.args
-	binPath = args.bin + os.path.sep + "test_" + test.framework
+	binPath = args.bin + os.path.sep + test.Bin()
 	if not os.path.isfile(binPath):
 		return context.Error("Binary '{0}' is not exist!".format(binPath))
 	
@@ -187,6 +203,8 @@ def RunTest(context, test, format, batch, bf16):
 		pathArgs += "-fm={0}/other.xml -fw={0}/other.bin".format(testPath)
 	elif test.framework == "onnx" :
 		pathArgs += "-fw={0}/other.onnx".format(testPath)
+	elif test.framework == "synet" :
+		pathArgs += "-fm={0}/synet1.xml -fw={0}/synet1.bin".format(testPath)
 	if bf16 == "1" :
 		pathArgs += " -sm={0}/synet2.xml -sw={0}/synet2.bin".format(testPath)
 	else :
@@ -223,13 +241,14 @@ def RunTest(context, test, format, batch, bf16):
 def SingleThreadRun(context, beg, end):
 	for i in range(beg, end):
 		test = context.tests[i]
-		if not RunTest(context, test, 0, 1, "0") :
-			return
-		if not RunTest(context, test, 1, 1, "0") :
-			return
-		if test.batch == "1" :
-			if not RunTest(context, test, 1, 2, "0") :
+		if test.framework != "synet" :
+			if not RunTest(context, test, 0, 1, "0") :
 				return
+			if not RunTest(context, test, 1, 1, "0") :
+				return
+			if test.batch == "1" :
+				if not RunTest(context, test, 1, 2, "0") :
+					return
 		if test.bf16 == "1" :
 			if not RunTest(context, test, 1, 1, "1") :
 				return
