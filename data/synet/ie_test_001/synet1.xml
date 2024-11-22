@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network>
+	<version>1</version>
+	<name>age_gender</name>
+	<layers>
+		<item>
+			<type>Input</type>
+			<name>data</name>
+			<dst>data</dst>
+			<input>
+				<shape>
+					<item>
+						<dim>1 62 62 3</dim>
+						<format>Nhwc</format>
+					</item>
+				</shape>
+			</input>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv1</name>
+			<src>data</src>
+			<dst>conv1</dst>
+			<weight>
+				<item>
+					<dim>3 3 3 48</dim>
+					<format>Nhwc</format>
+					<offset>0</offset>
+					<size>5184</size>
+				</item>
+				<item>
+					<dim>48</dim>
+					<offset>5184</offset>
+					<size>192</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>48</outputNum>
+				<kernel>3 3</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Pooling</type>
+			<name>pool1</name>
+			<src>conv1</src>
+			<dst>pool1</dst>
+			<pooling>
+				<method>Max</method>
+				<kernel>3 3</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>2 2</stride>
+			</pooling>
+		</item>
+		<item>
+			<type>Relu</type>
+			<name>relu1</name>
+			<src>pool1</src>
+			<dst>pool1</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv2</name>
+			<src>pool1</src>
+			<dst>conv2</dst>
+			<weight>
+				<item>
+					<dim>3 3 48 64</dim>
+					<format>Nhwc</format>
+					<offset>5376</offset>
+					<size>110592</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>115968</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>3 3</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Pooling</type>
+			<name>pool2</name>
+			<src>conv2</src>
+			<dst>pool2</dst>
+			<pooling>
+				<method>Max</method>
+				<kernel>3 3</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>2 2</stride>
+			</pooling>
+		</item>
+		<item>
+			<type>Relu</type>
+			<name>relu2</name>
+			<src>pool2</src>
+			<dst>pool2</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv3</name>
+			<src>pool2</src>
+			<dst>conv3</dst>
+			<weight>
+				<item>
+					<dim>3 3 64 96</dim>
+					<format>Nhwc</format>
+					<offset>116224</offset>
+					<size>221184</size>
+				</item>
+				<item>
+					<dim>96</dim>
+					<offset>337408</offset>
+					<size>384</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>96</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Pooling</type>
+			<name>pool3</name>
+			<src>conv3</src>
+			<dst>pool3</dst>
+			<pooling>
+				<method>Max</method>
+				<kernel>3 3</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>2 2</stride>
+			</pooling>
+		</item>
+		<item>
+			<type>Relu</type>
+			<name>relu3</name>
+			<src>pool3</src>
+			<dst>pool3</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv4</name>
+			<src>pool3</src>
+			<dst>conv4</dst>
+			<weight>
+				<item>
+					<dim>3 3 96 192</dim>
+					<format>Nhwc</format>
+					<offset>337792</offset>
+					<size>663552</size>
+				</item>
+				<item>
+					<dim>192</dim>
+					<offset>1001344</offset>
+					<size>768</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>192</outputNum>
+				<kernel>3 3</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv5</name>
+			<src>conv4</src>
+			<dst>conv5</dst>
+			<weight>
+				<item>
+					<dim>3 3 192 256</dim>
+					<format>Nhwc</format>
+					<offset>1002112</offset>
+					<size>1769472</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>2771584</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>256</outputNum>
+				<kernel>3 3</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>age_conv1</name>
+			<src>conv5</src>
+			<dst>age_conv1</dst>
+			<weight>
+				<item>
+					<dim>3 3 256 256</dim>
+					<format>Nhwc</format>
+					<offset>2772608</offset>
+					<size>2359296</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>5131904</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>256</outputNum>
+				<kernel>3 3</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>age_conv2</name>
+			<src>age_conv1</src>
+			<dst>age_conv2</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 512</dim>
+					<format>Nhwc</format>
+					<offset>5132928</offset>
+					<size>524288</size>
+				</item>
+				<item>
+					<dim>512</dim>
+					<offset>5657216</offset>
+					<size>2048</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>512</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>age_conv3</name>
+			<src>age_conv2</src>
+			<dst>age_conv3</dst>
+			<weight>
+				<item>
+					<dim>1 1 512 1</dim>
+					<format>Nhwc</format>
+					<offset>5659264</offset>
+					<size>2048</size>
+				</item>
+				<item>
+					<dim>1</dim>
+					<offset>5661312</offset>
+					<size>4</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>1</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>gender_conv1</name>
+			<src>conv5</src>
+			<dst>gender_conv1</dst>
+			<weight>
+				<item>
+					<dim>3 3 256 256</dim>
+					<format>Nhwc</format>
+					<offset>5661316</offset>
+					<size>2359296</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>8020612</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>256</outputNum>
+				<kernel>3 3</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>gender_conv2</name>
+			<src>gender_conv1</src>
+			<dst>gender_conv2</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 512</dim>
+					<format>Nhwc</format>
+					<offset>8021636</offset>
+					<size>524288</size>
+				</item>
+				<item>
+					<dim>512</dim>
+					<offset>8545924</offset>
+					<size>2048</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>512</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>gender_conv3</name>
+			<src>gender_conv2</src>
+			<dst>gender_conv3</dst>
+			<weight>
+				<item>
+					<dim>1 1 512 2</dim>
+					<format>Nhwc</format>
+					<offset>8547972</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>2</dim>
+					<offset>8552068</offset>
+					<size>8</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>2</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Softmax</type>
+			<name>prob</name>
+			<src>gender_conv3</src>
+			<dst>prob</dst>
+			<softmax>
+				<axis>3</axis>
+			</softmax>
+		</item>
+	</layers>
+</network>
+
