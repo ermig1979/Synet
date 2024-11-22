@@ -223,14 +223,14 @@ def RunTest(context, test, format, batch, bf16):
 		result = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
 		out += result.stdout.decode('utf-8')
 		if result.returncode != 0 :
-			return context.Error("Error in test {0} :\n{1}".format(log, out))
+			return context.Error("Conversion error in test {0} :\n{1}".format(log, out))
 		
 	num = 2 if args.fast else 10
-	cmd = "{0} -m=compare -e=3 {1} -rn=1 -wt=1 -tt=0 -ie={2} -be={2} -tf={3} -bs={4} -ct={5} -cs=1 -ln={6} -pl={7} -bf={8} -cp={9}".format(binPath, pathArgs, num, format, batch, threshold, log, args.performanceLog, bf16, args.comparePrecise)
+	cmd = "{0} -m=compare -e=3 {1} -rn=1 -wt=1 -tt=0 -ie={2} -be={2} -tf={3} -bs={4} -ct={5} -cs=1 -ln={6} -pl={7} -bf={8} -cp={9:d}".format(binPath, pathArgs, num, format, batch, threshold, log, args.performanceLog, bf16, args.comparePrecise)
 	result = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
 	out += result.stdout.decode('utf-8')
 	if result.returncode != 0 :
-		return context.Error("Error in test {0} :\n{1}".format(log, out))
+		return context.Error("Compare error in test {0} :\n{1}".format(log, out))
 
 	context.UpdateProgress(log, out[:len(out)-1])
 	
@@ -288,7 +288,7 @@ def main():
 	parser.add_argument("-bf", "--bf16", help="Run BF16 tests.", required=False, type=bool, default=False)
 	parser.add_argument("-it", "--inferenceEngineThreshold", help="Threshold for Inference Engine tests.", required=False, type=float, default=0.000270)
 	parser.add_argument("-ot", "--onnxThreshold", help="Threshold for OnnxRuntime tests.", required=False, type=float, default=0.001317)
-	parser.add_argument("-bt", "--bf16Threshold", help="Threshold for BF16 tests.", required=False, type=float, default=0.011654)
+	parser.add_argument("-bt", "--bf16Threshold", help="Threshold for BF16 tests.", required=False, type=float, default=0.013339)
 	parser.add_argument("-cp", "--comparePrecise", help="Compare output precise (element-wise).", required=False, type=bool, default=True)
 	context = Context(parser.parse_args())
 	

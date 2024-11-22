@@ -75,6 +75,9 @@ int main(int argc, char* argv[])
 {
     Test::Options options(argc, argv);
 
+    Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
+    Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
+
     if (options.mode == "convert")
     {
         std::cout << "Convert Synet FP32 model to BF16: ";
