@@ -15,3 +15,4 @@ onnx root test_001 faces 0 1
 synet root dn_test_000 human_vehicle 1 1
 synet root ie_test_000 human_vehicle 1 1
 synet root ie_test_001 face 1 1
+synet root ie_test_002 faces 0 1
