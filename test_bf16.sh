@@ -80,6 +80,7 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 #TEST synet "" dn_test_000 human_vehicle 50 0 10 0 000 2
 #TEST synet "" ie_test_000 human_vehicle 500 0 1 1 000 2
 #TEST synet "" ie_test_001 face 500 0 10 1 000 2
-TEST synet "" ie_test_002 faces 20 1 1 1 000 2
+#TEST synet "" ie_test_002 faces 20 1 1 1 000 2
+TEST synet "" ie_test_003f faces 50 1 1 1 000 2
 
 exit
