@@ -166,6 +166,11 @@ namespace Synet
 					LayerParam act;
 					switch (merg.conv().back().activationType())
 					{
+					case ActivationFunctionTypeRestrictRange:
+						act.type() = LayerTypeRestrictRange;
+						act.restrictRange().lower() = merg.conv().back().activationParam0();
+						act.restrictRange().upper() = merg.conv().back().activationParam1();
+						break;
 					case ActivationFunctionTypeElu:
 						act.type() = LayerTypeElu;
 						act.elu().alpha() = merg.conv().back().activationParam0();
