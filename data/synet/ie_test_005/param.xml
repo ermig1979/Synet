@@ -5,20 +5,7 @@
 	<input>
 		<item>
 			<name>0</name>
-			<shape>
-				<item>
-					<size>1</size>
-				</item>
-				<item>
-					<size>3</size>
-				</item>
-				<item>
-					<size>48</size>
-				</item>
-				<item>
-					<size>48</size>
-				</item>
-			</shape>
+			<dims>1 3 48 48</dims>
 		</item>
 	</input>
 </test>

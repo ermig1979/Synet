@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test>
+	<lower>0</lower>
+	<upper>255</upper>
+	<input>
+		<item>
+			<name>0</name>
+			<dims>1 3 128 128</dims>
+		</item>
+	</input>
+	<output>
+		<item>
+			<name>658</name>
+			<compare>cos_dist</compare>
+		</item>
+	</output>
+</test>
+

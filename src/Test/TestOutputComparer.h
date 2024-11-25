@@ -255,12 +255,27 @@ namespace Test
 
         bool Compare4d(const Tensor& f, const Tensor& s, size_t d, const String& failed) const
         {
-            for (size_t n = 0; n < f.Axis(0); ++n)
-                for (size_t c = 0; c < f.Axis(1); ++c)
-                    for (size_t y = 0; y < f.Axis(2); ++y)
-                        for (size_t x = 0; x < f.Axis(3); ++x)
-                            if (!Compare(f, s, Shp(n, c, y, x), d, failed))
-                                return false;
+            using Synet::Detail::DebugPrint;
+            const String& compType = _param.output().size() ? _param.output()[d].compare() : "";
+            if (compType == "cos_dist" && (_options.bf16 || !_options.comparePrecise) && f.Axis(2) == 1 && f.Axis(3) == 1)
+            {
+                for (size_t n = 0; n < f.Axis(0); ++n)
+                {
+                    float cd;
+                    SimdCosineDistance32f(f.Data<float>(Shp(n, 0, 0, 0)), s.Data<float>(Shp(n, 0, 0, 0)), f.Axis(1), &cd);
+                    if (cd > _options.compareThreshold)
+                        SYNET_ERROR(failed << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape()) << " at " << DebugPrint(Shp(n, 0, 0, 0)) << " : cosine distance " << cd << " > " << _options.compareThreshold);
+                }
+            }
+            else
+            {
+                for (size_t n = 0; n < f.Axis(0); ++n)
+                    for (size_t c = 0; c < f.Axis(1); ++c)
+                        for (size_t y = 0; y < f.Axis(2); ++y)
+                            for (size_t x = 0; x < f.Axis(3); ++x)
+                                if (!Compare(f, s, Shp(n, c, y, x), d, failed))
+                                    return false;
+            }
             return true;
         }
 
