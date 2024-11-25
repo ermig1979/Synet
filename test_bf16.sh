@@ -57,7 +57,7 @@ export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 "$BIN_BF16" -m=convert $PATHES -tf=1 -cs=1 -dp=0 -su=1 -bf=1
 if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 
-"$BIN_BF16" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=1 -bs=$BATCH -ct=$THRESHOLD -bf=$BF16 -re=0 -et=10.0 -ie=10 -be=100 -dp=1 -dpf=6 -dpl=2 -dpp=4 -ar=1 -rt=0.3 -cs=0 -pl=$PERF -ln=$LOG
+"$BIN_BF16" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=1 -bs=$BATCH -ct=$THRESHOLD -bf=$BF16 -re=0 -et=10.0 -ie=10 -be=100 -dp=3 -dpf=6 -dpl=2 -dpp=4 -ar=1 -rt=0.3 -cs=0 -pl=$PERF -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
@@ -84,6 +84,7 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 #TEST synet "" ie_test_003f faces 50 1 1 1 000 2
 #TEST synet "" ie_test_004 license_plate_ab 200 1 1 1 000 2
 #TEST synet "" ie_test_005 face 2000 1 10 1 000 2
-TEST synet "" ie_test_006 face 100 1 10 1 000 2
+#TEST synet "" ie_test_006 face 100 1 10 1 000 2
+TEST synet "" ie_test_007 person 500 1 1 1 000 2
 
 exit

@@ -1,0 +1,2940 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network>
+	<version>1</version>
+	<name>ICV-RMNet-PD-ReID-Middle</name>
+	<layers>
+		<item>
+			<type>Input</type>
+			<name>data</name>
+			<dst>data</dst>
+			<input>
+				<shape>
+					<item>
+						<dim>1 160 64 3</dim>
+						<format>Nhwc</format>
+					</item>
+				</shape>
+			</input>
+		</item>
+		<item>
+			<type>Scale</type>
+			<name>Mul_1954/Fused_Mul_/FusedScaleShift_</name>
+			<src>data</src>
+			<dst>data</dst>
+			<weight>
+				<item>
+					<dim>3</dim>
+					<offset>0</offset>
+					<size>12</size>
+				</item>
+				<item>
+					<dim>3</dim>
+					<offset>12</offset>
+					<size>12</size>
+				</item>
+			</weight>
+			<scale>
+				<biasTerm>1</biasTerm>
+			</scale>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>init_block1/dim_inc/conv</name>
+			<src>data</src>
+			<dst>init_block1/dim_inc/conv</dst>
+			<weight>
+				<item>
+					<dim>3 3 3 32</dim>
+					<format>Nhwc</format>
+					<offset>24</offset>
+					<size>3456</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>3480</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>32</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>2 2</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck1_1/fn</name>
+			<src>init_block1/dim_inc/conv</src>
+			<dst>bottleneck1_1/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 32 8</dim>
+					<format>Nhwc</format>
+					<offset>3608</offset>
+					<size>1024</size>
+				</item>
+				<item>
+					<dim>8</dim>
+					<offset>4632</offset>
+					<size>32</size>
+				</item>
+				<item>
+					<dim>3 3 1 8</dim>
+					<format>Nhwc</format>
+					<offset>4664</offset>
+					<size>288</size>
+				</item>
+				<item>
+					<dim>8</dim>
+					<offset>4952</offset>
+					<size>32</size>
+				</item>
+				<item>
+					<dim>1 1 8 32</dim>
+					<format>Nhwc</format>
+					<offset>4984</offset>
+					<size>1024</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>6008</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>8</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>8</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>8</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck1_2/fn</name>
+			<src>bottleneck1_1/fn</src>
+			<dst>bottleneck1_2/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 32 8</dim>
+					<format>Nhwc</format>
+					<offset>6136</offset>
+					<size>1024</size>
+				</item>
+				<item>
+					<dim>8</dim>
+					<offset>7160</offset>
+					<size>32</size>
+				</item>
+				<item>
+					<dim>3 3 1 8</dim>
+					<format>Nhwc</format>
+					<offset>7192</offset>
+					<size>288</size>
+				</item>
+				<item>
+					<dim>8</dim>
+					<offset>7480</offset>
+					<size>32</size>
+				</item>
+				<item>
+					<dim>1 1 8 32</dim>
+					<format>Nhwc</format>
+					<offset>7512</offset>
+					<size>1024</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>8536</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>8</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>8</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>8</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck1_3/fn</name>
+			<src>bottleneck1_2/fn</src>
+			<dst>bottleneck1_3/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 32 8</dim>
+					<format>Nhwc</format>
+					<offset>8664</offset>
+					<size>1024</size>
+				</item>
+				<item>
+					<dim>8</dim>
+					<offset>9688</offset>
+					<size>32</size>
+				</item>
+				<item>
+					<dim>3 3 1 8</dim>
+					<format>Nhwc</format>
+					<offset>9720</offset>
+					<size>288</size>
+				</item>
+				<item>
+					<dim>8</dim>
+					<offset>10008</offset>
+					<size>32</size>
+				</item>
+				<item>
+					<dim>1 1 8 32</dim>
+					<format>Nhwc</format>
+					<offset>10040</offset>
+					<size>1024</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>11064</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>8</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>8</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>8</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck1_4/fn</name>
+			<src>bottleneck1_3/fn</src>
+			<dst>bottleneck1_4/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 32 8</dim>
+					<format>Nhwc</format>
+					<offset>11192</offset>
+					<size>1024</size>
+				</item>
+				<item>
+					<dim>8</dim>
+					<offset>12216</offset>
+					<size>32</size>
+				</item>
+				<item>
+					<dim>3 3 1 8</dim>
+					<format>Nhwc</format>
+					<offset>12248</offset>
+					<size>288</size>
+				</item>
+				<item>
+					<dim>8</dim>
+					<offset>12536</offset>
+					<size>32</size>
+				</item>
+				<item>
+					<dim>1 1 8 32</dim>
+					<format>Nhwc</format>
+					<offset>12568</offset>
+					<size>1024</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>13592</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>8</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>8</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>8</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Pooling</type>
+			<name>bottleneck2_0/skip/pooling</name>
+			<src>bottleneck1_4/fn</src>
+			<dst>bottleneck2_0/skip/pooling</dst>
+			<pooling>
+				<method>Max</method>
+				<kernel>2 2</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>2 2</stride>
+			</pooling>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>bottleneck2_0/skip/conv</name>
+			<src>bottleneck2_0/skip/pooling</src>
+			<dst>bottleneck2_0/skip/conv</dst>
+			<weight>
+				<item>
+					<dim>1 1 32 64</dim>
+					<format>Nhwc</format>
+					<offset>13720</offset>
+					<size>8192</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>21912</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck2_0/dim_inc/conv</name>
+			<src>bottleneck1_4/fn</src>
+			<dst>bottleneck2_0/dim_inc/conv</dst>
+			<weight>
+				<item>
+					<dim>1 1 32 16</dim>
+					<format>Nhwc</format>
+					<offset>22168</offset>
+					<size>2048</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>24216</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>3 3 1 16</dim>
+					<format>Nhwc</format>
+					<offset>24280</offset>
+					<size>576</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>24856</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>1 1 16 64</dim>
+					<format>Nhwc</format>
+					<offset>24920</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>29016</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>2 2</stride>
+						<dilation>1 1</dilation>
+						<group>16</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Eltwise</type>
+			<name>bottleneck2_0/add</name>
+			<src>bottleneck2_0/skip/conv bottleneck2_0/dim_inc/conv</src>
+			<dst>bottleneck2_0/skip/conv</dst>
+		</item>
+		<item>
+			<type>Elu</type>
+			<name>bottleneck2_0/fn</name>
+			<src>bottleneck2_0/skip/conv</src>
+			<dst>bottleneck2_0/fn</dst>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck2_1/fn</name>
+			<src>bottleneck2_0/fn</src>
+			<dst>bottleneck2_1/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 16</dim>
+					<format>Nhwc</format>
+					<offset>29272</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>33368</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>3 3 1 16</dim>
+					<format>Nhwc</format>
+					<offset>33432</offset>
+					<size>576</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>34008</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>1 1 16 64</dim>
+					<format>Nhwc</format>
+					<offset>34072</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>38168</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>16</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck2_2/fn</name>
+			<src>bottleneck2_1/fn</src>
+			<dst>bottleneck2_2/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 16</dim>
+					<format>Nhwc</format>
+					<offset>38424</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>42520</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>3 3 1 16</dim>
+					<format>Nhwc</format>
+					<offset>42584</offset>
+					<size>576</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>43160</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>1 1 16 64</dim>
+					<format>Nhwc</format>
+					<offset>43224</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>47320</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>16</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck2_3/fn</name>
+			<src>bottleneck2_2/fn</src>
+			<dst>bottleneck2_3/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 16</dim>
+					<format>Nhwc</format>
+					<offset>47576</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>51672</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>3 3 1 16</dim>
+					<format>Nhwc</format>
+					<offset>51736</offset>
+					<size>576</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>52312</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>1 1 16 64</dim>
+					<format>Nhwc</format>
+					<offset>52376</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>56472</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>16</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck2_4/fn</name>
+			<src>bottleneck2_3/fn</src>
+			<dst>bottleneck2_4/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 16</dim>
+					<format>Nhwc</format>
+					<offset>56728</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>60824</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>3 3 1 16</dim>
+					<format>Nhwc</format>
+					<offset>60888</offset>
+					<size>576</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>61464</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>1 1 16 64</dim>
+					<format>Nhwc</format>
+					<offset>61528</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>65624</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>16</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck2_5/fn</name>
+			<src>bottleneck2_4/fn</src>
+			<dst>bottleneck2_5/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 16</dim>
+					<format>Nhwc</format>
+					<offset>65880</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>69976</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>3 3 1 16</dim>
+					<format>Nhwc</format>
+					<offset>70040</offset>
+					<size>576</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>70616</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>1 1 16 64</dim>
+					<format>Nhwc</format>
+					<offset>70680</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>74776</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>16</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck2_6/fn</name>
+			<src>bottleneck2_5/fn</src>
+			<dst>bottleneck2_6/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 16</dim>
+					<format>Nhwc</format>
+					<offset>75032</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>79128</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>3 3 1 16</dim>
+					<format>Nhwc</format>
+					<offset>79192</offset>
+					<size>576</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>79768</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>1 1 16 64</dim>
+					<format>Nhwc</format>
+					<offset>79832</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>83928</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>16</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck2_7/fn</name>
+			<src>bottleneck2_6/fn</src>
+			<dst>bottleneck2_7/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 16</dim>
+					<format>Nhwc</format>
+					<offset>84184</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>88280</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>3 3 1 16</dim>
+					<format>Nhwc</format>
+					<offset>88344</offset>
+					<size>576</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>88920</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>1 1 16 64</dim>
+					<format>Nhwc</format>
+					<offset>88984</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>93080</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>16</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck2_8/fn</name>
+			<src>bottleneck2_7/fn</src>
+			<dst>bottleneck2_8/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 16</dim>
+					<format>Nhwc</format>
+					<offset>93336</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>97432</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>3 3 1 16</dim>
+					<format>Nhwc</format>
+					<offset>97496</offset>
+					<size>576</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>98072</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>1 1 16 64</dim>
+					<format>Nhwc</format>
+					<offset>98136</offset>
+					<size>4096</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>102232</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>16</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>16</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Pooling</type>
+			<name>bottleneck3_0/skip/pooling</name>
+			<src>bottleneck2_8/fn</src>
+			<dst>bottleneck3_0/skip/pooling</dst>
+			<pooling>
+				<method>Max</method>
+				<kernel>2 2</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>2 2</stride>
+			</pooling>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>bottleneck3_0/skip/conv</name>
+			<src>bottleneck3_0/skip/pooling</src>
+			<dst>bottleneck3_0/skip/conv</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 128</dim>
+					<format>Nhwc</format>
+					<offset>102488</offset>
+					<size>32768</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>135256</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>128</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck3_0/dim_inc/conv</name>
+			<src>bottleneck2_8/fn</src>
+			<dst>bottleneck3_0/dim_inc/conv</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 32</dim>
+					<format>Nhwc</format>
+					<offset>135768</offset>
+					<size>8192</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>143960</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>3 3 1 32</dim>
+					<format>Nhwc</format>
+					<offset>144088</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>145240</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>1 1 32 128</dim>
+					<format>Nhwc</format>
+					<offset>145368</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>161752</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>2 2</stride>
+						<dilation>1 1</dilation>
+						<group>32</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>128</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Eltwise</type>
+			<name>bottleneck3_0/add</name>
+			<src>bottleneck3_0/skip/conv bottleneck3_0/dim_inc/conv</src>
+			<dst>bottleneck3_0/skip/conv</dst>
+		</item>
+		<item>
+			<type>Elu</type>
+			<name>bottleneck3_0/fn</name>
+			<src>bottleneck3_0/skip/conv</src>
+			<dst>bottleneck3_0/fn</dst>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck3_1/fn</name>
+			<src>bottleneck3_0/fn</src>
+			<dst>bottleneck3_1/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 32</dim>
+					<format>Nhwc</format>
+					<offset>162264</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>178648</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>3 3 1 32</dim>
+					<format>Nhwc</format>
+					<offset>178776</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>179928</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>1 1 32 128</dim>
+					<format>Nhwc</format>
+					<offset>180056</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>196440</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>32</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>128</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck3_2/fn</name>
+			<src>bottleneck3_1/fn</src>
+			<dst>bottleneck3_2/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 32</dim>
+					<format>Nhwc</format>
+					<offset>196952</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>213336</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>3 3 1 32</dim>
+					<format>Nhwc</format>
+					<offset>213464</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>214616</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>1 1 32 128</dim>
+					<format>Nhwc</format>
+					<offset>214744</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>231128</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>32</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>128</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck3_3/fn</name>
+			<src>bottleneck3_2/fn</src>
+			<dst>bottleneck3_3/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 32</dim>
+					<format>Nhwc</format>
+					<offset>231640</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>248024</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>3 3 1 32</dim>
+					<format>Nhwc</format>
+					<offset>248152</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>249304</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>1 1 32 128</dim>
+					<format>Nhwc</format>
+					<offset>249432</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>265816</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>32</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>128</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck3_4/fn</name>
+			<src>bottleneck3_3/fn</src>
+			<dst>bottleneck3_4/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 32</dim>
+					<format>Nhwc</format>
+					<offset>266328</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>282712</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>3 3 1 32</dim>
+					<format>Nhwc</format>
+					<offset>282840</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>283992</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>1 1 32 128</dim>
+					<format>Nhwc</format>
+					<offset>284120</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>300504</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>32</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>128</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck3_5/fn</name>
+			<src>bottleneck3_4/fn</src>
+			<dst>bottleneck3_5/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 32</dim>
+					<format>Nhwc</format>
+					<offset>301016</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>317400</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>3 3 1 32</dim>
+					<format>Nhwc</format>
+					<offset>317528</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>318680</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>1 1 32 128</dim>
+					<format>Nhwc</format>
+					<offset>318808</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>335192</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>32</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>128</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck3_6/fn</name>
+			<src>bottleneck3_5/fn</src>
+			<dst>bottleneck3_6/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 32</dim>
+					<format>Nhwc</format>
+					<offset>335704</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>352088</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>3 3 1 32</dim>
+					<format>Nhwc</format>
+					<offset>352216</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>353368</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>1 1 32 128</dim>
+					<format>Nhwc</format>
+					<offset>353496</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>369880</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>32</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>128</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck3_7/fn</name>
+			<src>bottleneck3_6/fn</src>
+			<dst>bottleneck3_7/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 32</dim>
+					<format>Nhwc</format>
+					<offset>370392</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>386776</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>3 3 1 32</dim>
+					<format>Nhwc</format>
+					<offset>386904</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>388056</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>1 1 32 128</dim>
+					<format>Nhwc</format>
+					<offset>388184</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>404568</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>32</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>128</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck3_8/fn</name>
+			<src>bottleneck3_7/fn</src>
+			<dst>bottleneck3_8/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 32</dim>
+					<format>Nhwc</format>
+					<offset>405080</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>421464</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>3 3 1 32</dim>
+					<format>Nhwc</format>
+					<offset>421592</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>422744</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>1 1 32 128</dim>
+					<format>Nhwc</format>
+					<offset>422872</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>439256</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>32</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>128</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck3_9/fn</name>
+			<src>bottleneck3_8/fn</src>
+			<dst>bottleneck3_9/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 32</dim>
+					<format>Nhwc</format>
+					<offset>439768</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>456152</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>3 3 1 32</dim>
+					<format>Nhwc</format>
+					<offset>456280</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>457432</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>1 1 32 128</dim>
+					<format>Nhwc</format>
+					<offset>457560</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>473944</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>32</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>128</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck3_10/fn</name>
+			<src>bottleneck3_9/fn</src>
+			<dst>bottleneck3_10/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 32</dim>
+					<format>Nhwc</format>
+					<offset>474456</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>490840</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>3 3 1 32</dim>
+					<format>Nhwc</format>
+					<offset>490968</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>492120</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>1 1 32 128</dim>
+					<format>Nhwc</format>
+					<offset>492248</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>508632</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>32</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>128</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Pooling</type>
+			<name>bottleneck4_0/skip/pooling</name>
+			<src>bottleneck3_10/fn</src>
+			<dst>bottleneck4_0/skip/pooling</dst>
+			<pooling>
+				<method>Max</method>
+				<kernel>2 2</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>2 2</stride>
+			</pooling>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>bottleneck4_0/skip/conv</name>
+			<src>bottleneck4_0/skip/pooling</src>
+			<dst>bottleneck4_0/skip/conv</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 256</dim>
+					<format>Nhwc</format>
+					<offset>509144</offset>
+					<size>131072</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>640216</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>256</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck4_0/dim_inc/conv</name>
+			<src>bottleneck3_10/fn</src>
+			<dst>bottleneck4_0/dim_inc/conv</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 64</dim>
+					<format>Nhwc</format>
+					<offset>641240</offset>
+					<size>32768</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>674008</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>3 3 1 64</dim>
+					<format>Nhwc</format>
+					<offset>674264</offset>
+					<size>2304</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>676568</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1 1 64 256</dim>
+					<format>Nhwc</format>
+					<offset>676824</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>742360</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>2 2</stride>
+						<dilation>1 1</dilation>
+						<group>64</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>256</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Eltwise</type>
+			<name>bottleneck4_0/add</name>
+			<src>bottleneck4_0/skip/conv bottleneck4_0/dim_inc/conv</src>
+			<dst>bottleneck4_0/skip/conv</dst>
+		</item>
+		<item>
+			<type>Elu</type>
+			<name>bottleneck4_0/fn</name>
+			<src>bottleneck4_0/skip/conv</src>
+			<dst>bottleneck4_0/fn</dst>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck4_1/fn</name>
+			<src>bottleneck4_0/fn</src>
+			<dst>bottleneck4_1/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 64</dim>
+					<format>Nhwc</format>
+					<offset>743384</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>808920</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>3 3 1 64</dim>
+					<format>Nhwc</format>
+					<offset>809176</offset>
+					<size>2304</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>811480</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1 1 64 256</dim>
+					<format>Nhwc</format>
+					<offset>811736</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>877272</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>64</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>256</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck4_2/fn</name>
+			<src>bottleneck4_1/fn</src>
+			<dst>bottleneck4_2/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 64</dim>
+					<format>Nhwc</format>
+					<offset>878296</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>943832</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>3 3 1 64</dim>
+					<format>Nhwc</format>
+					<offset>944088</offset>
+					<size>2304</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>946392</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1 1 64 256</dim>
+					<format>Nhwc</format>
+					<offset>946648</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>1012184</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>64</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>256</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck4_3/fn</name>
+			<src>bottleneck4_2/fn</src>
+			<dst>bottleneck4_3/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 64</dim>
+					<format>Nhwc</format>
+					<offset>1013208</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>1078744</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>3 3 1 64</dim>
+					<format>Nhwc</format>
+					<offset>1079000</offset>
+					<size>2304</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>1081304</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1 1 64 256</dim>
+					<format>Nhwc</format>
+					<offset>1081560</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>1147096</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>64</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>256</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck4_4/fn</name>
+			<src>bottleneck4_3/fn</src>
+			<dst>bottleneck4_4/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 64</dim>
+					<format>Nhwc</format>
+					<offset>1148120</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>1213656</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>3 3 1 64</dim>
+					<format>Nhwc</format>
+					<offset>1213912</offset>
+					<size>2304</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>1216216</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1 1 64 256</dim>
+					<format>Nhwc</format>
+					<offset>1216472</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>1282008</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>64</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>256</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck4_5/fn</name>
+			<src>bottleneck4_4/fn</src>
+			<dst>bottleneck4_5/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 64</dim>
+					<format>Nhwc</format>
+					<offset>1283032</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>1348568</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>3 3 1 64</dim>
+					<format>Nhwc</format>
+					<offset>1348824</offset>
+					<size>2304</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>1351128</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1 1 64 256</dim>
+					<format>Nhwc</format>
+					<offset>1351384</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>1416920</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>64</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>256</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck4_6/fn</name>
+			<src>bottleneck4_5/fn</src>
+			<dst>bottleneck4_6/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 64</dim>
+					<format>Nhwc</format>
+					<offset>1417944</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>1483480</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>3 3 1 64</dim>
+					<format>Nhwc</format>
+					<offset>1483736</offset>
+					<size>2304</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>1486040</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1 1 64 256</dim>
+					<format>Nhwc</format>
+					<offset>1486296</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>1551832</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>64</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>256</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck4_7/fn</name>
+			<src>bottleneck4_6/fn</src>
+			<dst>bottleneck4_7/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 64</dim>
+					<format>Nhwc</format>
+					<offset>1552856</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>1618392</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>3 3 1 64</dim>
+					<format>Nhwc</format>
+					<offset>1618648</offset>
+					<size>2304</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>1620952</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1 1 64 256</dim>
+					<format>Nhwc</format>
+					<offset>1621208</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>1686744</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>64</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>256</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck4_8/fn</name>
+			<src>bottleneck4_7/fn</src>
+			<dst>bottleneck4_8/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 64</dim>
+					<format>Nhwc</format>
+					<offset>1687768</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>1753304</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>3 3 1 64</dim>
+					<format>Nhwc</format>
+					<offset>1753560</offset>
+					<size>2304</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>1755864</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1 1 64 256</dim>
+					<format>Nhwc</format>
+					<offset>1756120</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>1821656</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>64</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>256</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck4_9/fn</name>
+			<src>bottleneck4_8/fn</src>
+			<dst>bottleneck4_9/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 64</dim>
+					<format>Nhwc</format>
+					<offset>1822680</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>1888216</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>3 3 1 64</dim>
+					<format>Nhwc</format>
+					<offset>1888472</offset>
+					<size>2304</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>1890776</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1 1 64 256</dim>
+					<format>Nhwc</format>
+					<offset>1891032</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>1956568</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>64</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>256</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck4_10/fn</name>
+			<src>bottleneck4_9/fn</src>
+			<dst>bottleneck4_10/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 64</dim>
+					<format>Nhwc</format>
+					<offset>1957592</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>2023128</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>3 3 1 64</dim>
+					<format>Nhwc</format>
+					<offset>2023384</offset>
+					<size>2304</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>2025688</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1 1 64 256</dim>
+					<format>Nhwc</format>
+					<offset>2025944</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>2091480</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>64</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>256</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>bottleneck4_11/fn</name>
+			<src>bottleneck4_10/fn</src>
+			<dst>bottleneck4_11/fn</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 64</dim>
+					<format>Nhwc</format>
+					<offset>2092504</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>2158040</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>3 3 1 64</dim>
+					<format>Nhwc</format>
+					<offset>2158296</offset>
+					<size>2304</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>2160600</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1 1 64 256</dim>
+					<format>Nhwc</format>
+					<offset>2160856</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>2226392</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>64</group>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+					<item>
+						<outputNum>256</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Elu</activationType>
+						<activationParam0>1.000000</activationParam0>
+					</item>
+				</conv>
+				<add>1</add>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Pooling</type>
+			<name>pooling/out</name>
+			<src>bottleneck4_11/fn</src>
+			<dst>pooling/out</dst>
+			<pooling>
+				<method>Max</method>
+				<kernel>10 4</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+			</pooling>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>embd/dim_inc/conv</name>
+			<src>pooling/out</src>
+			<dst>embd/dim_inc/conv</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 512</dim>
+					<format>Nhwc</format>
+					<offset>2227416</offset>
+					<size>524288</size>
+				</item>
+				<item>
+					<dim>512</dim>
+					<offset>2751704</offset>
+					<size>2048</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>512</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Elu</activationType>
+				<activationParam0>1.000000</activationParam0>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>embd/dim_red/conv</name>
+			<src>embd/dim_inc/conv</src>
+			<dst>embd/dim_red/conv</dst>
+			<weight>
+				<item>
+					<dim>1 1 512 256</dim>
+					<format>Nhwc</format>
+					<offset>2753752</offset>
+					<size>524288</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>3278040</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>256</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+	</layers>
+</network>
+

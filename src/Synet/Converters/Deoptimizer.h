@@ -161,7 +161,31 @@ namespace Synet
 				add.src().push_back(layer.src()[0]);
 				add.src().push_back(deoptimized.back().dst()[0]);
 				add.dst().push_back(layer.name());
-				deoptimized.push_back(add);
+				if (merg.conv().back().activationType() != ActivationFunctionTypeIdentity)
+				{
+					LayerParam act;
+					switch (merg.conv().back().activationType())
+					{
+					case ActivationFunctionTypeElu:
+						act.type() = LayerTypeElu;
+						act.elu().alpha() = merg.conv().back().activationParam0();
+						break;
+					default:
+						SYNET_ERROR("Deoptimization of merged convolution: unsupported last activation type " << merg.conv().back().activationType());
+					}
+					deoptimized.back().convolution().activationType() = ActivationFunctionTypeIdentity;
+					deoptimized.back().convolution().activationParam0() = 0.0f;
+					deoptimized.back().convolution().activationParam1() = 6.0f;
+					act.name() = layer.name();
+					act.dst().push_back(act.name());
+					add.name() = layer.name() + "_add";
+					add.dst()[0] = add.name();
+					act.src() = add.dst();
+					deoptimized.push_back(add);
+					deoptimized.push_back(act);
+				}
+				else
+					deoptimized.push_back(add);
 			}
 			return true;
 		}
