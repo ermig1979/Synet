@@ -17,3 +17,4 @@ synet root ie_test_000 human_vehicle 1 1
 synet root ie_test_001 face 1 1
 synet root ie_test_002 faces 0 1
 synet root ie_test_003f faces 0 1
+synet root ie_test_004 license_plate_ab 0 1

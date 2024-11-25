@@ -313,12 +313,12 @@ namespace Test
 
             Strings names;
             names.reserve(images.size());
-            size_t curr = 0;
+            size_t curr = 0, imgBeg = _options.imageBegin * network.SrcCount(), imgEnd = _options.imageEnd * network.SrcCount();
             for (StringList::const_iterator it = images.begin(); it != images.end(); ++it)
             {
                 if (RequiredExtension(*it))
                 {
-                    if(curr >= _options.imageBegin && curr < _options.imageEnd)
+                    if(curr >= imgBeg && curr < imgEnd)
                         names.push_back(*it);
                     curr++;
                 }
