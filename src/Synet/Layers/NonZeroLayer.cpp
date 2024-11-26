@@ -95,6 +95,9 @@ namespace Synet
         case TensorType32f:
             NonZero<float>(*src[0], *dst[0]);
             break;
+        case TensorType64i:
+            NonZero<int64_t>(*src[0], *dst[0]);
+            break;
         default:
             SYNET_ERROR("NonZeroLayer does not support input type: " << src[0]->GetType() << " !");
         }

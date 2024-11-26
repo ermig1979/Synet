@@ -100,6 +100,8 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if ((type == "NonMaxSuppression") && !ConvertNonMaxSuppressionLayer(pLayer, dstXml.layers(), srcBin, layer))
                     return ErrorMessage(pLayer);
+                if (type == "NonZero" && !ConvertNonZeroLayer(pLayer, dstXml.layers(), layer))
+                    return ErrorMessage(pLayer);
                 if (type == "Parameter" && !ConvertParameterLayer(pLayer, trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Power" && !ConvertPowerLayer(pLayer, srcBin, dstXml.layers(), layer))
@@ -306,7 +308,7 @@ namespace Synet
             const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
             if (src0 == NULL)
                 return false;
-            if (src0->type() == Synet::LayerTypeMeta)
+            if (src0->type() == Synet::LayerTypeMeta || (src0->type() == Synet::LayerTypeConst && src0->weight()[0].dim().size() == 1))
             {
                 layer.type() = Synet::LayerTypeMeta;
                 layer.meta().type() = Synet::MetaTypePack;
@@ -903,7 +905,7 @@ namespace Synet
             String epsMode;
             if (!ConvertValue(pData->FirstAttribute("eps_mode"), epsMode) || epsMode != "INSIDE_SQRT")
                 return false;
-            if (is0.size() == 3)
+            if (is0.size() == 3 || is0.size() == 4)
             {
                 int axis = (int)sp1->meta().alpha().i64()[0];
                 layer.normalize().acrossSpatial() = axis == 2;
@@ -973,6 +975,24 @@ namespace Synet
                 layer.nonMaxSuppression().softNmsSigma() = GetWeight<float>(srcBin, src->weight()[0])[0];
             }
             layer.src().resize(2);
+            return true;
+        }
+
+        bool ConvertNonZeroLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 1))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            if (src0 == NULL)
+                return false;
+            if (src0->type() == LayerTypeMeta || src0->type() == LayerTypeConstantOfShape || src0->type() == LayerTypeBroadcast)
+            {
+                layer.type() = Synet::LayerTypeNonZero;
+            }
+            else
+            {
+                SYNET_ERROR("Unsupported src type!");
+            }
             return true;
         }
 
@@ -1644,10 +1664,11 @@ namespace Synet
             if (!CheckSourceNumber(layer, 2))
                 return false;
             const LayerParam* sp1 = GetLayer(layers, layer.src()[1]);
-            if (sp1 == NULL || sp1->type() != LayerTypeMeta || sp1->meta().type() != MetaTypeConst ||
-                sp1->meta().alpha().type() != TensorType64i)
+            if (sp1 == NULL || sp1->type() != LayerTypeMeta)
                 return false;
-            int64_t k = sp1->meta().alpha().i64()[0];
+            int64_t k = -1;
+            if (sp1->meta().type() == MetaTypeConst && sp1->meta().alpha().type() == TensorType64i)
+                k = sp1->meta().alpha().i64()[0];
             const XmlNode* pData = pLayer->FirstNode("data");
             if (pData == NULL)
                 return false;

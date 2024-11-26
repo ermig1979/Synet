@@ -22,3 +22,4 @@ synet root ie_test_005 face 1 1
 synet root ie_test_006 face 1 1
 synet root ie_test_007 person 1 1
 synet root ie_test_009f persons 0 1
+synet root ie_test_014f license_plate_ab 0 1

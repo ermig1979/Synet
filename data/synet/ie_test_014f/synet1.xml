@@ -1,0 +1,672 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network>
+	<version>1</version>
+	<name>LPRNet</name>
+	<layers>
+		<item>
+			<type>Input</type>
+			<name>data</name>
+			<dst>data</dst>
+			<input>
+				<shape>
+					<item>
+						<dim>1 24 94 3</dim>
+						<format>Nhwc</format>
+					</item>
+				</shape>
+			</input>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv1</name>
+			<src>data</src>
+			<dst>conv1</dst>
+			<weight>
+				<item>
+					<dim>3 3 3 64</dim>
+					<format>Nhwc</format>
+					<offset>0</offset>
+					<size>6912</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>6912</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Pooling</type>
+			<name>pool1</name>
+			<src>conv1</src>
+			<dst>pool1</dst>
+			<pooling>
+				<method>Max</method>
+				<kernel>3 3</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+			</pooling>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire1_small/conv_reduce</name>
+			<src>pool1</src>
+			<dst>fire1_small/conv_reduce</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 32</dim>
+					<format>Nhwc</format>
+					<offset>7168</offset>
+					<size>8192</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>15360</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>32</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire1_small/conv_3x1</name>
+			<src>fire1_small/conv_reduce</src>
+			<dst>fire1_small/conv_3x1</dst>
+			<weight>
+				<item>
+					<dim>3 1 32 32</dim>
+					<format>Nhwc</format>
+					<offset>15488</offset>
+					<size>12288</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>27776</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>32</outputNum>
+				<kernel>3 1</kernel>
+				<pad>1 0 1 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire1_small/conv_1x3</name>
+			<src>fire1_small/conv_3x1</src>
+			<dst>fire1_small/conv_1x3</dst>
+			<weight>
+				<item>
+					<dim>1 3 32 32</dim>
+					<format>Nhwc</format>
+					<offset>27904</offset>
+					<size>12288</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>40192</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>32</outputNum>
+				<kernel>1 3</kernel>
+				<pad>0 1 0 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire1_small/conv_expand</name>
+			<src>fire1_small/conv_1x3</src>
+			<dst>fire1_small/conv_expand</dst>
+			<weight>
+				<item>
+					<dim>1 1 32 128</dim>
+					<format>Nhwc</format>
+					<offset>40320</offset>
+					<size>16384</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>56704</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>128</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Pooling</type>
+			<name>pool2</name>
+			<src>fire1_small/conv_expand</src>
+			<dst>pool2</dst>
+			<pooling>
+				<method>Max</method>
+				<kernel>3 3</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>2 1</stride>
+			</pooling>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire2_small/conv_reduce</name>
+			<src>pool2</src>
+			<dst>fire2_small/conv_reduce</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 64</dim>
+					<format>Nhwc</format>
+					<offset>57216</offset>
+					<size>32768</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>89984</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire2_small/conv_3x1</name>
+			<src>fire2_small/conv_reduce</src>
+			<dst>fire2_small/conv_3x1</dst>
+			<weight>
+				<item>
+					<dim>3 1 64 64</dim>
+					<format>Nhwc</format>
+					<offset>90240</offset>
+					<size>49152</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>139392</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>3 1</kernel>
+				<pad>1 0 1 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire2_small/conv_1x3</name>
+			<src>fire2_small/conv_3x1</src>
+			<dst>fire2_small/conv_1x3</dst>
+			<weight>
+				<item>
+					<dim>1 3 64 64</dim>
+					<format>Nhwc</format>
+					<offset>139648</offset>
+					<size>49152</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>188800</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>1 3</kernel>
+				<pad>0 1 0 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire2_small/conv_expand</name>
+			<src>fire2_small/conv_1x3</src>
+			<dst>fire2_small/conv_expand</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 256</dim>
+					<format>Nhwc</format>
+					<offset>189056</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>254592</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>256</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire3_small/conv_reduce</name>
+			<src>fire2_small/conv_expand</src>
+			<dst>fire3_small/conv_reduce</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 64</dim>
+					<format>Nhwc</format>
+					<offset>255616</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>321152</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire3_small/conv_3x1</name>
+			<src>fire3_small/conv_reduce</src>
+			<dst>fire3_small/conv_3x1</dst>
+			<weight>
+				<item>
+					<dim>3 1 64 64</dim>
+					<format>Nhwc</format>
+					<offset>321408</offset>
+					<size>49152</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>370560</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>3 1</kernel>
+				<pad>1 0 1 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire3_small/conv_1x3</name>
+			<src>fire3_small/conv_3x1</src>
+			<dst>fire3_small/conv_1x3</dst>
+			<weight>
+				<item>
+					<dim>1 3 64 64</dim>
+					<format>Nhwc</format>
+					<offset>370816</offset>
+					<size>49152</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>419968</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>1 3</kernel>
+				<pad>0 1 0 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fire3_small/conv_expand</name>
+			<src>fire3_small/conv_1x3</src>
+			<dst>fire3_small/conv_expand</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 256</dim>
+					<format>Nhwc</format>
+					<offset>420224</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>485760</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>256</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Pooling</type>
+			<name>pool3</name>
+			<src>fire3_small/conv_expand</src>
+			<dst>pool3</dst>
+			<pooling>
+				<method>Max</method>
+				<kernel>3 3</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>2 1</stride>
+			</pooling>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv2</name>
+			<src>pool3</src>
+			<dst>conv2</dst>
+			<weight>
+				<item>
+					<dim>5 1 256 128</dim>
+					<format>Nhwc</format>
+					<offset>486784</offset>
+					<size>655360</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>1142144</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>128</outputNum>
+				<kernel>5 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv3_w</name>
+			<src>conv2</src>
+			<dst>conv3_w</dst>
+			<weight>
+				<item>
+					<dim>1 13 128 71</dim>
+					<format>Nhwc</format>
+					<offset>1142656</offset>
+					<size>472576</size>
+				</item>
+				<item>
+					<dim>71</dim>
+					<offset>1615232</offset>
+					<size>284</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>71</outputNum>
+				<kernel>1 13</kernel>
+				<pad>0 6 0 6</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>pattern/weights_transpose/MinusOne1962_const</name>
+			<dst>pattern/weights_transpose/MinusOne1962_const</dst>
+			<meta>
+				<type>Const</type>
+				<alpha>
+					<type>64i</type>
+					<shape>1</shape>
+					<i64>-1</i64>
+				</alpha>
+			</meta>
+		</item>
+		<item>
+			<type>Const</type>
+			<name>pattern/WithoutBiases/1_port_transpose1913_const</name>
+			<dst>pattern/WithoutBiases/1_port_transpose1913_const</dst>
+			<weight>
+				<item>
+					<dim>128 6248</dim>
+					<offset>1615524</offset>
+					<size>3198976</size>
+				</item>
+			</weight>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>pattern/weights_transpose/Shape</name>
+			<src>pattern/WithoutBiases/1_port_transpose1913_const</src>
+			<dst>pattern/weights_transpose/Shape</dst>
+			<meta>
+				<type>Shape</type>
+				<version>1</version>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>pattern/weights_transpose/Shape/Gather/Cast_12925_const</name>
+			<dst>pattern/weights_transpose/Shape/Gather/Cast_12925_const</dst>
+			<meta>
+				<type>Const</type>
+				<alpha>
+					<type>32i</type>
+					<shape>1</shape>
+					<i32>1</i32>
+				</alpha>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>pattern/weights_transpose/Shape/Gather/Cast_22927_const</name>
+			<dst>pattern/weights_transpose/Shape/Gather/Cast_22927_const</dst>
+			<meta>
+				<type>Const</type>
+				<alpha>
+					<type>64i</type>
+					<shape>1</shape>
+					<i64>0</i64>
+				</alpha>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>pattern/weights_transpose/Shape/Gather</name>
+			<src>pattern/weights_transpose/Shape pattern/weights_transpose/Shape/Gather/Cast_12925_const pattern/weights_transpose/Shape/Gather/Cast_22927_const</src>
+			<dst>pattern/weights_transpose/Shape/Gather</dst>
+			<meta>
+				<type>Gather</type>
+			</meta>
+		</item>
+		<item>
+			<type>Meta</type>
+			<name>pattern/weights_transpose/MinusOne/shapes_concat</name>
+			<src>pattern/weights_transpose/MinusOne1962_const pattern/weights_transpose/Shape/Gather</src>
+			<dst>pattern/weights_transpose/MinusOne/shapes_concat</dst>
+			<meta>
+				<type>Pack</type>
+			</meta>
+		</item>
+		<item>
+			<type>Reshape</type>
+			<name>pattern/flatten_fc_input</name>
+			<src>conv3_w pattern/weights_transpose/MinusOne/shapes_concat</src>
+			<dst>pattern/flatten_fc_input</dst>
+		</item>
+		<item>
+			<type>InnerProduct</type>
+			<name>pattern</name>
+			<src>pattern/flatten_fc_input</src>
+			<dst>pattern</dst>
+			<weight>
+				<item>
+					<dim>128 6248</dim>
+					<format>Nhwc</format>
+					<offset>1615524</offset>
+					<size>3198976</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>4814512</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<innerProduct>
+				<outputNum>128</outputNum>
+			</innerProduct>
+		</item>
+		<item>
+			<type>Reshape</type>
+			<name>reshape</name>
+			<src>pattern</src>
+			<dst>reshape</dst>
+			<reshape>
+				<shape>128 1 1</shape>
+				<axis>1</axis>
+			</reshape>
+		</item>
+		<item>
+			<type>Tile</type>
+			<name>tile1071</name>
+			<src>reshape</src>
+			<dst>tile1071</dst>
+			<tile>
+				<axis>3</axis>
+				<tiles>88</tiles>
+			</tile>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>relu_conv3_w_permute_to_nchw</name>
+			<src>conv3_w</src>
+			<dst>relu_conv3_w_permute_to_nchw</dst>
+			<permute>
+				<order>0 3 1 2</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Concat</type>
+			<name>concat</name>
+			<src>relu_conv3_w_permute_to_nchw tile1071</src>
+			<dst>concat</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>result</name>
+			<src>concat</src>
+			<dst>result</dst>
+			<weight>
+				<item>
+					<dim>71 199 1 1</dim>
+					<offset>4815088</offset>
+					<size>56516</size>
+				</item>
+				<item>
+					<dim>71</dim>
+					<offset>4871604</offset>
+					<size>284</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>71</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>p_result</name>
+			<src>result</src>
+			<dst>p_result</dst>
+			<permute>
+				<order>3 0 1 2</order>
+			</permute>
+		</item>
+		<item>
+			<type>Reshape</type>
+			<name>reshape2</name>
+			<src>p_result</src>
+			<dst>reshape2</dst>
+			<reshape>
+				<shape>88 1 71</shape>
+			</reshape>
+		</item>
+		<item>
+			<type>Input</type>
+			<name>seq_ind</name>
+			<dst>seq_ind</dst>
+			<input>
+				<shape>
+					<item>
+						<dim>88 1</dim>
+					</item>
+				</shape>
+			</input>
+		</item>
+		<item>
+			<type>CtcGreedyDecoder</type>
+			<name>decode</name>
+			<src>reshape2 seq_ind</src>
+			<dst>decode</dst>
+		</item>
+		<item>
+			<type>Stub</type>
+			<name>decode/sink_port_0</name>
+			<src>decode</src>
+			<dst>decode/sink_port_0</dst>
+		</item>
+	</layers>
+</network>
+

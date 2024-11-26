@@ -41,6 +41,7 @@ namespace Synet
         switch (type)
         {
         case TensorType32f: return Broadcast<float>;
+        case TensorType64i: return Broadcast<int64_t>;
         default:
             return NULL;
         }

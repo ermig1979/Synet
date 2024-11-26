@@ -76,7 +76,13 @@ namespace Synet
             Synet::NetworkParamHolder dstXml;
             Vector dstBin = srcBin;
             if (!ConvertNetwork(srcXml, srcBin, trans, onnxParam, dstXml(), dstBin, version))
+            {
+                String errModel = Cpl::FileNameByPath(dstModel) == dstModel ?
+                    "error.xml" : Cpl::MakePath(Cpl::DirectoryByPath(dstModel), "error.xml");
+                if (!dstXml.Save(errModel, false))
+                    SYNET_ERROR("Can't save Synet model with conversion error '" << errModel << "' !");
                 return false;
+            }
 
             if (optParam.saveUnoptimized())
             {

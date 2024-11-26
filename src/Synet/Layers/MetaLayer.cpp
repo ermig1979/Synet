@@ -803,7 +803,7 @@ namespace Synet
         if (!(src[0]->Count() == 1 && src[1]->Size() == 1 && src[2]->Size() == 1))
             SYNET_ERROR("MetaLayer::ReshapeStridedSlice has incompatible input shapes!");
         size_t begin = GetAs<size_t>(*src[1], 0);
-        size_t end = GetAs<size_t>(*src[2], 0);
+        size_t end = Min(GetAs<size_t>(*src[2], 0), src[0]->Size());
         size_t step = src.size() > 3 ? GetAs<size_t>(*src[3], 0) : size_t(1);
         Shape result;
         for (size_t i = begin; i < end; i += step)
