@@ -313,7 +313,7 @@ namespace Test
 
             Strings names;
             names.reserve(images.size());
-            size_t curr = 0, imgBeg = _options.imageBegin * network.SrcCount(), imgEnd = _options.imageEnd * network.SrcCount();
+            size_t curr = 0, rN = RequiredInputNumber(network), imgBeg = _options.imageBegin * rN, imgEnd = _options.imageEnd * rN;
             for (StringList::const_iterator it = images.begin(); it != images.end(); ++it)
             {
                 if (RequiredExtension(*it))
@@ -323,8 +323,7 @@ namespace Test
                     curr++;
                 }
             }
-
-            size_t sN = network.SrcCount(), bN = _options.batchSize, rN = RequiredInputNumber(network);
+            size_t sN = network.SrcCount(), bN = _options.batchSize;
             size_t tN = names.size() / bN / rN;
             if (tN == 0)
                 SYNET_ERROR("There is no one image in '" << directory << "' for '" << _options.imageFilter << "' filter!");
