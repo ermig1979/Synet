@@ -44,7 +44,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        size_t _coords, _classes, _num, _classfix;
+        size_t _coords, _classes, _num;
         bool _softmax;
         Floats _anchors;
     };

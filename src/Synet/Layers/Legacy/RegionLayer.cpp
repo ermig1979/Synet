@@ -66,7 +66,6 @@ namespace Synet
         _anchors.resize(param.anchors().size());
         for (size_t i = 0; i < param.anchors().size(); ++i)
             _anchors[i] = param.anchors()[i];
-        _classfix = 0;
         if (src[0]->Axis(1) != _num * (_coords + _classes + 1))
             SYNET_ERROR("RegionLayer wrong parameters!");
         dst[0]->Reshape(TensorType32f, src[0]->Shape(), TensorFormatUnknown);
@@ -91,8 +90,6 @@ namespace Synet
                 size_t index = i*_num + n;
                 size_t predictIndex = index * (_classes + 5) + 4;
                 float scale = pPredict[predictIndex];
-                if (_classfix == -1 && scale < 0.5f) 
-                    scale = 0.0f;
                 size_t regionIndex = index * (_classes + 5);
                 Region r;
                 r.x = (col + CpuSigmoid(pPredict[regionIndex + 0])) / width;

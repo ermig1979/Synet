@@ -48,6 +48,7 @@ namespace Test
         Synet::ScrfdDecoder _scrfd;
         Synet::RtdetrV2Decoder _rtdetrV2;
         Synet::AlphaDecoder _alpha;
+        Synet::RegionDecoder _region;
 
     public:
         typedef Synet::Region<float> Region;
@@ -102,6 +103,8 @@ namespace Test
                 _enable = _rtdetrV2.Init(_shape[3], _shape[2], param.detection().rtdetrV2());
             else if (decoder == "alpha")
                 _enable = _alpha.Init(_shape[3], _shape[2], param.detection().alpha());
+            else if (decoder == "region")
+                _enable = _region.Init(param.detection().region());
             return _enable;
         }
 
@@ -136,6 +139,8 @@ namespace Test
                 return _rtdetrV2.GetRegions(net, size.x, size.y, threshold, overlap)[0];
             else if (_alpha.Enable())
                 return _alpha.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+            else if (_region.Enable())
+                return _region.GetRegions(net, size.x, size.y, threshold, overlap)[0];
             else
                 return net.GetRegions(size.x, size.y, threshold, overlap);
         }
@@ -166,6 +171,8 @@ namespace Test
                 return _rtdetrV2.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
             else if (_alpha.Enable())
                 return _alpha.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
+            else if (_region.Enable())
+                return _region.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
             else
                 return Regions();
         }

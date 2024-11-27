@@ -651,6 +651,9 @@
     <ClInclude Include="..\..\src\Synet\Converters\Bf16OptSetter.h">
       <Filter>Converters</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Region.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
