@@ -152,7 +152,7 @@ namespace Synet
                 const onnx::ValueInfoProto& input = graph.input(i);
                 if (consts.find(input.name()) != consts.end())
                     continue;
-                if (!ConvertInput(input, trans, network))
+                if (!ConvertInput(input, trans, network, renames))
                     SYNET_ERROR("Can't convert input '" << input.name() << "' !");
             }
 
@@ -424,11 +424,11 @@ namespace Synet
             return true;
         }
 
-        bool ConvertInput(const onnx::ValueInfoProto & input, bool trans, Synet::NetworkParam& network)
+        bool ConvertInput(const onnx::ValueInfoProto & input, bool trans, Synet::NetworkParam& network, Renames& renames)
         {
             LayerParam layer;
             layer.type() = LayerTypeInput;
-            layer.name() = input.name();
+            layer.name() = ValidName(input.name(), renames);
             layer.dst().push_back(input.name());
             layer.input().shape().resize(1);
             Shape shape = Convert(input.type().tensor_type().shape());
