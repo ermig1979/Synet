@@ -80,6 +80,7 @@ if(SYNET_PYTHON)
 		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/SynetPy/*.py ${CMAKE_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/Scripts/Check.py ${CMAKE_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/Scripts/Perf.py ${CMAKE_BINARY_DIR}
+		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/Scripts/PerfBf16.py ${CMAKE_BINARY_DIR}
 		)
 endif()
 
