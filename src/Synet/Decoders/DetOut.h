@@ -78,7 +78,7 @@ namespace Synet
         std::vector<Regions> GetRegions(const Net& net, size_t imgW, size_t imgH, float threshold, float overlap) const
         {
             std::vector<Regions> result(net.NchwShape()[0]);
-            for (size_t b = 0; b < result.size(); ++b)
+            for (size_t b = 0; b < result.size() && net.Dst()[0]->Size(); ++b)
             {
                 const float* data = net.Dst()[0]->Data<float>(Shp(b, 0, 0, 0));
                 size_t size = net.Dst()[0]->Axis(2);
@@ -90,7 +90,7 @@ namespace Synet
         std::vector<Regions> GetRegions(const Tensor& dst, size_t imgW, size_t imgH, float threshold, float overlap) const
         {
             std::vector<Regions> result(dst.Axis(0));
-            for (size_t b = 0; b < result.size(); ++b)
+            for (size_t b = 0; b < result.size() && dst.Size(); ++b)
             {
                 const float* data = dst.Data<float>(Shp(b, 0, 0, 0));
                 size_t size = dst.Axis(2);

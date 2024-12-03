@@ -57,9 +57,15 @@ namespace Synet
     struct Context
     {
         Options options;
+        std::map<String, size_t> tensorUsers;
 
         Context()
         {
+        }
+
+        void Clear()
+        {
+            tensorUsers.clear();
         }
     };
 }

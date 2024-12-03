@@ -190,6 +190,7 @@ namespace Test
 
         bool Compare3d(const Tensor& f, const Tensor& s, size_t d, const String& failed) const
         {
+            using Synet::Detail::DebugPrint;
             String decType = _param.detection().decoder();
             const String& compType = _param.output().size() ? _param.output()[d].compare() : "";
             if (decType == "yoloV8" && (_options.bf16 || !_options.comparePrecise))
@@ -241,6 +242,16 @@ namespace Test
                         for (size_t y = 0; y < _f.Axis(2); ++y)
                             if (!Compare(_f, _s, Shp(n, c, y), d, failed, compType))
                                 return false;
+            }
+            else if (compType == "cos_dist-12" && (_options.bf16 || !_options.comparePrecise))
+            {
+                for (size_t n = 0; n < f.Axis(0); ++n)
+                {
+                    float cd;
+                    SimdCosineDistance32f(f.Data<float>(Shp(n, 0, 0)), s.Data<float>(Shp(n, 0, 0)), f.Axis(1) * f.Axis(2), &cd);
+                    if (cd > _options.compareThreshold)
+                        SYNET_ERROR(failed << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape()) << " at " << DebugPrint(Shp(n, 0)) << " : cosine distance " << cd << " > " << _options.compareThreshold);
+                }
             }
             else
             {

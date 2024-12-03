@@ -105,4 +105,9 @@ namespace Synet
                 significant++;
         return significant;
     }
+
+    SYNET_INLINE Shape AtLeast2D(const Shape& shape)
+    {
+        return shape.size() > 1 ? shape : Shp(shape[0], shape[0]);
+    }
 }

@@ -558,7 +558,14 @@ namespace Synet
                 _batch = 1, _channels = 1, _spatial = _src[0]->Size();
 
             if (dst[0] != _src[0] && !resized)
-                dst[0]->Reshape(_typeD, _src[0]->Shape(), _src[0]->Format());
+            {
+                //if (TensorUsers(_src[0]->Name()) == 1 && _typeA == _typeD)
+                //    dst[0]->Share(*_src[0]);
+                //else if (TensorUsers(_src[1]->Name()) == 1 && _typeB == _typeD && _src[0]->Shape() == _src[1]->Shape())
+                //    dst[0]->Share(*_src[1]);
+                //else
+                    dst[0]->Reshape(_typeD, _src[0]->Shape(), _src[0]->Format());
+            }
 
             _uniform = GetUniform(_typeA, _typeB, _typeD);
             _addBias = GetAddBias(_typeA, _typeB, _typeD);

@@ -256,6 +256,11 @@ namespace Synet
             return _context->options;
         }
 
+        inline size_t TensorUsers(const String & name) const
+        {
+            return _context->tensorUsers[name];
+        }
+
     protected:
         bool _const;
 

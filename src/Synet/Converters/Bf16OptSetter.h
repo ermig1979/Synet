@@ -75,11 +75,6 @@ namespace Synet
 
         //-------------------------------------------------------------------------------------------------
 
-        Shape AtLeast2D(const Shape& shape) const
-        {
-            return shape.size() > 1 ? shape : Shp(shape[0], shape[0]);
-        }
-
         bool SetSimpleCase(LayerParams& layers)
         {
             for (size_t i = 0; i < layers.size(); ++i)

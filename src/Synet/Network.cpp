@@ -72,6 +72,7 @@ namespace Synet
         _statId.clear();
         _srcIds.clear();
         _dstIds.clear();
+        _context.Clear();
         _empty = true;
     }
 
@@ -668,7 +669,10 @@ namespace Synet
             else
             {
                 for (size_t j = 0; j < param.src().size(); ++j)
+                {
                     _srcIds[param.src()[j]].insert(_stages.size());
+                    _context.tensorUsers[param.src()[j]]++;
+                }
                 for (size_t j = 0; j < param.dst().size(); ++j)
                     _dstIds[param.dst()[j]].insert(_stages.size());
                 _stages.push_back(stage);
