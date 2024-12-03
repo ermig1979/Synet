@@ -166,17 +166,47 @@ namespace Synet
 					LayerParam act;
 					switch (merg.conv().back().activationType())
 					{
+					case ActivationFunctionTypeRelu:
+					case ActivationFunctionTypeLeakyRelu:
+						act.type() = LayerTypeRelu;
+						act.relu().negativeSlope() = merg.conv().back().activationParam0();
+						break;
 					case ActivationFunctionTypeRestrictRange:
 						act.type() = LayerTypeRestrictRange;
 						act.restrictRange().lower() = merg.conv().back().activationParam0();
 						act.restrictRange().upper() = merg.conv().back().activationParam1();
 						break;
+					case ActivationFunctionTypePrelu:
+						act.type() = LayerTypePrelu;
+						act.weight().push_back(deoptimized.back().weight().back());
+						deoptimized.back().weight().pop_back();
+						break;
 					case ActivationFunctionTypeElu:
 						act.type() = LayerTypeElu;
 						act.elu().alpha() = merg.conv().back().activationParam0();
 						break;
+					case ActivationFunctionTypeHswish:
+						act.type() = LayerTypeHswish;
+						act.hswish().shift() = merg.conv().back().activationParam0();
+						act.hswish().scale() = merg.conv().back().activationParam1();
+						break;
+					case ActivationFunctionTypeMish:
+						act.type() = LayerTypeMish;
+						act.softplus().threshold() = merg.conv().back().activationParam0();
+						break;
+					case ActivationFunctionTypeHardSigmoid:
+						act.type() = LayerTypeHardSigmoid;
+						act.hardSigmoid().scale() = merg.conv().back().activationParam0();
+						act.hardSigmoid().shift() = merg.conv().back().activationParam1();
+						break;
+					case ActivationFunctionTypeSwish:
+						act.type() = LayerTypeSwish;
+						break;
+					case ActivationFunctionTypeGelu:
+						act.type() = LayerTypeGelu;
+						break;
 					default:
-						SYNET_ERROR("Deoptimization of merged convolution: unsupported last activation type " << merg.conv().back().activationType());
+						SYNET_ERROR("Deoptimization of merged convolution: unsupported last activation type " << Cpl::ToStr(merg.conv().back().activationType()));
 					}
 					deoptimized.back().convolution().activationType() = ActivationFunctionTypeIdentity;
 					deoptimized.back().convolution().activationParam0() = 0.0f;
