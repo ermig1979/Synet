@@ -40,7 +40,10 @@ namespace Synet
         _size = src[0]->Size();
         if (src[0]->GetType() == TensorType32f)
         {
-            dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+            if (TensorUsers(Param().src()[0]) == 1 && !src[0]->Const())
+                dst[0]->Share(*src[0]);
+            else
+                dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
         }
         else
             SYNET_ERROR("EluLayer supports only FP32 input and output!");
