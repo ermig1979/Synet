@@ -362,9 +362,9 @@ namespace Test
 				if (_synet.flops)
 					table.SetCell(col++, row, ToString(test.second.flops, 1));
 				if (_other.memory)
-					table.SetCell(col++, row, summary ? String("-") : ToString(test.first.memory, 1));
+					table.SetCell(col++, row, ToString(test.first.memory, 1));
 				if (_synet.memory)
-					table.SetCell(col++, row, summary ? String("-") : ToString(test.second.memory, 1));
+					table.SetCell(col++, row, ToString(test.second.memory, 1));
 				table.SetCell(col++, row, summary ? String("-") : test.desc);
 				table.SetRowProp(row, summary && i == tests.size() - 1, summary);
 			}
@@ -390,6 +390,10 @@ namespace Test
 					summary.first.flops += ::log(test.first.flops);
 				if (_synet.flops)
 					summary.second.flops += ::log(test.second.flops);
+				if (_other.memory)
+					summary.first.memory += ::log(test.first.memory);
+				if (_synet.memory)
+					summary.second.memory += ::log(test.second.memory);
 			}
 			if (_other.time)
 				summary.first.time = summary.count > 0 ? ::exp(summary.first.time / summary.count) : 0;
@@ -399,6 +403,10 @@ namespace Test
 				summary.first.flops = summary.count > 0 ? ::exp(summary.first.flops / summary.count) : 0;
 			if (_synet.flops)
 				summary.second.flops = summary.count > 0 ? ::exp(summary.second.flops / summary.count) : 0;
+			if (_other.memory)
+				summary.first.memory = summary.count > 0 ? ::exp(summary.first.memory / summary.count) : 0;
+			if (_synet.memory)
+				summary.second.memory = summary.count > 0 ? ::exp(summary.second.memory / summary.count) : 0;
 		}
 
 		void FillSummary()
