@@ -559,11 +559,12 @@ namespace Synet
 
             if (dst[0] != _src[0] && !resized)
             {
-                //if (TensorUsers(_src[0]->Name()) == 1 && _typeA == _typeD)
-                //    dst[0]->Share(*_src[0]);
-                //else if (TensorUsers(_src[1]->Name()) == 1 && _typeB == _typeD && _src[0]->Shape() == _src[1]->Shape())
-                //    dst[0]->Share(*_src[1]);
-                //else
+                const Strings& names = Param().src();
+                if (TensorUsers(names[0]) == 1 && src[0]->GetType() == _typeD && src[0]->Shape() == src[1]->Shape() && _typeD != TensorType64i && !src[0]->Const())
+                    dst[0]->Share(*src[0]);
+                else if (TensorUsers(names[1]) == 1 && src[1]->GetType() == _typeD && src[0]->Shape() == src[1]->Shape() && _typeD != TensorType64i && !src[1]->Const())
+                    dst[0]->Share(*src[1]);
+                else
                     dst[0]->Reshape(_typeD, _src[0]->Shape(), _src[0]->Format());
             }
 
