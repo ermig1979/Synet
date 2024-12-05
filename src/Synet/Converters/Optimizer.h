@@ -920,7 +920,7 @@ namespace Synet
                 layer.lowPrecision().bf16Type() = l2.lowPrecision().bf16Type();
             index += 2;
             dst.push_back(layer);
-            if (src.size() > index + 1 && method == QuantizationMethodUnknown && l0.lowPrecision().bf16Type() == LowPrecisionTypeNone && l2.lowPrecision().bf16Type() == LowPrecisionTypeNone)
+            if (src.size() > index + 1 && method == QuantizationMethodUnknown)// && l0.lowPrecision().bf16Type() == LowPrecisionTypeNone && l2.lowPrecision().bf16Type() == LowPrecisionTypeNone)
             {
                 const LayerParam & l3 = src[index + 1];
                 if (l2.convolution().activationType() == ActivationFunctionTypeIdentity && IsAdd(l3) && ((l3.src()[0] == l0.src()[0] && l3.src()[1] == l2.dst()[0]) || 

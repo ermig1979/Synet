@@ -135,7 +135,7 @@ namespace Synet
 #endif
         }
 
-        void Init(size_t batch, const ConvParam* convs, size_t count)
+        void Init(size_t batch, const ConvParam* convs, size_t count, int add)
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_batch != batch || _srcH != convs[0].srcH || _srcW != convs[0].srcW)
@@ -145,7 +145,7 @@ namespace Synet
                     ::SimdRelease(_context), _context = NULL;
                 SimdSynetCompatibilityType compatibility = SimdSynetCompatibilityDefault;
                 if (convs[1].dstH >= 1 && convs[1].dstW >= 1)
-                    _context = ::SimdSynetMergedConvolution16bInit(batch, (const SimdConvolutionParameters*)convs, count, compatibility);
+                    _context = ::SimdSynetMergedConvolution16bInit(batch, (const SimdConvolutionParameters*)convs, count, (SimdBool)add);
             }
 #endif
         }
@@ -186,7 +186,9 @@ namespace Synet
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_context)
-                ::SimdSynetMergedConvolution16bSetParams(_context, weight, (::SimdBool*)internal, bias, params);
+                ::SimdSynetMergedConvolution16bSetParams(_context, weight, bias, params);
+            if (internal)
+                internal[0] = 1, internal[1] = 1, internal[2] = 1;
 #endif
         }
 

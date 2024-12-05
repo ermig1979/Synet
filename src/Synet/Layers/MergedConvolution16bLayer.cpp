@@ -47,6 +47,8 @@ namespace Synet
     {
         std::stringstream info;
         info << " bf16-" << (_src16b ? "b" : "f") << (_dst16b ? "b" : "f");
+        if (_alg.count == 3)
+            info << _alg.add;
         if (_mergedConvolution16b.Enable())
             info << " " << _mergedConvolution16b.Info();
         return info.str();
@@ -61,8 +63,6 @@ namespace Synet
         _dst16b = dst->GetType() == TensorType16b;
 
         AlgParam& a = this->_alg;
-        if (a.add != 0)
-            SYNET_ERROR("MergedConvolution16bLayer support only add=0 case!");
         if (a.conv[1].group != 1)
         {
             a.conv[0].dstT = TensorType32f;
@@ -72,7 +72,7 @@ namespace Synet
         const ConvParam& back = a.conv[a.count - 1];
         dst->Reshape(dst->GetType(), Shp(a.batch, back.dstH, back.dstW, back.dstC), src->Format());
 
-        _mergedConvolution16b.Init(a.batch, a.conv, a.count);
+        _mergedConvolution16b.Init(a.batch, a.conv, a.count, a.add);
         if (_mergedConvolution16b.Enable())
         {
             Layer::Extend8u(buf, 0, Shp(_mergedConvolution16b.ExternalBufferSize()));
