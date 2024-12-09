@@ -731,7 +731,10 @@ namespace Test
             if (_options.enable & ENABLE_FIRST)
             {
                 if (thread && !InitNetwork(_options.firstModel, _options.firstWeight, _firsts[thread]))
+                {
+                    CPL_LOG_SS(Error, "Can't initialize network " << Options::FullName(_firsts[thread].Name(), _firsts[thread].Type()) << " for " << thread << " thread!");
                     ::exit(0);
+                }
                 _threads[thread].first = true;
                 std::mutex mutex;
                 std::unique_lock<std::mutex> lock(mutex);
@@ -778,7 +781,10 @@ namespace Test
             if (_options.enable & ENABLE_SECOND)
             {
                 if (thread && !InitNetwork(_options.secondModel, _options.secondWeight, _seconds[thread]))
+                {
+                    CPL_LOG_SS(Error, "Can't initialize network " << Options::FullName(_seconds[thread].Name(), _seconds[thread].Type()) << " for " << thread << " thread!");
                     ::exit(0);
+                }
                 _threads[thread].second = true;
                 std::mutex mutex;
                 std::unique_lock<std::mutex> lock(mutex);

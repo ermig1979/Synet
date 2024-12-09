@@ -196,16 +196,16 @@ def RunTest(context, test, batch):
 			cmd = "{0} -m=convert {1} -tf=1 -cs=1 -bf=0".format(binOrig, origArgs)
 			result = subprocess.run(cmd.split())
 			if result.returncode != 0 :
-				return context.Error("Error in test {0} !".format(log))
+				return context.Error("Error in preliminary model conversion of test {0} !".format(log))
 		cmd = "{0} -m=convert {1} -tf=1 -cs=1 -bf=1".format(binTest, pathArgs)
 		result = subprocess.run(cmd.split())
 		if result.returncode != 0 :
-			return context.Error("Error in test {0} !".format(log))
+			return context.Error("Error in model conversion of test {0} !".format(log))
 		
 	cmd = "{0} -m=compare -e=3 {1} -rn=0 -et=10.0 -wt=1 -tt={2} -ie=10 -be=10 -tf=1 -bs={3} -ct={4} -cs=1 -ln={5} -bf={6} -cp={7}".format(binTest, pathArgs, args.threads, batch, args.bf16Threshold, log, args.bf16, args.comparePrecise)
 	result = subprocess.run(cmd.split())
 	if result.returncode != 0 :
-		return context.Error("Error in test {0} !".format(log))
+		return context.Error("Error in test {0} : {1} !".format(log, result.returncode))
 
 	return True
 
