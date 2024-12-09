@@ -269,7 +269,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Relu" && !ConvertReluNode(node, layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Reshape" && !ConvertReshapeNode(node, trans, network.layers(), original, layer))
+                if (node.op_type() == "Reshape" && !ConvertReshapeNode(node, trans, network.layers(), original, onnxParam, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Resize" && !ConvertResizeNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
@@ -1839,7 +1839,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertReshapeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        bool ConvertReshapeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Vector& original, const OnnxParam& onnxParam, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1883,6 +1883,8 @@ namespace Synet
             {
                 layer.type() = LayerTypeReshape;
             }
+            if (onnxParam.setReshapeAxis1() && layer.type() == LayerTypeReshape)
+                layer.reshape().axis() = 1;
             return true;
         }
 
