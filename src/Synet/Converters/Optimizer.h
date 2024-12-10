@@ -115,8 +115,8 @@ namespace Synet
                 }
                 case 3:
                 {
-                    //if (MergePowerAndScaleAndPower(network.layers(), i, bin, buf, merged, changes))
-                    //    continue;
+                    if (MergePowerAndScaleAndPower(network.layers(), i, bin, buf, merged, changes))
+                        continue;
                     if (MergeBiasAndScale(network.layers(), i, bin, buf, merged, changes))
                         continue;
                     if (MergeConvolutionAndScale(network.layers(), i, bin, buf, merged, changes))
@@ -181,6 +181,8 @@ namespace Synet
                 }
                 case 5:
                 {
+                    if (MergePowerAndScaleAndPower(network.layers(), i, bin, buf, merged, changes))
+                        continue;
                     if (MergeConvolutionOrDeconvolutionAndActivation(network.layers(), i, method, merged, changes))
                         continue;
                     if (MergeRnnGruBd(network.layers(), i, merged, changes))
@@ -409,7 +411,7 @@ namespace Synet
                 changes.push_back(Change(src[index + 0].dst()[0], layer.dst()[0]));
             else
                 dst.push_back(src[index + 0]);
-            index += (pre ? 1 : 0) + (post ? 1 : 0);
+            index += 1 + (post ? 1 : 0);
             dst.push_back(layer);
             return true;
         }
