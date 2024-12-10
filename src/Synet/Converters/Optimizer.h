@@ -217,6 +217,8 @@ namespace Synet
                         continue;
                     if (MergeYoloV7(network.layers(), i, merged, changes))
                         continue;
+                    //if (MergeParallelScaleAndDepthwiseConvolution(network.layers(), i, bin, buf, merged, changes))
+                    //    continue;
                     break;
                 }
                 default:
@@ -1824,6 +1826,48 @@ namespace Synet
             }
             index += parts.size() - 1;
 
+            return true;
+        }
+
+        bool MergeParallelScaleAndDepthwiseConvolution(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 3)
+                return false;
+            const LayerParam& scale = src[index + 0];
+            LayerParam conv = src[index + 1];
+            const LayerParam & add = src[index + 2];
+            if (scale.type() != LayerTypeScale)
+                return false;
+            if (conv.type() != LayerTypeConvolution || conv.convolution().group() != conv.convolution().outputNum() || 
+                conv.convolution().activationType() != ActivationFunctionTypeIdentity || conv.src() != scale.src() ||
+                conv.convolution().biasTerm() != scale.scale().biasTerm() || conv.weight().size() != scale.weight().size() ||
+                conv.weight()[0].format() != TensorFormatNhwc)
+                return false;
+            if (!IsAdd(add) || ((add.src()[0] != scale.dst()[0] || add.src()[1] != conv.dst()[0]) && 
+                (add.src()[1] != scale.dst()[0] || add.src()[0] != conv.dst()[0])))
+                return false;
+            if (InsideLink(src, index + 0, 3))
+                return false;
+
+            if (buf.empty())
+                buf = bin;
+            size_t C = conv.convolution().outputNum();
+            const float * pScale = bin.data() + scale.weight()[0].offset() / sizeof(float);
+            float* pWeight = buf.data() + conv.weight()[0].offset() / sizeof(float) + 
+                (conv.convolution().kernel()[1] * conv.convolution().pad()[0] + conv.convolution().pad()[1]) * C;
+            for (size_t c = 0; c < C; ++c)
+                pWeight[c] += pScale[c];
+            if (conv.convolution().biasTerm())
+            {
+                const float* pShift = bin.data() + scale.weight()[1].offset() / sizeof(float);
+                float* pBias = buf.data() + conv.weight()[1].offset() / sizeof(float);
+                for (size_t c = 0; c < C; ++c)
+                    pBias[c] += pShift[c];
+            }
+            conv.name() = add.name();
+            conv.dst() = add.dst();
+            dst.push_back(conv);
+            index += 2;
             return true;
         }
 
