@@ -54,10 +54,14 @@ namespace Test
 				FillSummary();
 				if (text)
 				{
-					Cpl::Table table(ColNum(), _summary.size() + _tests.size());
-					SetHeader(table);
-					SetCells(table, _summary, 0, true);
-					SetCells(table, _tests, _summary.size(), false);
+					Cpl::Table summary(ColNum(true), _summary.size());
+					SetHeader(summary, true);
+					SetCells(summary, _summary, 0, true);
+
+					Cpl::Table tests(ColNum(false), _tests.size());
+					SetHeader(tests, false);
+					SetCells(tests, _tests, 0, false);
+
 					ofs << "~~~~~~~~~~~~~~~~~~~~~ Synet Performance Report ~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 					ofs << "Test generation time: " + Cpl::CurrentDateTimeString() << std::endl;
 					ofs << "Synet version: " + Synet::Version() << std::endl;
@@ -65,7 +69,8 @@ namespace Test
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 					Simd::PrintInfo(ofs);
 #endif
-					ofs << table.GenerateText();
+					ofs << summary.GenerateText() << std::endl;
+					ofs << tests.GenerateText();
 				}
 				else
 				{
@@ -86,14 +91,14 @@ namespace Test
 					html.WriteEnd("h4", true, true);
 #endif
 
-					Cpl::Table summary(ColNum(), _summary.size());
-					SetHeader(summary);
+					Cpl::Table summary(ColNum(true), _summary.size());
+					SetHeader(summary, true);
 					SetCells(summary, _summary, 0, true);
 					html.WriteValue("h3", Cpl::Html::Attr(), String("Summary:"), true);
 					ofs << summary.GenerateHtml(0, true, true, true);
 
-					Cpl::Table tests(ColNum(), _tests.size());
-					SetHeader(tests);
+					Cpl::Table tests(ColNum(false), _tests.size());
+					SetHeader(tests, false);
 					SetCells(tests, _tests, 0, false);
 					html.WriteValue("h3", Cpl::Html::Attr(), String("Tests:"), true);
 					ofs << tests.GenerateHtml(0, false, true, true);
@@ -291,9 +296,9 @@ namespace Test
 			return desc;
 		}
 
-		size_t ColNum() const
+		size_t ColNum(bool summary) const
 		{
-			size_t col = 4;
+			size_t col = summary ? 5 : 4;
 			if (_other.time)
 				col++;
 			if (_synet.time)
@@ -311,7 +316,7 @@ namespace Test
 			return col;
 		}
 
-		void SetHeader(Cpl::Table& table)
+		void SetHeader(Cpl::Table& table, bool summary)
 		{
 			String first = Options::FullName(_options.firstName, _options.firstType);
 			String second = Options::FullName(_options.secondName, _options.secondType);
@@ -319,6 +324,8 @@ namespace Test
 			table.SetHeader(col++, "Test", true, Cpl::Table::Center);
 			table.SetHeader(col++, "Format", true, Cpl::Table::Center);
 			table.SetHeader(col++, "Batch", true, Cpl::Table::Center);
+			if(summary)
+				table.SetHeader(col++, "Number", true, Cpl::Table::Center);
 			if (_other.time)
 				table.SetHeader(col++, first + ", ms", true, Cpl::Table::Center);
 			if (_synet.time)
@@ -348,6 +355,8 @@ namespace Test
 					table.SetCell(col++, row, test.name + (test.bf16 == 0 ? String("_fp32_") : String("_bf16_")) + ToString(test.batch), Cpl::Table::Black, test.link);
 				table.SetCell(col++, row, test.bf16 < 0 ? String("-") : test.bf16 == 0 ? String("FP32") : String("BF16"));
 				table.SetCell(col++, row, test.batch ? ToString(test.batch) : String("-"));
+				if (summary)
+					table.SetCell(col++, row, ToString(test.count));
 				if (_other.time)
 					table.SetCell(col++, row, ToString(test.first.time, 3), test.skip == 1 ? Cpl::Table::Red : Cpl::Table::Black);
 				if (_synet.time)
