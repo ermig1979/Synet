@@ -64,6 +64,8 @@ namespace Synet
                 if (!OptimizeLayers(network, bin, stage))
                     return false;
             }
+            if (!_bf16OptSetter.Run(network, bin))
+                return false;
             if (!RemoveStub(network))
                 return false;
             if (!RemoveUnusedConst(network.layers()))
