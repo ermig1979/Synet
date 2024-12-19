@@ -35,7 +35,6 @@ namespace Synet
                 for (size_t y = 0; y < height; ++y)
                 {
                     for (size_t x = 0; x < width; ++x)
-
                         dst[x] = src[x] * ver[x] * hor[0];
                     src += width, dst += width;
                     hor += 1;
@@ -60,6 +59,13 @@ namespace Synet
         else
             assert(0);
     }
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+    template <> void TiledScale2D<float>(const float* src, size_t channels, size_t height, size_t width, const float* ver, const float* hor, float* dst, TensorFormat format)
+    {
+        SimdSynetTiledScale2D32f(src, channels, height, width, SimdTensorFormatType(format), ver, hor, dst);
+    }
+#endif
 
     //-------------------------------------------------------------------------------------------------
 
