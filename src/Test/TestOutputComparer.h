@@ -65,6 +65,8 @@ namespace Test
 
             if (first.size() != second.size())
                 SYNET_ERROR(failed << std::endl << "Dst count : " << first.size() << " != " << second.size());
+            if (_param.output().size() != first.size() && _param.output().size() != 0)
+                SYNET_ERROR(failed << std::endl << "Check output parameter size!" << _param.output().size() << " != " << first.size() << " !");
             if (_regionDecoder.Enable())
                 return CompareRegions(first, second, failed);
             for (size_t d = 0; d < first.size(); ++d)
@@ -73,6 +75,17 @@ namespace Test
                 String decType = _param.detection().decoder();
                 if (compType == "0" || compType == "false" || compType == "skip")
                     continue;
+                float compareThreshold = _options.compareThreshold;
+                if (_options.bf16)
+                {
+                    if (_param.output().size() && _param.output()[d].bf16Threshold() != 0.0f)
+                        compareThreshold = _param.output()[d].bf16Threshold();
+                }
+                else
+                {
+                    if (_param.output().size() && _param.output()[d].fp32Threshold() != 0.0f)
+                        compareThreshold = _param.output()[d].fp32Threshold();
+                }
                 const Tensor& f = first[d];
                 const Tensor& s = second[d];
 
@@ -81,7 +94,7 @@ namespace Test
                 Difference difference(f, s);
                 if (difference.Valid() && 0)
                 {
-                    if (!difference.Estimate(_options.compareThreshold, _options.compareQuantile))
+                    if (!difference.Estimate(compareThreshold, _options.compareQuantile))
                     {
                         PrintError(difference, d, failed, std::cout);
                         PrintMaxErrorNeighbours(f, s, difference, 2, std::cout);
@@ -92,19 +105,19 @@ namespace Test
                 switch (f.Count())
                 {
                 case 1:
-                    if (!Compare1d(f, s, d, failed))
+                    if (!Compare1d(f, s, d, failed, compType, compareThreshold))
                         return false;
                     break;
                 case 2:
-                    if (!Compare2d(f, s, d, failed))
+                    if (!Compare2d(f, s, d, failed, compType, compareThreshold))
                         return false;
                     break;
                 case 3:
-                    if (!Compare3d(f, s, d, failed))
+                    if (!Compare3d(f, s, d, failed, compType, compareThreshold))
                         return false;
                     break;
                 case 4:
-                    if (!Compare4d(f, s, d, failed))
+                    if (!Compare4d(f, s, d, failed, compType, compareThreshold))
                         return false;
                     break;
                 default:
@@ -122,35 +135,34 @@ namespace Test
             return e <= t;
         }
 
-        bool Compare(const Tensor& f, const Tensor& s, const Shape& i, size_t d, const String& m, const String & c = String()) const
+        bool Compare(const Tensor& f, const Tensor& s, const Shape& i, size_t d, const String& m, const String & c, float t) const
         {
             using Synet::Detail::DebugPrint;
-            float _f = f.Data<float>(i)[0], _s = s.Data<float>(i)[0], _t = _options.compareThreshold, _e = 0;
-            if (!Compare(_f, _s, _t, _e))
-                SYNET_ERROR(m << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape()) << " at " << DebugPrint(i) << " : " << _f << " != " << _s << " ( " << _e << " > " << _t << " ) " << c);
+            float _f = f.Data<float>(i)[0], _s = s.Data<float>(i)[0], _e = 0;
+            if (!Compare(_f, _s, t, _e))
+                SYNET_ERROR(m << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape()) << " at " << DebugPrint(i) << " : " << _f << " != " << _s << " ( " << _e << " > " << t << " ) " << c);
             return true;
         }
 
-        bool Compare1d(const Tensor& f, const Tensor& s, size_t d, const String& failed) const
+        bool Compare1d(const Tensor& f, const Tensor& s, size_t d, const String& failed, String compType, float compareThreshold) const
         {
             for (size_t n = 0; n < f.Axis(0); ++n)
-                if (!Compare(f, s, Shp(n), d, failed))
+                if (!Compare(f, s, Shp(n), d, failed, "", compareThreshold))
                     return false;
             return true;
         }
 
-        bool Compare2d(const Tensor& f, const Tensor& s, size_t d, const String& failed) const
+        bool Compare2d(const Tensor& f, const Tensor& s, size_t d, const String& failed, String compType, float compareThreshold) const
         {
             using Synet::Detail::DebugPrint;
-            const String & compType = _param.output().size() ? _param.output()[d].compare() : "";
             if (compType == "cos_dist" && (_options.bf16 || !_options.comparePrecise))
             {
                 for (size_t n = 0; n < f.Axis(0); ++n)
                 {
                     float cd;
                     SimdCosineDistance32f(f.Data<float>(Shp(n, 0)), s.Data<float>(Shp(n, 0)), f.Axis(1), &cd);
-                    if (cd > _options.compareThreshold)
-                        SYNET_ERROR(failed << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape()) << " at " << DebugPrint(Shp(n, 0)) << " : cosine distance " << cd << " > " << _options.compareThreshold);
+                    if (cd > compareThreshold)
+                        SYNET_ERROR(failed << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape()) << " at " << DebugPrint(Shp(n, 0)) << " : cosine distance " << cd << " > " << compareThreshold);
                 }
             }
             else if (compType == "softmax" && (_options.bf16 || !_options.comparePrecise))
@@ -162,7 +174,7 @@ namespace Test
                 SimdSynetSoftmaxLayerForward(s.Data<float>(), s.Axis(0), s.Axis(1), 1, _s.Data<float>());
                 for (size_t n = 0; n < f.Axis(0); ++n)
                     for (size_t c = 0; c < f.Axis(1); ++c)
-                        if (!Compare(_f, _s, Shp(n, c), d, failed, compType))
+                        if (!Compare(_f, _s, Shp(n, c), d, failed, compType, compareThreshold))
                             return false;
             }
             else if (compType == "sigmoid" && (_options.bf16 || !_options.comparePrecise))
@@ -175,24 +187,23 @@ namespace Test
                 SimdSynetSigmoid32f(s.Data<float>(), s.Size(), &_1, _s.Data<float>());
                 for (size_t n = 0; n < f.Axis(0); ++n)
                     for (size_t c = 0; c < f.Axis(1); ++c)
-                        if (!Compare(_f, _s, Shp(n, c), d, failed, compType))
+                        if (!Compare(_f, _s, Shp(n, c), d, failed, compType, compareThreshold))
                             return false;
             }
             else
             {
                 for (size_t n = 0; n < f.Axis(0); ++n)
                     for (size_t c = 0; c < f.Axis(1); ++c)
-                        if (!Compare(f, s, Shp(n, c), d, failed))
+                        if (!Compare(f, s, Shp(n, c), d, failed, "", compareThreshold))
                             return false;
             }
             return true;
         }
 
-        bool Compare3d(const Tensor& f, const Tensor& s, size_t d, const String& failed) const
+        bool Compare3d(const Tensor& f, const Tensor& s, size_t d, const String& failed, String compType, float compareThreshold) const
         {
             using Synet::Detail::DebugPrint;
             String decType = _param.detection().decoder();
-            const String& compType = _param.output().size() ? _param.output()[d].compare() : "";
             if (decType == "yoloV8" && (_options.bf16 || !_options.comparePrecise))
             {
                 float threshold = _param.detection().confidence();
@@ -203,7 +214,7 @@ namespace Test
                         if (score >= threshold)
                         {
                             for (size_t c = 0; c < 5; ++c)
-                                if (!Compare(f, s, Shp(n, c, y), d, failed))
+                                if (!Compare(f, s, Shp(n, c, y), d, failed, "", compareThreshold))
                                     return false;
                         }
                     }
@@ -226,7 +237,7 @@ namespace Test
                 for (size_t n = 0; n < _f.Axis(0); ++n)
                     for (size_t c = 0; c < _f.Axis(1); ++c)
                         for (size_t y = 0; y < _f.Axis(2); ++y)
-                            if (!Compare(_f, _s, Shp(n, c, y), d, failed, compType))
+                            if (!Compare(_f, _s, Shp(n, c, y), d, failed, compType, compareThreshold))
                                 return false;
             }
             else if (compType == "sigmoid" && (_options.bf16 || !_options.comparePrecise))
@@ -240,7 +251,7 @@ namespace Test
                 for (size_t n = 0; n < _f.Axis(0); ++n)
                     for (size_t c = 0; c < _f.Axis(1); ++c)
                         for (size_t y = 0; y < _f.Axis(2); ++y)
-                            if (!Compare(_f, _s, Shp(n, c, y), d, failed, compType))
+                            if (!Compare(_f, _s, Shp(n, c, y), d, failed, compType, compareThreshold))
                                 return false;
             }
             else if (compType == "cos_dist-12" && (_options.bf16 || !_options.comparePrecise))
@@ -249,8 +260,8 @@ namespace Test
                 {
                     float cd;
                     SimdCosineDistance32f(f.Data<float>(Shp(n, 0, 0)), s.Data<float>(Shp(n, 0, 0)), f.Axis(1) * f.Axis(2), &cd);
-                    if (cd > _options.compareThreshold)
-                        SYNET_ERROR(failed << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape()) << " at " << DebugPrint(Shp(n, 0)) << " : cosine distance " << cd << " > " << _options.compareThreshold);
+                    if (cd > compareThreshold)
+                        SYNET_ERROR(failed << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape()) << " at " << DebugPrint(Shp(n, 0)) << " : cosine distance " << cd << " > " << compareThreshold);
                 }
             }
             else
@@ -258,16 +269,15 @@ namespace Test
                 for (size_t n = 0; n < f.Axis(0); ++n)
                     for (size_t c = 0; c < f.Axis(1); ++c)
                         for (size_t y = 0; y < f.Axis(2); ++y)
-                            if (!Compare(f, s, Shp(n, c, y), d, failed))
+                            if (!Compare(f, s, Shp(n, c, y), d, failed, "", compareThreshold))
                                 return false;
             }
             return true;
         }
 
-        bool Compare4d(const Tensor& f, const Tensor& s, size_t d, const String& failed) const
+        bool Compare4d(const Tensor& f, const Tensor& s, size_t d, const String& failed, String compType, float compareThreshold) const
         {
             using Synet::Detail::DebugPrint;
-            const String& compType = _param.output().size() ? _param.output()[d].compare() : "";
             if (compType == "cos_dist" && (_options.bf16 || !_options.comparePrecise) && f.Axis(2) == 1 && f.Axis(3) == 1)
             {
                 for (size_t n = 0; n < f.Axis(0); ++n)
@@ -275,7 +285,7 @@ namespace Test
                     float cd;
                     SimdCosineDistance32f(f.Data<float>(Shp(n, 0, 0, 0)), s.Data<float>(Shp(n, 0, 0, 0)), f.Axis(1), &cd);
                     if (cd > _options.compareThreshold)
-                        SYNET_ERROR(failed << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape()) << " at " << DebugPrint(Shp(n, 0, 0, 0)) << " : cosine distance " << cd << " > " << _options.compareThreshold);
+                        SYNET_ERROR(failed << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape()) << " at " << DebugPrint(Shp(n, 0, 0, 0)) << " : cosine distance " << cd << " > " << compareThreshold);
                 }
             }
             else
@@ -284,7 +294,7 @@ namespace Test
                     for (size_t c = 0; c < f.Axis(1); ++c)
                         for (size_t y = 0; y < f.Axis(2); ++y)
                             for (size_t x = 0; x < f.Axis(3); ++x)
-                                if (!Compare(f, s, Shp(n, c, y, x), d, failed))
+                                if (!Compare(f, s, Shp(n, c, y, x), d, failed, "", compareThreshold))
                                     return false;
             }
             return true;
@@ -340,7 +350,7 @@ namespace Test
                 for (size_t si = 0; si < n; ++si)
                 {
                     float overlap = Synet::Overlap(_f, rs[si]);
-                    if (_f.id == rs[si].id && overlap > overlapMax )
+                    if (_f.id == rs[si].id && overlap > overlapMax)
                     {
                         indexMax = si;
                         overlapMax = overlap;

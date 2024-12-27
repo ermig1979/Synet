@@ -70,6 +70,8 @@ namespace Test
     {
         CPL_PARAM_VALUE(String, name, String());
         CPL_PARAM_VALUE(String, compare, "");
+        CPL_PARAM_VALUE(float, fp32Threshold, 0.0f);
+        CPL_PARAM_VALUE(float, bf16Threshold, 0.0f);
     };
 
     struct DetectionParam
