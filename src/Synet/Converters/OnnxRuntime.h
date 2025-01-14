@@ -199,7 +199,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Erf" && !ConvertErfNode(node, layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Equal" && !ConvertEqualNode(node, layer))
+                if (node.op_type() == "Equal" && !ConvertEqualNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Exp" && !ConvertExpNode(node, layer))
                     return ErrorMessage(i, node);
@@ -303,7 +303,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Unsqueeze" && !ConvertUnsqueezeNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Where" && !ConvertWhereNode(node, layer))
+                if (node.op_type() == "Where" && !ConvertWhereNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
 
 #if defined(SYNET_ONNX_PARSE_STOP_ON_ERROR)
@@ -1084,10 +1084,24 @@ namespace Synet
             return true;
         }
 
-        bool ConvertEqualNode(const onnx::NodeProto& node, LayerParam& layer)
+        bool ConvertEqualNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
-            layer.type() = Synet::LayerTypeCompare;
-            layer.compare().compareType() = CompareTypeEqual;
+            if (!CheckSourceNumber(layer, 2))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            if (src0 == NULL || src1 == NULL)
+                return false;
+            if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeEqual;
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeCompare;
+                layer.compare().compareType() = CompareTypeEqual;
+            }
             return true;
         }
 
@@ -2444,9 +2458,22 @@ namespace Synet
             return true;
         }
 
-        bool ConvertWhereNode(const onnx::NodeProto& node, LayerParam& layer)
+        bool ConvertWhereNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
-            layer.type() = Synet::LayerTypeWhere;
+            if (!CheckSourceNumber(layer, 3))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+            if (src0 == NULL || src1 == NULL || src2 == NULL)
+                return false;
+            if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta && src2->type() == LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = MetaTypeSelect;
+            }
+            else
+                layer.type() = Synet::LayerTypeWhere;
             return true;
         }
 
