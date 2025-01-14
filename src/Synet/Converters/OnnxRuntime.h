@@ -418,6 +418,34 @@ namespace Synet
                         SYNET_ERROR("Can't parse '" << layer.name() << "' INT64 tensor!");
                 }
             }
+            else if (tensor.data_type() == onnx::TensorProto_DataType_BOOL)
+            {
+                layer.type() = LayerTypeConst;
+                layer.weight().resize(1);
+                layer.weight()[0].type() = TensorTypeBool;
+                uint64_t size = 1, offset = weight.size();
+                for (size_t i = 0; i < tensor.dims_size(); ++i)
+                {
+                    size *= (size_t)tensor.dims(i);
+                    layer.weight()[0].dim().push_back((size_t)tensor.dims(i));
+                }
+                uint64_t size4 = DivHi(size, 4);
+                layer.weight()[0].offset() = offset * sizeof(float);
+                layer.weight()[0].size() = size;
+                if (size)
+                {
+                    if (size == 1 && layer.weight()[0].dim().empty())
+                    {
+                        layer.weight()[0].dim().push_back(1);
+                        layer.weight()[0].scalar() = true;
+                    }
+                    weight.resize(offset + size4);
+                    if (tensor.has_raw_data())
+                        memcpy(weight.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                    else
+                        SYNET_ERROR("Can't parse '" << layer.name() << "' Bool tensor!");
+                }
+            }
             else
                 SYNET_ERROR(" Unknown tensor type " << tensor.data_type() << " !");
             network.layers().push_back(layer);
@@ -886,6 +914,29 @@ namespace Synet
                         original[offset + i] = value;
                         reordered[offset + i] = value;
                     }
+                }
+            }
+            else if (tensor.data_type() == onnx::TensorProto_DataType_BOOL)
+            {
+                layer.type() = LayerTypeConst;
+                layer.weight().resize(1);
+                layer.weight()[0].type() = TensorTypeBool;
+                uint64_t size = 1, offset = original.size();
+                for (size_t i = 0; i < tensor.dims_size(); ++i)
+                {
+                    size *= tensor.dims(i);
+                    layer.weight()[0].dim().push_back(size_t(tensor.dims(i)));
+                }
+                if (layer.weight()[0].dim().empty())
+                    layer.weight()[0].dim().push_back(1);
+                layer.weight()[0].offset() = offset * sizeof(float);
+                layer.weight()[0].size() = size * sizeof(bool);
+                if (tensor.has_raw_data() && size)
+                {
+                    original.resize(offset + DivHi(size, 4));
+                    reordered.resize(offset + DivHi(size, 4));
+                    memcpy(original.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                    memcpy(reordered.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
                 }
             }
             else
@@ -1624,7 +1675,7 @@ namespace Synet
             const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
             if (src0 == NULL)
                 return false;
-            if (src0->type() == LayerTypeMeta || src0->type() == LayerTypeConstantOfShape)
+            if (src0->type() == LayerTypeMeta || src0->type() == LayerTypeConstantOfShape || src0->type() == LayerTypeTile)
             {
                 layer.type() = Synet::LayerTypeNonZero;
             }
@@ -1991,32 +2042,31 @@ namespace Synet
             const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
             if (src0 == NULL || src1 == NULL || src2 == NULL)
                 return false;
-            if (src1->type() != LayerTypeMeta || src1->meta().type() != MetaTypeConst)
-            {
-                std::cout << "src[1] type must be meta const!" << std::endl;
-                return false;
-            }
-            const TensorParam & alpha = src1->meta().alpha();
-            size_t size = TensorSize(alpha.shape()), offset = reordered.size();
             layer.type() = Synet::LayerTypeScatterNd;
-            layer.weight().resize(1);
-            layer.weight()[0].dim() = alpha.shape();
-            layer.weight()[0].type() = TensorType32i;
-            layer.weight()[0].offset() = offset * 4;
-            layer.weight()[0].size() = size * 4;
-            layer.src().erase(layer.src().begin() + 1);
-            reordered.resize(offset + size);
-            if (alpha.type() == TensorType64i)
+            if (src1->type() == LayerTypeMeta && src1->meta().type() == MetaTypeConst)
             {
-                const int64_t* src = alpha.i64().data();
-                int32_t * dst = (int32_t*)reordered.data() + offset;
-                for (size_t i = 0; i < size; ++i)
-                    dst[i] = (int32_t)src[i];
-            }
-            else
-            {
-                std::cout << "src[1] type must be meta const int64!" << std::endl;
-                return false;
+                const TensorParam & alpha = src1->meta().alpha();
+                size_t size = TensorSize(alpha.shape()), offset = reordered.size();
+                layer.type() = Synet::LayerTypeScatterNd;
+                layer.weight().resize(1);
+                layer.weight()[0].dim() = alpha.shape();
+                layer.weight()[0].type() = TensorType32i;
+                layer.weight()[0].offset() = offset * 4;
+                layer.weight()[0].size() = size * 4;
+                layer.src().erase(layer.src().begin() + 1);
+                reordered.resize(offset + size);
+                if (alpha.type() == TensorType64i)
+                {
+                    const int64_t* src = alpha.i64().data();
+                    int32_t * dst = (int32_t*)reordered.data() + offset;
+                    for (size_t i = 0; i < size; ++i)
+                        dst[i] = (int32_t)src[i];
+                }
+                else
+                {
+                    std::cout << "src[1] type must be meta const int64!" << std::endl;
+                    return false;
+                }
             }
             return true;
         }
