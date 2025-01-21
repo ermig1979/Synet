@@ -1,7 +1,6 @@
 
 set(IE_ROOT_DIR ${ROOT_DIR}/3rd/openvino)
 set(IE_BIN_DIR ${IE_ROOT_DIR}/bin/intel64/Release)
-set(IE_3RD_DIR ${IE_ROOT_DIR}/temp)
 set(IE_THREADING "OMP" CACHE STRING "Set threading mode for IE: TBB / OMP / SEQ")
 set(IE_GEMM "JIT")
 
@@ -10,30 +9,9 @@ set(IE_BIN_LIBS
 	${IE_BIN_DIR}/libopenvino_ir_frontend.so
 	${IE_BIN_DIR}/libopenvino_onnx_frontend.so
 	${IE_BIN_DIR}/libopenvino.so)
-#	${IE_BIN_DIR}/libinference_engine.so 
-#	${IE_BIN_DIR}/libMKLDNNPlugin.so 
-#	${IE_BIN_DIR}/libtemplatePlugin.so
-#	${IE_BIN_DIR}/libtemplate_extension.so
-#	${IE_BIN_DIR}/libonnx_importer.so
-#	${IE_BIN_DIR}/libngraph.so
-#	${IE_BIN_DIR}/libngraph_backend.so
-#	${IE_BIN_DIR}/libMultiDevicePlugin.so
-#	${IE_BIN_DIR}/libinterpreter_backend.so
-#	${IE_BIN_DIR}/libinference_engine_transformations.so
-#	${IE_BIN_DIR}/libinference_engine_preproc.so
-#	${IE_BIN_DIR}/libinference_engine_onnx_reader.so
-#	${IE_BIN_DIR}/libinference_engine_lp_transformations.so
-#	${IE_BIN_DIR}/libinference_engine_legacy.so
-#	${IE_BIN_DIR}/libinference_engine_ir_v7_reader.so
-#	${IE_BIN_DIR}/libinference_engine_ir_reader.so
-#	${IE_BIN_DIR}/libinference_engine_c_api.so
-#	${IE_BIN_DIR}/libie_backend.so
-#	${IE_BIN_DIR}/libformat_reader.so)
 if(IE_THREADING STREQUAL "TBB")	
-	#list(APPEND IE_BIN_LIBS ${IE_3RD_DIR}/tbb/lib/libtbb.so.2)
 	set(IE_SAMPLES ON)
 elseif(IE_THREADING STREQUAL "OMP")
-	#list(APPEND IE_BIN_LIBS ${IE_3RD_DIR}/omp/lib/libiomp5.so)
 	set(IE_SAMPLES OFF)
 endif()
 
@@ -88,6 +66,6 @@ add_custom_command(
 add_custom_target(make_openvino DEPENDS ${IE_BIN_LIBS})
 
 include_directories(${IE_ROOT_DIR}/src/inference/include)
-include_directories(${IE_ROOT_DIR}/src/inference/include/ie)
+#include_directories(${IE_ROOT_DIR}/src/inference/include/ie)
 include_directories(${IE_ROOT_DIR}/src/core/include)
 

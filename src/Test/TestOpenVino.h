@@ -305,7 +305,7 @@ namespace Test
                 ov::inference_num_threads(1),
                 ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY),
                 ov::num_streams(1),
-                ov::affinity(ov::Affinity::CORE));
+                ov::hint::enable_cpu_pinning(true));
             _ov->inferRequest = _ov->compiledModel.create_infer_request();
         }
 
