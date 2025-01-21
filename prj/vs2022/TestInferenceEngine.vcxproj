@@ -31,7 +31,6 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\Test\TestCommon.h" />
     <ClInclude Include="..\..\src\Test\TestCompare.h" />
-    <ClInclude Include="..\..\src\Test\TestInferenceEngine.h" />
     <ClInclude Include="..\..\src\Test\TestNetwork.h" />
     <ClInclude Include="..\..\src\Test\TestOpenVino.h" />
     <ClInclude Include="..\..\src\Test\TestOptions.h" />
