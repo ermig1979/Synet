@@ -1,6 +1,6 @@
 
 set(IE_ROOT_DIR ${ROOT_DIR}/3rd/openvino)
-set(IE_BIN_DIR ${IE_ROOT_DIR}/bin/intel64/Release/lib)
+set(IE_BIN_DIR ${IE_ROOT_DIR}/bin/intel64/Release)
 set(IE_3RD_DIR ${IE_ROOT_DIR}/temp)
 set(IE_THREADING "OMP" CACHE STRING "Set threading mode for IE: TBB / OMP / SEQ")
 set(IE_GEMM "JIT")
@@ -30,10 +30,10 @@ set(IE_BIN_LIBS
 #	${IE_BIN_DIR}/libie_backend.so
 #	${IE_BIN_DIR}/libformat_reader.so)
 if(IE_THREADING STREQUAL "TBB")	
-	list(APPEND IE_BIN_LIBS ${IE_3RD_DIR}/tbb/lib/libtbb.so.2)
+	#list(APPEND IE_BIN_LIBS ${IE_3RD_DIR}/tbb/lib/libtbb.so.2)
 	set(IE_SAMPLES ON)
 elseif(IE_THREADING STREQUAL "OMP")
-	list(APPEND IE_BIN_LIBS ${IE_3RD_DIR}/omp/lib/libiomp5.so)
+	#list(APPEND IE_BIN_LIBS ${IE_3RD_DIR}/omp/lib/libiomp5.so)
 	set(IE_SAMPLES OFF)
 endif()
 
@@ -66,7 +66,7 @@ set(IE_BUILD_OPTIONS
 	-DENABLE_AVX2=ON
 	-DENABLE_SSE42=ON
 	-DGEMM=${IE_GEMM}
-	-DTHREADING=${IE_THREADING}
+	-DTHREADING_DEFAULT=${IE_THREADING}
 	-DNGRAPH_UNIT_TEST_ENABLE=OFF
 	-DNGRAPH_TEST_UTIL_ENABLE=OFF
 	-DENABLE_INTEL_GNA=OFF
@@ -77,12 +77,11 @@ set(IE_BUILD_OPTIONS
 	-DENABLE_IR_V7_READER=OFF
 	)
 
-set(IE_PLUGINS_XML ${IE_BIN_DIR}/plugins.xml)
 file(MAKE_DIRECTORY ${IE_ROOT_DIR}/build)
 add_custom_command(
 	OUTPUT ${IE_BIN_LIBS}
 	COMMAND cmake .. ${IE_BUILD_OPTIONS} && make -j8
-	POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${IE_BIN_LIBS} ${IE_PLUGINS_XML} ${CMAKE_BINARY_DIR} 
+	POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${IE_BIN_LIBS} ${CMAKE_BINARY_DIR} 
 	WORKING_DIRECTORY ${IE_ROOT_DIR}/build)
 	
 

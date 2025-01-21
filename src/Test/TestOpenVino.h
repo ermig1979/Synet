@@ -196,7 +196,6 @@ namespace Test
         }
 
     private:
-        typedef InferenceEngine::SizeVector Sizes;
         typedef std::map<std::string, std::string> StringMap;
         struct Ov
         {
