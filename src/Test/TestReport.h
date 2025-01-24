@@ -233,14 +233,20 @@ namespace Test
 		String NetworkPredictName(const String & framework, const String& description)
 		{
 			std::stringstream ss;
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 			ss << "Test::";
 			ss << framework;
 			ss << "Network::Predict";
-#else
+#elif defined(__GNUC__) 
+#if __GNUC__ >= 13
 			ss << "virtual const Test::Tensors& Test::";
 			ss << framework;
 			ss << "Network::Predict(const Test::Tensors&)";
+#else
+			ss << "virtual const Tensors& Test::";
+			ss << framework;
+			ss << "Network::Predict(const Tensors&)";
+#endif
 #endif
 			if (!description.empty())
 				ss << "{ " << description << " }";
