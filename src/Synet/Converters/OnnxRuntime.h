@@ -275,7 +275,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "ScaledDotProductAttention" && !ConvertScaledDotProductAttentionNode(node, network.layers(), layer, reordered))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "ScatterND" && !ConvertScatterNdNode(node, network.layers(), layer, reordered))
+                if (node.op_type() == "ScatterND" && !ConvertScatterNdNode(node, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Shape" && !ConvertShapeNode(node, layer))
                     return ErrorMessage(i, node);
@@ -663,7 +663,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertBatchNormalizationNode(const onnx::NodeProto & node, const LayerParams& layers, const Vector& original, LayerParam& layer, Vector& reordered)
+        bool ConvertBatchNormalizationNode(const onnx::NodeProto & node, const LayerParams& layers, Vector& original, LayerParam& layer, Vector& reordered)
         {
             if (!CheckSourceNumber(layer, 5))
                 return false;
@@ -703,6 +703,7 @@ namespace Synet
             if(shared1)
             {
                 size_t size = TensorSize(layer.weight()[0].dim()), offset = reordered.size();
+                original.resize(offset + size);
                 reordered.resize(offset + size);
                 layer.weight()[0].offset() = offset * 4;
             }
@@ -710,6 +711,7 @@ namespace Synet
             if (shared2)
             {
                 size_t size = TensorSize(layer.weight()[1].dim()), offset = reordered.size();
+                original.resize(offset + size);
                 reordered.resize(offset + size);
                 layer.weight()[1].offset() = offset * 4;
             }
@@ -2033,7 +2035,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertScatterNdNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer, Vector& reordered)
+        bool ConvertScatterNdNode(const onnx::NodeProto& node, const LayerParams& layers, Vector & original, LayerParam& layer, Vector& reordered)
         {
             if (!CheckSourceNumber(layer, 3))
                 return false;
@@ -2054,6 +2056,7 @@ namespace Synet
                 layer.weight()[0].offset() = offset * 4;
                 layer.weight()[0].size() = size * 4;
                 layer.src().erase(layer.src().begin() + 1);
+                original.resize(offset + size);
                 reordered.resize(offset + size);
                 if (alpha.type() == TensorType64i)
                 {

@@ -156,7 +156,7 @@ namespace Synet
                 {
                     Reshape(param, tensor);
                     if (!is.read((char*)tensor.RawData(), tensor.RawSize()))
-                        return false;
+                        SYNET_ERROR("Can't load weight[" << i << "]!");
                 }
                 else
                 {
@@ -164,9 +164,9 @@ namespace Synet
                     {
                         Reshape(param, tensor);
                         if (!is.seekg(offset, std::ios::beg))
-                            return false;
+                            SYNET_ERROR("Can't load weight[" << i << "] for offset " << offset << " and size " << size << " !");
                         if (!is.read((char*)tensor.RawData(), size))
-                            return false;
+                            SYNET_ERROR("Can't load weight[" << i << "] for offset " << offset << " and size " << size << " !");
                     }
                 }
             }

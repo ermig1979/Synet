@@ -95,7 +95,7 @@ namespace Synet
             if (!_layers[i]->Load(ifs, _layers))
             {
                 ifs.close();
-                SYNET_ERROR("Can't load weight from file '" << weight << "' !");
+                SYNET_ERROR("Can't load weight from file '" << weight << "' for layer: " << _layers[i]->Param().name() << " !");
             }
         }
         ifs.close();
