@@ -179,6 +179,8 @@ namespace Synet
                         continue;
                     if (MergeTiledScale2D(network.layers(), i, merged, changes))
                         continue;
+                    if (MergeUnpack4(network.layers(), i, isNhwc, merged, changes))
+                        continue;
                     break;
                 }
                 case 5:
@@ -1643,6 +1645,65 @@ namespace Synet
             layer.dst().push_back(layer.name());
             dst.push_back(layer);
             index += 3;
+            return true;
+        }
+
+        bool MergeUnpack4(const LayerParams& src, size_t& index, bool isNhwc, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 19)
+                return false;
+            if (src[index + 0].type() != LayerTypeMeta || src[index + 0].meta().type() != MetaTypeShape)
+                return false;
+            if (src[index + 1].type() != LayerTypeMeta || src[index + 1].meta().type() != MetaTypeConst)
+                return false;
+            if (src[index + 2].type() != LayerTypeMeta || src[index + 2].meta().type() != MetaTypeGather)
+                return false;
+            if (src[index + 3].type() != LayerTypeMeta || src[index + 3].meta().type() != MetaTypeConst)
+                return false;
+            if (src[index + 4].type() != LayerTypeMeta || src[index + 4].meta().type() != MetaTypeConst)
+                return false;
+            if (src[index + 5].type() != LayerTypeMeta || src[index + 5].meta().type() != MetaTypeAdd)
+                return false;
+            if (!IsMetaConst64i(src[index + 6], Lng(4)))
+                return false;
+            if (src[index + 7].type() != LayerTypeMeta || src[index + 7].meta().type() != MetaTypeDiv)
+                return false;
+            if (!IsMetaConst64i(src[index + 8], Lng(1)))
+                return false;
+            if (src[index + 9].type() != LayerTypeMeta || src[index + 9].meta().type() != MetaTypeMul)
+                return false;
+            if (src[index + 10].type() != LayerTypeStridedSlice || src[index + 10].src()[0] != src[index + 0].src()[0])
+                return false;
+            if (!IsMetaConst64i(src[index + 11], Lng(2)))
+                return false;
+            if (src[index + 12].type() != LayerTypeMeta || src[index + 12].meta().type() != MetaTypeMul)
+                return false;
+            if (src[index + 13].type() != LayerTypeStridedSlice || src[index + 13].src()[0] != src[index + 0].src()[0])
+                return false;
+            if (!IsMetaConst64i(src[index + 14], Lng(3)))
+                return false;
+            if (src[index + 15].type() != LayerTypeMeta || src[index + 15].meta().type() != MetaTypeMul)
+                return false;
+            if (src[index + 16].type() != LayerTypeStridedSlice || src[index + 16].src()[0] != src[index + 0].src()[0])
+                return false;
+            if (!IsMetaConst64i(src[index + 17], Lng(4)))
+                return false;
+            if (src[index + 18].type() != LayerTypeMeta || src[index + 18].meta().type() != MetaTypeMul)
+                return false;
+            if (src[index + 19].type() != LayerTypeStridedSlice || src[index + 19].src()[0] != src[index + 0].src()[0])
+                return false;
+
+            LayerParam layer;
+            layer.type() = LayerTypeUnpack;
+            layer.name() = src[index + 0].name();
+            layer.src() = src[index + 0].src();
+            layer.unpack().axis() = isNhwc ? 3 : 1;
+            layer.dst().push_back(src[index + 10].dst()[0]);
+            layer.dst().push_back(src[index + 13].dst()[0]);
+            layer.dst().push_back(src[index + 16].dst()[0]);
+            layer.dst().push_back(src[index + 19].dst()[0]);
+            dst.push_back(layer);
+            index += 19;
             return true;
         }
 

@@ -591,5 +591,13 @@ namespace Synet
                 return true;
             return false;
         }
+
+        static SYNET_INLINE bool IsMetaConst64i(const LayerParam& layer, Longs value = Longs())
+        {
+            if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeConst && 
+                layer.meta().alpha().type() == TensorType64i && (value.empty() || layer.meta().alpha().i64() == value))
+                return true;
+            return false;
+        }
     };
 }

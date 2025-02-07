@@ -110,4 +110,36 @@ namespace Synet
     {
         return shape.size() > 1 ? shape : Shp(shape[0], shape[0]);
     }
+
+    //-------------------------------------------------------------------------------------------------
+
+    SYNET_INLINE Longs Lng()
+    {
+        return Longs();
+    }
+
+    SYNET_INLINE Longs Lng(int64_t val0)
+    {
+        return Longs({ val0 });
+    }
+
+    SYNET_INLINE Longs Lng(int64_t val0, int64_t val1)
+    {
+        return Longs({ val0, val1 });
+    }
+
+    SYNET_INLINE Longs Lng(int64_t val0, int64_t val1, int64_t val2)
+    {
+        return Longs({ val0, val1, val2 });
+    }
+
+    SYNET_INLINE Longs Lng(int64_t val0, int64_t val1, int64_t val2, int64_t val3)
+    {
+        return Longs({ val0, val1, val2, val3 });
+    }
+
+    SYNET_INLINE Longs Lng(int64_t val0, int64_t val1, int64_t val2, int64_t val3, int64_t val4)
+    {
+        return Longs({ val0, val1, val2, val3, val4 });
+    }
 }
