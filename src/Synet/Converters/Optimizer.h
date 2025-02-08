@@ -1654,13 +1654,13 @@ namespace Synet
                 return false;
             if (src[index + 0].type() != LayerTypeMeta || src[index + 0].meta().type() != MetaTypeShape)
                 return false;
-            if (src[index + 1].type() != LayerTypeMeta || src[index + 1].meta().type() != MetaTypeConst)
+            if (!IsMetaConst64i(src[index + 1]))
                 return false;
             if (src[index + 2].type() != LayerTypeMeta || src[index + 2].meta().type() != MetaTypeGather)
                 return false;
-            if (src[index + 3].type() != LayerTypeMeta || src[index + 3].meta().type() != MetaTypeConst)
+            if (!IsMetaConst64i(src[index + 3]))
                 return false;
-            if (src[index + 4].type() != LayerTypeMeta || src[index + 4].meta().type() != MetaTypeConst)
+            if (!IsMetaConst64i(src[index + 4]))
                 return false;
             if (src[index + 5].type() != LayerTypeMeta || src[index + 5].meta().type() != MetaTypeAdd)
                 return false;
