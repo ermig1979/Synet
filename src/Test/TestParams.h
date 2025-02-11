@@ -114,6 +114,7 @@ namespace Test
         CPL_PARAM_VALUE(String, model, String());
         CPL_PARAM_VALUE(String, order, String());
         CPL_PARAM_VALUE(bool, dynamicOutput, false);
+        CPL_PARAM_VALUE(bool, batchEmulation, false);
         CPL_PARAM_VECTOR(InputParam, input);
         CPL_PARAM_VECTOR(OutputParam, output);
         CPL_PARAM_STRUCT(DetectionParam, detection);

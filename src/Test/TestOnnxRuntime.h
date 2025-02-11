@@ -134,7 +134,7 @@ namespace Test
 
             for (size_t i = 0; i < _inputShapes.size(); ++i)
             {
-                if (_inputShapes[i][0] == -1)
+                if (_inputShapes[i][0] == -1 && !param.batchEmulation())
                 {
                     _inputShapes[i][0] = options.batchSize;
                     _batchSize = 1;
@@ -142,6 +142,8 @@ namespace Test
                 else
                 {
                     _batchSize = options.batchSize;
+                    if(_inputShapes[i][0] == -1)
+                        _inputShapes[i][0] = 1;
                     if (_batchSize > 1 && !options.consoleSilence && i == 0)
                         CPL_LOG_SS(Warning, "OnnxRuntime model can't be reshaped, try to emulate batch > 1.");
                 }
