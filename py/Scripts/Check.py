@@ -5,6 +5,7 @@ import threading
 import multiprocessing
 import subprocess
 import random
+import copy
 
 ###################################################################################################
 
@@ -20,6 +21,7 @@ class Test():
 		else :
 			self.bf16 = "0"
 		self.path = ""
+		self.format = -1
 		
 	def TestNum(self) -> int :
 		if self.framework == "synet" :
@@ -38,6 +40,13 @@ class Test():
 				return 3
 			else :
 				return 2
+			
+	def SubTest(self, format, bf16) :
+		test = copy.deepcopy(self)
+		test.format = format
+		test.bf16 = bf16
+		return test
+			
 	def Bin(self) -> str :
 		if self.framework == "synet" :
 			return "test_bf16"
@@ -151,6 +160,19 @@ def SetTestList(context : Context):
 
 ###################################################################################################
 
+def OpimizeTestList(context : Context):
+	tests = []
+	for test in context.tests :
+		if test.framework != "synet" :
+			tests.append(test.SubTest(0, "0"))
+			tests.append(test.SubTest(1, "0"))
+		if test.bf16 == "1" :
+			tests.append(test.SubTest(1, "1"))
+	random.shuffle(tests)
+	context.tests = tests;
+
+###################################################################################################
+
 def ValidateThreadNumber(context : Context):
 	args = context.args
 	count = len(context.tests)
@@ -241,26 +263,32 @@ def RunTest(context, test, format, batch, bf16):
 def SingleThreadRun(context, beg, end):
 	for i in range(beg, end):
 		test = context.tests[i]
-		if test.framework != "synet" :
-			if not RunTest(context, test, 0, 1, "0") :
-				return
-			if not RunTest(context, test, 1, 1, "0") :
-				return
-			if test.batch == "1" :
-				if not RunTest(context, test, 1, 2, "0") :
+		if test.format == -1 :
+			if test.framework != "synet" :
+				if not RunTest(context, test, 0, 1, "0") :
 					return
-		if test.bf16 == "1" :
-			if not RunTest(context, test, 1, 1, "1") :
+				if not RunTest(context, test, 1, 1, "0") :
+					return
+				if test.batch == "1" :
+					if not RunTest(context, test, 1, 2, "0") :
+						return
+			if test.bf16 == "1" :
+				if not RunTest(context, test, 1, 1, "1") :
+					return
+			if test.batch == "1" and test.bf16 == "1" :
+				if not RunTest(context, test, 1, 2, "1") :
+					return
+		else :
+			if not RunTest(context, test, test.format, 1, test.bf16) :
 				return
-		if test.batch == "1" and test.bf16 == "1" :
-			if not RunTest(context, test, 1, 2, "1") :
-				return
+			if test.batch == "1" and test.format != 0 :
+				if not RunTest(context, test, 1, 2, test.bf16) :
+					return
 
 ###################################################################################################
 
 def MultiThreadRun(context):
 	threads = []
-	random.shuffle(context.tests)
 	for t in range(context.args.threads) :
 		beg = t * context.block
 		end = min(beg + context.block, len(context.tests))
@@ -298,7 +326,9 @@ def main():
 	if not SetTestList(context):
 		return 1
 	
-	ValidateThreadNumber(context)
+	if context.args.threads != 1 :
+		OpimizeTestList(context)
+		ValidateThreadNumber(context)
 	
 	print("\nSynet start checking in {0} threads: \n".format(context.args.threads))
 	
