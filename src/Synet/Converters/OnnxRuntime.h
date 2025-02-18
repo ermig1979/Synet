@@ -2143,8 +2143,8 @@ namespace Synet
                                 src3->meta().alpha().i64().size() != 1)
                                 return false;
                             layer.stridedSlice().axes().push_back((size_t)src3->meta().alpha().i64()[0]);
-                            layer.stridedSlice().beginDims().push_back((size_t)src1->meta().alpha().i64()[0]);
-                            layer.stridedSlice().endDims().push_back((size_t)src2->meta().alpha().i64()[0]);
+                            layer.stridedSlice().beginDims().push_back(src1->meta().alpha().i64()[0]);
+                            layer.stridedSlice().endDims().push_back(src2->meta().alpha().i64()[0]);
                             //layer.stridedSlice().strideDims().push_back((size_t)src4->meta().alpha().i64()[0]);
                             if (trans && !PermutedToNchw(layers, layer.src(), false, true, true))
                             {
@@ -2165,9 +2165,9 @@ namespace Synet
                                 src3->meta().alpha().i64().size() != 1 || src4->meta().alpha().i64().size() != 1)
                                 return false;
                             layer.stridedSlice().axes().push_back((size_t)src3->meta().alpha().i64()[0]);
-                            layer.stridedSlice().beginDims().push_back((size_t)src1->meta().alpha().i64()[0]);
-                            layer.stridedSlice().endDims().push_back((size_t)src2->meta().alpha().i64()[0]);
-                            layer.stridedSlice().strideDims().push_back((size_t)src4->meta().alpha().i64()[0]);
+                            layer.stridedSlice().beginDims().push_back(src1->meta().alpha().i64()[0]);
+                            layer.stridedSlice().endDims().push_back(src2->meta().alpha().i64()[0]);
+                            layer.stridedSlice().strideDims().push_back(src4->meta().alpha().i64()[0]);
                             if (trans && !PermutedToNchw(layers, layer.src(), false, true, true))
                             {
                                 Shape nchw = Shape({ 0, 3, 1, 2 });

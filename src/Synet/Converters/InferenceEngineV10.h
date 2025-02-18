@@ -1999,19 +1999,19 @@ namespace Synet
 
         //---------------------------------------------------------------------
 
-        template<class T> bool GetShapeFromWeight(const WeightParam & weight, const Vector & bin, Shape & shape)
+        template<class S, class D> bool GetShapeFromWeight(const WeightParam & weight, const Vector & bin, std::vector<D> & shape)
         {
             size_t size = weight.dim()[0];
-            if (size != weight.size() / sizeof(T))
+            if (size != weight.size() / sizeof(S))
                 return false;
-            T * data = (T*)((uint8_t*)bin.data() + weight.offset());
+            S * data = (S*)((uint8_t*)bin.data() + weight.offset());
             shape.resize(size);
             for (size_t i = 0; i < size; ++i)
-                shape[i] = (size_t)data[i];
+                shape[i] = (D)data[i];
             return true;
         }
 
-        bool GetShapeFromConst(const LayerParam & layer, const Vector & bin, bool trans, Shape & shape)
+        template<class D> bool GetShapeFromConst(const LayerParam & layer, const Vector & bin, bool trans, std::vector<D>& shape)
         {
             if (layer.type() == LayerTypeConst)
             {
@@ -2023,10 +2023,10 @@ namespace Synet
                 switch (weight.type())
                 {
                 case TensorType32i:
-                    if (!GetShapeFromWeight<int32_t>(weight, bin, shape))
+                    if (!GetShapeFromWeight<int32_t, D>(weight, bin, shape))
                         return false;
                 case TensorType64i:
-                    if (!GetShapeFromWeight<int64_t>(weight, bin, shape))
+                    if (!GetShapeFromWeight<int64_t, D>(weight, bin, shape))
                         return false;
                 default:
                     return false;
@@ -2041,12 +2041,12 @@ namespace Synet
                 if (alpha.type() == TensorType32i)
                 {
                     for (size_t i = 0; i < shape.size(); ++i)
-                        shape[i] = (size_t)alpha.i32()[i];
+                        shape[i] = (D)alpha.i32()[i];
                 }
                 else if (alpha.type() == TensorType64i)
                 {
                     for (size_t i = 0; i < shape.size(); ++i)
-                        shape[i] = (size_t)alpha.i64()[i];
+                        shape[i] = (D)alpha.i64()[i];
                 }
                 else
                     return false;
@@ -2057,7 +2057,7 @@ namespace Synet
             {
                 if (shape.size() == 4)
                 {
-                    shape = Shp(shape[0], shape[2], shape[3], shape[1]);
+                    shape = std::vector<D>({ shape[0], shape[2], shape[3], shape[1] });
                 }
             }
             return true;

@@ -142,4 +142,20 @@ namespace Synet
     {
         return Longs({ val0, val1, val2, val3, val4 });
     }
+
+    template<class T> SYNET_INLINE Longs Lng(const std::vector<T>& vec)
+    {
+        Longs dst(vec.size());
+        for (size_t i = 0; i < vec.size(); ++i)
+            dst[i] = (int64_t)vec[i];
+        return dst;
+    }
+
+    template<class T> SYNET_INLINE Longs Lng(const T* data, size_t size)
+    {
+        Longs dst(size);
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = (int64_t)data[i];
+        return dst;
+    }
 }

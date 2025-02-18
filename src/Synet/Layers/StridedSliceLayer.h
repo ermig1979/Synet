@@ -35,14 +35,15 @@ namespace Synet
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-        typedef void(*StridedSlicePtr)(const uint8_t* src, const size_t* srcStrides, const size_t* beginDims, const size_t* dstDims, const size_t* strideDims, uint8_t* dst, const size_t* dstStrides);
+        typedef void(*StridedSlicePtr)(const uint8_t* src, const int64_t* srcStrides, const int64_t* beginDims, const int64_t* dstDims, const int64_t* strideDims, uint8_t* dst, const int64_t* dstStrides);
 
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        Shape _axes, _beginDims, _endDims, _strideDims, _srcDims, _dstDims;
-        Shape _srcStrides, _dstStrides;
+        Shape _axes;
+        Longs _beginDims, _endDims, _strideDims, _srcDims, _dstDims;
+        Longs _srcStrides, _dstStrides;
         TensorType _type;
 
         StridedSlicePtr _stridedSlice;

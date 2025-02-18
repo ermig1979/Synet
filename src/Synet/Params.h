@@ -693,9 +693,9 @@ namespace Synet
         CPL_PARAM_VALUE(Shape, endMask, Shape());
         CPL_PARAM_VALUE(Shape, newAxisMask, Shape());
         CPL_PARAM_VALUE(Shape, shrinkAxisMask, Shape());
-        CPL_PARAM_VALUE(Shape, beginDims, Shape());
-        CPL_PARAM_VALUE(Shape, endDims, Shape());
-        CPL_PARAM_VALUE(Shape, strideDims, Shape());
+        CPL_PARAM_VALUE(Longs, beginDims, Longs());
+        CPL_PARAM_VALUE(Longs, endDims, Longs());
+        CPL_PARAM_VALUE(Longs, strideDims, Longs());
         CPL_PARAM_VALUE(Shape, axes, Shape());
     };
 
