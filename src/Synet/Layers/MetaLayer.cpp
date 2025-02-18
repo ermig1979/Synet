@@ -726,8 +726,11 @@ namespace Synet
         {
             if (src[0]->Count() == 1)
             {
-                if(!(src.size() == 4 && src[1]->Size() == 1 && src[2]->Size() == 1 && src[3]->Size() == 1))
-                    SYNET_ERROR("MetaLayer::ReshapeSlice: unsupported input shapes!");
+                if (src.size() < 3)
+                    SYNET_ERROR("MetaLayer::ReshapeSlice: too low src count!");
+                for(size_t i = 1; i < src.size(); ++i)
+                    if (src[i]->Size() != 1)
+                        SYNET_ERROR("MetaLayer::ReshapeSlice: unsupported input shapes!");
                 int64_t size = src[0]->Size();
                 int64_t beg = src[1]->Data<int64_t>()[0];
                 if (beg < 0)
