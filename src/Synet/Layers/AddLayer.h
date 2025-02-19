@@ -30,6 +30,12 @@
 
 namespace Synet
 {
+    typedef void (*AddUniversalPtr)(const uint8_t* a, const Shape& aSteps, const uint8_t* b, const Shape& bSteps, uint8_t* dst, const Shape& dstShape);
+
+    AddUniversalPtr GetAddUniversal(TensorType typeA, TensorType typeB, TensorType typeD, size_t dim);
+
+    //-------------------------------------------------------------------------------------------------
+
     class AddLayer : public Layer
     {
     public:
@@ -43,7 +49,6 @@ namespace Synet
 
         typedef void (*UniformPtr)(const uint8_t* a, const uint8_t* b, size_t size, uint8_t* dst);
         typedef void (*AddBiasPtr)(const uint8_t* a, const uint8_t* b, size_t count, size_t size, uint8_t* dst, TensorFormat format);
-        typedef void (*UniversalPtr)(const uint8_t* a, const Shape& aSteps, const uint8_t* b, const Shape& bSteps, uint8_t* dst, const Shape& dstShape);
 
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -73,7 +78,7 @@ namespace Synet
         Shape _aSteps, _bSteps, _dstShape;
         UniformPtr _uniform;
         AddBiasPtr _addBias;
-        UniversalPtr _universal;
+        AddUniversalPtr _universal;
         Add16b _add16b;
     };
 }

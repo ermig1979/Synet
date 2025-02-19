@@ -169,7 +169,7 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template <typename A, typename B, typename D, size_t N> static void Universal(const uint8_t* a8, const Shape& aSteps, const uint8_t* b8, const Shape& bSteps, uint8_t* dst8, const Shape& dstShape)
+    template <typename A, typename B, typename D, size_t N> static void AddUniversal(const uint8_t* a8, const Shape& aSteps, const uint8_t* b8, const Shape& bSteps, uint8_t* dst8, const Shape& dstShape)
     {
         const A* a = (const A*)a8;
         const B* b = (const B*)b8;
@@ -269,49 +269,51 @@ namespace Synet
 
     }
 
-    template<class A, class B, class D> static AddLayer::UniversalPtr GetUniversal(size_t dim)
+    template<class A, class B, class D> static AddUniversalPtr GetAddUniversal(size_t dim)
     {
         switch (dim)
         {
-        case 1: return Universal<A, B, D, 1>;
-        case 2: return Universal<A, B, D, 2>;
-        case 3: return Universal<A, B, D, 3>;
-        case 4: return Universal<A, B, D, 4>;
+        case 1: return AddUniversal<A, B, D, 1>;
+        case 2: return AddUniversal<A, B, D, 2>;
+        case 3: return AddUniversal<A, B, D, 3>;
+        case 4: return AddUniversal<A, B, D, 4>;
         default:
             return NULL;
         }
     }
 
-    template<class A, class B> static AddLayer::UniversalPtr GetUniversal(TensorType typeD, size_t dim)
+    template<class A, class B> static AddUniversalPtr GetAddUniversal(TensorType typeD, size_t dim)
     {
         switch (typeD)
         {
-        case TensorType32f: return GetUniversal<A, B, float>(dim);
-        case TensorType16b: return GetUniversal<A, B, uint16_t>(dim);
+        case TensorType32f: return GetAddUniversal<A, B, float>(dim);
+        case TensorType16b: return GetAddUniversal<A, B, uint16_t>(dim);
         default:
             return NULL;
         }
     }
 
-    template<class A> static AddLayer::UniversalPtr GetUniversal(TensorType typeB, TensorType typeD, size_t dim)
+    template<class A> static AddUniversalPtr GetAddUniversal(TensorType typeB, TensorType typeD, size_t dim)
     {
         switch (typeB)
         {
-        case TensorType32f: return GetUniversal<A, float>(typeD, dim);
-        case TensorType16b: return GetUniversal<A, uint16_t>(typeD, dim);
+        case TensorType32f: return GetAddUniversal<A, float>(typeD, dim);
+        case TensorType16b: return GetAddUniversal<A, uint16_t>(typeD, dim);
         default:
             return NULL;
         }
     }
 
-    static AddLayer::UniversalPtr GetUniversal(TensorType typeA, TensorType typeB, TensorType typeD, size_t dim)
+    AddUniversalPtr GetAddUniversal(TensorType typeA, TensorType typeB, TensorType typeD, size_t dim)
     {
         if (typeA == TensorType64i && typeB == TensorType64i && typeD == TensorType64i)
-            return GetUniversal<int64_t, int64_t, int64_t>(dim);
+            return GetAddUniversal<int64_t, int64_t, int64_t>(dim);
+        if (typeA == TensorType32i && typeB == TensorType32i && typeD == TensorType32i)
+            return GetAddUniversal<int32_t, int32_t, int32_t>(dim);
         switch (typeA)
         {
-        case TensorType32f: return GetUniversal<float>(typeB, typeD, dim);
-        case TensorType16b: return GetUniversal<uint16_t>(typeB, typeD, dim);
+        case TensorType32f: return GetAddUniversal<float>(typeB, typeD, dim);
+        case TensorType16b: return GetAddUniversal<uint16_t>(typeB, typeD, dim);
         default:
             return NULL;
         }
@@ -469,7 +471,7 @@ namespace Synet
                             _dstShape[i] = Max(aShape[i], bShape[i]);
                         if (!(GetSteps(aShape, _dstShape, _aSteps) && GetSteps(bShape, _dstShape, _bSteps)))
                             SYNET_ERROR("AddLayer has incompatible inputs!");
-                        _universal = GetUniversal(_typeA, _typeB, _typeD, _src[0]->Count());
+                        _universal = GetAddUniversal(_typeA, _typeB, _typeD, _src[0]->Count());
                         if(_universal == NULL)
                             SYNET_ERROR("AddLayer can create universal worker!");
                         _special = SpecialUniversal;
@@ -535,7 +537,7 @@ namespace Synet
                         _dstShape[i] = Max(aShape[i], bShape[i]);
                     if (!(GetSteps(aShape, _dstShape, _aSteps) && GetSteps(bShape, _dstShape, _bSteps)))
                         SYNET_ERROR("AddLayer has incompatible inputs!");
-                    _universal = GetUniversal(_typeA, _typeB, _typeD, _src[0]->Count());
+                    _universal = GetAddUniversal(_typeA, _typeB, _typeD, _src[0]->Count());
                     if (_universal == NULL)
                         SYNET_ERROR("AddLayer can create universal worker!");
                     _special = SpecialUniversal;

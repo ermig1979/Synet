@@ -23,6 +23,7 @@
 */
 
 #include "Synet/Layers/MetaLayer.h"
+#include "Synet/Layers/AddLayer.h"
 
 namespace Synet
 {
@@ -95,38 +96,23 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template<class T> bool ReshapeAdd(const Synet::Tensor<float>& src0, const Synet::Tensor<float>& src1, Synet::Tensor<float>& dst0)
-    {
-        dst0.Reshape(Synet::GetTensorType<T>(), src0.Shape(), src0.Format());
-        if (src0.Size() == src1.Size())
-        {
-            for (size_t i = 0; i < src0.Size(); ++i)
-                dst0.Data<T>()[i] = src0.Data<T>()[i] + src1.Data<T>()[i];
-        }
-        else if (src1.Size() == 1)
-        {
-            for (size_t i = 0; i < src0.Size(); ++i)
-                dst0.Data<T>()[i] = src0.Data<T>()[i] + src1.Data<T>()[0];
-        }
-        else
-            SYNET_ERROR("MetaLayer::ReshapeAdd supported input shapes!");
-        return true;
-    }
-
     bool MetaLayer::ReshapeAdd(const TensorPtrs& src, const TensorPtrs& dst)
     {
         if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("MetaLayer::ReshapeAdd supports only 2 inputs and 1 output!");
-        if(src[0]->Count() != src[1]->Count() || src[0]->GetType() != src[1]->GetType())
-            SYNET_ERROR("MetaLayer::ReshapeAdd unsupported input shape or type combination!");
-        switch (src[0]->GetType())
-        {
-        case TensorType32f: return Synet::ReshapeAdd<float>(*src[0], *src[1], *dst[0]);
-        case TensorType32i: return Synet::ReshapeAdd<int32_t>(*src[0], *src[1], *dst[0]);        
-        case TensorType64i: return Synet::ReshapeAdd<int64_t>(*src[0], *src[1], *dst[0]);
-        default:
-            SYNET_ERROR("MetaLayer::ReshapeAdd unsupported input type!");
-        }
+        if (src[0]->GetType() != src[1]->GetType())
+            SYNET_ERROR("MetaLayer::ReshapeAdd inputs must be the same type!");
+        if(!IsCompatible(src[0]->Shape(), src[1]->Shape()))
+            SYNET_ERROR("MetaLayer::ReshapeAdd incompatible input shapes!");
+        TensorType type = src[0]->GetType();
+        Shape dstShape = OutputShape(src[0]->Shape(), src[1]->Shape());
+        Shape steps0 = SourceSteps(src[0]->Shape(), dstShape);
+        Shape steps1 = SourceSteps(src[1]->Shape(), dstShape);
+        AddUniversalPtr add = GetAddUniversal(type, type, type, dstShape.size());
+        if (add == NULL)
+            SYNET_ERROR("MetaLayer::ReshapeAdd unsupported input type or axes count!");
+        dst[0]->Reshape(type, dstShape, src[0]->Format());
+        add(src[0]->RawData(), steps0, src[1]->RawData(), steps1, dst[0]->RawData(), dstShape);
         return true;
     }
 

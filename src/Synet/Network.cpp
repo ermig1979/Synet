@@ -927,7 +927,7 @@ namespace Synet
         }
     }
 
-//#define SYNET_RESHAPE_LOG
+#define SYNET_RESHAPE_LOG
 
     bool Network::ReshapeStages()
     {
@@ -938,6 +938,8 @@ namespace Synet
             {
                 std::stringstream err;
                 err << "Can't reshape " << i << " layer with name: " << Cpl::ToStr(param.name()) << ", type: " << Cpl::ToStr(param.type());
+                if (param.type() == LayerTypeMeta)
+                    err << "-" << Cpl::ToStr(param.meta().type());
                 for (size_t s = 0; s < param.src().size(); ++s)
                     err << ", src[" << s << "]: " << Cpl::ToStr(_stages[i].src[s]->GetType()) << " " << ToStr(_stages[i].src[s]->Shape());
                 err << " !";
@@ -947,6 +949,8 @@ namespace Synet
             {
                 std::stringstream err;
                 err << "Reshape " << i << " layer with name: " << Cpl::ToStr(param.name()) << ", type: " << Cpl::ToStr(param.type());
+                if (param.type() == LayerTypeMeta)
+                    err << "-" << Cpl::ToStr(param.meta().type());
                 for (size_t s = 0; s < param.src().size(); ++s)
                     err << ", src[" << s << "]: " << Cpl::ToStr(_stages[i].src[s]->GetType()) << " " << ToStr(_stages[i].src[s]->Shape());
                 err << " gets dst[0]: " << Cpl::ToStr(_stages[i].dst[0]->GetType()) << " " << ToStr(_stages[i].dst[0]->Shape()) << " !";
@@ -956,6 +960,8 @@ namespace Synet
             {
                 std::stringstream msg;
                 msg << "Layer " << i << " with name: " << Cpl::ToStr(param.name()) << ", type: " << Cpl::ToStr(param.type());
+                if (param.type() == LayerTypeMeta)
+                    msg << "-" << Cpl::ToStr(param.meta().type());
                 for (size_t s = 0; s < param.src().size(); ++s)
                     msg << ", src[" << s << "]: " << Cpl::ToStr(_stages[i].src[s]->GetType()) << " " << ToStr(_stages[i].src[s]->Shape());
                 msg << " -> ";
