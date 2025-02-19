@@ -1181,6 +1181,12 @@ namespace Synet
                     layer.type() = Synet::LayerTypeStub;
                     layer.src().resize(1);
                 }
+                else if (meta.type() == MetaTypeConst && meta.alpha().type() == TensorType64i &&
+                    src0->type() == LayerTypeConst && Shp(meta.alpha().i64()) == src0->weight()[0].dim())
+                {
+                    layer.type() = Synet::LayerTypeStub;
+                    layer.src().resize(1);
+                }
                 else
                 {
                     layer.type() = Synet::LayerTypeTile;
@@ -1677,7 +1683,7 @@ namespace Synet
             const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
             if (src0 == NULL)
                 return false;
-            if (src0->type() == LayerTypeMeta || src0->type() == LayerTypeConstantOfShape || src0->type() == LayerTypeTile)
+            if (src0->type() == LayerTypeMeta || src0->type() == LayerTypeConstantOfShape || src0->type() == LayerTypeTile || src0->type() == LayerTypeStub)
             {
                 layer.type() = Synet::LayerTypeNonZero;
             }
