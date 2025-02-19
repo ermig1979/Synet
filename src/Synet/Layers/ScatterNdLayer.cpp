@@ -38,34 +38,58 @@ namespace Synet
 
     void ScatterNdLayer::CompactWeight()
     {
-        ((Tensor&)this->Weight()[0]).Clear();
+        if(this->Weight().size())
+            ((Tensor&)this->Weight()[0]).Clear();
     }
 
     bool ScatterNdLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 2 || dst.size() != 1)
-            SYNET_ERROR("ScatterNdLayer supports only 2 inputs and 1 output!");
-        if (src[0]->GetType() != TensorType32f || src[1]->GetType() != TensorType32f)
-            SYNET_ERROR("ScatterNdLayer inputs must be FP32 type!");
-        _offset.Reshape(TensorType32i, src[1]->Shape(), TensorFormatUnknown);
-        size_t count = src[1]->Count(), size = src[1]->Size();
-        if (this->Weight().size() != 1)
-            SYNET_ERROR("ScatterNdLayer has wrong weight count!");
-        const Tensor &idx = this->Weight()[0];
-        if (idx.GetType() != TensorType32i)
-            SYNET_ERROR("ScatterNdLayer has wrong weight type!");
-        if (idx.Axis(-1) != count)
-            SYNET_ERROR("ScatterNdLayer has wrong weight shape!");
-        for (size_t a = 0; a < count; ++a)
-            if (idx.Axis(a) != _offset.Axis(a))
-                SYNET_ERROR("ScatterNdLayer has wrong weight shape!");
-        for (size_t o = 0, i = 0; o < size; ++o)
+        if ((src.size() != 2 && src.size() != 3) || dst.size() != 1)
+            SYNET_ERROR("ScatterNdLayer supports only 2-3 inputs and 1 output!");
+        if (src[0]->GetType() != TensorType32f || src.back()->GetType() != TensorType32f)
+            SYNET_ERROR("ScatterNdLayer the first and the last inputs must be FP32 type!");
+        size_t count = src.back()->Count(), size = src.back()->Size();
+        _offset.Reshape(TensorType32i, src.back()->Shape(), TensorFormatUnknown);
+        if (src.size() == 2)
         {
-            Shape index;
-            for (size_t a = 0; a < count; ++a, ++i)
-                index.push_back(idx.Data<int32_t>()[i]);
-            _offset.Data<int32_t>()[o] = (uint32_t)src[0]->Offset(index);
+            if (this->Weight().size() != 1)
+                SYNET_ERROR("ScatterNdLayer has wrong weight count!");
+            const Tensor &idx = this->Weight()[0];
+            if (idx.GetType() != TensorType32i)
+                SYNET_ERROR("ScatterNdLayer has wrong weight type!");
+            if (idx.Axis(-1) != count)
+                SYNET_ERROR("ScatterNdLayer has wrong weight shape!");
+            for (size_t a = 0; a < count; ++a)
+                if (idx.Axis(a) != _offset.Axis(a))
+                    SYNET_ERROR("ScatterNdLayer has wrong weight shape!");        
+            for (size_t o = 0, i = 0; o < size; ++o)
+            {
+                Shape index;
+                for (size_t a = 0; a < count; ++a, ++i)
+                    index.push_back(idx.Data<int32_t>()[i]);
+                _offset.Data<int32_t>()[o] = (uint32_t)src[0]->Offset(index);
+            }        
         }
+        else if (src.size() == 3 && src[1]->Const())
+        {
+            const Tensor& idx = *src[1];
+            if (idx.GetType() != TensorType64i)
+                SYNET_ERROR("ScatterNdLayer src[1] must be INT64 type!");
+            if (idx.Axis(-1) != count)
+                SYNET_ERROR("ScatterNdLayer has wrong src[1] shape!");
+            for (size_t a = 0; a < count; ++a)
+                if (idx.Axis(a) != _offset.Axis(a))
+                    SYNET_ERROR("ScatterNdLayer has wrong src[1] shape!");
+            for (size_t o = 0, i = 0; o < size; ++o)
+            {
+                Shape index;
+                for (size_t a = 0; a < count; ++a, ++i)
+                    index.push_back((size_t)idx.Data<int64_t>()[i]);
+                _offset.Data<int32_t>()[o] = (uint32_t)src[0]->Offset(index);
+            }
+        }
+        else
+            SYNET_ERROR("ScatterNdLayer supports only constant index!");
         if (src[0] != dst[0])
             dst[0]->Reshape(TensorType32f, src[0]->Shape(), src[0]->Format());
         this->UsePerfStat();
