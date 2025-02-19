@@ -119,11 +119,11 @@ namespace Synet
         if (src[0] != dst[0])
             memcpy(dst[0]->RawData(), src[0]->RawData(), src[0]->RawSize());
         const int32_t * pOffs = _offset.Data<int32_t>();
-        size_t size = src[1]->Size();
+        size_t size = src.back()->Size();
         if (src[0]->GetType() == TensorType32f)
-            ScatterNd(src[1]->Data<float>(), pOffs, size, dst[0]->Data<float>());
+            ScatterNd(src.back()->Data<float>(), pOffs, size, dst[0]->Data<float>());
         else if (src[0]->GetType() == TensorType64i)
-            ScatterNd(src[1]->Data<int64_t>(), pOffs, size, dst[0]->Data<int64_t>());
+            ScatterNd(src.back()->Data<int64_t>(), pOffs, size, dst[0]->Data<int64_t>());
         else
             assert(0);
     }
