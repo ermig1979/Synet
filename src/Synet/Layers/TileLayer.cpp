@@ -62,33 +62,36 @@ namespace Synet
         _srcType = src[0]->GetType();
         if (_srcType != TensorType32f && _srcType != TensorType64i && _srcType != TensorType32i)
             SYNET_ERROR("TileLayer has wrong src[0] type!");
-        Shape shape = src[0]->Shape();
+        Shape dstShape = src[0]->Shape();
         size_t axis = 0;
         if (src.size() == 1)
         {
             axis = src[0]->Index(this->Param().tile().axis());
             _tiles = this->Param().tile().tiles();
+            dstShape[axis] *= _tiles;
         }
         else
         {
-            if(src[0]->Count() != src[1]->Size() || src[1]->GetType() != TensorType64i)
-                SYNET_ERROR("TileLayer has wrong src[1] size or type!");
-            const int64_t * pSrc1 = src[1]->Data<int64_t>();
+            if(src[1]->GetType() != TensorType64i)
+                SYNET_ERROR("TileLayer has wrong src[1] type!");
+            Shape shape1 = Shp(src[1]->Data<int64_t>(), src[1]->Size());
+            if(!IsCompatible(src[0]->Shape(), shape1))
+                SYNET_ERROR("TileLayer has wrong src[1] content: " << ToStr(shape1) << " !");
+            dstShape = OutputShape(src[0]->Shape(), shape1);
             _tiles = 1;
-            for (size_t a = 0; a < src[1]->Size(); ++a)
+            for (ptrdiff_t a = dstShape.size() - 1, a0 = dstShape.size() - src[0]->Count(); a >= a0; --a)
             {
-                if (pSrc1[a] != src[0]->Axis(a) && pSrc1[a] != 1)
+                if (dstShape[a] != src[0]->Axis(a - a0))
                 {
-                    axis = a;
-                    _tiles = (size_t)pSrc1[a];
+                    axis = a - a0;
+                    _tiles = dstShape[a];
                     break;
                 }
             }
         }
-        shape[axis] *= _tiles;
         _outer = src[0]->Size(0, axis);
         _inner = src[0]->Size(axis);
-        dst[0]->Reshape(_srcType, shape, src[0]->Format());
+        dst[0]->Reshape(_srcType, dstShape, src[0]->Format());
         if (src[0]->Const() && src[1]->Const())
         {
             ForwardCpu(src, buf, dst);
