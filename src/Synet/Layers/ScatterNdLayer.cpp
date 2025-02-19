@@ -26,6 +26,14 @@
 
 namespace Synet
 {
+    template <class T, class I> void ScatterNd(const T* src, const I* idx, size_t size, T* dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[idx[i]] = src[i];
+    }
+
+    //--------------------------------------------------------------------------------------------------
+
     ScatterNdLayer::ScatterNdLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
     {
@@ -46,10 +54,12 @@ namespace Synet
     {
         if ((src.size() != 2 && src.size() != 3) || dst.size() != 1)
             SYNET_ERROR("ScatterNdLayer supports only 2-3 inputs and 1 output!");
-        if (src[0]->GetType() != TensorType32f || src.back()->GetType() != TensorType32f)
-            SYNET_ERROR("ScatterNdLayer the first and the last inputs must be FP32 type!");
-        size_t count = src.back()->Count(), size = src.back()->Size();
-        _offset.Reshape(TensorType32i, src.back()->Shape(), TensorFormatUnknown);
+        if (src[0]->GetType() != src.back()->GetType())
+            SYNET_ERROR("ScatterNdLayer the first and the last inputs must be the same type!");
+        if (src[0]->GetType() != TensorType32f && src[0]->GetType() != TensorType64i)
+            SYNET_ERROR("ScatterNdLayer src[0] unsupported type!");
+        size_t count = src[0]->Count(), size = src.back()->Size();
+        _offset.Reshape(TensorType32i, Shp(size), TensorFormatUnknown);
         if (src.size() == 2)
         {
             if (this->Weight().size() != 1)
@@ -59,9 +69,8 @@ namespace Synet
                 SYNET_ERROR("ScatterNdLayer has wrong weight type!");
             if (idx.Axis(-1) != count)
                 SYNET_ERROR("ScatterNdLayer has wrong weight shape!");
-            for (size_t a = 0; a < count; ++a)
-                if (idx.Axis(a) != _offset.Axis(a))
-                    SYNET_ERROR("ScatterNdLayer has wrong weight shape!");        
+            if (idx.Size() != size * count)
+                SYNET_ERROR("ScatterNdLayer has wrong weight size!");        
             for (size_t o = 0, i = 0; o < size; ++o)
             {
                 Shape index;
@@ -77,9 +86,8 @@ namespace Synet
                 SYNET_ERROR("ScatterNdLayer src[1] must be INT64 type!");
             if (idx.Axis(-1) != count)
                 SYNET_ERROR("ScatterNdLayer has wrong src[1] shape!");
-            for (size_t a = 0; a < count; ++a)
-                if (idx.Axis(a) != _offset.Axis(a))
-                    SYNET_ERROR("ScatterNdLayer has wrong src[1] shape!");
+            if (idx.Size() != size * count)
+                SYNET_ERROR("ScatterNdLayer has wrong weight size!");
             for (size_t o = 0, i = 0; o < size; ++o)
             {
                 Shape index;
@@ -91,9 +99,18 @@ namespace Synet
         else
             SYNET_ERROR("ScatterNdLayer supports only constant index!");
         if (src[0] != dst[0])
-            dst[0]->Reshape(TensorType32f, src[0]->Shape(), src[0]->Format());
-        this->UsePerfStat();
-        _const = false;
+            dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        if (src[0]->Const() && src.back()->Const())
+        {
+            ForwardCpu(src, buf, dst);
+            dst[0]->SetConst(true);
+            _const = true;
+        }
+        else
+        {
+            this->UsePerfStat();
+            _const = false;
+        }
         return true;
     }
 
@@ -102,10 +119,12 @@ namespace Synet
         if (src[0] != dst[0])
             memcpy(dst[0]->RawData(), src[0]->RawData(), src[0]->RawSize());
         const int32_t * pOffs = _offset.Data<int32_t>();
-        const float * pSrc = src[1]->Data<float>();
-        float * pDst = dst[0]->Data<float>();
         size_t size = src[1]->Size();
-        for (size_t i = 0; i < size; ++i)
-            pDst[pOffs[i]] = pSrc[i];
+        if (src[0]->GetType() == TensorType32f)
+            ScatterNd(src[1]->Data<float>(), pOffs, size, dst[0]->Data<float>());
+        else if (src[0]->GetType() == TensorType64i)
+            ScatterNd(src[1]->Data<int64_t>(), pOffs, size, dst[0]->Data<int64_t>());
+        else
+            assert(0);
     }
 }

@@ -205,7 +205,8 @@ namespace Synet
         if (nontrivial)
         {
             dst[0]->Reshape(src[0]->GetType(), _dstShape, param.format() == TensorFormatUnknown ? src[0]->Format() : param.format());
-            _simdPermute->Init(src[0]->Shape(), param.order(), src[0]->GetType());
+            if(src[0]->GetType() != TensorType64i && src[0]->GetType() != TensorType64u)
+                _simdPermute->Init(src[0]->Shape(), param.order(), src[0]->GetType());
             if (!_simdPermute->Enable())
             {
                 CompactShapes();
@@ -217,8 +218,17 @@ namespace Synet
                 if(_permute == NULL)
                     SYNET_ERROR("PermuteLayer can't set permute worker!");
             }
-            this->UsePerfStat(Cpl::ToStr(src[0]->GetType()));
-            _const = false;
+            if (src[0]->Const())
+            {
+                ForwardCpu(src, buf, dst);
+                dst[0]->SetConst(true);
+                _const = true;
+            }
+            else
+            {
+                this->UsePerfStat(Cpl::ToStr(src[0]->GetType()));
+                _const = false;
+            }
         }
         else
         {
