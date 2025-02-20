@@ -23,6 +23,7 @@
 */
 
 #include "Synet/Layers/TileLayer.h"
+#include "Synet/Utils/UniversalBinary.h"
 
 namespace Synet
 {
@@ -106,8 +107,6 @@ namespace Synet
                 if (after)
                     _inner *= da;
             }
-            if (this->Param().name() == "/aligner/net/Expand_2_output_0")
-                std::cout << "";
         }
         dst[0]->Reshape(_srcType, dstShape, src[0]->Format());
         if (src[0]->Const() && src[1]->Const())

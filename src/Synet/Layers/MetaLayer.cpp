@@ -23,7 +23,7 @@
 */
 
 #include "Synet/Layers/MetaLayer.h"
-#include "Synet/Layers/AddLayer.h"
+#include "Synet/Utils/UniversalBinary.h"
 
 namespace Synet
 {
@@ -108,7 +108,7 @@ namespace Synet
         Shape dstShape = OutputShape(src[0]->Shape(), src[1]->Shape());
         Shape steps0 = SourceSteps(src[0]->Shape(), dstShape);
         Shape steps1 = SourceSteps(src[1]->Shape(), dstShape);
-        AddUniversalPtr add = GetAddUniversal(type, type, type, dstShape.size());
+        UniversalBinaryPtr add = GetUniversalBinary(BinaryOperationTypeAdd, type, dstShape.size());
         if (add == NULL)
             SYNET_ERROR("MetaLayer::ReshapeAdd unsupported input type or axes count!");
         dst[0]->Reshape(type, dstShape, src[0]->Format());

@@ -113,45 +113,6 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    SYNET_INLINE bool IsCompatible(const Shape& a, const Shape& b)
-    {
-        for (size_t i = 0, n = std::max(a.size(), b.size()), a0 = n - a.size(), b0 = n - b.size(); i < n; ++i)
-        {
-            size_t ai = i < a0 ? 1 : a[i - a0];
-            size_t bi = i < b0 ? 1 : b[i - b0];
-            if (!(ai == bi || ai == 1 || bi == 1))
-                return false;
-        }
-        return true;
-    }
-
-    SYNET_INLINE Shape OutputShape(const Shape& a, const Shape& b)
-    {
-        Shape d(std::max(a.size(), b.size()), 1);
-        for (size_t i = 0, n = d.size(), a0 = n - a.size(), b0 = n - b.size(); i < n; ++i)
-        {
-            size_t ai = i < a0 ? 1 : a[i - a0];
-            size_t bi = i < b0 ? 1 : b[i - b0];
-            d[i] = std::max(ai, bi);
-        }
-        return d;
-    }
-
-    SYNET_INLINE Shape SourceSteps(const Shape& src, const Shape& dst)
-    {
-        Shape steps(dst.size(), 0);
-        size_t step = 1;
-        for (ptrdiff_t i = dst.size() - 1, s0 = dst.size() - src.size(); i >= 0; --i)
-        {
-            size_t si = i < s0 ? 1 : src[i - s0];
-            steps[i] = si == 1 ? 0 : step;
-            step *= si;
-        }
-        return steps;
-    }
-
-    //-------------------------------------------------------------------------------------------------
-
     SYNET_INLINE Longs Lng()
     {
         return Longs();

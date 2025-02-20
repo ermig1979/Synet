@@ -104,6 +104,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\YoloV7Layer.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\Activation.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\SetInput.cpp" />
+    <ClCompile Include="..\..\src\Synet\Utils\UniversalBinary.cpp" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Args.h" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Config.h" />
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Console.h" />
@@ -248,6 +249,7 @@
     <ClInclude Include="..\..\src\Synet\Utils\SetInput.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Shape.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Statistics.h" />
+    <ClInclude Include="..\..\src\Synet\Utils\UniversalBinary.h" />
     <ClInclude Include="..\..\src\Synet\Version.h" />
   </ItemGroup>
   <ItemGroup>

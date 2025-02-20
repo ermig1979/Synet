@@ -269,7 +269,7 @@ namespace Synet
 
     }
 
-    template<class A, class B, class D> static AddUniversalPtr GetAddUniversal(size_t dim)
+    template<class A, class B, class D> static AddLayer::UniversalPtr GetAddUniversal(size_t dim)
     {
         switch (dim)
         {
@@ -282,7 +282,7 @@ namespace Synet
         }
     }
 
-    template<class A, class B> static AddUniversalPtr GetAddUniversal(TensorType typeD, size_t dim)
+    template<class A, class B> static AddLayer::UniversalPtr GetAddUniversal(TensorType typeD, size_t dim)
     {
         switch (typeD)
         {
@@ -293,7 +293,7 @@ namespace Synet
         }
     }
 
-    template<class A> static AddUniversalPtr GetAddUniversal(TensorType typeB, TensorType typeD, size_t dim)
+    template<class A> static AddLayer::UniversalPtr GetAddUniversal(TensorType typeB, TensorType typeD, size_t dim)
     {
         switch (typeB)
         {
@@ -304,7 +304,7 @@ namespace Synet
         }
     }
 
-    AddUniversalPtr GetAddUniversal(TensorType typeA, TensorType typeB, TensorType typeD, size_t dim)
+    AddLayer::UniversalPtr GetAddUniversal(TensorType typeA, TensorType typeB, TensorType typeD, size_t dim)
     {
         if (typeA == TensorType64i && typeB == TensorType64i && typeD == TensorType64i)
             return GetAddUniversal<int64_t, int64_t, int64_t>(dim);

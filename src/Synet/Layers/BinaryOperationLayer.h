@@ -26,6 +26,8 @@
 
 #include "Synet/Layer.h"
 
+#include "Synet/Utils/UniversalBinary.h"
+
 namespace Synet
 {
     class BinaryOperationLayer : public Layer
@@ -39,15 +41,9 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        typedef void(*Func32fPtr)(const float * a, const float* b, size_t outer, size_t aSize, size_t bSize, size_t inner, float* dst);
-        typedef void(*FuncBoolPtr)(const bool* a, const bool* b, size_t outer, size_t aSize, size_t bSize, size_t inner, bool* dst);
-        typedef void(*Func64iPtr)(const int64_t* a, const int64_t* b, size_t outer, size_t aSize, size_t bSize, size_t inner, int64_t* dst);
-
         TensorType _srcType;
         BinaryOperationType _opType;
-        size_t _outer, _aSize, _bSize, _inner;
-        Func32fPtr _func32f;
-        FuncBoolPtr _funcBool;
-        Func64iPtr _func64i;
+        Shape _steps0, _steps1, _dstShape;
+        UniversalBinaryPtr _unvirsalBinary;
     };
 }
