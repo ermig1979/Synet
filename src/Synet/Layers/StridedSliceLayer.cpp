@@ -171,6 +171,7 @@ namespace Synet
 		switch (type)
 		{
 		case TensorType32f: return GetStridedSlice<float>(count);
+		case TensorType64i: return GetStridedSlice<int64_t>(count);
 		default:
 			return NULL;
 		}
