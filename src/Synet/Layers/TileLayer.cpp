@@ -63,34 +63,52 @@ namespace Synet
         if (_srcType != TensorType32f && _srcType != TensorType64i && _srcType != TensorType32i)
             SYNET_ERROR("TileLayer has wrong src[0] type!");
         Shape dstShape = src[0]->Shape();
-        size_t axis = 0;
         if (src.size() == 1)
         {
-            axis = src[0]->Index(this->Param().tile().axis());
+            size_t axis = src[0]->Index(this->Param().tile().axis());
             _tiles = this->Param().tile().tiles();
             dstShape[axis] *= _tiles;
+            _outer = src[0]->Size(0, axis);
+            _inner = src[0]->Size(axis);
         }
         else
         {
             if(src[1]->GetType() != TensorType64i)
                 SYNET_ERROR("TileLayer has wrong src[1] type!");
-            Shape shape1 = Shp(src[1]->Data<int64_t>(), src[1]->Size());
-            if(!IsCompatible(src[0]->Shape(), shape1))
+            const Shape & shape0 = src[0]->Shape();
+            const Shape & shape1 = Shp(src[1]->Data<int64_t>(), src[1]->Size());
+            if(!IsCompatible(shape0, shape1))
                 SYNET_ERROR("TileLayer has wrong src[1] content: " << ToStr(shape1) << " !");
-            dstShape = OutputShape(src[0]->Shape(), shape1);
+            dstShape = OutputShape(shape0, shape1);
+            Shape srcShape(dstShape.size(), 1);
             _tiles = 1;
-            for (ptrdiff_t a = dstShape.size() - 1, a0 = dstShape.size() - src[0]->Count(); a >= a0; --a)
+            _inner = 1;
+            _outer = 1;
+            bool before = true, after = false;
+            for (ptrdiff_t i = 0, s0 = dstShape.size() - shape0.size(); i < dstShape.size(); i++)
             {
-                if (dstShape[a] != src[0]->Axis(a - a0))
+                size_t sa = i < s0 ? 1 : shape0[i - s0];
+                size_t da = dstShape[i];
+                if (da != sa)
                 {
-                    axis = a - a0;
-                    _tiles = dstShape[a];
-                    break;
+                    if (after)
+                        SYNET_ERROR("TileLayer support only one tile axes group!");
+                    before = false;
+                    _tiles *= da;
                 }
+                else
+                {
+                    if (!before)
+                        after = true;
+                }
+                if (before)
+                    _outer *= da;
+                if (after)
+                    _inner *= da;
             }
+            if (this->Param().name() == "/aligner/net/Expand_2_output_0")
+                std::cout << "";
         }
-        _outer = src[0]->Size(0, axis);
-        _inner = src[0]->Size(axis);
         dst[0]->Reshape(_srcType, dstShape, src[0]->Format());
         if (src[0]->Const() && src[1]->Const())
         {

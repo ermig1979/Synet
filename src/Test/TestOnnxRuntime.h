@@ -243,7 +243,7 @@ namespace Test
         {
             for (size_t i = 0; i < _outputNames.size(); i++)
             {
-                os << "Layer: " << _outputNames[i] << " : " << std::endl;
+                os << "Output layer " << i << ": " << _outputNames[i] << " : " << std::endl;
                 _output[i].DebugPrint(os, "dst[0]", false, first, last, precision);
             }
         }

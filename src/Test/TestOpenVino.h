@@ -157,7 +157,7 @@ namespace Test
         virtual void DebugPrint(const Tensors& src, std::ostream& os, int flag, int first, int last, int precision)
         {
             for (size_t o = 0; o < _ov->output.size(); ++o)
-                DebugPrint(os, _ov->output[o], _ov->outputNames[o], flag, first, last, precision);
+                DebugPrint(os, o, _ov->output[o], _ov->outputNames[o], flag, first, last, precision);
         }
 
         virtual Regions GetRegions(const Size& size, float threshold, float overlap) const
@@ -446,9 +446,9 @@ namespace Test
             }
         }
 
-        void DebugPrint(std::ostream& os, const ov::Tensor & src, const String & name, int flag, int first, int last, int precision)
+        void DebugPrint(std::ostream& os, size_t o, const ov::Tensor & src, const String & name, int flag, int first, int last, int precision)
         {
-            os << "Layer: " << name;
+            os << "Output layer " << o << ": " << name;
             os << " : " << std::endl;
             Shape dims = src.get_shape();
             Shape strides = src.get_strides();

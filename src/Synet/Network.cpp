@@ -410,7 +410,7 @@ namespace Synet
             Layer & layer = *_input[i].layer;
             if ((layer._isBack && printOutput) || printLayerDst)
             {
-                os << "Layer: " << layer.Param().name() << " : ";
+                os << "Input layer " << i << ": " << layer.Param().name() << " : ";
                 os << Cpl::ToStr(layer.Param().type()) << " ( ";
                 for (size_t j = 0; j < layer.Param().src().size(); ++j)
                     os << layer.Param().src()[j] << " ";
@@ -426,7 +426,7 @@ namespace Synet
             {
                 if(printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
                     layer.Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
-                os << "Layer: " << layer.Param().name() << " : ";
+                os << (layer._isBack ? "Output layer " : "Layer ") << i << ": " << layer.Param().name() << " : ";
                 os << Cpl::ToStr(layer.Param().type()) << " ( ";
                 for (size_t j = 0; j < layer.Param().src().size(); ++j)
                     os << layer.Param().src()[j] << " ";
