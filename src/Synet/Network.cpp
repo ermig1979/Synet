@@ -927,7 +927,7 @@ namespace Synet
         }
     }
 
-#define SYNET_RESHAPE_LOG
+//#define SYNET_RESHAPE_LOG
 
     bool Network::ReshapeStages()
     {
@@ -963,10 +963,22 @@ namespace Synet
                 if (param.type() == LayerTypeMeta)
                     msg << "-" << Cpl::ToStr(param.meta().type());
                 for (size_t s = 0; s < param.src().size(); ++s)
-                    msg << ", src[" << s << "]: " << Cpl::ToStr(_stages[i].src[s]->GetType()) << " " << ToStr(_stages[i].src[s]->Shape());
+                {
+                    msg << ", src[" << s << "]: " << Cpl::ToStr(_stages[i].src[s]->GetType()) << " " << ToStr(_stages[i].src[s]->Shape()) << (_stages[i].src[s]->Const() ? " c" : "");
+                }
                 msg << " -> ";
                 for (size_t d = 0; d < param.dst().size(); ++d)
-                    msg << ", dst[" << d << "]: " << Cpl::ToStr(_stages[i].dst[d]->GetType()) << " " << ToStr(_stages[i].dst[d]->Shape());
+                {
+                    msg << ", dst[" << d << "]: " << Cpl::ToStr(_stages[i].dst[d]->GetType()) << " " << ToStr(_stages[i].dst[d]->Shape()) << (_stages[i].dst[d]->Const() ? " c" : "");
+                    if (_stages[i].dst[d]->GetType() == TensorType64i)
+                    {
+                        size_t n = _stages[i].dst[d]->Size(), m = Min<size_t>(n, 5);
+                        msg << " [";
+                        for (size_t j = 0; j < m; ++j)
+                            msg << " " << _stages[i].dst[d]->Data<int64_t>()[j];
+                        msg << (m < n ? " ... " : " ") << "]";
+                    }
+                }
                 msg << ".";
                 CPL_LOG_SS(Info, msg.str());
             }

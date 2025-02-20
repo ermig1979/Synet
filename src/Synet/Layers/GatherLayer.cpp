@@ -195,7 +195,7 @@ namespace Synet
 
             for (size_t i = 0; i < _axis; ++i)
                 dstShape.push_back(srcShape[i]);
-            if (src[1]->Size() > 1 && !src[1]->Const())
+            if (src[1]->Size() > 1)// && !src[1]->Const())
             {
                 for (size_t i = 0; i < idxShape.size(); ++i)
                     dstShape.push_back(idxShape[i]);
