@@ -73,7 +73,7 @@ namespace Synet
                 dst += count;
             }
         }
-        else if (format == TensorFormatNchw)
+        else// if (format == TensorFormatNchw)
         {
             for (size_t i = 0; i < count; ++i)
             {
