@@ -248,7 +248,11 @@ namespace Synet
                 {
                     for (size_t d = 0; d < layers[l].dst().size(); ++d)
                     {
-                        if (layers[l].type() == LayerTypeMeta || layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
+                        if (permuteMap && IsMetaConst(layers[l]))
+                            continue;
+                        if (!permuteMap && layers[l].type() == LayerTypeMeta)
+                            continue;
+                        if (layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
                             continue;
                         const String & dst = layers[l].dst()[d];
                         if (src == dst && PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling, permuteMap))
@@ -276,7 +280,11 @@ namespace Synet
                     for (size_t d = 0; d < layers[l].dst().size(); ++d)
                     {
                         const String & dst = layers[l].dst()[d];
-                        if (layers[l].type() == LayerTypeMeta || layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
+                        if (permuteMap && IsMetaConst(layers[l]))
+                            continue;
+                        if (!permuteMap && layers[l].type() == LayerTypeMeta)
+                            continue;
+                        if (layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
                             continue;
                         if (names[s] == dst && PermutedToNchw(layers, l, checkInnerProduct, checkPriorBox, globalPooling, permuteMap))
                             return true;
@@ -596,6 +604,13 @@ namespace Synet
         {
             if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeConst && 
                 layer.meta().alpha().type() == TensorType64i && (value.empty() || layer.meta().alpha().i64() == value))
+                return true;
+            return false;
+        }
+
+        static SYNET_INLINE bool IsMetaConst(const LayerParam& layer)
+        {
+            if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeConst)
                 return true;
             return false;
         }

@@ -166,7 +166,7 @@ namespace Test
                     _outputNameBuffers.push_back(String(_session->GetOutputNameAllocated(i, s_env.allocator).get()));
                     _outputNames.push_back(_outputNameBuffers[i].c_str());
                 }
-                //std::sort(_outputNames.begin(), _outputNames.end(), [](const char* a, const char* b) -> bool { return strcmp(a, b) < 1; });
+                std::sort(_outputNames.begin(), _outputNames.end(), [](const char* a, const char* b) -> bool { return strcmp(a, b) < 1; });
             }
 
             Tensors stubInput(SrcCount());
