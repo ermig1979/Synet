@@ -53,7 +53,8 @@ if [ -f $IMAGE/descript.ion ];then rm $IMAGE/descript.ion; fi
 
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
-"$BIN" -m=convert $PATHES -tf=$FORMAT -cs=1 -qm=$METHOD -qq=0.0001 -dp=0 -su=1 -bf=$BF16
+if [ "$THREAD" = "0" ]; then SU=1; else SU=0; fi
+"$BIN" -m=convert $PATHES -tf=$FORMAT -cs=1 -qm=$METHOD -qq=0.0001 -dp=0 -su=$SU -bf=$BF16
 if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 
 "$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -bf=$BF16 -re=0 -et=10.0 -ie=10 -be=100 -dp=1 -dpf=6 -dpl=2 -dpp=4 -ar=1 -rt=0.3 -cs=0 -pl=$PERF -ln=$LOG

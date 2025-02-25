@@ -143,7 +143,7 @@ namespace Test
             ss << h.quot << ":" << Cpl::ToStr(h.rem, 2) << ":" << Cpl::ToStr(m.rem, 2);
         else if (m.quot)
             ss << m.quot << ":" << Cpl::ToStr(m.rem, 2);
-        else if (s.quot)
+        else
             ss << s.quot;
         ss << "." << Cpl::ToStr(s.rem, 3);
         return ss.str();

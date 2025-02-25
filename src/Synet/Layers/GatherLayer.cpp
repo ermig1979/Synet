@@ -51,7 +51,7 @@ namespace Synet
                 src += srcCount * srcInner;
             }
         }
-        else
+        else if(srcInner < 32)
         {
             for (size_t so = 0; so < srcOuter; ++so)
             {
@@ -66,6 +66,26 @@ namespace Synet
                         const T* ps = src + sc * srcInner;
                         for (size_t si = 0; si < srcInner; ++si)
                             dst[si] = ps[si];
+                        dst += srcInner;
+                    }
+                    pi += idxCount;
+                }
+                src += srcCount * srcInner;
+            }
+        }
+        else
+        {
+            for (size_t so = 0; so < srcOuter; ++so)
+            {
+                const I* pi = idx;
+                for (size_t io = 0; io < idxOuter; ++io)
+                {
+                    for (size_t ic = 0; ic < idxCount; ++ic)
+                    {
+                        I sc = pi[ic];
+                        if (sc < 0)
+                            sc += I(srcCount);
+                        memcpy(dst, src + sc * srcInner, srcInner * sizeof(T));
                         dst += srcInner;
                     }
                     pi += idxCount;
