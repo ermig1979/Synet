@@ -388,35 +388,70 @@ namespace Synet
             }
             else if(tensor.data_type() == onnx::TensorProto_DataType_INT64)
             {
-                layer.type() = Synet::LayerTypeMeta;
-                layer.meta().type() = Synet::MetaTypeConst;
-                layer.meta().alpha().type() = TensorType64i;
-                uint64_t size = 1;
+                ptrdiff_t size = 1;
                 for (size_t i = 0; i < tensor.dims_size(); ++i)
-                {
                     size *= (size_t)tensor.dims(i);
-                    layer.meta().alpha().shape().push_back(size_t(tensor.dims(i)));
-                }
-                layer.meta().alpha().i64().resize(size);
-                if (size)
+                if (size < 16 || 1)
                 {
-                    if (layer.meta().alpha().shape().empty())
+                    layer.type() = Synet::LayerTypeMeta;
+                    layer.meta().type() = Synet::MetaTypeConst;
+                    layer.meta().alpha().type() = TensorType64i;
+                    uint64_t size = 1;
+                    for (size_t i = 0; i < tensor.dims_size(); ++i)
                     {
-                        layer.meta().alpha().shape().push_back(1);
-                        layer.meta().alpha().scalar() = true;
+                        size *= (size_t)tensor.dims(i);
+                        layer.meta().alpha().shape().push_back(size_t(tensor.dims(i)));
                     }
-                    if (tensor.has_raw_data())
+                    layer.meta().alpha().i64().resize(size);
+                    if (size)
                     {
-                        for (size_t i = 0; i < size; ++i)
-                            layer.meta().alpha().i64()[i] = ((int64_t*)tensor.raw_data().c_str())[i];
+                        if (layer.meta().alpha().shape().empty())
+                        {
+                            layer.meta().alpha().shape().push_back(1);
+                            layer.meta().alpha().scalar() = true;
+                        }
+                        if (tensor.has_raw_data())
+                        {
+                            for (size_t i = 0; i < size; ++i)
+                                layer.meta().alpha().i64()[i] = ((int64_t*)tensor.raw_data().c_str())[i];
+                        }
+                        else if (tensor.int64_data_size())
+                        {
+                            for (size_t i = 0; i < size; ++i)
+                                layer.meta().alpha().i64()[i] = tensor.int64_data(i);
+                        }
+                        else
+                            SYNET_ERROR("Can't parse '" << layer.name() << "' INT64 tensor!");
                     }
-                    else if (tensor.int64_data_size())
+                }
+                else
+                {
+                    size_t offset = weight.size();
+                    layer.type() = LayerTypeConst;
+                    layer.weight().resize(1);
+                    layer.weight()[0].type() = TensorType64i;
+                    for (size_t i = 0; i < tensor.dims_size(); ++i)
+                        layer.weight()[0].dim().push_back((size_t)tensor.dims(i));
+                    layer.weight()[0].offset() = offset * sizeof(float);
+                    layer.weight()[0].size() = size * sizeof(int64_t);
+                    if (size)
                     {
-                        for (size_t i = 0; i < size; ++i)
-                            layer.meta().alpha().i64()[i] = tensor.int64_data(i);
+                        if (tensor.has_raw_data())
+                        {
+                            weight.resize(offset + size * 2);
+                            memcpy(weight.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                        }
+                        else if (tensor.int64_data_size())
+                        {
+                            if (size != tensor.int64_data_size())
+                                SYNET_ERROR("Wrong tensor int64_data_size " << tensor.int64_data_size() << " != " << size << " !");
+                            weight.resize(offset + size * 2);
+                            for (size_t i = 0; i < size; ++i)
+                                ((int64_t*)(weight.data() + offset))[i] = tensor.int64_data(i);
+                        }
+                        else
+                            SYNET_ERROR("Can't parse '" << layer.name() << "' INT64 tensor!");
                     }
-                    else
-                        SYNET_ERROR("Can't parse '" << layer.name() << "' INT64 tensor!");
                 }
             }
             else if (tensor.data_type() == onnx::TensorProto_DataType_BOOL)
@@ -851,22 +886,46 @@ namespace Synet
             const onnx::TensorProto& tensor = value->t();
             if (tensor.data_type() == onnx::TensorProto_DataType_INT64)
             {
-                layer.type() = Synet::LayerTypeMeta;
-                layer.meta().type() = Synet::MetaTypeConst;
-                layer.meta().alpha().type() = TensorType64i;
-                uint64_t size = 1;
+                ptrdiff_t size = 1;
                 for (size_t i = 0; i < tensor.dims_size(); ++i)
-                {
                     size *= tensor.dims(i);
-                    layer.meta().alpha().shape().push_back(size_t(tensor.dims(i)));
-                }
-                if (layer.meta().alpha().shape().empty())
-                    layer.meta().alpha().shape().push_back(1);
-                layer.meta().alpha().i64().resize(size);
-                if (tensor.has_raw_data())
+                if (size < 16 || 1)
                 {
-                    for (size_t i = 0; i < size; ++i)
-                        layer.meta().alpha().i64()[i] = ((int64_t*)tensor.raw_data().c_str())[i];
+                    layer.type() = Synet::LayerTypeMeta;
+                    layer.meta().type() = Synet::MetaTypeConst;
+                    layer.meta().alpha().type() = TensorType64i;
+                    uint64_t size = 1;
+                    for (size_t i = 0; i < tensor.dims_size(); ++i)
+                    {
+                        size *= tensor.dims(i);
+                        layer.meta().alpha().shape().push_back(size_t(tensor.dims(i)));
+                    }
+                    if (layer.meta().alpha().shape().empty())
+                        layer.meta().alpha().shape().push_back(1);
+                    layer.meta().alpha().i64().resize(size);
+                    if (tensor.has_raw_data())
+                    {
+                        for (size_t i = 0; i < size; ++i)
+                            layer.meta().alpha().i64()[i] = ((int64_t*)tensor.raw_data().c_str())[i];
+                    }
+                }
+                else
+                {
+                    layer.type() = LayerTypeConst;
+                    layer.weight().resize(1);
+                    layer.weight()[0].type() = TensorType64i;
+                    uint64_t offset = original.size();
+                    for (size_t i = 0; i < tensor.dims_size(); ++i)
+                        layer.weight()[0].dim().push_back(size_t(tensor.dims(i)));
+                    layer.weight()[0].offset() = offset * sizeof(float);
+                    layer.weight()[0].size() = size * sizeof(int64_t);
+                    if (tensor.has_raw_data() && size)
+                    {
+                        original.resize(offset + size * 2);
+                        reordered.resize(offset + size * 2);
+                        memcpy(original.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                        memcpy(reordered.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                    }
                 }
             }
             else if (tensor.data_type() == onnx::TensorProto_DataType_FLOAT)
