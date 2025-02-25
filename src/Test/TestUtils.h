@@ -26,6 +26,9 @@
 
 #include "TestCommon.h"
 
+#include "Cpl/Time.h"
+#include "Cpl/String.h"
+
 #include <locale>
 #include <iostream>
 #include <fstream>
@@ -123,6 +126,27 @@ namespace Test
             if (src[i] != symbol)
                 dst.push_back(src[i]);
         return dst;
+    }
+
+    //---------------------------------------------------------------------------------------------
+
+    inline String ExecTimeStr(int64_t start)
+    {
+        std::lldiv_t s = std::lldiv((int64_t)Cpl::Miliseconds(Cpl::TimeCounter() - start), 1000);
+        std::lldiv_t m = std::lldiv(s.quot, 60);
+        std::lldiv_t h = std::lldiv(m.quot, 60);
+        std::lldiv_t d = std::lldiv(h.quot, 24);
+        std::stringstream ss;
+        if (d.quot)
+            ss << d.quot << ":" << Cpl::ToStr(d.rem, 2) << ":" << Cpl::ToStr(h.rem, 2) << ":" << Cpl::ToStr(m.rem, 2);
+        else if (h.quot)
+            ss << h.quot << ":" << Cpl::ToStr(h.rem, 2) << ":" << Cpl::ToStr(m.rem, 2);
+        else if (m.quot)
+            ss << m.quot << ":" << Cpl::ToStr(m.rem, 2);
+        else if (s.quot)
+            ss << s.quot;
+        ss << "." << Cpl::ToStr(s.rem, 3);
+        return ss.str();
     }
 
     //---------------------------------------------------------------------------------------------

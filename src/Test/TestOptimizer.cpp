@@ -34,7 +34,6 @@ namespace Test
 {
     bool OptimizeSynet(const Test::Options& options)
     {
-        CPL_PERF_FUNC();
         Test::TestParamHolder param;
         if (FileExists(options.testParam) && !param.Load(options.testParam))
             SYNET_ERROR("Can't load file '" << options.testParam << "' !");
@@ -67,10 +66,13 @@ int main(int argc, char* argv[])
 
     if (options.mode == "convert")
     {
+        int64_t start = Cpl::TimeCounter();
         std::cout << "Optimize Synet network : ";
         options.result = OptimizeSynet(options);
-        std::cout << (options.result ? "OK." : " Optimization finished with errors!") << std::endl;
-
+        if (options.result)
+            std::cout << " finished successfully in " << Test::ExecTimeStr(start) << "." << std::endl;
+        else
+            std::cout << " Conversion finished with errors!" << std::endl;
     }
     else if (options.mode == "compare")
     {

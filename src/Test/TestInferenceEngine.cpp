@@ -69,7 +69,6 @@ namespace Test
 
     bool ConvertInferenceEngineToSynet(const Test::Options & options)
     {
-        CPL_PERF_FUNC();
         Test::TestParamHolder param;
         if (FileExists(options.testParam) && !param.Load(options.testParam))
             SYNET_ERROR("Can't load file '" << options.testParam << "' !");
@@ -89,9 +88,13 @@ int main(int argc, char* argv[])
 
     if (options.mode == "convert")
     {
-        std::cout << "Convert network from Inference Engine to Synet : ";
+        int64_t start = Cpl::TimeCounter();
+        std::cout << "Convert network from Inference Engine to Synet :";
         options.result = ConvertInferenceEngineToSynet(options);
-        std::cout << (options.result ? "OK." : " Conversion finished with errors!") << std::endl;
+        if (options.result)
+            std::cout << " finished successfully in " << Test::ExecTimeStr(start) << "." << std::endl;
+        else
+            std::cout << " Conversion finished with errors!" << std::endl;
     }
     else if (options.mode == "compare")
     {

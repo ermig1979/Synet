@@ -38,7 +38,6 @@ namespace Test
 
     bool ConvertOnnxToSynet(const Test::Options &options)
     {
-        SYNET_PERF_FUNC();
         Test::TestParamHolder param;
         if (FileExists(options.testParam) && !param.Load(options.testParam))
             SYNET_ERROR("Can't load file '" << options.testParam << "' !");
@@ -66,10 +65,13 @@ int main(int argc, char* argv[])
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
     if (options.mode == "convert")
     {
-        SYNET_PERF_FUNC();
-        std::cout << "Convert network from Onnx to Synet : " << std::flush;
+        int64_t start = Cpl::TimeCounter();
+        std::cout << "Convert network from Onnx to Synet :" << std::flush;
         options.result = Test::ConvertOnnxToSynet(options);
-        std::cout << (options.result ? "OK." : " Conversion finished with errors!") << std::endl;
+        if (options.result)
+            std::cout << " finished successfully in " << Test::ExecTimeStr(start) << "." << std::endl;
+        else
+            std::cout << " Conversion finished with errors!" << std::endl;
     }
     else 
 #endif

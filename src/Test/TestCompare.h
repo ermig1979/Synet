@@ -133,9 +133,11 @@ namespace Test
             std::cout << "tests :" << std::endl;
         }
 
-        bool PrintFinishMessage() const
+        bool PrintFinishMessage(int64_t start) const
         {
-            std::cout << ExpandRight("Tests are finished successfully!", _progressMessageSizeMax) << std::endl << std::endl;
+            std::stringstream msg;
+            msg << "Tests are finished successfully in " << Test::ExecTimeStr(start) << ".";
+            std::cout << ExpandRight(msg.str(), _progressMessageSizeMax) << std::endl << std::endl;
             return true;
         }
 
@@ -632,6 +634,7 @@ namespace Test
 
         bool SingleThreadComparison()
         {
+            int64_t start = Cpl::TimeCounter();
             size_t repeats = std::max<size_t>(1, _options.repeatNumber), total = _tests.size() * repeats, current = 0;
             for (size_t i = 0; i < _tests.size(); ++i)
             {
@@ -664,11 +667,12 @@ namespace Test
             if (_options.enable & ENABLE_SECOND)
                 _options.secondMemoryUsage = _seconds[0].MemoryUsage();
 #endif
-            return PrintFinishMessage();
+            return PrintFinishMessage(start);
         }
 
         bool MultiThreadsComparison()
         {
+            int64_t start = Cpl::TimeCounter();
             size_t current = 0, total = _options.repeatNumber ?
                 _tests.size() * _options.repeatNumber : size_t(_options.executionTime * 1000);
             _threads.resize(_options.TestThreads());
@@ -722,7 +726,7 @@ namespace Test
                     _options.secondMemoryUsage += _seconds[t].MemoryUsage();
 #endif            
             }
-            return PrintFinishMessage();
+            return PrintFinishMessage(start);
         }
 
         void MultuThreadRunFirst(size_t thread, size_t total, size_t& current, size_t networks, size_t second)
