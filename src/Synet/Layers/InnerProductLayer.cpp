@@ -97,7 +97,9 @@ namespace Synet
         std::stringstream desc;
         desc << _batch << "x" << _M << "x" << _K << "-" << _N << " ";
         desc << ToChar(src[0]->GetType()) << (src.size() > 1 ? ToChar(src[1]->GetType()) : "0") << ToChar(dst[0]->GetType()) << "-";
-        desc << (_transB ? "n" : "t") << (_biasTerm ? "b" : "o") << "-" << Cpl::ToStr(param.quantizationLevel());
+        desc << (_transB ? "n" : "t") << (_biasTerm ? "b" : "o");
+        if(param.quantizationLevel())
+            desc << "-" << Cpl::ToStr(param.quantizationLevel());
         _desc = desc.str();
         this->UsePerfStat(_desc, Flop());
         return true;
