@@ -41,6 +41,8 @@ namespace Synet
         CPL_PARAM_VALUE(bool, setReshapeAxis1, false);
     };
 
+    //-------------------------------------------------------------------------------------------------
+
     class SynetUtils
     {
     protected:
@@ -49,6 +51,7 @@ namespace Synet
         typedef std::vector<Tensor> Tensors;
         typedef std::vector<float> Vector;
         typedef std::map<String, bool> PermuteMap;
+        typedef std::map<String, TensorFormat> TensorFormatMap;
 
         struct Pin
         {
@@ -56,6 +59,8 @@ namespace Synet
             int index;
             Pin(const String& n = String(), int i = 0) : name(n), index(i) {}
         };
+
+        //-------------------------------------------------------------------------------------------------
 
         static bool CheckDims(const Shape& shape, size_t dims, const String& desc)
         {
@@ -84,6 +89,8 @@ namespace Synet
                 SYNET_ERROR("Wrong number of destinations (" << layer.dst().size() << " instead of " << size << ") !");
             return true;
         }
+
+        //-------------------------------------------------------------------------------------------------
 
         static bool CompactShape(Shape& shape)
         {
@@ -214,6 +221,8 @@ namespace Synet
             return pin;
         }
 
+        //-------------------------------------------------------------------------------------------------
+
         static bool Cache(const LayerParam& layer, bool value, PermuteMap* permuteMap = NULL)
         {
             if (permuteMap)
@@ -317,26 +326,37 @@ namespace Synet
             return count;
         }
 
-        static TensorFormat CurrentTensorFormat(const LayerParams& layers, size_t current, bool checkInnerProduct, bool checkPriorBox, bool globalPooling)
+        //-------------------------------------------------------------------------------------------------
+
+        static TensorFormat Cache(const LayerParam& layer, TensorFormat value, TensorFormatMap* tensorFormatMap = NULL)
+        {
+            if (tensorFormatMap)
+                (*tensorFormatMap)[layer.name()] = value;
+            return value;
+        }
+
+        static TensorFormat CurrentTensorFormat(const LayerParams& layers, size_t current, bool checkInnerProduct, bool checkPriorBox, bool globalPooling, TensorFormatMap* tensorFormatMap = NULL)
         {
             const LayerParam& layer = layers[current];
+            if (tensorFormatMap && tensorFormatMap->find(layer.name()) != tensorFormatMap->end())
+                return (*tensorFormatMap)[layer.name()];
             if (layer.type() == LayerTypeConvolution || layer.type() == LayerTypeDeconvolution)
-                return layer.weight()[0].format();
+                return Cache(layer, layer.weight()[0].format(), tensorFormatMap);
             if (layer.type() == LayerTypePermute && layer.permute().format() != TensorFormatUnknown)
-                return layer.permute().format();
+                return Cache(layer, layer.permute().format(), tensorFormatMap);
             if (layer.type() == LayerTypeInnerProduct)
             {
                 if (layer.weight().size())
-                    return layer.weight()[0].format();
+                    return Cache(layer, layer.weight()[0].format(), tensorFormatMap);
                 if(checkInnerProduct)
-                    return TensorFormatNchw;
+                    return Cache(layer, TensorFormatNchw, tensorFormatMap);
             }
             if (checkPriorBox && (layer.type() == LayerTypePriorBox || layer.type() == LayerTypePriorBoxClustered))
-                return TensorFormatNchw;
+                return Cache(layer, TensorFormatNchw, tensorFormatMap);
             if (globalPooling && layer.type() == LayerTypePooling && layer.pooling().globalPooling())
-                return TensorFormatNchw;
+                return Cache(layer, TensorFormatNchw, tensorFormatMap);
             if (layer.type() == LayerTypeInput && layer.input().shape().size())
-                return layer.input().shape()[0].format();
+                return Cache(layer, layer.input().shape()[0].format(), tensorFormatMap);
             for (size_t s = 0; s < layer.src().size(); ++s)
             {
                 const String& src = layer.src()[s];
@@ -344,12 +364,17 @@ namespace Synet
                 {
                     for (size_t d = 0; d < layers[l].dst().size(); ++d)
                     {
-                        if (layers[l].type() == LayerTypeMeta || layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
+                        if (tensorFormatMap && IsMetaConst(layers[l]))
+                            continue;
+                        if (!tensorFormatMap && layers[l].type() == LayerTypeMeta)
+                            continue;
+                        if (layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
                             continue;
                         const String& dst = layers[l].dst()[d];
                         if (src == dst)
                         {
-                            TensorFormat format = CurrentTensorFormat(layers, l, checkInnerProduct, checkPriorBox, globalPooling);
+                            TensorFormat format = CurrentTensorFormat(layers, l, checkInnerProduct, checkPriorBox, globalPooling, tensorFormatMap);
+                            Cache(layers[l], format, tensorFormatMap);
                             if (format != TensorFormatUnknown)
                                 return format;
                         }
@@ -359,7 +384,7 @@ namespace Synet
             return TensorFormatUnknown;
         }
 
-        static TensorFormat CurrentTensorFormat(const LayerParams& layers, const Strings& names, bool checkInnerProduct, bool checkPriorBox, bool globalPooling)
+        static TensorFormat CurrentTensorFormat(const LayerParams& layers, const Strings& names, bool checkInnerProduct, bool checkPriorBox, bool globalPooling, TensorFormatMap* tensorFormatMap = NULL)
         {
             for (size_t s = 0; s < names.size(); ++s)
             {
@@ -372,7 +397,7 @@ namespace Synet
                             continue;
                         if (names[s] == dst)
                         {
-                            TensorFormat format = CurrentTensorFormat(layers, l, checkInnerProduct, checkPriorBox, globalPooling);
+                            TensorFormat format = CurrentTensorFormat(layers, l, checkInnerProduct, checkPriorBox, globalPooling, tensorFormatMap);
                             if (format != TensorFormatUnknown)
                                 return format;
                         }
@@ -381,6 +406,8 @@ namespace Synet
             }
             return TensorFormatUnknown;
         }
+
+        //-------------------------------------------------------------------------------------------------
 
         static size_t UserCount(const LayerParams& layers, size_t index)
         {
@@ -455,6 +482,8 @@ namespace Synet
             }
             return true;
         }
+
+        //-------------------------------------------------------------------------------------------------
 
         static bool ReorderWeight(const Vector& srcBin, const Shape& input, LayerParam& layer, Vector& dstBin)
         {

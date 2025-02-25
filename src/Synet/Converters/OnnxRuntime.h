@@ -138,6 +138,7 @@ namespace Synet
             Consts consts;
             Renames renames;
             PermuteMap permuteMap;
+            TensorFormatMap tensorFormatMap;
             for (size_t i = 0; i < graph.initializer_size(); ++i)
             {
                 const onnx::TensorProto& tensor = graph.initializer(i);
@@ -235,7 +236,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "LSTM" && !ConvertLstmNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "MatMul" && !ConvertMatMulNode(node, trans, network.layers(), layer))
+                if (node.op_type() == "MatMul" && !ConvertMatMulNode(node, trans, network.layers(), layer, &tensorFormatMap))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "MaxPool" && !ConvertMaxPoolNode(node, layer))
                     return ErrorMessage(i, node);
@@ -1483,7 +1484,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertMatMulNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer)
+        bool ConvertMatMulNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, TensorFormatMap *tensorFormatMap)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1512,14 +1513,6 @@ namespace Synet
                     layers.erase(layers.begin() + (src1 - layers.data()));
                 }
             }
-            //else if (src1->type() == LayerTypeReshape)
-            //{
-            //}
-            //else
-            //{
-            //    CPL_LOG_SS(Error, "Unsupported src[1] type: " << Cpl::ToStr(src1->type()));
-            //    return false;
-            //}
             Shape weight = layer.weight()[0].dim();
             layer.innerProduct().transposeB() = !transB;
             if (weight.empty())
@@ -1534,11 +1527,8 @@ namespace Synet
                     return false;
                 layer.innerProduct().outputNum() = (uint32_t)(transB ? weight[0] : weight[1]);
                 layer.src().resize(1);
-                if (trans && CurrentTensorFormat(layers, layer.src(), true, false, true) == TensorFormatNhwc)
-                {
-                    CPL_LOG_SS(Error, "Can 't convert MatMul node for NHWC format!");
-                    return false;
-                }
+                if (trans && CurrentTensorFormat(layers, layer.src(), true, false, true, tensorFormatMap) == TensorFormatNhwc)
+                    SYNET_ERROR("Can 't convert MatMul node for NHWC format!");
             }
             return true;
         }
