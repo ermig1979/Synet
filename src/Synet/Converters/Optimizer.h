@@ -2103,6 +2103,9 @@ namespace Synet
             }
 
             bool skip = false;
+            if ((src[index].permute().order() == Shp(0, 3, 1, 2)) && src[second].permute().order() == Shp(0, 2, 3, 1) && 
+                src[index].permute().format() == TensorFormatNchw)
+                skip = true;
             if ((src[index].permute().order() == Shp(0, 2, 1) || src[index].permute().order() == Shp(0, 3, 1, 2)) &&
                 src[second].permute().order() == Shp(0, 2, 3, 1) && src[second].permute().format() == TensorFormatNhwc)
                 skip = true;
