@@ -391,7 +391,7 @@ namespace Synet
                 ptrdiff_t size = 1;
                 for (size_t i = 0; i < tensor.dims_size(); ++i)
                     size *= (size_t)tensor.dims(i);
-                if (size < 16 || 1)
+                if (size < 16)
                 {
                     layer.type() = Synet::LayerTypeMeta;
                     layer.meta().type() = Synet::MetaTypeConst;
@@ -889,7 +889,7 @@ namespace Synet
                 ptrdiff_t size = 1;
                 for (size_t i = 0; i < tensor.dims_size(); ++i)
                     size *= tensor.dims(i);
-                if (size < 16 || 1)
+                if (size < 16)
                 {
                     layer.type() = Synet::LayerTypeMeta;
                     layer.meta().type() = Synet::MetaTypeConst;
