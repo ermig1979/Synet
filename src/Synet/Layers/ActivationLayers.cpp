@@ -292,9 +292,16 @@ namespace Synet
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("RestrictRangeLayer supports only 1 input and 1 output!");
         _size = src[0]->Size();
+        size_t srcUsers = TensorUsers(Param().src()[0]);
         if (src[0]->GetType() == TensorType32f)
         {
-            dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+            if (dst[0] != src[0])
+            {
+                if(srcUsers == 1 && !src[0]->Const())
+                    dst[0]->Share(*src[0]);
+                else
+                    dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+            }
         }
         else
             SYNET_ERROR("RestrictRangeLayer supports only FP32 input and output!");
