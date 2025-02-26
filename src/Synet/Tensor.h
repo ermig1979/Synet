@@ -466,6 +466,11 @@ namespace Synet
             }
         }
 
+        size_t Users() const
+        {
+            return _buffer.use_count();
+        }
+
     private:
 
         template <class U> static void DebugPrint(std::ostream& os, const Tensor<T> & tensor, const String& name, bool weight, size_t first, size_t last, size_t precision)

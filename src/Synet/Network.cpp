@@ -395,7 +395,7 @@ namespace Synet
     {
         SYNET_PERF_FUNC();
         for (size_t i = 0; i < _tensors.size(); ++i)
-                UpdateStatistics(*_tensors[i], quantile, epsilon);
+            UpdateStatistics(*_tensors[i], quantile, epsilon);
     }
 
     void Network::DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
@@ -408,12 +408,13 @@ namespace Synet
         for (size_t i = 0; i < _input.size() && (printLayerDst || printOutput); ++i)
         {
             Layer & layer = *_input[i].layer;
+            const LayerParam& param = layer.Param();
             if ((layer._isBack && printOutput) || printLayerDst)
             {
-                os << "Input layer " << i << ": " << layer.Param().name() << " : ";
-                os << Cpl::ToStr(layer.Param().type()) << " ( ";
-                for (size_t j = 0; j < layer.Param().src().size(); ++j)
-                    os << layer.Param().src()[j] << " ";
+                os << "Input layer " << i << ": " << param.name() << " : ";
+                os << Cpl::ToStr(param.type()) << " ( ";
+                for (size_t j = 0; j < param.src().size(); ++j)
+                    os << param.src()[j] << " ";
                 os << ")." << std::endl;
                 for (size_t j = 0; j < _input[i].dst.size(); ++j)
                     _input[i].dst[j]->DebugPrint(os, String("dst[") + Cpl::ToStr(j) + "]", false, first, last, precision);
@@ -422,14 +423,18 @@ namespace Synet
         for (size_t i = 0; i < _stages.size(); ++i)
         {
             Layer & layer = *_stages[i].layer;
+            const LayerParam& param = layer.Param();
             if ((layer._isBack && printOutput) || printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
             {
                 if(printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
                     layer.Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
-                os << (layer._isBack ? "Output layer " : "Layer ") << i << ": " << layer.Param().name() << " : ";
-                os << Cpl::ToStr(layer.Param().type()) << " ( ";
-                for (size_t j = 0; j < layer.Param().src().size(); ++j)
-                    os << layer.Param().src()[j] << " ";
+                os << (layer._isBack ? "Output layer " : "Layer ") << i << ": " << param.name() << " : ";
+                os << Cpl::ToStr(param.type());
+                if (param.type() == LayerTypeMeta)
+                    os << "-" << Cpl::ToStr(param.meta().type());
+                os << " ( ";
+                for (size_t j = 0; j < param.src().size(); ++j)
+                    os << param.src()[j] << " ";
                 os << ")." << std::endl;
                 if (printLayerWeight)
                 {
@@ -549,6 +554,24 @@ namespace Synet
     {
         for (size_t i = 0; i < _layers.size(); ++i)
             _layers[i]->CompactWeight();
+        for (size_t i = 0; i < _tensors.size(); ++i)
+        {
+            Tensor32f& t = *_tensors[i];
+            if (t.Const() && t.Size() >= 16 && t.Users() == 1)
+            {
+                const IdSet& ids = _srcIds[t.Name()];
+                bool isConst = ids.size() > 0;
+                for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
+                {
+                    const Stage& s = _stages[*id];
+                    if (!s.layer->Const())
+                        isConst = false;
+
+                }
+                if (isConst)
+                    t.Clear();
+            }
+        }
     }
 
     int64_t Network::Flop() const
