@@ -369,6 +369,8 @@ namespace Synet
         return TensorFormatUnknown;
     }
 
+//#define SYNET_FORWARD_LOG
+
     void Network::Forward()
     {
         //SYNET_PERF_FUNC();
@@ -376,15 +378,19 @@ namespace Synet
         SetFastMode(true);
         for (size_t i = 0; i < _stages.size(); ++i)
         {
-#if 0
-            std::cout << _stages[i].layer->Param().name() << " : { ";
-            if (_stages[i].src.size())
-            {
-                const Shape& shape = _stages[i].src[0]->Shape();
-                for (size_t j = 0; j < shape.size(); ++j)
-                    std::cout << shape[j] << " ";
-            }
-            std::cout << "}" << std::endl;
+#if defined(SYNET_FORWARD_LOG)
+            const Layer& layer = *_stages[i].layer;
+            const LayerParam& param = layer.Param();
+            std::cout << "Layer " << i << ": " << param.name() << " : ";
+            std::cout << Cpl::ToStr(param.type());
+            if (param.type() == LayerTypeMeta)
+                std::cout << "-" << Cpl::ToStr(param.meta().type());
+            for (size_t s = 0; s < _stages[i].src.size(); ++s)
+                std::cout << (s ? ", " : " ") << "src[" << s << "]: " << Cpl::ToStr(_stages[i].src[s]->GetType()) << " " << ToStr(_stages[i].src[s]->Shape());
+            std::cout << " -> ";
+            for (size_t d = 0; d < _stages[i].dst.size(); ++d)
+                std::cout << (d ? ", " : " ") << "dst[" << d << "]: " << Cpl::ToStr(_stages[i].dst[d]->GetType()) << " " << ToStr(_stages[i].dst[d]->Shape());
+            std::cout << std::endl;
 #endif
             _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
         }
