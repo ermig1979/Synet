@@ -19,6 +19,10 @@ class Test():
 			self.bf16 = vals[5]
 		else :
 			self.bf16 = "0"
+		if args.fp32 :
+			self.fp32 = "1"
+		else :
+			self.fp32 = "0"
 		self.path = ""
 		
 ###################################################################################################
@@ -130,14 +134,15 @@ def SetTestList(context : Context):
 			if skip :
 				continue
 		
-		if test.batch == "1" and test.bf16 == "1":
-			context.total += 4
-		elif test.batch == "1" and test.bf16 == "0" :
-			context.total += 2
-		elif test.batch == "0" and test.bf16 == "1" :
-			context.total += 2
-		else :
+		if test.bf16 == "1":
+			if(test.batch == "1") :
+				context.total += 1
 			context.total += 1
+		if test.fp32 == "1":
+			if(test.batch == "1") :
+				context.total += 1
+			context.total += 1
+			
 		context.tests.append(test)
 	listFile.close()
 	if len(context.tests) == 0 :
@@ -219,9 +224,10 @@ def RunTest(context, test, batch, bf16):
 
 def RunAllTests(context):
 	for test in context.tests:
-		if not RunTest(context, test, 1, "0") :
-			return False
-		if test.batch == "1" :
+		if test.fp32 == "1" :
+			if not RunTest(context, test, 1, "0") :
+				return False
+		if test.fp32 == "1" and test.batch == "1" :
 			if not RunTest(context, test, 10, "0") :
 				return False
 		if test.bf16 == "1" :
@@ -245,6 +251,7 @@ def main():
 	parser.add_argument("-f", "--framework", help="Framework to test. It can be i(inference_engine), o(onnx), or q(quantization).", required=False, type=str, default="o", choices=["i", "o", "q"])
 	parser.add_argument("-i", "--include", help="Include tests filter.", required=False, default=[], action="append")
 	parser.add_argument("-e", "--exclude", help="Exclude tests filter.", required=False, default=[], action="append")
+	parser.add_argument("-fp", "--fp32", help="Run FP32 tests.", required=False, type=bool, default=True)
 	parser.add_argument("-bf", "--bf16", help="Run BF16 tests.", required=False, type=bool, default=False)
 	parser.add_argument("-it", "--inferenceEngineThreshold", help="Threshold for Inference Engine tests.", required=False, type=float, default=0.000270)
 	parser.add_argument("-ot", "--onnxThreshold", help="Threshold for OnnxRuntime tests.", required=False, type=float, default=0.001317)

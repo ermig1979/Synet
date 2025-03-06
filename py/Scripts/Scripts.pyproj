@@ -5,7 +5,7 @@
     <ProjectGuid>88714303-76f4-44a7-96f1-d7b5084be739</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>Check.py</StartupFile>
+    <StartupFile>Perf.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>../..</WorkingDirectory>
@@ -13,7 +13,7 @@
     <Name>Scripts</Name>
     <RootNamespace>simple</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>-bf=1 -t=2</CommandLineArguments>
+    <CommandLineArguments>-bf=1 -t=2 -fp=0</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
