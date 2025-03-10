@@ -42,6 +42,8 @@ namespace Synet
 
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
+        virtual int64_t Flop() const;
+
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 

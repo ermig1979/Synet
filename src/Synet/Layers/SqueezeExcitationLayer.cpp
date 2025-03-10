@@ -97,6 +97,11 @@ namespace Synet
         return (_sumScale.size() + _sumShift.size() + _rWeight[0].size() + _rWeight[1].size())*sizeof(float) + _scale8i.InternalBufferSize();
     }
 
+    int64_t SqueezeExcitationLayer::Flop() const
+    {
+        return _batch * (_channels * _height * _width * 2 + _squeeze * _channels * 4 + _squeeze * 2 + _channels * 22);
+    }
+
     bool SqueezeExcitationLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         const Tensors& weight = this->Weight();
@@ -180,7 +185,10 @@ namespace Synet
                 _scale8i.SetParams(_sumScale.data(), NULL, stats);
             }
         }
-        this->UsePerfStat();
+        if (Options().BFloat16Enable())
+            this->UsePerfStat(ToChar(src[0]->GetType()) + ToChar(dst[0]->GetType()));
+        else
+            this->UsePerfStat();
         return true;
     }
 
