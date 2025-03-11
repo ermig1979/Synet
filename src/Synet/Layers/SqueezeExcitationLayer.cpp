@@ -65,6 +65,12 @@ namespace Synet
             assert(0);
     }
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
+    template <> inline void ChannelSum<uint16_t, float>(const uint16_t* src, size_t channels, size_t height, size_t width, TensorFormat format, float* sum)
+    {
+        size_t spatial = height * width;
+        SimdSynetChannelSum16b(src, channels, spatial, (SimdTensorFormatType)format, sum);
+    }
+
     template <> inline void ChannelSum<uint8_t, int32_t>(const uint8_t* src, size_t channels, size_t height, size_t width, TensorFormat format, int32_t* sum)
     {
         //SYNET_PERF_FUNC();
