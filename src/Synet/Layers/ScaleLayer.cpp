@@ -234,6 +234,7 @@ namespace Synet
         }
         if (_src16b || _dst16b)
         {
+            _scale16b.Init(_channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, true, _biasTerm);
             if (_biasTerm)
                 _shift.Share(this->Weight()[1]);
             else
@@ -346,12 +347,26 @@ namespace Synet
         {
             const float* scale = this->Weight()[0].Data<float>();
             const float* shift = _shift.Data<float>();
-            if (_src16b && _dst16b)
-                ScaleForward16b(src[0]->Data<uint16_t>(), _batch, _channels, _height * _width, _format, scale, shift, dst[0]->Data<uint16_t>());
-            else if (!_src16b && _dst16b)
-                ScaleForward16b(src[0]->Data<float>(), _batch, _channels, _height * _width, _format, scale, shift, dst[0]->Data<uint16_t>());
-            else if (_src16b && !_dst16b)
-                ScaleForward16b(src[0]->Data<uint16_t>(), _batch, _channels, _height * _width, _format, scale, shift, dst[0]->Data<float>());
+            if (_scale16b.Enable())
+            {
+                const uint8_t* src8 = src[0]->RawData();
+                uint8_t* dst8 = dst[0]->RawData();
+                for (size_t b = 0; b < _batch; ++b)
+                {
+                    _scale16b.Forward(src8, scale, shift, dst8);
+                    src8 += _channels * _height * _width * (_src16b ? 2 : 4);
+                    dst8 += _channels * _height * _width * (_dst16b ? 2 : 4);
+                }
+            }
+            else
+            {
+                if (_src16b && _dst16b)
+                    ScaleForward16b(src[0]->Data<uint16_t>(), _batch, _channels, _height * _width, _format, scale, shift, dst[0]->Data<uint16_t>());
+                else if (!_src16b && _dst16b)
+                    ScaleForward16b(src[0]->Data<float>(), _batch, _channels, _height * _width, _format, scale, shift, dst[0]->Data<uint16_t>());
+                else if (_src16b && !_dst16b)
+                    ScaleForward16b(src[0]->Data<uint16_t>(), _batch, _channels, _height * _width, _format, scale, shift, dst[0]->Data<float>());
+            }
         }
         else
             Scale32f(src[0]->Data<float>(), dst[0]->Data<float>());

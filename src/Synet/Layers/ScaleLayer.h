@@ -63,5 +63,6 @@ namespace Synet
         bool _biasTerm, _src8u, _dst8u, _is8i, _src16b, _dst16b;
         Tensor _scale, _shift;
         Scale8i _scale8i;
+        Scale16b _scale16b;
     };
 }
