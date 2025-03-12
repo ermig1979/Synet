@@ -71,5 +71,6 @@ namespace Synet
         QuantizationMethod _method;
         Floats _sumScale, _sumShift, _rWeight[2];
         Synet::Scale8i _scale8i;
+        Synet::Scale16b _scale16b;
     };
 }

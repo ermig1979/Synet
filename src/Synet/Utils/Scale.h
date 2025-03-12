@@ -98,4 +98,55 @@ namespace Synet
         void* _context;
         size_t _batch, _spatial;
     };
+
+    //-------------------------------------------------------------------------------------------------
+
+    class Scale16b
+    {
+    public:
+        Scale16b()
+            : _context(NULL)
+            , _spatial(0)
+        {
+        }
+
+        virtual ~Scale16b()
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdRelease(_context), _context = NULL;
+#endif
+        }
+
+        SYNET_INLINE void Init(size_t channels, size_t spatial, TensorType srcType, TensorType dstType, TensorFormat format, bool norm, bool bias)
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_spatial != spatial)
+            {
+                _spatial = spatial;
+                if (_context)
+                    ::SimdRelease(_context), _context = NULL;
+                _context = ::SimdSynetScale16bInit(channels, spatial, (SimdTensorDataType)srcType, (SimdTensorDataType)dstType, 
+                    (SimdTensorFormatType)format, norm ? SimdTrue : SimdFalse, bias ? SimdTrue : SimdFalse);
+            }
+#endif
+        }
+
+        SYNET_INLINE bool Enable() const
+        {
+            return _context != NULL;
+        }
+
+        SYNET_INLINE void Forward(const uint8_t* src, const float * norm, const float * bias, uint8_t* dst)
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdSynetScale16bForward(_context, src, norm, bias, dst);
+#endif
+        }
+
+    private:
+        void* _context;
+        size_t _spatial;
+    };
 }

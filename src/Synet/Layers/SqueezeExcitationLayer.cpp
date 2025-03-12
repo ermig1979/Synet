@@ -191,6 +191,8 @@ namespace Synet
                 _scale8i.SetParams(_sumScale.data(), NULL, stats);
             }
         }
+        if (_src16b || _dst16b)
+            _scale16b.Init(_channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, true, false);
         if (Options().BFloat16Enable())
             this->UsePerfStat(ToChar(src[0]->GetType()) + ToChar(dst[0]->GetType()));
         else
@@ -392,7 +394,11 @@ namespace Synet
 
     void SqueezeExcitationLayer::Scale16b(const uint16_t* src, float* norm, uint16_t* dst)
     {
-        //SYNET_PERF_FUNC();
+        if (_scale16b.Enable())
+        {
+            _scale16b.Forward((uint8_t*)src, norm, NULL, (uint8_t*)dst);
+            return;
+        }
         if (_format == TensorFormatNchw)
         {
             for (size_t c = 0; c < _channels; ++c)
@@ -425,7 +431,11 @@ namespace Synet
 
     void SqueezeExcitationLayer::Scale16b(const uint16_t* src, float* norm, float* dst)
     {
-        //SYNET_PERF_FUNC();
+        if (_scale16b.Enable())
+        {
+            _scale16b.Forward((uint8_t*)src, norm, NULL, (uint8_t*)dst);
+            return;
+        }
         if (_format == TensorFormatNchw)
         {
             for (size_t c = 0; c < _channels; ++c)
