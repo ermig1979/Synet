@@ -658,7 +658,8 @@ namespace Test
 
         bool SingleThreadComparison()
         {
-            PinThread(0);
+            if (_options.pinThread)
+                PinThread(0);
             int64_t start = Cpl::TimeCounter();
             size_t repeats = std::max<size_t>(1, _options.repeatNumber), total = _tests.size() * repeats, current = 0;
             for (size_t i = 0; i < _tests.size(); ++i)
@@ -697,7 +698,8 @@ namespace Test
 
         bool MultiThreadsComparison()
         {
-            PinThread(SimdCpuInfo(SimdCpuInfoThreads) - 1);
+            if (_options.pinThread)
+                PinThread(SimdCpuInfo(SimdCpuInfoThreads) - 1);
             int64_t start = Cpl::TimeCounter();
             size_t current = 0, total = _options.repeatNumber ?
                 _tests.size() * _options.repeatNumber : size_t(_options.executionTime * 1000);
@@ -861,8 +863,9 @@ namespace Test
 
         static void TestThread(Comparer* comparer, size_t thread, size_t total)
         {
-            PinThread(thread);
             const Options& options = comparer->_options;
+            if(options.pinThread)
+                PinThread(thread);
             size_t current = 0, networks = 1;
 #if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_TEST_SECOND_RUN)
             if (options.enable == (ENABLE_FIRST | ENABLE_SECOND))

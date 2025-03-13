@@ -289,7 +289,7 @@ namespace Synet
         else if (src[0] != dst[0])
         {
             if (_src16b || _dst16b)
-                _scale16b.Init(_channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, true, _biasTerm);
+                ;// _scale16b.Init(_channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, true, _biasTerm);
             if(_dst16b)
                 dst[0]->Reshape(TensorType16b, src[0]->Shape(), _format);
             else

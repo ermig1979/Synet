@@ -248,7 +248,7 @@ def RunTest(context, test, format, batch, bf16):
 			return context.Error("Conversion error in test {0} :\n{1}".format(log, out))
 		
 	num = 2 if args.fast else 10
-	cmd = "{0} -m=compare -e=3 {1} -rn=1 -wt=1 -tt=0 -ie={2} -be={2} -tf={3} -bs={4} -ct={5} -cs=1 -ln={6} -pl={7} -bf={8} -cp={9}".format(binPath, pathArgs, num, format, batch, threshold, log, args.performanceLog, bf16, args.comparePrecise)
+	cmd = "{0} -m=compare -e=3 {1} -rn=1 -wt=1 -tt=0 -ie={2} -be={2} -tf={3} -bs={4} -ct={5} -cs=1 -pt=0 -ln={6} -pl={7} -bf={8} -cp={9}".format(binPath, pathArgs, num, format, batch, threshold, log, args.performanceLog, bf16, args.comparePrecise)
 	result = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
 	out += result.stdout.decode('utf-8')
 	if result.returncode != 0 :
