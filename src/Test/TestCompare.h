@@ -33,6 +33,11 @@
 #include "TestSynet.h"
 #include "TestOutputComparer.h"
 
+#ifdef __linux__
+#include <sched.h>
+#include <pthread.h>
+#endif
+
 namespace Test
 {
     template<class FirstNetwork, class SecondNetwork> class Comparer
@@ -99,10 +104,10 @@ namespace Test
 
         struct Thread
         {
-            size_t current;
+            size_t current, core;
             bool first, second;
             std::thread thread;
-            Thread() : current(0), first(false), second(false) {}
+            Thread() : current(0), core(0), first(false), second(false) {}
         };
         std::vector<Thread> _threads;
         std::condition_variable _startFirst, _startSecond;
@@ -575,16 +580,20 @@ namespace Test
         {
             std::stringstream progress;
             progress << "Test progress : " << ToString(100.0 * current / total, 1) << "% ";
-            if (_threads.size() > 1)
+            if (_threads.size() > 0)
             {
                 const size_t m = 10;
                 progress << "[ ";
                 for (size_t t = 0, n = std::min(m, _threads.size()); t < n; ++t)
-                    progress << ToString(100.0 * _threads[t].current / total, 1) << "% ";
+                    progress << /*_threads[t].core << ":" << */ToString(100.0 * _threads[t].current / total, 1) << "% ";
                 if (_threads.size() > m)
                     progress << "... ";
                 progress << "] ";
             }
+#if defined(__linux__) && 0
+            int core = 0;// sched_getcpu();
+            progress << " core[" << core << "]: " << SimdCpuInfo(SimdCpuInfoCurrentFrequency) / 1000000 << " MHz.";
+#endif
             _progressMessageSizeMax = std::max(_progressMessageSizeMax, progress.str().size());
             return progress.str();
         }
@@ -634,6 +643,7 @@ namespace Test
 
         bool SingleThreadComparison()
         {
+            PinThread(0);
             int64_t start = Cpl::TimeCounter();
             size_t repeats = std::max<size_t>(1, _options.repeatNumber), total = _tests.size() * repeats, current = 0;
             for (size_t i = 0; i < _tests.size(); ++i)
@@ -831,6 +841,8 @@ namespace Test
 
         static void TestThread(Comparer* comparer, size_t thread, size_t total)
         {
+            PinThread(thread);
+            comparer->_threads[thread].core = thread;
             const Options& options = comparer->_options;
             size_t current = 0, networks = 1;
 #if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_TEST_SECOND_RUN)
@@ -860,6 +872,32 @@ namespace Test
             dst.resize(src.size());
             for (size_t i = 0; i < src.size(); ++i)
                 dst[i].Clone(src[i]);
+        }
+
+        static bool PinThread(size_t core)
+        {
+#if defined(__linux__)
+            cpu_set_t cpuset;
+            CPU_ZERO(&cpuset);
+            CPU_SET(core, &cpuset);
+            std::thread::id this_id = std::this_thread::get_id();
+            int result = pthread_setaffinity_np(*(pthread_t*)&this_id, sizeof(cpu_set_t), &cpuset);
+            if (result) 
+            {
+                CPL_LOG_SS(Error, "Can't set affinity " << core << " to " << this_id << " thread!");
+                return false;
+            }
+
+            //sched_param sch_params;
+            //sch_params.sched_priority = sched_get_priority_max(SCHED_OTHER);
+            //CPL_LOG_SS(Info, "Max prioriry: " << sch_params.sched_priority);
+            //if (pthread_setschedparam(*(pthread_t*)&this_id, SCHED_OTHER, &sch_params))
+            //{
+            //    std::cerr << "Failed to set Thread scheduling : " << std::strerror(errno) << std::endl;
+            //    return false;
+            //}
+#endif
+            return true;
         }
     };
 }
