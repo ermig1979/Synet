@@ -48,6 +48,7 @@ namespace Test
             , _progressMessageSizeMax(0)
             , _notifiedFirst(false)
             , _notifiedSecond(false)
+            , _nextProgressUpdate(Cpl::Miliseconds(Cpl::TimeCounter()))
         {
             assert(_options.testThreads >= 0);
             if (_options.enable & ENABLE_FIRST)
@@ -104,15 +105,17 @@ namespace Test
 
         struct Thread
         {
-            size_t current, core;
+            size_t current;
             bool first, second;
             std::thread thread;
-            Thread() : current(0), core(0), first(false), second(false) {}
+            String debug;
+            Thread() : current(0), first(false), second(false) {}
         };
         std::vector<Thread> _threads;
         std::condition_variable _startFirst, _startSecond;
         bool _notifiedFirst, _notifiedSecond;
         size_t _progressMessageSizeMax;
+        double _nextProgressUpdate;
 
         typedef Simd::Pixel::Bgra32 Color;
         typedef std::vector<Color> Colors;
@@ -182,7 +185,7 @@ namespace Test
                 else
                     SYNET_ERROR("File '" << weight << "' is not exist!");
             }
-            Network::Options options(_options.outputDirectory, _options.workThreads, _options.consoleSilence, _options.batchSize, 
+            Network::Options options(_options.outputDirectory, _options.workThreads, _options.consoleSilence, _options.batchSize,
                 (_options.performanceLog & network.PerfLogMask()), _options.debugPrint, _options.regionThreshold, _options.bf16);
             if (!network.Init(model, weight, options, _param()))
                 SYNET_ERROR("Can't load " << network.Name() << " from '" << model << "' and '" << weight << "' !");
@@ -267,10 +270,10 @@ namespace Test
             return true;
         }
 
-        bool RequiredExtension(const String & name)
+        bool RequiredExtension(const String& name)
         {
             String ext = ExtensionByPath(name);
-            static const char * EXTS[] = { "JPG", "jpeg", "jpg", "png", "ppm", "pgm", "bin" };
+            static const char* EXTS[] = { "JPG", "jpeg", "jpg", "png", "ppm", "pgm", "bin" };
             for (size_t i = 0, n = sizeof(EXTS) / sizeof(EXTS[0]); i < n; ++i)
                 if (ext == EXTS[i])
                     return true;
@@ -313,7 +316,7 @@ namespace Test
             return network.SrcCount();
         }
 
-        bool CreateTestListImages(const Network& network, const String & directory)
+        bool CreateTestListImages(const Network& network, const String& directory)
         {
             StringList images = GetFileList(directory, _options.imageFilter, true, false);
             images.sort();
@@ -325,7 +328,7 @@ namespace Test
             {
                 if (RequiredExtension(*it))
                 {
-                    if(curr >= imgBeg && curr < imgEnd)
+                    if (curr >= imgBeg && curr < imgEnd)
                         names.push_back(*it);
                     curr++;
                 }
@@ -391,12 +394,12 @@ namespace Test
                             }
                             else
                                 SYNET_ERROR("Can't map to source '" << test->path[p] << "' image!");
-                        }                        
+                        }
                         r++;
                     }
                     else if (_param().input().size() && _param().input()[s].from() == "image_size")
                     {
-                        if(tensor.GetType() == Synet::TensorType32i)
+                        if (tensor.GetType() == Synet::TensorType32i)
                         {
                             for (size_t b = 0; b < bN; ++b)
                             {
@@ -415,7 +418,7 @@ namespace Test
             return true;
         }
 
-        bool CreateTestListBinary(const Network& network, const String & directory)
+        bool CreateTestListBinary(const Network& network, const String& directory)
         {
             StringList files = GetFileList(directory, _options.imageFilter, true, false);
             files.sort();
@@ -446,12 +449,12 @@ namespace Test
                     SYNET_ERROR("The binary file '" << path << "' is too small!");
                 if (n == 0)
                     _tests.resize(tN);
-                else if(_tests.size() != tN)
+                else if (_tests.size() != tN)
                     SYNET_ERROR("The binary files are not compartible!");
                 for (size_t i = 0; i < tN; i += 1)
                 {
                     size_t offs = (tB + i) * sS;
-                    TestDataPtr & test = _tests[i];
+                    TestDataPtr& test = _tests[i];
                     if (n == 0)
                     {
                         test.reset(new TestData());
@@ -476,7 +479,7 @@ namespace Test
                 SYNET_ERROR("Test image directory '" << imageDirectory << "' is not exists!");
             if (_param().inputType() == "images")
                 return CreateTestListImages(network, imageDirectory);
-            else if(_param().inputType() == "binary")
+            else if (_param().inputType() == "binary")
                 return CreateTestListBinary(network, imageDirectory);
             else
                 SYNET_ERROR("Unknown input type '" << _param().inputType() << "' !");
@@ -578,21 +581,33 @@ namespace Test
 
         String ProgressString(size_t current, size_t total)
         {
+            const size_t m = 10, n = std::min(m, _threads.size());
             std::stringstream progress;
             progress << "Test progress : " << ToString(100.0 * current / total, 1) << "% ";
-            if (_threads.size() > 0)
+            if (_threads.size() > 1)
             {
-                const size_t m = 10;
                 progress << "[ ";
-                for (size_t t = 0, n = std::min(m, _threads.size()); t < n; ++t)
-                    progress << /*_threads[t].core << ":" << */ToString(100.0 * _threads[t].current / total, 1) << "% ";
+                for (size_t t = 0; t < n; ++t)
+                    progress << ToString(100.0 * _threads[t].current / total, 1) << "% ";
                 if (_threads.size() > m)
                     progress << "... ";
                 progress << "] ";
             }
 #if defined(__linux__) && 0
-            int core = 0;// sched_getcpu();
-            progress << " core[" << core << "]: " << SimdCpuInfo(SimdCpuInfoCurrentFrequency) / 1000000 << " MHz.";
+            if (_threads.size())
+            {
+                progress << " [ ";
+                for (size_t t = 0; t < n; ++t)
+                    progress << _threads[t].debug << " ";
+                progress << "] ";
+            }
+            progress << CoreFreqInfo();
+            double time = Cpl::Miliseconds(Cpl::TimeCounter());
+            if (time >= _nextProgressUpdate)
+            {
+                progress << std::endl;
+                _nextProgressUpdate = time + 300;
+            }
 #endif
             _progressMessageSizeMax = std::max(_progressMessageSizeMax, progress.str().size());
             return progress.str();
@@ -682,6 +697,7 @@ namespace Test
 
         bool MultiThreadsComparison()
         {
+            PinThread(SimdCpuInfo(SimdCpuInfoThreads) - 1);
             int64_t start = Cpl::TimeCounter();
             size_t current = 0, total = _options.repeatNumber ?
                 _tests.size() * _options.repeatNumber : size_t(_options.executionTime * 1000);
@@ -764,6 +780,7 @@ namespace Test
                         {
                             Copy(_firsts[thread].Predict(test.input), test.output[thread].first);
                             _threads[thread].current = current / networks;
+                            _threads[thread].debug = CoreFreqInfo();
                         }
                     }
                 }
@@ -780,6 +797,7 @@ namespace Test
                             duration = Cpl::Time() - start;
                             _threads[thread].current = (total * (networks - 1) * second +
                                 std::min(total, size_t(duration * 1000))) / networks;
+                            _threads[thread].debug = CoreFreqInfo();
                         }
                         canstop = true;
                     }
@@ -814,6 +832,7 @@ namespace Test
                         {
                             Copy(_seconds[thread].Predict(test.input), test.output[thread].second);
                             _threads[thread].current = current / networks;
+                            _threads[thread].debug = CoreFreqInfo();
                         }
                     }
                 }
@@ -830,6 +849,7 @@ namespace Test
                             duration = Cpl::Time() - start;
                             _threads[thread].current = (total * (networks - 1) * second +
                                 std::min(total, size_t(duration * 1000))) / networks;
+                            _threads[thread].debug = CoreFreqInfo();
                         }
                         canstop = true;
                     }
@@ -842,7 +862,6 @@ namespace Test
         static void TestThread(Comparer* comparer, size_t thread, size_t total)
         {
             PinThread(thread);
-            comparer->_threads[thread].core = thread;
             const Options& options = comparer->_options;
             size_t current = 0, networks = 1;
 #if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_TEST_SECOND_RUN)
@@ -877,27 +896,45 @@ namespace Test
         static bool PinThread(size_t core)
         {
 #if defined(__linux__)
+            pthread_t this_thread = pthread_self();
             cpu_set_t cpuset;
             CPU_ZERO(&cpuset);
             CPU_SET(core, &cpuset);
-            std::thread::id this_id = std::this_thread::get_id();
-            int result = pthread_setaffinity_np(*(pthread_t*)&this_id, sizeof(cpu_set_t), &cpuset);
-            if (result) 
+            if (pthread_setaffinity_np(this_thread, sizeof(cpu_set_t), &cpuset)) 
             {
-                CPL_LOG_SS(Error, "Can't set affinity " << core << " to " << this_id << " thread!");
+                CPL_LOG_SS(Warning, "Can't set affinity " << core << " to " << this_thread << " thread : " << std::strerror(errno) << " !");
+                return false;
+            }
+#if 0
+            int policy = 0;
+            sched_param params;
+            if (pthread_getschedparam(this_thread, &policy, &params))
+            {
+                CPL_LOG_SS(Warning, "Can't get thread parameters of " << this_thread << " thread : " << std::strerror(errno) << " !");
                 return false;
             }
 
-            //sched_param sch_params;
-            //sch_params.sched_priority = sched_get_priority_max(SCHED_OTHER);
-            //CPL_LOG_SS(Info, "Max prioriry: " << sch_params.sched_priority);
-            //if (pthread_setschedparam(*(pthread_t*)&this_id, SCHED_OTHER, &sch_params))
-            //{
-            //    std::cerr << "Failed to set Thread scheduling : " << std::strerror(errno) << std::endl;
-            //    return false;
-            //}
+            CPL_LOG_SS(Info, "Core : " << core << " Policy: " << policy  << " Priority: " << params.sched_priority << " max: " << sched_get_priority_max(policy) << " min: " << sched_get_priority_min(policy));
+
+            if (pthread_setschedparam(this_thread, policy, &params))
+            {
+                CPL_LOG_SS(Warning, "Can't set thread parameters of " << this_thread << " thread : " << std::strerror(errno) << " !");
+                return false;
+            }
+
+            CPL_LOG_SS(Info, "Core : " << core << " Policy: " << policy << " Priority: " << params.sched_priority);
+#endif
 #endif
             return true;
+        }
+
+        static String CoreFreqInfo()
+        {
+            std::stringstream info;
+#if defined(__linux__)
+            info << " " << sched_getcpu() << ": " << ToString(double(SimdCpuInfo(SimdCpuInfoCurrentFrequency)) / 1000000000.0, 1) << " GHz.";
+#endif
+            return info.str();
         }
     };
 }
