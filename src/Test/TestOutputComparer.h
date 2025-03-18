@@ -336,6 +336,17 @@ namespace Test
 
         bool CompareRegions(const Tensors& f, const Tensors& s, const String& failed) const
         {
+            float compareThreshold = _options.compareThreshold;
+            if (_options.bf16)
+            {
+                if (_param.output().size() && _param.output()[0].bf16Threshold() != 0.0f)
+                    compareThreshold = _param.output()[0].bf16Threshold();
+            }
+            else
+            {
+                if (_param.output().size() && _param.output()[0].fp32Threshold() != 0.0f)
+                    compareThreshold = _param.output()[0].fp32Threshold();
+            }
             Regions rf = _regionDecoder.GetRegions(f, Size(1, 1), _param.detection().confidence(), _options.regionOverlap);
             Regions rs = _regionDecoder.GetRegions(s, Size(1, 1), _param.detection().confidence(), _options.regionOverlap);
             SortRegionsByProb(rf);
@@ -359,9 +370,9 @@ namespace Test
                 const Region& _s = rs[indexMax];
                 //std::cout << "CompareRegions: " << ToStr(_f) << " and " << ToStr(_s) << std::endl;
                 float d = std::max(std::max(::abs(_f.x - _s.x), ::abs(_f.y - _s.y)), std::max(abs(_f.w - _s.w), ::abs(_f.h - _s.h)));
-                if (_f.id != _s.id || d > _options.compareThreshold)
+                if (_f.id != _s.id || d > compareThreshold)
                 {
-                    SYNET_ERROR(failed << std::endl << " Region[" << fi << "] from " << n << " : " << ToStr(_f) << " != " << ToStr(_s) << " : difference " << d << " > " << _options.compareThreshold);
+                    SYNET_ERROR(failed << std::endl << " Region[" << fi << "] from " << n << " : " << ToStr(_f) << " != " << ToStr(_s) << " : difference " << d << " > " << compareThreshold);
                 }
             }
             return true;
