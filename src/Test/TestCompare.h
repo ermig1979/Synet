@@ -782,7 +782,7 @@ namespace Test
                         {
                             Copy(_firsts[thread].Predict(test.input), test.output[thread].first);
                             _threads[thread].current = current / networks;
-                            _threads[thread].debug = CoreFreqInfo();
+                            //_threads[thread].debug = CoreFreqInfo();
                         }
                     }
                 }
@@ -799,7 +799,7 @@ namespace Test
                             duration = Cpl::Time() - start;
                             _threads[thread].current = (total * (networks - 1) * second +
                                 std::min(total, size_t(duration * 1000))) / networks;
-                            _threads[thread].debug = CoreFreqInfo();
+                            //_threads[thread].debug = CoreFreqInfo();
                         }
                         canstop = true;
                     }
@@ -834,7 +834,7 @@ namespace Test
                         {
                             Copy(_seconds[thread].Predict(test.input), test.output[thread].second);
                             _threads[thread].current = current / networks;
-                            _threads[thread].debug = CoreFreqInfo();
+                            //_threads[thread].debug = CoreFreqInfo();
                         }
                     }
                 }
@@ -851,7 +851,7 @@ namespace Test
                             duration = Cpl::Time() - start;
                             _threads[thread].current = (total * (networks - 1) * second +
                                 std::min(total, size_t(duration * 1000))) / networks;
-                            _threads[thread].debug = CoreFreqInfo();
+                            //_threads[thread].debug = CoreFreqInfo();
                         }
                         canstop = true;
                     }
