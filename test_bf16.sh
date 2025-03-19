@@ -36,7 +36,7 @@ if [ ! -f $DIR/synet1.xml ] | [ ! -f $DIR/synet1.bin ];then
   elif [ "$FRAMEWORK" = "onnx" ]; then 
     ORIG="-fw=$DIR/other.onnx"
   fi
-  "$BIN_DIR"/test_"$FRAMEWORK" "$ORIG -sm=$DIR/synet1.xml -sw=$DIR/synet1.bin" -tf=1 -cs=1 -dp=0 -su=1 -bf=0
+  "$BIN_DIR"/test_"$FRAMEWORK" -m=convert $ORIG "-sm=$DIR/synet1.xml -sw=$DIR/synet1.bin" -tf=1 -cs=1 -dp=0 -su=1 -bf=0
 fi 
 
 PATHES="-fm=$DIR/synet1.xml -fw=$DIR/synet1.bin -sm=$DIR/synet2.xml -sw=$DIR/synet2.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
