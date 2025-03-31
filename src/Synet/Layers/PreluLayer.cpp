@@ -97,6 +97,13 @@ namespace Synet
         return true;
     }
 
+    int64_t PreluLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        return _batch * _channels * _spatial * 4;
+    }
+
     void PreluLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
         const float * pSrc = src[0]->Data<float>();
@@ -105,8 +112,8 @@ namespace Synet
         for (size_t b = 0; b < _batch; ++b)
         {
             PreluLayerForward(pSrc, pSlope, _channels, _spatial, pDst, _format);
-            pSrc += _channels*_spatial;
-            pDst += _channels*_spatial;
+            pSrc += _channels * _spatial;
+            pDst += _channels * _spatial;
         }
     }
 }

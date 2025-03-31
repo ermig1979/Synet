@@ -121,6 +121,8 @@ namespace Synet
 
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
+        virtual int64_t Flop() const;        
+        
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
@@ -138,6 +140,8 @@ namespace Synet
     {
     public:
         RestrictRangeLayer(const LayerParam& param, Context* context);
+
+        virtual int64_t Flop() const;
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 

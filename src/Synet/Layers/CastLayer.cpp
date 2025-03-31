@@ -101,6 +101,13 @@ namespace Synet
         return true;
     }
 
+    int64_t CastLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        return _size;
+    }
+
     void CastLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
         _cast(src[0]->RawData(), _size, dst[0]->RawData());

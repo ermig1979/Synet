@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2024 Yermalayeu Ihar.
+* Copyright (c) 2018-2025 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -235,6 +235,15 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
+    int64_t ReluLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        if (_negativeSlope != 0.0f)
+            return _size * 4;
+        return _size * 1;
+    }
+
     bool ReluLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         _negativeSlope = this->Param().relu().negativeSlope();
@@ -282,6 +291,13 @@ namespace Synet
     RestrictRangeLayer::RestrictRangeLayer(const LayerParam& param, Context* context)
         : Layer(param, context)
     {
+    }
+
+    int64_t RestrictRangeLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        return _size * 2;
     }
 
     bool RestrictRangeLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)

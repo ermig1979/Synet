@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2024 Yermalayeu Ihar,
+* Copyright (c) 2018-2025 Yermalayeu Ihar,
 *               2019-2019 Artur Voronkov.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -358,6 +358,8 @@ namespace Synet
 
     int64_t AddLayer::Flop() const
     {
+        if (_const)
+            return 0;
         if (_dstShape.size())
             return Detail::Size(_dstShape);
         return _batch * _channels * _spatial;

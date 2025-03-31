@@ -37,6 +37,8 @@ namespace Synet
 
         typedef void (*CastPtr)(const uint8_t* src8, size_t size, uint8_t* dst8);
 
+        virtual int64_t Flop() const;
+
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
