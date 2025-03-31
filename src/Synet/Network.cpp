@@ -423,7 +423,7 @@ namespace Synet
                     os << param.src()[j] << " ";
                 os << ")." << std::endl;
                 for (size_t j = 0; j < _input[i].dst.size(); ++j)
-                    _input[i].dst[j]->DebugPrint(os, String("dst[") + Cpl::ToStr(j) + "]", false, first, last, precision);
+                    _input[i].dst[j]->DebugPrint(os, String(" dst[") + Cpl::ToStr(j) + "]", false, first, last, precision);
             }
         }
         for (size_t i = 0; i < _stages.size(); ++i)
@@ -445,7 +445,7 @@ namespace Synet
                 if (printLayerWeight)
                 {
                     for (size_t j = 0; j < layer.Weight().size(); ++j)
-                        layer.Weight()[j].DebugPrint(os, String("weight[") + Cpl::ToStr(j) + "]", true, first, last, precision);
+                        layer.Weight()[j].DebugPrint(os, String(" weight[") + Cpl::ToStr(j) + "]", true, first, last, precision);
                 }
                 if (printInt8Buffers && (layer.LowPrecision(TensorType8u) == LowPrecisionTypeActive))
                 {
@@ -462,7 +462,7 @@ namespace Synet
                 if ((layer._isBack && printOutput) || printLayerDst)
                 {
                     for (size_t j = 0; j < _stages[i].dst.size(); ++j)
-                        _stages[i].dst[j]->DebugPrint(os, String("dst[") + Cpl::ToStr(j) + "]", false, first, last, precision);
+                        _stages[i].dst[j]->DebugPrint(os, String(" dst[") + Cpl::ToStr(j) + "]", false, first, last, precision);
                 }
             }
         }

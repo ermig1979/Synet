@@ -207,7 +207,7 @@ namespace Synet
         if (diagnostic)
             Detail::PrintDiagnostic(os, data, Detail::Size(shape), precision);
         os << std::endl;
-        if (data == NULL)
+        if (data == NULL || first == 0 || last == 0)
             return;
         size_t n = shape.size();
         Shape firsts(n), lasts(n), index(n, 0);
