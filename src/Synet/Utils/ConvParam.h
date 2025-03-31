@@ -259,10 +259,12 @@ namespace Synet
             case ActivationFunctionTypeLeakyRelu: return 4;
             case ActivationFunctionTypeRestrictRange: return 2;
             case ActivationFunctionTypePrelu: return 4;
-
+            case ActivationFunctionTypeElu: return 24;
             case ActivationFunctionTypeHswish: return 5;
-
+            case ActivationFunctionTypeMish: return 28;
             case ActivationFunctionTypeHardSigmoid: return 4;
+            case ActivationFunctionTypeSwish: return 24;
+            case ActivationFunctionTypeGelu: return 26;
             default:
                 return 0;
             }

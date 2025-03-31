@@ -61,6 +61,13 @@ namespace Synet
         return true;
     }
 
+    int64_t EluLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        return _size * 24;
+    }
+
     void EluLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         Elu32f(src[0]->Data<float>(), _size, _alpha, dst[0]->Data<float>());
@@ -71,6 +78,13 @@ namespace Synet
     GeluLayer::GeluLayer(const LayerParam& param, Context* context)
         : Layer(param, context)
     {
+    }
+
+    int64_t GeluLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        return _size * 26;
     }
 
     bool GeluLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
@@ -230,6 +244,13 @@ namespace Synet
         return true;
     }
 
+    int64_t MishLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        return _size * 28;
+    }
+
     void MishLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         Mish32f(src[0]->Data<float>(), _size, _threshold, dst[0]->Data<float>());
@@ -386,6 +407,13 @@ namespace Synet
         return true;
     }
 
+    int64_t SigmoidLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        return _size * 22;
+    }
+
     void SigmoidLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         Sigmoid32f(src[0]->Data<float>(), _size, dst[0]->Data<float>());
@@ -426,6 +454,13 @@ namespace Synet
         return true;
     }
 
+    int64_t SoftplusLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        return _size * 45;
+    }
+
     void SoftplusLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         Softplus32f(src[0]->Data<float>(), _size, _beta, _threshold, dst[0]->Data<float>());
@@ -461,6 +496,13 @@ namespace Synet
             _const = false;
         }
         return true;
+    }
+
+    int64_t SwishLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        return _size * 24;
     }
 
     void SwishLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
