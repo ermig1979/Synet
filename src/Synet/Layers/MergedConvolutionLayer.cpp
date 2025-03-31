@@ -134,7 +134,8 @@ namespace Synet
         const AlgParam& a = _alg;
         int64_t flop = 0;
         for (size_t i = 0; i < a.count; ++i)
-            flop += a.batch * a.conv[i].kernelY * a.conv[i].kernelX * a.conv[i].srcC * a.conv[i].dstH * a.conv[i].dstW * a.conv[i].dstC / a.conv[i].group * 2;
+            flop += a.batch * a.conv[i].dstC * a.conv[i].dstH * a.conv[i].dstW * 
+                (a.conv[i].kernelY * a.conv[i].kernelX * a.conv[i].srcC / a.conv[i].group * 2 + (a.biasTerm[i] ? 1 : 0) + a.conv[i].ActivalionFlop());
         return flop;
     }
 }

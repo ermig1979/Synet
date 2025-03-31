@@ -249,5 +249,23 @@ namespace Synet
                 return false;
             }
         }
+
+        int64_t ActivalionFlop() const
+        {
+            switch (activation)
+            {
+            case ActivationFunctionTypeIdentity: return 0;
+            case ActivationFunctionTypeRelu: return 1;
+            case ActivationFunctionTypeLeakyRelu: return 4;
+            case ActivationFunctionTypeRestrictRange: return 2;
+            case ActivationFunctionTypePrelu: return 4;
+
+            case ActivationFunctionTypeHswish: return 5;
+
+            case ActivationFunctionTypeHardSigmoid: return 4;
+            default:
+                return 0;
+            }
+        }
     };
 }

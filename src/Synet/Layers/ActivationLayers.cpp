@@ -110,6 +110,13 @@ namespace Synet
     {
     }
 
+    int64_t HardSigmoidLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        return _size * 4;
+    }
+
     bool HardSigmoidLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         HardSigmoidParam hardSigmoid = this->Param().hardSigmoid();
@@ -148,6 +155,13 @@ namespace Synet
     HswishLayer::HswishLayer(const LayerParam& param, Context* context)
         : Layer(param, context)
     {
+    }
+
+    int64_t HswishLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        return _size * 5;
     }
 
     bool HswishLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)

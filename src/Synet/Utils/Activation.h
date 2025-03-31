@@ -182,7 +182,6 @@ namespace Synet
             dst[i] = CpuSwish(src[i]);
     }
 
-
     //-------------------------------------------------------------------------------------------------
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)

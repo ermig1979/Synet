@@ -68,6 +68,8 @@ namespace Synet
     public:
         HardSigmoidLayer(const LayerParam& param, Context* context);
 
+        virtual int64_t Flop() const;
+
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
@@ -84,6 +86,8 @@ namespace Synet
     {
     public:
         HswishLayer(const LayerParam& param, Context* context);
+
+        virtual int64_t Flop() const;
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 

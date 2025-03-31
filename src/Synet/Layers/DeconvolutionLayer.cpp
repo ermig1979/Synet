@@ -38,7 +38,8 @@ namespace Synet
 
     int64_t DeconvolutionLayer::Flop() const
     {
-        return _num * _conv.kernelY * _conv.kernelX * _conv.srcC * _conv.srcH * _conv.srcW * _conv.dstC / _conv.group * 2;
+        return _num * _conv.kernelY * _conv.kernelX * _conv.srcC * _conv.srcH * _conv.srcW * _conv.dstC / _conv.group * 2 +
+            _num * _conv.dstC * _conv.dstH * _conv.dstW * ((_biasTerm ? 1 : 0) + _conv.ActivalionFlop());
     }
 
     void DeconvolutionLayer::CompactWeight()

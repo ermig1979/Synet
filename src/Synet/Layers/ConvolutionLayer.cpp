@@ -34,7 +34,8 @@ namespace Synet
 
     int64_t ConvolutionLayer::Flop() const
     {
-        return _alg.batch* _conv.kernelY* _conv.kernelX* _conv.srcC* _conv.dstH* _conv.dstW* _conv.dstC / _conv.group * 2;
+        return _alg.batch * _conv.dstC * _conv.dstH * _conv.dstW *
+            (_conv.kernelY * _conv.kernelX * _conv.srcC / _conv.group * 2 + _alg.bias + _conv.ActivalionFlop());
     }
 
     void ConvolutionLayer::CompactWeight()
