@@ -70,6 +70,16 @@ namespace Synet
         return true;
     }
 
+    int64_t PowerLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        if (_power == 1.0f)
+            return _size * 2;
+        else
+            return _size * 41;
+    }
+
     void PowerLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
         const float* pSrc = src[0]->Data<float>();

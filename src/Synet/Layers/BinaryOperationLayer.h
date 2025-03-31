@@ -37,6 +37,8 @@ namespace Synet
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
+        virtual int64_t Flop() const;
+
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
@@ -44,6 +46,6 @@ namespace Synet
         TensorType _srcType;
         BinaryOperationType _opType;
         Shape _steps0, _steps1, _dstShape;
-        UniversalBinaryPtr _unvirsalBinary;
+        UniversalBinaryPtr _universalBinary;
     };
 }

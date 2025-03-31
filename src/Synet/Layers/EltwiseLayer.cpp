@@ -128,6 +128,8 @@ namespace Synet
 
     int64_t EltwiseLayer::Flop() const
     {
+        if (_const)
+            return 0;
         return _size * (_coefficients.size() - 1) * (_operation == EltwiseOperationTypeSum ? 2 : 1);
     }
 

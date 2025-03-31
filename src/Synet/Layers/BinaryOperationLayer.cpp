@@ -44,8 +44,8 @@ namespace Synet
             SYNET_ERROR("BinaryOperationLayer too complicated shape!");
         _steps0 = SourceSteps(src[0]->Shape(), _dstShape);
         _steps1 = SourceSteps(src[1]->Shape(), _dstShape);
-        _unvirsalBinary = GetUniversalBinary(this->Param().binaryOperation().type(), src[0]->GetType(), _dstShape.size());
-        if(_unvirsalBinary == NULL)
+        _universalBinary = GetUniversalBinary(this->Param().binaryOperation().type(), src[0]->GetType(), _dstShape.size());
+        if(_universalBinary == NULL)
             SYNET_ERROR("BinaryOperationLayer can't get universal handler!");
 
         dst[0]->Reshape(src[0]->GetType(), _dstShape, src[0]->Format());
@@ -63,8 +63,15 @@ namespace Synet
         return true;
     }
 
+    int64_t BinaryOperationLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        return TensorSize(_dstShape);
+    }
+
     void BinaryOperationLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
-        _unvirsalBinary(src[0]->RawData(), _steps0, src[1]->RawData(), _steps1, dst[0]->RawData(), _dstShape);
+        _universalBinary(src[0]->RawData(), _steps0, src[1]->RawData(), _steps1, dst[0]->RawData(), _dstShape);
     }
 }

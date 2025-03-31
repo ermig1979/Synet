@@ -38,7 +38,7 @@ namespace Synet
 
     int64_t InnerProductLayer::Flop() const
     {
-        return _batch * _M * _N * (_K * 2 + _biasTerm ? 1 : 0);
+        return _batch * _M * _N * (_K * 2 + (_biasTerm ? 1 : 0));
     }
 
     bool InnerProductLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)

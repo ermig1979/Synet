@@ -154,6 +154,11 @@ namespace Synet
         return true;
     }
 
+    int64_t SoftmaxLayer::Flop() const
+    {
+        return _inner * _outer * _count * 24;
+    }
+
     void SoftmaxLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
         if(_log)

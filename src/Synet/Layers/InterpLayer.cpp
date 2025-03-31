@@ -238,6 +238,18 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
+    int64_t InterpLayer::Flop() const
+    {
+        int64_t size = _batch * _channels * _dstH * _dstW;
+        switch (_interpType)
+        {
+        case InterpolationTypeNearest: return size * 1;
+        case InterpolationTypeBilinear: return size * 9;
+        default:
+            return size * 0;
+        }
+    }
+
     bool InterpLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if ((src.size() != 1 && src.size() != 2) || dst.size() != 1)
