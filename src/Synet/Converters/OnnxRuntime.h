@@ -1732,14 +1732,7 @@ namespace Synet
             const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
             if (src0 == NULL)
                 return false;
-            if (src0->type() == LayerTypeMeta || src0->type() == LayerTypeConstantOfShape || src0->type() == LayerTypeTile || src0->type() == LayerTypeStub)
-            {
-                layer.type() = Synet::LayerTypeNonZero;
-            }
-            else
-            {
-                SYNET_ERROR("Unsupported src type!");
-            }
+            layer.type() = Synet::LayerTypeNonZero;
             return true;
         }
 
