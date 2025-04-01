@@ -195,6 +195,64 @@ namespace Synet
             ::SimdRelease(resizer);
         }
     }
+
+    template <> inline void InterpLayerForwardCpuBilinear<uint16_t>(size_t channels, const uint16_t* src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW,
+        uint16_t* dst, size_t dstH, size_t dstW, CoordinateTransformType coordTransfType, TensorFormat format)
+    {
+        SimdResizeMethodType method;
+        if (coordTransfType == CoordinateTransformTypeLegacy || coordTransfType == CoordinateTransformTypeCaffe)
+            method = ::SimdResizeMethodBilinearCaffe;
+        else if (coordTransfType == CoordinateTransformTypePytorch)
+            method = ::SimdResizeMethodBilinearPytorch;
+        else if (coordTransfType == CoordinateTransformTypeHalfPixel)
+            method = ::SimdResizeMethodBilinear;
+        if (format == TensorFormatNhwc)
+        {
+            void* resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, channels, ::SimdResizeChannelBf16, method);
+            ::SimdResizerRun(resizer, (uint8_t*)src, channels * srcW * sizeof(uint16_t), (uint8_t*)dst, channels * dstW * sizeof(uint16_t));
+            ::SimdRelease(resizer);
+        }
+        else
+        {
+            void* resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, 1, ::SimdResizeChannelBf16, method);
+            for (size_t c = 0; c < channels; ++c)
+            {
+                ::SimdResizerRun(resizer, (uint8_t*)src, srcW * sizeof(uint16_t), (uint8_t*)dst, dstW * sizeof(uint16_t));
+                src += srcH * srcW;
+                dst += dstH * dstW;
+            }
+            ::SimdRelease(resizer);
+        }
+    }
+
+    template <> inline void InterpLayerForwardCpuNearest<uint16_t>(size_t channels, const uint16_t* src, size_t srcH, size_t srcW, size_t sizeH, size_t sizeW,
+        uint16_t* dst, size_t dstH, size_t dstW, CoordinateTransformType coordTransfType, TensorFormat format)
+    {
+        SimdResizeMethodType method;
+        if (coordTransfType == CoordinateTransformTypeLegacy || coordTransfType == CoordinateTransformTypePytorch)
+            method = ::SimdResizeMethodNearestPytorch;
+        else if (coordTransfType == CoordinateTransformTypeHalfPixel)
+            method = ::SimdResizeMethodNearest;
+        else
+            assert(0);
+        if (format == TensorFormatNhwc)
+        {
+            void* resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, channels, ::SimdResizeChannelBf16, method);
+            ::SimdResizerRun(resizer, (uint8_t*)src, channels * srcW * sizeof(uint16_t), (uint8_t*)dst, channels * dstW * sizeof(uint16_t));
+            ::SimdRelease(resizer);
+        }
+        else
+        {
+            void* resizer = ::SimdResizerInit(sizeW, sizeH, dstW, dstH, 1, ::SimdResizeChannelBf16, method);
+            for (size_t c = 0; c < channels; ++c)
+            {
+                ::SimdResizerRun(resizer, (uint8_t*)src, srcW * sizeof(uint16_t), (uint8_t*)dst, dstW * sizeof(uint16_t));
+                src += srcH * srcW;
+                dst += dstH * dstW;
+            }
+            ::SimdRelease(resizer);
+        }
+    }
 #endif
 
     template <typename T> void InterpLayerForwardCpu(size_t channels, const uint8_t * src8, size_t srcH, size_t srcW, size_t cropB, size_t cropE, uint8_t* dst8, size_t dstH, size_t dstW,
@@ -284,12 +342,12 @@ namespace Synet
         }
         size_t srcH = _srcH - _cropBeg - _cropEnd;
         size_t srcW = _srcW - _cropBeg - _cropEnd;
-        if (src.size() == 2)
+        if (src.size() == 2 || Weight().size())
         {
             if (param.useTensorSize())
             {
-            if (src[1]->Count() != 4)
-                SYNET_ERROR("InterpLayer src[2] must be 4D tensor if interp().useTensorSize() == true!");
+                if (src[1]->Count() != 4)
+                    SYNET_ERROR("InterpLayer src[2] must be 4D tensor if interp().useTensorSize() == true!");
                 if (_format == TensorFormatNhwc)
                 {
                     _dstH = src[1]->Axis(1);
@@ -303,20 +361,21 @@ namespace Synet
             } 
             else
             {
-                if (src[1]->GetType() == TensorType32f)
+                const Tensor& src1 = src.size() > 1 ? *src[1] : Weight()[0];
+                if (src1.GetType() == TensorType32f)
                 {
-                    const float * factor = src[1]->Data<float>();
+                    const float * factor = src1.Data<float>();
                     _dstH = size_t(srcH * factor[2]);
                     _dstW = size_t(srcW * factor[3]);
                 }
-                else if (src[1]->GetType() == TensorType64i)
+                else if (src1.GetType() == TensorType64i)
                 {
-                    const int64_t * sizes = src[1]->Data<int64_t>();
+                    const int64_t * sizes = src1.Data<int64_t>();
                     _dstH = size_t(sizes[2]);
                     _dstW = size_t(sizes[3]);
                 }
                 else
-                    SYNET_ERROR("InterpLayer src[2] has wrong type!");
+                    SYNET_ERROR("InterpLayer src[1] has wrong type!");
             }
         }
         else if (param.shrinkFactor() != 1 && param.zoomFactor() == 1)

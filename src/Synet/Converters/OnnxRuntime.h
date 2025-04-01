@@ -2021,6 +2021,12 @@ namespace Synet
                 if (src2->type() != Synet::LayerTypeConst || src2->weight()[0].dim()[0] != 0)
                     return false;
                 layer.src().erase(layer.src().begin() + 1, layer.src().begin() + 3);
+                const LayerParam* src1b = GetLayer(layers, layer.src()[1]);
+                if (src1b->type() == Synet::LayerTypeConst)
+                {
+                    layer.weight() = src1b->weight();
+                    layer.src().resize(1);
+                }
             }           
             else if (layer.src().size() == 3)
             {
@@ -2028,8 +2034,13 @@ namespace Synet
                 if (src1->type() != Synet::LayerTypeConst || src1->weight()[0].dim()[0] != 0)
                     return false;
                 layer.src().erase(layer.src().begin() + 1);
+                const LayerParam* src1b = GetLayer(layers, layer.src()[1]);
+                if (src1b->type() == Synet::LayerTypeConst)
+                {
+                    layer.weight() = src1b->weight();
+                    layer.src().resize(1);
+                }
             }
-
             if (layer.src().size() == 2)
             {
                 const LayerParam * src1 = GetLayer(layers, layer.src()[1]);
@@ -2044,6 +2055,11 @@ namespace Synet
                     }
                     else
                         return false;
+                }
+                else if (src1->type() == Synet::LayerTypeConst)
+                {
+                    layer.weight() = src1->weight();
+                    layer.src().resize(1);
                 }
             }
 
