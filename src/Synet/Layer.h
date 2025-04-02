@@ -163,10 +163,8 @@ namespace Synet
                     if (!ShareExisted(offset, layers, tensor))
                     {
                         Reshape(param, tensor);
-                        if (!is.seekg(offset, std::ios::beg))
-                            SYNET_ERROR("Can't load weight[" << i << "] for offset " << offset << " and size " << size << " !");
-                        if (!is.read((char*)tensor.RawData(), size))
-                            SYNET_ERROR("Can't load weight[" << i << "] for offset " << offset << " and size " << size << " !");
+                        if (!(is.seekg(offset, std::ios::beg) && is.read((char*)tensor.RawData(), size)))
+                            SYNET_ERROR("Can't load weight[" << i << "] of type " << Cpl::ToStr(param.type()) << " for offset " << offset << " and size " << size << " !");
                     }
                 }
             }
