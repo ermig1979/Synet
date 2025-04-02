@@ -479,7 +479,35 @@ namespace Synet
                     if (tensor.has_raw_data())
                         memcpy(weight.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
                     else
-                        SYNET_ERROR("Can't parse '" << layer.name() << "' Bool tensor!");
+                        SYNET_ERROR("Can't parse '" << layer.name() << "' BOOL tensor!");
+                }
+            }
+            else if (tensor.data_type() == onnx::TensorProto_DataType_UINT8)
+            {
+                layer.type() = LayerTypeConst;
+                layer.weight().resize(1);
+                layer.weight()[0].type() = TensorType8u;
+                uint64_t size = 1, offset = weight.size();
+                for (size_t i = 0; i < tensor.dims_size(); ++i)
+                {
+                    size *= (size_t)tensor.dims(i);
+                    layer.weight()[0].dim().push_back((size_t)tensor.dims(i));
+                }
+                uint64_t size4 = DivHi(size, 4);
+                layer.weight()[0].offset() = offset * sizeof(float);
+                layer.weight()[0].size() = size;
+                if (size)
+                {
+                    if (size == 1 && layer.weight()[0].dim().empty())
+                    {
+                        layer.weight()[0].dim().push_back(1);
+                        layer.weight()[0].scalar() = true;
+                    }
+                    weight.resize(offset + size4);
+                    if (tensor.has_raw_data())
+                        memcpy(weight.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                    else
+                        SYNET_ERROR("Can't parse '" << layer.name() << "' UINT8 tensor!");
                 }
             }
             else
@@ -993,6 +1021,29 @@ namespace Synet
                     layer.weight()[0].dim().push_back(1);
                 layer.weight()[0].offset() = offset * sizeof(float);
                 layer.weight()[0].size() = size * sizeof(bool);
+                if (tensor.has_raw_data() && size)
+                {
+                    original.resize(offset + DivHi(size, 4));
+                    reordered.resize(offset + DivHi(size, 4));
+                    memcpy(original.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                    memcpy(reordered.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                }
+            }
+            else if (tensor.data_type() == onnx::TensorProto_DataType_UINT8)
+            {
+                layer.type() = LayerTypeConst;
+                layer.weight().resize(1);
+                layer.weight()[0].type() = TensorType8u;
+                uint64_t size = 1, offset = original.size();
+                for (size_t i = 0; i < tensor.dims_size(); ++i)
+                {
+                    size *= tensor.dims(i);
+                    layer.weight()[0].dim().push_back(size_t(tensor.dims(i)));
+                }
+                if (layer.weight()[0].dim().empty())
+                    layer.weight()[0].dim().push_back(1);
+                layer.weight()[0].offset() = offset * sizeof(float);
+                layer.weight()[0].size() = size * sizeof(uint8_t);
                 if (tensor.has_raw_data() && size)
                 {
                     original.resize(offset + DivHi(size, 4));
