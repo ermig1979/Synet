@@ -510,6 +510,34 @@ namespace Synet
                         SYNET_ERROR("Can't parse '" << layer.name() << "' UINT8 tensor!");
                 }
             }
+            else if (tensor.data_type() == onnx::TensorProto_DataType_INT8)
+            {
+                layer.type() = LayerTypeConst;
+                layer.weight().resize(1);
+                layer.weight()[0].type() = TensorType8i;
+                uint64_t size = 1, offset = weight.size();
+                for (size_t i = 0; i < tensor.dims_size(); ++i)
+                {
+                    size *= (size_t)tensor.dims(i);
+                    layer.weight()[0].dim().push_back((size_t)tensor.dims(i));
+                }
+                uint64_t size4 = DivHi(size, 4);
+                layer.weight()[0].offset() = offset * sizeof(float);
+                layer.weight()[0].size() = size;
+                if (size)
+                {
+                    if (size == 1 && layer.weight()[0].dim().empty())
+                    {
+                        layer.weight()[0].dim().push_back(1);
+                        layer.weight()[0].scalar() = true;
+                    }
+                    weight.resize(offset + size4);
+                    if (tensor.has_raw_data())
+                        memcpy(weight.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                    else
+                        SYNET_ERROR("Can't parse '" << layer.name() << "' INT8 tensor!");
+                }
+            }
             else
                 SYNET_ERROR(" Unknown tensor type " << tensor.data_type() << " !");
             network.layers().push_back(layer);
@@ -822,6 +850,8 @@ namespace Synet
                     layer.cast().type() = TensorType32i;
                 else if (to == onnx::TensorProto_DataType_INT64)
                     layer.cast().type() = TensorType64i;
+                else if (to == onnx::TensorProto_DataType_UINT8)
+                    layer.cast().type() = TensorType8u;
                 else
                     SYNET_ERROR("Unsupported cast type!");
             }
@@ -903,6 +933,30 @@ namespace Synet
             return true;
         }
 
+        void ConvertConstantTensor(const onnx::TensorProto& tensor, TensorType typeName, size_t typeSize, LayerParam& layer, Vector& original, Vector& reordered)
+        {
+            layer.type() = LayerTypeConst;
+            layer.weight().resize(1);
+            layer.weight()[0].type() = typeName;
+            uint64_t size = 1, offset = original.size();
+            for (size_t i = 0; i < tensor.dims_size(); ++i)
+            {
+                size *= tensor.dims(i);
+                layer.weight()[0].dim().push_back(size_t(tensor.dims(i)));
+            }
+            if (layer.weight()[0].dim().empty())
+                layer.weight()[0].dim().push_back(1);
+            layer.weight()[0].offset() = offset * sizeof(float);
+            layer.weight()[0].size() = size * typeSize;
+            if (tensor.has_raw_data() && size)
+            {
+                original.resize(offset + DivHi(size, 4));
+                reordered.resize(offset + DivHi(size, 4));
+                memcpy(original.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+                memcpy(reordered.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
+            }
+        }
+
         bool ConvertConstantNode(const onnx::NodeProto& node, LayerParam& layer, Vector& original, Vector& reordered)
         {
             String name = "value";
@@ -938,47 +992,12 @@ namespace Synet
                     }
                 }
                 else
-                {
-                    layer.type() = LayerTypeConst;
-                    layer.weight().resize(1);
-                    layer.weight()[0].type() = TensorType64i;
-                    uint64_t offset = original.size();
-                    for (size_t i = 0; i < tensor.dims_size(); ++i)
-                        layer.weight()[0].dim().push_back(size_t(tensor.dims(i)));
-                    layer.weight()[0].offset() = offset * sizeof(float);
-                    layer.weight()[0].size() = size * sizeof(int64_t);
-                    if (tensor.has_raw_data() && size)
-                    {
-                        original.resize(offset + size * 2);
-                        reordered.resize(offset + size * 2);
-                        memcpy(original.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
-                        memcpy(reordered.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
-                    }
-                }
+                    ConvertConstantTensor(tensor, TensorType64i, sizeof(int64_t), layer, original, reordered);
             }
             else if (tensor.data_type() == onnx::TensorProto_DataType_FLOAT)
-            {
-                layer.type() = LayerTypeConst;
-                layer.weight().resize(1);
-                layer.weight()[0].type() = TensorType32f;
-                uint64_t size = 1, offset = original.size();
-                for (size_t i = 0; i < tensor.dims_size(); ++i)
-                {
-                    size *= tensor.dims(i);
-                    layer.weight()[0].dim().push_back(size_t(tensor.dims(i)));
-                }
-                if (layer.weight()[0].dim().empty())
-                    layer.weight()[0].dim().push_back(1);
-                layer.weight()[0].offset() = offset * sizeof(float);
-                layer.weight()[0].size() = size * sizeof(float);
-                if (tensor.has_raw_data() && size)
-                {
-                    original.resize(offset + size);
-                    reordered.resize(offset + size);
-                    memcpy(original.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
-                    memcpy(reordered.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
-                }
-            }
+                ConvertConstantTensor(tensor, TensorType32f, sizeof(float), layer, original, reordered);
+            else if (tensor.data_type() == onnx::TensorProto_DataType_INT32)
+                ConvertConstantTensor(tensor, TensorType32i, sizeof(int32_t), layer, original, reordered);
             else if (tensor.data_type() == onnx::TensorProto_DataType_DOUBLE)
             {
                 layer.type() = LayerTypeConst;
@@ -1007,51 +1026,11 @@ namespace Synet
                 }
             }
             else if (tensor.data_type() == onnx::TensorProto_DataType_BOOL)
-            {
-                layer.type() = LayerTypeConst;
-                layer.weight().resize(1);
-                layer.weight()[0].type() = TensorTypeBool;
-                uint64_t size = 1, offset = original.size();
-                for (size_t i = 0; i < tensor.dims_size(); ++i)
-                {
-                    size *= tensor.dims(i);
-                    layer.weight()[0].dim().push_back(size_t(tensor.dims(i)));
-                }
-                if (layer.weight()[0].dim().empty())
-                    layer.weight()[0].dim().push_back(1);
-                layer.weight()[0].offset() = offset * sizeof(float);
-                layer.weight()[0].size() = size * sizeof(bool);
-                if (tensor.has_raw_data() && size)
-                {
-                    original.resize(offset + DivHi(size, 4));
-                    reordered.resize(offset + DivHi(size, 4));
-                    memcpy(original.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
-                    memcpy(reordered.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
-                }
-            }
+                ConvertConstantTensor(tensor, TensorTypeBool, sizeof(bool), layer, original, reordered);
             else if (tensor.data_type() == onnx::TensorProto_DataType_UINT8)
-            {
-                layer.type() = LayerTypeConst;
-                layer.weight().resize(1);
-                layer.weight()[0].type() = TensorType8u;
-                uint64_t size = 1, offset = original.size();
-                for (size_t i = 0; i < tensor.dims_size(); ++i)
-                {
-                    size *= tensor.dims(i);
-                    layer.weight()[0].dim().push_back(size_t(tensor.dims(i)));
-                }
-                if (layer.weight()[0].dim().empty())
-                    layer.weight()[0].dim().push_back(1);
-                layer.weight()[0].offset() = offset * sizeof(float);
-                layer.weight()[0].size() = size * sizeof(uint8_t);
-                if (tensor.has_raw_data() && size)
-                {
-                    original.resize(offset + DivHi(size, 4));
-                    reordered.resize(offset + DivHi(size, 4));
-                    memcpy(original.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
-                    memcpy(reordered.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
-                }
-            }
+                ConvertConstantTensor(tensor, TensorType8u, sizeof(uint8_t), layer, original, reordered);
+            else if (tensor.data_type() == onnx::TensorProto_DataType_INT8)
+                ConvertConstantTensor(tensor, TensorType8i, sizeof(int8_t), layer, original, reordered);
             else
                 SYNET_ERROR("Unsupported format of Constant node!");
             return true;
@@ -2703,6 +2682,7 @@ namespace Synet
             switch (tensor.data_type())
             {
             case onnx::TensorProto_DataType_FLOAT: ss << "f32"; break;
+            case onnx::TensorProto_DataType_INT32: ss << "i32"; break;
             case onnx::TensorProto_DataType_INT64: ss << "i64"; break;
             case onnx::TensorProto_DataType_DOUBLE: ss << "f64"; break;
             default: ss << " unknown-" << tensor.data_type();
@@ -2734,6 +2714,20 @@ namespace Synet
                 {
                     for (size_t i = 0; i < printSize; ++i)
                         ss << " " << ((float*)tensor.raw_data().c_str())[i];
+                }
+                break;
+            }
+            case onnx::TensorProto_DataType_INT32:
+            {
+                if (tensor.int32_data_size())
+                {
+                    for (size_t i = 0; i < printSize; ++i)
+                        ss << " " << tensor.int32_data(i);
+                }
+                if (tensor.has_raw_data())
+                {
+                    for (size_t i = 0; i < printSize; ++i)
+                        ss << " " << ((int32_t*)tensor.raw_data().c_str())[i];
                 }
                 break;
             }
@@ -2793,6 +2787,10 @@ namespace Synet
             case onnx::AttributeProto_AttributeType_INTS:
                 for(size_t i = 0; i < attribute.ints_size(); ++i)
                     ss << (i ? " " : "") << attribute.ints(i);
+                break;
+            case onnx::AttributeProto_AttributeType_FLOATS:
+                for (size_t i = 0; i < attribute.floats_size(); ++i)
+                    ss << (i ? " " : "") << attribute.floats(i);
                 break;
             default:
                 ss << "unknown-" << attribute.type();
