@@ -51,7 +51,7 @@ namespace Synet
         {
         }
 
-        bool Run(Synet::NetworkParam & network, Floats & bin)
+        bool Run(Synet::NetworkParam & network, Bytes & bin)
         {
             if (!_param.enable())
                 return true;            

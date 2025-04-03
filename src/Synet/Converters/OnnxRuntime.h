@@ -63,15 +63,14 @@ namespace Synet
                 return false;
 
             Synet::NetworkParamHolder holder;
-            Vector weight;
+            Bytes weight;
             if (!ConvertModel(model, trans, onnxParam, holder(), weight))
             {
                 String errModelPath = Cpl::FileNameByPath(dstModelPath) == dstModelPath ?
                     "error.xml" : Cpl::MakePath(Cpl::DirectoryByPath(dstModelPath), "error.xml");
                 if (!holder.Save(errModelPath, false))
                     SYNET_ERROR("Can't save Synet model with conversion error '" << errModelPath << "' !");
-                    return false;
-                return false;
+                SYNET_ERROR("There is Synet model conversion error! Partial converted model is saved to '" << errModelPath << "'.");
             }
 
             if (optParam.saveUnoptimized())
@@ -89,7 +88,7 @@ namespace Synet
 
             Optimizer optimizer(optParam);
             if (!optimizer.Run(holder(), weight))
-                return false;
+                SYNET_ERROR("Can't perform Synet model optimization!");
 
             if (!holder.Save(dstModelPath, false))
                 SYNET_ERROR("Can't save Synet model '" << dstModelPath << "' !");
@@ -120,7 +119,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertModel(const onnx::ModelProto & model, bool trans, const OnnxParam& onnxParam, Synet::NetworkParam& network, Vector& reordered)
+        bool ConvertModel(const onnx::ModelProto & model, bool trans, const OnnxParam& onnxParam, Synet::NetworkParam& network, Bytes& reordered)
         {
             const onnx::GraphProto& graph = model.graph();
 
@@ -134,7 +133,7 @@ namespace Synet
 
             network.layers().reserve(graph.initializer_size() + graph.input_size() + graph.node_size() * 2);
 
-            Vector original;
+            Bytes original;
             Consts consts;
             Renames renames;
             PermuteMap permuteMap;
@@ -344,7 +343,7 @@ namespace Synet
             return dst;
         }
 
-        bool ConvertInitializer(const onnx::TensorProto& tensor, Synet::NetworkParam& network, Vector& weight, Renames& renames)
+        bool ConvertInitializer(const onnx::TensorProto& tensor, Synet::NetworkParam& network, Bytes& weight, Renames& renames)
         {
             LayerParam layer;
             layer.name() = ValidName(tensor.name(), renames);
@@ -360,7 +359,7 @@ namespace Synet
                     size *= (size_t)tensor.dims(i);
                     layer.weight()[0].dim().push_back((size_t)tensor.dims(i));
                 }
-                layer.weight()[0].offset() = offset * sizeof(float);
+                layer.weight()[0].offset() = offset;
                 layer.weight()[0].size() = size * sizeof(float);
                 if (size)
                 {
@@ -370,17 +369,13 @@ namespace Synet
                         layer.weight()[0].scalar() = true;
                     }
                     if (tensor.has_raw_data())
-                    {
-                        weight.resize(offset + size);
-                        memcpy(weight.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
-                    }
+                        Append(weight, layer.weight()[0], tensor.raw_data().c_str());
                     else if (tensor.float_data_size())
                     {
                         if (size != tensor.float_data_size())
                             SYNET_ERROR("Wrong tensor float_data_size " << tensor.float_data_size() << " != " << size << " !");
-                        weight.resize(offset + size);
                         for (size_t i = 0; i < size; ++i)
-                            weight[offset + i] = tensor.float_data(i);
+                            PushBack<float>(weight, tensor.float_data(i));
                     }
                     else
                         SYNET_ERROR("Can't parse '" << layer.name() << "' FP32 tensor!");
@@ -432,22 +427,18 @@ namespace Synet
                     layer.weight()[0].type() = TensorType64i;
                     for (size_t i = 0; i < tensor.dims_size(); ++i)
                         layer.weight()[0].dim().push_back((size_t)tensor.dims(i));
-                    layer.weight()[0].offset() = offset * sizeof(float);
+                    layer.weight()[0].offset() = offset;
                     layer.weight()[0].size() = size * sizeof(int64_t);
                     if (size)
                     {
                         if (tensor.has_raw_data())
-                        {
-                            weight.resize(offset + size * 2);
-                            memcpy(weight.data() + offset, tensor.raw_data().c_str(), layer.weight()[0].size());
-                        }
+                            Append(weight, layer.weight()[0], tensor.raw_data().c_str());
                         else if (tensor.int64_data_size())
                         {
                             if (size != tensor.int64_data_size())
                                 SYNET_ERROR("Wrong tensor int64_data_size " << tensor.int64_data_size() << " != " << size << " !");
-                            weight.resize(offset + size * 2);
                             for (size_t i = 0; i < size; ++i)
-                                ((int64_t*)(weight.data() + offset))[i] = tensor.int64_data(i);
+                                PushBack<int64_t>(weight, tensor.int64_data(i));
                         }
                         else
                             SYNET_ERROR("Can't parse '" << layer.name() << "' INT64 tensor!");
@@ -577,7 +568,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertAddNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, const OnnxParam& onnxParam, LayerParam& layer)
+        bool ConvertAddNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -671,7 +662,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertBatchNormalizationNode(const onnx::NodeProto & node, const LayerParams& layers, Vector& original, LayerParam& layer, Vector& reordered)
+        bool ConvertBatchNormalizationNode(const onnx::NodeProto & node, const LayerParams& layers, Bytes& original, LayerParam& layer, Bytes& reordered)
         {
             if (!CheckSourceNumber(layer, 5))
                 return false;
@@ -711,17 +702,17 @@ namespace Synet
             if(shared1)
             {
                 size_t size = TensorSize(layer.weight()[0].dim()), offset = reordered.size();
-                original.resize(offset + size);
-                reordered.resize(offset + size);
-                layer.weight()[0].offset() = offset * 4;
+                original.resize(offset + size * 4);
+                reordered.resize(offset + size * 4);
+                layer.weight()[0].offset() = offset;
             }
             layer.weight()[1] = src2->weight()[0];
             if (shared2)
             {
                 size_t size = TensorSize(layer.weight()[1].dim()), offset = reordered.size();
-                original.resize(offset + size);
-                reordered.resize(offset + size);
-                layer.weight()[1].offset() = offset * 4;
+                original.resize(offset + size * 4);
+                reordered.resize(offset + size * 4);
+                layer.weight()[1].offset() = offset;
             }
             float* scale = GetWeight<float>(reordered, layer.weight()[0]);
             float* shift = GetWeight<float>(reordered, layer.weight()[1]);
@@ -734,7 +725,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertCastNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        bool ConvertCastNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1))
                 return false;
@@ -793,7 +784,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertClipNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        bool ConvertClipNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeRestrictRange;
             if (layer.src().size() > 1)
@@ -849,7 +840,7 @@ namespace Synet
             return true;
         }
 
-        void ConvertConstantTensor(const onnx::TensorProto& tensor, TensorType typeName, size_t typeSize, LayerParam& layer, Vector& original, Vector& reordered)
+        void ConvertConstantTensor(const onnx::TensorProto& tensor, TensorType typeName, size_t typeSize, LayerParam& layer, Bytes& original, Bytes& reordered)
         {
             layer.type() = LayerTypeConst;
             layer.weight().resize(1);
@@ -862,18 +853,16 @@ namespace Synet
             }
             if (layer.weight()[0].dim().empty())
                 layer.weight()[0].dim().push_back(1);
-            layer.weight()[0].offset() = offset * sizeof(float);
+            layer.weight()[0].offset() = offset;
             layer.weight()[0].size() = size;
             if (tensor.has_raw_data() && size)
             {
-                original.resize(offset + DivHi(size, 4));
-                reordered.resize(offset + DivHi(size, 4));
-                memcpy(original.data() + offset, tensor.raw_data().c_str(), size);
-                memcpy(reordered.data() + offset, tensor.raw_data().c_str(), size);
+                Append(original, layer.weight()[0], tensor.raw_data().c_str());
+                Append(reordered, layer.weight()[0], tensor.raw_data().c_str());
             }
         }
 
-        bool ConvertConstantNode(const onnx::NodeProto& node, LayerParam& layer, Vector& original, Vector& reordered)
+        bool ConvertConstantNode(const onnx::NodeProto& node, LayerParam& layer, Bytes& original, Bytes& reordered)
         {
             String name = "value";
             const onnx::AttributeProto * value = GetAtrribute(node, name);
@@ -927,17 +916,15 @@ namespace Synet
                 }
                 if (layer.weight()[0].dim().empty())
                     layer.weight()[0].dim().push_back(1);
-                layer.weight()[0].offset() = offset * sizeof(float);
+                layer.weight()[0].offset() = offset;
                 layer.weight()[0].size() = size * sizeof(float);
                 if (tensor.has_raw_data() && size)
                 {
-                    original.resize(offset + size);
-                    reordered.resize(offset + size);
                     for (size_t i = 0; i < size; ++i)
                     {
                         float value = float(((double*)tensor.raw_data().c_str())[i]);
-                        original[offset + i] = value;
-                        reordered[offset + i] = value;
+                        PushBack<float>(original, value);
+                        PushBack<float>(reordered, value);
                     }
                 }
             }
@@ -1031,7 +1018,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConvOrConvTransposeNode(const onnx::NodeProto & node, bool trans, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin, PermuteMap* permuteMap)
+        bool ConvertConvOrConvTransposeNode(const onnx::NodeProto & node, bool trans, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin, PermuteMap* permuteMap)
         {
             if (node.op_type() == "Conv")
                 layer.type() = Synet::LayerTypeConvolution;
@@ -1079,7 +1066,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertDivNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer, Vector& reordered)
+        bool ConvertDivNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1248,7 +1235,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertGemmNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Vector& original, LayerParam& layer, Vector& reordered)
+        bool ConvertGemmNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered)
         {
             layer.type() = Synet::LayerTypeInnerProduct;
             int transB;
@@ -1453,7 +1440,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertLogSoftmaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        bool ConvertLogSoftmaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeSoftmax;
             if (!ConvertAtrributeInt(node, "axis", layer.softmax().axis()))
@@ -1596,7 +1583,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertMulNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, const OnnxParam& onnxParam, LayerParam& layer)
+        bool ConvertMulNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1659,7 +1646,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertNonMaxSuppressionNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& bin, LayerParam& layer)
+        bool ConvertNonMaxSuppressionNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& bin, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 5))
                 return false;
@@ -1738,7 +1725,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertPowNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        bool ConvertPowNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1914,7 +1901,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertReshapeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Vector& original, const OnnxParam& onnxParam, LayerParam& layer)
+        bool ConvertReshapeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1963,7 +1950,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertResizeNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        bool ConvertResizeNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer)
         {
             if (layer.src().size() == 4)
             {
@@ -2047,7 +2034,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertScaledDotProductAttentionNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer, Vector& reordered)
+        bool ConvertScaledDotProductAttentionNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer, Bytes& reordered)
         {
             if (!CheckSourceNumber(layer, 4))
                 return false;
@@ -2059,7 +2046,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertScatterNdNode(const onnx::NodeProto& node, const LayerParams& layers, Vector & original, LayerParam& layer, Vector& reordered)
+        bool ConvertScatterNdNode(const onnx::NodeProto& node, const LayerParams& layers, Bytes & original, LayerParam& layer, Bytes& reordered)
         {
             if (!CheckSourceNumber(layer, 3))
                 return false;
@@ -2077,15 +2064,15 @@ namespace Synet
                 layer.weight().resize(1);
                 layer.weight()[0].dim() = alpha.shape();
                 layer.weight()[0].type() = TensorType32i;
-                layer.weight()[0].offset() = offset * 4;
+                layer.weight()[0].offset() = offset;
                 layer.weight()[0].size() = size * 4;
                 layer.src().erase(layer.src().begin() + 1);
-                original.resize(offset + size);
-                reordered.resize(offset + size);
+                original.resize(offset + size * 4);
+                reordered.resize(offset + size * 4);
                 if (alpha.type() == TensorType64i)
                 {
                     const int64_t* src = alpha.i64().data();
-                    int32_t * dst = (int32_t*)reordered.data() + offset;
+                    int32_t * dst = GetWeight<int32_t>(reordered, layer.weight()[0]);
                     for (size_t i = 0; i < size; ++i)
                         dst[i] = (int32_t)src[i];
                 }
@@ -2205,7 +2192,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertSoftmaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Vector& original, LayerParam& layer)
+        bool ConvertSoftmaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeSoftmax;
             if (!ConvertAtrributeInt(node, "axis", layer.softmax().axis()))
@@ -2312,7 +2299,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertSubNode(const onnx::NodeProto& node, const LayerParams& layers, const Vector& original, LayerParam& layer, Vector& reordered)
+        bool ConvertSubNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;

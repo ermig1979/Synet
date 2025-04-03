@@ -364,7 +364,7 @@ namespace Test
                 SetConcatCan8i(layer);
             }
             network().quantization().method() = _quant().method();
-            Floats bin;
+            Bytes bin;
             Synet::OptimizerParamHolder param;
             Synet::Optimizer optimizer(param());
             if (!optimizer.Run(network(), bin))

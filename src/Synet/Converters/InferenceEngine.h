@@ -68,13 +68,13 @@ namespace Synet
             if (!LoadModel(srcModel, file, srcXml))
                 SYNET_ERROR("Can't load Inference Engine model '" << srcModel << "' !");
 
-            Vector srcBin;
+            Bytes srcBin;
             if (!LoadBinaryData(srcWeight, srcBin))
                 SYNET_ERROR("Can't load Inference Engine weight '" << srcWeight << "' !");
 
             int version;
             Synet::NetworkParamHolder dstXml;
-            Vector dstBin = srcBin;
+            Bytes dstBin = srcBin;
             if (!ConvertNetwork(srcXml, srcBin, trans, onnxParam, dstXml(), dstBin, version))
             {
                 String errModel = Cpl::FileNameByPath(dstModel) == dstModel ?
@@ -144,7 +144,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertNetwork(const XmlDoc & srcXml, const Vector & srcBin, bool trans, const OnnxParam &onnxParam, Synet::NetworkParam & dstXml, Vector & dstBin, int & version)
+        bool ConvertNetwork(const XmlDoc & srcXml, const Bytes& srcBin, bool trans, const OnnxParam &onnxParam, Synet::NetworkParam & dstXml, Bytes& dstBin, int & version)
         {
             const XmlNode * pNet = srcXml.FirstNode("net");
             if (pNet == NULL)

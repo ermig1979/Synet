@@ -31,7 +31,7 @@ namespace Synet
     class InferenceEngineConverterV10 : public InferenceEngineConverter
     {
     public:
-        bool Convert(const XmlNode& srcXml, const std::vector<float>& srcBin, bool trans, const OnnxParam &onnxParam, Synet::NetworkParam & dstXml, std::vector<float>& dstBin)
+        bool Convert(const XmlNode& srcXml, const Bytes& srcBin, bool trans, const OnnxParam &onnxParam, Synet::NetworkParam & dstXml, Bytes& dstBin)
         {
             Edges edges;
             if (!ParseEdges(srcXml, edges))
@@ -84,7 +84,7 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "Gather" && !ConvertGatherLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
-                if (type == "Interpolate" && !ConvertInterpolateLayer(pLayer, srcBin, dstXml.layers(), layer))
+                if (type == "Interpolate" && !ConvertInterpolateLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "Log" && !ConvertLogLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
@@ -114,21 +114,21 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "PriorBoxV2" && !ConvertPriorBoxV2Layer(pLayer, layer))
                     return ErrorMessage(pLayer);
-                if (type == "Range" && !ConvertRangeLayer(pLayer, srcBin, dstXml.layers(), layer))
+                if (type == "Range" && !ConvertRangeLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
-                if (type == "ReduceMean" && !ConvertReduceMeanLayer(pLayer, srcBin, dstXml.layers(), layer))
+                if (type == "ReduceMean" && !ConvertReduceMeanLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
-                if (type == "ReduceMin" && !ConvertReduceMinLayer(pLayer, srcBin, dstXml.layers(), layer))
+                if (type == "ReduceMin" && !ConvertReduceMinLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
-                if (type == "ReduceProd" && !ConvertReduceProdLayer(pLayer, srcBin, dstXml.layers(), layer))
+                if (type == "ReduceProd" && !ConvertReduceProdLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
-                if ((type == "ReduceMax" || type == "ReduceSum") && !ConvertReduceMaxOrSumLayer(pLayer, srcBin, dstXml.layers(), layer))
+                if ((type == "ReduceMax" || type == "ReduceSum") && !ConvertReduceMaxOrSumLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
                 if (type == "RegionYolo" && !ConvertRegionYoloLayer(pLayer, dstXml.layers(), trans, layer, index))
                     return ErrorMessage(pLayer);
                 if (type == "ReLU" && !ConvertReluLayer(pLayer, layer))
                     return ErrorMessage(pLayer);
-                if (type == "Reshape" && !ConvertReshapeLayer(pLayer, srcBin, dstXml.layers(), trans, layer))
+                if (type == "Reshape" && !ConvertReshapeLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "Result" && !ConvertResultLayer(pLayer, layer, &dstXml))
                     return ErrorMessage(pLayer);
@@ -162,11 +162,11 @@ namespace Synet
                     return ErrorMessage(pLayer);
                 if (type == "TopK" && !ConvertTopKLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
-                if (type == "Transpose" && !ConvertTransposeLayer(pLayer, srcBin, dstXml.layers(), trans, layer))
+                if (type == "Transpose" && !ConvertTransposeLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
                 if (type == "VariadicSplit" && !ConvertVariadicSplitLayer(pLayer, dstXml.layers(), trans, layer))
                     return ErrorMessage(pLayer);
-                if (type == "Unsqueeze" && !ConvertUnsqueezeLayer(pLayer, srcBin, dstXml.layers(), layer))
+                if (type == "Unsqueeze" && !ConvertUnsqueezeLayer(pLayer, dstXml.layers(), layer))
                     return ErrorMessage(pLayer);
 #if defined(SYNET_IE_PARSE_STOP_ON_ERROR)
                 if (layer.type() == LayerTypeUnknown)
@@ -196,7 +196,7 @@ namespace Synet
 
     private:
 
-        bool ConvertAddLayer(const XmlNode* pLayer, const LayerParams& layers, const Vector & srcBin, LayerParam& layer)
+        bool ConvertAddLayer(const XmlNode* pLayer, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -230,7 +230,7 @@ namespace Synet
                 if (TensorSize(src1) == 1)
                 {
                     layer.type() = Synet::LayerTypePower;
-                    const float * pShift = srcBin.data() + second->weight()[0].offset() / sizeof(float);
+                    const float * pShift = GetWeight<float>(srcBin, second->weight()[0]);
                     layer.power().shift() = pShift[0];
                 }
                 else
@@ -377,7 +377,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConstLayer(const XmlNode* pLayer, const Vector & srcBin, LayerParam & layer)
+        bool ConvertConstLayer(const XmlNode* pLayer, const Bytes & srcBin, LayerParam & layer)
         {
             const XmlNode* pData = pLayer->FirstNode("data");
             if (pData)
@@ -498,7 +498,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConvolutionLayer(const XmlNode* pLayer, bool trans, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin)
+        bool ConvertConvolutionLayer(const XmlNode* pLayer, bool trans, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin)
         {
             layer.type() = Synet::LayerTypeConvolution;
             layer.convolution().biasTerm() = false;
@@ -577,7 +577,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertDivideLayer(const XmlNode* pLayer, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin)
+        bool ConvertDivideLayer(const XmlNode* pLayer, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -590,7 +590,7 @@ namespace Synet
             if (sp1->type() == LayerTypeConst && (TensorSize(is1) == 1 || TensorSize(is1) == 0))
             {
                 layer.type() = Synet::LayerTypePower;
-                const float* pScale = srcBin.data() + sp1->weight()[0].offset() / sizeof(float);
+                const float* pScale = GetWeight<float>(srcBin, sp1->weight()[0]);
                 layer.power().scale() = 1.0f / pScale[0];
                 layer.src().resize(1);
             }
@@ -689,7 +689,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertInterpolateLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
+        bool ConvertInterpolateLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
         {
             //if (!CheckSourceNumber(layer, 2))
             //    return false;
@@ -749,7 +749,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertMatMulLayer(const XmlNode* pLayer, bool trans, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin, TensorInfoMap& info)
+        bool ConvertMatMulLayer(const XmlNode* pLayer, bool trans, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin, TensorInfoMap& info)
         {
             layer.type() = Synet::LayerTypeInnerProduct;
             const XmlNode* pData = pLayer->FirstNode("data");
@@ -824,7 +824,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertMultiplyLayer(const XmlNode* pLayer, const Vector & srcBin, const LayerParams& layers, LayerParam& layer)
+        bool ConvertMultiplyLayer(const XmlNode* pLayer, const Bytes& srcBin, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -917,7 +917,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertNonMaxSuppressionLayer(const XmlNode* pLayer, const LayerParams& layers, const Vector& srcBin, LayerParam& layer)
+        bool ConvertNonMaxSuppressionLayer(const XmlNode* pLayer, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2, 6))
                 return false;
@@ -1027,7 +1027,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertPowerLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
+        bool ConvertPowerLayer(const XmlNode* pLayer, const Bytes& srcBin, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1117,7 +1117,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertRangeLayer(const XmlNode* pLayer, const Vector & srcBin, const LayerParams& layers, LayerParam& layer)
+        bool ConvertRangeLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 3))
                 return false;
@@ -1133,7 +1133,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertReduceMeanLayer(const XmlNode* pLayer, const Vector & srcBin, const LayerParams& layers, LayerParam& layer)
+        bool ConvertReduceMeanLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1156,7 +1156,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertReduceMinLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
+        bool ConvertReduceMinLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1193,7 +1193,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertReduceProdLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
+        bool ConvertReduceProdLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1230,7 +1230,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertReduceMaxOrSumLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
+        bool ConvertReduceMaxOrSumLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1294,7 +1294,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertReshapeLayer(const XmlNode* pLayer, const Vector & srcBin, const LayerParams& layers, bool trans, LayerParam& layer)
+        bool ConvertReshapeLayer(const XmlNode* pLayer, const LayerParams& layers, bool trans, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1515,7 +1515,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertStridedSliceLayer(const XmlNode* pLayer, const LayerParams& layers, const Vector& srcBin, bool trans, LayerParam& layer)
+        bool ConvertStridedSliceLayer(const XmlNode* pLayer, const LayerParams& layers, const Bytes& srcBin, bool trans, LayerParam& layer)
         {
             bool meta = true;
             for (size_t s = 0; s < layer.src().size(); ++s)
@@ -1570,7 +1570,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertSubtractLayer(const XmlNode* pLayer, const LayerParams& layers, const Vector& srcBin, LayerParam& layer, Vector& dstBin)
+        bool ConvertSubtractLayer(const XmlNode* pLayer, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1583,7 +1583,7 @@ namespace Synet
             if (sp1->type() == LayerTypeConst && (TensorSize(is1) == 1 || TensorSize(is1) == 0))
             {
                 layer.type() = Synet::LayerTypePower;
-                const float* pShift = srcBin.data() + sp1->weight()[0].offset() / sizeof(float);
+                const float* pShift = GetWeight<float>(srcBin, sp1->weight()[0]);
                 layer.power().shift() = -pShift[0];
                 layer.src().resize(1);
             }
@@ -1591,7 +1591,7 @@ namespace Synet
             {
                 layer.type() = Synet::LayerTypePower;
                 layer.power().scale() = -1.0f;
-                const float* pShift = srcBin.data() + sp0->weight()[0].offset() / sizeof(float);
+                const float* pShift = GetWeight<float>(srcBin, sp0->weight()[0]);
                 layer.power().shift() = pShift[0];
                 layer.src()[0] = layer.src()[1];
                 layer.src().resize(1);
@@ -1699,7 +1699,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertTensorIteratorLayer(const XmlNode* pParent, bool trans, const LayerParams& parents, const Vector& srcBin, LayerParam& parent, Vector& dstBin, TensorInfoMap& info, LayerParams & children)
+        bool ConvertTensorIteratorLayer(const XmlNode* pParent, bool trans, const LayerParams& parents, const Bytes& srcBin, LayerParam& parent, Bytes& dstBin, TensorInfoMap& info, LayerParams & children)
         {
             if (trans)
                 trans = !PermutedToNchw(parents, parent.src(), false, true, false);
@@ -1755,7 +1755,7 @@ namespace Synet
                     return ErrorMessage(pChild);
                 if (type == "Tanh" && !ConvertTanhLayer(pChild, child))
                     return ErrorMessage(pChild);
-                if (type == "Unsqueeze" && !ConvertUnsqueezeLayer(pChild, srcBin, children, child))
+                if (type == "Unsqueeze" && !ConvertUnsqueezeLayer(pChild,  children, child))
                     return ErrorMessage(pChild);
 
 #if defined(SYNET_IE_PARSE_STOP_ON_ERROR)
@@ -1845,7 +1845,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertTransposeLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, bool trans, LayerParam& layer)
+        bool ConvertTransposeLayer(const XmlNode* pLayer, const LayerParams& layers, bool trans, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1966,7 +1966,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertUnsqueezeLayer(const XmlNode* pLayer, const Vector& srcBin, const LayerParams& layers, LayerParam& layer)
+        bool ConvertUnsqueezeLayer(const XmlNode* pLayer, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -1999,19 +1999,19 @@ namespace Synet
 
         //---------------------------------------------------------------------
 
-        template<class S, class D> bool GetShapeFromWeight(const WeightParam & weight, const Vector & bin, std::vector<D> & shape)
+        template<class S, class D> bool GetShapeFromWeight(const WeightParam & weight, const Bytes& bin, std::vector<D> & shape)
         {
             size_t size = weight.dim()[0];
             if (size != weight.size() / sizeof(S))
                 return false;
-            S * data = (S*)((uint8_t*)bin.data() + weight.offset());
+            const S * data = GetWeight<S>(bin, weight);
             shape.resize(size);
             for (size_t i = 0; i < size; ++i)
                 shape[i] = (D)data[i];
             return true;
         }
 
-        template<class D> bool GetShapeFromConst(const LayerParam & layer, const Vector & bin, bool trans, std::vector<D>& shape)
+        template<class D> bool GetShapeFromConst(const LayerParam & layer, const Bytes& bin, bool trans, std::vector<D>& shape)
         {
             if (layer.type() == LayerTypeConst)
             {

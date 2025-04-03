@@ -55,7 +55,7 @@ namespace Synet
         {
         }
 
-        bool Run(Synet::NetworkParam & network, Floats & bin)
+        bool Run(Synet::NetworkParam & network, Bytes & bin)
         {
             if (!_bf16OptSetter.Run(network, bin))
                 return false;
@@ -85,14 +85,14 @@ namespace Synet
         const OptimizerParam & _param;
         Bf16OptSetter _bf16OptSetter;
 
-        bool OptimizeLayers(Synet::NetworkParam& network, Floats& bin, int stage)
+        bool OptimizeLayers(Synet::NetworkParam& network, Bytes& bin, int stage)
         {
             QuantizationMethod method = network.quantization().method();
             const bool is8i = network.quantization().method() != QuantizationMethodUnknown;
             const bool isNhwc = IsNnwc(network);
             Changes changes;
             LayerParams merged;
-            Floats buf;
+            Bytes buf;
             for (size_t i = 0; i < network.layers().size(); ++i)
             {
                 switch (stage)
@@ -238,7 +238,7 @@ namespace Synet
             return true;
         }
 
-        bool ReduceTensorIteratorIO(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst)
+        bool ReduceTensorIteratorIO(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst)
         {
             const LayerParam & stt = src[index];
             if (stt.type() != LayerTypeTensorIterator || stt.src().size() < 3 || stt.tensorIterator().back().size() < 1)
@@ -307,27 +307,26 @@ namespace Synet
             return true;
         }
 
-        bool TransposeInnerProduct(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst)
+        bool TransposeInnerProduct(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst)
         {
             const LayerParam& ip = src[index];
             if (ip.type() != LayerTypeInnerProduct || !ip.innerProduct().transposeB() || ip.weight().empty())
                 return false;
             const Shape & dim = ip.weight()[0].dim();
-            size_t offset = ip.weight()[0].offset() / 4;
             if (buf.empty())
                 buf = bin;
             dst.push_back(ip);
             dst.back().innerProduct().transposeB() = false;
             dst.back().weight()[0].dim() = Shp(dim[1], dim[0]);
-            const float* pSrc = bin.data() + offset;
-            float* pDst = buf.data() + offset;
+            const float* pSrc = GetWeight<float>(bin, ip.weight()[0]);
+            float* pDst = GetWeight<float>(buf, ip.weight()[0]);
             for (size_t i = 0; i < dim[0]; ++i)
                 for (size_t j = 0; j < dim[1]; ++j)
                     pDst[j * dim[0] + i] = pSrc[i * dim[1] + j];
             return true;
         }
 
-        bool MergeCurrentAndBias(const LayerParams& src, size_t& index, Floats& bin, LayerParams& dst, Changes& changes)
+        bool MergeCurrentAndBias(const LayerParams& src, size_t& index, Bytes& bin, LayerParams& dst, Changes& changes)
         {
             if (index == 0)
                 return false;
@@ -360,9 +359,9 @@ namespace Synet
                 dst.back().type() = LayerTypeScale;
                 dst.back().scale().biasTerm() = true;
                 dst.back().weight().push_back(*weight);
-                dst.back().weight()[0].offset() = bin.size() * sizeof(float);
+                dst.back().weight()[0].offset() = bin.size();
                 for (size_t i = 0; i < dst.back().weight()[0].dim()[0]; ++i)
-                    bin.push_back(current.power().scale());
+                    PushBack<float>(bin, current.power().scale());
                 dst.back().power().scale() = 1.0f;
                 break;
             case LayerTypeScale:
@@ -379,7 +378,7 @@ namespace Synet
             return true;
         }
 
-        bool MergePowerAndScaleAndPower(const LayerParams& src, size_t& index, Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        bool MergePowerAndScaleAndPower(const LayerParams& src, size_t& index, Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes)
         {
             bool pre = false, scale = false, post = false;
             if (src.size() > index + 0 && src[index + 0].type() == LayerTypePower && src[index + 0].power().power() == 1.0f)
@@ -422,7 +421,7 @@ namespace Synet
             return true;
         }
 
-        bool MergeBiasAndScale(const LayerParams& src, size_t& index, Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        bool MergeBiasAndScale(const LayerParams& src, size_t& index, Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes)
         {
             if (index == 0)
                 return false;
@@ -454,7 +453,7 @@ namespace Synet
             return true;
         }
 
-        bool MergeConvolutionAndScale(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        bool MergeConvolutionAndScale(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes)
         {
             if (index == 0)
                 return false;
@@ -470,9 +469,9 @@ namespace Synet
                 buf = bin;
             dst.back().name() = scale.name();
             dst.back().dst() = scale.dst();
-            const float* pScale = bin.data() + scale.weight()[0].offset() / 4;
-            const float* pSrc = bin.data() + conv.weight()[0].offset() / 4;
-            float * pDst = buf.data() + conv.weight()[0].offset() / 4;
+            const float* pScale = GetWeight<float>(bin, scale.weight()[0]);
+            const float* pSrc = GetWeight<float>(bin, conv.weight()[0]);
+            float * pDst = GetWeight<float>(buf, conv.weight()[0]);
             const Shape & dim = conv.weight()[0].dim();
             if (conv.weight()[0].format() == TensorFormatNhwc)
             {
@@ -491,13 +490,13 @@ namespace Synet
             if (conv.convolution().biasTerm())
             {
                 const Shape & dim = conv.weight()[1].dim();
-                const float* pSrc = bin.data() + conv.weight()[1].offset() / 4;
-                float * pDst = buf.data() + conv.weight()[1].offset() / 4;
+                const float* pSrc = GetWeight<float>(bin, conv.weight()[1]);
+                float * pDst = GetWeight<float>(buf, conv.weight()[1]);
                 for (size_t i = 0, n = dim[0]; i < n; ++i)
                      pDst[i] = pSrc[i] * pScale[i];
                 if (scale.scale().biasTerm())
                 {
-                    const float* pShift = bin.data() + scale.weight()[1].offset() / 4;
+                    const float* pShift = GetWeight<float>(bin, scale.weight()[1]);
                     for (size_t i = 0, n = dim[0]; i < n; ++i)
                         pDst[i] += pShift[i];
                 }
@@ -510,7 +509,7 @@ namespace Synet
             return true;
         }
 
-        bool MergeConvolutionAndPower(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        bool MergeConvolutionAndPower(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes)
         {
             if (index == 0)
                 return false;
@@ -533,15 +532,15 @@ namespace Synet
             float scale = power.power().scale();
             for (size_t w = 0; w < conv.weight().size(); ++w)
             {
-                const float* pSrc = bin.data() + conv.weight()[w].offset() / 4;
-                float* pDst = buf.data() + conv.weight()[w].offset() / 4;
+                const float* pSrc = GetWeight<float>(bin, conv.weight()[w]);
+                float* pDst = GetWeight<float>(buf, conv.weight()[w]);
                 for (size_t i = 0, n = conv.weight()[w].size() / 4; i < n; ++i)
                     pDst[i] = pSrc[i] * scale;
             }
             return true;
         }
 
-        bool MergeInnerProductAndPower(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        bool MergeInnerProductAndPower(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes)
         {
             if (index == 0)
                 return false;
@@ -561,15 +560,15 @@ namespace Synet
             float scale = power.power().scale();
             for (size_t w = 0; w < ip.weight().size(); ++w)
             {
-                const float* pSrc = bin.data() + ip.weight()[w].offset() / 4;
-                float* pDst = buf.data() + ip.weight()[w].offset() / 4;
+                const float* pSrc = GetWeight<float>(bin, ip.weight()[w]);
+                float* pDst = GetWeight<float>(buf, ip.weight()[w]);
                 for (size_t i = 0, n = ip.weight()[w].size() / 4; i < n; ++i)
                     pDst[i] = pSrc[i] * scale;
             }
             return true;
         }
 
-        bool MergeInnerProductAndScale(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        bool MergeInnerProductAndScale(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes)
         {
             if (index == 0)
                 return false;
@@ -590,9 +589,9 @@ namespace Synet
                 dst.back().innerProduct().biasTerm() = true;
                 dst.back().weight().push_back(scale.weight()[1]);
             }
-            const float* pSrc = bin.data() + ip.weight()[0].offset() / 4;
-            const float* pScale = bin.data() + scale.weight()[0].offset() / 4;
-            float* pDst = buf.data() + ip.weight()[0].offset() / 4;
+            const float* pSrc = GetWeight<float>(bin, ip.weight()[0]);
+            const float* pScale = GetWeight<float>(bin, scale.weight()[0]);
+            float* pDst = GetWeight<float>(buf, ip.weight()[0]);
             const Shape& dim = ip.weight()[0].dim();
             for (size_t i = 0; i < dim[0]; ++i)
                 for (size_t j = 0; j < dim[1]; ++j)
@@ -695,7 +694,7 @@ namespace Synet
             return true;
         }
 
-        bool MergePrelu0(const LayerParams & src, size_t & index, const Floats & bin, LayerParams & dst, Changes & changes)
+        bool MergePrelu0(const LayerParams & src, size_t & index, const Bytes & bin, LayerParams & dst, Changes & changes)
         {
             if (src.size() < index + 2)
                 return false;
@@ -707,13 +706,13 @@ namespace Synet
                 return false;
             if (InsideLink(src, index + 1, 1))
                 return false;
-            const float * scale = bin.data() + src[index].weight()[0].offset() / 4;
+            const float * scale = GetWeight<float>(bin, src[index].weight()[0]);
             for (size_t i = 0, n = src[index].weight()[0].size() / 4; i < n; ++i)
                 if (scale[i] < -1.0f || scale[i] > 1.0f)
                     return false;
             if (src[index + 0].weight().size() > 1)
             {
-                const float * shift = bin.data() + src[index].weight()[1].offset() / 4;
+                const float * shift = GetWeight<float>(bin, src[index].weight()[1]);
                 for (size_t i = 0, n = src[index].weight()[1].size() / 4; i < n; ++i)
                     if (shift[i] != 0.0f)
                         return false;
@@ -730,7 +729,7 @@ namespace Synet
             return true;
         }
 
-        bool MergePrelu1(const LayerParams & src, size_t & index, const Floats & bin, Floats& buf, LayerParams & dst, Changes & changes)
+        bool MergePrelu1(const LayerParams & src, size_t & index, const Bytes & bin, Bytes& buf, LayerParams & dst, Changes & changes)
         {
             if (src.size() < index + 5)
                 return false;
@@ -766,8 +765,8 @@ namespace Synet
             dst.push_back(layer);
             if (buf.empty())
                 buf = bin;
-            const float* pSrc = bin.data() + layer.weight()[0].offset() / 4;
-            float * pDst = buf.data() + layer.weight()[0].offset() / 4;
+            const float* pSrc = GetWeight<float>(bin, layer.weight()[0]);
+            float * pDst = GetWeight<float>(buf, layer.weight()[0]);
             for (size_t i = 0, n = layer.weight()[0].size() / 4; i < n; ++i)
                 pDst[i] = -pSrc[i];
             //dst.erase(dst.begin() + tile - 2, dst.begin() + tile + 1);
@@ -1763,7 +1762,7 @@ namespace Synet
             return true;
         }
 
-        bool MergeParallelConvolutions(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        bool MergeParallelConvolutions(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes)
         {
             const LayerParam& l0 = src[index];
             size_t MinPart = 32, minPart = MinPart;
@@ -1834,8 +1833,8 @@ namespace Synet
                 buf = bin;
             size_t newSize = buf.size();
             for (size_t w = 0; w < conv.weight().size(); ++w)
-                newSize += conv.weight()[w].size() / sizeof(float);
-            conv.weight()[0].offset() = buf.size() * sizeof(float);
+                newSize += conv.weight()[w].size();
+            conv.weight()[0].offset() = buf.size();
             buf.resize(newSize);
             for (size_t w = 0; w < conv.weight().size(); ++w)
             {
@@ -1844,8 +1843,8 @@ namespace Synet
                 const Shape & dim = conv.weight()[w].dim();
                 std::vector<const float*> pSrc(parts.size());
                 for (size_t p = 0; p < parts.size(); ++p)
-                    pSrc[p] = bin.data() + src[index + p].weight()[w].offset() / sizeof(float);
-                float * pDst = buf.data() + conv.weight()[w].offset() / sizeof(float);
+                    pSrc[p] = GetWeight<float>(bin, src[index + p].weight()[w]);
+                float * pDst = GetWeight<float>(buf, conv.weight()[w]);
                 if (l0.weight()[0].format() == TensorFormatNhwc && w == 0)
                 {
                     for (size_t o = 0, outer = dim[0] * dim[1] * dim[2]; o < outer; ++o)
@@ -1892,7 +1891,7 @@ namespace Synet
             return true;
         }
 
-        bool MergeParallelScaleAndDepthwiseConvolution(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        bool MergeParallelScaleAndDepthwiseConvolution(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes)
         {
             if (src.size() < index + 3)
                 return false;
@@ -1915,15 +1914,15 @@ namespace Synet
             if (buf.empty())
                 buf = bin;
             size_t C = conv.convolution().outputNum();
-            const float * pScale = bin.data() + scale.weight()[0].offset() / sizeof(float);
-            float* pWeight = buf.data() + conv.weight()[0].offset() / sizeof(float) + 
+            const float * pScale = GetWeight<float>(bin, scale.weight()[0]);
+            float* pWeight = GetWeight<float>(buf, conv.weight()[0]) +
                 (conv.convolution().kernel()[1] * conv.convolution().pad()[0] + conv.convolution().pad()[1]) * C;
             for (size_t c = 0; c < C; ++c)
                 pWeight[c] += pScale[c];
             if (conv.convolution().biasTerm())
             {
-                const float* pShift = bin.data() + scale.weight()[1].offset() / sizeof(float);
-                float* pBias = buf.data() + conv.weight()[1].offset() / sizeof(float);
+                const float* pShift = GetWeight<float>(bin, scale.weight()[1]);
+                float* pBias = GetWeight<float>(buf, conv.weight()[1]);
                 for (size_t c = 0; c < C; ++c)
                     pBias[c] += pShift[c];
             }
@@ -2027,7 +2026,7 @@ namespace Synet
             return true;
         }
 
-        bool TransposeConvolutions(const LayerParams& src, size_t& index, const Floats& bin, Floats& buf, LayerParams& dst, Changes& changes)
+        bool TransposeConvolutions(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes)
         {
             size_t end = index;
             if (!PermutedToNchw(src, src[index].src(), true, false, false))
@@ -2357,7 +2356,7 @@ namespace Synet
             std::cout << "Can't load Synet model '" << srcXml << "' !" << std::endl;
             return false;
         }
-        Floats bin;
+        Bytes bin;
         if (!srcBin.empty() && !LoadBinaryData(srcBin, bin))
         {
             std::cout << "Can't load Synet weight '" << srcBin << "' !" << std::endl;

@@ -49,7 +49,7 @@ namespace Synet
         typedef std::vector<Synet::LayerParam> LayerParams;
         typedef Synet::Tensor<float> Tensor;
         typedef std::vector<Tensor> Tensors;
-        typedef std::vector<float> Vector;
+        typedef std::vector<uint8_t> Bytes;
         typedef std::map<String, bool> PermuteMap;
         typedef std::map<String, TensorFormat> TensorFormatMap;
 
@@ -161,30 +161,6 @@ namespace Synet
             SYNET_ERROR("Can't found weight " << name << " !");
         }
 
-        template<class T> static T* GetWeight(Vector& bin, size_t offset)
-        {
-            if (offset >= bin.size() * sizeof(T))
-                SYNET_ERROR("Vector access overflow: " << offset << " >= " << bin.size() * sizeof(T) << " !");
-            return (T*)((uint8_t*)bin.data() + offset);
-        }
-
-        template<class T> static const T* GetWeight(const Vector& bin, size_t offset)
-        {
-            if (offset >= bin.size() * sizeof(T))
-                SYNET_ERROR("Vector access overflow: " << offset << " >= " << bin.size() * sizeof(T) << " !");
-            return (const T*)((const uint8_t*)bin.data() + offset);
-        }
-
-        template<class T> static T* GetWeight(Vector& bin, const WeightParam& param)
-        {
-            return GetWeight<T>(bin, param.offset());
-        }
-
-        template<class T> static const T* GetWeight(const Vector& bin, const WeightParam& param)
-        {
-            return GetWeight<T>(bin, param.offset());
-        }
-
         static const LayerParam* GetLayerByName(const LayerParams& layers, const String& name)
         {
             for (size_t i = 0; i < layers.size(); ++i)
@@ -219,6 +195,52 @@ namespace Synet
                 std::istringstream(name.substr(delimiter + 1)) >> pin.index;
             }
             return pin;
+        }
+
+        //-------------------------------------------------------------------------------------------------
+
+        template<class T> static T* GetWeight(Bytes& bin, size_t offset)
+        {
+            if (offset >= bin.size())
+                SYNET_ERROR("Binary storage access overflow: " << offset << " >= " << bin.size() << " !");
+            return (T*)(bin.data() + offset);
+        }
+
+        template<class T> static const T* GetWeight(const Bytes& bin, size_t offset)
+        {
+            if (offset >= bin.size())
+                SYNET_ERROR("Binary storage access overflow: " << offset << " >= " << bin.size() << " !");
+            return (const T*)(bin.data() + offset);
+        }
+
+        template<class T> static T* GetWeight(Bytes& bin, const WeightParam& param)
+        {
+            if (param.offset() + param.size() > bin.size())
+                SYNET_ERROR("Binary storage access overflow: " << param.offset() + param.size() << " > " << bin.size() << " !");
+            return GetWeight<T>(bin, param.offset());
+        }
+
+        template<class T> static const T* GetWeight(const Bytes& bin, const WeightParam& param)
+        {
+            if (param.offset() + param.size() > bin.size())
+                SYNET_ERROR("Binary storage access overflow: " << param.offset() + param.size() << " > " << bin.size() << " !");
+            return GetWeight<T>(bin, param.offset());
+        }
+
+        template<class T> static void PushBack(Bytes& bin, const T &value)
+        {
+            size_t offset = bin.size();
+            bin.resize(offset + sizeof(T));
+            GetWeight<T>(bin, offset)[0] = value;
+        }
+
+        static void Append(Bytes& bin, const WeightParam& param, const void * src)
+        {
+            size_t offset = bin.size();
+            if(param.offset() != offset)
+                CPL_LOG_SS(Warning, "Binary storage wrong append offset: " << param.offset() << " != " << offset << " !");
+            bin.resize(offset + param.size());
+            memcpy(bin.data() + offset, src, param.size());
         }
 
         //-------------------------------------------------------------------------------------------------
@@ -485,13 +507,13 @@ namespace Synet
 
         //-------------------------------------------------------------------------------------------------
 
-        static bool ReorderWeight(const Vector& srcBin, const Shape& input, LayerParam& layer, Vector& dstBin)
+        static bool ReorderWeight(const Bytes& srcBin, const Shape& input, LayerParam& layer, Bytes& dstBin)
         {
             if (layer.weight().size() < 1)
                 SYNET_ERROR("There is no weight to reorder!");
             WeightParam& weight = layer.weight()[0];
-            const float* pSrc = srcBin.data() + weight.offset() / sizeof(float);
-            float* pDst = dstBin.data() + weight.offset() / sizeof(float);
+            const float* pSrc = GetWeight<float>(srcBin, weight);
+            float* pDst = GetWeight<float>(dstBin, weight);
             Shape& shape = weight.dim();
             weight.format() = TensorFormatNhwc;
             switch (layer.type())

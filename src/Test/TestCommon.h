@@ -81,6 +81,8 @@ namespace Test
 
     typedef std::vector<float> Vector;
     typedef std::vector<Vector> Vectors;
+
+    typedef std::vector<uint8_t> Bytes;
 }
 
 
