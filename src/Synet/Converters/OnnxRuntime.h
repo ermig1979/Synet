@@ -1697,7 +1697,7 @@ namespace Synet
 
             layer.type() = Synet::LayerTypePad;
             String mode;
-            if (!ConvertAtrributeString(node, "mode", mode))
+            if (!ConvertAtrributeString(node, "mode", mode, true, "constant"))
                 return false;
             if (mode == "constant")
                 layer.pad().mode() = PadModeConstant;
@@ -2776,10 +2776,10 @@ namespace Synet
                     value = defVal;
                     return true;
                 }
-                SYNET_ERROR("Can't find attribute " << name << " !");
+                SYNET_ERROR("Can't find attribute '" << name << "' !");
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_INT)
-                SYNET_ERROR("Attribute " << name << " has wrong type " << attribute->type() << " !");
+                SYNET_ERROR("Attribute '" << name << "' has wrong type " << attribute->type() << " !");
             value = attribute->i();
             return true;
         }
@@ -2794,10 +2794,10 @@ namespace Synet
                     value = defVal;
                     return true;
                 }
-                SYNET_ERROR("Can't find attribute " << name << " !");
+                SYNET_ERROR("Can't find attribute '" << name << "' !");
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_FLOAT)
-                SYNET_ERROR("Attribute " << name << " has wrong type " << attribute->type() << " !");
+                SYNET_ERROR("Attribute '" << name << "' has wrong type " << attribute->type() << " !");
             value = attribute->f();
             return true;
         }
@@ -2812,10 +2812,10 @@ namespace Synet
                     value = defVal;
                     return true;
                 }
-                SYNET_ERROR("Can't find attribute " << name << " !");
+                SYNET_ERROR("Can't find attribute '" << name << "' !");
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_STRING)
-                SYNET_ERROR("Attribute " << name << " has wrong type " << attribute->type() << " !");
+                SYNET_ERROR("Attribute '" << name << "' has wrong type " << attribute->type() << " !");
             value = attribute->s();
             return true;
         }
@@ -2831,10 +2831,10 @@ namespace Synet
                     values = defVals;
                     return true;
                 }
-                SYNET_ERROR("Can't find attribute " << name << " !");
+                SYNET_ERROR("Can't find attribute '" << name << "' !");
             }
             if (attribute->type() != onnx::AttributeProto_AttributeType_INTS)
-                SYNET_ERROR("Attribute " << name << " has wrong type " << attribute->type() << " !");
+                SYNET_ERROR("Attribute '" << name << "' has wrong type " << attribute->type() << " !");
             values.resize(attribute->ints_size());
             for(size_t i = 0; i < attribute->ints_size(); ++i)
                 values[i] = (T)attribute->ints(i);
