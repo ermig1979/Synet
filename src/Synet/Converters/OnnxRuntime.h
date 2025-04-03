@@ -1529,7 +1529,7 @@ namespace Synet
             }
             else
             {
-                if (!CheckDims(weight, 2, "inner product weight"))
+                if (!CheckSignificantDims(weight, 2, "MatMul weight"))
                     return false;
                 layer.innerProduct().outputNum() = (uint32_t)(transB ? weight[0] : weight[1]);
                 layer.src().resize(1);

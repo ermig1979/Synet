@@ -62,6 +62,13 @@ namespace Synet
 
         //-------------------------------------------------------------------------------------------------
 
+        static bool CheckSignificantDims(const Shape& shape, size_t dims, const String& desc)
+        {
+            if (SignificantDimsCount(shape) != dims)
+                SYNET_ERROR("Wrong " << desc << " shape " << ToStr(shape) << " !");
+            return true;
+        }
+
         static bool CheckDims(const Shape& shape, size_t dims, const String& desc)
         {
             if (shape.size() != dims)
