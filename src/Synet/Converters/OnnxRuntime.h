@@ -1529,9 +1529,11 @@ namespace Synet
             }
             else
             {
-                if (!CheckSignificantDims(weight, 2, "MatMul weight"))
-                    return false;
-                layer.innerProduct().outputNum() = (uint32_t)(transB ? weight[0] : weight[1]);
+                //if (!CheckSignificantDims(weight, 2, "MatMul weight"))
+                //    return false;
+                if(weight.size() > 2)
+                    layer.innerProduct().axis() = weight.size() - 1;
+                layer.innerProduct().outputNum() = (uint32_t)(transB ? weight[weight.size() - 2] : weight[weight.size() - 1]);
                 layer.src().resize(1);
                 if (trans && CurrentTensorFormat(layers, layer.src(), true, false, true, tensorFormatMap) == TensorFormatNhwc)
                     SYNET_ERROR("Can 't convert MatMul node for NHWC format!");

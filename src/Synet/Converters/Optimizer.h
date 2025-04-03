@@ -317,7 +317,8 @@ namespace Synet
                 buf = bin;
             dst.push_back(ip);
             dst.back().innerProduct().transposeB() = false;
-            dst.back().weight()[0].dim() = Shp(dim[1], dim[0]);
+            int axis = ip.innerProduct().axis();
+            dst.back().weight()[0].dim() = Shp(dim[axis], dim[axis - 1]);
             const float* pSrc = GetWeight<float>(bin, ip.weight()[0]);
             float* pDst = GetWeight<float>(buf, ip.weight()[0]);
             for (size_t i = 0; i < dim[0]; ++i)

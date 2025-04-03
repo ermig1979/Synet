@@ -76,6 +76,8 @@ namespace Synet
         _empty = true;
     }
 
+//#define SYNET_LOAD_LOG
+
     bool Network::Load(const String & model, const String & weight, const Options & options)
     {
         Clear();
@@ -92,6 +94,16 @@ namespace Synet
             SYNET_ERROR("Can't open weight file '" << weight << "' !");
         for (size_t i = 0; i < _layers.size(); ++i)
         {
+#ifdef SYNET_LOAD_LOG
+            {
+                const LayerParam& param = _param().layers()[i];
+                std::stringstream msg;
+                msg << "Load layer " << i << " with name: " << Cpl::ToStr(param.name()) << ", type: " << Cpl::ToStr(param.type());
+                if (param.type() == LayerTypeMeta)
+                    msg << "-" << Cpl::ToStr(param.meta().type());
+                CPL_LOG_SS(Info, msg.str());
+            }
+#endif            
             if (!_layers[i]->Load(ifs, _layers))
             {
                 ifs.close();
@@ -616,12 +628,23 @@ namespace Synet
         return NULL;
     }
 
+//#define SYNET_CREATE_LOG
+
     bool Network::CreateLayers()
     {
         NameIdMap layerId;
         for (size_t i = 0; i < _param().layers().size(); ++i)
         {
             const LayerParam& param = _param().layers()[i];
+#ifdef SYNET_CREATE_LOG
+            {
+                std::stringstream msg;
+                msg << "Create layer " << i << " with name: " << Cpl::ToStr(param.name()) << ", type: " << Cpl::ToStr(param.type());
+                if (param.type() == LayerTypeMeta)
+                    msg << "-" << Cpl::ToStr(param.meta().type());
+                CPL_LOG_SS(Info, msg.str());
+            }
+#endif            
             LayerSharedPtr layer(Fabric::Create(param, &_context, _param().quantization().method()));
             if (layer)
             {
@@ -633,12 +656,15 @@ namespace Synet
                         SYNET_ERROR("Can't find parent layer: " << param.parent() << " of layer " << param.name() << " !");
                     _layers[layerId[param.parent()]]->AddChild(layer);
                 }
+
             }
             else
                 SYNET_ERROR("Can't create layer " << param.name() << " of type " << Cpl::ToStr(param.type()) << " !");
         }
         return true;
     }
+
+//#define SYNET_INIT_LOG
 
     bool Network::Init()
     {
@@ -652,6 +678,15 @@ namespace Synet
             Stage stage;
             stage.layer = _layers[i].get();
             const LayerParam& param = stage.layer->Param();
+#ifdef SYNET_INIT_LOG
+            {
+                std::stringstream msg;
+                msg << "Init layer " << i << " with name: " << Cpl::ToStr(param.name()) << ", type: " << Cpl::ToStr(param.type());
+                if (param.type() == LayerTypeMeta)
+                    msg << "-" << Cpl::ToStr(param.meta().type());
+                CPL_LOG_SS(Info, msg.str());
+            }
+#endif
             if (!param.parent().empty())
                 continue;
             _layerId[param.name()] = i;
