@@ -266,7 +266,6 @@ namespace Synet
         }
         else
             assert(0);
-
     }
 
     template<class A, class B, class D> static AddLayer::UniversalPtr GetAddUniversal(size_t dim)

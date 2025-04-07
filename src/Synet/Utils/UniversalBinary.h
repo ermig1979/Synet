@@ -66,6 +66,44 @@ namespace Synet
         return steps;
     }
 
+    SYNET_INLINE Shape FullSrcShape(const Shape& src, const Shape& dst)
+    {
+        Shape full(dst.size(), 1);
+        for (size_t is = 0, id = dst.size() - src.size(); is < src.size(); is++, id++)
+            full[id] = src[is];
+        return full;
+    }
+
+    SYNET_INLINE int Relation(size_t a, size_t b, size_t d)
+    {
+        if (a < d)
+            return -1;
+        if (b < d)
+            return 1;
+        return 0;
+    }
+
+    SYNET_INLINE void CompactShapes(Shape& a, Shape& b, Shape& d)
+    {
+        Shape _a = FullSrcShape(a, d), _b = FullSrcShape(b, d), _d = d;
+        a.resize(1), b.resize(1), d.resize(1);
+        for (size_t i = 1; i < _d.size(); ++i)
+        {
+            if (Relation(_a[i - 1], _b[i - 1], _d[i - 1]) == Relation(_a[i], _b[i], _d[i]) || d.back() == 1 || _d[i] == 1)
+            {
+                a.back() *= _a[i];
+                b.back() *= _b[i];
+                d.back() *= _d[i];
+            }
+            else
+            {
+                a.push_back(_a[i]);
+                b.push_back(_b[i]);
+                d.push_back(_d[i]);
+            }
+        }
+    }
+
     //-------------------------------------------------------------------------------------------------
 
     typedef void (*UniversalBinaryPtr)(const uint8_t* a, const Shape& aSteps, const uint8_t* b, const Shape& bSteps, uint8_t* dst, const Shape& dstShape);

@@ -23,34 +23,80 @@
 */
 
 #include "Synet/Utils/Math.h"
+#include "Synet/Utils/UniversalBinary.h"
 #include "Synet/Layers/ScaleLayer.h"
 #include "Synet/Layers/MulLayer.h"
 
 namespace Synet
 {
-    template <typename T> static void Uniform(const uint8_t* a8, const uint8_t* b8, size_t size, uint8_t* dst8)
+    template <typename T> void Mul(const T& a, const T& b, T& dst)
     {
-        const T* a = (const T*)a8;
-        const T* b = (const T*)b8;
-        T* dst = (T*)dst8;
+        dst = a * b;
+    }
+
+    template <> void Mul(const uint16_t& a, const uint16_t& b, uint16_t& dst)
+    {
+        dst = Float32ToBFloat16(BFloat16ToFloat32(a) * BFloat16ToFloat32(b));
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    template <typename A, typename B, typename D> void Mul(const A& a, const B& b, D& dst)
+    {
+        float _a = Convert<A, float>(a);
+        float _b = Convert<B, float>(b);
+        dst = Convert<float, D>(_a * _b);
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    template <typename A, typename B, typename D> static void MulUniform(const uint8_t* a8, const uint8_t* b8, size_t size, uint8_t* dst8)
+    {
+        const A* a = (const A*)a8;
+        const B* b = (const B*)b8;
+        D* dst = (D*)dst8;
         for (size_t i = 0; i < size; ++i)
-            dst[i] = a[i] * b[i];
+            Mul(a[i], b[i], dst[i]);
     }
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-    template <> void Uniform<float>(const uint8_t* a8, const uint8_t* b8, size_t size, uint8_t* dst8)
+    template <> void MulUniform<float, float, float>(const uint8_t* a8, const uint8_t* b8, size_t size, uint8_t* dst8)
     {
         const float* src[] = { (const float*)a8, (const float*)b8 };
         SimdSynetEltwiseLayerForward(src, NULL, 2, size, ::SimdSynetEltwiseOperationProduct, (float*)dst8);
     }
 #endif
 
-    static MulLayer::UniformPtr GetUniform(TensorType type)
+    template<class A, class B> static MulLayer::UniformPtr GetMulUniform(TensorType typeD)
     {
-        switch (type)
+        switch (typeD)
         {
-        case TensorType32f: return Uniform<float>;
-        case TensorType64i: return Uniform<int64_t>;
+        case TensorType32f: return MulUniform<A, B, float>;
+        case TensorType16b: return MulUniform<A, B, uint16_t>;
+        default:
+            return NULL;
+        }
+    }
+
+    template<class A> static MulLayer::UniformPtr GetMulUniform(TensorType typeB, TensorType typeD)
+    {
+        switch (typeB)
+        {
+        case TensorType32f: return GetMulUniform<A, float>(typeD);
+        case TensorType16b: return GetMulUniform<A, uint16_t>(typeD);
+        default:
+            return NULL;
+        }
+    }
+
+    static MulLayer::UniformPtr GetMulUniform(TensorType typeA, TensorType typeB, TensorType typeD)
+    {
+        if (typeA == TensorType64i && typeB == TensorType64i && typeD == TensorType64i)
+            return MulUniform<int64_t, int64_t, int64_t>;
+        switch (typeA)
+        {
+        case TensorType32f: return GetMulUniform<float>(typeB, typeD);
+        case TensorType16b: return GetMulUniform<uint16_t>(typeB, typeD);
         default:
             return NULL;
         }
@@ -58,17 +104,17 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template <typename T> void Scale(const uint8_t* src8, const uint8_t* scale8, size_t count, size_t size, uint8_t* dst8, TensorFormat format)
+    template <typename A, typename B, typename D> void Scale(const uint8_t* src8, const uint8_t* scale8, size_t count, size_t size, uint8_t* dst8, TensorFormat format)
     {
-        const T* src = (const T*)src8;
-        const T* scale = (const T*)scale8;
-        T* dst = (T*)dst8;
+        const A* src = (const A*)src8;
+        const B* scale = (const B*)scale8;
+        D* dst = (D*)dst8;
         if (format == TensorFormatNhwc)
         {
             for (size_t j = 0; j < size; ++j)
             {
                 for (size_t i = 0; i < count; ++i)
-                    dst[i] = src[i] * scale[i];
+                    Mul<A, B, D>(src[i], scale[i], dst[i]);
                 src += count;
                 dst += count;
             }
@@ -77,9 +123,9 @@ namespace Synet
         {
             for (size_t i = 0; i < count; ++i)
             {
-                T s = scale[i];
+                B _scale = scale[i];
                 for (size_t j = 0; j < size; ++j)
-                    dst[j] = src[j] * s;
+                    Mul<A, B, D>(src[j], _scale, dst[j]);
                 src += size;
                 dst += size;
             }
@@ -87,18 +133,42 @@ namespace Synet
     }
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-    template <> void Scale<float>(const uint8_t* src8, const uint8_t* scale8, size_t count, size_t size, uint8_t* dst8, TensorFormat format)
+    template <> void Scale<float, float, float>(const uint8_t* src8, const uint8_t* scale8, size_t count, size_t size, uint8_t* dst8, TensorFormat format)
     {
         SimdSynetScaleLayerForward((float*)src8, (float*)scale8, NULL, count, 1, size, (float*)dst8, (SimdTensorFormatType)format, SimdSynetCompatibilityFmaUse);
     }
 #endif
 
-    MulLayer::ScalePtr GetScale(TensorType type)
+    template<class A, class B> static MulLayer::ScalePtr GetScale(TensorType typeD)
     {
-        switch (type)
+        switch (typeD)
         {
-        case TensorType32f: return Scale<float>;
-        case TensorType64i: return Scale<int64_t>;
+        case TensorType32f: return Scale<A, B, float>;
+        case TensorType16b: return Scale<A, B, uint16_t>;
+        default:
+            return NULL;
+        }
+    }
+
+    template<class A> static MulLayer::ScalePtr GetScale(TensorType typeB, TensorType typeD)
+    {
+        switch (typeB)
+        {
+        case TensorType32f: return GetScale<A, float>(typeD);
+        case TensorType16b: return GetScale<A, uint16_t>(typeD);
+        default:
+            return NULL;
+        }
+    }
+
+    static MulLayer::ScalePtr GetScale(TensorType typeA, TensorType typeB, TensorType typeD)
+    {
+        if (typeA == TensorType64i && typeB == TensorType64i && typeD == TensorType64i)
+            return Scale<int64_t, int64_t, int64_t>;
+        switch (typeA)
+        {
+        case TensorType32f: return GetScale<float>(typeB, typeD);
+        case TensorType16b: return GetScale<uint16_t>(typeB, typeD);
         default:
             return NULL;
         }
@@ -106,32 +176,37 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template <typename T, size_t N> static void Universal(const uint8_t* a8, const Shape& aSteps, const uint8_t* b8, const Shape& bSteps, uint8_t* dst8, const Shape& dstShape)
+    template <typename A, typename B, typename D, size_t N> static void MulUniversal(const uint8_t* a8, const Shape& aSteps, const uint8_t* b8, const Shape& bSteps, uint8_t* dst8, const Shape& dstShape)
     {
-        const T* a = (const T*)a8;
-        const T* b = (const T*)b8;
-        T* dst = (T*)dst8;
+        const A* a = (const A*)a8;
+        const B* b = (const B*)b8;
+        D* dst = (D*)dst8;
         if (N == 1)
         {
-            const T *a0 = a, *b0 = b;
+            const A* a0 = a;
+            const B* b0 = b;
             for (size_t i0 = 0; i0 < dstShape[0]; ++i0)
             {
-                *dst++ = (*a0) * (*b0);
+                Mul<A, B, D>(*a0, *b0, *dst);
                 a0 += aSteps[0];
                 b0 += bSteps[0];
+                dst += 1;
             }
         }
         else if (N == 2)
         {
-            const T* a0 = a, * b0 = b;
+            const A* a0 = a;
+            const B* b0 = b;
             for (size_t i0 = 0; i0 < dstShape[0]; ++i0)
             {
-                const T* a1 = a0, * b1 = b0;
+                const A* a1 = a0;
+                const B* b1 = b0;
                 for (size_t i1 = 0; i1 < dstShape[1]; ++i1)
                 {
-                    *dst++ = (*a1) * (*b1);
+                    Mul<A, B, D>(*a1, *b1, *dst);
                     a1 += aSteps[1];
                     b1 += bSteps[1];
+                    dst += 1;
                 }
                 a0 += aSteps[0];
                 b0 += bSteps[0];
@@ -139,18 +214,22 @@ namespace Synet
         }
         else if (N == 3)
         {
-            const T* a0 = a, * b0 = b;
+            const A* a0 = a;
+            const B* b0 = b;
             for (size_t i0 = 0; i0 < dstShape[0]; ++i0)
             {
-                const T* a1 = a0, * b1 = b0;
+                const A* a1 = a0;
+                const B* b1 = b0;
                 for (size_t i1 = 0; i1 < dstShape[1]; ++i1)
                 {
-                    const T* a2 = a1, * b2 = b1;
+                    const A* a2 = a1;
+                    const B* b2 = b1;
                     for (size_t i2 = 0; i2 < dstShape[2]; ++i2)
                     {
-                        *dst++ = (*a2) * (*b2);
+                        Mul<A, B, D>(*a2, *b2, *dst);
                         a2 += aSteps[2];
                         b2 += bSteps[2];
+                        dst += 1;
                     }
                     a1 += aSteps[1];
                     b1 += bSteps[1];
@@ -161,21 +240,26 @@ namespace Synet
         }
         else if (N == 4)
         {
-            const T* a0 = a, * b0 = b;
+            const A* a0 = a;
+            const B* b0 = b;
             for (size_t i0 = 0; i0 < dstShape[0]; ++i0)
             {
-                const T* a1 = a0, * b1 = b0;
+                const A* a1 = a0;
+                const B* b1 = b0;
                 for (size_t i1 = 0; i1 < dstShape[1]; ++i1)
                 {
-                    const T* a2 = a1, * b2 = b1;
+                    const A* a2 = a1;
+                    const B* b2 = b1;
                     for (size_t i2 = 0; i2 < dstShape[2]; ++i2)
                     {
-                        const T* a3 = a2, * b3 = b2;
+                        const A* a3 = a2;
+                        const B* b3 = b2;
                         for (size_t i3 = 0; i3 < dstShape[3]; ++i3)
                         {
-                            *dst++ = (*a3) * (*b3);
+                            Mul<A, B, D>(*a3, *b3, *dst);
                             a3 += aSteps[3];
                             b3 += bSteps[3];
+                            dst += 1;
                         }
                         a2 += aSteps[2];
                         b2 += bSteps[2];
@@ -189,28 +273,53 @@ namespace Synet
         }
         else
             assert(0);
-
     }
 
-    template<class T> static MulLayer::UniversalPtr GetUniversal(size_t dim)
+    template<class A, class B, class D> static MulLayer::UniversalPtr GetMulUniversal(size_t dim)
     {
         switch (dim)
         {
-        case 1: return Universal<T, 1>;
-        case 2: return Universal<T, 2>;
-        case 3: return Universal<T, 3>;
-        case 4: return Universal<T, 4>;
+        case 1: return MulUniversal<A, B, D, 1>;
+        case 2: return MulUniversal<A, B, D, 2>;
+        case 3: return MulUniversal<A, B, D, 3>;
+        case 4: return MulUniversal<A, B, D, 4>;
         default:
             return NULL;
         }
     }
 
-    static MulLayer::UniversalPtr GetUniversal(TensorType type, size_t dim)
+    template<class A, class B> static MulLayer::UniversalPtr GetMulUniversal(TensorType typeD, size_t dim)
     {
-        switch (type)
+        switch (typeD)
         {
-        case TensorType32f: return GetUniversal<float>(dim);
-        case TensorType64i: return GetUniversal<int64_t>(dim);
+        case TensorType32f: return GetMulUniversal<A, B, float>(dim);
+        case TensorType16b: return GetMulUniversal<A, B, uint16_t>(dim);
+        default:
+            return NULL;
+        }
+    }
+
+    template<class A> static MulLayer::UniversalPtr GetMulUniversal(TensorType typeB, TensorType typeD, size_t dim)
+    {
+        switch (typeB)
+        {
+        case TensorType32f: return GetMulUniversal<A, float>(typeD, dim);
+        case TensorType16b: return GetMulUniversal<A, uint16_t>(typeD, dim);
+        default:
+            return NULL;
+        }
+    }
+
+    MulLayer::UniversalPtr GetMulUniversal(TensorType typeA, TensorType typeB, TensorType typeD, size_t dim)
+    {
+        if (typeA == TensorType64i && typeB == TensorType64i && typeD == TensorType64i)
+            return GetMulUniversal<int64_t, int64_t, int64_t>(dim);
+        if (typeA == TensorType32i && typeB == TensorType32i && typeD == TensorType32i)
+            return GetMulUniversal<int32_t, int32_t, int32_t>(dim);
+        switch (typeA)
+        {
+        case TensorType32f: return GetMulUniversal<float>(typeB, typeD, dim);
+        case TensorType16b: return GetMulUniversal<uint16_t>(typeB, typeD, dim);
         default:
             return NULL;
         }
@@ -315,7 +424,7 @@ namespace Synet
                         _dstShape[i] = Max(aShape[i], bShape[i]);
                     if (!(GetSteps(aShape, _dstShape, _aSteps) && GetSteps(bShape, _dstShape, _bSteps)))
                         SYNET_ERROR("MulLayer has incompatible inputs!");
-                    _universal = GetUniversal(_type, 3);
+                    _universal = GetMulUniversal(_type, _type, _type, 3);
                     _special = SpecialUniversal;
                     if (dst[0] != _src[_index[0]])
                         dst[0]->Reshape(_type, _dstShape, _src[_index[0]]->Format());
@@ -344,7 +453,7 @@ namespace Synet
                         _dstShape[i] = Max(aShape[i], bShape[i]);
                     if (!(GetSteps(aShape, _dstShape, _aSteps) && GetSteps(bShape, _dstShape, _bSteps)))
                         SYNET_ERROR("MulLayer has incompatible inputs!");
-                    _universal = GetUniversal(_type, 4);
+                    _universal = GetMulUniversal(_type, _type, _type, 4);
                     _special = SpecialUniversal;
                     if (dst[0] != _src[_index[0]])
                         dst[0]->Reshape(_type, _dstShape, _src[_index[0]]->Format());
@@ -384,6 +493,25 @@ namespace Synet
                 _spatial = _src[_index[0]]->Size();
                 _special = SpecialScaleChannel;
             }
+            else if (_src[0]->Count() == 7)
+            {
+                if(!IsCompatible(_src[0]->Shape(), _src[1]->Shape()))
+                    SYNET_ERROR("MulLayer can't process inputs with this shape!");
+                _dstShape = OutputShape(_src[0]->Shape(), _src[1]->Shape());
+                if (dst[0] != _src[_index[0]])
+                {
+                    dst[0]->Reshape(_type, _dstShape, _src[_index[0]]->Format());
+                    resized = true;
+                    Shape src0 = _src[0]->Shape(), src1 = _src[1]->Shape();
+                    CompactShapes(src0, src1, _dstShape);
+                    if (!(GetSteps(src0, _dstShape, _aSteps) && GetSteps(src1, _dstShape, _bSteps)))
+                        SYNET_ERROR("MulLayer has incompatible inputs!");
+                    _universal = GetMulUniversal(_type, _type, _type, _dstShape.size());
+                    if (_universal == NULL)
+                        SYNET_ERROR("MulLayer can create universal worker!");
+                    _special = SpecialUniversal;
+                }
+            }
             else
                 SYNET_ERROR("MulLayer can't process inputs with this shape!");
         }
@@ -393,8 +521,8 @@ namespace Synet
             _batch = 1, _channels = 1, _spatial = _src[_index[0]]->Size();
         }
 
-        _uniform = GetUniform(_type);
-        _scale = GetScale(_type);
+        _uniform = GetMulUniform(_type, _type, _type);
+        _scale = GetScale(_type, _type, _type);
         if (_uniform == NULL || _scale == NULL)
             SYNET_ERROR("MulLayer can't process input type!");
 
