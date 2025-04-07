@@ -317,13 +317,13 @@ namespace Synet
                 buf = bin;
             dst.push_back(ip);
             dst.back().innerProduct().transposeB() = false;
-            int axis = ip.innerProduct().axis();
-            dst.back().weight()[0].dim() = Shp(dim[axis], dim[axis - 1]);
+            int axis = ip.innerProduct().axis(), dim0 = dim[axis - 1], dim1 = dim[axis];
+            dst.back().weight()[0].dim() = Shp(dim1, dim0);
             const float* pSrc = GetWeight<float>(bin, ip.weight()[0]);
             float* pDst = GetWeight<float>(buf, ip.weight()[0]);
-            for (size_t i = 0; i < dim[0]; ++i)
-                for (size_t j = 0; j < dim[1]; ++j)
-                    pDst[j * dim[0] + i] = pSrc[i * dim[1] + j];
+            for (int i = 0; i < dim0; ++i)
+                for (int j = 0; j < dim1; ++j)
+                    pDst[j * dim0 + i] = pSrc[i * dim1 + j];
             return true;
         }
 
