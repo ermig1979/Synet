@@ -2292,6 +2292,12 @@ namespace Synet
                     continue;
                 if (HasOutput(network, layer))
                     continue;
+                size_t srcIndex = GetLayerIndex(layers, layer.src()[0]);
+                if (layers[srcIndex].type() == LayerTypeReshape)
+                {
+                    if (Users(layers[srcIndex].src()[0], layers, srcIndex, "") > 1)
+                        continue;
+                }
                 if (!CanReuse(layer))
                     continue;
                 if (!Rename(Change(layer.dst()[0], layer.src()[0]), layers))
