@@ -1078,7 +1078,7 @@ namespace Synet
             {
                 layer.type() = Synet::LayerTypePower;
                 const float* pScale = GetWeight<float>(original, src1->weight()[0]);
-                layer.power().scale() = 1.0f / pScale[0];
+                layer.power().scale() = float(1.0 / double(pScale[0]));
                 layer.src().resize(1);
             }
             else if (src0->type() == LayerTypeConst && TensorSize(src0->weight()[0].dim()) == 1)
