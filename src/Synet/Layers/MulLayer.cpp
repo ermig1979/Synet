@@ -441,7 +441,13 @@ namespace Synet
                 _channels = _src[_index[0]]->Axis(_format == TensorFormatNhwc ? 3 : 1);
                 _spatial = _src[_index[0]]->Size() / _batch / _channels;
                 size_t size = _src[_index[1]]->Count() == 4 ? _src[_index[1]]->Size(1) : _src[_index[1]]->Size(0);
-                if (size == _channels)
+                if (size == 1)
+                {
+                    _special = SpecialScaleChannel;
+                    _spatial *= _channels;
+                    _channels = 1;
+                }
+                else if (size == _channels)
                     _special = SpecialScaleChannel;
                 else if (size == _spatial)
                     _special = SpecialScaleSpatial;
