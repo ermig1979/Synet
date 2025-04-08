@@ -2120,6 +2120,21 @@ namespace Synet
                     return false;
                 layer.type() = Synet::LayerTypeStridedSlice;
             }
+            else if (layer.src().size() == 3)
+            {
+                const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+                const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+                const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+                if (src0 == NULL || src1 == NULL || src2 == NULL)
+                    return false;
+                if (src0->type() == LayerTypeMeta)
+                {
+                    layer.type() = Synet::LayerTypeMeta;
+                    layer.meta().type() = MetaTypeSlice;
+                }
+                else
+                    return false;
+            }
             else if(layer.src().size() >= 4 && layer.src().size() <= 5)
             {
                 const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
