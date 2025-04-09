@@ -74,6 +74,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypePrelu,
     LayerTypePriorBox,
     LayerTypePriorBoxClustered,
+    LayerTypeQuantizeLinear,
     LayerTypeReduction,
     LayerTypeRegion,//legacy
     LayerTypeRelu,
@@ -605,6 +606,14 @@ namespace Synet
         CPL_PARAM_VALUE(float, offset, 0.5f);
     };
 
+    struct QuantizeParam
+    {
+        CPL_PARAM_VALUE(float, scale, 0.0f);
+        CPL_PARAM_VALUE(int, zero, 0);
+        CPL_PARAM_VALUE(int, axis, 0);
+        CPL_PARAM_VALUE(TensorType, type, TensorTypeUnknown);
+    };
+
     struct ReductionParam
     {
         CPL_PARAM_VALUE(ReductionType, type, ReductionTypeUnknown);
@@ -816,6 +825,7 @@ namespace Synet
         CPL_PARAM_STRUCT(PreluParam, prelu);
         CPL_PARAM_STRUCT(PriorBoxParam, priorBox);
         CPL_PARAM_STRUCT(PriorBoxClusteredParam, priorBoxClustered);
+        CPL_PARAM_STRUCT(QuantizeParam, quantize);
         CPL_PARAM_STRUCT(ReductionParam, reduction);
         CPL_PARAM_STRUCT(RegionParam, region);
         CPL_PARAM_STRUCT(ReluParam, relu);
