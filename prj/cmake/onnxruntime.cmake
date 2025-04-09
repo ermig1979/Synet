@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.10)
 
 set(ORT_DIR ${ROOT_DIR}/3rd/onnxruntime) 
 set(ORT_BIN ${CMAKE_BINARY_DIR}/3rd/onnxruntime) 
@@ -24,7 +24,7 @@ file(MAKE_DIRECTORY ${ORT_BIN})
 add_custom_command(
 	OUTPUT ${ORT_LIBS}
 	COMMAND cmake ${ORT_DIR}/cmake ${ORT_BUILD_OPTIONS} && make -j16
-	POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${ORT_LIBS} ${CMAKE_BINARY_DIR} 
+	COMMAND ${CMAKE_COMMAND} -E copy ${ORT_LIBS} ${CMAKE_BINARY_DIR} 
 	WORKING_DIRECTORY ${ORT_BIN})
 	
 add_custom_target(make_ort DEPENDS ${ORT_LIBS})

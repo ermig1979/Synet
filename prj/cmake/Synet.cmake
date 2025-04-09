@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.10)
 
 if(SYNET_PERF GREATER_EQUAL 1)
 	list(APPEND SYNET_DEFINITIONS -DSYNET_PERFORMANCE_STATISTIC)
