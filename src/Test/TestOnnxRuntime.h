@@ -92,8 +92,15 @@ namespace Test
             sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
             sessionOptions.SetInterOpNumThreads((int)options.workThreads);
             sessionOptions.SetIntraOpNumThreads((int)options.workThreads);
+#if defined(SYNET_ORT_DNNL_ENABLE)
+			bool enable_cpu_mem_arena = true;
+			if (OrtSessionOptionsAppendExecutionProvider_Dnnl(sessionOptions, enable_cpu_mem_arena) != nullptr )
+				SYNET_ERROR("Can not initialize ONNXRT Dnnl Session!");
+#else
             if (OrtSessionOptionsAppendExecutionProvider_CPU(sessionOptions, 0) != nullptr)
                 SYNET_ERROR("Can not Initialize ONNXRT CPU Session!");
+#endif
+
             std::stringstream logName;
             logName << "log_";
             logName << std::hex << std::this_thread::get_id();
