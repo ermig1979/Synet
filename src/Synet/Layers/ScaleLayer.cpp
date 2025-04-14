@@ -205,7 +205,7 @@ namespace Synet
     bool ScaleLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         const ScaleParam & param = this->Param().scale();
-        _axis = param.axis();
+        _axis = src[0]->Index(param.axis());
         _biasTerm = param.biasTerm();
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("ScaleLayer supports only 1 input and 1 output!");
@@ -218,6 +218,7 @@ namespace Synet
         _src16b = src[0]->GetType() == TensorType16b;
         _dst16b = dst[0]->GetType() == TensorType16b;
         _format = src[0]->Format();
+        _processFormat = _format;
         if (this->Weight().empty())
             SYNET_ERROR("ScaleLayer weights are absent!");
         if (_biasTerm)
@@ -252,23 +253,33 @@ namespace Synet
         }
         else
         {
-            _batch = src[0]->Size(0, _axis);
-            if (src[0]->Count() < 4)
+            if (_axis == 3)
             {
-                _height = 1;
-                _width = src[0]->Size() / _batch / _channels;
+                _processFormat = TensorFormatNhwc;
+                _batch = src[0]->Axis(0);
+                _height = src[0]->Axis(1);
+                _width = src[0]->Axis(2);
             }
             else
             {
-                _height = _format == TensorFormatNhwc ? src[0]->Axis(1) : src[0]->Axis(2);
-                _width = _format == TensorFormatNhwc ? src[0]->Axis(2) : src[0]->Axis(3);
+                _batch = src[0]->Size(0, _axis);
+                if (src[0]->Count() < 4)
+                {
+                    _height = 1;
+                    _width = src[0]->Size() / _batch / _channels;
+                }
+                else
+                {
+                    _height = _format == TensorFormatNhwc ? src[0]->Axis(1) : src[0]->Axis(2);
+                    _width = _format == TensorFormatNhwc ? src[0]->Axis(2) : src[0]->Axis(3);
+                }
             }
         }
         if (src[0]->Size() != _batch * _channels * _height * _width)
             SYNET_ERROR("ScaleLayer: can't process input shape: " << ToStr(src[0]->Shape()) << " for weight size " << _channels << " and axis " << _axis << " !");
         if (_is8i)
         {
-            _scale8i.Init(_batch, _channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, _method);
+            _scale8i.Init(_batch, _channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _processFormat, _method);
             if (_scale8i.Enable())
             {
                 const float* bias = _biasTerm ? this->Weight()[1].Data<float>() : NULL;
@@ -362,11 +373,11 @@ namespace Synet
             else
             {
                 if (_src16b && _dst16b)
-                    ScaleForward16b(src[0]->Data<uint16_t>(), _batch, _channels, _height * _width, _format, scale, shift, dst[0]->Data<uint16_t>());
+                    ScaleForward16b(src[0]->Data<uint16_t>(), _batch, _channels, _height * _width, _processFormat, scale, shift, dst[0]->Data<uint16_t>());
                 else if (!_src16b && _dst16b)
-                    ScaleForward16b(src[0]->Data<float>(), _batch, _channels, _height * _width, _format, scale, shift, dst[0]->Data<uint16_t>());
+                    ScaleForward16b(src[0]->Data<float>(), _batch, _channels, _height * _width, _processFormat, scale, shift, dst[0]->Data<uint16_t>());
                 else if (_src16b && !_dst16b)
-                    ScaleForward16b(src[0]->Data<uint16_t>(), _batch, _channels, _height * _width, _format, scale, shift, dst[0]->Data<float>());
+                    ScaleForward16b(src[0]->Data<uint16_t>(), _batch, _channels, _height * _width, _processFormat, scale, shift, dst[0]->Data<float>());
             }
         }
         else
@@ -379,7 +390,7 @@ namespace Synet
         const float* bias = _biasTerm ? this->Weight()[1].Data<float>() : NULL;
         for (size_t b = 0; b < _batch; ++b)
         {
-            ScaleForward32f(src, scale, bias, _channels, _height, _width, dst, _format, _compatibility);
+            ScaleForward32f(src, scale, bias, _channels, _height, _width, dst, _processFormat, _compatibility);
             src += _channels * _height * _width;
             dst += _channels * _height * _width;
         }

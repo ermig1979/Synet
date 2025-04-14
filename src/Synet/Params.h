@@ -663,7 +663,7 @@ namespace Synet
 
     struct ScaleParam
     {
-        CPL_PARAM_VALUE(uint32_t, axis, 1);
+        CPL_PARAM_VALUE(int32_t, axis, 1);
         CPL_PARAM_VALUE(uint32_t, numAxes, 1);
         CPL_PARAM_VALUE(bool, biasTerm, false);
         CPL_PARAM_VALUE(TensorType, quantizationLevel, TensorTypeUnknown);

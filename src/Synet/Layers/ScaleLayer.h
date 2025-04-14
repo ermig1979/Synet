@@ -57,7 +57,7 @@ namespace Synet
 
     private:
         QuantizationMethod _method;
-        TensorFormat _format;
+        TensorFormat _format, _processFormat;
         size_t _axis, _batch, _channels, _height, _width;
         int _compatibility, _lower, _upper;
         bool _biasTerm, _src8u, _dst8u, _is8i, _src16b, _dst16b;

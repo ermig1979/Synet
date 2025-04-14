@@ -1154,6 +1154,8 @@ namespace Synet
                     {
                         layer.type() = Synet::LayerTypeScale;
                         layer.scale().biasTerm() = false;
+                        if (dim.size() == 1)
+                            layer.scale().axis() = -1;
                         if (!CompactShape(layer.weight()[0].dim()))
                             return false;                    
                     }

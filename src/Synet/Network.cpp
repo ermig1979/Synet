@@ -33,6 +33,13 @@
 #include "Synet/Layers/DetectionOutputLayer.h"
 #include "Synet/Layers/YoloLayer.h"
 
+
+//#define SYNET_LOAD_LOG
+//#define SYNET_CREATE_LOG
+//#define SYNET_INIT_LOG
+//#define SYNET_RESHAPE_LOG
+//#define SYNET_FORWARD_LOG
+
 namespace Synet
 {
     Network::Network()
@@ -75,8 +82,6 @@ namespace Synet
         _context.Clear();
         _empty = true;
     }
-
-//#define SYNET_LOAD_LOG
 
     bool Network::Load(const String & model, const String & weight, const Options & options)
     {
@@ -381,8 +386,6 @@ namespace Synet
         return TensorFormatUnknown;
     }
 
-//#define SYNET_FORWARD_LOG
-
     void Network::Forward()
     {
         //SYNET_PERF_FUNC();
@@ -628,8 +631,6 @@ namespace Synet
         return NULL;
     }
 
-//#define SYNET_CREATE_LOG
-
     bool Network::CreateLayers()
     {
         NameIdMap layerId;
@@ -663,8 +664,6 @@ namespace Synet
         }
         return true;
     }
-
-//#define SYNET_INIT_LOG
 
     bool Network::Init()
     {
@@ -990,8 +989,6 @@ namespace Synet
             }
         }
     }
-
-//#define SYNET_RESHAPE_LOG
 
     bool Network::ReshapeStages()
     {

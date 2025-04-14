@@ -69,7 +69,7 @@ namespace Synet
                 SYNET_ERROR("InnerProductLayer has wrong weight number!");
             if (_transB && weight[0].Shape() != Shp(_K, _N))
             {
-                SYNET_ERROR("InnerProductLayer: check weight[0] shape!");
+                SYNET_ERROR("InnerProductLayer: weight[0] has wrong shape: " << ToStr(weight[0].Shape()) << " !");
             }
             else
             {
@@ -78,8 +78,16 @@ namespace Synet
                     _axis = (int)src[0]->Count() - 1;
                     _K = src[0]->Size(_axis);
                 }
-                if(weight[0].Shape() != Shp(_N, _K))
-                    SYNET_ERROR("InnerProductLayer: check weight[0] shape!");
+                if (_transB)
+                {
+                    if (weight[0].Shape() != Shp(_K, _N))
+                        SYNET_ERROR("InnerProductLayer: weight[0] has wrong shape: " << ToStr(weight[0].Shape()) << " !");
+                }
+                else
+                {
+                    if(weight[0].Shape() != Shp(_N, _K))
+                        SYNET_ERROR("InnerProductLayer: weight[0] has wrong shape: " << ToStr(weight[0].Shape()) << " !");
+                }
             }
             if (_biasTerm && weight[1].Shape() != Shp(_N))
                 SYNET_ERROR("InnerProductLayer: check weight[1] shape!");
