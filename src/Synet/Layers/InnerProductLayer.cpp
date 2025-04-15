@@ -57,9 +57,9 @@ namespace Synet
         {
             if(_biasTerm)
                 SYNET_ERROR("InnerProductLayer don't support bias for 2 inputs!");
-            if(_K != src[1]->Size(_axis - 1, _axis))
+            if(_K != src[1]->Size(param.axis() - 1, param.axis()))
                 SYNET_ERROR("InnerProductLayer: src[0] shape " << ToStr(src[0]->Shape()) << " and src[1] shape " << ToStr(src[1]->Shape()) << " is not compatible!");
-            _N = src[1]->Axis(_axis);
+            _N = src[1]->Axis(param.axis());
         }
         else
         {
@@ -67,9 +67,15 @@ namespace Synet
             const Tensors & weight = this->Weight();
             if (weight.size() != (_biasTerm ? 2 : 1))
                 SYNET_ERROR("InnerProductLayer has wrong weight number!");
-            if (_transB && weight[0].Shape() != Shp(_K, _N))
+            if (_transB)
             {
-                SYNET_ERROR("InnerProductLayer: weight[0] has wrong shape: " << ToStr(weight[0].Shape()) << " !");
+                if (weight[0].Shape()[0] != _K && src[0]->Count() > 2)
+                {
+                    _axis = (int)src[0]->Count() - 1;
+                    _K = src[0]->Axis(_axis);
+                }
+                if (weight[0].Shape() != Shp(_K, _N))
+                    SYNET_ERROR("InnerProductLayer: weight[0] has wrong shape: " << ToStr(weight[0].Shape()) << " !");
             }
             else
             {
@@ -78,16 +84,8 @@ namespace Synet
                     _axis = (int)src[0]->Count() - 1;
                     _K = src[0]->Size(_axis);
                 }
-                if (_transB)
-                {
-                    if (weight[0].Shape() != Shp(_K, _N))
-                        SYNET_ERROR("InnerProductLayer: weight[0] has wrong shape: " << ToStr(weight[0].Shape()) << " !");
-                }
-                else
-                {
-                    if(weight[0].Shape() != Shp(_N, _K))
-                        SYNET_ERROR("InnerProductLayer: weight[0] has wrong shape: " << ToStr(weight[0].Shape()) << " !");
-                }
+                if (weight[0].Shape() != Shp(_N, _K))
+                    SYNET_ERROR("InnerProductLayer: weight[0] has wrong shape: " << ToStr(weight[0].Shape()) << " !");
             }
             if (_biasTerm && weight[1].Shape() != Shp(_N))
                 SYNET_ERROR("InnerProductLayer: check weight[1] shape!");
