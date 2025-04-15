@@ -299,18 +299,32 @@ namespace Synet
         }
         else if (src[0] != dst[0])
         {
-            if (_src16b || _dst16b)
-                ;// _scale16b.Init(_channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, true, _biasTerm);
-            if(_dst16b)
-                dst[0]->Reshape(TensorType16b, src[0]->Shape(), _format);
+            //if (_src16b || _dst16b)
+            //    _scale16b.Init(_channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, true, _biasTerm);
+            if (_src16b == _dst16b && TensorUsers(Param().src()[0]) == 1 && !src[0]->Const())
+                dst[0]->Share(*src[0]);
             else
-                dst[0]->Reshape(TensorType32f, src[0]->Shape(), _format);
+            {
+                if (_dst16b)
+                    dst[0]->Reshape(TensorType16b, src[0]->Shape(), _format);
+                else
+                    dst[0]->Reshape(TensorType32f, src[0]->Shape(), _format);
+            }
         }
-        if (Options().BFloat16Enable())
-            UsePerfStat(ToChar(src[0]->GetType()) + ToChar(dst[0]->GetType()));
+        if (src[0]->Const())
+        {
+            ForwardCpu(src, buf, dst);
+            dst[0]->SetConst(true);
+            _const = true;
+        }
         else
-            UsePerfStat();
-        this->UsePerfStat();
+        {
+            if (Options().BFloat16Enable())
+                UsePerfStat(ToChar(src[0]->GetType()) + ToChar(dst[0]->GetType()));
+            else
+                UsePerfStat();
+            _const = false;
+        }
         _compatibility = 1;
         return true;
     }

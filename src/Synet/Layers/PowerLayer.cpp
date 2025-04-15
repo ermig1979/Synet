@@ -45,7 +45,7 @@ namespace Synet
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("Power supports only 1 input and 1 output!");
 
-        const PowerParam & param = this->Param().power();
+        const PowerParam & param = Param().power();
         _power = param.power();
         _scale = param.scale();
         _shift = param.shift();
@@ -54,8 +54,14 @@ namespace Synet
             SYNET_ERROR("PowerLayer usupported src[0]: " << Cpl::ToStr(src[0]->GetType()) << " type !");
         _size = src[0]->Size();
 
-        if(src[0] != dst[0])
-            dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        if (src[0] != dst[0])
+        {
+            const Strings& names = Param().src();
+            if (TensorUsers(names[0]) == 1 && !src[0]->Const())
+                dst[0]->Share(*src[0]);
+            else
+                dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        }
         if (src[0]->Const())
         {
             ForwardCpu(src, buf, dst);

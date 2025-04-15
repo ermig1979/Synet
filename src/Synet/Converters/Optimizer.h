@@ -105,8 +105,8 @@ namespace Synet
                 }
                 case 1:
                 {
-                    if (TransposeInnerProduct(network.layers(), i, bin, buf, merged))
-                        continue;
+                    //if (TransposeInnerProduct(network.layers(), i, bin, buf, merged))
+                    //    continue;
                     break;
                 }
                 case 2:
@@ -2243,10 +2243,10 @@ namespace Synet
                 return true;
             if (layer.type() == LayerTypeSwish)
                 return true;
-            if (layer.type() == LayerTypeScale)
-                return true;
-            if (layer.type() == LayerTypePower)
-                return true;
+            //if (layer.type() == LayerTypeScale)
+            //    return true;
+            //if (layer.type() == LayerTypePower)
+            //    return true;
             if (_param.reuseEltwise() && layer.type() == LayerTypeEltwise)
                 return true;
             if (layer.type() == LayerTypeRelu)
