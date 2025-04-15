@@ -103,7 +103,7 @@ namespace Synet
 
         size_t MemoryUsage() const;
 
-        void CompactWeight();
+        void CompactWeight(bool unusedConst = true);
 
         int64_t Flop() const;
 

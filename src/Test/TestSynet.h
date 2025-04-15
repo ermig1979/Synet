@@ -91,7 +91,7 @@ namespace Test
                             return false;
                     }
                 }
-                _net.CompactWeight();
+                _net.CompactWeight(!(options.debugPrint&2));
                 _lower = param.lower();
                 _upper = param.upper();
                 _synetMemoryUsage = _net.MemoryUsage();

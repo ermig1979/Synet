@@ -571,26 +571,29 @@ namespace Synet
         return memoryUsage;
     }
 
-    void Network::CompactWeight()
+    void Network::CompactWeight(bool unusedConst)
     {
         for (size_t i = 0; i < _layers.size(); ++i)
             _layers[i]->CompactWeight();
-        for (size_t i = 0; i < _tensors.size(); ++i)
+        if (unusedConst)
         {
-            Tensor32f& t = *_tensors[i];
-            if (t.Const() && t.Size() >= 16 && t.Users() == 1)
+            for (size_t i = 0; i < _tensors.size(); ++i)
             {
-                const IdSet& ids = _srcIds[t.Name()];
-                bool isConst = ids.size() > 0;
-                for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
+                Tensor32f& t = *_tensors[i];
+                if (t.Const() && t.Size() >= 16 && t.Users() == 1)
                 {
-                    const Stage& s = _stages[*id];
-                    if (!s.layer->Const())
-                        isConst = false;
+                    const IdSet& ids = _srcIds[t.Name()];
+                    bool isConst = ids.size() > 0;
+                    for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
+                    {
+                        const Stage& s = _stages[*id];
+                        if (!s.layer->Const())
+                            isConst = false;
 
+                    }
+                    if (isConst)
+                        t.Clear();
                 }
-                if (isConst)
-                    t.Clear();
             }
         }
     }
