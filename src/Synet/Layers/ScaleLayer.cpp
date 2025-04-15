@@ -233,6 +233,8 @@ namespace Synet
                     SYNET_ERROR("ScaleLayer scale and bias weights have different shapes: " << ToStr(this->Weight()[0].Shape()) << " != " << ToStr(this->Weight()[1].Shape()) << "!");
             }
         }
+        const Tensor & scale = this->Weight()[0];
+        _channels = scale.Size();
         if (_src16b || _dst16b)
         {
             if (_biasTerm)
@@ -240,9 +242,6 @@ namespace Synet
             else
                 _shift.Reshape(TensorType32f, Shp(_channels), TensorFormatUnknown, 0.0f);
         }
-
-        const Tensor & scale = this->Weight()[0];
-        _channels = scale.Size();
         if (scale.Size() == src[0]->Size())
         {
             _batch = 1;
@@ -273,6 +272,13 @@ namespace Synet
                     _height = _format == TensorFormatNhwc ? src[0]->Axis(1) : src[0]->Axis(2);
                     _width = _format == TensorFormatNhwc ? src[0]->Axis(2) : src[0]->Axis(3);
                 }
+            }
+            if (src[0]->Count() == 3 && _format == TensorFormatNchw && src[0]->Axis(2) == _channels && src[0]->Axis(1) != _channels)
+            {
+                _processFormat = TensorFormatNhwc;
+                _batch = src[0]->Axis(0);
+                _height = 1;
+                _width = src[0]->Axis(1);
             }
         }
         if (src[0]->Size() != _batch * _channels * _height * _width)
