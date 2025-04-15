@@ -105,8 +105,8 @@ namespace Synet
                 }
                 case 1:
                 {
-                    //if (TransposeInnerProduct(network.layers(), i, bin, buf, merged))
-                    //    continue;
+                    if (TransposeInnerProduct(network.layers(), i, bin, buf, merged))
+                        continue;
                     break;
                 }
                 case 2:
@@ -311,6 +311,8 @@ namespace Synet
         {
             const LayerParam& ip = src[index];
             if (ip.type() != LayerTypeInnerProduct || !ip.innerProduct().transposeB() || ip.weight().empty())
+                return false;
+            if (WeightUserCount(src, ip.weight()[0]) > 1)
                 return false;
             const Shape & dim = ip.weight()[0].dim();
             if (buf.empty())

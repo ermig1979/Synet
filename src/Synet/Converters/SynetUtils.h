@@ -514,6 +514,22 @@ namespace Synet
 
         //-------------------------------------------------------------------------------------------------
 
+        static size_t WeightUserCount(const LayerParams& layers, const WeightParam& weight)
+        {
+            size_t users = 0;
+            for (size_t l = 0; l < layers.size(); ++l)
+            {
+                for (size_t w = 0; w < layers[l].weight().size(); w++)
+                {
+                    if (layers[l].weight()[w].offset() == weight.offset())
+                        users++;
+                }
+            }
+            return users;
+        }
+
+        //-------------------------------------------------------------------------------------------------
+
         static bool ReorderWeight(const Bytes& srcBin, const Shape& input, LayerParam& layer, Bytes& dstBin)
         {
             if (layer.weight().size() < 1)
