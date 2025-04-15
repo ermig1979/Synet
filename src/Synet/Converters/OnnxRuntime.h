@@ -2011,7 +2011,7 @@ namespace Synet
                 layer.type() = LayerTypeReshape;
                 shape = Shp(alpha.i64().data(), alpha.shape()[0]);
                 layer.src().resize(1);
-                if (trans && !PermutedToNchw(layers, layer.src(), true, false, true))
+                if (trans && CurrentTensorFormat(layers, layer.src(), true, false, true) == TensorFormatNhwc)
                 {
                     if (shape.size() == 5)
                     {
