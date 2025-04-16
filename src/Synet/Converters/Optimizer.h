@@ -877,7 +877,7 @@ namespace Synet
                 return false;
             if (k0.size() < 2 || (k0[0] != k0[1] || (k0[0] != 1 && k0[0] != 3)) || l0.convolution().group() != 1)
                 return false;
-            if (l1.convolution().outputNum() != l1.convolution().group())
+            if (l1.convolution().outputNum() != l1.convolution().group() || l1.convolution().group() == 1)
                 return false;
             if (k1.size() < 2 || (k1[0] != k1[1] || (k1[0] != 3 && k1[0] != 5 && k1[0] != 7)))
                 return false;
@@ -1021,7 +1021,7 @@ namespace Synet
                 return false;
             if (l0.convolution().group() != 1)
             {
-                if (l0.convolution().outputNum() != l0.convolution().group())
+                if (l0.convolution().outputNum() != l0.convolution().group() || l0.convolution().group() == 1)
                     return false;
                 if (k0.size() < 2 || (k0[0] != k0[1] || (k0[0] != 3 && k0[0] != 5 && k0[0] != 7)))
                     return false;
@@ -1032,7 +1032,7 @@ namespace Synet
             {
                 if (k0.size() < 2 || (k0[0] != k0[1] || (k0[0] != 1 && k0[0] != 3)) || l0.convolution().group() != 1)
                     return false;
-                if (l1.convolution().outputNum() != l1.convolution().group())
+                if (l1.convolution().outputNum() != l1.convolution().group() || l1.convolution().group() == 1)
                     return false;
                 if (k1.size() < 2 || (k1[0] != k1[1] || (k1[0] != 3 && k1[0] != 5 && k1[0] != 7)))
                     return false;
