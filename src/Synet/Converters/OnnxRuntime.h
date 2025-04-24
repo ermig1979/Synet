@@ -1042,11 +1042,22 @@ namespace Synet
                 return false;
             if (!ConvertAtrributeInts(node, "strides", layer.convolution().stride()))
                 return false;
-            layer.weight().resize(layer.src().size() - 1);
+            if (GetLayerType(layers, layer.src()[0]) == LayerTypeDequantizeLinear && 
+                GetLayerType(layers, layer.src()[1]) == LayerTypeDequantizeLinear)
+            {
+                if (layer.type() == Synet::LayerTypeConvolution)
+                {
+                    layer.type() = Synet::LayerTypeQuantizedConvolution;
+                    return true;
+                }
+                else
+                    return false;
+            }
             const LayerParam* weight = GetWeightLayer(layers, layer.src()[1]);
             if (weight == NULL || weight->type() != LayerTypeConst)
                 return false;
             const Shape& shape = weight->weight()[0].dim();
+            layer.weight().resize(layer.src().size() - 1);
             layer.weight()[0] = weight->weight()[0];
             layer.convolution().outputNum() = uint32_t(layer.type() == Synet::LayerTypeConvolution ? shape[0] : shape[1] * layer.convolution().group());
             layer.convolution().biasTerm() = layer.src().size() > 2;

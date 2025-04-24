@@ -187,6 +187,17 @@ namespace Synet
             return i;
         }
 
+        static LayerType GetLayerType(const LayerParams& layers, const String& name)
+        {
+            for (size_t i = 0; i < layers.size(); ++i)
+            {
+                if (layers[i].name() == name)
+                    return layers[i].type();
+            }
+            CPL_LOG_SS(Error, "Can't find layer " << name << " !");
+            return LayerTypeUnknown;
+        }
+
         static String NotImplementedMarker()
         {
             return "~~~NOT_IMPLEMENTED~~~";
