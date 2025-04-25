@@ -195,6 +195,13 @@ namespace Synet
 #endif
     }
 
+    inline void SetAmxFull()
+    {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        ::SimdSetAmxFull();
+#endif
+    }
+
     inline void PrintMemoryUsage()
     {
 #if defined(__linux__)

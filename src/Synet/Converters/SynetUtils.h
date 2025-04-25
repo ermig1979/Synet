@@ -193,6 +193,9 @@ namespace Synet
             {
                 if (layers[i].name() == name)
                     return layers[i].type();
+                for (size_t d = 0; d < layers[i].dst().size(); ++d)
+                    if (layers[i].dst()[d] == name)
+                        return layers[i].type();
             }
             CPL_LOG_SS(Error, "Can't find layer " << name << " !");
             return LayerTypeUnknown;

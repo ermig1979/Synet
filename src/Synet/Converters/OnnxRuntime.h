@@ -1300,6 +1300,12 @@ namespace Synet
             layer.innerProduct().transposeB() = !transB;
             if (layer.src().size() < 2 || layer.src().size() > 3)
                 return false;
+            if (GetLayerType(layers, layer.src()[0]) == LayerTypeDequantizeLinear &&
+                GetLayerType(layers, layer.src()[1]) == LayerTypeDequantizeLinear)
+            {
+                layer.type() = Synet::LayerTypeQuantizedInnerProduct;
+                return true;
+            }
             layer.weight().resize(layer.src().size() - 1);
             const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
             if (src1 == NULL || src1->type() != LayerTypeConst)

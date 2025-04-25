@@ -391,6 +391,7 @@ namespace Synet
         //SYNET_PERF_FUNC();
         bool mode = GetFastMode();
         SetFastMode(true);
+        SetAmxFull();
         for (size_t i = 0; i < _stages.size(); ++i)
         {
 #if defined(SYNET_FORWARD_LOG)
