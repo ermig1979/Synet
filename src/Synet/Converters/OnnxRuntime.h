@@ -189,7 +189,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Constant" && !ConvertConstantNode(node, layer, original, reordered))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "ConstantOfShape" && !ConvertConstantOfShapeNode(node, network.layers(), layer))
+                if (node.op_type() == "ConstantOfShape" && !ConvertConstantOfShapeNode(node, network.layers(), layer, original, reordered))
                     return ErrorMessage(i, node);
                 if ((node.op_type() == "Conv" || node.op_type() == "ConvTranspose") && !ConvertConvOrConvTransposeNode(node, trans, network.layers(), original, layer, reordered, &permuteMap))
                     return ErrorMessage(i, node);
@@ -943,11 +943,14 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConstantOfShapeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        bool ConvertConstantOfShapeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer, Bytes& original, Bytes& reordered)
         {
             const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
             if (src0 == NULL)// || src0->type() != Synet::LayerTypeMeta)
                 return false;
+            Shape shape;
+            if (IsMetaConst64i(*src0))
+                shape = Shp(src0->meta().alpha().i64());
             const onnx::AttributeProto * attribute = GetAtrribute(node, "value");
             if (attribute && attribute->type() == onnx::AttributeProto_AttributeType_TENSOR)
             {
@@ -1005,11 +1008,27 @@ namespace Synet
                     else if (tensor.has_raw_data())
                         value = ((int32_t*)tensor.raw_data().c_str())[0];
                     else
-                        return false;
-                    layer.type() = Synet::LayerTypeConstantOfShape;
-                    layer.constantOfShape().value().type() = TensorType32i;
-                    layer.constantOfShape().value().shape() = Shp(1);
-                    layer.constantOfShape().value().i32().resize(1, value);
+                        return false;                    
+                    if (shape.empty())
+                    {
+                        layer.type() = Synet::LayerTypeConstantOfShape;
+                        layer.constantOfShape().value().type() = TensorType32i;
+                        layer.constantOfShape().value().shape() = Shp(1);
+                        layer.constantOfShape().value().i32().resize(1, value);
+                    }
+                    else
+                    {
+                        layer.type() = Synet::LayerTypeConst;
+                        layer.weight().resize(1);
+                        layer.weight()[0].type() = Synet::TensorType32i;
+                        layer.weight()[0].dim() = shape;
+                        layer.weight()[0].scalar() = true;
+                        layer.weight()[0].offset() = original.size();
+                        layer.weight()[0].size() = sizeof(int32_t);
+                        PushBack<int32_t>(original, value);
+                        PushBack<int32_t>(reordered, value);
+                        layer.src().clear();
+                    }
                 }
                 else
                     return false;

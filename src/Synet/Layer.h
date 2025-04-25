@@ -165,6 +165,8 @@ namespace Synet
                         Reshape(param, tensor);
                         if (!(is.seekg(offset, std::ios::beg) && is.read((char*)tensor.RawData(), size)))
                             SYNET_ERROR("Can't load weight[" << i << "] of type " << Cpl::ToStr(param.type()) << " for offset " << offset << " and size " << size << " !");
+                        if (param.scalar())
+                            FillByFirstValue(tensor);
                     }
                 }
             }
@@ -198,6 +200,8 @@ namespace Synet
                             return false;
                         Reshape(param, tensor);
                         memcpy(tensor.RawData(), data + offset, length);
+                        if (param.scalar())
+                            FillByFirstValue(tensor);
                     }
                 }
             }
@@ -347,6 +351,17 @@ namespace Synet
             case TensorTypeBool: tensor.Reshape(TensorTypeBool, param.dim(), param.format(), false); break;
             default:
                 assert(0);
+            }
+        }
+
+        void FillByFirstValue(Tensor& tensor)
+        {
+            size_t unit = tensor.TypeSize(), size = tensor.RawSize();
+            uint8_t* data = tensor.RawData();            
+            for (size_t i = unit; i < size; i += unit)
+            {
+                for (size_t j = 0; j < unit; ++j)
+                    data[i + j] = data[j];
             }
         }
     };
