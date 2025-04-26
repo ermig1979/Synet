@@ -765,6 +765,11 @@ namespace Synet
                     layer.cast().type() = TensorType8u;
                 else
                     SYNET_ERROR("Unsupported cast type!");
+                if (src0->type() == LayerTypeConst && src0->weight().size() && src0->weight()[0].type() == layer.cast().type())
+                {
+                    layer.type() = Synet::LayerTypeStub;
+                    layer.cast().type() = TensorTypeUnknown;
+                }
             }
             return true;
         }
