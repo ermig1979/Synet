@@ -770,6 +770,11 @@ namespace Synet
                     layer.type() = Synet::LayerTypeStub;
                     layer.cast().type() = TensorTypeUnknown;
                 }
+                if (src0->type() == LayerTypeQuantizeLinear && src0->quantize().type() == layer.cast().type())
+                {
+                    layer.type() = Synet::LayerTypeStub;
+                    layer.cast().type() = TensorTypeUnknown;
+                }
             }
             return true;
         }
