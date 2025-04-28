@@ -1135,30 +1135,34 @@ namespace Synet
                 layer.weight().push_back(src2->weight()[0]);
                 layer.src().resize(1);
             }
-            //if (src1->type() == LayerTypeConst && src2->type() == LayerTypeConst)
-            //{
-                //    if (TensorSize(src1->weight()[0].dim()) == 1 && TensorSize(src2->weight()[0].dim()) == 1)
-                //    {
-                //        layer.quantize().scale() = GetWeight<float>(original, src1->weight()[0])[0];
-                //        layer.quantize().type() = src2->weight()[0].type();
-                //        switch (layer.quantize().type())
-                //        {
-                //        case TensorType8u:
-                //            layer.quantize().zero() = GetWeight<uint8_t>(original, src2->weight()[0])[0];
-                //            break;
-                //        default:
-                //            SYNET_ERROR("QuantizeLinear: unsupported src[2] type!");
-                //        }
-                //    }
-                //    else
-                //    {
-                //        layer.weight().push_back(src1->weight()[0]);
-                //        layer.weight().push_back(src2->weight()[0]);
-                //    }
-                //    layer.src().resize(1);
-            //}
-            //else
-            //    SYNET_ERROR("DequantizLinear: src[1] or src[2] is not const!");
+            if (TensorSize(layer.weight().back().dim()) == 1 || layer.weight().back().scalar())
+            {
+                switch (layer.weight().back().type())
+                {
+                case TensorType8u:
+                    layer.quantize().zero() = GetWeight<uint8_t>(original, layer.weight().back())[0];
+                    break;
+                case TensorType32i:
+                    layer.quantize().zero() = GetWeight<int32_t>(original, layer.weight().back())[0];
+                    break;
+                default:
+                    return false;
+                }
+                layer.quantize().type() = layer.weight().back().type();
+                layer.weight().resize(layer.weight().size() - 1);
+                if (TensorSize(layer.weight().back().dim()) == 1 || layer.weight().back().scalar())
+                {
+                    switch (layer.weight().back().type())
+                    {
+                    case TensorType32f:
+                        layer.quantize().scale() = GetWeight<float>(original, layer.weight().back())[0];
+                        break;
+                    default:
+                        return false;
+                    }
+                    layer.weight().resize(layer.weight().size() - 1);
+                }
+            }
             return true;
         }
 
