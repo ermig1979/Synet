@@ -243,6 +243,9 @@
     <ClCompile Include="..\..\src\Synet\Utils\UniversalBinary.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizeLinearLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -660,6 +663,9 @@
     <ClInclude Include="..\..\src\Synet\Utils\UniversalBinary.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizeLinearLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -682,6 +688,9 @@
     </Filter>
     <Filter Include="Layers\Legacy">
       <UniqueIdentifier>{bd4270e8-bca4-4558-be00-ce82d571c796}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Quantized">
+      <UniqueIdentifier>{eab212be-fd12-4eec-900c-8df9283378a6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

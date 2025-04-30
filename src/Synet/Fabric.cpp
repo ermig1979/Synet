@@ -30,6 +30,8 @@
 #include "Synet/Layers/Legacy/SwitchLayer.h"
 #include "Synet/Layers/Legacy/UpsampleLayer.h"
 
+#include "Synet/Layers/Quantized/QuantizeLinearLayer.h"
+
 #include "Synet/Layers/ActivationLayers.h"
 #include "Synet/Layers/AddLayer.h"
 #include "Synet/Layers/ArgMaxLayer.h"
@@ -185,6 +187,7 @@ namespace Synet
         case LayerTypePrelu: return new PreluLayer(param, context);
         case LayerTypePriorBox: return new PriorBoxLayer(param, context);
         case LayerTypePriorBoxClustered: return new PriorBoxClusteredLayer(param, context);
+        case LayerTypeQuantizeLinear: return new QuantizeLinearLayer(param, context);
         case LayerTypeReduction: return new ReductionLayer(param, context);
         case LayerTypeRegion: return new RegionLayer(param, context);
         case LayerTypeRelu: return new ReluLayer(param, context);
