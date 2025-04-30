@@ -30,6 +30,7 @@
 #include "Synet/Layers/Legacy/SwitchLayer.h"
 #include "Synet/Layers/Legacy/UpsampleLayer.h"
 
+#include "Synet/Layers/Quantized/DequantizeLinearLayer.h"
 #include "Synet/Layers/Quantized/QuantizeLinearLayer.h"
 
 #include "Synet/Layers/ActivationLayers.h"
@@ -139,6 +140,7 @@ namespace Synet
                 return new Deconvolution16bLayer(param, context);
             else
                 return new Deconvolution32fLayer(param, context);
+        case LayerTypeDequantizeLinear: return new DequantizeLinearLayer(param, context);
         case LayerTypeDetectionOutput: return new DetectionOutputLayer(param, context);
         case LayerTypeEltwise: 
             if(SynetUtils::IsAdd(param))

@@ -78,6 +78,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\PreluLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PriorBoxClusteredLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PriorBoxLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizeLinearLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ReductionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ReshapeLayer.cpp" />
@@ -198,6 +199,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\PreluLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\PriorBoxClusteredLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\PriorBoxLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizeLinearLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ReshapeLayer.h" />
