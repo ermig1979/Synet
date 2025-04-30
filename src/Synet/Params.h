@@ -615,6 +615,7 @@ namespace Synet
         CPL_PARAM_VALUE(int, zero, 0);
         CPL_PARAM_VALUE(int, axis, 0);
         CPL_PARAM_VALUE(TensorType, type, TensorTypeUnknown);
+        CPL_PARAM_VALUE(int, weights, 0);
     };
 
     struct ReductionParam
@@ -793,6 +794,8 @@ namespace Synet
         CPL_PARAM_VECTOR(WeightParam, weight);
         CPL_PARAM_VALUE(Strings, origin, Strings());
         CPL_PARAM_STRUCT(LowPrecisionParam, lowPrecision);
+        CPL_PARAM_VECTOR(QuantizeParam, qSrc);
+        CPL_PARAM_VECTOR(QuantizeParam, qDst);
 
         CPL_PARAM_STRUCT(ArgMaxParam, argMax);
         CPL_PARAM_STRUCT(BiasParam, bias);
