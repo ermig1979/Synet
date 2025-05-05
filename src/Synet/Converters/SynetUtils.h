@@ -144,6 +144,20 @@ namespace Synet
             SYNET_ERROR("Can't found layer " << pin.name << " !");
         }
 
+        static LayerParam* GetLayer(LayerParams& layers, const String& name)
+        {
+            Pin pin = ParsePin(name);
+            for (size_t i = 0; i < layers.size(); ++i)
+            {
+                if (pin.name == layers[i].name())
+                    return &layers[i];
+                for (size_t d = 0; d < layers[i].dst().size(); ++d)
+                    if (pin.name == layers[i].dst()[d])
+                        return &layers[i];
+            }
+            SYNET_ERROR("Can't found layer " << pin.name << " !");
+        }
+
         static const LayerParam* GetWeightLayer(const LayerParams& layers, const String& name, bool * shared = NULL)
         {
             const LayerParam* curr = GetLayer(layers, name);
@@ -467,7 +481,10 @@ namespace Synet
             for (size_t i = 0; i < layers.size(); ++i)
             {
                 const LayerParam& curr = layers[i];
-                if (curr.type() == LayerTypeConst || (curr.type() == LayerTypeMeta && curr.meta().type() == MetaTypeConst))
+                if (
+                    curr.type() == LayerTypeConst || 
+                    (curr.type() == LayerTypeMeta && curr.meta().type() == MetaTypeConst) ||
+                    curr.type() == LayerTypeDequantizeLinear)
                 {
                     if (UserCount(layers, i) == 0)
                         layers.erase(layers.begin() + i), i -= 1;
@@ -548,9 +565,21 @@ namespace Synet
         {
             if (layer.weight().size() < 1)
                 SYNET_ERROR("There is no weight to reorder!");
+            const WeightParam& weight = layer.weight()[0];
+            switch (weight.type())
+            {
+            case TensorType32f: return ReorderWeight<float>(srcBin, input, layer, dstBin);
+            case TensorType8i: return ReorderWeight<int8_t>(srcBin, input, layer, dstBin);
+            default:
+                SYNET_ERROR("ReorderWeight: unsupported type: " << weight.type() << " !");
+            }
+        }
+
+        template<class T> static bool ReorderWeight(const Bytes& srcBin, const Shape& input, LayerParam& layer, Bytes& dstBin)
+        {
             WeightParam& weight = layer.weight()[0];
-            const float* pSrc = GetWeight<float>(srcBin, weight);
-            float* pDst = GetWeight<float>(dstBin, weight);
+            const T* pSrc = GetWeight<T>(srcBin, weight);
+            T* pDst = GetWeight<T>(dstBin, weight);
             Shape& shape = weight.dim();
             weight.format() = TensorFormatNhwc;
             switch (layer.type())
@@ -563,7 +592,7 @@ namespace Synet
                     for (size_t i = 0; i < shape[2]; ++i)
                         for (size_t y = 0; y < shape[0]; ++y)
                             for (size_t x = 0; x < shape[1]; ++x)
-                                dst.Data<float>(Shape({ y, x, i, o }))[0] = *pSrc++;
+                                dst.Data<T>(Shape({ y, x, i, o }))[0] = *pSrc++;
                 break;
             }
             case LayerTypeDeconvolution:
@@ -574,7 +603,7 @@ namespace Synet
                     for (size_t c = 0; c < shape[3]; ++c)
                         for (size_t y = 0; y < shape[1]; ++y)
                             for (size_t x = 0; x < shape[2]; ++x)
-                                dst.Data<float>(Shape({ i, y, x, c }))[0] = *pSrc++;
+                                dst.Data<T>(Shape({ i, y, x, c }))[0] = *pSrc++;
                 break;
             }
             case LayerTypeInnerProduct:

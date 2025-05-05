@@ -1051,7 +1051,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConvOrConvTransposeNode(const onnx::NodeProto & node, bool trans, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin, PermuteMap* permuteMap)
+        bool ConvertConvOrConvTransposeNode(const onnx::NodeProto & node, bool trans, LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin, PermuteMap* permuteMap)
         {
             if (node.op_type() == "Conv")
                 layer.type() = Synet::LayerTypeConvolution;
@@ -1074,9 +1074,17 @@ namespace Synet
             if (GetLayerType(layers, layer.src()[0]) == LayerTypeDequantizeLinear && 
                 GetLayerType(layers, layer.src()[1]) == LayerTypeDequantizeLinear)
             {
+                const LayerParam* dequantized = GetLayer(layers, layer.src()[1]);
+                if (dequantized->weight().empty())
+                    return false;
+                const Shape& shape = dequantized->weight()[0].dim();
+                layer.convolution().outputNum() = uint32_t(layer.type() == Synet::LayerTypeConvolution ? shape[0] : shape[1] * layer.convolution().group());
+                layer.convolution().biasTerm() = layer.src().size() > 2;
                 if (layer.type() == Synet::LayerTypeConvolution)
                 {
                     layer.type() = Synet::LayerTypeQuantizedConvolution;
+                    if (!MoveDequantizeLinearToLayer(layers, layer))
+                        return false;
                     return true;
                 }
                 else
@@ -1337,7 +1345,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertGemmNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered)
+        bool ConvertGemmNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered)
         {
             layer.type() = Synet::LayerTypeInnerProduct;
             int transB;
@@ -1350,6 +1358,16 @@ namespace Synet
                 GetLayerType(layers, layer.src()[1]) == LayerTypeDequantizeLinear)
             {
                 layer.type() = Synet::LayerTypeQuantizedInnerProduct;
+                const LayerParam* dequantized = GetLayer(layers, layer.src()[1]);
+                if (dequantized->weight().empty())
+                    return false;
+                const Shape& shape = dequantized->weight()[0].dim();
+                if (!CheckDims(shape, 2, "quantized inner product weight"))
+                    return false;
+                layer.innerProduct().outputNum() = (uint32_t)(transB ? shape[0] : shape[1]);
+                layer.convolution().biasTerm() = layer.src().size() > 2;
+                if (!MoveDequantizeLinearToLayer(layers, layer))
+                    return false;
                 return true;
             }
             layer.weight().resize(layer.src().size() - 1);
@@ -2702,6 +2720,33 @@ namespace Synet
             }
             else
                 layer.type() = Synet::LayerTypeWhere;
+            return true;
+        }
+
+        //-----------------------------------------------------------------------------------------
+
+        bool MoveDequantizeLinearToLayer(LayerParams& layers, LayerParam& layer)
+        {
+            for (int s = 0; s < (int)layer.src().size(); ++s)
+            {
+                LayerParam* dequantize = GetLayer(layers, layer.src()[s]);
+                if (dequantize->type() != LayerTypeDequantizeLinear)
+                    SYNET_ERROR("MoveDequantizeLinearToLayer can move only DequantizeLinearLayer layers!");
+                layer.qSrc().push_back(dequantize->quantize());
+                layer.qSrc().back().weights() = dequantize->weight().size();
+                for (size_t w = 0; w < dequantize->weight().size(); ++w)
+                    layer.weight().push_back(dequantize->weight()[w]);
+                if (!dequantize->src().empty())
+                {
+                    layer.src()[s] = dequantize->src()[0];
+                    dequantize->src().clear();
+                }
+                else
+                {
+                    layer.src().erase(layer.src().begin() + s, layer.src().begin() + s + 1);
+                    --s;
+                }
+            }
             return true;
         }
 
