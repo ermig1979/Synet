@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2024 Yermalayeu Ihar.
+* Copyright (c) 2018-2025 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -33,12 +33,22 @@ namespace Synet
 
     bool DequantizeLinearLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 1 || dst.size() != 1)
-            SYNET_ERROR("DequantizeLinearLayer supports only 1 input and 1 output!");
+        if ((src.size() != 0 && src.size() != 1) || dst.size() != 1)
+            SYNET_ERROR("DequantizeLinearLayer supports only 0 or 1 inputs and 1 output!");
 
         const QuantizeParam& param = Param().quantize();
+        const Tensors& weight = this->Weight();
 
-        dst[0]->Reshape(TensorType32f, src[0]->Shape(), src[0]->Format());
+        if(src.size())
+            dst[0]->Reshape(TensorType32f, src[0]->Shape(), src[0]->Format());
+        else
+        {
+            if (weight.empty())
+                SYNET_ERROR("DequantizeLinearLayer weight is empty!");
+            dst[0]->Reshape(TensorType32f, weight[0].Shape(), weight[0].Format());
+            _const = true;
+            dst[0]->SetConst(true);
+        }
 
         return true;
     }
