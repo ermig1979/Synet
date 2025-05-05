@@ -32,6 +32,7 @@
 
 #include "Synet/Layers/Quantized/DequantizeLinearLayer.h"
 #include "Synet/Layers/Quantized/QuantizedConvolutionLayer.h"
+#include "Synet/Layers/Quantized/QuantizedInnerProductLayer.h"
 #include "Synet/Layers/Quantized/QuantizeLinearLayer.h"
 
 #include "Synet/Layers/ActivationLayers.h"
@@ -191,6 +192,7 @@ namespace Synet
         case LayerTypePriorBox: return new PriorBoxLayer(param, context);
         case LayerTypePriorBoxClustered: return new PriorBoxClusteredLayer(param, context);
         case LayerTypeQuantizedConvolution: return new QuantizedConvolutionLayer(param, context);
+        case LayerTypeQuantizedInnerProduct: return new QuantizedInnerProductLayer(param, context);
         case LayerTypeQuantizeLinear: return new QuantizeLinearLayer(param, context);
         case LayerTypeReduction: return new ReductionLayer(param, context);
         case LayerTypeRegion: return new RegionLayer(param, context);
