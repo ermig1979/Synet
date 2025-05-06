@@ -41,9 +41,69 @@ namespace Synet
         _conv.Set(param);
         _conv.Set(*src[0], *dst[0], true, param.autoPad());
 
+        if (src[0]->Count() != 4)
+            SYNET_ERROR("QuantizedConvolutionLayer supports only 4D tensors!");
+
+        _alg.is1x1 = _conv.Is1x1() ? 1 : 0;
+        _alg.bias = param.biasTerm() ? 1 : 0;
         _alg.batch = src[0]->Axis(0);
+        _alg.trans = _conv.Trans();
+        if (_alg.trans)
+        {
+            _alg.siW = _conv.srcC * _conv.kernelY * _conv.kernelX / _conv.group;
+            _alg.ldW = _conv.dstC;
+            _alg.grW = _conv.dstC / _conv.group;
+
+            _alg.siS = _conv.dstH * _conv.dstW;
+            _alg.ldS = _alg.siW * (_alg.is1x1 ? _conv.group : 1);
+            _alg.grS = _alg.siW * (_alg.is1x1 ? 1 : _alg.siS);
+
+            _alg.siD = _conv.dstC / _conv.group;
+            _alg.ldD = _conv.dstC;
+            _alg.grD = _alg.siD;
+        }
+        else
+        {
+            _alg.siW = _conv.srcC * _conv.kernelY * _conv.kernelX / _conv.group;
+            _alg.ldW = _alg.siW;
+            _alg.grW = _conv.dstC * _alg.siW / _conv.group;
+
+            _alg.siS = _conv.dstH * _conv.dstW;
+            _alg.ldS = _alg.siS;
+            _alg.grS = _alg.siS * _alg.siW;
+
+            _alg.siD = _conv.dstC / _conv.group;
+            _alg.ldD = _conv.dstH * _conv.dstW;
+            _alg.grD = _alg.siD * _alg.siS;
+        }
+
+        if (!Compartible())
+            return false;
 
         dst[0]->Reshape(TensorType32f, _conv.DstShape(_alg.batch), src[0]->Format());
+
+        return true;
+    }
+
+    bool QuantizedConvolutionLayer::Compartible() const
+    {
+        const LayerParam& param = this->Param();
+        const Tensors& weight = this->Weight();
+
+        if(param.qSrc().size() < 2)
+            SYNET_ERROR("QuantizedConvolutionLayer must have at least 2 input dequantizers!");
+        if (param.qSrc()[0].weights() != 0)
+            SYNET_ERROR("QuantizedConvolutionLayer supports only uniform input quantization!");
+        if (param.qSrc()[1].weights() < 2 || weight.size() < param.qSrc()[1].weights())
+            SYNET_ERROR("QuantizedConvolutionLayer: check weight or dequantizers!");
+        bool zeroZero = true;
+        if (param.qSrc()[1].weights() == 2)
+            zeroZero = param.qSrc()[1].zero() == 0;
+        else
+        {
+            //for(size_t i = 0; )
+        }
+
 
         return true;
     }

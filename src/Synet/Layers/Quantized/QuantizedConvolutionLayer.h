@@ -39,11 +39,15 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
+        bool Compartible() const;
+
     protected:
         ConvParam _conv;
         struct AlgParam
         {
-            size_t batch;
+            int is1x1, bias, trans, internal;
+            size_t batch, sSize, dSize, ldW, ldS, ldD, grW, grS, grD, siW, siS, siD;
+            float params[2];
         } _alg;
     };
 }
