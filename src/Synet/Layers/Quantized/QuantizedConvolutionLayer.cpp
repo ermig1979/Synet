@@ -77,7 +77,7 @@ namespace Synet
             _alg.grD = _alg.siD * _alg.siS;
         }
 
-        if (!Compartible())
+        if (!(Compartible() && !InitParams()))
             return false;
 
         dst[0]->Reshape(TensorType32f, _conv.DstShape(_alg.batch), src[0]->Format());
@@ -96,14 +96,30 @@ namespace Synet
             SYNET_ERROR("QuantizedConvolutionLayer supports only uniform input quantization!");
         if (param.qSrc()[1].weights() < 2 || weight.size() < param.qSrc()[1].weights())
             SYNET_ERROR("QuantizedConvolutionLayer: check weight or dequantizers!");
+        if (weight[0].GetType() != TensorType8i)
+            SYNET_ERROR("QuantizedConvolutionLayer supports only INT8 weight!");
         bool zeroZero = true;
         if (param.qSrc()[1].weights() == 2)
+        {
+            if(param.qSrc()[1].type() != TensorType8i)
+                SYNET_ERROR("QuantizedConvolutionLayer supports only INT8 weight!");
             zeroZero = param.qSrc()[1].zero() == 0;
+        }
         else
         {
-            //for(size_t i = 0; )
+            if (weight[2].GetType() != TensorType8i)
+                SYNET_ERROR("QuantizedConvolutionLayer supports only INT8 weight!");
+            for (size_t i = 0, n = weight[2].Size(); i < n && zeroZero; ++i)
+                zeroZero = weight[2].Data<int8_t>()[i] == 0;
         }
+        if(!zeroZero)
+            SYNET_ERROR("QuantizedConvolutionLayer supports only weight zero == 0!");
 
+        return true;
+    }
+
+    bool QuantizedConvolutionLayer::InitParams()
+    {
 
         return true;
     }

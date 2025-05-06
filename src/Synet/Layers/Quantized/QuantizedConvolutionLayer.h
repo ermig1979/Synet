@@ -40,6 +40,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
         bool Compartible() const;
+        bool InitParams();
 
     protected:
         ConvParam _conv;
@@ -49,5 +50,7 @@ namespace Synet
             size_t batch, sSize, dSize, ldW, ldS, ldD, grW, grS, grD, siW, siS, siD;
             float params[2];
         } _alg;
+
+        Tensor _bias32i, _norm32f;
     };
 }
