@@ -731,5 +731,16 @@ namespace Synet
                 return true;
             return false;
         }
+
+        static SYNET_INLINE bool IsDeptwiseConvolution(const LayerParam& layer, const Shape & kernel, const Shape& stride, bool bias, ActivationFunctionType activation)
+        {
+            if (layer.type() == LayerTypeConvolution && layer.convolution().group() == layer.convolution().outputNum() &&
+                layer.convolution().stride() == stride &&
+                layer.convolution().kernel() == kernel &&
+                layer.convolution().biasTerm() == bias &&
+                layer.convolution().activationType() == activation)
+                return true;
+            return false;
+        }
     };
 }
