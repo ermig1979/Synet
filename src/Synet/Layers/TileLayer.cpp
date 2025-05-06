@@ -86,7 +86,7 @@ namespace Synet
             _inner = 1;
             _outer = 1;
             bool before = true, after = false;
-            for (ptrdiff_t i = 0, s0 = dstShape.size() - shape0.size(); i < dstShape.size(); i++)
+            for (ptrdiff_t i = 0, s0 = dstShape.size() - shape0.size(); i < (ptrdiff_t)dstShape.size(); i++)
             {
                 size_t sa = i < s0 ? 1 : shape0[i - s0];
                 size_t da = dstShape[i];

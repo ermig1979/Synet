@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2025 Yermalayeu Ihar.
+* Copyright (c) 2018-2024 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -24,29 +24,12 @@
 
 #pragma once
 
-#include "Synet/Layer.h"
+#include "Synet/Utils/Math.h"
 
 namespace Synet
 {
-    class QuantizeLinearLayer : public Layer
-    {
-    public:
-        QuantizeLinearLayer(const LayerParam& param, Context* context);
-
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
-
-        virtual int64_t Flop() const;
-
-        typedef void (*UniformPtr)(const float* src, float scale, int zero, size_t size, uint8_t* dst);
-
-    protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
-
-        TensorType _type;
-        int32_t _zero;
-        float _scale;
-        size_t _axis, _size;
-
-        UniformPtr _uniform;
-    };
+    //SYNET_INLINE int QuantizeToEven(float value)
+    //{
+    //    return (int)(value + (value >= 0 ? 0.5f : -0.5f));
+    //}
 }

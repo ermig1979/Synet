@@ -24,11 +24,37 @@
 
 #include "Synet/Layers/Quantized/QuantizeLinearLayer.h"
 
+#include "Synet/Quantization/QuantizeLinear.h"
+
 namespace Synet
 {
+    SYNET_INLINE int QuantizeLinear(float value, float scale, int zero, int min, int max)
+    {
+        return RestrictRange(Round(value * scale) + zero, min, max);
+    }
+
+    template<class T> void QuantizeLinearUniform(const float* src, float scale, int zero, size_t size, uint8_t* dst8)
+    {
+        T* dst = (T*)dst8;
+        int min = std::numeric_limits<T>::min();
+        int max = std::numeric_limits<T>::max();
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = (T)QuantizeLinear(src[i], scale, zero, min, max);
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     QuantizeLinearLayer::QuantizeLinearLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
+        , _uniform(NULL)
     {
+    }
+
+    int64_t QuantizeLinearLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        return _size * 2;
     }
 
     bool QuantizeLinearLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
@@ -38,13 +64,41 @@ namespace Synet
 
         const QuantizeParam& param = Param().quantize();
         _type = param.type();
+        _size = src[0]->Size();
+        _zero = param.zero();
+        _scale = 1.0f / param.scale();
+
+        if(!this->Weight().empty())
+            SYNET_ERROR("QuantizeLinearLayer supports only uniform case!");
+
+        switch (_type)
+        {
+        case TensorType8u:
+            _uniform = QuantizeLinearUniform<uint8_t>;
+            break;
+        default:
+            SYNET_ERROR("QuantizeLinearLayer does not support" << Cpl::ToStr(_type) << " !");
+        }
 
         dst[0]->Reshape(_type, src[0]->Shape(), src[0]->Format());
+        if (src[0]->Const())
+        {
+            ForwardCpu(src, buf, dst);
+            dst[0]->SetConst(true);
+            _const = true;
+        }
+        else
+        {
+            this->UsePerfStat();
+            _const = false;
+        }
 
         return true;
     }
 
     void QuantizeLinearLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
+        if(_uniform)
+            _uniform(src[0]->Data<float>(), _scale, _zero, _size, dst[0]->RawData());
     }
 }

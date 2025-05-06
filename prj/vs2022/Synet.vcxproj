@@ -235,6 +235,7 @@
     <ClInclude Include="..\..\src\Synet\Quantization\Const.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\Convert.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\Gemm.h" />
+    <ClInclude Include="..\..\src\Synet\Quantization\QuantizeLinear.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\Stat.h" />
     <ClInclude Include="..\..\src\Synet\Region.h" />
     <ClInclude Include="..\..\src\Synet\Tensor.h" />
