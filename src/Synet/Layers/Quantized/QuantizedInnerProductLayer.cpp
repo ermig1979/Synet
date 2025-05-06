@@ -31,10 +31,37 @@ namespace Synet
     {
     }
 
+    bool QuantizedInnerProductLayer::Resizable() const
+    {
+        return false;
+    }
+
     bool QuantizedInnerProductLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if ((src.size() != 1 && src.size() != 2) || dst.size() != 1)
             SYNET_ERROR("QuantizedInnerProductLayer supports only 1 or 2 inputs and 1 output!");
+
+        const InnerProductParam& param = this->Param().innerProduct();
+
+        _axis = (int)src[0]->Index(param.axis());
+        _batch = 1;
+        _K = src[0]->Size(_axis);
+
+        if (src.size() == 2)
+        {
+            SYNET_ERROR("QuantizedInnerProductLayer 2 inputs support is not implemented!");
+        }
+        else
+        {
+            _N = this->Param().innerProduct().outputNum();
+            _M = src[0]->Size(0, _axis);
+            _batch = 1;
+        }
+
+        Shape dstShape = src[0]->Shape();
+        dstShape.resize(_axis + 1);
+        dstShape[_axis] = _N;
+        dst[0]->Reshape(TensorType32f, dstShape, TensorFormatNchw);
 
         return true;
     }

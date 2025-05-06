@@ -36,6 +36,15 @@ namespace Synet
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("QuantizedConvolutionLayer supports only 1 input and 1 output!");
 
+        const ConvolutionParam& param = this->Param().convolution();
+
+        _conv.Set(param);
+        _conv.Set(*src[0], *dst[0], true, param.autoPad());
+
+        _alg.batch = src[0]->Axis(0);
+
+        dst[0]->Reshape(TensorType32f, _conv.DstShape(_alg.batch), src[0]->Format());
+
         return true;
     }
 

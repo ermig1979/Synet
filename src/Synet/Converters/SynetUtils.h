@@ -484,7 +484,7 @@ namespace Synet
                 if (
                     curr.type() == LayerTypeConst || 
                     (curr.type() == LayerTypeMeta && curr.meta().type() == MetaTypeConst) ||
-                    curr.type() == LayerTypeDequantizeLinear)
+                    (curr.type() == LayerTypeDequantizeLinear && curr.src().empty()))
                 {
                     if (UserCount(layers, i) == 0)
                         layers.erase(layers.begin() + i), i -= 1;

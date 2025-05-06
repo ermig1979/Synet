@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Synet/Layer.h"
+#include "Synet/Utils/ConvParam.h"
 
 namespace Synet
 {
@@ -37,5 +38,12 @@ namespace Synet
 
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+    protected:
+        ConvParam _conv;
+        struct AlgParam
+        {
+            size_t batch;
+        } _alg;
     };
 }

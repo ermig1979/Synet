@@ -35,7 +35,11 @@ namespace Synet
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
+        virtual bool Resizable() const;
+
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+        size_t _axis, _batch, _M, _N, _K;
     };
 }
