@@ -198,6 +198,8 @@ namespace Synet
                             _input[j].dst[0]->Reshape(param.input().shape()[0].type(), srcShapes[i], param.input().shape()[0].format());
                             _input[j].dst[0]->SetName(param.name());
                             _src.push_back(_input[j].dst[0]);
+                            if(srcShapes[i].size() > 1)
+                                _context.batchSize = srcShapes[i][0];
                         }
                         else
                             SYNET_ERROR("Unsupported type " << Cpl::ToStr(param.type()) << " of input layer " << param.name() << " !");
@@ -282,6 +284,7 @@ namespace Synet
             return false;
         _input[0].dst[0]->Reshape(TensorType32f, shape, format, Type(0));
         _input[0].dst[0]->SetName(param.name());
+        _context.batchSize = batch;
         return ReshapeStages();
     }
 
@@ -299,6 +302,7 @@ namespace Synet
         shape[0] = batch;
         _input[0].dst[0]->Reshape(TensorType32f, shape, format, Type(0));
         _input[0].dst[0]->SetName(param.name());
+        _context.batchSize = batch;
         ReshapeStages();
         return true;
     }
@@ -1006,7 +1010,17 @@ namespace Synet
                 if (param.type() == LayerTypeMeta)
                     err << "-" << Cpl::ToStr(param.meta().type());
                 for (size_t s = 0; s < param.src().size(); ++s)
-                    err << ", src[" << s << "]: " << Cpl::ToStr(_stages[i].src[s]->GetType()) << " " << ToStr(_stages[i].src[s]->Shape());
+                {
+                    const Tensor * src = _stages[i].src[s];
+                    err << ", src[" << s << "]: " << Cpl::ToStr(src->GetType()) << " " << ToStr(src->Shape());
+                    if (src->Const() && src->GetType() == TensorType64i && src->Size() < 8)
+                    {
+                        err << " [";
+                        for (size_t j = 0, m = src->Size(); j < m; ++j)
+                            err << " " << src->Data<int64_t>()[j];
+                        err << " ]";
+                    }
+                }
                 err << " !";
                 SYNET_ERROR(err.str());
             }
@@ -1017,7 +1031,17 @@ namespace Synet
                 if (param.type() == LayerTypeMeta)
                     err << "-" << Cpl::ToStr(param.meta().type());
                 for (size_t s = 0; s < param.src().size(); ++s)
-                    err << ", src[" << s << "]: " << Cpl::ToStr(_stages[i].src[s]->GetType()) << " " << ToStr(_stages[i].src[s]->Shape());
+                {
+                    const Tensor* src = _stages[i].src[s];
+                    err << ", src[" << s << "]: " << Cpl::ToStr(src->GetType()) << " " << ToStr(src->Shape());
+                    if (src->Const() && src->GetType() == TensorType64i && src->Size() < 8)
+                    {
+                        err << " [";
+                        for (size_t j = 0, m = src->Size(); j < m; ++j)
+                            err << " " << src->Data<int64_t>()[j];
+                        err << " ]";
+                    }
+                }
                 err << " gets dst[0]: " << Cpl::ToStr(_stages[i].dst[0]->GetType()) << " " << ToStr(_stages[i].dst[0]->Shape()) << " !";
                 SYNET_ERROR(err.str());
             }

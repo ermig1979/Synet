@@ -89,7 +89,7 @@ namespace Synet
                 SYNET_ERROR("ReshapeLayer src[1] has more then one negative elements!");
             if (unknown)
             {
-                if (src[0]->Count() > 1 && shape.size() > 1 && shape[0] == 1)
+                if (src[0]->Count() > 1 && shape.size() > 1 && shape[0] == 1 && Context().batchSize == src[0]->Axis(0))
                     shape[0] = src[0]->Axis(0);
                 size_t known = 1, index = shape.size();
                 for (size_t i = 0; i < shape.size(); ++i)
