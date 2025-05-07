@@ -44,6 +44,9 @@ namespace Synet
         if (src[0]->Count() != 4)
             SYNET_ERROR("QuantizedConvolutionLayer supports only 4D tensors!");
 
+        _alg.params[0] = param.activationParam0();
+        _alg.params[1] = param.activationParam1();
+
         _alg.is1x1 = _conv.Is1x1() ? 1 : 0;
         _alg.bias = param.biasTerm() ? 1 : 0;
         _alg.batch = src[0]->Axis(0);
@@ -77,7 +80,7 @@ namespace Synet
             _alg.grD = _alg.siD * _alg.siS;
         }
 
-        if (!(Compartible() && !InitParams()))
+        if (!(Compartible() && InitParams()))
             return false;
 
         dst[0]->Reshape(TensorType32f, _conv.DstShape(_alg.batch), src[0]->Format());
@@ -113,7 +116,16 @@ namespace Synet
                 zeroZero = weight[2].Data<int8_t>()[i] == 0;
         }
         if(!zeroZero)
-            SYNET_ERROR("QuantizedConvolutionLayer supports only weight zero == 0!");
+            SYNET_ERROR("QuantizedConvolutionLayer supports only weight 'zero' == 0!");
+
+        if (_alg.bias)
+        {
+            if (param.qSrc().size() != 3)
+                SYNET_ERROR("QuantizedConvolutionLayer must have 3 input dequantizers for when uses bias!");
+            int biasStart = param.qSrc()[1].weights();
+
+            bool equalScale = true;
+        }
 
         return true;
     }

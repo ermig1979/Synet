@@ -299,6 +299,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Sub" && !ConvertSubNode(node, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Tanh" && !ConvertTanhNode(node, layer))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "Tile" && !ConvertTileNode(node, trans, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "TopK" && !ConvertTopKNode(node, network.layers(), layer))
@@ -2528,6 +2530,13 @@ namespace Synet
                 layer.type() = Synet::LayerTypeBinaryOperation;
                 layer.binaryOperation().type() = BinaryOperationTypeSub;
             }
+            return true;
+        }
+
+        bool ConvertTanhNode(const onnx::NodeProto& node, LayerParam& layer)
+        {
+            layer.type() = Synet::LayerTypeUnaryOperation;
+            layer.unaryOperation().type() = UnaryOperationTypeTanh;
             return true;
         }
 
