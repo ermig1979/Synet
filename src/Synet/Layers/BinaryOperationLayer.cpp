@@ -39,16 +39,18 @@ namespace Synet
         if (!IsCompatible(src[0]->Shape(), src[1]->Shape()))
             SYNET_ERROR("BinaryOperationLayer incompatible input shapes!");
 
-        _dstShape = OutputShape(src[0]->Shape(), src[1]->Shape());
+        Shape src0 = src[0]->Shape(), src1 = src[1]->Shape();
+        _dstShape = OutputShape(src0, src1);
+        dst[0]->Reshape(src[0]->GetType(), _dstShape, src[0]->Format());
+        CompactShapes(src0, src1, _dstShape);
         if(_dstShape.size() > 4)
             SYNET_ERROR("BinaryOperationLayer too complicated shape!");
-        _steps0 = SourceSteps(src[0]->Shape(), _dstShape);
-        _steps1 = SourceSteps(src[1]->Shape(), _dstShape);
+        _steps0 = SourceSteps(src0, _dstShape);
+        _steps1 = SourceSteps(src1, _dstShape);
         _universalBinary = GetUniversalBinary(this->Param().binaryOperation().type(), src[0]->GetType(), _dstShape.size());
         if(_universalBinary == NULL)
             SYNET_ERROR("BinaryOperationLayer can't get universal handler!");
 
-        dst[0]->Reshape(src[0]->GetType(), _dstShape, src[0]->Format());
         if (src[0]->Const() && src[1]->Const())
         {
             ForwardCpu(src, buf, dst);
