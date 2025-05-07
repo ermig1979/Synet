@@ -89,7 +89,7 @@ namespace Synet
         a.resize(1), b.resize(1), d.resize(1);
         for (size_t i = 1; i < _d.size(); ++i)
         {
-            if (Relation(_a[i - 1], _b[i - 1], _d[i - 1]) == Relation(_a[i], _b[i], _d[i]) || d.back() == 1 || _d[i] == 1)
+            if (Relation(a.back(), b.back(), d.back()) == Relation(_a[i], _b[i], _d[i]) || d.back() == 1 || _d[i] == 1)
             {
                 a.back() *= _a[i];
                 b.back() *= _b[i];
