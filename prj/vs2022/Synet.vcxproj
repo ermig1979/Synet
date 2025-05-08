@@ -137,6 +137,7 @@
     <ClInclude Include="..\..\src\Synet\Decoders\Anchor.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\DetOut.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Iim.h" />
+    <ClInclude Include="..\..\src\Synet\Decoders\Nanodet.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Region.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Rtdetr.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\RtdetrV2.h" />

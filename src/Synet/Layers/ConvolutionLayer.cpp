@@ -91,7 +91,7 @@ namespace Synet
         _alg.batch = src[0]->Axis(0);
         _alg.trans = _conv.Trans();
         if (weight[0].Shape() != _conv.WeightShape(_alg.trans != 0, true) || 
-           (weight[0].Format() == SimdTensorFormatNhwc && src[0]->Format() != SimdTensorFormatNhwc))
+           (weight[0].Format() == TensorFormatNhwc && src[0]->Format() != TensorFormatNhwc))
             SYNET_ERROR("ConvolutionLayer: check weight[0] size or format!");
 
         if (_alg.trans)

@@ -687,6 +687,9 @@
     <ClInclude Include="..\..\src\Synet\Quantization\QuantizeLinear.h">
       <Filter>Quantization</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Nanodet.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
