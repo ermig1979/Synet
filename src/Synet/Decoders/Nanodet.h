@@ -69,8 +69,8 @@ namespace Synet
                 {
                     for (int w = 0; w < featW; ++w)
                     {
-                        _anchors.push_back((w + 0.5f) * stride);
-                        _anchors.push_back((h + 0.5f) * stride);
+                        _anchors.push_back(w * stride);
+                        _anchors.push_back(h * stride);
                         _anchors.push_back(stride);
                     }
                 }
@@ -89,7 +89,8 @@ namespace Synet
             float kY = float(imgH) / float(_netH);
             const float* anchors = _anchors.data();
             Regions regions;
-            for (size_t i = 0; i < size; ++i, data += _classes + 4 * (_regMax + 1), anchors += 3) 
+            size_t predSize = _regMax + 1;
+            for (size_t i = 0; i < size; ++i, data += _classes + 4 * predSize, anchors += 3)
             {
                 float score = data[0];
                 size_t index = 0;
@@ -104,30 +105,28 @@ namespace Synet
                 if (score < threshold)
                     continue;
 
+                float cx = anchors[0] * kX, cy = anchors[1] * kY;
+                float px = anchors[2] * kX, py = anchors[2] * kY;
+                const float* pred = data + _classes;
+
+                float pdx0 = PredDist(pred + 0 * predSize, predSize) * px;
+                float pdy0 = PredDist(pred + 1 * predSize, predSize) * py;
+                float pdx1 = PredDist(pred + 2 * predSize, predSize) * px;
+                float pdy1 = PredDist(pred + 3 * predSize, predSize) * py;
+
+                float xMin = std::max(cx - pdx0, .0f);
+                float yMin = std::max(cy - pdy0, .0f);
+                float xMax = std::min(cx + pdx1, (float)imgW);
+                float yMax = std::min(cy + pdy1, (float)imgH);
+
                 Region region;
                 region.prob = score;
                 region.id = (int)index;
-
-                float classMax = 0;
-                for (size_t c = 0; c < _classes; ++c)
-                {
-                    if (data[5 + c] > classMax)
-                    {
-                        classMax = data[5 + c];
-                        region.id = (int)c;
-                    }
-                }
-                //if (region.id == _background)
-                //    continue;
-                //float xMin = std::max(0.0f, (data[0] - data[2] / 2) * kX);
-                //float xMax = std::min((float)imgW, (data[0] + data[2] / 2) * kX);
-                //float yMin = std::max(0.0f, (data[1] - data[3] / 2) * kY);
-                //float yMax = std::min((float)imgH, (data[1] + data[3] / 2) * kY);
-                //region.x = (xMin + xMax) / 2.0f;
-                //region.y = (yMin + yMax) / 2.0f;
-                //region.w = xMax - xMin;
-                //region.h = yMax - yMin;
-                //regions.push_back(region);
+                region.x = (xMin + xMax) / 2.0f;
+                region.y = (yMin + yMax) / 2.0f;
+                region.w = xMax - xMin;
+                region.h = yMax - yMin;
+                regions.push_back(region);
             }
             Synet::Filter(regions, overlap);
             return regions;
@@ -161,6 +160,20 @@ namespace Synet
         size_t _netW, _netH, _classes, _regMax;
         Ints _strides;
         Floats _anchors;
+
+        inline float PredDist(const float* src, size_t count) const
+        {
+            float max = -FLT_MAX;
+            for (size_t i = 0; i < count; ++i)
+                max = std::max(max, src[i]);
+            float sum = 0;
+            for (size_t i = 0; i < count; ++i)
+                sum += ::exp(src[i] - max);
+            float dst = 0;
+            for (size_t i = 0; i < count; ++i)
+                dst += i * ::exp(src[i] - max) / sum;
+            return dst;
+        }
     };
 }
 
