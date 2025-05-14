@@ -34,6 +34,7 @@ namespace Synet
     {
         CPL_PARAM_VALUE(Strings, toNchwHints, Strings());
         CPL_PARAM_VALUE(Strings, toNhwcHints, Strings());
+        CPL_PARAM_VALUE(Strings, shapeV2s, Strings());
         CPL_PARAM_VALUE(bool, transpose0312PermuteToNhwc, false);
         CPL_PARAM_VALUE(bool, globalPoolingPermuteToNchw, true);
         CPL_PARAM_VALUE(bool, addToEltwise, true);
@@ -414,6 +415,8 @@ namespace Synet
                 return Cache(layer, TensorFormatNchw, tensorFormatMap);
             if (layer.type() == LayerTypeInput && layer.input().shape().size())
                 return Cache(layer, layer.input().shape()[0].format(), tensorFormatMap);
+            if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeShape && layer.meta().version() == 2)
+                return Cache(layer, TensorFormatNchw, tensorFormatMap);
             for (size_t s = 0; s < layer.src().size(); ++s)
             {
                 const String& src = layer.src()[s];

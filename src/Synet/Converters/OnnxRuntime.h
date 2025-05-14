@@ -281,7 +281,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "ScatterND" && !ConvertScatterNdNode(node, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Shape" && !ConvertShapeNode(node, layer))
+                if (node.op_type() == "Shape" && !ConvertShapeNode(node, trans, network.layers(), onnxParam, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Sigmoid" && !ConvertSigmoidNode(node, layer))
                     return ErrorMessage(i, node);
@@ -305,7 +305,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "TopK" && !ConvertTopKNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Transpose" && !ConvertTransposeNode(node, trans, network.layers(), onnxParam, layer))
+                if (node.op_type() == "Transpose" && !ConvertTransposeNode(node, trans, network.layers(), onnxParam, layer, &tensorFormatMap))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Unsqueeze" && !ConvertUnsqueezeNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
@@ -2254,11 +2254,17 @@ namespace Synet
             return true;
         }
 
-        bool ConvertShapeNode(const onnx::NodeProto& node, LayerParam& layer)
+        bool ConvertShapeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const OnnxParam& onnxParam, LayerParam& layer)
         {
             layer.type() = LayerTypeMeta;
             layer.meta().type() = MetaTypeShape;
             layer.meta().version() = 1;
+            if (trans)
+            {
+                for (size_t i = 0; i < onnxParam.shapeV2s().size(); ++i)
+                    if (layer.name() == onnxParam.shapeV2s()[i])
+                        layer.meta().version() = 2;
+            }
             return true;
         }
 
@@ -2415,7 +2421,7 @@ namespace Synet
             if (!ConvertAtrributeInt(node, "axis", layer.unpack().axis()))
                 return false;
             layer.type() = Synet::LayerTypeUnpack;
-            if (trans && !PermutedToNchw(layers, layer.src(), true, false, true))
+            if (trans && CurrentTensorFormat(layers, layer.src(), true, false, true, NULL) == TensorFormatNhwc)
             {
                 Shape nchw = Shape({ 0, 3, 1, 2 });
                 layer.unpack().axis() = nchw[layer.unpack().axis()];
@@ -2600,7 +2606,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertTransposeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const OnnxParam& onnxParam, LayerParam& layer)
+        bool ConvertTransposeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const OnnxParam& onnxParam, LayerParam& layer, TensorFormatMap* tensorFormatMap)
         {
             if (!CheckSourceNumber(layer, 1))
                 return false;
@@ -2624,7 +2630,7 @@ namespace Synet
                 layer.type() = Synet::LayerTypePermute;
                 if (trans)
                 {
-                    bool permutedToNchw = PermutedToNchw(layers, layer.src(), true, false, onnxParam.globalPoolingPermuteToNchw());
+                    bool permutedToNchw = CurrentTensorFormat(layers, layer.src(), true, false, onnxParam.globalPoolingPermuteToNchw(), tensorFormatMap) != TensorFormatNhwc;
                     if (!permutedToNchw)
                     {
                         if (order == Shape({ 0, 2, 1, 3, 4 }))

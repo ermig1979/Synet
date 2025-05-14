@@ -677,12 +677,16 @@ namespace Synet
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("MetaLayer::ReshapeShape supports only 1 input and 1 output!");
         Shape shape = src[0]->Shape();
-        bool trans = src[0]->Format() == TensorFormatNhwc;
-        if(version == 1)
+        TensorFormat format = src[0]->Format();
+        if(version == 1 || version == 2)
         {
-            if (trans && shape.size() == 4)
+            if (format == TensorFormatNhwc && shape.size() == 4)
+            {
                 shape = Shp(shape[0], shape[3], shape[1], shape[2]);
-            dst[0]->Reshape(TensorType64i, Shp(shape.size()), src[0]->Format());
+                if (version == 2)
+                    format = TensorFormatNchw;
+            }
+            dst[0]->Reshape(TensorType64i, Shp(shape.size()), format);
             for (size_t i = 0; i < shape.size(); ++i)
                 dst[0]->Data<int64_t>()[i] = (int64_t)shape[i];
         }
