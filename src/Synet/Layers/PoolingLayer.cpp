@@ -549,7 +549,7 @@ namespace Synet
             }
             break;
         case PoolingMethodTypeAverage:
-            for (size_t b = 0; b < _batch; ++b)
+            if (_format == TensorFormatNchw)
             {
                 if (_3d)
                 {
@@ -557,11 +557,26 @@ namespace Synet
                 }
                 else
                 {
-                    PoolingAverage2D(src, _srcC, _srcH, _srcW, _kernelY, _kernelX,
+                    PoolingAverage2D(src, _srcC * _batch, _srcH, _srcW, _kernelY, _kernelX,
                         _strideY, _strideX, _padY, _padX, dst, _dstH, _dstW, _excludePad, _format);
                 }
-                src += _srcC *_srcW * _srcH;
-                dst += _dstC *_dstW * _dstH;
+            }
+            else
+            {
+                for (size_t b = 0; b < _batch; ++b)
+                {
+                    if (_3d)
+                    {
+                        assert(0);
+                    }
+                    else
+                    {
+                        PoolingAverage2D(src, _srcC, _srcH, _srcW, _kernelY, _kernelX,
+                            _strideY, _strideX, _padY, _padX, dst, _dstH, _dstW, _excludePad, _format);
+                    }
+                    src += _srcC * _srcW * _srcH;
+                    dst += _dstC * _dstW * _dstH;
+                }
             }
             break;
         default:

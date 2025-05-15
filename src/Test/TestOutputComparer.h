@@ -288,6 +288,30 @@ namespace Test
                         SYNET_ERROR(failed << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape()) << " at " << DebugPrint(Shp(n, 0, 0, 0)) << " : cosine distance " << cd << " > " << compareThreshold);
                 }
             }
+            else if (compType == "avg2x2" || compType == "avg4x4" || compType == "avg8x8" || compType == "avg16x16")
+            {
+                size_t kX = 1, kY = 1;
+                if (compType == "avg2x2")
+                    kX = 2, kY = 2;
+                else if (compType == "avg4x4")
+                    kX = 4, kY = 4;
+                else if (compType == "avg8x8")
+                    kX = 8, kY = 8;                
+                else if (compType == "avg16x16")
+                    kX = 16, kY = 16;
+                Shape shape = Shp(f.Axis(0), f.Axis(1), f.Axis(2) / kY, f.Axis(3) / kX);
+                Tensor _f, _s;
+                _f.Reshape(Synet::TensorType32f, shape, Synet::TensorFormatNchw);
+                _s.Reshape(Synet::TensorType32f, shape, Synet::TensorFormatNchw);
+                SimdSynetPoolingAverage(f.Data<float>(), f.Axis(0) * f.Axis(1), f.Axis(2), f.Axis(3), kY, kX, kY, kX, 0, 0, _f.Data<float>(), _f.Axis(2), _f.Axis(3), SimdFalse, SimdTensorFormatNchw);
+                SimdSynetPoolingAverage(s.Data<float>(), s.Axis(0) * s.Axis(1), s.Axis(2), s.Axis(3), kY, kX, kY, kX, 0, 0, _s.Data<float>(), _s.Axis(2), _s.Axis(3), SimdFalse, SimdTensorFormatNchw);
+                for (size_t n = 0; n < _f.Axis(0); ++n)
+                    for (size_t c = 0; c < _f.Axis(1); ++c)
+                        for (size_t y = 0; y < _f.Axis(2); ++y)
+                            for (size_t x = 0; x < _f.Axis(3); ++x)
+                                if (!Compare(_f, _s, Shp(n, c, y, x), d, failed, compType, compareThreshold))
+                                    return false;
+            }
             else
             {
                 for (size_t n = 0; n < f.Axis(0); ++n)
