@@ -283,7 +283,11 @@ namespace Synet
             SYNET_ERROR("GridSampleLayer can't get worker!");
 
         dst[0]->Reshape(src[0]->GetType(), dstShape, src[0]->Format());
-        this->UsePerfStat();
+
+        std::stringstream desc;
+        desc << _batch << "x" << _channels << "x" << _srcH << "x" << _srcW;
+        desc << "-" << _dstH << "x" << _dstW;
+        this->UsePerfStat(desc.str());
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         _context = SimdSynetGridSample2dInit(_batch, _channels, _srcH, _srcW, _dstH, _dstW, (SimdTensorDataType)_type,
