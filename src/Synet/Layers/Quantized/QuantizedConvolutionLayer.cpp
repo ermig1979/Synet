@@ -101,21 +101,21 @@ namespace Synet
             SYNET_ERROR("QuantizedConvolutionLayer: check weight or dequantizers!");
         if (weight[0].GetType() != TensorType8i)
             SYNET_ERROR("QuantizedConvolutionLayer supports only INT8 weight!");
-        bool zeroZero = true;
+        bool weightZeroZero = true;
         if (param.qSrc()[1].weights() == 2)
         {
             if(param.qSrc()[1].type() != TensorType8i)
                 SYNET_ERROR("QuantizedConvolutionLayer supports only INT8 weight!");
-            zeroZero = param.qSrc()[1].zero() == 0;
+            weightZeroZero = param.qSrc()[1].zero() == 0;
         }
         else
         {
             if (weight[2].GetType() != TensorType8i)
                 SYNET_ERROR("QuantizedConvolutionLayer supports only INT8 weight!");
-            for (size_t i = 0, n = weight[2].Size(); i < n && zeroZero; ++i)
-                zeroZero = weight[2].Data<int8_t>()[i] == 0;
+            for (size_t i = 0, n = weight[2].Size(); i < n && weightZeroZero; ++i)
+                weightZeroZero = weight[2].Data<int8_t>()[i] == 0;
         }
-        if(!zeroZero)
+        if(!weightZeroZero)
             SYNET_ERROR("QuantizedConvolutionLayer supports only weight 'zero' == 0!");
 
         if (_alg.bias)
@@ -123,6 +123,22 @@ namespace Synet
             if (param.qSrc().size() != 3)
                 SYNET_ERROR("QuantizedConvolutionLayer must have 3 input dequantizers for when uses bias!");
             int biasStart = param.qSrc()[1].weights();
+            bool biasZeroZero = true;
+            if (param.qSrc()[2].weights() == 2)
+            {
+                if (param.qSrc()[2].type() != TensorType32i)
+                    SYNET_ERROR("QuantizedConvolutionLayer supports only INT32 bias!");
+                biasZeroZero = param.qSrc()[2].zero() == 0;
+            }
+            else
+            {
+                if (weight[biasStart + 2].GetType() != TensorType32i)
+                    SYNET_ERROR("QuantizedConvolutionLayer supports only INT32 bias!");
+                for (size_t i = 0, n = weight[biasStart + 2].Size(); i < n && biasZeroZero; ++i)
+                    biasZeroZero = weight[biasStart + 2].Data<int32_t>()[i] == 0;
+            }
+            if (!biasZeroZero)
+                SYNET_ERROR("QuantizedConvolutionLayer supports only bias 'zero' == 0!");
 
             bool equalScale = true;
         }
