@@ -141,6 +141,16 @@ namespace Synet
                 SYNET_ERROR("QuantizedConvolutionLayer supports only bias 'zero' == 0!");
 
             bool equalScale = true;
+            if (weight[0].Count() != 4 || weight[0].GetType() != TensorType8i)
+                SYNET_ERROR("QuantizedConvolutionLayer: weight[0] must be 4D int8 tensor!");
+            if (weight[1].Count() != 1 || weight[biasStart + 1].Count() != 1 || weight[1].Axis(0) != weight[biasStart + 1].Axis(0))
+                SYNET_ERROR("QuantizedConvolutionLayer: weight scale (weight[1]) must the same size as bias scale (weight[" << biasStart + 1 << "]) !");
+            float srcScale = param.qSrc()[0].scale();
+            for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
+            {
+                if(::fabs(weight[1].Data<float>()[i] * srcScale - weight[biasStart + 1].Data<float>()[i]) > 0.000001)
+                    SYNET_ERROR("QuantizedConvolutionLayer: weight scale (weight[1]) and bias scale (weight[" << biasStart + 1 << "]) are not compartible!");
+            }
         }
 
         return true;
@@ -148,7 +158,17 @@ namespace Synet
 
     bool QuantizedConvolutionLayer::InitParams()
     {
+        const LayerParam& param = this->Param();
+        const Tensors& weight = this->Weight();
+        _bias32i.Reshape(TensorType32i, Shp(weight[1].Size()), TensorFormatNchw, int32_t(0));
+        if (weight[0].Format() == TensorFormatNhwc)
+        {
+            SYNET_ERROR("QuantizedConvolutionLayer: unsupported weight[0] format: " << weight[0].Format() << " !");
+        }
+        else
+        {
 
+        }
         return true;
     }
 
