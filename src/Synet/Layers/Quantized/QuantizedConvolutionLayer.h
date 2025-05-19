@@ -34,6 +34,10 @@ namespace Synet
     public:
         QuantizedConvolutionLayer(const LayerParam& param, Context* context);
 
+        virtual size_t MemoryUsage() const;
+
+        virtual int64_t Flop() const;
+
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
@@ -51,6 +55,6 @@ namespace Synet
             float params[2];
         } _alg;
 
-        Tensor _bias32i, _norm32f;
+        Tensor _weight8i, _bias32i, _norm32f;
     };
 }

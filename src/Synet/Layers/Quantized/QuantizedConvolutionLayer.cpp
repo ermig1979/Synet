@@ -31,6 +31,17 @@ namespace Synet
     {
     }
 
+    size_t QuantizedConvolutionLayer::MemoryUsage() const
+    {
+        return Layer::MemoryUsage() + _weight8i.MemoryUsage() + _norm32f.MemoryUsage() + _bias32i.MemoryUsage();
+    }
+
+    int64_t QuantizedConvolutionLayer::Flop() const
+    {
+        return _alg.batch * _conv.dstC * _conv.dstH * _conv.dstW *
+            (_conv.kernelY * _conv.kernelX * _conv.srcC / _conv.group * 2 + _alg.bias + _conv.ActivalionFlop());
+    }
+
     bool QuantizedConvolutionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (src.size() != 1 || dst.size() != 1)
@@ -161,14 +172,34 @@ namespace Synet
         const LayerParam& param = this->Param();
         const Tensors& weight = this->Weight();
         _bias32i.Reshape(TensorType32i, Shp(weight[1].Size()), TensorFormatNchw, int32_t(0));
+        int srcZero = param.qSrc()[0].zero();
         if (weight[0].Format() == TensorFormatNhwc)
         {
             SYNET_ERROR("QuantizedConvolutionLayer: unsupported weight[0] format: " << weight[0].Format() << " !");
         }
         else
         {
-
+            size_t M = weight[0].Size(0, 1), K = weight[0].Size(1, 4);
+            const int8_t* pw = weight[0].Data<int8_t>();
+            int32_t* pdb = _bias32i.Data<int32_t>();
+            for (size_t i = 0; i < M; ++i)
+            {
+                pdb[i] = 0;
+                for (size_t k = 0; k < K; ++k)
+                    pdb[i] -= pw[i * K + k] * srcZero;
+            }
+            if(_alg.bias)
+            {
+                int biasStart = param.qSrc()[1].weights();
+                const int32_t* psb = weight[biasStart].Data<int32_t>();
+                for (size_t i = 0; i < M; ++i)
+                    pdb[i] += psb[i];
+            }
         }
+        _norm32f.Reshape(TensorType32f, Shp(weight[1].Size()), TensorFormatNchw, float(0));
+        float srcScale = param.qSrc()[0].scale();
+        for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
+            _norm32f.Data<float>()[i] = weight[1].Data<float>()[i] * srcScale;
         return true;
     }
 
