@@ -25,6 +25,7 @@
 
 #include "Synet/Layers/AddLayer.h"
 #include "Synet/Utils/Math.h"
+#include "Synet/Utils/UniversalBinary.h"
 #include "Synet/Quantization/Convert.h"
 
 namespace Synet
@@ -491,15 +492,37 @@ namespace Synet
                 }
                 else if (_src[1]->Count() == 2)
                 {
-                    _special = SpecialBiasChannelV2;
-                    _format = TensorFormatNhwc;
-                    _batch = _src[1]->Axis(0);
-                    _channels = 1;
-                    _spatial = _src[0]->Size();
-                    if (dst[0] != _src[0] && dst[0] != _src[1])
+                    if (_src[0]->Count() == 4)
                     {
-                        dst[0]->Reshape(_typeD, Shp(_batch, _spatial), _src[1]->Format());
+                        Shape src0 = _src[0]->Shape(), src1 = _src[1]->Shape();
+                        if (!IsCompatible(src0, src1))
+                            SYNET_ERROR("AddnLayer incompatible input shapes!");
+                        _dstShape = OutputShape(src0, src1);
+                        if (dst[0] != _src[0])
+                            dst[0]->Reshape(_typeD, _dstShape, _src[0]->Format());
                         resized = true;
+                        //CompactShapes(src0, src1, _dstShape);
+                        if (_dstShape.size() > 4)
+                            SYNET_ERROR("AddLayer too complicated shape!");
+                        _aSteps = SourceSteps(src0, _dstShape);
+                        _bSteps = SourceSteps(src1, _dstShape);
+                        _universal = GetAddUniversal(_typeA, _typeB, _typeD, _src[0]->Count());
+                        if (_universal == NULL)
+                            SYNET_ERROR("AddLayer can create universal worker!");
+                        _special = SpecialUniversal;
+                    }
+                    else
+                    {
+                        _special = SpecialBiasChannelV2;
+                        _format = TensorFormatNhwc;
+                        _batch = _src[1]->Axis(0);
+                        _channels = 1;
+                        _spatial = _src[0]->Size();
+                        if (dst[0] != _src[0] && dst[0] != _src[1])
+                        {
+                            dst[0]->Reshape(_typeD, Shp(_batch, _spatial), _src[1]->Format());
+                            resized = true;
+                        }
                     }
                 }
                 else if (_src[1]->Count() == 3 && _src[0]->Size(1) == _src[1]->Size(0))
