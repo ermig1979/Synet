@@ -50,6 +50,7 @@ namespace Test
         Synet::AlphaDecoder _alpha;
         Synet::RegionDecoder _region;
         Synet::NanodetDecoder _nanodet;
+        Synet::YoloV11Decoder _yoloV11;
 
     public:
         typedef Synet::Region<float> Region;
@@ -108,6 +109,8 @@ namespace Test
                 _enable = _region.Init(param.detection().region());
             else if (decoder == "nanodet")
                 _enable = _nanodet.Init(_shape[3], _shape[2], param.detection().nanodet());
+            else if (decoder == "yoloV11")
+                _enable = _yoloV11.Init(_shape[3], _shape[2], param.detection().yoloV11());
             return _enable;
         }
 
@@ -146,6 +149,8 @@ namespace Test
                 return _region.GetRegions(net, size.x, size.y, threshold, overlap)[0];
             else if (_nanodet.Enable())
                 return _nanodet.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+            else if (_yoloV11.Enable())
+                return _yoloV11.GetRegions(net, size.x, size.y, threshold, overlap)[0];
             else
                 return net.GetRegions(size.x, size.y, threshold, overlap);
         }
@@ -180,6 +185,8 @@ namespace Test
                 return _region.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
             else if (_nanodet.Enable())
                 return _nanodet.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
+            else if (_yoloV11.Enable())
+                return _yoloV11.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
             else
                 return Regions();
         }

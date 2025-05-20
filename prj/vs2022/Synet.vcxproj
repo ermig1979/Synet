@@ -144,6 +144,7 @@
     <ClInclude Include="..\..\src\Synet\Decoders\Scrfd.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Ultraface.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Yolo.h" />
+    <ClInclude Include="..\..\src\Synet\Decoders\YoloV11.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\YoloV5.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\YoloV7.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\YoloV8.h" />

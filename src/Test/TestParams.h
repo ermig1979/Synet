@@ -44,6 +44,7 @@
 #include "Synet/Decoders/Scrfd.h"
 #include "Synet/Decoders/Alpha.h"
 #include "Synet/Decoders/Nanodet.h"
+#include "Synet/Decoders/YoloV11.h"
 
 namespace Test
 {
@@ -91,6 +92,7 @@ namespace Test
         CPL_PARAM_STRUCT(Synet::AlphaParam, alpha);
         CPL_PARAM_STRUCT(Synet::RegionParam, region);
         CPL_PARAM_STRUCT(Synet::NanodetParam, nanodet);
+        CPL_PARAM_STRUCT(Synet::YoloV11Param, yoloV11);
     };
 
     struct IdParam

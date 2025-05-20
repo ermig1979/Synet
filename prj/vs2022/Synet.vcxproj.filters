@@ -690,6 +690,9 @@
     <ClInclude Include="..\..\src\Synet\Decoders\Nanodet.h">
       <Filter>Decoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\YoloV11.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
