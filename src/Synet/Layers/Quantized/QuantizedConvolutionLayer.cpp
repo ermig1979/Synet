@@ -25,6 +25,9 @@
 #include "Synet/Layers/Quantized/QuantizedConvolutionLayer.h"
 #include "Synet/Utils/ImgToCol.h"
 #include "Synet/Utils/Gemm.h"
+#include "Synet/Quantization/Gemm.h"
+#include "Synet/Quantization/QuantizeLinear.h"
+#include "Synet/Quantization/DequantizeLinear.h"
 
 namespace Synet
 {
@@ -93,8 +96,6 @@ namespace Synet
             _alg.ldD = _conv.dstH * _conv.dstW;
             _alg.grD = _alg.siD * _alg.siS;
         }
-        _alg.sSize = src[0]->Size(1);
-        _alg.dSize = dst[0]->Size(1);
 
         if (!(Compartible() && InitParams()))
             return false;
@@ -109,12 +110,15 @@ namespace Synet
         if (_dst8u)
             Layer::Extend32f(buf, 0, _conv.DstShape(1));
 
+        _alg.sSize = src[0]->Size(1);
+        _alg.dSize = dst[0]->Size(1);
+
         std::stringstream desc;
         desc << _alg.batch << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW;
         desc << "-" << _conv.dstC << "x" << _conv.kernelY << "x" << _conv.kernelX;
         desc << "-" << Max(_conv.dilationY, _conv.dilationX) << "-" << Max(_conv.strideY, _conv.strideX);
         desc << "-" << _conv.group;// << InternalInfo();
-        this->UsePerfStat(desc.str(), Flop());
+        this->UsePerfStat(desc.str(), Flop()); 
 
         return true;
     }
@@ -255,8 +259,9 @@ namespace Synet
 
     void QuantizedConvolutionLayer::ForwardCpu(const uint8_t* src, uint8_t* buf, int32_t* sum, float* dst)
     {
+        const bool overflow16i = true;
         const uint8_t* zero = _zero8u.Data<uint8_t>();
-        const int8_t* weight = _weight8i.Data<int8_t>();
+        const int8_t* weight = Weight()[0].Data<int8_t>();// _weight8i.Data<int8_t>();
         const float* norm = _norm32f.Data<float>();
         const int32_t* bias = _bias32i.Data<int32_t>();
         const uint8_t* tmp = src;
@@ -270,5 +275,23 @@ namespace Synet
                     _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, zero, buf);
             tmp = buf;
         }
+        if (_alg.trans)
+        {
+            assert(_conv.group == 1 || _conv.group == _conv.srcC);
+            if (_conv.group == 1)
+                Synet::CpuGemm8iNN(_alg.siS, _alg.siD, _conv.kernelY * _conv.kernelX, _conv.srcC, tmp, _alg.ldS, weight, _alg.ldW, sum, _alg.ldD, overflow16i);
+            else
+                for (size_t g = 0; g < _conv.group; ++g)
+                    Synet::CpuGemmNN(_alg.siS, _alg.siD, _alg.siW, tmp + _alg.grS * g, _alg.ldS, weight + _alg.grW * g, _alg.ldW, sum + _alg.grD * g, _alg.ldD);
+        }
+        else
+        {
+            if (_conv.group == 1)
+                Synet::CpuGemm8iNN(_alg.siD, _alg.siS, _conv.srcC, _conv.kernelY * _conv.kernelX, weight, _alg.ldW, tmp, _alg.ldS, sum, _alg.ldD, overflow16i);
+            else
+                for (size_t g = 0; g < _conv.group; ++g)
+                    Synet::CpuGemmNN(_alg.siD, _alg.siS, _alg.siW, weight + _alg.grW * g, _alg.ldW, tmp + _alg.grS * g, _alg.ldS, sum + _alg.grD * g, _alg.ldD);
+        }
+        DequantizeLinear(sum, 1, _conv.srcC, _conv.srcH, _conv.srcW, _conv.dstF, bias, norm, dst);
     }
 }

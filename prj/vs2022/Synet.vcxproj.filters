@@ -693,6 +693,9 @@
     <ClInclude Include="..\..\src\Synet\Decoders\YoloV11.h">
       <Filter>Decoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Quantization\DequantizeLinear.h">
+      <Filter>Quantization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
