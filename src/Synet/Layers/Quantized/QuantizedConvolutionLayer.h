@@ -46,6 +46,8 @@ namespace Synet
         bool Compartible() const;
         bool InitParams();
 
+        void ForwardCpu(const uint8_t* src, uint8_t* buf, int32_t* sum, float* dst);
+
     protected:
         ConvParam _conv;
         struct AlgParam
@@ -54,7 +56,7 @@ namespace Synet
             size_t batch, sSize, dSize, ldW, ldS, ldD, grW, grS, grD, siW, siS, siD;
             float params[2];
         } _alg;
-
-        Tensor _weight8i, _bias32i, _norm32f;
+        bool _src8u, _dst8u;
+        Tensor _zero8u, _weight8i, _bias32i, _norm32f;
     };
 }

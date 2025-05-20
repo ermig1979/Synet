@@ -23,6 +23,8 @@
 */
 
 #include "Synet/Layers/Quantized/QuantizedConvolutionLayer.h"
+#include "Synet/Utils/ImgToCol.h"
+#include "Synet/Utils/Gemm.h"
 
 namespace Synet
 {
@@ -51,7 +53,8 @@ namespace Synet
 
         _conv.Set(param);
         _conv.Set(*src[0], *dst[0], true, param.autoPad());
-
+        _src8u = src[0]->GetType() == TensorType8u;
+        _dst8u = dst[0]->GetType() == TensorType8u;
         if (src[0]->Count() != 4)
             SYNET_ERROR("QuantizedConvolutionLayer supports only 4D tensors!");
 
@@ -90,11 +93,28 @@ namespace Synet
             _alg.ldD = _conv.dstH * _conv.dstW;
             _alg.grD = _alg.siD * _alg.siS;
         }
+        _alg.sSize = src[0]->Size(1);
+        _alg.dSize = dst[0]->Size(1);
 
         if (!(Compartible() && InitParams()))
             return false;
 
         dst[0]->Reshape(TensorType32f, _conv.DstShape(_alg.batch), src[0]->Format());
+
+        if (!_src8u)
+            Layer::Extend8u(buf, 0, _conv.SrcShape(1));
+        if (!_conv.Is1x1())
+            Layer::Extend8u(buf, 1, Shp(_conv.ImgSize()));
+        Layer::Extend32i(buf, 0, _conv.DstShape(1));
+        if (_dst8u)
+            Layer::Extend32f(buf, 0, _conv.DstShape(1));
+
+        std::stringstream desc;
+        desc << _alg.batch << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW;
+        desc << "-" << _conv.dstC << "x" << _conv.kernelY << "x" << _conv.kernelX;
+        desc << "-" << Max(_conv.dilationY, _conv.dilationX) << "-" << Max(_conv.strideY, _conv.strideX);
+        desc << "-" << _conv.group;// << InternalInfo();
+        this->UsePerfStat(desc.str(), Flop());
 
         return true;
     }
@@ -171,8 +191,9 @@ namespace Synet
     {
         const LayerParam& param = this->Param();
         const Tensors& weight = this->Weight();
-        _bias32i.Reshape(TensorType32i, Shp(weight[1].Size()), TensorFormatNchw, int32_t(0));
         int srcZero = param.qSrc()[0].zero();
+        _zero8u.Reshape(TensorType8u, Shp(_conv.srcC), TensorFormatNchw, uint8_t(srcZero));
+        _bias32i.Reshape(TensorType32i, Shp(weight[1].Size()), TensorFormatNchw, int32_t(0));
         if (weight[0].Format() == TensorFormatNhwc)
         {
             SYNET_ERROR("QuantizedConvolutionLayer: unsupported weight[0] format: " << weight[0].Format() << " !");
@@ -205,5 +226,49 @@ namespace Synet
 
     void QuantizedConvolutionLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
+        const AlgParam& alg = this->_alg;
+        const float* src32f = _src8u ? NULL : src[0]->Data<float>();
+        uint8_t* src8u = _src8u ? src[0]->Data<uint8_t>() : Layer::Buf8u(buf, 0);
+        uint8_t* buf8u = Layer::Buf8u(buf, 1);
+        int32_t* sum32i = Layer::Buf32i(buf, 0);
+        float* dst32f = _dst8u ? Layer::Buf32f(buf, 0) : dst[0]->Data<float>();
+        uint8_t* dst8u = _dst8u ? dst[0]->Data<uint8_t>() : NULL;
+        for (size_t b = 0; b < alg.batch; ++b)
+        {
+            if (!_src8u)
+            {
+                //_srcCvt.Convert(src32f, src8u);
+                src32f += alg.sSize;
+            }
+            ForwardCpu(src8u, buf8u, sum32i, dst32f);
+            if (_src8u)
+                src8u += alg.sSize;
+            if (_dst8u)
+            {
+                //_dstCvt.Convert(dst32f, dst8u);
+                dst8u += alg.dSize;
+            }
+            else
+                dst32f += alg.dSize;
+        }
+    }
+
+    void QuantizedConvolutionLayer::ForwardCpu(const uint8_t* src, uint8_t* buf, int32_t* sum, float* dst)
+    {
+        const uint8_t* zero = _zero8u.Data<uint8_t>();
+        const int8_t* weight = _weight8i.Data<int8_t>();
+        const float* norm = _norm32f.Data<float>();
+        const int32_t* bias = _bias32i.Data<int32_t>();
+        const uint8_t* tmp = src;
+        if (!_alg.is1x1)
+        {
+            if (_alg.trans)
+                Synet::ImgToRow(tmp, _conv.srcH, _conv.srcW, _conv.srcC, _conv.kernelY, _conv.kernelX,
+                    _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, _conv.group, zero, buf);
+            else
+                Synet::ImgToCol(tmp, _conv.srcC, _conv.srcH, _conv.srcW, _conv.kernelY, _conv.kernelX,
+                    _conv.padY, _conv.padX, _conv.padH, _conv.padW, _conv.strideY, _conv.strideX, _conv.dilationY, _conv.dilationX, zero, buf);
+            tmp = buf;
+        }
     }
 }
