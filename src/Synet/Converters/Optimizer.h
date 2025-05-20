@@ -783,85 +783,82 @@ namespace Synet
 
         bool MergeConvolutionOrDeconvolutionAndActivation(const LayerParams & src, size_t index, QuantizationMethod method, LayerParams & dst, Changes & changes)
         {
-            if (index == 0)
-                return false;
-            const LayerParam& conv = src[index - 1];
             const LayerParam& act = src[index];
-            if (conv.type() != LayerTypeConvolution && conv.type() != LayerTypeDeconvolution)
-                return false;
-            if (act.src().size() != 1 || act.src()[0] != conv.dst()[0])
-                return false;
-            if (InsideLink(src, index - 1, 2) && act.src()[0] != act.dst()[0])
-                return false;
-            bool result = false;
+            ActivationFunctionType type = ActivationFunctionTypeIdentity;
+            float param0 = ConvolutionParam().activationParam0(), param1 = ConvolutionParam().activationParam1();
             if (act.type() == LayerTypeRestrictRange)
             {
-                dst.back().convolution().activationType() = ActivationFunctionTypeRestrictRange;
-                dst.back().convolution().activationParam0() = act.restrictRange().lower();
-                dst.back().convolution().activationParam1() = act.restrictRange().upper();
-                result = true;
+                type = ActivationFunctionTypeRestrictRange;
+                param0 = act.restrictRange().lower();
+                param1 = act.restrictRange().upper();
             }
             if (act.type() == LayerTypeRelu)
             {
-                dst.back().convolution().activationType() = act.relu().negativeSlope() == 0.0f ? ActivationFunctionTypeRelu : ActivationFunctionTypeLeakyRelu;
-                dst.back().convolution().activationParam0() = act.relu().negativeSlope();
-                result = true;
+                type = act.relu().negativeSlope() == 0.0f ? ActivationFunctionTypeRelu : ActivationFunctionTypeLeakyRelu;
+                param0 = act.relu().negativeSlope();
             }
             if (act.type() == LayerTypePrelu && method != QuantizationMethodIECompatible)
             {
-                dst.back().convolution().activationType() = ActivationFunctionTypePrelu;
-                dst.back().weight().push_back(act.weight()[0]);
-                result = true;
+                type = ActivationFunctionTypePrelu;
             }
             if (act.type() == LayerTypeElu)
             {
-                dst.back().convolution().activationType() = ActivationFunctionTypeElu;
-                dst.back().convolution().activationParam0() = act.elu().alpha();
-                result = true;
+                type = ActivationFunctionTypeElu;
+                param0 = act.elu().alpha();
             }
             if (act.type() == LayerTypeHswish)
             {
-                dst.back().convolution().activationType() = ActivationFunctionTypeHswish;
-                dst.back().convolution().activationParam0() = act.hswish().shift();
-                dst.back().convolution().activationParam1() = act.hswish().scale();
-                result = true;
+                type = ActivationFunctionTypeHswish;
+                param0 = act.hswish().shift();
+                param1 = act.hswish().scale();
             }
             if (act.type() == LayerTypeMish)
             {
-                dst.back().convolution().activationType() = ActivationFunctionTypeMish;
-                dst.back().convolution().activationParam0() = act.softplus().threshold();
-                result = true;
+                type = ActivationFunctionTypeMish;
+                param0 = act.softplus().threshold();
             }
             if (act.type() == LayerTypeHardSigmoid)
             {
-                dst.back().convolution().activationType() = ActivationFunctionTypeHardSigmoid;
-                dst.back().convolution().activationParam0() = act.hardSigmoid().scale();
-                dst.back().convolution().activationParam1() = act.hardSigmoid().shift();
-                result = true;
+                type = ActivationFunctionTypeHardSigmoid;
+                param0 = act.hardSigmoid().scale();
+                param1 = act.hardSigmoid().shift();
             }
             if (act.type() == LayerTypeSwish)
             {
-                dst.back().convolution().activationType() = ActivationFunctionTypeSwish;
-                dst.back().convolution().activationParam0() = 1.0f;
-                result = true;
+                type = ActivationFunctionTypeSwish;
+                param0 = 1.0f;
             }
             if (act.type() == LayerTypeGelu)
             {
-                dst.back().convolution().activationType() = ActivationFunctionTypeGelu;
-                result = true;
+                type = ActivationFunctionTypeGelu;
             }
-            if (result)
+            if (type == ActivationFunctionTypeIdentity)
+                return false;
+            size_t dst0 = GetIndexByName(dst, act.src()[0]);
+            size_t src0 = GetIndexByName(src, act.src()[0]);
+            if (dst0 >= dst.size() || src0 >= src.size())
+                return false;
+            LayerParam& conv = dst[dst0];
+            if (conv.type() != LayerTypeConvolution && conv.type() != LayerTypeDeconvolution)
+                return false;
+            if (conv.convolution().activationType() != ActivationFunctionTypeIdentity)
+                return false;
+            if (UserCount(src, src0) != 1)
+                return false;
+            if (conv.convolution().quantizationLevel() == TensorType8i)
             {
-                if (dst.back().convolution().quantizationLevel() == TensorType8i)
-                {
-                    dst.back().origin().push_back(conv.name());
-                    dst.back().name() = act.name();
-                    dst.back().dst()[0] = act.name();
-                }
-                else
-                    changes.push_back(Change(act.name(), conv.name()));
+                conv.origin().push_back(conv.name());
+                conv.name() = act.name();
+                conv.dst()[0] = act.name();
             }
-            return result;
+            else
+                changes.push_back(Change(act.name(), conv.name()));
+            conv.convolution().activationType() = type;
+            conv.convolution().activationParam0() = param0;
+            conv.convolution().activationParam1() = param1;
+            if(act.weight().size())
+                conv.weight().push_back(act.weight()[0]);
+            return true;
         }
 
         bool MergeThreeConvolutions(const LayerParams & src, size_t & index, QuantizationMethod method, LayerParams & dst, Changes & changes)
@@ -1436,23 +1433,41 @@ namespace Synet
 
         bool MergeSwish(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
         {
-            if (src.size() < index + 2)
+            if (!IsMul(src[index]))
                 return false;
-            if (src[index + 0].type() != LayerTypeSigmoid)
+            size_t dst0 = GetIndexByName(dst, src[index].src()[0]);
+            size_t dst1 = GetIndexByName(dst, src[index].src()[1]);
+            if (dst0 >= dst.size() || dst1 >= dst.size())
                 return false;
-            if (src[index + 1].type() != LayerTypeEltwise || src[index + 1].eltwise().operation() != Synet::EltwiseOperationTypeProduct ||
-                src[index + 1].src()[0] != src[index + 0].src()[0] || src[index + 1].src()[1] != src[index + 0].dst()[0])
+            if (dst[dst0].type() != LayerTypeSigmoid && dst[dst1].type() != LayerTypeSigmoid)
                 return false;
-            if (InsideLink(src, index + 1, 1))
-                return false;
-
             LayerParam layer;
             layer.type() = LayerTypeSwish;
-            layer.name() = src[index + 1].name();
-            layer.src().push_back(src[index + 0].src()[0]);
+            layer.name() = src[index].name();
             layer.dst().push_back(layer.name());
+            if (dst[dst0].type() == LayerTypeSigmoid)
+            {
+                size_t dst00 = GetIndexByName(dst, dst[dst0].src()[0]);
+                if (dst00 >= dst.size() || dst00 != dst1)
+                    return false;
+                size_t src0 = GetIndexByName(src, src[index].src()[0]);
+                if (UserCount(src, src0) != 1)
+                    return false;
+                layer.src().push_back(dst[dst0].src()[0]);
+                dst.erase(dst.begin() + dst0, dst.begin() + dst0 + 1);
+            }
+            else
+            {
+                size_t dst10 = GetIndexByName(dst, dst[dst1].src()[0]);
+                if (dst10 >= dst.size() || dst10 != dst0)
+                    return false;
+                size_t src1 = GetIndexByName(src, src[index].src()[1]);
+                if (UserCount(src, src1) != 1)
+                    return false;
+                layer.src().push_back(dst[dst1].src()[0]);
+                dst.erase(dst.begin() + dst1, dst.begin() + dst1 + 1);
+            }
             dst.push_back(layer);
-            index += 1;
             return true;
         }
 
@@ -1743,7 +1758,7 @@ namespace Synet
             return true;
         }
 
-        bool MergeRnnGruBd(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        bool MergeRnnGruBd(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)       
         {
             const size_t RNN_GRU_BD_SIZE = 19;
             if (index == 0 || index + RNN_GRU_BD_SIZE >= src.size())
