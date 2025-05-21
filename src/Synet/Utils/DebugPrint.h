@@ -172,32 +172,49 @@ namespace Synet
 
         template <class T> static void PrintDiagnostic(std::ostream& os, const T* data, size_t size, size_t precision)
         {
-            if (data == NULL || size == 0 || !(std::is_same<T, float>::value || std::is_same<T, uint16_t>::value))
+            if (data == NULL || size == 0 || !(std::is_same<T, float>::value || std::is_same<T, uint16_t>::value || std::is_same<T, uint8_t>::value))
                 return;
-            float max = -FLT_MAX, min = FLT_MAX;
-            if (std::is_same<T, float>::value)
+            if (std::is_same<T, float>::value || std::is_same<T, uint16_t>::value)
             {
-                float* ptr = (float*)data;
-                for (size_t i = 0; i < size; ++i)
+                float max = -FLT_MAX, min = FLT_MAX;
+                if (std::is_same<T, float>::value)
                 {
-                    max = std::max(max, ptr[i]);
-                    min = std::min(min, ptr[i]);
+                    float* ptr = (float*)data;
+                    for (size_t i = 0; i < size; ++i)
+                    {
+                        max = std::max(max, ptr[i]);
+                        min = std::min(min, ptr[i]);
+                    }
                 }
+                if (std::is_same<T, uint16_t>::value)
+                {
+                    uint16_t* ptr = (uint16_t*)data;
+                    for (size_t i = 0; i < size; ++i)
+                    {
+                        float val = BFloat16ToFloat32(ptr[i]);
+                        max = std::max(max, val);
+                        min = std::min(min, val);
+                    }
+                }
+                os << std::fixed << std::setprecision(precision);
+                os << " { " << min << " .. " << max << " }";
+                if (max > float(INT_MAX) || min < float(INT_MIN) || std::isnan(min) || std::isnan(max))
+                    os << " warning!";
             }
-            if (std::is_same<T, uint16_t>::value)
+            if (std::is_same<T, uint8_t>::value)
             {
-                uint16_t* ptr = (uint16_t*)data;
-                for (size_t i = 0; i < size; ++i)
+                int max = std::numeric_limits<T>::min(), min = std::numeric_limits<T>::max();
+                if (std::is_same<T, uint8_t>::value)
                 {
-                    float val = BFloat16ToFloat32(ptr[i]);
-                    max = std::max(max, val);
-                    min = std::min(min, val);
+                    uint8_t* ptr = (uint8_t*)data;
+                    for (size_t i = 0; i < size; ++i)
+                    {
+                        max = std::max<int>(max, ptr[i]);
+                        min = std::min<int>(min, ptr[i]);
+                    }
                 }
+                os << " { " << min << " .. " << max << " }";
             }
-            os << std::fixed << std::setprecision(precision);
-            os << " { " << min << " .. " << max << " }";
-            if (max > float(INT_MAX) || min < float(INT_MIN) || std::isnan(min) || std::isnan(max))
-                os << " warning!";
         }
     }
 
