@@ -64,8 +64,8 @@ namespace Synet
 
     void Network::Clear()
     {
-        _param() = NetworkParam();
         _layers.clear();
+        _param() = NetworkParam();
         _tensors.clear();
         _stats.clear();
         _input.clear();

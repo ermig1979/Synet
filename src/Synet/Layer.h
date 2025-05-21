@@ -58,6 +58,7 @@ namespace Synet
 
         virtual ~Layer()
         {
+            //CPL_LOG_SS(Info, "Delete layer of type " << Cpl::ToStr(_param.type()) << " and name " << _param.name() << " :");
         }
 
         const LayerParam & Param() const 

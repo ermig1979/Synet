@@ -292,6 +292,6 @@ namespace Synet
                 for (size_t g = 0; g < _conv.group; ++g)
                     Synet::CpuGemmNN(_alg.siD, _alg.siS, _alg.siW, weight + _alg.grW * g, _alg.ldW, tmp + _alg.grS * g, _alg.ldS, sum + _alg.grD * g, _alg.ldD);
         }
-        DequantizeLinear(sum, 1, _conv.srcC, _conv.srcH, _conv.srcW, _conv.dstF, bias, norm, dst);
+        DequantizeLinear(sum, 1, _conv.dstC, _conv.dstH, _conv.dstW, _conv.dstF, bias, norm, dst);
     }
 }
