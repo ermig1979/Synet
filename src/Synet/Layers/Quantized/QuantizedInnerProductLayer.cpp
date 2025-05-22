@@ -88,6 +88,34 @@ namespace Synet
 
     bool QuantizedInnerProductLayer::Compartible() const
     {
+        const LayerParam& param = this->Param();
+        const Tensors& weight = this->Weight();
+
+        if (param.qSrc().size() < 2)
+            SYNET_ERROR("QuantizedInnerProductLayer must have at least 2 input dequantizers!");
+        if (param.qSrc()[0].weights() != 0)
+            SYNET_ERROR("QuantizedInnerProductLayer supports only uniform input quantization!");
+        if (param.qSrc()[1].weights() < 2 || weight.size() < param.qSrc()[1].weights())
+            SYNET_ERROR("QuantizedInnerProductLayer: check weight or dequantizers!");
+        if (weight[0].GetType() != TensorType8i)
+            SYNET_ERROR("QuantizedInnerProductLayer supports only INT8 weight!");
+        bool weightZeroZero = true;
+        if (param.qSrc()[1].weights() == 2)
+        {
+            if (param.qSrc()[1].type() != TensorType8i)
+                SYNET_ERROR("QuantizedInnerProductLayer supports only INT8 weight!");
+            weightZeroZero = param.qSrc()[1].zero() == 0;
+        }
+        else
+        {
+            if (weight[2].GetType() != TensorType8i)
+                SYNET_ERROR("QuantizedInnerProductLayer supports only INT8 weight!");
+            for (size_t i = 0, n = weight[2].Size(); i < n && weightZeroZero; ++i)
+                weightZeroZero = weight[2].Data<int8_t>()[i] == 0;
+        }
+        if (!weightZeroZero)
+            SYNET_ERROR("QuantizedInnerProductLayer supports only weight 'zero' == 0!");
+
         return true;
     }
 
