@@ -40,6 +40,7 @@ namespace Synet
         CPL_PARAM_VALUE(bool, saveUnoptimized, false);
         CPL_PARAM_VALUE(int, convToNhwc, 0);
         CPL_PARAM_VALUE(bool, skipPermute, false);
+        CPL_PARAM_VALUE(bool, reuseLayers, true);
         CPL_PARAM_VALUE(bool, reuseEltwise, false);
         CPL_PARAM_STRUCT(Bf16OptParam, bf16);
     };
@@ -70,8 +71,11 @@ namespace Synet
                 return false;
             if (!RemoveUnusedConst(network.layers()))
                 return false;
-            if (!ReuseLayers(network))
-                return false;
+            if (_param.reuseLayers())
+            {
+                if (!ReuseLayers(network))
+                    return false;
+            }
             return true;
         }
 

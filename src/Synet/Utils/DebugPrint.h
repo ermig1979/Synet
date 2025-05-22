@@ -203,14 +203,14 @@ namespace Synet
             }
             if (std::is_same<T, uint8_t>::value)
             {
-                int max = std::numeric_limits<T>::min(), min = std::numeric_limits<T>::max();
+                int64_t max = (int64_t)std::numeric_limits<T>::min(), min = (int64_t)std::numeric_limits<T>::max();
                 if (std::is_same<T, uint8_t>::value)
                 {
                     uint8_t* ptr = (uint8_t*)data;
                     for (size_t i = 0; i < size; ++i)
                     {
-                        max = std::max<int>(max, ptr[i]);
-                        min = std::min<int>(min, ptr[i]);
+                        max = std::max<int64_t>(max, ptr[i]);
+                        min = std::min<int64_t>(min, ptr[i]);
                     }
                 }
                 os << " { " << min << " .. " << max << " }";

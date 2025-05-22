@@ -57,6 +57,6 @@ namespace Synet
             float params[2];
         } _alg;
         bool _src8u, _dst8u;
-        Tensor _zero8u, _weight8i, _bias32i, _norm32f;
+        Tensor _zero8u, _weight8i, _bias32i, _norm32f, _zero32i, _bias32f;
     };
 }

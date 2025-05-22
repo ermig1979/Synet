@@ -287,6 +287,9 @@ namespace Test
             case Synet::TensorType64i:
                 SetOutputT<int64_t>(src, back, dst);
                 break;
+            case Synet::TensorType8u:
+                SetOutputT<uint8_t>(src, back, dst);
+                break;
             default:
                 assert(0);
             }

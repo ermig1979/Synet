@@ -611,7 +611,8 @@ namespace Synet
 
     struct QuantizeParam
     {
-        CPL_PARAM_VALUE(float, scale, 0.0f);
+        //CPL_PARAM_VALUE(float, scale, 0.0f);
+        CPL_PARAM_VALUE(double, scale, 0.0);
         CPL_PARAM_VALUE(int, zero, 0);
         CPL_PARAM_VALUE(int, axis, 0);
         CPL_PARAM_VALUE(TensorType, type, TensorTypeUnknown);
