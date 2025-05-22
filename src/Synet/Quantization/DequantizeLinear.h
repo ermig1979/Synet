@@ -29,12 +29,12 @@
 
 namespace Synet
 {
-    SYNET_INLINE float DequantizeLinear(int value, int zero, float norm)
+    SYNET_INLINE float DequantizeLinear(int value, int bias, float norm)
     {
-        return float(value - zero) * norm;
+        return float(value + bias) * norm;
     }
 
-    SYNET_INLINE void DequantizeLinear(const int32_t *src, size_t batch, size_t channels, size_t height, size_t width, TensorFormat format, const int32_t* zero, const float *norm, float * dst)
+    SYNET_INLINE void DequantizeLinear(const int32_t *src, size_t batch, size_t channels, size_t height, size_t width, TensorFormat format, const int32_t* bias, const float *norm, float * dst)
     {
         for (size_t b = 0; b < batch; ++b)
         {
@@ -42,12 +42,12 @@ namespace Synet
             {
                 for (size_t c = 0; c < channels; ++c)
                 {
-                    int32_t _zero = zero[c];
+                    int32_t _bias = bias[c];
                     float _norm = norm[c];
                     for (size_t h = 0; h < height; ++h)
                     {
                         for (size_t w = 0; w < width; ++w)
-                            dst[w] = DequantizeLinear(src[w], _zero, _norm);
+                            dst[w] = DequantizeLinear(src[w], _bias, _norm);
                         src += width;
                         dst += width;
                     }
@@ -60,7 +60,7 @@ namespace Synet
                     for (size_t w = 0; w < width; ++w)
                     {
                         for (size_t c = 0; c < channels; ++c)
-                            dst[c] = DequantizeLinear(src[c], zero[c], norm[c]);
+                            dst[c] = DequantizeLinear(src[c], bias[c], norm[c]);
                         src += channels;
                         dst += channels;
                     }

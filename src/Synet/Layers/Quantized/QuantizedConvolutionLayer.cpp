@@ -39,7 +39,7 @@ namespace Synet
 
     size_t QuantizedConvolutionLayer::MemoryUsage() const
     {
-        return Layer::MemoryUsage() + _weight8i.MemoryUsage() + _norm32f.MemoryUsage() + _bias32i.MemoryUsage();
+        return Layer::MemoryUsage() + _norm32f.MemoryUsage() + _bias32i.MemoryUsage();
     }
 
     int64_t QuantizedConvolutionLayer::Flop() const
@@ -199,8 +199,6 @@ namespace Synet
         int srcZero = param.qSrc()[0].zero();
         _zero8u.Reshape(TensorType8u, Shp(_conv.srcC), TensorFormatNchw, uint8_t(srcZero));
         _bias32i.Reshape(TensorType32i, Shp(weight[1].Size()), TensorFormatNchw, int32_t(0));
-        _zero32i.Reshape(TensorType32i, Shp(weight[1].Size()), TensorFormatNchw, int32_t(0));
-        _bias32f.Reshape(TensorType32f, Shp(weight[1].Size()), TensorFormatNchw, float(0));
         if (weight[0].Format() == TensorFormatNhwc)
         {
             SYNET_ERROR("QuantizedConvolutionLayer: unsupported weight[0] format: " << weight[0].Format() << " !");
@@ -209,36 +207,40 @@ namespace Synet
         {
             size_t M = weight[0].Size(0, 1), K = weight[0].Size(1, 4);
             const int8_t* pw = weight[0].Data<int8_t>();
-            int32_t* pz = _zero32i.Data<int32_t>();
+            int32_t* pb = _bias32i.Data<int32_t>();
             for (size_t i = 0; i < M; ++i)
             {
-                pz[i] = 0;
+                pb[i] = 0;
                 for (size_t k = 0; k < K; ++k)
-                    pz[i] += pw[i * K + k] * srcZero;
+                    pb[i] -= pw[i * K + k] * srcZero;
             }
             if(_alg.bias)
             {
                 int biasStart = param.qSrc()[1].weights();
                 const int32_t* pw = weight[biasStart + 0].Data<int32_t>();
-                const float* ps = weight[biasStart + 1].Data<float>();
-                float* pb = _bias32f.Data<float>();
+                int32_t* pb = _bias32i.Data<int32_t>();
                 for (size_t i = 0; i < M; ++i)
-                    pb[i] = pw[i] * ps[i];
+                    pb[i] += pw[i];
             }
         }
         _norm32f.Reshape(TensorType32f, Shp(weight[1].Size()), TensorFormatNchw, float(0));
-        //if (_alg.bias)
-        //{
-        //    int biasStart = param.qSrc()[1].weights();
-        //    for (size_t i = 0, n = weight[biasStart + 1].Size(); i < n; ++i)
-        //        _norm32f.Data<float>()[i] = weight[biasStart + 1].Data<float>()[i];
-        //}
-        //else
+        if (_alg.bias)
+        {
+            int biasStart = param.qSrc()[1].weights();
+            for (size_t i = 0, n = weight[biasStart + 1].Size(); i < n; ++i)
+                _norm32f.Data<float>()[i] = weight[biasStart + 1].Data<float>()[i];
+        }
+        else
         {
             float srcScale = param.qSrc()[0].scale();
             for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
                 _norm32f.Data<float>()[i] = weight[1].Data<float>()[i] * srcScale;
         }
+
+        //std::cout << std::fixed << std::setprecision(10) << "Synet: _norm32f: " << _norm32f.Data<float>()[0]
+        //    << " srcScale: " << param.qSrc()[0].scale()
+        //    << " weight[1]: " << weight[1].Data<float>()[0]
+        //    << std::endl;
 
         return true;
     }
@@ -275,7 +277,7 @@ namespace Synet
     void QuantizedConvolutionLayer::ForwardCpu(const uint8_t* src, uint8_t* buf, int32_t* sum, float* dst)
     {
         const bool overflow16i = false;// true;
-        const int8_t* weight = Weight()[0].Data<int8_t>();// _weight8i.Data<int8_t>();
+        const int8_t* weight = Weight()[0].Data<int8_t>();
         const float* norm = _norm32f.Data<float>();
 
         const uint8_t* tmp = src;
@@ -307,12 +309,12 @@ namespace Synet
                 for (size_t g = 0; g < _conv.group; ++g)
                     Synet::CpuGemmNN(_alg.siD, _alg.siS, _alg.siW, weight + _alg.grW * g, _alg.ldW, tmp + _alg.grS * g, _alg.ldS, sum + _alg.grD * g, _alg.ldD);
         }
-        const int32_t* zero = _zero32i.Data<int32_t>();
-        DequantizeLinear(sum, 1, _conv.dstC, _conv.dstH, _conv.dstW, _conv.dstF, zero, norm, dst);
-        if (_alg.bias)
-        {
-            const float* bias = _bias32f.Data<float>();        
-            BiasLayerForward(dst, bias, _conv.dstC, _conv.dstH * _conv.dstW, dst, _conv.dstF);
-        }
+        const int32_t* bias = _bias32i.Data<int32_t>();
+        DequantizeLinear(sum, 1, _conv.dstC, _conv.dstH, _conv.dstW, _conv.dstF, bias, norm, dst);
+        //if (_alg.bias)
+        //{
+        //    const float* bias = _bias32f.Data<float>();        
+        //    BiasLayerForward(dst, bias, _conv.dstC, _conv.dstH * _conv.dstW, dst, _conv.dstF);
+        //}
     }
 }

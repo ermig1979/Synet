@@ -24,11 +24,29 @@
 
 #include "Synet/Layers/Quantized/DequantizeLinearLayer.h"
 
+#include "Synet/Quantization/DequantizeLinear.h"
+
 namespace Synet
 {
+    static void DequantizeLinearUniform(const uint8_t* src, int zero, float norm, size_t size, float* dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = DequantizeLinear(src[i], zero, norm);
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     DequantizeLinearLayer::DequantizeLinearLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
+        , _uniform(NULL)
     {
+    }
+
+    int64_t DequantizeLinearLayer::Flop() const
+    {
+        if (_const)
+            return 0;
+        return _size * 2;
     }
 
     bool DequantizeLinearLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
@@ -38,6 +56,12 @@ namespace Synet
 
         const QuantizeParam& param = Param().quantize();
         const Tensors& weight = this->Weight();
+
+        _size = src[0]->Size();
+        _zero = param.zero();
+        _norm = param.scale();
+
+        _uniform = DequantizeLinearUniform;
 
         if(src.size())
             dst[0]->Reshape(TensorType32f, src[0]->Shape(), src[0]->Format());
@@ -55,5 +79,7 @@ namespace Synet
 
     void DequantizeLinearLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
+        if (_uniform)
+            _uniform(src[0]->Data<uint8_t>(), _zero, _norm, _size, dst[0]->Data<float>());
     }
 }

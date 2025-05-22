@@ -35,11 +35,17 @@ namespace Synet
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
+        virtual int64_t Flop() const;
+
+        typedef void (*UniformPtr)(const uint8_t* src, int zero, float norm, size_t size, float* dst);
+
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
         int32_t _zero;
-        float scale;
-        size_t _axis;
+        float _norm;
+        size_t _axis, _size;
+
+        UniformPtr _uniform;
     };
 }
