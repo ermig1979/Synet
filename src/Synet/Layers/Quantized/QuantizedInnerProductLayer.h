@@ -37,9 +37,17 @@ namespace Synet
 
         virtual bool Resizable() const;
 
+        virtual int64_t Flop() const;
+
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
+        bool Compartible() const;
+
+        bool InitParams();
+
+        bool _src8u, _dst8u;
         size_t _axis, _batch, _M, _N, _K;
+        bool _biasTerm, _transA, _transB;
     };
 }

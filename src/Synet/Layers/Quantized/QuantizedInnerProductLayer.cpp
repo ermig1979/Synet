@@ -36,6 +36,11 @@ namespace Synet
         return false;
     }
 
+    int64_t QuantizedInnerProductLayer::Flop() const
+    {
+        return _batch * _M * _N * (_K * 2 + (_biasTerm ? 1 : 0));
+    }
+
     bool QuantizedInnerProductLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if ((src.size() != 1 && src.size() != 2) || dst.size() != 1)
@@ -43,9 +48,15 @@ namespace Synet
 
         const InnerProductParam& param = this->Param().innerProduct();
 
+        _biasTerm = param.biasTerm();
+        _transA = param.transposeA();
+        _transB = param.transposeB();
         _axis = (int)src[0]->Index(param.axis());
         _batch = 1;
         _K = src[0]->Size(_axis);
+
+        _src8u = src[0]->GetType() == TensorType8u;
+        _dst8u = dst[0]->GetType() == TensorType8u;
 
         if (src.size() == 2)
         {
@@ -58,11 +69,30 @@ namespace Synet
             _batch = 1;
         }
 
+        if (!(Compartible() && InitParams()))
+            return false;
+
         Shape dstShape = src[0]->Shape();
         dstShape.resize(_axis + 1);
         dstShape[_axis] = _N;
         dst[0]->Reshape(TensorType32f, dstShape, TensorFormatNchw);
 
+        std::stringstream desc;
+        desc << _batch << "x" << _M << "x" << _K << "-" << _N << " ";
+        desc << ToChar(src[0]->GetType()) << (src.size() > 1 ? ToChar(src[1]->GetType()) : "0") << ToChar(dst[0]->GetType()) << "-";
+        desc << (_transB ? "n" : "t") << (_biasTerm ? "b" : "o");
+        this->UsePerfStat(desc.str(), Flop());
+
+        return true;
+    }
+
+    bool QuantizedInnerProductLayer::Compartible() const
+    {
+        return true;
+    }
+
+    bool QuantizedInnerProductLayer::InitParams()
+    {
         return true;
     }
 

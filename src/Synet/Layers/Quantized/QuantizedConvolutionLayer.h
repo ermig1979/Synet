@@ -44,6 +44,7 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
         bool Compartible() const;
+
         bool InitParams();
 
         void ForwardCpu(const uint8_t* src, uint8_t* buf, int32_t* sum, float* dst);
