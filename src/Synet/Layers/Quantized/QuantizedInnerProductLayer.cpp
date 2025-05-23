@@ -24,6 +24,11 @@
 
 #include "Synet/Layers/Quantized/QuantizedInnerProductLayer.h"
 
+#include "Synet/Utils/Gemm.h"
+
+#include "Synet/Quantization/Gemm.h"
+#include "Synet/Quantization/DequantizeLinear.h"
+
 namespace Synet
 {
     QuantizedInnerProductLayer::QuantizedInnerProductLayer(const LayerParam & param, Context* context)
@@ -76,6 +81,10 @@ namespace Synet
         dstShape.resize(_axis + 1);
         dstShape[_axis] = _N;
         dst[0]->Reshape(TensorType32f, dstShape, TensorFormatNchw);
+
+        if (!_src8u)
+            Layer::Extend8u(buf, 0, src[0]->Shape(), src[0]->Format());
+        Layer::Extend32i(buf, 0, dstShape, TensorFormatNchw);
 
         std::stringstream desc;
         desc << _batch << "x" << _M << "x" << _K << "-" << _N << " ";
@@ -202,5 +211,27 @@ namespace Synet
 
     void QuantizedInnerProductLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
+        uint8_t* tmp = _src8u ? src[0]->Data<uint8_t>() : Layer::Buf8u(buf, 0);
+        int32_t* sum = Layer::Buf32i(buf, 0);
+        //if (!_src8u)
+        //    _srcCvt.Convert(src[0]->Data<float>(), tmp);
+        ForwardCpu(tmp, sum, dst[0]->Data<float>());
+        //if (_dst8u)
+        //    _dstCvt.Convert(sum, dst[0]->Data<uint8_t>());
+        //else
+        //    _dstCvt.Convert(sum, dst[0]->Data<float>());
+    }
+
+    void QuantizedInnerProductLayer::ForwardCpu(const uint8_t* src, int32_t* sum, float* dst)
+    {
+        const int8_t* weight = Weight()[0].Data<int8_t>();
+
+        const bool overflow16i = true;
+        Synet::CpuGemm8iNT(_M, _N, _K, src, _K, weight, _K, sum, _N, overflow16i);
+        //Synet::CpuGemmNN(_M, _N, _K, weight, _K, src, _N, sum, _N);
+ 
+        const int32_t* bias = _bias32i.Data<int32_t>();
+        const float* norm = _norm32f.Data<float>();
+        DequantizeLinear(sum, 1, _M, 1, _N, TensorFormatNchw, bias, norm, dst);
     }
 }

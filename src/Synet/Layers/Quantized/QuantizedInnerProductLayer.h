@@ -46,6 +46,8 @@ namespace Synet
 
         bool InitParams();
 
+        void ForwardCpu(const uint8_t* src, int32_t* sum, float* dst);
+
         bool _src8u, _dst8u;
         size_t _axis, _batch, _M, _N, _K;
         bool _biasTerm, _transA, _transB;
