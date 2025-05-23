@@ -116,6 +116,41 @@ namespace Synet
         if (!weightZeroZero)
             SYNET_ERROR("QuantizedInnerProductLayer supports only weight 'zero' == 0!");
 
+        if (_biasTerm)
+        {
+            if (param.qSrc().size() != 3)
+                SYNET_ERROR("QuantizedInnerProductLayer must have 3 input dequantizers for when uses bias!");
+            int biasStart = param.qSrc()[1].weights();
+            bool biasZeroZero = true;
+            if (param.qSrc()[2].weights() == 2)
+            {
+                if (param.qSrc()[2].type() != TensorType32i)
+                    SYNET_ERROR("QuantizedInnerProductLayer supports only INT32 bias!");
+                biasZeroZero = param.qSrc()[2].zero() == 0;
+            }
+            else
+            {
+                if (weight[biasStart + 2].GetType() != TensorType32i)
+                    SYNET_ERROR("QuantizedInnerProductLayer supports only INT32 bias!");
+                for (size_t i = 0, n = weight[biasStart + 2].Size(); i < n && biasZeroZero; ++i)
+                    biasZeroZero = weight[biasStart + 2].Data<int32_t>()[i] == 0;
+            }
+            if (!biasZeroZero)
+                SYNET_ERROR("QuantizedInnerProductLayer supports only bias 'zero' == 0!");
+
+            bool equalScale = true;
+            if (weight[0].Count() != 2 || weight[0].GetType() != TensorType8i)
+                SYNET_ERROR("QuantizedInnerProductLayer: weight[0] must be 2D int8 tensor!");
+            if (weight[1].Count() != 1 || weight[biasStart + 1].Count() != 1 || weight[1].Axis(0) != weight[biasStart + 1].Axis(0))
+                SYNET_ERROR("QuantizedInnerProductLayer: weight scale (weight[1]) must the same size as bias scale (weight[" << biasStart + 1 << "]) !");
+            float srcScale = param.qSrc()[0].scale();
+            for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
+            {
+                if (::fabs(weight[1].Data<float>()[i] * srcScale - weight[biasStart + 1].Data<float>()[i]) > 0.000001)
+                    SYNET_ERROR("QuantizedInnerProductLayer: weight scale (weight[1]) and bias scale (weight[" << biasStart + 1 << "]) are not compartible!");
+            }
+        }
+
         return true;
     }
 
