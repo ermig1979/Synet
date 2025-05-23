@@ -203,6 +203,8 @@ namespace Synet
                 {
                     if (_param.convToNhwc() && isNhwc && TransposeConvolutions(network.layers(), i, bin, buf, merged, changes))
                         continue;
+                    if (MergeOtherAndQuantizeLinear(network.layers(), i, method, merged, changes))
+                        continue;
                     break;
                 }
                 case 7:
@@ -862,6 +864,27 @@ namespace Synet
             conv.convolution().activationParam1() = param1;
             if(act.weight().size())
                 conv.weight().push_back(act.weight()[0]);
+            return true;
+        }
+
+        bool MergeOtherAndQuantizeLinear(const LayerParams& src, size_t index, QuantizationMethod method, LayerParams& dst, Changes& changes)
+        {
+            const LayerParam& ql = src[index];
+            if (ql.type() != LayerTypeQuantizeLinear)
+                return false;
+            if (ql.quantize().weights())
+                return false;
+            size_t dst0 = GetIndexByName(dst, ql.src()[0]);
+            size_t src0 = GetIndexByName(src, ql.src()[0]);
+            if (dst0 >= dst.size() || src0 >= src.size())
+                return false;
+            LayerParam& other = dst[dst0];
+            if (other.type() != LayerTypeQuantizedConvolution)
+                return false;
+            if (UserCount(src, src0) != 1)
+                return false;
+            changes.push_back(Change(ql.name(), other.name()));
+            other.qDst().push_back(ql.quantize());
             return true;
         }
 
