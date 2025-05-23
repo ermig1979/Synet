@@ -49,5 +49,6 @@ namespace Synet
         bool _src8u, _dst8u;
         size_t _axis, _batch, _M, _N, _K;
         bool _biasTerm, _transA, _transB;
+        Tensor _bias32i, _norm32f;
     };
 }

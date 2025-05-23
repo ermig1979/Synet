@@ -143,7 +143,7 @@ namespace Synet
                 SYNET_ERROR("QuantizedInnerProductLayer: weight[0] must be 2D int8 tensor!");
             if (weight[1].Count() != 1 || weight[biasStart + 1].Count() != 1 || weight[1].Axis(0) != weight[biasStart + 1].Axis(0))
                 SYNET_ERROR("QuantizedInnerProductLayer: weight scale (weight[1]) must the same size as bias scale (weight[" << biasStart + 1 << "]) !");
-            float srcScale = param.qSrc()[0].scale();
+            float srcScale = (float)param.qSrc()[0].scale();
             for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
             {
                 if (::fabs(weight[1].Data<float>()[i] * srcScale - weight[biasStart + 1].Data<float>()[i]) > 0.000001)
@@ -156,6 +156,47 @@ namespace Synet
 
     bool QuantizedInnerProductLayer::InitParams()
     {
+        const LayerParam& param = this->Param();
+        const Tensors& weight = this->Weight();
+        int srcZero = param.qSrc()[0].zero();
+        _bias32i.Reshape(TensorType32i, Shp(weight[1].Size()), TensorFormatNchw, int32_t(0));
+        if (weight[0].Format() == TensorFormatNhwc)
+        {
+            SYNET_ERROR("QuantizedInnerProductLayer: unsupported weight[0] format: " << weight[0].Format() << " !");
+        }
+        else
+        {
+            size_t M = weight[0].Size(0, 1), K = weight[0].Size(1, 2);
+            const int8_t* pw = weight[0].Data<int8_t>();
+            int32_t* pb = _bias32i.Data<int32_t>();
+            for (size_t i = 0; i < M; ++i)
+            {
+                pb[i] = 0;
+                for (size_t k = 0; k < K; ++k)
+                    pb[i] -= pw[i * K + k] * srcZero;
+            }
+            if (_biasTerm)
+            {
+                int biasStart = param.qSrc()[1].weights();
+                const int32_t* pw = weight[biasStart + 0].Data<int32_t>();
+                int32_t* pb = _bias32i.Data<int32_t>();
+                for (size_t i = 0; i < M; ++i)
+                    pb[i] += pw[i];
+            }
+        }
+        _norm32f.Reshape(TensorType32f, Shp(weight[1].Size()), TensorFormatNchw, float(0));
+        if (_biasTerm)
+        {
+            int biasStart = param.qSrc()[1].weights();
+            for (size_t i = 0, n = weight[biasStart + 1].Size(); i < n; ++i)
+                _norm32f.Data<float>()[i] = weight[biasStart + 1].Data<float>()[i];
+        }
+        else
+        {
+            float srcScale = (float)param.qSrc()[0].scale();
+            for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
+                _norm32f.Data<float>()[i] = weight[1].Data<float>()[i] * srcScale;
+        }
         return true;
     }
 

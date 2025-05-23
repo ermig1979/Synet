@@ -181,7 +181,7 @@ namespace Synet
                 SYNET_ERROR("QuantizedConvolutionLayer: weight[0] must be 4D int8 tensor!");
             if (weight[1].Count() != 1 || weight[biasStart + 1].Count() != 1 || weight[1].Axis(0) != weight[biasStart + 1].Axis(0))
                 SYNET_ERROR("QuantizedConvolutionLayer: weight scale (weight[1]) must the same size as bias scale (weight[" << biasStart + 1 << "]) !");
-            float srcScale = param.qSrc()[0].scale();
+            float srcScale = (float)param.qSrc()[0].scale();
             for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
             {
                 if(::fabs(weight[1].Data<float>()[i] * srcScale - weight[biasStart + 1].Data<float>()[i]) > 0.000001)
@@ -232,7 +232,7 @@ namespace Synet
         }
         else
         {
-            float srcScale = param.qSrc()[0].scale();
+            float srcScale = (float)param.qSrc()[0].scale();
             for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
                 _norm32f.Data<float>()[i] = weight[1].Data<float>()[i] * srcScale;
         }
