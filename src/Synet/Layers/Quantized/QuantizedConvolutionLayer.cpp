@@ -54,20 +54,21 @@ namespace Synet
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("QuantizedConvolutionLayer supports only 1 input and 1 output!");
 
-        const ConvolutionParam& param = this->Param().convolution();
+        const LayerParam& param = this->Param();
+        const ConvolutionParam& conv = param.convolution();
 
-        _conv.Set(param);
-        _conv.Set(*src[0], *dst[0], true, param.autoPad());
+        _conv.Set(conv);
+        _conv.Set(*src[0], *dst[0], true, conv.autoPad());
         _src8u = src[0]->GetType() == TensorType8u;
-        _dst8u = dst[0]->GetType() == TensorType8u;
+        _dst8u = param.qDst().size() && param.qDst()[0].type() == TensorType8u;
         if (src[0]->Count() != 4)
             SYNET_ERROR("QuantizedConvolutionLayer supports only 4D tensors!");
 
-        _alg.params[0] = param.activationParam0();
-        _alg.params[1] = param.activationParam1();
+        _alg.params[0] = conv.activationParam0();
+        _alg.params[1] = conv.activationParam1();
 
         _alg.is1x1 = _conv.Is1x1() ? 1 : 0;
-        _alg.bias = param.biasTerm() ? 1 : 0;
+        _alg.bias = conv.biasTerm() ? 1 : 0;
         _alg.batch = src[0]->Axis(0);
         _alg.trans = _conv.Trans();
         if (_alg.trans)
