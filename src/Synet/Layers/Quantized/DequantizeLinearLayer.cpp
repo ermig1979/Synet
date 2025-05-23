@@ -28,10 +28,10 @@
 
 namespace Synet
 {
-    static void DequantizeLinearUniform(const uint8_t* src, int zero, float norm, size_t size, float* dst)
+    static void DequantizeLinearUniform(const uint8_t* src, int bias, float norm, size_t size, float* dst)
     {
         for (size_t i = 0; i < size; ++i)
-            dst[i] = DequantizeLinear(src[i], zero, norm);
+            dst[i] = DequantizeLinear(src[i], bias, norm);
     }
 
     //-------------------------------------------------------------------------------------------------
@@ -58,7 +58,7 @@ namespace Synet
         const Tensors& weight = this->Weight();
 
         _size = src[0]->Size();
-        _zero = param.zero();
+        _bias = -param.zero();
         _norm = param.scale();
 
         _uniform = DequantizeLinearUniform;
@@ -80,6 +80,6 @@ namespace Synet
     void DequantizeLinearLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
         if (_uniform)
-            _uniform(src[0]->Data<uint8_t>(), _zero, _norm, _size, dst[0]->Data<float>());
+            _uniform(src[0]->Data<uint8_t>(), _bias, _norm, _size, dst[0]->Data<float>());
     }
 }
