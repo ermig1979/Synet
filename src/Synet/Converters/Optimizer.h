@@ -193,7 +193,7 @@ namespace Synet
                 {
                     if (MergePowerAndScaleAndPower(network.layers(), i, bin, buf, merged, changes))
                         continue;
-                    if (MergeConvolutionOrDeconvolutionAndActivation(network.layers(), i, method, merged, changes))
+                    if (MergeConvolutionOrOtherAndActivation(network.layers(), i, method, merged, changes))
                         continue;
                     if (MergeRnnGruBd(network.layers(), i, merged, changes))
                         continue;
@@ -785,7 +785,7 @@ namespace Synet
             return true;
         }
 
-        bool MergeConvolutionOrDeconvolutionAndActivation(const LayerParams & src, size_t index, QuantizationMethod method, LayerParams & dst, Changes & changes)
+        bool MergeConvolutionOrOtherAndActivation(const LayerParams & src, size_t index, QuantizationMethod method, LayerParams & dst, Changes & changes)
         {
             const LayerParam& act = src[index];
             ActivationFunctionType type = ActivationFunctionTypeIdentity;
@@ -843,7 +843,7 @@ namespace Synet
             if (dst0 >= dst.size() || src0 >= src.size())
                 return false;
             LayerParam& conv = dst[dst0];
-            if (conv.type() != LayerTypeConvolution && conv.type() != LayerTypeDeconvolution)
+            if (conv.type() != LayerTypeConvolution && conv.type() != LayerTypeDeconvolution && conv.type() != LayerTypeQuantizedConvolution)
                 return false;
             if (conv.convolution().activationType() != ActivationFunctionTypeIdentity)
                 return false;

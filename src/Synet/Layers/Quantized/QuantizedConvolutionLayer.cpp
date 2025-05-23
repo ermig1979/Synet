@@ -24,6 +24,7 @@
 
 #include "Synet/Layers/Quantized/QuantizedConvolutionLayer.h"
 #include "Synet/Layers/BiasLayer.h"
+#include "Synet/Utils/Activation.h"
 #include "Synet/Utils/ImgToCol.h"
 #include "Synet/Utils/Gemm.h"
 #include "Synet/Quantization/Gemm.h"
@@ -316,5 +317,42 @@ namespace Synet
         //    const float* bias = _bias32f.Data<float>();        
         //    BiasLayerForward(dst, bias, _conv.dstC, _conv.dstH * _conv.dstW, dst, _conv.dstF);
         //}
+        switch (_conv.activation)
+        {
+        case ActivationFunctionTypeIdentity:
+            break;
+        case ActivationFunctionTypeRelu:
+            CpuRelu(dst, _alg.dSize, 0.0f, dst);
+            break;
+        case ActivationFunctionTypeLeakyRelu:
+            CpuRelu(dst, _alg.dSize, _alg.params[0], dst);
+            break;
+        case ActivationFunctionTypeRestrictRange:
+            CpuRestrictRange(dst, _alg.dSize, _alg.params[0], _alg.params[1], dst);
+            break;
+        case ActivationFunctionTypePrelu:
+            //PreluLayerForward(dst, this->Weight().back().Data<float>(), conv.dstC, conv.dstH * conv.dstW, dst, alg.trans ? TensorFormatNhwc : TensorFormatNchw);
+            break;
+        case ActivationFunctionTypeElu:
+            CpuElu(dst, _alg.dSize, _alg.params[0], dst);
+            break;
+        case ActivationFunctionTypeHswish:
+            CpuHswish(dst, _alg.dSize, _alg.params[0], _alg.params[1], dst);
+            break;
+        case ActivationFunctionTypeMish:
+            CpuMish(dst, _alg.dSize, _alg.params[0], dst);
+            break;
+        case ActivationFunctionTypeHardSigmoid:
+            CpuHardSigmoid(dst, _alg.dSize, _alg.params[0], _alg.params[1], dst);
+            break;
+        case ActivationFunctionTypeSwish:
+            CpuSwish(dst, _alg.dSize, dst);
+            break;
+        case ActivationFunctionTypeGelu:
+            CpuGelu(dst, _alg.dSize, dst);
+            break;
+        default:
+            assert(0);
+        }
     }
 }
