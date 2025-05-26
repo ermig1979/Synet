@@ -227,17 +227,29 @@ namespace Synet
             for (size_t i = 0; i < dstNames.size(); ++i)
             {
                 bool found = false;
-                for (size_t j = 0; j < _stages.size(); ++j)
+                for (size_t j = 0; j < _stages.size() && !found; ++j)
                 {
-                    Layer * layer = _stages[j].layer;
-                    const LayerParam & param = layer->Param();
+                    Layer* layer = _stages[j].layer;
+                    const LayerParam& param = layer->Param();
                     if (param.name() == dstNames[i])
                     {
                         _dst.push_back(_stages[j].dst[0]);
                         layer->_isBack = true;
                         _back.push_back(layer);
                         found = true;
-                        break;
+                    }
+                    else
+                    {
+                        for (size_t d = 0; d < param.dst().size() && !found; ++d)
+                        {
+                            if (param.dst()[d] == dstNames[i])
+                            {
+                                _dst.push_back(_stages[j].dst[d]);
+                                layer->_isBack = true;
+                                _back.push_back(layer);
+                                found = true;
+                            }
+                        }
                     }
                 }
                 if (!found)

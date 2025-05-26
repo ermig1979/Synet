@@ -883,7 +883,11 @@ namespace Synet
                 return false;
             if (UserCount(src, src0) != 1)
                 return false;
+#if 0
             changes.push_back(Change(ql.name(), other.name()));
+#else
+            other.dst() = ql.dst();
+#endif
             other.qDst().push_back(ql.quantize());
             return true;
         }
