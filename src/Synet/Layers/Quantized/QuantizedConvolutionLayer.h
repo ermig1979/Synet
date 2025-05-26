@@ -47,7 +47,9 @@ namespace Synet
 
         bool InitParams();
 
-        void ForwardCpu(const uint8_t* src, uint8_t* buf, int32_t* sum, float* dst);
+        void Convolution(const uint8_t* src, uint8_t* buf, int32_t* sum);
+        void PostProcess(const int32_t* sum, float* dst);
+        void PostProcess(const int32_t* sum, float* buf, uint8_t* dst);
 
     protected:
         ConvParam _conv;
@@ -58,6 +60,6 @@ namespace Synet
             float params[2];
         } _alg;
         bool _src8u, _dst8u;
-        Tensor _zero8u, _bias32i, _norm32f;
+        Tensor _srcZero8u, _dstZero8u, _bias32i, _norm32f;
     };
 }

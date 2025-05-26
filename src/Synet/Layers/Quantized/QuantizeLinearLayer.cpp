@@ -28,11 +28,6 @@
 
 namespace Synet
 {
-    SYNET_INLINE int QuantizeLinear(float value, float scale, int zero, int min, int max)
-    {
-        return RestrictRange(Round(value * scale) + zero, min, max);
-    }
-
     template<class T> void QuantizeLinearUniform(const float* src, float scale, int zero, size_t size, uint8_t* dst8)
     {
         T* dst = (T*)dst8;
