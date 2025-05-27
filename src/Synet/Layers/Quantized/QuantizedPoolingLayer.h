@@ -33,9 +33,20 @@ namespace Synet
     public:
         QuantizedPoolingLayer(const LayerParam& param, Context* context);
 
+        virtual int64_t Flop() const;
+
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+        TensorFormat _format;
+        TensorType _type;
+        PoolingMethodType _method;
+        RoundingType _roundingType;
+        int _excludePad;
+        bool _src8u, _dst8u;
+        size_t _batch, _srcC, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX,
+            _padY, _padX, _padH, _padW, _dstC, _dstH, _dstW;
     };
 }

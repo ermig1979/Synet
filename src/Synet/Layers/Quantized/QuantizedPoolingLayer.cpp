@@ -33,10 +33,22 @@ namespace Synet
     {
     }
 
+    int64_t QuantizedPoolingLayer::Flop() const
+    {
+        return _const ? int64_t(0) : _batch * _kernelY * _kernelX * _dstC * _dstH * _dstW;
+    }
+
     bool QuantizedPoolingLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if ((src.size() != 0 && src.size() != 1) || dst.size() != 1)
             SYNET_ERROR("QuantizedPoolingLayer supports only 1 inputs and 1 output!");
+
+        const PoolingParam& param = this->Param().pooling();
+
+        _roundingType = param.roundingType();
+        _excludePad = param.excludePad();
+        if (src[0]->Count() < 4)
+            SYNET_ERROR("QuantizedPoolingLayer input must have at least 4 dimensions!");
 
         return true;
     }

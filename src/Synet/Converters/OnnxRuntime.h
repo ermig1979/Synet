@@ -213,7 +213,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Gemm" && !ConvertGemmNode(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "GlobalAveragePool" && !ConvertGlobalAveragePoolNode(node, layer))
+                if (node.op_type() == "GlobalAveragePool" && !ConvertGlobalAveragePoolNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Greater" && !ConvertGreaterNode(node, layer))
                     return ErrorMessage(i, node);
@@ -1400,11 +1400,22 @@ namespace Synet
             return true;
         }
 
-        bool ConvertGlobalAveragePoolNode(const onnx::NodeProto& node, LayerParam& layer)
+        bool ConvertGlobalAveragePoolNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer)
         {
-            layer.type() = Synet::LayerTypePooling;
-            layer.pooling().method() = PoolingMethodTypeAverage;
-            layer.pooling().globalPooling() = true;
+            if (GetLayerType(layers, layer.src()[0]) == LayerTypeDequantizeLinear)
+            {
+                layer.type() = Synet::LayerTypeQuantizedPooling;
+                layer.pooling().method() = PoolingMethodTypeAverage;
+                layer.pooling().globalPooling() = true;
+                if (!MoveDequantizeLinearToLayer(layers, layer))
+                    return false;
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypePooling;
+                layer.pooling().method() = PoolingMethodTypeAverage;
+                layer.pooling().globalPooling() = true;
+            }
             return true;
         }
 
