@@ -148,6 +148,36 @@ namespace Synet
             _strideY == 1 && _strideX == 1 &&
             _padY == 0 && _padX == 0 && _padH == 0 && _padW == 0;
 
+        if (skip)
+        {
+            _const = true;
+            dst[0]->Share(*src[0]);
+        }
+        else
+        {
+            Shape shape = src[0]->Shape();
+            if (_format == TensorFormatNhwc)
+            {
+                shape[shape.size() - 3] = _dstH;
+                shape[shape.size() - 2] = _dstW;
+                shape[shape.size() - 1] = _dstC;
+            }
+            else
+            {
+                shape[shape.size() - 3] = _dstC;
+                shape[shape.size() - 2] = _dstH;
+                shape[shape.size() - 1] = _dstW;
+            }
+            dst[0]->Reshape(_dst8u ? TensorType8u : TensorType32f, shape, _format);
+
+            std::stringstream desc;
+            desc << _batch << "x" << _srcC << "x" << _srcH << "x" << _srcW;
+            desc << "-" << _kernelY << "x" << _kernelX << "-" << _strideY << "x" << _strideX;
+            desc << (_method ? " avg" : " max") << "-" << (_src8u ? "u" : "f") << (_dst8u ? "u" : "f");
+            this->UsePerfStat(desc.str(), Flop());
+            _const = false;
+        }
+
         return true;
     }
 

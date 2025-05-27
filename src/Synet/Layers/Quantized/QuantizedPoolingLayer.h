@@ -41,7 +41,6 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
         TensorFormat _format;
-        TensorType _type;
         PoolingMethodType _method;
         RoundingType _roundingType;
         int _excludePad;
