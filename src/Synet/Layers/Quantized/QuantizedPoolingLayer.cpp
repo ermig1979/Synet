@@ -127,6 +127,13 @@ namespace Synet
         return _const ? int64_t(0) : _batch * _kernelY * _kernelX * _dstC * _dstH * _dstW;
     }
 
+    LowPrecisionType QuantizedPoolingLayer::LowPrecision(TensorType type) const
+    {
+        if (type == TensorType8u)
+            return LowPrecisionTypeActive;
+        return LowPrecisionTypeNone;
+    }
+
     bool QuantizedPoolingLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if ((src.size() != 0 && src.size() != 1) || dst.size() != 1)

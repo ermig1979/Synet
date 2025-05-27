@@ -47,6 +47,13 @@ namespace Synet
         return _batch * _M * _N * (_K * 2 + (_biasTerm ? 1 : 0));
     }
 
+    LowPrecisionType QuantizedInnerProductLayer::LowPrecision(TensorType type) const
+    {
+        if (type == TensorType8u)
+            return LowPrecisionTypeActive;
+        return LowPrecisionTypeNone;
+    }
+
     bool QuantizedInnerProductLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if ((src.size() != 1 && src.size() != 2) || dst.size() != 1)

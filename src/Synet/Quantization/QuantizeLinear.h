@@ -74,7 +74,7 @@ namespace Synet
                     for (size_t w = 0; w < width; ++w)
                     {
                         for (size_t c = 0; c < channels; ++c)
-                            dst[c] = (uint8_t)QuantizeSumLinear(sum[w], bias[c], norm[c], zero[c], min, max);
+                            dst[c] = (uint8_t)QuantizeSumLinear(sum[c], bias[c], norm[c], zero[c], min, max);
                         sum += channels;
                         dst += channels;
                     }

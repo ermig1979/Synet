@@ -63,8 +63,21 @@ namespace Synet
 
         _uniform = DequantizeLinearUniform;
 
-        if(src.size())
+        if (src.size())
+        {
             dst[0]->Reshape(TensorType32f, src[0]->Shape(), src[0]->Format());
+            if (src[0]->Const())
+            {
+                ForwardCpu(src, buf, dst);
+                dst[0]->SetConst(true);
+                _const = true;
+            }
+            else
+            {
+                this->UsePerfStat();
+                _const = false;
+            }
+        }
         else
         {
             if (weight.empty())

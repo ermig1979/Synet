@@ -49,6 +49,13 @@ namespace Synet
             (_conv.kernelY * _conv.kernelX * _conv.srcC / _conv.group * 2 + _alg.bias + _conv.ActivalionFlop());
     }
 
+    LowPrecisionType QuantizedConvolutionLayer::LowPrecision(TensorType type) const
+    {
+        if (type == TensorType8u)
+            return LowPrecisionTypeActive;
+        return LowPrecisionTypeNone;
+    }
+
     bool QuantizedConvolutionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (src.size() != 1 || dst.size() != 1)
@@ -209,7 +216,23 @@ namespace Synet
         _bias32i.Reshape(TensorType32i, Shp(weight[1].Size()), TensorFormatNchw, int32_t(0));
         if (weight[0].Format() == TensorFormatNhwc)
         {
-            SYNET_ERROR("QuantizedConvolutionLayer: unsupported weight[0] format: " << weight[0].Format() << " !");
+            size_t K = weight[0].Size(0, 3), M = weight[0].Size(3, 4);
+            const int8_t* pw = weight[0].Data<int8_t>();
+            int32_t* pb = _bias32i.Data<int32_t>();
+            for (size_t i = 0; i < M; ++i)
+            {
+                pb[i] = 0;
+                for (size_t k = 0; k < K; ++k)
+                    pb[i] -= pw[k * M + i] * srcZero;
+            }
+            if (_alg.bias)
+            {
+                int biasStart = param.qSrc()[1].weights();
+                const int32_t* pw = weight[biasStart + 0].Data<int32_t>();
+                int32_t* pb = _bias32i.Data<int32_t>();
+                for (size_t i = 0; i < M; ++i)
+                    pb[i] += pw[i];
+            }
         }
         else
         {

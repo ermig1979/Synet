@@ -588,6 +588,7 @@ namespace Synet
             switch (layer.type())
             {
             case LayerTypeConvolution:
+            case LayerTypeQuantizedConvolution:
             {
                 shape = Shape({ shape[2], shape[3], shape[1], shape[0] });
                 Tensor dst((uint8_t*)pDst, weight.size(), TensorType32f, shape, weight.format());

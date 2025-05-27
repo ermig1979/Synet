@@ -1087,10 +1087,12 @@ namespace Synet
                     layer.type() = Synet::LayerTypeQuantizedConvolution;
                     if (!MoveDequantizeLinearToLayer(layers, layer))
                         return false;
-                    return true;
                 }
                 else
                     return false;
+                if (trans && !PermutedToNchw(layers, layer.src(), true, false, false, permuteMap))
+                    return ReorderWeight(srcBin, Shape(), layer, dstBin);
+                return true;
             }
             const LayerParam* weight = GetWeightLayer(layers, layer.src()[1]);
             if (weight == NULL || weight->type() != LayerTypeConst)
