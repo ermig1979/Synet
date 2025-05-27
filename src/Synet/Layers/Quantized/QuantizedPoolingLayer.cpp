@@ -32,7 +32,7 @@ namespace Synet
         size_t batch, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX, size_t strideY, size_t strideX, size_t padY, size_t padX, 
         int32_t* buf, uint8_t* dst, float dstScale, int32_t dstZero, size_t dstH, size_t dstW, int excludePad, TensorFormat format)
     {
-        int32_t bias = excludePad ? 0 : -srcZero * int32_t(kernelY * kernelX);
+        int32_t bias = -srcZero * int32_t(kernelY * kernelX);
         constexpr int min = std::numeric_limits<uint8_t>::min();
         constexpr int max = std::numeric_limits<uint8_t>::max();
         float norm = srcScale / (dstScale * float(kernelY * kernelX));
@@ -51,7 +51,7 @@ namespace Synet
                         size_t wEnd = Min(wStart + kernelX, srcW);
                         wStart = Max<ptrdiff_t>(0, wStart);
                         for (size_t c = 0; c < channels; ++c)
-                            buf[c] = bias;
+                            buf[c] = 0;
                         for (size_t h = hStart; h < hEnd; ++h)
                         {
                             for (size_t w = wStart; w < wEnd; ++w)
@@ -92,7 +92,7 @@ namespace Synet
                             size_t wStart = pw * strideX - padX;
                             size_t wEnd = Min(wStart + kernelX, srcW);
                             wStart = Max<ptrdiff_t>(0, wStart);
-                            int32_t sum = bias;
+                            int32_t sum = 0;
                             for (size_t h = hStart; h < hEnd; ++h)
                                 for (size_t w = wStart; w < wEnd; ++w)
                                     sum += src[h * srcW + w];
@@ -100,7 +100,7 @@ namespace Synet
                             {
                                 int area = int(hEnd - hStart) * int(wEnd - wStart), bias = -srcZero * area;
                                 float norm = srcScale / (dstScale * float(area));
-                                dst[c] = (uint8_t)QuantizeSumLinear(sum, bias, norm, dstZero, min, max);
+                                dst[ph * dstW + pw] = (uint8_t)QuantizeSumLinear(sum, bias, norm, dstZero, min, max);
                             }
                             else
                                 dst[ph * dstW + pw] = (uint8_t)QuantizeSumLinear(sum, bias, norm, dstZero, min, max);
@@ -134,6 +134,7 @@ namespace Synet
 
         const LayerParam& param = this->Param();
         const PoolingParam& pooling = this->Param().pooling();
+        _method = pooling.method();
         _roundingType = pooling.roundingType();
         _excludePad = pooling.excludePad();
         if (src[0]->Count() < 4)
@@ -235,9 +236,28 @@ namespace Synet
                 SYNET_ERROR("QuantizedPoolingLayer check stride and pad parameters!");
         }
 
+        if (param.qSrc().size() != 1)
+            SYNET_ERROR("QuantizedPoolingLayer must have 1 input dequantizer!");
+        if (param.qSrc()[0].weights() != 0)
+            SYNET_ERROR("QuantizedPoolingnLayer supports only uniform input quantization!");
+        _srcScale = (float)param.qSrc()[0].scale();
+        _srcZero = param.qSrc()[0].zero();
+
+        if (param.qDst().size() != 1)
+            SYNET_ERROR("QuantizedPoolingLayer must have 1 output dequantizer!");
+        if (param.qDst()[0].weights() != 0)
+            SYNET_ERROR("QuantizedPoolingnLayer supports only uniform output quantization!");
+        _dstScale = (float)param.qDst()[0].scale();
+        _dstZero = param.qDst()[0].zero();
+
         bool skip = _kernelX == 1 && _kernelY == 1 &&
             _strideY == 1 && _strideX == 1 &&
             _padY == 0 && _padX == 0 && _padH == 0 && _padW == 0;
+
+        if(!(_src8u && _dst8u))
+            SYNET_ERROR("QuantizedPoolingnLayer supports only UINT8!");
+        if (_method != PoolingMethodTypeAverage)
+            SYNET_ERROR("QuantizedPoolingnLayer supports only Average method!");
 
         if (skip)
         {
@@ -260,6 +280,7 @@ namespace Synet
                 shape[shape.size() - 1] = _dstW;
             }
             dst[0]->Reshape(_dst8u ? TensorType8u : TensorType32f, shape, _format);
+            Layer::Extend32i(buf, 0, Shp(_srcC), TensorFormatNchw);
 
             std::stringstream desc;
             desc << _batch << "x" << _srcC << "x" << _srcH << "x" << _srcW;
@@ -274,5 +295,13 @@ namespace Synet
 
     void QuantizedPoolingLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
+        if (_method == PoolingMethodTypeAverage)
+        {
+            QuantizedPoolingAverage2D(src[0]->Data<uint8_t>(), _srcZero, _srcScale,
+                _batch, _srcC, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX,
+                Layer::Buf32i(buf, 0), dst[0]->Data<uint8_t>(), _dstScale, _dstZero, _dstH, _dstW, _excludePad, _format);
+        }
+        else
+            assert(0);
     }
 }

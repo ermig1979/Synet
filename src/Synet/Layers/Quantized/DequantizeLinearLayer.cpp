@@ -59,7 +59,7 @@ namespace Synet
 
         _size = src[0]->Size();
         _bias = -param.zero();
-        _norm = param.scale();
+        _norm = (float)param.scale();
 
         _uniform = DequantizeLinearUniform;
 

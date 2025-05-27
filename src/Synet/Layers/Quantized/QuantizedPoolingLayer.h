@@ -38,6 +38,7 @@ namespace Synet
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
+
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
         TensorFormat _format;
@@ -47,5 +48,7 @@ namespace Synet
         bool _src8u, _dst8u, _globalPooling;
         size_t _batch, _srcC, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX,
             _padY, _padX, _padH, _padW, _dstC, _dstH, _dstW;
+        float _srcScale, _dstScale;
+        int32_t _srcZero, _dstZero;
     };
 }

@@ -61,7 +61,7 @@ namespace Synet
         _type = param.type();
         _size = src[0]->Size();
         _zero = param.zero();
-        _scale = 1.0f / param.scale();
+        _scale = 1.0f / float(param.scale());
 
         if(!this->Weight().empty())
             SYNET_ERROR("QuantizeLinearLayer supports only uniform case!");
