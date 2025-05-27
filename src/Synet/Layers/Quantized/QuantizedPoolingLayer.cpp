@@ -28,6 +28,95 @@
 
 namespace Synet
 {
+    void QuantizedPoolingAverage2D(const uint8_t * src, int32_t srcZero, float srcScale,
+        size_t batch, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX, size_t strideY, size_t strideX, size_t padY, size_t padX, 
+        int32_t* buf, uint8_t* dst, float dstScale, int32_t dstZero, size_t dstH, size_t dstW, int excludePad, TensorFormat format)
+    {
+        int32_t bias = excludePad ? 0 : -srcZero * int32_t(kernelY * kernelX);
+        constexpr int min = std::numeric_limits<uint8_t>::min();
+        constexpr int max = std::numeric_limits<uint8_t>::max();
+        float norm = srcScale / (dstScale * float(kernelY * kernelX));
+        if (format == TensorFormatNhwc)
+        {
+            for (size_t b = 0; b < batch; ++b)
+            {
+                for (size_t ph = 0; ph < dstH; ++ph)
+                {
+                    size_t hStart = ph * strideY - padY;
+                    size_t hEnd = Min(hStart + kernelY, srcH);
+                    hStart = Max<ptrdiff_t>(0, hStart);
+                    for (size_t pw = 0; pw < dstW; ++pw)
+                    {
+                        size_t wStart = pw * strideX - padX;
+                        size_t wEnd = Min(wStart + kernelX, srcW);
+                        wStart = Max<ptrdiff_t>(0, wStart);
+                        for (size_t c = 0; c < channels; ++c)
+                            buf[c] = bias;
+                        for (size_t h = hStart; h < hEnd; ++h)
+                        {
+                            for (size_t w = wStart; w < wEnd; ++w)
+                            {
+                                const uint8_t* ps = src + (h * srcW + w) * channels;
+                                for (size_t c = 0; c < channels; ++c)
+                                    buf[c] += ps[c];
+                            }
+                        }
+                        if (excludePad)
+                            for (size_t c = 0; c < channels; ++c)
+                            {
+                                int area = int(hEnd - hStart) * int(wEnd - wStart), bias = -srcZero * area;
+                                float norm = srcScale / (dstScale * float(area));
+                                dst[c] = (uint8_t)QuantizeSumLinear(buf[c], bias, norm, dstZero, min, max);
+                            }
+                        else
+                            for (size_t c = 0; c < channels; ++c)
+                                dst[c] = (uint8_t)QuantizeSumLinear(buf[c], bias, norm, dstZero, min, max);
+                        dst += channels;
+                    }
+                }
+            }
+        }
+        else if (format == TensorFormatNchw)
+        {
+            for (size_t b = 0; b < batch; ++b)
+            {
+                for (size_t c = 0; c < channels; ++c)
+                {
+                    for (size_t ph = 0; ph < dstH; ++ph)
+                    {
+                        size_t hStart = ph * strideY - padY;
+                        size_t hEnd = Min(hStart + kernelY, srcH);
+                        hStart = Max<ptrdiff_t>(0, hStart);
+                        for (size_t pw = 0; pw < dstW; ++pw)
+                        {
+                            size_t wStart = pw * strideX - padX;
+                            size_t wEnd = Min(wStart + kernelX, srcW);
+                            wStart = Max<ptrdiff_t>(0, wStart);
+                            int32_t sum = bias;
+                            for (size_t h = hStart; h < hEnd; ++h)
+                                for (size_t w = wStart; w < wEnd; ++w)
+                                    sum += src[h * srcW + w];
+                            if (excludePad)
+                            {
+                                int area = int(hEnd - hStart) * int(wEnd - wStart), bias = -srcZero * area;
+                                float norm = srcScale / (dstScale * float(area));
+                                dst[c] = (uint8_t)QuantizeSumLinear(sum, bias, norm, dstZero, min, max);
+                            }
+                            else
+                                dst[ph * dstW + pw] = (uint8_t)QuantizeSumLinear(sum, bias, norm, dstZero, min, max);
+                        }
+                    }
+                    src += srcW * srcH;
+                    dst += dstW * dstH;
+                }
+            }
+        }
+        else
+            assert(0);
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     QuantizedPoolingLayer::QuantizedPoolingLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
     {
@@ -61,11 +150,13 @@ namespace Synet
 
         if (pooling.globalPooling())
         {
+            _globalPooling = true;
             _kernelY = _srcH;
             _kernelX = _srcW;
         }
         else
         {
+            _globalPooling = false;
             const Shape& kernel = pooling.kernel();
             if (kernel.size() < 1 && kernel.size() > 3)
                 SYNET_ERROR("QuantizedPoolingLayer parameter kernel size must be in range [1..2]!");

@@ -44,7 +44,7 @@ namespace Synet
         PoolingMethodType _method;
         RoundingType _roundingType;
         int _excludePad;
-        bool _src8u, _dst8u;
+        bool _src8u, _dst8u, _globalPooling;
         size_t _batch, _srcC, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX,
             _padY, _padX, _padH, _padW, _dstC, _dstH, _dstW;
     };
