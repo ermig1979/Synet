@@ -46,11 +46,13 @@ namespace Synet
 
         bool InitParams();
 
-        void ForwardCpu(const uint8_t* src, int32_t* sum, float* dst);
+        void Gemm(const uint8_t* src, int32_t* sum);
+        void PostProcess(const int32_t* sum, float* dst);
+        void PostProcess(const int32_t* sum, uint8_t* dst);
 
         bool _src8u, _dst8u;
         size_t _axis, _batch, _M, _N, _K;
         bool _biasTerm, _transA, _transB;
-        Tensor _bias32i, _norm32f;
+        Tensor _dstZero8u, _bias32i, _norm32f;
     };
 }

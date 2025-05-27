@@ -28,6 +28,7 @@
 
 #include "Synet/Quantization/Gemm.h"
 #include "Synet/Quantization/DequantizeLinear.h"
+#include "Synet/Quantization/QuantizeLinear.h"
 
 namespace Synet
 {
@@ -51,17 +52,18 @@ namespace Synet
         if ((src.size() != 1 && src.size() != 2) || dst.size() != 1)
             SYNET_ERROR("QuantizedInnerProductLayer supports only 1 or 2 inputs and 1 output!");
 
-        const InnerProductParam& param = this->Param().innerProduct();
+        const LayerParam& param = this->Param();
+        const InnerProductParam& ip = param.innerProduct();
 
-        _biasTerm = param.biasTerm();
-        _transA = param.transposeA();
-        _transB = param.transposeB();
-        _axis = (int)src[0]->Index(param.axis());
+        _biasTerm = ip.biasTerm();
+        _transA = ip.transposeA();
+        _transB = ip.transposeB();
+        _axis = (int)src[0]->Index(ip.axis());
         _batch = 1;
         _K = src[0]->Size(_axis);
 
         _src8u = src[0]->GetType() == TensorType8u;
-        _dst8u = dst[0]->GetType() == TensorType8u;
+        _dst8u = param.qDst().size() && param.qDst()[0].type() == TensorType8u;
 
         if (src.size() == 2)
         {
@@ -80,7 +82,7 @@ namespace Synet
         Shape dstShape = src[0]->Shape();
         dstShape.resize(_axis + 1);
         dstShape[_axis] = _N;
-        dst[0]->Reshape(TensorType32f, dstShape, TensorFormatNchw);
+        dst[0]->Reshape(_dst8u ? TensorType8u : TensorType32f, dstShape, TensorFormatNchw);
 
         if (!_src8u)
             Layer::Extend8u(buf, 0, src[0]->Shape(), src[0]->Format());
@@ -160,6 +162,12 @@ namespace Synet
             }
         }
 
+        if (param.qDst().size())
+        {
+            if (param.qDst()[0].weights() != 0)
+                SYNET_ERROR("QuantizedInnerProductLayer supports only uniform output quantization!");
+        }
+
         return true;
     }
 
@@ -194,17 +202,38 @@ namespace Synet
             }
         }
         _norm32f.Reshape(TensorType32f, Shp(weight[1].Size()), TensorFormatNchw, float(0));
-        if (_biasTerm)
+        if (param.qDst().size())
         {
-            int biasStart = param.qSrc()[1].weights();
-            for (size_t i = 0, n = weight[biasStart + 1].Size(); i < n; ++i)
-                _norm32f.Data<float>()[i] = weight[biasStart + 1].Data<float>()[i];
+            int dstZero = param.qDst()[0].zero();
+            float dstScale = (float)param.qDst()[0].scale();
+            _dstZero8u.Reshape(TensorType8u, Shp(weight[1].Size()), TensorFormatNchw, uint8_t(dstZero));
+            if (_biasTerm)
+            {
+                int biasStart = param.qSrc()[1].weights();
+                for (size_t i = 0, n = weight[biasStart + 1].Size(); i < n; ++i)
+                    _norm32f.Data<float>()[i] = weight[biasStart + 1].Data<float>()[i] / dstScale;
+            }
+            else
+            {
+                float srcScale = (float)param.qSrc()[0].scale();
+                for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
+                    _norm32f.Data<float>()[i] = weight[1].Data<float>()[i] * srcScale / dstScale;
+            }
         }
         else
         {
-            float srcScale = (float)param.qSrc()[0].scale();
-            for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
-                _norm32f.Data<float>()[i] = weight[1].Data<float>()[i] * srcScale;
+            if (_biasTerm)
+            {
+                int biasStart = param.qSrc()[1].weights();
+                for (size_t i = 0, n = weight[biasStart + 1].Size(); i < n; ++i)
+                    _norm32f.Data<float>()[i] = weight[biasStart + 1].Data<float>()[i];
+            }
+            else
+            {
+                float srcScale = (float)param.qSrc()[0].scale();
+                for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
+                    _norm32f.Data<float>()[i] = weight[1].Data<float>()[i] * srcScale;
+            }
         }
         return true;
     }
@@ -215,23 +244,32 @@ namespace Synet
         int32_t* sum = Layer::Buf32i(buf, 0);
         //if (!_src8u)
         //    _srcCvt.Convert(src[0]->Data<float>(), tmp);
-        ForwardCpu(tmp, sum, dst[0]->Data<float>());
-        //if (_dst8u)
-        //    _dstCvt.Convert(sum, dst[0]->Data<uint8_t>());
-        //else
-        //    _dstCvt.Convert(sum, dst[0]->Data<float>());
+        Gemm(tmp, sum);
+        if (_dst8u)
+            PostProcess(sum, dst[0]->Data<uint8_t>());
+        else
+            PostProcess(sum, dst[0]->Data<float>());
     }
 
-    void QuantizedInnerProductLayer::ForwardCpu(const uint8_t* src, int32_t* sum, float* dst)
+    void QuantizedInnerProductLayer::Gemm(const uint8_t* src, int32_t* sum)
     {
         const int8_t* weight = Weight()[0].Data<int8_t>();
-
         const bool overflow16i = true;
         Synet::CpuGemm8iNT(_M, _N, _K, src, _K, weight, _K, sum, _N, overflow16i);
-        //Synet::CpuGemmNN(_M, _N, _K, weight, _K, src, _N, sum, _N);
- 
+    }
+
+    void QuantizedInnerProductLayer::PostProcess(const int32_t* sum, float* dst)
+    {
         const int32_t* bias = _bias32i.Data<int32_t>();
         const float* norm = _norm32f.Data<float>();
-        DequantizeLinear(sum, 1, _M, 1, _N, TensorFormatNchw, bias, norm, dst);
+        DequantizeLinear(sum, 1, _N, 1, _M, TensorFormatNchw, bias, norm, dst);
+    }
+
+    void QuantizedInnerProductLayer::PostProcess(const int32_t* sum, uint8_t* dst)
+    {
+        const float* norm = _norm32f.Data<float>();
+        const int32_t* bias = _bias32i.Data<int32_t>();
+        const uint8_t* zero = _dstZero8u.Data<uint8_t>();
+        QuantizeSumLinear(sum, 1, _N, 1, _M, TensorFormatNchw, bias, norm, zero, dst);
     }
 }

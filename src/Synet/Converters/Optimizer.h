@@ -879,7 +879,9 @@ namespace Synet
             if (dst0 >= dst.size() || src0 >= src.size())
                 return false;
             LayerParam& other = dst[dst0];
-            if (other.type() != LayerTypeQuantizedConvolution && other.type() != LayerTypeQuantizedPooling)
+            if (other.type() != LayerTypeQuantizedConvolution && 
+                other.type() != LayerTypeQuantizedPooling && 
+                other.type() != LayerTypeQuantizedInnerProduct)
                 return false;
             if (UserCount(src, src0) != 1)
                 return false;
