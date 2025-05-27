@@ -28,16 +28,21 @@
 
 namespace Synet
 {
+    SYNET_INLINE int NearByInt(float value)
+    {
+        return (int)std::nearbyint(value);
+    }
+
     SYNET_INLINE int QuantizeLinear(float value, float scale, int zero, int min, int max)
     {
-        return RestrictRange(Round(value * scale) + zero, min, max);
+        return RestrictRange(NearByInt(value * scale) + zero, min, max);
     }
 
     //--------------------------------------------------------------------------------------------------
 
     SYNET_INLINE int QuantizeSumLinear(int sum, int bias, float norm, int zero, int min, int max)
     {
-        return RestrictRange(Round(float(sum + bias) * norm) + zero, min, max);
+        return RestrictRange(NearByInt(float(sum + bias) * norm) + zero, min, max);
     }
 
     SYNET_INLINE void QuantizeSumLinear(const int32_t* sum, size_t batch, size_t channels, size_t height, size_t width, TensorFormat format, const int32_t* bias, const float* norm, const uint8_t* zero, uint8_t* dst)

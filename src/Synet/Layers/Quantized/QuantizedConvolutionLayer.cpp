@@ -265,12 +265,6 @@ namespace Synet
                     _norm32f.Data<float>()[i] = weight[1].Data<float>()[i] * srcScale;
             }
         }
-
-        //std::cout << std::fixed << std::setprecision(10) << "Synet: _norm32f: " << _norm32f.Data<float>()[0]
-        //    << " srcScale: " << param.qSrc()[0].scale()
-        //    << " weight[1]: " << weight[1].Data<float>()[0]
-        //    << std::endl;
-
         return true;
     }
 
