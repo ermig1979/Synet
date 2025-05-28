@@ -269,7 +269,7 @@ namespace Synet
     {
         const int32_t* bias = _bias32i.Data<int32_t>();
         const float* norm = _norm32f.Data<float>();
-        DequantizeLinear(sum, 1, _N, 1, _M, TensorFormatNchw, bias, norm, dst);
+        DequantizeLinear(sum, _M, _N, 1, 1, TensorFormatNchw, bias, norm, dst);
     }
 
     void QuantizedInnerProductLayer::PostProcess(const int32_t* sum, uint8_t* dst)
@@ -277,6 +277,6 @@ namespace Synet
         const float* norm = _norm32f.Data<float>();
         const int32_t* bias = _bias32i.Data<int32_t>();
         const uint8_t* zero = _dstZero8u.Data<uint8_t>();
-        QuantizeSumLinear(sum, 1, _N, 1, _M, TensorFormatNchw, bias, norm, zero, dst);
+        QuantizeSumLinear(sum, _M, _N, 1, 1, TensorFormatNchw, bias, norm, zero, dst);
     }
 }
