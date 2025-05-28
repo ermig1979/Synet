@@ -74,6 +74,7 @@ namespace Synet
                         dst += channels;
                     }
                 }
+                src += srcW * srcH * channels;
             }
         }
         else if (format == TensorFormatNchw)
