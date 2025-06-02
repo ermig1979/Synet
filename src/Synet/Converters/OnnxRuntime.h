@@ -209,6 +209,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Flatten" && !ConvertFlattenNode(node, layer))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "Floor" && !ConvertFloorNode(node, network.layers(), layer))
+                    return ErrorMessage(i, node);
                 if ((node.op_type() == "Gather" || node.op_type() == "GatherElements") && !ConvertGatherNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Gemm" && !ConvertGemmNode(node, trans, network.layers(), original, layer, reordered))
@@ -1323,6 +1325,26 @@ namespace Synet
             layer.type() = Synet::LayerTypeFlatten;
             if (!ConvertAtrributeInt(node, "axis", layer.flatten().axis()))
                 return false;
+            return true;
+        }
+
+        bool ConvertFloorNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        {
+            if (!CheckSourceNumber(layer, 1))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            if (src0 == NULL)
+                return false;
+            if (src0->type() == LayerTypeMeta)
+            {
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeFloor;
+            }
+            else
+            {
+                layer.type() = Synet::LayerTypeUnaryOperation;
+                layer.unaryOperation().type() = Synet::UnaryOperationTypeFloor;
+            }
             return true;
         }
 
