@@ -255,7 +255,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Not" && !ConvertNotNode(node, layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Pad" && !ConvertPadNode(node, network.layers(), layer))
+                if (node.op_type() == "Pad" && !ConvertPadNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Pow" && !ConvertPowNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
@@ -1855,7 +1855,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertPadNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
+        bool ConvertPadNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1, 3))
                 return false;
@@ -1880,6 +1880,15 @@ namespace Synet
                 const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
                 if (src1 == NULL || src1->type() != LayerTypeMeta)
                     return false;
+                if (layer.src().size() > 2)
+                {
+                    const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+                    if (src2 == NULL || src2->type() != LayerTypeConst || src2->weight()[0].type() != TensorType32f)
+                        return false;
+                    if(GetWeight<float>(original, src2->weight()[0])[0] != 0)
+                        SYNET_ERROR("Synet support only pad value == 0!");
+                    layer.src().resize(2);
+                }
             }  
             else
             {
