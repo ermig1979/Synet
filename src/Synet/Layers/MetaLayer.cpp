@@ -310,16 +310,21 @@ namespace Synet
         if (src[1]->GetType() == TensorType32i)
         {
             for (size_t i = 0; i < idx.size(); ++i)
-                idx[i] = (size_t)src[1]->Data<int32_t>()[i];
+            {
+                int32_t index = src[1]->Data<int32_t>()[i];
+                idx[i] = (size_t)(index < 0 ? src[0]->Size() + index : index);
+            }
         }
-        else if(src[1]->GetType() == TensorType64i)
+        else if (src[1]->GetType() == TensorType64i)
         {
             for (size_t i = 0; i < idx.size(); ++i)
-                idx[i] = (size_t)src[1]->Data<int64_t>()[i];
+            {
+                int64_t index = src[1]->Data<int64_t>()[i];
+                idx[i] = (size_t)(index < 0 ? src[0]->Size() + index : index);
+            }
         }
         else
             SYNET_ERROR("MetaLayer::ReshapeFloor unsupported src[1] " << src[1]->GetType() << " type!");
-
         dst[0]->Reshape(src[0]->GetType(), src[1]->Shape(), src[0]->Format());
         if (src[0]->GetType() == TensorType32f)
         {
