@@ -372,7 +372,7 @@ namespace Synet
             _src.push_back((Tensor*)this->Weight().data() + 0);
         if (_src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("AddLayer  supports 2 inputs (or 1 input and 1 weight) and 1 output!");
-        if (_src[0]->Shape() != _src[1]->Shape() && _src[0]->Size() < _src[1]->Size())
+        if (_src[0]->Shape() != _src[1]->Shape() && (_src[0]->Size() < _src[1]->Size() || (_src[0]->Size() == _src[1]->Size() && _src[0]->Count() < _src[1]->Count())))
             std::swap(_src[0], _src[1]);
 
         _typeA = _src[0]->GetType();
