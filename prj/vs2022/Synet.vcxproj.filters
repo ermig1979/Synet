@@ -702,6 +702,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedPoolingLayer.h">
       <Filter>Layers\Quantized</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\ScrfdV2.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
