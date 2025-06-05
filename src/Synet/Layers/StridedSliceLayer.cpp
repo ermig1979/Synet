@@ -198,7 +198,11 @@ namespace Synet
         {
             param.beginDims() = Lng(src[1]->Data<int64_t>(), src[1]->Size());
             param.endDims() = Lng(src[2]->Data<int64_t>(), src[2]->Size());
-            param.axes() = Shp(src[3]->Data<int64_t>(), src[3]->Size());
+			for (size_t i = 0; i < src[3]->Size(); ++i)
+			{
+				int64_t axis = src[3]->Data<int64_t>()[i];
+				param.axes().push_back(size_t(axis < 0 ? axis + src[0]->Count() : axis));
+			}
         }
 		if (src.size() == 5)
 		{
