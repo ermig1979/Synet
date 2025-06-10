@@ -26,6 +26,7 @@
 
 #include "Synet/Layer.h"
 #include "Synet/Utils/ConvParam.h"
+#include "Synet/Utils/Convolution.h"
 
 namespace Synet
 {
@@ -37,6 +38,8 @@ namespace Synet
         virtual size_t MemoryUsage() const;
 
         virtual int64_t Flop() const;
+
+        virtual void CompactWeight();
 
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
@@ -63,5 +66,7 @@ namespace Synet
         } _alg;
         bool _src8u, _dst8u;
         Tensor _srcZero8u, _dstZero8u, _bias32i, _norm32f;
+
+        QuantizedConvolution _quantizedConvolution;
     };
 }

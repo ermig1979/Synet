@@ -40,13 +40,20 @@ namespace Synet
 
     size_t QuantizedConvolutionLayer::MemoryUsage() const
     {
-        return Layer::MemoryUsage() + _norm32f.MemoryUsage() + _bias32i.MemoryUsage();
+        return Layer::MemoryUsage() + _norm32f.MemoryUsage() + _bias32i.MemoryUsage() + 
+            _quantizedConvolution.InternalBufferSize();
     }
 
     int64_t QuantizedConvolutionLayer::Flop() const
     {
         return _alg.batch * _conv.dstC * _conv.dstH * _conv.dstW *
             (_conv.kernelY * _conv.kernelX * _conv.srcC / _conv.group * 2 + _alg.bias + _conv.ActivalionFlop());
+    }
+
+    void QuantizedConvolutionLayer::CompactWeight()
+    {
+        if (_quantizedConvolution.Enable())
+            ((Tensor&)this->Weight()[0]).Clear();
     }
 
     LowPrecisionType QuantizedConvolutionLayer::LowPrecision(TensorType type) const
@@ -68,6 +75,7 @@ namespace Synet
         _conv.Set(*src[0], *dst[0], true, conv.autoPad());
         _src8u = src[0]->GetType() == TensorType8u;
         _dst8u = param.qDst().size() && param.qDst()[0].type() == TensorType8u;
+        _conv.dstT = _dst8u ? TensorType8u : TensorType32f;
         if (src[0]->Count() != 4)
             SYNET_ERROR("QuantizedConvolutionLayer supports only 4D tensors!");
 
@@ -107,27 +115,43 @@ namespace Synet
             _alg.grD = _alg.siD * _alg.siS;
         }
 
-        if (!(Compartible() && InitParams()))
-            return false;
-
         dst[0]->Reshape(_dst8u ? TensorType8u: TensorType32f, _conv.DstShape(_alg.batch), src[0]->Format());
-
-        if (!_src8u)
-            Layer::Extend8u(buf, 0, _conv.SrcShape(1));
-        if (!_conv.Is1x1())
-            Layer::Extend8u(buf, 1, Shp(_conv.ImgSize()));
-        Layer::Extend32i(buf, 0, _conv.DstShape(1));
-        if (_dst8u)
-            Layer::Extend32f(buf, 0, _conv.DstShape(1));
 
         _alg.sSize = src[0]->Size(1);
         _alg.dSize = dst[0]->Size(1);
+
+        _quantizedConvolution.Init(_alg.batch, &_conv);
+        if (_quantizedConvolution.Enable())
+        {
+            Layer::Extend8u(buf, 0, Shp(_quantizedConvolution.ExternalBufferSize()));
+            const Tensors& weight = this->Weight();
+            int bias = param.qSrc()[1].weights();
+            const float* params = _conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : _alg.params;
+            float srcScale = (float)param.qSrc()[0].scale(), dstScale = (float)param.qDst()[0].scale();
+            uint8_t srcZero = (uint8_t)param.qSrc()[0].zero(), dstZero = (uint8_t)param.qDst()[0].zero();
+            _quantizedConvolution.SetParams(&srcScale, &srcZero, weight[0].Data<int8_t>(), weight[1].Data<float>(), 
+                _alg.bias ? weight[bias + 0].Data<int32_t>() : NULL, params, &dstScale, &dstZero);
+        }
+        else
+        {
+            if (!(Compartible() && InitParams()))
+                return false;
+            if (!_src8u)
+                Layer::Extend8u(buf, 0, _conv.SrcShape(1));
+            if (!_conv.Is1x1())
+                Layer::Extend8u(buf, 1, Shp(_conv.ImgSize()));
+            Layer::Extend32i(buf, 0, _conv.DstShape(1));
+            if (_dst8u)
+                Layer::Extend32f(buf, 0, _conv.DstShape(1));
+        }
 
         std::stringstream desc;
         desc << _alg.batch << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW;
         desc << "-" << _conv.dstC << "x" << _conv.kernelY << "x" << _conv.kernelX;
         desc << "-" << Max(_conv.dilationY, _conv.dilationX) << "-" << Max(_conv.strideY, _conv.strideX);
-        desc << "-" << _conv.group;// << InternalInfo();
+        desc << "-" << _conv.group;
+        if(_quantizedConvolution.Enable())
+            desc << " " << _quantizedConvolution.Info();
         this->UsePerfStat(desc.str(), Flop()); 
 
         return true;
@@ -293,6 +317,11 @@ namespace Synet
 
     void QuantizedConvolutionLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
+        if (_quantizedConvolution.Enable())
+        {
+            _quantizedConvolution.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());
+            return;
+        }
         const AlgParam& alg = this->_alg;
         const float* src32f = _src8u ? NULL : src[0]->Data<float>();
         uint8_t* src8u = _src8u ? src[0]->Data<uint8_t>() : Layer::Buf8u(buf, 0);
