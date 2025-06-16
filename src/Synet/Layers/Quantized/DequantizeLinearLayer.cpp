@@ -30,8 +30,12 @@ namespace Synet
 {
     static void DequantizeLinearUniform(const uint8_t* src, int bias, float norm, size_t size, float* dst)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        SimdSynetDequantizeLinear(src, size, bias, &norm, dst);
+#else
         for (size_t i = 0; i < size; ++i)
             dst[i] = DequantizeLinear(src[i], bias, norm);
+#endif
     }
 
     //-------------------------------------------------------------------------------------------------
