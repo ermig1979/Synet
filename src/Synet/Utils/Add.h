@@ -76,4 +76,58 @@ namespace Synet
         void* _context;
         Shape _aShape, _bShape;
     };
+
+    //-------------------------------------------------------------------------------------------------
+
+    class QuantizedAdd
+    {
+    public:
+        QuantizedAdd()
+            : _context(NULL)
+        {
+        }
+
+        virtual ~QuantizedAdd()
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdRelease(_context), _context = NULL;
+#endif
+        }
+
+        SYNET_INLINE void Init(const Shape& aShape, TensorType aType, int32_t aBias, float aNorm, const Shape& bShape, TensorType bType, int32_t bBias, float bNorm,
+            ActivationFunctionType actType, const float* actParams, TensorType dstType, float dstNorm, int32_t dstZero)
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_aShape != aShape || _bShape != bShape)
+            {
+                _aShape = aShape, _bShape = aShape;
+                if (_context)
+                    ::SimdRelease(_context), _context = NULL;
+                _context = ::SimdSynetQuantizedAddInit(
+                    _aShape.data(), _aShape.size(), (SimdTensorDataType)aType, aBias, &aNorm, 
+                    _bShape.data(), _bShape.size(), (SimdTensorDataType)bType, bBias, &bNorm, 
+                    (SimdConvolutionActivationType)actType, actParams, (SimdTensorDataType)dstType, &dstNorm, dstZero);
+            }
+#endif
+        }
+
+        SYNET_INLINE bool Enable() const
+        {
+            return _context != NULL;
+        }
+
+        SYNET_INLINE void Forward(const uint8_t* a, const uint8_t* b, uint8_t* dst)
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdSynetQuantizedAddForward(_context, a, b, dst);
+#endif
+        }
+
+    private:
+        void* _context;
+        Shape _aShape, _bShape;
+    };
+
 }

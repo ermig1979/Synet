@@ -26,6 +26,8 @@
 
 #include "Synet/Layer.h"
 
+#include "Synet/Utils/Add.h"
+
 namespace Synet
 {
     class QuantizedAddLayer : public Layer
@@ -49,5 +51,6 @@ namespace Synet
         size_t _axis, _size;
 
         UniformPtr _uniform;
+        QuantizedAdd _quantizedAdd;
     };
 }

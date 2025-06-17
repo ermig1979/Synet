@@ -111,20 +111,27 @@ namespace Synet
         _params[0] = activ.param0();
         _params[1] = activ.param1();
 
-        switch (_activationType)
+        _quantizedAdd.Init(
+            src[0]->Shape(), src[0]->GetType(), _aBias, _aNorm,
+            src[1]->Shape(), src[1]->GetType(), _bBias, _bNorm,
+            _activationType, _params, _dstType, _scale, _zero);
+        if (!_quantizedAdd.Enable())
         {
-        case ActivationFunctionTypeIdentity:
-            _uniform = _dstType == TensorType8u ? 
-                QuantizedAddUniform<ActivationFunctionTypeIdentity, uint8_t> :
-                QuantizedAddUniform<ActivationFunctionTypeIdentity, float>;
-            break;
-        case ActivationFunctionTypeRelu:
-            _uniform = _dstType == TensorType8u ?
-                QuantizedAddUniform<ActivationFunctionTypeIdentity, uint8_t> :
-                QuantizedAddUniform<ActivationFunctionTypeRelu, float>;
-            break;
-        default:
-            SYNET_ERROR("QuantizedAddLayer does not support " << Cpl::ToStr(_activationType) << " !");
+            switch (_activationType)
+            {
+            case ActivationFunctionTypeIdentity:
+                _uniform = _dstType == TensorType8u ? 
+                    QuantizedAddUniform<ActivationFunctionTypeIdentity, uint8_t> :
+                    QuantizedAddUniform<ActivationFunctionTypeIdentity, float>;
+                break;
+            case ActivationFunctionTypeRelu:
+                _uniform = _dstType == TensorType8u ?
+                    QuantizedAddUniform<ActivationFunctionTypeIdentity, uint8_t> :
+                    QuantizedAddUniform<ActivationFunctionTypeRelu, float>;
+                break;
+            default:
+                SYNET_ERROR("QuantizedAddLayer does not support " << Cpl::ToStr(_activationType) << " !");
+            }
         }
 
         dst[0]->Reshape(_dstType, src[0]->Shape(), src[0]->Format());
@@ -145,7 +152,9 @@ namespace Synet
 
     void QuantizedAddLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
-        if(_uniform)
+        if (_quantizedAdd.Enable())
+            _quantizedAdd.Forward(src[0]->RawData(), src[1]->RawData(), dst[0]->RawData());
+        else if(_uniform)
             _uniform(src[0]->Data<uint8_t>(), _aBias, _aNorm, src[1]->Data<uint8_t>(), _bBias, _bNorm, _size, _params, _scale, _zero, dst[0]->RawData());
     }
 }
