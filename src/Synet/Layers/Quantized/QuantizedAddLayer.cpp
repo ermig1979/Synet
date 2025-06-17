@@ -31,7 +31,7 @@
 
 namespace Synet
 {
-    template<ActivationFunctionType activation, class D> void QuantizedAaddUniform(const uint8_t* a, int aBias, float aNorm, const uint8_t* b, int bBias, float bNorm, size_t size, float* params, float scale, int zero, uint8_t* dst8)
+    template<ActivationFunctionType activation, class D> void QuantizedAddUniform(const uint8_t* a, int aBias, float aNorm, const uint8_t* b, int bBias, float bNorm, size_t size, float* params, float scale, int zero, uint8_t* dst8)
     {
         D* dst = (D*)dst8;
         if (std::is_same<D, uint8_t>())
@@ -115,13 +115,13 @@ namespace Synet
         {
         case ActivationFunctionTypeIdentity:
             _uniform = _dstType == TensorType8u ? 
-                QuantizedAaddUniform<ActivationFunctionTypeIdentity, uint8_t> :
-                QuantizedAaddUniform<ActivationFunctionTypeIdentity, float>;
+                QuantizedAddUniform<ActivationFunctionTypeIdentity, uint8_t> :
+                QuantizedAddUniform<ActivationFunctionTypeIdentity, float>;
             break;
         case ActivationFunctionTypeRelu:
             _uniform = _dstType == TensorType8u ?
-                QuantizedAaddUniform<ActivationFunctionTypeRelu, uint8_t> :
-                QuantizedAaddUniform<ActivationFunctionTypeRelu, float>;
+                QuantizedAddUniform<ActivationFunctionTypeIdentity, uint8_t> :
+                QuantizedAddUniform<ActivationFunctionTypeRelu, float>;
             break;
         default:
             SYNET_ERROR("QuantizedAddLayer does not support " << Cpl::ToStr(_activationType) << " !");

@@ -844,26 +844,40 @@ namespace Synet
             size_t src0 = GetIndexByName(src, act.src()[0]);
             if (dst0 >= dst.size() || src0 >= src.size())
                 return false;
-            LayerParam& conv = dst[dst0];
-            if (conv.type() != LayerTypeConvolution && conv.type() != LayerTypeDeconvolution && conv.type() != LayerTypeQuantizedConvolution)
-                return false;
-            if (conv.convolution().activationType() != ActivationFunctionTypeIdentity)
-                return false;
             if (UserCount(src, src0) != 1)
                 return false;
-            if (conv.convolution().quantizationLevel() == TensorType8i)
+            const LayerParam& prev = dst[dst0];
+            if (prev.type() == LayerTypeConvolution || prev.type() == LayerTypeDeconvolution || prev.type() == LayerTypeQuantizedConvolution)
             {
-                conv.origin().push_back(conv.name());
-                conv.name() = act.name();
-                conv.dst()[0] = act.name();
+                LayerParam& conv = dst[dst0];
+                if (conv.convolution().activationType() != ActivationFunctionTypeIdentity)
+                    return false;
+                if (conv.convolution().quantizationLevel() == TensorType8i)
+                {
+                    conv.origin().push_back(conv.name());
+                    conv.name() = act.name();
+                    conv.dst()[0] = act.name();
+                }
+                else
+                    changes.push_back(Change(act.name(), conv.name()));
+                conv.convolution().activationType() = type;
+                conv.convolution().activationParam0() = param0;
+                conv.convolution().activationParam1() = param1;
+                if(act.weight().size())
+                    conv.weight().push_back(act.weight()[0]);
+            }
+            else if (prev.type() == LayerTypeQuantizedAdd && (type == ActivationFunctionTypeRelu))
+            {
+                LayerParam& quant = dst[dst0];
+                if (quant.activation().type() != ActivationFunctionTypeIdentity)
+                    return false;
+                changes.push_back(Change(act.name(), quant.name()));
+                quant.activation().type() = type;
+                quant.activation().param0() = param0;
+                quant.activation().param1() = param1;
             }
             else
-                changes.push_back(Change(act.name(), conv.name()));
-            conv.convolution().activationType() = type;
-            conv.convolution().activationParam0() = param0;
-            conv.convolution().activationParam1() = param1;
-            if(act.weight().size())
-                conv.weight().push_back(act.weight()[0]);
+                return false;
             return true;
         }
 
@@ -879,9 +893,10 @@ namespace Synet
             if (dst0 >= dst.size() || src0 >= src.size())
                 return false;
             LayerParam& other = dst[dst0];
-            if (other.type() != LayerTypeQuantizedConvolution && 
-                other.type() != LayerTypeQuantizedPooling && 
-                other.type() != LayerTypeQuantizedInnerProduct)
+            if (other.type() != LayerTypeQuantizedAdd &&
+                other.type() != LayerTypeQuantizedConvolution &&
+                other.type() != LayerTypeQuantizedInnerProduct &&
+                other.type() != LayerTypeQuantizedPooling)
                 return false;
             if (UserCount(src, src0) != 1)
                 return false;
