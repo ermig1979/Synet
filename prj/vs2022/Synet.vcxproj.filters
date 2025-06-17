@@ -258,6 +258,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedPoolingLayer.cpp">
       <Filter>Layers\Quantized</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -704,6 +707,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\ScrfdV2.h">
       <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.h">
+      <Filter>Layers\Quantized</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "Synet/Params.h"
 #include "Synet/Utils/Math.h"
 
 namespace Synet
@@ -237,4 +238,18 @@ namespace Synet
         ::SimdSynetSwish32f(src, size, &slope, dst);
     }
 #endif
+
+    //-------------------------------------------------------------------------------------------------
+
+    template<ActivationFunctionType activation> float Activation(float value, size_t offset, float* params);
+
+    template<> SYNET_INLINE float Activation<ActivationFunctionTypeIdentity>(float value, size_t offset, float* params)
+    {
+        return value;
+    }
+
+    template<> SYNET_INLINE float Activation<ActivationFunctionTypeRelu>(float value, size_t offset, float* params)
+    {
+        return CpuRelu(value, 0.0f);
+    }
 }

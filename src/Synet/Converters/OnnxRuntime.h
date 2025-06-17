@@ -576,10 +576,18 @@ namespace Synet
             return true;
         }
 
-        bool ConvertAddNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer)
+        bool ConvertAddNode(const onnx::NodeProto& node, LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
+            if (GetLayerType(layers, layer.src()[0]) == LayerTypeDequantizeLinear &&
+                GetLayerType(layers, layer.src()[1]) == LayerTypeDequantizeLinear)
+            {
+                layer.type() = Synet::LayerTypeQuantizedAdd;
+                if (!MoveDequantizeLinearToLayer(layers, layer))
+                    return false;
+                return true;
+            }
             const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
             const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
             if (src0 == NULL || src1 == NULL)

@@ -75,6 +75,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypePrelu,
     LayerTypePriorBox,
     LayerTypePriorBoxClustered,
+    LayerTypeQuantizedAdd,
     LayerTypeQuantizedConvolution,
     LayerTypeQuantizedInnerProduct,
     LayerTypeQuantizedPooling,
@@ -338,6 +339,13 @@ namespace Synet
     };
 
     //-------------------------------------------------------------------------------------------------
+
+    struct ActivationParam
+    {
+        CPL_PARAM_VALUE(ActivationFunctionType, type, ActivationFunctionTypeIdentity);
+        CPL_PARAM_VALUE(float, param0, 0.0f);
+        CPL_PARAM_VALUE(float, param1, 6.0f);
+    };
 
     struct ArgMaxParam
     {
@@ -799,6 +807,7 @@ namespace Synet
         CPL_PARAM_VECTOR(QuantizeParam, qSrc);
         CPL_PARAM_VECTOR(QuantizeParam, qDst);
 
+        CPL_PARAM_STRUCT(ActivationParam, activation);
         CPL_PARAM_STRUCT(ArgMaxParam, argMax);
         CPL_PARAM_STRUCT(BiasParam, bias);
         CPL_PARAM_STRUCT(BinaryOperationParam, binaryOperation);
