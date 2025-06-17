@@ -37,6 +37,13 @@ namespace Synet
             dst[i] = (T)QuantizeLinear(src[i], scale, zero, min, max);
     }
 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+    template<> void QuantizeLinearUniform<uint8_t>(const float* src, float scale, int zero, size_t size, uint8_t* dst)
+    {
+        SimdSynetQuantizeLinear(src, size, &scale, zero, dst);
+    }
+#endif
+
     //-------------------------------------------------------------------------------------------------
 
     QuantizeLinearLayer::QuantizeLinearLayer(const LayerParam & param, Context* context)
