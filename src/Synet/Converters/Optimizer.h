@@ -859,7 +859,12 @@ namespace Synet
                     conv.dst()[0] = act.name();
                 }
                 else
-                    changes.push_back(Change(act.name(), conv.name()));
+                {
+                    if(index == src.size() - 1)
+                        conv.dst() = act.dst();
+                    else
+                        changes.push_back(Change(act.name(), conv.name()));
+                }
                 conv.convolution().activationType() = type;
                 conv.convolution().activationParam0() = param0;
                 conv.convolution().activationParam1() = param1;
