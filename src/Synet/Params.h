@@ -682,6 +682,13 @@ namespace Synet
         CPL_PARAM_VALUE(TensorType, quantizationLevel, TensorTypeUnknown);
     };
 
+    struct ScatterParam
+    {
+        CPL_PARAM_VALUE(int, axis, 0);
+        CPL_PARAM_VALUE(int, version, 0);
+        CPL_PARAM_VALUE(String, reduction, String("none"));
+    };
+
     struct ShuffleParam
     {
         CPL_PARAM_VALUE(int, type, 0);
@@ -851,6 +858,7 @@ namespace Synet
         CPL_PARAM_STRUCT(RestrictRangeParam, restrictRange);
         CPL_PARAM_STRUCT(ReverseSequenceParam, reverseSequence);
         CPL_PARAM_STRUCT(ScaleParam, scale);
+        CPL_PARAM_STRUCT(ScatterParam, scatter);
         CPL_PARAM_STRUCT(ShuffleParam, shuffle);
         CPL_PARAM_STRUCT(SliceParam, slice);
         CPL_PARAM_STRUCT(SoftmaxParam, softmax);

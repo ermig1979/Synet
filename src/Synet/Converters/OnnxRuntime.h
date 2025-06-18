@@ -281,6 +281,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "ScaledDotProductAttention" && !ConvertScaledDotProductAttentionNode(node, network.layers(), layer, reordered))
                     return ErrorMessage(i, node);
+                if (node.op_type() == "ScatterElements" && !ConvertScatterElementsNode(node, network.layers(), original, layer, reordered))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "ScatterND" && !ConvertScatterNdNode(node, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Shape" && !ConvertShapeNode(node, trans, network.layers(), onnxParam, layer))
@@ -1126,7 +1128,7 @@ namespace Synet
                 return false;
             if(!ConvertAtrributeInt(node, "group", layer.convolution().group()))
                 return false;
-            if (!ConvertAtrributeInts(node, "kernel_shape", layer.convolution().kernel()))
+            if (!ConvertAtrributeInts(node, "kernel_shape", layer.convolution().kernel(), true))
                 return false;
             if (!ConvertAtrributeInts(node, "pads", layer.convolution().pad()))
                 return false;
@@ -1157,6 +1159,12 @@ namespace Synet
             if (weight == NULL || weight->type() != LayerTypeConst)
                 return false;
             const Shape& shape = weight->weight()[0].dim();
+            if (layer.convolution().kernel().empty())
+            {
+                if (shape.size() != 4)
+                    SYNET_ERROR("Convolution weight must be 4D tensor!");
+                layer.convolution().kernel() = Shp(shape[2], shape[3]);
+            }
             layer.weight().resize(layer.src().size() - 1);
             layer.weight()[0] = weight->weight()[0];
             layer.convolution().outputNum() = uint32_t(layer.type() == Synet::LayerTypeConvolution ? shape[0] : shape[1] * layer.convolution().group());
@@ -2316,6 +2324,25 @@ namespace Synet
             return true;
         }
 
+        bool ConvertScatterElementsNode(const onnx::NodeProto& node, const LayerParams& layers, Bytes& original, LayerParam& layer, Bytes& reordered)
+        {
+            if (!CheckSourceNumber(layer, 3))
+                return false;
+            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
+            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+            if (src0 == NULL || src1 == NULL || src2 == NULL)
+                return false;
+            layer.type() = Synet::LayerTypeScatterNd;
+            layer.scatter().version() = 1;
+            if (!ConvertAtrributeInt(node, "axis", layer.scatter().axis()))
+                return false;
+            String reduction;
+            if (!ConvertAtrributeString(node, "reduction", reduction) || reduction != "none")
+                return false;
+            return true;
+        }
+
         bool ConvertScatterNdNode(const onnx::NodeProto& node, const LayerParams& layers, Bytes & original, LayerParam& layer, Bytes& reordered)
         {
             if (!CheckSourceNumber(layer, 3))
@@ -2502,7 +2529,7 @@ namespace Synet
                 return false;
             if (layer.src().size() == 1)
             {
-                if (!ConvertAtrributeInts(node, "split", layer.unpack().parts()))
+                if (!ConvertAtrributeInts(node, "split", layer.unpack().parts(), true))
                     return false;
             }
             else if (layer.src().size() == 2)
