@@ -772,8 +772,8 @@ namespace Synet
                 if(_layerId.find(it->second) != _layerId.end())
                     layer = _layers[_layerId[it->second]].get();
                 //assert(layer);
-                //if (_dstIds.find(it->second) != _dstIds.end())
-                //    layer = _stages[*_dstIds[it->second].begin()].layer;
+                if (_dstIds.find(it->second) != _dstIds.end())
+                    layer = _stages[*_dstIds[it->second].begin()].layer;
                 if (layer && layer->Param().type() != LayerTypeMeta)
                 {
                     _dst.push_back(_tensors[_tensorId[it->second]].get());
@@ -906,7 +906,8 @@ namespace Synet
         for (size_t d = 0; d < param.dst().size(); ++d)
         {
             const String& name = param.dst()[d];
-            _tensors[_tensorId[name]]->SetType(type);
+            if (!this->Dst(name))
+                _tensors[_tensorId[name]]->SetType(type);
             const IdSet& ids = _srcIds[name];
             for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
             {
@@ -922,7 +923,8 @@ namespace Synet
             for (size_t s = 0; s < param.src().size(); ++s)
             {
                 const String& name = param.src()[s];
-                _tensors[_tensorId[name]]->SetType(type);
+                if (!this->Dst(name))
+                    _tensors[_tensorId[name]]->SetType(type);
                 const IdSet& ids = _dstIds[name];
                 for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
                 {
