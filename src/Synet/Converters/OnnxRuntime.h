@@ -389,6 +389,39 @@ namespace Synet
                         SYNET_ERROR("Can't parse '" << layer.name() << "' FP32 tensor!");
                 }
             }
+            else if (tensor.data_type() == onnx::TensorProto_DataType_INT32)
+            {
+                layer.type() = LayerTypeConst;
+                layer.weight().resize(1);
+                layer.weight()[0].type() = TensorType32i;
+                uint64_t size = 1, offset = weight.size();
+                for (size_t i = 0; i < tensor.dims_size(); ++i)
+                {
+                    size *= (size_t)tensor.dims(i);
+                    layer.weight()[0].dim().push_back((size_t)tensor.dims(i));
+                }
+                layer.weight()[0].offset() = offset;
+                layer.weight()[0].size() = size * sizeof(int32_t);
+                if (size)
+                {
+                    if (size == 1 && layer.weight()[0].dim().empty())
+                    {
+                        layer.weight()[0].dim().push_back(1);
+                        layer.weight()[0].scalar() = true;
+                    }
+                    if (tensor.has_raw_data())
+                        Append(weight, layer.weight()[0], tensor.raw_data().c_str());
+                    else if (tensor.int32_data_size())
+                    {
+                        if (size != tensor.int32_data_size())
+                            SYNET_ERROR("Wrong tensor int32_data_size " << tensor.int32_data_size() << " != " << size << " !");
+                        for (size_t i = 0; i < size; ++i)
+                            PushBack<int32_t>(weight, tensor.int32_data(i));
+                    }
+                    else
+                        SYNET_ERROR("Can't parse '" << layer.name() << "' INT32 tensor!");
+                }
+            }
             else if(tensor.data_type() == onnx::TensorProto_DataType_INT64)
             {
                 ptrdiff_t size = 1;
@@ -890,7 +923,23 @@ namespace Synet
 
         bool ConvertConstantNode(const onnx::NodeProto& node, LayerParam& layer, Bytes& original, Bytes& reordered)
         {
-            String name = "value";
+            String name = "value_ints";
+            const onnx::AttributeProto* value_ints = GetAtrribute(node, name);
+            if (value_ints)
+            {
+                size_t size = value_ints->ints_size();
+                if(size == 0)
+                    SYNET_ERROR("Attribute " << name << " is empty!");
+                layer.type() = Synet::LayerTypeMeta;
+                layer.meta().type() = Synet::MetaTypeConst;
+                layer.meta().alpha().type() = TensorType64i;
+                layer.meta().alpha().shape() = Shp(size);
+                layer.meta().alpha().i64().resize(size);
+                for (size_t i = 0; i < size; ++i)
+                    layer.meta().alpha().i64()[i] = value_ints->ints(i);
+                return true;
+            }
+            name = "value";
             const onnx::AttributeProto * value = GetAtrribute(node, name);
             if (value == NULL)
                 SYNET_ERROR("Can't find attribute " << name << " !");
