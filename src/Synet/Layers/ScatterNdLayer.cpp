@@ -26,10 +26,18 @@
 
 namespace Synet
 {
-    template <class T, class I> void ScatterNd(const T* src, const I* idx, size_t size, T* dst)
+    template <class T, class I> void ScatterNd(const T* src, const I* idx, size_t size, size_t inner, T* dst)
     {
-        for (size_t i = 0; i < size; ++i)
-            dst[idx[i]] = src[i];
+        if (inner == 1)
+        {
+            for (size_t i = 0; i < size; ++i)
+                dst[idx[i]] = src[i];
+        }
+        else
+        {
+            for (size_t i = 0; i < size; ++i)
+                memcpy(dst + idx[i] * inner, src + i * inner, inner * sizeof(T));
+        }
     }
 
     //--------------------------------------------------------------------------------------------------
@@ -54,50 +62,21 @@ namespace Synet
     {
         if ((src.size() != 2 && src.size() != 3) || dst.size() != 1)
             SYNET_ERROR("ScatterNdLayer supports only 2-3 inputs and 1 output!");
+        if (src.size() + Weight().size() != 3)
+            SYNET_ERROR("ScatterNdLayer has wrong weight count!");
         if (src[0]->GetType() != src.back()->GetType())
             SYNET_ERROR("ScatterNdLayer the first and the last inputs must be the same type!");
         if (src[0]->GetType() != TensorType32f && src[0]->GetType() != TensorType64i)
             SYNET_ERROR("ScatterNdLayer src[0] unsupported type!");
-        size_t count = src[0]->Count(), size = src.back()->Size();
-        _offset.Reshape(TensorType32i, Shp(size), TensorFormatUnknown);
-        if (src.size() == 2)
+        const ScatterParam& scatter = this->Param().scatter();
+        _version = scatter.version();
+        if (_version == 0)
         {
-            if (this->Weight().size() != 1)
-                SYNET_ERROR("ScatterNdLayer has wrong weight count!");
-            const Tensor &idx = this->Weight()[0];
-            if (idx.GetType() != TensorType32i)
-                SYNET_ERROR("ScatterNdLayer has wrong weight type!");
-            if (idx.Axis(-1) != count)
-                SYNET_ERROR("ScatterNdLayer has wrong weight shape!");
-            if (idx.Size() != size * count)
-                SYNET_ERROR("ScatterNdLayer has wrong weight size!");        
-            for (size_t o = 0, i = 0; o < size; ++o)
-            {
-                Shape index;
-                for (size_t a = 0; a < count; ++a, ++i)
-                    index.push_back(idx.Data<int32_t>()[i]);
-                _offset.Data<int32_t>()[o] = (uint32_t)src[0]->Offset(index);
-            }        
-        }
-        else if (src.size() == 3 && src[1]->Const())
-        {
-            const Tensor& idx = *src[1];
-            if (idx.GetType() != TensorType64i)
-                SYNET_ERROR("ScatterNdLayer src[1] must be INT64 type!");
-            if (idx.Axis(-1) != count)
-                SYNET_ERROR("ScatterNdLayer has wrong src[1] shape!");
-            if (idx.Size() != size * count)
-                SYNET_ERROR("ScatterNdLayer has wrong weight size!");
-            for (size_t o = 0, i = 0; o < size; ++o)
-            {
-                Shape index;
-                for (size_t a = 0; a < count; ++a, ++i)
-                    index.push_back((size_t)idx.Data<int64_t>()[i]);
-                _offset.Data<int32_t>()[o] = (uint32_t)src[0]->Offset(index);
-            }
+            if (!ReshapeScatterNd(src, dst))
+                return false;
         }
         else
-            SYNET_ERROR("ScatterNdLayer supports only constant index!");
+            SYNET_ERROR("ScatterNdLayer unknown version " << _version  << " !");
         if (src[0] != dst[0])
             dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
         if (src[0]->Const() && src.back()->Const())
@@ -114,17 +93,72 @@ namespace Synet
         return true;
     }
 
+    bool ScatterNdLayer::ReshapeScatterNd(const TensorPtrs& src, const TensorPtrs& dst)
+    {
+        const Tensor& data = *src[0];
+        const Tensor& index = src.size() == 2 ? this->Weight()[0] : *src[1];
+        const Tensor& update = *src.back();
+        if(!index.Const())
+            SYNET_ERROR("ScatterNdLayer supports only constant index!");
+        if (index.GetType() != TensorType32i && index.GetType() != TensorType64i)
+            SYNET_ERROR("ScatterNdLayer has wrong index type: " << Cpl::ToStr(index.GetType()) << " !");
+        size_t count = data.Count();  
+        if(data.Count() + index.Count() - index.Axis(-1) - 1 != update.Count())
+            SYNET_ERROR("ScatterNdLayer data, index " << ToStr(index.Shape()) << " and update have incompatible rank!");
+        if (index.Axis(-1) == data.Count())
+        {
+            _inner = 1, _size = update.Size();
+            if (index.Size() != _size * count)
+                SYNET_ERROR("ScatterNdLayer has wrong weight size!");
+            _offset.Reshape(TensorType32i, Shp(_size), TensorFormatUnknown);
+            for (size_t o = 0, i = 0; o < _size; ++o)
+            {
+                Shape idx;
+                for (size_t a = 0; a < count; ++a, ++i)
+                    idx.push_back(index.GetType() == TensorType32i ? index.Data<int32_t>()[i] : index.Data<int64_t>()[i]);
+                _offset.Data<int32_t>()[o] = (uint32_t)src[0]->Offset(idx);
+            }
+        }
+        else
+        {
+            size_t rank = index.Count() - 1;
+            if(update.Size(rank) != data.Size(rank))
+                SYNET_ERROR("ScatterNdLayer: data shape " << ToStr(data.Shape()) << " and update shape " << ToStr(update.Shape()) << " are incompatible!");
+            _inner = update.Size(rank);
+            for(size_t i = 0; i < rank; ++i)
+                if (index.Axis(i) != update.Axis(i))
+                    SYNET_ERROR("ScatterNdLayer: update shape " << ToStr(update.Shape()) << " and index shape " << ToStr(index.Shape()) << " are incompatible!");
+            _size = index.Size(0, -1);
+            _offset.Reshape(TensorType32i, Shp(_size), TensorFormatUnknown);
+            for (size_t o = 0, i = 0; o < _size; ++o)
+            {
+                Shape idx(count, 0);
+                for (size_t a = 0; a < rank; ++a, ++i)
+                    idx[a] = index.GetType() == TensorType32i ? index.Data<int32_t>()[i] : index.Data<int64_t>()[i];
+                _offset.Data<int32_t>()[o] = (uint32_t)src[0]->Offset(idx);
+            }
+        }
+        return true;
+    }
+
     void ScatterNdLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    {
+        if (_version == 0)
+            ForwardCpuNd(src, dst);
+    }
+
+    void ScatterNdLayer::ForwardCpuNd(const TensorPtrs& src, const TensorPtrs& dst)
     {
         if (src[0] != dst[0])
             memcpy(dst[0]->RawData(), src[0]->RawData(), src[0]->RawSize());
-        const int32_t * pOffs = _offset.Data<int32_t>();
+        const int32_t* pOffs = _offset.Data<int32_t>();
         size_t size = src.back()->Size();
         if (src[0]->GetType() == TensorType32f)
-            ScatterNd(src.back()->Data<float>(), pOffs, size, dst[0]->Data<float>());
+            ScatterNd(src.back()->Data<float>(), pOffs, _size, _inner, dst[0]->Data<float>());
         else if (src[0]->GetType() == TensorType64i)
-            ScatterNd(src.back()->Data<int64_t>(), pOffs, size, dst[0]->Data<int64_t>());
+            ScatterNd(src.back()->Data<int64_t>(), pOffs, _size, _inner, dst[0]->Data<int64_t>());
         else
             assert(0);
     }
+
 }

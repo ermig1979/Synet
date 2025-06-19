@@ -170,6 +170,7 @@ namespace Synet
                             FillByFirstValue(tensor);
                     }
                 }
+                tensor.SetConst(true);
             }
             return true;
         }
@@ -205,6 +206,7 @@ namespace Synet
                             FillByFirstValue(tensor);
                     }
                 }
+                tensor.SetConst(true);
             }
             return true;
         }

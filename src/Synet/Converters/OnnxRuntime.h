@@ -211,7 +211,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Floor" && !ConvertFloorNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
-                if ((node.op_type() == "Gather" || node.op_type() == "GatherElements") && !ConvertGatherNode(node, network.layers(), layer))
+                if ((node.op_type() == "Gather" || node.op_type() == "GatherElements" || node.op_type() == "GatherND") && !ConvertGatherNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Gemm" && !ConvertGemmNode(node, trans, network.layers(), original, layer, reordered))
                     return ErrorMessage(i, node);
@@ -1429,9 +1429,23 @@ namespace Synet
             else
             {
                 layer.type() = LayerTypeGather;
-                if (!ConvertAtrributeInt(node, "axis", layer.gather().axis()))
-                    return false;
-                layer.gather().version() = node.op_type() == "GatherElements" ? 1 : 0;
+                if (node.op_type() == "Gather")
+                {
+                    if (!ConvertAtrributeInt(node, "axis", layer.gather().axis()))
+                        return false;
+                }
+                if (node.op_type() == "GatherElements")
+                {
+                    if (!ConvertAtrributeInt(node, "axis", layer.gather().axis()))
+                        return false;
+                    layer.gather().version() = 1;
+                }
+                if (node.op_type() == "GatherND")
+                {
+                    if (!ConvertAtrributeInt(node, "batch_dims", layer.gather().axis()))
+                        return false;
+                    layer.gather().version() = 2;
+                }
             }
             return true;
         }
