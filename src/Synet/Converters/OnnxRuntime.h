@@ -1444,7 +1444,6 @@ namespace Synet
                 {
                     if (!ConvertAtrributeInt(node, "batch_dims", layer.gather().axis()))
                         return false;
-                    //layer.gather().version() = 2;
                 }
             }
             return true;

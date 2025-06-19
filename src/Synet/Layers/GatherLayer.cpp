@@ -209,7 +209,7 @@ namespace Synet
         _version = gather.version();
 
         Shape dstShape;
-        if (_version == 0 || _version == 2)
+        if (_version == 0)
         {
             _gather = GetGather(_srcType, _idxType);
             if (_gather == NULL)
@@ -243,31 +243,6 @@ namespace Synet
             _idxCount = src[1]->Axis(_axis);
             _idxInner = src[1]->Size(_axis + 1);
         }
-        //else if (_version == 2)
-        //{
-        //    if(idxShape.size() > srcShape.size())
-        //        SYNET_ERROR("GatherLayer (version=2): index rank is greater then data rank!");
-
-        //    _idxOuter = index.Size(0, _axis);
-        //    dstShape = idxShape;
-        //    _idxCount = 1, _srcInner = 1;
-        //    for (size_t i = _axis; i < idxShape.size(); ++i)
-        //        _idxCount *= idxShape[i];
-        //    for (size_t i = idxShape.size(); i < srcShape.size(); ++i)
-        //    {
-        //        dstShape.push_back(srcShape[i]);
-        //        _srcInner *= srcShape[i];
-        //    }
-
-        //    _gatherElements = GetGatherElements(_srcType, _idxType);
-        //    if (_gatherElements == NULL)
-        //        SYNET_ERROR("GatherLayer can't get 'gatherElements' worker!");
-
-        //    dstShape = idxShape;
-
-        //    _idxCount = src[1]->Axis(_axis);
-        //    _idxInner = src[1]->Size(_axis + 1);
-        //}
         else
             SYNET_ERROR("GatherLayer parameter version: " << _version << " is unsupported!");
         _srcOuter = src[0]->Size(0, _axis);
@@ -293,9 +268,6 @@ namespace Synet
         switch (_version)
         {
         case 0:
-            _gather(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, src[1]->RawData(), _idxOuter, _idxCount, dst[0]->RawData());
-            break;
-        case 2:
             _gather(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, src[1]->RawData(), _idxOuter, _idxCount, dst[0]->RawData());
             break;
         case 1:
