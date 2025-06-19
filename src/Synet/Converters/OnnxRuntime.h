@@ -291,7 +291,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Sin" && !ConvertSinNode(node, layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Slice" && !ConvertSliceNode(node, trans, network.layers(), layer, &permuteMap))
+                if (node.op_type() == "Slice" && !ConvertSliceNode(node, trans, network.layers(), layer, &tensorFormatMap))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Softmax" && !ConvertSoftmaxNode(node, trans, network.layers(), original, layer))
                     return ErrorMessage(i, node);
@@ -1444,7 +1444,7 @@ namespace Synet
                 {
                     if (!ConvertAtrributeInt(node, "batch_dims", layer.gather().axis()))
                         return false;
-                    layer.gather().version() = 2;
+                    //layer.gather().version() = 2;
                 }
             }
             return true;
@@ -2423,7 +2423,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertSliceNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer, PermuteMap* permuteMap)
+        bool ConvertSliceNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer, TensorFormatMap *tensorFormatMap)
         {
             if (layer.src().size() == 1)
             {
@@ -2489,7 +2489,7 @@ namespace Synet
                             layer.stridedSlice().beginDims().push_back(src1->meta().alpha().i64()[0]);
                             layer.stridedSlice().endDims().push_back(src2->meta().alpha().i64()[0]);
                             //layer.stridedSlice().strideDims().push_back((size_t)src4->meta().alpha().i64()[0]);
-                            if (trans && !PermutedToNchw(layers, layer.src(), false, true, true, permuteMap))
+                            if (trans && CurrentTensorFormat(layers, layer.src(), false, true, true, tensorFormatMap) == TensorFormatNhwc)
                             {
                                 Shape nchw = Shape({ 0, 3, 1, 2 });
                                 layer.stridedSlice().axes()[0] = nchw[layer.stridedSlice().axes()[0]];
@@ -2511,7 +2511,7 @@ namespace Synet
                             layer.stridedSlice().beginDims().push_back(src1->meta().alpha().i64()[0]);
                             layer.stridedSlice().endDims().push_back(src2->meta().alpha().i64()[0]);
                             layer.stridedSlice().strideDims().push_back(src4->meta().alpha().i64()[0]);
-                            if (trans && !PermutedToNchw(layers, layer.src(), false, true, true, permuteMap))
+                            if (trans && CurrentTensorFormat(layers, layer.src(), false, true, true, tensorFormatMap) == TensorFormatNhwc)
                             {
                                 Shape nchw = Shape({ 0, 3, 1, 2 });
                                 layer.stridedSlice().axes()[0] = nchw[layer.stridedSlice().axes()[0]];

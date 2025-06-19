@@ -176,7 +176,7 @@ namespace Synet
 
     void ScatterNdLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
-        if (_version == 0)
+        if (_version == 0 || _version == 1)
             ForwardCpuNd(src, dst);
     }
 
