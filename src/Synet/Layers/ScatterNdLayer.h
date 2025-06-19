@@ -42,11 +42,12 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-        bool ReshapeScatterNd(const TensorPtrs& src, const TensorPtrs& dst);
+        bool SetOffsetScatterNd(const Tensor& data, const Tensor& index, const Tensor& update);
+        bool SetOffsetScatterElements(const Tensor& data, const Tensor& index, const Tensor& update);
         void ForwardCpuNd(const TensorPtrs& src, const TensorPtrs& dst);
     private:
         int _version;
-        size_t _inner, _size;
+        size_t _inner, _size, _axis;
         TensorType _srcType, _idxType;
         Tensor _offset;
     };

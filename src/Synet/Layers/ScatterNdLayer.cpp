@@ -68,12 +68,25 @@ namespace Synet
             SYNET_ERROR("ScatterNdLayer the first and the last inputs must be the same type!");
         if (src[0]->GetType() != TensorType32f && src[0]->GetType() != TensorType64i)
             SYNET_ERROR("ScatterNdLayer src[0] unsupported type!");
+        const Tensor& data = *src[0];
+        const Tensor& index = src.size() == 2 ? this->Weight()[0] : *src[1];
+        const Tensor& update = *src.back();
+        if (!index.Const())
+            SYNET_ERROR("ScatterNdLayer supports only constant index!");
         const ScatterParam& scatter = this->Param().scatter();
+        if (index.GetType() != TensorType32i && index.GetType() != TensorType64i)
+            SYNET_ERROR("ScatterNdLayer has wrong index type: " << Cpl::ToStr(index.GetType()) << " !");
         _version = scatter.version();
         if (_version == 0)
         {
-            if (!ReshapeScatterNd(src, dst))
-                return false;
+            if (!SetOffsetScatterNd(data, index, update))
+                SYNET_ERROR("ScatterNdLayer can't set offset for ScatterND version!");
+        }
+        else if (_version == 1)
+        {
+            _axis = data.Index(scatter.axis());
+            if (!SetOffsetScatterElements(data, index, update))
+                SYNET_ERROR("ScatterNdLayer can't set offset for ScatterElements version!");
         }
         else
             SYNET_ERROR("ScatterNdLayer unknown version " << _version  << " !");
@@ -93,15 +106,8 @@ namespace Synet
         return true;
     }
 
-    bool ScatterNdLayer::ReshapeScatterNd(const TensorPtrs& src, const TensorPtrs& dst)
+    bool ScatterNdLayer::SetOffsetScatterNd(const Tensor& data, const Tensor& index, const Tensor& update)
     {
-        const Tensor& data = *src[0];
-        const Tensor& index = src.size() == 2 ? this->Weight()[0] : *src[1];
-        const Tensor& update = *src.back();
-        if(!index.Const())
-            SYNET_ERROR("ScatterNdLayer supports only constant index!");
-        if (index.GetType() != TensorType32i && index.GetType() != TensorType64i)
-            SYNET_ERROR("ScatterNdLayer has wrong index type: " << Cpl::ToStr(index.GetType()) << " !");
         size_t count = data.Count();  
         if(data.Count() + index.Count() - index.Axis(-1) - 1 != update.Count())
             SYNET_ERROR("ScatterNdLayer data, index " << ToStr(index.Shape()) << " and update have incompatible rank!");
@@ -116,7 +122,7 @@ namespace Synet
                 Shape idx;
                 for (size_t a = 0; a < count; ++a, ++i)
                     idx.push_back(index.GetType() == TensorType32i ? index.Data<int32_t>()[i] : index.Data<int64_t>()[i]);
-                _offset.Data<int32_t>()[o] = (uint32_t)src[0]->Offset(idx);
+                _offset.Data<int32_t>()[o] = (uint32_t)data.Offset(idx);
             }
         }
         else
@@ -135,7 +141,34 @@ namespace Synet
                 Shape idx(count, 0);
                 for (size_t a = 0; a < rank; ++a, ++i)
                     idx[a] = index.GetType() == TensorType32i ? index.Data<int32_t>()[i] : index.Data<int64_t>()[i];
-                _offset.Data<int32_t>()[o] = (uint32_t)src[0]->Offset(idx);
+                _offset.Data<int32_t>()[o] = (uint32_t)data.Offset(idx);
+            }
+        }
+        return true;
+    }
+
+    bool ScatterNdLayer::SetOffsetScatterElements(const Tensor& data, const Tensor& index, const Tensor& update)
+    {
+        size_t count = data.Count();
+        if (data.Count() != index.Count() || index.Count() != update.Count())
+            SYNET_ERROR("ScatterNdLayer data, index and update must heave the same rank!");
+        if (index.Shape() != update.Shape())
+            SYNET_ERROR("ScatterNdLayer index and update must have the same shape!");
+        for (size_t i = 0; i < count; ++i)
+            if (i != _axis && index.Axis(i) != data.Axis(i))
+                SYNET_ERROR("ScatterNdLayer: data shape " << ToStr(data.Shape()) << " and index shape " << ToStr(index.Shape()) << " are incompatible!");
+        _inner = 1, _size = update.Size();
+        _offset.Reshape(TensorType32i, Shp(_size), TensorFormatUnknown);
+        size_t outer = index.Size(0, _axis), iAxis = index.Axis(_axis), dAxis = data.Axis(_axis), inner = index.Size(_axis + 1);
+        for (size_t o = 0, offs = 0; o < outer; ++o)
+        {
+            for (size_t a = 0; a < iAxis; ++a)
+            {
+                for (size_t i = 0; i < inner; ++i, ++offs)
+                {
+                    size_t idx = index.GetType() == TensorType32i ? index.Data<int32_t>()[offs] : index.Data<int64_t>()[offs];
+                    _offset.Data<int32_t>()[offs] = (int32_t)(o * dAxis * inner + idx * inner + i);
+                }
             }
         }
         return true;
