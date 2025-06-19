@@ -36,7 +36,7 @@ namespace Synet
         else
         {
             for (size_t i = 0; i < size; ++i)
-                memcpy(dst + idx[i] * inner, src + i * inner, inner * sizeof(T));
+                memcpy(dst + idx[i], src + i * inner, inner * sizeof(T));
         }
     }
 

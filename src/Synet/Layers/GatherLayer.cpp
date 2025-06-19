@@ -188,17 +188,19 @@ namespace Synet
     {
         if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("GatherLayer supports only 2 inputs and 1 output!");
+        const Tensor& data = *src[0];
+        const Tensor& index = *src[1];
 
-        _srcType = src[0]->GetType();
+        _srcType = data.GetType();
         if (_srcType != TensorType32f && _srcType != TensorType64i)
             SYNET_ERROR("GatherLayer has wrong src[0] type: " << Cpl::ToStr(_srcType) << " !");
 
-        _idxType = src[1]->GetType();
+        _idxType = index.GetType();
         if (_idxType != TensorType32i && _idxType != TensorType64i)
             SYNET_ERROR("GatherLayer has wrong src[1] type: " << Cpl::ToStr(_idxType) << " !");
 
-        Shape srcShape = src[0]->Shape();
-        Shape idxShape = src[1]->Shape();
+        Shape srcShape = data.Shape();
+        Shape idxShape = index.Shape();
 
         const GatherParam& gather = this->Param().gather();
         _axis = src[0]->Index(gather.axis());
@@ -207,7 +209,7 @@ namespace Synet
         _version = gather.version();
 
         Shape dstShape;
-        if (_version == 0)
+        if (_version == 0 || _version == 2)
         {
             _gather = GetGather(_srcType, _idxType);
             if (_gather == NULL)
@@ -220,7 +222,7 @@ namespace Synet
                 for (size_t i = 0; i < idxShape.size(); ++i)
                     dstShape.push_back(idxShape[i]);
             }
-            for (size_t i = _axis + 1; i < srcShape.size(); ++i)
+            for (size_t i = _axis + idxShape.size(); i < srcShape.size(); ++i)
                 dstShape.push_back(srcShape[i]);
 
             _idxOuter = src[1]->Size(0, -1);
@@ -241,6 +243,31 @@ namespace Synet
             _idxCount = src[1]->Axis(_axis);
             _idxInner = src[1]->Size(_axis + 1);
         }
+        //else if (_version == 2)
+        //{
+        //    if(idxShape.size() > srcShape.size())
+        //        SYNET_ERROR("GatherLayer (version=2): index rank is greater then data rank!");
+
+        //    _idxOuter = index.Size(0, _axis);
+        //    dstShape = idxShape;
+        //    _idxCount = 1, _srcInner = 1;
+        //    for (size_t i = _axis; i < idxShape.size(); ++i)
+        //        _idxCount *= idxShape[i];
+        //    for (size_t i = idxShape.size(); i < srcShape.size(); ++i)
+        //    {
+        //        dstShape.push_back(srcShape[i]);
+        //        _srcInner *= srcShape[i];
+        //    }
+
+        //    _gatherElements = GetGatherElements(_srcType, _idxType);
+        //    if (_gatherElements == NULL)
+        //        SYNET_ERROR("GatherLayer can't get 'gatherElements' worker!");
+
+        //    dstShape = idxShape;
+
+        //    _idxCount = src[1]->Axis(_axis);
+        //    _idxInner = src[1]->Size(_axis + 1);
+        //}
         else
             SYNET_ERROR("GatherLayer parameter version: " << _version << " is unsupported!");
         _srcOuter = src[0]->Size(0, _axis);
@@ -266,6 +293,9 @@ namespace Synet
         switch (_version)
         {
         case 0:
+            _gather(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, src[1]->RawData(), _idxOuter, _idxCount, dst[0]->RawData());
+            break;
+        case 2:
             _gather(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, src[1]->RawData(), _idxOuter, _idxCount, dst[0]->RawData());
             break;
         case 1:
