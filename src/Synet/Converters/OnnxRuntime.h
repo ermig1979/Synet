@@ -275,7 +275,7 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Relu" && !ConvertReluNode(node, layer))
                     return ErrorMessage(i, node);
-                if (node.op_type() == "Reshape" && !ConvertReshapeNode(node, trans, network.layers(), original, onnxParam, layer))
+                if (node.op_type() == "Reshape" && !ConvertReshapeNode(node, trans, network.layers(), original, onnxParam, layer, &tensorFormatMap))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Resize" && !ConvertResizeNode(node, network.layers(), original, layer))
                     return ErrorMessage(i, node);
@@ -2192,7 +2192,7 @@ namespace Synet
             return true;
         }
 
-        bool ConvertReshapeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer)
+        bool ConvertReshapeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer, TensorFormatMap* tensorFormatMap)
         {
             if (!CheckSourceNumber(layer, 2))
                 return false;
@@ -2216,7 +2216,7 @@ namespace Synet
                 layer.type() = LayerTypeReshape;
                 shape = Shp(alpha.i64().data(), alpha.shape()[0]);
                 layer.src().resize(1);
-                if (trans && CurrentTensorFormat(layers, layer.src(), true, false, true) == TensorFormatNhwc)
+                if (trans && CurrentTensorFormat(layers, layer.src(), true, false, true, tensorFormatMap) == TensorFormatNhwc)
                 {
                     if (shape.size() == 5)
                     {
