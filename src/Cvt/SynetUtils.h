@@ -33,18 +33,6 @@ namespace Synet
 {
     using namespace ModelUtils;
 
-    struct OnnxParam
-    {
-        CPL_PARAM_VALUE(Strings, toNchwHints, Strings());
-        CPL_PARAM_VALUE(Strings, toNhwcHints, Strings());
-        CPL_PARAM_VALUE(Strings, shapeV2s, Strings());
-        CPL_PARAM_VALUE(bool, transpose0312PermuteToNhwc, false);
-        CPL_PARAM_VALUE(bool, globalPoolingPermuteToNchw, true);
-        CPL_PARAM_VALUE(bool, addToEltwise, true);
-        CPL_PARAM_VALUE(bool, mulToEltwise, true);
-        CPL_PARAM_VALUE(bool, setReshapeAxis1, false);
-    };
-
     //-------------------------------------------------------------------------------------------------
 
     class SynetUtils

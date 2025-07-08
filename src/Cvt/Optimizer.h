@@ -28,26 +28,12 @@
 #include "Synet/Params.h"
 #include "Synet/Utils/FileUtils.h"
 
+#include "Cvt/Params.h"
 #include "Cvt/SynetUtils.h"
 #include "Cvt/Bf16OptSetter.h"
 
 namespace Synet
 {
-    struct OptimizerParam
-    {
-        CPL_PARAM_VALUE(bool, mergeTwoConvolutions, true);
-        CPL_PARAM_VALUE(uint32_t, mergeTwoConvolutionsOutputNumMax, 256);
-        CPL_PARAM_VALUE(bool, mergeInt8Convolutions, true);
-        CPL_PARAM_VALUE(bool, saveUnoptimized, false);
-        CPL_PARAM_VALUE(int, convToNhwc, 0);
-        CPL_PARAM_VALUE(bool, skipPermute, false);
-        CPL_PARAM_VALUE(bool, reuseLayers, true);
-        CPL_PARAM_VALUE(bool, reuseEltwise, false);
-        CPL_PARAM_STRUCT(Bf16OptParam, bf16);
-    };
-
-    CPL_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);
-
     class Optimizer : public SynetUtils
     {
     public:

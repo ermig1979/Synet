@@ -28,22 +28,11 @@
 #include "Synet/Params.h"
 #include "Synet/Utils/FileUtils.h"
 
+#include "Cvt/Params.h"
 #include "Cvt/SynetUtils.h"
 
 namespace Synet
 {
-    struct Bf16OptParam
-    {
-        CPL_PARAM_VALUE(bool, enable, false);
-        CPL_PARAM_VALUE(uint32_t, minSrcC, 32);
-        CPL_PARAM_VALUE(uint32_t, minDstC, 8);
-        CPL_PARAM_VALUE(LowPrecisionType, addType, LowPrecisionTypeActive);
-        CPL_PARAM_VALUE(LowPrecisionType, reluType, LowPrecisionTypePassive);
-        CPL_PARAM_VALUE(LowPrecisionType, depthwiseType, LowPrecisionTypeNone);
-        CPL_PARAM_VALUE(Strings, exclude, Strings());
-        CPL_PARAM_VALUE(Strings, manualActive, Strings());
-    };
-
     class Bf16OptSetter : public SynetUtils
     {
     public:

@@ -28,6 +28,7 @@
 #include "Synet/Params.h"
 #include "Synet/Utils/FileUtils.h"
 
+#include "Cvt/Params.h"
 #include "Cvt/InferenceEngineV10.h"
 #include "Cvt/Optimizer.h"
 

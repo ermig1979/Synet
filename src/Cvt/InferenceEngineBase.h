@@ -28,6 +28,7 @@
 #include "Synet/Params.h"
 #include "Synet/Tensor.h"
 
+#include "Cvt/Params.h"
 #include "Cvt/SynetUtils.h"
 
 //#define SYNET_IE_PARSE_STOP_ON_ERROR
