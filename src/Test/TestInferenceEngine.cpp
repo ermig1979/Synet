@@ -28,7 +28,7 @@
 #include "TestCompare.h"
 #include "TestReport.h"
 
-#include "Synet/Converters/InferenceEngine.h"
+#include "Cvt/InferenceEngine.h"
 
 #ifdef SYNET_TEST_FIRST_RUN
 #include "TestOpenVino.h"

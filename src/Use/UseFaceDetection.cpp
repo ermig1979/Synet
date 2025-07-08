@@ -25,7 +25,7 @@
 #define SYNET_SIMD_LIBRARY_ENABLE
 #endif
 #include "Synet/Network.h"
-#include "Synet/Converters/InferenceEngine.h"
+#include "Cvt/InferenceEngine.h"
 #include "Simd/SimdDrawing.hpp"
 
 typedef Synet::Network Net;

@@ -28,8 +28,6 @@
 
 #include "Synet/Params.h"
 #include "Synet/Tensor.h"
-#include "Synet/Converters/Optimizer.h"
-#include "Synet/Converters/OnnxRuntime.h"
 #include "Synet/Decoders/Anchor.h"
 #include "Synet/Decoders/Ultraface.h"
 #include "Synet/Decoders/YoloV5.h"
@@ -46,6 +44,10 @@
 #include "Synet/Decoders/Alpha.h"
 #include "Synet/Decoders/Nanodet.h"
 #include "Synet/Decoders/YoloV11.h"
+
+#include "Cvt/Optimizer.h"
+#include "Cvt/OnnxRuntime.h"
+
 
 namespace Test
 {

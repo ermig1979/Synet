@@ -333,15 +333,6 @@
     <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\InferenceEngine.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineBase.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineV10.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolutionLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
@@ -423,14 +414,8 @@
     <ClInclude Include="..\..\src\Synet\Utils\MergedConvolution.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\Optimizer.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Common.h" />
     <ClInclude Include="..\..\src\Synet\Buffer.h" />
-    <ClInclude Include="..\..\src\Synet\Converters\Deoptimizer.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\FileUtils.h">
       <Filter>Utils</Filter>
     </ClInclude>
@@ -471,9 +456,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Region.h" />
-    <ClInclude Include="..\..\src\Synet\Converters\SynetUtils.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ReverseSequenceLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
@@ -487,9 +469,6 @@
     <ClInclude Include="..\..\src\Synet\Context.h" />
     <ClInclude Include="..\..\src\Synet\Layers\RnnGruBdLayer.h">
       <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\OnnxRuntime.h">
-      <Filter>Converters</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Ultraface.h">
       <Filter>Decoders</Filter>
@@ -669,9 +648,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\Deconvolution32fLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\Bf16OptSetter.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Region.h">
       <Filter>Decoders</Filter>
     </ClInclude>
@@ -711,13 +687,13 @@
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.h">
       <Filter>Layers\Quantized</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\ModelUtils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
       <UniqueIdentifier>{2b236438-b274-4f2f-a02b-72175df7cd1a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Converters">
-      <UniqueIdentifier>{3b086818-329c-4b6e-81ca-035978ca699d}</UniqueIdentifier>
     </Filter>
     <Filter Include="Utils">
       <UniqueIdentifier>{36aa89bf-afc4-4b67-8db6-28ef952a4fc5}</UniqueIdentifier>

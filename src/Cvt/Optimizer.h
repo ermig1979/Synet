@@ -27,8 +27,9 @@
 #include "Synet/Common.h"
 #include "Synet/Params.h"
 #include "Synet/Utils/FileUtils.h"
-#include "Synet/Converters/SynetUtils.h"
-#include "Synet/Converters/Bf16OptSetter.h"
+
+#include "Cvt/SynetUtils.h"
+#include "Cvt/Bf16OptSetter.h"
 
 namespace Synet
 {

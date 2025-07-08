@@ -29,9 +29,10 @@
 #include "Synet/Common.h"
 #include "Synet/Params.h"
 #include "Synet/Tensor.h"
-#include "Synet/Converters/Optimizer.h"
-#include "Synet/Converters/SynetUtils.h"
 #include "Synet/Utils/FileUtils.h"
+
+#include "Cvt/Optimizer.h"
+#include "Cvt/SynetUtils.h"
 
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
 

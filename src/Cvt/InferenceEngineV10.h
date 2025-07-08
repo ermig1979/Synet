@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "Synet/Converters/InferenceEngineBase.h"
+#include "Cvt/InferenceEngineBase.h"
 
 namespace Synet
 {

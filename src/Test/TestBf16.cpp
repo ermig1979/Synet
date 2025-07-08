@@ -30,8 +30,8 @@
 #include "TestCompare.h"
 #include "TestReport.h"
 
-#include "Synet/Converters/Deoptimizer.h"
-#include "Synet/Converters/Optimizer.h"
+#include "Cvt/Deoptimizer.h"
+#include "Cvt/Optimizer.h"
 
 namespace Test
 {

@@ -104,7 +104,7 @@
 #include "Synet/Layers/YoloLayer.h"
 #include "Synet/Layers/YoloV7Layer.h"
 
-#include "Synet/Converters/SynetUtils.h"
+#include "Synet/Utils/ModelUtils.h"
 #include "Synet/Fabric.h"
 
 namespace Synet
@@ -147,9 +147,9 @@ namespace Synet
         case LayerTypeDequantizeLinear: return new DequantizeLinearLayer(param, context);
         case LayerTypeDetectionOutput: return new DetectionOutputLayer(param, context);
         case LayerTypeEltwise: 
-            if(SynetUtils::IsAdd(param))
+            if(ModelUtils::IsAdd(param))
                 return new AddLayer(param, context, method);
-            else if (SynetUtils::IsMul(param))
+            else if (ModelUtils::IsMul(param))
                 return new MulLayer(param, context);
             else
                 return new EltwiseLayer(param, context);

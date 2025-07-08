@@ -28,8 +28,8 @@
 #include "TestOptions.h"
 #include "TestSynet.h"
 
-#include "Synet/Converters/Deoptimizer.h"
-#include "Synet/Converters/Optimizer.h"
+#include "Cvt/Deoptimizer.h"
+#include "Cvt/Optimizer.h"
 
 namespace Test
 {

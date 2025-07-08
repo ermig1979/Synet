@@ -27,8 +27,9 @@
 #include "Synet/Common.h"
 #include "Synet/Params.h"
 #include "Synet/Utils/FileUtils.h"
-#include "Synet/Converters/InferenceEngineV10.h"
-#include "Synet/Converters/Optimizer.h"
+
+#include "Cvt/InferenceEngineV10.h"
+#include "Cvt/Optimizer.h"
 
 namespace Synet
 {

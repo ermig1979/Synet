@@ -27,7 +27,8 @@
 #include "Synet/Common.h"
 #include "Synet/Params.h"
 #include "Synet/Utils/FileUtils.h"
-#include "Synet/Converters/SynetUtils.h"
+
+#include "Cvt/SynetUtils.h"
 
 namespace Synet
 {
