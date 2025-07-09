@@ -28,7 +28,7 @@
 #include "TestOptions.h"
 #include "TestSynet.h"
 
-#include "Cvt/Deoptimizer.h"
+#include "Cvt/Deoptimizer/Deoptimizer.h"
 #include "Cvt/Optimizer.h"
 
 namespace Test

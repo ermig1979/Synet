@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\src\Cvt\Deoptimizer\Deoptimizer.cpp">
+      <Filter>Deoptimizer</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\Cvt\Common\Params.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Cvt\Common\SynetUtils.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Cvt\Deoptimizer\Deoptimizer.h">
+      <Filter>Deoptimizer</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>{eb69be5d-8c06-43c5-9f7e-7b515d6ee961}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Deoptimizer">
+      <UniqueIdentifier>{e45d96c4-a871-4411-bd89-83af13c8c263}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

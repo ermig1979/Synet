@@ -274,25 +274,7 @@ namespace Synet
 		}
 	};
 
-	inline bool DeoptimizeSynetModel(const String& srcModel, const String& dstModel)
-	{
-		NetworkParamHolder network;
-		if (!network.Load(srcModel))
-		{
-			std::cout << "Can't load '" << srcModel << "' model file!" << std::endl;
-			return false;
-		}
-		Deoptimizer deoptimizer;
-		if (!deoptimizer.Run(network()))
-		{
-			std::cout << "Can't deoptimize Synet model!" << std::endl;
-			return false;
-		}
-		if (!network.Save(dstModel, false))
-		{
-			std::cout << "Can't save '" << dstModel << "' model file!" << std::endl;
-			return false;
-		}
-		return true;
-	}
+	//--------------------------------------------------------------------------------------------------
+
+	bool DeoptimizeSynetModel(const String& srcModel, const String& dstModel);
 }

@@ -28,8 +28,8 @@
 #include "Synet/Params.h"
 #include "Synet/Utils/FileUtils.h"
 
-#include "Cvt/Params.h"
-#include "Cvt/SynetUtils.h"
+#include "Cvt/Common/Params.h"
+#include "Cvt/Common/SynetUtils.h"
 #include "Cvt/Bf16OptSetter.h"
 
 namespace Synet

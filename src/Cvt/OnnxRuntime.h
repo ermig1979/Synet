@@ -32,7 +32,7 @@
 #include "Synet/Utils/FileUtils.h"
 
 #include "Cvt/Optimizer.h"
-#include "Cvt/SynetUtils.h"
+#include "Cvt/Common/SynetUtils.h"
 
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
 

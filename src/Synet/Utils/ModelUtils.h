@@ -31,7 +31,7 @@ namespace Synet
 {
     namespace ModelUtils
     {
-        template<class T> static bool AllEqualTo(const std::vector<T>& vector, T value)
+        template<class T> SYNET_INLINE bool AllEqualTo(const std::vector<T>& vector, T value)
         {
             for (size_t i = 0; i < vector.size(); ++i)
                 if (vector[i] != value)
@@ -39,14 +39,14 @@ namespace Synet
             return true;
         }
 
-        bool Equal(float a, float b, float e = 0.000001f)
+        SYNET_INLINE bool Equal(float a, float b, float e = 0.000001f)
         {
             return abs(a - b) < e;
         }
 
         //-------------------------------------------------------------------------------------------------
 
-        static SYNET_INLINE bool IsAdd(const LayerParam& layer)
+        SYNET_INLINE bool IsAdd(const LayerParam& layer)
         {
             if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum &&
                 (layer.eltwise().coefficients().empty() || layer.eltwise().coefficients() == Floats({ 1.0f, 1.0f })) && layer.src().size() == 2)
@@ -56,7 +56,7 @@ namespace Synet
             return false;
         }
 
-        static SYNET_INLINE bool IsMul(const LayerParam& layer)
+        SYNET_INLINE bool IsMul(const LayerParam& layer)
         {
             if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeProduct && layer.src().size() == 2)
                 return true;
@@ -65,7 +65,7 @@ namespace Synet
             return false;
         }
 
-        static SYNET_INLINE bool IsSub(const LayerParam& layer)
+        SYNET_INLINE bool IsSub(const LayerParam& layer)
         {
             if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum &&
                 layer.eltwise().coefficients() == Floats({ 1.0f, -1.0f }) && layer.src().size() == 2)
@@ -75,7 +75,7 @@ namespace Synet
             return false;
         }
 
-        static SYNET_INLINE bool IsMulConst(const LayerParam& layer, float value, float epsilon = 0.000001)
+        SYNET_INLINE bool IsMulConst(const LayerParam& layer, float value, float epsilon = 0.000001)
         {
             if (layer.type() == LayerTypePower && layer.power().power() == 1.0f && layer.power().shift() == 0.0f
                 && abs(layer.power().scale() - value) < epsilon)
@@ -83,7 +83,7 @@ namespace Synet
             return false;
         }
 
-        static SYNET_INLINE bool IsAddConst(const LayerParam& layer, float value, float epsilon = 0.000001)
+        SYNET_INLINE bool IsAddConst(const LayerParam& layer, float value, float epsilon = 0.000001)
         {
             if (layer.type() == LayerTypePower && layer.power().power() == 1.0f && layer.power().scale() == 1.0f
                 && abs(layer.power().shift() - value) < epsilon)
@@ -91,7 +91,7 @@ namespace Synet
             return false;
         }
 
-        static SYNET_INLINE bool IsMetaConst64i(const LayerParam& layer, Longs value = Longs())
+        SYNET_INLINE bool IsMetaConst64i(const LayerParam& layer, Longs value = Longs())
         {
             if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeConst && 
                 layer.meta().alpha().type() == TensorType64i && (value.empty() || layer.meta().alpha().i64() == value))
@@ -99,14 +99,14 @@ namespace Synet
             return false;
         }
 
-        static SYNET_INLINE bool IsMetaConst(const LayerParam& layer)
+        SYNET_INLINE bool IsMetaConst(const LayerParam& layer)
         {
             if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeConst)
                 return true;
             return false;
         }
 
-        static SYNET_INLINE bool IsDeptwiseConvolution(const LayerParam& layer, const Shape & kernel, const Shape& stride, bool bias, ActivationFunctionType activation)
+        SYNET_INLINE bool IsDeptwiseConvolution(const LayerParam& layer, const Shape & kernel, const Shape& stride, bool bias, ActivationFunctionType activation)
         {
             if (layer.type() == LayerTypeConvolution && layer.convolution().group() == layer.convolution().outputNum() &&
                 layer.convolution().stride() == stride &&
