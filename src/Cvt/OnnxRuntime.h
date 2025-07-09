@@ -31,8 +31,8 @@
 #include "Synet/Tensor.h"
 #include "Synet/Utils/FileUtils.h"
 
-#include "Cvt/Optimizer.h"
 #include "Cvt/Common/SynetUtils.h"
+#include "Cvt/Optimizer/Optimizer.h"
 
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
 

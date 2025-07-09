@@ -28,7 +28,7 @@
 #include "TestCompare.h"
 #include "TestReport.h"
 
-#include "Cvt/Optimizer.h"
+#include "Cvt/Optimizer/Optimizer.h"
 
 namespace Test
 {

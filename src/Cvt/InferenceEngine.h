@@ -30,7 +30,7 @@
 
 #include "Cvt/Common/Params.h"
 #include "Cvt/InferenceEngineV10.h"
-#include "Cvt/Optimizer.h"
+#include "Cvt/Optimizer/Optimizer.h"
 
 namespace Synet
 {

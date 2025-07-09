@@ -4,6 +4,9 @@
     <ClCompile Include="..\..\src\Cvt\Deoptimizer\Deoptimizer.cpp">
       <Filter>Deoptimizer</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\Optimizer.cpp">
+      <Filter>Optimizer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cvt\Common\Params.h">
@@ -15,6 +18,12 @@
     <ClInclude Include="..\..\src\Cvt\Deoptimizer\Deoptimizer.h">
       <Filter>Deoptimizer</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Cvt\Optimizer\Bf16OptSetter.h">
+      <Filter>Optimizer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Cvt\Optimizer\Optimizer.h">
+      <Filter>Optimizer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Common">
@@ -22,6 +31,9 @@
     </Filter>
     <Filter Include="Deoptimizer">
       <UniqueIdentifier>{e45d96c4-a871-4411-bd89-83af13c8c263}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer">
+      <UniqueIdentifier>{5b89448e-4370-4e41-9e2c-5f064189e8e4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

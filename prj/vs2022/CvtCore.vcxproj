@@ -25,9 +25,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Cvt\Deoptimizer\Deoptimizer.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\Optimizer.cpp" />
     <ClInclude Include="..\..\src\Cvt\Common\Params.h" />
     <ClInclude Include="..\..\src\Cvt\Common\SynetUtils.h" />
     <ClInclude Include="..\..\src\Cvt\Deoptimizer\Deoptimizer.h" />
+    <ClInclude Include="..\..\src\Cvt\Optimizer\Bf16OptSetter.h" />
+    <ClInclude Include="..\..\src\Cvt\Optimizer\Optimizer.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\3rd\Simd\prj\vs2022\Simd.vcxproj">

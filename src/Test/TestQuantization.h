@@ -29,7 +29,7 @@
 #include "TestSynet.h"
 
 #include "Cvt/Deoptimizer/Deoptimizer.h"
-#include "Cvt/Optimizer.h"
+#include "Cvt/Optimizer/Optimizer.h"
 
 namespace Test
 {

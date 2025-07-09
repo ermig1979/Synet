@@ -45,7 +45,7 @@
 #include "Synet/Decoders/Nanodet.h"
 #include "Synet/Decoders/YoloV11.h"
 
-#include "Cvt/Optimizer.h"
+#include "Cvt/Common/Params.h"
 #include "Cvt/OnnxRuntime.h"
 
 
