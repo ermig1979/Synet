@@ -29,7 +29,7 @@
 #include "Synet/Utils/FileUtils.h"
 
 #include "Cvt/Common/Params.h"
-#include "Cvt/InferenceEngineV10.h"
+#include "Cvt/InferenceEngine/InferenceEngineV10.h"
 #include "Cvt/Optimizer/Optimizer.h"
 
 namespace Synet
@@ -191,9 +191,5 @@ namespace Synet
         }
     };
 
-    bool ConvertInferenceEngineToSynet(const String & srcData, const String & srcWeights, bool trans, const String & dstXml, const String & dstBin, const OnnxParam &onnxParam = OnnxParam(), const OptimizerParam& optParam = OptimizerParam())
-    {
-        InferenceEngineToSynet ieToSynet;
-        return ieToSynet.Convert(srcData, srcWeights, trans, dstXml, dstBin, onnxParam, optParam);
-    }
+    bool ConvertInferenceEngineToSynet(const String& srcData, const String& srcWeights, bool trans, const String& dstXml, const String& dstBin, const OnnxParam& onnxParam = OnnxParam(), const OptimizerParam& optParam = OptimizerParam());
 }

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "Cvt/InferenceEngineBase.h"
+#include "Cvt/InferenceEngine/InferenceEngineBase.h"
 
 namespace Synet
 {

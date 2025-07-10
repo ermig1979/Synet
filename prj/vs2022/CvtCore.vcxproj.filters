@@ -7,6 +7,9 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\Optimizer.cpp">
       <Filter>Optimizer</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\InferenceEngine\InferenceEngine.cpp">
+      <Filter>InferenceEngine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cvt\Common\Params.h">
@@ -24,6 +27,15 @@
     <ClInclude Include="..\..\src\Cvt\Optimizer\Optimizer.h">
       <Filter>Optimizer</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Cvt\InferenceEngine\InferenceEngine.h">
+      <Filter>InferenceEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Cvt\InferenceEngine\InferenceEngineBase.h">
+      <Filter>InferenceEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Cvt\InferenceEngine\InferenceEngineV10.h">
+      <Filter>InferenceEngine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Common">
@@ -34,6 +46,9 @@
     </Filter>
     <Filter Include="Optimizer">
       <UniqueIdentifier>{5b89448e-4370-4e41-9e2c-5f064189e8e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="InferenceEngine">
+      <UniqueIdentifier>{ba55f2e2-6f63-495d-842d-c8821e77631e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
