@@ -1443,7 +1443,7 @@ namespace Synet
                 }
                 if (node.op_type() == "GatherND")
                 {
-                    if (!ConvertAtrributeInt(node, "batch_dims", layer.gather().axis()))
+                    if (!ConvertAtrributeInt(node, "batch_dims", layer.gather().axis(), true, 0))
                         return false;
                 }
             }
