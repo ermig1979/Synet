@@ -192,6 +192,8 @@ namespace Synet
                         continue;
                     if (MergeOtherAndQuantizeLinear(network.layers(), i, method, merged, changes))
                         continue;
+                    if (SkipUnnecessaryQuantize(network.layers(), i, method, merged, changes))
+                        continue;
                     break;
                 }
                 case 7:
@@ -898,6 +900,31 @@ namespace Synet
             other.dst() = ql.dst();
 #endif
             other.qDst().push_back(ql.quantize());
+            return true;
+        }
+
+        bool SkipUnnecessaryQuantize(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 3)
+                return false;
+            const LayerParam& dl = src[index + 0];
+            LayerParam layer = src[index + 1];
+            const LayerParam& ql = src[index + 2];
+            if (dl.type() != LayerTypeDequantizeLinear)
+                return false;
+            if (layer.type() != LayerTypeFlatten)
+                return false;
+            if (ql.type() != LayerTypeQuantizeLinear)
+                return false;
+            if (dl.quantize().scale() != ql.quantize().scale() ||
+                dl.quantize().zero() != ql.quantize().zero())
+                return false;
+            if (InsideLink(src, index, 3))
+                return false;
+            layer.src() = dl.src();
+            layer.dst() = ql.dst();
+            dst.push_back(layer);
+            index += 2;
             return true;
         }
 
