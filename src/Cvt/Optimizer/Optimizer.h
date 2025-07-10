@@ -912,7 +912,8 @@ namespace Synet
             const LayerParam& ql = src[index + 2];
             if (dl.type() != LayerTypeDequantizeLinear)
                 return false;
-            if (layer.type() != LayerTypeFlatten)
+            if (layer.type() != LayerTypeFlatten && 
+                (layer.type() != LayerTypePooling || layer.pooling().method() != PoolingMethodTypeMax))
                 return false;
             if (ql.type() != LayerTypeQuantizeLinear)
                 return false;
