@@ -29,7 +29,7 @@
 #include "TestReport.h"
 
 #if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_ONNXRUNTIME_ENABLE)
-#include "Cvt/OnnxRuntime.h"
+#include "Cvt/OnnxRuntime/OnnxRuntime.h"
 #include "TestOnnxRuntime.h"
 
 namespace Test

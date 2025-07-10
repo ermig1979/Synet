@@ -3210,12 +3210,7 @@ namespace Synet
 
     //---------------------------------------------------------------------------------------------
 
-    bool ConvertOnnxToSynet(const String& srcGraph, bool trans, const String& dstXml, const String& dstBin, 
-        const OnnxParam& onnxParam, const OptimizerParam& optParam)
-    {
-        OnnxToSynet onnxToSynet;
-        return onnxToSynet.Convert(srcGraph, trans, dstXml, dstBin, onnxParam, optParam);
-    }
+    bool ConvertOnnxToSynet(const String& srcGraph, bool trans, const String& dstXml, const String& dstBin, const OnnxParam& onnxParam, const OptimizerParam& optParam);
 }
 
 #endif

@@ -46,8 +46,7 @@
 #include "Synet/Decoders/YoloV11.h"
 
 #include "Cvt/Common/Params.h"
-#include "Cvt/OnnxRuntime.h"
-
+#include "Cvt/OnnxRuntime/OnnxRuntime.h"
 
 namespace Test
 {

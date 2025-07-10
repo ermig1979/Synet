@@ -49,6 +49,9 @@
     <ProjectReference Include="CvtCore.vcxproj">
       <Project>{b5ca8c94-9973-44a4-912d-500fbde0bc96}</Project>
     </ProjectReference>
+    <ProjectReference Include="CvtOnnx.vcxproj">
+      <Project>{a0d937c5-9297-4183-a64c-f9294334c642}</Project>
+    </ProjectReference>
     <ProjectReference Include="Synet.vcxproj">
       <Project>{c809d7a3-6c52-4e36-8582-00ced929317f}</Project>
     </ProjectReference>

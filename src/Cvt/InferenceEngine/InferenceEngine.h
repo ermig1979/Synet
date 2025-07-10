@@ -191,5 +191,7 @@ namespace Synet
         }
     };
 
+    //--------------------------------------------------------------------------------------------------
+
     bool ConvertInferenceEngineToSynet(const String& srcData, const String& srcWeights, bool trans, const String& dstXml, const String& dstBin, const OnnxParam& onnxParam = OnnxParam(), const OptimizerParam& optParam = OptimizerParam());
 }
