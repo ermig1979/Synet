@@ -83,22 +83,38 @@ namespace Synet
             _batch = 1;
         }
 
-        if (!(Compartible() && InitParams()))
-            return false;
-
         Shape dstShape = src[0]->Shape();
         dstShape.resize(_axis + 1);
         dstShape[_axis] = _N;
         dst[0]->Reshape(_dst8u ? TensorType8u : TensorType32f, dstShape, TensorFormatNchw);
 
-        if (!_src8u)
-            Layer::Extend8u(buf, 0, src[0]->Shape(), src[0]->Format());
-        Layer::Extend32i(buf, 0, dstShape, TensorFormatNchw);
+        _quantizedInnerProduct.Init(_M, _N, _K, src[0]->GetType(), src.size() > 1 ? src[1]->GetType() : TensorType8i, dst[0]->GetType(), _transB ? 0 : 1, src.size() == 1, _biasTerm ? 1 : 0);
+        if (_quantizedInnerProduct.Enable())
+        {
+            Layer::Extend8u(buf, 0, Shp(_quantizedInnerProduct.ExternalBufferSize()));
+            const Tensors& weight = this->Weight();
+            int bias = param.qSrc()[1].weights();
+            float srcScale = (float)param.qSrc()[0].scale(), dstScale = (float)param.qDst()[0].scale();
+            uint8_t srcZero = (uint8_t)param.qSrc()[0].zero(), dstZero = (uint8_t)param.qDst()[0].zero();
+            _quantizedInnerProduct.SetParams(&srcScale, &srcZero, weight[0].Data<int8_t>(), weight[1].Data<float>(),
+                _biasTerm ? weight[bias + 0].Data<int32_t>() : NULL, &dstScale, &dstZero);
+        }
+        else
+        {
+            if (!(Compartible() && InitParams()))
+                return false;
+
+            if (!_src8u)
+                Layer::Extend8u(buf, 0, src[0]->Shape(), src[0]->Format());
+            Layer::Extend32i(buf, 0, dstShape, TensorFormatNchw);
+        }
 
         std::stringstream desc;
         desc << _batch << "x" << _M << "x" << _K << "-" << _N << " ";
         desc << ToChar(src[0]->GetType()) << (src.size() > 1 ? ToChar(src[1]->GetType()) : "0") << ToChar(dst[0]->GetType()) << "-";
         desc << (_transB ? "n" : "t") << (_biasTerm ? "b" : "o");
+        if (_quantizedInnerProduct.Enable())
+            desc << " " << _quantizedInnerProduct.Info();
         this->UsePerfStat(desc.str(), Flop());
 
         return true;
@@ -247,6 +263,11 @@ namespace Synet
 
     void QuantizedInnerProductLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
+        if (_quantizedInnerProduct.Enable())
+        {
+            _quantizedInnerProduct.Forward(src[0]->RawData(), src.size() > 1 ? src[1]->RawData() : NULL, Layer::Buf8u(buf, 0), dst[0]->RawData());
+            return;
+        }
         uint8_t* tmp = _src8u ? src[0]->Data<uint8_t>() : Layer::Buf8u(buf, 0);
         int32_t* sum = Layer::Buf32i(buf, 0);
         //if (!_src8u)

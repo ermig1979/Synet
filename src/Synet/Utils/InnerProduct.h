@@ -178,4 +178,90 @@ namespace Synet
         void* _context;
         size_t _M;
     };
+
+    //-------------------------------------------------------------------------------------------------
+
+    class QuantizedInnerProduct
+    {
+    public:
+        QuantizedInnerProduct()
+            : _context(NULL)
+            , _M(0)
+        {
+        }
+
+        virtual ~QuantizedInnerProduct()
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_context)
+                ::SimdRelease(_context), _context = NULL;
+#endif
+        }
+
+        SYNET_INLINE void Init(size_t M, size_t N, size_t K, TensorType typeA, TensorType typeB, TensorType typeC, int transB, int constB, int bias)
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_M != M)
+            {
+                _M = M;
+                if (_context)
+                    ::SimdRelease(_context), _context = NULL;
+                _context = ::SimdSynetQuantizedInnerProductInit(M, N, K, (SimdTensorDataType)typeA, (SimdTensorDataType)typeB, (SimdTensorDataType)typeC,
+                    transB ? SimdTrue : SimdFalse, constB ? SimdTrue : SimdFalse, bias ? SimdTrue : SimdFalse);
+            }
+#endif
+        }
+
+        SYNET_INLINE bool Enable() const
+        {
+            return _context != NULL;
+        }
+
+        SYNET_INLINE size_t InternalBufferSize() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return _context ? ::SimdSynetQuantizedInnerProductInternalBufferSize(_context) : 0;
+#else
+            return 0;
+#endif
+        }
+
+        SYNET_INLINE size_t ExternalBufferSize() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return _context ? ::SimdSynetQuantizedInnerProductExternalBufferSize(_context) : 0;
+#else
+            return 0;
+#endif
+        }
+
+        String Info() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return _context ? ::SimdSynetQuantizedInnerProductInfo(_context) : String();
+#else
+            return String();
+#endif
+        }
+
+        SYNET_INLINE void SetParams(const float* aScale, const uint8_t* aZero, const int8_t* b, const float* bScale, const int32_t* bias, const float* cScale, const uint8_t* cZero)
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_context)
+                ::SimdSynetQuantizedInnerProductSetParams(_context, aScale, aZero, b, bScale, bias, cScale, cZero);
+#endif
+        }
+
+        SYNET_INLINE void Forward(const uint8_t* A, const uint8_t* B, uint8_t* buf, uint8_t* C)
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_context)
+                ::SimdSynetQuantizedInnerProductForward(_context, A, B, buf, C);
+#endif
+        }
+
+    private:
+        void* _context;
+        size_t _M;
+    };
 }

@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Synet/Layer.h"
+#include "Synet/Utils/InnerProduct.h"
 
 namespace Synet
 {
@@ -56,5 +57,6 @@ namespace Synet
         size_t _axis, _batch, _M, _N, _K;
         bool _biasTerm, _transA, _transB;
         Tensor _dstZero8u, _bias32i, _norm32f;
+        QuantizedInnerProduct _quantizedInnerProduct;
     };
 }
