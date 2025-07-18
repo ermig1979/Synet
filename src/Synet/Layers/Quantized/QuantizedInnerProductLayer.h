@@ -38,6 +38,10 @@ namespace Synet
 
         virtual bool Resizable() const;
 
+        virtual size_t MemoryUsage() const;
+
+        virtual void CompactWeight();
+
         virtual int64_t Flop() const;
 
         virtual LowPrecisionType LowPrecision(TensorType type) const;

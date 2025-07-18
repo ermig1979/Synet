@@ -42,9 +42,21 @@ namespace Synet
         return false;
     }
 
+    size_t QuantizedInnerProductLayer::MemoryUsage() const
+    {
+        return Layer::MemoryUsage() + _norm32f.MemoryUsage() + _bias32i.MemoryUsage() +
+            _quantizedInnerProduct.InternalBufferSize();
+    }
+
     int64_t QuantizedInnerProductLayer::Flop() const
     {
         return _batch * _M * _N * (_K * 2 + (_biasTerm ? 1 : 0));
+    }
+
+    void QuantizedInnerProductLayer::CompactWeight()
+    {
+        if (_quantizedInnerProduct.Enable())
+            ((Tensor&)this->Weight()[0]).Clear();
     }
 
     LowPrecisionType QuantizedInnerProductLayer::LowPrecision(TensorType type) const
