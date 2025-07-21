@@ -261,6 +261,8 @@ namespace Synet
                     return ErrorMessage(i, node);
                 if (node.op_type() == "PRelu" && !ConvertPreluNode(node, network.layers(), layer))
                     return ErrorMessage(i, node);
+                if ((node.op_type() == "QLinearConv") && !ConvertQLinearConvNode(node, trans, network.layers(), original, layer, reordered, &tensorFormatMap))
+                    return ErrorMessage(i, node);
                 if (node.op_type() == "QuantizeLinear" && !ConvertQuantizeLinearNode(node, trans, network.layers(), original, layer))
                     return ErrorMessage(i, node);
                 if (node.op_type() == "Range" && !ConvertRangeNode(node, network.layers(), layer))
@@ -2959,32 +2961,6 @@ namespace Synet
             SYNET_ERROR("Can't convert node[" << index << "]: " << NodeString(node) << " !");
         }
 
-        const onnx::AttributeProto * GetAtrribute(const onnx::NodeProto& node, const String& name)
-        {
-            for (size_t i = 0; i < node.attribute_size(); ++i)
-                if (node.attribute(i).name() == name)
-                    return &node.attribute(i);
-            return NULL;
-        }
-
-        template<class T> bool ConvertAtrributeInt(const onnx::NodeProto& node, const String& name, T & value, bool optional = false, const T & defVal = T())
-        {
-            const onnx::AttributeProto* attribute = GetAtrribute(node, name);
-            if (attribute == NULL)
-            {
-                if (optional)
-                {
-                    value = defVal;
-                    return true;
-                }
-                SYNET_ERROR("Can't find attribute '" << name << "' !");
-            }
-            if (attribute->type() != onnx::AttributeProto_AttributeType_INT)
-                SYNET_ERROR("Attribute '" << name << "' has wrong type " << attribute->type() << " !");
-            value = attribute->i();
-            return true;
-        }
-
         bool ConvertAtrributeFloat(const onnx::NodeProto& node, const String& name, float & value, bool optional = false, const float & defVal = float())
         {
             const onnx::AttributeProto* attribute = GetAtrribute(node, name);
@@ -3018,27 +2994,6 @@ namespace Synet
             if (attribute->type() != onnx::AttributeProto_AttributeType_STRING)
                 SYNET_ERROR("Attribute '" << name << "' has wrong type " << attribute->type() << " !");
             value = attribute->s();
-            return true;
-        }
-
-        template<class T> bool ConvertAtrributeInts(const onnx::NodeProto& node, const String& name, std::vector<T>& values, 
-            bool optional = false, const std::vector<T> & defVals = std::vector<T>())
-        {
-            const onnx::AttributeProto* attribute = GetAtrribute(node, name);
-            if (attribute == NULL)
-            {
-                if (optional)
-                {
-                    values = defVals;
-                    return true;
-                }
-                SYNET_ERROR("Can't find attribute '" << name << "' !");
-            }
-            if (attribute->type() != onnx::AttributeProto_AttributeType_INTS)
-                SYNET_ERROR("Attribute '" << name << "' has wrong type " << attribute->type() << " !");
-            values.resize(attribute->ints_size());
-            for(size_t i = 0; i < attribute->ints_size(); ++i)
-                values[i] = (T)attribute->ints(i);
             return true;
         }
     };

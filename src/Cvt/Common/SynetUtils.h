@@ -30,6 +30,11 @@
 
 namespace Synet
 {
+    typedef std::map<String, TensorFormat> TensorFormatMap;
+    typedef std::vector<Synet::LayerParam> LayerParams;
+
+    //-------------------------------------------------------------------------------------------------
+
     template<class T> SYNET_INLINE bool AllEqualTo(const std::vector<T>& vector, T value)
     {
         for (size_t i = 0; i < vector.size(); ++i)
@@ -118,6 +123,43 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
+    static bool CheckSignificantDims(const Shape& shape, size_t dims, const String& desc)
+    {
+        if (SignificantDimsCount(shape) != dims)
+            SYNET_ERROR("Wrong " << desc << " shape " << ToStr(shape) << " !");
+        return true;
+    }
+
+    static bool CheckDims(const Shape& shape, size_t dims, const String& desc)
+    {
+        if (shape.size() != dims)
+            SYNET_ERROR("Wrong " << desc << " shape " << ToStr(shape) << " !");
+        return true;
+    }
+
+    static bool CheckSourceNumber(const LayerParam& layer, size_t size)
+    {
+        if (layer.src().size() != size)
+            SYNET_ERROR("Wrong number of sources (" << layer.src().size() << " instead of " << size << ") !");
+        return true;
+    }
+
+    static bool CheckSourceNumber(const LayerParam& layer, size_t min, size_t max)
+    {
+        if (layer.src().size() < min || layer.src().size() > max)
+            SYNET_ERROR("Wrong number of sources (" << layer.src().size() << ". It must be in range [" << min << ", " << max << "] !");
+        return true;
+    }
+
+    static bool CheckDestinationNumber(const LayerParam& layer, size_t size)
+    {
+        if (layer.dst().size() != size)
+            SYNET_ERROR("Wrong number of destinations (" << layer.dst().size() << " instead of " << size << ") !");
+        return true;
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     template<class T> static T* GetWeight(Bytes& bin, size_t offset)
     {
         if (offset >= bin.size())
@@ -167,12 +209,10 @@ namespace Synet
     class SynetUtils
     {
     protected:
-        typedef std::vector<Synet::LayerParam> LayerParams;
         typedef Synet::Tensor<float> Tensor;
         typedef std::vector<Tensor> Tensors;
         typedef std::vector<uint8_t> Bytes;
         typedef std::map<String, bool> PermuteMap;
-        typedef std::map<String, TensorFormat> TensorFormatMap;
 
         struct Pin
         {
@@ -181,42 +221,7 @@ namespace Synet
             Pin(const String& n = String(), int i = 0) : name(n), index(i) {}
         };
 
-        //-------------------------------------------------------------------------------------------------
 
-        static bool CheckSignificantDims(const Shape& shape, size_t dims, const String& desc)
-        {
-            if (SignificantDimsCount(shape) != dims)
-                SYNET_ERROR("Wrong " << desc << " shape " << ToStr(shape) << " !");
-            return true;
-        }
-
-        static bool CheckDims(const Shape& shape, size_t dims, const String& desc)
-        {
-            if (shape.size() != dims)
-                SYNET_ERROR("Wrong " << desc << " shape " << ToStr(shape) << " !");
-            return true;
-        }
-
-        static bool CheckSourceNumber(const LayerParam& layer, size_t size)
-        {
-            if (layer.src().size() != size)
-                SYNET_ERROR("Wrong number of sources (" << layer.src().size() << " instead of " << size << ") !");
-            return true;
-        }
-
-        static bool CheckSourceNumber(const LayerParam& layer, size_t min, size_t max)
-        {
-            if (layer.src().size() < min || layer.src().size() > max)
-                SYNET_ERROR("Wrong number of sources (" << layer.src().size() << ". It must be in range [" << min << ", " << max << "] !");
-            return true;
-        }
-
-        static bool CheckDestinationNumber(const LayerParam& layer, size_t size)
-        {
-            if (layer.dst().size() != size)
-                SYNET_ERROR("Wrong number of destinations (" << layer.dst().size() << " instead of " << size << ") !");
-            return true;
-        }
 
         //-------------------------------------------------------------------------------------------------
 

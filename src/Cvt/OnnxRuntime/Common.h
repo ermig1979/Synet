@@ -72,9 +72,60 @@ namespace Synet
 
     //--------------------------------------------------------------------------------------------------
 
+    inline const onnx::AttributeProto* GetAtrribute(const onnx::NodeProto& node, const String& name)
+    {
+        for (size_t i = 0; i < node.attribute_size(); ++i)
+            if (node.attribute(i).name() == name)
+                return &node.attribute(i);
+        return NULL;
+    }
+
+    template<class T> bool ConvertAtrributeInt(const onnx::NodeProto& node, const String& name, T& value, bool optional = false, const T& defVal = T())
+    {
+        const onnx::AttributeProto* attribute = GetAtrribute(node, name);
+        if (attribute == NULL)
+        {
+            if (optional)
+            {
+                value = defVal;
+                return true;
+            }
+            SYNET_ERROR("Can't find attribute '" << name << "' !");
+        }
+        if (attribute->type() != onnx::AttributeProto_AttributeType_INT)
+            SYNET_ERROR("Attribute '" << name << "' has wrong type " << attribute->type() << " !");
+        value = attribute->i();
+        return true;
+    }
+
+    template<class T> bool ConvertAtrributeInts(const onnx::NodeProto& node, const String& name, std::vector<T>& values,
+        bool optional = false, const std::vector<T>& defVals = std::vector<T>())
+    {
+        const onnx::AttributeProto* attribute = GetAtrribute(node, name);
+        if (attribute == NULL)
+        {
+            if (optional)
+            {
+                values = defVals;
+                return true;
+                }
+            SYNET_ERROR("Can't find attribute '" << name << "' !");
+            }
+        if (attribute->type() != onnx::AttributeProto_AttributeType_INTS)
+            SYNET_ERROR("Attribute '" << name << "' has wrong type " << attribute->type() << " !");
+        values.resize(attribute->ints_size());
+        for (size_t i = 0; i < attribute->ints_size(); ++i)
+            values[i] = (T)attribute->ints(i);
+        return true;
+        }
+
+    //--------------------------------------------------------------------------------------------------
+
     bool ConvertInitializer(const onnx::TensorProto& tensor, Synet::NetworkParam& network, Bytes& weight, Renames& renames);
 
     bool ConvertInput(const onnx::ValueInfoProto& input, bool trans, Synet::NetworkParam& network, Renames& renames);
+
+    bool ConvertQLinearConvNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin, TensorFormatMap* tensorFormatMap);
 }
 
 #endif
