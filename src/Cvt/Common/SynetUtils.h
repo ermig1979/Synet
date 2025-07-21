@@ -27,11 +27,140 @@
 #include "Synet/Common.h"
 #include "Synet/Params.h"
 #include "Synet/Tensor.h"
-#include "Synet/Utils/ModelUtils.h"
 
 namespace Synet
 {
-    using namespace ModelUtils;
+    template<class T> SYNET_INLINE bool AllEqualTo(const std::vector<T>& vector, T value)
+    {
+        for (size_t i = 0; i < vector.size(); ++i)
+            if (vector[i] != value)
+                return false;
+        return true;
+    }
+
+    SYNET_INLINE bool Equal(float a, float b, float e = 0.000001f)
+    {
+        return abs(a - b) < e;
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    SYNET_INLINE bool IsAdd(const LayerParam& layer)
+    {
+        if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum &&
+            (layer.eltwise().coefficients().empty() || layer.eltwise().coefficients() == Floats({ 1.0f, 1.0f })) && layer.src().size() == 2)
+            return true;
+        if (layer.type() == LayerTypeAdd)
+            return true;
+        return false;
+    }
+
+    SYNET_INLINE bool IsMul(const LayerParam& layer)
+    {
+        if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeProduct && layer.src().size() == 2)
+            return true;
+        if (layer.type() == LayerTypeMul)
+            return true;
+        return false;
+    }
+
+    SYNET_INLINE bool IsSub(const LayerParam& layer)
+    {
+        if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum &&
+            layer.eltwise().coefficients() == Floats({ 1.0f, -1.0f }) && layer.src().size() == 2)
+            return true;
+        if (layer.type() == LayerTypeBinaryOperation && layer.binaryOperation().type() == BinaryOperationTypeSub)
+            return true;
+        return false;
+    }
+
+    SYNET_INLINE bool IsMulConst(const LayerParam& layer, float value, float epsilon = 0.000001)
+    {
+        if (layer.type() == LayerTypePower && layer.power().power() == 1.0f && layer.power().shift() == 0.0f
+            && abs(layer.power().scale() - value) < epsilon)
+            return true;
+        return false;
+    }
+
+    SYNET_INLINE bool IsAddConst(const LayerParam& layer, float value, float epsilon = 0.000001)
+    {
+        if (layer.type() == LayerTypePower && layer.power().power() == 1.0f && layer.power().scale() == 1.0f
+            && abs(layer.power().shift() - value) < epsilon)
+            return true;
+        return false;
+    }
+
+    SYNET_INLINE bool IsMetaConst64i(const LayerParam& layer, Longs value = Longs())
+    {
+        if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeConst &&
+            layer.meta().alpha().type() == TensorType64i && (value.empty() || layer.meta().alpha().i64() == value))
+            return true;
+        return false;
+    }
+
+    SYNET_INLINE bool IsMetaConst(const LayerParam& layer)
+    {
+        if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeConst)
+            return true;
+        return false;
+    }
+
+    SYNET_INLINE bool IsDeptwiseConvolution(const LayerParam& layer, const Shape& kernel, const Shape& stride, bool bias, ActivationFunctionType activation)
+    {
+        if (layer.type() == LayerTypeConvolution && layer.convolution().group() == layer.convolution().outputNum() &&
+            layer.convolution().stride() == stride &&
+            layer.convolution().kernel() == kernel &&
+            layer.convolution().biasTerm() == bias &&
+            layer.convolution().activationType() == activation)
+            return true;
+        return false;
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    template<class T> static T* GetWeight(Bytes& bin, size_t offset)
+    {
+        if (offset >= bin.size())
+            SYNET_ERROR("Binary storage access overflow: " << offset << " >= " << bin.size() << " !");
+        return (T*)(bin.data() + offset);
+    }
+
+    template<class T> static const T* GetWeight(const Bytes& bin, size_t offset)
+    {
+        if (offset >= bin.size())
+            SYNET_ERROR("Binary storage access overflow: " << offset << " >= " << bin.size() << " !");
+        return (const T*)(bin.data() + offset);
+    }
+
+    template<class T> static T* GetWeight(Bytes& bin, const WeightParam& param)
+    {
+        if (param.offset() + param.size() > bin.size())
+            SYNET_ERROR("Binary storage access overflow: " << param.offset() + param.size() << " > " << bin.size() << " !");
+        return GetWeight<T>(bin, param.offset());
+    }
+
+    template<class T> static const T* GetWeight(const Bytes& bin, const WeightParam& param)
+    {
+        if (param.offset() + param.size() > bin.size())
+            SYNET_ERROR("Binary storage access overflow: " << param.offset() + param.size() << " > " << bin.size() << " !");
+        return GetWeight<T>(bin, param.offset());
+    }
+
+    template<class T> static void PushBack(Bytes& bin, const T& value)
+    {
+        size_t offset = bin.size();
+        bin.resize(offset + sizeof(T));
+        GetWeight<T>(bin, offset)[0] = value;
+    }
+
+    static void Append(Bytes& bin, const WeightParam& param, const void* src)
+    {
+        size_t offset = bin.size();
+        if (param.offset() != offset)
+            CPL_LOG_SS(Warning, "Binary storage wrong append offset: " << param.offset() << " != " << offset << " !");
+        bin.resize(offset + param.size());
+        memcpy(bin.data() + offset, src, param.size());
+    }
 
     //-------------------------------------------------------------------------------------------------
 
@@ -222,52 +351,6 @@ namespace Synet
                 std::istringstream(name.substr(delimiter + 1)) >> pin.index;
             }
             return pin;
-        }
-
-        //-------------------------------------------------------------------------------------------------
-
-        template<class T> static T* GetWeight(Bytes& bin, size_t offset)
-        {
-            if (offset >= bin.size())
-                SYNET_ERROR("Binary storage access overflow: " << offset << " >= " << bin.size() << " !");
-            return (T*)(bin.data() + offset);
-        }
-
-        template<class T> static const T* GetWeight(const Bytes& bin, size_t offset)
-        {
-            if (offset >= bin.size())
-                SYNET_ERROR("Binary storage access overflow: " << offset << " >= " << bin.size() << " !");
-            return (const T*)(bin.data() + offset);
-        }
-
-        template<class T> static T* GetWeight(Bytes& bin, const WeightParam& param)
-        {
-            if (param.offset() + param.size() > bin.size())
-                SYNET_ERROR("Binary storage access overflow: " << param.offset() + param.size() << " > " << bin.size() << " !");
-            return GetWeight<T>(bin, param.offset());
-        }
-
-        template<class T> static const T* GetWeight(const Bytes& bin, const WeightParam& param)
-        {
-            if (param.offset() + param.size() > bin.size())
-                SYNET_ERROR("Binary storage access overflow: " << param.offset() + param.size() << " > " << bin.size() << " !");
-            return GetWeight<T>(bin, param.offset());
-        }
-
-        template<class T> static void PushBack(Bytes& bin, const T &value)
-        {
-            size_t offset = bin.size();
-            bin.resize(offset + sizeof(T));
-            GetWeight<T>(bin, offset)[0] = value;
-        }
-
-        static void Append(Bytes& bin, const WeightParam& param, const void * src)
-        {
-            size_t offset = bin.size();
-            if(param.offset() != offset)
-                CPL_LOG_SS(Warning, "Binary storage wrong append offset: " << param.offset() << " != " << offset << " !");
-            bin.resize(offset + param.size());
-            memcpy(bin.data() + offset, src, param.size());
         }
 
         //-------------------------------------------------------------------------------------------------

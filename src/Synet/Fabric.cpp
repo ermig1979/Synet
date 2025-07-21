@@ -104,17 +104,35 @@
 #include "Synet/Layers/YoloLayer.h"
 #include "Synet/Layers/YoloV7Layer.h"
 
-#include "Synet/Utils/ModelUtils.h"
 #include "Synet/Fabric.h"
 
 namespace Synet
 {
-    inline bool Use8i(const MergedConvolutionParam& param)
+    SYNET_INLINE bool Use8i(const MergedConvolutionParam& param)
     {
         if (param.conv().size() == 3)
             return param.conv()[0].quantizationLevel() == TensorType8i && param.conv()[2].quantizationLevel() == TensorType8i;
         else
             return param.conv()[0].quantizationLevel() == TensorType8i || param.conv()[1].quantizationLevel() == TensorType8i;
+    }
+
+    SYNET_INLINE bool IsAdd(const LayerParam& layer)
+    {
+        if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum &&
+            (layer.eltwise().coefficients().empty() || layer.eltwise().coefficients() == Floats({ 1.0f, 1.0f })) && layer.src().size() == 2)
+            return true;
+        if (layer.type() == LayerTypeAdd)
+            return true;
+        return false;
+    }
+
+    SYNET_INLINE bool IsMul(const LayerParam& layer)
+    {
+        if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeProduct && layer.src().size() == 2)
+            return true;
+        if (layer.type() == LayerTypeMul)
+            return true;
+        return false;
     }
 
     Layer* Fabric::Create(const LayerParam & param, Context* context, QuantizationMethod method)
@@ -147,9 +165,9 @@ namespace Synet
         case LayerTypeDequantizeLinear: return new DequantizeLinearLayer(param, context);
         case LayerTypeDetectionOutput: return new DetectionOutputLayer(param, context);
         case LayerTypeEltwise: 
-            if(ModelUtils::IsAdd(param))
+            if(IsAdd(param))
                 return new AddLayer(param, context, method);
-            else if (ModelUtils::IsMul(param))
+            else if (IsMul(param))
                 return new MulLayer(param, context);
             else
                 return new EltwiseLayer(param, context);
