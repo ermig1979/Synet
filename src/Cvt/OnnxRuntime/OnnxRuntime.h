@@ -425,6 +425,72 @@ namespace Synet
                         SYNET_ERROR("Can't parse '" << layer.name() << "' INT32 tensor!");
                 }
             }
+            else if (tensor.data_type() == onnx::TensorProto_DataType_UINT8)
+            {
+                layer.type() = LayerTypeConst;
+                layer.weight().resize(1);
+                layer.weight()[0].type() = TensorType8u;
+                uint64_t size = 1, offset = weight.size();
+                for (size_t i = 0; i < tensor.dims_size(); ++i)
+                {
+                    size *= (size_t)tensor.dims(i);
+                    layer.weight()[0].dim().push_back((size_t)tensor.dims(i));
+                }
+                layer.weight()[0].offset() = offset;
+                layer.weight()[0].size() = size * sizeof(uint8_t);
+                if (size)
+                {
+                    if (size == 1 && layer.weight()[0].dim().empty())
+                    {
+                        layer.weight()[0].dim().push_back(1);
+                        layer.weight()[0].scalar() = true;
+                    }
+                    if (tensor.has_raw_data())
+                        Append(weight, layer.weight()[0], tensor.raw_data().c_str());
+                    else if (tensor.int32_data_size())
+                    {
+                        if (size != tensor.int32_data_size())
+                            SYNET_ERROR("Wrong tensor int32_data_size " << tensor.int32_data_size() << " != " << size << " !");
+                        for (size_t i = 0; i < size; ++i)
+                            PushBack<uint8_t>(weight, tensor.int32_data(i));
+                    }
+                    else
+                        SYNET_ERROR("Can't parse '" << layer.name() << "' UINT8 tensor!");
+                }
+            }
+            else if (tensor.data_type() == onnx::TensorProto_DataType_INT8)
+            {
+                layer.type() = LayerTypeConst;
+                layer.weight().resize(1);
+                layer.weight()[0].type() = TensorType8i;
+                uint64_t size = 1, offset = weight.size();
+                for (size_t i = 0; i < tensor.dims_size(); ++i)
+                {
+                    size *= (size_t)tensor.dims(i);
+                    layer.weight()[0].dim().push_back((size_t)tensor.dims(i));
+                }
+                layer.weight()[0].offset() = offset;
+                layer.weight()[0].size() = size * sizeof(int8_t);
+                if (size)
+                {
+                    if (size == 1 && layer.weight()[0].dim().empty())
+                    {
+                        layer.weight()[0].dim().push_back(1);
+                        layer.weight()[0].scalar() = true;
+                    }
+                    if (tensor.has_raw_data())
+                        Append(weight, layer.weight()[0], tensor.raw_data().c_str());
+                    else if (tensor.int32_data_size())
+                    {
+                        if (size != tensor.int32_data_size())
+                            SYNET_ERROR("Wrong tensor int32_data_size " << tensor.int32_data_size() << " != " << size << " !");
+                        for (size_t i = 0; i < size; ++i)
+                            PushBack<int8_t>(weight, tensor.int32_data(i));
+                    }
+                    else
+                        SYNET_ERROR("Can't parse '" << layer.name() << "' INT8 tensor!");
+                }
+            }
             else if(tensor.data_type() == onnx::TensorProto_DataType_INT64)
             {
                 ptrdiff_t size = 1;
@@ -2969,6 +3035,8 @@ namespace Synet
             {
             case onnx::TensorProto_DataType_FLOAT: ss << "f32"; break;
             case onnx::TensorProto_DataType_INT32: ss << "i32"; break;
+            case onnx::TensorProto_DataType_UINT8: ss << "u8"; break;
+            case onnx::TensorProto_DataType_INT8: ss << "i8"; break;
             case onnx::TensorProto_DataType_INT64: ss << "i64"; break;
             case onnx::TensorProto_DataType_DOUBLE: ss << "f64"; break;
             default: ss << " unknown-" << tensor.data_type();
@@ -3014,6 +3082,34 @@ namespace Synet
                 {
                     for (size_t i = 0; i < printSize; ++i)
                         ss << " " << ((int32_t*)tensor.raw_data().c_str())[i];
+                }
+                break;
+            }
+            case onnx::TensorProto_DataType_UINT8:
+            {
+                if (tensor.int32_data_size())
+                {
+                    for (size_t i = 0; i < printSize; ++i)
+                        ss << " " << tensor.int32_data(i);
+                }
+                if (tensor.has_raw_data())
+                {
+                    for (size_t i = 0; i < printSize; ++i)
+                        ss << " " << (int)((uint8_t*)tensor.raw_data().c_str())[i];
+                }
+                break;
+            }
+            case onnx::TensorProto_DataType_INT8:
+            {
+                if (tensor.int32_data_size())
+                {
+                    for (size_t i = 0; i < printSize; ++i)
+                        ss << " " << tensor.int32_data(i);
+                }
+                if (tensor.has_raw_data())
+                {
+                    for (size_t i = 0; i < printSize; ++i)
+                        ss << " " << (int)((int8_t*)tensor.raw_data().c_str())[i];
                 }
                 break;
             }
