@@ -57,7 +57,24 @@ namespace Synet
 
     //--------------------------------------------------------------------------------------------------
 
+    inline Shape Convert(const onnx::TensorShapeProto& shapeProto)
+    {
+        Shape shape;
+        for (size_t i = 0; i < shapeProto.dim_size(); ++i)
+        {
+            if (shapeProto.dim(i).has_dim_value())
+                shape.push_back((size_t)shapeProto.dim(i).dim_value());
+            else
+                shape.push_back(size_t(-1));
+        }
+        return shape;
+    }
+
+    //--------------------------------------------------------------------------------------------------
+
     bool ConvertInitializer(const onnx::TensorProto& tensor, Synet::NetworkParam& network, Bytes& weight, Renames& renames);
+
+    bool ConvertInput(const onnx::ValueInfoProto& input, bool trans, Synet::NetworkParam& network, Renames& renames);
 }
 
 #endif

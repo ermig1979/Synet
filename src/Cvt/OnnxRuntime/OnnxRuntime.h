@@ -340,36 +340,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertInput(const onnx::ValueInfoProto & input, bool trans, Synet::NetworkParam& network, Renames& renames)
-        {
-            LayerParam layer;
-            layer.type() = LayerTypeInput;
-            layer.name() = ValidName(input.name(), renames);
-            layer.dst().push_back(input.name());
-            layer.input().shape().resize(1);
-            Shape shape = Convert(input.type().tensor_type().shape());
-            if (trans)
-            {
-                if (shape.size() == 4)
-                {
-                    shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
-                    layer.input().shape()[0].format() = TensorFormatNhwc;
-                }
-            }
-            if (shape.size() > 1 && shape[0] == -1)
-                shape[0] = 1;
-            layer.input().shape()[0].dim() = shape;
-            switch (input.type().tensor_type().elem_type())
-            {
-            case onnx::TensorProto_DataType_FLOAT: layer.input().shape()[0].type() = Synet::TensorType32f; break;
-            case onnx::TensorProto_DataType_INT32: layer.input().shape()[0].type() = Synet::TensorType32i; break;
-            default:
-                SYNET_ERROR(" Unknown input tensor type " << input.type().tensor_type().elem_type() << " !");
-            }
-            network.layers().push_back(layer);
-            return true;
-        }
-
         void SetSrcAndDst(const onnx::NodeProto& node, Renames &renames, LayerParam& layer)
         {
             for (size_t j = 0; j < node.input_size(); ++j)
@@ -2789,7 +2759,7 @@ namespace Synet
             ss << info.name();
             if (info.type().has_tensor_type())
             {
-                Shape shape = Convert(info.type().tensor_type().shape());
+                Shape shape = Synet::Convert(info.type().tensor_type().shape());
                 ss << " {";
                 for (size_t j = 0; j < shape.size(); ++j)
                     ss << " " << ptrdiff_t(shape[j]);
@@ -2974,19 +2944,6 @@ namespace Synet
                 ss << " " << AttributeString(node.attribute(j));
             ss << " }";
             return ss.str();
-        }
-
-        Shape Convert(const onnx::TensorShapeProto& shapeProto)
-        {
-            Shape shape;
-            for (size_t i = 0; i < shapeProto.dim_size(); ++i)
-            {
-                if (shapeProto.dim(i).has_dim_value())
-                    shape.push_back((size_t)shapeProto.dim(i).dim_value());
-                else
-                    shape.push_back(size_t(-1));
-            }
-            return shape;
         }
 
         void NotImplemented(const onnx::NodeProto& node, LayerParam& dst)
