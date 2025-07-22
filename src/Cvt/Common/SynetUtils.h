@@ -123,35 +123,35 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    static bool CheckSignificantDims(const Shape& shape, size_t dims, const String& desc)
+    inline bool CheckSignificantDims(const Shape& shape, size_t dims, const String& desc)
     {
         if (SignificantDimsCount(shape) != dims)
             SYNET_ERROR("Wrong " << desc << " shape " << ToStr(shape) << " !");
         return true;
     }
 
-    static bool CheckDims(const Shape& shape, size_t dims, const String& desc)
+    inline bool CheckDims(const Shape& shape, size_t dims, const String& desc)
     {
         if (shape.size() != dims)
             SYNET_ERROR("Wrong " << desc << " shape " << ToStr(shape) << " !");
         return true;
     }
 
-    static bool CheckSourceNumber(const LayerParam& layer, size_t size)
+    inline bool CheckSourceNumber(const LayerParam& layer, size_t size)
     {
         if (layer.src().size() != size)
             SYNET_ERROR("Wrong number of sources (" << layer.src().size() << " instead of " << size << ") !");
         return true;
     }
 
-    static bool CheckSourceNumber(const LayerParam& layer, size_t min, size_t max)
+    inline bool CheckSourceNumber(const LayerParam& layer, size_t min, size_t max)
     {
         if (layer.src().size() < min || layer.src().size() > max)
             SYNET_ERROR("Wrong number of sources (" << layer.src().size() << ". It must be in range [" << min << ", " << max << "] !");
         return true;
     }
 
-    static bool CheckDestinationNumber(const LayerParam& layer, size_t size)
+    inline bool CheckDestinationNumber(const LayerParam& layer, size_t size)
     {
         if (layer.dst().size() != size)
             SYNET_ERROR("Wrong number of destinations (" << layer.dst().size() << " instead of " << size << ") !");
@@ -160,42 +160,42 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template<class T> static T* GetWeight(Bytes& bin, size_t offset)
+    template<class T> inline T* GetWeight(Bytes& bin, size_t offset)
     {
         if (offset >= bin.size())
             SYNET_ERROR("Binary storage access overflow: " << offset << " >= " << bin.size() << " !");
         return (T*)(bin.data() + offset);
     }
 
-    template<class T> static const T* GetWeight(const Bytes& bin, size_t offset)
+    template<class T> inline const T* GetWeight(const Bytes& bin, size_t offset)
     {
         if (offset >= bin.size())
             SYNET_ERROR("Binary storage access overflow: " << offset << " >= " << bin.size() << " !");
         return (const T*)(bin.data() + offset);
     }
 
-    template<class T> static T* GetWeight(Bytes& bin, const WeightParam& param)
+    template<class T> inline T* GetWeight(Bytes& bin, const WeightParam& param)
     {
         if (param.offset() + param.size() > bin.size())
             SYNET_ERROR("Binary storage access overflow: " << param.offset() + param.size() << " > " << bin.size() << " !");
         return GetWeight<T>(bin, param.offset());
     }
 
-    template<class T> static const T* GetWeight(const Bytes& bin, const WeightParam& param)
+    template<class T> inline const T* GetWeight(const Bytes& bin, const WeightParam& param)
     {
         if (param.offset() + param.size() > bin.size())
             SYNET_ERROR("Binary storage access overflow: " << param.offset() + param.size() << " > " << bin.size() << " !");
         return GetWeight<T>(bin, param.offset());
     }
 
-    template<class T> static void PushBack(Bytes& bin, const T& value)
+    template<class T> inline void PushBack(Bytes& bin, const T& value)
     {
         size_t offset = bin.size();
         bin.resize(offset + sizeof(T));
         GetWeight<T>(bin, offset)[0] = value;
     }
 
-    static void Append(Bytes& bin, const WeightParam& param, const void* src)
+    inline void Append(Bytes& bin, const WeightParam& param, const void* src)
     {
         size_t offset = bin.size();
         if (param.offset() != offset)
@@ -206,6 +206,56 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
+    struct Pin
+    {
+        String name;
+        int index;
+        Pin(const String& n = String(), int i = 0) : name(n), index(i) {}
+    };
+
+    inline Pin ParsePin(const String& name)
+    {
+        Pin pin(name);
+        size_t delimiter = name.find_first_of(":");
+        if (delimiter != std::string::npos)
+        {
+            pin.name = name.substr(0, delimiter);
+            std::istringstream(name.substr(delimiter + 1)) >> pin.index;
+        }
+        return pin;
+    }
+
+    inline const LayerParam* GetLayer(const LayerParams& layers, const String& name)
+    {
+        Pin pin = ParsePin(name);
+        for (size_t i = 0; i < layers.size(); ++i)
+        {
+            if (pin.name == layers[i].name())
+                return &layers[i];
+            for (size_t d = 0; d < layers[i].dst().size(); ++d)
+                if (pin.name == layers[i].dst()[d])
+                    return &layers[i];
+        }
+        SYNET_ERROR("Can't found layer " << pin.name << " !");
+    }
+
+    inline LayerParam* GetLayer(LayerParams& layers, const String& name)
+    {
+        Pin pin = ParsePin(name);
+        for (size_t i = 0; i < layers.size(); ++i)
+        {
+            if (pin.name == layers[i].name())
+                return &layers[i];
+            for (size_t d = 0; d < layers[i].dst().size(); ++d)
+                if (pin.name == layers[i].dst()[d])
+                    return &layers[i];
+        }
+        SYNET_ERROR("Can't found layer " << pin.name << " !");
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+
     class SynetUtils
     {
     protected:
@@ -213,14 +263,6 @@ namespace Synet
         typedef std::vector<Tensor> Tensors;
         typedef std::vector<uint8_t> Bytes;
         typedef std::map<String, bool> PermuteMap;
-
-        struct Pin
-        {
-            String name;
-            int index;
-            Pin(const String& n = String(), int i = 0) : name(n), index(i) {}
-        };
-
 
 
         //-------------------------------------------------------------------------------------------------
@@ -254,34 +296,6 @@ namespace Synet
                         return i;
             }
             return layers.size();
-        }
-
-        static const LayerParam* GetLayer(const LayerParams& layers, const String& name)
-        {
-            Pin pin = ParsePin(name);
-            for (size_t i = 0; i < layers.size(); ++i)
-            {
-                if (pin.name == layers[i].name())
-                    return &layers[i];
-                for(size_t d = 0; d < layers[i].dst().size(); ++d)
-                    if (pin.name == layers[i].dst()[d])
-                        return &layers[i];
-            }
-            SYNET_ERROR("Can't found layer " << pin.name << " !");
-        }
-
-        static LayerParam* GetLayer(LayerParams& layers, const String& name)
-        {
-            Pin pin = ParsePin(name);
-            for (size_t i = 0; i < layers.size(); ++i)
-            {
-                if (pin.name == layers[i].name())
-                    return &layers[i];
-                for (size_t d = 0; d < layers[i].dst().size(); ++d)
-                    if (pin.name == layers[i].dst()[d])
-                        return &layers[i];
-            }
-            SYNET_ERROR("Can't found layer " << pin.name << " !");
         }
 
         static const LayerParam* GetWeightLayer(const LayerParams& layers, const String& name, bool * shared = NULL)
@@ -344,18 +358,6 @@ namespace Synet
         static String NotImplementedMarker()
         {
             return "~~~NOT_IMPLEMENTED~~~";
-        }
-
-        static Pin ParsePin(const String& name)
-        {
-            Pin pin(name);
-            size_t delimiter = name.find_first_of(":");
-            if (delimiter != std::string::npos)
-            {
-                pin.name = name.substr(0, delimiter);
-                std::istringstream(name.substr(delimiter + 1)) >> pin.index;
-            }
-            return pin;
         }
 
         //-------------------------------------------------------------------------------------------------

@@ -43,6 +43,31 @@ namespace Synet
             return false;
         if (!ConvertAtrributeInts(node, "strides", layer.convolution().stride()))
             return false;
+
+        const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+        const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+        if (src1->type() == LayerTypeConst && src2->type() == LayerTypeConst)
+        {
+            layer.qSrc().resize(1);
+            if (TensorSize(src1->weight()[0].dim()) == 1 && TensorSize(src2->weight()[0].dim()) == 1)
+            {
+                layer.qSrc()[0].scale() = GetWeight<float>(srcBin, src1->weight()[0])[0];
+                layer.qSrc()[0].type() = src2->weight()[0].type();
+                switch (layer.qSrc()[0].type())
+                {
+                case TensorType8u:
+                    layer.qSrc()[0].zero() = GetWeight<uint8_t>(srcBin, src2->weight()[0])[0];
+                    break;
+                default:
+                    SYNET_ERROR("QLinearConv: unsupported src[2] type!");
+                }
+            }
+            else
+                SYNET_ERROR("QLinearConv: support only uniform quantized input!");
+        }
+        else
+            SYNET_ERROR("QuantizeLinear: src[1] or src[2] is not const!");
+
         return true;
     }
 }

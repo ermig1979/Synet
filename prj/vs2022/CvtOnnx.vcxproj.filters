@@ -26,5 +26,8 @@
     <ClInclude Include="..\..\src\Cvt\OnnxRuntime\Common.h">
       <Filter>OnnxRuntime</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Cvt\OnnxRuntime\Convert.h">
+      <Filter>OnnxRuntime</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -33,8 +33,6 @@
 
 #include "onnx/onnx.pb.h"
 
-#include "Cvt/OnnxRuntime/Common.h"
-
 namespace Synet
 {
     typedef std::map<String, String> Renames;
@@ -108,24 +106,16 @@ namespace Synet
             {
                 values = defVals;
                 return true;
-                }
-            SYNET_ERROR("Can't find attribute '" << name << "' !");
             }
+            SYNET_ERROR("Can't find attribute '" << name << "' !");
+        }
         if (attribute->type() != onnx::AttributeProto_AttributeType_INTS)
             SYNET_ERROR("Attribute '" << name << "' has wrong type " << attribute->type() << " !");
         values.resize(attribute->ints_size());
         for (size_t i = 0; i < attribute->ints_size(); ++i)
             values[i] = (T)attribute->ints(i);
         return true;
-        }
-
-    //--------------------------------------------------------------------------------------------------
-
-    bool ConvertInitializer(const onnx::TensorProto& tensor, Synet::NetworkParam& network, Bytes& weight, Renames& renames);
-
-    bool ConvertInput(const onnx::ValueInfoProto& input, bool trans, Synet::NetworkParam& network, Renames& renames);
-
-    bool ConvertQLinearConvNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin, TensorFormatMap* tensorFormatMap);
+    }
 }
 
 #endif

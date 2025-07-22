@@ -36,6 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cvt\OnnxRuntime\Common.h" />
+    <ClInclude Include="..\..\src\Cvt\OnnxRuntime\Convert.h" />
     <ClInclude Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
