@@ -245,6 +245,8 @@ namespace Synet
                 return ErrorMessage(i, node);
             if ((node.op_type() == "QLinearConv") && !ConvertQLinearConvNode(node, trans, network.layers(), original, layer, reordered, &tensorFormatMap))
                 return ErrorMessage(i, node);
+            if ((node.op_type() == "QLinearGlobalAveragePool") && !ConvertQLinearGlobalAveragePoolNode(node, network.layers(), original, layer))
+                return ErrorMessage(i, node);
             if (node.op_type() == "QuantizeLinear" && !ConvertQuantizeLinearNode(node, trans, network.layers(), original, layer))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Range" && !ConvertRangeNode(node, network.layers(), layer))

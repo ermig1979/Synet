@@ -31,7 +31,9 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInitializer.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInput.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearAddNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearConvNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearGlobalAveragePoolNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.cpp" />
   </ItemGroup>
   <ItemGroup>
