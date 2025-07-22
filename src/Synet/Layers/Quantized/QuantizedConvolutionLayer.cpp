@@ -193,7 +193,7 @@ namespace Synet
                 SYNET_ERROR("QuantizedConvolutionLayer must have 3 input dequantizers for when uses bias!");
             int biasStart = param.qSrc()[1].weights();
             bool biasZeroZero = true;
-            if (param.qSrc()[2].weights() == 2)
+            if (param.qSrc()[2].weights() < 3)
             {
                 if (param.qSrc()[2].type() != TensorType32i)
                     SYNET_ERROR("QuantizedConvolutionLayer supports only INT32 bias!");
@@ -209,16 +209,19 @@ namespace Synet
             if (!biasZeroZero)
                 SYNET_ERROR("QuantizedConvolutionLayer supports only bias 'zero' == 0!");
 
-            bool equalScale = true;
             if (weight[0].Count() != 4 || weight[0].GetType() != TensorType8i)
                 SYNET_ERROR("QuantizedConvolutionLayer: weight[0] must be 4D int8 tensor!");
-            if (weight[1].Count() != 1 || weight[biasStart + 1].Count() != 1 || weight[1].Axis(0) != weight[biasStart + 1].Axis(0))
-                SYNET_ERROR("QuantizedConvolutionLayer: weight scale (weight[1]) must the same size as bias scale (weight[" << biasStart + 1 << "]) !");
-            float srcScale = (float)param.qSrc()[0].scale();
-            for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
+            if (param.qSrc()[2].weights() > 1)
             {
-                if(::fabs(weight[1].Data<float>()[i] * srcScale - weight[biasStart + 1].Data<float>()[i]) > 0.000001)
-                    SYNET_ERROR("QuantizedConvolutionLayer: weight scale (weight[1]) and bias scale (weight[" << biasStart + 1 << "]) are not compartible!");
+                bool equalScale = true;
+                if (weight[1].Count() != 1 || weight[biasStart + 1].Count() != 1 || weight[1].Axis(0) != weight[biasStart + 1].Axis(0))
+                    SYNET_ERROR("QuantizedConvolutionLayer: weight scale (weight[1]) must the same size as bias scale (weight[" << biasStart + 1 << "]) !");
+                float srcScale = (float)param.qSrc()[0].scale();
+                for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
+                {
+                    if (::fabs(weight[1].Data<float>()[i] * srcScale - weight[biasStart + 1].Data<float>()[i]) > 0.000001)
+                        SYNET_ERROR("QuantizedConvolutionLayer: weight scale (weight[1]) and bias scale (weight[" << biasStart + 1 << "]) are not compartible!");
+                }
             }
         }
 
@@ -284,7 +287,7 @@ namespace Synet
             int dstZero = param.qDst()[0].zero();
             float dstScale = (float)param.qDst()[0].scale();
             _dstZero8u.Reshape(TensorType8u, Shp(_conv.dstC), TensorFormatNchw, uint8_t(dstZero));
-            if (_alg.bias)
+            if (_alg.bias && param.qSrc()[2].weights() > 1)
             {
                 int biasStart = param.qSrc()[1].weights();
                 for (size_t i = 0, n = weight[biasStart + 1].Size(); i < n; ++i)
@@ -299,7 +302,7 @@ namespace Synet
         }
         else
         {
-            if (_alg.bias)
+            if (_alg.bias && param.qSrc()[2].weights() > 1)
             {
                 int biasStart = param.qSrc()[1].weights();
                 for (size_t i = 0, n = weight[biasStart + 1].Size(); i < n; ++i)

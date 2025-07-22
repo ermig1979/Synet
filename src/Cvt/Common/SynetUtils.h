@@ -30,6 +30,7 @@
 
 namespace Synet
 {
+    typedef std::vector<uint8_t> Bytes;
     typedef std::map<String, TensorFormat> TensorFormatMap;
     typedef std::vector<Synet::LayerParam> LayerParams;
 
@@ -253,17 +254,264 @@ namespace Synet
         SYNET_ERROR("Can't found layer " << pin.name << " !");
     }
 
+
+    inline size_t GetLayerIndex(const LayerParams& layers, const String& name)
+    {
+        Pin pin = ParsePin(name);
+        for (size_t i = 0; i < layers.size(); ++i)
+        {
+            if (pin.name == layers[i].name())
+                return i;
+            for (size_t d = 0; d < layers[i].dst().size(); ++d)
+                if (pin.name == layers[i].dst()[d])
+                    return i;
+        }
+        return layers.size();
+    }
+
+    inline const LayerParam* GetWeightLayer(const LayerParams& layers, const String& name, bool* shared = NULL)
+    {
+        const LayerParam* curr = GetLayer(layers, name);
+        if (curr == NULL || curr->type() == LayerTypeConst)
+        {
+            if (shared)
+                *shared = false;
+            return curr;
+        }
+        if (curr->type() == LayerTypeStub)
+        {
+            if (curr->src().size() != 1)
+                SYNET_ERROR("Stub layer " << name << " has wrong inputs number!");
+            const LayerParam* next = GetLayer(layers, curr->src()[0]);
+            if (next == NULL || next->type() == LayerTypeConst)
+            {
+                if (shared)
+                    *shared = true;
+                return next;
+            }
+        }
+        SYNET_ERROR("Can't found weight " << name << " !");
+    }
+
+    inline const LayerParam* GetLayerByName(const LayerParams& layers, const String& name)
+    {
+        for (size_t i = 0; i < layers.size(); ++i)
+        {
+            if (layers[i].name() == name)
+                return &layers[i];
+        }
+        return NULL;
+    }
+
+    inline size_t GetIndexByName(const LayerParams& layers, const String& name)
+    {
+        size_t i = 0;
+        for (; i < layers.size(); ++i)
+            if (layers[i].name() == name)
+                break;
+        return i;
+    }
+
+    inline LayerType GetLayerType(const LayerParams& layers, const String& name)
+    {
+        for (size_t i = 0; i < layers.size(); ++i)
+        {
+            if (layers[i].name() == name)
+                return layers[i].type();
+            for (size_t d = 0; d < layers[i].dst().size(); ++d)
+                if (layers[i].dst()[d] == name)
+                    return layers[i].type();
+        }
+        CPL_LOG_SS(Error, "Can't find layer " << name << " !");
+        return LayerTypeUnknown;
+    }
+
     //-------------------------------------------------------------------------------------------------
 
+    inline TensorFormat Cache(const LayerParam& layer, TensorFormat value, TensorFormatMap* tensorFormatMap = NULL)
+    {
+        if (tensorFormatMap)
+            (*tensorFormatMap)[layer.name()] = value;
+        return value;
+    }
+
+    inline TensorFormat CurrentTensorFormat(const LayerParams& layers, size_t current, bool checkInnerProduct, bool checkPriorBox, bool globalPooling, TensorFormatMap* tensorFormatMap = NULL)
+    {
+        const LayerParam& layer = layers[current];
+        if (tensorFormatMap && tensorFormatMap->find(layer.name()) != tensorFormatMap->end())
+            return (*tensorFormatMap)[layer.name()];
+        if (layer.type() == LayerTypeConvolution || layer.type() == LayerTypeDeconvolution)
+            return Cache(layer, layer.weight()[0].format(), tensorFormatMap);
+        if (layer.type() == LayerTypePermute && layer.permute().format() != TensorFormatUnknown)
+            return Cache(layer, layer.permute().format(), tensorFormatMap);
+        if (layer.type() == LayerTypeInnerProduct)
+        {
+            if (layer.weight().size())
+                return Cache(layer, layer.weight()[0].format(), tensorFormatMap);
+            if (checkInnerProduct)
+                return Cache(layer, TensorFormatNchw, tensorFormatMap);
+        }
+        if (checkPriorBox && (layer.type() == LayerTypePriorBox || layer.type() == LayerTypePriorBoxClustered))
+            return Cache(layer, TensorFormatNchw, tensorFormatMap);
+        if (globalPooling && layer.type() == LayerTypePooling && layer.pooling().globalPooling())
+            return Cache(layer, TensorFormatNchw, tensorFormatMap);
+        if (layer.type() == LayerTypeInput && layer.input().shape().size())
+            return Cache(layer, layer.input().shape()[0].format(), tensorFormatMap);
+        if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeShape && layer.meta().version() == 2)
+            return Cache(layer, TensorFormatNchw, tensorFormatMap);
+        for (size_t s = 0; s < layer.src().size(); ++s)
+        {
+            const String& src = layer.src()[s];
+            for (size_t l = 0; l < current; ++l)
+            {
+                for (size_t d = 0; d < layers[l].dst().size(); ++d)
+                {
+                    if (tensorFormatMap && IsMetaConst(layers[l]))
+                        continue;
+                    if (!tensorFormatMap && layers[l].type() == LayerTypeMeta)
+                        continue;
+                    if (layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
+                        continue;
+                    const String& dst = layers[l].dst()[d];
+                    if (src == dst)
+                    {
+                        TensorFormat format = CurrentTensorFormat(layers, l, checkInnerProduct, checkPriorBox, globalPooling, tensorFormatMap);
+                        Cache(layers[l], format, tensorFormatMap);
+                        if (format != TensorFormatUnknown)
+                            return format;
+                    }
+                }
+            }
+        }
+        return TensorFormatUnknown;
+    }
+
+    inline TensorFormat CurrentTensorFormat(const LayerParams& layers, const Strings& names, bool checkInnerProduct, bool checkPriorBox, bool globalPooling, TensorFormatMap* tensorFormatMap = NULL)
+    {
+        for (size_t s = 0; s < names.size(); ++s)
+        {
+            for (size_t l = 0; l < layers.size(); ++l)
+            {
+                for (size_t d = 0; d < layers[l].dst().size(); ++d)
+                {
+                    const String& dst = layers[l].dst()[d];
+                    if (layers[l].type() == LayerTypeMeta || layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
+                        continue;
+                    if (names[s] == dst)
+                    {
+                        TensorFormat format = CurrentTensorFormat(layers, l, checkInnerProduct, checkPriorBox, globalPooling, tensorFormatMap);
+                        if (format != TensorFormatUnknown)
+                            return format;
+                    }
+                }
+            }
+        }
+        return TensorFormatUnknown;
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    template<class T> inline bool ReorderWeight(const Bytes& srcBin, const Shape& input, LayerParam& layer, Bytes& dstBin)
+    {
+        WeightParam& weight = layer.weight()[0];
+        const T* pSrc = GetWeight<T>(srcBin, weight);
+        T* pDst = GetWeight<T>(dstBin, weight);
+        Shape& shape = weight.dim();
+        weight.format() = TensorFormatNhwc;
+        switch (layer.type())
+        {
+        case LayerTypeConvolution:
+        case LayerTypeQuantizedConvolution:
+        {
+            shape = Shape({ shape[2], shape[3], shape[1], shape[0] });
+            Tensor<float> dst((uint8_t*)pDst, weight.size(), TensorType32f, shape, weight.format());
+            for (size_t o = 0; o < shape[3]; ++o)
+                for (size_t i = 0; i < shape[2]; ++i)
+                    for (size_t y = 0; y < shape[0]; ++y)
+                        for (size_t x = 0; x < shape[1]; ++x)
+                            dst.Data<T>(Shape({ y, x, i, o }))[0] = *pSrc++;
+            break;
+        }
+        case LayerTypeDeconvolution:
+        {
+            shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
+            Tensor<float> dst((uint8_t*)pDst, weight.size(), TensorType32f, shape, weight.format());
+            for (size_t i = 0; i < shape[0]; ++i)
+                for (size_t c = 0; c < shape[3]; ++c)
+                    for (size_t y = 0; y < shape[1]; ++y)
+                        for (size_t x = 0; x < shape[2]; ++x)
+                            dst.Data<T>(Shape({ i, y, x, c }))[0] = *pSrc++;
+            break;
+        }
+        case LayerTypeInnerProduct:
+        {
+            if (layer.innerProduct().transposeB())
+            {
+                for (size_t c = 0; c < input[1]; c++)
+                {
+                    for (size_t y = 0; y < input[2]; y++)
+                    {
+                        for (size_t x = 0; x < input[3]; x++)
+                        {
+                            size_t srcOffset = (input[2] * input[3] * c + input[3] * y + x) * shape[1];
+                            size_t dstOffset = (input[3] * input[1] * y + input[1] * x + c) * shape[1];
+                            for (size_t n = 0; n < shape[1]; n++)
+                                pDst[dstOffset + n] = pSrc[srcOffset + n];
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (size_t n = 0; n < shape[0]; n++)
+                {
+                    for (size_t c = 0; c < input[1]; c++)
+                    {
+                        for (size_t y = 0; y < input[2]; y++)
+                        {
+                            for (size_t x = 0; x < input[3]; x++)
+                            {
+                                size_t srcOffset = input[2] * input[3] * c + input[3] * y + x;
+                                size_t dstOffset = input[3] * input[1] * y + input[1] * x + c;
+                                pDst[dstOffset] = pSrc[srcOffset];
+                            }
+                        }
+                    }
+                    pSrc += input[1] * input[2] * input[3];
+                    pDst += input[1] * input[2] * input[3];
+                }
+            }
+
+            break;
+        }
+        default:
+            SYNET_ERROR("Unsupported layer type " << Cpl::ToStr(layer.type()) << " to convert weight !");
+        }
+        return true;
+    }
+
+    inline bool ReorderWeight(const Bytes& srcBin, const Shape& input, LayerParam& layer, Bytes& dstBin)
+    {
+        if (layer.weight().size() < 1)
+            SYNET_ERROR("There is no weight to reorder!");
+        const WeightParam& weight = layer.weight()[0];
+        switch (weight.type())
+        {
+        case TensorType32f: return ReorderWeight<float>(srcBin, input, layer, dstBin);
+        case TensorType8i: return ReorderWeight<int8_t>(srcBin, input, layer, dstBin);
+        default:
+            SYNET_ERROR("ReorderWeight: unsupported type: " << weight.type() << " !");
+        }
+    }
+
+    //-------------------------------------------------------------------------------------------------
 
     class SynetUtils
     {
     protected:
         typedef Synet::Tensor<float> Tensor;
         typedef std::vector<Tensor> Tensors;
-        typedef std::vector<uint8_t> Bytes;
         typedef std::map<String, bool> PermuteMap;
-
 
         //-------------------------------------------------------------------------------------------------
 
@@ -282,77 +530,6 @@ namespace Synet
                 SYNET_ERROR("Can't compact shape " << ToStr(shape) << " !");
             shape = Shp(value);
             return true;
-        }
-
-        static size_t GetLayerIndex(const LayerParams& layers, const String& name)
-        {
-            Pin pin = ParsePin(name);
-            for (size_t i = 0; i < layers.size(); ++i)
-            {
-                if (pin.name == layers[i].name())
-                    return i;
-                for (size_t d = 0; d < layers[i].dst().size(); ++d)
-                    if (pin.name == layers[i].dst()[d])
-                        return i;
-            }
-            return layers.size();
-        }
-
-        static const LayerParam* GetWeightLayer(const LayerParams& layers, const String& name, bool * shared = NULL)
-        {
-            const LayerParam* curr = GetLayer(layers, name);
-            if (curr == NULL || curr->type() == LayerTypeConst)
-            {
-                if (shared)
-                    *shared = false;
-                return curr;
-            }
-            if (curr->type() == LayerTypeStub)
-            {
-                if(curr->src().size() != 1)
-                    SYNET_ERROR("Stub layer " << name << " has wrong inputs number!");
-                const LayerParam* next = GetLayer(layers, curr->src()[0]);
-                if (next == NULL || next->type() == LayerTypeConst)
-                {
-                    if (shared)
-                        *shared = true;
-                    return next;
-                }
-            }
-            SYNET_ERROR("Can't found weight " << name << " !");
-        }
-
-        static const LayerParam* GetLayerByName(const LayerParams& layers, const String& name)
-        {
-            for (size_t i = 0; i < layers.size(); ++i)
-            {
-                if (layers[i].name() == name)
-                    return &layers[i];
-            }
-            return NULL;
-        }
-
-        static size_t GetIndexByName(const LayerParams& layers, const String& name)
-        {
-            size_t i = 0;
-            for (; i < layers.size(); ++i)
-                if (layers[i].name() == name)
-                    break;
-            return i;
-        }
-
-        static LayerType GetLayerType(const LayerParams& layers, const String& name)
-        {
-            for (size_t i = 0; i < layers.size(); ++i)
-            {
-                if (layers[i].name() == name)
-                    return layers[i].type();
-                for (size_t d = 0; d < layers[i].dst().size(); ++d)
-                    if (layers[i].dst()[d] == name)
-                        return layers[i].type();
-            }
-            CPL_LOG_SS(Error, "Can't find layer " << name << " !");
-            return LayerTypeUnknown;
         }
 
         static String NotImplementedMarker()
@@ -465,88 +642,6 @@ namespace Synet
             return count;
         }
 
-        //-------------------------------------------------------------------------------------------------
-
-        static TensorFormat Cache(const LayerParam& layer, TensorFormat value, TensorFormatMap* tensorFormatMap = NULL)
-        {
-            if (tensorFormatMap)
-                (*tensorFormatMap)[layer.name()] = value;
-            return value;
-        }
-
-        static TensorFormat CurrentTensorFormat(const LayerParams& layers, size_t current, bool checkInnerProduct, bool checkPriorBox, bool globalPooling, TensorFormatMap* tensorFormatMap = NULL)
-        {
-            const LayerParam& layer = layers[current];
-            if (tensorFormatMap && tensorFormatMap->find(layer.name()) != tensorFormatMap->end())
-                return (*tensorFormatMap)[layer.name()];
-            if (layer.type() == LayerTypeConvolution || layer.type() == LayerTypeDeconvolution)
-                return Cache(layer, layer.weight()[0].format(), tensorFormatMap);
-            if (layer.type() == LayerTypePermute && layer.permute().format() != TensorFormatUnknown)
-                return Cache(layer, layer.permute().format(), tensorFormatMap);
-            if (layer.type() == LayerTypeInnerProduct)
-            {
-                if (layer.weight().size())
-                    return Cache(layer, layer.weight()[0].format(), tensorFormatMap);
-                if(checkInnerProduct)
-                    return Cache(layer, TensorFormatNchw, tensorFormatMap);
-            }
-            if (checkPriorBox && (layer.type() == LayerTypePriorBox || layer.type() == LayerTypePriorBoxClustered))
-                return Cache(layer, TensorFormatNchw, tensorFormatMap);
-            if (globalPooling && layer.type() == LayerTypePooling && layer.pooling().globalPooling())
-                return Cache(layer, TensorFormatNchw, tensorFormatMap);
-            if (layer.type() == LayerTypeInput && layer.input().shape().size())
-                return Cache(layer, layer.input().shape()[0].format(), tensorFormatMap);
-            if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeShape && layer.meta().version() == 2)
-                return Cache(layer, TensorFormatNchw, tensorFormatMap);
-            for (size_t s = 0; s < layer.src().size(); ++s)
-            {
-                const String& src = layer.src()[s];
-                for (size_t l = 0; l < current; ++l)
-                {
-                    for (size_t d = 0; d < layers[l].dst().size(); ++d)
-                    {
-                        if (tensorFormatMap && IsMetaConst(layers[l]))
-                            continue;
-                        if (!tensorFormatMap && layers[l].type() == LayerTypeMeta)
-                            continue;
-                        if (layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
-                            continue;
-                        const String& dst = layers[l].dst()[d];
-                        if (src == dst)
-                        {
-                            TensorFormat format = CurrentTensorFormat(layers, l, checkInnerProduct, checkPriorBox, globalPooling, tensorFormatMap);
-                            Cache(layers[l], format, tensorFormatMap);
-                            if (format != TensorFormatUnknown)
-                                return format;
-                        }
-                    }
-                }
-            }
-            return TensorFormatUnknown;
-        }
-
-        static TensorFormat CurrentTensorFormat(const LayerParams& layers, const Strings& names, bool checkInnerProduct, bool checkPriorBox, bool globalPooling, TensorFormatMap* tensorFormatMap = NULL)
-        {
-            for (size_t s = 0; s < names.size(); ++s)
-            {
-                for (size_t l = 0; l < layers.size(); ++l)
-                {
-                    for (size_t d = 0; d < layers[l].dst().size(); ++d)
-                    {
-                        const String& dst = layers[l].dst()[d];
-                        if (layers[l].type() == LayerTypeMeta || layers[l].type() == LayerTypeConst || layers[l].type() == LayerTypeUnknown)
-                            continue;
-                        if (names[s] == dst)
-                        {
-                            TensorFormat format = CurrentTensorFormat(layers, l, checkInnerProduct, checkPriorBox, globalPooling, tensorFormatMap);
-                            if (format != TensorFormatUnknown)
-                                return format;
-                        }
-                    }
-                }
-            }
-            return TensorFormatUnknown;
-        }
 
         //-------------------------------------------------------------------------------------------------
 
@@ -643,99 +738,6 @@ namespace Synet
             return users;
         }
 
-        //-------------------------------------------------------------------------------------------------
 
-        static bool ReorderWeight(const Bytes& srcBin, const Shape& input, LayerParam& layer, Bytes& dstBin)
-        {
-            if (layer.weight().size() < 1)
-                SYNET_ERROR("There is no weight to reorder!");
-            const WeightParam& weight = layer.weight()[0];
-            switch (weight.type())
-            {
-            case TensorType32f: return ReorderWeight<float>(srcBin, input, layer, dstBin);
-            case TensorType8i: return ReorderWeight<int8_t>(srcBin, input, layer, dstBin);
-            default:
-                SYNET_ERROR("ReorderWeight: unsupported type: " << weight.type() << " !");
-            }
-        }
-
-        template<class T> static bool ReorderWeight(const Bytes& srcBin, const Shape& input, LayerParam& layer, Bytes& dstBin)
-        {
-            WeightParam& weight = layer.weight()[0];
-            const T* pSrc = GetWeight<T>(srcBin, weight);
-            T* pDst = GetWeight<T>(dstBin, weight);
-            Shape& shape = weight.dim();
-            weight.format() = TensorFormatNhwc;
-            switch (layer.type())
-            {
-            case LayerTypeConvolution:
-            case LayerTypeQuantizedConvolution:
-            {
-                shape = Shape({ shape[2], shape[3], shape[1], shape[0] });
-                Tensor dst((uint8_t*)pDst, weight.size(), TensorType32f, shape, weight.format());
-                for (size_t o = 0; o < shape[3]; ++o)
-                    for (size_t i = 0; i < shape[2]; ++i)
-                        for (size_t y = 0; y < shape[0]; ++y)
-                            for (size_t x = 0; x < shape[1]; ++x)
-                                dst.Data<T>(Shape({ y, x, i, o }))[0] = *pSrc++;
-                break;
-            }
-            case LayerTypeDeconvolution:
-            {
-                shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
-                Tensor dst((uint8_t*)pDst, weight.size(), TensorType32f, shape, weight.format());
-                for (size_t i = 0; i < shape[0]; ++i)
-                    for (size_t c = 0; c < shape[3]; ++c)
-                        for (size_t y = 0; y < shape[1]; ++y)
-                            for (size_t x = 0; x < shape[2]; ++x)
-                                dst.Data<T>(Shape({ i, y, x, c }))[0] = *pSrc++;
-                break;
-            }
-            case LayerTypeInnerProduct:
-            {
-                if (layer.innerProduct().transposeB())
-                {
-                    for (size_t c = 0; c < input[1]; c++)
-                    {
-                        for (size_t y = 0; y < input[2]; y++)
-                        {
-                            for (size_t x = 0; x < input[3]; x++)
-                            {
-                                size_t srcOffset = (input[2] * input[3] * c + input[3] * y + x) * shape[1];
-                                size_t dstOffset = (input[3] * input[1] * y + input[1] * x + c) * shape[1];
-                                for (size_t n = 0; n < shape[1]; n++)
-                                    pDst[dstOffset + n] = pSrc[srcOffset + n];
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    for (size_t n = 0; n < shape[0]; n++)
-                    {
-                        for (size_t c = 0; c < input[1]; c++)
-                        {
-                            for (size_t y = 0; y < input[2]; y++)
-                            {
-                                for (size_t x = 0; x < input[3]; x++)
-                                {
-                                    size_t srcOffset = input[2] * input[3] * c + input[3] * y + x;
-                                    size_t dstOffset = input[3] * input[1] * y + input[1] * x + c;
-                                    pDst[dstOffset] = pSrc[srcOffset];
-                                }
-                            }
-                        }
-                        pSrc += input[1] * input[2] * input[3];
-                        pDst += input[1] * input[2] * input[3];
-                    }
-                }
-
-                break;
-            }
-            default:
-                SYNET_ERROR("Unsupported layer type " << Cpl::ToStr(layer.type()) << " to convert weight !");
-            }
-            return true;
-        }
     };
 }
