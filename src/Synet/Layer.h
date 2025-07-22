@@ -351,6 +351,7 @@ namespace Synet
             case TensorType32f: tensor.Reshape(TensorType32f, param.dim(), param.format(), 0.0f); break;
             case TensorType32i: tensor.Reshape(TensorType32i, param.dim(), param.format(), int32_t(0)); break;
             case TensorType8i: tensor.Reshape(TensorType8i, param.dim(), param.format(), int8_t(0)); break;
+            case TensorType8u: tensor.Reshape(TensorType8u, param.dim(), param.format(), uint8_t(0)); break;
             case TensorType64i: tensor.Reshape(TensorType64i, param.dim(), param.format(), int64_t(0)); break;
             case TensorTypeBool: tensor.Reshape(TensorTypeBool, param.dim(), param.format(), false); break;
             default:

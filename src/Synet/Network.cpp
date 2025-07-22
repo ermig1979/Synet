@@ -428,6 +428,7 @@ namespace Synet
 #endif
             _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
         }
+        SetAmxFull();
         SetFastMode(mode);
     }
 
@@ -1103,6 +1104,13 @@ namespace Synet
     {
         for (TensorType type = TensorType32f; type <= TensorType8u; type = TensorType((int)type + 1))
         {
+#ifdef SYNET_INIT_LOG
+            {
+                std::stringstream msg;
+                msg << "Set Buffer of type: " << Cpl::ToStr(type);
+                CPL_LOG_SS(Info, msg.str());
+            }
+#endif            
             for (int i = 0; i < BUFFER_COUNT; ++i)
             {
                 TensorSharedPtr tensor(new Tensor());

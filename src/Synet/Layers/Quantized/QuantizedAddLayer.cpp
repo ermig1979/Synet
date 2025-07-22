@@ -76,7 +76,7 @@ namespace Synet
     {
         if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("QuantizedAddLayer supports only 2 inputs and 1 output!");
-        if (src[0]->Shape() != src[1]->Shape())
+        if (src[0]->Shape() != src[1]->Shape() && src[0]->Size() != src[1]->Size())
             SYNET_ERROR("QuantizedAddLayer supports only inputs with the same shape!");
 
         const LayerParam& param = this->Param();
