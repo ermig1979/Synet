@@ -28,22 +28,14 @@
 
 namespace Synet
 {
-    bool ConvertQLinearConvNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin, TensorFormatMap* tensorFormatMap)
+    bool ConvertQLinearAddNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer)
     {
-        if (!CheckSourceNumber(layer, 8, 9))
+        if (!CheckSourceNumber(layer, 8))
             return false;
-        layer.type() = Synet::LayerTypeQuantizedConvolution;
-        if (!ConvertAtrributeInts(node, "dilations", layer.convolution().dilation()))
-            return false;
-        if (!ConvertAtrributeInt(node, "group", layer.convolution().group()))
-            return false;
-        if (!ConvertAtrributeInts(node, "kernel_shape", layer.convolution().kernel(), true))
-            return false;
-        if (!ConvertAtrributeInts(node, "pads", layer.convolution().pad()))
-            return false;
-        if (!ConvertAtrributeInts(node, "strides", layer.convolution().stride()))
-            return false;
+        layer.type() = Synet::LayerTypeQuantizedAdd;
+        Strings sources;
 
+        sources.push_back(layer.src()[0]);
         const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
         const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
         if (src1 == NULL || src2 == NULL)
@@ -61,29 +53,41 @@ namespace Synet
                     layer.qSrc()[0].zero() = GetWeight<uint8_t>(srcBin, src2->weight()[0])[0];
                     break;
                 default:
-                    SYNET_ERROR("QLinearConv: unsupported src[2] type!");
+                    SYNET_ERROR("QLinearAdd: unsupported src[2] type!");
                 }
             }
             else
-                SYNET_ERROR("QLinearConv: support only uniform quantized input!");
+                SYNET_ERROR("QLinearAdd: support only uniform quantized input!");
         }
         else
-            SYNET_ERROR("QuantizeConv: src[1] or src[2] is not const!");
+            SYNET_ERROR("QuantizeAdd: src[1] or src[2] is not const!");
 
-        const LayerParam* src3 = GetWeightLayer(layers, layer.src()[3]);
-        const LayerParam* src4 = GetWeightLayer(layers, layer.src()[4]);
-        const LayerParam* src5 = GetWeightLayer(layers, layer.src()[5]);
-        if (src3 == NULL || src4 == NULL || src5 == NULL)
+        sources.push_back(layer.src()[3]);
+        const LayerParam* src4 = GetLayer(layers, layer.src()[4]);
+        const LayerParam* src5 = GetLayer(layers, layer.src()[5]);
+        if (src4 == NULL || src5 == NULL)
             return false;
-        const Shape& shape = src3->weight()[0].dim();
-        layer.convolution().outputNum() = uint32_t(shape[0]);
-        layer.weight().push_back(src3->weight()[0]);
-        layer.weight().push_back(src4->weight()[0]);
-        layer.weight().push_back(src5->weight()[0]);
-        layer.qSrc().resize(2);
-        layer.qSrc()[1].weights() = 3;
-        if (trans && CurrentTensorFormat(layers, layer.src(), true, false, false, tensorFormatMap) == TensorFormatNhwc)
-            return ReorderWeight(srcBin, Shape(), layer, dstBin);
+        if (src4->type() == LayerTypeConst && src5->type() == LayerTypeConst)
+        {
+            layer.qSrc().resize(2);
+            if (TensorSize(src4->weight()[0].dim()) == 1 && TensorSize(src5->weight()[0].dim()) == 1)
+            {
+                layer.qSrc()[1].scale() = GetWeight<float>(srcBin, src4->weight()[0])[0];
+                layer.qSrc()[1].type() = src5->weight()[0].type();
+                switch (layer.qSrc()[1].type())
+                {
+                case TensorType8u:
+                    layer.qSrc()[1].zero() = GetWeight<uint8_t>(srcBin, src5->weight()[0])[0];
+                    break;
+                default:
+                    SYNET_ERROR("QLinearAdd: unsupported src[5] type!");
+                }
+            }
+            else
+                SYNET_ERROR("QLinearAdd: support only uniform quantized input!");
+        }
+        else
+            SYNET_ERROR("QuantizeAdd: src[4] or src[5] is not const!");
 
         const LayerParam* src6 = GetLayer(layers, layer.src()[6]);
         const LayerParam* src7 = GetLayer(layers, layer.src()[7]);
@@ -102,32 +106,16 @@ namespace Synet
                     layer.qDst()[0].zero() = GetWeight<uint8_t>(srcBin, src7->weight()[0])[0];
                     break;
                 default:
-                    SYNET_ERROR("QLinearConv: unsupported src[7] type!");
+                    SYNET_ERROR("QLinearAdd: unsupported src[7] type!");
                 }
             }
             else
-                SYNET_ERROR("QLinearConv: support only uniform quantized output!");
+                SYNET_ERROR("QLinearAdd: support only uniform quantized output!");
         }
         else
-            SYNET_ERROR("QuantizeConv: src[6] or src[7] is not const!");
+            SYNET_ERROR("QuantizeAdd: src[6] or src[7] is not const!");
 
-        if (layer.src().size() > 8)
-        {
-            const LayerParam* src8 = GetWeightLayer(layers, layer.src()[8]);
-            if (src8 == NULL)
-                return false;
-            if (src8->weight()[0].type() != TensorType32i)
-                SYNET_ERROR("QLinearConv: support only INT32 bias!");
-            layer.weight().push_back(src8->weight()[0]);
-            layer.convolution().biasTerm() = true;
-            layer.qSrc().resize(3);
-            layer.qSrc()[2].weights() = 1;
-            layer.qSrc()[2].type() = TensorType32i;
-        }
-        else
-            layer.convolution().biasTerm() = false;
-
-        layer.src().resize(1);
+        layer.src() = sources;
 
         return true;
     }

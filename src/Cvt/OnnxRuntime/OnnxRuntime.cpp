@@ -241,6 +241,8 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "PRelu" && !ConvertPreluNode(node, network.layers(), layer))
                 return ErrorMessage(i, node);
+            if ((node.op_type() == "QLinearAdd") && !ConvertQLinearAddNode(node, network.layers(), original, layer))
+                return ErrorMessage(i, node);
             if ((node.op_type() == "QLinearConv") && !ConvertQLinearConvNode(node, trans, network.layers(), original, layer, reordered, &tensorFormatMap))
                 return ErrorMessage(i, node);
             if (node.op_type() == "QuantizeLinear" && !ConvertQuantizeLinearNode(node, trans, network.layers(), original, layer))
