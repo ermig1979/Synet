@@ -328,6 +328,84 @@ namespace Synet
         return true;
     }
 
+    void OnnxToSynet::SetSrcAndDst(const onnx::NodeProto& node, Renames& renames, LayerParam& layer)
+    {
+        for (size_t j = 0; j < node.input_size(); ++j)
+        {
+            String input = node.input(j);
+            if (input.empty())
+                continue;
+            Renames::const_iterator rename = renames.find(input);
+            if (rename != renames.end())
+            {
+                input = rename->second;
+                rename = renames.find(input);
+                if (rename != renames.end())
+                    input = rename->second;
+            }
+            layer.src().push_back(input);
+            }
+        for (size_t j = 0; j < node.output_size(); ++j)
+            layer.dst().push_back(ValidName(node.output(j), renames));
+        layer.name() = layer.dst()[0];
+        }
+
+    bool OnnxToSynet::ManualInsertToNchwPermute(const OnnxParam& onnxParam, LayerParams& layers, Renames& renames)
+    {
+        LayerParam& layer = layers.back();
+        for (size_t h = 0; h < onnxParam.toNchwHints().size(); ++h)
+        {
+            if (layer.name() == onnxParam.toNchwHints()[h])
+            {
+                for (size_t d = 0; d < layer.dst().size(); ++d)
+                {
+                    const String& dst = layer.dst()[d];
+                    LayerParam permute;
+                    permute.type() = LayerTypePermute;
+                    permute.src().push_back(dst);
+                    permute.name() = dst + "_permute_to_nchw";
+                    permute.dst().push_back(permute.name());
+                    permute.permute().order() = Shp(0, 3, 1, 2);
+                    permute.permute().format() = TensorFormatNchw;
+                    if (renames.find(dst) != renames.end())
+                        SYNET_ERROR("Multiple manual NhwcToNchw permute at " << layer.name() << " !");
+                    renames[dst] = permute.name();
+                    //CPL_LOG_SS(Info, "Insert manual NhwcToNchw permute at " << layer.name() << " !");
+                    layers.push_back(permute);
+                }
+            }
+        }
+        return true;
+    }
+
+    bool OnnxToSynet::ManualInsertToNhwcPermute(const OnnxParam& onnxParam, LayerParams& layers, Renames& renames)
+    {
+        LayerParam& layer = layers.back();
+        for (size_t h = 0; h < onnxParam.toNhwcHints().size(); ++h)
+        {
+            if (layer.name() == onnxParam.toNhwcHints()[h])
+            {
+                for (size_t d = 0; d < layer.dst().size(); ++d)
+                {
+                    const String& dst = layer.dst()[d];
+                    LayerParam permute;
+                    permute.type() = LayerTypePermute;
+                    permute.src().push_back(dst);
+                    permute.name() = dst + "_permute_to_nhwc";
+                    permute.dst().push_back(permute.name());
+                    permute.permute().order() = Shp(0, 2, 3, 1);
+                    permute.permute().format() = TensorFormatNhwc;
+                    if (renames.find(dst) != renames.end())
+                        SYNET_ERROR("Multiple manual NchwToNhwc permute at " << layer.name() << " !");
+                    renames[dst] = permute.name();
+                    //CPL_LOG_SS(Info, "Insert manual NchwToNhwc permute at " << layer.name() << " !");
+                    layers.push_back(permute);
+                }
+            }
+        }
+        return true;
+    }
+
     //--------------------------------------------------------------------------------------------------
 
     bool ConvertOnnxToSynet(const String& srcGraph, bool trans, const String& dstXml, const String& dstBin, const OnnxParam& onnxParam, const OptimizerParam& optParam)
