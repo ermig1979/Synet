@@ -76,7 +76,7 @@ namespace Synet
                 switch (layer.qDst()[0].type())
                 {
                 case TensorType8u:
-                    layer.qDst()[0].zero() = GetWeight<uint8_t>(srcBin, src3->weight()[0])[0];
+                    layer.qDst()[0].zero() = GetWeight<uint8_t>(srcBin, src4->weight()[0])[0];
                     break;
                 default:
                     SYNET_ERROR("QLinearGlobalAveragePool: unsupported src[4] type!");
