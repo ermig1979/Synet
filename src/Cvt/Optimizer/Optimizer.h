@@ -192,7 +192,9 @@ namespace Synet
                         continue;
                     if (MergeOtherAndQuantizeLinear(network.layers(), i, method, merged, changes))
                         continue;
-                    if (SkipUnnecessaryQuantize(network.layers(), i, method, merged, changes))
+                    if (SkipUnnecessaryDequantizeQuantize(network.layers(), i, method, merged, changes))
+                        continue;
+                    if (SkipUnnecessaryDequantize(network.layers(), i, method, merged, changes))
                         continue;
                     break;
                 }
@@ -903,7 +905,7 @@ namespace Synet
             return true;
         }
 
-        bool SkipUnnecessaryQuantize(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes)
+        bool SkipUnnecessaryDequantizeQuantize(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes)
         {
             if (src.size() < index + 3)
                 return false;
@@ -926,6 +928,24 @@ namespace Synet
             layer.dst() = ql.dst();
             dst.push_back(layer);
             index += 2;
+            return true;
+        }
+
+        bool SkipUnnecessaryDequantize(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 2)
+                return false;
+            const LayerParam& dl = src[index + 0];
+            LayerParam layer = src[index + 1];
+            if (dl.type() != LayerTypeDequantizeLinear)
+                return false;
+            if (layer.type() != LayerTypeMeta && layer.meta().type() != MetaTypeShape)
+                return false;
+            if (InsideLink(src, index, 2))
+                return false;
+            layer.src() = dl.src();
+            dst.push_back(layer);
+            index += 1;
             return true;
         }
 
