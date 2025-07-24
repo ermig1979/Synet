@@ -39,6 +39,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\Cvt\OnnxRuntime\Attribute.h" />
     <ClInclude Include="..\..\src\Cvt\OnnxRuntime\Common.h" />
     <ClInclude Include="..\..\src\Cvt\OnnxRuntime\Convert.h" />
     <ClInclude Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.h" />

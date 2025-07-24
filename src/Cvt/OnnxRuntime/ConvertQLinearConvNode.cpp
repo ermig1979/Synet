@@ -24,7 +24,7 @@
 
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
 
-#include "Cvt/OnnxRuntime/Common.h"
+#include "Cvt/OnnxRuntime/Attribute.h"
 
 namespace Synet
 {
@@ -83,7 +83,10 @@ namespace Synet
         layer.qSrc().resize(2);
         layer.qSrc()[1].weights() = 3;
         if (trans && CurrentTensorFormat(layers, layer.src(), true, false, false, tensorFormatMap) == TensorFormatNhwc)
-            return ReorderWeight(srcBin, Shape(), layer, dstBin);
+        {
+            if (!ReorderWeight(srcBin, Shape(), layer, dstBin))
+                return false;
+        }
 
         const LayerParam* src6 = GetLayer(layers, layer.src()[6]);
         const LayerParam* src7 = GetLayer(layers, layer.src()[7]);

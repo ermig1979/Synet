@@ -39,6 +39,7 @@
 #include "onnx/onnx.pb.h"
 
 #include "Cvt/OnnxRuntime/Common.h"
+#include "Cvt/OnnxRuntime/Attribute.h"
 
 namespace Synet
 {
@@ -2482,42 +2483,6 @@ namespace Synet
         bool ErrorMessage(size_t index, const onnx::NodeProto& node)
         {
             SYNET_ERROR("Can't convert node[" << index << "]: " << NodeString(node) << " !");
-        }
-
-        bool ConvertAtrributeFloat(const onnx::NodeProto& node, const String& name, float & value, bool optional = false, const float & defVal = float())
-        {
-            const onnx::AttributeProto* attribute = GetAtrribute(node, name);
-            if (attribute == NULL)
-            {
-                if (optional)
-                {
-                    value = defVal;
-                    return true;
-                }
-                SYNET_ERROR("Can't find attribute '" << name << "' !");
-            }
-            if (attribute->type() != onnx::AttributeProto_AttributeType_FLOAT)
-                SYNET_ERROR("Attribute '" << name << "' has wrong type " << attribute->type() << " !");
-            value = attribute->f();
-            return true;
-        }
-
-        bool ConvertAtrributeString(const onnx::NodeProto& node, const String& name, String & value, bool optional = false, const String & defVal = String())
-        {
-            const onnx::AttributeProto* attribute = GetAtrribute(node, name);
-            if (attribute == NULL)
-            {
-                if (optional)
-                {
-                    value = defVal;
-                    return true;
-                }
-                SYNET_ERROR("Can't find attribute '" << name << "' !");
-            }
-            if (attribute->type() != onnx::AttributeProto_AttributeType_STRING)
-                SYNET_ERROR("Attribute '" << name << "' has wrong type " << attribute->type() << " !");
-            value = attribute->s();
-            return true;
         }
     };
 

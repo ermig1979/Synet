@@ -169,8 +169,8 @@ namespace Synet
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("PermuteLayer supports only 1 input and 1 output!");
-        if (src[0]->GetType() != dst[0]->GetType() && src[0]->GetType() != TensorType64i)
-            SYNET_ERROR("PermuteLayer input and output must have the same type!");
+        //if (src[0]->GetType() != dst[0]->GetType() && src[0]->GetType() != TensorType64i)
+        //    SYNET_ERROR("PermuteLayer input and output must have the same type!");
 
         const PermuteParam & param = this->Param().permute();
         _dstOrder = param.order();

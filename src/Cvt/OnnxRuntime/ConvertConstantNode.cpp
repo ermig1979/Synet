@@ -24,7 +24,7 @@
 
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
 
-#include "Cvt/OnnxRuntime/Common.h"
+#include "Cvt/OnnxRuntime/Attribute.h"
 
 namespace Synet
 {

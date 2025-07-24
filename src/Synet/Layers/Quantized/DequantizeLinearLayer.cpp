@@ -57,6 +57,8 @@ namespace Synet
     {
         if ((src.size() != 0 && src.size() != 1) || dst.size() != 1)
             SYNET_ERROR("DequantizeLinearLayer supports only 0 or 1 inputs and 1 output!");
+        if (src[0]->GetType() != TensorType8u)
+            SYNET_ERROR("DequantizeLinearLayer supports only UINT8 input!");
 
         const QuantizeParam& param = Param().quantize();
         const Tensors& weight = this->Weight();
