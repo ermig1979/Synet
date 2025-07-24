@@ -60,7 +60,7 @@ namespace Synet
         else
             SYNET_ERROR("QuantizeMatMul: src[1] or src[2] is not const!");
 
-        layer.innerProduct().transposeB() = false;
+        layer.innerProduct().transposeB() = true;
         layer.innerProduct().biasTerm() = false;
 
         const LayerParam* src3 = GetWeightLayer(layers, layer.src()[3]);
