@@ -82,7 +82,7 @@ namespace Synet
         _dstIds.clear();
         _context.Clear();
         _empty = true;
-        _disableBf16 = false;
+        //_disableBf16 = false;
     }
 
     bool Network::Load(const String & model, const String & weight, const Options & options)
