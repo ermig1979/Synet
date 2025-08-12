@@ -375,6 +375,9 @@ namespace Synet
         if (_src[0]->Shape() != _src[1]->Shape() && (_src[0]->Size() < _src[1]->Size() || (_src[0]->Size() == _src[1]->Size() && _src[0]->Count() < _src[1]->Count())))
             std::swap(_src[0], _src[1]);
 
+        //if(!IsCompatible(_src[0]->Shape(), _src[1]->Shape()))
+        //    SYNET_ERROR("AddLayer incompatible input shapes!");
+
         _typeA = _src[0]->GetType();
         _typeB = _src[1]->GetType();
         _typeD = _typeA == TensorType64i ? TensorType64i : dst[0]->GetType();
@@ -424,7 +427,6 @@ namespace Synet
             if (_src[0]->Shape() != _src[1]->Shape() && _src[0]->Size() != _src[1]->Size())
             {
                 _format = _src[0]->Format();
-                size_t signDims1 = SignificantDimsCount(_src[1]->Shape());
                 if (_src[0]->Count() > 1 && _src[0]->Count() == _src[1]->Count() && _src[0]->Size(1) == _src[1]->Size(1))
                 {
                     _special = SpecialBatch;
@@ -489,6 +491,11 @@ namespace Synet
                     _batch = 1;
                     _channels = 1;
                     _spatial = _src[0]->Size();
+                    if (_src[1]->Count() > _src[0]->Count())
+                    {
+                        dst[0]->Reshape(_typeD, OutputShape(_src[0]->Shape(), _src[1]->Shape()), _src[0]->Format());
+                        resized = true;
+                    }
                 }
                 else if (_src[1]->Count() == 2)
                 {
