@@ -39,18 +39,25 @@ namespace Synet
             PerfomanceLogSubnet,
         };
 
+        enum Bf16Support
+        {
+            Bf16SupportNone = 0,
+            Bf16SupportHard,
+            Bf16SupportSoft
+        };
+
         PerfomanceLog performanceLog;
-        bool bf16RoundTest;
+        Bf16Support bf16Support;
 
         Options()
         {
             performanceLog = PerfomanceLogEmpty;
-            bf16RoundTest = false;
+            bf16Support = Bf16SupportHard;
         }
 
         bool BFloat16Enable() const
         {
-            return bf16RoundTest || BFloat16HardwareSupport();
+            return (bf16Support == Bf16SupportSoft) || (bf16Support == Bf16SupportHard && BFloat16HardwareSupport());
         }
     };
 

@@ -111,8 +111,6 @@ namespace Synet
 
         bool Is16b() const;
 
-        void DisableBf16(bool disable = true);
-
         const Tensor* GetInternalTensor(const String& name) const;
 
     private:
@@ -138,7 +136,7 @@ namespace Synet
         };
         typedef std::vector<Stage> Stages;
 
-        bool _empty, _disableBf16;
+        bool _empty;
         NetworkParamHolder _param;
         Context _context;
         LayerSharedPtrs _layers;

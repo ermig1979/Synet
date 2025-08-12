@@ -44,7 +44,6 @@ namespace Synet
 {
     Network::Network()
         : _empty(true)
-        , _disableBf16(false)
     {
     }
 
@@ -82,7 +81,6 @@ namespace Synet
         _dstIds.clear();
         _context.Clear();
         _empty = true;
-        //_disableBf16 = false;
     }
 
     bool Network::Load(const String & model, const String & weight, const Options & options)
@@ -636,7 +634,7 @@ namespace Synet
 
     bool Network::Is16b() const
     {
-        bool has16b = false, enable = _context.options.BFloat16Enable() && (!_disableBf16);
+        bool has16b = false, enable = _context.options.BFloat16Enable();
         for (size_t i = 0; i < _param().layers().size() && !has16b && enable; ++i)
         {
             const LayerParam& layer = _param().layers()[i];
@@ -644,11 +642,6 @@ namespace Synet
                 has16b = true;
         }
         return has16b && enable;
-    }
-
-    void Network::DisableBf16(bool disable)
-    {
-        _disableBf16 = disable;
     }
 
     const Network::Tensor* Network::GetInternalTensor(const String& name) const
