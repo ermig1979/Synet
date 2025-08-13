@@ -38,10 +38,7 @@ namespace Synet
 
         virtual ~Add16b()
         {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-            if (_context)
-                ::SimdRelease(_context), _context = NULL;
-#endif
+            Clear();
         }
 
         SYNET_INLINE void Init(const Shape & aShape, TensorType aType, const Shape& bShape, TensorType bType, TensorType dstType, TensorFormat format)
@@ -49,9 +46,8 @@ namespace Synet
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
             if (_aShape != aShape || _bShape != bShape)
             {
+                Clear();
                 _aShape = aShape, _bShape = aShape;
-                if (_context)
-                    ::SimdRelease(_context), _context = NULL;
                 _context = ::SimdSynetAdd16bInit(_aShape.data(), _aShape.size(), (SimdTensorDataType)aType, 
                     _bShape.data(), _bShape.size(), (SimdTensorDataType)bType,
                     (SimdTensorDataType)dstType, (SimdTensorFormatType)format);
@@ -69,6 +65,16 @@ namespace Synet
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
             if (_context)
                 ::SimdSynetAdd16bForward(_context, a, b, dst);
+#endif
+        }
+
+        SYNET_INLINE void Clear()
+        {
+#ifdef SYNET_SIMD_LIBRARY_ENABLE
+            if (_context)
+                ::SimdRelease(_context), _context = NULL;
+            _aShape.clear();
+            _bShape.clear();
 #endif
         }
 
