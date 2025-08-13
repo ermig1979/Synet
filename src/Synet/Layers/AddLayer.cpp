@@ -585,7 +585,17 @@ namespace Synet
                 _format = _src[0]->Axis(0) == _src[1]->Axis(0) ? TensorFormatNchw : TensorFormatNhwc;
             }
             else
-                SYNET_ERROR("AddLayer can't process inputs with this shape!");
+            {
+                _dstShape = shapeD;
+                if (!(GetSteps(shapeA, _dstShape, _aSteps) && GetSteps(shapeB, _dstShape, _bSteps)))
+                    SYNET_ERROR("AddLayer has incompatible inputs!");
+                _universal = GetAddUniversal(_typeA, _typeB, _typeD, shapeA.size());
+                if (_universal == NULL)
+                    SYNET_ERROR("AddLayer can create universal worker!");
+                _special = SpecialUniversal;
+
+                //SYNET_ERROR("AddLayer can't process inputs with this shape!");
+            }
 
             _uniform = GetUniform(_typeA, _typeB, _typeD);
             _addBias = GetAddBias(_typeA, _typeB, _typeD);
