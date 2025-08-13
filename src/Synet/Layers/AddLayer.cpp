@@ -375,13 +375,41 @@ namespace Synet
         if (_src[0]->Shape() != _src[1]->Shape() && (_src[0]->Size() < _src[1]->Size() || (_src[0]->Size() == _src[1]->Size() && _src[0]->Count() < _src[1]->Count())))
             std::swap(_src[0], _src[1]);
 
-        //if(!IsCompatible(_src[0]->Shape(), _src[1]->Shape()))
-        //    SYNET_ERROR("AddLayer incompatible input shapes!");
+        Shape shapeA = _src[0]->Shape(), shapeB = _src[1]->Shape();
+        TensorFormat formatA = _src[0]->Format(), formatB = _src[1]->Format();
+        if (!IsCompatible(shapeA, shapeB))
+        {
+            if (formatA != formatB)
+            {
+                if (shapeA.size() == 4 && shapeB.size() == 3 && SignificantDimsCount(shapeB) == 1)
+                {
+                    shapeB = Shp(1, shapeB[1], shapeB[2], shapeB[0]);
+                    formatB = formatA;
+                }
+                else
+                    SYNET_ERROR("AddLayer can't correct incompatible input shapes!");
+            }
+            else
+                SYNET_ERROR("AddLayer incompatible input shapes!");
+        }
+        Shape shapeD = OutputShape(shapeA, shapeB);
+        shapeB = FullSrcShape(shapeB, shapeD);
 
         _typeA = _src[0]->GetType();
         _typeB = _src[1]->GetType();
         _typeD = _typeA == TensorType64i ? TensorType64i : dst[0]->GetType();
-        _format = _src[0]->Format();
+        _format = formatA;
+        if (dst[0] != _src[0] && dst[0])
+        {
+            const Strings& names = Param().src();
+            if (TensorUsers(names[0]) == 1 && src[0]->GetType() == _typeD && src[0]->Shape() == src[1]->Shape() && _typeD != TensorType64i && !src[0]->Const())
+                dst[0]->Share(*src[0]);
+            else if (TensorUsers(names[1]) == 1 && src[1]->GetType() == _typeD && src[0]->Shape() == src[1]->Shape() && _typeD != TensorType64i && !src[1]->Const())
+                dst[0]->Share(*src[1]);
+            else
+                dst[0]->Reshape(_typeD, shapeD, formatA);
+        }
+        bool resized = true;
 
         if (_method != QuantizationMethodUnknown && (_typeA == TensorType8u || _typeB == TensorType8u || _typeD == TensorType8u))
         {
@@ -413,8 +441,6 @@ namespace Synet
             this->Stats(0)[0]->Init8u(_method);
             this->Stats(0)[1]->Init8u(_method);
             this->Stats(2)[0]->Init8u(_method);
-
-            dst[0]->Reshape(_typeD, _src[0]->Shape(), _format);
         }
         else
         {
@@ -423,7 +449,6 @@ namespace Synet
             _elemB = GetTensorTypeSize(_typeB);
             _elemD = GetTensorTypeSize(_typeD);
 
-            bool resized = false;
             if (_src[0]->Shape() != _src[1]->Shape() && _src[0]->Size() != _src[1]->Size())
             {
                 _format = _src[0]->Format();
@@ -432,15 +457,6 @@ namespace Synet
                     _special = SpecialBatch;
                     _batch = Max(_src[0]->Axis(0), _src[1]->Axis(0));
                     _channels = 1, _spatial = _src[0]->Size(1);
-                    Shape shape = _src[0]->Shape();
-                    shape[0] = _batch;
-                    if (dst[0] != _src[0] && dst[0] != _src[1])
-                    {
-                        dst[0]->Reshape(_typeD, shape, _format);
-                        resized = true;
-                    }
-                    if(shape != dst[0]->Shape())
-                        SYNET_ERROR("AddLayer can't process inputs with this shape!");
                 }
                 else if (_src[0]->Count() == _src[1]->Count())
                 {
@@ -479,9 +495,6 @@ namespace Synet
                         if(_universal == NULL)
                             SYNET_ERROR("AddLayer can create universal worker!");
                         _special = SpecialUniversal;
-                        if (dst[0] != _src[0])
-                            dst[0]->Reshape(_typeD, _dstShape, _src[0]->Format());
-                        resized = true;
                     }
                 }
                 else if (_src[1]->Size() == 1)
@@ -491,11 +504,6 @@ namespace Synet
                     _batch = 1;
                     _channels = 1;
                     _spatial = _src[0]->Size();
-                    if (_src[1]->Count() > _src[0]->Count())
-                    {
-                        dst[0]->Reshape(_typeD, OutputShape(_src[0]->Shape(), _src[1]->Shape()), _src[0]->Format());
-                        resized = true;
-                    }
                 }
                 else if (_src[1]->Count() == 2)
                 {
@@ -505,9 +513,6 @@ namespace Synet
                         if (!IsCompatible(src0, src1))
                             SYNET_ERROR("AddnLayer incompatible input shapes!");
                         _dstShape = OutputShape(src0, src1);
-                        if (dst[0] != _src[0])
-                            dst[0]->Reshape(_typeD, _dstShape, _src[0]->Format());
-                        resized = true;
                         //CompactShapes(src0, src1, _dstShape);
                         if (_dstShape.size() > 4)
                             SYNET_ERROR("AddLayer too complicated shape!");
@@ -525,11 +530,6 @@ namespace Synet
                         _batch = _src[1]->Axis(0);
                         _channels = 1;
                         _spatial = _src[0]->Size();
-                        if (dst[0] != _src[0] && dst[0] != _src[1])
-                        {
-                            dst[0]->Reshape(_typeD, Shp(_batch, _spatial), _src[1]->Format());
-                            resized = true;
-                        }
                     }
                 }
                 else if (_src[1]->Count() == 3 && _src[0]->Size(1) == _src[1]->Size(0))
@@ -572,9 +572,6 @@ namespace Synet
                     if (_universal == NULL)
                         SYNET_ERROR("AddLayer can create universal worker!");
                     _special = SpecialUniversal;
-                    if (dst[0] != _src[0])
-                        dst[0]->Reshape(_typeD, _dstShape, _src[0]->Format());
-                    resized = true;
                 }
                 else if (_src[0]->Count() == 2 && _src[1]->Count() == 1)
                 {
@@ -589,17 +586,6 @@ namespace Synet
             }
             else
                 _batch = 1, _channels = 1, _spatial = _src[0]->Size();
-
-            if (dst[0] != _src[0] && !resized)
-            {
-                const Strings& names = Param().src();
-                if (TensorUsers(names[0]) == 1 && src[0]->GetType() == _typeD && src[0]->Shape() == src[1]->Shape() && _typeD != TensorType64i && !src[0]->Const())
-                    dst[0]->Share(*src[0]);
-                else if (TensorUsers(names[1]) == 1 && src[1]->GetType() == _typeD && src[0]->Shape() == src[1]->Shape() && _typeD != TensorType64i && !src[1]->Const())
-                    dst[0]->Share(*src[1]);
-                else
-                    dst[0]->Reshape(_typeD, _src[0]->Shape(), _src[0]->Format());
-            }
 
             _uniform = GetUniform(_typeA, _typeB, _typeD);
             _addBias = GetAddBias(_typeA, _typeB, _typeD);
