@@ -444,7 +444,7 @@ namespace Synet
         }
         else
         {
-            _special = SpecialNone;
+            _special = SpecialUniversal;
             _elemA = GetTensorTypeSize(_typeA);
             _elemB = GetTensorTypeSize(_typeB);
             _elemD = GetTensorTypeSize(_typeD);
@@ -458,8 +458,6 @@ namespace Synet
                 _special = SpecialBatch;
                 _batch = Max(_src[0]->Axis(0), _src[1]->Axis(0));
                 _channels = 1, _spatial = _src[0]->Size(1);
-                //if(!(_src[0]->Count() > 1 && _src[0]->Count() == _src[1]->Count() && _src[0]->Size(1) == _src[1]->Size(1)))
-                //    SYNET_ERROR("AddLayer compact: " << Cpl::ToStr(shapeA) << " " << Cpl::ToStr(shapeB));
             }
             else if (_src[0]->Count() == _src[1]->Count())
             {
@@ -487,18 +485,7 @@ namespace Synet
                     }
                 }
                 if (invalid)
-                {
-                    Shape aShape = _src[0]->Shape(), bShape = _src[1]->Shape();
-                    _dstShape.resize(_src[0]->Count(), 1);
-                    for (size_t i = 0; i < _src[0]->Count(); ++i)
-                        _dstShape[i] = Max(aShape[i], bShape[i]);
-                    if (!(GetSteps(aShape, _dstShape, _aSteps) && GetSteps(bShape, _dstShape, _bSteps)))
-                        SYNET_ERROR("AddLayer has incompatible inputs!");
-                    _universal = GetAddUniversal(_typeA, _typeB, _typeD, _src[0]->Count());
-                    if (_universal == NULL)
-                        SYNET_ERROR("AddLayer can create universal worker!");
                     _special = SpecialUniversal;
-                }
             }
             else if (_src[1]->Size() == 1)
             {
@@ -510,23 +497,7 @@ namespace Synet
             }
             else if (_src[1]->Count() == 2)
             {
-                if (_src[0]->Count() == 4)
-                {
-                    Shape src0 = _src[0]->Shape(), src1 = _src[1]->Shape();
-                    if (!IsCompatible(src0, src1))
-                        SYNET_ERROR("AddnLayer incompatible input shapes!");
-                    _dstShape = OutputShape(src0, src1);
-                    //CompactShapes(src0, src1, _dstShape);
-                    if (_dstShape.size() > 4)
-                        SYNET_ERROR("AddLayer too complicated shape!");
-                    _aSteps = SourceSteps(src0, _dstShape);
-                    _bSteps = SourceSteps(src1, _dstShape);
-                    _universal = GetAddUniversal(_typeA, _typeB, _typeD, _src[0]->Count());
-                    if (_universal == NULL)
-                        SYNET_ERROR("AddLayer can create universal worker!");
-                    _special = SpecialUniversal;
-                }
-                else
+                if (_src[0]->Count() != 4)
                 {
                     _special = SpecialBiasChannelV2;
                     _format = TensorFormatNhwc;
@@ -563,19 +534,6 @@ namespace Synet
                 else
                     SYNET_ERROR("AddLayer can't process inputs with this shape!");
             }
-            else if (_src[0]->Count() == 4 && _src[1]->Count() == 1 && _src[0]->Axis(-1) == _src[1]->Axis(0))
-            {
-                Shape aShape = _src[0]->Shape(), bShape = Shp(1, 1, 1, _src[1]->Axis(0));
-                _dstShape.resize(_src[0]->Count(), 1);
-                for (size_t i = 0; i < _src[0]->Count(); ++i)
-                    _dstShape[i] = Max(aShape[i], bShape[i]);
-                if (!(GetSteps(aShape, _dstShape, _aSteps) && GetSteps(bShape, _dstShape, _bSteps)))
-                    SYNET_ERROR("AddLayer has incompatible inputs!");
-                _universal = GetAddUniversal(_typeA, _typeB, _typeD, _src[0]->Count());
-                if (_universal == NULL)
-                    SYNET_ERROR("AddLayer can create universal worker!");
-                _special = SpecialUniversal;
-            }
             else if (_src[0]->Count() == 2 && _src[1]->Count() == 1)
             {
                 _special = SpecialBiasChannel;
@@ -584,7 +542,8 @@ namespace Synet
                 _spatial = _src[0]->Size() / _channels;
                 _format = _src[0]->Axis(0) == _src[1]->Axis(0) ? TensorFormatNchw : TensorFormatNhwc;
             }
-            else
+
+            if(_special == SpecialUniversal)
             {
                 _dstShape = shapeD;
                 if (!(GetSteps(shapeA, _dstShape, _aSteps) && GetSteps(shapeB, _dstShape, _bSteps)))
@@ -592,11 +551,7 @@ namespace Synet
                 _universal = GetAddUniversal(_typeA, _typeB, _typeD, shapeA.size());
                 if (_universal == NULL)
                     SYNET_ERROR("AddLayer can create universal worker!");
-                _special = SpecialUniversal;
-
-                //SYNET_ERROR("AddLayer can't process inputs with this shape!");
             }
-
             _uniform = GetUniform(_typeA, _typeB, _typeD);
             _addBias = GetAddBias(_typeA, _typeB, _typeD);
             if(_uniform == NULL || _addBias == NULL)
