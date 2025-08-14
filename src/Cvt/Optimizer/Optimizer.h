@@ -174,6 +174,8 @@ namespace Synet
                         continue;
                     if (MergeUnpack4(network.layers(), i, isNhwc, merged, changes))
                         continue;
+                    if (MergeQuantizedShuffleV0(network.layers(), i, merged, changes))
+                        continue;
                     break;
                 }
                 case 5:
@@ -1843,6 +1845,44 @@ namespace Synet
             layer.dst().push_back(src[index + 19].dst()[0]);
             dst.push_back(layer);
             index += 19;
+            return true;
+        }
+
+        bool MergeQuantizedShuffleV0(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+        {
+            if (src.size() < index + 7)
+                return false;
+            if (src[index + 0].type() != LayerTypeDequantizeLinear)
+                return false;
+            if (src[index + 1].type() != LayerTypeDequantizeLinear)
+                return false;
+            if (src[index + 2].type() != LayerTypeConcat || src[index + 2].src().size() != 2)
+                return false;
+            if (src[index + 3].type() != LayerTypeReshape || src[index + 3].reshape().shape().size() != 5)
+                return false;
+            if (src[index + 4].type() != LayerTypePermute)
+                return false;
+            if (src[index + 5].type() != LayerTypeReshape || src[index + 5].reshape().shape().size() != 4)
+                return false;
+            if (src[index + 6].type() != LayerTypeQuantizeLinear)
+                return false;
+            if (src[index + 7].type() != LayerTypeUnpack || src[index + 7].dst().size() != 2)
+                return false;
+            if (InsideLink(src, index, 6, 1))
+                return false;
+            LayerParam layer;
+            layer.type() = LayerTypeQuantizedShuffle;
+            layer.name() = src[index + 0].name();
+            layer.src().push_back(src[index + 0].src()[0]);
+            layer.src().push_back(src[index + 1].src()[0]);
+            layer.qSrc().push_back(src[index + 0].quantize());
+            layer.qSrc().push_back(src[index + 1].quantize());
+            layer.shuffle().type() = 1;
+            layer.dst().push_back(src[index + 7].dst()[0]);
+            layer.dst().push_back(src[index + 7].dst()[1]);
+            layer.qDst().push_back(src[index + 6].quantize());
+            index += 7;
+            dst.push_back(layer);
             return true;
         }
 

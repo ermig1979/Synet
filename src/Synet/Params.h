@@ -79,6 +79,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeQuantizedConvolution,
     LayerTypeQuantizedInnerProduct,
     LayerTypeQuantizedPooling,
+    LayerTypeQuantizedShuffle,
     LayerTypeQuantizeLinear,
     LayerTypeReduction,
     LayerTypeRegion,//legacy

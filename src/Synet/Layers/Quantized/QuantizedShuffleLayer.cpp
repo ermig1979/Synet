@@ -228,7 +228,17 @@ namespace Synet
 
     void QuantizedShuffleLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
-        QuantizedShuffleLayerForwardCpu(src[0]->Data<uint8_t>(), _bias0, _norm0, _srcC0, src[1]->Data<uint8_t>(), _bias1, _norm1, _srcC1,
-            _spatial, src[0]->Data<uint8_t>(), src[1]->Data<uint8_t>(), _scale, _zero, _format, _shuffleType);
+        const uint8_t* src0 = src[0]->Data<uint8_t>();
+        const uint8_t* src1 = src[1]->Data<uint8_t>();
+        uint8_t* dst0 = dst[0]->Data<uint8_t>();
+        uint8_t* dst1 = dst[1]->Data<uint8_t>();
+        for (size_t b = 0; b < _batch; ++b)
+        {
+            QuantizedShuffleLayerForwardCpu(src0, _bias0, _norm0, _srcC0, src1, _bias1, _norm1, _srcC1, _spatial, dst0, dst1, _scale, _zero, _format, _shuffleType);
+            src0 += _srcC0 * _spatial;
+            src1 += _srcC1 * _spatial;
+            dst0 += _dstC * _spatial;
+            dst1 += _dstC * _spatial;
+        }
     }
 }
