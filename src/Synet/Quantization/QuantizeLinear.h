@@ -84,4 +84,11 @@ namespace Synet
                 assert(0);
         }
     }
+
+    //--------------------------------------------------------------------------------------------------
+
+    SYNET_INLINE int DequantizeQuantizeLinear(int value, int bias, float norm, float scale, int zero, int min, int max)
+    {
+        return RestrictRange(NearByInt(float(value + bias) * norm * scale) + zero, min, max);
+    }
 }
