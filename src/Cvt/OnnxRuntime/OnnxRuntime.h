@@ -1468,16 +1468,27 @@ namespace Synet
             return true;
         }
 
-        bool ConvertReduceMeanNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
+        bool ConvertReduceMeanNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer)
         {
             Ints axes;
             if (!ConvertAtrributeInts(node, "axes", axes))
                 return false;
             if (axes == Ints({ 2, 3 }))
             {
-                layer.type() = Synet::LayerTypePooling;
-                layer.pooling().method() = PoolingMethodTypeAverage;
-                layer.pooling().globalPooling() = true;
+                if (GetLayerType(layers, layer.src()[0]) == LayerTypeDequantizeLinear)
+                {
+                    layer.type() = Synet::LayerTypeQuantizedPooling;
+                    layer.pooling().method() = PoolingMethodTypeAverage;
+                    layer.pooling().globalPooling() = true;
+                    if (!MoveDequantizeLinearToLayer(layers, layer))
+                        return false;
+                }
+                else
+                {
+                    layer.type() = Synet::LayerTypePooling;
+                    layer.pooling().method() = PoolingMethodTypeAverage;
+                    layer.pooling().globalPooling() = true;
+                }
             }
             else
             {
