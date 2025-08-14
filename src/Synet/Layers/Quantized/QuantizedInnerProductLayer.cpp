@@ -100,6 +100,15 @@ namespace Synet
         dstShape[_axis] = _N;
         dst[0]->Reshape(_dst8u ? TensorType8u : TensorType32f, dstShape, TensorFormatNchw);
 
+        Tensor& scale = ((Tensors&)this->Weight())[1];
+        if (scale.Size() != _N)
+        {
+            if (scale.Size() == 1)
+                scale.Reshape(TensorType32f, Shp(_N), TensorFormatNchw, scale.Data<float>()[0]);
+            else
+                SYNET_ERROR("QuantizedInnerProductLayer weight[1] has incorrect shape!");
+        }
+
         _quantizedInnerProduct.Init(_M, _N, _K, src[0]->GetType(), src.size() > 1 ? src[1]->GetType() : TensorType8i, dst[0]->GetType(), _transB ? 0 : 1, src.size() == 1, _biasTerm ? 1 : 0);
         if (_quantizedInnerProduct.Enable())
         {
