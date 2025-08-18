@@ -30,41 +30,15 @@
 
 #include "Cvt/Common/Params.h"
 #include "Cvt/Common/SynetUtils.h"
-#include "Cvt/Optimizer/Bf16OptSetter.h"
 
 namespace Synet
 {
     class Optimizer : public SynetUtils
     {
     public:
-        Optimizer(const OptimizerParam& param)
-            : _param(param)
-            , _bf16OptSetter(param.bf16())
-        {
-        }
+        Optimizer(const OptimizerParam& param);
 
-        bool Run(Synet::NetworkParam & network, Bytes & bin)
-        {
-            if (!_bf16OptSetter.Run(network, bin))
-                return false;
-            for (int stage = 0; stage < 10; stage++)
-            {
-                if (!OptimizeLayers(network, bin, stage))
-                    return false;
-            }
-            if (!_bf16OptSetter.Run(network, bin))
-                return false;
-            if (!RemoveStub(network))
-                return false;
-            if (!RemoveUnusedConst(network.layers()))
-                return false;
-            if (_param.reuseLayers())
-            {
-                if (!ReuseLayers(network))
-                    return false;
-            }
-            return true;
-        }
+        bool Run(Synet::NetworkParam& network, Bytes& bin);
 
     private:
         typedef std::vector<Synet::LayerParam> LayerParams;
@@ -74,7 +48,6 @@ namespace Synet
         typedef std::set<String> StringSet;
 
         const OptimizerParam & _param;
-        Bf16OptSetter _bf16OptSetter;
 
         bool OptimizeLayers(Synet::NetworkParam& network, Bytes& bin, int stage)
         {

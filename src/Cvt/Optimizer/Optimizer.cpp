@@ -23,9 +23,41 @@
 */
 
 #include "Cvt/Optimizer/Optimizer.h"
+#include "Cvt/Optimizer/Bf16OptSetter.h"
 
 namespace Synet
 {
+    Optimizer::Optimizer(const OptimizerParam& param)
+        : _param(param)
+    {
+    }
+
+    bool Optimizer::Run(Synet::NetworkParam& network, Bytes& bin)
+    {
+        Bf16OptSetter bf16OptSetter(_param.bf16());
+        if (!bf16OptSetter.Run(network, bin))
+            return false;
+        for (int stage = 0; stage < 10; stage++)
+        {
+            if (!OptimizeLayers(network, bin, stage))
+                return false;
+        }
+        if (!bf16OptSetter.Run(network, bin))
+            return false;
+        if (!RemoveStub(network))
+            return false;
+        if (!RemoveUnusedConst(network.layers()))
+            return false;
+        if (_param.reuseLayers())
+        {
+            if (!ReuseLayers(network))
+                return false;
+        }
+        return true;
+    }
+
+    //--------------------------------------------------------------------------------------------------
+
     bool OptimizeSynetModel(const String& srcXml, const String& srcBin, const String& dstXml, const String & dstBin, const OptimizerParam & param)
     {
         NetworkParamHolder network;

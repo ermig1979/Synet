@@ -17,5 +17,5 @@ add_custom_command(OUTPUT ${ONNX_PB_CC} DEPENDS make_ort
 add_custom_target(make_onnx_pb_cc DEPENDS ${ONNX_PB_CC})
 add_dependencies(CvtOnnx make_ort make_onnx_pb_cc)
 target_sources(CvtOnnx PUBLIC ${ONNX_PB_CC})
-target_link_libraries(CvtOnnx ${ORT_LIBS} -ldl -lpthread)
+target_link_libraries(CvtOnnx ${ORT_LIBS} CvtCore -ldl -lpthread)
 
