@@ -160,9 +160,13 @@ namespace Synet
         _simdPermute = std::make_shared<SimdPermute>();
     }
 
-    bool PermuteLayer::Can16b() const
+    LowPrecisionType PermuteLayer::LowPrecision(TensorType type) const
     {
-        return Options().BFloat16Enable();
+        if (type == TensorType8u)
+            return LowPrecisionTypePassive;
+        if (type == TensorType16b)
+            return LowPrecisionTypePassive;
+        return LowPrecisionTypeNone;
     }
 
     bool PermuteLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
