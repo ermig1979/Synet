@@ -379,7 +379,6 @@ namespace Synet
     struct ConcatParam
     {
         CPL_PARAM_VALUE(int32_t, axis, 1);
-        CPL_PARAM_VALUE(bool, fixed, false);
         CPL_PARAM_VALUE(bool, can8i, true);
     };
 

@@ -363,16 +363,6 @@ namespace Synet
                         }
                     }
                 }
-                layer.concat().fixed() = true;
-                for (size_t i = 0; i < layer.src().size() && layer.concat().fixed(); ++i)
-                {
-                    const LayerParam* src = GetLayer(layers, layer.src()[i]);
-                    if (src == NULL)
-                        return false;
-                    if (src->type() != LayerTypePriorBox &&
-                        src->type() != LayerTypePriorBoxClustered)
-                        layer.concat().fixed() = false;
-                }
             }
             return true;
         }
