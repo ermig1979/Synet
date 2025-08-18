@@ -32,6 +32,9 @@ namespace Synet
     static void QuantizedShuffleLayerForwardCpu(const uint8_t* src0, int bias0, float norm0, size_t srcC0, const uint8_t* src1, int bias1, float norm1, size_t srcC1, 
         size_t spatial, uint8_t* dst0, uint8_t* dst1, float scale, int zero, TensorFormat format, int shuffleType)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        SimdSynetQuantizedShuffleLayerForward(src0, bias0, &norm0, srcC0, src1, bias1, &norm1, srcC1, spatial, dst0, dst1, &scale, zero, (SimdTensorFormatType)format, shuffleType);
+#else
         size_t dstC = (srcC0 + srcC1) / 2;
         switch (shuffleType)
         {
@@ -134,6 +137,7 @@ namespace Synet
             }
             break;
         }
+#endif
     }
 
     //-------------------------------------------------------------------------------------------------
