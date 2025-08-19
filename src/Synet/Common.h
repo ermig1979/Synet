@@ -148,6 +148,8 @@ namespace Synet
     typedef std::vector<Shape> Shapes;
     typedef std::vector<size_t> Index;
     typedef std::vector<uint8_t> Bytes;
+    typedef std::vector<uint8_t*> BytePtrs;
+    typedef std::vector<const uint8_t*> ByteConstPtrs;
     typedef std::vector<int> Ints;
     typedef std::vector<int64_t> Longs;
     typedef std::vector<uint64_t> ULongs;
