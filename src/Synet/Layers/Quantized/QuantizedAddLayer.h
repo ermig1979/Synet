@@ -39,6 +39,8 @@ namespace Synet
 
         virtual int64_t Flop() const;
 
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
+
         typedef void (*UniformPtr)(const uint8_t *a, int aBias, float aNorm, const uint8_t* b, int bBias, float bNorm, size_t size, float * params, float scale, int zero, uint8_t* dst);
 
     protected:

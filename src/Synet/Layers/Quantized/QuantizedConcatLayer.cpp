@@ -31,6 +31,9 @@ namespace Synet
 {
     static void QuantizedConcatLayerForward(size_t count, const uint8_t ** src, size_t num, const size_t *size, const int32_t *bias, const float * norm, float scale, int32_t zero, uint8_t * dst)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        SimdSynetQuantizedConcatLayerForward(count, src, num, size, bias, norm, &scale, zero, dst);
+#else
         for (size_t o = 0; o < num; ++o)
         {
             for (size_t s = 0; s < count; ++s)
@@ -42,10 +45,8 @@ namespace Synet
                 dst += _size;
             }
         }
+#endif   
     }
-
-#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-#endif
 
     //-------------------------------------------------------------------------------------------------
 
@@ -59,6 +60,13 @@ namespace Synet
         if (_const)
             return 0;
         return _outputSize * _dstSize * 4;
+    }
+
+    LowPrecisionType QuantizedConcatLayer::LowPrecision(TensorType type) const
+    {
+        if (type == TensorType8u)
+            return LowPrecisionTypeActive;
+        return LowPrecisionTypeNone;
     }
 
     bool QuantizedConcatLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)

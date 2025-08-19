@@ -72,6 +72,13 @@ namespace Synet
         return _size * (_dstType == TensorType8u ? 7 : 5);
     }
 
+    LowPrecisionType QuantizedAddLayer::LowPrecision(TensorType type) const
+    {
+        if (type == TensorType8u)
+            return LowPrecisionTypeActive;
+        return LowPrecisionTypeNone;
+    }
+
     bool QuantizedAddLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (src.size() != 2 || dst.size() != 1)

@@ -154,6 +154,13 @@ namespace Synet
         return _batch * _dstC * _spatial * 4;
     }
 
+    LowPrecisionType QuantizedShuffleLayer::LowPrecision(TensorType type) const
+    {
+        if (type == TensorType8u)
+            return LowPrecisionTypeActive;
+        return LowPrecisionTypeNone;
+    }
+
     bool QuantizedShuffleLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (src.size() != 2 || dst.size() != 2)
