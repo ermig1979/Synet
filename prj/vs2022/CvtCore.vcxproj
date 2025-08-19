@@ -26,6 +26,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\Cvt\Deoptimizer\Deoptimizer.cpp" />
     <ClCompile Include="..\..\src\Cvt\InferenceEngine\InferenceEngine.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantized.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\Optimizer.cpp" />
     <ClInclude Include="..\..\src\Cvt\Common\Params.h" />
     <ClInclude Include="..\..\src\Cvt\Common\SynetUtils.h" />
@@ -34,6 +35,7 @@
     <ClInclude Include="..\..\src\Cvt\InferenceEngine\InferenceEngineBase.h" />
     <ClInclude Include="..\..\src\Cvt\InferenceEngine\InferenceEngineV10.h" />
     <ClInclude Include="..\..\src\Cvt\Optimizer\Bf16OptSetter.h" />
+    <ClInclude Include="..\..\src\Cvt\Optimizer\Common.h" />
     <ClInclude Include="..\..\src\Cvt\Optimizer\Optimizer.h" />
   </ItemGroup>
   <ItemGroup>

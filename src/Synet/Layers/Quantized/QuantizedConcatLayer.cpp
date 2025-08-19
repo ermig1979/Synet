@@ -80,6 +80,7 @@ namespace Synet
         _outputSize = src[0]->Size(0, axis);
         Shape dstShape = src[0]->Shape();
         dstShape[axis] = 0;
+        _dstSize = 0;
         _const = true;
         for (size_t i = 0; i < num; ++i)
         {

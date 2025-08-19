@@ -30,6 +30,7 @@
 
 #include "Cvt/Common/Params.h"
 #include "Cvt/Common/SynetUtils.h"
+#include "Cvt/Optimizer/Common.h"
 
 namespace Synet
 {
@@ -41,178 +42,9 @@ namespace Synet
         bool Run(Synet::NetworkParam& network, Bytes& bin);
 
     private:
-        typedef std::vector<Synet::LayerParam> LayerParams;
-        typedef std::pair<String, String> Change;
-        typedef std::vector<Change> Changes;
-        typedef std::vector<LayerType> LayerTypes;
-        typedef std::set<String> StringSet;
-
         const OptimizerParam & _param;
 
-        bool OptimizeLayers(Synet::NetworkParam& network, Bytes& bin, int stage)
-        {
-            QuantizationMethod method = network.quantization().method();
-            const bool is8i = network.quantization().method() != QuantizationMethodUnknown;
-            const bool isNhwc = IsNnwc(network);
-            Changes changes;
-            LayerParams merged;
-            Bytes buf;
-            for (size_t i = 0; i < network.layers().size(); ++i)
-            {
-                switch (stage)
-                {
-                case 0:
-                {
-                    if (ReduceTensorIteratorIO(network.layers(), i, bin, buf, merged))
-                        continue;
-                    break;
-                }
-                case 1:
-                {
-                    if (TransposeInnerProduct(network.layers(), i, bin, buf, merged))
-                        continue;
-                    break;
-                }
-                case 2:
-                {
-                    if (MergeCurrentAndBias(network.layers(), i, bin, merged, changes))
-                        continue;
-                    break;
-                }
-                case 3:
-                {
-                    if (MergePowerAndScaleAndPower(network.layers(), i, bin, buf, merged, changes))
-                        continue;
-                    if (MergeBiasAndScale(network.layers(), i, bin, buf, merged, changes))
-                        continue;
-                    if (MergeConvolutionAndScale(network.layers(), i, bin, buf, merged, changes))
-                        continue;
-                    if (MergeConvolutionAndPower(network.layers(), i, bin, buf, merged, changes))
-                        continue;
-                    if (MergeInnerProductAndPower(network.layers(), i, bin, buf, merged, changes))
-                        continue;
-                    if (MergeInnerProductAndScale(network.layers(), i, bin, buf, merged, changes))
-                        continue;
-                    if (SimplifyInterp(network.layers(), i, merged, changes))
-                        continue;
-                    break;
-                }
-                case 4:
-                {
-                    if (MergeHswish(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeHswishV2(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeMish(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergePrelu0(network.layers(), i, bin, merged, changes))
-                        continue;
-                    if (MergePrelu1(network.layers(), i, bin, buf, merged, changes))
-                        continue;
-                    if (MergeShuffle0(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeShuffle1(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeShuffle2(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeShuffle3(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeShuffle3cut(network.layers(), i, isNhwc, merged, changes))
-                        continue;
-                    if (MergeShuffle4(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeSoftmax(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergePermute(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergePooling(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeSpaceToDepth(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeSwish(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeNormalize(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeNormalizeV2(network.layers(), i, isNhwc, merged, changes))
-                        continue;
-                    if (MergeNormalizeV4(network.layers(), i, isNhwc, merged, changes))
-                        continue;
-                    if (MergeNormalizeV5(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeGelu(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeScale(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeTiledScale2D(network.layers(), i, merged, changes))
-                        continue;
-                    if (MergeUnpack4(network.layers(), i, isNhwc, merged, changes))
-                        continue;
-                    if (MergeQuantizedShuffleV0(network.layers(), i, merged, changes))
-                        continue;
-                    break;
-                }
-                case 5:
-                {
-                    if (MergePowerAndScaleAndPower(network.layers(), i, bin, buf, merged, changes))
-                        continue;
-                    if (MergeConvolutionOrOtherAndActivation(network.layers(), i, method, merged, changes))
-                        continue;
-                    if (MergeRnnGruBd(network.layers(), i, merged, changes))
-                        continue;
-                    break;
-                }
-                case 6:
-                {
-                    if (_param.convToNhwc() && isNhwc && TransposeConvolutions(network.layers(), i, bin, buf, merged, changes))
-                        continue;
-                    if (MergeOtherAndQuantizeLinear(network.layers(), i, method, merged, changes))
-                        continue;
-                    if (SkipUnnecessaryDequantizeQuantize(network.layers(), i, method, merged, changes))
-                        continue;
-                    if (SkipUnnecessaryDequantize(network.layers(), i, method, merged, changes))
-                        continue;
-                    break;
-                }
-                case 7:
-                {
-                    if (MergeThreeConvolutions(network.layers(), i, method, merged, changes))
-                        continue;
-                    if (MergeSqueezeExcitation(network.layers(), i, merged, changes))
-                        continue;
-                    if (_param.skipPermute() && SkipTwoPermutes(network.layers(), i, merged))
-                        continue;
-                    break;
-                }
-                case 8:
-                {
-                    if (MergeTwoConvolutions(network.layers(), i, method, merged, changes))
-                        continue;
-                    break;
-                }
-                case 9:
-                {
-                    if (MergeParallelConvolutions(network.layers(), i, bin, buf, merged, changes))
-                        continue;
-                    if (MergeYoloV7(network.layers(), i, merged, changes))
-                        continue;
-                    //if (MergeParallelScaleAndDepthwiseConvolution(network.layers(), i, bin, buf, merged, changes))
-                    //    continue;
-                    if (MergeParallelDepthwiseConvolutions(network.layers(), i, bin, buf, merged, changes))
-                        continue;
-                    break;
-                }
-                default:
-                    assert(0);
-                    return false;
-                }
-                merged.push_back(network.layers()[i]);
-            }
-            Rename(changes, merged);
-            network.layers() = merged;
-            if (buf.size())
-                bin.swap(buf);
-            return true;
-        }
+        bool OptimizeLayers(Synet::NetworkParam& network, Bytes& bin, int stage);
 
         bool ReduceTensorIteratorIO(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst)
         {
@@ -877,50 +709,6 @@ namespace Synet
             other.dst() = ql.dst();
 #endif
             other.qDst().push_back(ql.quantize());
-            return true;
-        }
-
-        bool SkipUnnecessaryDequantizeQuantize(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes)
-        {
-            if (src.size() < index + 3)
-                return false;
-            const LayerParam& dl = src[index + 0];
-            LayerParam layer = src[index + 1];
-            const LayerParam& ql = src[index + 2];
-            if (dl.type() != LayerTypeDequantizeLinear)
-                return false;
-            if (layer.type() != LayerTypeFlatten && 
-                (layer.type() != LayerTypePooling || layer.pooling().method() != PoolingMethodTypeMax))
-                return false;
-            if (ql.type() != LayerTypeQuantizeLinear)
-                return false;
-            if (dl.quantize().scale() != ql.quantize().scale() ||
-                dl.quantize().zero() != ql.quantize().zero())
-                return false;
-            if (InsideLink(src, index, 3))
-                return false;
-            layer.src() = dl.src();
-            layer.dst() = ql.dst();
-            dst.push_back(layer);
-            index += 2;
-            return true;
-        }
-
-        bool SkipUnnecessaryDequantize(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes)
-        {
-            if (src.size() < index + 2)
-                return false;
-            const LayerParam& dl = src[index + 0];
-            LayerParam layer = src[index + 1];
-            if (dl.type() != LayerTypeDequantizeLinear)
-                return false;
-            if (layer.type() != LayerTypeMeta && layer.meta().type() != MetaTypeShape)
-                return false;
-            if (InsideLink(src, index, 2))
-                return false;
-            layer.src() = dl.src();
-            dst.push_back(layer);
-            index += 1;
             return true;
         }
 
@@ -1821,44 +1609,6 @@ namespace Synet
             return true;
         }
 
-        bool MergeQuantizedShuffleV0(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
-        {
-            if (src.size() < index + 7)
-                return false;
-            if (src[index + 0].type() != LayerTypeDequantizeLinear)
-                return false;
-            if (src[index + 1].type() != LayerTypeDequantizeLinear)
-                return false;
-            if (src[index + 2].type() != LayerTypeConcat || src[index + 2].src().size() != 2)
-                return false;
-            if (src[index + 3].type() != LayerTypeReshape || src[index + 3].reshape().shape().size() != 5)
-                return false;
-            if (src[index + 4].type() != LayerTypePermute)
-                return false;
-            if (src[index + 5].type() != LayerTypeReshape || src[index + 5].reshape().shape().size() != 4)
-                return false;
-            if (src[index + 6].type() != LayerTypeQuantizeLinear)
-                return false;
-            if (src[index + 7].type() != LayerTypeUnpack || src[index + 7].dst().size() != 2)
-                return false;
-            if (InsideLink(src, index, 6, 1))
-                return false;
-            LayerParam layer;
-            layer.type() = LayerTypeQuantizedShuffle;
-            layer.name() = src[index + 0].name();
-            layer.src().push_back(src[index + 0].src()[0]);
-            layer.src().push_back(src[index + 1].src()[0]);
-            layer.qSrc().push_back(src[index + 0].quantize());
-            layer.qSrc().push_back(src[index + 1].quantize());
-            layer.shuffle().type() = 1;
-            layer.dst().push_back(src[index + 7].dst()[0]);
-            layer.dst().push_back(src[index + 7].dst()[1]);
-            layer.qDst().push_back(src[index + 6].quantize());
-            index += 7;
-            dst.push_back(layer);
-            return true;
-        }
-
         bool MergeRnnGruBd(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)       
         {
             const size_t RNN_GRU_BD_SIZE = 19;
@@ -2364,28 +2114,6 @@ namespace Synet
                     return src1->weight().data() + 0;
             }
             return NULL;
-        }
-
-        bool InsideLink(const LayerParams & src, size_t start, size_t count, size_t skip = 0, const LayerTypes & ignored = LayerTypes()) const
-        {
-            for (size_t i = start + count + skip; i < src.size(); ++i)
-            {
-                bool ignore = false;
-                for (size_t j = 0; j < ignored.size(); ++j)
-                    if (src[i].type() == ignored[j])
-                        ignore = true;
-                if (ignore)
-                    continue;
-                for (size_t j = 0; j < src[i].src().size(); ++j)
-                {
-                    for (size_t k = 0; k < count - 1; ++k)
-                    {
-                        if (src[i].src()[j] == src[start + k].name())
-                            return true;
-                    }
-                }
-            }
-            return false;
         }
 
         bool Rename(const Change & change, LayerParams & layers)
