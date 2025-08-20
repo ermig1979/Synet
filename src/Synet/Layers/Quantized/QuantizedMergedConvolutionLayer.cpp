@@ -55,7 +55,8 @@ namespace Synet
     void QuantizedMergedConvolutionLayer::CompactWeight()
     {
         //if (_quantizedMergedConvolution.Enable())
-        //    ((Tensor&)this->Weight()[0]).Clear();
+        //  for(size_t i = 0; i < a.count; ++i)
+        //      ((Tensor&)this->Weight()[_index[i]]).Clear();
     }
 
     LowPrecisionType QuantizedMergedConvolutionLayer::LowPrecision(TensorType type) const
@@ -68,10 +69,84 @@ namespace Synet
     bool QuantizedMergedConvolutionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (src.size() != 1 || dst.size() != 1)
-            SYNET_ERROR("QuantizedConvolutionLayer supports only 1 input and 1 output!");
+            SYNET_ERROR("QuantizedMergedConvolutionLayer supports only 1 input and 1 output!");
+        if (src[0]->Count() != 4 || src[0]->GetType() != TensorType8u || src[0]->Format() != TensorFormatNhwc)
+            SYNET_ERROR("QuantizedMergedConvolutionLayer supports only 4D UINT8 NHWC tensors!");
 
-        const LayerParam& param = this->Param();
-        //const ConvolutionParam& conv = param.convolution();
+        const LayerParam& p = this->Param();
+        const MergedConvolutionParam& mc = p.mergedConvolution();
+        const ConvolutionParam* conv = mc.conv().data();
+        const Tensors& weight = this->Weight();
+
+        _count = mc.conv().size();
+        if (_count < 2 && _count > 3)
+            SYNET_ERROR("QuantizedMergedConvolutionLayer supports only 2 or 3 merged convolutions!");
+
+        size_t qn = 0;
+        for (size_t i = 0; i < _count; ++i)
+            qn += conv[i].biasTerm() ? 3 : 2;
+        if(qn != p.qSrc().size())
+            SYNET_ERROR("QuantizedMergedConvolutionLayer has wrong number of input quantization parameters!");
+
+        size_t wn = 0;
+        for (size_t i = 0; i < p.qSrc().size(); ++i)
+            wn += p.qSrc()[i].weights();
+        if (wn != weight.size())
+            SYNET_ERROR("QuantizedMergedConvolutionLayer has wrong number of weights!");
+
+        for (size_t i = 0, nextW = 0, nextQ = 0; i < _count; ++i)
+        {
+            _indexQ[i] = nextQ;
+            _indexW[i] = nextW;
+
+            if (!_conv[i].Set(conv[i]))
+                SYNET_ERROR("QuantizedMergedConvolutionLayer: check " << i << " convolution parameter!");
+            if (i)
+                _conv[i].Set(_conv[i - 1], true, conv[i].autoPad());
+            else
+                _conv[i].Set(*src[0], *dst[0], true, conv[i].autoPad());
+
+            const QuantizeParam& qS = p.qSrc()[nextQ++];
+            if (qS.weights() != 0)
+                SYNET_ERROR("QuantizedMergedConvolutionLayer supports only uniform quantization (check " << nextQ - 1 << " parameter) !");
+            int srcZero = qS.zero();
+
+            const Tensor& w = weight[nextW];
+            if (w.Shape() != _conv[i].WeightShape(true, true) || w.Format() != src[0]->Format())
+                SYNET_ERROR("QuantizedMergedConvolutionLayer: check weight[" << nextW << "] size or format!");
+            size_t K = w.Size(0, 3), M = w.Size(3, 4);
+            _weight[i] = w.Data<int8_t>();
+            const QuantizeParam& qW = p.qSrc()[nextQ++];
+            nextW += qW.weights();
+
+            _bias[i] = conv[i].biasTerm();
+            _bias32i[i].Reshape(TensorType32i, Shp(conv[i].outputNum()), TensorFormatNchw, int32_t(0));
+            _srcZero8u[i].Reshape(TensorType8u, Shp(_conv[i].srcC), TensorFormatNchw, uint8_t(srcZero));
+            const int8_t* pw = w.Data<int8_t>();
+            int32_t* pb = _bias32i[i].Data<int32_t>();
+            for (size_t i = 0; i < M; ++i)
+            {
+                pb[i] = 0;
+                for (size_t k = 0; k < K; ++k)
+                    pb[i] -= pw[k * M + i] * srcZero;
+            }
+            if (_bias[i])
+            {
+                const QuantizeParam& qB = p.qSrc()[nextQ++];
+                const Tensor& b = weight[nextW++];
+                if (b.Size() != _conv[i].dstC)
+                    SYNET_ERROR("QuantizedMergedConvolutionLayer has wrong bias[" << i << "] (weight[" << nextW - 1 << "]) size!");
+                const int32_t* pw = b.Data<int32_t>();
+                for (size_t i = 0; i < M; ++i)
+                    pb[i] += pw[i];
+            }
+
+            _params[i][0] = conv[i].activationParam0();
+            _params[i][1] = conv[i].activationParam1();
+        }
+
+        if (p.qDst().size() != 1 || p.qDst()[0].weights() != 0)
+            SYNET_ERROR("QuantizedMergedConvolutionLayer supports only uniform output quantization!");
 
         //_conv.Set(conv);
         //_conv.Set(*src[0], *dst[0], true, conv.autoPad());
@@ -226,12 +301,6 @@ namespace Synet
         //        }
         //    }
         //}
-
-        if (param.qDst().size())
-        {
-            if (param.qDst()[0].weights() != 0)
-                SYNET_ERROR("QuantizedMergedConvolutionLayer supports only uniform output quantization!");
-        }
 
         return true;
     }

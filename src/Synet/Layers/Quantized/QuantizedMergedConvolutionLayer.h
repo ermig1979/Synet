@@ -55,8 +55,13 @@ namespace Synet
     protected:
         static const size_t COUNT_MAX = 3;
         size_t _count, _batch;
+        size_t  _indexQ[COUNT_MAX], _indexW[COUNT_MAX];
         ConvParam _conv[COUNT_MAX];
         bool _bias[COUNT_MAX];
+        float _params[COUNT_MAX][2];
+        const int8_t* _weight[COUNT_MAX];
+        Tensor _srcZero8u[COUNT_MAX], _bias32i[COUNT_MAX], _norm32f[COUNT_MAX];
+        //const float* weight[Detail::MCC_MAX], * bias[Detail::MCC_MAX]
         //struct AlgParam
         //{
         //    int is1x1, bias, trans, internal;
