@@ -55,8 +55,8 @@ namespace Synet
     void QuantizedMergedConvolutionLayer::CompactWeight()
     {
         //if (_quantizedMergedConvolution.Enable())
-        //  for(size_t i = 0; i < a.count; ++i)
-        //      ((Tensor&)this->Weight()[_index[i]]).Clear();
+        //  for(size_t c = 0; c < _count; ++c)
+        //      ((Tensor&)this->Weight()[_indexW[c]]).Clear();
     }
 
     LowPrecisionType QuantizedMergedConvolutionLayer::LowPrecision(TensorType type) const
@@ -78,6 +78,7 @@ namespace Synet
         const ConvolutionParam* conv = mc.conv().data();
         const Tensors& weight = this->Weight();
 
+        _batch = src[0]->Axis(0);
         _count = mc.conv().size();
         if (_count < 2 && _count > 3)
             SYNET_ERROR("QuantizedMergedConvolutionLayer supports only 2 or 3 merged convolutions!");
@@ -94,75 +95,107 @@ namespace Synet
         if (wn != weight.size())
             SYNET_ERROR("QuantizedMergedConvolutionLayer has wrong number of weights!");
 
-        for (size_t i = 0, nextW = 0, nextQ = 0; i < _count; ++i)
-        {
-            _indexQ[i] = nextQ;
-            _indexW[i] = nextW;
+        if (p.qDst().size() != 1 || p.qDst()[0].weights() != 0)
+            SYNET_ERROR("QuantizedMergedConvolutionLayer supports only uniform output quantization!");
 
-            if (!_conv[i].Set(conv[i]))
-                SYNET_ERROR("QuantizedMergedConvolutionLayer: check " << i << " convolution parameter!");
-            if (i)
-                _conv[i].Set(_conv[i - 1], true, conv[i].autoPad());
+        for (size_t c = 0, nextW = 0, nextQ = 0; c < _count; ++c)
+        {
+            _indexQ[c] = nextQ;
+            _indexW[c] = nextW;
+
+            if (!_conv[c].Set(conv[c]))
+                SYNET_ERROR("QuantizedMergedConvolutionLayer: check " << c << " convolution parameter!");
+            if (c)
+                _conv[c].Set(_conv[c - 1], true, conv[c].autoPad());
             else
-                _conv[i].Set(*src[0], *dst[0], true, conv[i].autoPad());
+                _conv[c].Set(*src[0], *dst[0], true, conv[c].autoPad());
 
             const QuantizeParam& qS = p.qSrc()[nextQ++];
             if (qS.weights() != 0)
                 SYNET_ERROR("QuantizedMergedConvolutionLayer supports only uniform quantization (check " << nextQ - 1 << " parameter) !");
-            int srcZero = qS.zero();
 
             const Tensor& w = weight[nextW];
-            if (w.Shape() != _conv[i].WeightShape(true, true) || w.Format() != src[0]->Format())
-                SYNET_ERROR("QuantizedMergedConvolutionLayer: check weight[" << nextW << "] size or format!");
+            if (w.Shape() != _conv[c].WeightShape(true, true) || w.Format() != src[0]->Format() || w.GetType() != TensorType8i)
+                SYNET_ERROR("QuantizedMergedConvolutionLayer: check weight[" << nextW << "] size, format or type!");
             size_t K = w.Size(0, 3), M = w.Size(3, 4);
-            _weight[i] = w.Data<int8_t>();
+            _weight[c] = w.Data<int8_t>();
             const QuantizeParam& qW = p.qSrc()[nextQ++];
             nextW += qW.weights();
 
-            _bias[i] = conv[i].biasTerm();
-            _bias32i[i].Reshape(TensorType32i, Shp(conv[i].outputNum()), TensorFormatNchw, int32_t(0));
-            _srcZero8u[i].Reshape(TensorType8u, Shp(_conv[i].srcC), TensorFormatNchw, uint8_t(srcZero));
-            const int8_t* pw = w.Data<int8_t>();
-            int32_t* pb = _bias32i[i].Data<int32_t>();
-            for (size_t i = 0; i < M; ++i)
+            _bias[c] = conv[c].biasTerm();
+            if (_bias[c])
             {
-                pb[i] = 0;
-                for (size_t k = 0; k < K; ++k)
-                    pb[i] -= pw[k * M + i] * srcZero;
-            }
-            if (_bias[i])
-            {
-                const QuantizeParam& qB = p.qSrc()[nextQ++];
                 const Tensor& b = weight[nextW++];
-                if (b.Size() != _conv[i].dstC)
-                    SYNET_ERROR("QuantizedMergedConvolutionLayer has wrong bias[" << i << "] (weight[" << nextW - 1 << "]) size!");
-                const int32_t* pw = b.Data<int32_t>();
-                for (size_t i = 0; i < M; ++i)
-                    pb[i] += pw[i];
+                if (b.Size() != M || b.GetType() != TensorType32i)
+                    SYNET_ERROR("QuantizedMergedConvolutionLayer has wrong bias[" << c << "] (weight[" << nextW - 1 << "]) size or type!");
             }
 
-            _params[i][0] = conv[i].activationParam0();
-            _params[i][1] = conv[i].activationParam1();
+            _params[c][0] = conv[c].activationParam0();
+            _params[c][1] = conv[c].activationParam1();
+
+            const Tensor& s = weight[_indexW[c] + 1];
+            if (s.Size() != M || s.GetType() != TensorType32f)
+                SYNET_ERROR("QuantizedMergedConvolutionLayer has wrong scale[" << c << "] (weight[" << _indexW[c] + 1 << "]) size or type!");
         }
 
-        if (p.qDst().size() != 1 || p.qDst()[0].weights() != 0)
-            SYNET_ERROR("QuantizedMergedConvolutionLayer supports only uniform output quantization!");
+        const ConvParam& back = _conv[_count - 1];
+        dst[0]->Reshape(TensorType8u, back.DstShape(_batch), src[0]->Format());
 
-        //_conv.Set(conv);
-        //_conv.Set(*src[0], *dst[0], true, conv.autoPad());
-        //_src8u = src[0]->GetType() == TensorType8u;
-        //_dst8u = param.qDst().size() && param.qDst()[0].type() == TensorType8u;
-        //_conv.dstT = _dst8u ? TensorType8u : TensorType32f;
-        //if (src[0]->Count() != 4)
-        //    SYNET_ERROR("QuantizedConvolutionLayer supports only 4D tensors!");
+        _srcS = src[0]->Size(1);
+        _dstS = dst[0]->Size(1);
 
-        //_alg.params[0] = conv.activationParam0();
-        //_alg.params[1] = conv.activationParam1();
+        _add = _count == 3 && mc.add() ? 1 : 0;
+        if (_add)
+        {
+            if (_srcS != _dstS)
+                SYNET_ERROR("QuantizedMergedConvolutionLayer with add=1 parameter must have input and output of the same size!");
+        }
 
-        //_alg.is1x1 = _conv.Is1x1() ? 1 : 0;
-        //_alg.bias = conv.biasTerm() ? 1 : 0;
-        //_alg.batch = src[0]->Axis(0);
-        //_alg.trans = _conv.Trans();
+        {
+            for (size_t c = 0; c < _count; ++c)
+            {
+                size_t iQ = _indexQ[c], iW = _indexW[c];
+
+                const QuantizeParam& qS = p.qSrc()[iQ + 0];
+                const QuantizeParam& qD = c + 1 < _count ? p.qSrc()[_indexQ[c + 1]] : p.qDst()[0];
+                int srcZero = qS.zero(), dstZero = qD.zero();
+                float srcScale = (float)qS.scale(), dstScale = float(qD.scale());
+
+                const Tensor& w = weight[iW];
+                size_t K = w.Size(0, 3), M = w.Size(3, 4);
+
+                _bias32i[c].Reshape(TensorType32i, Shp(M), TensorFormatNchw, int32_t(0));
+                _srcZero8u[c].Reshape(TensorType8u, Shp(_conv[c].srcC), TensorFormatNchw, uint8_t(srcZero));
+                const int8_t* pw = w.Data<int8_t>();
+                int32_t* pb = _bias32i[c].Data<int32_t>();
+                for (size_t i = 0; i < M; ++i)
+                {
+                    pb[i] = 0;
+                    for (size_t k = 0; k < K; ++k)
+                        pb[i] -= pw[k * M + i] * srcZero;
+                }
+                if (_bias[c])
+                {
+                    const QuantizeParam& qW = p.qSrc()[iQ + 1];
+                    const Tensor& b = weight[iW + qW.weights()];
+                    const int32_t* pw = b.Data<int32_t>();
+                    for (size_t i = 0; i < M; ++i)
+                        pb[i] += pw[i];
+                }
+
+                _norm32f[c].Reshape(TensorType32f, Shp(M), TensorFormatNchw, float(0));
+                const float* ps = weight[iW + 1].Data<float>();
+                float* pn = _norm32f[c].Data<float>();
+                for (size_t i = 0; i < M; ++i)
+                    pn[i] = ps[i] * srcScale / dstScale;
+
+                Layer::Extend32i(buf, 0, _conv[c].DstShape(1));
+                if(c + 1 < _count)
+                    Layer::Extend8u(buf, 0, _conv[c].DstShape(1));
+            }
+        }
+
+
         //if (_alg.trans)
         //{
         //    _alg.siW = _conv.srcC * _conv.kernelY * _conv.kernelX / _conv.group;
@@ -176,20 +209,6 @@ namespace Synet
         //    _alg.siD = _conv.dstC / _conv.group;
         //    _alg.ldD = _conv.dstC;
         //    _alg.grD = _alg.siD;
-        //}
-        //else
-        //{
-        //    _alg.siW = _conv.srcC * _conv.kernelY * _conv.kernelX / _conv.group;
-        //    _alg.ldW = _alg.siW;
-        //    _alg.grW = _conv.dstC * _alg.siW / _conv.group;
-
-        //    _alg.siS = _conv.dstH * _conv.dstW;
-        //    _alg.ldS = _alg.siS;
-        //    _alg.grS = _alg.siS * _alg.siW;
-
-        //    _alg.siD = _conv.dstC / _conv.group;
-        //    _alg.ldD = _conv.dstH * _conv.dstW;
-        //    _alg.grD = _alg.siD * _alg.siS;
         //}
 
         //dst[0]->Reshape(_dst8u ? TensorType8u: TensorType32f, _conv.DstShape(_alg.batch), src[0]->Format());
@@ -211,8 +230,6 @@ namespace Synet
         //}
         //else
         {
-            if (!(Compartible() && InitParams()))
-                return false;
             //if (!_src8u)
             //    Layer::Extend8u(buf, 0, _conv.SrcShape(1));
             //if (!_conv.Is1x1())
@@ -231,161 +248,6 @@ namespace Synet
         //    desc << " " << _quantizedMergedConvolution.Info();
         this->UsePerfStat(desc.str(), Flop()); 
 
-        return true;
-    }
-
-    bool QuantizedMergedConvolutionLayer::Compartible() const
-    {
-        const LayerParam& param = this->Param();
-        const Tensors& weight = this->Weight();
-
-        //if(param.qSrc().size() < 2)
-        //    SYNET_ERROR("QuantizedConvolutionLayer must have at least 2 input dequantizers!");
-        //if (param.qSrc()[0].weights() != 0)
-        //    SYNET_ERROR("QuantizedConvolutionLayer supports only uniform input quantization!");
-        //if (param.qSrc()[1].weights() < 2 || weight.size() < param.qSrc()[1].weights())
-        //    SYNET_ERROR("QuantizedConvolutionLayer: check weight or dequantizers!");
-        //if (weight[0].GetType() != TensorType8i)
-        //    SYNET_ERROR("QuantizedConvolutionLayer supports only INT8 weight!");
-        //bool weightZeroZero = true;
-        //if (param.qSrc()[1].weights() == 2)
-        //{
-        //    if(param.qSrc()[1].type() != TensorType8i)
-        //        SYNET_ERROR("QuantizedConvolutionLayer supports only INT8 weight!");
-        //    weightZeroZero = param.qSrc()[1].zero() == 0;
-        //}
-        //else
-        //{
-        //    if (weight[2].GetType() != TensorType8i)
-        //        SYNET_ERROR("QuantizedConvolutionLayer supports only INT8 weight!");
-        //    for (size_t i = 0, n = weight[2].Size(); i < n && weightZeroZero; ++i)
-        //        weightZeroZero = weight[2].Data<int8_t>()[i] == 0;
-        //}
-        //if(!weightZeroZero)
-        //    SYNET_ERROR("QuantizedConvolutionLayer supports only weight 'zero' == 0!");
-
-        //if (_alg.bias)
-        //{
-        //    if (param.qSrc().size() != 3)
-        //        SYNET_ERROR("QuantizedConvolutionLayer must have 3 input dequantizers for when uses bias!");
-        //    int biasStart = param.qSrc()[1].weights();
-        //    bool biasZeroZero = true;
-        //    if (param.qSrc()[2].weights() < 3)
-        //    {
-        //        if (param.qSrc()[2].type() != TensorType32i)
-        //            SYNET_ERROR("QuantizedConvolutionLayer supports only INT32 bias!");
-        //        biasZeroZero = param.qSrc()[2].zero() == 0;
-        //    }
-        //    else
-        //    {
-        //        if (weight[biasStart + 2].GetType() != TensorType32i)
-        //            SYNET_ERROR("QuantizedConvolutionLayer supports only INT32 bias!");
-        //        for (size_t i = 0, n = weight[biasStart + 2].Size(); i < n && biasZeroZero; ++i)
-        //            biasZeroZero = weight[biasStart + 2].Data<int32_t>()[i] == 0;
-        //    }
-        //    if (!biasZeroZero)
-        //        SYNET_ERROR("QuantizedConvolutionLayer supports only bias 'zero' == 0!");
-
-        //    if (weight[0].Count() != 4 || weight[0].GetType() != TensorType8i)
-        //        SYNET_ERROR("QuantizedConvolutionLayer: weight[0] must be 4D int8 tensor!");
-        //    if (param.qSrc()[2].weights() > 1)
-        //    {
-        //        bool equalScale = true;
-        //        if (weight[1].Count() != 1 || weight[biasStart + 1].Count() != 1 || weight[1].Axis(0) != weight[biasStart + 1].Axis(0))
-        //            SYNET_ERROR("QuantizedConvolutionLayer: weight scale (weight[1]) must the same size as bias scale (weight[" << biasStart + 1 << "]) !");
-        //        float srcScale = (float)param.qSrc()[0].scale();
-        //        for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
-        //        {
-        //            if (::fabs(weight[1].Data<float>()[i] * srcScale - weight[biasStart + 1].Data<float>()[i]) > 0.000001)
-        //                SYNET_ERROR("QuantizedConvolutionLayer: weight scale (weight[1]) and bias scale (weight[" << biasStart + 1 << "]) are not compartible!");
-        //        }
-        //    }
-        //}
-
-        return true;
-    }
-
-    bool QuantizedMergedConvolutionLayer::InitParams()
-    {
-        const LayerParam& param = this->Param();
-        const Tensors& weight = this->Weight();
-        //int srcZero = param.qSrc()[0].zero();
-        //_srcZero8u.Reshape(TensorType8u, Shp(_conv.srcC), TensorFormatNchw, uint8_t(srcZero));
-        //_bias32i.Reshape(TensorType32i, Shp(weight[1].Size()), TensorFormatNchw, int32_t(0));
-        //if (weight[0].Format() == TensorFormatNhwc)
-        //{
-        //    size_t K = weight[0].Size(0, 3), M = weight[0].Size(3, 4);
-        //    const int8_t* pw = weight[0].Data<int8_t>();
-        //    int32_t* pb = _bias32i.Data<int32_t>();
-        //    for (size_t i = 0; i < M; ++i)
-        //    {
-        //        pb[i] = 0;
-        //        for (size_t k = 0; k < K; ++k)
-        //            pb[i] -= pw[k * M + i] * srcZero;
-        //    }
-        //    if (_alg.bias)
-        //    {
-        //        int biasStart = param.qSrc()[1].weights();
-        //        const int32_t* pw = weight[biasStart + 0].Data<int32_t>();
-        //        int32_t* pb = _bias32i.Data<int32_t>();
-        //        for (size_t i = 0; i < M; ++i)
-        //            pb[i] += pw[i];
-        //    }
-        //}
-        //else
-        //{
-        //    size_t M = weight[0].Size(0, 1), K = weight[0].Size(1, 4);
-        //    const int8_t* pw = weight[0].Data<int8_t>();
-        //    int32_t* pb = _bias32i.Data<int32_t>();
-        //    for (size_t i = 0; i < M; ++i)
-        //    {
-        //        pb[i] = 0;
-        //        for (size_t k = 0; k < K; ++k)
-        //            pb[i] -= pw[i * K + k] * srcZero;
-        //    }
-        //    if(_alg.bias)
-        //    {
-        //        int biasStart = param.qSrc()[1].weights();
-        //        const int32_t* pw = weight[biasStart + 0].Data<int32_t>();
-        //        int32_t* pb = _bias32i.Data<int32_t>();
-        //        for (size_t i = 0; i < M; ++i)
-        //            pb[i] += pw[i];
-        //    }
-        //}
-        //_norm32f.Reshape(TensorType32f, Shp(weight[1].Size()), TensorFormatNchw, float(0));
-        //if (param.qDst().size())
-        //{
-        //    int dstZero = param.qDst()[0].zero();
-        //    float dstScale = (float)param.qDst()[0].scale();
-        //    _dstZero8u.Reshape(TensorType8u, Shp(_conv.dstC), TensorFormatNchw, uint8_t(dstZero));
-        //    if (_alg.bias && param.qSrc()[2].weights() > 1)
-        //    {
-        //        int biasStart = param.qSrc()[1].weights();
-        //        for (size_t i = 0, n = weight[biasStart + 1].Size(); i < n; ++i)
-        //            _norm32f.Data<float>()[i] = weight[biasStart + 1].Data<float>()[i] / dstScale;
-        //    }
-        //    else
-        //    {
-        //        float srcScale = (float)param.qSrc()[0].scale();
-        //        for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
-        //            _norm32f.Data<float>()[i] = weight[1].Data<float>()[i] * srcScale / dstScale;
-        //    }
-        //}
-        //else
-        //{
-        //    if (_alg.bias && param.qSrc()[2].weights() > 1)
-        //    {
-        //        int biasStart = param.qSrc()[1].weights();
-        //        for (size_t i = 0, n = weight[biasStart + 1].Size(); i < n; ++i)
-        //            _norm32f.Data<float>()[i] = weight[biasStart + 1].Data<float>()[i];
-        //    }
-        //    else
-        //    {
-        //        float srcScale = (float)param.qSrc()[0].scale();
-        //        for (size_t i = 0, n = weight[1].Size(); i < n; ++i)
-        //            _norm32f.Data<float>()[i] = weight[1].Data<float>()[i] * srcScale;
-        //    }
-        //}
         return true;
     }
 

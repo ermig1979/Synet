@@ -48,40 +48,14 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-        bool Compartible() const;
-
-        bool InitParams();
-
     protected:
         static const size_t COUNT_MAX = 3;
-        size_t _count, _batch;
+        size_t _count, _batch, _srcS, _dstS;
         size_t  _indexQ[COUNT_MAX], _indexW[COUNT_MAX];
         ConvParam _conv[COUNT_MAX];
-        bool _bias[COUNT_MAX];
+        bool _bias[COUNT_MAX], _add;
         float _params[COUNT_MAX][2];
         const int8_t* _weight[COUNT_MAX];
         Tensor _srcZero8u[COUNT_MAX], _bias32i[COUNT_MAX], _norm32f[COUNT_MAX];
-        //const float* weight[Detail::MCC_MAX], * bias[Detail::MCC_MAX]
-        //struct AlgParam
-        //{
-        //    int is1x1, bias, trans, internal;
-        //    size_t batch, sSize, dSize, ldW, ldS, ldD, grW, grS, grD, siW, siS, siD;
-        //    float params[2];
-        //} _alg;
-        //bool _src8u, _dst8u;
-        //Tensor _srcZero8u, _dstZero8u, _bias32i, _norm32f;
-
-        //struct AlgParam
-        //{
-        //    int internal[COUNT_MAX], add;
-        //    size_t index[COUNT_MAX], sSize, dSize, batch, count;
-        //    ConvParam conv[COUNT_MAX];
-        //    float params[COUNT_MAX][2];
-        //    const float* weight[COUNT_MAX], * bias[Detail::MCC_MAX], * params[Detail::MCC_MAX];
-
-        //    bool IsCdc() const { return count == 3; }
-        //    bool IsCd() const { return count == 2 && conv[0].group == 1; }
-        //    bool IsDc() const { return conv[0].group != 1; }
-        //} _alg;
     };
 }
