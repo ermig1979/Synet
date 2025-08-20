@@ -267,6 +267,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedConcatLayer.cpp">
       <Filter>Layers\Quantized</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedMergedConvolutionLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -697,6 +700,9 @@
       <Filter>Layers\Quantized</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedConcatLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedMergedConvolutionLayer.h">
       <Filter>Layers\Quantized</Filter>
     </ClInclude>
   </ItemGroup>
