@@ -413,16 +413,17 @@ namespace Synet
 #if defined(SYNET_FORWARD_LOG)
             const Layer& layer = *_stages[i].layer;
             const LayerParam& param = layer.Param();
-            std::cout << "Layer " << i << ": " << param.name() << " : ";
-            std::cout << Cpl::ToStr(param.type());
+            std::stringstream msg;
+            msg << "Forward Layer " << i << ": " << param.name() << " : ";
+            msg << Cpl::ToStr(param.type());
             if (param.type() == LayerTypeMeta)
-                std::cout << "-" << Cpl::ToStr(param.meta().type());
+                msg << "-" << Cpl::ToStr(param.meta().type());
             for (size_t s = 0; s < _stages[i].src.size(); ++s)
-                std::cout << (s ? ", " : " ") << "src[" << s << "]: " << Cpl::ToStr(_stages[i].src[s]->GetType()) << " " << ToStr(_stages[i].src[s]->Shape());
-            std::cout << " -> ";
+                msg << (s ? ", " : " ") << "src[" << s << "]: " << Cpl::ToStr(_stages[i].src[s]->GetType()) << " " << ToStr(_stages[i].src[s]->Shape());
+            msg << " -> ";
             for (size_t d = 0; d < _stages[i].dst.size(); ++d)
-                std::cout << (d ? ", " : " ") << "dst[" << d << "]: " << Cpl::ToStr(_stages[i].dst[d]->GetType()) << " " << ToStr(_stages[i].dst[d]->Shape());
-            std::cout << std::endl;
+                msg << (d ? ", " : " ") << "dst[" << d << "]: " << Cpl::ToStr(_stages[i].dst[d]->GetType()) << " " << ToStr(_stages[i].dst[d]->Shape());
+            CPL_LOG_SS(Info, msg.str());
 #endif
             _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
         }
@@ -1063,7 +1064,7 @@ namespace Synet
 #ifdef SYNET_RESHAPE_LOG
             {
                 std::stringstream msg;
-                msg << "Layer " << i << " with name: " << Cpl::ToStr(param.name()) << ", type: " << Cpl::ToStr(param.type());
+                msg << "Reshape Layer " << i << " with name: " << Cpl::ToStr(param.name()) << ", type: " << Cpl::ToStr(param.type());
                 if (param.type() == LayerTypeMeta)
                     msg << "-" << Cpl::ToStr(param.meta().type());
                 for (size_t s = 0; s < param.src().size(); ++s)
