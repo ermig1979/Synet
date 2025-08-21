@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2024 Yermalayeu Ihar.
+* Copyright (c) 2018-2025 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -24,33 +24,31 @@
 
 #pragma once
 
-#include "Synet/Utils/MergedConvolution.h"
-#include "Synet/Layers/MergedConvolutionLayer.h"
+#include "Synet/Layers/Deconvolution/DeconvolutionLayer.h"
 
 namespace Synet
 {
-    class MergedConvolution32fLayer : public MergedConvolutionLayer
+    class Deconvolution32fLayer : public DeconvolutionLayer
     {
     public:
-        MergedConvolution32fLayer(const LayerParam& param, Context* context);
+        Deconvolution32fLayer(const LayerParam& param, Context* context);
 
         virtual size_t MemoryUsage() const;
 
     protected:
-        typedef MergedConvolutionLayer::AlgParam AlgParam;
+        virtual bool Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst);
 
         virtual String InternalInfo() const;
 
-        virtual bool Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst);
-
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-        void ForwardCpu(const float* src, float* buf0, float* buf1, float* dst);
+        void ForwardCpu(const float* src, float* buf, float* dst);
 
     private:
-        typedef void(*ConvolutionBiasActivationPtr)(const float * src, const ConvParam & conv, const float* weight, const float* bias, const float* params, float* dst);
-        ConvolutionBiasActivationPtr _convolution[Detail::MCC_MAX];
+        bool _transW;
+        size_t _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
 
-        MergedConvolution32f _mergedConvolution32f;
+        Deconvolution32f _deconvolution32f;
+        Tensor _weightT;
     };
 }

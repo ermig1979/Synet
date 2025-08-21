@@ -24,28 +24,29 @@
 
 #pragma once
 
-#include "Synet/Layers/DeconvolutionLayer.h"
+#include "Synet/Layers/InnerProduct/InnerProductLayer.h"
+#include "Synet/Utils/InnerProduct.h"
 
 namespace Synet
 {
-    class Deconvolution16bLayer : public Synet::DeconvolutionLayer
+    class InnerProduct16bLayer : public Synet::InnerProductLayer
     {
     public:
-        Deconvolution16bLayer(const LayerParam& param, Context* context);
+        InnerProduct16bLayer(const LayerParam& param, Context* context);
 
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
         virtual size_t MemoryUsage() const;
 
+        virtual void CompactWeight();
+
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
     protected:
-        virtual String InternalInfo() const;
-
-        virtual bool Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst);
-
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        bool _src16b, _dst16b;
-        Deconvolution16b _deconvolution16b;
+        size_t _sizeA, _sizeB, _sizeC;
+        InnerProduct16b _innerProduct16b;
     };
 }

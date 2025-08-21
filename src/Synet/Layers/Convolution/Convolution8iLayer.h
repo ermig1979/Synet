@@ -24,25 +24,25 @@
 
 #pragma once
 
-#include "Synet/Utils/MergedConvolution.h"
+#include "Synet/Layers/Convolution/ConvolutionLayer.h"
+#include "Synet/Utils/Convolution.h"
 #include "Synet/Quantization/Convert.h"
-#include "Synet/Layers/MergedConvolutionLayer.h"
 
 namespace Synet
 {
-    class MergedConvolution8iLayer : public MergedConvolutionLayer
+    class Convolution8iLayer : public Synet::ConvolutionLayer
     {
     public:
-        MergedConvolution8iLayer(const LayerParam& param, Context* context, QuantizationMethod method);
-
-        virtual LowPrecisionType LowPrecision(TensorType type) const;
+        Convolution8iLayer(const LayerParam& param, Context* context, QuantizationMethod method);
 
         virtual size_t MemoryUsage() const;
+
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
 
         virtual void DebugPrint(std::ostream& os, int flag, int first, int last, int precision);
 
     protected:
-        typedef MergedConvolutionLayer::AlgParam AlgParam;
+        typedef typename ConvolutionLayer::AlgParam AlgParam;
 
         virtual String InternalInfo() const;
 
@@ -50,20 +50,18 @@ namespace Synet
 
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-        void DirectConvolution8i(const uint8_t* src, size_t cIdx, size_t wIdx, const uint8_t* zero, uint8_t* buf, int32_t* sum, float* dst);
+        void SetNormMinMax(const float* weight, const float* scale, float* norm, float& min, float& max);
 
-        void Init();
+        void Quantize();
 
-        void Quantize(size_t srcIdx, const Stat& stat, size_t dstIdx);
+        void ForwardCpu(const uint8_t* src, uint8_t* buf, int32_t* sum, float* dst);
 
     private:
         QuantizationMethod _method;
-        bool _src8u, _dst8u, _dw0;
-        Converter _srcCvt, _intCvt, _dstCvt;
-        Tensor _weight8i[2], _norm32f[2], _bias32f[2];
-        typedef void(*DepthwiseConvolution32fPtr)(const float* src, const ConvParam& conv, const float* weight, const float* bias, const float* params, float* dst);
-        DepthwiseConvolution32fPtr _depthwise;
+        bool _src8u, _dst8u;
+        Converter _srcCvt, _dstCvt;
+        Tensor _weight8i, _norm32f, _bias32f;
 
-        MergedConvolution8i _mergedConvolution8i;
+        Convolution8i _convolution8i;
     };
 }

@@ -24,20 +24,25 @@
 
 #pragma once
 
-#include "Synet/Layers/ConvolutionLayer.h"
-#include "Synet/Utils/Convolution.h"
+#include "Synet/Utils/MergedConvolution.h"
+#include "Synet/Quantization/Convert.h"
+#include "Synet/Layers/MergedConvolution/MergedConvolutionLayer.h"
 
 namespace Synet
 {
-    class Convolution32fLayer : public Synet::ConvolutionLayer
+    class MergedConvolution8iLayer : public MergedConvolutionLayer
     {
     public:
-        Convolution32fLayer(const LayerParam& param, Context* context);
+        MergedConvolution8iLayer(const LayerParam& param, Context* context, QuantizationMethod method);
+
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
 
         virtual size_t MemoryUsage() const;
 
+        virtual void DebugPrint(std::ostream& os, int flag, int first, int last, int precision);
+
     protected:
-        typedef typename ConvolutionLayer::AlgParam AlgParam;
+        typedef MergedConvolutionLayer::AlgParam AlgParam;
 
         virtual String InternalInfo() const;
 
@@ -45,9 +50,20 @@ namespace Synet
 
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-        void ForwardCpu(const float* src, float* buf, float* dst);
+        void DirectConvolution8i(const uint8_t* src, size_t cIdx, size_t wIdx, const uint8_t* zero, uint8_t* buf, int32_t* sum, float* dst);
+
+        void Init();
+
+        void Quantize(size_t srcIdx, const Stat& stat, size_t dstIdx);
 
     private:
-        Convolution32f _convolution32f;
+        QuantizationMethod _method;
+        bool _src8u, _dst8u, _dw0;
+        Converter _srcCvt, _intCvt, _dstCvt;
+        Tensor _weight8i[2], _norm32f[2], _bias32f[2];
+        typedef void(*DepthwiseConvolution32fPtr)(const float* src, const ConvParam& conv, const float* weight, const float* bias, const float* params, float* dst);
+        DepthwiseConvolution32fPtr _depthwise;
+
+        MergedConvolution8i _mergedConvolution8i;
     };
 }

@@ -27,7 +27,7 @@
 #include "Synet/Layers/ActivationLayers.h"
 #include "Synet/Utils/ImgToCol.h"
 #include "Synet/Utils/Activation.h"
-#include "Synet/Layers/MergedConvolutionLayer.h"
+#include "Synet/Layers/MergedConvolution/MergedConvolutionLayer.h"
 #include "Synet/Layers/PreluLayer.h"
 
 namespace Synet

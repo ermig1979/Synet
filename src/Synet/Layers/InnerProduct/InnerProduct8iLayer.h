@@ -24,41 +24,17 @@
 
 #pragma once
 
-#include "Synet/Layers/InnerProductLayer.h"
-#include "Synet/Utils/InnerProduct.h"
+#include "Synet/Layers/InnerProduct/InnerProductLayer.h"
+#include "Synet/Quantization/Convert.h"
 
 namespace Synet
 {
-    namespace Detail
-    {
-        template <class T> void InnerProductLayerForwardCpu(const T* src, const T* weight, const T* bias, size_t count, size_t size, T* dst)
-        {
-            if (bias)
-            {
-                for (size_t i = 0; i < count; ++i)
-                    dst[i] = CpuDotProduct(src, weight + size * i, size) + bias[i];
-            }
-            else
-            {
-                for (size_t i = 0; i < count; ++i)
-                    dst[i] = CpuDotProduct(src, weight + size * i, size);
-            }
-        }
-
-#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        template <> SYNET_INLINE void InnerProductLayerForwardCpu<float>(const float* src, const float* weight, const float* bias, size_t count, size_t size, float* dst)
-        {
-            ::SimdSynetInnerProductLayerForward(src, weight, bias, count, size, dst);
-        }
-#endif
-    }
-
-    //-------------------------------------------------------------------------------------------------
-
-    class InnerProduct32fLayer : public Synet::InnerProductLayer
+    class InnerProduct8iLayer : public Synet::InnerProductLayer
     {
     public:
-        InnerProduct32fLayer(const LayerParam& param, Context* context);
+        InnerProduct8iLayer(const LayerParam& param, Context* context, QuantizationMethod method);
+
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
 
         virtual size_t MemoryUsage() const;
 
@@ -69,10 +45,14 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-        void ForwardCpu(const float* src, const float* wgt, float* dst);
+        void Quantize();
+
+        void ForwardCpu(const uint8_t* src, int32_t* dst);
 
     private:
-        int _internal;
-        InnerProduct32f _innerProduct32f;
+        QuantizationMethod _method;
+        bool _src8u, _dst8u;
+        Converter _srcCvt, _dstCvt;
+        Tensor _weight8i, _norm32i, _norm32f;
     };
 }

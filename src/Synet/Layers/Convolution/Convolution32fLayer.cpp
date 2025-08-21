@@ -21,7 +21,7 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 */
-#include "Synet/Layers/Convolution32fLayer.h"
+#include "Synet/Layers/Convolution/Convolution32fLayer.h"
 #include "Synet/Utils/ImgToCol.h"
 #include "Synet/Utils/Activation.h"
 #include "Synet/Utils/Gemm.h"

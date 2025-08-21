@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/MergedConvolution32fLayer.h"
+#include "Synet/Layers/MergedConvolution/MergedConvolution32fLayer.h"
 
 namespace Synet
 {

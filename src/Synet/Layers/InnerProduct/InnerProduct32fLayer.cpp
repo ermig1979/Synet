@@ -23,7 +23,7 @@
 */
 
 #include "Synet/Utils/Gemm.h"
-#include "Synet/Layers/InnerProduct32fLayer.h"
+#include "Synet/Layers/InnerProduct/InnerProduct32fLayer.h"
 
 namespace Synet
 {

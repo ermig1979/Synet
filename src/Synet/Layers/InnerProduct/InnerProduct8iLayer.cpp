@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/InnerProduct8iLayer.h"
+#include "Synet/Layers/InnerProduct/InnerProduct8iLayer.h"
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"

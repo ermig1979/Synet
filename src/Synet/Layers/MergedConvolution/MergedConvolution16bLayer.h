@@ -24,29 +24,31 @@
 
 #pragma once
 
-#include "Synet/Layers/InnerProductLayer.h"
-#include "Synet/Utils/InnerProduct.h"
+#include "Synet/Utils/MergedConvolution.h"
+#include "Synet/Layers/MergedConvolution/MergedConvolutionLayer.h"
 
 namespace Synet
 {
-    class InnerProduct16bLayer : public Synet::InnerProductLayer
+    class MergedConvolution16bLayer : public MergedConvolutionLayer
     {
     public:
-        InnerProduct16bLayer(const LayerParam& param, Context* context);
+        MergedConvolution16bLayer(const LayerParam& param, Context* context);
 
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
         virtual size_t MemoryUsage() const;
 
-        virtual void CompactWeight();
-
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
-
     protected:
+        typedef MergedConvolutionLayer::AlgParam AlgParam;
+
+        virtual String InternalInfo() const;
+
+        virtual bool Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst);
+
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        size_t _sizeA, _sizeB, _sizeC;
-        InnerProduct16b _innerProduct16b;
+        bool _src16b, _dst16b;
+        MergedConvolution16b _mergedConvolution16b;
     };
 }

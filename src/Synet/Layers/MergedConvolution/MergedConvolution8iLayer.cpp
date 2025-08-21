@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/MergedConvolution8iLayer.h"
+#include "Synet/Layers/MergedConvolution/MergedConvolution8iLayer.h"
 #include "Synet/Utils/DebugPrint.h"
 #include "Synet/Quantization/Gemm.h"
 

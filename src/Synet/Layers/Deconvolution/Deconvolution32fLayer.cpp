@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/Deconvolution32fLayer.h"
+#include "Synet/Layers/Deconvolution/Deconvolution32fLayer.h"
 #include "Synet/Layers/PreluLayer.h"
 #include "Synet/Utils/Gemm.h"
 #include "Synet/Utils/ImgToCol.h"

@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/ConvolutionLayer.h"
+#include "Synet/Layers/Convolution/ConvolutionLayer.h"
 
 namespace Synet
 {

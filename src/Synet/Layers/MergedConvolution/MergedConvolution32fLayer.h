@@ -25,16 +25,14 @@
 #pragma once
 
 #include "Synet/Utils/MergedConvolution.h"
-#include "Synet/Layers/MergedConvolutionLayer.h"
+#include "Synet/Layers/MergedConvolution/MergedConvolutionLayer.h"
 
 namespace Synet
 {
-    class MergedConvolution16bLayer : public MergedConvolutionLayer
+    class MergedConvolution32fLayer : public MergedConvolutionLayer
     {
     public:
-        MergedConvolution16bLayer(const LayerParam& param, Context* context);
-
-        virtual LowPrecisionType LowPrecision(TensorType type) const;
+        MergedConvolution32fLayer(const LayerParam& param, Context* context);
 
         virtual size_t MemoryUsage() const;
 
@@ -47,8 +45,12 @@ namespace Synet
 
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
+        void ForwardCpu(const float* src, float* buf0, float* buf1, float* dst);
+
     private:
-        bool _src16b, _dst16b;
-        MergedConvolution16b _mergedConvolution16b;
+        typedef void(*ConvolutionBiasActivationPtr)(const float * src, const ConvParam & conv, const float* weight, const float* bias, const float* params, float* dst);
+        ConvolutionBiasActivationPtr _convolution[Detail::MCC_MAX];
+
+        MergedConvolution32f _mergedConvolution32f;
     };
 }

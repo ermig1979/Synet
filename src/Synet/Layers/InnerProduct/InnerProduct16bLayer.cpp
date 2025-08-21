@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/InnerProduct16bLayer.h"
+#include "Synet/Layers/InnerProduct/InnerProduct16bLayer.h"
 
 namespace Synet
 {

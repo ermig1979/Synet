@@ -21,7 +21,7 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 */
-#include "Synet/Layers/Convolution16bLayer.h"
+#include "Synet/Layers/Convolution/Convolution16bLayer.h"
 
 namespace Synet
 {

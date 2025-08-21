@@ -24,35 +24,31 @@
 
 #pragma once
 
-#include "Synet/Layers/InnerProductLayer.h"
-#include "Synet/Quantization/Convert.h"
+#include "Synet/Layers/Convolution/ConvolutionLayer.h"
+#include "Synet/Utils/Convolution.h"
 
 namespace Synet
 {
-    class InnerProduct8iLayer : public Synet::InnerProductLayer
+    class Convolution16bLayer : public Synet::ConvolutionLayer
     {
     public:
-        InnerProduct8iLayer(const LayerParam& param, Context* context, QuantizationMethod method);
+        Convolution16bLayer(const LayerParam& param, Context* context);
 
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
         virtual size_t MemoryUsage() const;
 
-        virtual void CompactWeight();
-
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
-
     protected:
+        typedef typename ConvolutionLayer::AlgParam AlgParam;
+
+        virtual String InternalInfo() const;
+
+        virtual bool Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst);
+
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-        void Quantize();
-
-        void ForwardCpu(const uint8_t* src, int32_t* dst);
-
     private:
-        QuantizationMethod _method;
-        bool _src8u, _dst8u;
-        Converter _srcCvt, _dstCvt;
-        Tensor _weight8i, _norm32i, _norm32f;
+        bool _src16b, _dst16b;
+        Convolution16b _convolution16b;
     };
 }

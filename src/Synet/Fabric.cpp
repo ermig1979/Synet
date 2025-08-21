@@ -22,6 +22,17 @@
 * SOFTWARE.
 */
 
+#include "Synet/Layers/Convolution/Convolution32fLayer.h"
+#include "Synet/Layers/Convolution/Convolution16bLayer.h"
+#include "Synet/Layers/Convolution/Convolution8iLayer.h"
+
+#include "Synet/Layers/Deconvolution/Deconvolution32fLayer.h"
+#include "Synet/Layers/Deconvolution/Deconvolution16bLayer.h"
+
+#include "Synet/Layers/InnerProduct/InnerProduct32fLayer.h"
+#include "Synet/Layers/InnerProduct/InnerProduct16bLayer.h"
+#include "Synet/Layers/InnerProduct/InnerProduct8iLayer.h"
+
 #include "Synet/Layers/Legacy/BroadcastLayer.h"
 #include "Synet/Layers/Legacy/FusedLayer.h"
 #include "Synet/Layers/Legacy/LrnLayer.h"
@@ -29,6 +40,10 @@
 #include "Synet/Layers/Legacy/ReorgLayer.h"
 #include "Synet/Layers/Legacy/SwitchLayer.h"
 #include "Synet/Layers/Legacy/UpsampleLayer.h"
+
+#include "Synet/Layers/MergedConvolution/MergedConvolution32fLayer.h"
+#include "Synet/Layers/MergedConvolution/MergedConvolution16bLayer.h"
+#include "Synet/Layers/MergedConvolution/MergedConvolution8iLayer.h"
 
 #include "Synet/Layers/Quantized/DequantizeLinearLayer.h"
 #include "Synet/Layers/Quantized/QuantizedAddLayer.h"
@@ -49,27 +64,16 @@
 #include "Synet/Layers/ConcatLayer.h"
 #include "Synet/Layers/ConstLayer.h"
 #include "Synet/Layers/ConstantOfShapeLayer.h"
-#include "Synet/Layers/Convolution32fLayer.h"
-#include "Synet/Layers/Convolution16bLayer.h"
-#include "Synet/Layers/Convolution8iLayer.h"
 #include "Synet/Layers/CtcGreedyDecoderLayer.h"
-#include "Synet/Layers/Deconvolution32fLayer.h"
-#include "Synet/Layers/Deconvolution16bLayer.h"
 #include "Synet/Layers/DetectionOutputLayer.h"
 #include "Synet/Layers/EltwiseLayer.h"
 #include "Synet/Layers/ExpandDimsLayer.h"
 #include "Synet/Layers/FlattenLayer.h"
 #include "Synet/Layers/GatherLayer.h"
 #include "Synet/Layers/GridSampleLayer.h"
-#include "Synet/Layers/InnerProduct32fLayer.h"
-#include "Synet/Layers/InnerProduct16bLayer.h"
-#include "Synet/Layers/InnerProduct8iLayer.h"
 #include "Synet/Layers/InputLayer.h"
 #include "Synet/Layers/InterpLayer.h"
 #include "Synet/Layers/LstmLayer.h"
-#include "Synet/Layers/MergedConvolution32fLayer.h"
-#include "Synet/Layers/MergedConvolution16bLayer.h"
-#include "Synet/Layers/MergedConvolution8iLayer.h"
 #include "Synet/Layers/MetaLayer.h"
 #include "Synet/Layers/MulLayer.h"
 #include "Synet/Layers/NonZeroLayer.h"

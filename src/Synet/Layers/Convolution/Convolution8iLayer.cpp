@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/Convolution8iLayer.h"
+#include "Synet/Layers/Convolution/Convolution8iLayer.h"
 #include "Synet/Quantization/Const.h"
 #include "Synet/Quantization/Gemm.h"
 #include "Synet/Utils/Activation.h"

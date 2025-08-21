@@ -24,17 +24,15 @@
 
 #pragma once
 
-#include "Synet/Layers/ConvolutionLayer.h"
+#include "Synet/Layers/Convolution/ConvolutionLayer.h"
 #include "Synet/Utils/Convolution.h"
 
 namespace Synet
 {
-    class Convolution16bLayer : public Synet::ConvolutionLayer
+    class Convolution32fLayer : public Synet::ConvolutionLayer
     {
     public:
-        Convolution16bLayer(const LayerParam& param, Context* context);
-
-        virtual LowPrecisionType LowPrecision(TensorType type) const;
+        Convolution32fLayer(const LayerParam& param, Context* context);
 
         virtual size_t MemoryUsage() const;
 
@@ -47,8 +45,9 @@ namespace Synet
 
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
+        void ForwardCpu(const float* src, float* buf, float* dst);
+
     private:
-        bool _src16b, _dst16b;
-        Convolution16b _convolution16b;
+        Convolution32f _convolution32f;
     };
 }
