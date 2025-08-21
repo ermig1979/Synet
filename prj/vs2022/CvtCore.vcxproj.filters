@@ -13,6 +13,9 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantized.cpp">
       <Filter>Optimizer</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeScale.cpp">
+      <Filter>Optimizer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cvt\Common\Params.h">

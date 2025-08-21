@@ -27,6 +27,7 @@
     <ClCompile Include="..\..\src\Cvt\Deoptimizer\Deoptimizer.cpp" />
     <ClCompile Include="..\..\src\Cvt\InferenceEngine\InferenceEngine.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantized.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeScale.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\Optimizer.cpp" />
     <ClInclude Include="..\..\src\Cvt\Common\Params.h" />
     <ClInclude Include="..\..\src\Cvt\Common\SynetUtils.h" />

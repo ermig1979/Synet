@@ -27,7 +27,6 @@
 
 namespace Synet
 {
-
     bool MergeQuantizedShuffleV0(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
     {
         if (src.size() < index + 7)
@@ -155,5 +154,4 @@ namespace Synet
         index += 1;
         return true;
     }
-
 }
