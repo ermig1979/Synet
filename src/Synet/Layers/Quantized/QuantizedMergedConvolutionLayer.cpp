@@ -40,7 +40,12 @@ namespace Synet
 
     size_t QuantizedMergedConvolutionLayer::MemoryUsage() const
     {
-        return Layer::MemoryUsage();
+        size_t size = Layer::MemoryUsage();
+        for (size_t c = 0; c < _count; ++c)
+            size += _srcZero8u[c].RawSize() + _bias32i[c].RawSize() + _norm32f[c].RawSize();
+        size += _dstZero8u.RawSize();
+        size += _quantizedMergedConvolution.InternalBufferSize();
+        return size;
     }
 
     int64_t QuantizedMergedConvolutionLayer::Flop() const
@@ -54,9 +59,11 @@ namespace Synet
 
     void QuantizedMergedConvolutionLayer::CompactWeight()
     {
-        //if (_quantizedMergedConvolution.Enable())
-        //  for(size_t c = 0; c < _count; ++c)
-        //      ((Tensor&)this->Weight()[_indexW[c]]).Clear();
+        if (_quantizedMergedConvolution.Enable())
+        {
+            for (size_t i = 0; i < this->Weight().size(); ++i)
+                ((Tensor&)this->Weight()[i]).Clear();
+        }
     }
 
     LowPrecisionType QuantizedMergedConvolutionLayer::LowPrecision(TensorType type) const
@@ -113,6 +120,7 @@ namespace Synet
             const QuantizeParam& qS = p.qSrc()[nextQ++];
             if (qS.weights() != 0)
                 SYNET_ERROR("QuantizedMergedConvolutionLayer supports only uniform quantization (check " << nextQ - 1 << " parameter) !");
+            _srcZero[c] = qS.zero();
 
             const Tensor& w = weight[nextW];
             if (w.Shape() != _conv[c].WeightShape(true, true) || w.Format() != src[0]->Format() || w.GetType() != TensorType8i)
@@ -137,6 +145,7 @@ namespace Synet
             if (s.Size() != M || s.GetType() != TensorType32f)
                 SYNET_ERROR("QuantizedMergedConvolutionLayer has wrong scale[" << c << "] (weight[" << _indexW[c] + 1 << "]) size or type!");
         }
+        _dstZero = p.qDst()[0].zero();
 
         const ConvParam& back = _conv[_count - 1];
         dst[0]->Reshape(TensorType8u, back.DstShape(_batch), src[0]->Format());
@@ -151,6 +160,18 @@ namespace Synet
                 SYNET_ERROR("QuantizedMergedConvolutionLayer with add=1 parameter must have input and output of the same size!");
         }
 
+        _quantizedMergedConvolution.Init(_batch, _conv, _count, _add);
+        if (_quantizedMergedConvolution.Enable())
+        {
+            Layer::Extend8u(buf, 0, Shp(_quantizedMergedConvolution.ExternalBufferSize()));
+        //    int bias = param.qSrc()[1].weights();
+        //    const float* params = _conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : _alg.params;
+        //    float srcScale = (float)param.qSrc()[0].scale(), dstScale = (float)param.qDst()[0].scale();
+        //    uint8_t srcZero = (uint8_t)param.qSrc()[0].zero(), dstZero = (uint8_t)param.qDst()[0].zero();
+        //    _quantizedConvolution.SetParams(&srcScale, &srcZero, weight[0].Data<int8_t>(), weight[1].Data<float>(), 
+        //        _alg.bias ? weight[bias + 0].Data<int32_t>() : NULL, params, &dstScale, &dstZero);
+        }
+        else
         {
             for (size_t c = 0; c < _count; ++c)
             {
@@ -165,7 +186,7 @@ namespace Synet
                 size_t K = w.Size(0, 3), M = w.Size(3, 4);
 
                 _bias32i[c].Reshape(TensorType32i, Shp(M), TensorFormatNchw, int32_t(0));
-                _srcZero8u[c].Reshape(TensorType8u, Shp(_conv[c].srcC), TensorFormatNchw, uint8_t(srcZero));
+                _srcZero8u[c].Reshape(TensorType8u, Shp(_conv[c].srcC), TensorFormatNchw, _srcZero[c]);
                 const int8_t* pw = w.Data<int8_t>();
                 int32_t* pb = _bias32i[c].Data<int32_t>();
                 for (size_t i = 0; i < M; ++i)
@@ -193,8 +214,8 @@ namespace Synet
                 if(c + 1 < _count)
                     Layer::Extend8u(buf, 0, _conv[c].DstShape(1));
             }
+            _dstZero8u.Reshape(TensorType8u, Shp(_conv[_count - 1].dstC), TensorFormatNchw, _dstZero);
         }
-
 
         //if (_alg.trans)
         //{
@@ -216,36 +237,12 @@ namespace Synet
         //_alg.sSize = src[0]->Size(1);
         //_alg.dSize = dst[0]->Size(1);
 
-        //_quantizedMergedConvolution.Init(_alg.batch, &_conv);
-        //if (_quantizedMergedConvolution.Enable())
-        //{
-        //    Layer::Extend8u(buf, 0, Shp(_quantizedMergedConvolution.ExternalBufferSize()));
-        //    const Tensors& weight = this->Weight();
-        //    int bias = param.qSrc()[1].weights();
-        //    const float* params = _conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : _alg.params;
-        //    float srcScale = (float)param.qSrc()[0].scale(), dstScale = (float)param.qDst()[0].scale();
-        //    uint8_t srcZero = (uint8_t)param.qSrc()[0].zero(), dstZero = (uint8_t)param.qDst()[0].zero();
-        //    _quantizedConvolution.SetParams(&srcScale, &srcZero, weight[0].Data<int8_t>(), weight[1].Data<float>(), 
-        //        _alg.bias ? weight[bias + 0].Data<int32_t>() : NULL, params, &dstScale, &dstZero);
-        //}
-        //else
-        {
-            //if (!_src8u)
-            //    Layer::Extend8u(buf, 0, _conv.SrcShape(1));
-            //if (!_conv.Is1x1())
-            //    Layer::Extend8u(buf, 1, Shp(_conv.ImgSize()));
-            //Layer::Extend32i(buf, 0, _conv.DstShape(1));
-            //if (_dst8u)
-            //    Layer::Extend32f(buf, 0, _conv.DstShape(1));
-        }
-
         std::stringstream desc;
         desc << _count << ": " << _batch << "x" << _conv[0].srcC << "x" << _conv[0].srcH << "x" << _conv[0].srcW;
         for (size_t i = 0; i < _count; ++i)
             desc << "-" << (_conv[i].IsDepthwise() ? String("") : Cpl::ToStr(_conv[i].dstC) + "x") << _conv[i].kernelY << "x" << _conv[i].strideY;
-
-        //if(_quantizedMergedConvolution.Enable())
-        //    desc << " " << _quantizedMergedConvolution.Info();
+        if(_quantizedMergedConvolution.Enable())
+            desc << " " << _quantizedMergedConvolution.Info();
         this->UsePerfStat(desc.str(), Flop()); 
 
         return true;
@@ -253,6 +250,35 @@ namespace Synet
 
     void QuantizedMergedConvolutionLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
+        if (_quantizedMergedConvolution.Enable())
+            _quantizedMergedConvolution.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());
+        else
+            ForwardCpu(src[0]->RawData(), Layer::Buf8u(buf, 0), Layer::Buf32i(buf, 0), dst[0]->RawData());
+    }
 
+    void QuantizedMergedConvolutionLayer::ForwardCpu(const uint8_t* src, uint8_t* buf, int32_t* sum, uint8_t* dst)
+    {
+        const bool overflow16i = true;
+        for (size_t b = 0; b < _batch; ++b)
+        {
+            for (size_t c = 0; c < _count; ++c)
+            {
+                const ConvParam& conv = _conv[c];
+                const uint8_t* ps = c ? buf : src;
+                uint8_t* pd = c + 1 < _count ? buf : dst;
+                const uint8_t * pz = c + 1 < _count ? _srcZero8u[c + 1].RawData() : _dstZero8u.RawData();
+                if (conv.IsDepthwise())
+                {
+
+                }
+                else
+                {
+                    Synet::CpuGemm8iNN(conv.dstH * conv.dstW, conv.dstC, conv.kernelY * conv.kernelX, conv.srcC, ps, conv.srcC * conv.kernelY * conv.kernelX, _weight[c], conv.dstC, sum, conv.dstC, overflow16i);
+                    QuantizeSumLinear(sum, 1, conv.dstC, conv.dstH, conv.dstW, conv.dstF, _bias32i[c].Data<int32_t>(), _norm32f[c].Data<float>(), pz, dst);
+                }
+            }
+            src += _srcS;
+            dst += _dstS;
+        }
     }
 }

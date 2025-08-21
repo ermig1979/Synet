@@ -26,7 +26,7 @@
 
 #include "Synet/Layer.h"
 #include "Synet/Utils/ConvParam.h"
-#include "Synet/Utils/Convolution.h"
+#include "Synet/Utils/MergedConvolution.h"
 
 namespace Synet
 {
@@ -48,14 +48,18 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
+        void ForwardCpu(const uint8_t* src, uint8_t* buf, int32_t* sum, uint8_t * dst);
+
     protected:
         static const size_t COUNT_MAX = 3;
-        size_t _count, _batch, _srcS, _dstS;
-        size_t  _indexQ[COUNT_MAX], _indexW[COUNT_MAX];
+        size_t _count, _batch, _srcS, _dstS, _indexQ[COUNT_MAX], _indexW[COUNT_MAX];
+        int32_t _srcZero[COUNT_MAX], _dstZero, _add;
         ConvParam _conv[COUNT_MAX];
-        bool _bias[COUNT_MAX], _add;
+        bool _bias[COUNT_MAX];
         float _params[COUNT_MAX][2];
         const int8_t* _weight[COUNT_MAX];
-        Tensor _srcZero8u[COUNT_MAX], _bias32i[COUNT_MAX], _norm32f[COUNT_MAX];
+        Tensor _srcZero8u[COUNT_MAX], _bias32i[COUNT_MAX], _norm32f[COUNT_MAX], _dstZero8u;
+
+        QuantizedMergedConvolution _quantizedMergedConvolution;
     };
 }

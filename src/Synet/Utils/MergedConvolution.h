@@ -303,4 +303,92 @@ namespace Synet
         void* _context;
         size_t _batch, _srcH, _srcW;
     };
+
+    //-------------------------------------------------------------------------------------------------
+
+    class QuantizedMergedConvolution
+    {
+    public:
+        QuantizedMergedConvolution()
+            : _context(NULL)
+            , _batch(0)
+            , _srcH(0)
+            , _srcW(0)
+        {
+        }
+
+        virtual ~QuantizedMergedConvolution()
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_context)
+                SimdRelease(_context), _context = NULL;
+#endif
+        }
+
+        void Init(size_t batch, const ConvParam* convs, size_t count, int add)
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            if (_batch != batch || _srcH != convs[0].srcH || _srcW != convs[0].srcW)
+            {
+                _batch = batch, _srcH = convs[0].srcH, _srcW = convs[0].srcW;
+                if (_context)
+                    SimdRelease(_context), _context = NULL;
+                //if (convs[1].dstH >= 1 && convs[1].dstW >= 1)
+                //     _context = SimdSynetQuantizedMergedConvolutionInit(batch, (const SimdConvolutionParameters*)convs, count, (SimdBool)add);
+            }
+#endif
+        }
+
+        bool Enable() const
+        {
+            return _context != NULL;
+        }
+
+        size_t ExternalBufferSize() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return 1;// _context ? SimdSynetQuantizedMergedConvolutionExternalBufferSize(_context) : 1;
+#else
+            return 1;
+#endif
+        }
+
+        size_t InternalBufferSize() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return 0;// _context ? SimdSynetQuantizedMergedConvolution16bInternalBufferSize(_context) : 0;
+#else
+            return 0;
+#endif
+        }
+
+        String Info() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return "";// _context ? SimdSynetQuantizedMergedConvolution16bInfo(_context) : String();
+#else
+            return String();
+#endif
+        }
+
+        void SetParams(const uint8_t* srcZero, const int8_t* const* weight, const float* const* weightScale, const int32_t* const* bias, const float* dstScale, const uint8_t* dstZero)
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            //if (_context)
+            //    SimdSynetQuantizedMergedConvolutionSetParams(_context, srcZero, weight, weightScale, bias, dstScale, dstZero);
+#endif
+        }
+
+        void Forward(const uint8_t* src, uint8_t* buf, uint8_t* dst)
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            //if (_context)
+            //    SimdSynetQuntizedMergedConvolutionForward(_context, src, buf, dst);
+#endif
+        }
+
+    private:
+        void* _context;
+        size_t _batch, _srcH, _srcW;
+    };
 }
