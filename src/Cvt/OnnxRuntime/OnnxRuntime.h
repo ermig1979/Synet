@@ -1468,45 +1468,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertReduceMeanNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer)
-        {
-            Ints axes;
-            if (!ConvertAtrributeInts(node, "axes", axes))
-                return false;
-            if (axes == Ints({ 2, 3 }))
-            {
-                if (GetLayerType(layers, layer.src()[0]) == LayerTypeDequantizeLinear)
-                {
-                    layer.type() = Synet::LayerTypeQuantizedPooling;
-                    layer.pooling().method() = PoolingMethodTypeAverage;
-                    layer.pooling().globalPooling() = true;
-                    if (!MoveDequantizeLinearToLayer(layers, layer))
-                        return false;
-                }
-                else
-                {
-                    layer.type() = Synet::LayerTypePooling;
-                    layer.pooling().method() = PoolingMethodTypeAverage;
-                    layer.pooling().globalPooling() = true;
-                }
-            }
-            else
-            {
-                layer.type() = Synet::LayerTypeReduction;
-                layer.reduction().type() = ReductionTypeMean;
-                for (size_t i = 0; i < axes.size(); ++i)
-                    layer.reduction().axis().push_back(axes[i]);
-                ConvertAtrributeInt(node, "keepdims", layer.reduction().keepDims(), true, true);
-                if (trans && CurrentTensorFormat(layers, layer.src(), false, true, true) == TensorFormatNhwc)
-                {
-                    Ints nchw = Ints({ 0, 3, 1, 2 }), axis = layer.reduction().axis();
-                    for (size_t i = 0; i < axis.size(); ++i)
-                        layer.reduction().axis()[i] = nchw[axis[i]];
-                }
-            }
-            return true;
-        }
-
         bool ConvertReduceSumNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1, 2))
@@ -2232,33 +2193,6 @@ namespace Synet
             }
             else
                 layer.type() = Synet::LayerTypeWhere;
-            return true;
-        }
-
-        //-----------------------------------------------------------------------------------------
-
-        bool MoveDequantizeLinearToLayer(LayerParams& layers, LayerParam& layer)
-        {
-            for (int s = 0; s < (int)layer.src().size(); ++s)
-            {
-                LayerParam* dequantize = GetLayer(layers, layer.src()[s]);
-                if (dequantize->type() != LayerTypeDequantizeLinear)
-                    SYNET_ERROR("MoveDequantizeLinearToLayer can move only DequantizeLinearLayer layers!");
-                layer.qSrc().push_back(dequantize->quantize());
-                layer.qSrc().back().weights() = dequantize->weight().size();
-                for (size_t w = 0; w < dequantize->weight().size(); ++w)
-                    layer.weight().push_back(dequantize->weight()[w]);
-                if (!dequantize->src().empty())
-                {
-                    layer.src()[s] = dequantize->src()[0];
-                    dequantize->src().clear();
-                }
-                else
-                {
-                    layer.src().erase(layer.src().begin() + s, layer.src().begin() + s + 1);
-                    --s;
-                }
-            }
             return true;
         }
 

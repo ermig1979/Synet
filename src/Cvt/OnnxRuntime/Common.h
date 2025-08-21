@@ -67,6 +67,35 @@ namespace Synet
         }
         return shape;
     }
+
+    //-----------------------------------------------------------------------------------------
+
+    inline bool MoveDequantizeLinearToLayer(LayerParams& layers, LayerParam& layer)
+    {
+        for (int s = 0; s < (int)layer.src().size(); ++s)
+        {
+            LayerParam* dequantize = GetLayer(layers, layer.src()[s]);
+            if (dequantize->type() != LayerTypeDequantizeLinear)
+                SYNET_ERROR("MoveDequantizeLinearToLayer can move only DequantizeLinearLayer layers!");
+            layer.qSrc().push_back(dequantize->quantize());
+            layer.qSrc().back().weights() = dequantize->weight().size();
+            for (size_t w = 0; w < dequantize->weight().size(); ++w)
+                layer.weight().push_back(dequantize->weight()[w]);
+            if (!dequantize->src().empty())
+            {
+                layer.src()[s] = dequantize->src()[0];
+                dequantize->src().clear();
+            }
+            else
+            {
+                layer.src().erase(layer.src().begin() + s, layer.src().begin() + s + 1);
+                --s;
+            }
+        }
+        return true;
+    }
+
+
 }
 
 #endif
