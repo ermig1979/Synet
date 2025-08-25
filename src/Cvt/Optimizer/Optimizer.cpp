@@ -185,7 +185,7 @@ namespace Synet
             }
             case 7:
             {
-                if (MergeThreeConvolutions(network.layers(), i, method, merged, changes))
+                if (MergeThreeConvolutions(network.layers(), i, method, _param, merged, changes))
                     continue;
                 if (MergeSqueezeExcitation(network.layers(), i, merged, changes))
                     continue;
@@ -195,7 +195,7 @@ namespace Synet
             }
             case 8:
             {
-                if (MergeTwoConvolutions(network.layers(), i, method, merged, changes))
+                if (MergeTwoConvolutions(network.layers(), i, method, _param, merged, changes))
                     continue;
                 break;
             }

@@ -69,7 +69,17 @@ namespace Synet
 
     bool MergeInnerProductAndScale(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
 
+    bool MergeParallelConvolutions(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
+
+    bool MergeParallelDepthwiseConvolutions(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
+
+    bool MergeParallelScaleAndDepthwiseConvolution(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
+
     bool MergeQuantizedShuffleV0(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
+    bool MergeThreeConvolutions(const LayerParams& src, size_t& index, QuantizationMethod method, const OptimizerParam& param, LayerParams& dst, Changes& changes);
+
+    bool MergeTwoConvolutions(const LayerParams& src, size_t& index, QuantizationMethod method, const OptimizerParam& param, LayerParams& dst, Changes& changes);
 
     bool SkipUnnecessaryDequantizeQuantizeV0(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes);
 
