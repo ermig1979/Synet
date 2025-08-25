@@ -50,6 +50,8 @@ namespace Synet
 
         void ForwardCpu(const uint8_t* src, uint8_t* buf, int32_t* sum, uint8_t * dst);
 
+        void DepthwiseConvolution(const uint8_t* src, const ConvParam& conv, const int8_t * weight, int32_t* dst);
+
     protected:
         static const size_t COUNT_MAX = 3;
         size_t _count, _batch, _srcS, _dstS, _indexQ[COUNT_MAX], _indexW[COUNT_MAX];

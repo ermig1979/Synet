@@ -268,17 +268,45 @@ namespace Synet
                 uint8_t* pd = c + 1 < _count ? buf : dst;
                 const uint8_t * pz = c + 1 < _count ? _srcZero8u[c + 1].RawData() : _dstZero8u.RawData();
                 if (conv.IsDepthwise())
-                {
-
-                }
+                    DepthwiseConvolution(ps, conv, _weight[c], sum);
                 else
-                {
                     Synet::CpuGemm8iNN(conv.dstH * conv.dstW, conv.dstC, conv.kernelY * conv.kernelX, conv.srcC, ps, conv.srcC * conv.kernelY * conv.kernelX, _weight[c], conv.dstC, sum, conv.dstC, overflow16i);
-                    QuantizeSumLinear(sum, 1, conv.dstC, conv.dstH, conv.dstW, conv.dstF, _bias32i[c].Data<int32_t>(), _norm32f[c].Data<float>(), pz, dst);
-                }
+                QuantizeSumLinear(sum, 1, conv.dstC, conv.dstH, conv.dstW, conv.dstF, _bias32i[c].Data<int32_t>(), _norm32f[c].Data<float>(), pz, dst);
             }
             src += _srcS;
             dst += _dstS;
+        }
+    }
+
+    void QuantizedMergedConvolutionLayer::DepthwiseConvolution(const uint8_t* src, const ConvParam& conv, const int8_t* weight, int32_t* dst)
+    {
+        size_t C = conv.srcC;
+        for (size_t dy = 0; dy < conv.dstH; ++dy)
+        {
+            for (size_t dx = 0; dx < conv.dstW; ++dx)
+            {
+                for (size_t c = 0; c < C; ++c)
+                    dst[c] = 0;
+                for (size_t ky = 0; ky < conv.kernelY; ++ky)
+                {
+                    size_t sy = dy * conv.strideY + ky - conv.padY;
+                    if (sy < conv.srcH)
+                    {
+                        for (size_t kx = 0; kx < conv.kernelX; ++kx)
+                        {
+                            size_t sx = dx * conv.strideX + kx - conv.padX;
+                            if (sx < conv.srcW)
+                            {
+                                const int8_t* pw = weight + (ky * conv.kernelX + kx) * C;
+                                const uint8_t* ps = src + (sy * conv.srcW + sx) * C;
+                                for (size_t c = 0; c < C; ++c)
+                                    dst[c] += ps[c] * pw[c];
+                            }
+                        }
+                    }
+                }
+                dst += C;
+            }
         }
     }
 }
