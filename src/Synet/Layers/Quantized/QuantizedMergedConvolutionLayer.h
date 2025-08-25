@@ -52,13 +52,15 @@ namespace Synet
 
         void DepthwiseConvolution(const uint8_t* src, const ConvParam& conv, const int8_t * weight, int32_t* dst);
 
+        void AddSrc(const uint8_t* src, uint8_t* dst);
+
     protected:
         static const size_t COUNT_MAX = 3;
         size_t _count, _batch, _srcS, _dstS, _indexQ[COUNT_MAX], _indexW[COUNT_MAX];
-        int32_t _srcZero[COUNT_MAX], _dstZero, _add;
+        int32_t _srcZero[COUNT_MAX], _dstZero, _add, _addZero, _srcBias, _dstBias;
         ConvParam _conv[COUNT_MAX];
         bool _bias[COUNT_MAX];
-        float _params[COUNT_MAX][2];
+        float _params[COUNT_MAX][2], _srcNorm, _dstNorm, _addScale;
         const int8_t* _weight[COUNT_MAX];
         Tensor _srcZero8u[COUNT_MAX], _bias32i[COUNT_MAX], _norm32f[COUNT_MAX], _dstZero8u;
 

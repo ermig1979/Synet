@@ -54,6 +54,11 @@ namespace Synet
         for (size_t i = 0; i < _count; ++i)
             flop += _batch * _conv[i].dstC * _conv[i].dstH * _conv[i].dstW *
             (_conv[i].kernelY * _conv[i].kernelX * _conv[i].srcC / _conv[i].group * 2 + (_bias[i] ? 1 : 0) + _conv[i].ActivalionFlop());
+        if (_add)
+        {
+            const ConvParam& back = _conv[_count - 1];
+            flop += _batch * back.dstC * back.dstH * back.dstW * 7;
+        }
         return flop;
     }
 
@@ -89,8 +94,9 @@ namespace Synet
         _count = mc.conv().size();
         if (_count < 2 && _count > 3)
             SYNET_ERROR("QuantizedMergedConvolutionLayer supports only 2 or 3 merged convolutions!");
+        _add = _count == 3 && mc.add() ? 1 : 0;
 
-        size_t qn = 0;
+        size_t qn = _add;
         for (size_t i = 0; i < _count; ++i)
             qn += conv[i].biasTerm() ? 3 : 2;
         if(qn != p.qSrc().size())
@@ -148,7 +154,7 @@ namespace Synet
             if (s.Size() != M || s.GetType() != TensorType32f)
                 SYNET_ERROR("QuantizedMergedConvolutionLayer has wrong scale[" << c << "] (weight[" << _indexW[c] + 1 << "]) size or type!");
         }
-        _dstZero = p.qDst()[0].zero();
+        _dstZero = _add ? p.qSrc().back().zero() : p.qDst()[0].zero();
 
         const ConvParam& back = _conv[_count - 1];
         dst[0]->Reshape(TensorType8u, back.DstShape(_batch), src[0]->Format());
@@ -156,11 +162,16 @@ namespace Synet
         _srcS = src[0]->Size(1);
         _dstS = dst[0]->Size(1);
 
-        _add = _count == 3 && mc.add() ? 1 : 0;
         if (_add)
         {
             if (_srcS != _dstS)
                 SYNET_ERROR("QuantizedMergedConvolutionLayer with add=1 parameter must have input and output of the same size!");
+            _srcBias = -p.qSrc()[0].zero();
+            _srcNorm = float(p.qSrc()[0].scale());
+            _dstBias = -p.qSrc().back().zero();
+            _dstNorm = float(p.qSrc().back().scale());
+            _addZero = p.qDst()[0].zero();
+            _addScale = 1.0f / float(p.qDst()[0].scale());
         }
 
         _quantizedMergedConvolution.Init(_batch, _conv, _count, _add);
@@ -181,7 +192,7 @@ namespace Synet
                 size_t iQ = _indexQ[c], iW = _indexW[c];
 
                 const QuantizeParam& qS = p.qSrc()[iQ + 0];
-                const QuantizeParam& qD = c + 1 < _count ? p.qSrc()[_indexQ[c + 1]] : p.qDst()[0];
+                const QuantizeParam& qD = c + 1 < _count ? p.qSrc()[_indexQ[c + 1]] : (_add ? p.qSrc().back() : p.qDst()[0]);
                 int srcZero = qS.zero(), dstZero = qD.zero();
                 float srcScale = (float)qS.scale(), dstScale = float(qD.scale());
 
@@ -258,6 +269,8 @@ namespace Synet
                     Synet::CpuGemm8iNN(conv.dstH * conv.dstW, conv.dstC, conv.kernelY * conv.kernelX, conv.srcC, ps, conv.srcC * conv.kernelY * conv.kernelX, _weight[c], conv.dstC, sum, conv.dstC, overflow16i);
                 QuantizeSumLinear(sum, 1, conv.dstC, conv.dstH, conv.dstW, conv.dstF, _bias32i[c].Data<int32_t>(), _norm32f[c].Data<float>(), pz, pd);
             }
+            if (_add)
+                AddSrc(src, dst);
             src += _srcS;
             dst += _dstS;
         }
@@ -292,6 +305,16 @@ namespace Synet
                 }
                 dst += C;
             }
+        }
+    }
+
+    void QuantizedMergedConvolutionLayer::AddSrc(const uint8_t* src, uint8_t* dst)
+    {
+        for (size_t i = 0; i < _dstS; ++i)
+        {
+            float _src = DequantizeLinear(src[i], _srcBias, _srcNorm);
+            float _dst = DequantizeLinear(dst[i], _dstBias, _dstNorm);
+            dst[i] = QuantizeLinear(_src + _dst, _addScale, _addZero, 0, 255);
         }
     }
 }

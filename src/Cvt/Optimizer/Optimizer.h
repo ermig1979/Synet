@@ -127,7 +127,7 @@ namespace Synet
                 buf = bin;
             dst.push_back(ip);
             dst.back().innerProduct().transposeB() = false;
-            int axis = ip.innerProduct().axis(), dim0 = dim[axis - 1], dim1 = dim[axis];
+            int axis = ip.innerProduct().axis(), dim0 = (int)dim[axis - 1], dim1 = (int)dim[axis];
             dst.back().weight()[0].dim() = Shp(dim1, dim0);
             const float* pSrc = GetWeight<float>(bin, ip.weight()[0]);
             float* pDst = GetWeight<float>(buf, ip.weight()[0]);
