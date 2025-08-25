@@ -89,7 +89,7 @@
 #endif
 
 #if !defined(SYNET_VERSION)
-#include "Version.h"
+#include "Synet/Version.h"
 #endif
 
 #if defined(_MSC_VER)

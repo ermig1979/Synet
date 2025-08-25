@@ -133,8 +133,11 @@ namespace Synet
             _bias[c] = conv[c].biasTerm();
             if (_bias[c])
             {
+                const QuantizeParam& qB = p.qSrc()[nextQ++];
+                if (qB.type() != TensorType32i)
+                    SYNET_ERROR("QuantizedMergedConvolutionLayer has wrong bias[" << c << "] (quantize[" << nextQ - 1 << "]) quantize parameter!");
                 const Tensor& b = weight[nextW++];
-                if (b.Size() != M || b.GetType() != TensorType32i)
+                if (b.Size() != M || b.GetType() != TensorType32i || qB.type() != TensorType32i)
                     SYNET_ERROR("QuantizedMergedConvolutionLayer has wrong bias[" << c << "] (weight[" << nextW - 1 << "]) size or type!");
             }
 
@@ -186,7 +189,7 @@ namespace Synet
                 size_t K = w.Size(0, 3), M = w.Size(3, 4);
 
                 _bias32i[c].Reshape(TensorType32i, Shp(M), TensorFormatNchw, int32_t(0));
-                _srcZero8u[c].Reshape(TensorType8u, Shp(_conv[c].srcC), TensorFormatNchw, _srcZero[c]);
+                _srcZero8u[c].Reshape(TensorType8u, Shp(_conv[c].srcC), TensorFormatNchw, uint8_t(_srcZero[c]));
                 const int8_t* pw = w.Data<int8_t>();
                 int32_t* pb = _bias32i[c].Data<int32_t>();
                 for (size_t i = 0; i < M; ++i)
@@ -214,28 +217,10 @@ namespace Synet
                 if(c + 1 < _count)
                     Layer::Extend8u(buf, 0, _conv[c].DstShape(1));
             }
-            _dstZero8u.Reshape(TensorType8u, Shp(_conv[_count - 1].dstC), TensorFormatNchw, _dstZero);
+            _dstZero8u.Reshape(TensorType8u, Shp(_conv[_count - 1].dstC), TensorFormatNchw, uint8_t(_dstZero));
         }
 
-        //if (_alg.trans)
-        //{
-        //    _alg.siW = _conv.srcC * _conv.kernelY * _conv.kernelX / _conv.group;
-        //    _alg.ldW = _conv.dstC;
-        //    _alg.grW = _conv.dstC / _conv.group;
-
-        //    _alg.siS = _conv.dstH * _conv.dstW;
-        //    _alg.ldS = _alg.siW * (_alg.is1x1 ? _conv.group : 1);
-        //    _alg.grS = _alg.siW * (_alg.is1x1 ? 1 : _alg.siS);
-
-        //    _alg.siD = _conv.dstC / _conv.group;
-        //    _alg.ldD = _conv.dstC;
-        //    _alg.grD = _alg.siD;
-        //}
-
-        //dst[0]->Reshape(_dst8u ? TensorType8u: TensorType32f, _conv.DstShape(_alg.batch), src[0]->Format());
-
-        //_alg.sSize = src[0]->Size(1);
-        //_alg.dSize = dst[0]->Size(1);
+        dst[0]->Reshape(TensorType8u, back.DstShape(_batch), src[0]->Format());
 
         std::stringstream desc;
         desc << _count << ": " << _batch << "x" << _conv[0].srcC << "x" << _conv[0].srcH << "x" << _conv[0].srcW;
@@ -271,7 +256,7 @@ namespace Synet
                     DepthwiseConvolution(ps, conv, _weight[c], sum);
                 else
                     Synet::CpuGemm8iNN(conv.dstH * conv.dstW, conv.dstC, conv.kernelY * conv.kernelX, conv.srcC, ps, conv.srcC * conv.kernelY * conv.kernelX, _weight[c], conv.dstC, sum, conv.dstC, overflow16i);
-                QuantizeSumLinear(sum, 1, conv.dstC, conv.dstH, conv.dstW, conv.dstF, _bias32i[c].Data<int32_t>(), _norm32f[c].Data<float>(), pz, dst);
+                QuantizeSumLinear(sum, 1, conv.dstC, conv.dstH, conv.dstW, conv.dstF, _bias32i[c].Data<int32_t>(), _norm32f[c].Data<float>(), pz, pd);
             }
             src += _srcS;
             dst += _dstS;

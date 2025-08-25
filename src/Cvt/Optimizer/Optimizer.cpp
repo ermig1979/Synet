@@ -187,6 +187,8 @@ namespace Synet
             {
                 if (MergeThreeConvolutions(network.layers(), i, method, _param, merged, changes))
                     continue;
+                //if (MergeThreeQuantizedConvolutions(network.layers(), i, _param, merged, changes))
+                //    continue;
                 if (MergeSqueezeExcitation(network.layers(), i, merged, changes))
                     continue;
                 if (_param.skipPermute() && SkipTwoPermutes(network.layers(), i, merged))
