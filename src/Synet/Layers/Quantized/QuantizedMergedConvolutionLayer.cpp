@@ -127,12 +127,14 @@ namespace Synet
             if (qS.weights() != 0)
                 SYNET_ERROR("QuantizedMergedConvolutionLayer supports only uniform quantization (check " << nextQ - 1 << " parameter) !");
             _srcZero[c] = qS.zero();
+            _imgZero[c] = (uint8_t)qS.zero();
+            _imgScale[c] = (float)qS.scale();
 
             const Tensor& w = weight[nextW];
             if (w.Shape() != _conv[c].WeightShape(true, true) || w.Format() != src[0]->Format() || w.GetType() != TensorType8i)
                 SYNET_ERROR("QuantizedMergedConvolutionLayer: check weight[" << nextW << "] size, format or type!");
             size_t K = w.Size(0, 3), M = w.Size(3, 4);
-            _weight[c] = w.Data<int8_t>();
+            _ptrW[c] = w.Data<int8_t>();
             const QuantizeParam& qW = p.qSrc()[nextQ++];
             nextW += qW.weights();
 
@@ -153,6 +155,18 @@ namespace Synet
             const Tensor& s = weight[_indexW[c] + 1];
             if (s.Size() != M || s.GetType() != TensorType32f)
                 SYNET_ERROR("QuantizedMergedConvolutionLayer has wrong scale[" << c << "] (weight[" << _indexW[c] + 1 << "]) size or type!");
+        }
+        if (_add)
+        {
+            _imgZero[_count] = (uint8_t)p.qSrc().back().zero();
+            _imgZero[_count + 1] = (uint8_t)p.qDst()[0].zero();
+            _imgScale[_count] = (float)p.qSrc().back().scale();
+            _imgScale[_count + 1] = (float)p.qDst()[0].scale();
+        }
+        else
+        {
+            _imgZero[_count] = (uint8_t)p.qDst()[0].zero();
+            _imgScale[_count] = (float)p.qDst()[0].scale();
         }
         _dstZero = _add ? p.qSrc().back().zero() : p.qDst()[0].zero();
 
@@ -213,6 +227,7 @@ namespace Synet
                 {
                     const QuantizeParam& qW = p.qSrc()[iQ + 1];
                     const Tensor& b = weight[iW + qW.weights()];
+                    _ptrB[c] = (int32_t*)b.Data<int32_t>();
                     const int32_t* pw = b.Data<int32_t>();
                     for (size_t i = 0; i < M; ++i)
                         pb[i] += pw[i];
@@ -220,6 +235,7 @@ namespace Synet
 
                 _norm32f[c].Reshape(TensorType32f, Shp(M), TensorFormatNchw, float(0));
                 const float* ps = weight[iW + 1].Data<float>();
+                _ptrS[c] = (float*)weight[iW + 1].Data<float>();
                 float* pn = _norm32f[c].Data<float>();
                 for (size_t i = 0; i < M; ++i)
                     pn[i] = ps[i] * srcScale / dstScale;
@@ -264,9 +280,9 @@ namespace Synet
                 uint8_t* pd = c + 1 < _count ? buf : dst;
                 const uint8_t * pz = c + 1 < _count ? _srcZero8u[c + 1].RawData() : _dstZero8u.RawData();
                 if (conv.IsDepthwise())
-                    DepthwiseConvolution(ps, conv, _weight[c], sum);
+                    DepthwiseConvolution(ps, _srcZero8u[c].RawData(), conv, _ptrW[c], sum);
                 else
-                    Synet::CpuGemm8iNN(conv.dstH * conv.dstW, conv.dstC, conv.kernelY * conv.kernelX, conv.srcC, ps, conv.srcC * conv.kernelY * conv.kernelX, _weight[c], conv.dstC, sum, conv.dstC, overflow16i);
+                    Synet::CpuGemm8iNN(conv.dstH * conv.dstW, conv.dstC, conv.kernelY * conv.kernelX, conv.srcC, ps, conv.srcC * conv.kernelY * conv.kernelX, _ptrW[c], conv.dstC, sum, conv.dstC, overflow16i);
                 QuantizeSumLinear(sum, 1, conv.dstC, conv.dstH, conv.dstW, conv.dstF, _bias32i[c].Data<int32_t>(), _norm32f[c].Data<float>(), pz, pd);
             }
             if (_add)
@@ -276,7 +292,7 @@ namespace Synet
         }
     }
 
-    void QuantizedMergedConvolutionLayer::DepthwiseConvolution(const uint8_t* src, const ConvParam& conv, const int8_t* weight, int32_t* dst)
+    void QuantizedMergedConvolutionLayer::DepthwiseConvolution(const uint8_t* src, const uint8_t* zero, const ConvParam& conv, const int8_t* weight, int32_t* dst)
     {
         size_t C = conv.srcC;
         for (size_t dy = 0; dy < conv.dstH; ++dy)
@@ -288,18 +304,20 @@ namespace Synet
                 for (size_t ky = 0; ky < conv.kernelY; ++ky)
                 {
                     size_t sy = dy * conv.strideY + ky - conv.padY;
-                    if (sy < conv.srcH)
-                    {
-                        for (size_t kx = 0; kx < conv.kernelX; ++kx)
+                    for (size_t kx = 0; kx < conv.kernelX; ++kx)
+                    {                    
+                        size_t sx = dx * conv.strideX + kx - conv.padX;
+                        const int8_t* pw = weight + (ky * conv.kernelX + kx) * C;
+                        if (sy < conv.srcH && sx < conv.srcW)
                         {
-                            size_t sx = dx * conv.strideX + kx - conv.padX;
-                            if (sx < conv.srcW)
-                            {
-                                const int8_t* pw = weight + (ky * conv.kernelX + kx) * C;
-                                const uint8_t* ps = src + (sy * conv.srcW + sx) * C;
-                                for (size_t c = 0; c < C; ++c)
-                                    dst[c] += ps[c] * pw[c];
-                            }
+                            const uint8_t* ps = src + (sy * conv.srcW + sx) * C;
+                            for (size_t c = 0; c < C; ++c)
+                                dst[c] += ps[c] * pw[c];
+                        }
+                        else
+                        {
+                            for (size_t c = 0; c < C; ++c)
+                                dst[c] += zero[c] * pw[c];
                         }
                     }
                 }

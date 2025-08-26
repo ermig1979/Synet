@@ -50,18 +50,19 @@ namespace Synet
 
         void ForwardCpu(const uint8_t* src, uint8_t* buf, int32_t* sum, uint8_t * dst);
 
-        void DepthwiseConvolution(const uint8_t* src, const ConvParam& conv, const int8_t * weight, int32_t* dst);
+        void DepthwiseConvolution(const uint8_t* src, const uint8_t* zero, const ConvParam& conv, const int8_t * weight, int32_t* dst);
 
         void AddSrc(const uint8_t* src, uint8_t* dst);
 
     protected:
         static const size_t COUNT_MAX = 3;
         size_t _count, _batch, _srcS, _dstS, _indexQ[COUNT_MAX], _indexW[COUNT_MAX];
-        int32_t _srcZero[COUNT_MAX], _dstZero, _add, _addZero, _srcBias, _dstBias;
+        int32_t _srcZero[COUNT_MAX], _dstZero, _add, _addZero, _srcBias, _dstBias, *_ptrB[3];
+        uint8_t _imgZero[5];
         ConvParam _conv[COUNT_MAX];
         bool _bias[COUNT_MAX];
-        float _params[COUNT_MAX][2], _srcNorm, _dstNorm, _addScale;
-        const int8_t* _weight[COUNT_MAX];
+        float _params[COUNT_MAX][2], _srcNorm, _dstNorm, _addScale, _imgScale[5], *_ptrS[3];
+        const int8_t* _ptrW[COUNT_MAX];
         Tensor _srcZero8u[COUNT_MAX], _bias32i[COUNT_MAX], _norm32f[COUNT_MAX], _dstZero8u;
 
         QuantizedMergedConvolution _quantizedMergedConvolution;
