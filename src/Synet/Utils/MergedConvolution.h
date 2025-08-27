@@ -333,8 +333,8 @@ namespace Synet
                 _batch = batch, _srcH = convs[0].srcH, _srcW = convs[0].srcW;
                 if (_context)
                     SimdRelease(_context), _context = NULL;
-                //if (convs[1].dstH >= 1 && convs[1].dstW >= 1)
-                //     _context = SimdSynetQuantizedMergedConvolutionInit(batch, (const SimdConvolutionParameters*)convs, count, (SimdBool)add);
+                if (convs[1].dstH >= 1 && convs[1].dstW >= 1)
+                     _context = SimdSynetQuantizedMergedConvolutionInit(batch, (const SimdConvolutionParameters*)convs, count, (SimdBool)add);
             }
 #endif
         }
@@ -347,7 +347,7 @@ namespace Synet
         size_t ExternalBufferSize() const
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-            return 1;// _context ? SimdSynetQuantizedMergedConvolutionExternalBufferSize(_context) : 1;
+            return _context ? SimdSynetQuantizedMergedConvolutionExternalBufferSize(_context) : 1;
 #else
             return 1;
 #endif
@@ -356,7 +356,7 @@ namespace Synet
         size_t InternalBufferSize() const
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-            return 0;// _context ? SimdSynetQuantizedMergedConvolution16bInternalBufferSize(_context) : 0;
+            return _context ? SimdSynetQuantizedMergedConvolutionInternalBufferSize(_context) : 0;
 #else
             return 0;
 #endif
@@ -365,25 +365,25 @@ namespace Synet
         String Info() const
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-            return "";// _context ? SimdSynetQuantizedMergedConvolution16bInfo(_context) : String();
+            return _context ? SimdSynetQuantizedMergedConvolutionInfo(_context) : String();
 #else
             return String();
 #endif
         }
 
-        void SetParams(const uint8_t* srcZero, const int8_t* const* weight, const float* const* weightScale, const int32_t* const* bias, const float* dstScale, const uint8_t* dstZero)
+        void SetParams(const float* ioScale, const uint8_t* ioZero, const int8_t* const* weight, const float* const* weightScale, const int32_t* const* bias)
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-            //if (_context)
-            //    SimdSynetQuantizedMergedConvolutionSetParams(_context, srcZero, weight, weightScale, bias, dstScale, dstZero);
+            if (_context)
+                SimdSynetQuantizedMergedConvolutionSetParams(_context, ioScale, ioZero, weight, weightScale, bias);
 #endif
         }
 
         void Forward(const uint8_t* src, uint8_t* buf, uint8_t* dst)
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-            //if (_context)
-            //    SimdSynetQuntizedMergedConvolutionForward(_context, src, buf, dst);
+            if (_context)
+                SimdSynetQuantizedMergedConvolutionForward(_context, src, buf, dst);
 #endif
         }
 

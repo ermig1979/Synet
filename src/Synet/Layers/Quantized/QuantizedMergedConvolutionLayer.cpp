@@ -42,8 +42,8 @@ namespace Synet
     {
         size_t size = Layer::MemoryUsage();
         for (size_t c = 0; c < _count; ++c)
-            size += _srcZero8u[c].RawSize() + _bias32i[c].RawSize() + _norm32f[c].RawSize();
-        size += _dstZero8u.RawSize();
+            size += _bias32i[c].RawSize() + _norm32f[c].RawSize();
+        size += _dwSrcZero8u.RawSize();
         size += _quantizedMergedConvolution.InternalBufferSize();
         return size;
     }
@@ -121,14 +121,16 @@ namespace Synet
             if (c)
                 _conv[c].Set(_conv[c - 1], true, conv[c].autoPad());
             else
+            {
                 _conv[c].Set(*src[0], *dst[0], true, conv[c].autoPad());
+                _conv[c].dstT = TensorType8u;
+            }
 
             const QuantizeParam& qS = p.qSrc()[nextQ++];
             if (qS.weights() != 0)
                 SYNET_ERROR("QuantizedMergedConvolutionLayer supports only uniform quantization (check " << nextQ - 1 << " parameter) !");
-            _srcZero[c] = qS.zero();
-            _imgZero[c] = (uint8_t)qS.zero();
-            _imgScale[c] = (float)qS.scale();
+            _ioZero[c] = (uint8_t)qS.zero();
+            _ioScale[c] = (float)qS.scale();
 
             const Tensor& w = weight[nextW];
             if (w.Shape() != _conv[c].WeightShape(true, true) || w.Format() != src[0]->Format() || w.GetType() != TensorType8i)
@@ -147,6 +149,7 @@ namespace Synet
                 const Tensor& b = weight[nextW++];
                 if (b.Size() != M || b.GetType() != TensorType32i || qB.type() != TensorType32i)
                     SYNET_ERROR("QuantizedMergedConvolutionLayer has wrong bias[" << c << "] (weight[" << nextW - 1 << "]) size or type!");
+                _ptrB[c] = (int32_t*)b.Data<int32_t>();
             }
 
             _params[c][0] = conv[c].activationParam0();
@@ -155,20 +158,20 @@ namespace Synet
             const Tensor& s = weight[_indexW[c] + 1];
             if (s.Size() != M || s.GetType() != TensorType32f)
                 SYNET_ERROR("QuantizedMergedConvolutionLayer has wrong scale[" << c << "] (weight[" << _indexW[c] + 1 << "]) size or type!");
+            _ptrS[c] = (float*)s.Data<float>();
         }
         if (_add)
         {
-            _imgZero[_count] = (uint8_t)p.qSrc().back().zero();
-            _imgZero[_count + 1] = (uint8_t)p.qDst()[0].zero();
-            _imgScale[_count] = (float)p.qSrc().back().scale();
-            _imgScale[_count + 1] = (float)p.qDst()[0].scale();
+            _ioZero[_count] = (uint8_t)p.qSrc().back().zero();
+            _ioZero[_count + 1] = (uint8_t)p.qDst()[0].zero();
+            _ioScale[_count] = (float)p.qSrc().back().scale();
+            _ioScale[_count + 1] = (float)p.qDst()[0].scale();
         }
         else
         {
-            _imgZero[_count] = (uint8_t)p.qDst()[0].zero();
-            _imgScale[_count] = (float)p.qDst()[0].scale();
+            _ioZero[_count] = (uint8_t)p.qDst()[0].zero();
+            _ioScale[_count] = (float)p.qDst()[0].scale();
         }
-        _dstZero = _add ? p.qSrc().back().zero() : p.qDst()[0].zero();
 
         const ConvParam& back = _conv[_count - 1];
         dst[0]->Reshape(TensorType8u, back.DstShape(_batch), src[0]->Format());
@@ -192,12 +195,7 @@ namespace Synet
         if (_quantizedMergedConvolution.Enable())
         {
             Layer::Extend8u(buf, 0, Shp(_quantizedMergedConvolution.ExternalBufferSize()));
-        //    int bias = param.qSrc()[1].weights();
-        //    const float* params = _conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : _alg.params;
-        //    float srcScale = (float)param.qSrc()[0].scale(), dstScale = (float)param.qDst()[0].scale();
-        //    uint8_t srcZero = (uint8_t)param.qSrc()[0].zero(), dstZero = (uint8_t)param.qDst()[0].zero();
-        //    _quantizedConvolution.SetParams(&srcScale, &srcZero, weight[0].Data<int8_t>(), weight[1].Data<float>(), 
-        //        _alg.bias ? weight[bias + 0].Data<int32_t>() : NULL, params, &dstScale, &dstZero);
+            _quantizedMergedConvolution.SetParams(_ioScale, _ioZero, _ptrW, _ptrS, _ptrB);
         }
         else
         {
@@ -214,7 +212,8 @@ namespace Synet
                 size_t K = w.Size(0, 3), M = w.Size(3, 4);
 
                 _bias32i[c].Reshape(TensorType32i, Shp(M), TensorFormatNchw, int32_t(0));
-                _srcZero8u[c].Reshape(TensorType8u, Shp(_conv[c].srcC), TensorFormatNchw, uint8_t(_srcZero[c]));
+                if(_conv[c].IsDepthwise())
+                    _dwSrcZero8u.Reshape(TensorType8u, Shp(_conv[c].srcC), TensorFormatNchw, _ioZero[c]);
                 const int8_t* pw = w.Data<int8_t>();
                 int32_t* pb = _bias32i[c].Data<int32_t>();
                 for (size_t i = 0; i < M; ++i)
@@ -227,7 +226,6 @@ namespace Synet
                 {
                     const QuantizeParam& qW = p.qSrc()[iQ + 1];
                     const Tensor& b = weight[iW + qW.weights()];
-                    _ptrB[c] = (int32_t*)b.Data<int32_t>();
                     const int32_t* pw = b.Data<int32_t>();
                     for (size_t i = 0; i < M; ++i)
                         pb[i] += pw[i];
@@ -235,7 +233,6 @@ namespace Synet
 
                 _norm32f[c].Reshape(TensorType32f, Shp(M), TensorFormatNchw, float(0));
                 const float* ps = weight[iW + 1].Data<float>();
-                _ptrS[c] = (float*)weight[iW + 1].Data<float>();
                 float* pn = _norm32f[c].Data<float>();
                 for (size_t i = 0; i < M; ++i)
                     pn[i] = ps[i] * srcScale / dstScale;
@@ -244,7 +241,6 @@ namespace Synet
                 if(c + 1 < _count)
                     Layer::Extend8u(buf, 0, _conv[c].DstShape(1));
             }
-            _dstZero8u.Reshape(TensorType8u, Shp(_conv[_count - 1].dstC), TensorFormatNchw, uint8_t(_dstZero));
         }
 
         dst[0]->Reshape(TensorType8u, back.DstShape(_batch), src[0]->Format());
@@ -278,12 +274,11 @@ namespace Synet
                 const ConvParam& conv = _conv[c];
                 const uint8_t* ps = c ? buf : src;
                 uint8_t* pd = c + 1 < _count ? buf : dst;
-                const uint8_t * pz = c + 1 < _count ? _srcZero8u[c + 1].RawData() : _dstZero8u.RawData();
                 if (conv.IsDepthwise())
-                    DepthwiseConvolution(ps, _srcZero8u[c].RawData(), conv, _ptrW[c], sum);
+                    DepthwiseConvolution(ps, _dwSrcZero8u.RawData(), conv, _ptrW[c], sum);
                 else
                     Synet::CpuGemm8iNN(conv.dstH * conv.dstW, conv.dstC, conv.kernelY * conv.kernelX, conv.srcC, ps, conv.srcC * conv.kernelY * conv.kernelX, _ptrW[c], conv.dstC, sum, conv.dstC, overflow16i);
-                QuantizeSumLinear(sum, 1, conv.dstC, conv.dstH, conv.dstW, conv.dstF, _bias32i[c].Data<int32_t>(), _norm32f[c].Data<float>(), pz, pd);
+                QuantizeSumLinear(sum, 1, conv.dstC, conv.dstH, conv.dstW, conv.dstF, _bias32i[c].Data<int32_t>(), _norm32f[c].Data<float>(), _ioZero[c + 1], pd);
             }
             if (_add)
                 AddSrc(src, dst);
