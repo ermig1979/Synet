@@ -30,6 +30,17 @@ import copy
 
 ###################################################################################################
 
+def GreenColor():
+	return "\033[0;32;49m"
+
+def RedColor():
+	return "\033[0;31;49m"
+
+def DefaultColor():
+	return "\033[0m"
+
+###################################################################################################
+
 class Test():
 	def __init__(self, vals, args):
 		self.framework = vals[0]
@@ -92,11 +103,11 @@ class Context():
 			return
 		with self.lock:
 			self.curr += 1;
-			print("Test {0} of {1} log to : {2} \n{3}".format(self.curr, self.total, log, out))
+			print("{4}Test{5} {0} of {1} log to : {2} \n{3}".format(self.curr, self.total, log, out, GreenColor(), DefaultColor()))
 			
 	def Error(self, text="") -> bool :
 		if text != "" :
-			print(text)
+			print("{0}ERROR:{1} {2}".format(RedColor(), DefaultColor(), text))
 		self.error = True
 		return False
 	
@@ -363,7 +374,7 @@ def main():
 	elapsed = datetime.datetime.now() - start
 	
 	if not context.error :
-		print("All tests finished successfully in {0}:{1:02d}:{2:02d} !\n".format(elapsed.seconds // 3600, elapsed.seconds % 3600 // 60, elapsed.seconds % 60))
+		print("All tests finished {3}successfully{4} in {0}:{1:02d}:{2:02d} !\n".format(elapsed.seconds // 3600, elapsed.seconds % 3600 // 60, elapsed.seconds % 60, GreenColor(), DefaultColor()))
 	
 	return 0
 	
