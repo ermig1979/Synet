@@ -1554,7 +1554,11 @@ namespace Synet
                 layer.type() = LayerTypeReshape;
             }
             if (onnxParam.setReshapeAxis1() && layer.type() == LayerTypeReshape)
+            {
                 layer.reshape().axis() = 1;
+                if (layer.reshape().shape().size() > 1 && layer.reshape().shape()[0] == 1)
+                    layer.reshape().shape().erase(layer.reshape().shape().begin(), layer.reshape().shape().begin() + 1);
+            }
             return true;
         }
 
