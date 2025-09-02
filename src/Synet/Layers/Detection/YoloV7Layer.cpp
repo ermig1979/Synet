@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/YoloV7Layer.h"
+#include "Synet/Layers/Detection/YoloV7Layer.h"
 
 namespace Synet
 {

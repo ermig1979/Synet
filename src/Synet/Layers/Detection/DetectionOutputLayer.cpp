@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/DetectionOutputLayer.h"
+#include "Synet/Layers/Detection/DetectionOutputLayer.h"
 
 namespace Synet
 {

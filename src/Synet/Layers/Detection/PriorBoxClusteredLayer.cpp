@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/PriorBoxClusteredLayer.h"
+#include "Synet/Layers/Detection/PriorBoxClusteredLayer.h"
 
 namespace Synet
 {

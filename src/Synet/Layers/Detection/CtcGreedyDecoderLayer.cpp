@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/CtcGreedyDecoderLayer.h"
+#include "Synet/Layers/Detection/CtcGreedyDecoderLayer.h"
 
 namespace Synet
 {

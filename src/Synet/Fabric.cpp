@@ -29,6 +29,13 @@
 #include "Synet/Layers/Deconvolution/Deconvolution32fLayer.h"
 #include "Synet/Layers/Deconvolution/Deconvolution16bLayer.h"
 
+#include "Synet/Layers/Detection/CtcGreedyDecoderLayer.h"
+#include "Synet/Layers/Detection/DetectionOutputLayer.h"
+#include "Synet/Layers/Detection/PriorBoxLayer.h"
+#include "Synet/Layers/Detection/PriorBoxClusteredLayer.h"
+#include "Synet/Layers/Detection/YoloLayer.h"
+#include "Synet/Layers/Detection/YoloV7Layer.h"
+
 #include "Synet/Layers/InnerProduct/InnerProduct32fLayer.h"
 #include "Synet/Layers/InnerProduct/InnerProduct16bLayer.h"
 #include "Synet/Layers/InnerProduct/InnerProduct8iLayer.h"
@@ -65,8 +72,6 @@
 #include "Synet/Layers/ConcatLayer.h"
 #include "Synet/Layers/ConstLayer.h"
 #include "Synet/Layers/ConstantOfShapeLayer.h"
-#include "Synet/Layers/CtcGreedyDecoderLayer.h"
-#include "Synet/Layers/DetectionOutputLayer.h"
 #include "Synet/Layers/EltwiseLayer.h"
 #include "Synet/Layers/ExpandDimsLayer.h"
 #include "Synet/Layers/FlattenLayer.h"
@@ -84,8 +89,6 @@
 #include "Synet/Layers/PoolingLayer.h"
 #include "Synet/Layers/PowerLayer.h"
 #include "Synet/Layers/PreluLayer.h"
-#include "Synet/Layers/PriorBoxLayer.h"
-#include "Synet/Layers/PriorBoxClusteredLayer.h"
 #include "Synet/Layers/ReductionLayer.h"
 #include "Synet/Layers/ReshapeLayer.h"
 #include "Synet/Layers/ReverseSequenceLayer.h"
@@ -108,8 +111,6 @@
 #include "Synet/Layers/UnaryOperationLayer.h"
 #include "Synet/Layers/UnpackLayer.h"
 #include "Synet/Layers/WhereLayer.h"
-#include "Synet/Layers/YoloLayer.h"
-#include "Synet/Layers/YoloV7Layer.h"
 
 #include "Synet/Fabric.h"
 

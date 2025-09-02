@@ -30,8 +30,8 @@
 #include "Synet/Utils/Statistics.h"
 
 #include "Synet/Layers/Legacy/RegionLayer.h"
-#include "Synet/Layers/DetectionOutputLayer.h"
-#include "Synet/Layers/YoloLayer.h"
+#include "Synet/Layers/Detection/DetectionOutputLayer.h"
+#include "Synet/Layers/Detection/YoloLayer.h"
 
 
 //#define SYNET_LOAD_LOG

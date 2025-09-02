@@ -26,12 +26,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\ConcatLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\PriorBoxClusteredLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\PriorBoxLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\TopKLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -71,9 +65,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\ConstLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\CtcGreedyDecoderLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -102,9 +93,6 @@
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\StridedSliceLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\DetectionOutputLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\PermuteLayer.cpp">
@@ -188,12 +176,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\UpsampleLayer.cpp">
       <Filter>Layers\Legacy</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\YoloLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\YoloV7Layer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Fabric.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\UniversalBinary.cpp">
       <Filter>Utils</Filter>
@@ -270,6 +252,24 @@
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolutionLayer.cpp">
       <Filter>Layers\MergedConvolution</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\CtcGreedyDecoderLayer.cpp">
+      <Filter>Layers\Detection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\DetectionOutputLayer.cpp">
+      <Filter>Layers\Detection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\PriorBoxClusteredLayer.cpp">
+      <Filter>Layers\Detection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\PriorBoxLayer.cpp">
+      <Filter>Layers\Detection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\YoloLayer.cpp">
+      <Filter>Layers\Detection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\YoloV7Layer.cpp">
+      <Filter>Layers\Detection</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -292,12 +292,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ConstLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\CtcGreedyDecoderLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\DetectionOutputLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\EltwiseLayer.h">
@@ -354,13 +348,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\PowerLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\PriorBoxClusteredLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\PreluLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\PriorBoxLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h">
@@ -394,9 +382,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\UnpackLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\YoloLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\TileLayer.h">
@@ -524,9 +509,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\YoloV7.h">
       <Filter>Decoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\YoloV7Layer.h">
-      <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ScatterNdLayer.h">
       <Filter>Layers</Filter>
@@ -705,6 +687,24 @@
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolutionLayer.h">
       <Filter>Layers\MergedConvolution</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\CtcGreedyDecoderLayer.h">
+      <Filter>Layers\Detection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\DetectionOutputLayer.h">
+      <Filter>Layers\Detection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\PriorBoxClusteredLayer.h">
+      <Filter>Layers\Detection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\PriorBoxLayer.h">
+      <Filter>Layers\Detection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\YoloLayer.h">
+      <Filter>Layers\Detection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\YoloV7Layer.h">
+      <Filter>Layers\Detection</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -739,6 +739,9 @@
     </Filter>
     <Filter Include="Layers\MergedConvolution">
       <UniqueIdentifier>{d4cd0a84-5350-477f-80ea-dd28d85ea0f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Detection">
+      <UniqueIdentifier>{edad7bc8-f3d7-4414-b75d-511d077650b0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
