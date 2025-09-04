@@ -19,9 +19,10 @@ echo $FULL_VERSION>$FULL_VERSION_TXT
 if [ -x "$(command -v git)" ]; then
 	git -C $ROOT_DIR rev-parse 2>/dev/null
 	if [ "$?" == "0" ]; then
+		GIT_DATE="$(git -C $ROOT_DIR show -s --date=format:'%Y-%m-%d' --format='%cd' HEAD)"
 		GIT_REVISION="$(git -C $ROOT_DIR rev-parse --short HEAD)"
 		GIT_BRANCH="$(git -C $ROOT_DIR rev-parse --abbrev-ref HEAD)"
-		echo "${USER_VERSION}.${GIT_BRANCH}-${GIT_REVISION}">$FULL_VERSION_TXT
+		echo "${USER_VERSION}.${GIT_DATE}.${GIT_BRANCH}-${GIT_REVISION}">$FULL_VERSION_TXT
 	fi
 fi
 FULL_VERSION=`cat $FULL_VERSION_TXT`
