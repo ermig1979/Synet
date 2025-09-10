@@ -73,6 +73,18 @@ namespace Synet
 
     bool MergeGeluV2(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
+    bool MergeHswish(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
+    bool MergeHswishV2(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
+    bool MergeMish(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
+    bool MergePrelu0(const LayerParams& src, size_t& index, const Bytes& bin, LayerParams& dst, Changes& changes);
+
+    bool MergePrelu1(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
+
+    bool MergeSwish(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
     bool MergeParallelConvolutions(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
 
     bool MergeParallelDepthwiseConvolutions(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);

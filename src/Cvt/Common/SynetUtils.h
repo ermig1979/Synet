@@ -520,6 +520,85 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
+    inline size_t UserCount(const LayerParams& layers, size_t index)
+    {
+        size_t users = 0;
+        for (size_t j = index + 1; j < layers.size(); ++j)
+            for (size_t k = 0; k < layers[j].src().size(); ++k)
+                if (layers[j].src()[k] == layers[index].name())
+                    users++;
+        return users;
+    }
+
+    inline bool RemoveUnusedConst(LayerParams& layers)
+    {
+        for (size_t i = 0; i < layers.size(); ++i)
+        {
+            const LayerParam& curr = layers[i];
+            if (
+                curr.type() == LayerTypeConst ||
+                (curr.type() == LayerTypeMeta && curr.meta().type() == MetaTypeConst) ||
+                (curr.type() == LayerTypeDequantizeLinear && curr.src().empty()))
+            {
+                if (UserCount(layers, i) == 0)
+                    layers.erase(layers.begin() + i), i -= 1;
+                continue;
+            }
+            if (i >= 1 && curr.type() == LayerTypeReshape)
+            {
+                const LayerParam& prev = layers[i - 1];
+                if (prev.type() == LayerTypeConst && curr.src().size() == 1 && curr.src()[0] == prev.name())
+                {
+                    if (UserCount(layers, i) == 0 && UserCount(layers, i - 1) == 1)
+                        layers.erase(layers.begin() + i - 1, layers.begin() + i + 1), i -= 2;
+                }
+            }
+            if (i >= 2 && curr.type() == LayerTypeTile)
+            {
+                const LayerParam& prev1 = layers[i - 1];
+                if (prev1.type() == LayerTypeTile && curr.src().size() == 1 && curr.src()[0] == prev1.name())
+                {
+                    const LayerParam& prev2 = layers[i - 2];
+                    if (prev2.type() == LayerTypeConst && prev1.src().size() == 1 && prev1.src()[0] == prev2.name())
+                    {
+                        if (UserCount(layers, i) == 0 && UserCount(layers, i - 1) == 1 && UserCount(layers, i - 2) == 1)
+                            layers.erase(layers.begin() + i - 2, layers.begin() + i + 1), i -= 3;
+                    }
+                }
+            }
+            if (curr.type() == LayerTypeStub)
+            {
+                if (UserCount(layers, i) == 0)
+                {
+                    size_t p = GetLayerIndex(layers, curr.src()[0]);
+                    if (p < layers.size())
+                    {
+                        if (layers[p].type() == LayerTypeConst)
+                        {
+                            size_t constUserCount = UserCount(layers, p);
+                            if (constUserCount > 1)
+                            {
+                                layers.erase(layers.begin() + i);
+                                i -= 1;
+                            }
+                            else if (constUserCount == 1)
+                            {
+                                layers.erase(layers.begin() + i);
+                                layers.erase(layers.begin() + p);
+                                i -= 2;
+                            }
+                            continue;
+                        }
+                    }
+                }
+                continue;
+            }
+        }
+        return true;
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     class SynetUtils
     {
     protected:
@@ -654,86 +733,6 @@ namespace Synet
                 }
             }
             return count;
-        }
-
-
-        //-------------------------------------------------------------------------------------------------
-
-        static size_t UserCount(const LayerParams& layers, size_t index)
-        {
-            size_t users = 0;
-            for (size_t j = index + 1; j < layers.size(); ++j)
-                for (size_t k = 0; k < layers[j].src().size(); ++k)
-                    if (layers[j].src()[k] == layers[index].name())
-                        users++;
-            return users;
-        }
-
-        static bool RemoveUnusedConst(LayerParams& layers)
-        {
-            for (size_t i = 0; i < layers.size(); ++i)
-            {
-                const LayerParam& curr = layers[i];
-                if (
-                    curr.type() == LayerTypeConst || 
-                    (curr.type() == LayerTypeMeta && curr.meta().type() == MetaTypeConst) ||
-                    (curr.type() == LayerTypeDequantizeLinear && curr.src().empty()))
-                {
-                    if (UserCount(layers, i) == 0)
-                        layers.erase(layers.begin() + i), i -= 1;
-                    continue;
-                }
-                if (i >= 1 && curr.type() == LayerTypeReshape)
-                {
-                    const LayerParam& prev = layers[i - 1];
-                    if (prev.type() == LayerTypeConst && curr.src().size() == 1 && curr.src()[0] == prev.name())
-                    {
-                        if (UserCount(layers, i) == 0 && UserCount(layers, i - 1) == 1)
-                            layers.erase(layers.begin() + i - 1, layers.begin() + i + 1), i -= 2;
-                    }
-                }
-                if (i >= 2 && curr.type() == LayerTypeTile)
-                {
-                    const LayerParam& prev1 = layers[i - 1];
-                    if (prev1.type() == LayerTypeTile && curr.src().size() == 1 && curr.src()[0] == prev1.name())
-                    {
-                        const LayerParam& prev2 = layers[i - 2];
-                        if (prev2.type() == LayerTypeConst && prev1.src().size() == 1 && prev1.src()[0] == prev2.name())
-                        {
-                            if (UserCount(layers, i) == 0 && UserCount(layers, i - 1) == 1 && UserCount(layers, i - 2) == 1)
-                                layers.erase(layers.begin() + i - 2, layers.begin() + i + 1), i -= 3;
-                        }
-                    }
-                }
-                if (curr.type() == LayerTypeStub)
-                {
-                    if (UserCount(layers, i) == 0)
-                    {
-                        size_t p = GetLayerIndex(layers, curr.src()[0]);
-                        if (p < layers.size())
-                        {
-                            if (layers[p].type() == LayerTypeConst)
-                            {
-                                size_t constUserCount = UserCount(layers, p);
-                                if (constUserCount > 1)
-                                {
-                                    layers.erase(layers.begin() + i);
-                                    i -= 1;
-                                }
-                                else if(constUserCount == 1)
-                                {
-                                    layers.erase(layers.begin() + i);
-                                    layers.erase(layers.begin() + p);
-                                    i -= 2;
-                                }  
-                                continue;
-                            }
-                        }
-                    }
-                    continue;
-                }
-            }
-            return true;
         }
     };
 }
