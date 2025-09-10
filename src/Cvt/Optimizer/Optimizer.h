@@ -1178,35 +1178,6 @@ namespace Synet
             return true;
         }
 
-        bool MergeGelu(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
-        {
-            if (src.size() < index + 5)
-                return false;
-            if (!IsMulConst(src[index + 0], M_SQRT1_2))
-                return false;
-            if (src[index + 1].type() != LayerTypeUnaryOperation || src[index + 1].unaryOperation().type() != UnaryOperationTypeErf ||
-                src[index + 1].src()[0] != src[index + 0].dst()[0])
-                return false;
-            if (!IsAddConst(src[index + 2], 1.0f) || src[index + 2].src()[0] != src[index + 1].dst()[0])
-                return false;
-            if (src[index + 3].type() != LayerTypeEltwise || src[index + 3].eltwise().operation() != Synet::EltwiseOperationTypeProduct ||
-                src[index + 3].src()[0] != src[index + 0].src()[0] || src[index + 3].src()[1] != src[index + 2].dst()[0])
-                return false;
-            if (!IsMulConst(src[index + 4], 0.5f) || src[index + 4].src()[0] != src[index + 3].dst()[0])
-                return false;
-            if (InsideLink(src, index + 1, 4))
-                return false;
-
-            LayerParam layer;
-            layer.type() = LayerTypeGelu;
-            layer.name() = src[index + 4].name();
-            layer.src().push_back(src[index + 0].src()[0]);
-            layer.dst().push_back(layer.name());
-            dst.push_back(layer);
-            index += 4;
-            return true;
-        }
-
         bool MergeScale(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
         {
             if (src.size() < index + 2)

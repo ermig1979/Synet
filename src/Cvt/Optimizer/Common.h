@@ -69,6 +69,10 @@ namespace Synet
 
     bool MergeInnerProductAndScale(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
 
+    bool MergeGelu(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
+    bool MergeGeluV2(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
     bool MergeParallelConvolutions(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
 
     bool MergeParallelDepthwiseConvolutions(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
