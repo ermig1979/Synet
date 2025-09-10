@@ -170,69 +170,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertBatchNormalizationNode(const onnx::NodeProto & node, const LayerParams& layers, Bytes& original, LayerParam& layer, Bytes& reordered)
-        {
-            if (!CheckSourceNumber(layer, 5))
-                return false;
-
-            bool shared1, shared2;
-            const LayerParam* src1 = GetWeightLayer(layers, layer.src()[1], &shared1);
-            if (src1 == NULL || src1->type() != LayerTypeConst)
-                SYNET_ERROR("BatchNormalization src[1] must be Const type!");
-            const float* gamma = GetWeight<float>(original, src1->weight()[0]);
-
-            const LayerParam* src2 = GetWeightLayer(layers, layer.src()[2], &shared2);
-            if (src2 == NULL || src2->type() != LayerTypeConst)
-                SYNET_ERROR("BatchNormalization src[2] must be Const type!");
-            const float* beta = GetWeight<float>(original, src2->weight()[0]);
-
-            const LayerParam* src3 = GetWeightLayer(layers, layer.src()[3]);
-            if (src3 == NULL || src3->type() != LayerTypeConst)
-                SYNET_ERROR("BatchNormalization src[3] must be Const type!");
-            const float* mean = GetWeight<float>(original, src3->weight()[0]);
-
-            const LayerParam* src4 = GetWeightLayer(layers, layer.src()[4]);
-            if (src4 == NULL || src4->type() != LayerTypeConst)
-                SYNET_ERROR("BatchNormalization src[4] must be Const type!");
-            const float* var = GetWeight<float>(original, src4->weight()[0]);
-
-            float epsilon, momentum;
-            if (!ConvertAtrributeFloat(node, "epsilon", epsilon))
-                return false;
-            if (!ConvertAtrributeFloat(node, "momentum", momentum))
-                return false;
-
-            layer.type() = Synet::LayerTypeScale;
-            layer.src().resize(1);
-            layer.scale().biasTerm() = true;
-            layer.weight().resize(2);
-            layer.weight()[0] = src1->weight()[0];
-            if(shared1)
-            {
-                size_t size = TensorSize(layer.weight()[0].dim()), offset = reordered.size();
-                original.resize(offset + size * 4);
-                reordered.resize(offset + size * 4);
-                layer.weight()[0].offset() = offset;
-            }
-            layer.weight()[1] = src2->weight()[0];
-            if (shared2)
-            {
-                size_t size = TensorSize(layer.weight()[1].dim()), offset = reordered.size();
-                original.resize(offset + size * 4);
-                reordered.resize(offset + size * 4);
-                layer.weight()[1].offset() = offset;
-            }
-            float* scale = GetWeight<float>(reordered, layer.weight()[0]);
-            float* shift = GetWeight<float>(reordered, layer.weight()[1]);
-            size_t channels = layer.weight()[0].dim()[0];
-            for (size_t c = 0; c < channels; c++)
-            {
-                scale[c] = gamma[c] / sqrt(var[c] + epsilon);
-                shift[c] = -scale[c] * mean[c] + beta[c];
-            }
-            return true;
-        }
-
         bool ConvertCastNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1))
