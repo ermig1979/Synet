@@ -75,6 +75,13 @@ namespace Synet
                     }
                 }
             }
+
+            _classesIndices.clear();
+            _classesIndices.reserve(_classes);
+            for (size_t i = 0; i < _classes; i++)
+            {
+                _classesIndices.emplace_back(i);
+            }
             return true;
         }
 
@@ -83,19 +90,21 @@ namespace Synet
             return _classes != 0;
         }
 
-        Regions GetRegions(const float* data, size_t size, size_t imgW, size_t imgH, float threshold, float overlap) const
+        Regions GetRegions(const float* data, size_t size, size_t imgW, size_t imgH, float threshold, float overlap, const Index& classes = {}) const
         {
             float kX = float(imgW) / float(_netW);
             float kY = float(imgH) / float(_netH);
             const float* anchors = _anchors.data();
+            const auto& classesIndices = classes.empty() ? _classesIndices : classes;
             Regions regions;
             size_t predSize = _regMax + 1;
             for (size_t i = 0; i < size; ++i, data += _classes + 4 * predSize, anchors += 3)
             {
-                float score = data[0];
-                size_t index = 0;
-                for (size_t c = 1; c < _classes; ++c)
+                size_t index = classesIndices[0];
+                float score = data[index];
+                for (size_t j = 1; j < classesIndices.size(); ++j)
                 {
+                    auto c = classesIndices[j];
                     if (data[c] > score)
                     {
                         score = data[c];
@@ -132,26 +141,26 @@ namespace Synet
             return regions;
         }
 
-        std::vector<Regions> GetRegions(const Net& net, size_t imgW, size_t imgH, float threshold, float overlap) const
+        std::vector<Regions> GetRegions(const Net& net, size_t imgW, size_t imgH, float threshold, float overlap, const Index& classes = {}) const
         {
             std::vector<Regions> result(net.NchwShape()[0]);
             for (size_t b = 0; b < result.size(); ++b)
             {
                 const float* data = net.Dst()[0]->Data<float>();
                 size_t size = net.Dst()[0]->Size(1, 2);
-                result[b] = GetRegions(data, size, imgW, imgH, threshold, overlap);
+                result[b] = GetRegions(data, size, imgW, imgH, threshold, overlap, classes);
             }
             return result;
         }
 
-        std::vector<Regions> GetRegions(const Tensors& dst, size_t imgW, size_t imgH, float threshold, float overlap) const
+        std::vector<Regions> GetRegions(const Tensors& dst, size_t imgW, size_t imgH, float threshold, float overlap, const Index& classes = {}) const
         {
             std::vector<Regions> result(dst[0].Axis(0));
             for (size_t b = 0; b < result.size(); ++b)
             {
                 const float* data = dst[0].Data<float>();
                 size_t size = dst[0].Size(1, 2);
-                result[b] = GetRegions(data, size, imgW, imgH, threshold, overlap);
+                result[b] = GetRegions(data, size, imgW, imgH, threshold, overlap, classes);
             }
             return result;
         }
@@ -160,6 +169,7 @@ namespace Synet
         size_t _netW, _netH, _classes, _regMax;
         Ints _strides;
         Floats _anchors;
+        Index _classesIndices;
 
         inline float PredDist(const float* src, size_t count) const
         {
@@ -176,5 +186,3 @@ namespace Synet
         }
     };
 }
-
-
