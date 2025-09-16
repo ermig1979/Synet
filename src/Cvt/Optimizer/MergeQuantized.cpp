@@ -69,6 +69,8 @@ namespace Synet
 
     bool MergeThreeQuantizedConvolutions(const LayerParams& src, size_t& index, const OptimizerParam& param, LayerParams& dst, Changes& changes)
     {
+        if (!param.mergeQuantizedConvolutions())
+            return false;
         if (src.size() < index + 3)
             return false;
         const LayerParam& l0 = src[index + 0];
@@ -151,6 +153,8 @@ namespace Synet
 
     bool MergeTwoQuantizedConvolutions(const LayerParams& src, size_t& index, const OptimizerParam& param, LayerParams& dst, Changes& changes)
     {
+        if (!param.mergeQuantizedConvolutions())
+            return false;
         if (src.size() < index + 2 || !param.mergeTwoConvolutions())
             return false;
         const LayerParam& l0 = src[index + 0];
