@@ -57,7 +57,7 @@ namespace Synet
         float epsilon, momentum;
         if (!ConvertAtrributeFloat(node, "epsilon", epsilon))
             return false;
-        if (!ConvertAtrributeFloat(node, "momentum", momentum))
+        if (!ConvertAtrributeFloat(node, "momentum", momentum, true, 0.9f))
             return false;
 
         layer.type() = Synet::LayerTypeScale;

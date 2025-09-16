@@ -171,7 +171,7 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "ConstantOfShape" && !ConvertConstantOfShapeNode(node, network.layers(), layer, original, reordered))
                 return ErrorMessage(i, node);
-            if ((node.op_type() == "Conv" || node.op_type() == "ConvTranspose") && !ConvertConvOrConvTransposeNode(node, trans, network.layers(), original, layer, reordered, &permuteMap))
+            if ((node.op_type() == "Conv" || node.op_type() == "ConvTranspose") && !ConvertConvOrConvTransposeNode(node, trans, network.layers(), original, layer, reordered, &tensorFormatMap))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Cos" && !ConvertCosNode(node, layer))
                 return ErrorMessage(i, node);

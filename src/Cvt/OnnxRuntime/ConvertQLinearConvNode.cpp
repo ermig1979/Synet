@@ -33,9 +33,9 @@ namespace Synet
         if (!CheckSourceNumber(layer, 8, 9))
             return false;
         layer.type() = Synet::LayerTypeQuantizedConvolution;
-        if (!ConvertAtrributeInts(node, "dilations", layer.convolution().dilation()))
+        if (!ConvertAtrributeInts(node, "dilations", layer.convolution().dilation(), true))
             return false;
-        if (!ConvertAtrributeInt(node, "group", layer.convolution().group()))
+        if (!ConvertAtrributeInt(node, "group", layer.convolution().group(), true, 1u))
             return false;
         if (!ConvertAtrributeInts(node, "kernel_shape", layer.convolution().kernel(), true))
             return false;
