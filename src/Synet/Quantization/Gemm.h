@@ -60,6 +60,35 @@ namespace Synet
         }
     }
 
+    inline void GemmNchwV2(size_t D, size_t S, size_t C, size_t K, const int8_t* wgt, size_t ldW, const uint8_t* src, size_t ldS, int32_t* dst, size_t ldD, bool overflow16i)
+    {
+        size_t KC = K * C, KC2 = (overflow16i && C > 1) ? KC / 2 * 2 : 0;
+        for (size_t i = 0; i < D; ++i)
+        {
+            for (size_t j = 0; j < S; ++j)
+                dst[j] = 0;
+            size_t kc = 0;
+            for (; kc < KC2; kc += 2)
+            {
+                size_t k0 = (kc + 0) / C, c0 = (kc + 0) % C, kc0 = c0 * K + k0;
+                size_t k1 = (kc + 1) / C, c1 = (kc + 1) % C, kc1 = c1 * K + k1;
+                int32_t w0 = wgt[kc0], w1 = wgt[kc1];
+                const uint8_t* s0 = src + kc0 * ldS, * s1 = src + kc1 * ldS;
+                for (size_t j = 0; j < S; ++j)
+                    dst[j] += RestrictRange(s0[j] * w0 + s1[j] * w1, SHRT_MIN, SHRT_MAX);
+            }
+            for (; kc < KC; ++kc)
+            {
+                int32_t w0 = wgt[kc];
+                const uint8_t* s0 = src + kc * ldS;
+                for (size_t j = 0; j < S; ++j)
+                    dst[j] += s0[j] * w0;
+            }
+            wgt += ldW;
+            dst += ldD;
+        }
+    }
+
     inline void CpuGemm8iNN(size_t D, size_t S, size_t C, size_t K, const int8_t* weight, size_t ldW, const uint8_t* src, size_t ldS, int32_t* dst, size_t ldD, bool overflow16i)
     {
         const size_t C2 = overflow16i ? C / 2 * 2 : 0;

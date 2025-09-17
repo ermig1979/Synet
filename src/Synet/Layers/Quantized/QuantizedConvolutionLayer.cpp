@@ -383,7 +383,7 @@ namespace Synet
         else
         {
             if (_conv.group == 1)
-                Synet::CpuGemm8iNN(_alg.siD, _alg.siS, _conv.srcC, _conv.kernelY * _conv.kernelX, weight, _alg.ldW, tmp, _alg.ldS, sum, _alg.ldD, overflow16i);
+                Synet::GemmNchwV2(_alg.siD, _alg.siS, _conv.srcC, _conv.kernelY * _conv.kernelX, weight, _alg.ldW, tmp, _alg.ldS, sum, _alg.ldD, overflow16i);
             else
                 for (size_t g = 0; g < _conv.group; ++g)
                     Synet::CpuGemmNN(_alg.siD, _alg.siS, _alg.siW, weight + _alg.grW * g, _alg.ldW, tmp + _alg.grS * g, _alg.ldS, sum + _alg.grD * g, _alg.ldD);
