@@ -227,22 +227,29 @@ namespace Synet
         }
         else
         {
-            size_t M = weight[0].Size(0, 1), K = weight[0].Size(1, 2);
+            size_t K, N;
             const int8_t* pw = weight[0].Data<int8_t>();
             int32_t* pb = _bias32i.Data<int32_t>();
-            for (size_t i = 0; i < M; ++i)
+            if (_transB)
             {
-                pb[i] = 0;
-                for (size_t k = 0; k < K; ++k)
-                    pb[i] -= pw[i * K + k] * srcZero;
+                K = weight[0].Size(0, 1), N = weight[0].Size(1, 2);
+                for (size_t j = 0; j < N; ++j)
+                    for (size_t k = 0; k < K; ++k)
+                        pb[j] -= pw[j * K + k] * srcZero;
+            }
+            else
+            {
+                N = weight[0].Size(0, 1), K = weight[0].Size(1, 2);
+                for (size_t j = 0; j < N; ++j)
+                    for (size_t k = 0; k < K; ++k)
+                        pb[j] -= pw[k * N + j] * srcZero;
             }
             if (_biasTerm)
             {
                 int biasStart = param.qSrc()[1].weights();
                 const int32_t* pw = weight[biasStart + 0].Data<int32_t>();
-                int32_t* pb = _bias32i.Data<int32_t>();
-                for (size_t i = 0; i < M; ++i)
-                    pb[i] += pw[i];
+                for (size_t j = 0; j < N; ++j)
+                    pb[j] += pw[j];
             }
         }
         _norm32f.Reshape(TensorType32f, Shp(weight[1].Size()), TensorFormatNchw, float(0));
@@ -304,7 +311,10 @@ namespace Synet
     {
         const int8_t* weight = Weight()[0].Data<int8_t>();
         const bool overflow16i = true;
-        Synet::CpuGemm8iNT(_M, _N, _K, src, _K, weight, _K, sum, _N, overflow16i);
+        if(_transB)
+            Synet::CpuGemm8iNN(_M, _N, 1, _K, src, _K, weight, _N, sum, _N, overflow16i);
+        else
+            Synet::CpuGemm8iNT(_M, _N, _K, src, _K, weight, _K, sum, _N, overflow16i);
     }
 
     void QuantizedInnerProductLayer::PostProcess(const int32_t* sum, float* dst)
