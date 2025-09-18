@@ -32,10 +32,13 @@
 #include <sstream>
 #include <iomanip>
 #include <type_traits>
+#include <cfloat>
 
 #include <assert.h>
 
+#if !defined(SYNET_BF16_PRINT_DISABLE)
 #include "Synet/Quantization/Bf16.h"
+#endif
 
 namespace Synet
 {
@@ -70,10 +73,12 @@ namespace Synet
             os << value;
         }
 
+#if !defined(SYNET_BF16_PRINT_DISABLE)
         template<> inline void DebugPrint(std::ostream& os, uint16_t value, size_t precision)
         {
             os << std::fixed << std::setprecision(precision) << BFloat16ToFloat32(value);
         }
+#endif
 
         template<class T> std::ostream& DebugPrint(std::ostream& os, T value, size_t precision, size_t padding)
         {
@@ -186,6 +191,7 @@ namespace Synet
                         min = std::min(min, ptr[i]);
                     }
                 }
+#if !defined(SYNET_BF16_PRINT_DISABLE)
                 if (std::is_same<T, uint16_t>::value)
                 {
                     uint16_t* ptr = (uint16_t*)data;
@@ -196,6 +202,7 @@ namespace Synet
                         min = std::min(min, val);
                     }
                 }
+#endif
                 os << std::fixed << std::setprecision(precision);
                 os << " { " << min << " .. " << max << " }";
                 if (max > float(INT_MAX) || min < float(INT_MIN) || std::isnan(min) || std::isnan(max))
@@ -231,7 +238,7 @@ namespace Synet
         Strings separators(n);
         for (ptrdiff_t i = n - 1; i >= 0; --i)
         {
-            if (i == n - 1)
+            if (i == ptrdiff_t(n - 1))
             {
                 firsts[i] = first;
                 lasts[i] = last;
