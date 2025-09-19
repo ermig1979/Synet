@@ -243,6 +243,11 @@ namespace Synet
         return sum;
     }
 
+    SYNET_INLINE float Fmadd(float a, float b, float c)
+    {
+        return float(double(a) * double(b) + double(c));
+    }
+
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
     template <> SYNET_INLINE void CpuSet<float>(size_t size, float value, float * dst)
     {

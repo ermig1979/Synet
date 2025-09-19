@@ -63,10 +63,10 @@ namespace Synet
         {
             float adScale = aScale / dScale;
             float bdScale = bScale / dScale;
-            float term = float(dZero) - adScale * float(aZero) - bdScale * float(bZero);
+            float term = float(dZero) - (adScale * float(aZero) + bdScale * float(bZero));
             for (size_t i = 0; i < size; ++i)
             {
-                float val = float(a[i]) * adScale + float(b[i]) * bdScale + term;
+                float val = Fmadd(float(a[i]), adScale, Fmadd(float(b[i]), bdScale, term));
                 dst[i] = RestrictRange(NearByInt(val), 0, 255);
             }
         }
