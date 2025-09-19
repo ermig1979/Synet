@@ -31,31 +31,52 @@
 
 namespace Synet
 {
-    template<ActivationFunctionType activation, class D> void QuantizedAddUniform(const uint8_t* a, int aBias, float aNorm, const uint8_t* b, int bBias, float bNorm, size_t size, float* params, float scale, int zero, uint8_t* dst8)
+    template<ActivationFunctionType activation, class D> void QuantizedAddUniformV0(const uint8_t* a, float aScale, int aZero, const uint8_t* b, float bScale, int bZero, size_t size, const float* params, float dScale, int dZero, uint8_t* dst8)
     {
         D* dst = (D*)dst8;
+        int aBias = -aZero, bBias = -bZero;
         if (std::is_same<D, uint8_t>())
         {
+            float scale = 1.0f / dScale;
             for (size_t i = 0; i < size; ++i)
             {
-                float _a = DequantizeLinear(a[i], aBias, aNorm);
-                float _b = DequantizeLinear(b[i], bBias, bNorm);
-                dst[i] = QuantizeLinear(Activation<activation>(_a + _b, 0, params), scale, zero, 0, 255);
+                float _a = DequantizeLinear(a[i], aBias, aScale);
+                float _b = DequantizeLinear(b[i], bBias, bScale);
+                dst[i] = (D)QuantizeLinear(Activation<activation>(_a + _b, 0, params), scale, dZero, 0, 255);
             }
         }
         if (std::is_same<D, float>())
         {
             for (size_t i = 0; i < size; ++i)
             {
-                float _a = DequantizeLinear(a[i], aBias, aNorm);
-                float _b = DequantizeLinear(b[i], bBias, bNorm);
-                dst[i] = Activation<activation>(_a + _b, 0, params);
+                float _a = DequantizeLinear(a[i], aBias, aScale);
+                float _b = DequantizeLinear(b[i], bBias, bScale);
+                dst[i] = (D)Activation<activation>(_a + _b, 0, params);
             }
         }
     }
 
-#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-#endif
+    template<ActivationFunctionType activation, class D> void QuantizedAddUniformV1(const uint8_t* a, float aScale, int aZero, const uint8_t* b, float bScale, int bZero, size_t size, const float* params, float dScale, int dZero, uint8_t* dst8)
+    {
+        D* dst = (D*)dst8;
+        if (std::is_same<D, uint8_t>())
+        {
+            float adScale = aScale / dScale;
+            float bdScale = bScale / dScale;
+            float term = float(dZero) - adScale * float(aZero) - bdScale * float(bZero);
+            for (size_t i = 0; i < size; ++i)
+            {
+                float val = float(a[i]) * adScale + float(b[i]) * bdScale + term;
+                dst[i] = RestrictRange(NearByInt(val), 0, 255);
+            }
+        }
+        if (std::is_same<D, float>())
+        {
+            float term = - aScale * float(aZero) - bScale * float(bZero);
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = Activation<activation>(float(a[i]) * aScale + float(b[i]) * bScale + term, 0, params);
+        }
+    }
 
     //-------------------------------------------------------------------------------------------------
 
@@ -92,22 +113,22 @@ namespace Synet
         if (src[0]->GetType() != TensorType8u || src[1]->GetType() != TensorType8u)
             SYNET_ERROR("QuantizedAddLayer supports only INT8 inputs!");
 
-        _aBias = -param.qSrc()[0].zero();
-        _aNorm = float(param.qSrc()[0].scale());
-        _bBias = -param.qSrc()[1].zero();
-        _bNorm = float(param.qSrc()[1].scale());
+        _aScale = float(param.qSrc()[0].scale());
+        _aZero = param.qSrc()[0].zero();
+        _bScale = float(param.qSrc()[1].scale());
+        _bZero = param.qSrc()[1].zero();
 
         if (param.qDst().size())
         {
             _dstType = param.qDst()[0].type();
-            _zero = param.qDst()[0].zero();
-            _scale = 1.0f / float(param.qDst()[0].scale());
+            _dZero = param.qDst()[0].zero();
+            _dScale = float(param.qDst()[0].scale());
         }
         else
         {
             _dstType = TensorType32f;
-            _zero = 0;
-            _scale = 1.0f;
+            _dZero = 0;
+            _dScale = 1.0f;
         }
         if(_dstType != TensorType8u && _dstType != TensorType32f)
             SYNET_ERROR("QuantizedAddLayer supports only INT8 or FP32 output!");
@@ -118,23 +139,23 @@ namespace Synet
         _params[0] = activ.param0();
         _params[1] = activ.param1();
 
-        _quantizedAdd.Init(
-            src[0]->Shape(), src[0]->GetType(), _aBias, _aNorm,
-            src[1]->Shape(), src[1]->GetType(), _bBias, _bNorm,
-            _activationType, _params, _dstType, _scale, _zero);
+        //_quantizedAdd.Init(
+        //    src[0]->Shape(), src[0]->GetType(), _aBias, _aNorm,
+        //    src[1]->Shape(), src[1]->GetType(), _bBias, _bNorm,
+        //    _activationType, _params, _dstType, _scale, _zero);
         if (!_quantizedAdd.Enable())
         {
             switch (_activationType)
             {
             case ActivationFunctionTypeIdentity:
                 _uniform = _dstType == TensorType8u ? 
-                    QuantizedAddUniform<ActivationFunctionTypeIdentity, uint8_t> :
-                    QuantizedAddUniform<ActivationFunctionTypeIdentity, float>;
+                    QuantizedAddUniformV1<ActivationFunctionTypeIdentity, uint8_t> :
+                    QuantizedAddUniformV0<ActivationFunctionTypeIdentity, float>;
                 break;
             case ActivationFunctionTypeRelu:
                 _uniform = _dstType == TensorType8u ?
-                    QuantizedAddUniform<ActivationFunctionTypeIdentity, uint8_t> :
-                    QuantizedAddUniform<ActivationFunctionTypeRelu, float>;
+                    QuantizedAddUniformV1<ActivationFunctionTypeIdentity, uint8_t> :
+                    QuantizedAddUniformV0<ActivationFunctionTypeRelu, float>;
                 break;
             default:
                 SYNET_ERROR("QuantizedAddLayer does not support " << Cpl::ToStr(_activationType) << " !");
@@ -162,6 +183,6 @@ namespace Synet
         if (_quantizedAdd.Enable())
             _quantizedAdd.Forward(src[0]->RawData(), src[1]->RawData(), dst[0]->RawData());
         else if(_uniform)
-            _uniform(src[0]->Data<uint8_t>(), _aBias, _aNorm, src[1]->Data<uint8_t>(), _bBias, _bNorm, _size, _params, _scale, _zero, dst[0]->RawData());
+            _uniform(src[0]->Data<uint8_t>(), _aScale, _aZero, src[1]->Data<uint8_t>(), _bScale, _bZero, _size, _params, _dScale, _dZero, dst[0]->RawData());
     }
 }

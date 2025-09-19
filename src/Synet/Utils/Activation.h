@@ -241,14 +241,14 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template<ActivationFunctionType activation> float Activation(float value, size_t offset, float* params);
+    template<ActivationFunctionType activation> float Activation(float value, size_t offset, const float* params);
 
-    template<> SYNET_INLINE float Activation<ActivationFunctionTypeIdentity>(float value, size_t offset, float* params)
+    template<> SYNET_INLINE float Activation<ActivationFunctionTypeIdentity>(float value, size_t offset, const float* params)
     {
         return value;
     }
 
-    template<> SYNET_INLINE float Activation<ActivationFunctionTypeRelu>(float value, size_t offset, float* params)
+    template<> SYNET_INLINE float Activation<ActivationFunctionTypeRelu>(float value, size_t offset, const float* params)
     {
         return CpuRelu(value, 0.0f);
     }

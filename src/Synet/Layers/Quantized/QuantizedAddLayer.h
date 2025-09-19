@@ -41,15 +41,15 @@ namespace Synet
 
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
-        typedef void (*UniformPtr)(const uint8_t *a, int aBias, float aNorm, const uint8_t* b, int bBias, float bNorm, size_t size, float * params, float scale, int zero, uint8_t* dst);
+        typedef void (*UniformPtr)(const uint8_t* a, float aScale, int aZero, const uint8_t* b, float bScale, int bZero, size_t size, const float* params, float dScale, int dZero, uint8_t* dst);
 
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
         TensorType _dstType;
         ActivationFunctionType _activationType;
-        int32_t _aBias, _bBias, _zero;
-        float _aNorm, _bNorm, _scale, _params[2];
+        int32_t _aZero, _bZero, _dZero;
+        float _aScale, _bScale, _dScale, _params[2];
         size_t _axis, _size;
 
         UniformPtr _uniform;
