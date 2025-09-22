@@ -139,10 +139,10 @@ namespace Synet
         _params[0] = activ.param0();
         _params[1] = activ.param1();
 
-        //_quantizedAdd.Init(
-        //    src[0]->Shape(), src[0]->GetType(), _aBias, _aNorm,
-        //    src[1]->Shape(), src[1]->GetType(), _bBias, _bNorm,
-        //    _activationType, _params, _dstType, _scale, _zero);
+        _quantizedAdd.Init(
+            src[0]->Shape(), src[0]->GetType(), _aScale, _aZero,
+            src[1]->Shape(), src[1]->GetType(), _bScale, _bZero,
+            _activationType, _params, _dstType, _dScale, _dZero);
         if (!_quantizedAdd.Enable())
         {
             switch (_activationType)

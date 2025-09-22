@@ -101,8 +101,8 @@ namespace Synet
 #endif
         }
 
-        SYNET_INLINE void Init(const Shape& aShape, TensorType aType, int32_t aBias, float aNorm, const Shape& bShape, TensorType bType, int32_t bBias, float bNorm,
-            ActivationFunctionType actType, const float* actParams, TensorType dstType, float dstNorm, int32_t dstZero)
+        SYNET_INLINE void Init(const Shape& aShape, TensorType aType, float aScale, int32_t aZero, const Shape& bShape, TensorType bType, float bScale, int32_t bZero,
+            ActivationFunctionType actType, const float* actParams, TensorType dstType, float dstScale, int32_t dstZero)
         {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
             if (_aShape != aShape || _bShape != bShape)
@@ -111,9 +111,9 @@ namespace Synet
                 if (_context)
                     ::SimdRelease(_context), _context = NULL;
                 _context = ::SimdSynetQuantizedAddInit(
-                    _aShape.data(), _aShape.size(), (SimdTensorDataType)aType, aBias, &aNorm, 
-                    _bShape.data(), _bShape.size(), (SimdTensorDataType)bType, bBias, &bNorm, 
-                    (SimdConvolutionActivationType)actType, actParams, (SimdTensorDataType)dstType, &dstNorm, dstZero);
+                    _aShape.data(), _aShape.size(), (SimdTensorDataType)aType, &aScale, aZero, 
+                    _bShape.data(), _bShape.size(), (SimdTensorDataType)bType, &bScale, bZero,
+                    (SimdConvolutionActivationType)actType, actParams, (SimdTensorDataType)dstType, &dstScale, dstZero);
             }
 #endif
         }
