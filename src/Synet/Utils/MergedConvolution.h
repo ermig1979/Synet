@@ -334,7 +334,7 @@ namespace Synet
                 if (_context)
                     SimdRelease(_context), _context = NULL;
                 if (convs[1].dstH >= 1 && convs[1].dstW >= 1)
-                     _context = SimdSynetQuantizedMergedConvolutionInit(batch, (const SimdConvolutionParameters*)convs, count, (SimdBool)add);
+                     _context = SimdSynetQuantizedMergedConvolutionInit(batch, (const SimdConvolutionParameters*)convs, count, add);
             }
 #endif
         }

@@ -103,7 +103,7 @@ namespace Synet
             if (l2.convolution().activationType() == ActivationFunctionTypeIdentity && IsAdd(l3) && ((l3.src()[0] == l0.src()[0] && l3.src()[1] == l2.dst()[0]) ||
                 ((l3.src()[1] == l0.src()[0] && l3.src()[0] == l2.dst()[0]))) && !InsideLink(src, index - 2, 4))
             {
-                dst.back().mergedConvolution().add() = true;
+                dst.back().mergedConvolution().add() = 1;
                 dst.back().name() = l3.name();
                 dst.back().dst()[0] = dst.back().name();
                 index += 1;

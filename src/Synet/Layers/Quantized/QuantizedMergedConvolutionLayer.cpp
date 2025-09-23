@@ -183,12 +183,10 @@ namespace Synet
         {
             if (_srcS != _dstS)
                 SYNET_ERROR("QuantizedMergedConvolutionLayer with add=1 parameter must have input and output of the same size!");
-            _srcBias = -p.qSrc()[0].zero();
-            _srcNorm = float(p.qSrc()[0].scale());
-            _dstBias = -p.qSrc().back().zero();
-            _dstNorm = float(p.qSrc().back().scale());
-            _addZero = p.qDst()[0].zero();
-            _addScale = 1.0f / float(p.qDst()[0].scale());
+            int a = _add == 1 ? 3 : 0, b = _add == 1 ? 0 : 3;
+            _aNorm = float(_ioScale[a]) / float(_ioScale[4]);
+            _bNorm = float(_ioScale[b]) / float(_ioScale[4]);
+            _term = float(_ioZero[4]) - Fmadd(float(_ioZero[a]), _aNorm, float(_ioZero[b]) * _bNorm);
         }
 
         _quantizedMergedConvolution.Init(_batch, _conv, _count, _add);
@@ -280,8 +278,10 @@ namespace Synet
                     Synet::CpuGemm8iNN(conv.dstH * conv.dstW, conv.dstC, conv.kernelY * conv.kernelX, conv.srcC, ps, conv.srcC * conv.kernelY * conv.kernelX, _ptrW[c], conv.dstC, sum, conv.dstC, overflow16i);
                 QuantizeSumLinear(sum, 1, conv.dstC, conv.dstH, conv.dstW, conv.dstF, _bias32i[c].Data<int32_t>(), _norm32f[c].Data<float>(), _ioZero[c + 1], pd);
             }
-            if (_add)
-                AddSrc(src, dst);
+            if (_add == 1)
+                Add(dst, src, dst);
+            else if (_add == 2)
+                Add(src, dst, dst);
             src += _srcS;
             dst += _dstS;
         }
@@ -321,13 +321,12 @@ namespace Synet
         }
     }
 
-    void QuantizedMergedConvolutionLayer::AddSrc(const uint8_t* src, uint8_t* dst)
+    void QuantizedMergedConvolutionLayer::Add(const uint8_t* a, const uint8_t* b, uint8_t* dst)
     {
         for (size_t i = 0; i < _dstS; ++i)
         {
-            float _src = DequantizeLinear(src[i], _srcBias, _srcNorm);
-            float _dst = DequantizeLinear(dst[i], _dstBias, _dstNorm);
-            dst[i] = QuantizeLinear(_src + _dst, _addScale, _addZero, 0, 255);
+            float val = Fmadd(float(a[i]), _aNorm, Fmadd(float(b[i]), _bNorm, _term));
+            dst[i] = RestrictRange(NearByInt(val), 0, 255);
         }
     }
 }

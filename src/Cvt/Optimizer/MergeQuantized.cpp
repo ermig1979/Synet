@@ -138,10 +138,10 @@ namespace Synet
                 ((l3.src()[0] == l0.src()[0] && l3.src()[1] == l2.dst()[0]) ||
                 ((l3.src()[1] == l0.src()[0] && l3.src()[0] == l2.dst()[0]))) && !InsideLink(src, index - 2, 4))
             {
-                dst.back().mergedConvolution().add() = true;
+                dst.back().mergedConvolution().add() = l3.src()[0] == l0.src()[0] ? 2 : 1;
                 dst.back().name() = l3.name();
                 dst.back().dst()[0] = dst.back().name();
-                dst.back().qSrc().push_back(l3.qSrc()[1]);
+                dst.back().qSrc().push_back(l2.qDst()[0]);
                 dst.back().qDst() = l3.qDst();
                 index += 1;
             }

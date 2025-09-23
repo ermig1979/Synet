@@ -522,7 +522,7 @@ namespace Synet
     struct MergedConvolutionParam
     {
         CPL_PARAM_VECTOR(ConvolutionParam, conv);
-        CPL_PARAM_VALUE(bool, add, false);
+        CPL_PARAM_VALUE(int, add, 0);
     };
 
     struct MetaParam
