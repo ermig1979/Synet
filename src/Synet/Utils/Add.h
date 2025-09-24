@@ -107,7 +107,7 @@ namespace Synet
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
             if (_aShape != aShape || _bShape != bShape)
             {
-                _aShape = aShape, _bShape = aShape;
+                _aShape = aShape, _bShape = bShape;
                 if (_context)
                     ::SimdRelease(_context), _context = NULL;
                 _context = ::SimdSynetQuantizedAddInit(

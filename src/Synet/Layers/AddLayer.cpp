@@ -319,20 +319,6 @@ namespace Synet
         }
     }
 
-    SYNET_INLINE bool GetSteps(const Shape& src, const Shape& dst, Shape& steps)
-    {
-        steps.resize(src.size(), 0);
-        size_t step = 1;
-        for (ptrdiff_t i = src.size() - 1; i >= 0; --i)
-        {
-            if (src[i] != dst[i] && src[i] != 1)
-                return false;
-            steps[i] = src[i] == 1 ? 0 : step;
-            step *= src[i];
-        }
-        return true;
-    }
-
     //-------------------------------------------------------------------------------------------------
 
     AddLayer::AddLayer(const LayerParam & param, Context* context, QuantizationMethod method)
@@ -546,8 +532,10 @@ namespace Synet
             if(_special == SpecialUniversal)
             {
                 _dstShape = shapeD;
-                if (!(GetSteps(shapeA, _dstShape, _aSteps) && GetSteps(shapeB, _dstShape, _bSteps)))
+                if(!IsCompatible(shapeA, shapeB))
                     SYNET_ERROR("AddLayer has incompatible inputs!");
+                _aSteps = SourceSteps(shapeA, _dstShape);
+                _bSteps = SourceSteps(shapeB, _dstShape);
                 _universal = GetAddUniversal(_typeA, _typeB, _typeD, shapeA.size());
                 if (_universal == NULL)
                     SYNET_ERROR("AddLayer can create universal worker!");

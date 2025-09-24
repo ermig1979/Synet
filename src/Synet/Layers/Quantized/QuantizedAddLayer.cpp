@@ -28,6 +28,7 @@
 #include "Synet/Quantization/DequantizeLinear.h"
 
 #include "Synet/Utils/Activation.h"
+#include "Synet/Utils/UniversalBinary.h"
 
 namespace Synet
 {
@@ -56,25 +57,151 @@ namespace Synet
         }
     }
 
+    //-------------------------------------------------------------------------------------------------
+
+    SYNET_INLINE void QuantizedAdd(int a, float aNorm, int b, float bNorm, float term, uint8_t &dst)
+    {
+        float val = Fmadd(float(a), aNorm, Fmadd(float(b), bNorm, term));
+        dst = (uint8_t)RestrictRange(NearByInt(val), 0, 255);
+    }
+
     template<ActivationFunctionType activation, class D> void QuantizedAddUniformV1(const uint8_t* a, float aScale, int aZero, const uint8_t* b, float bScale, int bZero, size_t size, const float* params, float dScale, int dZero, uint8_t* dst8)
     {
         D* dst = (D*)dst8;
         if (std::is_same<D, uint8_t>())
         {
-            float adScale = aScale / dScale;
-            float bdScale = bScale / dScale;
-            float term = float(dZero) - (adScale * float(aZero) + bdScale * float(bZero));
+            float aNorm = aScale / dScale;
+            float bNorm = bScale / dScale;
+            float term = float(dZero) - (aNorm * float(aZero) + bNorm * float(bZero));
             for (size_t i = 0; i < size; ++i)
-            {
-                float val = Fmadd(float(a[i]), adScale, Fmadd(float(b[i]), bdScale, term));
-                dst[i] = RestrictRange(NearByInt(val), 0, 255);
-            }
+                QuantizedAdd(a[i], aNorm, b[i], bNorm, term, dst[i]);
         }
         if (std::is_same<D, float>())
         {
             float term = - aScale * float(aZero) - bScale * float(bZero);
             for (size_t i = 0; i < size; ++i)
-                dst[i] = Activation<activation>(float(a[i]) * aScale + float(b[i]) * bScale + term, 0, params);
+                dst[i] = (D)Activation<activation>(float(a[i]) * aScale + float(b[i]) * bScale + term, 0, params);
+        }
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    template <size_t N> void QuantizedAddUniversal8u(const uint8_t* a, const Shape& aSteps, float aScale, int aZero,
+        const uint8_t* b, const Shape& bSteps, float bScale, int bZero,
+        const float* params, uint8_t* dst, const Shape& dstShape, float dScale, int dZero)
+    {
+        float aNorm = aScale / dScale;
+        float bNorm = bScale / dScale;
+        float term = float(dZero) - (aNorm * float(aZero) + bNorm * float(bZero));
+        if (N == 1)
+        {
+            const uint8_t* a0 = a;
+            const uint8_t* b0 = b;
+            for (size_t i0 = 0; i0 < dstShape[0]; ++i0)
+            {
+                QuantizedAdd(*a0, aNorm, *b0, bNorm, term, *dst);
+                a0 += aSteps[0];
+                b0 += bSteps[0];
+                dst += 1;
+            }
+        }
+        else if (N == 2)
+        {
+            const uint8_t* a0 = a;
+            const uint8_t* b0 = b;
+            for (size_t i0 = 0; i0 < dstShape[0]; ++i0)
+            {
+                const uint8_t* a1 = a0;
+                const uint8_t* b1 = b0;
+                for (size_t i1 = 0; i1 < dstShape[1]; ++i1)
+                {
+                    QuantizedAdd(*a1, aNorm, *b1, bNorm, term, *dst);
+                    a1 += aSteps[1];
+                    b1 += bSteps[1];
+                    dst += 1;
+                }
+                a0 += aSteps[0];
+                b0 += bSteps[0];
+            }
+        }
+        else if (N == 3)
+        {
+            const uint8_t* a0 = a;
+            const uint8_t* b0 = b;
+            for (size_t i0 = 0; i0 < dstShape[0]; ++i0)
+            {
+                const uint8_t* a1 = a0;
+                const uint8_t* b1 = b0;
+                for (size_t i1 = 0; i1 < dstShape[1]; ++i1)
+                {
+                    const uint8_t* a2 = a1;
+                    const uint8_t* b2 = b1;
+                    for (size_t i2 = 0; i2 < dstShape[2]; ++i2)
+                    {
+                        QuantizedAdd(*a2, aNorm, *b2, bNorm, term, *dst);
+                        a2 += aSteps[2];
+                        b2 += bSteps[2];
+                        dst += 1;
+                    }
+                    a1 += aSteps[1];
+                    b1 += bSteps[1];
+                }
+                a0 += aSteps[0];
+                b0 += bSteps[0];
+            }
+        }
+        else if (N == 4)
+        {
+            const uint8_t* a0 = a;
+            const uint8_t* b0 = b;
+            for (size_t i0 = 0; i0 < dstShape[0]; ++i0)
+            {
+                const uint8_t* a1 = a0;
+                const uint8_t* b1 = b0;
+                for (size_t i1 = 0; i1 < dstShape[1]; ++i1)
+                {
+                    const uint8_t* a2 = a1;
+                    const uint8_t* b2 = b1;
+                    for (size_t i2 = 0; i2 < dstShape[2]; ++i2)
+                    {
+                        const uint8_t* a3 = a2;
+                        const uint8_t* b3 = b2;
+                        for (size_t i3 = 0; i3 < dstShape[3]; ++i3)
+                        {
+                            QuantizedAdd(*a3, aNorm, *b3, bNorm, term, *dst);
+                            a3 += aSteps[3];
+                            b3 += bSteps[3];
+                            dst += 1;
+                        }
+                        a2 += aSteps[2];
+                        b2 += bSteps[2];
+                    }
+                    a1 += aSteps[1];
+                    b1 += bSteps[1];
+                }
+                a0 += aSteps[0];
+                b0 += bSteps[0];
+            }
+        }
+        else
+            assert(0);
+    }
+
+    QuantizedAddLayer::UniversalPtr GetQuantizedAddUniversal(TensorType typeD, size_t dim)
+    {
+        if (typeD == TensorType32f)
+            return NULL;
+        else
+        {
+            switch (dim)
+            {
+            case 1: return QuantizedAddUniversal8u<1>;
+            case 2: return QuantizedAddUniversal8u<2>;
+            case 3: return QuantizedAddUniversal8u<3>;
+            case 4: return QuantizedAddUniversal8u<4>;
+            default:
+                return NULL;
+            }
         }
     }
 
@@ -83,6 +210,7 @@ namespace Synet
     QuantizedAddLayer::QuantizedAddLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
         , _uniform(NULL)
+        , _universal(NULL)
     {
     }
 
@@ -90,7 +218,7 @@ namespace Synet
     {
         if (_const)
             return 0;
-        return _size * (_dstType == TensorType8u ? 7 : 5);
+        return _size * (_dType == TensorType8u ? 7 : 5);
     }
 
     LowPrecisionType QuantizedAddLayer::LowPrecision(TensorType type) const
@@ -104,13 +232,13 @@ namespace Synet
     {
         if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("QuantizedAddLayer supports only 2 inputs and 1 output!");
-        if (src[0]->Shape() != src[1]->Shape() && src[0]->Size() != src[1]->Size())
-            SYNET_ERROR("QuantizedAddLayer supports only inputs with the same shape!");
 
         const LayerParam& param = this->Param();
         if (param.qSrc().size() != 2)
             SYNET_ERROR("QuantizedAddLayer must have 2 inputs quantization parameters!");
-        if (src[0]->GetType() != TensorType8u || src[1]->GetType() != TensorType8u)
+
+        _aType = src[0]->GetType(), _bType = src[1]->GetType();
+        if (_aType != TensorType8u || _bType != TensorType8u)
             SYNET_ERROR("QuantizedAddLayer supports only INT8 inputs!");
 
         _aScale = float(param.qSrc()[0].scale());
@@ -120,49 +248,68 @@ namespace Synet
 
         if (param.qDst().size())
         {
-            _dstType = param.qDst()[0].type();
+            _dType = param.qDst()[0].type();
             _dZero = param.qDst()[0].zero();
             _dScale = float(param.qDst()[0].scale());
         }
         else
         {
-            _dstType = TensorType32f;
+            _dType = TensorType32f;
             _dZero = 0;
             _dScale = 1.0f;
         }
-        if(_dstType != TensorType8u && _dstType != TensorType32f)
+        if(_dType != TensorType8u && _dType != TensorType32f)
             SYNET_ERROR("QuantizedAddLayer supports only INT8 or FP32 output!");
 
-        const ActivationParam& activ = param.activation();
+        const ActivationParam& act = param.activation();
         _size = src[0]->Size();
-        _activationType = activ.type();
-        _params[0] = activ.param0();
-        _params[1] = activ.param1();
+        _activationType = act.type();
+        _params[0] = act.param0();
+        _params[1] = act.param1();
 
-        _quantizedAdd.Init(
-            src[0]->Shape(), src[0]->GetType(), _aScale, _aZero,
-            src[1]->Shape(), src[1]->GetType(), _bScale, _bZero,
-            _activationType, _params, _dstType, _dScale, _dZero);
+        Shape shapeA = src[0]->Shape(), shapeB = src[1]->Shape();
+        if (!IsCompatible(shapeA, shapeB))
+            SYNET_ERROR("QuantizedAddLayer incompatible input shapes!");
+        Shape shapeD = OutputShape(shapeA, shapeB);
+
+        _quantizedAdd.Init(shapeA, _aType, _aScale, _aZero, shapeB, _bType, _bScale, _bZero,
+            _activationType, _params, _dType, _dScale, _dZero);
         if (!_quantizedAdd.Enable())
         {
-            switch (_activationType)
+            _uniform = NULL, _universal = NULL;
+            if (shapeA == shapeB)
             {
-            case ActivationFunctionTypeIdentity:
-                _uniform = _dstType == TensorType8u ? 
-                    QuantizedAddUniformV1<ActivationFunctionTypeIdentity, uint8_t> :
-                    QuantizedAddUniformV0<ActivationFunctionTypeIdentity, float>;
-                break;
-            case ActivationFunctionTypeRelu:
-                _uniform = _dstType == TensorType8u ?
-                    QuantizedAddUniformV1<ActivationFunctionTypeIdentity, uint8_t> :
-                    QuantizedAddUniformV0<ActivationFunctionTypeRelu, float>;
-                break;
-            default:
-                SYNET_ERROR("QuantizedAddLayer does not support " << Cpl::ToStr(_activationType) << " !");
+                switch (_activationType)
+                {
+                case ActivationFunctionTypeIdentity:
+                    _uniform = _dType == TensorType8u ?
+                        QuantizedAddUniformV1<ActivationFunctionTypeIdentity, uint8_t> :
+                        QuantizedAddUniformV0<ActivationFunctionTypeIdentity, float>;
+                    break;
+                case ActivationFunctionTypeRelu:
+                    _uniform = _dType == TensorType8u ?
+                        QuantizedAddUniformV1<ActivationFunctionTypeIdentity, uint8_t> :
+                        QuantizedAddUniformV0<ActivationFunctionTypeRelu, float>;
+                    break;
+                default:
+                    SYNET_ERROR("QuantizedAddLayer does not support " << Cpl::ToStr(_activationType) << " !");
+                }
+            }
+            else
+            {
+                shapeB = FullSrcShape(shapeB, shapeD);
+                shapeA = FullSrcShape(shapeA, shapeD);
+                _dShape = shapeD;
+                CompactShapes(shapeA, shapeB, _dShape);
+                _aSteps = SourceSteps(shapeA, _dShape);
+                _bSteps = SourceSteps(shapeB, _dShape);
+                _universal = GetQuantizedAddUniversal(_dType, shapeA.size());
+                if (_universal == NULL)
+                    SYNET_ERROR("QuantizedAddLayer can create universal worker!");
             }
         }
 
-        dst[0]->Reshape(_dstType, src[0]->Shape(), src[0]->Format());
+        dst[0]->Reshape(_dType, shapeD, src[0]->Format());
         if (src[0]->Const() && src[1]->Const())
         {
             ForwardCpu(src, buf, dst);
@@ -184,5 +331,7 @@ namespace Synet
             _quantizedAdd.Forward(src[0]->RawData(), src[1]->RawData(), dst[0]->RawData());
         else if(_uniform)
             _uniform(src[0]->Data<uint8_t>(), _aScale, _aZero, src[1]->Data<uint8_t>(), _bScale, _bZero, _size, _params, _dScale, _dZero, dst[0]->RawData());
+        else if (_universal)
+            _universal(src[0]->Data<uint8_t>(), _aSteps, _aScale, _aZero, src[1]->Data<uint8_t>(), _bSteps, _bScale, _bZero, _params, dst[0]->RawData(), _dShape, _dScale, _dZero);
     }
 }
