@@ -599,6 +599,25 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
+    inline bool CompactShape(Shape& shape)
+    {
+        size_t count = 0, value = 1;
+        for (size_t i = 0; i < shape.size(); ++i)
+        {
+            if (shape[i] != 1)
+            {
+                value = shape[i];
+                count++;
+            }
+        }
+        if (count > 1)
+            SYNET_ERROR("Can't compact shape " << ToStr(shape) << " !");
+        shape = Shp(value);
+        return true;
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     class SynetUtils
     {
     protected:
@@ -607,23 +626,6 @@ namespace Synet
         typedef std::map<String, bool> PermuteMap;
 
         //-------------------------------------------------------------------------------------------------
-
-        static bool CompactShape(Shape& shape)
-        {
-            size_t count = 0, value = 1;
-            for (size_t i = 0; i < shape.size(); ++i)
-            {
-                if (shape[i] != 1)
-                {
-                    value = shape[i];
-                    count++;
-                }
-            }
-            if (count > 1)
-                SYNET_ERROR("Can't compact shape " << ToStr(shape) << " !");
-            shape = Shp(value);
-            return true;
-        }
 
         static String NotImplementedMarker()
         {

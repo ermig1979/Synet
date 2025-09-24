@@ -47,6 +47,8 @@ namespace Synet
 
     bool ConvertInput(const onnx::ValueInfoProto& input, bool trans, Synet::NetworkParam& network, Renames& renames);
 
+    bool ConvertPreluNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer);
+
     bool ConvertQLinearAddNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer);
 
     bool ConvertQLinearAveragePoolNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer);

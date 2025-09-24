@@ -34,6 +34,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConvOrConvTransposeNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInitializer.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInput.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertPreluNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearAddNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearAveragePoolNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearConvNode.cpp" />

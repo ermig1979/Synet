@@ -1214,36 +1214,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertPreluNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src1 == NULL)
-                return false;
-            layer.type() = Synet::LayerTypePrelu;
-            if (src1->type() == LayerTypeConst)
-            {
-                layer.weight() = src1->weight();
-            }
-            else if (src1->type() == LayerTypeExpandDims)
-            {
-                if (!CheckSourceNumber(*src1, 1))
-                    return false;
-                const LayerParam* src10 = GetLayer(layers, src1->src()[0]);
-                if (src10 == NULL || src10->type() != LayerTypeConst)
-                    return false;
-                layer.weight() = src10->weight();
-                layers.erase(layers.begin() + (src1 - layers.data()));
-            }
-            else
-                return false;
-            layer.src().resize(1);
-            if (!CompactShape(layer.weight()[0].dim()))
-                return false;
-            return true;
-        }
-
         bool ConvertQuantizeLinearNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 3))
