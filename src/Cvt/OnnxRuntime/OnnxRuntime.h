@@ -596,14 +596,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertFlattenNode(const onnx::NodeProto& node, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypeFlatten;
-            if (!ConvertAtrributeInt(node, "axis", layer.flatten().axis()))
-                return false;
-            return true;
-        }
-
         bool ConvertFloorNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1))
