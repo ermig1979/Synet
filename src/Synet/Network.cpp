@@ -460,6 +460,9 @@ namespace Synet
                     _input[i].dst[j]->DebugPrint(os, String(" dst[") + Cpl::ToStr(j) + "]", false, first, last, precision);
             }
         }
+        bool mode = GetFastMode();
+        SetFastMode(true);
+        SetAmxFull();
         for (size_t i = 0; i < _stages.size(); ++i)
         {
             Layer & layer = *_stages[i].layer;
@@ -500,6 +503,8 @@ namespace Synet
                 }
             }
         }
+        SetFastMode(mode);
+        SetAmxFull();
     }
 
     Network::Regions Network::GetRegions(size_t imageW, size_t imageH, Type threshold, Type overlap) const
