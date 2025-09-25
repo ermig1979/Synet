@@ -39,6 +39,8 @@
 //#define SYNET_TEST_SET_INPUT
 //#define SYNET_TEST_OPENVINO_EXTENSIONS
 
+//#define TEST_COMPARE_LOG
+
 #if !defined(SYNET_TEST_FIRST_RUN) && !defined(SYNET_TEST_SECOND_RUN)
 #error SYNET_TEST_FIRST_RUN and SYNET_TEST_SECOND_RUN are undefined!
 #endif

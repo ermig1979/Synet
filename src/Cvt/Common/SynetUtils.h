@@ -438,7 +438,7 @@ namespace Synet
         case LayerTypeQuantizedConvolution:
         {
             shape = Shape({ shape[2], shape[3], shape[1], shape[0] });
-            Tensor<float> dst((uint8_t*)pDst, weight.size(), TensorType32f, shape, weight.format());
+            Tensor<float> dst((uint8_t*)pDst, weight.size(), weight.type(), shape, weight.format());
             for (size_t o = 0; o < shape[3]; ++o)
                 for (size_t i = 0; i < shape[2]; ++i)
                     for (size_t y = 0; y < shape[0]; ++y)

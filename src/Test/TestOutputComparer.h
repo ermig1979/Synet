@@ -62,7 +62,9 @@ namespace Test
         bool Compare(const Tensors& first, const Tensors& second, const String & failed) const
         {
             using Synet::Detail::DebugPrint;
-
+#ifdef TEST_COMPARE_LOG
+            CPL_LOG_SS(Info, "Compare starts with filed message '" << failed << "'.");
+#endif
             if (first.size() != second.size())
                 SYNET_ERROR(failed << std::endl << "Dst count : " << first.size() << " != " << second.size());
             if (_param.output().size() != first.size() && _param.output().size() != 0)
@@ -121,9 +123,12 @@ namespace Test
                         return false;
                     break;
                 default:
-                    SYNET_ERROR("Error! Dst has unsupported shape " << Synet::Detail::DebugPrint(f.Shape()));
+                    SYNET_ERROR("Error! Dst has unsupported shape " << DebugPrint(f.Shape()));
                 }
             }
+#ifdef TEST_COMPARE_LOG
+            CPL_LOG_SS(Info, "Compare ends.");
+#endif
             return true;
         }
 

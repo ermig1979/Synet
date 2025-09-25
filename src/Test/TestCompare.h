@@ -508,8 +508,14 @@ namespace Test
                 std::ofstream log(path);
                 if (log.is_open())
                 {
+#ifdef TEST_COMPARE_LOG
+                    CPL_LOG_SS(Info, "DebugPrint starts write to '" << path << "'.");
+#endif
                     network.DebugPrint(_tests[i]->input, log, _options.debugPrint, _options.debugPrintFirst, _options.debugPrintLast, _options.debugPrintPrecision);
                     log.close();
+#ifdef TEST_COMPARE_LOG
+                    CPL_LOG_SS(Info, "DebugPrint ends.");
+#endif
                 }
                 else
                     SYNET_ERROR("Can't open '" << path << "' file!");
@@ -541,6 +547,9 @@ namespace Test
         {
             if (_options.annotateRegions && _param().inputType() == "images")
             {
+#ifdef TEST_COMPARE_LOG
+                CPL_LOG_SS(Info, "AnnotateRegions starts write to '" << inputPath << "'.");
+#endif
                 View image;
                 if (!LoadImage(inputPath, image))
                     SYNET_ERROR("Can't read '" << inputPath << "' image!");
@@ -557,6 +566,9 @@ namespace Test
                 String outputPath = MakePath(_options.outputDirectory, Options::FullName(network.Name(), network.Type()) + "_" + GetNameByPath(inputPath));
                 if (!SaveImage(image, outputPath))
                     SYNET_ERROR("Can't write '" << outputPath << "' image!");
+#ifdef TEST_COMPARE_LOG
+                CPL_LOG_SS(Info, "AnnotateRegions ends.");
+#endif
             }
             return true;
         }
@@ -618,6 +630,9 @@ namespace Test
 #ifdef SYNET_TEST_FIRST_RUN
             if (_options.enable & ENABLE_FIRST)
             {
+#ifdef TEST_COMPARE_LOG
+                CPL_LOG_SS(Info, "SingleThreadRunFirst starts.");
+#endif
                 TestData& test = *_tests[index];
                 Copy(_firsts[0].Predict(test.input), test.output[0].first);
                 if (repeat == 0)
@@ -627,6 +642,9 @@ namespace Test
                     if (!AnnotateRegions(_firsts[0], test.path[0]))
                         return false;
                 }
+#ifdef TEST_COMPARE_LOG
+                CPL_LOG_SS(Info, "SingleThreadRunFirst ends.");
+#endif
             }
 #endif
             return true;
@@ -637,12 +655,10 @@ namespace Test
 #ifdef SYNET_TEST_SECOND_RUN
             if (_options.enable & ENABLE_SECOND)
             {
-                TestData& test = *_tests[index];
-#if 0
-                if (repeat == 0)
-                    if (!DebugPrint(_seconds[0], index))
-                        return false;
+#ifdef TEST_COMPARE_LOG
+                CPL_LOG_SS(Info, "SingleThreadRunSecond starts.");
 #endif
+                TestData& test = *_tests[index];
                 Copy(_seconds[0].Predict(test.input), test.output[0].second);
                 if (repeat == 0)
                 {
@@ -651,6 +667,9 @@ namespace Test
                     if (!AnnotateRegions(_seconds[0], test.path[0]))
                         return false;
                 }
+#ifdef TEST_COMPARE_LOG
+                CPL_LOG_SS(Info, "SingleThreadRunSecond ends.");
+#endif
             }
 #endif
             return true;

@@ -360,6 +360,9 @@ namespace Test
         void SetInput(const Tensors& src, size_t b)
         {
             assert(_inputNames.size() == src.size());
+#ifdef TEST_COMPARE_LOG
+            CPL_LOG_SS(Info, "OnnxRuntimeNetwork::SetInput starts " << b);
+#endif
             for (size_t i = 0; i < src.size(); i++)
             {
                 Shape shape = _inputShapes[i], index(shape.size(), 0);
@@ -377,10 +380,16 @@ namespace Test
                     break;
                 }
             }
+#ifdef TEST_COMPARE_LOG
+            CPL_LOG_SS(Info, "OnnxRuntimeNetwork::SetInput ends.");
+#endif
         }
 
         void SetOutput(size_t b)
         {
+#ifdef TEST_COMPARE_LOG
+            CPL_LOG_SS(Info, "OnnxRuntimeNetwork::SetOutput starts " << b);
+#endif
             _output.resize(_outputNames.size());
             for (size_t i = 0; i < _outputNames.size(); i++)
             {
@@ -447,6 +456,9 @@ namespace Test
                 }
                 _output[i].SetName(_outputNames[i]);
             }
+#ifdef TEST_COMPARE_LOG
+            CPL_LOG_SS(Info, "OnnxRuntimeNetwork::SetOutput ends.");
+#endif
         }
 
         bool IsDynamicOutput()
