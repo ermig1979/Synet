@@ -176,7 +176,7 @@ namespace Synet
         uint8_t* dst0 = dst[0]->Data<uint8_t>();
         for (size_t b = 0; b < _batch; ++b)
         {
-            QuantizedScaleLayerForward(src0, &_srcScale, _dstZero, _channels, _spatial, _scale, _bias, dst0, &_dstScale, _dstZero, _format);
+            QuantizedScaleLayerForward(src0, &_srcScale, _srcZero, _channels, _spatial, _scale, _bias, dst0, &_dstScale, _dstZero, _format);
             src0 += _channels * _spatial;
             dst0 += _channels * _spatial;
         }

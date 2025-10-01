@@ -159,6 +159,8 @@ namespace Synet
                     continue;
                 if (MergeQuantizedShuffleV0(network.layers(), i, merged, changes))
                     continue;
+                if (MergeQuantizedScale(network.layers(), i, merged, changes))
+                    continue;
                 break;
             }
             case 5:

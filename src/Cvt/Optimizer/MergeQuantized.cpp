@@ -27,6 +27,34 @@
 
 namespace Synet
 {
+    bool MergeQuantizedScale(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+    {
+        if (src.size() < index + 7)
+            return false;
+        if (src[index + 0].type() != LayerTypeDequantizeLinear)
+            return false;
+        if (src[index + 1].type() != LayerTypeScale)
+            return false;
+        if (src[index + 2].type() != LayerTypeQuantizeLinear)
+            return false;
+        if (InsideLink(src, index, 2, 1))
+            return false;
+        LayerParam layer;
+        layer.type() = LayerTypeQuantizedScale;
+        layer.name() = src[index + 0].name();
+        layer.src().push_back(src[index + 0].src()[0]);
+        layer.qSrc().push_back(src[index + 0].quantize());
+        layer.scale() = src[index + 1].scale();
+        layer.weight() = src[index + 1].weight();
+        layer.dst().push_back(src[index + 2].dst()[0]);
+        layer.qDst().push_back(src[index + 2].quantize());
+        index += 2;
+        dst.push_back(layer);
+        return true;
+    }
+
+    //--------------------------------------------------------------------------------------------------
+
     bool MergeQuantizedShuffleV0(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
     {
         if (src.size() < index + 7)
