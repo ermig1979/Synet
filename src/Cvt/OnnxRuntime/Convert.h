@@ -43,6 +43,8 @@ namespace Synet
 
     bool ConvertBatchNormalizationNode(const onnx::NodeProto& node, const LayerParams& layers, Bytes& original, LayerParam& layer, Bytes& reordered);
 
+    bool ConvertDequantizeLinearNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer);
+
     bool ConvertDropoutNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertFlattenNode(const onnx::NodeProto& node, LayerParam& layer);

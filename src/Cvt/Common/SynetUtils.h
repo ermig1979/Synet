@@ -268,7 +268,6 @@ namespace Synet
         SYNET_ERROR("Can't found layer " << pin.name << " !");
     }
 
-
     inline size_t GetLayerIndex(const LayerParams& layers, const String& name)
     {
         Pin pin = ParsePin(name);

@@ -400,62 +400,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertDequantizeLinearNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 3))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetWeightLayer(layers, layer.src()[1]);
-            const LayerParam* src2 = GetWeightLayer(layers, layer.src()[2]);
-            if (src0 == NULL || src1 == NULL || src2 == NULL)
-                return false;
-            layer.type() = Synet::LayerTypeDequantizeLinear;
-            if (!ConvertAtrributeInt(node, "axis", layer.quantize().axis(), true, 0))
-                return false;
-            if (src0->type() == LayerTypeConst)
-            {
-                layer.weight().push_back(src0->weight()[0]);
-                layer.weight().push_back(src1->weight()[0]);
-                layer.weight().push_back(src2->weight()[0]);
-                layer.src().resize(0);
-            }
-            else
-            {
-                layer.weight().push_back(src1->weight()[0]);
-                layer.weight().push_back(src2->weight()[0]);
-                layer.src().resize(1);
-            }
-            if (TensorSize(layer.weight().back().dim()) == 1 || layer.weight().back().scalar())
-            {
-                switch (layer.weight().back().type())
-                {
-                case TensorType8u:
-                    layer.quantize().zero() = GetWeight<uint8_t>(original, layer.weight().back())[0];
-                    break;
-                case TensorType32i:
-                    layer.quantize().zero() = GetWeight<int32_t>(original, layer.weight().back())[0];
-                    break;
-                default:
-                    return false;
-                }
-                layer.quantize().type() = layer.weight().back().type();
-                layer.weight().resize(layer.weight().size() - 1);
-                if (TensorSize(layer.weight().back().dim()) == 1 || layer.weight().back().scalar())
-                {
-                    switch (layer.weight().back().type())
-                    {
-                    case TensorType32f:
-                        layer.quantize().scale() = GetWeight<float>(original, layer.weight().back())[0];
-                        break;
-                    default:
-                        return false;
-                    }
-                    layer.weight().resize(layer.weight().size() - 1);
-                }
-            }
-            return true;
-        }
-
         bool ConvertDivNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered)
         {
             if (!CheckSourceNumber(layer, 2))
