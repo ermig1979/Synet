@@ -273,6 +273,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\Reshape\SqueezeLayer.cpp">
       <Filter>Layers\Reshape</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedPreluLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -710,6 +713,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Reshape\SqueezeLayer.h">
       <Filter>Layers\Reshape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedPreluLayer.h">
+      <Filter>Layers\Quantized</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -59,6 +59,7 @@
 #include "Synet/Layers/Quantized/QuantizedInnerProductLayer.h"
 #include "Synet/Layers/Quantized/QuantizedMergedConvolutionLayer.h"
 #include "Synet/Layers/Quantized/QuantizedPoolingLayer.h"
+#include "Synet/Layers/Quantized/QuantizedPreluLayer.h"
 #include "Synet/Layers/Quantized/QuantizedScaleLayer.h"
 #include "Synet/Layers/Quantized/QuantizedShuffleLayer.h"
 #include "Synet/Layers/Quantized/QuantizeLinearLayer.h"
@@ -227,6 +228,7 @@ namespace Synet
         case LayerTypeQuantizedInnerProduct: return new QuantizedInnerProductLayer(param, context);
         case LayerTypeQuantizedMergedConvolution: return new QuantizedMergedConvolutionLayer(param, context);
         case LayerTypeQuantizedPooling: return new QuantizedPoolingLayer(param, context);
+        case LayerTypeQuantizedPrelu: return new QuantizedPreluLayer(param, context);
         case LayerTypeQuantizedScale: return new QuantizedScaleLayer(param, context);
         case LayerTypeQuantizedShuffle: return new QuantizedShuffleLayer(param, context);
         case LayerTypeQuantizeLinear: return new QuantizeLinearLayer(param, context);
