@@ -170,7 +170,7 @@ namespace Synet
         if (src[0]->Format() != src[1]->Format())
             SYNET_ERROR("QuantizedShuffleLayer inputs must have the same format!");
         if (src[0]->GetType() != TensorType8u || src[1]->GetType() != TensorType8u)
-            SYNET_ERROR("ShuffleLayer supports only UINT8 inputs and outputs!");
+            SYNET_ERROR("QuantizedShuffleLayer supports only UINT8 inputs and outputs!");
 
         _format = src[0]->Format();
         const Shape& srcShape0 = src[0]->Shape();

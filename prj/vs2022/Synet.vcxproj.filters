@@ -270,6 +270,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\Detection\YoloV7Layer.cpp">
       <Filter>Layers\Detection</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedScaleLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -704,6 +707,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Detection\YoloV7Layer.h">
       <Filter>Layers\Detection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedScaleLayer.h">
+      <Filter>Layers\Quantized</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
