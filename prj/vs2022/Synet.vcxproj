@@ -49,8 +49,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\Detection\YoloLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Detection\YoloV7Layer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\EltwiseLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\ExpandDimsLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\FlattenLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\GatherLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\GridSampleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct16bLayer.cpp" />
@@ -71,7 +69,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution32fLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution8iLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolutionLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\MetaLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MulLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\NonZeroLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\NormalizeLayer.cpp" />
@@ -91,7 +88,11 @@
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedShuffleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizeLinearLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ReductionLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\ReshapeLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Reshape\ExpandDimsLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Reshape\FlattenLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Reshape\MetaLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Reshape\ReshapeLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Reshape\SqueezeLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ReverseSequenceLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\RnnGruBdLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp" />
@@ -102,7 +103,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SpaceToDepthLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\SqueezeLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\StridedSliceLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\StubLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\TensorIteratorLayer.cpp" />
@@ -173,8 +173,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\Detection\YoloLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Detection\YoloV7Layer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\EltwiseLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\ExpandDimsLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\FlattenLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\GatherLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\GridSampleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct16bLayer.h" />
@@ -195,7 +193,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution32fLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution8iLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolutionLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\MetaLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MulLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\NonZeroLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\NormalizeLayer.h" />
@@ -215,7 +212,11 @@
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedShuffleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizeLinearLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\ReshapeLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Reshape\ExpandDimsLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Reshape\FlattenLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Reshape\MetaLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Reshape\ReshapeLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Reshape\SqueezeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ReverseSequenceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\RnnGruBdLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.h" />
@@ -226,7 +227,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SpaceToDepthLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\SqueezeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\StridedSliceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\StubLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\TensorIteratorLayer.h" />

@@ -32,9 +32,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\GatherLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\FlattenLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\PadLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -51,9 +48,6 @@
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\WhereLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\MetaLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\ConstantOfShapeLayer.cpp">
@@ -84,9 +78,6 @@
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\TileLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\SqueezeLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\NonZeroLayer.cpp">
@@ -128,9 +119,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\EltwiseLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\ExpandDimsLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.cpp">
       <Filter>Layers\Legacy</Filter>
     </ClCompile>
@@ -148,9 +136,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\ReorgLayer.cpp">
       <Filter>Layers\Legacy</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\ReshapeLayer.cpp">
-      <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\ReverseSequenceLayer.cpp">
       <Filter>Layers</Filter>
@@ -273,6 +258,21 @@
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedScaleLayer.cpp">
       <Filter>Layers\Quantized</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reshape\ExpandDimsLayer.cpp">
+      <Filter>Layers\Reshape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reshape\FlattenLayer.cpp">
+      <Filter>Layers\Reshape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reshape\MetaLayer.cpp">
+      <Filter>Layers\Reshape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reshape\ReshapeLayer.cpp">
+      <Filter>Layers\Reshape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reshape\SqueezeLayer.cpp">
+      <Filter>Layers\Reshape</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -298,12 +298,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\EltwiseLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ExpandDimsLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\FlattenLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\GatherLayer.h">
@@ -333,9 +327,6 @@
     <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\MetaLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\NormalizeLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
@@ -357,9 +348,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ReshapeLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ScaleLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
@@ -370,9 +358,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\SqueezeLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\StridedSliceLayer.h">
@@ -711,6 +696,21 @@
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedScaleLayer.h">
       <Filter>Layers\Quantized</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reshape\ExpandDimsLayer.h">
+      <Filter>Layers\Reshape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reshape\FlattenLayer.h">
+      <Filter>Layers\Reshape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reshape\MetaLayer.h">
+      <Filter>Layers\Reshape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reshape\ReshapeLayer.h">
+      <Filter>Layers\Reshape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reshape\SqueezeLayer.h">
+      <Filter>Layers\Reshape</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -748,6 +748,9 @@
     </Filter>
     <Filter Include="Layers\Detection">
       <UniqueIdentifier>{edad7bc8-f3d7-4414-b75d-511d077650b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Reshape">
+      <UniqueIdentifier>{dcf7b270-4b41-4d2b-a42b-c7f23500881b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/FlattenLayer.h"
+#include "Synet/Layers/Reshape/FlattenLayer.h"
 
 namespace Synet
 {

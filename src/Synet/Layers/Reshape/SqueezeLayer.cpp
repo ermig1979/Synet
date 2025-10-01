@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/SqueezeLayer.h"
+#include "Synet/Layers/Reshape/SqueezeLayer.h"
 
 namespace Synet
 {

@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/ReshapeLayer.h"
+#include "Synet/Layers/Reshape/ReshapeLayer.h"
 
 namespace Synet
 {

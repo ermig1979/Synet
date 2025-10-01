@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/MetaLayer.h"
+#include "Synet/Layers/Reshape/MetaLayer.h"
 #include "Synet/Utils/UniversalBinary.h"
 
 namespace Synet

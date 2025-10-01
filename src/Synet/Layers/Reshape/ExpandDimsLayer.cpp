@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/ExpandDimsLayer.h"
+#include "Synet/Layers/Reshape/ExpandDimsLayer.h"
 
 namespace Synet
 {
