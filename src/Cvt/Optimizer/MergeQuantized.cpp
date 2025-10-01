@@ -57,27 +57,29 @@ namespace Synet
 
     bool MergeQuantizedScale(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
     {
-        if (src.size() < index + 2)
+        size_t is2 = index;
+        if (src[is2].type() != LayerTypeQuantizeLinear)
             return false;
-        if (src[index + 0].type() != LayerTypeDequantizeLinear)
+        size_t is1 = GetLayerIndex(src, src[is2].src()[0]);
+        size_t id1 = GetLayerIndex(dst, src[is2].src()[0]);
+        if (is1 >= src.size() || id1 >= dst.size() || src[is1].type() != LayerTypeScale || UserCount(src, is1) > 1)
             return false;
-        if (src[index + 1].type() != LayerTypeScale)
-            return false;
-        if (src[index + 2].type() != LayerTypeQuantizeLinear)
-            return false;
-        if (InsideLink(src, index, 2, 1))
+        size_t is0 = GetLayerIndex(src, src[is1].src()[0]);
+        size_t id0 = GetLayerIndex(dst, src[is1].src()[0]);
+        if (is0 >= src.size() || id0 >= dst.size() || src[is0].type() != LayerTypeDequantizeLinear || UserCount(src, is0) > 1)
             return false;
         LayerParam layer;
         layer.type() = LayerTypeQuantizedScale;
-        layer.name() = src[index + 0].name();
-        layer.src().push_back(src[index + 0].src()[0]);
-        layer.qSrc().push_back(src[index + 0].quantize());
-        layer.scale() = src[index + 1].scale();
-        layer.weight() = src[index + 1].weight();
-        layer.dst().push_back(src[index + 2].dst()[0]);
-        layer.qDst().push_back(src[index + 2].quantize());
-        index += 2;
+        layer.name() = src[is0].name();
+        layer.src().push_back(src[is2].src()[0]);
+        layer.qSrc().push_back(src[is0].quantize());
+        layer.scale() = src[is1].scale();
+        layer.weight() = src[is1].weight();
+        layer.dst().push_back(src[is2].dst()[0]);
+        layer.qDst().push_back(src[is2].quantize());
         dst.push_back(layer);
+        dst[id0].type() = LayerTypeStub;
+        dst[id1].type() = LayerTypeStub;
         return true;
     }
 
