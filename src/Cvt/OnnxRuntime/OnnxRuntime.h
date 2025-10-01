@@ -1150,45 +1150,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertQuantizeLinearNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 3))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
-            if (src0 == NULL || src1 == NULL || src2 == NULL)
-                return false;
-            layer.type() = Synet::LayerTypeQuantizeLinear;
-            if (!ConvertAtrributeInt(node, "axis", layer.quantize().axis(), true, 0))
-                return false;
-            if (src1->type() == LayerTypeConst && src2->type() == LayerTypeConst)
-            {
-                if (TensorSize(src1->weight()[0].dim()) == 1 && TensorSize(src2->weight()[0].dim()) == 1)
-                {
-                    layer.quantize().scale() = GetWeight<float>(original, src1->weight()[0])[0];
-                    layer.quantize().type() = src2->weight()[0].type();
-                    switch (layer.quantize().type())
-                    {
-                    case TensorType8u:
-                        layer.quantize().zero() = GetWeight<uint8_t>(original, src2->weight()[0])[0];
-                        break;
-                    default:
-                        SYNET_ERROR("QuantizeLinear: unsupported src[2] type!");
-                    }
-                }
-                else
-                {
-                    layer.weight().push_back(src1->weight()[0]);
-                    layer.weight().push_back(src2->weight()[0]);
-                }
-                layer.src().resize(1);
-            }
-            else
-                SYNET_ERROR("QuantizeLinear: src[1] or src[2] is not const!");
-            return true;
-        }
-
         bool ConvertRangeNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 3))
