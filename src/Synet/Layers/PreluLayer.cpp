@@ -82,7 +82,14 @@ namespace Synet
         if(_batch*_spatial*_channels != src[0]->Size())
             SYNET_ERROR("PreluLayer has wrong weight size!");
 
-        dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        if (dst[0] != src[0])
+        {
+            if (TensorUsers(Param().src()[0]) == 1 && !src[0]->Const())
+                dst[0]->Share(*src[0]);
+            else
+                dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        }
+
         if (src[0]->Const())
         {
             ForwardCpu(src, buf, dst);
