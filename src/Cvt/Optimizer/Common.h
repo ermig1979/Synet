@@ -91,6 +91,8 @@ namespace Synet
 
     bool MergeParallelScaleAndDepthwiseConvolution(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
 
+    bool MergeQuantizedPrelu(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
     bool MergeQuantizedScale(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
     bool MergeQuantizedShuffleV0(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);

@@ -161,6 +161,8 @@ namespace Synet
                     continue;
                 if (MergeQuantizedScale(network.layers(), i, merged, changes))
                     continue;
+                if (MergeQuantizedPrelu(network.layers(), i, merged, changes))
+                    continue;
                 break;
             }
             case 5:
