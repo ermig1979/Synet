@@ -32,7 +32,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\BinaryOperationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\CastLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\CompareLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\ConcatLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ConstantOfShapeLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ConstLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Convolution\Convolution16bLayer.cpp" />
@@ -72,7 +71,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\NonZeroLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\NormalizeLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PadLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\PermuteLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PoolingLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PowerLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PreluLayer.cpp" />
@@ -92,6 +90,11 @@
     <ClCompile Include="..\..\src\Synet\Layers\Recurrent\RnnGruBdLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Recurrent\TensorIteratorLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ReductionLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Reorder\ConcatLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Reorder\PermuteLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Reorder\ShuffleLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Reorder\SpaceToDepthLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Reorder\UnpackLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Reshape\ExpandDimsLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Reshape\FlattenLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Reshape\MetaLayer.cpp" />
@@ -100,10 +103,8 @@
     <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ScaleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ScatterNdLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\ShuffleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SliceLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\SpaceToDepthLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\StridedSliceLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\StubLayer.cpp" />
@@ -111,7 +112,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\TileLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\TopKLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\UnaryOperationLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\UnpackLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\WhereLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\Activation.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\SetInput.cpp" />
@@ -157,7 +157,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\BinaryOperationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\CastLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\CompareLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\ConcatLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ConstantOfShapeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ConstLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Convolution\Convolution16bLayer.h" />
@@ -197,7 +196,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\NonZeroLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\NormalizeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\PadLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\PermuteLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\PoolingLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\PowerLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\PreluLayer.h" />
@@ -217,6 +215,11 @@
     <ClInclude Include="..\..\src\Synet\Layers\Recurrent\RnnGruBdLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Recurrent\TensorIteratorLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Reorder\ConcatLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Reorder\PermuteLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Reorder\ShuffleLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Reorder\SpaceToDepthLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Reorder\UnpackLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Reshape\ExpandDimsLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Reshape\FlattenLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Reshape\MetaLayer.h" />
@@ -225,10 +228,8 @@
     <ClInclude Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ScaleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ScatterNdLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\ShuffleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SliceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\SpaceToDepthLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\StridedSliceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\StubLayer.h" />
@@ -236,7 +237,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\TileLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\TopKLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\UnaryOperationLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\UnpackLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\WhereLayer.h" />
     <ClInclude Include="..\..\src\Synet\Network.h" />
     <ClInclude Include="..\..\src\Synet\Params.h" />

@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/UnpackLayer.h"
+#include "Synet/Layers/Reorder/UnpackLayer.h"
 
 namespace Synet
 {

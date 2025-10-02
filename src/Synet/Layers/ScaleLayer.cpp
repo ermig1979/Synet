@@ -305,8 +305,8 @@ namespace Synet
         }
         else if (src[0] != dst[0])
         {
-            //if (_src16b || _dst16b)
-            //    _scale16b.Init(_channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, true, _biasTerm);
+            if (_src16b || _dst16b)
+                _scale16b.Init(_channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, true, _biasTerm);
             if (_src16b == _dst16b && TensorUsers(Param().src()[0]) == 1 && !src[0]->Const())
                 dst[0]->Share(*src[0]);
             else

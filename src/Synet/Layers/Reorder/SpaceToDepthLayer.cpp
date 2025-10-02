@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/SpaceToDepthLayer.h"
+#include "Synet/Layers/Reorder/SpaceToDepthLayer.h"
 
 namespace Synet
 {

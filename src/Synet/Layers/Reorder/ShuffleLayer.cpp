@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/ShuffleLayer.h"
+#include "Synet/Layers/Reorder/ShuffleLayer.h"
 
 namespace Synet
 {

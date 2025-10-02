@@ -23,9 +23,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\GridSampleLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\ConcatLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\TopKLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -68,9 +65,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\BiasLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\UnpackLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\NormalizeLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -84,9 +78,6 @@
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\StridedSliceLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\PermuteLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\PreluLayer.cpp">
@@ -105,9 +96,6 @@
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\ShuffleLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\TiledScale2DLayer.cpp">
@@ -138,9 +126,6 @@
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\SliceLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\SpaceToDepthLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\SwitchLayer.cpp">
@@ -276,6 +261,21 @@
     <ClCompile Include="..\..\src\Synet\Layers\Recurrent\TensorIteratorLayer.cpp">
       <Filter>Layers\Recurrent</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reorder\ConcatLayer.cpp">
+      <Filter>Layers\Reorder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reorder\PermuteLayer.cpp">
+      <Filter>Layers\Reorder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reorder\ShuffleLayer.cpp">
+      <Filter>Layers\Reorder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reorder\SpaceToDepthLayer.cpp">
+      <Filter>Layers\Reorder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reorder\UnpackLayer.cpp">
+      <Filter>Layers\Reorder</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -292,9 +292,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\CastLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ConcatLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ConstLayer.h">
@@ -336,9 +333,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\PadLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\PermuteLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\PoolingLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
@@ -354,9 +348,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\ScaleLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ShuffleLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\SliceLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
@@ -370,9 +361,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\UnaryOperationLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\UnpackLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\TileLayer.h">
@@ -481,9 +469,6 @@
       <Filter>Decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ArgMaxLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\SpaceToDepthLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\YoloV7.h">
@@ -717,6 +702,21 @@
     <ClInclude Include="..\..\src\Synet\Layers\Recurrent\TensorIteratorLayer.h">
       <Filter>Layers\Recurrent</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reorder\ConcatLayer.h">
+      <Filter>Layers\Reorder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reorder\PermuteLayer.h">
+      <Filter>Layers\Reorder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reorder\ShuffleLayer.h">
+      <Filter>Layers\Reorder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reorder\SpaceToDepthLayer.h">
+      <Filter>Layers\Reorder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reorder\UnpackLayer.h">
+      <Filter>Layers\Reorder</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -760,6 +760,9 @@
     </Filter>
     <Filter Include="Layers\Recurrent">
       <UniqueIdentifier>{7aed8d2e-cfc0-4ffc-8929-086dc0ff5f9b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Reorder">
+      <UniqueIdentifier>{74ab632a-5066-4c8b-aa84-c6f6ec38aa48}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

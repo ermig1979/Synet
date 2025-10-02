@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/PermuteLayer.h"
+#include "Synet/Layers/Reorder/PermuteLayer.h"
 #include "Synet/Utils/Permute.h"
 
 namespace Synet

@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/ConcatLayer.h"
+#include "Synet/Layers/Reorder/ConcatLayer.h"
 
 #include "Synet/Utils/Math.h"
 
