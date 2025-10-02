@@ -309,7 +309,13 @@ namespace Synet
             }
         }
 
-        dst[0]->Reshape(_dType, shapeD, src[0]->Format());
+        if (TensorUsers(Param().src()[0]) == 1 && !src[0]->Const() && shapeD == src[0]->Shape() && dst[0] != src[0])
+            dst[0]->Share(*src[0]);
+        else if (TensorUsers(Param().src()[1]) == 1 && !src[1]->Const() && shapeD == src[1]->Shape() && dst[0] != src[1])
+            dst[0]->Share(*src[1]);
+        else
+            dst[0]->Reshape(_dType, shapeD, src[0]->Format());
+
         if (src[0]->Const() && src[1]->Const())
         {
             ForwardCpu(src, buf, dst);
