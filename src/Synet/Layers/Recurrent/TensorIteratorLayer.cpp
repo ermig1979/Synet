@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/TensorIteratorLayer.h"
+#include "Synet/Layers/Recurrent/TensorIteratorLayer.h"
 #include "Synet/Fabric.h"
 
 namespace Synet

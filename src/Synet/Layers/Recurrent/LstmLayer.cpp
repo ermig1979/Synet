@@ -21,11 +21,10 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 */
-
+#include "Synet/Layers/Recurrent/LstmLayer.h"
+#include "Synet/Layers/UnaryOperationLayer.h"
 #include "Synet/Utils/Gemm.h"
 #include "Synet/Utils/Activation.h"
-#include "Synet/Layers/LstmLayer.h"
-#include "Synet/Layers/UnaryOperationLayer.h"
 
 namespace Synet
 {

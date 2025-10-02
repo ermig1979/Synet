@@ -128,20 +128,11 @@
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\FusedLayer.cpp">
       <Filter>Layers\Legacy</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\LstmLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\RegionLayer.cpp">
       <Filter>Layers\Legacy</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\ReorgLayer.cpp">
       <Filter>Layers\Legacy</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\ReverseSequenceLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\RnnGruBdLayer.cpp">
-      <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\ScatterNdLayer.cpp">
       <Filter>Layers</Filter>
@@ -154,9 +145,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\SwitchLayer.cpp">
       <Filter>Layers\Legacy</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\TensorIteratorLayer.cpp">
-      <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\UpsampleLayer.cpp">
       <Filter>Layers\Legacy</Filter>
@@ -275,6 +263,18 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedPreluLayer.cpp">
       <Filter>Layers\Quantized</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Recurrent\LstmLayer.cpp">
+      <Filter>Layers\Recurrent</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Recurrent\ReverseSequenceLayer.cpp">
+      <Filter>Layers\Recurrent</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Recurrent\RnnGruBdLayer.cpp">
+      <Filter>Layers\Recurrent</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Recurrent\TensorIteratorLayer.cpp">
+      <Filter>Layers\Recurrent</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -417,20 +417,11 @@
       <Filter>Quantization</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Region.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\ReverseSequenceLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Fabric.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\TensorIteratorLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\InnerProduct.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Context.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\RnnGruBdLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Ultraface.h">
       <Filter>Decoders</Filter>
     </ClInclude>
@@ -490,9 +481,6 @@
       <Filter>Decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ArgMaxLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\LstmLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\SpaceToDepthLayer.h">
@@ -717,6 +705,18 @@
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedPreluLayer.h">
       <Filter>Layers\Quantized</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Recurrent\LstmLayer.h">
+      <Filter>Layers\Recurrent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Recurrent\ReverseSequenceLayer.h">
+      <Filter>Layers\Recurrent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Recurrent\RnnGruBdLayer.h">
+      <Filter>Layers\Recurrent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Recurrent\TensorIteratorLayer.h">
+      <Filter>Layers\Recurrent</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -757,6 +757,9 @@
     </Filter>
     <Filter Include="Layers\Reshape">
       <UniqueIdentifier>{dcf7b270-4b41-4d2b-a42b-c7f23500881b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Recurrent">
+      <UniqueIdentifier>{7aed8d2e-cfc0-4ffc-8929-086dc0ff5f9b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

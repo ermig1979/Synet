@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/ReverseSequenceLayer.h"
+#include "Synet/Layers/Recurrent/ReverseSequenceLayer.h"
 
 namespace Synet
 {
