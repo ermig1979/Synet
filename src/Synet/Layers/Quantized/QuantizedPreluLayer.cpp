@@ -129,7 +129,13 @@ namespace Synet
             SYNET_ERROR("QuantizedPreluLayer weights are absent!");
         _slope = this->Weight()[0].Data<float>();
 
-        dst[0]->Reshape(src[0]->GetType(), shape, _format);
+        if (dst[0] != src[0])
+        {
+            if (TensorUsers(Param().src()[0]) == 1 && !src[0]->Const())
+                dst[0]->Share(*src[0]);
+            else
+                dst[0]->Reshape(src[0]->GetType(), shape, _format);
+        }
 
         if (src[0]->Const())
         {
