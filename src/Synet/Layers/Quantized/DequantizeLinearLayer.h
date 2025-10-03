@@ -37,7 +37,7 @@ namespace Synet
 
         virtual int64_t Flop() const;
 
-        typedef void (*UniformPtr)(const uint8_t* src, int bias, float norm, size_t size, float* dst);
+        typedef void (*UniformPtr)(const uint8_t* src, TensorType type, int bias, float norm, size_t size, float* dst);
 
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
@@ -45,6 +45,7 @@ namespace Synet
         int32_t _bias;
         float _norm;
         size_t _axis, _size;
+        TensorType _type;
 
         UniformPtr _uniform;
     };

@@ -28,14 +28,24 @@
 
 namespace Synet
 {
-    static void DequantizeLinearUniform(const uint8_t* src, int bias, float norm, size_t size, float* dst)
+    static void DequantizeLinearUniform(const uint8_t* src8, TensorType type, int bias, float norm, size_t size, float* dst)
     {
+        if (type == TensorType8u)
+        {
+            const uint8_t* src = (uint8_t*)src8;
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        SimdSynetDequantizeLinear(src, size, bias, &norm, dst);
+            SimdSynetDequantizeLinear(src, size, bias, &norm, dst);
 #else
-        for (size_t i = 0; i < size; ++i)
-            dst[i] = DequantizeLinear(src[i], bias, norm);
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = DequantizeLinear(src[i], bias, norm);
 #endif
+        }
+        else
+        {
+            const int8_t* src = (int8_t*)src8;
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = DequantizeLinear(src[i], bias, norm);
+        }
     }
 
     //-------------------------------------------------------------------------------------------------
@@ -61,15 +71,19 @@ namespace Synet
         const QuantizeParam& param = Param().quantize();
         _bias = -param.zero();
         _norm = (float)param.scale();
+        _type = param.type();
+        if (_type != TensorType8u && _type != TensorType8i)
+            SYNET_ERROR("DequantizeLinearLayer supports only UINT8 and INT8 quantize parameter type!");
 
         _uniform = DequantizeLinearUniform;
 
         if (src.size() == 1)
         {
-            if (src[0]->GetType() != TensorType8u)
-                SYNET_ERROR("DequantizeLinearLayer supports only UINT8 input!");
+            if (src[0]->GetType() != _type)
+                SYNET_ERROR("DequantizeLinearLayer input and quantize parameter has different type!");
 
             _size = src[0]->Size();
+            _type = src[0]->GetType();
 
             dst[0]->Reshape(TensorType32f, src[0]->Shape(), src[0]->Format());
             if (src[0]->Const())
@@ -89,14 +103,15 @@ namespace Synet
             const Tensors& weight = this->Weight();
             if (weight.empty())
                 SYNET_ERROR("DequantizeLinearLayer weight is empty!");
-            if (weight[0].GetType() != TensorType8u)
-                SYNET_ERROR("DequantizeLinearLayer supports only UINT8 weight!");
+            if (weight[0].GetType() != _type)
+                SYNET_ERROR("DequantizeLinearLayer weight and quantize parameter has different type!");
 
             _size = weight[0].Size();
+            _type = weight[0].GetType();
 
             dst[0]->Reshape(TensorType32f, weight[0].Shape(), weight[0].Format());
 
-            _uniform(weight[0].Data<uint8_t>(), _bias, _norm, _size, dst[0]->Data<float>());
+            _uniform(weight[0].RawData(), _type, _bias, _norm, _size, dst[0]->Data<float>());
 
             _const = true;
             dst[0]->SetConst(true);
@@ -108,6 +123,6 @@ namespace Synet
     void DequantizeLinearLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
         if (_uniform)
-            _uniform(src[0]->Data<uint8_t>(), _bias, _norm, _size, dst[0]->Data<float>());
+            _uniform(src[0]->RawData(), _type, _bias, _norm, _size, dst[0]->Data<float>());
     }
 }

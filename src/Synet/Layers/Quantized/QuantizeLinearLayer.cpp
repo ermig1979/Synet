@@ -79,7 +79,7 @@ namespace Synet
             _uniform = QuantizeLinearUniform<uint8_t>;
             break;
         default:
-            SYNET_ERROR("QuantizeLinearLayer does not support" << Cpl::ToStr(_type) << " !");
+            SYNET_ERROR("QuantizeLinearLayer does not support " << Cpl::ToStr(_type) << " !");
         }
 
         dst[0]->Reshape(_type, src[0]->Shape(), src[0]->Format());
