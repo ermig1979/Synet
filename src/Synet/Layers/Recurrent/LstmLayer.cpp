@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 #include "Synet/Layers/Recurrent/LstmLayer.h"
-#include "Synet/Layers/UnaryOperationLayer.h"
+#include "Synet/Layers/Math/UnaryOperationLayer.h"
 #include "Synet/Utils/Gemm.h"
 #include "Synet/Utils/Activation.h"
 

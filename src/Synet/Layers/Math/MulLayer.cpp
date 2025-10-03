@@ -24,8 +24,8 @@
 
 #include "Synet/Utils/Math.h"
 #include "Synet/Utils/UniversalBinary.h"
-#include "Synet/Layers/ScaleLayer.h"
-#include "Synet/Layers/MulLayer.h"
+#include "Synet/Layers/Math/ScaleLayer.h"
+#include "Synet/Layers/Math/MulLayer.h"
 
 namespace Synet
 {

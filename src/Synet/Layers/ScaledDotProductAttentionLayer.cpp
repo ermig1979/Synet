@@ -23,7 +23,7 @@
 */
 
 #include "Synet/Layers/ScaledDotProductAttentionLayer.h"
-#include "Synet/Layers/ScaleLayer.h"
+#include "Synet/Layers/Math/ScaleLayer.h"
 #include "Synet/Layers/SoftmaxLayer.h"
 #include "Synet/Utils/Permute.h"
 #include "Synet/Utils/Gemm.h"

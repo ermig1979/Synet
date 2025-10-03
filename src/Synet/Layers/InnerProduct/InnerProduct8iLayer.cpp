@@ -26,7 +26,7 @@
 
 #include "Synet/Common.h"
 #include "Synet/Layer.h"
-#include "Synet/Layers/ScaleLayer.h"
+#include "Synet/Layers/Math/ScaleLayer.h"
 #include "Synet/Quantization/Gemm.h"
 #include "Synet/Quantization/Convert.h"
 #include "Synet/Quantization/Const.h"

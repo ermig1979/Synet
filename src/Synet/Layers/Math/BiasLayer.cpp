@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/BiasLayer.h"
+#include "Synet/Layers/Math/BiasLayer.h"
 
 namespace Synet
 {

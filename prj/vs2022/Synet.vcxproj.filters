@@ -14,12 +14,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\ArgMaxLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\BinaryOperationLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\UnaryOperationLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\GridSampleLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -32,13 +26,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\PadLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\ScaleLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\CompareLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\CastLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\ReductionLayer.cpp">
@@ -50,9 +38,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\ConstantOfShapeLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\PowerLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\ConstLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -60,9 +45,6 @@
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\StubLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\BiasLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\NormalizeLayer.cpp">
@@ -89,12 +71,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\AddLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\MulLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -102,9 +78,6 @@
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\InterpLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\EltwiseLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.cpp">
@@ -276,6 +249,33 @@
     <ClCompile Include="..\..\src\Synet\Layers\Reorder\UnpackLayer.cpp">
       <Filter>Layers\Reorder</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\AddLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\BiasLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\BinaryOperationLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\CastLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\MulLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\PowerLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\ScaleLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\UnaryOperationLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\EltwiseLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -285,19 +285,7 @@
     <ClInclude Include="..\..\src\Synet\Utils\Activation.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\BiasLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\BinaryOperationLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\CastLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ConstLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\EltwiseLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\GatherLayer.h">
@@ -336,16 +324,10 @@
     <ClInclude Include="..\..\src\Synet\Layers\PoolingLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\PowerLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\PreluLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ScaleLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\SliceLayer.h">
@@ -358,9 +340,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\StubLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\UnaryOperationLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\TileLayer.h">
@@ -396,9 +375,6 @@
       <Filter>Quantization</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\AddLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Quantization\Stat.h">
@@ -509,9 +485,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\Permute.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\MulLayer.h">
-      <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Rtdetr.h">
       <Filter>Decoders</Filter>
@@ -717,6 +690,33 @@
     <ClInclude Include="..\..\src\Synet\Layers\Reorder\UnpackLayer.h">
       <Filter>Layers\Reorder</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\AddLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\BiasLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\BinaryOperationLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\CastLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\MulLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\PowerLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\ScaleLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\UnaryOperationLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\EltwiseLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -763,6 +763,9 @@
     </Filter>
     <Filter Include="Layers\Reorder">
       <UniqueIdentifier>{74ab632a-5066-4c8b-aa84-c6f6ec38aa48}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Math">
+      <UniqueIdentifier>{7beb6499-f218-41cf-a807-d425b04bc4dd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

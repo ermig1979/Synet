@@ -23,7 +23,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/AddLayer.h"
+#include "Synet/Layers/Math/AddLayer.h"
 #include "Synet/Utils/Math.h"
 #include "Synet/Utils/UniversalBinary.h"
 #include "Synet/Quantization/Convert.h"

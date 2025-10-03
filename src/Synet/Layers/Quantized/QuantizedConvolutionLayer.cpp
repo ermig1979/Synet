@@ -23,7 +23,6 @@
 */
 
 #include "Synet/Layers/Quantized/QuantizedConvolutionLayer.h"
-#include "Synet/Layers/BiasLayer.h"
 #include "Synet/Utils/Activation.h"
 #include "Synet/Utils/ImgToCol.h"
 #include "Synet/Utils/Gemm.h"

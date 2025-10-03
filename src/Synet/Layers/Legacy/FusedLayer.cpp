@@ -23,7 +23,8 @@
 */
 
 #include "Synet/Layers/Legacy/FusedLayer.h"
-#include "Synet/Layers/ScaleLayer.h"
+
+#include "Synet/Layers/Math/ScaleLayer.h"
 
 namespace Synet
 {

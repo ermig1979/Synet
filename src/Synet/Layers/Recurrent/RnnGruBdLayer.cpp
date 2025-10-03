@@ -23,7 +23,7 @@
 */
 
 #include "Synet/Layers/Recurrent/RnnGruBdLayer.h"
-#include "Synet/Layers/UnaryOperationLayer.h"
+#include "Synet/Layers/Math/UnaryOperationLayer.h"
 #include "Synet/Utils/Math.h"
 #include "Synet/Utils/Activation.h"
 

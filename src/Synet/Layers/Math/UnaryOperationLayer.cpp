@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/UnaryOperationLayer.h"
+#include "Synet/Layers/Math/UnaryOperationLayer.h"
 
 namespace Synet
 {

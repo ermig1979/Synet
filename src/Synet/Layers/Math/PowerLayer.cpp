@@ -22,8 +22,8 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/ScaleLayer.h"
-#include "Synet/Layers/PowerLayer.h"
+#include "Synet/Layers/Math/ScaleLayer.h"
+#include "Synet/Layers/Math/PowerLayer.h"
 
 namespace Synet
 {

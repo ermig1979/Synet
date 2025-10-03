@@ -23,11 +23,11 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/EltwiseLayer.h"
+#include "Synet/Layers/Math/EltwiseLayer.h"
+#include "Synet/Layers/Math/ScaleLayer.h"
+#include "Synet/Layers/Math/BiasLayer.h"
 
 #include "Synet/Utils/Math.h"
-#include "Synet/Layers/ScaleLayer.h"
-#include "Synet/Layers/BiasLayer.h"
 
 namespace Synet
 {

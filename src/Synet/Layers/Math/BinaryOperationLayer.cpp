@@ -21,7 +21,7 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 */
-#include "Synet/Layers/BinaryOperationLayer.h"
+#include "Synet/Layers/Math/BinaryOperationLayer.h"
 
 namespace Synet
 {

@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/CastLayer.h"
+#include "Synet/Layers/Math/CastLayer.h"
 
 namespace Synet
 {
