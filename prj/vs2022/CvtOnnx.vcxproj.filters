@@ -60,6 +60,12 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAddNode.cpp">
       <Filter>OnnxRuntime</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGemmNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGlobalAveragePoolNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.h">

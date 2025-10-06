@@ -29,7 +29,7 @@
 
 namespace Synet
 {
-    bool ConvertReduceMeanNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer)
+    bool ConvertReduceMeanNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, UniqNames& merged)
     {
         if (!CheckSourceNumber(layer, 1, 2))
             return false;
@@ -60,7 +60,7 @@ namespace Synet
                 layer.type() = Synet::LayerTypeQuantizedPooling;
                 layer.pooling().method() = PoolingMethodTypeAverage;
                 layer.pooling().globalPooling() = true;
-                if (!MoveDequantizeLinearToLayer(layers, layer))
+                if (!MoveDequantizeLinearToLayer(layers, layer, merged))
                     return false;
             }
             else

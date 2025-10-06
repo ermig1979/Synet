@@ -29,7 +29,7 @@
 
 namespace Synet
 {
-    bool ConvertConvOrConvTransposeNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin, TensorFormatMap* tensorFormatMap)
+    bool ConvertConvOrConvTransposeNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin, TensorFormatMap* tensorFormatMap, UniqNames& merged)
     {
         if (node.op_type() == "Conv")
             layer.type() = Synet::LayerTypeConvolution;
@@ -61,7 +61,7 @@ namespace Synet
             if (layer.type() == Synet::LayerTypeConvolution)
             {
                 layer.type() = Synet::LayerTypeQuantizedConvolution;
-                if (!MoveDequantizeLinearToLayer(layers, layer))
+                if (!MoveDequantizeLinearToLayer(layers, layer, merged))
                     return false;
             }
             else

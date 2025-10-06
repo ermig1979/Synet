@@ -33,6 +33,7 @@ namespace Synet
     typedef std::vector<uint8_t> Bytes;
     typedef std::map<String, TensorFormat> TensorFormatMap;
     typedef std::vector<Synet::LayerParam> LayerParams;
+    typedef std::set<String> UniqNames;
 
     //-------------------------------------------------------------------------------------------------
 
@@ -591,6 +592,24 @@ namespace Synet
                     }
                 }
                 continue;
+            }
+        }
+        return true;
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    inline bool RemoveUnusedMerged(LayerParams& layers, const UniqNames& merged)
+    {
+        for (ptrdiff_t i = layers.size() - 1; i >= 0 && layers.size(); --i)
+        {
+            if (merged.find(layers[i].name()) == merged.end())
+                continue;
+            if (UserCount(layers, i) == 0)
+            {
+                layers.erase(layers.begin() + i);
+                if (i)
+                    i -= 1;
             }
         }
         return true;

@@ -116,6 +116,7 @@ namespace Synet
         Bytes original;
         Consts consts;
         Renames renames;
+        UniqNames merged;
         PermuteMap permuteMap;
         TensorFormatMap tensorFormatMap;
         for (size_t i = 0; i < graph.initializer_size(); ++i)
@@ -171,7 +172,7 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "ConstantOfShape" && !ConvertConstantOfShapeNode(node, network.layers(), layer, original, reordered))
                 return ErrorMessage(i, node);
-            if ((node.op_type() == "Conv" || node.op_type() == "ConvTranspose") && !ConvertConvOrConvTransposeNode(node, trans, network.layers(), original, layer, reordered, &tensorFormatMap))
+            if ((node.op_type() == "Conv" || node.op_type() == "ConvTranspose") && !ConvertConvOrConvTransposeNode(node, trans, network.layers(), original, layer, reordered, &tensorFormatMap, merged))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Cos" && !ConvertCosNode(node, layer))
                 return ErrorMessage(i, node);
@@ -195,9 +196,9 @@ namespace Synet
                 return ErrorMessage(i, node);
             if ((node.op_type() == "Gather" || node.op_type() == "GatherElements" || node.op_type() == "GatherND") && !ConvertGatherNode(node, network.layers(), layer))
                 return ErrorMessage(i, node);
-            if (node.op_type() == "Gemm" && !ConvertGemmNode(node, trans, network.layers(), original, layer, reordered))
+            if (node.op_type() == "Gemm" && !ConvertGemmNode(node, trans, network.layers(), original, layer, reordered, &tensorFormatMap, merged))
                 return ErrorMessage(i, node);
-            if (node.op_type() == "GlobalAveragePool" && !ConvertGlobalAveragePoolNode(node, network.layers(), layer))
+            if (node.op_type() == "GlobalAveragePool" && !ConvertGlobalAveragePoolNode(node, network.layers(), layer, merged))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Greater" && !ConvertGreaterNode(node, layer))
                 return ErrorMessage(i, node);
@@ -261,7 +262,7 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "ReduceMax" && !ConvertReduceMaxNode(node, trans, network.layers(), layer))
                 return ErrorMessage(i, node);
-            if (node.op_type() == "ReduceMean" && !ConvertReduceMeanNode(node, trans, network.layers(), layer))
+            if (node.op_type() == "ReduceMean" && !ConvertReduceMeanNode(node, trans, network.layers(), layer, merged))
                 return ErrorMessage(i, node);
             if (node.op_type() == "ReduceSum" && !ConvertReduceSumNode(node, trans, network.layers(), layer))
                 return ErrorMessage(i, node);
@@ -329,6 +330,9 @@ namespace Synet
         if (!RemoveUnusedConst(network.layers()))
             return false;
 
+        if (!RemoveUnusedMerged(network.layers(), merged))
+            return false;
+
         return true;
     }
 
@@ -348,11 +352,11 @@ namespace Synet
                     input = rename->second;
             }
             layer.src().push_back(input);
-            }
+        }
         for (size_t j = 0; j < node.output_size(); ++j)
             layer.dst().push_back(ValidName(node.output(j), renames));
         layer.name() = layer.dst()[0];
-        }
+    }
 
     bool OnnxToSynet::ManualInsertToNchwPermute(const OnnxParam& onnxParam, LayerParams& layers, Renames& renames)
     {

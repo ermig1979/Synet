@@ -70,7 +70,7 @@ namespace Synet
 
     //-----------------------------------------------------------------------------------------
 
-    inline bool MoveDequantizeLinearToLayer(LayerParams& layers, LayerParam& layer)
+    inline bool MoveDequantizeLinearToLayer(LayerParams& layers, LayerParam& layer, UniqNames& merged)
     {
         for (int s = 0; s < (int)layer.src().size(); ++s)
         {
@@ -84,7 +84,8 @@ namespace Synet
             if (!dequantize->src().empty())
             {
                 layer.src()[s] = dequantize->src()[0];
-                dequantize->src().clear();
+                //dequantize->src().clear();
+                merged.insert(dequantize->name());
             }
             else
             {

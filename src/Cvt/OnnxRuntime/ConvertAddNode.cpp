@@ -37,9 +37,6 @@ namespace Synet
             GetLayerType(layers, layer.src()[1]) == LayerTypeDequantizeLinear)
         {
             layer.type() = Synet::LayerTypeAdd;
-            //layer.type() = Synet::LayerTypeQuantizedAdd;
-            //if (!MoveDequantizeLinearToLayer(layers, layer))
-            //    return false;
             return true;
         }
         const LayerParam* src0 = GetLayer(layers, layer.src()[0]);

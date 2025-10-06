@@ -78,6 +78,8 @@ namespace Synet
             dst[id3].type() = LayerTypeStub;
             dst[id3].dst() = src[is4].dst();
         }
+        else
+            layer.dst() = src[is4].dst();
         dst[id2] = layer;
         return true;
     }

@@ -41,7 +41,7 @@ namespace Synet
 
     bool ConvertConstantNode(const onnx::NodeProto& node, LayerParam& layer, Bytes& original, Bytes& reordered);
 
-    bool ConvertConvOrConvTransposeNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin, TensorFormatMap* tensorFormatMap);
+    bool ConvertConvOrConvTransposeNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin, TensorFormatMap* tensorFormatMap, UniqNames& merged);
 
     bool ConvertBatchNormalizationNode(const onnx::NodeProto& node, const LayerParams& layers, Bytes& original, LayerParam& layer, Bytes& reordered);
 
@@ -50,6 +50,10 @@ namespace Synet
     bool ConvertDropoutNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertFlattenNode(const onnx::NodeProto& node, LayerParam& layer);
+
+    bool ConvertGemmNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered, TensorFormatMap* tensorFormatMap, UniqNames& merged);
+
+    bool ConvertGlobalAveragePoolNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer, UniqNames& merged);
 
     bool ConvertInitializer(const onnx::TensorProto& tensor, Synet::NetworkParam& network, Bytes& weight, Renames& renames);
 
@@ -69,7 +73,7 @@ namespace Synet
 
     bool ConvertQuantizeLinearNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer);
 
-    bool ConvertReduceMeanNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer);
+    bool ConvertReduceMeanNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, UniqNames& merged);
 }
 
 #endif
