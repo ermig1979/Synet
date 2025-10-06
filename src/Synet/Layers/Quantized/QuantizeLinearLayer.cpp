@@ -28,21 +28,27 @@
 
 namespace Synet
 {
-    template<class T> void QuantizeLinearUniform(const float* src, float scale, int zero, size_t size, uint8_t* dst8)
+    void QuantizeLinearUniform(const float* src, float scale, int zero, size_t size, uint8_t* dst8, TensorType type)
     {
-        T* dst = (T*)dst8;
-        int min = std::numeric_limits<T>::min();
-        int max = std::numeric_limits<T>::max();
-        for (size_t i = 0; i < size; ++i)
-            dst[i] = (T)QuantizeLinear(src[i], scale, zero, min, max);
-    }
-
+        if (type == TensorType8u)
+        {
+            uint8_t* dst = (uint8_t*)dst8;
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-    template<> void QuantizeLinearUniform<uint8_t>(const float* src, float scale, int zero, size_t size, uint8_t* dst)
-    {
-        SimdSynetQuantizeLinear(src, size, &scale, zero, dst);
-    }
+            SimdSynetQuantizeLinear(src, size, &scale, zero, dst);
+#else
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = (uint8_t)QuantizeLinear(src[i], scale, zero, 0, 255);
 #endif
+        }
+        else if (type == TensorType8u)
+        {
+            int8_t* dst = (int8_t*)dst8;
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = (int8_t)QuantizeLinear(src[i], scale, zero, -128, 127);
+        }
+        else
+            assert(0);
+    }
 
     //-------------------------------------------------------------------------------------------------
 
@@ -70,17 +76,16 @@ namespace Synet
         _zero = param.zero();
         _scale = 1.0f / float(param.scale());
 
-        if(!this->Weight().empty())
+        if(param.weights() != 0)
             SYNET_ERROR("QuantizeLinearLayer supports only uniform case!");
 
-        switch (_type)
-        {
-        case TensorType8u:
-            _uniform = QuantizeLinearUniform<uint8_t>;
-            break;
-        default:
-            SYNET_ERROR("QuantizeLinearLayer does not support " << Cpl::ToStr(_type) << " !");
-        }
+        if (_type != TensorType8u && _type != TensorType8i)
+            SYNET_ERROR("QuantizeLinearLayer supports only UINT8 and INT8 quantize parameter type!");
+
+        if (src[0]->GetType() != TensorType32f)
+            SYNET_ERROR("QuantizeLinearLayer supports only FP32 input!");
+
+        _uniform = QuantizeLinearUniform;
 
         dst[0]->Reshape(_type, src[0]->Shape(), src[0]->Format());
         if (src[0]->Const())
@@ -101,6 +106,6 @@ namespace Synet
     void QuantizeLinearLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
         if(_uniform)
-            _uniform(src[0]->Data<float>(), _scale, _zero, _size, dst[0]->RawData());
+            _uniform(src[0]->Data<float>(), _scale, _zero, _size, dst[0]->RawData(), _type);
     }
 }
