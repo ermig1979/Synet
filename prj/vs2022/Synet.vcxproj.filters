@@ -23,9 +23,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\GatherLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\PadLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\CompareLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -65,9 +62,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\PreluLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\PoolingLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -75,9 +69,6 @@
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\TiledScale2DLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\InterpLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.cpp">
@@ -276,6 +267,15 @@
     <ClCompile Include="..\..\src\Synet\Layers\Math\EltwiseLayer.cpp">
       <Filter>Layers\Math</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Resize\InterpLayer.cpp">
+      <Filter>Layers\Resize</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Resize\PadLayer.cpp">
+      <Filter>Layers\Resize</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Resize\PoolingLayer.cpp">
+      <Filter>Layers\Resize</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -292,9 +292,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\InputLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\InterpLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\ConvParam.h">
@@ -316,12 +313,6 @@
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\NormalizeLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\PadLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\PoolingLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\PreluLayer.h">
@@ -717,6 +708,15 @@
     <ClInclude Include="..\..\src\Synet\Layers\Math\EltwiseLayer.h">
       <Filter>Layers\Math</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Resize\InterpLayer.h">
+      <Filter>Layers\Resize</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Resize\PadLayer.h">
+      <Filter>Layers\Resize</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Resize\PoolingLayer.h">
+      <Filter>Layers\Resize</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -766,6 +766,9 @@
     </Filter>
     <Filter Include="Layers\Math">
       <UniqueIdentifier>{7beb6499-f218-41cf-a807-d425b04bc4dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Resize">
+      <UniqueIdentifier>{3d68823c-7964-4ca1-b7a3-16764bf854cc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

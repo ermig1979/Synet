@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/PoolingLayer.h"
+#include "Synet/Layers/Resize/PoolingLayer.h"
 #include "Synet/Utils/Math.h"
 
 namespace Synet

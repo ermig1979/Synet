@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/PadLayer.h"
+#include "Synet/Layers/Resize/PadLayer.h"
 
 namespace Synet
 {

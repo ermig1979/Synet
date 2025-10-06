@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/InterpLayer.h"
+#include "Synet/Layers/Resize/InterpLayer.h"
 
 namespace Synet
 {
