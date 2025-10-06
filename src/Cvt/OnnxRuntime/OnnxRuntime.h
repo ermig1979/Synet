@@ -68,51 +68,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertAddNode(const onnx::NodeProto& node, LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            if (GetLayerType(layers, layer.src()[0]) == LayerTypeDequantizeLinear &&
-                GetLayerType(layers, layer.src()[1]) == LayerTypeDequantizeLinear)
-            {
-                layer.type() = Synet::LayerTypeQuantizedAdd;
-                if (!MoveDequantizeLinearToLayer(layers, layer))
-                    return false;
-                return true;
-            }
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src0 == NULL || src1 == NULL)
-                return false;
-            else if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
-            {
-                layer.type() = LayerTypeMeta;
-                layer.meta().type() = MetaTypeAdd;
-            }
-            else if(src1->type() == LayerTypeConst && src1->weight()[0].dim() == Shp(1))
-            {
-                const float* shift = GetWeight<float>(original, src1->weight()[0]);
-                layer.type() = Synet::LayerTypePower;
-                layer.power().power() = 1.0f;
-                layer.power().scale() = 1.0f;
-                layer.power().shift() = shift[0];
-                layer.src().resize(1);
-            }
-            else
-            {
-                if (onnxParam.addToEltwise())
-                {
-                    layer.type() = Synet::LayerTypeEltwise;
-                    layer.eltwise().operation() = EltwiseOperationTypeSum;
-                }
-                else
-                    layer.type() = Synet::LayerTypeAdd;
-                if (src0->type() == LayerTypeConst && src1->type() != LayerTypeConst)
-                    std::swap(layer.src()[0], layer.src()[1]);
-            }
-            return true;
-        }
-
         bool ConvertAndNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))

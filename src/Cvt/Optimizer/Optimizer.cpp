@@ -163,6 +163,8 @@ namespace Synet
                     continue;
                 if (MergeQuantizedPrelu(network.layers(), i, merged, changes))
                     continue;
+                if (MergeQuantizedAdd(network.layers(), i, merged, changes))
+                    continue;
                 break;
             }
             case 5:
