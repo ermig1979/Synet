@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.28)
 project(Synet)
 
 option(SYNET_INFO "Print build information" ON)
