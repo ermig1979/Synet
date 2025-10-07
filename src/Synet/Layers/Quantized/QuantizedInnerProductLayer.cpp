@@ -235,14 +235,14 @@ namespace Synet
                 K = weight[0].Size(0, 1), N = weight[0].Size(1, 2);
                 for (size_t j = 0; j < N; ++j)
                     for (size_t k = 0; k < K; ++k)
-                        pb[j] -= pw[j * K + k] * srcZero;
+                        pb[j] -= pw[k * N + j] * srcZero;
             }
             else
             {
                 N = weight[0].Size(0, 1), K = weight[0].Size(1, 2);
                 for (size_t j = 0; j < N; ++j)
                     for (size_t k = 0; k < K; ++k)
-                        pb[j] -= pw[k * N + j] * srcZero;
+                        pb[j] -= pw[j * K + k] * srcZero;
             }
             if (_biasTerm)
             {
