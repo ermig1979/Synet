@@ -422,34 +422,6 @@ namespace Synet
             return true;
         }
 
-        bool MergeOtherAndQuantizeLinear(const LayerParams& src, size_t index, QuantizationMethod method, LayerParams& dst, Changes& changes)
-        {
-            const LayerParam& ql = src[index];
-            if (ql.type() != LayerTypeQuantizeLinear)
-                return false;
-            if (ql.quantize().weights())
-                return false;
-            size_t dst0 = GetIndexByName(dst, ql.src()[0]);
-            size_t src0 = GetIndexByName(src, ql.src()[0]);
-            if (dst0 >= dst.size() || src0 >= src.size())
-                return false;
-            LayerParam& other = dst[dst0];
-            if (other.type() != LayerTypeQuantizedAdd &&
-                other.type() != LayerTypeQuantizedConvolution &&
-                other.type() != LayerTypeQuantizedInnerProduct &&
-                other.type() != LayerTypeQuantizedPooling)
-                return false;
-            if (UserCount(src, src0) != 1)
-                return false;
-#if 0
-            changes.push_back(Change(ql.name(), other.name()));
-#else
-            other.dst() = ql.dst();
-#endif
-            other.qDst().push_back(ql.quantize());
-            return true;
-        }
-
         bool MergeSoftmax(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
         {
             if (index == 0 || src.size() < index + 5)

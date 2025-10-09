@@ -27,6 +27,46 @@
 
 namespace Synet
 {
+    bool MergeOtherAndQuantizeLinear(const LayerParams& src, size_t index, QuantizationMethod method, LayerParams& dst, Changes& changes)
+    {
+        const LayerParam& ql = src[index];
+        if (ql.type() != LayerTypeQuantizeLinear)
+            return false;
+        if (ql.quantize().weights())
+            return false;
+        size_t dst0 = GetIndexByName(dst, ql.src()[0]);
+        size_t src0 = GetIndexByName(src, ql.src()[0]);
+        if (dst0 >= dst.size() || src0 >= src.size())
+            return false;
+        LayerParam& other = dst[dst0];
+        if (other.type() != LayerTypeQuantizedAdd &&
+            other.type() != LayerTypeQuantizedConvolution &&
+            other.type() != LayerTypeQuantizedInnerProduct &&
+            other.type() != LayerTypeQuantizedPooling)
+            return false;
+        if (other.qDst().size())
+            return false;
+        if (UserCount(src, src0) != 1)
+            return false;
+        other.dst() = ql.dst();
+        if (other.type() == LayerTypeQuantizedConvolution && (other.convolution().activationType() == ActivationFunctionTypeRelu ||
+            (other.convolution().activationType() == ActivationFunctionTypeRestrictRange && other.convolution().activationParam0() == 0.0f)))
+        {
+            other.convolution().activationType() = ActivationFunctionTypeIdentity;
+            other.convolution().activationParam1() = other.convolution().activationParam1.Default();
+        }
+        if (other.type() == LayerTypeQuantizedAdd && (other.activation().type() == ActivationFunctionTypeRelu ||
+            (other.activation().type() == ActivationFunctionTypeRestrictRange && other.activation().param0() == 0.0f)))
+        {
+            other.activation().type() = ActivationFunctionTypeIdentity;
+            other.activation().param1() = other.activation().param1.Default();
+        }
+        other.qDst().push_back(ql.quantize());
+        return true;
+    }
+
+    //--------------------------------------------------------------------------------------------------
+
     bool MergeQuantizedAdd(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
     {
         size_t is4 = index;
@@ -36,13 +76,22 @@ namespace Synet
         size_t id3 = GetLayerIndex(dst, src[is4].src()[0]);
         if (is3 >= src.size() || id3 >= dst.size() || UserCount(src, is3) > 1)
             return false;
-        ActivationFunctionType activation = ActivationFunctionTypeIdentity;
+        ActivationFunctionType actType = ActivationFunctionTypeIdentity;
+        float actParam0 = 0.0f, actParam1 = 6.0f;
         size_t is2 = src.size(), id2 = dst.size();
         if (src[is3].type() == LayerTypeRelu)
         {
             is2 = GetLayerIndex(src, src[is3].src()[0]);
             id2 = GetLayerIndex(dst, src[is3].src()[0]);
-            activation = ActivationFunctionTypeRelu;
+            actType = ActivationFunctionTypeRelu;
+        }
+        else if(src[is3].type() == LayerTypeRestrictRange)
+        {
+            is2 = GetLayerIndex(src, src[is3].src()[0]);
+            id2 = GetLayerIndex(dst, src[is3].src()[0]);
+            actType = ActivationFunctionTypeRestrictRange;
+            actParam0 = src[is3].restrictRange().lower();
+            actParam1 = src[is3].restrictRange().upper();
         }
         else if (src[is3].type() == LayerTypeAdd)
         {
@@ -72,9 +121,8 @@ namespace Synet
         layer.qDst().push_back(src[is4].quantize());
         dst[id0].type() = LayerTypeStub;
         dst[id1].type() = LayerTypeStub;
-        if (activation == ActivationFunctionTypeRelu)
+        if (actType == ActivationFunctionTypeRelu || (actType == ActivationFunctionTypeRestrictRange && actParam0 == 0.0f))
         {
-            layer.activation().type() = activation;
             dst[id3].type() = LayerTypeStub;
             dst[id3].dst() = src[is4].dst();
         }
