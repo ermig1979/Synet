@@ -366,11 +366,11 @@ namespace Synet
 #endif
         }
 
-        SYNET_INLINE void SetParams(const float* srcScale, const uint8_t* srcZero, const int8_t* weight, const float* weightScale, const int32_t* bias, const float* params, const float* dstScale, const uint8_t* dstZero)
+        SYNET_INLINE void SetParams(const float* ioScale, const uint8_t* ioZero, const int8_t* weight, const float* weightScale, const int32_t* bias, const float* params)
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_context)
-                ::SimdSynetQuantizedConvolutionSetParams(_context, srcScale, srcZero, weight, weightScale, bias, params, dstScale, dstZero);
+                ::SimdSynetQuantizedConvolutionSetParams(_context, ioScale, ioZero, weight, weightScale, bias, params);
 #endif
         }
 

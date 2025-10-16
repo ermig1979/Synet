@@ -48,7 +48,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-        bool Compartible() const;
+        bool CheckParams();
 
         bool InitParams();
 
@@ -64,8 +64,10 @@ namespace Synet
             size_t batch, sSize, dSize, ldW, ldS, ldD, grW, grS, grD, siW, siS, siD;
             float params[2];
         } _alg;
-        bool _src8u, _dst8u;
-        Tensor _srcZero8u, _dstZero8u, _bias32i, _norm32f;
+        Tensor _srcZero8u, _bias32i, _norm32f;
+        int32_t _srcZero, _intZero, _dstZero;
+        float _srcScale, _intScale, _dstScale;
+        size_t _biasStart, _actStart;
 
         QuantizedConvolution _quantizedConvolution;
     };
