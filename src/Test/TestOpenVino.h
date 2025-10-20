@@ -221,6 +221,8 @@ namespace Test
                 std::cout << "Inference Engine uses PriorBoxV2 extension." << std::endl;
 #endif
             _ov->core.set_property(_ieDeviceName, ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY));
+            _ov->core.set_property(_ieDeviceName, ov::inference_num_threads(1));
+            _ov->core.set_property(_ieDeviceName, ov::num_streams(1));
             return true;
         }
 
@@ -246,7 +248,10 @@ namespace Test
                     return false;
                 }
             } 
-            _ov->model = _ov->core.read_model(model, weight);
+            if (onnx)
+                _ov->model = _ov->core.read_model(dst);
+            else
+                _ov->model = _ov->core.read_model(dst, bin);
             return true;
         }
 
@@ -267,11 +272,19 @@ namespace Test
                         if (_ov->model->inputs()[j].get_any_name() == name)
                         {
                             found = true;
+                            ov::PartialShape shape = _ov->model->inputs()[j].get_partial_shape();
+                            if (param.input()[i].dims().size() == shape.size())
+                            {
+                                for (size_t d = 0; d < param.input()[i].dims().size(); ++d)
+                                    shape[d] = param.input()[i].dims()[d];
+                                _ov->model->reshape(shape);
+                            }
                             break;
                         }
                     }
                     if (!found)
                         SYNET_ERROR("Input with name '" << name << "' is not exist! ");
+
                 }
             }
             else

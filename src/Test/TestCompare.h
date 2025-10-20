@@ -158,7 +158,7 @@ namespace Test
 
         bool InitNetwork(String model, String weight, Network& network) const
         {
-            if (network.Name() != "OnnxRuntime")
+            if (network.Name() != "OnnxRuntime" && _param().model() != "onnx")
             {
                 if (!Cpl::FileExists(model))
                 {
