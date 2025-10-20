@@ -233,7 +233,7 @@ namespace Test
 #endif
 				else
 					SYNET_ERROR("Unknown framework: " << _options.framework << "!");
-				Network::Options options(_options.outputDirectory, 1, true, _options.batchSize, _options.performanceLog, 0, 0.5f, false);
+				Network::Options options(_options.outputDirectory, 1, true, _options.batchSize, _options.performanceLog, 0, 0.5f, false, "cpu");
 				if (!network->Init(_options.testModel, _options.testWeight, options, _param()))
 					SYNET_ERROR("Can't load " << network->Name() << " from '" << _options.testModel << "' and '" << _options.testWeight << "' !");
 				Shape shape = network->SrcShape(0);

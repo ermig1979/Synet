@@ -46,8 +46,9 @@ namespace Test
             int performanceLog;
             int debugPrint;
             float regionThreshold;
+            String ortProvider;
             bool bf16Test;
-            Options(String od, size_t wt, bool cs, int bs, int pl, int dp, float rt, bool bf)
+            Options(String od, size_t wt, bool cs, int bs, int pl, int dp, float rt, bool bf, String op)
                 : outputDirectory(od)
                 , workThreads(wt)
                 , consoleSilence(cs)
@@ -56,6 +57,7 @@ namespace Test
                 , debugPrint(dp)
                 , regionThreshold(rt)
                 , bf16Test(bf)
+                , ortProvider(op)
             {}
         };
 

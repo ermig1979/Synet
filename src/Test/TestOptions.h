@@ -101,6 +101,7 @@ namespace Test
         bool bf16;
         bool saveUnoptimized;
         bool pinThread;
+        String ortProvider;
 
         mutable bool result;
         mutable size_t firstMemoryUsage,  secondMemoryUsage;
@@ -156,6 +157,7 @@ namespace Test
             bf16 = FromString<bool>(GetArg("-bf", "0"));
             saveUnoptimized = FromString<bool>(GetArg("-su", "0"));
             pinThread = FromString<bool>(GetArg("-pt", "1"));
+            ortProvider = GetArg("-op", "cpu", false);
             if (enable < 1 || enable > 3)
             {
                 std::cout << "Parameter '-e' (enable) must be only 1, 2, 3!" << std::endl;

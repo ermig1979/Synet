@@ -17,6 +17,7 @@ set(ORT_INCS ${ORT_ONNX} ${ORT_BIN}/_deps/protobuf-src/src ${ORT_DIR}/include ${
 set(ORT_BUILD_OPTIONS
 	-DCMAKE_BUILD_TYPE="Release"
 	-DCMAKE_CXX_FLAGS="-Wno-attributes"
+	-DCMAKE_POLICY_VERSION_MINIMUM=3.5
 	-DPython_EXECUTABLE=/usr/bin/python3
 	-DPYTHON_EXECUTABLE=/usr/bin/python3
 	-Donnxruntime_ENABLE_CPU_FP16_OPS=OFF
