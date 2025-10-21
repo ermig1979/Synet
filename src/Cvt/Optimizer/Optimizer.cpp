@@ -189,8 +189,8 @@ namespace Synet
                     continue;
                 if (SkipUnnecessaryDequantize(network.layers(), i, method, merged, changes))
                     continue;
-                //if (MergeQuantizedConvolutionAndQuantizedActivation(network.layers(), i, method, merged, changes))
-                //    continue;
+                if (MergeQuantizedConvolutionAndQuantizedActivation(network.layers(), i, method, merged, changes))
+                    continue;
                 break;
             }
             case 7:
