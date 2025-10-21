@@ -67,6 +67,8 @@ namespace Synet
 
     bool MergeConvolutionAndScale(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
 
+    bool MergeConvolutionOrOtherAndActivation(const LayerParams& src, size_t index, QuantizationMethod method, LayerParams& dst, Changes& changes);
+
     bool MergeInnerProductAndScale(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
 
     bool MergeGelu(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
@@ -94,6 +96,8 @@ namespace Synet
     bool MergeOtherAndQuantizeLinear(const LayerParams& src, size_t index, QuantizationMethod method, LayerParams& dst, Changes& changes);
 
     bool MergeQuantizedAdd(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
+    bool MergeQuantizedConvolutionAndQuantizedActivation(const LayerParams& src, size_t index, QuantizationMethod method, LayerParams& dst, Changes& changes);
 
     bool MergeQuantizedPrelu(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 

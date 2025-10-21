@@ -149,6 +149,8 @@ namespace Synet
         desc << "-" << _conv.dstC << "x" << _conv.kernelY << "x" << _conv.kernelX;
         desc << "-" << Max(_conv.dilationY, _conv.dilationX) << "-" << Max(_conv.strideY, _conv.strideX);
         desc << "-" << _conv.group;
+        if (_conv.activation)
+            desc << "-" << ShortStr(_conv.activation);
         if(_quantizedConvolution.Enable())
             desc << " " << _quantizedConvolution.Info();
         this->UsePerfStat(desc.str(), Flop()); 
@@ -193,8 +195,8 @@ namespace Synet
         _biasStart = param.qSrc()[1].weights();            
         if (_alg.bias)
         {
-            if (param.qSrc().size() != 3)
-                SYNET_ERROR("QuantizedConvolutionLayer must have 3 input dequantizers for when uses bias!");
+            if (param.qSrc().size() < 3)
+                SYNET_ERROR("QuantizedConvolutionLayer must have at least 3 input dequantizers for when uses bias!");
             bool biasZeroZero = true;
             if (param.qSrc()[2].weights() < 3)
             {

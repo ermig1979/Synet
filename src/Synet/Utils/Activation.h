@@ -252,4 +252,12 @@ namespace Synet
     {
         return CpuRelu(value, 0.0f);
     }
+
+    //-------------------------------------------------------------------------------------------------
+
+    SYNET_INLINE String ShortStr(ActivationFunctionType t)
+    {
+        static const char* cats[] = { "id", "re", "lr", "rr", "pr", "el", "hs", "mi", "hi", "sw", "ge" };
+        return String(cats[t]);
+    }
 }
