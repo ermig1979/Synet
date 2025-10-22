@@ -100,7 +100,8 @@ namespace Synet
 
     size_t SqueezeExcitationLayer::MemoryUsage() const
     {
-        return (_sumScale.size() + _sumShift.size() + _rWeight[0].size() + _rWeight[1].size())*sizeof(float) + _scale8i.InternalBufferSize();
+        return (_sumScale.size() + _sumShift.size() + _rWeight[0].size() + _rWeight[1].size() + _bias[0].size() + _bias[1].size() + _params.size()) * sizeof(float) + 
+            _scale8i.InternalBufferSize();
     }
 
     int64_t SqueezeExcitationLayer::Flop() const
@@ -110,15 +111,17 @@ namespace Synet
 
     bool SqueezeExcitationLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        const Tensors& weight = this->Weight();
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("SqueezeExcitationLayer supports only 1 input and 1 output!");
-        if(weight[0].Count() != 4 || weight[1].Count() != 4)
-            SYNET_ERROR("SqueezeExcitationLayer: check weight size!");
         if (src[0]->GetType() != TensorType32f && src[0]->GetType() != TensorType16b && src[0]->GetType() != TensorType8u)
             SYNET_ERROR("SqueezeExcitationLayer input must have FP32, BF16 or INT8 type!");
         if (dst[0]->GetType() != TensorType32f && dst[0]->GetType() != TensorType16b && dst[0]->GetType() != TensorType8u)
             SYNET_ERROR("SqueezeExcitationLayer output must have FP32, BF16 or INT8 type!");
+        const Tensors& weight = this->Weight();
+        const SqueezeExcitationParam& param = this->Param().squeezeExcitation();
+        //if(weight.size() != 2 + param.biasTerm0() ? 0 : 1 + param.biasTerm1() ? 0 : 1)
+        if(weight[0].Count() != 4 || weight[1].Count() != 4)
+            SYNET_ERROR("SqueezeExcitationLayer: check weight size!");
 
         _src16b = src[0]->GetType() == TensorType16b;
         _dst16b = dst[0]->GetType() == TensorType16b;

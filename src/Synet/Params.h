@@ -693,6 +693,15 @@ namespace Synet
         CPL_PARAM_VALUE(String, reduction, String("none"));
     };
 
+    struct SqueezeExcitationParam
+    {
+        CPL_PARAM_VALUE(bool, biasTerm0, false);
+        CPL_PARAM_VALUE(ActivationFunctionType, activationType, ActivationFunctionTypeRelu);
+        CPL_PARAM_VALUE(float, activationParam0, 0.0f);
+        CPL_PARAM_VALUE(float, activationParam1, 6.0f);
+        CPL_PARAM_VALUE(bool, biasTerm1, false);
+    };
+
     struct ShuffleParam
     {
         CPL_PARAM_VALUE(int, type, 0);
@@ -868,6 +877,7 @@ namespace Synet
         CPL_PARAM_STRUCT(SoftmaxParam, softmax);
         CPL_PARAM_STRUCT(SoftplusParam, softplus);
         CPL_PARAM_STRUCT(SqueezeParam, squeeze);
+        CPL_PARAM_STRUCT(SqueezeExcitationParam, squeezeExcitation);
         CPL_PARAM_STRUCT(StridedSliceParam, stridedSlice);
         CPL_PARAM_STRUCT(TileParam, tile);
         CPL_PARAM_STRUCT(TensorIteratorParam, tensorIterator);

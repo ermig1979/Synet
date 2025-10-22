@@ -69,7 +69,7 @@ namespace Synet
         size_t _batch, _channels, _height, _width, _size, _squeeze; 
         float _kAvg;
         QuantizationMethod _method;
-        Floats _sumScale, _sumShift, _rWeight[2];
+        Floats _sumScale, _sumShift, _rWeight[2], _bias[2], _params;
         Synet::Scale8i _scale8i;
         Synet::Scale16b _scale16b;
     };
