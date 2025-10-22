@@ -325,20 +325,6 @@ namespace Synet
         }
     }
 
-    SYNET_INLINE bool GetSteps(const Shape& src, const Shape& dst, Shape& steps)
-    {
-        steps.resize(src.size(), 0);
-        size_t step = 1;
-        for (ptrdiff_t i = src.size() - 1; i >= 0; --i)
-        {
-            if (src[i] != dst[i] && src[i] != 1)
-                return false;
-            steps[i] = src[i] == 1 ? 0 : step;
-            step *= src[i];
-        }
-        return true;
-    }
-
     //-------------------------------------------------------------------------------------------------
 
     MulLayer::MulLayer(const LayerParam & param, Context* context)
@@ -362,6 +348,34 @@ namespace Synet
             SYNET_ERROR("MulLayer supports 2 inputs (or 1 input and 1 weight) and 1 output!");
         if (_src[0]->GetType() != _src[1]->GetType())
             SYNET_ERROR("MulLayer inputs must have the same type!");
+
+        Shape shapeA = _src[0]->Shape(), shapeB = _src[1]->Shape();
+        TensorFormat formatA = _src[0]->Format(), formatB = _src[1]->Format();
+        if (!IsCompatible(shapeA, shapeB))
+        {
+            if (formatA != formatB)
+            {
+                if (shapeA.size() == 4 && shapeB.size() == 3 && SignificantDimsCount(shapeB) == 1)
+                {
+                    shapeB = Shp(1, shapeB[1], shapeB[2], shapeB[0]);
+                    formatB = formatA;
+                }
+                else if (shapeA.size() == 4 && shapeB.size() == 4 && shapeB[2] == 1 && shapeB[3] == 1)
+                {
+                    shapeB = Shp(shapeB[0], shapeB[2], shapeB[3], shapeB[1]);
+                }
+            }
+            else if(formatA == TensorFormatNhwc)
+            {
+                if (shapeA.size() == 4 && shapeB.size() == 4 && shapeB[2] == 1 && shapeB[3] == 1)
+                {
+                    shapeB = Shp(shapeB[0], shapeB[2], shapeB[3], shapeB[1]);
+                }
+            }
+            if (!IsCompatible(shapeA, shapeB))
+                SYNET_ERROR("MulLayer incompatible input shapes and they can't be corrected!");
+        }
+        Shape shapeD = OutputShape(shapeA, shapeB);
 
         _type = _src[0]->GetType();
         _format = _src[0]->Format();
@@ -417,19 +431,7 @@ namespace Synet
                     _channels = _channelsOuter * _channelsInner;
                 }
                 else if (_src[_index[1]]->Count() == 3)
-                {
-                    Shape aShape = _src[0]->Shape(), bShape = _src[1]->Shape();
-                    _dstShape.resize(3, 1);
-                    for (size_t i = 0; i < 3; ++i)
-                        _dstShape[i] = Max(aShape[i], bShape[i]);
-                    if (!(GetSteps(aShape, _dstShape, _aSteps) && GetSteps(bShape, _dstShape, _bSteps)))
-                        SYNET_ERROR("MulLayer has incompatible inputs!");
-                    _universal = GetMulUniversal(_type, _type, _type, 3);
                     _special = SpecialUniversal;
-                    if (dst[0] != _src[_index[0]])
-                        dst[0]->Reshape(_type, _dstShape, _src[_index[0]]->Format());
-                    resized = true;
-                }
                 else
                     SYNET_ERROR("MulLayer can't process inputs with this shape!");
             }
@@ -452,19 +454,7 @@ namespace Synet
                 else if (size == _spatial)
                     _special = SpecialScaleSpatial;
                 else if (_src[_index[1]]->Count() == 4)
-                {
-                    Shape aShape = _src[0]->Shape(), bShape = _src[1]->Shape();
-                    _dstShape.resize(4, 1);
-                    for (size_t i = 0; i < 4; ++i)
-                        _dstShape[i] = Max(aShape[i], bShape[i]);
-                    if (!(GetSteps(aShape, _dstShape, _aSteps) && GetSteps(bShape, _dstShape, _bSteps)))
-                        SYNET_ERROR("MulLayer has incompatible inputs!");
-                    _universal = GetMulUniversal(_type, _type, _type, 4);
                     _special = SpecialUniversal;
-                    if (dst[0] != _src[_index[0]])
-                        dst[0]->Reshape(_type, _dstShape, _src[_index[0]]->Format());
-                    resized = true;
-                }
                 else
                     SYNET_ERROR("MulLayer can't process inputs with this shape!");
             }
@@ -499,27 +489,8 @@ namespace Synet
                 _spatial = _src[_index[0]]->Size();
                 _special = SpecialScaleChannel;
             }
-            else if (_src[0]->Count() == 7)
-            {
-                if(!IsCompatible(_src[0]->Shape(), _src[1]->Shape()))
-                    SYNET_ERROR("MulLayer can't process inputs with this shape!");
-                _dstShape = OutputShape(_src[0]->Shape(), _src[1]->Shape());
-                if (dst[0] != _src[_index[0]])
-                {
-                    dst[0]->Reshape(_type, _dstShape, _src[_index[0]]->Format());
-                    resized = true;
-                    Shape src0 = _src[0]->Shape(), src1 = _src[1]->Shape();
-                    CompactShapes(src0, src1, _dstShape);
-                    if (!(GetSteps(src0, _dstShape, _aSteps) && GetSteps(src1, _dstShape, _bSteps)))
-                        SYNET_ERROR("MulLayer has incompatible inputs!");
-                    _universal = GetMulUniversal(_type, _type, _type, _dstShape.size());
-                    if (_universal == NULL)
-                        SYNET_ERROR("MulLayer can create universal worker!");
-                    _special = SpecialUniversal;
-                }
-            }
             else
-                SYNET_ERROR("MulLayer can't process inputs with this shape!");
+                _special = SpecialUniversal;
         }
         else
         {
@@ -527,6 +498,18 @@ namespace Synet
             _batch = 1, _channels = 1, _spatial = _src[_index[0]]->Size();
         }
 
+        if (_special == SpecialUniversal)
+        {
+            Shape aShape = _src[0]->Shape(), bShape = _src[1]->Shape();
+            _dstShape = shapeD;
+            if (!IsCompatible(shapeA, shapeB))
+                SYNET_ERROR("MulLayer has incompatible inputs!");
+            _aSteps = SourceSteps(shapeA, _dstShape);
+            _bSteps = SourceSteps(shapeB, _dstShape);
+            _universal = GetMulUniversal(_type, _type, _type, shapeA.size());
+            if (_universal == NULL)
+                SYNET_ERROR("MulLayer can create universal worker!");
+        }
         _uniform = GetMulUniform(_type, _type, _type);
         _scale = GetScale(_type, _type, _type);
         if (_uniform == NULL || _scale == NULL)
