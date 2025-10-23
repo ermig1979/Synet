@@ -33,6 +33,7 @@ namespace Synet
         CPL_PARAM_VALUE(Strings, names, Strings({ "score_8", "score_16", "score_32", "bbox_8", "bbox_16", "bbox_32" }));
         CPL_PARAM_VALUE(Shape, step, Shape({ 8, 16, 32 }));
         CPL_PARAM_VALUE(Shape, minSize, Shape({ 1, 2, 1, 2, 1, 2 }));
+        CPL_PARAM_VALUE(String, format, "nchw");
     };
 
     class ScrfdDecoder
@@ -57,6 +58,12 @@ namespace Synet
             _size.resize(_step.size());
             _dstW.resize(_step.size());
             _dstH.resize(_step.size());
+            if (param.format() == "nhwc")
+                _trans = 1;
+            else if (param.format() == "nchw")
+                _trans = 0;
+            else
+                SYNET_ERROR("Unknown format of scrfd decoder: '" << param.format() << "' !");
             size_t M = param.minSize().size() / _step.size();
             for (size_t s = 0; s < _step.size(); ++s)
             {
@@ -114,6 +121,7 @@ namespace Synet
         Strings _names;
         size_t _netW, _netH;
         Shape _step, _size, _dstW, _dstH;
+        bool _trans;
 
         SYNET_INLINE const float* GetPtr(const Tensors& dst, const String& name, size_t b) const
         {
@@ -147,39 +155,67 @@ namespace Synet
         {
             size_t size = _size[s], dstW = _dstW[s], dstH = _dstH[s];
             float step = float(_step[s]), kX = float(imgW) / float(_netW), kY = float(imgH) / float(_netH);
-            for (size_t y = 0; y < dstH; ++y)
+            if (_trans)
             {
-                for (size_t x = 0; x < dstW; ++x)
+                for (size_t y = 0; y < dstH; ++y)
                 {
-                    for (size_t i = 0; i < size; ++i)
+                    for (size_t x = 0; x < dstW; ++x)
                     {
-                        if (score[0] > threshold)
+                        for (size_t i = 0; i < size; ++i)
                         {
-                            float xy[4];
-                            DecodeXY(x * step, y * step, bbox, step, xy);
-
-                            Synet::Region<float> region;
-                            region.x = (xy[0] + xy[2]) * 0.5f * kX;
-                            region.y = (xy[1] + xy[3]) * 0.5f * kY;
-                            region.w = fabs(xy[2] - xy[0]) * kX;
-                            region.h = fabs(xy[3] - xy[1]) * kY;
-                            region.id = 0;
-                            region.prob = score[0];
-                            regions.push_back(region);
+                            if (score[0] > threshold)
+                            {
+                                float xy[4];
+                                DecodeXY(x * step, y * step, bbox, 1, step, xy);
+                                AddRegion(xy, kX, kY, score[0], regions);
+                            }
+                            score += 1;
+                            bbox += 4;
                         }
-                        score += 1;
-                        bbox += 4;
                     }
+                }
+            }
+            else
+            {
+                size_t stride = dstH * dstW;
+                for (size_t i = 0; i < size; ++i)
+                {
+                    for (size_t y = 0, o = 0; y < dstH; ++y)
+                    {
+                        for (size_t x = 0; x < dstW; ++x, ++o)
+                        {
+                            if (score[o] > threshold)
+                            {
+                                float xy[4];
+                                DecodeXY(x * step, y * step, bbox + o, stride, step, xy);
+                                AddRegion(xy, kX, kY, score[o], regions);
+                            }
+                        }
+                    }
+                    score += 1 * stride;
+                    bbox += 4 * stride;
                 }
             }
         }
 
-        SYNET_INLINE void DecodeXY(float x, float y, const float* bbox, float step, float* xy) const
+        SYNET_INLINE void DecodeXY(float x, float y, const float* bbox, size_t stride, float step, float* xy) const
         {
-            xy[0] = RestrictRange<float>(x - bbox[0] * step, 0, (float)_netW);
-            xy[1] = RestrictRange<float>(y - bbox[1] * step, 0, (float)_netH);
-            xy[2] = RestrictRange<float>(x + bbox[2] * step, 0, (float)_netW);
-            xy[3] = RestrictRange<float>(y + bbox[3] * step, 0, (float)_netH);
+            xy[0] = RestrictRange<float>(x - bbox[0 * stride] * step, 0, (float)_netW);
+            xy[1] = RestrictRange<float>(y - bbox[1 * stride] * step, 0, (float)_netH);
+            xy[2] = RestrictRange<float>(x + bbox[2 * stride] * step, 0, (float)_netW);
+            xy[3] = RestrictRange<float>(y + bbox[3 * stride] * step, 0, (float)_netH);
+        }
+
+        SYNET_INLINE void AddRegion(const float* xy, float kX, float kY, float score, Regions& regions) const
+        {
+            Synet::Region<float> region;
+            region.x = (xy[0] + xy[2]) * 0.5f * kX;
+            region.y = (xy[1] + xy[3]) * 0.5f * kY;
+            region.w = fabs(xy[2] - xy[0]) * kX;
+            region.h = fabs(xy[3] - xy[1]) * kY;
+            region.id = 0;
+            region.prob = score;
+            regions.push_back(region);
         }
     };
 }
