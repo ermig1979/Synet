@@ -46,8 +46,6 @@ namespace Synet
             return false;
         if (InsideLink(src, index + 1, 4))
             return false;
-        if (src[index + 1].convolution().biasTerm())//stub
-            return false;
         LayerParam layer;
         layer.type() = LayerTypeSqueezeExcitation;
         layer.name() = src[index + 4].name();

@@ -63,13 +63,16 @@ namespace Synet
 
         void Scale16b(const uint16_t* src, float* norm, float* dst);
 
+        void Normalize(float* norm0, float* norm1);
+
     private:
-        bool _src8u, _dst8u, _src16b, _dst16b;
+        bool _src8u, _dst8u, _src16b, _dst16b, _hasBias[2];
         TensorFormat _format;
-        size_t _batch, _channels, _height, _width, _size, _squeeze; 
+        size_t _batch, _channels, _height, _width, _size, _squeeze, _sci; 
+        ActivationFunctionType _actType;
         float _kAvg;
         QuantizationMethod _method;
-        Floats _sumScale, _sumShift, _rWeight[2], _bias[2], _params;
+        Floats _sumScale, _sumShift, _rWeight[2], _params;
         Synet::Scale8i _scale8i;
         Synet::Scale16b _scale16b;
     };

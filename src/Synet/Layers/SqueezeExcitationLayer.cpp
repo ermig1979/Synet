@@ -25,6 +25,7 @@
 #include "Synet/Layers/SqueezeExcitationLayer.h"
 #include "Synet/Layers/Math/ScaleLayer.h"
 #include "Synet/Layers/InnerProduct/InnerProduct32fLayer.h"
+#include "Synet/Layers/PreluLayer.h"
 #include "Synet/Utils/Activation.h"
 #include "Synet/Quantization/Convert.h"
 #include "Synet/Quantization/Bf16.h"
@@ -95,12 +96,12 @@ namespace Synet
     void SqueezeExcitationLayer::CompactWeight()
     {
         ((Tensor&)this->Weight()[0]).Clear();
-        ((Tensor&)this->Weight()[1]).Clear();
+        ((Tensor&)this->Weight()[_sci]).Clear();
     }
 
     size_t SqueezeExcitationLayer::MemoryUsage() const
     {
-        return (_sumScale.size() + _sumShift.size() + _rWeight[0].size() + _rWeight[1].size() + _bias[0].size() + _bias[1].size() + _params.size()) * sizeof(float) + 
+        return (_sumScale.size() + _sumShift.size() + _rWeight[0].size() + _rWeight[1].size() + _params.size()) * sizeof(float) + 
             _scale8i.InternalBufferSize();
     }
 
@@ -119,9 +120,17 @@ namespace Synet
             SYNET_ERROR("SqueezeExcitationLayer output must have FP32, BF16 or INT8 type!");
         const Tensors& weight = this->Weight();
         const SqueezeExcitationParam& param = this->Param().squeezeExcitation();
-        //if(weight.size() != 2 + param.biasTerm0() ? 0 : 1 + param.biasTerm1() ? 0 : 1)
-        if(weight[0].Count() != 4 || weight[1].Count() != 4)
-            SYNET_ERROR("SqueezeExcitationLayer: check weight size!");
+        _actType = param.activationType();
+        _hasBias[0] = param.biasTerm0();
+        _hasBias[1] = param.biasTerm1();
+        _params.resize(2);
+        _params[0] = param.activationParam0();
+        _params[1] = param.activationParam1();
+        _sci = 1 + (_hasBias[0] ? 1 : 0) + (_actType == ActivationFunctionTypePrelu ? 1 : 0);
+        if(weight.size() != _sci + 1 + (_hasBias[1] ? 1 : 0))
+            SYNET_ERROR("SqueezeExcitationLayer: check weight count!");
+        if(weight[0].Count() != 4 || weight[_sci].Count() != 4)
+            SYNET_ERROR("SqueezeExcitationLayer: check weight dims!");
 
         _src16b = src[0]->GetType() == TensorType16b;
         _dst16b = dst[0]->GetType() == TensorType16b;
@@ -135,11 +144,10 @@ namespace Synet
             _height = src[0]->Axis(2);
             _width = src[0]->Axis(3);
             _squeeze = weight[0].Axis(0);
-            if(weight[1].Axis(0) != _channels)
-                SYNET_ERROR("SqueezeExcitationLayer: check weight[1] axis 0!");
-            assert(weight[1].Axis(0) == _channels);
+            if(weight[_sci].Axis(0) != _channels)
+                SYNET_ERROR("SqueezeExcitationLayer: check weight[" << _sci << "] axis 0!");
             _rWeight[0].assign(weight[0].Data<float>(), weight[0].Data<float>() + _squeeze * _channels);
-            _rWeight[1].assign(weight[1].Data<float>(), weight[1].Data<float>() + _squeeze * _channels);
+            _rWeight[1].assign(weight[_sci].Data<float>(), weight[_sci].Data<float>() + _squeeze * _channels);
         }
         else if (_format == TensorFormatNhwc)
         {
@@ -147,8 +155,8 @@ namespace Synet
             _width = src[0]->Axis(2);
             _channels = src[0]->Axis(3);
             _squeeze = weight[0].Axis(3);
-            if(weight[1].Axis(3) != _channels)
-                SYNET_ERROR("SqueezeExcitationLayer: check weight[1] axis 3!");
+            if(weight[_sci].Axis(3) != _channels)
+                SYNET_ERROR("SqueezeExcitationLayer: check weight[" << _sci << "] axis 3!");
             _rWeight[0].resize(_squeeze * _channels);
             for (size_t s = 0; s < _squeeze; ++s)
                 for (size_t c = 0; c < _channels; ++c)
@@ -156,7 +164,7 @@ namespace Synet
             _rWeight[1].resize(_squeeze * _channels);
             for (size_t c = 0; c < _channels; ++c)
                 for (size_t s = 0; s < _squeeze; ++s)
-                    _rWeight[1][c * _squeeze + s] = weight[1].Data<float>()[s * _channels + c];
+                    _rWeight[1][c * _squeeze + s] = weight[_sci].Data<float>()[s * _channels + c];
         }
         else
             assert(0);
@@ -241,10 +249,7 @@ namespace Synet
         {
             ChannelSum(src, _channels, _height, _width, _format, sum);
             CpuScale(sum, _channels, _kAvg, norm0);
-            Detail::InnerProductLayerForwardCpu<float>(norm0, _rWeight[0].data(), NULL, _squeeze, _channels, norm1);
-            CpuRelu(norm1, _squeeze, 0.0f, norm1);
-            Detail::InnerProductLayerForwardCpu<float>(norm1, _rWeight[1].data(), NULL, _channels, _squeeze, norm0);
-            CpuSigmoid(norm0, _channels, norm0);
+            Normalize(norm0, norm1);
             ScaleForward32f(src, norm0, NULL, _channels, _height, _width, dst, _format, 0);
             src += _size, dst += _size;
         }
@@ -257,10 +262,7 @@ namespace Synet
             ChannelSum(src, _channels, _height, _width, _format, sum);
             Detail::Convert<int32_t, float, float>(sum, 1, _channels, 1, 1, TensorFormatNhwc, 
                 _sumScale.data(), _sumShift.data(), INT_MIN, INT_MAX, norm0);
-            Detail::InnerProductLayerForwardCpu<float>(norm0, _rWeight[0].data(), NULL, _squeeze, _channels, norm1);
-            CpuRelu(norm1, _squeeze, 0.0f, norm1);
-            Detail::InnerProductLayerForwardCpu<float>(norm1, _rWeight[1].data(), NULL, _channels, _squeeze, norm0);
-            CpuSigmoid(norm0, _channels, norm0);
+            Normalize(norm0, norm1);
             if(_dst8u)
                 Scale8i(src, norm0, dst8u), dst8u += _size;
             else
@@ -383,10 +385,7 @@ namespace Synet
         {
             ChannelSum(src, _channels, _height, _width, _format, sum);
             CpuScale(sum, _channels, _kAvg, norm0);
-            Detail::InnerProductLayerForwardCpu<float>(norm0, _rWeight[0].data(), NULL, _squeeze, _channels, norm1);
-            CpuRelu(norm1, _squeeze, 0.0f, norm1);
-            Detail::InnerProductLayerForwardCpu<float>(norm1, _rWeight[1].data(), NULL, _channels, _squeeze, norm0);
-            CpuSigmoid(norm0, _channels, norm0);
+            Normalize(norm0, norm1);
             if (_dst16b)
                 Scale16b(src, norm0, dst16b), dst16b += _size;
             else
@@ -467,5 +466,48 @@ namespace Synet
         }
         else
             assert(0);
+    }
+
+    void SqueezeExcitationLayer::Normalize(float* norm0, float* norm1)
+    {
+        const Tensors& weight = this->Weight();
+        Detail::InnerProductLayerForwardCpu<float>(norm0, _rWeight[0].data(), _hasBias[0] ? weight[1].Data<float>() : NULL, _squeeze, _channels, norm1);
+        switch (_actType)
+        {
+        case ActivationFunctionTypeIdentity:
+            break;
+        case ActivationFunctionTypeRelu:
+            CpuRelu(norm1, _squeeze, 0.0f, norm1);
+            break;
+        case ActivationFunctionTypeLeakyRelu:
+            CpuRelu(norm1, _squeeze, _params[0], norm1);
+            break;
+        case ActivationFunctionTypeRestrictRange:
+            CpuRestrictRange(norm1, _squeeze, _params[0], _params[1], norm1);
+            break;
+        case ActivationFunctionTypePrelu:
+            PreluLayerForward(norm1, weight[_sci - 1].Data<float>(), _squeeze, 1, norm1, _format);
+            break;
+        case ActivationFunctionTypeElu:
+            CpuElu(norm1, _squeeze, _params[0], norm1);
+            break;
+        case ActivationFunctionTypeHswish:
+            CpuHswish(norm1, _squeeze, _params[0], _params[1], norm1);
+            break;
+        case ActivationFunctionTypeMish:
+            CpuMish(norm1, _squeeze, _params[0], norm1);
+            break;
+        case ActivationFunctionTypeHardSigmoid:
+            CpuHardSigmoid(norm1, _squeeze, _params[0], _params[1], norm1);
+            break;
+        case ActivationFunctionTypeSwish:
+            CpuSwish(norm1, _squeeze, norm1);
+            break;
+        case ActivationFunctionTypeGelu:
+            CpuGelu(norm1, _squeeze, norm1);
+            break;
+        }
+        Detail::InnerProductLayerForwardCpu<float>(norm1, _rWeight[1].data(), _hasBias[1] ? weight[_sci + 1].Data<float>() : NULL, _channels, _squeeze, norm0);
+        CpuSigmoid(norm0, _channels, norm0);
     }
 }
