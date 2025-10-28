@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/NormalizeLayer.h"
+#include "Synet/Layers/Normalize/NormalizeLayer.h"
 
 namespace Synet
 {

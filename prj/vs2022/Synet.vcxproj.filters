@@ -44,9 +44,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\StubLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\NormalizeLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\InputLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -63,9 +60,6 @@
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\TiledScale2DLayer.cpp">
@@ -276,6 +270,12 @@
     <ClCompile Include="..\..\src\Synet\Layers\Resize\PoolingLayer.cpp">
       <Filter>Layers\Resize</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Normalize\NormalizeLayer.cpp">
+      <Filter>Layers\Normalize</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.cpp">
+      <Filter>Layers\Normalize</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -311,9 +311,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\NormalizeLayer.h">
-      <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\PreluLayer.h">
       <Filter>Layers</Filter>
@@ -364,9 +361,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Quantization\Const.h">
       <Filter>Quantization</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.h">
-      <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Quantization\Stat.h">
       <Filter>Quantization</Filter>
@@ -717,6 +711,12 @@
     <ClInclude Include="..\..\src\Synet\Layers\Resize\PoolingLayer.h">
       <Filter>Layers\Resize</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Normalize\NormalizeLayer.h">
+      <Filter>Layers\Normalize</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.h">
+      <Filter>Layers\Normalize</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -769,6 +769,9 @@
     </Filter>
     <Filter Include="Layers\Resize">
       <UniqueIdentifier>{3d68823c-7964-4ca1-b7a3-16764bf854cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Normalize">
+      <UniqueIdentifier>{b1234bf4-00c3-45b5-a443-294ca6b28407}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

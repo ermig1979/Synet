@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/SqueezeExcitationLayer.h"
+#include "Synet/Layers/Normalize/SqueezeExcitationLayer.h"
 #include "Synet/Layers/Math/ScaleLayer.h"
 #include "Synet/Layers/InnerProduct/InnerProduct32fLayer.h"
 #include "Synet/Layers/PreluLayer.h"

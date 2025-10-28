@@ -71,7 +71,8 @@
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution8iLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolutionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\NonZeroLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\NormalizeLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Normalize\NormalizeLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\PreluLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.cpp" />
@@ -106,7 +107,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\ScatterNdLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SliceLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\StridedSliceLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\StubLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\TiledScale2DLayer.cpp" />
@@ -196,7 +196,8 @@
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution8iLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolutionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\NonZeroLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\NormalizeLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Normalize\NormalizeLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\PreluLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.h" />
@@ -231,7 +232,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\ScatterNdLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SliceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\StridedSliceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\StubLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\TiledScale2DLayer.h" />
