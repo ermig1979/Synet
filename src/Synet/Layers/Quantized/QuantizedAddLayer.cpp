@@ -272,6 +272,8 @@ namespace Synet
             SYNET_ERROR("QuantizedAddLayer incompatible input shapes!");
         Shape shapeD = OutputShape(shapeA, shapeB);
 
+        shapeB = FullSrcShape(shapeB, shapeD);
+        shapeA = FullSrcShape(shapeA, shapeD);
         _quantizedAdd.Init(shapeA, _aType, _aScale, _aZero, shapeB, _bType, _bScale, _bZero,
             _activationType, _params, _dType, _dScale, _dZero);
         if (!_quantizedAdd.Enable())
@@ -297,8 +299,6 @@ namespace Synet
             }
             else
             {
-                shapeB = FullSrcShape(shapeB, shapeD);
-                shapeA = FullSrcShape(shapeA, shapeD);
                 _dShape = shapeD;
                 CompactShapes(shapeA, shapeB, _dShape);
                 _aSteps = SourceSteps(shapeA, _dShape);
