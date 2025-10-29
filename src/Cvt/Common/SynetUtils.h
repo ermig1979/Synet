@@ -367,7 +367,7 @@ namespace Synet
         }
         if (checkPriorBox && (layer.type() == LayerTypePriorBox || layer.type() == LayerTypePriorBoxClustered))
             return Cache(layer, TensorFormatNchw, tensorFormatMap);
-        if (globalPooling && layer.type() == LayerTypePooling && layer.pooling().globalPooling())
+        if (globalPooling && (layer.type() == LayerTypePooling || layer.type() == LayerTypeQuantizedPooling) && layer.pooling().globalPooling())
             return Cache(layer, TensorFormatNchw, tensorFormatMap);
         if (layer.type() == LayerTypeInput && layer.input().shape().size())
             return Cache(layer, layer.input().shape()[0].format(), tensorFormatMap);
