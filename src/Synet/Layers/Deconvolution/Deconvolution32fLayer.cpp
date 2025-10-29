@@ -23,7 +23,7 @@
 */
 
 #include "Synet/Layers/Deconvolution/Deconvolution32fLayer.h"
-#include "Synet/Layers/PreluLayer.h"
+#include "Synet/Layers/Activation/PreluLayer.h"
 #include "Synet/Utils/Gemm.h"
 #include "Synet/Utils/ImgToCol.h"
 #include "Synet/Utils/Activation.h"

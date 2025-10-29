@@ -22,6 +22,9 @@
 * SOFTWARE.
 */
 
+#include "Synet/Layers/Activation/ActivationLayers.h"
+#include "Synet/Layers/Activation/PreluLayer.h"
+
 #include "Synet/Layers/Convolution/Convolution32fLayer.h"
 #include "Synet/Layers/Convolution/Convolution16bLayer.h"
 #include "Synet/Layers/Convolution/Convolution8iLayer.h"
@@ -98,7 +101,6 @@
 #include "Synet/Layers/Resize/PadLayer.h"
 #include "Synet/Layers/Resize/PoolingLayer.h"
 
-#include "Synet/Layers/ActivationLayers.h"
 #include "Synet/Layers/ArgMaxLayer.h"
 #include "Synet/Layers/CompareLayer.h"
 #include "Synet/Layers/ConstLayer.h"
@@ -107,7 +109,6 @@
 #include "Synet/Layers/GridSampleLayer.h"
 #include "Synet/Layers/InputLayer.h"
 #include "Synet/Layers/NonZeroLayer.h"
-#include "Synet/Layers/PreluLayer.h"
 #include "Synet/Layers/ReductionLayer.h"
 #include "Synet/Layers/ScaledDotProductAttentionLayer.h"
 #include "Synet/Layers/ScatterNdLayer.h"

@@ -25,7 +25,7 @@
 #include "Synet/Utils/ImgToCol.h"
 #include "Synet/Utils/Activation.h"
 #include "Synet/Utils/Gemm.h"
-#include "Synet/Layers/PreluLayer.h"
+#include "Synet/Layers/Activation/PreluLayer.h"
 
 namespace Synet
 {

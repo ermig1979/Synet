@@ -8,9 +8,6 @@
     <ClCompile Include="..\..\src\Synet\Utils\Activation.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\ActivationLayers.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\ArgMaxLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -54,9 +51,6 @@
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\StridedSliceLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\PreluLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp">
@@ -276,6 +270,12 @@
     <ClCompile Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.cpp">
       <Filter>Layers\Normalize</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Activation\ActivationLayers.cpp">
+      <Filter>Layers\Activation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Activation\PreluLayer.cpp">
+      <Filter>Layers\Activation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -311,9 +311,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\PreluLayer.h">
-      <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h">
       <Filter>Layers</Filter>
@@ -415,9 +412,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Anchor.h">
       <Filter>Decoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ActivationLayers.h">
-      <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Version.h" />
     <ClInclude Include="..\..\src\Synet\Layers\TopKLayer.h">
@@ -717,6 +711,12 @@
     <ClInclude Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.h">
       <Filter>Layers\Normalize</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Activation\ActivationLayers.h">
+      <Filter>Layers\Activation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Activation\PreluLayer.h">
+      <Filter>Layers\Activation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -772,6 +772,9 @@
     </Filter>
     <Filter Include="Layers\Normalize">
       <UniqueIdentifier>{b1234bf4-00c3-45b5-a443-294ca6b28407}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Activation">
+      <UniqueIdentifier>{714d4540-e7e3-4689-88f2-ef5afe266193}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

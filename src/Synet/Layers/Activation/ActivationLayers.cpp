@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/ActivationLayers.h"
+#include "Synet/Layers/Activation/ActivationLayers.h"
 #include "Synet/Utils/Activation.h"
 
 namespace Synet

@@ -25,7 +25,7 @@
 #include "Synet/Layers/Normalize/SqueezeExcitationLayer.h"
 #include "Synet/Layers/Math/ScaleLayer.h"
 #include "Synet/Layers/InnerProduct/InnerProduct32fLayer.h"
-#include "Synet/Layers/PreluLayer.h"
+#include "Synet/Layers/Activation/PreluLayer.h"
 #include "Synet/Utils/Activation.h"
 #include "Synet/Quantization/Convert.h"
 #include "Synet/Quantization/Bf16.h"

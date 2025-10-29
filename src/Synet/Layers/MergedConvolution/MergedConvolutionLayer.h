@@ -26,10 +26,10 @@
 
 #include "Synet/Layer.h"
 #include "Synet/Utils/MergedConvolution.h"
-#include "Synet/Layers/ActivationLayers.h"
+#include "Synet/Layers/Activation/ActivationLayers.h"
+#include "Synet/Layers/Activation/PreluLayer.h"
 #include "Synet/Utils/ImgToCol.h"
 #include "Synet/Utils/Activation.h"
-#include "Synet/Layers/PreluLayer.h"
 
 namespace Synet
 {

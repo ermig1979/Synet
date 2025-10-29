@@ -25,7 +25,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Synet\Fabric.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\ActivationLayers.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Activation\ActivationLayers.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Activation\PreluLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ArgMaxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\CompareLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ConstantOfShapeLayer.cpp" />
@@ -73,7 +74,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\NonZeroLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Normalize\NormalizeLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\PreluLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedConcatLayer.cpp" />
@@ -150,7 +150,8 @@
     <ClInclude Include="..\..\src\Synet\Decoders\YoloV8.h" />
     <ClInclude Include="..\..\src\Synet\Fabric.h" />
     <ClInclude Include="..\..\src\Synet\Layer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\ActivationLayers.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Activation\ActivationLayers.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Activation\PreluLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ArgMaxLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\CompareLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ConstantOfShapeLayer.h" />
@@ -198,7 +199,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\NonZeroLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Normalize\NormalizeLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\PreluLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedConcatLayer.h" />
