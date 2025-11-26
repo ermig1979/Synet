@@ -33,6 +33,7 @@ namespace Synet
         CPL_PARAM_VALUE(int, classes, 80);
         CPL_PARAM_VALUE(int, regMax, 7);
         CPL_PARAM_VALUE(Ints, strides, Ints({ 8, 16, 32, 64 }));
+        CPL_PARAM_VALUE(int, stub, 0);
     };
 
     class NanodetDecoder
@@ -49,6 +50,7 @@ namespace Synet
             , _netH(0)
             , _classes(0)
             , _regMax(-1)
+            , _stub(0)
         {
         }
 
@@ -59,6 +61,7 @@ namespace Synet
             _classes = param.classes();
             _regMax = param.regMax();
             _strides = param.strides();
+            _stub = param.stub();
             _anchors.clear();
             for (size_t s = 0; s < _strides.size(); ++s)
             {
@@ -98,7 +101,7 @@ namespace Synet
             const auto& classesIndices = classes.empty() ? _classesIndices : classes;
             Regions regions;
             size_t predSize = _regMax + 1;
-            for (size_t i = 0; i < size; ++i, data += _classes + 4 * predSize, anchors += 3)
+            for (size_t i = 0; i < size; ++i, data += _classes + 4 * predSize + _stub, anchors += 3)
             {
                 size_t index = classesIndices[0];
                 float score = data[index];
@@ -166,7 +169,7 @@ namespace Synet
         }
 
     private:
-        size_t _netW, _netH, _classes, _regMax;
+        size_t _netW, _netH, _classes, _regMax, _stub;
         Ints _strides;
         Floats _anchors;
         Index _classesIndices;
