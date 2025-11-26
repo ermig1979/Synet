@@ -136,9 +136,12 @@ namespace Synet
     {
     }
 
-    bool ShuffleLayer::Can16b() const
+    LowPrecisionType ShuffleLayer::LowPrecision(TensorType type) const
     {
-        return Options().BFloat16Enable();
+        const LayerParam& p = this->Param();
+        if (type == TensorType16b)
+            return LowPrecisionTypePassive;
+        return LowPrecisionTypeNone;
     }
 
     bool ShuffleLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
