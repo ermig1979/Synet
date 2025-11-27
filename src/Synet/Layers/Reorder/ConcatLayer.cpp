@@ -35,6 +35,8 @@ namespace Synet
         {
             ((H*)dst)[0] = *(H*)src0;
             ((H*)dst)[1] = *(H*)src1;
+            //::memcpy(dst + 0, src0, N * sizeof(T));
+            //::memcpy(dst + N, src1, N * sizeof(T));
             src0 += N;
             src1 += N;
             dst += 2*N;
@@ -110,7 +112,31 @@ namespace Synet
             if (Options().BFloat16Enable())
                 UsePerfStat(Cpl::ToStr(_srcType));
             else
+            {
+#if 0
                 UsePerfStat();
+#else
+                std::stringstream ss;
+                ss << "fp32-";
+                for (size_t a = 0; a < dstShape.size(); ++a)
+                {
+                    if (a)
+                        ss << "x";
+                    if (a == _concatAxis)
+                    {
+                        for (size_t s = 0; s < src.size(); ++s)
+                        {
+                            if (s)
+                                ss << "+";
+                            ss << src[s]->Axis(a);
+                        }
+                    }
+                    else
+                        ss << dstShape[a];
+                }
+                UsePerfStat(ss.str());
+#endif
+            }
             _const = false;
         }
         return true;
@@ -173,10 +199,16 @@ namespace Synet
         {
             if (_special2N == 16)
                 Concat2N<T, 16>(src[0], src[1], _concatNum, dst);
+            //else if (_special2N == 24)
+            //    Concat2N<T, 24>(src[0], src[1], _concatNum, dst);
             else if (_special2N == 32)
                 Concat2N<T, 32>(src[0], src[1], _concatNum, dst);
+            //else if (_special2N == 48)
+            //    Concat2N<T, 48>(src[0], src[1], _concatNum, dst);
             else if (_special2N == 64)
                 Concat2N<T, 64>(src[0], src[1], _concatNum, dst);
+            //else if (_special2N == 96)
+            //    Concat2N<T, 96>(src[0], src[1], _concatNum, dst);
             else if (_special2N == 128)
                 Concat2N<T, 128>(src[0], src[1], _concatNum, dst);
             else
