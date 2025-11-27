@@ -402,7 +402,7 @@ namespace Synet
         if (parts.size() < 2)
             return false;
         const LayerParam& conc = src[index + parts.size()];
-        if (conc.type() != LayerTypeConcat && conc.src().size() != parts.size())
+        if (conc.type() != LayerTypeConcat || conc.src().size() != parts.size())
             return false;
         for (size_t s = 0; s < conc.src().size(); ++s)
             if (conc.src()[s] != src[index + s].dst()[0])
