@@ -217,6 +217,8 @@ namespace Synet
             {
                 if (MergeParallelConvolutions(network.layers(), i, bin, buf, merged, changes))
                     continue;
+                if (MergeConcatedParallelConvolutions(network.layers(), i, bin, buf, merged, changes))
+                    continue;
                 if (MergeYoloV7(network.layers(), i, merged, changes))
                     continue;
                 //if (MergeParallelScaleAndDepthwiseConvolution(network.layers(), i, bin, buf, merged, changes))
