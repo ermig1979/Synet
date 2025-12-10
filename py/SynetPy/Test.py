@@ -30,42 +30,13 @@ import Simd
 
 ###################################################################################################
 
-def DrawRectangle(image : Simd.Image, left : int, top : int, right : int, bottom : int, color: int) :
-	if image.Format() != Simd.PixelFormat.Bgra32 :
-		raise Exception("DrawRectangle can annotate only for BGRA-32 image!")
-	bgra = ctypes.c_uint32(color)
-	data = ctypes.cast(image.Data(), ctypes.POINTER(ctypes.c_uint32))
-	stride = image.Stride() // 4
-	if top >= 0 and top < image.Height() :
-		beg = top * stride + max(0, left)
-		end = top * stride + min(right, image.Width())
-		for offs in range(beg, end) :
-			data[offs] = bgra
-	if bottom > 0 and bottom <= image.Height() :
-		beg = (bottom - 1) * stride + max(0, left)
-		end = (bottom - 1) * stride + min(right, image.Width())
-		for offs in range(beg, end) :
-			data[offs] = bgra
-	if left >= 0 and left < image.Width() :
-		beg = max(0, top) * stride + left
-		end = min(bottom, image.Height()) * stride + left
-		for offs in range(beg, end, stride) :
-			data[offs] = bgra
-	if right > 0 and right < image.Width() :
-		beg = max(0, top) * stride + right - 1
-		end = min(bottom, image.Height()) * stride + right - 1
-		for offs in range(beg, end, stride) :
-			data[offs] = bgra
-	
-###################################################################################################
-
 def AnnotateDetection(image : Simd.Image, ptr : ctypes.POINTER(ctypes.c_float), offs : int) :
 	color = int("ff00ff00", 16)
 	left = int(ptr[offs + 3] * image.Width())
 	top = int(ptr[offs + 4] * image.Height())
 	right = int(ptr[offs + 5] * image.Width())
 	bottom = int(ptr[offs + 6] * image.Height())
-	DrawRectangle(image, left, top, right, bottom, color)
+	image.DrawRectangle(left, top, right, bottom, [0, 255, 0, 255], 3)
 
 ###################################################################################################
 
@@ -115,7 +86,7 @@ def main():
 	
 	print("Set network input: ", end = "")	
 	shape = network.NchwShape()
-	resized = Simd.Resized(image, shape[3], shape[2], Simd.ResizeMethod.Area)
+	resized = Simd.ResizedImage(image, shape[3], shape[2], Simd.ResizeMethod.Area)
 	lower = [0.0, 0.0, 0.0]
 	upper = [255.0, 255.0, 255.0]
 	input = network.Src(0)
