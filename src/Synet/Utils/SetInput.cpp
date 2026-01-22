@@ -29,15 +29,17 @@
 namespace Synet
 {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-    bool SetInput(class Network & network, const Views & views, Floats lower, Floats upper, bool rgb)
+    bool SetInput(class Network & network, const Views & views, Floats lower, Floats upper, bool rgb, size_t thread)
     {
         SYNET_PERF_FUNC();
-        if (network.Src().size() != 1)
+        if(thread < network.GetThreads())
+            SYNET_ERROR("SetInput: network supports only " << network.GetThreads() << " threads but current is " << thread << " !");
+        if (network.Src(thread).size() != 1)
             SYNET_ERROR("SetInput can process only models with one input!");
         if (views.empty() || lower.size() != upper.size())
             SYNET_ERROR("SetInput: check input parameters!");
         const Shape & shape = network.NchwShape();
-        if (network.Src()[0]->GetType() != TensorType32f || shape.size() != 4)
+        if (network.Src(thread)[0]->GetType() != TensorType32f || shape.size() != 4)
             SYNET_ERROR("SetInput: network input must be 4D FP32 tensor!");
         if (shape[0] != views.size())
             SYNET_ERROR("SetInput: wrong batch!");
@@ -57,7 +59,7 @@ namespace Synet
             lower.resize(shape[1], lower[0]);
         if (upper.size() == 1)
             upper.resize(shape[1], upper[0]);
-        float * dst = network.Src()[0]->Data<float>();
+        float * dst = network.Src(thread)[0]->Data<float>();
         for (size_t i = 0; i < views.size(); ++i)
         {
             Simd::SynetSetInput(views[i], lower.data(), upper.data(), dst, shape[1], (SimdTensorFormatType)network.Format(), rgb);

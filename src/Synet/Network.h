@@ -51,27 +51,29 @@ namespace Synet
 
         void Clear();
 
-        bool Load(const String& model, const String& weight, const Options& options = Options());
+        bool Load(const String& model, const String& weight, const Options& options = Options(), size_t threads = 1);
 
-        bool Load(const char* modelData, size_t modelSize, const char* weightData, size_t weightSize, const Options& options = Options());
+        bool Load(const char* modelData, size_t modelSize, const char* weightData, size_t weightSize, const Options& options = Options(), size_t threads = 1);
 
         bool Save(const String& model) const;
 
-        TensorPtrs& Src();
+        TensorPtrs& Src(size_t thread = 0);
 
-        const TensorPtrs& Src() const;
+        const TensorPtrs& Src(size_t thread = 0) const;
 
-        const TensorPtrs& Dst() const;
+        const TensorPtrs& Dst(size_t thread = 0) const;
 
-        const Tensor* Dst(const String& name) const;
+        const Tensor* Dst(const String& name, size_t thread = 0) const;
 
         LayerPtrs Back() const;
 
-        bool Reshape(const Strings& srcNames = Strings(), const Shapes& srcShapes = Shapes(), const Strings& dstNames = Strings());
+        bool Reshape(const Strings& srcNames = Strings(), const Shapes& srcShapes = Shapes(), const Strings& dstNames = Strings(), size_t threads = 1);
 
-        bool Reshape(size_t width, size_t height, size_t batch = 1);
+        bool Reshape(size_t width, size_t height, size_t batch = 1, size_t threads = 1);
 
-        bool SetBatch(size_t batch);
+        bool SetBatch(size_t batch, size_t threads = 1);
+
+        bool SetThreads(size_t threads);
 
         bool Dynamic() const;
 
@@ -79,27 +81,29 @@ namespace Synet
 
         Shape NchwShape() const;
 
+        size_t GetThreads() const;
+
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-        bool SetInput(const View& view, float lower, float upper, bool rgb = false);
+        bool SetInput(const View& view, float lower, float upper, bool rgb = false, size_t thread = 0);
 
-        bool SetInput(const View& view, const Floats& lower, const Floats& upper, bool rgb = false);
+        bool SetInput(const View& view, const Floats& lower, const Floats& upper, bool rgb = false, size_t thread = 0);
 
-        bool SetInput(const Views& views, float lower, float upper, bool rgb = false);
+        bool SetInput(const Views& views, float lower, float upper, bool rgb = false, size_t thread = 0);
 
-        bool SetInput(const Views& views, const Floats& lower, const Floats& upper, bool rgb = false);
+        bool SetInput(const Views& views, const Floats& lower, const Floats& upper, bool rgb = false, size_t thread = 0);
 #endif
 
         bool GetMetaConst(const String& name, Tensor& value) const;
 
         TensorFormat Format() const;
 
-        void Forward();
+        void Forward(size_t thread = 0);
 
         void UpdateStatistics(float quantile, float epsilon);
 
-        void DebugPrint(std::ostream& os, int flag, int first, int last, int precision);
+        void DebugPrint(std::ostream& os, int flag, int first, int last, int precision, size_t thread = 0);
 
-        Regions GetRegions(size_t imageW, size_t imageH, Type threshold, Type overlap) const;
+        Regions GetRegions(size_t imageW, size_t imageH, Type threshold, Type overlap, size_t thread = 0) const;
 
         size_t MemoryUsage() const;
 
@@ -111,7 +115,7 @@ namespace Synet
 
         bool Is16b() const;
 
-        const Tensor* GetInternalTensor(const String& name) const;
+        const Tensor* GetInternalTensor(const String& name, size_t thread = 0) const;
 
     private:
         typedef std::shared_ptr<Layer> LayerSharedPtr;
@@ -136,22 +140,28 @@ namespace Synet
         };
         typedef std::vector<Stage> Stages;
 
+        struct Thread
+        {
+            TensorSharedPtrs tensors;
+            Stages input, stages;
+            TensorPtrs src, buf, dst;
+        };
+        typedef std::vector<Thread> Threads;
+
         bool _empty;
         NetworkParamHolder _param;
         Context _context;
         LayerSharedPtrs _layers;
-        TensorSharedPtrs _tensors;
         StatSharedPtrs _stats;
 
-        Stages _input, _stages;
-        TensorPtrs _src, _dst;
         LayerPtrs _back;
         NameIdMap _tensorId, _layerId, _statId;
         NameIdSetMap _srcIds, _dstIds;
+        Threads _threads;
 
         bool CreateLayers();
 
-        bool Init();
+        bool Init(size_t threads);
 
         void SetTensorType32f();
 
@@ -171,12 +181,14 @@ namespace Synet
 
         bool ReshapeStages();
 
-        void SetBuffers(TensorPtrs& buf);
+        void SetBuffers();
 
         void SetStats();
 
         void UpdateStatistics(const Tensor& tensor, float quantile, float epsilon);
 
         bool InsertDst(const String& name);
+
+        bool CloneThreadBuffers(size_t threads);
     };
 }

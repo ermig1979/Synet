@@ -29,6 +29,6 @@
 namespace Synet
 {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-    bool SetInput(class Network& network, const Views& views, Floats lower, Floats upper, bool rgb);
+    bool SetInput(class Network& network, const Views& views, Floats lower, Floats upper, bool rgb, size_t thread = 0);
 #endif
 }

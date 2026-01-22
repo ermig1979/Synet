@@ -66,24 +66,27 @@ namespace Synet
     {
         _layers.clear();
         _param() = NetworkParam();
-        _tensors.clear();
-        _stats.clear();
-        _input.clear();
-        _stages.clear();
-        _stats.clear();
-        _src.clear();
-        _dst.clear();
         _back.clear();
+        _stats.clear();
         _tensorId.clear();
         _layerId.clear();
         _statId.clear();
         _srcIds.clear();
         _dstIds.clear();
         _context.Clear();
+        for (size_t t = 0; t < _threads.size(); ++t)
+        {
+            _threads[t].tensors.clear();
+            _threads[t].input.clear();
+            _threads[t].stages.clear();
+            _threads[t].src.clear();
+            _threads[t].dst.clear();
+        }
+        _threads.clear();
         _empty = true;
     }
 
-    bool Network::Load(const String & model, const String & weight, const Options & options)
+    bool Network::Load(const String & model, const String & weight, const Options & options, size_t threads)
     {
         Clear();
 
@@ -117,10 +120,10 @@ namespace Synet
         }
         ifs.close();
 
-        return Init();
+        return Init(threads);
     }
 
-    bool Network::Load(const char * modelData, size_t modelSize, const char * weightData, size_t weightSize, const Options& options)
+    bool Network::Load(const char * modelData, size_t modelSize, const char * weightData, size_t weightSize, const Options& options, size_t threads)
     {
         Clear();
 
@@ -138,7 +141,7 @@ namespace Synet
                 return false;
         }
 
-        return Init();
+        return Init(threads);
     }
 
     bool Network::Save(const String& model) const
@@ -146,26 +149,30 @@ namespace Synet
         return _param.Save(model, false);
     }
 
-    Network::TensorPtrs & Network::Src()
+    Network::TensorPtrs & Network::Src(size_t thread)
     { 
-        return _src; 
+        assert(thread < _threads.size());
+        return _threads[thread].src; 
     }
 
-    const Network::TensorPtrs & Network::Src() const
+    const Network::TensorPtrs & Network::Src(size_t thread) const
     {
-        return _src;
+        assert(thread < _threads.size());
+        return _threads[thread].src;
     }
 
-    const Network::TensorPtrs & Network::Dst() const
+    const Network::TensorPtrs & Network::Dst(size_t thread) const
     { 
-        return _dst; 
+        assert(thread < _threads.size());
+        return _threads[thread].dst;
     }
 
-    const Network::Tensor * Network::Dst(const String & name) const
+    const Network::Tensor * Network::Dst(const String & name, size_t thread) const
     {
-        for (size_t i = 0; i < _dst.size(); ++i)
-            if (_dst[i]->Name() == name)
-                return _dst[i];
+        assert(thread < _threads.size());
+        for (size_t i = 0; i < _threads[thread].dst.size(); ++i)
+            if (_threads[thread].dst[i]->Name() == name)
+                return _threads[thread].dst[i];
         return NULL;
     }
 
@@ -174,30 +181,31 @@ namespace Synet
         return _back;
     }
 
-    bool Network::Reshape(const Strings & srcNames, const Shapes & srcShapes, const Strings & dstNames)
+    bool Network::Reshape(const Strings & srcNames, const Shapes & srcShapes, const Strings & dstNames, size_t threads)
     {
         if (srcNames.size() != srcShapes.size())
             SYNET_ERROR("srcNames.size() != srcShapes.size() !");
 
-        for (size_t i = 0; i < _tensors.size(); ++i)
-            _tensors[i]->Clear(true);
+        for (size_t t = 0; t < _threads.size(); ++t)
+            for (size_t i = 0; i < _threads[t].tensors.size(); ++i)
+                _threads[t].tensors[i]->Clear(true);
 
         if (srcNames.size())
         {
-            _src.clear();
+            _threads[0].src.clear();
             for (size_t i = 0; i < srcNames.size(); ++i)
             {
                 bool found = false;
-                for (size_t j = 0; j < _input.size(); ++j)
+                for (size_t j = 0; j < _threads[0].input.size(); ++j)
                 {
-                    const LayerParam & param = _input[j].layer->Param();
+                    const LayerParam & param = _threads[0].input[j].layer->Param();
                     if (param.name() == srcNames[i])
                     {
                         if (param.type() == LayerTypeInput)
                         {
-                            _input[j].dst[0]->Reshape(param.input().shape()[0].type(), srcShapes[i], param.input().shape()[0].format());
-                            _input[j].dst[0]->SetName(param.name());
-                            _src.push_back(_input[j].dst[0]);
+                            _threads[0].input[j].dst[0]->Reshape(param.input().shape()[0].type(), srcShapes[i], param.input().shape()[0].format());
+                            _threads[0].input[j].dst[0]->SetName(param.name());
+                            _threads[0].src.push_back(_threads[0].input[j].dst[0]);
                             if(srcShapes[i].size() > 1)
                                 _context.batchSize = srcShapes[i][0];
                         }
@@ -213,27 +221,29 @@ namespace Synet
         }
         else
         {
-            for (size_t i = 0; i < _input.size(); ++i)
-                _input[i].layer->Reshape(_input[i].src, _input[i].buf, _input[i].dst);
+            for (size_t i = 0; i < _threads[0].input.size(); ++i)
+                _threads[0].input[i].layer->Reshape(_threads[0].input[i].src, _threads[0].input[i].buf, _threads[0].input[i].dst);
         }
 
-        if (!ReshapeStages())
+        if (!(ReshapeStages() && CloneThreadBuffers(threads)))
             return false;
 
         if (dstNames.size())
         {
-            _dst.clear();
+            for (size_t t = 0; t < _threads.size(); ++t)
+                _threads[t].dst.clear();
             _back.clear();
             for (size_t i = 0; i < dstNames.size(); ++i)
             {
                 bool found = false;
-                for (size_t j = 0; j < _stages.size() && !found; ++j)
+                for (size_t j = 0; j < _threads[0].stages.size() && !found; ++j)
                 {
-                    Layer* layer = _stages[j].layer;
+                    Layer* layer = _threads[0].stages[j].layer;
                     const LayerParam& param = layer->Param();
                     if (param.name() == dstNames[i])
                     {
-                        _dst.push_back(_stages[j].dst[0]);
+                        for (size_t t = 0; t < _threads.size(); ++t)
+                            _threads[t].dst.push_back(_threads[t].stages[j].dst[0]);
                         layer->_isBack = true;
                         _back.push_back(layer);
                         found = true;
@@ -244,7 +254,8 @@ namespace Synet
                         {
                             if (param.dst()[d] == dstNames[i])
                             {
-                                _dst.push_back(_stages[j].dst[d]);
+                                for (size_t t = 0; t < _threads.size(); ++t)
+                                    _threads[t].dst.push_back(_threads[t].stages[j].dst[d]);
                                 layer->_isBack = true;
                                 _back.push_back(layer);
                                 found = true;
@@ -260,11 +271,13 @@ namespace Synet
         return true;
     }
 
-    bool Network::Reshape(size_t width, size_t height, size_t batch)
+    bool Network::Reshape(size_t width, size_t height, size_t batch, size_t threads)
     {
-        if (_input.size() != 1)
+        if (_threads.size() == 0)
             return false;
-        const LayerParam & param = _input[0].layer->Param();
+        if (_threads[0].input.size() != 1)
+            return false;
+        const LayerParam & param = _threads[0].input[0].layer->Param();
         if (param.type() != LayerTypeInput || param.input().shape().size() != 1)
             return false;
         const TensorFormat & format = param.input().shape()[0].format();
@@ -294,17 +307,19 @@ namespace Synet
         }
         else
             return false;
-        _input[0].dst[0]->Reshape(TensorType32f, shape, format, Type(0));
-        _input[0].dst[0]->SetName(param.name());
+        _threads[0].input[0].dst[0]->Reshape(TensorType32f, shape, format, Type(0));
+        _threads[0].input[0].dst[0]->SetName(param.name());
         _context.batchSize = batch;
-        return ReshapeStages();
+        return ReshapeStages() && CloneThreadBuffers(threads);
     }
 
-    bool Network::SetBatch(size_t batch)
+    bool Network::SetBatch(size_t batch, size_t threads)
     {
-        if (_input.size() != 1)
+        if (_threads.size() == 0)
             return false;
-        const LayerParam& param = _input[0].layer->Param();
+        if (_threads[0].input.size() != 1)
+            return false;
+        const LayerParam& param = _threads[0].input[0].layer->Param();
         if (param.type() != LayerTypeInput || param.input().shape().size() != 1)
             return false;
         const TensorFormat& format = param.input().shape()[0].format();
@@ -312,11 +327,26 @@ namespace Synet
         if (shape.size() < 2)
             return false;
         shape[0] = batch;
-        _input[0].dst[0]->Reshape(TensorType32f, shape, format, Type(0));
-        _input[0].dst[0]->SetName(param.name());
+        _threads[0].input[0].dst[0]->Reshape(TensorType32f, shape, format, Type(0));
+        _threads[0].input[0].dst[0]->SetName(param.name());
         _context.batchSize = batch;
-        ReshapeStages();
-        return true;
+        return ReshapeStages() && CloneThreadBuffers(threads);
+    }
+
+    bool Network::SetThreads(size_t threads)
+    {
+        if (_threads.size() != 1)
+            return false;
+        if (_threads[0].input.size() != 1)
+            return false;
+        const LayerParam& param = _threads[0].input[0].layer->Param();
+        if (param.type() != LayerTypeInput || param.input().shape().size() != 1)
+            return false;
+        const TensorFormat& format = param.input().shape()[0].format();
+        Shape shape = param.input().shape()[0].dim();
+        _threads[0].input[0].dst[0]->Reshape(TensorType32f, shape, format, Type(0));
+        _threads[0].input[0].dst[0]->SetName(param.name());
+        return ReshapeStages() && CloneThreadBuffers(threads);
     }
 
     bool Network::Dynamic() const
@@ -347,32 +377,37 @@ namespace Synet
 
     Shape Network::NchwShape() const
     {
-        assert(_src.size() >= 1);
-        Shape shape = _src[0]->Shape();
-        if (_src[0]->Format() == TensorFormatNhwc && shape.size() == 4)
+        assert(_threads.size() > 0 && _threads[0].src.size() >= 1);
+        Shape shape = _threads[0].src[0]->Shape();
+        if (_threads[0].src[0]->Format() == TensorFormatNhwc && shape.size() == 4)
             shape = Shape({ shape[0], shape[3] , shape[1] , shape[2] });
         return shape;
     }
 
+    size_t Network::GetThreads() const
+    {
+        return _threads.size();
+    }
+
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
-    bool Network::SetInput(const View & view, float lower, float upper, bool rgb)
+    bool Network::SetInput(const View & view, float lower, float upper, bool rgb, size_t thread)
     {
-        return Synet::SetInput(*this, Views({ view }), Floats({ lower }), Floats({ upper }), rgb);
+        return Synet::SetInput(*this, Views({ view }), Floats({ lower }), Floats({ upper }), rgb, thread);
     }
 
-    bool Network::SetInput(const View & view, const Floats & lower, const Floats & upper, bool rgb)
+    bool Network::SetInput(const View & view, const Floats & lower, const Floats & upper, bool rgb, size_t thread)
     {
-        return Synet::SetInput(*this, Views({ view }), lower, upper, rgb);
+        return Synet::SetInput(*this, Views({ view }), lower, upper, rgb, thread);
     }
 
-    bool Network::SetInput(const Views & views, float lower, float upper, bool rgb)
+    bool Network::SetInput(const Views & views, float lower, float upper, bool rgb, size_t thread)
     {
-        return Synet::SetInput(*this, views, Floats({ lower }), Floats({ upper }), rgb);
+        return Synet::SetInput(*this, views, Floats({ lower }), Floats({ upper }), rgb, thread);
     }
 
-    bool Network::SetInput(const Views & views, const Floats & lower, const Floats & upper, bool rgb)
+    bool Network::SetInput(const Views & views, const Floats & lower, const Floats & upper, bool rgb, size_t thread)
     {
-        return Synet::SetInput(*this, views, lower, upper, rgb);
+        return Synet::SetInput(*this, views, lower, upper, rgb, thread);
     }
 #endif
 
@@ -392,9 +427,10 @@ namespace Synet
 
     TensorFormat Network::Format() const
     {
-        for (size_t i = 0; i < _input.size(); ++i)
+        assert(_threads.size() > 0);
+        for (size_t i = 0; i < _threads[0].input.size(); ++i)
         {
-            const LayerParam & param = _input[i].layer->Param();
+            const LayerParam & param = _threads[0].input[i].layer->Param();
             if (param.type() == LayerTypeInput && param.input().shape().size())
                 return param.input().shape()[0].format();
         }
@@ -402,30 +438,32 @@ namespace Synet
         return TensorFormatUnknown;
     }
 
-    void Network::Forward()
+    void Network::Forward(size_t thread)
     {
+        assert(thread < _threads.size());
         //SYNET_PERF_FUNC();
         bool mode = GetFastMode();
         SetFastMode(true);
         SetAmxFull();
-        for (size_t i = 0; i < _stages.size(); ++i)
+        for (size_t i = 0; i < _threads[thread].stages.size(); ++i)
         {
+            const Stage& stage = _threads[thread].stages[i];
 #if defined(SYNET_FORWARD_LOG)
-            const Layer& layer = *_stages[i].layer;
+            const Layer& layer = *stage.layer;
             const LayerParam& param = layer.Param();
             std::stringstream msg;
             msg << "Forward Layer " << i << ": " << param.name() << " : ";
             msg << Cpl::ToStr(param.type());
             if (param.type() == LayerTypeMeta)
                 msg << "-" << Cpl::ToStr(param.meta().type());
-            for (size_t s = 0; s < _stages[i].src.size(); ++s)
-                msg << (s ? ", " : " ") << "src[" << s << "]: " << Cpl::ToStr(_stages[i].src[s]->GetType()) << " " << ToStr(_stages[i].src[s]->Shape());
+            for (size_t s = 0; s < stage.src.size(); ++s)
+                msg << (s ? ", " : " ") << "src[" << s << "]: " << Cpl::ToStr(stage.src[s]->GetType()) << " " << ToStr(stage.src[s]->Shape());
             msg << " -> ";
-            for (size_t d = 0; d < _stages[i].dst.size(); ++d)
-                msg << (d ? ", " : " ") << "dst[" << d << "]: " << Cpl::ToStr(_stages[i].dst[d]->GetType()) << " " << ToStr(_stages[i].dst[d]->Shape());
+            for (size_t d = 0; d < stage.dst.size(); ++d)
+                msg << (d ? ", " : " ") << "dst[" << d << "]: " << Cpl::ToStr(stage.dst[d]->GetType()) << " " << ToStr(stage.dst[d]->Shape());
             CPL_LOG_SS(Info, msg.str());
 #endif
-            _stages[i].layer->Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
+            stage.layer->Forward(stage.src, stage.buf, stage.dst);
         }
         SetAmxFull();
         SetFastMode(mode);
@@ -434,20 +472,22 @@ namespace Synet
     void Network::UpdateStatistics(float quantile, float epsilon)
     {
         SYNET_PERF_FUNC();
-        for (size_t i = 0; i < _tensors.size(); ++i)
-            UpdateStatistics(*_tensors[i], quantile, epsilon);
+        for (size_t t = 0; t < _threads.size(); ++t)
+            for (size_t i = 0; i < _threads[t].tensors.size(); ++i)
+                UpdateStatistics(*_threads[t].tensors[i], quantile, epsilon);
     }
 
-    void Network::DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
+    void Network::DebugPrint(std::ostream & os, int flag, int first, int last, int precision, size_t thread)
     {
+        assert(thread < _threads.size());
         bool printOutput = (flag & (1 << DebugPrintOutput)) != 0;
         bool printLayerDst = (flag & (1 << DebugPrintLayerDst)) != 0;
         bool printLayerWeight = (flag & (1 << DebugPrintLayerWeight)) != 0;
         bool printInt8Buffers = (flag & (1 << DebugPrintInt8Buffers)) != 0;
         bool printLayerInternal = (flag & (1 << DebugPrintLayerInternal)) != 0;
-        for (size_t i = 0; i < _input.size() && (printLayerDst || printOutput); ++i)
+        for (size_t i = 0; i < _threads[thread].input.size() && (printLayerDst || printOutput); ++i)
         {
-            Layer & layer = *_input[i].layer;
+            Layer & layer = *_threads[thread].input[i].layer;
             const LayerParam& param = layer.Param();
             if ((layer._isBack && printOutput) || printLayerDst)
             {
@@ -456,21 +496,21 @@ namespace Synet
                 for (size_t j = 0; j < param.src().size(); ++j)
                     os << param.src()[j] << " ";
                 os << ")." << std::endl;
-                for (size_t j = 0; j < _input[i].dst.size(); ++j)
-                    _input[i].dst[j]->DebugPrint(os, String(" dst[") + Cpl::ToStr(j) + "]", false, first, last, precision);
+                for (size_t j = 0; j < _threads[thread].input[i].dst.size(); ++j)
+                    _threads[thread].input[i].dst[j]->DebugPrint(os, String(" dst[") + Cpl::ToStr(j) + "]", false, first, last, precision);
             }
         }
         bool mode = GetFastMode();
         SetFastMode(true);
         SetAmxFull();
-        for (size_t i = 0; i < _stages.size(); ++i)
+        for (size_t i = 0; i < _threads[thread].stages.size(); ++i)
         {
-            Layer & layer = *_stages[i].layer;
+            Layer & layer = *_threads[thread].stages[i].layer;
             const LayerParam& param = layer.Param();
             if ((layer._isBack && printOutput) || printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
             {
                 if(printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
-                    layer.Forward(_stages[i].src, _stages[i].buf, _stages[i].dst);
+                    layer.Forward(_threads[thread].stages[i].src, _threads[thread].stages[i].buf, _threads[thread].stages[i].dst);
                 os << (layer._isBack ? "Output layer " : "Layer ") << i << ": " << param.name() << " : ";
                 os << Cpl::ToStr(param.type());
                 if (param.type() == LayerTypeMeta)
@@ -486,11 +526,11 @@ namespace Synet
                 }
                 if (printInt8Buffers && (layer.LowPrecision(TensorType8u) == LowPrecisionTypeActive))
                 {
-                    const Tensor& src = *_stages[i].src[0];
+                    const Tensor& src = *_threads[thread].stages[i].src[0];
                     if (src.GetType() == TensorType32f)
-                        _stages[i].buf[TensorType8u * BUFFER_COUNT + 1]->DebugPrint(os, src.Shape(), src.Format(), String("src"), false, first, last, precision);
-                    const Tensor& dst = *_stages[i].dst[0];
-                    _stages[i].buf[TensorType32i * BUFFER_COUNT + 0]->DebugPrint(os, dst.Shape(), dst.Format(), String("sum"), false, first, last, precision);
+                        _threads[thread].stages[i].buf[TensorType8u * BUFFER_COUNT + 1]->DebugPrint(os, src.Shape(), src.Format(), String("src"), false, first, last, precision);
+                    const Tensor& dst = *_threads[thread].stages[i].dst[0];
+                    _threads[thread].stages[i].buf[TensorType32i * BUFFER_COUNT + 0]->DebugPrint(os, dst.Shape(), dst.Format(), String("sum"), false, first, last, precision);
                 }
                 if (printLayerInternal)
                 {
@@ -498,8 +538,8 @@ namespace Synet
                 }
                 if ((layer._isBack && printOutput) || printLayerDst)
                 {
-                    for (size_t j = 0; j < _stages[i].dst.size(); ++j)
-                        _stages[i].dst[j]->DebugPrint(os, String(" dst[") + Cpl::ToStr(j) + "]", false, first, last, precision);
+                    for (size_t j = 0; j < _threads[thread].stages[i].dst.size(); ++j)
+                        _threads[thread].stages[i].dst[j]->DebugPrint(os, String(" dst[") + Cpl::ToStr(j) + "]", false, first, last, precision);
                 }
             }
         }
@@ -507,15 +547,16 @@ namespace Synet
         SetAmxFull();
     }
 
-    Network::Regions Network::GetRegions(size_t imageW, size_t imageH, Type threshold, Type overlap) const
+    Network::Regions Network::GetRegions(size_t imageW, size_t imageH, Type threshold, Type overlap, size_t thread) const
     {
+        assert(thread < _threads.size());
         const Shape & netNCHW = NchwShape();
         size_t netH = netNCHW[2];
         size_t netW = netNCHW[3];
         Regions regions;
-        for (size_t i = 0; i < _dst.size(); ++i)
+        for (size_t i = 0; i < _threads[thread].dst.size(); ++i)
         {
-            TensorPtrs dst(1, _dst[i]);
+            TensorPtrs dst(1, _threads[thread].dst[i]);
             const Layer * layer = _back[i];
             if (layer->Param().type() == Synet::LayerTypeStub && layer->Param().src().size() == 1)
             {
@@ -581,13 +622,16 @@ namespace Synet
             }
             memoryUsage += _layers[i]->MemoryUsage();
         }
-        for (size_t i = 0; i < _tensors.size(); ++i)
+        for (size_t t = 0; t < _threads.size(); ++t)
         {
-            const void * ptr = _tensors[i]->RawData();
-            if (unique.find(ptr) == unique.end())
+            for (size_t i = 0; i < _threads[t].tensors.size(); ++i)
             {
-                memoryUsage += _tensors[i]->MemoryUsage();
-                unique.insert(ptr);
+                const void* ptr = _threads[t].tensors[i]->RawData();
+                if (unique.find(ptr) == unique.end())
+                {
+                    memoryUsage += _threads[t].tensors[i]->MemoryUsage();
+                    unique.insert(ptr);
+                }
             }
         }
         for (size_t i = 0; i < _stats.size(); ++i)
@@ -601,22 +645,25 @@ namespace Synet
             _layers[i]->CompactWeight();
         if (unusedConst)
         {
-            for (size_t i = 0; i < _tensors.size(); ++i)
+            for (size_t t = 0; t < _threads.size(); ++t)
             {
-                Tensor32f& t = *_tensors[i];
-                if (t.Const() && t.Size() >= 16 && t.Users() == 1)
+                for (size_t i = 0; i < _threads[t].tensors.size(); ++i)
                 {
-                    const IdSet& ids = _srcIds[t.Name()];
-                    bool isConst = ids.size() > 0;
-                    for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
+                    Tensor32f& tn = *_threads[t].tensors[i];
+                    if (tn.Const() && tn.Size() >= 16 && tn.Users() == 1)
                     {
-                        const Stage& s = _stages[*id];
-                        if (!s.layer->Const())
-                            isConst = false;
+                        const IdSet& ids = _srcIds[tn.Name()];
+                        bool isConst = ids.size() > 0;
+                        for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
+                        {
+                            const Stage& s = _threads[t].stages[*id];
+                            if (!s.layer->Const())
+                                isConst = false;
 
+                        }
+                        if (isConst)
+                            tn.Clear();
                     }
-                    if (isConst)
-                        t.Clear();
                 }
             }
         }
@@ -650,11 +697,12 @@ namespace Synet
         return has16b && enable;
     }
 
-    const Network::Tensor* Network::GetInternalTensor(const String& name) const
+    const Network::Tensor* Network::GetInternalTensor(const String& name, size_t thread) const
     {
+        assert(thread < _threads.size());
         NameIdMap::const_iterator it = _tensorId.find(name);
         if (it != _tensorId.end())
-            return _tensors[it->second].get();
+            return _threads[thread].tensors[it->second].get();
         return NULL;
     }
 
@@ -692,10 +740,10 @@ namespace Synet
         return true;
     }
 
-    bool Network::Init()
+    bool Network::Init(size_t threads)
     {
-        TensorPtrs buf;
-        SetBuffers(buf);
+        _threads.resize(1);
+        SetBuffers();
         SetStats();
 
         NameSet available;
@@ -721,7 +769,8 @@ namespace Synet
                 const String& name = param.src()[j];
                 if (_tensorId.find(name) != _tensorId.end())
                 {
-                    stage.src.push_back(_tensors[_tensorId[name]].get());
+                    size_t tensorId = _tensorId[name];
+                    stage.src.push_back(_threads[0].tensors[tensorId].get());
                     if (available.find(name) != available.end())
                         available.erase(name);
                 }
@@ -733,7 +782,8 @@ namespace Synet
                 const String& name = param.dst()[j];
                 if (j < param.src().size() && name == param.src()[j])
                 {
-                    stage.dst.push_back(_tensors[_tensorId[name]].get());
+                    size_t tensorId = _tensorId[name];
+                    stage.dst.push_back(_threads[0].tensors[tensorId].get());
                 }
                 else  if (_tensorId.find(name) != _tensorId.end())
                 {
@@ -743,29 +793,32 @@ namespace Synet
                 {
                     TensorSharedPtr tensor(new Tensor());
                     tensor->SetName(name);
-                    _tensorId[name] = _tensors.size();
-                    _tensors.push_back(tensor);
+                    _tensorId[name] = _threads[0].tensors.size();
+                    _threads[0].tensors.push_back(tensor);
                     stage.dst.push_back(tensor.get());
                 }
                 available.insert(name);
                 if (param.type() == LayerTypeInput)
-                    _src.push_back(_tensors.back().get());
+                {
+                    for (size_t t = 0; t < _threads.size(); ++t)
+                        _threads[t].src.push_back(_threads[t].tensors.back().get());
+                }
             }
-            stage.buf = buf;
+            stage.buf = _threads[0].buf;
             if (Is8i())
                 stage.layer->SetStats(_stats);
             if (param.type() == LayerTypeInput)
-                _input.push_back(stage);
+                _threads[0].input.push_back(stage);
             else
             {
                 for (size_t j = 0; j < param.src().size(); ++j)
                 {
-                    _srcIds[param.src()[j]].insert(_stages.size());
+                    _srcIds[param.src()[j]].insert(_threads[0].stages.size());
                     _context.tensorUsers[param.src()[j]]++;
                 }
                 for (size_t j = 0; j < param.dst().size(); ++j)
-                    _dstIds[param.dst()[j]].insert(_stages.size());
-                _stages.push_back(stage);
+                    _dstIds[param.dst()[j]].insert(_threads[0].stages.size());
+                _threads[0].stages.push_back(stage);
             }
         }
         IdNameMap sorted;
@@ -780,10 +833,11 @@ namespace Synet
                     layer = _layers[_layerId[it->second]].get();
                 //assert(layer);
                 if (_dstIds.find(it->second) != _dstIds.end())
-                    layer = _stages[*_dstIds[it->second].begin()].layer;
+                    layer = _threads[0].stages[*_dstIds[it->second].begin()].layer;
                 if (layer && layer->Param().type() != LayerTypeMeta)
                 {
-                    _dst.push_back(_tensors[_tensorId[it->second]].get());
+                    size_t tensorId = _tensorId[it->second];
+                    _threads[0].dst.push_back(_threads[0].tensors[tensorId].get());
                     layer->_isBack = true;
                     _back.push_back(layer);
                 }
@@ -801,7 +855,7 @@ namespace Synet
         }
         if (!Dynamic())
         {
-            if (!Reshape())
+            if (!Reshape(Strings(), Shapes(), Strings(), threads))
                 return false;
         }
         _empty = false;
@@ -810,14 +864,14 @@ namespace Synet
 
     void Network::SetTensorType32f()
     {
-        for (size_t s = 0; s < _stages.size(); ++s)
+        for (size_t s = 0; s < _threads[0].stages.size(); ++s)
         {
-            const LayerParam& param = _stages[s].layer->Param();
+            const LayerParam& param = _threads[0].stages[s].layer->Param();
             if (param.type() == LayerTypeMeta)
                 continue;
             for (size_t d = 0; d < param.dst().size(); ++d)
             {
-                Tensor& tensor = *_tensors[_tensorId[param.dst()[d]]];
+                Tensor& tensor = *_threads[0].tensors[_tensorId[param.dst()[d]]];
                 if (tensor.GetType() == TensorTypeUnknown)
                     tensor.SetType(TensorType32f);
             }
@@ -848,7 +902,7 @@ namespace Synet
     bool Network::IsLowPrecisionInSubGraph(TensorType type, size_t current, IdSet& visited, bool back)
     {
         visited.insert(current);
-        const Stage& stage = _stages[current];
+        const Stage& stage = _threads[0].stages[current];
         const Layer& layer = *stage.layer;
         if (layer._isBack)
             return false;
@@ -863,7 +917,7 @@ namespace Synet
             {
                 if (visited.find(*id) != visited.end())
                     continue;
-                const Stage& dst = _stages[*id];
+                const Stage& dst = _threads[0].stages[*id];
                 if (CanIgnoreInSubGraph(type, dst.layer, true))
                     continue;
                 if (ParseSubGraph(type, dst.layer) && IsLowPrecisionInSubGraph(type, *id, visited, true))
@@ -881,7 +935,7 @@ namespace Synet
                 {
                     if (visited.find(*id) != visited.end())
                         continue;
-                    const Stage& src = _stages[*id];
+                    const Stage& src = _threads[0].stages[*id];
                     if (CanIgnoreInSubGraph(type, src.layer, false))
                         continue;
                     if (ParseSubGraph(type, src.layer) && IsLowPrecisionInSubGraph(type, *id, visited, true))
@@ -893,7 +947,7 @@ namespace Synet
                 {
                     if (visited.find(*id) != visited.end())
                         continue;
-                    const Stage& dst = _stages[*id];
+                    const Stage& dst = _threads[0].stages[*id];
                     if (CanIgnoreInSubGraph(type, dst.layer, true))
                         continue;
                     if (ParseSubGraph(type, dst.layer) && IsLowPrecisionInSubGraph(type, *id, visited, true))
@@ -908,19 +962,22 @@ namespace Synet
     void Network::SetLowPrecisionInSubGraph(TensorType type, size_t current, IdSet& visited, bool back)
     {
         visited.insert(current);
-        const Stage& stage = _stages[current];
+        const Stage& stage = _threads[0].stages[current];
         const LayerParam& param = stage.layer->Param();
         for (size_t d = 0; d < param.dst().size(); ++d)
         {
             const String& name = param.dst()[d];
             if (!this->Dst(name))
-                _tensors[_tensorId[name]]->SetType(type);
+            {
+                size_t id = _tensorId[name];
+                _threads[0].tensors[id]->SetType(type);
+            }
             const IdSet& ids = _srcIds[name];
             for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
             {
                 if (visited.find(*id) != visited.end())
                     continue;
-                if (CanIgnoreInSubGraph(type, _stages[*id].layer, true))
+                if (CanIgnoreInSubGraph(type, _threads[0].stages[*id].layer, true))
                     continue;
                 SetLowPrecisionInSubGraph(type, *id, visited, true);
             }
@@ -931,13 +988,16 @@ namespace Synet
             {
                 const String& name = param.src()[s];
                 if (!this->Dst(name))
-                    _tensors[_tensorId[name]]->SetType(type);
+                {
+                    size_t id = _tensorId[name];
+                    _threads[0].tensors[id]->SetType(type);
+                }
                 const IdSet& ids = _dstIds[name];
                 for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
                 {
                     if (visited.find(*id) != visited.end())
                         continue;
-                    if (CanIgnoreInSubGraph(type, _stages[*id].layer, false))
+                    if (CanIgnoreInSubGraph(type, _threads[0].stages[*id].layer, false))
                         continue;
                     SetLowPrecisionInSubGraph(type, *id, visited, true);
                 }
@@ -947,9 +1007,9 @@ namespace Synet
 
     void Network::SetLowPrecisionTensorType(TensorType type)
     {
-        for (size_t s = 0; s < _stages.size(); ++s)
+        for (size_t s = 0; s < _threads[0].stages.size(); ++s)
         {
-            const Layer& layer = *_stages[s].layer;
+            const Layer& layer = *_threads[0].stages[s].layer;
             if (layer.LowPrecision(type) == LowPrecisionTypeActive)
             {
                 IdSet checked, setted;
@@ -961,7 +1021,7 @@ namespace Synet
 
     bool Network::IsSubGraphEndConv(size_t s)
     {
-        const Stage& stage = _stages[s];
+        const Stage& stage = _threads[0].stages[s];
         const Layer & layer = *stage.layer;
         if (layer._isBack)
             return false;
@@ -974,7 +1034,7 @@ namespace Synet
             {
                 if (*id <= s)
                     continue;
-                const Stage & dst = _stages[*id];
+                const Stage & dst = _threads[0].stages[*id];
                 const LayerParam & param = dst.layer->Param();
                 if (param.type() == LayerTypeConvolution && param.convolution().group() != param.convolution().outputNum())
                     continue;
@@ -994,13 +1054,13 @@ namespace Synet
     {
         if (_param().quantization().method() == QuantizationMethodSymmetricNarrowed)
             return;
-        for (size_t i = 0; i < _input.size(); ++i)
-            _stats[_statId[_input[i].layer->Param().name()]]->Unify();
-        for (size_t s = 0; s < _stages.size(); ++s)
+        for (size_t i = 0; i < _threads[0].input.size(); ++i)
+            _stats[_statId[_threads[0].input[i].layer->Param().name()]]->Unify();
+        for (size_t s = 0; s < _threads[0].stages.size(); ++s)
         {
             if (IsSubGraphEndConv(s))
             {
-                const LayerParam & param = _stages[s].layer->Param();
+                const LayerParam & param = _threads[0].stages[s].layer->Param();
                 if (param.type() == LayerTypeConvolution || param.type() == LayerTypeMergedConvolution || param.type() == LayerTypeScale)
                     _stats[_statId[param.dst()[0]]]->Unify();
 
@@ -1021,10 +1081,11 @@ namespace Synet
 
     bool Network::ReshapeStages()
     {
-        for (size_t i = 0; i < _stages.size(); ++i)
+        for (size_t i = 0; i < _threads[0].stages.size(); ++i)
         {
-            const LayerParam& param = _stages[i].layer->Param();
-            if (!_stages[i].layer->Reshape(_stages[i].src, _stages[i].buf, _stages[i].dst))
+            Stage& stage = _threads[0].stages[i];
+            const LayerParam& param = stage.layer->Param();
+            if (!stage.layer->Reshape(stage.src, stage.buf, stage.dst))
             {
                 std::stringstream err;
                 err << "Can't reshape " << i << " layer with name: " << Cpl::ToStr(param.name()) << ", type: " << Cpl::ToStr(param.type());
@@ -1032,7 +1093,7 @@ namespace Synet
                     err << "-" << Cpl::ToStr(param.meta().type());
                 for (size_t s = 0; s < param.src().size(); ++s)
                 {
-                    const Tensor * src = _stages[i].src[s];
+                    const Tensor * src = stage.src[s];
                     err << ", src[" << s << "]: " << Cpl::ToStr(src->GetType()) << " " << ToStr(src->Shape());
                     if (src->Const() && src->GetType() == TensorType64i && src->Size() < 8)
                     {
@@ -1045,7 +1106,7 @@ namespace Synet
                 err << " !";
                 SYNET_ERROR(err.str());
             }
-            if (_stages[i].dst.size() && _stages[i].dst[0]->Size() == 0 && !_stages[i].layer->_isBack && _stages[i].dst[0]->Count() > 1)
+            if (stage.dst.size() && stage.dst[0]->Size() == 0 && !stage.layer->_isBack && stage.dst[0]->Count() > 1)
             {
                 std::stringstream err;
                 err << "Reshape " << i << " layer with name: " << Cpl::ToStr(param.name()) << ", type: " << Cpl::ToStr(param.type());
@@ -1053,7 +1114,7 @@ namespace Synet
                     err << "-" << Cpl::ToStr(param.meta().type());
                 for (size_t s = 0; s < param.src().size(); ++s)
                 {
-                    const Tensor* src = _stages[i].src[s];
+                    const Tensor* src = stage.src[s];
                     err << ", src[" << s << "]: " << Cpl::ToStr(src->GetType()) << " " << ToStr(src->Shape());
                     if (src->Const() && src->GetType() == TensorType64i && src->Size() < 8)
                     {
@@ -1063,7 +1124,7 @@ namespace Synet
                         err << " ]";
                     }
                 }
-                err << " gets dst[0]: " << Cpl::ToStr(_stages[i].dst[0]->GetType()) << " " << ToStr(_stages[i].dst[0]->Shape()) << " !";
+                err << " gets dst[0]: " << Cpl::ToStr(stage.dst[0]->GetType()) << " " << ToStr(stage.dst[0]->Shape()) << " !";
                 SYNET_ERROR(err.str());
             }
 #ifdef SYNET_RESHAPE_LOG
@@ -1074,18 +1135,18 @@ namespace Synet
                     msg << "-" << Cpl::ToStr(param.meta().type());
                 for (size_t s = 0; s < param.src().size(); ++s)
                 {
-                    msg << ", src[" << s << "]: " << Cpl::ToStr(_stages[i].src[s]->GetType()) << " " << ToStr(_stages[i].src[s]->Shape()) << (_stages[i].src[s]->Const() ? " c" : "");
+                    msg << ", src[" << s << "]: " << Cpl::ToStr(stage.src[s]->GetType()) << " " << ToStr(stage.src[s]->Shape()) << (stage.src[s]->Const() ? " c" : "");
                 }
                 msg << " -> ";
                 for (size_t d = 0; d < param.dst().size(); ++d)
                 {
-                    msg << ", dst[" << d << "]: " << Cpl::ToStr(_stages[i].dst[d]->GetType()) << " " << ToStr(_stages[i].dst[d]->Shape()) << (_stages[i].dst[d]->Const() ? " c" : "");
-                    if (_stages[i].dst[d]->GetType() == TensorType64i)
+                    msg << ", dst[" << d << "]: " << Cpl::ToStr(stage.dst[d]->GetType()) << " " << ToStr(stage.dst[d]->Shape()) << (stage.dst[d]->Const() ? " c" : "");
+                    if (stage.dst[d]->GetType() == TensorType64i)
                     {
-                        size_t n = _stages[i].dst[d]->Size(), m = Min<size_t>(n, 5);
+                        size_t n = stage.dst[d]->Size(), m = Min<size_t>(n, 5);
                         msg << " [";
                         for (size_t j = 0; j < m; ++j)
-                            msg << " " << _stages[i].dst[d]->Data<int64_t>()[j];
+                            msg << " " << stage.dst[d]->Data<int64_t>()[j];
                         msg << (m < n ? " ... " : " ") << "]";
                     }
                 }
@@ -1093,13 +1154,13 @@ namespace Synet
                 CPL_LOG_SS(Info, msg.str());
             }
 #endif
-            if (_stages[i].layer->_isBack && /*param.type() != LayerTypeStub &&*/ param.name().find("/sink_port") == String::npos)
-                _stages[i].dst[0]->SetName(param.name());
+            if (stage.layer->_isBack && /*param.type() != LayerTypeStub &&*/ param.name().find("/sink_port") == String::npos)
+                stage.dst[0]->SetName(param.name());
         }
         return true;
     }
 
-    void Network::SetBuffers(TensorPtrs & buf)
+    void Network::SetBuffers()
     {
         for (TensorType type = TensorType32f; type <= TensorType8u; type = TensorType((int)type + 1))
         {
@@ -1114,8 +1175,8 @@ namespace Synet
             {
                 TensorSharedPtr tensor(new Tensor());
                 tensor->SetType(type);
-                _tensors.push_back(tensor);
-                buf.push_back(tensor.get());
+                _threads[0].tensors.push_back(tensor);
+                _threads[0].buf.push_back(tensor.get());
             }
         }
     }
@@ -1164,5 +1225,13 @@ namespace Synet
                 return true;
         }
         return false;
+    }
+
+    bool Network::CloneThreadBuffers(size_t threads)
+    {
+        if (threads < 1)
+            return false;
+        _threads.resize(threads);
+        return true;
     }
 }
