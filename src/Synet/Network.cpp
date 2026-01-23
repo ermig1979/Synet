@@ -1232,6 +1232,30 @@ namespace Synet
         if (threads < 1)
             return false;
         _threads.resize(threads);
+        if (threads == 1)
+            return true;
+        typedef std::map<void*, size_t> PtrIdMap;
+        PtrIdMap ptrs;
+        for (size_t i = 0; i < _threads[0].tensors.size(); ++i)
+        {
+            void* ptr = _threads[0].tensors[i]->RawData();
+            if (ptrs.find(ptr) == ptrs.end())
+                ptrs[ptr] = i;
+        }
+        for (size_t t = 1; t < _threads.size(); ++t)
+        {
+            _threads[t].tensors.resize(_threads[0].tensors.size());
+            for (size_t i = 0; i < _threads[0].tensors.size(); ++i)
+            {
+                size_t idx = ptrs[_threads[0].tensors[i]->RawData()];
+                TensorSharedPtr tensor(new Tensor());
+                if (idx == i)
+                    tensor->Clone(*_threads[0].tensors[i]);
+                else
+                    tensor->Share(*_threads[t].tensors[idx]);
+                _threads[t].tensors[i] = tensor;
+            }
+        }
         return true;
     }
 }
