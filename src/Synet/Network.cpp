@@ -1281,6 +1281,7 @@ namespace Synet
             {
                 _threads[t].input[i].layer = _threads[0].input[i].layer;
                 _threads[t].input[i].buf = _threads[t].buf;
+                _threads[t].input[i].dst.resize(_threads[0].input[i].dst.size());
                 for (size_t j = 0; j < _threads[0].input[i].dst.size(); ++j)
                 {
                     size_t idx = _tensorId[_threads[0].input[i].dst[j]->Name()];
@@ -1293,11 +1294,13 @@ namespace Synet
             {
                 _threads[t].stages[i].layer = _threads[0].stages[i].layer;
                 _threads[t].stages[i].buf = _threads[t].buf;
+                _threads[t].stages[i].src.resize(_threads[0].stages[i].src.size());
                 for (size_t j = 0; j < _threads[0].stages[i].src.size(); ++j)
                 {
                     size_t idx = _tensorId[_threads[0].stages[i].src[j]->Name()];
                     _threads[t].stages[i].src[j] = _threads[t].tensors[idx].get();
                 }
+                _threads[t].stages[i].dst.resize(_threads[0].stages[i].dst.size());
                 for (size_t j = 0; j < _threads[0].stages[i].dst.size(); ++j)
                 {
                     size_t idx = _tensorId[_threads[0].stages[i].dst[j]->Name()];

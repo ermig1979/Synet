@@ -126,7 +126,7 @@ namespace Test
             if (flag)
             {
                 SetInput(src);
-                _net.DebugPrint(os, flag, first, last, precision);
+                _net.DebugPrint(os, flag, first, last, precision, CTX_NUM - 1);
             }
         };
 

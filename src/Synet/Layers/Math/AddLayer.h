@@ -54,6 +54,8 @@ namespace Synet
 
         void Add8i(const float* src0, const float* src1, uint8_t* dst);
 
+        TensorPtrs GetSrc(const TensorPtrs& src);
+
     private:
        enum Special
         {
@@ -63,7 +65,6 @@ namespace Synet
             SpecialBiasChannelV2,
             SpecialUniversal,
         } _special;
-        TensorPtrs _src;
         bool _quant;
         QuantizationMethod _method;
         TensorFormat _format;

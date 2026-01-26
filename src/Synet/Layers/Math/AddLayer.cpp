@@ -353,13 +353,9 @@ namespace Synet
 
     bool AddLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        _src = src;
-        if (this->Weight().size())
-            _src.push_back((Tensor*)this->Weight().data() + 0);
-        if (_src.size() != 2 || dst.size() != 1)
-            SYNET_ERROR("AddLayer  supports 2 inputs (or 1 input and 1 weight) and 1 output!");
-        if (_src[0]->Shape() != _src[1]->Shape() && (_src[0]->Size() < _src[1]->Size() || (_src[0]->Size() == _src[1]->Size() && _src[0]->Count() < _src[1]->Count())))
-            std::swap(_src[0], _src[1]);
+        if (src.size() + this->Weight().size() != 2 || dst.size() != 1)
+            SYNET_ERROR("AddLayer supports 2 inputs (or 1 input and 1 weight) and 1 output!");
+        TensorPtrs _src = GetSrc(src);
 
         Shape shapeA = _src[0]->Shape(), shapeB = _src[1]->Shape();
         TensorFormat formatA = _src[0]->Format(), formatB = _src[1]->Format();
@@ -570,6 +566,7 @@ namespace Synet
 
     void AddLayer::ForwardCpu(const TensorPtrs & src_, const TensorPtrs & buf, const TensorPtrs & dst)
     {
+        TensorPtrs _src = GetSrc(src_);
         if (_quant)
         {
             if (_typeA == TensorType8u && _typeD == TensorType8u)
@@ -758,5 +755,17 @@ namespace Synet
             else
                 assert(0);
         }
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    AddLayer::TensorPtrs AddLayer::GetSrc(const TensorPtrs& src)
+    {
+        TensorPtrs _src = src;
+        if (this->Weight().size())
+            _src.push_back((Tensor*)this->Weight().data() + 0);
+        if (_src[0]->Shape() != _src[1]->Shape() && (_src[0]->Size() < _src[1]->Size() || (_src[0]->Size() == _src[1]->Size() && _src[0]->Count() < _src[1]->Count())))
+            std::swap(_src[0], _src[1]);
+        return _src;
     }
 }
