@@ -1246,12 +1246,21 @@ namespace Synet
             _threads[t].tensors.resize(_threads[0].tensors.size());
             for (size_t i = 0; i < _threads[0].tensors.size(); ++i)
             {
-                size_t idx = ptrs[_threads[0].tensors[i]->RawData()];
+                void* ptr = _threads[0].tensors[i]->RawData();
+                size_t idx = ptrs[ptr];
                 TensorSharedPtr tensor(new Tensor());
-                if (idx == i)
-                    tensor->Clone(*_threads[0].tensors[i]);
-                else
-                    tensor->Share(*_threads[t].tensors[idx]);
+                if (ptr)
+                {
+                    if(_threads[0].tensors[i]->Const())
+                        tensor->Share(*_threads[0].tensors[i]);
+                    else
+                    {
+                        if (idx == i)
+                            tensor->Clone(*_threads[0].tensors[i]);
+                        else
+                            tensor->ShareAs(*_threads[t].tensors[idx], _threads[0].tensors[i]->Shape(), _threads[0].tensors[i]->Format());
+                    }
+                }
                 _threads[t].tensors[i] = tensor;
             }
 
@@ -1284,8 +1293,13 @@ namespace Synet
                 _threads[t].input[i].dst.resize(_threads[0].input[i].dst.size());
                 for (size_t j = 0; j < _threads[0].input[i].dst.size(); ++j)
                 {
-                    size_t idx = _tensorId[_threads[0].input[i].dst[j]->Name()];
-                    _threads[t].input[i].dst[j] = _threads[t].tensors[idx].get();
+                    if (_threads[0].input[i].dst[j]->Const())
+                        _threads[t].input[i].dst[j] = _threads[0].input[i].dst[j];
+                    else
+                    {
+                        size_t idx = _tensorId[_threads[0].input[i].dst[j]->Name()];
+                        _threads[t].input[i].dst[j] = _threads[t].tensors[idx].get();
+                    }
                 }
             }
 
@@ -1297,14 +1311,24 @@ namespace Synet
                 _threads[t].stages[i].src.resize(_threads[0].stages[i].src.size());
                 for (size_t j = 0; j < _threads[0].stages[i].src.size(); ++j)
                 {
-                    size_t idx = _tensorId[_threads[0].stages[i].src[j]->Name()];
-                    _threads[t].stages[i].src[j] = _threads[t].tensors[idx].get();
+                    if (_threads[0].stages[i].src[j]->Const())
+                        _threads[t].stages[i].src[j] = _threads[0].stages[i].src[j];
+                    else
+                    {
+                        size_t idx = _tensorId[_threads[0].stages[i].src[j]->Name()];
+                        _threads[t].stages[i].src[j] = _threads[t].tensors[idx].get();
+                    }
                 }
                 _threads[t].stages[i].dst.resize(_threads[0].stages[i].dst.size());
                 for (size_t j = 0; j < _threads[0].stages[i].dst.size(); ++j)
                 {
-                    size_t idx = _tensorId[_threads[0].stages[i].dst[j]->Name()];
-                    _threads[t].stages[i].dst[j] = _threads[t].tensors[idx].get();
+                    if (_threads[0].stages[i].dst[j]->Const())
+                        _threads[t].stages[i].dst[j] = _threads[0].stages[i].dst[j];
+                    else
+                    {
+                        size_t idx = _tensorId[_threads[0].stages[i].dst[j]->Name()];
+                        _threads[t].stages[i].dst[j] = _threads[t].tensors[idx].get();
+                    }
                 }
             }
         }
