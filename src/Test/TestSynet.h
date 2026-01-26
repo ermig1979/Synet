@@ -87,7 +87,7 @@ namespace Test
                     const Shape & shape = _net.NchwShape();
                     if (shape.size() == 4 && shape[0] != options.batchSize)
                     {
-                        if (!_net.Reshape(shape[3], shape[2], options.batchSize))
+                        if (!_net.Reshape(shape[3], shape[2], options.batchSize, CTX_NUM))
                             return false;
                     }
                 }
@@ -115,7 +115,7 @@ namespace Test
             SetInput(src);
             {
                 CPL_PERF_BEGF(Type(), _net.Flop());
-                _net.Forward();
+                _net.Forward(CTX_NUM - 1);
             }
             SetOutput();
             return _output;
@@ -132,10 +132,15 @@ namespace Test
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
-            if(_regionDecoder.Enable())
-                return _regionDecoder.GetRegions(_net, size, threshold, overlap);
+            if (_regionDecoder.Enable())
+            {
+                Tensors tensors(_net.Dst().size());
+                for (size_t i = 0; i < tensors.size(); ++i)
+                    tensors[i].Share(*_net.Dst(CTX_NUM - 1)[i]);
+                return _regionDecoder.GetRegions(tensors, size, threshold, overlap);
+            }
             else
-                return _net.GetRegions(size.x, size.y, threshold, overlap);
+                return _net.GetRegions(size.x, size.y, threshold, overlap, CTX_NUM - 1);
         }
 
         virtual size_t MemoryUsage() const
@@ -150,6 +155,7 @@ namespace Test
         Floats _lower, _upper;
         size_t _synetMemoryUsage;
         RegionDecoder _regionDecoder;
+        const int CTX_NUM = 1;
 
         bool Load(const String & model, const String & weight, const Options& options)
         {
@@ -182,9 +188,9 @@ namespace Test
             wifs.read(wdata.data(), (std::streamsize)wsize);
             wifs.close();
 
-            return _net.Load(mdata.data(), msize, wdata.data(), wsize, synOpt);
+            return _net.Load(mdata.data(), msize, wdata.data(), wsize, synOpt, CTX_NUM);
 #else
-            return _net.Load(model, weight, synOpt);
+            return _net.Load(model, weight, synOpt, CTX_NUM);
 #endif
         }
 
@@ -211,7 +217,7 @@ namespace Test
             {
                 Views views;
                 InputToViews(x[0], views);
-                _net.SetInput(views, _lower, _upper);
+                _net.SetInput(views, _lower, _upper, CTX_NUM - 1);
                 return;
             }
 #endif
@@ -219,9 +225,9 @@ namespace Test
             {
                 switch (src[i].GetType())
                 {
-                case Synet::TensorType32f: SetInput<float>(src[i], *_net.Src()[i]); break;
-                case Synet::TensorType32i: SetInput<int32_t>(src[i], *_net.Src()[i]); break;
-                case Synet::TensorType64i: SetInput<int64_t>(src[i], *_net.Src()[i]); break;
+                case Synet::TensorType32f: SetInput<float>(src[i], *_net.Src(CTX_NUM - 1)[i]); break;
+                case Synet::TensorType32i: SetInput<int32_t>(src[i], *_net.Src(CTX_NUM - 1)[i]); break;
+                case Synet::TensorType64i: SetInput<int64_t>(src[i], *_net.Src(CTX_NUM - 1)[i]); break;
                 default:
                     assert(0);
                 }
@@ -262,7 +268,7 @@ namespace Test
                 typedef std::map<String, Net::Tensor*> Dst;
                 Dst dst;
                 for (size_t i = 0; i < _net.Dst().size(); ++i)
-                    dst[_net.Dst()[i]->Name()] = _net.Dst()[i];
+                    dst[_net.Dst(CTX_NUM - 1)[i]->Name()] = _net.Dst(CTX_NUM - 1)[i];
                 _output.resize(dst.size());
                 size_t i = 0;
                 for (Dst::const_iterator it = dst.begin(); it != dst.end(); ++it, ++i)
@@ -272,7 +278,7 @@ namespace Test
             {
                 _output.resize(_net.Dst().size());
                 for (size_t i = 0; i < _net.Dst().size(); ++i)
-                    SetOutput(*_net.Dst()[i], *_net.Back()[i], _output[i]);
+                    SetOutput(*_net.Dst(CTX_NUM - 1)[i], *_net.Back()[i], _output[i]);
             }
         }
 
@@ -446,11 +452,11 @@ namespace Test
             }
 #ifdef SYNET_TEST_NET_RESHAPE
             if (_trans)
-                return _net.Reshape(srcShapes[0][2], srcShapes[0][1], srcShapes[0][0]);
+                return _net.Reshape(srcShapes[0][2], srcShapes[0][1], srcShapes[0][0], CTX_NUM);
             else
-                return _net.Reshape(srcShapes[0][3], srcShapes[0][2], srcShapes[0][0]);
+                return _net.Reshape(srcShapes[0][3], srcShapes[0][2], srcShapes[0][0], CTX_NUM);
 #endif
-            return equal || _net.Reshape(srcNames, srcShapes, dstNames);
+            return equal || _net.Reshape(srcNames, srcShapes, dstNames, CTX_NUM);
         }
     };
 }

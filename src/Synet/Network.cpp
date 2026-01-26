@@ -800,8 +800,7 @@ namespace Synet
                 available.insert(name);
                 if (param.type() == LayerTypeInput)
                 {
-                    for (size_t t = 0; t < _threads.size(); ++t)
-                        _threads[t].src.push_back(_threads[t].tensors.back().get());
+                    _threads[0].src.push_back(_threads[0].tensors.back().get());
                 }
             }
             stage.buf = _threads[0].buf;
@@ -1254,6 +1253,56 @@ namespace Synet
                 else
                     tensor->Share(*_threads[t].tensors[idx]);
                 _threads[t].tensors[i] = tensor;
+            }
+
+            _threads[t].buf.resize(_threads[0].buf.size());
+            for (size_t i = 0; i < _threads[0].buf.size(); ++i)
+            {
+                size_t idx = ptrs[_threads[0].buf[i]->RawData()];
+                _threads[t].buf[i] = _threads[t].tensors[idx].get();
+            }
+
+            _threads[t].src.resize(_threads[0].src.size());
+            for (size_t i = 0; i < _threads[0].src.size(); ++i)
+            {
+                size_t idx = _tensorId[_threads[0].src[i]->Name()];
+                _threads[t].src[i] = _threads[t].tensors[idx].get();
+            }
+
+            _threads[t].dst.resize(_threads[0].dst.size());
+            for (size_t i = 0; i < _threads[0].dst.size(); ++i)
+            {
+                size_t idx = _tensorId[_threads[0].dst[i]->Name()];
+                _threads[t].dst[i] = _threads[t].tensors[idx].get();
+            }
+
+            _threads[t].input.resize(_threads[0].input.size());
+            for (size_t i = 0; i < _threads[0].input.size(); ++i)
+            {
+                _threads[t].input[i].layer = _threads[0].input[i].layer;
+                _threads[t].input[i].buf = _threads[t].buf;
+                for (size_t j = 0; j < _threads[0].input[i].dst.size(); ++j)
+                {
+                    size_t idx = _tensorId[_threads[0].input[i].dst[j]->Name()];
+                    _threads[t].input[i].dst[j] = _threads[t].tensors[idx].get();
+                }
+            }
+
+            _threads[t].stages.resize(_threads[0].stages.size());
+            for (size_t i = 0; i < _threads[0].stages.size(); ++i)
+            {
+                _threads[t].stages[i].layer = _threads[0].stages[i].layer;
+                _threads[t].stages[i].buf = _threads[t].buf;
+                for (size_t j = 0; j < _threads[0].stages[i].src.size(); ++j)
+                {
+                    size_t idx = _tensorId[_threads[0].stages[i].src[j]->Name()];
+                    _threads[t].stages[i].src[j] = _threads[t].tensors[idx].get();
+                }
+                for (size_t j = 0; j < _threads[0].stages[i].dst.size(); ++j)
+                {
+                    size_t idx = _tensorId[_threads[0].stages[i].dst[j]->Name()];
+                    _threads[t].stages[i].dst[j] = _threads[t].tensors[idx].get();
+                }
             }
         }
         return true;
