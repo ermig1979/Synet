@@ -1258,7 +1258,10 @@ namespace Synet
                         if (idx == i)
                             tensor->Clone(*_threads[0].tensors[i]);
                         else
+                        {
                             tensor->ShareAs(*_threads[t].tensors[idx], _threads[0].tensors[i]->Shape(), _threads[0].tensors[i]->Format());
+                            tensor->SetName(_threads[0].tensors[i]->Name());
+                        }
                     }
                 }
                 _threads[t].tensors[i] = tensor;
