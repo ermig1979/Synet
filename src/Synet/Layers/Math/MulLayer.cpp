@@ -341,11 +341,9 @@ namespace Synet
 
     bool MulLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        _src = src;
-        if (this->Weight().size())
-            _src.push_back((Tensor*)this->Weight().data() + 0);
-        if (_src.size() != 2 || dst.size() != 1)
+        if (src.size() + this->Weight().size() != 2 || dst.size() != 1)
             SYNET_ERROR("MulLayer supports 2 inputs (or 1 input and 1 weight) and 1 output!");
+        TensorPtrs _src = GetSrc(src);
         if (_src[0]->GetType() != _src[1]->GetType())
             SYNET_ERROR("MulLayer inputs must have the same type!");
 
@@ -535,6 +533,7 @@ namespace Synet
 
     void MulLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
+        TensorPtrs _src = GetSrc(src);
         const uint8_t* src0 = _src[_index[0]]->RawData();
         const uint8_t* src1 = _src[_index[1]]->RawData();
         uint8_t* dst0 = dst[0]->RawData();
@@ -595,5 +594,13 @@ namespace Synet
         default:
             assert(0);
         }
+    }
+
+    MulLayer::TensorPtrs MulLayer::GetSrc(const TensorPtrs& src)
+    {
+        TensorPtrs _src = src;
+        if (this->Weight().size())
+            _src.push_back((Tensor*)this->Weight().data() + 0);
+        return _src;
     }
 }

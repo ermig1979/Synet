@@ -44,6 +44,7 @@ namespace Synet
     protected:
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
+        TensorPtrs GetSrc(const TensorPtrs& src);
     private:
         enum Special
         {
@@ -54,7 +55,6 @@ namespace Synet
             SpecialBatch,
             SpecialUniversal,
         } _special;
-        TensorPtrs _src;
         TensorFormat _format;
         TensorType _type;
         size_t _batch, _channels, _spatial, _sizeT;

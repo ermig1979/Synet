@@ -103,9 +103,6 @@ namespace Synet
         }
         _type = src[0]->GetType();
         _size = src[0]->Size();
-        _src.resize(src.size());
-        for (size_t i = 0; i < src.size(); ++i)
-            _src[i] = src[i]->RawData();
 
         if (dst[0] != src[0])
             dst[0]->Reshape(_type, src[0]->Shape(), src[0]->Format());
@@ -135,6 +132,9 @@ namespace Synet
 
     void EltwiseLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
     {
+        std::vector<uint8_t*> _src(src.size());
+        for (size_t i = 0; i < src.size(); ++i)
+            _src[i] = src[i]->RawData();
         switch (_type)
         {
         case TensorType32f:

@@ -42,11 +42,8 @@ namespace Synet
         virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     private:
-        typedef std::vector<uint8_t*> Pointers;
-
         EltwiseOperationType _operation;
         Floats _coefficients;
-        Pointers _src;
         TensorType _type;
         size_t _size;
     };
