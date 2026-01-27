@@ -124,7 +124,7 @@ namespace Synet
             switch (_type)
             {
             case TensorType32f:
-                dst[0]->Reshape(_type, dstShape, src[0]->Format(), 0.0f);
+                dst[0]->Reshape(_type, dstShape, src[0]->Format(), 0.0f, dst[0]->Name());
                 break;
             default:
                 SYNET_ERROR("PadLayer does not support: " << Cpl::ToStr(_type) << " src[0] type!");
