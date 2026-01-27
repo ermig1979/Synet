@@ -80,7 +80,7 @@ namespace Synet
                     if (score > region.prob)
                     {
                         region.prob = score;
-                        region.id = c;
+                        region.id = (int)c;
                     }
                 }
                 if (region.prob >= threshold)

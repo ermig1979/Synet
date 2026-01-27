@@ -72,9 +72,9 @@ namespace Synet
                 {
                     for (int w = 0; w < featW; ++w)
                     {
-                        _anchors.push_back(w * stride);
-                        _anchors.push_back(h * stride);
-                        _anchors.push_back(stride);
+                        _anchors.push_back(float(w * stride));
+                        _anchors.push_back(float(h * stride));
+                        _anchors.push_back(float(stride));
                     }
                 }
             }
