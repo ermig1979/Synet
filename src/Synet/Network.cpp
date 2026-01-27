@@ -206,6 +206,8 @@ namespace Synet
                             _threads[0].input[j].dst[0]->Reshape(param.input().shape()[0].type(), srcShapes[i], param.input().shape()[0].format());
                             _threads[0].input[j].dst[0]->SetName(param.name());
                             _threads[0].src.push_back(_threads[0].input[j].dst[0]);
+                            if (param.name() != param.dst()[0] && _tensorId.find(param.dst()[0]) != _tensorId.end())
+                                _tensorId[param.name()] = _tensorId[param.dst()[0]];
                             if(srcShapes[i].size() > 1)
                                 _context.batchSize = srcShapes[i][0];
                         }
@@ -1153,7 +1155,7 @@ namespace Synet
                 CPL_LOG_SS(Info, msg.str());
             }
 #endif
-            if (stage.layer->_isBack && /*param.type() != LayerTypeStub &&*/ param.name().find("/sink_port") == String::npos)
+            if (stage.layer->_isBack && /*param.type() != LayerTypeStub &&*/ param.name().find("/sink_port") == String::npos && param.src()[0] == param.dst()[0])
                 stage.dst[0]->SetName(param.name());
         }
         return true;
