@@ -122,42 +122,42 @@ namespace Test
             return _enable;
         }
 
-        Regions GetRegions(const Net& net, const Size& size, float threshold, float overlap) const
+        Regions GetRegions(const Net& net, const Size& size, float threshold, float overlap, size_t thread = 0) const
         {
             if (_anchor.Enable())
-                return _anchor.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+                return _anchor.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else if (_ultraface.Enable())
-                return _ultraface.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+                return _ultraface.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else if (_yoloV5.Enable())
-                return _yoloV5.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+                return _yoloV5.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else if (_yoloV7.Enable())
-                return _yoloV7.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+                return _yoloV7.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else if (_yoloV8.Enable())
-                return _yoloV8.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+                return _yoloV8.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else if (_iim.Enable())
-                return _iim.GetRegions(net, size.x, size.y)[0];
+                return _iim.GetRegions(net, size.x, size.y, thread)[0];
             else if (_rtdetr.Enable())
-                return _rtdetr.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+                return _rtdetr.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else if (_detOut.Enable())
-                return _detOut.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+                return _detOut.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else if (_yolo.Enable())
-                return _yolo.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+                return _yolo.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else if (_scrfd.Enable())
-                return _scrfd.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+                return _scrfd.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else if (_scrfdV2.Enable())
-                return _scrfdV2.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+                return _scrfdV2.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else if (_rtdetrV2.Enable())
-                return _rtdetrV2.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+                return _rtdetrV2.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else if (_alpha.Enable())
-                return _alpha.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+                return _alpha.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else if (_region.Enable())
-                return _region.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+                return _region.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else if (_nanodet.Enable())
-                return _nanodet.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+                return _nanodet.GetRegions(net, size.x, size.y, threshold, overlap, Index(), thread)[0];
             else if (_yoloV11.Enable())
-                return _yoloV11.GetRegions(net, size.x, size.y, threshold, overlap)[0];
+                return _yoloV11.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else
-                return net.GetRegions(size.x, size.y, threshold, overlap);
+                return net.GetRegions(size.x, size.y, threshold, overlap, thread);
         }
 
         Regions GetRegions(const Tensors & dst, const Size& size, float threshold, float overlap) const

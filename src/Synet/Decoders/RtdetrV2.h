@@ -61,16 +61,16 @@ namespace Synet
             return _names.size() > 0;
         }
 
-        std::vector<Regions> GetRegions(const Net& net, size_t imgW, size_t imgH, float threshold, float overlap) const
+        std::vector<Regions> GetRegions(const Net& net, size_t imgW, size_t imgH, float threshold, float overlap, size_t thread = 0) const
         {
             std::vector<Regions> result(net.NchwShape()[0]);
-            const Net::Tensor & dst = *net.Dst()[0];
+            const Net::Tensor & dst = *net.Dst(thread)[0];
             size_t size = dst.Axis(1);
             for (size_t b = 0; b < result.size(); ++b)
             {
-                const int64_t* labels = net.Dst(_names[0])->Data<int64_t>(Shp(b, 0));
-                const float* scores = net.Dst(_names[1])->Data<float>(Shp(b, 0));
-                const float* boxes = net.Dst(_names[2])->Data<float>(Shp(b, 0, 0));
+                const int64_t* labels = net.Dst(_names[0], thread)->Data<int64_t>(Shp(b, 0));
+                const float* scores = net.Dst(_names[1], thread)->Data<float>(Shp(b, 0));
+                const float* boxes = net.Dst(_names[2], thread)->Data<float>(Shp(b, 0, 0));
                 if (labels && scores && boxes)
                     result[b] = GetRegions(labels, scores, boxes, size, imgW, imgH, threshold, overlap);
             }

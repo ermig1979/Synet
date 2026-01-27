@@ -128,9 +128,9 @@ namespace Synet
             return regions;
         }
 
-        std::vector<Regions> GetRegions(const Net& net, size_t imgW, size_t imgH) const
+        std::vector<Regions> GetRegions(const Net& net, size_t imgW, size_t imgH, size_t thread = 0) const
         {
-            const Tensor* dst = net.Dst(_name);
+            const Tensor* dst = net.Dst(_name, thread);
             const float* bin = dst->Data<float>();
             std::vector<Regions> result(dst->Axis(0));
             for (size_t b = 0; b < result.size(); ++b)

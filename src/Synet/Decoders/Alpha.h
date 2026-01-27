@@ -160,24 +160,24 @@ namespace Synet
             return regions;
         }
 
-        std::vector<Regions> GetRegions(const Net& net, size_t imgW, size_t imgH, float threshold, float overlap) const
+        std::vector<Regions> GetRegions(const Net& net, size_t imgW, size_t imgH, float threshold, float overlap, size_t thread = 0) const
         {
             std::vector<Regions> result(net.NchwShape()[0]);
-            assert(net.Dst().size() == _count * 2);
+            assert(net.Dst(thread).size() == _count * 2);
             bool nhwc = net.Format() == TensorFormatNhwc;
             size_t C = nhwc ? 3 : 1, H = nhwc ? 1 : 2, W = nhwc ? 2 : 3;
             for (size_t i = 0; i < _count; ++i)
             {
-                const Tensor& score = *net.Dst()[i * 2 + 0];
+                const Tensor& score = *net.Dst(thread)[i * 2 + 0];
                 assert(score.Count() == 4 && score.Axis(C) == 2 && score.Axis(H) == _rfH[i] && score.Axis(W) == _rfW[i]);
-                const Tensor& bbox = *net.Dst()[i * 2 + 1];
+                const Tensor& bbox = *net.Dst(thread)[i * 2 + 1];
                 assert(bbox.Count() == 4 && bbox.Axis(C) == 4 && bbox.Axis(H) == _rfH[i] && bbox.Axis(W) == _rfW[i]);
             }
             FloatPtrs ptrs(_count * 2, NULL);
             for (size_t b = 0; b < result.size(); ++b)
             {
                 for (size_t i = 0; i < _count * 2; ++i)
-                    ptrs[i] = (float*)net.Dst(_names[i])->Data<float>(Shp(b, 0, 0, 0));
+                    ptrs[i] = (float*)net.Dst(_names[i], thread)->Data<float>(Shp(b, 0, 0, 0));
                 result[b] = GetRegions(ptrs.data(), net.Format(), imgW, imgH, threshold, overlap);
             }
             return result;

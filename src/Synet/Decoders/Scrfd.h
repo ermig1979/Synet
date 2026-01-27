@@ -83,15 +83,15 @@ namespace Synet
             return _step.size() != 0;
         }
 
-        std::vector<Regions> GetRegions(const Net& net, size_t imgW, size_t imgH, float threshold, float overlap) const
+        std::vector<Regions> GetRegions(const Net& net, size_t imgW, size_t imgH, float threshold, float overlap, size_t thread = 0) const
         {
             std::vector<Regions> result(net.NchwShape()[0]);
             for (size_t b = 0; b < result.size(); ++b)
             {
                 for (size_t s = 0, n = _step.size(); s < n; ++s)
                 {
-                    const float* score = GetPtr(net, _names[0 * n + s], b);
-                    const float* bbox = GetPtr(net, _names[1 * n + s], b);
+                    const float* score = GetPtr(net, _names[0 * n + s], b, thread);
+                    const float* bbox = GetPtr(net, _names[1 * n + s], b, thread);
                     if (score && bbox)
                         GetRegions(score, bbox, s, imgW, imgH, threshold, overlap, result[b]);
                 }
@@ -138,9 +138,9 @@ namespace Synet
             return NULL;
         }
 
-        SYNET_INLINE const float* GetPtr(const Net& net, const String& name, size_t b) const
+        SYNET_INLINE const float* GetPtr(const Net& net, const String& name, size_t b, size_t thread) const
         {
-            const Tensor* dst = net.Dst(name);
+            const Tensor* dst = net.Dst(name, thread);
             if (dst)
             {
                 if(dst->Count() == 4)

@@ -133,12 +133,7 @@ namespace Test
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
             if (_regionDecoder.Enable())
-            {
-                Tensors tensors(_net.Dst().size());
-                for (size_t i = 0; i < tensors.size(); ++i)
-                    tensors[i].Share(*_net.Dst(CTX_NUM - 1)[i]);
-                return _regionDecoder.GetRegions(tensors, size, threshold, overlap);
-            }
+                return _regionDecoder.GetRegions(_net, size, threshold, overlap, CTX_NUM - 1);
             else
                 return _net.GetRegions(size.x, size.y, threshold, overlap, CTX_NUM - 1);
         }
