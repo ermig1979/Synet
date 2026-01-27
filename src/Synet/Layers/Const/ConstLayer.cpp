@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/ConstLayer.h"
+#include "Synet/Layers/Const/ConstLayer.h"
 
 namespace Synet
 {

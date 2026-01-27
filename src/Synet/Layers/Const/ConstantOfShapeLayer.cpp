@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/ConstantOfShapeLayer.h"
+#include "Synet/Layers/Const/ConstantOfShapeLayer.h"
 
 namespace Synet
 {

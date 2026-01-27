@@ -29,12 +29,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\WhereLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\ConstantOfShapeLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\ConstLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -276,6 +270,12 @@
     <ClCompile Include="..\..\src\Synet\Layers\Activation\PreluLayer.cpp">
       <Filter>Layers\Activation</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Const\ConstantOfShapeLayer.cpp">
+      <Filter>Layers\Const</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Const\ConstLayer.cpp">
+      <Filter>Layers\Const</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -284,9 +284,6 @@
     <ClInclude Include="..\..\src\Synet\Tensor.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Activation.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ConstLayer.h">
-      <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\GatherLayer.h">
       <Filter>Layers</Filter>
@@ -433,9 +430,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\CompareLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ConstantOfShapeLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\WhereLayer.h">
@@ -717,6 +711,12 @@
     <ClInclude Include="..\..\src\Synet\Layers\Activation\PreluLayer.h">
       <Filter>Layers\Activation</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Const\ConstantOfShapeLayer.h">
+      <Filter>Layers\Const</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Const\ConstLayer.h">
+      <Filter>Layers\Const</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -775,6 +775,9 @@
     </Filter>
     <Filter Include="Layers\Activation">
       <UniqueIdentifier>{714d4540-e7e3-4689-88f2-ef5afe266193}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Const">
+      <UniqueIdentifier>{458bb4ef-16fe-4778-a41c-618fffb0ab96}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

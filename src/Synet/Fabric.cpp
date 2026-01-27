@@ -25,6 +25,9 @@
 #include "Synet/Layers/Activation/ActivationLayers.h"
 #include "Synet/Layers/Activation/PreluLayer.h"
 
+#include "Synet/Layers/Const/ConstLayer.h"
+#include "Synet/Layers/Const/ConstantOfShapeLayer.h"
+
 #include "Synet/Layers/Convolution/Convolution32fLayer.h"
 #include "Synet/Layers/Convolution/Convolution16bLayer.h"
 #include "Synet/Layers/Convolution/Convolution8iLayer.h"
@@ -103,8 +106,6 @@
 
 #include "Synet/Layers/ArgMaxLayer.h"
 #include "Synet/Layers/CompareLayer.h"
-#include "Synet/Layers/ConstLayer.h"
-#include "Synet/Layers/ConstantOfShapeLayer.h"
 #include "Synet/Layers/GatherLayer.h"
 #include "Synet/Layers/GridSampleLayer.h"
 #include "Synet/Layers/InputLayer.h"

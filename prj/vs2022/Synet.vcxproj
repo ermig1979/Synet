@@ -29,8 +29,8 @@
     <ClCompile Include="..\..\src\Synet\Layers\Activation\PreluLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ArgMaxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\CompareLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\ConstantOfShapeLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\ConstLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Const\ConstantOfShapeLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Const\ConstLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Convolution\Convolution16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Convolution\Convolution32fLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Convolution\Convolution8iLayer.cpp" />
@@ -154,8 +154,8 @@
     <ClInclude Include="..\..\src\Synet\Layers\Activation\PreluLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ArgMaxLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\CompareLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\ConstantOfShapeLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\ConstLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Const\ConstantOfShapeLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Const\ConstLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Convolution\Convolution16bLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Convolution\Convolution32fLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Convolution\Convolution8iLayer.h" />
