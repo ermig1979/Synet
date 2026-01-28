@@ -21,9 +21,36 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 */
+#include "TestCommon.h"
 
-#include "TestCompare.h"
+#include "Synet/Network.h"
+
 #include "TestReport.h"
+#include "TestOptions.h"
+#include "TestParams.h"
+#include "TestRegionDecoder.h"
+
+
+namespace Test
+{
+    class MultiThreadTest
+    {
+    public:
+        MultiThreadTest(const Options& options)
+            : _options(options)
+        {
+
+        }
+
+        bool Run()
+        {
+            return true;
+        }
+
+    private:
+        const Options& _options;
+    };
+}
 
 int main(int argc, char* argv[])
 {
@@ -31,6 +58,10 @@ int main(int argc, char* argv[])
 
     Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
     Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
+
+    Test::MultiThreadTest multiThreadTest(options);
+
+    options.result = multiThreadTest.Run();
 
     return options.result ? 0 : 1;
 }

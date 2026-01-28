@@ -36,7 +36,7 @@ if [ ! -f $DIR/synet1.xml ] | [ ! -f $DIR/synet1.bin ];then
   elif [ "$FRAMEWORK" = "onnx" ]; then 
     ORIG="-fw=$DIR/other.onnx"
   fi
-  "$BIN_DIR"/test_"$FRAMEWORK" -m=convert $ORIG "-sm=$DIR/synet1.xml -sw=$DIR/synet1.bin" -tf=1 -cs=1 -dp=0 -su=1 -bf=0
+  "$BIN_DIR"/test_"$FRAMEWORK" -m=convert $ORIG -sm=$DIR/synet1.xml -sw=$DIR/synet1.bin -tf=1 -cs=1 -dp=0 -su=1 -bf=0
 fi 
 
 PATHES="-fm=$DIR/synet1.xml -fw=$DIR/synet1.bin -sm=$DIR/synet2.xml -sw=$DIR/synet2.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
@@ -74,7 +74,7 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 #TEST inference_engine "" test_020f persons 1 0 1 0 000 2 ???
 #TEST inference_engine "" test_021f persons 100 0 1 0 000 2
 
-#TEST onnx "" test_000 face 80 1 1 1 000 2
+TEST onnx "" test_000 face 80 1 1 1 000 2
 #TEST onnx "" test_001 faces 30 1 1 0 000 2
 
 #TEST synet "" dn_test_000 human_vehicle 50 0 10 0 000 2
@@ -85,7 +85,7 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 #TEST synet "" ie_test_004 license_plate_ab 200 1 1 1 000 2
 #TEST synet "" ie_test_005 face 2000 1 10 1 000 2
 #TEST synet "" ie_test_006 face 100 1 10 1 000 2
-TEST synet "" ie_test_007 person 500 1 1 0 001 2
+#TEST synet "" ie_test_007 person 500 1 1 0 001 2
 #TEST synet "" ie_test_009f persons 20 0 1 1 000 2
 #TEST synet "" ie_test_014f license_plate_ab 200 1 1 1 000 2
 

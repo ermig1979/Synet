@@ -273,7 +273,7 @@ namespace Test
 					const Synet::LayerParam& layer = model().layers()[i];
 					if (layer.type() == Synet::LayerTypeInput)
 					{
-						Shape dim = layer.input().shape()[0].dim();
+						Synet::Shape dim = layer.input().shape()[0].dim();
 						if (layer.input().shape()[0].format() == Synet::TensorFormatNhwc && dim.size() == 4)
 							dim = Synet::Shp(dim[0], dim[3], dim[1], dim[2]);
 						for (size_t d = 0; d < dim.size(); ++d)

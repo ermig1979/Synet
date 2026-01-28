@@ -153,7 +153,7 @@ namespace Test
             else if (_region.Enable())
                 return _region.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else if (_nanodet.Enable())
-                return _nanodet.GetRegions(net, size.x, size.y, threshold, overlap, Index(), thread)[0];
+                return _nanodet.GetRegions(net, size.x, size.y, threshold, overlap, Synet::Index(), thread)[0];
             else if (_yoloV11.Enable())
                 return _yoloV11.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else
