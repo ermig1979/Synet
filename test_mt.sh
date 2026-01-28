@@ -79,7 +79,7 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 #TEST inference_engine "" test_021f persons 100 0 1 1 0 000 2
 #TEST inference_engine "" test_022f persons 1 0 0 1 0 000 2
 
-#TEST onnx "" test_000 face 80 0 1 1 1 000 2
+TEST onnx "" test_000 face 80 0 1 1 1 000 2
 #TEST onnx "" test_001 faces 30 0 1 1 1 004 2
 #TEST onnx "" test_002 faces 1 0 1 1 0 000 2
 
@@ -87,7 +87,7 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 #TEST quantization "" test_009 persons 1 0 1 1 0 000t 0
 #TEST quantization "" test_010 faces 100 4 1 1 0 000t 0
 
-TEST synet "" dn_test_000 human_vehicle 50 0 1 1 0 000 2
+#TEST synet "" dn_test_000 human_vehicle 50 0 1 1 0 000 2
 #TEST synet "" ie_test_000 human_vehicle 500 0 1 1 000 2
 #TEST synet "" ie_test_001 face 500 0 10 1 000 2
 #TEST synet "" ie_test_002 faces 20 1 1 1 000 2
