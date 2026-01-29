@@ -23,7 +23,7 @@ BATCH=$8
 BF16=$9
 VERSION=${10}
 PERF=${11}
-THRESHOLD=0.002
+THRESHOLD=0.000001
 
 if [ "${BF16}" = "1" ]; then
   NUM_FMT="bf16"
@@ -79,8 +79,8 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 #TEST inference_engine "" test_021f persons 100 0 1 1 0 000 2
 #TEST inference_engine "" test_022f persons 1 0 0 1 0 000 2
 
-TEST onnx "" test_000 face 10 2 1 1 1 000 2
-#TEST onnx "" test_001 faces 30 0 1 1 1 004 2
+#TEST onnx "" test_000 face 80 10 1 1 0 000 2
+TEST onnx "" test_001 faces 30 2 1 1 0 004 2
 #TEST onnx "" test_002 faces 1 0 1 1 0 000 2
 
 #TEST quantization "" test_003 faces 100 1 1 1 0 000t 0

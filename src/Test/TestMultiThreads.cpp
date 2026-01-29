@@ -25,6 +25,9 @@
 
 #include "Synet/Network.h"
 
+#define SECOND_MODEL_DEFAULT "synet1.xml"
+#define SECOND_WEIGHT_DEFAULT "synet1.bin"
+
 #include "TestReport.h"
 #include "TestOptions.h"
 #include "TestParams.h"
@@ -48,6 +51,7 @@ namespace Test
     public:
         MultiThreadsTest(const Options& options)
             : _options(options)
+            , _progressMessageSizeMax(0)
         {
         }
 
@@ -336,7 +340,8 @@ namespace Test
                                 View resized(Size(shape[3], shape[2]), converted.format);
                                 ResizeImage(converted, resized);
 
-                                Simd::SynetSetInput(resized, lower.data(), upper.data(), input, shape[1], SimdTensorFormatNchw, _param().order() == "rgb");
+                                Simd::SynetSetInput(resized, lower.data(), upper.data(), input, _net.NchwShape()[1], 
+                                    _options.tensorFormat ? SimdTensorFormatNhwc : SimdTensorFormatNchw, _param().order() == "rgb");
                                 input += shape[1] * shape[2] * shape[3];
                             }
                             else if (shape.size() == 2)
@@ -447,7 +452,7 @@ namespace Test
         template<class T> static void NetworkSetInput(const Tensor& src, Tensor& dst)
         {
             assert(src.Size() == dst.Size() && src.GetType() == dst.GetType());
-            if (dst.Format() == Synet::TensorFormatNhwc && dst.Count() == 4)
+            if (dst.Format() == Synet::TensorFormatNhwc && dst.Count() == 4  && 0)
             {
                 for (size_t n = 0; n < src.Axis(0); ++n)
                     for (size_t c = 0; c < src.Axis(1); ++c)
@@ -475,18 +480,158 @@ namespace Test
             }
         }
 
-        void NetworkPredict(const Tensors& src, size_t thread, const Tensors& dst)
+
+        void NetworkSetOutput(Tensors& output, size_t thread)
+        {
+            if (_sort)
+            {
+                typedef std::map<String, Net::Tensor*> Dst;
+                Dst dst;
+                for (size_t i = 0; i < _net.Dst().size(); ++i)
+                    dst[_net.Dst(thread)[i]->Name()] = _net.Dst(thread)[i];
+                output.resize(dst.size());
+                size_t i = 0;
+                for (Dst::const_iterator it = dst.begin(); it != dst.end(); ++it, ++i)
+                    NetworkSetOutput(*it->second, *_net.Back()[i], output[i]);
+            }
+            else
+            {
+                output.resize(_net.Dst().size());
+                for (size_t i = 0; i < _net.Dst().size(); ++i)
+                    NetworkSetOutput(*_net.Dst(thread)[i], *_net.Back()[i], output[i]);
+            }
+        }
+
+        void NetworkSetOutput(const Net::Tensor& src, const Net::Layer& back, Tensor& dst)
+        {
+            switch (src.GetType())
+            {
+            case Synet::TensorType32f:
+                NetworkSetOutputT<float>(src, back, dst);
+                break;
+            case Synet::TensorType32i:
+                NetworkSetOutputT<int32_t>(src, back, dst);
+                break;
+            case Synet::TensorType64i:
+                NetworkSetOutputT<int64_t>(src, back, dst);
+                break;
+            case Synet::TensorType8u:
+                NetworkSetOutputT<uint8_t>(src, back, dst);
+                break;
+            default:
+                assert(0);
+            }
+        }
+
+        template<class T> void NetworkSetOutputT(const Tensor& src, const Net::Layer& back, Tensor& dst)
+        {
+            if (src.Count() == 4 && src.Axis(3) == 7 && back.Param().type() == Synet::LayerTypeDetectionOutput)
+            {
+                assert(src.Axis(0) == 1);
+                Vector tmp;
+                const T* pSrc = src.Data<T>();
+                for (size_t j = 0; j < src.Axis(2); ++j, pSrc += 7)
+                {
+                    if (pSrc[0] == -1)
+                        break;
+                    if (pSrc[2] <= _options.regionThreshold)
+                        continue;
+                    size_t offset = tmp.size();
+                    tmp.resize(offset + 7);
+                    tmp[offset + 0] = (float)pSrc[0];
+                    tmp[offset + 1] = (float)pSrc[1];
+                    tmp[offset + 2] = (float)pSrc[2];
+                    tmp[offset + 3] = (float)pSrc[3];
+                    tmp[offset + 4] = (float)pSrc[4];
+                    tmp[offset + 5] = (float)pSrc[5];
+                    tmp[offset + 6] = (float)pSrc[6];
+                }
+                SortDetectionOutput(tmp.data(), tmp.size());
+                dst.Reshape(Synet::TensorType32f, Shp(1, 1, tmp.size() / 7, 7));
+                memcpy(dst.RawData(), tmp.data(), dst.RawSize());
+            }
+            else if (_param().detection().decoder() == "rtdetr")
+            {
+                assert(src.Axis(0) == 1 && src.Axis(2) == 6);
+                Vector tmp;
+                const T* pSrc = src.Data<T>();
+                for (size_t i = 0, n = src.Axis(1); i < n; ++i, pSrc += 6)
+                {
+                    if (pSrc[4] <= _options.regionThreshold)
+                        continue;
+                    size_t offset = tmp.size();
+                    tmp.resize(offset + 6);
+                    tmp[offset + 0] = (float)pSrc[0];
+                    tmp[offset + 1] = (float)pSrc[1];
+                    tmp[offset + 2] = (float)pSrc[2];
+                    tmp[offset + 3] = (float)pSrc[3];
+                    tmp[offset + 4] = (float)pSrc[4];
+                    tmp[offset + 5] = (float)pSrc[5];
+                }
+                SortRtdetr(tmp.data(), tmp.size());
+                dst.Reshape(Synet::TensorType32f, Shp(1, tmp.size() / 6, 6));
+                memcpy(dst.RawData(), tmp.data(), dst.RawSize());
+            }
+            else
+            {
+                bool trans = src.Format() == Synet::TensorFormatNhwc;
+                bool batch = _net.Src()[0]->Axis(0) != 1;
+                if (trans && src.Count() == 4)
+                {
+                    dst.Reshape(Synet::TensorType32f, Shp(src.Axis(0), src.Axis(3), src.Axis(1), src.Axis(2)), Synet::TensorFormatNchw);
+                    for (size_t n = 0; n < src.Axis(0); ++n)
+                        for (size_t c = 0; c < src.Axis(3); ++c)
+                            for (size_t y = 0; y < src.Axis(1); ++y)
+                                for (size_t x = 0; x < src.Axis(2); ++x)
+                                    dst.Data<float>(Shp(n, c, y, x))[0] = (float)src.Data<T>(Shp(n, y, x, c))[0];
+                }
+                else if (trans && src.Count() == 3)
+                {
+                    if (batch)
+                    {
+                        dst.Reshape(Synet::TensorType32f, Shp(src.Axis(0), src.Axis(2), src.Axis(1)), Synet::TensorFormatNchw);
+                        for (size_t n = 0; n < src.Axis(0); ++n)
+                            for (size_t c = 0; c < src.Axis(2); ++c)
+                                for (size_t s = 0; s < src.Axis(1); ++s)
+                                    dst.Data<float>(Shp(n, c, s))[0] = (float)src.Data<T>(Shp(n, s, c))[0];
+                    }
+                    else
+                    {
+                        dst.Reshape(Synet::TensorType32f, Shp(src.Axis(2), src.Axis(0), src.Axis(1)), Synet::TensorFormatNchw);
+                        for (size_t c = 0; c < src.Axis(2); ++c)
+                            for (size_t y = 0; y < src.Axis(0); ++y)
+                                for (size_t x = 0; x < src.Axis(1); ++x)
+                                    dst.Data<float>(Shp(c, y, x))[0] = (float)src.Data<T>(Shp(y, x, c))[0];
+                    }
+                }
+                else if (trans && src.Count() == 2 && (src.Axis(0) == 1 || src.Format() == Synet::TensorFormatNhwc))
+                {
+                    dst.Reshape(Synet::TensorType32f, Shp(src.Axis(1), src.Axis(0)), Synet::TensorFormatNchw);
+                    for (size_t c = 0; c < src.Axis(1); ++c)
+                        for (size_t s = 0; s < src.Axis(0); ++s)
+                            dst.Data<float>(Shp(c, s))[0] = (float)src.Data<T>(Shp(s, c))[0];
+                }
+                else
+                {
+                    dst.Reshape(Synet::TensorType32f, src.Shape(), Synet::TensorFormatNchw);
+                    for (size_t i = 0; i < src.Size(); ++i)
+                        dst.Data<float>()[i] = (float)src.Data<T>()[i];
+                }
+            }
+            dst.SetName(src.Name());
+        }
+
+        void NetworkPredict(const Tensors& src, size_t thread, Tensors& dst)
         {
             NetworkSetInput(src, thread);
             {
                 CPL_PERF_BEGF("Network::Forward", _net.Flop());
                 _net.Forward(thread);
             }
-            //SetOutput();
-            //return _output;
+            NetworkSetOutput(dst, thread);
         }
 
-        void ThreadRun(size_t thread, size_t total, size_t& current, size_t networks, size_t second)
+        void ThreadRun(size_t thread, size_t total, size_t& current)
         {
             if (_options.repeatNumber)
             {
@@ -496,7 +641,7 @@ namespace Test
                     for (size_t r = 0; r < _options.repeatNumber; ++r, ++current)
                     {
                         NetworkPredict(test.input, thread, test.output[thread]);
-                        _threads[thread].current = current / networks;
+                        _threads[thread].current = current;
                         //_threads[thread].debug = CoreFreqInfo();
                     }
                 }
@@ -512,8 +657,7 @@ namespace Test
                         TestData& test = *_tests[i];
                         NetworkPredict(test.input, thread, test.output[thread]);
                         duration = Cpl::Time() - start;
-                        _threads[thread].current = (total * (networks - 1) * second +
-                            std::min(total, size_t(duration * 1000))) / networks;
+                        _threads[thread].current = std::min(total, size_t(duration * 1000));
                         //_threads[thread].debug = CoreFreqInfo();
                     }
                     canstop = true;
@@ -526,12 +670,10 @@ namespace Test
             const Options& options = multiThreadsTest->_options;
             if (options.pinThread)
                 PinThread(thread);
-            size_t current = 0, networks = 1;
 
-            if (options.enable == (ENABLE_FIRST | ENABLE_SECOND))
-                networks = 2;
+            size_t current = 0;
 
-            multiThreadsTest->ThreadRun(thread, total, current, networks, 0);
+            multiThreadsTest->ThreadRun(thread, total, current);
 
             multiThreadsTest->_threads[thread].current = total;
         }
@@ -604,8 +746,8 @@ namespace Test
             {
                 for (size_t i = 0; i < _tests.size(); ++i)
                 {
-                    //if (!CompareResults(*_tests[i], i, t))
-                    //    return false;
+                    if (!CompareResults(*_tests[i], i, t))
+                        return false;
                 }
             }
             return PrintFinishMessage(start);
