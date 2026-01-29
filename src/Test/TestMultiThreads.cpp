@@ -29,7 +29,7 @@
 #include "TestOptions.h"
 #include "TestParams.h"
 #include "TestRegionDecoder.h"
-
+#include "TestOutputComparer.h"
 
 namespace Test
 {
@@ -62,7 +62,7 @@ namespace Test
                 return false;
             if (!CreateTestList())
                 return false;
-            return true;
+            return ThreadsComparison();
         }
 
     private:
@@ -87,18 +87,32 @@ namespace Test
         typedef std::vector<TestDataPtr> TestDataPtrs;
         TestDataPtrs _tests;
 
+        struct Thread
+        {
+            size_t current;
+            bool first;
+            std::thread thread;
+            String debug;
+            Thread() : current(0), first(false) {}
+        };
+        std::vector<Thread> _threads;
+        std::condition_variable _start;
+        bool _notified;
+        size_t _progressMessageSizeMax;
+        double _nextProgressUpdate;
+
         void PrintStartMessage() const
         {
-            std::cout << "Start ";
-            //if (_options.enable & ENABLE_FIRST)
-            //    std::cout << Options::FullName(_firsts[0].Name(), _firsts[0].Type()) << " ";
-            //if (_options.enable == (ENABLE_FIRST | ENABLE_SECOND))
-            //    std::cout << "and ";
-            //if (_options.enable & ENABLE_SECOND)
-            //    std::cout << Options::FullName(_seconds[0].Name(), _seconds[0].Type()) << " ";
-            std::cout << _options.testThreads << "-threads ";
-            //std::cout << (_options.enable == (ENABLE_FIRST | ENABLE_SECOND) ? "comparison " : "performance ");
-            std::cout << "tests :" << std::endl;
+            std::cout << "Start MultiThreadsTest for ";
+            std::cout << _options.testThreads << "-threads: " << std::endl;
+        }
+
+        bool PrintFinishMessage(int64_t start) const
+        {
+            std::stringstream msg;
+            msg << "Tests are finished successfully in " << Test::ExecTimeStr(start) << ".";
+            std::cout << ExpandRight(msg.str(), _progressMessageSizeMax) << std::endl << std::endl;
+            return true;
         }
 
         bool LoadTestParam()
@@ -428,6 +442,210 @@ namespace Test
                 return CreateTestListBinary(imageDirectory);
             else
                 SYNET_ERROR("Unknown input type '" << _param().inputType() << "' !");
+        }
+
+        template<class T> static void NetworkSetInput(const Tensor& src, Tensor& dst)
+        {
+            assert(src.Size() == dst.Size() && src.GetType() == dst.GetType());
+            if (dst.Format() == Synet::TensorFormatNhwc && dst.Count() == 4)
+            {
+                for (size_t n = 0; n < src.Axis(0); ++n)
+                    for (size_t c = 0; c < src.Axis(1); ++c)
+                        for (size_t y = 0; y < src.Axis(2); ++y)
+                            for (size_t x = 0; x < src.Axis(3); ++x)
+                                dst.Data<T>(Shape({ n, y, x, c }))[0] = src.Data<T>(Shape({ n, c, y, x }))[0];
+            }
+            else
+                memcpy(dst.RawData(), src.RawData(), src.RawSize());
+        }
+
+        void NetworkSetInput(const Tensors& src, size_t thread)
+        {
+            assert(src.size() == _net.Src().size());
+            for (size_t i = 0; i < src.size(); ++i)
+            {
+                switch (src[i].GetType())
+                {
+                case Synet::TensorType32f: NetworkSetInput<float>(src[i], *_net.Src(thread)[i]); break;
+                case Synet::TensorType32i: NetworkSetInput<int32_t>(src[i], *_net.Src(thread)[i]); break;
+                case Synet::TensorType64i: NetworkSetInput<int64_t>(src[i], *_net.Src(thread)[i]); break;
+                default:
+                    assert(0);
+                }
+            }
+        }
+
+        void NetworkPredict(const Tensors& src, size_t thread, const Tensors& dst)
+        {
+            NetworkSetInput(src, thread);
+            {
+                CPL_PERF_BEGF("Network::Forward", _net.Flop());
+                _net.Forward(thread);
+            }
+            //SetOutput();
+            //return _output;
+        }
+
+        void ThreadRun(size_t thread, size_t total, size_t& current, size_t networks, size_t second)
+        {
+            if (_options.repeatNumber)
+            {
+                for (size_t i = 0; i < _tests.size(); ++i)
+                {
+                    TestData& test = *_tests[i];
+                    for (size_t r = 0; r < _options.repeatNumber; ++r, ++current)
+                    {
+                        NetworkPredict(test.input, thread, test.output[thread]);
+                        _threads[thread].current = current / networks;
+                        //_threads[thread].debug = CoreFreqInfo();
+                    }
+                }
+            }
+            else
+            {
+                bool canstop = false;
+                double start = Cpl::Time(), duration = 0;
+                while (duration < _options.executionTime)
+                {
+                    for (size_t i = 0; i < _tests.size() && (duration < _options.executionTime || !canstop); ++i)
+                    {
+                        TestData& test = *_tests[i];
+                        NetworkPredict(test.input, thread, test.output[thread]);
+                        duration = Cpl::Time() - start;
+                        _threads[thread].current = (total * (networks - 1) * second +
+                            std::min(total, size_t(duration * 1000))) / networks;
+                        //_threads[thread].debug = CoreFreqInfo();
+                    }
+                    canstop = true;
+                }
+            }
+        }
+
+        static void TestThread(MultiThreadsTest* multiThreadsTest, size_t thread, size_t total)
+        {
+            const Options& options = multiThreadsTest->_options;
+            if (options.pinThread)
+                PinThread(thread);
+            size_t current = 0, networks = 1;
+
+            if (options.enable == (ENABLE_FIRST | ENABLE_SECOND))
+                networks = 2;
+
+            multiThreadsTest->ThreadRun(thread, total, current, networks, 0);
+
+            multiThreadsTest->_threads[thread].current = total;
+        }
+
+        String ProgressString(size_t current, size_t total)
+        {
+            const size_t m = 10, n = std::min(m, _threads.size());
+            std::stringstream progress;
+            progress << "Test progress : " << ToString(100.0 * current / total, 1) << "% ";
+            if (_threads.size() > 1)
+            {
+                progress << "[ ";
+                for (size_t t = 0; t < n; ++t)
+                    progress << ToString(100.0 * _threads[t].current / total, 1) << "% ";
+                if (_threads.size() > m)
+                    progress << "... ";
+                progress << "] ";
+            }
+            _progressMessageSizeMax = std::max(_progressMessageSizeMax, progress.str().size());
+            return progress.str();
+        }
+
+        String TestFailedMessage(const TestData& test, size_t index, size_t thread) const
+        {
+            std::stringstream ss;
+            ss << "At thread " << thread << " test " << index << " '" << test.path[0];
+            for (size_t k = 1; k < test.path.size(); ++k)
+                ss << ", " << test.path[k];
+            ss << "' is failed!";
+            return ss.str();
+        }
+
+        bool CompareResults(const TestData& test, size_t index, size_t thread) const
+        {
+            const Output& control = test.output[0];
+            const Output& current = test.output[thread];
+            String failed = TestFailedMessage(test, index, thread);
+            OutputComparer outputComparer(_options, _param(), test.input[0].Shape(), control);
+            return outputComparer.Compare(control, current, failed);
+        }
+
+        bool ThreadsComparison()
+        {
+            if (_options.pinThread)
+                PinThread(SimdCpuInfo(SimdCpuInfoThreads) - 1);
+            int64_t start = Cpl::TimeCounter();
+            size_t current = 0, total = _options.repeatNumber ?
+                _tests.size() * _options.repeatNumber : size_t(_options.executionTime * 1000);
+            _threads.resize(_options.TestThreads());
+            for (size_t t = 0; t < _threads.size(); ++t)
+                _threads[t].thread = std::thread(TestThread, this, t, total);
+
+            while (current < total)
+            {
+                current = total;
+                for (size_t t = 0; t < _threads.size(); ++t)
+                    current = std::min(current, _threads[t].current);
+                std::cout << ProgressString(current, total) << std::flush;
+                Sleep(1);
+                std::cout << " \r" << std::flush;
+            }
+
+            _options.secondMemoryUsage = _net.MemoryUsage();
+            for (size_t t = 0; t < _threads.size(); ++t)
+            {
+                if (_threads[t].thread.joinable())
+                    _threads[t].thread.join();
+            }
+            for (size_t t = 1; t < _threads.size(); ++t)
+            {
+                for (size_t i = 0; i < _tests.size(); ++i)
+                {
+                    //if (!CompareResults(*_tests[i], i, t))
+                    //    return false;
+                }
+            }
+            return PrintFinishMessage(start);
+        }
+
+        inline void Sleep(unsigned int miliseconds)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(miliseconds));
+        }
+
+        //static inline void Copy(const Tensors& src, Tensors& dst)
+        //{
+        //    dst.resize(src.size());
+        //    for (size_t i = 0; i < src.size(); ++i)
+        //        dst[i].Clone(src[i]);
+        //}
+
+        static bool PinThread(size_t core)
+        {
+#if defined(__linux__)
+            pthread_t this_thread = pthread_self();
+            cpu_set_t cpuset;
+            CPU_ZERO(&cpuset);
+            CPU_SET(core, &cpuset);
+            if (pthread_setaffinity_np(this_thread, sizeof(cpu_set_t), &cpuset))
+            {
+                CPL_LOG_SS(Warning, "Can't set affinity " << core << " to " << this_thread << " thread : " << std::strerror(errno) << " !");
+                return false;
+            }
+#endif
+            return true;
+        }
+
+        static String CoreFreqInfo()
+        {
+            std::stringstream info;
+#if defined(__linux__)
+            info << " " << sched_getcpu() << ": " << ToString(double(SimdCpuInfo(SimdCpuInfoCurrentFrequency)) / 1000000000.0, 1) << " GHz.";
+#endif
+            return info.str();
         }
     };
 }
