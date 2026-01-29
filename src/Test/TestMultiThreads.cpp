@@ -635,11 +635,11 @@ namespace Test
         {
             if (_options.repeatNumber)
             {
-                for (size_t i = 0; i < _tests.size(); ++i)
+                for (size_t r = 0; r < _options.repeatNumber; ++r)
                 {
-                    TestData& test = *_tests[i];
-                    for (size_t r = 0; r < _options.repeatNumber; ++r, ++current)
+                    for (size_t i = 0; i < _tests.size(); ++i, ++current)
                     {
+                        TestData& test = *_tests[i];
                         NetworkPredict(test.input, thread, test.output[thread]);
                         _threads[thread].current = current;
                         //_threads[thread].debug = CoreFreqInfo();
