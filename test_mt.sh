@@ -61,7 +61,7 @@ if [ -f $IMAGE/descript.ion ];then rm $IMAGE/descript.ion; fi
 
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
-"$BIN_TMT" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=1 -bs=$BATCH -ct=$THRESHOLD -bf=$BF16 -re=0 -et=10.0 -ie=10 -be=100 -dp=3 -dpf=6 -dpl=2 -dpp=4 -ar=1 -rt=0.3 -cs=0 -pl=$PERF -ln=$LOG
+"$BIN_TMT" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=1 -bs=$BATCH -ct=$THRESHOLD -bf=$BF16 -re=0 -et=10.0 -ie=10 -be=100 -dp=0 -dpf=6 -dpl=2 -dpp=4 -ar=0 -rt=0.3 -cs=0 -pl=$PERF -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
@@ -80,7 +80,7 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 #TEST inference_engine "" test_022f persons 1 0 0 1 0 000 2
 
 #TEST onnx "" test_000 face 80 10 1 1 0 000 2
-TEST onnx "" test_001 faces 30 2 1 1 0 004 2
+TEST onnx "" test_001 faces 30 1 1 1 0 004 2
 #TEST onnx "" test_002 faces 1 0 1 1 0 000 2
 
 #TEST quantization "" test_003 faces 100 1 1 1 0 000t 0

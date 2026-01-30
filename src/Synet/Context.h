@@ -65,10 +65,11 @@ namespace Synet
     {
         Options options;
         std::map<String, size_t> tensorUsers;
-        size_t batchSize;
+        size_t batchSize, threads;
 
         Context()
             : batchSize(1)
+            , threads(1)
         {
         }
 

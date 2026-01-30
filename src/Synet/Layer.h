@@ -49,11 +49,8 @@ namespace Synet
             , _isBack(false)
             , _const(false)
             , _perfEnable(false)
-            , _perfInited(false)
             , _perfFlop(0)
         {
-            SYNET_PERF_SET(_perfComm, NULL);
-            SYNET_PERF_SET(_perfSpec, NULL);
         }
 
         virtual ~Layer()
@@ -134,13 +131,13 @@ namespace Synet
 
         virtual bool Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
 
-        inline void Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+        inline void Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
         {
             if (_const)
                 return;
-            InitPerfStat();
-            SYNET_PERF_TEST(_perfComm);
-            SYNET_PERF_TEST(_perfSpec);
+            InitPerfStat(thread);
+            SYNET_PERF_TEST(_perfComm[thread]);
+            SYNET_PERF_TEST(_perfSpec[thread]);
             ForwardCpu(src, buf, dst);
         }
 
@@ -221,6 +218,9 @@ namespace Synet
             _perfEnable = true;
             _perfDesc = desc;
             _perfFlop = flop;
+            _perfInited.resize(_context->threads, 0);
+            SYNET_PERF_VEC_RESZ(_perfComm, _context->threads, NULL);
+            SYNET_PERF_VEC_RESZ(_perfSpec, _context->threads, NULL);
         }
 
         static float * Buf32f(const TensorPtrs& buf, size_t idx)
@@ -278,11 +278,12 @@ namespace Synet
         StatPtrs _stats[3];
         bool _isBack;
 
-        bool _perfEnable, _perfInited;
+        bool _perfEnable;
+        Ints _perfInited;
         String _perfDesc;
         int64_t _perfFlop;
-        SYNET_PERF_DECL(_perfComm);
-        SYNET_PERF_DECL(_perfSpec);
+        SYNET_PERF_VEC_DECL(_perfComm);
+        SYNET_PERF_VEC_DECL(_perfSpec);
 
         bool ShareExisted(size_t offset, const LayerSharedPtrs& layers, Tensor& tensor)
         {
@@ -302,21 +303,21 @@ namespace Synet
             return false;
         }
 
-        void InitPerfStat()
+        void InitPerfStat(size_t thread)
         {
-            if (_perfEnable && !_perfInited)
+            if (_perfEnable && _perfInited[thread] == 0)
             {
                 if (_context->options.performanceLog >= Options::PerfomanceLogLayer)
                 {
                     String type = Cpl::ToStr(_param.type());
-                    SYNET_PERF_INIT(_perfComm, "void Synet::" + type + "Layer::Forward() {  " + 
+                    SYNET_PERF_INIT(_perfComm[thread], "void Synet::" + type + "Layer::Forward() {  " +
                        (LowPrecision(TensorType8u) == LowPrecisionTypeActive ? "int8" : LowPrecision(TensorType16b) == LowPrecisionTypeActive ? "bf16" :  "fp32") + " } ", 0);
                     if (_context->options.performanceLog >= Options::PerfomanceLogSize && _perfDesc.size())
                     {
-                        SYNET_PERF_INIT(_perfSpec, "void Synet::" + type + "Layer::Forward() { " + _perfDesc + " } ", _perfFlop);
+                        SYNET_PERF_INIT(_perfSpec[thread], "void Synet::" + type + "Layer::Forward() { " + _perfDesc + " } ", _perfFlop);
                     }
                 }
-                _perfInited = true;
+                _perfInited[thread] = 1;
             }
         }
 

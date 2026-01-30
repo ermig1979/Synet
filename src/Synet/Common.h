@@ -113,16 +113,16 @@
 #define SYNET_PERF_FUNC() CPL_PERF_FUNC()
 #define SYNET_PERF_BLOCK(name) CPL_PERF_BEG(name)
 #define SYNET_PERF_BLOCK_END(name) CPL_PERF_END(name)
-#define SYNET_PERF_DECL(name) Cpl::PerformanceMeasurer * name;
-#define SYNET_PERF_SET(name, value) name = value;
+#define SYNET_PERF_VEC_DECL(name) std::vector<Cpl::PerformanceMeasurer *> name;
+#define SYNET_PERF_VEC_RESZ(name, size, val) name.resize(size, val);
 #define SYNET_PERF_INIT(name, desc, flop) name = Cpl::PerformanceStorage::Global().Get(desc, flop);
 #define SYNET_PERF_TEST(name) Cpl::PerformanceHolder CPL_CAT(__pmh,__LINE__)(name);
 #elif !defined(SYNET_PERF_FUNC)
 #define SYNET_PERF_FUNC()
 #define SYNET_PERF_BLOCK(name)
 #define SYNET_PERF_BLOCK_END(name)
-#define SYNET_PERF_DECL(name)
-#define SYNET_PERF_SET(name, value)
+#define SYNET_PERF_VEC_DECL(name)
+#define SYNET_PERF_VEC_RESZ(name, size, val)
 #define SYNET_PERF_INIT(name, desc, flop)
 #define SYNET_PERF_TEST(name)
 #endif

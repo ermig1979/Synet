@@ -189,6 +189,7 @@ namespace Synet
         for (size_t t = 0; t < _threads.size(); ++t)
             for (size_t i = 0; i < _threads[t].tensors.size(); ++i)
                 _threads[t].tensors[i]->Clear(true);
+        _context.threads = threads;
 
         if (srcNames.size())
         {
@@ -312,6 +313,7 @@ namespace Synet
         _threads[0].input[0].dst[0]->Reshape(TensorType32f, shape, format, Type(0));
         _threads[0].input[0].dst[0]->SetName(param.name());
         _context.batchSize = batch;
+        _context.threads = threads;
         return ReshapeStages() && CloneThreadBuffers(threads);
     }
 
@@ -332,6 +334,7 @@ namespace Synet
         _threads[0].input[0].dst[0]->Reshape(TensorType32f, shape, format, Type(0));
         _threads[0].input[0].dst[0]->SetName(param.name());
         _context.batchSize = batch;
+        _context.threads = threads;
         return ReshapeStages() && CloneThreadBuffers(threads);
     }
 
@@ -348,6 +351,7 @@ namespace Synet
         Shape shape = param.input().shape()[0].dim();
         _threads[0].input[0].dst[0]->Reshape(TensorType32f, shape, format, Type(0));
         _threads[0].input[0].dst[0]->SetName(param.name());
+        _context.threads = threads;
         return ReshapeStages() && CloneThreadBuffers(threads);
     }
 
@@ -465,7 +469,7 @@ namespace Synet
                 msg << (d ? ", " : " ") << "dst[" << d << "]: " << Cpl::ToStr(stage.dst[d]->GetType()) << " " << ToStr(stage.dst[d]->Shape());
             CPL_LOG_SS(Info, msg.str());
 #endif
-            stage.layer->Forward(stage.src, stage.buf, stage.dst);
+            stage.layer->Forward(stage.src, stage.buf, stage.dst, thread);
         }
         SetAmxFull();
         SetFastMode(mode);
@@ -512,7 +516,7 @@ namespace Synet
             if ((layer._isBack && printOutput) || printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
             {
                 if(printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
-                    layer.Forward(_threads[thread].stages[i].src, _threads[thread].stages[i].buf, _threads[thread].stages[i].dst);
+                    layer.Forward(_threads[thread].stages[i].src, _threads[thread].stages[i].buf, _threads[thread].stages[i].dst, thread);
                 os << (layer._isBack ? "Output layer " : "Layer ") << i << ": " << param.name() << " : ";
                 os << Cpl::ToStr(param.type());
                 if (param.type() == LayerTypeMeta)
