@@ -74,7 +74,7 @@ namespace Test
         TestParamHolder _param;
 
         Net _net;
-        bool _trans, _sort;
+        bool _trans, _sort, _stopped;
         Floats _lower, _upper;
         size_t _synetMemoryUsage;
         RegionDecoder _regionDecoder;
@@ -94,14 +94,11 @@ namespace Test
         struct Thread
         {
             size_t current;
-            bool first;
             std::thread thread;
             String debug;
-            Thread() : current(0), first(false) {}
+            Thread() : current(0) {}
         };
         std::vector<Thread> _threads;
-        std::condition_variable _start;
-        bool _notified;
         size_t _progressMessageSizeMax;
         double _nextProgressUpdate;
 
@@ -329,20 +326,21 @@ namespace Test
                             Shape shape = _net.Src()[s]->Shape();
                             if (shape.size() == 4)
                             {
+                                size_t c = _net.NchwShape()[1], h = _net.NchwShape()[2], w = _net.NchwShape()[3];
                                 if (lower.size() == 1)
-                                    lower.resize(shape[1], lower[0]);
+                                    lower.resize(c, lower[0]);
                                 if (upper.size() == 1)
-                                    upper.resize(shape[1], upper[0]);
+                                    upper.resize(c, upper[0]);
 
-                                View converted(original.Size(), shape[1] == 1 ? View::Gray8 : View::Bgr24);
+                                View converted(original.Size(), c == 1 ? View::Gray8 : View::Bgr24);
                                 Simd::Convert(original, converted);
 
-                                View resized(Size(shape[3], shape[2]), converted.format);
+                                View resized(Size(w, h), converted.format);
                                 ResizeImage(converted, resized);
 
-                                Simd::SynetSetInput(resized, lower.data(), upper.data(), input, _net.NchwShape()[1], 
+                                Simd::SynetSetInput(resized, lower.data(), upper.data(), input, c, 
                                     _options.tensorFormat ? SimdTensorFormatNhwc : SimdTensorFormatNchw, _param().order() == "rgb");
-                                input += shape[1] * shape[2] * shape[3];
+                                input += c * h * w;
                             }
                             else if (shape.size() == 2)
                             {
@@ -631,28 +629,57 @@ namespace Test
             NetworkSetOutput(dst, thread);
         }
 
-        void ThreadRun(size_t thread, size_t total, size_t& current)
+        bool DebugPrint(size_t i, size_t thread)
+        {
+            if (_options.debugPrint)
+            {
+                String name = String("Synet") + (_options.bf16 ? "_bf16" : "_fp32") + "_f" + std::to_string(_options.tensorFormat) +
+                    "_b" + std::to_string(_options.batchSize) + "_i" + std::to_string(i) + "_t" + std::to_string(thread) + ".log";
+                String path = MakePath(_options.outputDirectory, name);
+                std::ofstream log(path);
+                if (log.is_open())
+                {
+                    NetworkSetInput(_tests[i]->input, thread);
+                    _net.DebugPrint(log, _options.debugPrint, _options.debugPrintFirst, _options.debugPrintLast, _options.debugPrintPrecision, thread);
+                    log.close();
+                }
+                else
+                    SYNET_ERROR("Can't open '" << path << "' file!");
+            }
+            return true;
+        }
+
+        void ThreadRun(size_t thread, size_t total)
         {
             if (_options.repeatNumber)
             {
-                for (size_t r = 0; r < _options.repeatNumber; ++r)
+                for (size_t r = 0, current = 0; r < _options.repeatNumber && !_stopped; ++r)
                 {
-                    for (size_t i = 0; i < _tests.size(); ++i, ++current)
+                    for (size_t i = 0; i < _tests.size() && !_stopped; ++i, ++current)
                     {
                         TestData& test = *_tests[i];
                         NetworkPredict(test.input, thread, test.output[thread]);
                         _threads[thread].current = current;
+                        if (r == 0)
+                        {
+                            if (!DebugPrint(i, thread))
+                            {
+                                _stopped = true;
+                                return;
+                            }
+                        }
                         //_threads[thread].debug = CoreFreqInfo();
                     }
                 }
+                _threads[thread].current = total;
             }
             else
             {
                 bool canstop = false;
                 double start = Cpl::Time(), duration = 0;
-                while (duration < _options.executionTime)
+                while (duration < _options.executionTime && !_stopped)
                 {
-                    for (size_t i = 0; i < _tests.size() && (duration < _options.executionTime || !canstop); ++i)
+                    for (size_t i = 0; i < _tests.size() && (duration < _options.executionTime || !canstop) && !_stopped; ++i)
                     {
                         TestData& test = *_tests[i];
                         NetworkPredict(test.input, thread, test.output[thread]);
@@ -662,6 +689,7 @@ namespace Test
                     }
                     canstop = true;
                 }
+                _threads[thread].current = total;
             }
         }
 
@@ -671,11 +699,7 @@ namespace Test
             if (options.pinThread)
                 PinThread(thread);
 
-            size_t current = 0;
-
-            multiThreadsTest->ThreadRun(thread, total, current);
-
-            multiThreadsTest->_threads[thread].current = total;
+            multiThreadsTest->ThreadRun(thread, total);
         }
 
         String ProgressString(size_t current, size_t total)
@@ -719,6 +743,7 @@ namespace Test
         {
             if (_options.pinThread)
                 PinThread(SimdCpuInfo(SimdCpuInfoThreads) - 1);
+            _stopped = false;
             int64_t start = Cpl::TimeCounter();
             size_t current = 0, total = _options.repeatNumber ?
                 _tests.size() * _options.repeatNumber : size_t(_options.executionTime * 1000);
@@ -726,7 +751,7 @@ namespace Test
             for (size_t t = 0; t < _threads.size(); ++t)
                 _threads[t].thread = std::thread(TestThread, this, t, total);
 
-            while (current < total)
+            while (current < total && !_stopped)
             {
                 current = total;
                 for (size_t t = 0; t < _threads.size(); ++t)
