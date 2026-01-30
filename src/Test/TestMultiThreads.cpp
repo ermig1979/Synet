@@ -102,6 +102,10 @@ namespace Test
         size_t _progressMessageSizeMax;
         double _nextProgressUpdate;
 
+        typedef Simd::Pixel::Bgra32 Color;
+        typedef std::vector<Color> Colors;
+        mutable Colors _colors;
+
         void PrintStartMessage() const
         {
             std::cout << "Start MultiThreadsTest for ";
@@ -649,6 +653,59 @@ namespace Test
             return true;
         }
 
+        Color GetColor(size_t index) const
+        {
+            if (index >= _colors.size())
+            {
+                if (_colors.empty())
+                {
+                    _colors.push_back(Color(0xFF, 0xFF, 0xFF));
+                    _colors.push_back(Color(0x00, 0x00, 0xFF));
+                    _colors.push_back(Color(0x00, 0xFF, 0x00));
+                    _colors.push_back(Color(0xFF, 0x00, 0x00));
+                    _colors.push_back(Color(0x00, 0xFF, 0xFF));
+                    _colors.push_back(Color(0xFF, 0xFF, 0x00));
+                    _colors.push_back(Color(0xFF, 0x00, 0xFF));
+                }
+                while (index >= _colors.size())
+                    _colors.push_back(Color(::rand(), ::rand(), ::rand()));
+            }
+            return _colors[index];
+        }
+
+        Regions GetRegions(const Size& size, float threshold, float overlap, size_t thread) const
+        {
+            if (_regionDecoder.Enable())
+                return _regionDecoder.GetRegions(_net, size, threshold, overlap, thread);
+            else
+                return _net.GetRegions(size.x, size.y, threshold, overlap, thread);
+        }
+
+        bool AnnotateRegions(const String& inputPath, size_t thread) const
+        {
+            if (_options.annotateRegions && _param().inputType() == "images")
+            {
+                View image;
+                if (!LoadImage(inputPath, image))
+                    SYNET_ERROR("Can't read '" << inputPath << "' image!");
+                Regions regions = GetRegions(image.Size(), _options.regionThreshold, _options.regionOverlap, thread);
+                for (size_t i = 0; i < regions.size(); ++i)
+                {
+                    const Region& region = regions[i];
+                    ptrdiff_t l = ptrdiff_t(region.x - region.w / 2);
+                    ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
+                    ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
+                    ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
+                    Simd::DrawRectangle(image, l, t, r, b, GetColor(region.id), std::min<int>(image.height / 500 + 1, 3));
+                }
+                String outputPath = MakePath(_options.outputDirectory, String("Synet") + (_options.bf16 ? "_bf16" : "_fp32")
+                    + "_t" + std::to_string(thread) + "_" + GetNameByPath(inputPath));
+                if (!SaveImage(image, outputPath))
+                    SYNET_ERROR("Can't write '" << outputPath << "' image!");
+            }
+            return true;
+        }
+
         void ThreadRun(size_t thread, size_t total)
         {
             if (_options.repeatNumber)
@@ -662,7 +719,7 @@ namespace Test
                         _threads[thread].current = current;
                         if (r == 0)
                         {
-                            if (!DebugPrint(i, thread))
+                            if (!DebugPrint(i, thread) || !AnnotateRegions(test.path[0], thread))
                             {
                                 _stopped = true;
                                 return;
