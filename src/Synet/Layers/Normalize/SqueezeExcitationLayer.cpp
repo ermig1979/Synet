@@ -221,7 +221,7 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
-    void SqueezeExcitationLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    void SqueezeExcitationLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
         float * norm0 = Layer::Buf32f(buf, 1);
         float * norm1 = norm0 + _channels;

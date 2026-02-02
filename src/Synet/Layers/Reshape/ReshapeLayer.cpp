@@ -151,7 +151,7 @@ namespace Synet
         return true;
     }
 
-    void ReshapeLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void ReshapeLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
     }
 }

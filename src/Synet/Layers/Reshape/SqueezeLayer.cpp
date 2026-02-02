@@ -100,11 +100,11 @@ namespace Synet
             }
         }
         dst[0]->ShareAs(*src[0], shape, src[0]->Format());
-        _const = false;
+        _const = true;
         return true;
     }
 
-    void SqueezeLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void SqueezeLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
     }
 }

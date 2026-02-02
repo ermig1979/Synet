@@ -155,7 +155,7 @@ namespace Synet
         dst[0]->Reshape(_dstType, shpD, src[0]->Format());
         if (src[0]->Const() && src[1]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -167,7 +167,7 @@ namespace Synet
         return true;
     }
 
-    void CompareLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void CompareLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         _compare(src[0]->RawData(), src[1]->RawData(), _size, _compareType, dst[0]->RawData());
     }

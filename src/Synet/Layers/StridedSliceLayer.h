@@ -38,7 +38,7 @@ namespace Synet
         typedef void(*StridedSlicePtr)(const uint8_t* src, const int64_t* srcStrides, const int64_t* beginDims, const int64_t* dstDims, const int64_t* strideDims, uint8_t* dst, const int64_t* dstStrides);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
     private:
         Shape _axes;

@@ -40,7 +40,7 @@ namespace Synet
             const uint8_t* neg, const Shape& negSteps, uint8_t* dst, const Shape& dstShape);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
     private:
         TensorType _cndType, _dstType;

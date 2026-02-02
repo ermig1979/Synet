@@ -116,7 +116,7 @@ namespace Synet
         return true;
     }
 
-    void TiledScale2DLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void TiledScale2DLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         for (size_t b = 0; b < _batch; ++b)
         {

@@ -38,7 +38,7 @@ namespace Synet
         typedef void (*BroadcastPtr)(const uint8_t* src, size_t size, uint8_t* dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
     private:
         TensorType _type;

@@ -124,12 +124,12 @@ namespace Synet
         return String(" fp32") + (_deconvolution32f.Enable() ? String(" ") + _deconvolution32f.Info() : String());
     }
 
-    void Deconvolution32fLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void Deconvolution32fLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
-        ForwardCpu(src[0]->Data<float>(), buf[TensorType32f*BUFFER_COUNT]->Data<float>(), dst[0]->Data<float>());
+        Forward(src[0]->Data<float>(), buf[TensorType32f*BUFFER_COUNT]->Data<float>(), dst[0]->Data<float>());
     }
 
-    void Deconvolution32fLayer::ForwardCpu(const float* src, float* buf, float* dst)
+    void Deconvolution32fLayer::Forward(const float* src, float* buf, float* dst)
     {
         if (_deconvolution32f.Enable())
             _deconvolution32f.Forward(src, buf, dst);

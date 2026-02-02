@@ -188,7 +188,7 @@ namespace Synet
             SYNET_ERROR("TopKLayer can't get worker!");
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             dst[1]->SetConst(true);
             _const = true;
@@ -201,7 +201,7 @@ namespace Synet
         return true;
     }
 
-    void TopKLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void TopKLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         _topK(src[0]->RawData(), _outer, _count, _inner, _k, Buf8u(buf, 0), dst[0]->RawData(), dst[1]->RawData());
     }

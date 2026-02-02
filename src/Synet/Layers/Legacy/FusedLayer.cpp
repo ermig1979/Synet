@@ -514,7 +514,7 @@ namespace Synet
         return true;
     }
 
-    void FusedLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void FusedLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         if (src.size() == 1 && dst.size() == 1)
             ForwardCpu11(src[0]->Data<float>(), dst[0]->Data<float>());

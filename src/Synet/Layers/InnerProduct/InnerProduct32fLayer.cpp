@@ -66,7 +66,7 @@ namespace Synet
         return true;
     }
 
-    void InnerProduct32fLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void InnerProduct32fLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         const float* src0 = src[0]->Data<float>();
         float* dst0 = dst[0]->Data<float>();
@@ -77,7 +77,7 @@ namespace Synet
             const float* src1 = src[1]->Data<float>();
             for(size_t b = 0; b < _batch; ++b)
             {
-                ForwardCpu(src0, src1, dst0);
+                Forward(src0, src1, dst0);
                 src0 += _M * _K;
                 src1 += _K * _N;
                 dst0 += _M * _N;
@@ -86,11 +86,11 @@ namespace Synet
         else
         {
             const float* wgt = this->Weight()[0].Data<float>();
-            ForwardCpu(src0, wgt, dst0);
+            Forward(src0, wgt, dst0);
         }
     }
 
-    void InnerProduct32fLayer::ForwardCpu(const float * src, const float* wgt, float* dst)
+    void InnerProduct32fLayer::Forward(const float * src, const float* wgt, float* dst)
     {
         const float* bias = _biasTerm ? this->Weight()[1].Data<float>() : NULL;
         if (!_transB && _M == 1)

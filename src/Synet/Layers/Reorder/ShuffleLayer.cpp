@@ -199,7 +199,7 @@ namespace Synet
         return true;
     }
 
-    void ShuffleLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void ShuffleLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         const uint8_t * src0 = src[0]->RawData();
         const uint8_t* src1 = src[1]->RawData();

@@ -94,7 +94,7 @@ namespace Synet
             dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
         if (src[0]->Const() && src.back()->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -174,7 +174,7 @@ namespace Synet
         return true;
     }
 
-    void ScatterNdLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void ScatterNdLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         if (_version == 0 || _version == 1)
             ForwardCpuNd(src, dst);

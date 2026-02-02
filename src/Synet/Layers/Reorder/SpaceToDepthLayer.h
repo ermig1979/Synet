@@ -36,7 +36,7 @@ namespace Synet
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
     private:
         typedef void (*SpaceToDepthPtr)(const uint8_t* src8, size_t batch, size_t srcC, size_t srcH, size_t srcW, uint8_t* dst8, TensorFormat format);

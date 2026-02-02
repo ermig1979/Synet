@@ -38,7 +38,7 @@ namespace Synet
         typedef void(*ReducePtr)(const uint8_t * src, size_t outer, size_t count, size_t inner, uint8_t* dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
     private:
         TensorType _srcType;

@@ -221,7 +221,7 @@ namespace Synet
         dst[0]->Reshape(_srcType, shape, src[0]->Format());
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -233,7 +233,7 @@ namespace Synet
         return true;
     }
 
-    void ReductionLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void ReductionLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         _reduce(src[0]->RawData(), _outer, _count, _inner, dst[0]->RawData());
     }

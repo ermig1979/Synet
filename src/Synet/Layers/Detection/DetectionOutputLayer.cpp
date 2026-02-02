@@ -105,7 +105,7 @@ namespace Synet
         }
     }
 
-    void DetectionOutputLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void DetectionOutputLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         const float* pLoc = src[0]->Data<float>();
         const float* pConf = src[1]->Data<float>();

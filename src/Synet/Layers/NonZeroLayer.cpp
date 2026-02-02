@@ -109,7 +109,7 @@ namespace Synet
         return true;
     }
 
-    void NonZeroLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void NonZeroLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
     }
 }

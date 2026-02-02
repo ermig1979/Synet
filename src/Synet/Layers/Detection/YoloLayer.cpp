@@ -96,7 +96,7 @@ namespace Synet
         }
     }
 
-    void YoloLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void YoloLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         size_t area = src[0]->Axis(2) * src[0]->Axis(3);
         Index i(4, 0);

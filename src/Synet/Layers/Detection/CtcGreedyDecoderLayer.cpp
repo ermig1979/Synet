@@ -48,7 +48,7 @@ namespace Synet
         return true;
     }
 
-    void CtcGreedyDecoderLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void CtcGreedyDecoderLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         const float * pProbabilities = src[0]->Data<float>();
         const float* pSequenceIndicators = src[1]->Data<float>();

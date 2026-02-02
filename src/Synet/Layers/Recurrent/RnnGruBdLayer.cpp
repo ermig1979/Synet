@@ -103,7 +103,7 @@ namespace Synet
             ((Tensor&)this->Weight()[2]).Clear();
     }
 
-    void RnnGruBdLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void RnnGruBdLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         const float* src0 = src[0]->Data<float>();
         const float* src1 = src[1]->Data<float>();

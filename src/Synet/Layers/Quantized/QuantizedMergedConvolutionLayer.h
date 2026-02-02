@@ -46,9 +46,9 @@ namespace Synet
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
-        void ForwardCpu(const uint8_t* src, uint8_t* buf, int32_t* sum, uint8_t * dst);
+        void Forward(const uint8_t* src, uint8_t* buf, int32_t* sum, uint8_t * dst);
 
         void DepthwiseConvolution(const uint8_t* src, const uint8_t* zero, const ConvParam& conv, const int8_t * weight, int32_t* dst);
 

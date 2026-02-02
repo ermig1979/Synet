@@ -85,7 +85,7 @@ namespace Synet
 
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -97,7 +97,7 @@ namespace Synet
         return true;
     }
 
-    void BroadcastLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void BroadcastLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         _broadcast(src[0]->RawData(), _size, dst[0]->RawData());
     }

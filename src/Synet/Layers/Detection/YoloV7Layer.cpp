@@ -57,7 +57,7 @@ namespace Synet
         return true;
     }
 
-    void YoloV7Layer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void YoloV7Layer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         Box* boxes = (Box*)Layer::Buf32f(buf, 0);
         size_t candidates = FindCandidates(src[0]->Data<float>(), boxes);

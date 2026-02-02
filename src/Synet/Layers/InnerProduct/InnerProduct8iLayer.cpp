@@ -80,13 +80,13 @@ namespace Synet
         return true;
     }
 
-    void InnerProduct8iLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void InnerProduct8iLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         uint8_t* tmp = _src8u ? src[0]->Data<uint8_t>() : Layer::Buf8u(buf, 0);
         int32_t* sum = Layer::Buf32i(buf, 0);
         if (!_src8u)
             _srcCvt.Convert(src[0]->Data<float>(), tmp);
-        ForwardCpu(tmp, sum);
+        Forward(tmp, sum);
         if (_dst8u)
             _dstCvt.Convert(sum, dst[0]->Data<uint8_t>());
         else
@@ -171,7 +171,7 @@ namespace Synet
         }
     }
 
-    void InnerProduct8iLayer::ForwardCpu(const uint8_t* src, int32_t* dst)
+    void InnerProduct8iLayer::Forward(const uint8_t* src, int32_t* dst)
     {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
         SimdSynetCompatibilityType compatibility = (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed) ?

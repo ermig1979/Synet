@@ -469,7 +469,7 @@ namespace Synet
                 msg << (d ? ", " : " ") << "dst[" << d << "]: " << Cpl::ToStr(stage.dst[d]->GetType()) << " " << ToStr(stage.dst[d]->Shape());
             CPL_LOG_SS(Info, msg.str());
 #endif
-            stage.layer->Forward(stage.src, stage.buf, stage.dst, thread);
+            stage.layer->ForwardPerf(stage.src, stage.buf, stage.dst, thread);
         }
         SetAmxFull();
         SetFastMode(mode);
@@ -516,7 +516,7 @@ namespace Synet
             if ((layer._isBack && printOutput) || printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
             {
                 if(printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
-                    layer.Forward(_threads[thread].stages[i].src, _threads[thread].stages[i].buf, _threads[thread].stages[i].dst, thread);
+                    layer.ForwardPerf(_threads[thread].stages[i].src, _threads[thread].stages[i].buf, _threads[thread].stages[i].dst, thread);
                 os << (layer._isBack ? "Output layer " : "Layer ") << i << ": " << param.name() << " : ";
                 os << Cpl::ToStr(param.type());
                 if (param.type() == LayerTypeMeta)

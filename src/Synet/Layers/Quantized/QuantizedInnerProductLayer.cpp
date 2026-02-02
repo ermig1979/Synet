@@ -289,7 +289,7 @@ namespace Synet
         return true;
     }
 
-    void QuantizedInnerProductLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void QuantizedInnerProductLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         if (_quantizedInnerProduct.Enable())
         {

@@ -548,7 +548,7 @@ namespace Synet
 
         if (_src[0]->Const() && _src[1]->Const())
         {
-            ForwardCpu(_src, buf, dst);
+            Forward(_src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -564,7 +564,7 @@ namespace Synet
         return true;
     }
 
-    void AddLayer::ForwardCpu(const TensorPtrs & src_, const TensorPtrs & buf, const TensorPtrs & dst)
+    void AddLayer::Forward(const TensorPtrs & src_, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         TensorPtrs _src = GetSrc(src_);
         if (_quant)

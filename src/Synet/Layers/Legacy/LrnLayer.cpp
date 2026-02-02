@@ -142,7 +142,7 @@ namespace Synet
         return Layer::MemoryUsage() + _buffer.RawSize();
     }
 
-    void LrnLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void LrnLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         float alpha = _alpha / _size;
         for (size_t b = 0; b < _batch; ++b)

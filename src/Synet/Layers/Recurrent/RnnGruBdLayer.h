@@ -43,7 +43,7 @@ namespace Synet
         virtual void CompactWeight();
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
         int _internal[2];
         InnerProduct32f _innerProduct32f[2];

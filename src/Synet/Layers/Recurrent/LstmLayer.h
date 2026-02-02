@@ -44,7 +44,7 @@ namespace Synet
         virtual void CompactWeight();
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
         void ForwardOneDir(const float* x, const float* h0, const float* c0, const float* w, const float* r, const float* bias, float* buf, float* h, bool rev);
 

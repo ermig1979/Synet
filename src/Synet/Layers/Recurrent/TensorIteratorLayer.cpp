@@ -118,7 +118,7 @@ namespace Synet
         return memoryUsage;
     }
 
-    void TensorIteratorLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void TensorIteratorLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         for (size_t i = 0; i < _iLink.size(); ++i)
             memcpy(_src[_iLink[i].second]->RawData(), src[_iLink[i].first]->RawData(), src[_iLink[i].first]->RawSize());
@@ -133,7 +133,7 @@ namespace Synet
             for (size_t i = 0; i < _srcExt; ++i)
                 memcpy(pSrcI, pSrcE + (i * _itCount + it) * _srcInt * eSrcE, _srcInt * eSrcE);
             for (size_t s = 0; s < _stages.size(); ++s)
-                _stages[s].layer->Forward(_stages[s].src, _stages[s].buf, _stages[s].dst, 0);//ermig: multithread error, temporary solution!
+                _stages[s].layer->ForwardPerf(_stages[s].src, _stages[s].buf, _stages[s].dst, 0);//ermig: multithread error, temporary solution!
             for (size_t b = 0; b < _bLink.size(); ++b)
             {
                 const uint8_t* pSrc = _dst[_bLink[b].first]->RawData();

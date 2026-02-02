@@ -40,7 +40,7 @@ namespace Synet
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
         TensorFormat _format;
         int _shuffleType;

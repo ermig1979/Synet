@@ -44,7 +44,7 @@ namespace Synet
         return true;
     }
 
-    void SwitchLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void SwitchLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         int pred = src[1]->Data<int32_t>()[0];
         if (pred)

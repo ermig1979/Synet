@@ -42,7 +42,7 @@ namespace Synet
         return true;
     }
 
-    void MetaLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void MetaLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
     }
 

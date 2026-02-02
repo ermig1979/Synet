@@ -49,7 +49,7 @@ namespace Synet
         virtual int64_t Flop() const;
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
         void Scale32f(const float* src, float* dst);
 

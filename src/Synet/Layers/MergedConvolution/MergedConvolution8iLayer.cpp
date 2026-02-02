@@ -139,7 +139,7 @@ namespace Synet
         return true;
     }
 
-    void MergedConvolution8iLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void MergedConvolution8iLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         if (_mergedConvolution8i.Enable())
             _mergedConvolution8i.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());

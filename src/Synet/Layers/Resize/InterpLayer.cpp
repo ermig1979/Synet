@@ -420,7 +420,7 @@ namespace Synet
         return true;
     }
 
-    void InterpLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void InterpLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         const uint8_t* src8 = src[0]->RawData();
          uint8_t* dst8 = dst[0]->RawData();

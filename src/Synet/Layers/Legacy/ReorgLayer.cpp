@@ -135,7 +135,7 @@ namespace Synet
         return true;
     }
 
-    void ReorgLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void ReorgLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         const Shape & shape = dst[0]->Shape();
         if(_trans)

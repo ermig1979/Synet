@@ -72,7 +72,7 @@ namespace Synet
         return _batch * _prev * _last * (_last + _prev) * 2;
     }
 
-    void ScaledDotProductAttentionLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void ScaledDotProductAttentionLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         const float* query = src[0]->Data<float>();
         const float* key = src[1]->Data<float>();

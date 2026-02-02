@@ -64,12 +64,12 @@ namespace Synet
         return true;
     }
 
-    void Convolution32fLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void Convolution32fLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
-        ForwardCpu(src[0]->Data<float>(), Layer::Buf32f(buf, 0), dst[0]->Data<float>());
+        Forward(src[0]->Data<float>(), Layer::Buf32f(buf, 0), dst[0]->Data<float>());
     }
 
-    void Convolution32fLayer::ForwardCpu(const float * src, float* buf, float* dst)
+    void Convolution32fLayer::Forward(const float * src, float* buf, float* dst)
     {
         if (_convolution32f.Enable())
             _convolution32f.Forward(src, buf, dst);

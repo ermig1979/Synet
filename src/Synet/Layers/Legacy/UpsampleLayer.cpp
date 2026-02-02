@@ -158,7 +158,7 @@ namespace Synet
         return true;
     }
 
-    void UpsampleLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void UpsampleLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         UpsampleLayerForwardCpu(src[0]->Data<float>(), _channel, _height, _width, _stride, _scale, _reverse, _trans, dst[0]->Data<float>());
     }

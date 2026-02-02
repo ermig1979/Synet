@@ -159,7 +159,7 @@ namespace Synet
         return _inner * _outer * _count * 24;
     }
 
-    void SoftmaxLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void SoftmaxLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         if(_log)
             LogSoftmaxLayerForward(src[0]->Data<float>(), _outer, _count, _inner, dst[0]->Data<float>());

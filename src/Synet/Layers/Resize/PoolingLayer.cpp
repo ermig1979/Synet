@@ -517,17 +517,17 @@ namespace Synet
         return true;
     }
 
-    void PoolingLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void PoolingLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         switch (_type)
         {
-        case TensorType32f: ForwardCpu(src[0]->Data<float>(), dst[0]->Data<float>()); break;
-        case TensorType8u: ForwardCpu(src[0]->Data<uint8_t>(), dst[0]->Data<uint8_t>()); break;
-        case TensorType8i: ForwardCpu(src[0]->Data<int8_t>(), dst[0]->Data<int8_t>()); break;
+        case TensorType32f: Forward(src[0]->Data<float>(), dst[0]->Data<float>()); break;
+        case TensorType8u: Forward(src[0]->Data<uint8_t>(), dst[0]->Data<uint8_t>()); break;
+        case TensorType8i: Forward(src[0]->Data<int8_t>(), dst[0]->Data<int8_t>()); break;
         }
     }
 
-    template <class T> void PoolingLayer::ForwardCpu(const T * src, T * dst)
+    template <class T> void PoolingLayer::Forward(const T * src, T * dst)
     {
         switch (_method)
         {

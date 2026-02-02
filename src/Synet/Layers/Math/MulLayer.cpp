@@ -518,7 +518,7 @@ namespace Synet
 
         if (_src[0]->Const() && _src[1]->Const())
         {
-            ForwardCpu(_src, buf, dst);
+            Forward(_src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -531,7 +531,7 @@ namespace Synet
         return true;
     }
 
-    void MulLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void MulLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         TensorPtrs _src = GetSrc(src);
         const uint8_t* src0 = _src[_index[0]]->RawData();

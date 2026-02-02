@@ -241,7 +241,7 @@ namespace Synet
 
         if (src[0]->Const() && src[1]->Const() && src[2]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -253,7 +253,7 @@ namespace Synet
         return true;
     }
 
-    void WhereLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void WhereLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         if (_where1)
             _where1(src[0]->RawData(), src[1]->RawData(), src[2]->RawData(), _size, dst[0]->RawData());

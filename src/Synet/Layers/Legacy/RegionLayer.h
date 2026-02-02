@@ -41,7 +41,7 @@ namespace Synet
         void GetRegions(const TensorPtrs& src, float threshold, Regions& dst) const;
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
     private:
         size_t _coords, _classes, _num;

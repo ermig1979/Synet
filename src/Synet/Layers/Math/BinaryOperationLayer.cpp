@@ -53,7 +53,7 @@ namespace Synet
 
         if (src[0]->Const() && src[1]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -72,7 +72,7 @@ namespace Synet
         return TensorSize(_dstShape);
     }
 
-    void BinaryOperationLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void BinaryOperationLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         _universalBinary(src[0]->RawData(), _steps0, src[1]->RawData(), _steps1, dst[0]->RawData(), _dstShape);
     }

@@ -42,7 +42,7 @@ namespace Synet
         typedef void (*GridSample2dPtr)(const uint8_t* src8, size_t batch, size_t channels, size_t srcH, size_t srcW, const uint8_t* grid8, size_t dstH, size_t dstW, uint8_t* dst8);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
     private:
         TensorType _type;

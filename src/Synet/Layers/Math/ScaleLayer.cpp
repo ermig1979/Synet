@@ -319,7 +319,7 @@ namespace Synet
         }
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -355,7 +355,7 @@ namespace Synet
         return _batch * _channels * _height * _width * 2;
     }
 
-    void ScaleLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void ScaleLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         if (_is8i)
         {

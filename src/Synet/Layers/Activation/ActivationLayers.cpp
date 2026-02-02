@@ -49,7 +49,7 @@ namespace Synet
             SYNET_ERROR("EluLayer supports only FP32 input and output!");
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -68,7 +68,7 @@ namespace Synet
         return _size * 24;
     }
 
-    void EluLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    void EluLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
         Elu32f(src[0]->Data<float>(), _size, _alpha, dst[0]->Data<float>());
     }
@@ -100,7 +100,7 @@ namespace Synet
             SYNET_ERROR("GeluLayer supports only FP32 input and output!");
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -112,7 +112,7 @@ namespace Synet
         return true;
     }
 
-    void GeluLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    void GeluLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
         Gelu32f(src[0]->Data<float>(), _size, dst[0]->Data<float>());
     }
@@ -147,7 +147,7 @@ namespace Synet
             SYNET_ERROR("HardSigmoidLayer supports only FP32 input and output!");
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -159,7 +159,7 @@ namespace Synet
         return true;
     }
 
-    void HardSigmoidLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    void HardSigmoidLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
         HardSigmoid32f(src[0]->Data<float>(), _size, _scale, _shift, dst[0]->Data<float>());
     }
@@ -194,7 +194,7 @@ namespace Synet
             SYNET_ERROR("HswishLayer supports only FP32 input and output!");
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -206,7 +206,7 @@ namespace Synet
         return true;
     }
 
-    void HswishLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    void HswishLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
         Hswish32f(src[0]->Data<float>(), _size, _shift, _scale, dst[0]->Data<float>());
     }
@@ -232,7 +232,7 @@ namespace Synet
             SYNET_ERROR("MishLayer supports only FP32 input and output!");
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -251,7 +251,7 @@ namespace Synet
         return _size * 28;
     }
 
-    void MishLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    void MishLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
         Mish32f(src[0]->Data<float>(), _size, _threshold, dst[0]->Data<float>());
     }
@@ -291,7 +291,7 @@ namespace Synet
         dst[0]->Reshape(_type, src[0]->Shape(), src[0]->Format());
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -306,7 +306,7 @@ namespace Synet
         return true;
     }
 
-    void ReluLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    void ReluLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
         switch (_type)
         {
@@ -358,7 +358,7 @@ namespace Synet
             SYNET_ERROR("RestrictRangeLayer supports only FP32 input and output!");
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -370,7 +370,7 @@ namespace Synet
         return true;
     }
 
-    void RestrictRangeLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    void RestrictRangeLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
         RestrictRange32f(src[0]->Data<float>(), _size, _lower, _upper, dst[0]->Data<float>());
     }
@@ -395,7 +395,7 @@ namespace Synet
             SYNET_ERROR("SigmoidLayer supports only FP32 input and output!");
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -414,7 +414,7 @@ namespace Synet
         return _size * 22;
     }
 
-    void SigmoidLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    void SigmoidLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
         Sigmoid32f(src[0]->Data<float>(), _size, dst[0]->Data<float>());
     }
@@ -442,7 +442,7 @@ namespace Synet
             SYNET_ERROR("SoftplusLayer supports only FP32 input and output!");
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -461,7 +461,7 @@ namespace Synet
         return _size * 45;
     }
 
-    void SoftplusLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    void SoftplusLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
         Softplus32f(src[0]->Data<float>(), _size, _beta, _threshold, dst[0]->Data<float>());
     }
@@ -486,7 +486,7 @@ namespace Synet
             SYNET_ERROR("SwishLayer supports only FP32 input and output!");
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -505,7 +505,7 @@ namespace Synet
         return _size * 24;
     }
 
-    void SwishLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    void SwishLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
         Swish32f(src[0]->Data<float>(), _size, dst[0]->Data<float>());
     }

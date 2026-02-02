@@ -43,11 +43,11 @@ namespace Synet
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
         void Quantize();
 
-        void ForwardCpu(const uint8_t* src, int32_t* dst);
+        void Forward(const uint8_t* src, int32_t* dst);
 
     private:
         QuantizationMethod _method;

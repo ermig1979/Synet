@@ -214,12 +214,12 @@ namespace Synet
         return true;
     }
 
-    void MergedConvolution32fLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void MergedConvolution32fLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
-        ForwardCpu(src[0]->Data<float>(), Layer::Buf32f(buf, 0), Layer::Buf32f(buf, 1), dst[0]->Data<float>());
+        Forward(src[0]->Data<float>(), Layer::Buf32f(buf, 0), Layer::Buf32f(buf, 1), dst[0]->Data<float>());
     }
 
-    void MergedConvolution32fLayer::ForwardCpu(const float * src, float* buf0, float* buf1, float* dst)
+    void MergedConvolution32fLayer::Forward(const float * src, float* buf0, float* buf1, float* dst)
     {
         if (_mergedConvolution32f.Enable())
             _mergedConvolution32f.Forward(src, buf0, dst);

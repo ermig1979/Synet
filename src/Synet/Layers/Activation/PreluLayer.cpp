@@ -92,7 +92,7 @@ namespace Synet
 
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -111,7 +111,7 @@ namespace Synet
         return _batch * _channels * _spatial * 4;
     }
 
-    void PreluLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void PreluLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         const float * pSrc = src[0]->Data<float>();
         const float* pSlope = this->Weight()[0].Data<float>();

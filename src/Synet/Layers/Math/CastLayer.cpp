@@ -89,7 +89,7 @@ namespace Synet
             dst[0]->Reshape(_dstType, src[0]->Shape(), src[0]->Format());
             if (src[0]->Const())
             {
-                ForwardCpu(src, buf, dst);
+                Forward(src, buf, dst, 0);
                 dst[0]->SetConst(true);
                 _const = true;
             }
@@ -109,7 +109,7 @@ namespace Synet
         return _size;
     }
 
-    void CastLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void CastLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         _cast(src[0]->RawData(), _size, dst[0]->RawData());
     }

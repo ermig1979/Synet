@@ -139,7 +139,7 @@ namespace Synet
         return true;
     }
 
-    void SpaceToDepthLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void SpaceToDepthLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         _spaceToDepth(src[0]->RawData(), _batch, _srcC, _srcH, _srcW, dst[0]->RawData(), _format);
     }

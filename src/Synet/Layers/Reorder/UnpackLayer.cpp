@@ -84,7 +84,7 @@ namespace Synet
             }
             if (src[0]->Const())
             {
-                ForwardCpu(src, buf, dst);
+                Forward(src, buf, dst, 0);
                 for (size_t i = 0; i < _count; ++i)
                     dst[i]->SetConst(true);
                 _const = true;
@@ -119,7 +119,7 @@ namespace Synet
         }
     }
 
-    void UnpackLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void UnpackLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         switch (_srcType)
         {

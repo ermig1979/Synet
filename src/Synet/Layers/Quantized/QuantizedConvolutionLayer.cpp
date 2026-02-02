@@ -330,7 +330,7 @@ namespace Synet
         return true;
     }
 
-    void QuantizedConvolutionLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void QuantizedConvolutionLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         if (_quantizedConvolution.Enable())
         {

@@ -44,7 +44,7 @@ namespace Synet
         };
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
     private:
         int _maxOutputBoxesPerClass, _numClasses, _size, _num, _oneClass;

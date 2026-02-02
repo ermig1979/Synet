@@ -47,7 +47,7 @@ namespace Synet
         return true;
     }
 
-    void InputLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void InputLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
     }    
 }

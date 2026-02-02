@@ -139,7 +139,7 @@ namespace Synet
 
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -152,7 +152,7 @@ namespace Synet
         return true;
     }
 
-    void QuantizedPreluLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void QuantizedPreluLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         const uint8_t* src0 = src[0]->Data<uint8_t>();
         uint8_t* dst0 = dst[0]->Data<uint8_t>();

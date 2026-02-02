@@ -38,7 +38,7 @@ namespace Synet
         typedef void (*TopKPtr)(const uint8_t* src8, size_t outer, size_t count, size_t inner, size_t k, uint8_t* buf8, uint8_t* dst8, uint8_t* idx8);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
     private:
         size_t _axis, _outer, _count, _inner, _k;

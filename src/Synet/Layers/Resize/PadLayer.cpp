@@ -136,7 +136,7 @@ namespace Synet
         return true;
     }
 
-    void PadLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void PadLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         switch (_dims)
         {

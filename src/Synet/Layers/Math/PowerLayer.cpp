@@ -64,7 +64,7 @@ namespace Synet
         }
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -86,7 +86,7 @@ namespace Synet
             return _size * 41;
     }
 
-    void PowerLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void PowerLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         const float* pSrc = src[0]->Data<float>();
         float* pDst = dst[0]->Data<float>();

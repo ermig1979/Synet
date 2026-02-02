@@ -331,7 +331,7 @@ namespace Synet
 			SYNET_ERROR("StridedSliceLayer: Can't get handler for current src[0]!");
 		if (src[0]->Const())
 		{
-			ForwardCpu(src, buf, dst);
+			Forward(src, buf, dst, 0);
 			dst[0]->SetConst(true);
 			_const = true;
 		}
@@ -343,7 +343,7 @@ namespace Synet
         return true;
     }
 
-	void StridedSliceLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+	void StridedSliceLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
 	{
 		_stridedSlice(src[0]->RawData(), _srcStrides.data(), _beginDims.data(), _dstDims.data(), _strideDims.data(), dst[0]->RawData(), _dstStrides.data());
 	}

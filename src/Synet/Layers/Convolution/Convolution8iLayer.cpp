@@ -120,7 +120,7 @@ namespace Synet
         return true;
     }
 
-    void Convolution8iLayer::ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    void Convolution8iLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
         if (_convolution8i.Enable())
             _convolution8i.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());
@@ -140,7 +140,7 @@ namespace Synet
                     _srcCvt.Convert(src32f, src8u);
                     src32f += alg.sSize;
                 }
-                ForwardCpu(src8u, buf8u, sum32i, dst32f);
+                Forward(src8u, buf8u, sum32i, dst32f);
                 if (_src8u)
                     src8u += alg.sSize;
                 if (_dst8u)
@@ -284,7 +284,7 @@ namespace Synet
         }
     }
 
-    void Convolution8iLayer::ForwardCpu(const uint8_t* src, uint8_t* buf, int32_t* sum, float* dst)
+    void Convolution8iLayer::Forward(const uint8_t* src, uint8_t* buf, int32_t* sum, float* dst)
     {
         const bool overflow16i = true;
         const ConvParam& conv = this->_conv;

@@ -48,7 +48,7 @@ namespace Synet
 
         virtual bool Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst);
 
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
         void DirectConvolution8i(const uint8_t* src, size_t cIdx, size_t wIdx, const uint8_t* zero, uint8_t* buf, int32_t* sum, float* dst);
 

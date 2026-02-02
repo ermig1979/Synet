@@ -90,7 +90,7 @@ namespace Synet
             dst[0]->Reshape(TensorType32f, src[0]->Shape(), src[0]->Format());
         if (src[0]->Const() && (src.size() == 1 || src[1]->Const()))
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -102,7 +102,7 @@ namespace Synet
         return true;
     }
 
-    void BiasLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void BiasLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         const float * pSrc = src[0]->Data<float>();
         const float * pBias = src.size() > 1 ? src[1]->Data<float>() : this->Weight()[0].Data<float>();

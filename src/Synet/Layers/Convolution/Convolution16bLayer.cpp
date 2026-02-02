@@ -81,7 +81,7 @@ namespace Synet
         return true;
     }
 
-    void Convolution16bLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void Convolution16bLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         if (_convolution16b.Enable())
             _convolution16b.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());

@@ -42,7 +42,7 @@ namespace Synet
         typedef void (*UniversalPtr)(const uint8_t* a, const Shape& aSteps, const uint8_t* b, const Shape& bSteps, uint8_t* dst, const Shape& dstShape);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
         TensorPtrs GetSrc(const TensorPtrs& src);
     private:

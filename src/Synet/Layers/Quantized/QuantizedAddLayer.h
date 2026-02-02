@@ -48,7 +48,7 @@ namespace Synet
             const float* params, uint8_t* dst, const Shape& dstShape, float dScale, int dZero);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
         TensorType _aType, _bType, _dType;
         ActivationFunctionType _activationType;

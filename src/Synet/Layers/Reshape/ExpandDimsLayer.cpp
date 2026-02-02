@@ -76,7 +76,7 @@ namespace Synet
         return true;
     }
 
-    void ExpandDimsLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void ExpandDimsLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
     }
 }

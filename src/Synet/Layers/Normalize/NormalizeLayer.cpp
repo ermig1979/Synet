@@ -554,7 +554,7 @@ namespace Synet
         return true;
     }
 
-    void NormalizeLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void NormalizeLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         const float* pSrc = src[0]->Data<float>();
         float* pDst = dst[0]->Data<float>();

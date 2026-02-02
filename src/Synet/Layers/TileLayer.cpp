@@ -111,7 +111,7 @@ namespace Synet
         dst[0]->Reshape(_srcType, dstShape, src[0]->Format());
         if (src[0]->Const() && src[1]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -123,7 +123,7 @@ namespace Synet
         return true;
     }
 
-    void TileLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void TileLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         switch (_srcType)
         {

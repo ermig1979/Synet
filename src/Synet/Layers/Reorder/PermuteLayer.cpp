@@ -224,7 +224,7 @@ namespace Synet
             }
             if (src[0]->Const())
             {
-                ForwardCpu(src, buf, dst);
+                Forward(src, buf, dst, 0);
                 dst[0]->SetConst(true);
                 _const = true;
             }
@@ -242,7 +242,7 @@ namespace Synet
         return true;
     }
 
-    void PermuteLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void PermuteLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         if (_simdPermute->Enable())
             _simdPermute->Forward(src[0]->RawData(), dst[0]->RawData());

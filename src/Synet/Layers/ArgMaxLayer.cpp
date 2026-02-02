@@ -61,7 +61,7 @@ namespace Synet
 
         if (src[0]->Const())
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -91,7 +91,7 @@ namespace Synet
         }
     }
 
-    void ArgMaxLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void ArgMaxLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         int64_t* pDst = dst[0]->Data<int64_t>();
         switch (_srcT)

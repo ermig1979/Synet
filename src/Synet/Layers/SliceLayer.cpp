@@ -95,7 +95,7 @@ namespace Synet
         return true;
     }
 
-    void SliceLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void SliceLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         size_t offsetSliceAxis = 0;
         const float * pSrc = src[0]->Data<float>();

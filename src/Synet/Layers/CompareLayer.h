@@ -38,7 +38,7 @@ namespace Synet
         typedef void (*ComparePtr)(const uint8_t* a, const uint8_t* b, size_t size, CompareType type, uint8_t* dst);
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
         CompareType _compareType;
         TensorType _srcType, _dstType;

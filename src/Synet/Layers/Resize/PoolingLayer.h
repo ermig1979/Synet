@@ -41,9 +41,9 @@ namespace Synet
 
     protected:
 
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
-        template <class T> void ForwardCpu(const T* src, T* dst);
+        template <class T> void Forward(const T* src, T* dst);
 
     private:
         TensorFormat _format;

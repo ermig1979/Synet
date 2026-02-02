@@ -114,7 +114,7 @@ namespace Synet
         dst[0]->Reshape(TensorType8u, dstShape, src[0]->Format());
         if (_const)
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
         }
         else
@@ -125,7 +125,7 @@ namespace Synet
         return true;
     }
 
-    void QuantizedConcatLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void QuantizedConcatLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         QuantizedConcatLayerForward(_src.size(), _src.data(), _outputSize, _srcSize.data(), _bias.data(), _norm.data(), _scale, _zero, dst[0]->Data<uint8_t>());
     }

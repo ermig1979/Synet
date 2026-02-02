@@ -253,15 +253,15 @@ namespace Synet
         return true;
     }
 
-    void QuantizedMergedConvolutionLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void QuantizedMergedConvolutionLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         if (_quantizedMergedConvolution.Enable())
             _quantizedMergedConvolution.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());
         else
-            ForwardCpu(src[0]->RawData(), Layer::Buf8u(buf, 0), Layer::Buf32i(buf, 0), dst[0]->RawData());
+            Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), Layer::Buf32i(buf, 0), dst[0]->RawData());
     }
 
-    void QuantizedMergedConvolutionLayer::ForwardCpu(const uint8_t* src, uint8_t* buf, int32_t* sum, uint8_t* dst)
+    void QuantizedMergedConvolutionLayer::Forward(const uint8_t* src, uint8_t* buf, int32_t* sum, uint8_t* dst)
     {
         const bool overflow16i = true;
         for (size_t b = 0; b < _batch; ++b)

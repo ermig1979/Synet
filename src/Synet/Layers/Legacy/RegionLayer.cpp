@@ -111,7 +111,7 @@ namespace Synet
         }
     }
 
-    void RegionLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void RegionLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         size_t size = _coords + _classes + 1;
         size_t batch = src[0]->Axis(0);

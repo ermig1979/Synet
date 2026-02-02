@@ -142,7 +142,7 @@ namespace Synet
         return true;
     }
 
-    void PriorBoxLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void PriorBoxLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
     }
 

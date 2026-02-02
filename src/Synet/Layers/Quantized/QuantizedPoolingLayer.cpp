@@ -301,7 +301,7 @@ namespace Synet
         return true;
     }
 
-    void QuantizedPoolingLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void QuantizedPoolingLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         if (_method == PoolingMethodTypeAverage)
         {

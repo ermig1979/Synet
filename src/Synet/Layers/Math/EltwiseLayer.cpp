@@ -112,7 +112,7 @@ namespace Synet
             _const = _const && src[i]->Const();
         if (_const)
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
         }
         else
@@ -130,7 +130,7 @@ namespace Synet
         return _size * (_coefficients.size() - 1) * (_operation == EltwiseOperationTypeSum ? 2 : 1);
     }
 
-    void EltwiseLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void EltwiseLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         std::vector<uint8_t*> _src(src.size());
         for (size_t i = 0; i < src.size(); ++i)

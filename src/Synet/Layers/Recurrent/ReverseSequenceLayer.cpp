@@ -85,7 +85,7 @@ namespace Synet
         if (src[0]->Const())
         {
             _const = true;
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
         }
         else
@@ -96,7 +96,7 @@ namespace Synet
         return true;
     }
 
-    void ReverseSequenceLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void ReverseSequenceLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         _reverseSequence(src[0]->RawData(), _outer, _reverse, _inner, dst[0]->RawData());
     }

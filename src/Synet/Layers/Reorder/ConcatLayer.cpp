@@ -103,7 +103,7 @@ namespace Synet
         _special2N = (src.size() == 2 && _srcConcatAxis[0] == _srcConcatAxis[1]) ? _srcConcatAxis[0] : 0;
         if (allConst)
         {
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, 0);
             dst[0]->SetConst(true);
             _const = true;
         }
@@ -142,7 +142,7 @@ namespace Synet
         return true;
     }
 
-    void ConcatLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void ConcatLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         if (src.size() == 1)
             return;

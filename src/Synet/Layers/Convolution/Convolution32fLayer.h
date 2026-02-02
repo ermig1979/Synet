@@ -43,9 +43,9 @@ namespace Synet
 
         virtual bool Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst);
 
-        virtual void ForwardCpu(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
-        void ForwardCpu(const float* src, float* buf, float* dst);
+        void Forward(const float* src, float* buf, float* dst);
 
     private:
         Convolution32f _convolution32f;

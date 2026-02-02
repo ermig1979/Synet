@@ -131,14 +131,14 @@ namespace Synet
 
         virtual bool Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
 
-        inline void Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
+        inline void ForwardPerf(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
         {
             if (_const)
                 return;
             InitPerfStat(thread);
             SYNET_PERF_TEST(_perfComm[thread]);
             SYNET_PERF_TEST(_perfSpec[thread]);
-            ForwardCpu(src, buf, dst);
+            Forward(src, buf, dst, thread);
         }
 
         bool Load(std::istream & is, const LayerSharedPtrs & layers)
@@ -209,7 +209,7 @@ namespace Synet
         }
 
     protected:
-        virtual void ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
+        virtual void Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread) = 0;
 
         void UsePerfStat(const String & desc = "", int64_t flop = 0)
         {

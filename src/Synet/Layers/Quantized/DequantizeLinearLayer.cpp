@@ -88,7 +88,7 @@ namespace Synet
             dst[0]->Reshape(TensorType32f, src[0]->Shape(), src[0]->Format());
             if (src[0]->Const())
             {
-                ForwardCpu(src, buf, dst);
+                Forward(src, buf, dst, 0);
                 dst[0]->SetConst(true);
                 _const = true;
             }
@@ -120,7 +120,7 @@ namespace Synet
         return true;
     }
 
-    void DequantizeLinearLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void DequantizeLinearLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         if (_uniform)
             _uniform(src[0]->RawData(), _type, _bias, _norm, _size, dst[0]->Data<float>());

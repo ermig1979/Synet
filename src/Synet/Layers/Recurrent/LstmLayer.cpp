@@ -111,7 +111,7 @@ namespace Synet
             ((Tensor&)this->Weight()[1]).Clear();
     }
 
-    void LstmLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void LstmLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         const float * x = src[0]->Data<float>();
         const float * h0 = src[1]->Data<float>(Shp(0, 0, 0));

@@ -81,7 +81,7 @@ namespace Synet
         return true;
     }
 
-    void InnerProduct16bLayer::ForwardCpu(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst)
+    void InnerProduct16bLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         if (_innerProduct16b.Enable())
         {
