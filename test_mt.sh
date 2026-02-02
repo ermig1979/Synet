@@ -51,7 +51,7 @@ PATHES="-sm=$DIR/synet${FILE_ID}.xml -sw=$DIR/synet${FILE_ID}.bin -id=$IMAGE -od
 if [ "$GROUP" = "" ]; then
   LOG=./test/"$FRAMEWORK"/"$NAME"/m"$PREFIX"_"$NAME"_t"$THREAD"_f"$FORMAT"_b"$BATCH"_"$NUM_FMT"_v"$VERSION"_p"$PERF".txt
 else
-  LOG=./test/"$FRAMEWORK"/"$GROUP"/m"$NAME"/"$PREFIX"_"$NAME"_t"$THREAD"_f"$FORMAT"_b"$BATCH"_"$NUM_FMT"_v"$VERSION"_p"$PERF".txt
+  LOG=./test/"$FRAMEWORK"/"$GROUP"/"$NAME"/m"$PREFIX"_"$NAME"_t"$THREAD"_f"$FORMAT"_b"$BATCH"_"$NUM_FMT"_v"$VERSION"_p"$PERF".txt
 fi
 BIN_TMT="$BIN_DIR"/test_multi_threads
 

@@ -25,6 +25,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Synet\Fabric.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Activation\ActivationLayers.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Activation\PreluLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ArgMaxLayer.cpp" />
