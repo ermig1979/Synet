@@ -5,7 +5,7 @@
     <ProjectGuid>88714303-76f4-44a7-96f1-d7b5084be739</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>Perf.py</StartupFile>
+    <StartupFile>CheckMt.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>../..</WorkingDirectory>
@@ -27,6 +27,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Check.py" />
+    <Compile Include="CheckMt.py" />
     <Compile Include="CocoToTxt.py" />
     <Compile Include="Perf.py" />
     <Compile Include="PerfBf16.py" />
