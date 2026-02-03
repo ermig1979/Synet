@@ -792,7 +792,7 @@ namespace Test
             const Output& control = test.output[0];
             const Output& current = test.output[thread];
             String failed = TestFailedMessage(test, index, thread);
-            OutputComparer outputComparer(_options, _param(), test.input[0].Shape(), control);
+            OutputComparer outputComparer(_options, _param(), _net.NchwShape(), control);
             return outputComparer.Compare(control, current, failed);
         }
 

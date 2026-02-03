@@ -1,1 +1,1 @@
-python3 ./py/Scripts/CheckMt.py $1 $2 $3 $4 $5 $6 $7 $8 $9 
+python3 ./py/Scripts/CheckMt.py -pl=2 -bf=1 $1 $2 $3 $4 $5 $6 $7 $8 $9 
