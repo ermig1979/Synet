@@ -237,16 +237,16 @@ namespace Synet
     GridSampleLayer::GridSampleLayer(const LayerParam& param, Context* context)
         : Layer(param, context)
     {
-#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        _context = NULL;
-#endif
     }
 
     GridSampleLayer::~GridSampleLayer()
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        if (_context)
-            SimdRelease(_context);
+        for (size_t i = 0; i < _context.size(); ++i)
+        {
+            if (_context[i])
+                SimdRelease(_context[i]);
+        }
 #endif
     }
 
@@ -290,8 +290,12 @@ namespace Synet
         this->UsePerfStat(desc.str());
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        _context = SimdSynetGridSample2dInit(_batch, _channels, _srcH, _srcW, _dstH, _dstW, (SimdTensorDataType)_type,
-            (SimdGridSampleInterpType)_interp, (SimdGridSamplePaddingType)_padding, _align ? SimdTrue : SimdFalse);
+        _context.resize(this->Threads(), 0);
+        for (size_t i = 0; i < _context.size(); ++i)
+        {
+            _context[i] = SimdSynetGridSample2dInit(_batch, _channels, _srcH, _srcW, _dstH, _dstW, (SimdTensorDataType)_type,
+                (SimdGridSampleInterpType)_interp, (SimdGridSamplePaddingType)_padding, _align ? SimdTrue : SimdFalse);
+        }
 #endif
 
         return true;
@@ -301,8 +305,11 @@ namespace Synet
     {
         size_t size = Layer::MemoryUsage();
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        if (_context)
-            size += SimdSynetGridSample2dInternalBufferSize(_context);
+        for (size_t i = 0; i < _context.size(); ++i)
+        {
+            if (_context[i])
+                size += SimdSynetGridSample2dInternalBufferSize(_context[i]);
+        }
 #endif
         return size;
     }
@@ -310,9 +317,9 @@ namespace Synet
     void GridSampleLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        if (_context)
+        if (_context[thread])
         {
-            SimdSynetGridSample2dForward(_context, src[0]->RawData(), src[1]->RawData(), dst[0]->RawData());
+            SimdSynetGridSample2dForward(_context[thread], src[0]->RawData(), src[1]->RawData(), dst[0]->RawData());
             return;
         }
 #endif

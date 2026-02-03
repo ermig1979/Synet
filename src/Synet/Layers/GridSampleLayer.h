@@ -52,7 +52,7 @@ namespace Synet
         size_t _batch, _channels, _srcH, _srcW, _dstH, _dstW;
         GridSample2dPtr _gridSample2d;
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        void* _context;
+        std::vector<void*> _context;
 #endif
     };
 }
