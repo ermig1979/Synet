@@ -68,6 +68,8 @@ namespace Synet
 
         GetPriorBBoxes(src[2]->Data<float>(), _numPriors, _priorBboxes, _priorVariances);
 
+        _threads.resize(this->Layer::Threads());
+
         Shape shape(2, 1);
         shape.push_back(1);
         shape.push_back(7);
@@ -111,15 +113,18 @@ namespace Synet
         const float* pConf = src[1]->Data<float>();
         size_t num = src[0]->Axis(0);
 
-        GetLocPredictions(pLoc, num, _numPriors, _numLocClasses, _shareLocation, _allLocPreds);
+        LabelBBoxes allLocPreds, allDecodeBboxes;
+        LabelPreds allConfScores;
 
-        GetConfidenceScores(pConf, num, _numPriors, _numClasses, _allConfScores, false);
+        GetLocPredictions(pLoc, num, _numPriors, _numLocClasses, _shareLocation, _threads[thread].allLocPreds);
+
+        GetConfidenceScores(pConf, num, _numPriors, _numClasses, _threads[thread].allConfScores, false);
 
         if (_keepMaxClassScoresOnly)
         {
             for (size_t i = 0; i < num; ++i) 
             {
-                LabelPred & labelScores = _allConfScores[i];
+                LabelPred & labelScores = _threads[thread].allConfScores[i];
                 for (size_t p = 0; p < _numPriors; ++p)
                 {
                     float maxScore = 0.0f;
@@ -139,15 +144,15 @@ namespace Synet
             }
         }
 
-        DecodeBBoxesAll(_allLocPreds, _priorBboxes, _priorVariances, num, _shareLocation, _numLocClasses,
-            _backgroundLabelId, _codeType, _varianceEncodedInTarget, _clip, _allDecodeBboxes);
+        DecodeBBoxesAll(_threads[thread].allLocPreds, _priorBboxes, _priorVariances, num, _shareLocation, _numLocClasses,
+            _backgroundLabelId, _codeType, _varianceEncodedInTarget, _clip, _threads[thread].allDecodeBboxes);
 
         size_t numKept = 0;
         IndexMaps allIndices;
         for (size_t i = 0; i < num; ++i) 
         {
-            const LabelBBox & decodeBboxes = _allDecodeBboxes[i];
-            const LabelPred & confScores = _allConfScores[i];
+            const LabelBBox & decodeBboxes = _threads[thread].allDecodeBboxes[i];
+            const LabelPred & confScores = _threads[thread].allConfScores[i];
             IndexMap indices;
             size_t numDet = 0;
             for (size_t c = 0; c < _numClasses; ++c)
@@ -221,8 +226,8 @@ namespace Synet
         size_t count = 0;
         for (size_t i = 0; i < num; ++i) 
         {
-            const LabelPred & confScores = _allConfScores[i];
-            const LabelBBox & decodeBboxes = _allDecodeBboxes[i];
+            const LabelPred & confScores = _threads[thread].allConfScores[i];
+            const LabelBBox & decodeBboxes = _threads[thread].allDecodeBboxes[i];
             for (IndexMap::iterator it = allIndices[i].begin(); it != allIndices[i].end(); ++it) 
             {
                 int label = it->first;

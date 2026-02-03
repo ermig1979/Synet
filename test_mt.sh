@@ -61,7 +61,6 @@ if [ -f $IMAGE/descript.ion ];then rm $IMAGE/descript.ion; fi
 
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
-echo "$BIN_TMT" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=1 -bs=$BATCH -ct=$THRESHOLD -bf=$BF16 -re=0 -et=10.0 -ie=10 -be=100 -dp=0 -dpf=6 -dpl=2 -dpp=4 -ar=0 -rt=0.3 -cs=0 -pl=$PERF -ln=$LOG
 "$BIN_TMT" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=1 -bs=$BATCH -ct=$THRESHOLD -bf=$BF16 -re=0 -et=10.0 -ie=10 -be=100 -dp=0 -dpf=6 -dpl=2 -dpp=4 -ar=0 -rt=0.3 -cs=0 -pl=$PERF -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }

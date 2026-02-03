@@ -285,8 +285,7 @@ def RunTest(context, test, format, batch, bf16):
 			return context.Error("Conversion error in test {0} :\n{1}".format(log, out))
 		
 	num = 2 if args.fast else 10
-	cmd = "{0} -e=3 {1} -rn=1 -wt=1 -tt={10} -ie={2} -be={2} -tf={3} -bs={4} -ct={5} -cs=1 -pt=0 -ln={6} -pl={7} -bf={8} -cp={9}".format(binTmtPath, pathArgs, num, format, batch, args.threshold, log, args.performanceLog, bf16, args.comparePrecise, args.internalThreads)
-	print(cmd)
+	cmd = "{0} -m=compare -e=3 {1} -rn=1 -wt=1 -tt={10} -ie={2} -be={2} -tf={3} -bs={4} -ct={5} -cs=1 -pt=0 -ln={6} -pl={7} -bf={8} -cp={9}".format(binTmtPath, pathArgs, num, format, batch, args.threshold, log, args.performanceLog, bf16, args.comparePrecise, args.internalThreads)
 	result = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
 	out += result.stdout.decode('utf-8')
 	if result.returncode != 0 :
@@ -345,7 +344,7 @@ def main():
 	parser.add_argument("-s", "--src", help="Tests data path.", required=False, type=str, default="./data")
 	parser.add_argument("-l", "--list", help="Alternative test list path.", required=False, type=str, default="")	
 	parser.add_argument("-b", "--bin", help="Tests binary path.", required=False, type=str, default="./build")
-	parser.add_argument("-d", "--dst", help="Output tests path.", required=False, type=str, default="../test/check_mt")
+	parser.add_argument("-d", "--dst", help="Output tests path.", required=False, type=str, default="./test/check_mt")
 	parser.add_argument("-it", "--internalThreads", help="Tests threads number.", required=False, type=int, default=2)
 	parser.add_argument("-et", "--externalThreads", help="Tests threads number.", required=False, type=int, default=-1)
 	parser.add_argument("-f", "--fast", help="Fast check flag (no model conversion, small number of test images).", required=False, type=bool, default=False)

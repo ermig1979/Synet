@@ -85,8 +85,14 @@ namespace Synet
         float _confidenceThreshold, _nmsThreshold, _eta;
         NormalizedBBoxes _priorBboxes;
         Variances _priorVariances;
-        LabelBBoxes _allLocPreds, _allDecodeBboxes;
-        LabelPreds _allConfScores;
+
+        struct Thread
+        {
+            LabelBBoxes allLocPreds, allDecodeBboxes;
+            LabelPreds allConfScores;
+        };
+        typedef std::vector<Thread> Threads;
+        Threads _threads;
 
         void GetLocPredictions(const float* pLoc, size_t num, size_t numPredsPerClass, size_t numLocClasses, bool shareLocation, LabelBBoxes& locPreds);
 

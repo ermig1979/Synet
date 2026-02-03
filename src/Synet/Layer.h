@@ -175,6 +175,11 @@ namespace Synet
             return _context->tensorUsers[name];
         }
 
+        inline size_t Threads() const
+        {
+            return _context->threads;
+        }
+
     protected:
         bool _const;
 
