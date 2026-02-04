@@ -225,7 +225,7 @@ namespace Synet
         else
         {
             for (size_t i = 0; i < _threads[0].input.size(); ++i)
-                _threads[0].input[i].layer->Reshape(_threads[0].input[i].src, _threads[0].input[i].buf, _threads[0].input[i].dst);
+                _threads[0].input[i].layer->Reshape(_threads[0].input[i].src, _threads[0].buf, _threads[0].input[i].dst);
         }
 
         if (!(ReshapeStages() && CloneThreadBuffers(threads)))
@@ -469,7 +469,7 @@ namespace Synet
                 msg << (d ? ", " : " ") << "dst[" << d << "]: " << Cpl::ToStr(stage.dst[d]->GetType()) << " " << ToStr(stage.dst[d]->Shape());
             CPL_LOG_SS(Info, msg.str());
 #endif
-            stage.layer->ForwardPerf(stage.src, stage.buf, stage.dst, thread);
+            stage.layer->ForwardPerf(stage.src, _threads[thread].buf, stage.dst, thread);
         }
         SetAmxFull();
         SetFastMode(mode);
@@ -516,7 +516,7 @@ namespace Synet
             if ((layer._isBack && printOutput) || printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
             {
                 if(printLayerDst || printLayerWeight || printInt8Buffers || printLayerInternal)
-                    layer.ForwardPerf(_threads[thread].stages[i].src, _threads[thread].stages[i].buf, _threads[thread].stages[i].dst, thread);
+                    layer.ForwardPerf(_threads[thread].stages[i].src, _threads[thread].buf, _threads[thread].stages[i].dst, thread);
                 os << (layer._isBack ? "Output layer " : "Layer ") << i << ": " << param.name() << " : ";
                 os << Cpl::ToStr(param.type());
                 if (param.type() == LayerTypeMeta)
@@ -534,9 +534,9 @@ namespace Synet
                 {
                     const Tensor& src = *_threads[thread].stages[i].src[0];
                     if (src.GetType() == TensorType32f)
-                        _threads[thread].stages[i].buf[TensorType8u * BUFFER_COUNT + 1]->DebugPrint(os, src.Shape(), src.Format(), String("src"), false, first, last, precision);
+                        _threads[thread].buf[TensorType8u * BUFFER_COUNT + 1]->DebugPrint(os, src.Shape(), src.Format(), String("src"), false, first, last, precision);
                     const Tensor& dst = *_threads[thread].stages[i].dst[0];
-                    _threads[thread].stages[i].buf[TensorType32i * BUFFER_COUNT + 0]->DebugPrint(os, dst.Shape(), dst.Format(), String("sum"), false, first, last, precision);
+                    _threads[thread].buf[TensorType32i * BUFFER_COUNT + 0]->DebugPrint(os, dst.Shape(), dst.Format(), String("sum"), false, first, last, precision);
                 }
                 if (printLayerInternal)
                 {
@@ -808,7 +808,6 @@ namespace Synet
                     _threads[0].src.push_back(_threads[0].tensors.back().get());
                 }
             }
-            stage.buf = _threads[0].buf;
             if (Is8i())
                 stage.layer->SetStats(_stats);
             if (param.type() == LayerTypeInput)
@@ -1089,7 +1088,7 @@ namespace Synet
         {
             Stage& stage = _threads[0].stages[i];
             const LayerParam& param = stage.layer->Param();
-            if (!stage.layer->Reshape(stage.src, stage.buf, stage.dst))
+            if (!stage.layer->Reshape(stage.src, _threads[0].buf, stage.dst))
             {
                 std::stringstream err;
                 err << "Can't reshape " << i << " layer with name: " << Cpl::ToStr(param.name()) << ", type: " << Cpl::ToStr(param.type());
@@ -1297,7 +1296,6 @@ namespace Synet
             for (size_t i = 0; i < _threads[0].input.size(); ++i)
             {
                 _threads[t].input[i].layer = _threads[0].input[i].layer;
-                _threads[t].input[i].buf = _threads[t].buf;
                 _threads[t].input[i].dst.resize(_threads[0].input[i].dst.size());
                 for (size_t j = 0; j < _threads[0].input[i].dst.size(); ++j)
                 {
@@ -1315,7 +1313,6 @@ namespace Synet
             for (size_t i = 0; i < _threads[0].stages.size(); ++i)
             {
                 _threads[t].stages[i].layer = _threads[0].stages[i].layer;
-                _threads[t].stages[i].buf = _threads[t].buf;
                 _threads[t].stages[i].src.resize(_threads[0].stages[i].src.size());
                 for (size_t j = 0; j < _threads[0].stages[i].src.size(); ++j)
                 {

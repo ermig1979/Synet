@@ -135,7 +135,6 @@ namespace Synet
         {
             Layer * layer;
             TensorPtrs src;
-            TensorPtrs buf;
             TensorPtrs dst;
         };
         typedef std::vector<Stage> Stages;
