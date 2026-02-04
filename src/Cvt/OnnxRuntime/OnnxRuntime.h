@@ -1053,23 +1053,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertReduceL2Node(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypeReduction;
-            layer.reduction().type() = ReductionTypeL2;
-            if (!ConvertAtrributeInts(node, "axes", layer.reduction().axis()))
-                return false;
-            if (!ConvertAtrributeInt(node, "keepdims", layer.reduction().keepDims()))
-                return false;
-            if (trans && !PermutedToNchw(layers, false, true, true))
-            {
-                Ints nchw = Ints({ 0, 3, 1, 2 }), axis = layer.reduction().axis();
-                for (size_t i = 0; i < axis.size(); ++i)
-                    layer.reduction().axis()[i] = nchw[axis[i]];
-            }
-            return true;
-        }
-
         bool ConvertReduceMaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeReduction;

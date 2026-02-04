@@ -47,6 +47,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearGlobalAveragePoolNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearMatMulNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQuantizeLinearNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceL2Node.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceMeanNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.cpp" />
   </ItemGroup>

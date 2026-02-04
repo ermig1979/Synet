@@ -73,6 +73,8 @@ namespace Synet
 
     bool ConvertQuantizeLinearNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer);
 
+    bool ConvertReduceL2Node(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer);
+
     bool ConvertReduceMeanNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, UniqNames& merged);
 }
 
