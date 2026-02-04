@@ -47,7 +47,6 @@ namespace Synet
 
         int _internal[2];
         InnerProduct32f _innerProduct32f[2];
-        Tensor _buffer[3];
         size_t _batch, _input, _output;
     };
 }

@@ -70,9 +70,7 @@ namespace Synet
         _innerProduct32f[0].SetParams(weight[0].Data<float>(), &_internal[0], weight[1].Data<float>(), NULL);
         _innerProduct32f[1].SetParams(weight[2].Data<float>(), &_internal[1], weight[3].Data<float>(), NULL);
 
-        _buffer[0].Reshape(TensorType32f, Shp(_batch, _input + _output), TensorFormatUnknown);
-        _buffer[1].Reshape(TensorType32f, Shp(_batch, 2 * _output), TensorFormatUnknown);
-        _buffer[2].Reshape(TensorType32f, Shp(_batch, _output), TensorFormatUnknown);
+        Layer::Extend32f(buf, 0, Shp(_batch, _input + 4 * _output), src[0]->Format());
 
         dst[0]->Reshape(TensorType32f, Shp(_batch, 1, _output), src[0]->Format());
         dst[1]->Share(*src[1]);
@@ -91,8 +89,7 @@ namespace Synet
 
     size_t RnnGruBdLayer::MemoryUsage() const
     {
-        return Layer::MemoryUsage() + (_buffer[0].Size() + _buffer[1].Size() + _buffer[2].Size() + 
-            _innerProduct32f[0].InternalBufferSize() + _innerProduct32f[1].InternalBufferSize()) * sizeof(float);
+        return Layer::MemoryUsage() + (_innerProduct32f[0].InternalBufferSize() + _innerProduct32f[1].InternalBufferSize()) * sizeof(float);
     }
 
     void RnnGruBdLayer::CompactWeight()
@@ -109,11 +106,12 @@ namespace Synet
         const float* src1 = src[1]->Data<float>();
         float* dst0 = dst[0]->Data<float>();
         float* dst1 = dst[1]->Data<float>();
-        float* buf00 = _buffer[0].Data<float>();
+
+        float* buf00 = Layer::Buf32f(buf, 0);
         float* buf01 = buf00 + _input;
-        float* buf10 = _buffer[1].Data<float>();
+        float* buf10 = buf01 + _output;
         float* buf11 = buf10 + _output;
-        float* buf2 = _buffer[2].Data<float>();
+        float* buf2 = buf11 + _output;
 
         if (_batch == 1)
         {
