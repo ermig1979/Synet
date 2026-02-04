@@ -80,7 +80,6 @@ namespace Synet
             SYNET_ERROR("QuantizedConcatLayer: wrong output quantization parameters!");
 
         size_t num = src.size();
-        _src.resize(num);
         _srcSize.resize(num);
         _bias.resize(num);
         _norm.resize(num);
@@ -126,6 +125,7 @@ namespace Synet
 
     void QuantizedConcatLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
+        ByteConstPtrs _src(src.size());
         for (size_t i = 0; i < src.size(); ++i)
             _src[i] = src[i]->Data<uint8_t>();
         QuantizedConcatLayerForward(_src.size(), _src.data(), _outputSize, _srcSize.data(), _bias.data(), _norm.data(), _scale, _zero, dst[0]->Data<uint8_t>());

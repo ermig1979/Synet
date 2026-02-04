@@ -43,7 +43,6 @@ namespace Synet
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
         size_t _outputSize, _dstSize;
-        ByteConstPtrs _src;
         Index _srcSize;
         Ints _bias;
         Floats _norm;
