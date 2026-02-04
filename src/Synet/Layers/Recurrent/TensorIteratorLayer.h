@@ -53,7 +53,6 @@ namespace Synet
         {
             LayerPtr layer;
             TensorPtrs src;
-            TensorPtrs buf;
             TensorPtrs dst;
         };
         typedef std::vector<Stage> Stages;
@@ -62,19 +61,26 @@ namespace Synet
         typedef std::vector<ConnectionParam> ConnectionParams;
         typedef std::pair<size_t, size_t> Link;
         typedef std::vector<Link> Links;
+        struct Thread
+        {
+            TensorSharedPtrs tensors;
+            Stages input, stages;
+            TensorPtrs src, dst;
+        };
+        typedef std::vector<Thread> Threads;
+        Threads _threads;
 
         bool _empty;
         LayerSharedPtrs _layers;
-        TensorSharedPtrs _tensors;
-        Stages _input, _stages;
-        TensorPtrs _src, _dst;
         NameIdMap _tensorId, _layerId;
         Link _itSrc, _itDst;
         Links _iLink, _oLink, _bLink;
         size_t _itCount, _srcAxis, _srcExt, _srcInt, _dstAxis, _dstExt, _dstInt;
 
-        bool InitGraph(const TensorPtrs& buf);
+        bool InitGraph();
 
         bool SetLinks(const TensorPtrs& src, const TensorPtrs& dst);
+
+        bool CloneThreadBuffers();
     };
 }

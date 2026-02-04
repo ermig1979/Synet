@@ -738,7 +738,6 @@ namespace Synet
                         SYNET_ERROR("Can't find parent layer: " << param.parent() << " of layer " << param.name() << " !");
                     _layers[layerId[param.parent()]]->AddChild(layer);
                 }
-
             }
             else
                 SYNET_ERROR("Can't create layer " << param.name() << " of type " << Cpl::ToStr(param.type()) << " !");
