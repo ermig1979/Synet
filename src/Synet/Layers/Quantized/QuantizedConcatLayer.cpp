@@ -99,7 +99,6 @@ namespace Synet
             for (size_t a = 0; a < dstShape.size(); ++a)
                 if(a != axis && dstShape[a] != src[i]->Axis(a))
                     SYNET_ERROR("QuantizedConcatLayer unsupported input shapes!");
-            _src[i] = src[i]->Data<uint8_t>();
             _srcSize[i] = src[i]->Size(axis);
             _dstSize += src[i]->Size(axis);
             dstShape[axis] += src[i]->Axis(axis);
@@ -127,6 +126,8 @@ namespace Synet
 
     void QuantizedConcatLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
+        for (size_t i = 0; i < src.size(); ++i)
+            _src[i] = src[i]->Data<uint8_t>();
         QuantizedConcatLayerForward(_src.size(), _src.data(), _outputSize, _srcSize.data(), _bias.data(), _norm.data(), _scale, _zero, dst[0]->Data<uint8_t>());
     }
 }
