@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--To be enable OpenCV to Synet rename this file into 'Ocv.prop'. Also you have to set correct paths to OpenCV (see below).-->
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemDefinitionGroup Condition="'$(Platform)'=='x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>c:\opencv-4.11.0\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SYNET_OPENCV_ENABLE;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+	<Link>
+      <AdditionalDependencies Condition="'$(Configuration)'=='Debug'">opencv_world4110d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)'=='Release'">opencv_world4110.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>c:\opencv-4.11.0\build\x64\vc16\lib;c:\opencv-4.11.0\build\x64\vc16\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+	<PostBuildEvent>
+      <Command>xcopy c:\opencv-4.11.0\build\x64\vc16\bin\*.dll $(OutDir) /y /i /s</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+</Project>

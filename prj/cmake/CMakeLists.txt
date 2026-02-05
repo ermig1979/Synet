@@ -8,6 +8,7 @@ option(SYNET_BF16_ROUND_TEST "Test BF16 rounding error" OFF)
 option(SYNET_SHARED "Build as SHARED library" OFF)
 option(SYNET_PERF "Performance statistics level: 0 - no statistics, 1 - Synet statistics, 2 - Simd statistics" OFF)
 option(SYNET_PYTHON "Enabling of Synet Python wrapper" ON)
+option(SYNET_OPENCV "OpenCV tests enable" OFF)
 option(SYNET_ORT_DNNL "Enabling of OnnxRuntime DNNL provider" OFF)
 option(SIMD_AVX512 "Use AVX-512 (AVX-512F, AVX-512CD, AVX-512VL, AVX-512DQ, AVX-512BW)" OFF)
 option(SIMD_AVX512VNNI "Use AVX-512VNNI" OFF)
@@ -30,7 +31,8 @@ if(NOT((SYNET_TEST STREQUAL "all") OR (SYNET_TEST STREQUAL "none") OR
        (SYNET_TEST STREQUAL "performance_difference") OR (SYNET_TEST STREQUAL "precision") OR 
        (SYNET_TEST STREQUAL "quantization") OR (SYNET_TEST STREQUAL "stability") OR
        (SYNET_TEST STREQUAL "optimizer") OR (SYNET_TEST STREQUAL "bf16") OR
-       (SYNET_TEST STREQUAL "multi_threads") OR (SYNET_TEST STREQUAL "use_samples")))
+       (SYNET_TEST STREQUAL "multi_threads") OR (SYNET_TEST STREQUAL "video") OR
+       (SYNET_TEST STREQUAL "use_samples")))
     message(FATAL_ERROR "Unknown value of SYNET_TEST: '${SYNET_TEST}'!")
 endif()
 

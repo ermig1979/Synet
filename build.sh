@@ -13,6 +13,7 @@ if [ "${TEST_MODE}" == "s" ]; then TEST_MODE="stability"; fi
 if [ "${TEST_MODE}" == "op" ]; then TEST_MODE="optimizer"; fi
 if [ "${TEST_MODE}" == "b" ]; then TEST_MODE="bf16"; fi
 if [ "${TEST_MODE}" == "m" ]; then TEST_MODE="multi_threads"; fi
+if [ "${TEST_MODE}" == "v" ]; then TEST_MODE="video"; fi
 if [ "${TEST_MODE}" == "u" ]; then TEST_MODE="use_samples"; fi
 
 BUILD_DIR=build
@@ -23,7 +24,7 @@ if [ ! -d $BUILD_DIR ]; then mkdir $BUILD_DIR; fi
 cd $BUILD_DIR
 
 cmake ../prj/cmake -DSYNET_TEST=$TEST_MODE -DTOOLCHAIN="/usr/bin/c++" -DSYNET_INFO=$ECHO -DSYNET_SIMD=1 -DSYNET_SHARED=1 -DSYNET_PERF=1 -DCMAKE_BUILD_TYPE=Release \
-	-DSIMD_AVX512=1 -DSIMD_AVX512VNNI=1 -DSIMD_AMXBF16=1 -DSIMD_AMX_EMULATE=0 -DSYNET_BF16_ROUND_TEST=0 -DSYNET_ORT_DNNL=0
+	-DSIMD_AVX512=1 -DSIMD_AVX512VNNI=1 -DSIMD_AMXBF16=1 -DSIMD_AMX_EMULATE=0 -DSYNET_BF16_ROUND_TEST=0 -DSYNET_ORT_DNNL=0 -DSYNET_OPENCV=OFF -DSYNET_OPENCV=ON
 if [ $? -ne 0 ] ; then 	exit; fi
 
 if [ ${HT} == "1" ]; then make "-j$(nproc)"; else make "-j$(grep "^core id" /proc/cpuinfo | sort -u | wc -l)"; fi
