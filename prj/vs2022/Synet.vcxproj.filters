@@ -277,6 +277,7 @@
       <Filter>Layers\Const</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Common.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />

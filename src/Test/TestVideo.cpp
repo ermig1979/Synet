@@ -44,12 +44,20 @@ namespace Test
     {
         String source;
         String output;
+        String model;
+        String weight;
+        double realtime;
+        double endTime;
 
         Options(int argc, char* argv[])
             : ArgsParser(argc, argv, true)
         {
-            source = GetArg2("-s", "-source", "", true);
-            output = GetArg2("-o", "-output", "");
+            source = GetArg("-s", "");
+            output = GetArg("-o", "");
+            model = GetArg("-m", "");
+            weight = GetArg("-w", "");
+            realtime = Cpl::ToVal<double>(GetArg("-rt", "1.0"));
+            endTime = Cpl::ToVal<double>(GetArg("-et", "0.0"));
         }
     };
 
@@ -113,11 +121,40 @@ namespace Test
 
     //-------------------------------------------------------------------------------------------------
 
-    struct Filter
+    struct Analyser
     {
-        virtual ~Filter() = default;
+    private:
+        const Options& _options;
+        Synet::Network _detector;
+    public:
+        Analyser(const Options& options)
+            : _options(options)
+        {
+        }
 
-        virtual bool Process(FramePtr frame) = 0;
+        bool Init()
+        {
+            if (!_detector.Load(_options.model, _options.weight))
+                SYNET_ERROR("Can't load model " << _options.model << " with weight " << _options.weight << " !");
+            return true;
+        }
+
+        virtual ~Analyser()
+        {
+        };
+
+        virtual bool Process(FramePtr frame)
+        {
+            Image input = Image(frame->original);
+            Image resized(_detector.NchwShape()[3], _detector.NchwShape()[2], input.format);
+            Simd::Resize(input, resized, SimdResizeMethodArea);
+            _detector.SetInput(resized, -1.0f, 1.0f);
+            _detector.Forward();
+            return true;
+        }
+
+    private:
+
     };
 
     //-------------------------------------------------------------------------------------------------
@@ -125,30 +162,28 @@ namespace Test
     struct VideoManager
     {
     protected:
-        const String SYNET_DEBUG_WINDOW_NAME = "Synet::Output";
 
-        bool _window, _started, _finished;
+        Options _options;
+        bool _readFinished, _analyseFinished;
         cv::VideoCapture _capture;
         cv::VideoWriter _writer;
-        Filter* _filter;
-        FrameQueue _input;
+        Analyser* _analyser;
+        FrameQueue _input, _output;
         Simd::Font _font;
 
     public:
 
-        VideoManager(bool window = true)
-            : _window(window)
-            , _started(false)
-            , _finished(false)
-            , _filter(NULL)
+        VideoManager(const Options& options)
+            : _options(options)
+            , _readFinished(false)
+            , _analyseFinished(false)
+            , _analyser(NULL)
         {
             _font.Resize(50);
         }
 
         virtual ~VideoManager()
         {
-            if (_window && _started)
-                cv::destroyWindow(SYNET_DEBUG_WINDOW_NAME.c_str());
         }
 
         bool SetSource(const String& source)
@@ -169,9 +204,9 @@ namespace Test
             return _writer.isOpened();
         }
 
-        bool SetFilter(Filter* filter)
+        bool SetAnalyser(Analyser* analyser)
         {
-            _filter = filter;
+            _analyser = analyser;
             return true;
         }
 
@@ -179,70 +214,55 @@ namespace Test
         {
             if (!_capture.isOpened())
                 return false;
-            _started = true;
 
             std::thread readThread = std::thread(ReadThread, this);
+
+            std::thread analyseThread = std::thread(AnalyseThread, this);
 
             std::thread writeThread = std::thread(WriteThread, this);
 
             if (readThread.joinable())
                 readThread.join();
 
+            if (analyseThread.joinable())
+                analyseThread.join();
+
             if (writeThread.joinable())
                 writeThread.join();
-            //while (1)
-            //{
-            //    {
-            //        FramePtr frame = std::make_shared<Frame>();
-            //        frame->startTime = Cpl::Time();
-            //        if (!_capture.read(frame->original))
-            //            break;
-            //        frame->videoTime = _capture.get(cv::CAP_PROP_POS_MSEC) * 0.001;
-            //        _input.Push(frame);
-            //    }
 
-            //    //if (_filter)
-            //    //    _filter->Process(frame);
-
-            //    {
-            //        FramePtr frame = _input.Pop();
-            //        if (_writer.isOpened())
-            //            _writer.write(frame->original);
-            //        if (_window)
-            //            cv::imshow(SYNET_DEBUG_WINDOW_NAME, frame->original);
-            //    }
-
-            //    if (cv::waitKey(1) == 27)// "press 'Esc' to break video";
-            //        break;
-            //}
             return true;
         }
+
+    protected:
 
         void ReadFrames()
         {
             double startTime = Cpl::Time();
-            while (!_finished)
+            while (1)
             {
                 FramePtr frame = std::make_shared<Frame>();
-                frame->startTime = Cpl::Time();
-                if (!_capture.read(frame->original))
-                    break;
-                frame->videoTime = _capture.get(cv::CAP_PROP_POS_MSEC) * 0.001;
-                _input.Push(frame);
+                {
+                    CPL_PERF_BEG("read");
+                    frame->startTime = Cpl::Time();
+                    if (!_capture.read(frame->original))
+                        break;
+                    frame->videoTime = _capture.get(cv::CAP_PROP_POS_MSEC) * 0.001;
+                    _input.Push(frame);
+                }
 
-                double delay = (frame->videoTime - (frame->startTime - startTime)) * 0.5;
+                double delay = (frame->videoTime*_options.realtime - (frame->startTime - startTime)) * 0.5;
                 if (delay > 0)
                     Sleep(int(delay * 1000));
 
-                std::cout << Cpl::ToStr(frame->videoTime, 3) << " sec. \r" << std::flush;
-
-                //if (_filter)
-                //    _filter->Process(frame);
+                std::cout << "Process: " << Cpl::ToStr(frame->videoTime, 3) << " sec. \r" << std::flush;
 
                 if (cv::waitKey(1) == 27)// "press 'Esc' to break video";
-                    _finished = true;
+                    break;
+
+                if (_options.endTime > 0 && frame->videoTime > _options.endTime)
+                    break;
             }
-            _finished = true;
+            _readFinished = true;
         }
 
         static void ReadThread(VideoManager * videoManager)
@@ -250,28 +270,46 @@ namespace Test
             videoManager->ReadFrames();
         }
 
-        void WriteFrames()
+        void AnalyseFrames()
         {
-            while (!(_finished && _input.Size() == 0))
+            while (!(_readFinished && _input.Size() == 0))
             {
                 FramePtr frame = _input.Pop();
                 if (frame)
                 {
+                    CPL_PERF_BEG("analyse");
+                    if (_analyser)
+                        _analyser->Process(frame);
+                    _output.Push(frame);
+                }
+            }
+            _analyseFinished = true;
+        }
+
+        static void AnalyseThread(VideoManager* videoManager)
+        {
+            videoManager->AnalyseFrames();
+        }
+
+        void WriteFrames()
+        {
+            while (!(_analyseFinished && _output.Size() == 0))
+            {
+                FramePtr frame = _output.Pop();
+                if (frame)
+                {
+                    CPL_PERF_BEG("write");
                     double currentTime = Cpl::Time();
                     double delay = currentTime - frame->startTime;
                     Image output = frame->original;
                     Simd::Pixel::Bgr24 red(0, 0, 255), green(0, 255, 0);
                     std::stringstream ss;
-                    ss << " Delay " << Cpl::ToStr(delay, 3) << " ; i-queue: " << _input.Size();
-                    _font.Draw(output, ss.str(), Image::BottomLeft, delay < 1.0 ? green : red);
+                    ss << "Delay " << Cpl::ToStr(delay, 3) << " ; i-queue: " << _input.Size() << " ; o-queue: " << _output.Size();
 
+                    _font.Draw(output, ss.str(), Image::BottomLeft, delay < 1.0 ? green : red);
 
                     if (_writer.isOpened())
                         _writer.write(frame->original);
-
-
-                    if (_window)
-                        cv::imshow(SYNET_DEBUG_WINDOW_NAME, frame->original);
                 }
             }
         }
@@ -295,11 +333,7 @@ int main(int argc, char* argv[])
     Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
     Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
 
-#ifdef __linux__
-    Test::VideoManager video(false);
-#else
-    Test::VideoManager video(true);
-#endif
+    Test::VideoManager video(options);
 
     if (options.source.length() == 0)
         SYNET_ERROR("Video source is undefined (-s parameter)!");
@@ -308,7 +342,15 @@ int main(int argc, char* argv[])
     if (options.output.length() != 0 && !video.SetOutput(options.output))
         SYNET_ERROR("Can't open output video file '" << options.output << "'!");
 
+    Test::Analyser analyser(options);
+    if(!analyser.Init())
+        SYNET_ERROR("Can't init video analyser!");
+
+    video.SetAnalyser(&analyser);
+
     video.Start();
+
+    std::cout << std::endl << Cpl::PerformanceStorage::Global().Report() << std::endl;
 
     return 0;
 }

@@ -50,7 +50,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReasonForCall, LPVOID lpReserved)
 
 SYNET_API const char* SynetVersion()
 {
-    return SYNET_VERSION;
+    return Synet::Version().c_str();
 }
 
 SYNET_API void SynetSetConsoleLogLevel(SynetLogLevel level)

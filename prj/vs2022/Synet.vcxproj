@@ -24,6 +24,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\Synet\Common.cpp" />
     <ClCompile Include="..\..\src\Synet\Fabric.cpp" />
     <ClCompile Include="..\..\src\Synet\Layer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Activation\ActivationLayers.cpp" />

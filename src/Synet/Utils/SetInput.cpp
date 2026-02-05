@@ -32,7 +32,7 @@ namespace Synet
     bool SetInput(class Network & network, const Views & views, Floats lower, Floats upper, bool rgb, size_t thread)
     {
         SYNET_PERF_FUNC();
-        if(thread < network.GetThreads())
+        if(thread >= network.GetThreads())
             SYNET_ERROR("SetInput: network supports only " << network.GetThreads() << " threads but current is " << thread << " !");
         if (network.Src(thread).size() != 1)
             SYNET_ERROR("SetInput can process only models with one input!");
