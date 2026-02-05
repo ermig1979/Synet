@@ -28,7 +28,6 @@
 #include <opencv2/videoio/videoio.hpp>
 #include "opencv2/core/utils/logger.hpp"
 #define SIMD_OPENCV_ENABLE
-#endif
 
 #include "Simd/SimdFrame.hpp"
 
@@ -56,44 +55,99 @@ namespace Test
 
     //-------------------------------------------------------------------------------------------------
 
-    struct Video
+    typedef Simd::View<Simd::Allocator> Image;
+
+    struct Frame
     {
-        typedef Simd::Frame<Simd::Allocator> Frame;
-        typedef Simd::View<Simd::Allocator> Image;
+        cv::Mat original;
+        double videoTime;
+        double startTime;
 
-        struct Filter
+        Frame()
+            : videoTime(0)
+            , startTime(0)
         {
-            virtual ~Filter() = default;
+        }
+    };
 
-            virtual bool Process(const Frame& input, Frame& output) = 0;
-        };
+    typedef std::shared_ptr<Frame> FramePtr;
+    typedef std::vector<FramePtr> FramePtrs;
+    typedef std::list<FramePtr> FramePtrList;
 
-#ifdef SYNET_OPENCV_ENABLE
+    //-------------------------------------------------------------------------------------------------
+
+    struct FrameQueue
+    {
+        FrameQueue()
+        {
+        }
+
+        void Push(FramePtr frame)
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+            _frames.push_back(frame);
+        }
+
+        FramePtr Pop()
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+            FramePtr frame;
+            if (_frames.size())
+            {
+                frame = _frames.front();
+                _frames.pop_front();
+            }
+            return frame;
+        }
+
+        size_t Size() const
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+            return _frames.size();
+        }
+
+        private:
+            FramePtrList _frames;
+            mutable std::mutex _mutex;
+    };
+
+    //-------------------------------------------------------------------------------------------------
+
+    struct Filter
+    {
+        virtual ~Filter() = default;
+
+        virtual bool Process(FramePtr frame) = 0;
+    };
+
+    //-------------------------------------------------------------------------------------------------
+
+    struct VideoManager
+    {
     protected:
         const String SYNET_DEBUG_WINDOW_NAME = "Synet::Output";
 
-        bool _window;
+        bool _window, _started, _finished;
         cv::VideoCapture _capture;
         cv::VideoWriter _writer;
         Filter* _filter;
+        FrameQueue _input;
+        Simd::Font _font;
 
-        Frame Convert(const cv::Mat& frame)
-        {
-            if (frame.channels() == 3)
-                return Frame(Image(frame), false, _capture.get(cv::CAP_PROP_POS_MSEC) * 0.001);
-            return Frame();
-        }
     public:
 
-        Video(bool window = true)
+        VideoManager(bool window = true)
             : _window(window)
+            , _started(false)
+            , _finished(false)
             , _filter(NULL)
         {
+            _font.Resize(50);
         }
 
-        virtual ~Video()
+        virtual ~VideoManager()
         {
-            if (_window)
+            if (_window && _started)
                 cv::destroyWindow(SYNET_DEBUG_WINDOW_NAME.c_str());
         }
 
@@ -125,52 +179,112 @@ namespace Test
         {
             if (!_capture.isOpened())
                 return false;
-            while (1)
-            {
-                cv::Mat frame;
-                if (!_capture.read(frame))
-                    break;
-                if (_filter)
-                    _filter->Process(Convert(frame), Convert(frame).Ref());
-                if (_writer.isOpened())
-                    _writer.write(frame);
-                if (_window)
-                    cv::imshow(SYNET_DEBUG_WINDOW_NAME, frame);
-                if (cv::waitKey(1) == 27)// "press 'Esc' to break video";
-                    break;
-            }
+            _started = true;
+
+            std::thread readThread = std::thread(ReadThread, this);
+
+            std::thread writeThread = std::thread(WriteThread, this);
+
+            if (readThread.joinable())
+                readThread.join();
+
+            if (writeThread.joinable())
+                writeThread.join();
+            //while (1)
+            //{
+            //    {
+            //        FramePtr frame = std::make_shared<Frame>();
+            //        frame->startTime = Cpl::Time();
+            //        if (!_capture.read(frame->original))
+            //            break;
+            //        frame->videoTime = _capture.get(cv::CAP_PROP_POS_MSEC) * 0.001;
+            //        _input.Push(frame);
+            //    }
+
+            //    //if (_filter)
+            //    //    _filter->Process(frame);
+
+            //    {
+            //        FramePtr frame = _input.Pop();
+            //        if (_writer.isOpened())
+            //            _writer.write(frame->original);
+            //        if (_window)
+            //            cv::imshow(SYNET_DEBUG_WINDOW_NAME, frame->original);
+            //    }
+
+            //    if (cv::waitKey(1) == 27)// "press 'Esc' to break video";
+            //        break;
+            //}
             return true;
         }
-#else
-    public:
-        Video(bool window = true)
+
+        void ReadFrames()
         {
+            double startTime = Cpl::Time();
+            while (!_finished)
+            {
+                FramePtr frame = std::make_shared<Frame>();
+                frame->startTime = Cpl::Time();
+                if (!_capture.read(frame->original))
+                    break;
+                frame->videoTime = _capture.get(cv::CAP_PROP_POS_MSEC) * 0.001;
+                _input.Push(frame);
+
+                double delay = (frame->videoTime - (frame->startTime - startTime)) * 0.5;
+                if (delay > 0)
+                    Sleep(int(delay * 1000));
+
+                std::cout << Cpl::ToStr(frame->videoTime, 3) << " sec. \r" << std::flush;
+
+                //if (_filter)
+                //    _filter->Process(frame);
+
+                if (cv::waitKey(1) == 27)// "press 'Esc' to break video";
+                    _finished = true;
+            }
+            _finished = true;
         }
 
-        virtual ~Video()
+        static void ReadThread(VideoManager * videoManager)
         {
+            videoManager->ReadFrames();
         }
 
-        bool SetSource(const String& source)
+        void WriteFrames()
         {
-            SYNET_ERROR("OpenCV is not enabled!");
+            while (!(_finished && _input.Size() == 0))
+            {
+                FramePtr frame = _input.Pop();
+                if (frame)
+                {
+                    double currentTime = Cpl::Time();
+                    double delay = currentTime - frame->startTime;
+                    Image output = frame->original;
+                    Simd::Pixel::Bgr24 red(0, 0, 255), green(0, 255, 0);
+                    std::stringstream ss;
+                    ss << " Delay " << Cpl::ToStr(delay, 3) << " ; i-queue: " << _input.Size();
+                    _font.Draw(output, ss.str(), Image::BottomLeft, delay < 1.0 ? green : red);
+
+
+                    if (_writer.isOpened())
+                        _writer.write(frame->original);
+
+
+                    if (_window)
+                        cv::imshow(SYNET_DEBUG_WINDOW_NAME, frame->original);
+                }
+            }
         }
 
-        bool SetOutput(const String& output)
+        static void WriteThread(VideoManager* videoManager)
         {
-            SYNET_ERROR("OpenCV is not enabled!");
+            videoManager->WriteFrames();
         }
 
-        bool SetFilter(Filter* filter)
+        inline void Sleep(unsigned int miliseconds)
         {
-            SYNET_ERROR("OpenCV is not enabled!");
+            std::this_thread::sleep_for(std::chrono::milliseconds(miliseconds));
         }
-
-        bool Start()
-        {
-            SYNET_ERROR("OpenCV is not enabled!");
-        }
-#endif
     };
 }
 
@@ -181,7 +295,38 @@ int main(int argc, char* argv[])
     Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
     Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
 
+#ifdef __linux__
+    Test::VideoManager video(false);
+#else
+    Test::VideoManager video(true);
+#endif
+
+    if (options.source.length() == 0)
+        SYNET_ERROR("Video source is undefined (-s parameter)!");
+    if (!video.SetSource(options.source))
+        SYNET_ERROR("Can't open source video file '" << options.source << "'!");
+    if (options.output.length() != 0 && !video.SetOutput(options.output))
+        SYNET_ERROR("Can't open output video file '" << options.output << "'!");
+
+    video.Start();
+
     return 0;
 }
+
+#else
+
+#include "Cpl/Log.h"
+
+int main(int argc, char* argv[])
+{
+    Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
+    Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
+
+    CPL_LOG_SS(Error, "OpenCV is not enable!"); 
+
+    return 1;
+}
+
+#endif
 
 
