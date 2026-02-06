@@ -179,7 +179,7 @@ namespace Test
             , _analyseFinished(false)
             , _analyser(NULL)
         {
-            _font.Resize(50);
+            _font.Resize(20);
         }
 
         virtual ~VideoManager()
@@ -282,6 +282,8 @@ namespace Test
                         _analyser->Process(frame);
                     _output.Push(frame);
                 }
+                else
+                    Sleep(1);
             }
             _analyseFinished = true;
         }
@@ -311,6 +313,8 @@ namespace Test
                     if (_writer.isOpened())
                         _writer.write(frame->original);
                 }
+                else
+                    Sleep(1);
             }
         }
 
