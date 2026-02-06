@@ -35,17 +35,25 @@
 #include "Cpl/Log.h"
 
 #include "Synet/Network.h"
+#include "Synet/Decoders/YoloV11.h"
 
 #include "TestCommon.h"
+#include "TestParams.h"
 
 namespace Test
 {
+    typedef Synet::Region<float> Region;
+    typedef std::vector<Region> Regions;
+
+    //-------------------------------------------------------------------------------------------------
+
     struct Options : public Cpl::ArgsParser
     {
         String source;
         String output;
         String model;
         String weight;
+        String param;
         double realtime;
         double endTime;
 
@@ -56,6 +64,7 @@ namespace Test
             output = GetArg("-o", "");
             model = GetArg("-m", "");
             weight = GetArg("-w", "");
+            param = GetArg("-p", "");
             realtime = Cpl::ToVal<double>(GetArg("-rt", "1.0"));
             endTime = Cpl::ToVal<double>(GetArg("-et", "0.0"));
         }
@@ -70,6 +79,8 @@ namespace Test
         cv::Mat original;
         double videoTime;
         double startTime;
+
+        Regions regions;
 
         Frame()
             : videoTime(0)
@@ -126,6 +137,7 @@ namespace Test
     private:
         const Options& _options;
         Synet::Network _detector;
+        Test::TestParamHolder _param;
     public:
         Analyser(const Options& options)
             : _options(options)
@@ -136,6 +148,8 @@ namespace Test
         {
             if (!_detector.Load(_options.model, _options.weight))
                 SYNET_ERROR("Can't load model " << _options.model << " with weight " << _options.weight << " !");
+            if (!_param.Load(_options.param))
+                SYNET_ERROR("Can't load param " << _options.param << " !");
             return true;
         }
 
@@ -148,8 +162,11 @@ namespace Test
             Image input = Image(frame->original);
             Image resized(_detector.NchwShape()[3], _detector.NchwShape()[2], input.format);
             Simd::Resize(input, resized, SimdResizeMethodArea);
-            _detector.SetInput(resized, -1.0f, 1.0f);
+            _detector.SetInput(resized, _param().lower(), _param().upper());
             _detector.Forward();
+            Synet::YoloV11Decoder decoder;
+            decoder.Init(_detector.NchwShape()[3], _detector.NchwShape()[2], _param().detection().yoloV11());
+            frame->regions = decoder.GetRegions(_detector, input.width, input.height, _param().detection().confidence(), _param().detection().overlap())[0];
             return true;
         }
 
@@ -309,6 +326,16 @@ namespace Test
                     ss << "Delay " << Cpl::ToStr(delay, 3) << " ; i-queue: " << _input.Size() << " ; o-queue: " << _output.Size();
 
                     _font.Draw(output, ss.str(), Image::BottomLeft, delay < 1.0 ? green : red);
+
+                    for (size_t i = 0; i < frame->regions.size(); ++i)
+                    {
+                        const Region& region = frame->regions[i];
+                        ptrdiff_t l = ptrdiff_t(region.x - region.w / 2);
+                        ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
+                        ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
+                        ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
+                        Simd::DrawRectangle(output, l, t, r, b, red, 1);
+                    }
 
                     if (_writer.isOpened())
                         _writer.write(frame->original);
