@@ -224,6 +224,8 @@ namespace Synet
             }
             for (size_t i = _axis + idxShape.size(); i < srcShape.size(); ++i)
                 dstShape.push_back(srcShape[i]);
+            if (srcShape.back() == 1 && dstShape.size() < srcShape.size() + idxShape.size() - 1)
+                dstShape.push_back(1);
 
             _idxOuter = src[1]->Size(0, -1);
             _idxCount = src[1]->Size(-1);
