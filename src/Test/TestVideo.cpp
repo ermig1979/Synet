@@ -77,14 +77,21 @@ namespace Test
     struct Frame
     {
         cv::Mat original;
+        Image resized;
         double videoTime;
-        double startTime;
+        double startReadTime;
+        double startAnalyseTime;
+
+        int id, processed;
 
         Regions regions;
 
         Frame()
             : videoTime(0)
-            , startTime(0)
+            , startReadTime(0)
+            , startAnalyseTime(0)
+            , id(-1)
+            , processed(0)
         {
         }
     };
@@ -142,6 +149,15 @@ namespace Test
             return _frames.size();
         }
 
+        int Processed()
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+            FramePtr frame;
+            if (_frames.size())
+                return _frames.front()->processed;
+            return 0;
+        }
+
         private:
             FramePtrList _frames;
             mutable std::mutex _mutex;
@@ -176,14 +192,21 @@ namespace Test
 
         virtual bool Process(FramePtr frame)
         {
-            Image input = Image(frame->original);
-            Image resized(_detector.NchwShape()[3], _detector.NchwShape()[2], input.format);
-            Simd::Resize(input, resized, SimdResizeMethodArea);
-            _detector.SetInput(resized, _param().lower(), _param().upper());
-            _detector.Forward();
-            Synet::YoloV11Decoder decoder;
-            decoder.Init(_detector.NchwShape()[3], _detector.NchwShape()[2], _param().detection().yoloV11());
-            frame->regions = decoder.GetRegions(_detector, input.width, input.height, _param().detection().confidence(), _param().detection().overlap())[0];
+            frame->startAnalyseTime = Cpl::Time();
+            if (frame->id % 2 == 0)
+            {
+                Image input = Image(frame->original);
+                frame->resized.Recreate(_detector.NchwShape()[3], _detector.NchwShape()[2], input.format);
+                Simd::Resize(input, frame->resized, SimdResizeMethodArea);
+                _detector.SetInput(frame->resized, _param().lower(), _param().upper());
+                _detector.Forward();
+                Synet::YoloV11Decoder decoder;
+                decoder.Init(_detector.NchwShape()[3], _detector.NchwShape()[2], _param().detection().yoloV11());
+                frame->regions = decoder.GetRegions(_detector, input.width, input.height, _param().detection().confidence(), _param().detection().overlap())[0];
+                frame->processed = 2;
+            }
+            else
+                frame->processed = 1;
             return true;
         }
 
@@ -284,19 +307,21 @@ namespace Test
         void ReadFrames()
         {
             double startTime = Cpl::Time();
+            int id = 0;
             while (1)
             {
                 FramePtr frame = std::make_shared<Frame>();
                 {
                     CPL_PERF_BEG("read");
-                    frame->startTime = Cpl::Time();
+                    frame->startReadTime = Cpl::Time();
                     if (!_capture.read(frame->original))
                         break;
                     frame->videoTime = _capture.get(cv::CAP_PROP_POS_MSEC) * 0.001;
+                    frame->id = id++;
                     _input.Push(frame);
                 }
 
-                double delay = (frame->videoTime*_options.realtime - (frame->startTime - startTime)) * 0.5;
+                double delay = (frame->videoTime*_options.realtime - (frame->startReadTime - startTime)) * 0.5;
                 if (delay > 0)
                     Sleep(int(delay * 1000));
 
@@ -344,14 +369,19 @@ namespace Test
         {
             while (!(_status.analyseFinished && _output.Size() == 0))
             {
-                FramePtr frame = _output.Pop();
-                if (frame)
+                if (_output.Processed())
                 {
-                    CPL_PERF_BEG("write");
-                    Annotate(frame);
-                    if (_writer.isOpened())
-                        _writer.write(frame->original);
-                    _status.writeTime = frame->videoTime;
+                    FramePtr frame = _output.Pop();
+                    if (frame)
+                    {
+                        CPL_PERF_BEG("write");
+                        Annotate(frame);
+                        if (_writer.isOpened())
+                            _writer.write(frame->original);
+                        _status.writeTime = frame->videoTime;
+                    }
+                    else
+                        Sleep(1);
                 }
                 else
                     Sleep(1);
@@ -364,7 +394,7 @@ namespace Test
             CPL_PERF_BEG("annotate");
 
             double currentTime = Cpl::Time();
-            double delay = currentTime - frame->startTime;
+            double delay = currentTime - frame->startReadTime;
             Image output = frame->original;
             Simd::Pixel::Bgr24 red(0, 0, 255), green(0, 255, 0);
             std::stringstream ss;
