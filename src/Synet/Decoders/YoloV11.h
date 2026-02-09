@@ -31,6 +31,7 @@ namespace Synet
     struct YoloV11Param
     {
         CPL_PARAM_VALUE(int, classes, 17);
+        CPL_PARAM_VALUE(int, version, 0);
     };
 
     class YoloV11Decoder
@@ -54,6 +55,9 @@ namespace Synet
             _netW = netW;
             _netH = netH;
             _classes = param.classes();
+            _version = param.version();
+            if (_version > 1)
+                SYNET_ERROR("Unknown version of YoloV11 decoder: " << _version << " !");
             return _netW && _netH;
         }
 
@@ -62,44 +66,17 @@ namespace Synet
             return _netW && _netH;
         }
 
-        Regions GetRegions(const float* data, size_t size, size_t imgW, size_t imgH, float threshold, float overlap) const
-        {
-            float kX = float(imgW) / float(_netW);
-            float kY = float(imgH) / float(_netH);
-            Regions regions;
-            for (size_t i = 0; i < size; ++i, data++) 
-            {
-                Region region;
-                region.x = data[0 * size] * kX;
-                region.y = data[1 * size] * kY;
-                region.w = data[2 * size] * kX;
-                region.h = data[3 * size] * kY;
-                for (size_t c = 0; c < _classes; ++c)
-                {
-                    float score = data[(c + 4) * size];
-                    if (score > region.prob)
-                    {
-                        region.prob = score;
-                        region.id = (int)c;
-                    }
-                }
-                if (region.prob >= threshold)
-                    regions.push_back(region);
-            }
-            Synet::Filter(regions, overlap);
-            return regions;
-        }
-
         std::vector<Regions> GetRegions(const Net& net, size_t imgW, size_t imgH, float threshold, float overlap, size_t thread = 0) const
         {
             std::vector<Regions> result(net.NchwShape()[0]);
             const Net::Tensor & dst = *net.Dst(thread)[0];
             assert(dst.Count() == 3 && dst.Axis(0) == result.size());
-            size_t size = dst.Axis(2);
+            size_t step = _version == 1 ? dst.Axis(2) : dst.Axis(1);
+            size_t size = _version == 1 ? dst.Axis(1) : dst.Axis(2);
             for (size_t b = 0; b < result.size(); ++b)
             {
                 const float* data = dst.Data<float>();
-                result[b] = GetRegions(data, size, imgW, imgH, threshold, overlap);
+                result[b] = GetRegions(data, size, step, imgW, imgH, threshold, overlap);
             }
             return result;
         }
@@ -108,18 +85,75 @@ namespace Synet
         {
             std::vector<Regions> result(dst[0].Axis(0));
             assert(dst[0].Count() == 3 && dst[0].Axis(0) == result.size());
-            size_t size = dst[0].Axis(2);
+            size_t step = _version == 1 ? dst[0].Axis(2) : dst[0].Axis(1);
+            size_t size = _version == 1 ? dst[0].Axis(1) : dst[0].Axis(2);
             for (size_t b = 0; b < result.size(); ++b)
             {
                 const float* data = dst[0].Data<float>();
-                result[b] = GetRegions(data, size, imgW, imgH, threshold, overlap);
+                result[b] = GetRegions(data, size, step, imgW, imgH, threshold, overlap);
             }
             return result;
         }
 
+    protected:
+
+        Regions GetRegions(const float* data, size_t size, size_t step, size_t imgW, size_t imgH, float threshold, float overlap) const
+        {
+            float kX = float(imgW) / float(_netW);
+            float kY = float(imgH) / float(_netH);
+            Regions regions;
+            if (_version == 1)
+            {
+                for (size_t i = 0; i < size; ++i, data += step)
+                {
+                    Region region;
+                    region.id = (int)data[5];
+                    region.x = (data[2] + data[0]) * kX / 2.0f;
+                    region.y = (data[3] + data[1]) * kY / 2.0f;
+                    region.w = (data[2] - data[0]) * kX;
+                    region.h = (data[3] - data[1]) * kY;
+                    for (size_t c = 0; c < _classes; ++c)
+                    {
+                        float score = data[c + 4];
+                        if (score > region.prob)
+                        {
+                            region.prob = score;
+                            region.id = (int)c;
+                        }
+                    }
+                    if (region.prob >= threshold)
+                        regions.push_back(region);
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i < size; ++i, data++)
+                {
+                    Region region;
+                    region.x = data[0 * size] * kX;
+                    region.y = data[1 * size] * kY;
+                    region.w = data[2 * size] * kX;
+                    region.h = data[3 * size] * kY;
+                    for (size_t c = 0; c < _classes; ++c)
+                    {
+                        float score = data[(c + 4) * size];
+                        if (score > region.prob)
+                        {
+                            region.prob = score;
+                            region.id = (int)c;
+                        }
+                    }
+                    if (region.prob >= threshold)
+                        regions.push_back(region);
+                }
+            }
+            Synet::Filter(regions, overlap);
+            return regions;
+        }
+
     private:
         size_t _netW, _netH, _classes;
-
+        int _version;
     };
 }
 
