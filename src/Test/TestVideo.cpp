@@ -95,6 +95,23 @@ namespace Test
 
     //-------------------------------------------------------------------------------------------------
 
+    struct Status
+    {
+        double readTime, analyseTime, writeTime;
+        bool readFinished, analyseFinished, writeFinished;
+        Status()
+            : readTime(0)
+            , analyseTime(0)
+            , writeTime(0)
+            , readFinished(0)
+            , analyseFinished(0)
+            , writeFinished(0)
+        {
+        }
+    };
+
+    //-------------------------------------------------------------------------------------------------
+
     struct FrameQueue
     {
         FrameQueue()
@@ -181,22 +198,19 @@ namespace Test
     protected:
 
         Options _options;
-        bool _readFinished, _analyseFinished;
         cv::VideoCapture _capture;
         cv::VideoWriter _writer;
         Analyser* _analyser;
         FrameQueue _input, _output;
         Simd::Font _font;
+        Status _status;
 
     public:
 
         VideoManager(const Options& options)
             : _options(options)
-            , _readFinished(false)
-            , _analyseFinished(false)
             , _analyser(NULL)
         {
-            _font.Resize(20);
         }
 
         virtual ~VideoManager()
@@ -209,6 +223,12 @@ namespace Test
                 _capture.open(0);
             else
                 _capture.open(source);
+            if (_capture.isOpened())
+            {
+                _font.Resize((int)_capture.get(cv::CAP_PROP_FRAME_HEIGHT) / 25);
+            }
+            else
+                return false;
             return _capture.isOpened();
         }
 
@@ -237,6 +257,15 @@ namespace Test
             std::thread analyseThread = std::thread(AnalyseThread, this);
 
             std::thread writeThread = std::thread(WriteThread, this);
+
+            while (!_status.writeFinished)
+            {
+                std::cout << "Progress: (r: " << Cpl::ToStr(_status.readTime, 3)
+                    << "; a: " << Cpl::ToStr(_status.analyseTime, 3)
+                    << "; w: " << Cpl::ToStr(_status.writeTime, 3) << ") ["
+                    << "i: " << _input.Size() << "; o:" << _output.Size() << "]. \r" << std::flush;
+                Sleep(20);
+            }
 
             if (readThread.joinable())
                 readThread.join();
@@ -271,7 +300,7 @@ namespace Test
                 if (delay > 0)
                     Sleep(int(delay * 1000));
 
-                std::cout << "Process: " << Cpl::ToStr(frame->videoTime, 3) << " sec. \r" << std::flush;
+                _status.readTime = frame->videoTime;
 
                 if (cv::waitKey(1) == 27)// "press 'Esc' to break video";
                     break;
@@ -279,7 +308,7 @@ namespace Test
                 if (_options.endTime > 0 && frame->videoTime > _options.endTime)
                     break;
             }
-            _readFinished = true;
+            _status.readFinished = true;
         }
 
         static void ReadThread(VideoManager * videoManager)
@@ -289,7 +318,7 @@ namespace Test
 
         void AnalyseFrames()
         {
-            while (!(_readFinished && _input.Size() == 0))
+            while (!(_status.readFinished && _input.Size() == 0))
             {
                 FramePtr frame = _input.Pop();
                 if (frame)
@@ -297,12 +326,13 @@ namespace Test
                     CPL_PERF_BEG("analyse");
                     if (_analyser)
                         _analyser->Process(frame);
+                    _status.analyseTime = frame->videoTime;
                     _output.Push(frame);
                 }
                 else
                     Sleep(1);
             }
-            _analyseFinished = true;
+            _status.analyseFinished = true;
         }
 
         static void AnalyseThread(VideoManager* videoManager)
@@ -312,36 +342,44 @@ namespace Test
 
         void WriteFrames()
         {
-            while (!(_analyseFinished && _output.Size() == 0))
+            while (!(_status.analyseFinished && _output.Size() == 0))
             {
                 FramePtr frame = _output.Pop();
                 if (frame)
                 {
                     CPL_PERF_BEG("write");
-                    double currentTime = Cpl::Time();
-                    double delay = currentTime - frame->startTime;
-                    Image output = frame->original;
-                    Simd::Pixel::Bgr24 red(0, 0, 255), green(0, 255, 0);
-                    std::stringstream ss;
-                    ss << "Delay " << Cpl::ToStr(delay, 3) << " ; i-queue: " << _input.Size() << " ; o-queue: " << _output.Size();
-
-                    _font.Draw(output, ss.str(), Image::BottomLeft, delay < 1.0 ? green : red);
-
-                    for (size_t i = 0; i < frame->regions.size(); ++i)
-                    {
-                        const Region& region = frame->regions[i];
-                        ptrdiff_t l = ptrdiff_t(region.x - region.w / 2);
-                        ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
-                        ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
-                        ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
-                        Simd::DrawRectangle(output, l, t, r, b, red, 1);
-                    }
-
+                    Annotate(frame);
                     if (_writer.isOpened())
                         _writer.write(frame->original);
+                    _status.writeTime = frame->videoTime;
                 }
                 else
                     Sleep(1);
+            }
+            _status.writeFinished = true;
+        }
+
+        void Annotate(FramePtr& frame)
+        {
+            CPL_PERF_BEG("annotate");
+
+            double currentTime = Cpl::Time();
+            double delay = currentTime - frame->startTime;
+            Image output = frame->original;
+            Simd::Pixel::Bgr24 red(0, 0, 255), green(0, 255, 0);
+            std::stringstream ss;
+            ss << "Delay " << Cpl::ToStr(delay, 3) << " ; i-queue: " << _input.Size() << " ; o-queue: " << _output.Size();
+
+            _font.Draw(output, ss.str(), Image::BottomLeft, delay < 1.0 ? green : red);
+
+            for (size_t i = 0; i < frame->regions.size(); ++i)
+            {
+                const Region& region = frame->regions[i];
+                ptrdiff_t l = ptrdiff_t(region.x - region.w / 2);
+                ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
+                ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
+                ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
+                Simd::DrawRectangle(output, l, t, r, b, red, 1);
             }
         }
 
