@@ -47,6 +47,13 @@ namespace Test
 
     //-------------------------------------------------------------------------------------------------
 
+    inline void Sleep(unsigned int miliseconds)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(miliseconds));
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     struct Options : public Cpl::ArgsParser
     {
         String source;
@@ -56,6 +63,7 @@ namespace Test
         String param;
         double realtime;
         double endTime;
+        size_t workThreads;
 
         Options(int argc, char* argv[])
             : ArgsParser(argc, argv, true)
@@ -67,6 +75,7 @@ namespace Test
             param = GetArg("-p", "");
             realtime = Cpl::ToVal<double>(GetArg("-rt", "1.0"));
             endTime = Cpl::ToVal<double>(GetArg("-et", "0.0"));
+            workThreads = Cpl::ToVal<double>(GetArg("-wt", "1"));
         }
     };
 
@@ -171,47 +180,97 @@ namespace Test
         const Options& _options;
         Synet::Network _detector;
         Test::TestParamHolder _param;
+        FrameQueue _input, _output;
+        Synet::YoloV11Decoder _decoder;
+        struct Thread
+        {
+            size_t id;
+            std::thread thread;
+        };
+        typedef std::vector<Thread> Threads;
+        Threads _threads;
+        bool _stopped;
     public:
         Analyser(const Options& options)
             : _options(options)
+            , _stopped(false)
         {
         }
 
         bool Init()
         {
-            if (!_detector.Load(_options.model, _options.weight))
+            if (!_detector.Load(_options.model, _options.weight, Synet::Options(), _options.workThreads))
                 SYNET_ERROR("Can't load model " << _options.model << " with weight " << _options.weight << " !");
             if (!_param.Load(_options.param))
                 SYNET_ERROR("Can't load param " << _options.param << " !");
+            if (_param().detection().decoder() != "yoloV11")
+                SYNET_ERROR("Detector support only YoloV11 decoder!");
+            if(!_decoder.Init(_detector.NchwShape()[3], _detector.NchwShape()[2], _param().detection().yoloV11()))
+                SYNET_ERROR("Can't init YoloV11 decoder !");
+            _threads.resize(_options.workThreads);
+            for (size_t t = 0; t < _threads.size(); ++t)
+            {
+                _threads[t].id = t;
+                _threads[t].thread = std::thread(&Analyser::DetectThread, this, t);
+            }
             return true;
         }
 
         virtual ~Analyser()
         {
+            _stopped = true;
+            for (size_t t = 0; t < _threads.size(); ++t)
+            {
+                if (_threads[t].thread.joinable())
+                    _threads[t].thread.join();
+            }
         };
 
         virtual bool Process(FramePtr frame)
         {
+            CPL_PERF_BEG("process");
             frame->startAnalyseTime = Cpl::Time();
-            if (frame->id % 2 == 0)
+            if (frame->id % 1 == 0)
             {
                 Image input = Image(frame->original);
                 frame->resized.Recreate(_detector.NchwShape()[3], _detector.NchwShape()[2], input.format);
                 Simd::Resize(input, frame->resized, SimdResizeMethodArea);
-                _detector.SetInput(frame->resized, _param().lower(), _param().upper());
-                _detector.Forward();
-                Synet::YoloV11Decoder decoder;
-                decoder.Init(_detector.NchwShape()[3], _detector.NchwShape()[2], _param().detection().yoloV11());
-                frame->regions = decoder.GetRegions(_detector, input.width, input.height, _param().detection().confidence(), _param().detection().overlap())[0];
-                frame->processed = 2;
+                _input.Push(frame);
             }
             else
                 frame->processed = 1;
+            while (_output.Size())
+            {
+                FramePtr output = _output.Pop();
+                if (output)
+                {
+                    output->processed = 3;
+                }
+            }
             return true;
         }
 
     private:
 
+        void DetectThread(int thread)
+        {
+            while (!_stopped)
+            {
+                FramePtr frame = _input.Pop();
+                if (frame)
+                {
+                    CPL_PERF_BEG("detect");
+                    Image input = Image(frame->original);
+                    _detector.SetInput(frame->resized, _param().lower(), _param().upper(), _param().order() == "rgb", thread);
+                    _detector.Forward(thread);
+                    frame->regions = _decoder.GetRegions(_detector, input.width, input.height, _param().detection().confidence(), _param().detection().overlap(), thread)[0];
+                    frame->processed = 2;
+                    _output.Push(frame);
+                }
+                else
+                    Sleep(1);
+            }
+        }
     };
 
     //-------------------------------------------------------------------------------------------------
@@ -275,11 +334,11 @@ namespace Test
             if (!_capture.isOpened())
                 return false;
 
-            std::thread readThread = std::thread(ReadThread, this);
+            std::thread readThread = std::thread(&VideoManager::ReadFrames, this);
 
-            std::thread analyseThread = std::thread(AnalyseThread, this);
+            std::thread analyseThread = std::thread(&VideoManager::AnalyseFrames, this);
 
-            std::thread writeThread = std::thread(WriteThread, this);
+            std::thread writeThread = std::thread(&VideoManager::WriteFrames, this);
 
             while (!_status.writeFinished)
             {
@@ -336,11 +395,6 @@ namespace Test
             _status.readFinished = true;
         }
 
-        static void ReadThread(VideoManager * videoManager)
-        {
-            videoManager->ReadFrames();
-        }
-
         void AnalyseFrames()
         {
             while (!(_status.readFinished && _input.Size() == 0))
@@ -358,11 +412,6 @@ namespace Test
                     Sleep(1);
             }
             _status.analyseFinished = true;
-        }
-
-        static void AnalyseThread(VideoManager* videoManager)
-        {
-            videoManager->AnalyseFrames();
         }
 
         void WriteFrames()
@@ -411,16 +460,6 @@ namespace Test
                 ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
                 Simd::DrawRectangle(output, l, t, r, b, red, 1);
             }
-        }
-
-        static void WriteThread(VideoManager* videoManager)
-        {
-            videoManager->WriteFrames();
-        }
-
-        inline void Sleep(unsigned int miliseconds)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(miliseconds));
         }
     };
 }
