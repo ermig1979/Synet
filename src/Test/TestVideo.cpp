@@ -83,6 +83,14 @@ namespace Test
 
     typedef Simd::View<Simd::Allocator> Image;
 
+    enum FrameType
+    {
+        FrameNone = 0,
+        FrameSkipped,
+        FrameMissed,
+        FrameProcessed,
+    };
+
     struct Frame
     {
         cv::Mat original;
@@ -91,7 +99,9 @@ namespace Test
         double startReadTime;
         double startAnalyseTime;
 
-        int id, processed;
+        int id;
+
+        FrameType type;
 
         Regions regions;
 
@@ -100,7 +110,7 @@ namespace Test
             , startReadTime(0)
             , startAnalyseTime(0)
             , id(-1)
-            , processed(0)
+            , type(FrameNone)
         {
         }
     };
@@ -158,13 +168,13 @@ namespace Test
             return _frames.size();
         }
 
-        int Processed()
+        FrameType FrontType()
         {
             std::lock_guard<std::mutex> lock(_mutex);
             FramePtr frame;
             if (_frames.size())
-                return _frames.front()->processed;
-            return 0;
+                return _frames.front()->type;
+            return FrameNone;
         }
 
         private:
@@ -190,6 +200,7 @@ namespace Test
         typedef std::vector<Thread> Threads;
         Threads _threads;
         bool _stopped;
+        int _totalSkipped, _totalProcessed, _lastS, _lastP;
     public:
         Analyser(const Options& options)
             : _options(options)
@@ -208,6 +219,10 @@ namespace Test
             if(!_decoder.Init(_detector.NchwShape()[3], _detector.NchwShape()[2], _param().detection().yoloV11()))
                 SYNET_ERROR("Can't init YoloV11 decoder !");
             _threads.resize(_options.workThreads);
+            _totalSkipped = 0;
+            _totalProcessed = 0;
+            _lastS = 0;
+            _lastP = 0;
             for (size_t t = 0; t < _threads.size(); ++t)
             {
                 _threads[t].id = t;
@@ -230,21 +245,29 @@ namespace Test
         {
             CPL_PERF_BEG("process");
             frame->startAnalyseTime = Cpl::Time();
-            if (frame->id % 1 == 0)
+            if (CanSkip(frame))
+            {
+                frame->type = FrameSkipped;
+                _totalSkipped++;
+                _lastP = 0;
+                _lastS++;
+            }
+            else
             {
                 Image input = Image(frame->original);
                 frame->resized.Recreate(_detector.NchwShape()[3], _detector.NchwShape()[2], input.format);
                 Simd::Resize(input, frame->resized, SimdResizeMethodArea);
+                _totalProcessed++;
+                _lastS = 0;
+                _lastP++;
                 _input.Push(frame);
             }
-            else
-                frame->processed = 1;
             while (_output.Size())
             {
                 FramePtr output = _output.Pop();
                 if (output)
                 {
-                    output->processed = 3;
+                    output->type = FrameProcessed;
                 }
             }
             return true;
@@ -264,12 +287,42 @@ namespace Test
                     _detector.SetInput(frame->resized, _param().lower(), _param().upper(), _param().order() == "rgb", thread);
                     _detector.Forward(thread);
                     frame->regions = _decoder.GetRegions(_detector, input.width, input.height, _param().detection().confidence(), _param().detection().overlap(), thread)[0];
-                    frame->processed = 2;
+                    frame->type = FrameMissed;
                     _output.Push(frame);
                 }
                 else
                     Sleep(1);
             }
+        }
+
+        bool CanSkip(FramePtr frame)
+        {
+            size_t loBorder = _options.workThreads, hiBorder = _options.workThreads * 2;
+
+            if (_input.Size() < loBorder)
+                return false;
+            else if (_input.Size() > hiBorder)
+                return true;
+            else
+            {
+                if (_totalSkipped > _totalProcessed)
+                {
+                    if (_lastP)
+                        return true;
+                    if (_lastS * _totalProcessed > _totalSkipped)
+                        return false;
+                    return true;
+                }
+                else
+                {
+                    if (_lastS)
+                        return false;
+                    if (_lastP * _totalSkipped > _totalProcessed)
+                        return true;
+                    return false;
+                }
+            }
+            return false;
         }
     };
 
@@ -418,7 +471,8 @@ namespace Test
         {
             while (!(_status.analyseFinished && _output.Size() == 0))
             {
-                if (_output.Processed())
+                FrameType type = _output.FrontType();
+                if (type == FrameProcessed || type == FrameSkipped || (type == FrameMissed && _status.analyseFinished))
                 {
                     FramePtr frame = _output.Pop();
                     if (frame)
@@ -445,11 +499,18 @@ namespace Test
             double currentTime = Cpl::Time();
             double delay = currentTime - frame->startReadTime;
             Image output = frame->original;
-            Simd::Pixel::Bgr24 red(0, 0, 255), green(0, 255, 0);
+            Simd::Pixel::Bgr24 red(0, 0, 255), green(0, 255, 0), yellow(0, 255, 255);
             std::stringstream ss;
             ss << "Delay " << Cpl::ToStr(delay, 3) << " ; i-queue: " << _input.Size() << " ; o-queue: " << _output.Size();
 
             _font.Draw(output, ss.str(), Image::BottomLeft, delay < 1.0 ? green : red);
+
+            switch (frame->type)
+            {
+            case FrameSkipped:  _font.Draw(output, "Skipped:" + Cpl::ToStr(frame->id), Image::TopLeft, yellow); break;
+            case FrameMissed:  _font.Draw(output, "Missed:" + Cpl::ToStr(frame->id), Image::TopLeft, red); break;
+            case FrameProcessed:  _font.Draw(output, "Processed:" + Cpl::ToStr(frame->id), Image::TopLeft, green); break;
+            }
 
             for (size_t i = 0; i < frame->regions.size(); ++i)
             {
