@@ -1,26 +1,42 @@
 cmake_minimum_required(VERSION 3.10)
 
-set(SIMD_TEST OFF CACHE BOOL "" FORCE)
-set(SIMD_SHARED ${SYNET_SHARED} CACHE BOOL "" FORCE)
-set(SIMD_GET_VERSION ON CACHE BOOL "" FORCE)
-set(SIMD_TOOLCHAIN ${CMAKE_CXX_COMPILER})
-set(SIMD_INFO ${SYNET_INFO} CACHE BOOL "" FORCE)
-set(SIMD_SYNET ${SYNET_SIMD} CACHE BOOL "" FORCE)
-set(SIMD_INT8_DEBUG OFF CACHE BOOL "" FORCE)
-set(SIMD_PYTHON ${SYNET_PYTHON} CACHE BOOL "" FORCE)
-set(SIMD_LIB "Simd")
-if(SYNET_PERF GREATER_EQUAL 2)
-	set(SIMD_PERF ON CACHE BOOL "" FORCE)
+# Пытаемся найти Conan пакет Simd
+find_package(simd QUIET)
+
+if(simd_FOUND)
+    message(STATUS "Using Conan Simd package")
+    set(SIMD_LIB simd::simd)
+    list(APPEND SYNET_DEFINITIONS -DSYNET_SIMD_LIBRARY_ENABLE)
+    if(NOT SYNET_SIMD)
+        list(APPEND SYNET_DEFINITIONS -DSYNET_SIMD_SYNET_DISABLE)
+    endif()
 else()
-	set(SIMD_PERF OFF CACHE BOOL "" FORCE)
+    message(STATUS "Conan Simd not found, using embedded submodule")
+    
+    # Оригинальная логика с embedded субмодулем
+    set(SIMD_TEST OFF CACHE BOOL "" FORCE)
+    set(SIMD_SHARED ${SYNET_SHARED} CACHE BOOL "" FORCE)
+    set(SIMD_GET_VERSION ON CACHE BOOL "" FORCE)
+    set(SIMD_TOOLCHAIN ${CMAKE_CXX_COMPILER})
+    set(SIMD_INFO ${SYNET_INFO} CACHE BOOL "" FORCE)
+    set(SIMD_SYNET ${SYNET_SIMD} CACHE BOOL "" FORCE)
+    set(SIMD_INT8_DEBUG OFF CACHE BOOL "" FORCE)
+    set(SIMD_PYTHON ${SYNET_PYTHON} CACHE BOOL "" FORCE)
+    set(SIMD_LIB "Simd")
+    
+    if(SYNET_PERF GREATER_EQUAL 2)
+        set(SIMD_PERF ON CACHE BOOL "" FORCE)
+    else()
+        set(SIMD_PERF OFF CACHE BOOL "" FORCE)
+    endif()
+    
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+    
+    list(APPEND SYNET_DEFINITIONS -DSYNET_SIMD_LIBRARY_ENABLE)
+    if(NOT SYNET_SIMD)
+        list(APPEND SYNET_DEFINITIONS -DSYNET_SIMD_SYNET_DISABLE)
+    endif()
+    
+    add_subdirectory(${ROOT_DIR}/3rd/Simd/prj/cmake 3rd/Simd)
+    include_directories(${ROOT_DIR}/3rd/Simd/src)
 endif()
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-
-list(APPEND SYNET_DEFINITIONS -DSYNET_SIMD_LIBRARY_ENABLE)
-if(NOT SYNET_SIMD)
-	list(APPEND SYNET_DEFINITIONS -DSYNET_SIMD_SYNET_DISABLE)
-endif()
-
-add_subdirectory(${ROOT_DIR}/3rd/Simd/prj/cmake 3rd/Simd)
-
-include_directories(${ROOT_DIR}/3rd/Simd/src)
