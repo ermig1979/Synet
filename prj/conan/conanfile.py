@@ -2,7 +2,6 @@ from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout, CMakeToolchain, CMakeDeps
 from conan.tools.files import copy, load, rmdir
 import os
-import re
 
 
 class SynetConan(ConanFile):
@@ -37,47 +36,43 @@ class SynetConan(ConanFile):
     def _repo_root(self):
         return os.path.normpath(os.path.join(self.recipe_folder, "..", ".."))
 
-    def _read_version(self, base_dir):
-        version_file = os.path.join(base_dir, "src", "Synet", "Version.h")
-        if not os.path.exists(version_file):
-            return None
-        content = load(self, version_file)
-        match = re.search(r'#define SYNET_VERSION "([^"]+)"', content)
-        return match.group(1) if match else None
-
-    def _read_simd_version(self):
+    def _read_version_file(self, filename, *subdirs):
         paths = [
-            os.path.join(self._repo_root(), "3rd", "Simd", "prj", "txt", "UserVersion.txt"),
-            os.path.join(self.recipe_folder, "3rd", "Simd", "UserVersion.txt"),
+            os.path.join(self._repo_root(), *subdirs, filename),
+            os.path.join(self.recipe_folder, *subdirs, filename),
         ]
         for version_file in paths:
             if os.path.exists(version_file):
                 version = load(self, version_file).strip()
                 if version:
                     return version
+        return None
+
+    def set_version(self):
+        if self.version:
+            return
+        version = self._read_version_file("UserVersion.txt", "prj", "txt")
+        if version:
+            self.version = version
+            return
+        raise Exception("Synet version not found in prj/txt/UserVersion.txt")
+
+    def _read_simd_version(self):
+        version = self._read_version_file("UserVersion.txt", "3rd", "Simd", "prj", "txt")
+        if version:
+            return version
         raise Exception(
             "Simd version not found. "
             "Run: git submodule update --init 3rd/Simd"
         )
 
-    def set_version(self):
-        if self.version:
-            return
-        # In local flow — read from repo; in cache — from exported copy
-        for base in [self._repo_root(), self.recipe_folder]:
-            version = self._read_version(base)
-            if version:
-                self.version = version
-                return
-        raise Exception("SYNET_VERSION not found")
-
     def export(self):
-        copy(self, "Version.h",
-             src=os.path.join(self._repo_root(), "src", "Synet"),
-             dst=os.path.join(self.export_folder, "src", "Synet"))
+        copy(self, "UserVersion.txt",
+             src=os.path.join(self._repo_root(), "prj", "txt"),
+             dst=os.path.join(self.export_folder, "prj", "txt"))
         copy(self, "UserVersion.txt",
              src=os.path.join(self._repo_root(), "3rd", "Simd", "prj", "txt"),
-             dst=os.path.join(self.export_folder, "3rd", "Simd"))
+             dst=os.path.join(self.export_folder, "3rd", "Simd", "prj", "txt"))
 
     def requirements(self):
         self.requires(f"simd/{self._read_simd_version()}")
