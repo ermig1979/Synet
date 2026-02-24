@@ -35,6 +35,7 @@ namespace Synet
         const Shape& k0 = l0.convolution().kernel();
         const LayerParam& l1 = src[index + 1];
         const Shape& k1 = l1.convolution().kernel();
+        const Shape& d1 = l1.convolution().dilation();
         const LayerParam& l2 = src[index + 2];
         const Shape& k2 = l2.convolution().kernel();
         if (l0.type() != LayerTypeConvolution || l1.type() != LayerTypeConvolution ||
@@ -47,6 +48,8 @@ namespace Synet
         if (l1.convolution().outputNum() != l1.convolution().group() || l1.convolution().group() == 1)
             return false;
         if (k1.size() < 2 || (k1[0] != k1[1] || (k1[0] != 3 && k1[0] != 5 && k1[0] != 7)))
+            return false;
+        if (d1.size() < 2 || d1[0] != 1 || d1[1] != 1)
             return false;
         if (k2.size() < 2 || k2[0] != 1 || k2[1] != 1 || l2.convolution().group() != 1)
             return false;
@@ -177,8 +180,10 @@ namespace Synet
             return false;
         const LayerParam& l0 = src[index + 0];
         const Shape& k0 = l0.convolution().kernel();
+        const Shape& d0 = l0.convolution().dilation();
         const LayerParam& l1 = src[index + 1];
         const Shape& k1 = l1.convolution().kernel();
+        const Shape& d1 = l1.convolution().dilation();
         if (l0.type() != LayerTypeConvolution || l1.type() != LayerTypeConvolution || l1.src()[0] != l0.dst()[0])
             return false;
         if (l0.weight()[0].format() != TensorFormatNhwc)
@@ -196,6 +201,8 @@ namespace Synet
                 return false;
             if (k1.size() < 2 || (k1[0] != k1[1] || (k1[0] != 1)) || l1.convolution().group() != 1)
                 return false;
+            if (d0.size() < 2 || d0[0] != 1 || d0[1] != 1)
+                return false;
         }
         else
         {
@@ -206,6 +213,8 @@ namespace Synet
             if (k1.size() < 2 || (k1[0] != k1[1] || (k1[0] != 3 && k1[0] != 5 && k1[0] != 7)))
                 return false;
             if (l0.lowPrecision().bf16Type() == LowPrecisionTypeActive && k0[0] != 1)
+                return false;
+            if (d1.size() < 2 || d1[0] != 1 || d1[1] != 1)
                 return false;
         }
         LayerParam layer;
