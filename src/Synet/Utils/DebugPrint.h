@@ -182,13 +182,16 @@ namespace Synet
             if (std::is_same<T, float>::value || std::is_same<T, uint16_t>::value)
             {
                 float max = -FLT_MAX, min = FLT_MAX;
+                bool hasNaN = false;
                 if (std::is_same<T, float>::value)
                 {
                     float* ptr = (float*)data;
                     for (size_t i = 0; i < size; ++i)
                     {
-                        max = std::max(max, ptr[i]);
-                        min = std::min(min, ptr[i]);
+                        float val = ptr[i];
+                        max = std::max(max, val);
+                        min = std::min(min, val);
+                        hasNaN = hasNaN || std::isnan(val);
                     }
                 }
 #if !defined(SYNET_BF16_PRINT_DISABLE)
@@ -200,12 +203,13 @@ namespace Synet
                         float val = BFloat16ToFloat32(ptr[i]);
                         max = std::max(max, val);
                         min = std::min(min, val);
+                        hasNaN = hasNaN || std::isnan(val);
                     }
                 }
 #endif
                 os << std::fixed << std::setprecision(precision);
                 os << " { " << min << " .. " << max << " }";
-                if (max > float(INT_MAX) || min < float(INT_MIN) || std::isnan(min) || std::isnan(max))
+                if (max > float(INT_MAX) || min < float(INT_MIN) || std::isnan(min) || std::isnan(max) || hasNaN)
                     os << " warning!";
             }
             if (std::is_same<T, uint8_t>::value)

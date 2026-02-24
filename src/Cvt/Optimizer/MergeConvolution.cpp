@@ -43,6 +43,8 @@ namespace Synet
             return false;
         if (l0.weight()[0].format() != TensorFormatNhwc)
             return false;
+        if (l0.weight()[0].dim()[2] > param.mergeConvolutionsInputNumMax())
+            return false;
         if (k0.size() < 2 || (k0[0] != k0[1] || (k0[0] != 1 && k0[0] != 3)) || l0.convolution().group() != 1)
             return false;
         if (l1.convolution().outputNum() != l1.convolution().group() || l1.convolution().group() == 1)
@@ -215,6 +217,8 @@ namespace Synet
             if (l0.lowPrecision().bf16Type() == LowPrecisionTypeActive && k0[0] != 1)
                 return false;
             if (d1.size() < 2 || d1[0] != 1 || d1[1] != 1)
+                return false;
+            if (l0.weight()[0].dim()[2] > param.mergeConvolutionsInputNumMax())
                 return false;
         }
         LayerParam layer;
