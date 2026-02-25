@@ -36,7 +36,7 @@ namespace Synet
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("StubLayer supports only 1 input and 1 output!");
         if(dst[0] != src[0])
-            dst[0]->Share(*src[0]);
+            dst[0]->ShareAs(*src[0], src[0]->Shape(), src[0]->Format());
         _const = true;
         return true;
     }

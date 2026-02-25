@@ -58,7 +58,7 @@ namespace Synet
         {
             const Strings& names = Param().src();
             if (TensorUsers(names[0]) == 1 && !src[0]->Const())
-                dst[0]->Share(*src[0]);
+                dst[0]->ShareAs(*src[0], src[0]->Shape(), src[0]->Format());
             else
                 dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
         }
