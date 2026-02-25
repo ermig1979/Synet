@@ -81,7 +81,7 @@ namespace Synet
             SYNET_ERROR("CastLayer can't cast " << Cpl::ToStr(_srcType) << " to " << Cpl::ToStr(_dstType) << " !");
         if (_srcType == _dstType)
         {
-            dst[0]->Share(*src[0]);
+            dst[0]->ShareAs(*src[0], src[0]->Shape(), src[0]->Format());
             _const = true;
         }
         else
