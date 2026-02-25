@@ -199,10 +199,7 @@ namespace Synet
             param.beginDims() = Lng(src[1]->Data<int64_t>(), src[1]->Size());
             param.endDims() = Lng(src[2]->Data<int64_t>(), src[2]->Size());
 			for (size_t i = 0; i < src[3]->Size(); ++i)
-			{
-				int64_t axis = src[3]->Data<int64_t>()[i];
-				param.axes().push_back(size_t(axis < 0 ? axis + src[0]->Count() : axis));
-			}
+				param.axes().push_back(src[0]->Index(src[3]->Data<int64_t>()[i]));
         }
 		if (src.size() == 5)
 		{
@@ -210,11 +207,14 @@ namespace Synet
 				SYNET_ERROR("Check StridedSliceLayer parameters!");
 			param.beginDims() = Lng(src[1]->Data<int64_t>(), src[1]->Size());
 			param.endDims() = Lng(src[2]->Data<int64_t>(), src[2]->Size());
-			param.axes() = Shp(src[3]->Data<int64_t>(), src[3]->Size());
+			for (size_t i = 0; i < src[3]->Size(); ++i)
+				param.axes().push_back(src[0]->Index(src[3]->Data<int64_t>()[i]));
 			param.strideDims() = Lng(src[4]->Data<int64_t>(), src[4]->Size());
 		}
-        _axes = param.axes();
-        if (param.strideDims().size())
+		_axes.resize(param.axes().size());
+		for (size_t i = 0; i < param.axes().size(); ++i)
+			_axes[i] = src[0]->Index(param.axes()[i]);
+		if (param.strideDims().size())
         {
             if (_axes.size())
             {
