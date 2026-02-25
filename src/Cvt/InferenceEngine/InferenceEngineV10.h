@@ -1347,7 +1347,7 @@ namespace Synet
         {
             layer.type() = Synet::LayerTypeStub;
             if (layer.dst().empty())
-                layer.dst().push_back(layer.name());
+                layer.dst().push_back(layer.src()[0]);
             if (network && layer.parent().empty())
                 network->dst().push_back(layer.src()[0]);
             return true;
