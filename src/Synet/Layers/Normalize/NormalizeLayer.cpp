@@ -509,7 +509,7 @@ namespace Synet
             _trans = axis == src[0]->Count() - 1 ? 1 : 0;
             if (_trans)
             {
-                if (src[0]->Count() == 4)
+                if (src[0]->Count() >= 3)
                 {
                     _batch = src[0]->Axis(0);
                     _spatial = src[0]->Size(1, axis);
