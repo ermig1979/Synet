@@ -919,35 +919,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertNonMaxSuppressionNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& bin, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 4, 5))
-                return false;
-
-            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
-            if (src2 == NULL || src2->type() != LayerTypeMeta || src2->meta().type() != MetaTypeConst)
-                return false;
-            layer.nonMaxSuppression().maxOutputBoxesPerClass() = src2->meta().alpha().i64()[0];
-
-            const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
-            if (src3 == NULL || src3->type() != LayerTypeConst)
-                return false;
-            layer.nonMaxSuppression().iouThreshold() = bin[src3->weight()[0].offset() / sizeof(float)];
-
-            if (layer.src().size() > 4)
-            {
-                const LayerParam* src4 = GetLayer(layers, layer.src()[4]);
-                if (src4 == NULL || src4->type() != LayerTypeConst)
-                    return false;
-                layer.nonMaxSuppression().scoreThreshold() = bin[src4->weight()[0].offset() / sizeof(float)];
-            }
-
-            layer.type() = Synet::LayerTypeNonMaxSuppression;
-            layer.src().resize(2);
-
-            return true;
-        }
-
         bool ConvertNonZeroNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1))
