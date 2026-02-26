@@ -396,6 +396,21 @@ namespace Test
             SortRegionsByProb(rf);
             SortRegionsByProb(rs);
             size_t n = std::min(rf.size(), rs.size());
+            float maxExceeding = 0.0f;
+            if (rf.size() > n)
+            {
+                for (size_t i = n; i < rf.size(); ++i)
+                    maxExceeding = std::max(maxExceeding, rf[i].prob - _param.detection().confidence());
+            }
+            if (rs.size() > n)
+            {
+                for (size_t i = n; i < rs.size(); ++i)
+                    maxExceeding = std::max(maxExceeding, rs[i].prob - _param.detection().confidence());
+            }
+            if (maxExceeding > compareThreshold)
+                SYNET_ERROR(failed << std::endl << "Regions number for '"
+                    << _param.detection().decoder() << "' decoder is different: " << rf.size() << " != " << rs.size()
+                    << " ; non detected region prob exceeding is " << maxExceeding << " !");
             //std::cout << "CompareRegions: " << rf.size() << " and " << rs.size() << std::endl;
             for (size_t fi = 0; fi < n; ++fi)
             {
