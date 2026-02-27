@@ -2,6 +2,7 @@
 	path = 3rd/Simd
 	url = https://github.com/ermig1979/Simd.git
 	ignore = dirty
+	branch = master
 [submodule "3rd/openvino"]
 	path = 3rd/openvino
 	url = https://github.com/openvinotoolkit/openvino.git
