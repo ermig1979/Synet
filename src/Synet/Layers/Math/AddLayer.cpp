@@ -95,6 +95,8 @@ namespace Synet
     {
         if (typeA == TensorType64i && typeB == TensorType64i && typeD == TensorType64i)
             return Uniform<int64_t, int64_t, int64_t>;
+        if (typeA == TensorType32i && typeB == TensorType32i && typeD == TensorType32i)
+            return Uniform<int32_t, int32_t, int32_t>;
         switch (typeA)
         {
         case TensorType32f: return GetUniform<float>(typeB, typeD);
@@ -159,6 +161,8 @@ namespace Synet
     {
         if (typeA == TensorType64i && typeB == TensorType64i && typeD == TensorType64i)
             return AddBias<int64_t, int64_t, int64_t>;
+        if (typeA == TensorType32i && typeB == TensorType32i && typeD == TensorType32i)
+            return AddBias<int32_t, int32_t, int32_t>;
         switch (typeA)
         {
         case TensorType32f: return GetAddBias<float>(typeB, typeD);
@@ -378,7 +382,10 @@ namespace Synet
 
         _typeA = _src[0]->GetType();
         _typeB = _src[1]->GetType();
-        _typeD = _typeA == TensorType64i ? TensorType64i : dst[0]->GetType();
+        if (_typeA == TensorType64i || _typeA == TensorType32i)
+            _typeD = _typeA;
+        else
+            _typeD = dst[0]->GetType();
         _format = formatA;
         if (dst[0] != _src[0] && dst[0])
         {
@@ -433,6 +440,7 @@ namespace Synet
 
             if (shapeA == shapeB)
             {
+                _special = SpecialNone;
                 _batch = 1, _channels = 1, _spatial = _src[0]->Size();
             }
             else if (_src[0]->Count() > 1 && _src[0]->Count() == _src[1]->Count() && _src[0]->Size(1) == _src[1]->Size(1))
