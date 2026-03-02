@@ -29,56 +29,71 @@
 
 namespace Synet
 {
-    bool ConvertAddNode(const onnx::NodeProto& node, LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer)
+    bool ConvertMulNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer)
     {
         if (!CheckSourceNumber(layer, 2))
             return false;
-        if (GetLayerType(layers, layer.src()[0]) == LayerTypeDequantizeLinear &&
-            GetLayerType(layers, layer.src()[1]) == LayerTypeDequantizeLinear)
-        {
-            layer.type() = Synet::LayerTypeAdd;
-            return true;
-        }
         const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
         const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
         if (src0 == NULL || src1 == NULL)
             return false;
-        else if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
+        if (src0->type() == LayerTypeConst)
         {
-            layer.type() = LayerTypeMeta;
-            layer.meta().type() = MetaTypeAdd;
+            std::swap(src0, src1);
+            std::swap(layer.src()[0], layer.src()[1]);
         }
-        else if (src1->type() == LayerTypeConst && src1->weight()[0].dim() == Shp(1))
+        if (src1->type() == LayerTypeConst && TensorSize(src1->weight()[0].dim()) == 1)
         {
             layer.type() = Synet::LayerTypePower;
             layer.power().power() = 1.0f;
-            layer.power().scale() = 1.0f;
+            layer.power().shift() = 0.0f;
             if (src1->weight()[0].type() == TensorType32f)
             {
-                const float* shift = GetWeight<float>(original, src1->weight()[0]);
-                layer.power().shift() = shift[0];
+                const float* scale = GetWeight<float>(original, src1->weight()[0]);
+                layer.power().scale() = scale[0];
             }
             else if (src1->weight()[0].type() == TensorType32i)
             {
-                const int32_t* shift = GetWeight<int32_t>(original, src1->weight()[0]);
-                layer.power().shift() = (float)shift[0];
+                const int32_t* scale = GetWeight<int32_t>(original, src1->weight()[0]);
+                layer.power().scale() = (float)scale[0];
             }
             layer.src().resize(1);
         }
+        else if (src1->type() == LayerTypeConst && SignificantDimsCount(src1->weight()[0].dim()) == 1 && src1->weight()[0].dim().size() == 3 && src1->weight()[0].dim()[0] != 1)
+        {
+            layer.type() = Synet::LayerTypeScale;
+            layer.weight() = src1->weight();
+            //if (!CompactShape(layer.weight()[0].dim()))
+            //    return false;
+            layer.src().resize(1);
+        }
+        else if (src1->type() == LayerTypeConst && SignificantDimsCount(src1->weight()[0].dim()) == 1 && src1->weight()[0].dim().size() == 4 && src1->weight()[0].dim()[1] != 1)
+        {
+            layer.type() = Synet::LayerTypeScale;
+            layer.weight() = src1->weight();
+            if (!CompactShape(layer.weight()[0].dim()))
+                return false;
+            layer.src().resize(1);
+        }
+        else if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
+        {
+            layer.type() = LayerTypeMeta;
+            layer.meta().type() = MetaTypeMul;
+        }
         else
         {
-            if (onnxParam.addToEltwise())
+            if (onnxParam.mulToEltwise())
             {
                 layer.type() = Synet::LayerTypeEltwise;
-                layer.eltwise().operation() = EltwiseOperationTypeSum;
+                layer.eltwise().operation() = EltwiseOperationTypeProduct;
             }
             else
-                layer.type() = Synet::LayerTypeAdd;
+                layer.type() = Synet::LayerTypeMul;
             if (src0->type() == LayerTypeConst && src1->type() != LayerTypeConst)
                 std::swap(layer.src()[0], layer.src()[1]);
         }
         return true;
-    }
+        }
 }
 
 #endif

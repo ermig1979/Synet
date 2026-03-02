@@ -44,6 +44,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInput.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessOrEqualNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMulNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertNonMaxSuppressionNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertPreluNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearAddNode.cpp" />

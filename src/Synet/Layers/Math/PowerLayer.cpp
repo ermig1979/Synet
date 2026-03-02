@@ -33,6 +33,12 @@ namespace Synet
             dst[i] = ::powf(src[i] * scale + shift, power);
     }
 
+    void Scale32i(const int32_t* src, size_t size, int32_t scale, int32_t shift, int32_t* dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = src[i] * scale + shift;
+    }
+
     //-------------------------------------------------------------------------------------------------
 
     PowerLayer::PowerLayer(const LayerParam & param, Context* context)
@@ -50,7 +56,7 @@ namespace Synet
         _scale = param.scale();
         _shift = param.shift();
 
-        if(src[0]->GetType() != TensorType32f)
+        if(src[0]->GetType() != TensorType32f && src[0]->GetType() != TensorType32i)
             SYNET_ERROR("PowerLayer usupported src[0]: " << Cpl::ToStr(src[0]->GetType()) << " type !");
         _size = src[0]->Size();
 
@@ -86,13 +92,20 @@ namespace Synet
             return _size * 41;
     }
 
-    void PowerLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
+    void PowerLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
-        const float* pSrc = src[0]->Data<float>();
-        float* pDst = dst[0]->Data<float>();
-        if (_power == 1.0f)
-            ScaleForward32f(pSrc, &_scale, &_shift, 1, 1, _size, pDst, TensorFormatNchw, 0);
-        else
-            Power32f(pSrc, _size, _scale, _shift, _power, pDst);
+        if (src[0]->GetType() == TensorType32f)
+        {
+            const float* pSrc = src[0]->Data<float>();
+            float* pDst = dst[0]->Data<float>();
+            if (_power == 1.0f)
+                ScaleForward32f(pSrc, &_scale, &_shift, 1, 1, _size, pDst, TensorFormatNchw, 0);
+            else
+                Power32f(pSrc, _size, _scale, _shift, _power, pDst);
+        } 
+        else if (src[0]->GetType() == TensorType32i)
+        {
+           Scale32i(src[0]->Data<int32_t>(), _size, (int32_t)_scale, (int32_t)_shift, dst[0]->Data<int32_t>());
+        }
     }
 }

@@ -67,6 +67,8 @@ namespace Synet
 
     bool ConvertLessOrEqualNode(const onnx::NodeProto& node, LayerParam& layer);
 
+    bool ConvertMulNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer);
+
     bool ConvertNonMaxSuppressionNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& bin, LayerParam& layer);
 
     bool ConvertPreluNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer);

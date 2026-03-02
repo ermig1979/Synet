@@ -90,6 +90,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp">
       <Filter>OnnxRuntime</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMulNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.h">

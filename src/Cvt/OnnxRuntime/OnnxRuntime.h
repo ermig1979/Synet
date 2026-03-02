@@ -821,62 +821,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertMulNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src0 == NULL || src1 == NULL)
-                return false;
-            if (src0->type() == LayerTypeConst)
-            {
-                std::swap(src0, src1);
-                std::swap(layer.src()[0], layer.src()[1]);
-            }
-            if (src1->type() == LayerTypeConst && TensorSize(src1->weight()[0].dim()) == 1)
-            {
-                layer.type() = Synet::LayerTypePower;
-                const float* pScale = GetWeight<float>(original, src1->weight()[0]);
-                layer.power().scale() = pScale[0];
-                layer.src().resize(1);
-            }
-            else if (src1->type() == LayerTypeConst && SignificantDimsCount(src1->weight()[0].dim()) == 1 && src1->weight()[0].dim().size() == 3 && src1->weight()[0].dim()[0] != 1)
-            {
-                layer.type() = Synet::LayerTypeScale;
-                layer.weight() = src1->weight();
-                //if (!CompactShape(layer.weight()[0].dim()))
-                //    return false;
-                layer.src().resize(1);
-            }
-            else if (src1->type() == LayerTypeConst && SignificantDimsCount(src1->weight()[0].dim()) == 1 && src1->weight()[0].dim().size() == 4 && src1->weight()[0].dim()[1] != 1)
-            {
-                layer.type() = Synet::LayerTypeScale;
-                layer.weight() = src1->weight();
-                if (!CompactShape(layer.weight()[0].dim()))
-                    return false;
-                layer.src().resize(1);
-            }
-            else if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
-            {
-                layer.type() = LayerTypeMeta;
-                layer.meta().type() = MetaTypeMul;
-            }
-            else
-            {
-                if (onnxParam.mulToEltwise())
-                {
-                    layer.type() = Synet::LayerTypeEltwise;
-                    layer.eltwise().operation() = EltwiseOperationTypeProduct;
-                }
-                else
-                    layer.type() = Synet::LayerTypeMul;
-                if (src0->type() == LayerTypeConst && src1->type() != LayerTypeConst)
-                    std::swap(layer.src()[0], layer.src()[1]);
-            }
-            return true;
-        }
-
         bool ConvertNegNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeUnaryOperation;

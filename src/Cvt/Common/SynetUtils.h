@@ -180,6 +180,8 @@ namespace Synet
     {
         if (param.offset() + param.size() > bin.size())
             SYNET_ERROR("Binary storage access overflow: " << param.offset() + param.size() << " > " << bin.size() << " !");
+        if (param.type() != GetTensorType<T>())
+            SYNET_ERROR("Try to access to " << Cpl::ToStr(param.type()) << " as to " << Cpl::ToStr(GetTensorType<T>()) << " !");
         return GetWeight<T>(bin, param.offset());
     }
 
