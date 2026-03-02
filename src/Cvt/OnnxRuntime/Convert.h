@@ -49,15 +49,23 @@ namespace Synet
 
     bool ConvertDropoutNode(const onnx::NodeProto& node, LayerParam& layer);
 
+    bool ConvertEqualNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
     bool ConvertFlattenNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertGemmNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered, TensorFormatMap* tensorFormatMap, UniqNames& merged);
 
     bool ConvertGlobalAveragePoolNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer, UniqNames& merged);
 
+    bool ConvertGreaterNode(const onnx::NodeProto& node, LayerParam& layer);
+
     bool ConvertInitializer(const onnx::TensorProto& tensor, Synet::NetworkParam& network, Bytes& weight, Renames& renames);
 
     bool ConvertInput(const onnx::ValueInfoProto& input, bool trans, Synet::NetworkParam& network, Renames& renames);
+
+    bool ConvertLessNode(const onnx::NodeProto& node, LayerParam& layer);
+
+    bool ConvertLessOrEqualNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertNonMaxSuppressionNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& bin, LayerParam& layer);
 

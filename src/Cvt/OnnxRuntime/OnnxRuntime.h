@@ -435,27 +435,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertEqualNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src0 == NULL || src1 == NULL)
-                return false;
-            if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
-            {
-                layer.type() = Synet::LayerTypeMeta;
-                layer.meta().type() = Synet::MetaTypeEqual;
-            }
-            else
-            {
-                layer.type() = Synet::LayerTypeCompare;
-                layer.compare().compareType() = CompareTypeEqual;
-            }
-            return true;
-        }
-
         bool ConvertExpNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeUnaryOperation;
@@ -548,13 +527,6 @@ namespace Synet
                         return false;
                 }
             }
-            return true;
-        }
-
-        bool ConvertGreaterNode(const onnx::NodeProto& node, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypeCompare;
-            layer.compare().compareType() = CompareTypeGreaterThan;
             return true;
         }
 
@@ -694,13 +666,6 @@ namespace Synet
             layer.type() = Synet::LayerTypeRelu;
             if (!ConvertAtrributeFloat(node, "alpha", layer.relu().negativeSlope()))
                 return false;
-            return true;
-        }
-
-        bool ConvertLessNode(const onnx::NodeProto& node, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypeCompare;
-            layer.compare().compareType() = CompareTypeLessThan;
             return true;
         }
 

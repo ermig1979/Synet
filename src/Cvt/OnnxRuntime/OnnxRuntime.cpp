@@ -216,6 +216,8 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "Less" && !ConvertLessNode(node, layer))
                 return ErrorMessage(i, node);
+            if (node.op_type() == "LessOrEqual" && !ConvertLessOrEqualNode(node, layer))
+                return ErrorMessage(i, node);
             if (node.op_type() == "Log" && !ConvertLogNode(node, layer))
                 return ErrorMessage(i, node);
             if (node.op_type() == "LogSoftmax" && !ConvertLogSoftmaxNode(node, trans, network.layers(), original, layer))
