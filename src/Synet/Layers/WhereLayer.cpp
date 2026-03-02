@@ -44,6 +44,7 @@ namespace Synet
         switch (dst)
         {
         case TensorType32f: return Where1<C, float>;
+        case TensorType32i: return Where1<C, uint32_t>;
         case TensorType64i: return Where1<C, uint64_t>;
         default:
             return NULL;
@@ -155,6 +156,7 @@ namespace Synet
         switch (dst)
         {
         case TensorType32f: return GetWhereN<C, float>(dim);
+        case TensorType32i: return GetWhereN<C, int32_t>(dim);
         case TensorType64i: return GetWhereN<C, int64_t>(dim);
         default:
             return NULL;
