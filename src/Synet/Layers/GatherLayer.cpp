@@ -113,6 +113,7 @@ namespace Synet
         switch (src)
         {
         case TensorType32f: return GetGather<float>(idx);
+        case TensorType32i: return GetGather<int32_t>(idx);
         case TensorType64i: return GetGather<int64_t>(idx);
         default:
             return NULL;
@@ -171,6 +172,7 @@ namespace Synet
         switch (src)
         {
         case TensorType32f: return GetGatherElements<float>(idx);
+        case TensorType32i: return GetGatherElements<int32_t>(idx);
         case TensorType64i: return GetGatherElements<int64_t>(idx);
         default:
             return NULL;
@@ -192,7 +194,7 @@ namespace Synet
         const Tensor& index = *src[1];
 
         _srcType = data.GetType();
-        if (_srcType != TensorType32f && _srcType != TensorType64i)
+        if (_srcType != TensorType32f && _srcType != TensorType32i && _srcType != TensorType64i)
             SYNET_ERROR("GatherLayer has wrong src[0] type: " << Cpl::ToStr(_srcType) << " !");
 
         _idxType = index.GetType();
