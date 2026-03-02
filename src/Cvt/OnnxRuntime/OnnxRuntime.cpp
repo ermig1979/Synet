@@ -274,6 +274,8 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "Resize" && !ConvertResizeNode(node, network.layers(), original, layer))
                 return ErrorMessage(i, node);
+            if (node.op_type() == "Round" && !ConvertRoundNode(node, layer))
+                return ErrorMessage(i, node);
             if (node.op_type() == "ScaledDotProductAttention" && !ConvertScaledDotProductAttentionNode(node, network.layers(), layer, reordered))
                 return ErrorMessage(i, node);
             if (node.op_type() == "ScatterElements" && !ConvertScatterElementsNode(node, network.layers(), original, layer, reordered))
@@ -283,6 +285,8 @@ namespace Synet
             if (node.op_type() == "Shape" && !ConvertShapeNode(node, trans, network.layers(), onnxParam, layer))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Sigmoid" && !ConvertSigmoidNode(node, layer))
+                return ErrorMessage(i, node);
+            if (node.op_type() == "Sign" && !ConvertSignNode(node, layer))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Sin" && !ConvertSinNode(node, layer))
                 return ErrorMessage(i, node);

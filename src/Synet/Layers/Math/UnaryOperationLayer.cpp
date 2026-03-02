@@ -73,9 +73,17 @@ namespace Synet
             for (size_t i = 0; i < size; ++i)
                 dst[i] = 1.0f / src[i];
             break;
+        case UnaryOperationTypeRound:
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = ::round(src[i]);
+            break;
         case UnaryOperationTypeRsqrt:
             for (size_t i = 0; i < size; ++i)
                 dst[i] = 1.0f / ::sqrt(src[i]);
+            break;
+        case UnaryOperationTypeSign:
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = src[i] < 0.0f ? -1.0f : (src[i] == 0.0f ? 0.0f : 1.0f);
             break;
         case UnaryOperationTypeSin:
             for (size_t i = 0; i < size; ++i)

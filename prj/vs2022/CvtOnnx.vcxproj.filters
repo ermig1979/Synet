@@ -75,6 +75,21 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGreaterNode.cpp">
       <Filter>OnnxRuntime</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertEqualNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessOrEqualNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertRoundNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.h">

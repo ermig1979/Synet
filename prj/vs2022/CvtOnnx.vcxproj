@@ -35,12 +35,15 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConvOrConvTransposeNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDequantizeLinearNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDropoutNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertEqualNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertFlattenNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGemmNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGlobalAveragePoolNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGreaterNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInitializer.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInput.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessOrEqualNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertNonMaxSuppressionNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertPreluNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearAddNode.cpp" />
@@ -51,6 +54,8 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQuantizeLinearNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceL2Node.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceMeanNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertRoundNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.cpp" />
   </ItemGroup>
   <ItemGroup>
