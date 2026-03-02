@@ -130,6 +130,23 @@ namespace Synet
         }
     }
 
+    void UnaryOperation32i(const int32_t* src, size_t size, UnaryOperationType type, int32_t* dst)
+    {
+        switch (type)
+        {
+        case UnaryOperationTypeAbs:
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = Abs(src[i]);
+            break;
+        case UnaryOperationTypeSign:
+            for (size_t i = 0; i < size; ++i)
+                dst[i] = src[i] < 0 ? -1 : (src[i] == 0 ? 0 : 1);
+            break;
+        default:
+            assert(0);
+        }
+    }
+
     void UnaryOperationBool(const bool* src, size_t size, UnaryOperationType type, bool* dst)
     {
         switch (type)
@@ -167,6 +184,10 @@ namespace Synet
             if (_opType < UnaryOperationTypeAbs || _opType > UnaryOperationTypeZero)
                 SYNET_ERROR("Unsupported value of UnaryOperation: " << Cpl::ToStr(_opType) << " for " << Cpl::ToStr(_srcType)  << " src !");
             break;
+        case TensorType32i:
+            if (_opType != UnaryOperationTypeAbs && _opType != UnaryOperationTypeSign)
+                SYNET_ERROR("Unsupported value of UnaryOperation: " << Cpl::ToStr(_opType) << " for " << Cpl::ToStr(_srcType) << " src !");
+            break;
         case TensorType64i:
             if (_opType != UnaryOperationTypeAbs && _opType != UnaryOperationTypeNeg && _opType != UnaryOperationTypeNot && _opType != UnaryOperationTypeZero)
                 SYNET_ERROR("Unsupported value of UnaryOperation: " << Cpl::ToStr(_opType) << " for " << Cpl::ToStr(_srcType) << " src !");
@@ -199,6 +220,7 @@ namespace Synet
         switch (_srcType)
         {
         case TensorType32f: UnaryOperation32f(src[0]->Data<float>(), _size, _opType, dst[0]->Data<float>()); break;
+        case TensorType32i: UnaryOperation32i(src[0]->Data<int32_t>(), _size, _opType, dst[0]->Data<int32_t>()); break;
         case TensorType64i: UnaryOperation64i(src[0]->Data<int64_t>(), _size, _opType, dst[0]->Data<int64_t>()); break;
         case TensorTypeBool: UnaryOperationBool(src[0]->Data<bool>(), _size, _opType, dst[0]->Data<bool>()); break;
         default:
