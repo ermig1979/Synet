@@ -132,7 +132,12 @@ namespace Synet
             for (size_t o = 0; o < srcOuter; ++o)
             {
                 for (size_t c = 0; c < idxCount; ++c)
-                    dst[c] = src[idx[c]];
+                {
+                    I ic = idx[c];
+                    if (ic < 0)
+                        ic += I(srcCount);
+                    dst[c] = src[ic];
+                }
                 src += srcCount;
                 idx += idxCount;
                 dst += idxCount;
@@ -145,7 +150,12 @@ namespace Synet
                 for (size_t c = 0; c < idxCount; ++c)
                 {
                     for (size_t i = 0; i < srcInner; ++i)
-                        dst[i] = src[idx[i]*srcInner + i];
+                    {
+                        I ii = idx[i];
+                        if (ii < 0)
+                            ii += I(srcCount);
+                        dst[i] = src[ii * srcInner + i];
+                    }
                     idx += srcInner;
                     dst += srcInner;
                 }
@@ -160,8 +170,8 @@ namespace Synet
     {
         switch (idx)
         {
-        case TensorType32i: return GatherElements<T, uint32_t>;
-        case TensorType64i: return GatherElements<T, uint64_t>;
+        case TensorType32i: return GatherElements<T, int32_t>;
+        case TensorType64i: return GatherElements<T, int64_t>;
         default:
             return NULL;
         }
