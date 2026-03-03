@@ -448,6 +448,12 @@ namespace Test
                     for (size_t j = 0; j < size; ++j)
                         dst[j] = (float)src[j];
                 }
+                else if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_INT32)
+                {
+                    const int32_t* src = _outputValues->at(i).GetTensorMutableData<int32_t>();
+                    for (size_t j = 0; j < size; ++j)
+                        dst[j] = (float)src[j];
+                }
                 else if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_BOOL)
                 {
                     const uint8_t* src = _outputValues->at(i).GetTensorMutableData<uint8_t>();
