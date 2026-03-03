@@ -37,7 +37,7 @@ namespace Synet
             const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
             if (src1 == NULL || src1->type() != LayerTypeConst || src1->weight().size() != 1)
                 return false;
-            if (node.input_size() != layer.src().size())
+            if (node.input(1).empty())
             {
                 const float* max = GetWeight<float>(original, src1->weight()[0]);
                 layer.restrictRange().upper() = max[0];
