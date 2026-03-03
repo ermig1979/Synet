@@ -31,6 +31,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAddNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertBatchNormalizationNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertClipNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConstantNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConvOrConvTransposeNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDequantizeLinearNode.cpp" />

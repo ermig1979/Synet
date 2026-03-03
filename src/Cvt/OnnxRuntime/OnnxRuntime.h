@@ -194,36 +194,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertClipNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypeRestrictRange;
-            if (layer.src().size() > 1)
-            {
-                const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-                if (src1 == NULL || src1->type() != LayerTypeConst || src1->weight().size() != 1)
-                    return false;
-                const float* min = GetWeight<float>(original, src1->weight()[0]);
-                layer.restrictRange().lower() = min[0];
-                if (layer.src().size() > 2)
-                {
-                    const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
-                    if (src2 == NULL || src2->type() != LayerTypeConst || src2->weight().size() != 1)
-                        return false;
-                    const float* max = GetWeight<float>(original, src2->weight()[0]);
-                    layer.restrictRange().upper() = max[0];
-                }
-                layer.src().resize(1);
-            }
-            else
-            {
-                if (!ConvertAtrributeFloat(node, "min", layer.restrictRange().lower(), true, -FLT_MAX))
-                    return false;
-                if (!ConvertAtrributeFloat(node, "max", layer.restrictRange().upper(), true, +FLT_MAX))
-                    return false;
-            }
-            return true;
-        }
-
         bool ConvertConcatNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
         {
             const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
