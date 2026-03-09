@@ -63,8 +63,8 @@ namespace Synet
         if (weight[2].Axis(1) != _output + _input || weight[2].Axis(0) != weight[3].Axis(0) || weight[3].Axis(0) != _output)
             SYNET_ERROR("RnnGruBdLayer: check weight[2] or weight[3] shapes!");
 
-        _innerProduct32f[0].Init(_batch, _input + _output, 2 * _output, 1);
-        _innerProduct32f[1].Init(_batch, _input + _output, _output, 1);
+        _innerProduct32f[0].Init(_batch, 2 * _output, _input + _output, 1, 1, 1, ActivationFunctionTypeIdentity);
+        _innerProduct32f[1].Init(_batch, _output, _input + _output, 1, 1, 1, ActivationFunctionTypeIdentity);
         if(!_innerProduct32f[0].Enable() || !_innerProduct32f[1].Enable())
             SYNET_ERROR("RnnGruBdLayer: wrong input shapes!");
         _innerProduct32f[0].SetParams(weight[0].Data<float>(), &_internal[0], weight[1].Data<float>(), NULL);
@@ -118,13 +118,13 @@ namespace Synet
             memcpy(buf00, src0, _input * sizeof(float));
             memcpy(buf01, src1, _output * sizeof(float));
 
-            _innerProduct32f[0].Forward(buf00, buf10);
+            _innerProduct32f[0].Forward(buf00, NULL, NULL, buf10);
             CpuSigmoid(buf10, _output * 2, buf10);
 
             for (size_t i = 0; i < _output; ++i)
                 buf01[i] = buf10[i] * src1[i];
 
-            _innerProduct32f[1].Forward(buf00, buf2);
+            _innerProduct32f[1].Forward(buf00, NULL, NULL, buf2);
             UnaryOperation32f(buf2, _output, UnaryOperationTypeTanh, buf2);
 
             for (size_t i = 0; i < _output; ++i)

@@ -33,7 +33,7 @@ namespace Synet
     public:
         InnerProduct32f()
             : _context(NULL)
-            , _batch(0)
+            , _M(0)
         {
         }
 
@@ -45,15 +45,15 @@ namespace Synet
 #endif
         }
 
-        SYNET_INLINE void Init(size_t batch, size_t input, size_t output, int transpose)
+        SYNET_INLINE void Init(size_t M, size_t N, size_t K, int transB, int constB, int bias, ActivationFunctionType activation)
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-            if (_batch != batch)
+            if (_M != M)
             {
-                _batch = batch;
+                _M = M;
                 if (_context)
                     ::SimdRelease(_context), _context = NULL;
-                _context = ::SimdSynetInnerProduct32fInit(batch, input, output, transpose ? SimdTrue : SimdFalse, SimdConvolutionActivationIdentity);
+                _context = ::SimdSynetInnerProduct32fInit(M, N, K, (SimdBool)transB, (SimdBool)constB, (SimdBool)bias, (SimdConvolutionActivationType)activation);
             }
 #endif
         }
@@ -72,6 +72,15 @@ namespace Synet
 #endif
         }
 
+        SYNET_INLINE size_t ExternalBufferSize() const
+        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+            return _context ? ::SimdSynetInnerProduct32fExternalBufferSize(_context) : 0;
+#else
+            return 0;
+#endif
+        }
+
         SYNET_INLINE void SetParams(const float* weight, int* internal, const float* bias, const float* params)
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
@@ -80,17 +89,17 @@ namespace Synet
 #endif
         }
 
-        SYNET_INLINE void Forward(const float* src, float* dst)
+        SYNET_INLINE void Forward(const float* A, const float * B, float *buf, float* C)
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         if (_context)
-            ::SimdSynetInnerProduct32fForward(_context, src, dst);
+            ::SimdSynetInnerProduct32fForward(_context, A, B, buf, C);
 #endif
         }
 
     private:
         void * _context;
-        size_t _batch;
+        size_t _M;
     };
 
     //-------------------------------------------------------------------------------------------------

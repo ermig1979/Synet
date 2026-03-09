@@ -24,6 +24,8 @@
 
 #include "Synet/Utils/Gemm.h"
 #include "Synet/Layers/InnerProduct/InnerProduct32fLayer.h"
+#include "Synet/Utils/Activation.h"
+#include "Synet/Layers/Activation/PreluLayer.h"
 
 namespace Synet
 {
@@ -53,47 +55,60 @@ namespace Synet
         dstShape.resize(_axis + 1);
         dstShape[_axis] = _N;
         dst[0]->Reshape(TensorType32f, dstShape, TensorFormatNchw);
-        if (!_transA && src.size() == 1)
+        if (!_transA)
         {
-            _innerProduct32f.Init(_M, _K, _N, _transB ? 0 : 1);
+            _innerProduct32f.Init(_M, _N, _K, _transB ? 0 : 1, src.size() == 1 ? 1 : 0, _biasTerm ? 1 : 0, _activation);
             if (_innerProduct32f.Enable())
             {
-                const float* weight = this->Weight()[0].Data<float>();
-                const float* bias = _biasTerm ? this->Weight()[1].Data<float>() : NULL;
-                _innerProduct32f.SetParams(weight, &_internal, bias, NULL);
+                const float* weight = src.size() == 1 ? this->Weight()[0].Data<float>() : NULL;
+                size_t biasIndex = src.size() == 1 ? 1 : 0;
+                const float* bias = _biasTerm ? this->Weight()[biasIndex].Data<float>() : NULL;
+                size_t paramsIndex = biasIndex + (_biasTerm ? 1 : 0);
+                const float* params = _activation == ActivationFunctionTypePrelu ? this->Weight()[paramsIndex].Data<float>() : _params;
+                _innerProduct32f.SetParams(weight, &_internal, bias, params);
+                Layer::Extend32f(buf, 0, Shp(_innerProduct32f.ExternalBufferSize()), src[0]->Format());
             }
         }
         return true;
     }
 
-    void InnerProduct32fLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
+    void InnerProduct32fLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
-        const float* src0 = src[0]->Data<float>();
-        float* dst0 = dst[0]->Data<float>();
+        const float* A = src[0]->Data<float>();
+        const float* B = src.size() > 1 ? src[1]->Data<float>() : NULL;
+        float* buf0 = Layer::Buf32f(buf, 0);
+        float* C = dst[0]->Data<float>();
         if (_innerProduct32f.Enable())
-            _innerProduct32f.Forward(src0, dst0);
+        {
+            for (size_t b = 0; b < _batch; ++b)
+            {
+                _innerProduct32f.Forward(A, B, buf0, C);
+                A += _M * _K;
+                B += _K * _N;
+                C += _M * _N;
+            }
+        }
         else if (src.size() > 1)
         {
-            const float* src1 = src[1]->Data<float>();
             for(size_t b = 0; b < _batch; ++b)
             {
-                Forward(src0, src1, dst0);
-                src0 += _M * _K;
-                src1 += _K * _N;
-                dst0 += _M * _N;
+                Forward(A, B, C);
+                A += _M * _K;
+                B += _K * _N;
+                C += _M * _N;
             }
         }
         else
         {
             const float* wgt = this->Weight()[0].Data<float>();
-            Forward(src0, wgt, dst0);
+            Forward(A, wgt, C);
         }
     }
 
     void InnerProduct32fLayer::Forward(const float * src, const float* wgt, float* dst)
     {
         const float* bias = _biasTerm ? this->Weight()[1].Data<float>() : NULL;
-        if (!_transB && _M == 1)
+        if (!_transB && _M == 1 && _activation == ActivationFunctionTypeIdentity)
             Detail::InnerProductLayerForwardCpu(src, wgt, bias, _N, _K, dst);
         else
         {
@@ -104,6 +119,43 @@ namespace Synet
             {
                 for (size_t i = 0; i < _M; ++i)
                     CpuAddBias(bias, _N, 1, dst + i * _N);
+            }
+            switch (_activation)
+            {
+            case ActivationFunctionTypeIdentity:
+                break;
+            case ActivationFunctionTypeRelu:
+                CpuRelu(dst, _M * _N, 0.0f, dst);
+                break;
+            case ActivationFunctionTypeLeakyRelu:
+                CpuRelu(dst, _M * _N, _params[0], dst);
+                break;
+            case ActivationFunctionTypeRestrictRange:
+                CpuRestrictRange(dst, _M * _N, _params[0], _params[1], dst);
+                break;
+            case ActivationFunctionTypePrelu:
+                PreluLayerForward(dst, this->Weight().back().Data<float>(), _N, _M, dst, TensorFormatNchw);
+                break;
+            case ActivationFunctionTypeElu:
+                CpuElu(dst, _M * _N, _params[0], dst);
+                break;
+            case ActivationFunctionTypeHswish:
+                CpuHswish(dst, _M * _N, _params[0], _params[1], dst);
+                break;
+            case ActivationFunctionTypeMish:
+                CpuMish(dst, _M * _N, _params[0], dst);
+                break;
+            case ActivationFunctionTypeHardSigmoid:
+                CpuHardSigmoid(dst, _M * _N, _params[0], _params[1], dst);
+                break;
+            case ActivationFunctionTypeSwish:
+                CpuSwish(dst, _M * _N, dst);
+                break;
+            case ActivationFunctionTypeGelu:
+                CpuGelu(dst, _M * _N, dst);
+                break;
+            default:
+                assert(0);
             }
         }
     }

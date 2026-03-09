@@ -51,6 +51,9 @@ namespace Synet
         _transA = param.transposeA();
         _transB = param.transposeB();
         _axis = (int)src[0]->Index(param.axis());
+        _activation = param.activationType();
+        _params[0] = param.activationParam0();
+        _params[1] = param.activationParam1();
         _batch = 1;
         _K = src[0]->Size(_axis);
         if (src.size() == 2)

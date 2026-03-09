@@ -487,6 +487,9 @@ namespace Synet
         CPL_PARAM_VALUE(bool, transposeA, false);
         CPL_PARAM_VALUE(bool, transposeB, false);
         CPL_PARAM_VALUE(int32_t, axis, 1);
+        CPL_PARAM_VALUE(ActivationFunctionType, activationType, ActivationFunctionTypeIdentity);
+        CPL_PARAM_VALUE(float, activationParam0, 0.0f);
+        CPL_PARAM_VALUE(float, activationParam1, 6.0f);
         CPL_PARAM_VALUE(TensorType, quantizationLevel, TensorType32f);
     };
 

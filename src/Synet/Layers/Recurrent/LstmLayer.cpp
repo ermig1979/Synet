@@ -72,15 +72,15 @@ namespace Synet
 
         dst[0]->Reshape(TensorType32f, Shp(_seqS, _dirS, _batch, _hidS), TensorFormatUnknown);
 
-        _innerProduct32f[0].Init(_seqS * _batch, _srcS, _hidS4, 1);
+        _innerProduct32f[0].Init(_seqS * _batch, _hidS4,_srcS,  1, 1, 1, ActivationFunctionTypeIdentity);
         _innerProduct32f[0].SetParams(_w0, &_internal[0], NULL, NULL);
-        _innerProduct32f[2].Init(1, _hidS, _hidS4, 1);
+        _innerProduct32f[2].Init(1, _hidS4, _hidS, 1, 1, 1, ActivationFunctionTypeIdentity);
         _innerProduct32f[2].SetParams(_r0, &_internal[2], NULL, NULL);
         if (_dirS > 1)
         {
-            _innerProduct32f[1].Init(_seqS * _batch, _srcS, _hidS4, 1);
+            _innerProduct32f[1].Init(_seqS * _batch, _hidS4, _srcS, 1, 1, 1, ActivationFunctionTypeIdentity);
             _innerProduct32f[1].SetParams(_w1, &_internal[1], NULL, NULL);
-            _innerProduct32f[3].Init(1, _hidS, _hidS4, 1);
+            _innerProduct32f[3].Init(1, _hidS4, _hidS, 1, 1, 1, ActivationFunctionTypeIdentity);
             _innerProduct32f[3].SetParams(_r1, &_internal[3], NULL, NULL);
         }
 
@@ -153,7 +153,7 @@ namespace Synet
         size_t idx = (rev && _dirS == 2) ? 1 : 0;
 
         memcpy(cBeg + cStep, c0, cStep * sizeof(float));
-        _innerProduct32f[0 + idx].Forward(x, xBuf);
+        _innerProduct32f[0 + idx].Forward(x, NULL, NULL, xBuf);
         for (size_t i = 0; i < _seqS; ++i)
         {
             float * xCurr = xBeg + i * xStep;
@@ -163,7 +163,7 @@ namespace Synet
             float * cPrev = cBeg + ((i - 1)&1) * cStep;
             for (size_t b = 0; b < _batch; ++b)
             {
-                _innerProduct32f[2 + idx].Forward(hPrev, buf0);
+                _innerProduct32f[2 + idx].Forward(hPrev, NULL, NULL, buf0);
 
                 for (size_t k = 0; k < _hidS4; ++k)
                     buf0[k] = xCurr[k] + buf0[k] + bias[k] + bias[_hidS4 + k];

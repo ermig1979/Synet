@@ -48,5 +48,7 @@ namespace Synet
         String _desc;
         size_t _axis, _batch, _M, _N, _K;
         bool _biasTerm, _transA, _transB;
+        ActivationFunctionType _activation;
+        float _params[2];
     };
 }
