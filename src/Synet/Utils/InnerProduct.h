@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Synet/Common.h"
+#include "Synet/Params.h"
 
 namespace Synet
 {
@@ -121,7 +122,7 @@ namespace Synet
 #endif
         }
 
-        SYNET_INLINE void Init(size_t M, size_t N, size_t K, TensorType typeA, TensorType typeB, TensorType typeC, int transB, int constB, int bias)
+        SYNET_INLINE void Init(size_t M, size_t N, size_t K, TensorType typeA, TensorType typeB, TensorType typeC, int transB, int constB, int bias, ActivationFunctionType activation)
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_M != M)
@@ -130,7 +131,7 @@ namespace Synet
                 if (_context)
                     ::SimdRelease(_context), _context = NULL;
                 _context = ::SimdSynetInnerProduct16bInit(M, N, K, (SimdTensorDataType)typeA, (SimdTensorDataType)typeB, (SimdTensorDataType)typeC, 
-                    transB ? SimdTrue : SimdFalse, constB ? SimdTrue : SimdFalse, bias ? SimdTrue : SimdFalse);
+                    (SimdBool)transB, (SimdBool)constB, (SimdBool)bias, (SimdConvolutionActivationType)activation);
             }
 #endif
         }
@@ -167,11 +168,11 @@ namespace Synet
 #endif
         }
 
-        SYNET_INLINE void SetParams(const float* weight, const float* bias)
+        SYNET_INLINE void SetParams(const float* weight, const float* bias, const float* params)
         {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
             if (_context)
-                ::SimdSynetInnerProduct16bSetParams(_context, weight, bias);
+                ::SimdSynetInnerProduct16bSetParams(_context, weight, bias, params);
 #endif
         }
 

@@ -67,15 +67,16 @@ namespace Synet
         dstShape[_axis] = _N;
         dst[0]->Reshape(dst[0]->GetType(), dstShape, TensorFormatNchw);
         _innerProduct16b.Init(_M, _N, _K, src[0]->GetType(), src.size() > 1 ? src[1]->GetType() : TensorType32f,
-            dst[0]->GetType(), _transB ? 0 : 1, src.size() == 1 ? 1 : 0, _biasTerm ? 1 : 0);
+            dst[0]->GetType(), _transB ? 0 : 1, src.size() == 1 ? 1 : 0, _biasTerm ? 1 : 0, _activation);
         if(!_innerProduct16b.Enable())
             SYNET_ERROR("InnerProduct16bLayer can't create SimdSynetInnerProduct16b backend!");
-        if (src.size() == 1)
-        {
-            const float* weight = this->Weight()[0].Data<float>();
-            const float* bias = _biasTerm ? this->Weight()[1].Data<float>() : NULL;
-            _innerProduct16b.SetParams(weight, bias);
-        }
+
+        const float* weight = src.size() == 1 ? this->Weight()[0].Data<float>() : NULL;
+        size_t biasIndex = src.size() == 1 ? 1 : 0;
+        const float* bias = _biasTerm ? this->Weight()[biasIndex].Data<float>() : NULL;
+        size_t paramsIndex = biasIndex + (_biasTerm ? 1 : 0);
+        const float* params = _activation == ActivationFunctionTypePrelu ? this->Weight()[paramsIndex].Data<float>() : _params;
+        _innerProduct16b.SetParams(weight, bias, params);
         Layer::Extend8u(buf, 0, Shp(_innerProduct16b.ExternalBufferSize()), src[0]->Format());
         this->UsePerfStat(_desc + " " + _innerProduct16b.Info(), Flop());
         return true;
