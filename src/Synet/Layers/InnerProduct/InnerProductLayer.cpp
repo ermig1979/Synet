@@ -54,6 +54,20 @@ namespace Synet
         _activation = param.activationType();
         _params[0] = param.activationParam0();
         _params[1] = param.activationParam1();
+        if (_activation == ActivationFunctionTypePrelu)
+        {
+            const Tensors& weight = this->Weight();
+            if (weight.back().Size() == 1)
+            {
+                _activation = ActivationFunctionTypeLeakyRelu;
+                _params[0] = weight.back().Data<float>()[0];
+            }
+            else
+            {
+                if (weight.back().Size() != param.outputNum())
+                    SYNET_ERROR("InnerProductLayer: check weight[" << weight.size() - 1 << "] size!");
+            }
+        }
         _batch = 1;
         _K = src[0]->Size(_axis);
         if (src.size() == 2)
@@ -68,7 +82,7 @@ namespace Synet
         {
             _N = this->Param().innerProduct().outputNum();
             const Tensors & weight = this->Weight();
-            if (weight.size() != (_biasTerm ? 2 : 1))
+            if (weight.size() != 1 + (_biasTerm ? 1 : 0) + (param.activationType() == ActivationFunctionTypePrelu ? 1 : 0))
                 SYNET_ERROR("InnerProductLayer has wrong weight number!");
             if (_transB)
             {

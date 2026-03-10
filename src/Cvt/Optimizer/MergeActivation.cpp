@@ -400,6 +400,21 @@ namespace Synet
             if (act.weight().size())
                 conv.weight().push_back(act.weight()[0]);
         }
+        else if (prev.type() == LayerTypeInnerProduct)
+        {
+            LayerParam& ip = dst[dst0];
+            if (ip.innerProduct().activationType() != ActivationFunctionTypeIdentity)
+                return false;
+            if (index == src.size() - 1)
+                ip.dst() = act.dst();
+            else
+                changes.push_back(Change(act.name(), ip.name()));
+            ip.innerProduct().activationType() = type;
+            ip.innerProduct().activationParam0() = param0;
+            ip.innerProduct().activationParam1() = param1;
+            if (act.weight().size())
+                ip.weight().push_back(act.weight()[0]);
+        }
         else if (prev.type() == LayerTypeQuantizedAdd && (type == ActivationFunctionTypeRelu))
         {
             LayerParam& quant = dst[dst0];
