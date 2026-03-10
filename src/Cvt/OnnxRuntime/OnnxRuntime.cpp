@@ -160,7 +160,7 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "BatchNormalization" && !ConvertBatchNormalizationNode(node, network.layers(), original, layer, reordered))
                 return ErrorMessage(i, node);
-            if (node.op_type() == "Cast" && !ConvertCastNode(node, network.layers(), original, layer))
+            if (node.op_type() == "Cast" && !ConvertCastNode(node, network.layers(), original, onnxParam, layer))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Ceil" && !ConvertCeilNode(node, network.layers(), layer))
                 return ErrorMessage(i, node);

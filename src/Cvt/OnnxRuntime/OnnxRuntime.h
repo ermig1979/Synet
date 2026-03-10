@@ -125,56 +125,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertCastNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 1))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            if (src0 == NULL)
-                return false;
-            int to;
-            if (!ConvertAtrributeInt(node, "to", to))
-                return false;
-            if (src0->type() == LayerTypeMeta)
-            {
-                layer.type() = Synet::LayerTypeMeta;
-                layer.meta().type() = Synet::MetaTypeCast;
-                if (to == onnx::TensorProto_DataType_FLOAT)
-                    layer.meta().alpha().type() = TensorType32f;
-                else if (to == onnx::TensorProto_DataType_INT32)
-                    layer.meta().alpha().type() = TensorType32i;
-                else if (to == onnx::TensorProto_DataType_INT64)
-                    layer.meta().alpha().type() = TensorType64i;
-                else
-                    SYNET_ERROR("Unsupported cast type!");
-            }
-            else
-            {
-                layer.type() = Synet::LayerTypeCast;
-                if (to == onnx::TensorProto_DataType_FLOAT)
-                    layer.cast().type() = TensorType32f;
-                else if (to == onnx::TensorProto_DataType_INT32)
-                    layer.cast().type() = TensorType32i;
-                else if (to == onnx::TensorProto_DataType_INT64)
-                    layer.cast().type() = TensorType64i;
-                else if (to == onnx::TensorProto_DataType_UINT8)
-                    layer.cast().type() = TensorType8u;
-                else
-                    SYNET_ERROR("Unsupported cast type!");
-                if (src0->type() == LayerTypeConst && src0->weight().size() && src0->weight()[0].type() == layer.cast().type())
-                {
-                    layer.type() = Synet::LayerTypeStub;
-                    layer.cast().type() = TensorTypeUnknown;
-                }
-                if (src0->type() == LayerTypeQuantizeLinear && src0->quantize().type() == layer.cast().type())
-                {
-                    layer.type() = Synet::LayerTypeStub;
-                    layer.cast().type() = TensorTypeUnknown;
-                }
-            }
-            return true;
-        }
-
         bool ConvertCeilNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1))

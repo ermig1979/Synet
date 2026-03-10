@@ -271,7 +271,9 @@ namespace Synet
         }
         else
         {
-            this->UsePerfStat();
+            std::stringstream desc;
+            desc << "v" << _version;
+            this->UsePerfStat(desc.str());
             _const = false;
         }
         return true;

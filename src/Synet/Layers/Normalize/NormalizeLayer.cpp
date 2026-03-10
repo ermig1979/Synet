@@ -550,7 +550,9 @@ namespace Synet
         dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
         buf[0]->Extend(TensorType32f, Shp(Max(_spatial, _channels * 2)));
         _const = false;
-        this->UsePerfStat();
+        std::stringstream desc;
+        desc <<  "v" << _version;
+        this->UsePerfStat(desc.str());
         return true;
     }
 
