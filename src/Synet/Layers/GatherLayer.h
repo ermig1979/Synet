@@ -35,6 +35,8 @@ namespace Synet
 
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
+        virtual bool CanIgnoreSubgraph(size_t index, bool src) const;
+
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
         typedef void (*GatherPtr)(const uint8_t* src8, size_t srcOuter, size_t srcCount, size_t srcInner, const uint8_t* idx8, size_t idxOuter, size_t idxCount, uint8_t* dst8);

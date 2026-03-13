@@ -205,6 +205,13 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
+    bool GatherLayer::CanIgnoreSubgraph(size_t index, bool src) const
+    {
+        if (src && index)
+            return true;
+        return false;
+    }
+
     bool GatherLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (src.size() != 2 || dst.size() != 1)
