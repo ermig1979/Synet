@@ -35,6 +35,10 @@ namespace Synet
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
+
+        virtual bool CanIgnoreSubgraph(size_t index, bool src) const;
+
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
     };

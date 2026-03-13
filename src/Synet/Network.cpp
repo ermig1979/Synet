@@ -902,6 +902,13 @@ namespace Synet
         return layer->LowPrecision(type) == LowPrecisionTypePassive;
     }
 
+    bool Network::CanCheckOnlyFirstSrc(const Layer* layer) const
+    {
+        if (layer->Param().type() == LayerTypeReshape)
+            return true;
+        return false;
+    }
+
     bool Network::IsLowPrecisionInSubGraph(TensorType type, size_t current, IdSet& visited, bool back)
     {
         visited.insert(current);
@@ -932,6 +939,8 @@ namespace Synet
         {
             for (size_t s = 0; s < param.src().size(); ++s)
             {
+                if (layer.CanIgnoreSubgraph(s, true))
+                    continue;
                 const String& name = param.src()[s];
                 const IdSet& dstIds = _dstIds[name];
                 for (IdSet::const_iterator id = dstIds.begin(); id != dstIds.end(); ++id)

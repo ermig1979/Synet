@@ -92,6 +92,11 @@ namespace Synet
             return LowPrecisionTypeNone;
         }
 
+        virtual bool CanIgnoreSubgraph(size_t index, bool src) const
+        {
+            return false;
+        }
+
         virtual bool Resizable() const
         {
             return true;

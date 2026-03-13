@@ -31,6 +31,22 @@ namespace Synet
     {
     }
 
+    LowPrecisionType ReshapeLayer::LowPrecision(TensorType type) const
+    {
+        if (type == TensorType8u)
+            return LowPrecisionTypePassive;
+        if (type == TensorType16b)
+            return LowPrecisionTypePassive;
+        return LowPrecisionTypeNone;
+    }
+
+    bool ReshapeLayer::CanIgnoreSubgraph(size_t index, bool src) const
+    {
+        if (src && index)
+            return true;
+        return false;
+    }
+
     bool ReshapeLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if ((src.size() != 1 && src.size() != 2) || dst.size() != 1)
