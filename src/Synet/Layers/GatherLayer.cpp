@@ -115,6 +115,7 @@ namespace Synet
         case TensorType32f: return GetGather<float>(idx);
         case TensorType32i: return GetGather<int32_t>(idx);
         case TensorType64i: return GetGather<int64_t>(idx);
+        case TensorType16b: return GetGather<uint16_t>(idx);
         default:
             return NULL;
         }
@@ -184,6 +185,7 @@ namespace Synet
         case TensorType32f: return GetGatherElements<float>(idx);
         case TensorType32i: return GetGatherElements<int32_t>(idx);
         case TensorType64i: return GetGatherElements<int64_t>(idx);
+        case TensorType16b: return GetGatherElements<uint16_t>(idx);
         default:
             return NULL;
         }
@@ -196,6 +198,13 @@ namespace Synet
     {
     }
 
+    LowPrecisionType GatherLayer::LowPrecision(TensorType type) const
+    {
+        if (type == TensorType16b)
+            return LowPrecisionTypePassive;
+        return LowPrecisionTypeNone;
+    }
+
     bool GatherLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (src.size() != 2 || dst.size() != 1)
@@ -204,7 +213,7 @@ namespace Synet
         const Tensor& index = *src[1];
 
         _srcType = data.GetType();
-        if (_srcType != TensorType32f && _srcType != TensorType32i && _srcType != TensorType64i)
+        if (_srcType != TensorType32f && _srcType != TensorType32i && _srcType != TensorType64i && _srcType != TensorType16b)
             SYNET_ERROR("GatherLayer has wrong src[0] type: " << Cpl::ToStr(_srcType) << " !");
 
         _idxType = index.GetType();
@@ -272,7 +281,7 @@ namespace Synet
         else
         {
             std::stringstream desc;
-            desc << "v" << _version;
+            desc << "v" << _version << ToChar(_srcType);
             this->UsePerfStat(desc.str());
             _const = false;
         }
