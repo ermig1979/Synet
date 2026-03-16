@@ -205,7 +205,7 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
-    bool GatherLayer::CanIgnoreSubgraph(size_t index, bool src) const
+    bool GatherLayer::CanIgnoreInSubGraph(size_t index, bool src) const
     {
         if (src && index)
             return true;

@@ -35,7 +35,7 @@ namespace Synet
 
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
-        virtual bool CanIgnoreSubgraph(size_t index, bool src) const;
+        virtual bool CanIgnoreInSubGraph(size_t index, bool src) const;
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 

@@ -92,7 +92,7 @@ namespace Synet
             return LowPrecisionTypeNone;
         }
 
-        virtual bool CanIgnoreSubgraph(size_t index, bool src) const
+        virtual bool CanIgnoreInSubGraph(size_t index, bool src) const
         {
             return false;
         }

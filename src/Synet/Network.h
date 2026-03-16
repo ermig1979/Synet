@@ -166,8 +166,6 @@ namespace Synet
 
         bool ParseSubGraph(TensorType type, const Layer* layer) const;
 
-        bool CanCheckOnlyFirstSrc(const Layer* layer) const;
-
         bool CanIgnoreInSubGraph(TensorType type, const Layer * layer, bool fromDst) const;
 
         bool IsLowPrecisionInSubGraph(TensorType type, size_t current, IdSet& visited, bool back);
