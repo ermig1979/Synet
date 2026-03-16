@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Synet/Layer.h"
+#include "Synet/Utils/Scale.h"
 
 namespace Synet
 {
@@ -37,11 +38,15 @@ namespace Synet
 
         virtual int64_t Flop() const;
 
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
+
     protected:
         void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
     private:
         float _power, _scale, _shift;
+        bool _src16b, _dst16b;
         size_t _size;
+        Scale16b _scale16b;
     };
 }

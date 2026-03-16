@@ -46,6 +46,14 @@ namespace Synet
     {
     }
 
+    LowPrecisionType PowerLayer::LowPrecision(TensorType type) const
+    {
+        const LayerParam& p = this->Param();
+        if (type == TensorType16b && Options().BFloat16Enable() && p.power().power() == 1.0f)
+            return /*p.src()[0] != p.dst()[0] ? LowPrecisionTypeActive :*/ LowPrecisionTypePassive;
+        return LowPrecisionTypeNone;
+    }
+
     bool PowerLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (src.size() != 1 || dst.size() != 1)
@@ -55,18 +63,39 @@ namespace Synet
         _power = param.power();
         _scale = param.scale();
         _shift = param.shift();
-
-        if(src[0]->GetType() != TensorType32f && src[0]->GetType() != TensorType32i)
-            SYNET_ERROR("PowerLayer usupported src[0]: " << Cpl::ToStr(src[0]->GetType()) << " type !");
+        bool disable16b = src[0]->GetType() == TensorType32i || src[0]->Const();
+        _src16b = src[0]->GetType() == TensorType16b;
+        _dst16b = dst[0]->GetType() == TensorType16b;
         _size = src[0]->Size();
+
+        if(src[0]->GetType() != TensorType32f && src[0]->GetType() != TensorType32i && src[0]->GetType() != TensorType16b)
+            SYNET_ERROR("PowerLayer unsupported src[0]: " << Cpl::ToStr(src[0]->GetType()) << " type !");
+        if(src[0]->GetType() != TensorType32f && _power != 1.0f)
+            SYNET_ERROR("PowerLayer parameter 'power' must be 1.0 for non FP32 tensors!");
+
+        if (!disable16b && (_src16b || _dst16b))
+        {
+            _scale16b.Init(1, _size, src[0]->GetType(), dst[0]->GetType(), TensorFormatNchw, true, true);
+            if(!_scale16b.Enable())
+                SYNET_ERROR("PowerLayer can't initialize Scale16b engine!");
+        }
 
         if (src[0] != dst[0])
         {
+            const Shape& shape = src[0]->Shape();
+            TensorFormat format = src[0]->Format();
             const Strings& names = Param().src();
-            if (TensorUsers(names[0]) == 1 && !src[0]->Const())
-                dst[0]->ShareAs(*src[0], src[0]->Shape(), src[0]->Format());
+            if (TensorUsers(names[0]) == 1 && !src[0]->Const() && _src16b == _dst16b)
+                dst[0]->ShareAs(*src[0], shape, format);
             else
-                dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+            {
+                if (disable16b)
+                    dst[0]->Reshape(src[0]->GetType(), shape, format);
+                else if (_dst16b)
+                    dst[0]->Reshape(TensorType16b, shape, format);
+                else
+                    dst[0]->Reshape(TensorType32f, shape, format);
+            }
         }
         if (src[0]->Const())
         {
@@ -94,7 +123,11 @@ namespace Synet
 
     void PowerLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
-        if (src[0]->GetType() == TensorType32f)
+        if (_scale16b.Enable())
+        {
+            _scale16b.Forward(src[0]->RawData(), &_scale, &_shift, dst[0]->RawData());
+        }
+        else if (src[0]->GetType() == TensorType32f)
         {
             const float* pSrc = src[0]->Data<float>();
             float* pDst = dst[0]->Data<float>();
