@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2025 Yermalayeu Ihar.
+* Copyright (c) 2018-2024 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,32 +22,26 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/InputLayer.h"
+#include "Synet/Layers/System/StubLayer.h"
 
 namespace Synet
 {
-    InputLayer::InputLayer(const LayerParam & param, Context* context)
+    StubLayer::StubLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
     {
     }
 
-    bool InputLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool StubLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
-        if (src.size() != 0 || dst.size() == 0)
-            SYNET_ERROR("InputLayer supports only outputs!");
-
-        const InputParam & input = this->Param().input();
-        if(input.shape().size() != dst.size())
-            SYNET_ERROR("Check InputLayer shape parameter!");
-
-        for (size_t i = 0; i < dst.size(); ++i)
-            dst[i]->Reshape(input.shape()[i].type(), input.shape()[i].dim(), input.shape()[i].format());
-
+        if (src.size() != 1 || dst.size() != 1)
+            SYNET_ERROR("StubLayer supports only 1 input and 1 output!");
+        if(dst[0] != src[0])
+            dst[0]->ShareAs(*src[0], src[0]->Shape(), src[0]->Format());
         _const = true;
         return true;
     }
 
-    void InputLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
+    void StubLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
-    }    
+    }
 }

@@ -32,12 +32,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\StubLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\InputLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\TileLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -278,6 +272,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layer.cpp" />
     <ClCompile Include="..\..\src\Synet\Common.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\System\InputLayer.cpp">
+      <Filter>Layers\System</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\System\StubLayer.cpp">
+      <Filter>Layers\System</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -288,9 +288,6 @@
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\GatherLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\InputLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\ConvParam.h">
@@ -321,9 +318,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\StridedSliceLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\StubLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\TileLayer.h">
@@ -719,6 +713,12 @@
     <ClInclude Include="..\..\src\Synet\Layers\Const\ConstLayer.h">
       <Filter>Layers\Const</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\System\InputLayer.h">
+      <Filter>Layers\System</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\System\StubLayer.h">
+      <Filter>Layers\System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -780,6 +780,9 @@
     </Filter>
     <Filter Include="Layers\Const">
       <UniqueIdentifier>{458bb4ef-16fe-4778-a41c-618fffb0ab96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\System">
+      <UniqueIdentifier>{65a183c1-932f-4050-b108-e20cf559e787}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
