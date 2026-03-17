@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/TiledScale2DLayer.h"
+#include "Synet/Layers/Resize/TiledScale2DLayer.h"
 
 namespace Synet
 {

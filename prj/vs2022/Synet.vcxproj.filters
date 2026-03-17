@@ -32,9 +32,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\TileLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\NonZeroLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -42,9 +39,6 @@
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\TiledScale2DLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.cpp">
@@ -278,6 +272,12 @@
     <ClCompile Include="..\..\src\Synet\Layers\System\StubLayer.cpp">
       <Filter>Layers\System</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Resize\TiledScale2DLayer.cpp">
+      <Filter>Layers\Resize</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Resize\TileLayer.cpp">
+      <Filter>Layers\Resize</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -318,9 +318,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\StridedSliceLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\TileLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\SetInput.h">
@@ -475,9 +472,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\Add.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\TiledScale2DLayer.h">
-      <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.h">
       <Filter>Layers\Legacy</Filter>
@@ -718,6 +712,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\System\StubLayer.h">
       <Filter>Layers\System</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Resize\TiledScale2DLayer.h">
+      <Filter>Layers\Resize</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Resize\TileLayer.h">
+      <Filter>Layers\Resize</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

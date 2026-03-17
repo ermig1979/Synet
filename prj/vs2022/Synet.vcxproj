@@ -104,6 +104,8 @@
     <ClCompile Include="..\..\src\Synet\Layers\Resize\InterpLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Resize\PadLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Resize\PoolingLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Resize\TiledScale2DLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Resize\TileLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ScatterNdLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SliceLayer.cpp" />
@@ -111,8 +113,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\StridedSliceLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\System\InputLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\System\StubLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\TiledScale2DLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\TileLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\TopKLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\WhereLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\Activation.cpp" />
@@ -229,6 +229,8 @@
     <ClInclude Include="..\..\src\Synet\Layers\Resize\InterpLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Resize\PadLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Resize\PoolingLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Resize\TiledScale2DLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Resize\TileLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ScatterNdLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SliceLayer.h" />
@@ -236,8 +238,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\StridedSliceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\System\InputLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\System\StubLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\TiledScale2DLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\TileLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\TopKLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\WhereLayer.h" />
     <ClInclude Include="..\..\src\Synet\Network.h" />

@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/TileLayer.h"
+#include "Synet/Layers/Resize/TileLayer.h"
 #include "Synet/Utils/UniversalBinary.h"
 
 namespace Synet

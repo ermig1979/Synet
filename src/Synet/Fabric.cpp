@@ -103,6 +103,8 @@
 #include "Synet/Layers/Resize/InterpLayer.h"
 #include "Synet/Layers/Resize/PadLayer.h"
 #include "Synet/Layers/Resize/PoolingLayer.h"
+#include "Synet/Layers/Resize/TileLayer.h"
+#include "Synet/Layers/Resize/TiledScale2DLayer.h"
 
 #include "Synet/Layers/System/InputLayer.h"
 #include "Synet/Layers/System/StubLayer.h"
@@ -118,8 +120,6 @@
 #include "Synet/Layers/SliceLayer.h"
 #include "Synet/Layers/SoftmaxLayer.h"
 #include "Synet/Layers/StridedSliceLayer.h"
-#include "Synet/Layers/TileLayer.h"
-#include "Synet/Layers/TiledScale2DLayer.h"
 #include "Synet/Layers/TopKLayer.h"
 #include "Synet/Layers/WhereLayer.h"
 
