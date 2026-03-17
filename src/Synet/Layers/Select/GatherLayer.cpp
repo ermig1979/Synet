@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/GatherLayer.h"
+#include "Synet/Layers/Select/GatherLayer.h"
 
 namespace Synet
 {

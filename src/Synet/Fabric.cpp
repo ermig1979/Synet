@@ -106,22 +106,23 @@
 #include "Synet/Layers/Resize/TileLayer.h"
 #include "Synet/Layers/Resize/TiledScale2DLayer.h"
 
+#include "Synet/Layers/Select/GatherLayer.h"
+#include "Synet/Layers/Select/SliceLayer.h"
+#include "Synet/Layers/Select/StridedSliceLayer.h"
+#include "Synet/Layers/Select/TopKLayer.h"
+#include "Synet/Layers/Select/WhereLayer.h"
+
 #include "Synet/Layers/System/InputLayer.h"
 #include "Synet/Layers/System/StubLayer.h"
 
 #include "Synet/Layers/ArgMaxLayer.h"
 #include "Synet/Layers/CompareLayer.h"
-#include "Synet/Layers/GatherLayer.h"
 #include "Synet/Layers/GridSampleLayer.h"
 #include "Synet/Layers/NonZeroLayer.h"
 #include "Synet/Layers/ReductionLayer.h"
 #include "Synet/Layers/ScaledDotProductAttentionLayer.h"
 #include "Synet/Layers/ScatterNdLayer.h"
-#include "Synet/Layers/SliceLayer.h"
 #include "Synet/Layers/SoftmaxLayer.h"
-#include "Synet/Layers/StridedSliceLayer.h"
-#include "Synet/Layers/TopKLayer.h"
-#include "Synet/Layers/WhereLayer.h"
 
 #include "Synet/Fabric.h"
 

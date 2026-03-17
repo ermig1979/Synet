@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/StridedSliceLayer.h"
+#include "Synet/Layers/Select/StridedSliceLayer.h"
 
 namespace Synet
 {

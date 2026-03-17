@@ -14,28 +14,16 @@
     <ClCompile Include="..\..\src\Synet\Layers\GridSampleLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\TopKLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\GatherLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\CompareLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\ReductionLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\WhereLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\NonZeroLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\StridedSliceLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp">
@@ -57,9 +45,6 @@
       <Filter>Layers\Legacy</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\ScatterNdLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\SliceLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\SwitchLayer.cpp">
@@ -278,6 +263,21 @@
     <ClCompile Include="..\..\src\Synet\Layers\Resize\TileLayer.cpp">
       <Filter>Layers\Resize</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Select\GatherLayer.cpp">
+      <Filter>Layers\Select</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Select\SliceLayer.cpp">
+      <Filter>Layers\Select</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Select\StridedSliceLayer.cpp">
+      <Filter>Layers\Select</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Select\TopKLayer.cpp">
+      <Filter>Layers\Select</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Select\WhereLayer.cpp">
+      <Filter>Layers\Select</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -286,9 +286,6 @@
     <ClInclude Include="..\..\src\Synet\Tensor.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Activation.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\GatherLayer.h">
-      <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\ConvParam.h">
       <Filter>Utils</Filter>
@@ -311,13 +308,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\SliceLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\StridedSliceLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\SetInput.h">
@@ -404,9 +395,6 @@
       <Filter>Decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Version.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\TopKLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Quantization\Bf16.h">
       <Filter>Quantization</Filter>
     </ClInclude>
@@ -423,9 +411,6 @@
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\CompareLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\WhereLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Iim.h">
@@ -719,6 +704,21 @@
     <ClInclude Include="..\..\src\Synet\Layers\Resize\TileLayer.h">
       <Filter>Layers\Resize</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Select\GatherLayer.h">
+      <Filter>Layers\Select</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Select\SliceLayer.h">
+      <Filter>Layers\Select</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Select\StridedSliceLayer.h">
+      <Filter>Layers\Select</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Select\TopKLayer.h">
+      <Filter>Layers\Select</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Select\WhereLayer.h">
+      <Filter>Layers\Select</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -783,6 +783,9 @@
     </Filter>
     <Filter Include="Layers\System">
       <UniqueIdentifier>{65a183c1-932f-4050-b108-e20cf559e787}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Select">
+      <UniqueIdentifier>{ed84254a-2b31-43d5-bd92-b1cf0fa57bae}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

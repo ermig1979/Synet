@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/SliceLayer.h"
+#include "Synet/Layers/Select/SliceLayer.h"
 #include "Synet/Utils/Math.h"
 
 namespace Synet

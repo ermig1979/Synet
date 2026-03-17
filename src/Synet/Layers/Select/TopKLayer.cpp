@@ -21,7 +21,7 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 */
-#include "Synet/Layers/TopKLayer.h"
+#include "Synet/Layers/Select/TopKLayer.h"
 
 #include "Synet/Utils/Math.h"
 

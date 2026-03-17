@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/WhereLayer.h"
+#include "Synet/Layers/Select/WhereLayer.h"
 #include "Synet/Utils/Math.h"
 
 namespace Synet
