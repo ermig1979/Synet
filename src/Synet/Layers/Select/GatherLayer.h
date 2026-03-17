@@ -26,6 +26,8 @@
 
 #include "Synet/Layer.h"
 
+#include "Synet/Utils/Gather.h"
+
 namespace Synet
 {
     class GatherLayer : public Layer
@@ -36,6 +38,8 @@ namespace Synet
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
         virtual bool CanIgnoreInSubGraph(size_t index, bool src) const;
+
+        virtual size_t MemoryUsage() const;
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
@@ -51,5 +55,6 @@ namespace Synet
         size_t _axis, _srcOuter, _srcCount, _srcInner, _idxOuter, _idxCount, _idxInner;
         GatherPtr _gather;
         GatherElementsPtr _gatherElements;
+        GatherElements _gatherElementsSimd;
     };
 }

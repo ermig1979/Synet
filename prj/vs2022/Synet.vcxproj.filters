@@ -719,6 +719,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\Select\WhereLayer.h">
       <Filter>Layers\Select</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Gather.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

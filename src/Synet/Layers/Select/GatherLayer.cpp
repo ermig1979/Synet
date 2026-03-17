@@ -123,7 +123,7 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template <class T, class I> void GatherElements(const uint8_t* src8, size_t srcOuter, size_t srcCount, size_t srcInner, const uint8_t* idx8, size_t idxCount, uint8_t* dst8)
+    template <class T, class I, int check> void GatherElementsImp(const uint8_t* src8, size_t srcOuter, size_t srcCount, size_t srcInner, const uint8_t* idx8, size_t idxCount, uint8_t* dst8)
     {
         const T* src = (const T*)src8;
         const I* idx = (I*)idx8;
@@ -135,8 +135,11 @@ namespace Synet
                 for (size_t c = 0; c < idxCount; ++c)
                 {
                     I ic = idx[c];
-                    if (ic < 0)
-                        ic += I(srcCount);
+                    if (check)
+                    {
+                        if (ic < 0)
+                            ic += I(srcCount);
+                    }
                     dst[c] = src[ic];
                 }
                 src += srcCount;
@@ -153,8 +156,11 @@ namespace Synet
                     for (size_t i = 0; i < srcInner; ++i)
                     {
                         I ii = idx[i];
-                        if (ii < 0)
-                            ii += I(srcCount);
+                        if (check)
+                        {
+                            if (ii < 0)
+                                ii += I(srcCount);
+                        }
                         dst[i] = src[ii * srcInner + i];
                     }
                     idx += srcInner;
@@ -167,28 +173,51 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template<class T> GatherLayer::GatherElementsPtr GetGatherElements(TensorType idx)
+    template<class T> GatherLayer::GatherElementsPtr GetGatherElements(TensorType idx, bool check)
     {
         switch (idx)
         {
-        case TensorType32i: return GatherElements<T, int32_t>;
-        case TensorType64i: return GatherElements<T, int64_t>;
+        case TensorType32i: return check ? GatherElementsImp<T, int32_t, 1> : GatherElementsImp<T, int32_t, 0>;
+        case TensorType64i: return check ? GatherElementsImp<T, int64_t, 1> : GatherElementsImp<T, int64_t, 0>;
         default:
             return NULL;
         }
     }
 
-    GatherLayer::GatherElementsPtr GetGatherElements(TensorType src, TensorType idx)
+    GatherLayer::GatherElementsPtr GetGatherElements(TensorType src, TensorType idx, bool check)
     {
         switch (src)
         {
-        case TensorType32f: return GetGatherElements<float>(idx);
-        case TensorType32i: return GetGatherElements<int32_t>(idx);
-        case TensorType64i: return GetGatherElements<int64_t>(idx);
-        case TensorType16b: return GetGatherElements<uint16_t>(idx);
+        case TensorType32f: return GetGatherElements<float>(idx, check);
+        case TensorType32i: return GetGatherElements<int32_t>(idx, check);
+        case TensorType64i: return GetGatherElements<int64_t>(idx, check);
+        case TensorType16b: return GetGatherElements<uint16_t>(idx, check);
         default:
             return NULL;
         }
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    bool NeedCheck(const uint8_t* idx8, size_t size, TensorType type)
+    {
+        if (type == TensorType32i)
+        {
+            const int32_t * idx = (int32_t*)idx8;
+            for (size_t i = 0; i < size; ++i)
+                if (idx[i] < 0)
+                    return true;
+            return false;
+        }
+        else if (type == TensorType64i)
+        {
+            const int64_t* idx = (int64_t*)idx8;
+            for (size_t i = 0; i < size; ++i)
+                if (idx[i] < 0)
+                    return true;
+            return false;
+        }
+        return true;
     }
 
     //-------------------------------------------------------------------------------------------------
@@ -210,6 +239,11 @@ namespace Synet
         if (src && index)
             return true;
         return false;
+    }
+
+    size_t GatherLayer::MemoryUsage() const
+    {
+        return _gatherElementsSimd.InternalBufferSize();
     }
 
     bool GatherLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
@@ -235,6 +269,10 @@ namespace Synet
         if(_axis >= srcShape.size())
             SYNET_ERROR("GatherLayer parameter axis: " << _axis << " has wrong value for input " << ToStr(srcShape) << " !");
         _version = gather.version();
+
+        _srcOuter = src[0]->Size(0, _axis);
+        _srcCount = src[0]->Axis(_axis);
+        _srcInner = src[0]->Size(_axis + 1);
 
         Shape dstShape;
         if (_version == 0)
@@ -263,7 +301,8 @@ namespace Synet
             if (srcShape.size() != idxShape.size())
                 SYNET_ERROR("GatherLayer (version=1) inputs are incompatible!");
 
-            _gatherElements = GetGatherElements(_srcType, _idxType);
+            bool check = !src[1]->Const() || NeedCheck(src[1]->RawData(), src[1]->Size(), _idxType);
+            _gatherElements = GetGatherElements(_srcType, _idxType, check);
             if (_gatherElements == NULL)
                 SYNET_ERROR("GatherLayer can't get 'gatherElements' worker!");
 
@@ -272,12 +311,16 @@ namespace Synet
             _idxOuter = src[1]->Size(0, _axis);
             _idxCount = src[1]->Axis(_axis);
             _idxInner = src[1]->Size(_axis + 1);
+
+            const Strings& names = Param().src();
+            if (TensorUsers(names[1]) == 1 && src[1]->Const())
+                _gatherElementsSimd.Init(_srcType, _idxType, src[1]->Const(), _srcOuter, _srcCount, _srcInner, _idxCount);
+            if (_gatherElementsSimd.Enable() && src[1]->Const())
+                _gatherElementsSimd.SetIndex(src[1]->RawData());
         }
         else
             SYNET_ERROR("GatherLayer parameter version: " << _version << " is unsupported!");
-        _srcOuter = src[0]->Size(0, _axis);
-        _srcCount = src[0]->Axis(_axis);
-        _srcInner = src[0]->Size(_axis + 1);
+
         dst[0]->Reshape(_srcType, dstShape, src[0]->Format());
         if (src[0]->Const() && src[1]->Const())
         {
@@ -303,7 +346,10 @@ namespace Synet
             _gather(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, src[1]->RawData(), _idxOuter, _idxCount, dst[0]->RawData());
             break;
         case 1:
-            _gatherElements(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, src[1]->RawData(), _idxCount, dst[0]->RawData());
+            if (_gatherElementsSimd.Enable())
+                _gatherElementsSimd.Forward(src[0]->RawData(), src[1]->RawData(), dst[0]->RawData());
+            else
+                _gatherElements(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, src[1]->RawData(), _idxCount, dst[0]->RawData());
             break;
         default:
             assert(0);
