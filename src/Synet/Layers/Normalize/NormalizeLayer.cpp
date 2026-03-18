@@ -23,6 +23,7 @@
 */
 
 #include "Synet/Layers/Normalize/NormalizeLayer.h"
+#include "Synet/Layers/Normalize/NormalizeLayer.h"
 
 namespace Synet
 {
@@ -190,6 +191,43 @@ namespace Synet
             }
         }
 #endif
+    }
+
+    void NormalizeLayerForward16bV2(const uint16_t* src, size_t batch, size_t channels, size_t spatial, const float* scale, const float* shift, float eps, int trans, float* buf, uint16_t* dst)
+    {
+        float k = 1.0f / float(channels);
+        if (trans)
+        {
+            for (size_t b = 0; b < batch; ++b)
+            {
+                for (size_t i = 0; i < spatial; ++i)
+                {
+                    for (size_t c = 0; c < channels; ++c)
+                        buf[c] = BFloat16ToFloat32(src[c]);
+
+                    float sum = 0;
+                    for (size_t c = 0; c < channels; ++c)
+                        sum += buf[c];
+                    float mean = sum * k;
+                    for (size_t c = 0; c < channels; ++c)
+                        buf[c] = buf[c] - mean;
+
+                    float sqsum = 0;
+                    for (size_t c = 0; c < channels; ++c)
+                        sqsum += Square(buf[c]);
+                    float norm = 1.0f / ::sqrt(sqsum * k + eps);
+                    for (size_t c = 0; c < channels; ++c)
+                        dst[c] = Float32ToBFloat16(buf[c] * norm * scale[c] + shift[c]);
+
+                    dst += channels;
+                    src += channels;
+                }
+            }
+        }
+        else
+        {
+            assert(0);
+        }
     }
 
     //-------------------------------------------------------------------------------------------------
@@ -427,6 +465,14 @@ namespace Synet
     {
     }
 
+    LowPrecisionType NormalizeLayer::LowPrecision(TensorType type) const
+    {
+        const NormalizeParam& param = this->Param().normalize();
+        if (type == TensorType16b && param.version() == 2 && param.axis() == -1 && 0)
+            return LowPrecisionTypePassive;
+        return LowPrecisionTypeNone;
+    }
+
     int64_t NormalizeLayer::Flop() const
     {
         return (_version == 1 ? 4 : 7) * _batch * _channels * _spatial;
@@ -436,7 +482,9 @@ namespace Synet
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("NormalizeLayer supports only 1 input and 1 output!");
-        if (src[0]->GetType() != TensorType32f)
+
+        _type = src[0]->GetType();
+        if (_type != TensorType32f && LowPrecision(_type) != LowPrecisionTypePassive)
             SYNET_ERROR("NormalizeLayer has unsupported input types!");
 
         const NormalizeParam& param = this->Param().normalize();
@@ -547,33 +595,45 @@ namespace Synet
         else
             SYNET_ERROR("Unsupported version " << _version << " of NormalizeLayer!");
 
-        dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
+        dst[0]->Reshape(_type, src[0]->Shape(), src[0]->Format());
         buf[0]->Extend(TensorType32f, Shp(Max(_spatial, _channels * 2)));
         _const = false;
         std::stringstream desc;
-        desc <<  "v" << _version;
+        desc <<  "v" << _version << ToChar(_type);
         this->UsePerfStat(desc.str());
         return true;
     }
 
     void NormalizeLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
-        const float* pSrc = src[0]->Data<float>();
-        float* pDst = dst[0]->Data<float>();
         float* pBuf = buf[0]->Data<float>();
         const float* pScale = _scale.Data<float>();
         const float* pShift = _shift.Data<float>();
-        if (_version == 1)
-            NormalizeLayerForwardCpu(pSrc, _batch, _channels, _spatial, pScale, _eps, _acrossSpatial, _trans, pBuf, pDst);
-        else if (_version == 2)
-            NormalizeLayerForwardV2Cpu(pSrc, _batch, _channels, _spatial, pScale, pShift, _eps, _trans, pBuf, pDst);
-        else if (_version == 3)
-            NormalizeLayerForwardV3Cpu(pSrc, _batch, _channels, _spatial, pScale, pShift, _eps, _trans, pBuf, pDst);
-        else if (_version == 4)
-            NormalizeLayerForwardV4Cpu(pSrc, _batch, _channels, _spatial, pScale, pShift, _eps, _trans, pBuf, pDst);
-        else if (_version == 5)
-            NormalizeLayerForwardV5Cpu(pSrc, _batch, _channels, _spatial, _group, pScale, pShift, _eps, _trans, pBuf, pDst);
-        else
-            assert(0);
+        if (_type == TensorType32f)
+        {
+            const float* pSrc = src[0]->Data<float>();
+            float* pDst = dst[0]->Data<float>();
+            if (_version == 1)
+                NormalizeLayerForwardCpu(pSrc, _batch, _channels, _spatial, pScale, _eps, _acrossSpatial, _trans, pBuf, pDst);
+            else if (_version == 2)
+                NormalizeLayerForwardV2Cpu(pSrc, _batch, _channels, _spatial, pScale, pShift, _eps, _trans, pBuf, pDst);
+            else if (_version == 3)
+                NormalizeLayerForwardV3Cpu(pSrc, _batch, _channels, _spatial, pScale, pShift, _eps, _trans, pBuf, pDst);
+            else if (_version == 4)
+                NormalizeLayerForwardV4Cpu(pSrc, _batch, _channels, _spatial, pScale, pShift, _eps, _trans, pBuf, pDst);
+            else if (_version == 5)
+                NormalizeLayerForwardV5Cpu(pSrc, _batch, _channels, _spatial, _group, pScale, pShift, _eps, _trans, pBuf, pDst);
+            else
+                assert(0);
+        }
+        else if (_type == TensorType16b)
+        {
+            const uint16_t* pSrc = src[0]->Data<uint16_t>();
+            uint16_t* pDst = dst[0]->Data<uint16_t>();
+            if (_version == 2)
+                NormalizeLayerForward16bV2(pSrc, _batch, _channels, _spatial, pScale, pShift, _eps, _trans, pBuf, pDst);
+            else
+                assert(0);
+        }
     }
 }

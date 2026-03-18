@@ -33,6 +33,8 @@ namespace Synet
     public:
         NormalizeLayer(const LayerParam& param, Context* context);
 
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
+
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
         virtual int64_t Flop() const;
@@ -41,6 +43,7 @@ namespace Synet
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
     private:
+        TensorType _type;
         size_t _batch, _channels, _spatial, _group;
         Tensor _scale, _shift;
         int _trans, _acrossSpatial, _channelShared, _version;
