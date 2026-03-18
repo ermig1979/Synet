@@ -312,9 +312,8 @@ namespace Synet
             _idxCount = src[1]->Axis(_axis);
             _idxInner = src[1]->Size(_axis + 1);
 
-            const Strings& names = Param().src();
-            if (TensorUsers(names[1]) == 1 && src[1]->Const())
-                _gatherElementsSimd.Init(_srcType, _idxType, src[1]->Const(), _srcOuter, _srcCount, _srcInner, _idxCount);
+            _gatherElementsSimd.Init(_srcType, _idxType, src[1]->Const(), 
+                TensorUsers(Param().src()[1]) == 1, idxShape.data(), _axis, _srcCount, _srcInner, _idxCount);
             if (_gatherElementsSimd.Enable() && src[1]->Const())
                 _gatherElementsSimd.SetIndex(src[1]->RawData());
         }

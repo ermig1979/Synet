@@ -44,12 +44,12 @@ namespace Synet
 #endif
         }
 
-        SYNET_INLINE void Init(TensorType dataType, TensorType indexType, bool indexConst, size_t srcOuter, size_t srcCount, size_t srcInner, size_t idxCount)
+        SYNET_INLINE void Init(TensorType dataType, TensorType indexType, bool indexConst, size_t indexUsers, const size_t *outer, size_t outerSize, size_t srcCount, size_t inner, size_t idxCount)
         {
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
                 if (_context)
                     ::SimdRelease(_context), _context = NULL;
-                _context = ::SimdSynetGatherElementsInit((SimdTensorDataType)dataType, (SimdTensorDataType)indexType, indexConst ? SimdTrue : SimdFalse, srcOuter, srcCount, srcInner, idxCount);
+                _context = ::SimdSynetGatherElementsInit((SimdTensorDataType)dataType, (SimdTensorDataType)indexType, indexConst ? SimdTrue : SimdFalse, indexUsers, outer, outerSize, srcCount, inner, idxCount);
 #endif
         }
 
