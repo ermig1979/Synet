@@ -30,7 +30,7 @@ namespace Synet
     void SoftmaxLayerForward(const float * src, size_t outer, size_t count, size_t inner, float * dst)
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        SimdSynetSoftmaxLayerForward(src, outer, count, inner, dst);
+        SimdSynetSoftmax32f(src, outer, count, inner, dst);
 #else
         Tensor<float> _buffer(TensorType32f, Shp(inner), TensorFormatUnknown);
         float * buffer = _buffer.Data<float>();

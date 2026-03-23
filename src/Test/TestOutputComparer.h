@@ -175,8 +175,8 @@ namespace Test
                 Tensor _f, _s;
                 _f.Clone(f);
                 _s.Clone(s);
-                SimdSynetSoftmaxLayerForward(f.Data<float>(), f.Axis(0), f.Axis(1), 1, _f.Data<float>());
-                SimdSynetSoftmaxLayerForward(s.Data<float>(), s.Axis(0), s.Axis(1), 1, _s.Data<float>());
+                SimdSynetSoftmax32f(f.Data<float>(), f.Axis(0), f.Axis(1), 1, _f.Data<float>());
+                SimdSynetSoftmax32f(s.Data<float>(), s.Axis(0), s.Axis(1), 1, _s.Data<float>());
                 for (size_t n = 0; n < f.Axis(0); ++n)
                     for (size_t c = 0; c < f.Axis(1); ++c)
                         if (!Compare(_f, _s, Shp(n, c), d, failed, compType, compareThreshold))
@@ -231,13 +231,13 @@ namespace Test
                 _s.Clone(s);
                 if (compType == "softmax-1")
                 {
-                    SimdSynetSoftmaxLayerForward(f.Data<float>(), f.Axis(0), f.Axis(1), f.Axis(2), _f.Data<float>());
-                    SimdSynetSoftmaxLayerForward(s.Data<float>(), s.Axis(0), s.Axis(1), s.Axis(2), _s.Data<float>());
+                    SimdSynetSoftmax32f(f.Data<float>(), f.Axis(0), f.Axis(1), f.Axis(2), _f.Data<float>());
+                    SimdSynetSoftmax32f(s.Data<float>(), s.Axis(0), s.Axis(1), s.Axis(2), _s.Data<float>());
                 }
                 else if (compType == "softmax-2")
                 {
-                    SimdSynetSoftmaxLayerForward(f.Data<float>(), f.Size(0, 2), f.Axis(2), 1, _f.Data<float>());
-                    SimdSynetSoftmaxLayerForward(s.Data<float>(), s.Size(0, 2), s.Axis(2), 1, _s.Data<float>());
+                    SimdSynetSoftmax32f(f.Data<float>(), f.Size(0, 2), f.Axis(2), 1, _f.Data<float>());
+                    SimdSynetSoftmax32f(s.Data<float>(), s.Size(0, 2), s.Axis(2), 1, _s.Data<float>());
                 }
                 for (size_t n = 0; n < _f.Axis(0); ++n)
                     for (size_t c = 0; c < _f.Axis(1); ++c)
