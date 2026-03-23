@@ -195,6 +195,9 @@ namespace Synet
 
     void NormalizeLayerForward16bV2(const uint16_t* src, size_t batch, size_t channels, size_t spatial, const float* scale, const float* shift, float eps, int trans, float* buf, uint16_t* dst)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        SimdSynetNormalizeLayerForward16bV2(src, batch, channels, spatial, scale, shift, &eps, trans ? SimdTensorFormatNhwc : SimdTensorFormatNchw, buf, dst);
+#else
         float k = 1.0f / float(channels);
         if (trans)
         {
@@ -228,6 +231,7 @@ namespace Synet
         {
             assert(0);
         }
+#endif
     }
 
     //-------------------------------------------------------------------------------------------------
@@ -468,7 +472,7 @@ namespace Synet
     LowPrecisionType NormalizeLayer::LowPrecision(TensorType type) const
     {
         const NormalizeParam& param = this->Param().normalize();
-        if (type == TensorType16b && param.version() == 2 && param.axis() == -1 && 0)
+        if (type == TensorType16b && param.version() == 2 && param.axis() == -1)
             return LowPrecisionTypePassive;
         return LowPrecisionTypeNone;
     }
