@@ -135,7 +135,7 @@ namespace Synet
                 for (size_t i = 0; i < height*width*_num; ++i)
                 {
                     size_t index = size*i + b*outputs;
-                    SoftmaxLayerForward(pDst + index + 5, 1, _classes, 1, pDst + index + 5);
+                    SoftmaxLayerForward32f(pDst + index + 5, 1, _classes, 1, pDst + index + 5);
                 }
             }
         }

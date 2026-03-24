@@ -95,7 +95,7 @@ namespace Synet
             ScaleForward32f(query, &_scale, NULL, 1, _prev, _last, qbuf, TensorFormatNchw, 1);
             CpuGemm(CblasNoTrans, CblasNoTrans, _prev, _prev, _last, 1.0f, qbuf, _last, kbuf, _prev, 0.0f, abuf, _prev);
         }
-        SoftmaxLayerForward(abuf, _prev, _prev, 1, abuf);
+        SoftmaxLayerForward32f(abuf, _prev, _prev, 1, abuf);
         CpuGemm(CblasNoTrans, CblasNoTrans, _prev, _last, _prev, 1.0f, abuf, _prev, value, _last, 0.0f, dst, _last);
     }
 }

@@ -27,7 +27,7 @@
 
 namespace Synet
 {
-    void SoftmaxLayerForward(const float * src, size_t outer, size_t count, size_t inner, float * dst)
+    void SoftmaxLayerForward32f(const float * src, size_t outer, size_t count, size_t inner, float * dst)
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         SimdSynetSoftmax32f(src, outer, count, inner, dst);
@@ -72,6 +72,15 @@ namespace Synet
             src += count*inner;
             dst += count*inner;
         }
+#endif    
+    }
+
+    void SoftmaxLayerForward16b(const uint16_t* src, size_t outer, size_t count, size_t inner, uint16_t* dst)
+    {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        SimdSynetSoftmax16b(src, outer, count, inner, dst);
+#else
+        assert(0);
 #endif    
     }
 
@@ -133,11 +142,20 @@ namespace Synet
     {
     }
 
+    LowPrecisionType SoftmaxLayer::LowPrecision(TensorType type) const
+    {
+        const SoftmaxParam& param = this->Param().softmax();
+        if (type == TensorType16b && param.log() == false)
+            return LowPrecisionTypePassive;
+        return LowPrecisionTypeNone;
+    }
+
     bool SoftmaxLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("SoftmaxLayer supports only 1 input and 1 output!");
-        if (src[0]->GetType() != TensorType32f)
+        _type = src[0]->GetType();
+        if (_type != TensorType32f && _type != TensorType16b)
             SYNET_ERROR("SoftmaxLayer has unsupported input types!");
 
         const SoftmaxParam& softmax = this->Param().softmax();
@@ -146,11 +164,16 @@ namespace Synet
         if(_axis >= src[0]->Count())
             SYNET_ERROR("SoftmaxLayer has wrong axis " << softmax.axis() << " parameter!");
 
+        if (_type == TensorType16b && _log)
+            SYNET_ERROR("SoftmaxLayer unsupports log softmax with BF16 input type!");
+
         _outer = src[0]->Size(0, _axis);
         _count = src[0]->Axis(_axis);
         _inner = src[0]->Size(_axis + 1);
-        dst[0]->Reshape(src[0]->GetType(), src[0]->Shape(), src[0]->Format());
-        this->UsePerfStat();
+        dst[0]->Reshape(_type, src[0]->Shape(), src[0]->Format());
+        std::stringstream desc;
+        desc << _log << ToChar(_type);
+        this->UsePerfStat(desc.str());
         return true;
     }
 
@@ -164,6 +187,13 @@ namespace Synet
         if(_log)
             LogSoftmaxLayerForward(src[0]->Data<float>(), _outer, _count, _inner, dst[0]->Data<float>());
         else
-            SoftmaxLayerForward(src[0]->Data<float>(), _outer, _count, _inner, dst[0]->Data<float>());
+        {
+            if (_type == TensorType32f)
+                SoftmaxLayerForward32f(src[0]->Data<float>(), _outer, _count, _inner, dst[0]->Data<float>());
+            else if (_type == TensorType16b)
+                SoftmaxLayerForward16b(src[0]->Data<uint16_t>(), _outer, _count, _inner, dst[0]->Data<uint16_t>());
+            else
+                assert(0);
+        }
     }
 }

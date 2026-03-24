@@ -28,7 +28,7 @@
 
 namespace Synet
 {
-    void SoftmaxLayerForward(const float* src, size_t outer, size_t count, size_t inner, float* dst);
+    void SoftmaxLayerForward32f(const float* src, size_t outer, size_t count, size_t inner, float* dst);
 
     //-------------------------------------------------------------------------------------------------
 
@@ -36,6 +36,8 @@ namespace Synet
     {
     public:
         SoftmaxLayer(const LayerParam& param, Context* context);
+
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
@@ -45,6 +47,7 @@ namespace Synet
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
     private:
+        TensorType _type;
         size_t _outer, _count, _inner, _axis;
         bool _log;
     };
