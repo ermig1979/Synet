@@ -206,6 +206,8 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "HardSigmoid" && !ConvertHardSigmoidNode(node, layer))
                 return ErrorMessage(i, node);
+            if (node.op_type() == "HardSwish" && !ConvertHardSwishNode(node, layer))
+                return ErrorMessage(i, node);
             if (node.op_type() == "Identity" && !ConvertIdentityNode(node, network.layers(), layer))
                 return ErrorMessage(i, node);
             if (node.op_type() == "InstanceNormalization" && !ConvertInstanceNormalizationNode(node, trans, network.layers(), layer))

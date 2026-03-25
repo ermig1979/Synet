@@ -63,6 +63,8 @@ namespace Synet
 
     bool ConvertGreaterNode(const onnx::NodeProto& node, LayerParam& layer);
 
+    bool ConvertHardSwishNode(const onnx::NodeProto& node, LayerParam& layer);
+
     bool ConvertInitializer(const onnx::TensorProto& tensor, Synet::NetworkParam& network, Bytes& weight, Renames& renames);
 
     bool ConvertInput(const onnx::ValueInfoProto& input, bool trans, Synet::NetworkParam& network, Renames& renames);
