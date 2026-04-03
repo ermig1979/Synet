@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test>
+	<lower>0</lower>
+	<upper>255</upper>
+	<detection>
+		<decoder>detOut</decoder>
+	</detection>
+</test>

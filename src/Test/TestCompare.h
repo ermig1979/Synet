@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2025 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -24,11 +24,19 @@
 
 #pragma once
 
+#include "Synet/Utils/Difference.h"
+
 #include "TestCommon.h"
 #include "TestUtils.h"
 #include "TestOptions.h"
 #include "TestPerformance.h"
 #include "TestSynet.h"
+#include "TestOutputComparer.h"
+
+#ifdef __linux__
+#include <sched.h>
+#include <pthread.h>
+#endif
 
 namespace Test
 {
@@ -40,6 +48,7 @@ namespace Test
             , _progressMessageSizeMax(0)
             , _notifiedFirst(false)
             , _notifiedSecond(false)
+            , _nextProgressUpdate(Cpl::Miliseconds(Cpl::TimeCounter()))
         {
             assert(_options.testThreads >= 0);
             if (_options.enable & ENABLE_FIRST)
@@ -99,12 +108,14 @@ namespace Test
             size_t current;
             bool first, second;
             std::thread thread;
+            String debug;
             Thread() : current(0), first(false), second(false) {}
         };
         std::vector<Thread> _threads;
         std::condition_variable _startFirst, _startSecond;
         bool _notifiedFirst, _notifiedSecond;
         size_t _progressMessageSizeMax;
+        double _nextProgressUpdate;
 
         typedef Simd::Pixel::Bgra32 Color;
         typedef std::vector<Color> Colors;
@@ -130,47 +141,58 @@ namespace Test
             std::cout << "tests :" << std::endl;
         }
 
-        bool PrintFinishMessage() const
+        bool PrintFinishMessage(int64_t start) const
         {
-            std::cout << ExpandRight("Tests are finished successfully!", _progressMessageSizeMax) << std::endl << std::endl;
+            std::stringstream msg;
+            msg << "Tests are finished successfully in " << Test::ExecTimeStr(start) << ".";
+            std::cout << ExpandRight(msg.str(), _progressMessageSizeMax) << std::endl << std::endl;
             return true;
         }
 
         bool LoadTestParam()
         {
             if (!_param.Load(_options.testParam))
-            {
-                std::cout << "Can't load file '" << _options.testParam << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't load file '" << _options.testParam << "' !");
             return true;
         }
 
-        bool InitNetwork(const String& model, const String& weight, Network& network) const
+        bool InitNetwork(String model, String weight, Network& network) const
         {
-            if (!FileExists(model))
+            if (network.Name() != "OnnxRuntime" && _param().model() != "onnx")
             {
-                std::cout << "File '" << model << "' is not exist!" << std::endl;
-                return false;
+                if (!Cpl::FileExists(model))
+                {
+                    String alt = Cpl::ChangeExtension(model, ".dsc");
+                    if (alt != model && network.Name() != "Synet")
+                    {
+                        if (!Cpl::FileExists(alt))
+                            SYNET_ERROR("Files '" << model << "' and '" << alt << "' are not exist!");
+                        model = alt;
+                    }
+                    else
+                        SYNET_ERROR("File '" << model << "' is not exist!");
+                }
             }
-            if (!FileExists(weight))
+            if (!Cpl::FileExists(weight))
             {
-                std::cout << "File '" << weight << "' is not exist!" << std::endl;
-                return false;
+                String alt = Cpl::ChangeExtension(weight, ".dat");
+                if (alt != weight && network.Name() != "Synet")
+                {
+                    if (!Cpl::FileExists(alt))
+                        SYNET_ERROR("Files '" << weight << "' and '" << alt << "' are not exist!");
+                    weight = alt;
+                }
+                else
+                    SYNET_ERROR("File '" << weight << "' is not exist!");
             }
-            Network::Options options(_options.outputDirectory, _options.workThreads, _options.consoleSilence, _options.batchSize, 
-                _options.performanceLog, _options.debugPrint, _options.regionThreshold, _options.bf16);
+            Network::Options options(_options.outputDirectory, _options.workThreads, _options.consoleSilence, _options.batchSize,
+                (_options.performanceLog & network.PerfLogMask()), _options.testThreads == 0 ? _options.debugPrint : 0, 
+                _options.regionThreshold, _options.bf16, _options.ortProvider);
             if (!network.Init(model, weight, options, _param()))
-            {
-                std::cout << "Can't load " << network.Name() << " from '" << model << "' and '" << weight << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't load " << network.Name() << " from '" << model << "' and '" << weight << "' !");
             Shape shape = network.SrcShape(0);
             if (!(shape[1] == 1 || shape[1] == 3 || _param().inputType() == "binary"))
-            {
-                std::cout << "Wrong " << network.Name() << " classifier channels count '" << shape[1] << " !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Wrong " << network.Name() << " network model channels count '" << shape[1] << " !");
             return true;
         }
 
@@ -218,26 +240,23 @@ namespace Test
             if (_options.enable == (ENABLE_FIRST | ENABLE_SECOND))
             {
                 if (_firsts[0].SrcCount() != _seconds[0].SrcCount())
-                {
-                    std::cout << "Networks have difference source number: " <<
-                        _firsts[0].SrcCount() << " != " << _seconds[0].SrcCount() << std::endl;
-                    return false;
-                }
+                    SYNET_ERROR("Networks have difference source number: " << _firsts[0].SrcCount() << " != " << _seconds[0].SrcCount());
                 for (size_t s = 0; s < _firsts[0].SrcCount(); ++s)
                 {
                     const Shape& os = _firsts[0].SrcShape(s);
                     const Shape& ss = _seconds[0].SrcShape(s);
                     if (os != ss)
                     {
-                        std::cout << "Networks have difference Src[" << s << "] size: ";
-                        std::cout << _firsts[0].Name() << " {" << os[0];
+                        std::stringstream err;
+                        err << "Networks have difference Src[" << s << "] size: ";
+                        err << _firsts[0].Name() << " {" << os[0];
                         for (size_t j = 1; j < os.size(); ++j)
-                            std::cout << ", " << os[j];
-                        std::cout << "} != " << _seconds[0].Name() << " {" << ss[0];
+                            err << ", " << os[j];
+                        err << "} != " << _seconds[0].Name() << " {" << ss[0];
                         for (size_t j = 1; j < ss.size(); ++j)
-                            std::cout << ", " << ss[j];
-                        std::cout << "} ! " << std::endl;
-                        return false;
+                            err << ", " << ss[j];
+                        err << "} !";
+                        SYNET_ERROR(err.str());
                     }
                 }
             }
@@ -248,47 +267,77 @@ namespace Test
         bool CreateDirectories()
         {
             if (_options.NeedOutputDirectory() && !DirectoryExists(_options.outputDirectory) && !CreatePath(_options.outputDirectory))
-            {
-                std::cout << "Can't create output directory '" << _options.outputDirectory << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Can't create output directory '" << _options.outputDirectory << "' !");
             return true;
         }
 
-        bool RequiredExtension(const String & name)
+        bool RequiredExtension(const String& name)
         {
             String ext = ExtensionByPath(name);
-            static const char * EXTS[] = { "JPG", "jpg", "png", "ppm", "pgm", "bin" };
+            static const char* EXTS[] = { "JPG", "jpeg", "jpg", "png", "ppm", "pgm", "bin" };
             for (size_t i = 0, n = sizeof(EXTS) / sizeof(EXTS[0]); i < n; ++i)
                 if (ext == EXTS[i])
                     return true;
             return false;
         }
 
-        bool CreateTestListImages(const Network& network, const String & directory)
+        void ResizeImage(const View& src, View& dst) const
+        {
+            if (_param().smartResize())
+            {
+                Simd::Fill(dst, 0);
+                ptrdiff_t d = src.width * dst.height - src.height * dst.width;
+                size_t w = d > 0 ? dst.width : src.width * dst.height / src.height;
+                size_t h = d < 0 ? dst.height : src.height * dst.width / src.width;
+                Simd::Resize(src, dst.Region(Size(w, h), View::MiddleLeft).Ref(), SimdResizeMethodArea);
+            }
+            else
+            {
+                Simd::Resize(src, dst, SimdResizeMethodArea);
+            }
+        }
+
+        bool RequiredInput(size_t index) const
+        {
+            if (_param().input().size())
+                return _param().input()[index].from().empty();
+            return true;
+        }
+
+        size_t RequiredInputNumber(const Network& network) const
+        {
+            if (_param().input().size())
+            {
+                size_t count = 0;
+                for (size_t i = 0; i < _param().input().size(); ++i)
+                    if (_param().input()[i].from().empty())
+                        count++;
+                return count;
+            }
+            return network.SrcCount();
+        }
+
+        bool CreateTestListImages(const Network& network, const String& directory)
         {
             StringList images = GetFileList(directory, _options.imageFilter, true, false);
             images.sort();
 
             Strings names;
             names.reserve(images.size());
-            size_t curr = 0;
+            size_t curr = 0, rN = RequiredInputNumber(network), imgBeg = _options.imageBegin * rN, imgEnd = _options.imageEnd * rN;
             for (StringList::const_iterator it = images.begin(); it != images.end(); ++it)
             {
-                if (curr >= _options.imageBegin && curr < _options.imageEnd && RequiredExtension(*it))
+                if (RequiredExtension(*it))
                 {
-                    names.push_back(*it);
+                    if (curr >= imgBeg && curr < imgEnd)
+                        names.push_back(*it);
                     curr++;
                 }
             }
-
             size_t sN = network.SrcCount(), bN = _options.batchSize;
-            size_t tN = names.size() / bN / sN;
+            size_t tN = names.size() / bN / rN;
             if (tN == 0)
-            {
-                std::cout << "There is no one image in '" << directory << "' for '" << _options.imageFilter << "' filter!" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("There is no one image in '" << directory << "' for '" << _options.imageFilter << "' filter!");
 
             Floats lower = _param().lower(), upper = _param().upper();
             _tests.clear();
@@ -296,62 +345,73 @@ namespace Test
             for (size_t t = 0; t < tN; ++t)
             {
                 TestDataPtr test(new TestData());
-                test->path.resize(bN * sN);
+                test->path.resize(bN * rN);
                 test->input.resize(sN);
                 test->output.resize(_options.TestThreads());
-                for (size_t s = 0; s < sN; ++s)
+                Points imageSizes;
+                for (size_t s = 0, r = 0; s < sN; ++s)
                 {
-                    test->input[s].Reshape(network.SrcShape(s));
-                    float* input = test->input[s].CpuData();
-                    for (size_t b = 0; b < bN; ++b)
+                    Tensor& tensor = test->input[s];
+                    tensor.Reshape(network.SrcType(s), network.SrcShape(s), Synet::TensorFormatUnknown);
+                    if (RequiredInput(s))
                     {
-                        size_t p = s * bN + b;
-                        test->path[p] = MakePath(directory, names[(t * bN + b) * sN + s]);
-                        View original;
-                        if (!LoadImage(test->path[p], original))
+                        float* input = tensor.Data<float>();
+                        for (size_t b = 0; b < bN; ++b)
                         {
-                            std::cout << "Can't read '" << test->path[p] << "' image!" << std::endl;
-                            return false;
-                        }
-                        Shape shape = network.SrcShape(s);
-                        if (shape.size() == 4)
-                        {
-                            if (lower.size() == 1)
-                                lower.resize(shape[1], lower[0]);
-                            if (upper.size() == 1)
-                                upper.resize(shape[1], upper[0]);
-
-                            View converted(original.Size(), shape[1] == 1 ? View::Gray8 : View::Bgr24);
-                            Simd::Convert(original, converted);
-
-                            View resized(Size(shape[3], shape[2]), converted.format);
-                            Simd::Resize(converted, resized, SimdResizeMethodArea);
-
-                            if (_param().order() == "rgb" && shape[1] == 3)
-                                (View::Format&)resized.format = View::Rgb24;
-                            Simd::SynetSetInput(resized, lower.data(), upper.data(), input, shape[1], SimdTensorFormatNchw);
-                            input += shape[1] * shape[2] * shape[3];
-                        }
-                        else if (shape.size() == 2)
-                        {
-                            if (shape[0] != original.height || shape[1] != original.width)
+                            size_t p = r * bN + b;
+                            test->path[p] = MakePath(directory, names[(t * bN + b) * rN + r]);
+                            View original;
+                            if (!LoadImage(test->path[p], original))
+                                SYNET_ERROR("Can't read '" << test->path[p] << "' image!");
+                            imageSizes.push_back(original.Size());
+                            Shape shape = network.SrcShape(s);
+                            if (shape.size() == 4)
                             {
-                                std::cout << "Incompatible size of '" << test->path[p] << "' image!" << std::endl;
-                                return false;
+                                if (lower.size() == 1)
+                                    lower.resize(shape[1], lower[0]);
+                                if (upper.size() == 1)
+                                    upper.resize(shape[1], upper[0]);
+
+                                View converted(original.Size(), shape[1] == 1 ? View::Gray8 : View::Bgr24);
+                                Simd::Convert(original, converted);
+
+                                View resized(Size(shape[3], shape[2]), converted.format);
+                                ResizeImage(converted, resized);
+
+                                Simd::SynetSetInput(resized, lower.data(), upper.data(), input, shape[1], SimdTensorFormatNchw, _param().order() == "rgb");
+                                input += shape[1] * shape[2] * shape[3];
                             }
-                            for (size_t y = 0; y < original.height; ++y)
+                            else if (shape.size() == 2)
                             {
-                                const uint8_t* row = original.Row<uint8_t>(y);
-                                const float lo = 0.0f, hi = 255.0f;
-                                ::SimdUint8ToFloat32(row, original.width, &lo, &hi, input);
-                                input += original.width;
+                                if (shape[0] != original.height || shape[1] != original.width)
+                                    SYNET_ERROR("Incompatible size of '" << test->path[p] << "' image!");
+                                for (size_t y = 0; y < original.height; ++y)
+                                {
+                                    const uint8_t* row = original.Row<uint8_t>(y);
+                                    const float lo = 0.0f, hi = 255.0f;
+                                    ::SimdUint8ToFloat32(row, original.width, &lo, &hi, input);
+                                    input += original.width;
+                                }
+                            }
+                            else
+                                SYNET_ERROR("Can't map to source '" << test->path[p] << "' image!");
+                        }
+                        r++;
+                    }
+                    else if (_param().input().size() && _param().input()[s].from() == "image_size")
+                    {
+                        if (tensor.GetType() == Synet::TensorType32i)
+                        {
+                            for (size_t b = 0; b < bN; ++b)
+                            {
+                                tensor.Data<int32_t>(Shp(b, 0))[0] = (int32_t)imageSizes[b].y;
+                                tensor.Data<int32_t>(Shp(b, 0))[1] = (int32_t)imageSizes[b].x;
                             }
                         }
-                        else
-                        {
-                            std::cout << "Can't map to source '" << test->path[p] << "' image!" << std::endl;
-                            return false;
-                        }
+                    }
+                    else
+                    {
+                        SYNET_ERROR("Can't process input parameter 'from'!");
                     }
                 }
                 _tests.push_back(test);
@@ -359,7 +419,7 @@ namespace Test
             return true;
         }
 
-        bool CreateTestListBinary(const Network& network, const String & directory)
+        bool CreateTestListBinary(const Network& network, const String& directory)
         {
             StringList files = GetFileList(directory, _options.imageFilter, true, false);
             files.sort();
@@ -372,10 +432,7 @@ namespace Test
 
             size_t sN = network.SrcCount(), bN = _options.batchSize;
             if (names.size() != sN)
-            {
-                std::cout << "The number of binary files " << names.size() << " is differ from number of network sources " << sN << " in '" << directory << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("The number of binary files " << names.size() << " is differ from number of network sources " << sN << " in '" << directory << "' !");
 
             _tests.clear();
             for (size_t n = 0; n < sN; ++n)
@@ -384,33 +441,21 @@ namespace Test
                 Vector data;
                 String path = MakePath(directory, names[n]);
                 if (!Synet::LoadBinaryData(path, data))
-                {
-                    std::cout << "Can't load binary file '" << path << "' !" << std::endl;
-                    return false;
-                }
+                    SYNET_ERROR("Can't load binary file '" << path << "' !");
                 size_t tN = data.size() / sS, tB = _options.binaryBegin / _options.batchSize, tE = std::min(_options.binaryEnd / _options.batchSize, tN);
                 if (tB >= tE)
-                {
-                    std::cout << "Wrong parameters: -bb=" << _options.binaryBegin << ", -be=" << _options.binaryEnd << ", binary size = " << tN << " !" << std::endl;
-                    return false;
-                }
+                    SYNET_ERROR("Wrong parameters: -bb=" << _options.binaryBegin << ", -be=" << _options.binaryEnd << ", binary size = " << tN << " !");
                 tN = tE - tB;
                 if (tN == 0)
-                {
-                    std::cout << "The binary file '" << path << "' is too small!" << std::endl;
-                    return false;
-                }
+                    SYNET_ERROR("The binary file '" << path << "' is too small!");
                 if (n == 0)
                     _tests.resize(tN);
-                else if(_tests.size() != tN)
-                {
-                    std::cout << "The binary files are not compartible!" << std::endl;
-                    return false;
-                }
+                else if (_tests.size() != tN)
+                    SYNET_ERROR("The binary files are not compartible!");
                 for (size_t i = 0; i < tN; i += 1)
                 {
                     size_t offs = (tB + i) * sS;
-                    TestDataPtr & test = _tests[i];
+                    TestDataPtr& test = _tests[i];
                     if (n == 0)
                     {
                         test.reset(new TestData());
@@ -418,8 +463,9 @@ namespace Test
                         test->input.resize(sN);
                         test->output.resize(_options.TestThreads());
                     }
-                    test->input[n].Reshape(network.SrcShape(n));
-                    memcpy(test->input[n].CpuData(), data.data() + offs, sS * sizeof(float));
+                    Tensor& tensor = test->input[n];
+                    tensor.Reshape(Synet::TensorType32f, network.SrcShape(n), Synet::TensorFormatUnknown);
+                    memcpy(tensor.Data<float>(), data.data() + offs, sS * sizeof(float));
                 }
             }
             return true;
@@ -431,19 +477,13 @@ namespace Test
             if (imageDirectory.empty())
                 imageDirectory = Test::MakePath(DirectoryByPath(_options.testParam), _param().images());
             if (!DirectoryExists(imageDirectory))
-            {
-                std::cout << "Test image directory '" << imageDirectory << "' is not exists!" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Test image directory '" << imageDirectory << "' is not exists!");
             if (_param().inputType() == "images")
                 return CreateTestListImages(network, imageDirectory);
-            else if(_param().inputType() == "binary")
+            else if (_param().inputType() == "binary")
                 return CreateTestListBinary(network, imageDirectory);
             else
-            {
-                std::cout << "Unknown input type '" << _param().inputType() << "' !" << std::endl;
-                return false;
-            }
+                SYNET_ERROR("Unknown input type '" << _param().inputType() << "' !");
         }
 
         bool CreateTestList()
@@ -469,14 +509,17 @@ namespace Test
                 std::ofstream log(path);
                 if (log.is_open())
                 {
+#ifdef TEST_COMPARE_LOG
+                    CPL_LOG_SS(Info, "DebugPrint starts write to '" << path << "'.");
+#endif
                     network.DebugPrint(_tests[i]->input, log, _options.debugPrint, _options.debugPrintFirst, _options.debugPrintLast, _options.debugPrintPrecision);
                     log.close();
+#ifdef TEST_COMPARE_LOG
+                    CPL_LOG_SS(Info, "DebugPrint ends.");
+#endif
                 }
                 else
-                {
-                    std::cout << "Can't open '" << path << "' file!" << std::endl;
-                    return false;
-                }
+                    SYNET_ERROR("Can't open '" << path << "' file!");
             }
             return true;
         }
@@ -488,9 +531,12 @@ namespace Test
                 if (_colors.empty())
                 {
                     _colors.push_back(Color(0xFF, 0xFF, 0xFF));
-                    _colors.push_back(Color(0xFF, 0x00, 0x00));
-                    _colors.push_back(Color(0x00, 0xFF, 0x00));
                     _colors.push_back(Color(0x00, 0x00, 0xFF));
+                    _colors.push_back(Color(0x00, 0xFF, 0x00));
+                    _colors.push_back(Color(0xFF, 0x00, 0x00));
+                    _colors.push_back(Color(0x00, 0xFF, 0xFF));
+                    _colors.push_back(Color(0xFF, 0xFF, 0x00));
+                    _colors.push_back(Color(0xFF, 0x00, 0xFF));
                 }
                 while (index >= _colors.size())
                     _colors.push_back(Color(::rand(), ::rand(), ::rand()));
@@ -502,12 +548,12 @@ namespace Test
         {
             if (_options.annotateRegions && _param().inputType() == "images")
             {
+#ifdef TEST_COMPARE_LOG
+                CPL_LOG_SS(Info, "AnnotateRegions starts write to '" << inputPath << "'.");
+#endif
                 View image;
                 if (!LoadImage(inputPath, image))
-                {
-                    std::cout << "Can't read '" << inputPath << "' image!" << std::endl;
-                    return false;
-                }
+                    SYNET_ERROR("Can't read '" << inputPath << "' image!");
                 Regions regions = network.GetRegions(image.Size(), _options.regionThreshold, _options.regionOverlap);
                 for (size_t i = 0; i < regions.size(); ++i)
                 {
@@ -516,14 +562,14 @@ namespace Test
                     ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
                     ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
                     ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
-                    Simd::DrawRectangle(image, l, t, r, b, GetColor(region.id));
+                    Simd::DrawRectangle(image, l, t, r, b, GetColor(region.id), std::min<int>(image.height / 500 + 1, 3));
                 }
                 String outputPath = MakePath(_options.outputDirectory, Options::FullName(network.Name(), network.Type()) + "_" + GetNameByPath(inputPath));
                 if (!SaveImage(image, outputPath))
-                {
-                    std::cout << "Can't write '" << outputPath << "' image!" << std::endl;
-                    return false;
-                }
+                    SYNET_ERROR("Can't write '" << outputPath << "' image!");
+#ifdef TEST_COMPARE_LOG
+                CPL_LOG_SS(Info, "AnnotateRegions ends.");
+#endif
             }
             return true;
         }
@@ -538,142 +584,44 @@ namespace Test
             return ss.str();
         }
 
-        bool Compare(float a, float b, float t) const
-        {
-            float d = ::fabs(a - b);
-            return d <= t || d / std::max(::fabs(a), ::fabs(b)) <= t;
-        }
-
-        bool Compare(const Tensor& f, const Tensor& s, const Shape & i, size_t d, const String & m) const
-        {
-            using Synet::Detail::DebugPrint;
-            float _f = f.CpuData(i)[0], _s = s.CpuData(i)[0];
-            if (!Compare(_f, _s, _options.compareThreshold))
-            {
-                std::cout << m << std::endl << std::fixed;
-                std::cout << "Dst[" << d << "]" << DebugPrint(f.Shape()) << " at ";
-                std::cout << DebugPrint(i) << " : " << _f << " != " << _s << std::endl;
-                return false;
-            }
-            return true;
-        }
-
-        void PrintError(const Difference & d, size_t i, const String& msg, std::ostream & os) const
-        {
-            using Synet::Detail::DebugPrint;
-            const Difference::Statistics& s = d.GetStatistics();
-            const Difference::Specific& e = s.exceed;
-            const Difference::Specific& m = s.max;
-            os << msg << std::endl << std::fixed;
-            os << "Dst[" << i << "]" << DebugPrint(d.GetShape()) << " at ";
-            os << DebugPrint(e.index) << " : diff = " << e.diff << " (" << e.first << " != " << e.second << ")";
-            os << ", num = " << double(e.count) / s.count << "(" << e.count << ")";
-            os << ", avg = " << s.mean << ", std = " << s.sdev << ", abs = " << s.adev;
-            os << ", max " << DebugPrint(m.index) << " diff = " << s.max.diff << " (" << m.first << " != " << m.second << ")" << std::endl;
-        }
-
-        void PrintNeighbours(const Tensor& t, const Shape & m, int n, std::ostream& os)
-        {
-            for (int y = Synet::Max(0, (int)m[2] - n), h = (int)Synet::Min(t.Axis(2), m[2] + n + 1); y < h; y++)
-            {
-                for (int x = Synet::Max(0, (int)m[3] - n), w = (int)Synet::Min(t.Axis(3), m[3] + n + 1); x < w; x++)
-                    os << ExpandLeft(ToString(t.CpuData(Shp(m[0], m[1], y, x))[0], 3), 8) << " ";
-                os << std::endl;
-            }
-            os << std::endl;
-        }
-
-        void PrintMaxErrorNeighbours(const Tensor& f, const Tensor& s, const Difference& d, int n, std::ostream& os)
-        {
-            if (f.Shape() != s.Shape() || f.Count() != 4)
-                return;
-            const Shape& m = d.GetStatistics().max.index;
-            PrintNeighbours(f, m, n, os);
-            PrintNeighbours(s, m, n, os);
-        }
-
         bool CompareResults(const TestData& test, size_t index, size_t thread)
         {
-            using Synet::Detail::DebugPrint;
             const Output& output = test.output[thread];
             String failed = TestFailedMessage(test, index, thread);
-            if (output.first.size() != output.second.size())
-            {
-                std::cout << failed << std::endl;
-                std::cout << "Dst count : " << output.first.size() << " != " << output.second.size() << std::endl;
-                return false;
-            }
-            for (size_t d = 0; d < output.first.size(); ++d)
-            {
-                const Tensor& f = output.first[d];
-                const Tensor& s = output.second[d];
-                if (f.Shape() != s.Shape())
-                {
-                    std::cout << failed << std::endl;
-                    std::cout << "Dst[" << d << "] shape : " << DebugPrint(f.Shape()) << " != " << DebugPrint(s.Shape()) << std::endl;
-                    return false;
-                }
-                Difference difference(f, s);
-                if (difference.Valid())
-                {
-                    if (!difference.Estimate(_options.compareThreshold, _options.compareQuantile))
-                    {
-                        PrintError(difference, d, failed, std::cout);
-                        PrintMaxErrorNeighbours(f, s, difference, 2, std::cout);
-                        return false;
-                    }
-                    continue;
-                }
-                switch (f.Count())
-                {
-                case 1:
-                    for (size_t n = 0; n < f.Axis(0); ++n)
-                        if (!Compare(f, s, Shp(n), d, failed))
-                            return false;
-                    break;
-                case 2:
-                    for (size_t n = 0; n < f.Axis(0); ++n)
-                        for (size_t c = 0; c < f.Axis(1); ++c)
-                            if (!Compare(f, s, Shp(n, c), d, failed))
-                                return false;
-                    break;
-                case 3:
-                    for (size_t n = 0; n < f.Axis(0); ++n)
-                        for (size_t c = 0; c < f.Axis(1); ++c)
-                            for (size_t y = 0; y < f.Axis(2); ++y)
-                                if (!Compare(f, s, Shp(n, c, y), d, failed))
-                                    return false;
-                    break;
-                case 4:
-                    for (size_t n = 0; n < f.Axis(0); ++n)
-                        for (size_t c = 0; c < f.Axis(1); ++c)
-                            for (size_t y = 0; y < f.Axis(2); ++y)
-                                for (size_t x = 0; x < f.Axis(3); ++x)
-                                    if (!Compare(f, s, Shp(n, c, y, x), d, failed))
-                                        return false;
-                    break;
-                default:
-                    std::cout << "Error! Dst has unsupported shape " << Synet::Detail::DebugPrint(f.Shape()) << std::endl;
-                    return false;
-                }
-            }
-            return true;
+            OutputComparer outputComparer(_options, _param(), test.input[0].Shape(), output.first);
+            return outputComparer.Compare(output.first, output.second, failed);
         }
 
         String ProgressString(size_t current, size_t total)
         {
+            const size_t m = 10, n = std::min(m, _threads.size());
             std::stringstream progress;
             progress << "Test progress : " << ToString(100.0 * current / total, 1) << "% ";
             if (_threads.size() > 1)
             {
-                const size_t m = 10;
                 progress << "[ ";
-                for (size_t t = 0, n = std::min(m, _threads.size()); t < n; ++t)
+                for (size_t t = 0; t < n; ++t)
                     progress << ToString(100.0 * _threads[t].current / total, 1) << "% ";
                 if (_threads.size() > m)
                     progress << "... ";
                 progress << "] ";
             }
+#if defined(__linux__) && 0
+            if (_threads.size())
+            {
+                progress << " [ ";
+                for (size_t t = 0; t < n; ++t)
+                    progress << _threads[t].debug << " ";
+                progress << "] ";
+            }
+            progress << CoreFreqInfo();
+            double time = Cpl::Miliseconds(Cpl::TimeCounter());
+            if (time >= _nextProgressUpdate)
+            {
+                progress << std::endl;
+                _nextProgressUpdate = time + 300;
+            }
+#endif
             _progressMessageSizeMax = std::max(_progressMessageSizeMax, progress.str().size());
             return progress.str();
         }
@@ -683,6 +631,9 @@ namespace Test
 #ifdef SYNET_TEST_FIRST_RUN
             if (_options.enable & ENABLE_FIRST)
             {
+#ifdef TEST_COMPARE_LOG
+                CPL_LOG_SS(Info, "SingleThreadRunFirst starts.");
+#endif
                 TestData& test = *_tests[index];
                 Copy(_firsts[0].Predict(test.input), test.output[0].first);
                 if (repeat == 0)
@@ -692,6 +643,9 @@ namespace Test
                     if (!AnnotateRegions(_firsts[0], test.path[0]))
                         return false;
                 }
+#ifdef TEST_COMPARE_LOG
+                CPL_LOG_SS(Info, "SingleThreadRunFirst ends.");
+#endif
             }
 #endif
             return true;
@@ -702,6 +656,9 @@ namespace Test
 #ifdef SYNET_TEST_SECOND_RUN
             if (_options.enable & ENABLE_SECOND)
             {
+#ifdef TEST_COMPARE_LOG
+                CPL_LOG_SS(Info, "SingleThreadRunSecond starts.");
+#endif
                 TestData& test = *_tests[index];
                 Copy(_seconds[0].Predict(test.input), test.output[0].second);
                 if (repeat == 0)
@@ -711,6 +668,9 @@ namespace Test
                     if (!AnnotateRegions(_seconds[0], test.path[0]))
                         return false;
                 }
+#ifdef TEST_COMPARE_LOG
+                CPL_LOG_SS(Info, "SingleThreadRunSecond ends.");
+#endif
             }
 #endif
             return true;
@@ -718,6 +678,9 @@ namespace Test
 
         bool SingleThreadComparison()
         {
+            if (_options.pinThread)
+                PinThread(0);
+            int64_t start = Cpl::TimeCounter();
             size_t repeats = std::max<size_t>(1, _options.repeatNumber), total = _tests.size() * repeats, current = 0;
             for (size_t i = 0; i < _tests.size(); ++i)
             {
@@ -750,11 +713,14 @@ namespace Test
             if (_options.enable & ENABLE_SECOND)
                 _options.secondMemoryUsage = _seconds[0].MemoryUsage();
 #endif
-            return PrintFinishMessage();
+            return PrintFinishMessage(start);
         }
 
         bool MultiThreadsComparison()
         {
+            if (_options.pinThread)
+                PinThread(SimdCpuInfo(SimdCpuInfoThreads) - 1);
+            int64_t start = Cpl::TimeCounter();
             size_t current = 0, total = _options.repeatNumber ?
                 _tests.size() * _options.repeatNumber : size_t(_options.executionTime * 1000);
             _threads.resize(_options.TestThreads());
@@ -808,7 +774,7 @@ namespace Test
                     _options.secondMemoryUsage += _seconds[t].MemoryUsage();
 #endif            
             }
-            return PrintFinishMessage();
+            return PrintFinishMessage(start);
         }
 
         void MultuThreadRunFirst(size_t thread, size_t total, size_t& current, size_t networks, size_t second)
@@ -817,7 +783,10 @@ namespace Test
             if (_options.enable & ENABLE_FIRST)
             {
                 if (thread && !InitNetwork(_options.firstModel, _options.firstWeight, _firsts[thread]))
+                {
+                    CPL_LOG_SS(Error, "Can't initialize network " << Options::FullName(_firsts[thread].Name(), _firsts[thread].Type()) << " for " << thread << " thread!");
                     ::exit(0);
+                }
                 _threads[thread].first = true;
                 std::mutex mutex;
                 std::unique_lock<std::mutex> lock(mutex);
@@ -833,6 +802,7 @@ namespace Test
                         {
                             Copy(_firsts[thread].Predict(test.input), test.output[thread].first);
                             _threads[thread].current = current / networks;
+                            //_threads[thread].debug = CoreFreqInfo();
                         }
                     }
                 }
@@ -849,6 +819,7 @@ namespace Test
                             duration = Cpl::Time() - start;
                             _threads[thread].current = (total * (networks - 1) * second +
                                 std::min(total, size_t(duration * 1000))) / networks;
+                            //_threads[thread].debug = CoreFreqInfo();
                         }
                         canstop = true;
                     }
@@ -864,7 +835,10 @@ namespace Test
             if (_options.enable & ENABLE_SECOND)
             {
                 if (thread && !InitNetwork(_options.secondModel, _options.secondWeight, _seconds[thread]))
+                {
+                    CPL_LOG_SS(Error, "Can't initialize network " << Options::FullName(_seconds[thread].Name(), _seconds[thread].Type()) << " for " << thread << " thread!");
                     ::exit(0);
+                }
                 _threads[thread].second = true;
                 std::mutex mutex;
                 std::unique_lock<std::mutex> lock(mutex);
@@ -880,6 +854,7 @@ namespace Test
                         {
                             Copy(_seconds[thread].Predict(test.input), test.output[thread].second);
                             _threads[thread].current = current / networks;
+                            //_threads[thread].debug = CoreFreqInfo();
                         }
                     }
                 }
@@ -896,6 +871,7 @@ namespace Test
                             duration = Cpl::Time() - start;
                             _threads[thread].current = (total * (networks - 1) * second +
                                 std::min(total, size_t(duration * 1000))) / networks;
+                            //_threads[thread].debug = CoreFreqInfo();
                         }
                         canstop = true;
                     }
@@ -908,6 +884,8 @@ namespace Test
         static void TestThread(Comparer* comparer, size_t thread, size_t total)
         {
             const Options& options = comparer->_options;
+            if(options.pinThread)
+                PinThread(thread);
             size_t current = 0, networks = 1;
 #if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_TEST_SECOND_RUN)
             if (options.enable == (ENABLE_FIRST | ENABLE_SECOND))
@@ -936,6 +914,50 @@ namespace Test
             dst.resize(src.size());
             for (size_t i = 0; i < src.size(); ++i)
                 dst[i].Clone(src[i]);
+        }
+
+        static bool PinThread(size_t core)
+        {
+#if defined(__linux__)
+            pthread_t this_thread = pthread_self();
+            cpu_set_t cpuset;
+            CPU_ZERO(&cpuset);
+            CPU_SET(core, &cpuset);
+            if (pthread_setaffinity_np(this_thread, sizeof(cpu_set_t), &cpuset)) 
+            {
+                CPL_LOG_SS(Warning, "Can't set affinity " << core << " to " << this_thread << " thread : " << std::strerror(errno) << " !");
+                return false;
+            }
+#if 0
+            int policy = 0;
+            sched_param params;
+            if (pthread_getschedparam(this_thread, &policy, &params))
+            {
+                CPL_LOG_SS(Warning, "Can't get thread parameters of " << this_thread << " thread : " << std::strerror(errno) << " !");
+                return false;
+            }
+
+            CPL_LOG_SS(Info, "Core : " << core << " Policy: " << policy  << " Priority: " << params.sched_priority << " max: " << sched_get_priority_max(policy) << " min: " << sched_get_priority_min(policy));
+
+            if (pthread_setschedparam(this_thread, policy, &params))
+            {
+                CPL_LOG_SS(Warning, "Can't set thread parameters of " << this_thread << " thread : " << std::strerror(errno) << " !");
+                return false;
+            }
+
+            CPL_LOG_SS(Info, "Core : " << core << " Policy: " << policy << " Priority: " << params.sched_priority);
+#endif
+#endif
+            return true;
+        }
+
+        static String CoreFreqInfo()
+        {
+            std::stringstream info;
+#if defined(__linux__)
+            info << " " << sched_getcpu() << ": " << ToString(double(SimdCpuInfo(SimdCpuInfoCurrentFrequency)) / 1000000000.0, 1) << " GHz.";
+#endif
+            return info.str();
         }
     };
 }

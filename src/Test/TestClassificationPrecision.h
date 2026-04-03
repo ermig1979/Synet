@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2021 Yermalayeu Ihar.
+* Copyright (c) 2018-2024 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -66,7 +66,7 @@ namespace Test
 			}
 			else
 			{
-				std::cout << "Can't open list file '" << path << "' !" << std::endl;
+				CPL_LOG_SS(Error, "Can't open list file '" << path << "' !");
 				if (!_options.generateIndex)
 					return false;
 			}
@@ -78,10 +78,7 @@ namespace Test
 			String path = _options.testList;
 			std::ofstream ofs(path);
 			if (!ofs.is_open())
-			{
-				std::cout << "Can't open file '" << path << "' !" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Can't open file '" << path << "' !");
 			for (size_t i = 0; i < _tests.size(); ++i)
 				ofs << _tests[i].name << std::endl;
 			return true;
@@ -102,18 +99,12 @@ namespace Test
 			String path = MakePath(_options.imageDirectory, _param().index().name());
 			std::ifstream ifs(path);
 			if (!ifs.is_open())
-			{
-				std::cout << "Can't open file '" << path << "' !" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Can't open file '" << path << "' !");
 			_tests.clear();
 			size_t size;
 			ifs >> size;
 			if (size == 0)
-			{
-				std::cout << "Wrong size: " << size << " !" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Wrong size: " << size << " !");
 			while (!ifs.eof())
 			{
 				Test test;
@@ -122,10 +113,7 @@ namespace Test
 					break;
 				test.path = MakePath(_options.imageDirectory, test.name);
 				if (!FileExists(test.path))
-				{
-					std::cout << "Image '" << test.path << "' is not exists!" << std::endl;
-					return false;
-				}
+					SYNET_ERROR("Image '" << test.path << "' is not exists!");
 				test.control.resize(size);
 				for (size_t i = 0; i < size; ++i)
 					ifs >> test.control[i];
@@ -134,10 +122,7 @@ namespace Test
 			}
 			_options.testNumber = _tests.size();
 			if (_options.testNumber == 0)
-			{
-				std::cout << "Test list is empty!" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Test list is empty!");
 			return true;
 		}
 
@@ -148,10 +133,7 @@ namespace Test
 			String path = MakePath(_options.imageDirectory, _param().index().name());
 			std::ofstream ofs(path);
 			if (!ofs.is_open())
-			{
-				std::cout << "Can't open file '" << path << "' !" << std::endl;
-				return false;
-			}
+				SYNET_ERROR("Can't open file '" << path << "' !");
 			for (size_t i = 0; i < _tests.size(); ++i)
 			{
 				const Test& t = _tests[i];
@@ -194,7 +176,7 @@ namespace Test
 			for(int i = 0; i < _options.repeatNumber; ++i, progress += batch)
 				t.output = t.network->Predict(t.input);
 			size_t size = t.output[0].Size(1);
-			const float* data = t.output[0].CpuData();
+			const float* data = t.output[0].Data<float>();
 			for (size_t b = 0; b < batch; ++b, data += size)
 			{
 				Test& test = _tests[current + b];

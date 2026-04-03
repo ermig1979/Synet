@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2025 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -37,7 +37,13 @@
 
 #define SYNET_INT8_SAFE_ZERO 1
 
-#define SYNET_BF16_ROUND_TEST
+//#define SYNET_BF16_ROUND_TEST
+
+#define SYNET_TENSOR_API_OLD
+
+#ifdef _MSC_VER
+#define _USE_MATH_DEFINES
+#endif
 
 #include <stddef.h>
 #include <assert.h>
@@ -82,10 +88,6 @@
 #include "Simd/SimdLib.hpp"
 #endif
 
-#if !defined(SYNET_VERSION)
-#include "Version.h"
-#endif
-
 #if defined(_MSC_VER)
 #define SYNET_INLINE __forceinline
 #elif defined(__GNUC__)
@@ -94,31 +96,30 @@
 #error This platform is unsupported!
 #endif
 
-#ifndef SYNET_PERF_FUNC
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#define SYNET_DEPRECATED SIMD_DEPRECATED
+#define SYNET_DEPRECATED_EX(message) SIMD_DEPRECATED_EX(message)
+#else
+#define SYNET_DEPRECATED
+#define SYNET_DEPRECATED_EX(message)
+#endif
+
+#if defined(SYNET_PERFORMANCE_STATISTIC) && !defined(SYNET_PERF_FUNC)
+#include "Cpl/Performance.h"
+#define SYNET_PERF_FUNC() CPL_PERF_FUNC()
+#define SYNET_PERF_BLOCK(name) CPL_PERF_BEG(name)
+#define SYNET_PERF_BLOCK_END(name) CPL_PERF_END(name)
+#define SYNET_PERF_VEC_DECL(name) std::vector<Cpl::PerformanceMeasurer *> name;
+#define SYNET_PERF_VEC_RESZ(name, size, val) name.resize(size, val);
+#define SYNET_PERF_INIT(name, desc, flop) name = Cpl::PerformanceStorage::Global().Get(desc, flop);
+#define SYNET_PERF_TEST(name) Cpl::PerformanceHolder CPL_CAT(__pmh,__LINE__)(name);
+#elif !defined(SYNET_PERF_FUNC)
 #define SYNET_PERF_FUNC()
-#endif
-
-#ifndef SYNET_PERF_BLOCK
 #define SYNET_PERF_BLOCK(name)
-#endif
-
-#ifndef SYNET_PERF_BLOCK_END
 #define SYNET_PERF_BLOCK_END(name)
-#endif
-
-#ifndef SYNET_PERF_DECL
-#define SYNET_PERF_DECL(name)
-#endif
-
-#ifndef SYNET_PERF_SET
-#define SYNET_PERF_SET(name, value)
-#endif
-
-#ifndef SYNET_PERF_INIT
+#define SYNET_PERF_VEC_DECL(name)
+#define SYNET_PERF_VEC_RESZ(name, size, val)
 #define SYNET_PERF_INIT(name, desc, flop)
-#endif
-
-#ifndef SYNET_PERF_TEST
 #define SYNET_PERF_TEST(name)
 #endif
 
@@ -143,65 +144,19 @@ namespace Synet
     typedef std::vector<Shape> Shapes;
     typedef std::vector<size_t> Index;
     typedef std::vector<uint8_t> Bytes;
+    typedef std::vector<uint8_t*> BytePtrs;
+    typedef std::vector<const uint8_t*> ByteConstPtrs;
     typedef std::vector<int> Ints;
     typedef std::vector<int64_t> Longs;
     typedef std::vector<uint64_t> ULongs;
     typedef std::vector<float> Floats;
+    typedef std::vector<float*> FloatPtrs;
 #ifdef SYNET_SIMD_LIBRARY_ENABLE
     typedef Simd::View<Simd::Allocator> View;
     typedef std::vector<View> Views;
 #endif
 
-    SYNET_INLINE String Version()
-    {
-        return SYNET_VERSION;
-    }
-
-    SYNET_INLINE Shape Shp()
-    {
-        return Shape();
-    }
-
-    SYNET_INLINE Shape Shp(size_t axis0)
-    {
-        return Shape({ axis0 });
-    }
-
-    SYNET_INLINE Shape Shp(size_t axis0, size_t axis1)
-    {
-        return Shape({ axis0, axis1 });
-    }
-
-    SYNET_INLINE Shape Shp(size_t axis0, size_t axis1, size_t axis2)
-    {
-        return Shape({ axis0, axis1, axis2 });
-    }
-
-    SYNET_INLINE Shape Shp(size_t axis0, size_t axis1, size_t axis2, size_t axis3)
-    {
-        return Shape({ axis0, axis1, axis2, axis3 });
-    }
-
-    SYNET_INLINE Shape Shp(size_t axis0, size_t axis1, size_t axis2, size_t axis3, size_t axis4)
-    {
-        return Shape({ axis0, axis1, axis2, axis3, axis4 });
-    }
-
-    template<class T> SYNET_INLINE Shape Shp(const std::vector<T> & vec)
-    {
-        Shape shape(vec.size());
-        for (size_t i = 0; i < vec.size(); ++i)
-            shape[i] = (size_t)vec[i];
-        return shape;
-    }
-
-    template<class T> SYNET_INLINE Shape Shp(const T * data, size_t size)
-    {
-        Shape shape(size);
-        for (size_t i = 0; i < size; ++i)
-            shape[i] = (size_t)data[i];
-        return shape;
-    }
+    String Version();
 
     inline size_t GetThreadNumber()
     {
@@ -235,6 +190,13 @@ namespace Synet
 #endif
     }
 
+    inline void SetAmxFull()
+    {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        ::SimdSetAmxFull();
+#endif
+    }
+
     inline void PrintMemoryUsage()
     {
 #if defined(__linux__)
@@ -265,4 +227,17 @@ namespace Synet
         DebugPrintInt8Buffers,
         DebugPrintLayerInternal,
     };
+
+    //---------------------------------------------------------------------------------------------
+
+    struct Deletable
+    {
+        virtual ~Deletable() {}
+    };
 }
+
+#define SYNET_ERROR(message) \
+    { \
+       CPL_LOG_SS(Error, message); \
+       return 0; \
+    }

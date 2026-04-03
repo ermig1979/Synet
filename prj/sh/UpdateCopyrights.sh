@@ -22,3 +22,5 @@ cd ~-
 UpdateCopyrights ../../src/Synet
 UpdateCopyrights ../../src/Test
 UpdateCopyrights ../../src/Use
+UpdateCopyrights ../../py/Scripts
+UpdateCopyrights ../../py/SynetPy

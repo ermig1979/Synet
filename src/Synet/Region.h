@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2024 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@ namespace Synet
     template <class T> struct Region
     {
         T x, y, w, h, prob;
-        size_t id;
+        int id;
 
         Region() : x(0), y(0), w(0), h(0), prob(0), id(0){}
     };
@@ -89,5 +89,13 @@ namespace Synet
                 dst.push_back(src[s]);
         }
         src.swap(dst);
+    }
+
+    template<class T> SYNET_INLINE String ToStr(const Region<T> & r)
+    {
+        std::stringstream ss;
+        ss << " { " << r.id << " " << r.prob << " ";
+        ss << r.x << " " << r.y << " " << r.w << " " << r.h << " }";
+       return ss.str();
     }
 }

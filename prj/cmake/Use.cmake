@@ -1,0 +1,10 @@
+if((SYNET_TEST STREQUAL "use_samples") OR (SYNET_TEST STREQUAL "all"))
+	file(GLOB USE_FD_SRC ${ROOT_DIR}/src/Use/UseFaceDetection.cpp)
+	set_source_files_properties(${USE_FD_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
+	add_executable(use_face_detection ${USE_FD_SRC})
+	target_compile_definitions(use_face_detection PUBLIC ${SYNET_DEFINITIONS})
+	target_link_libraries(use_face_detection ${SIMD_LIB} Synet CvtCore -ldl -lpthread)
+	file(GLOB USE_FD_DATA  ${ROOT_DIR}/data/use_samples/face_detection/*.*)
+	file(COPY ${USE_FD_DATA} DESTINATION ${CMAKE_BINARY_DIR})
+endif()
+

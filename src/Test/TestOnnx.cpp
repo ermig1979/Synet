@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2025 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,11 +22,14 @@
 * SOFTWARE.
 */
 
+#define FIRST_MODEL_DEFAULT "other.onnx"
+#define FIRST_WEIGHT_DEFAULT "other.onnx"
+
 #include "TestCompare.h"
 #include "TestReport.h"
 
 #if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_ONNXRUNTIME_ENABLE)
-#include "Synet/Converters/OnnxRuntime.h"
+#include "Cvt/OnnxRuntime/OnnxRuntime.h"
 #include "TestOnnxRuntime.h"
 
 namespace Test
@@ -35,16 +38,12 @@ namespace Test
 
     bool ConvertOnnxToSynet(const Test::Options &options)
     {
-        SYNET_PERF_FUNC();
         Test::TestParamHolder param;
         if (FileExists(options.testParam) && !param.Load(options.testParam))
-        {
-            std::cout << "Can't load file '" << options.testParam << "' !" << std::endl;
-            return false;
-        }
-        param().optimizer().bf16Enable() = options.bf16;
-        return Synet::ConvertOnnxToSynet(options.firstModel, options.firstWeight,
-            options.tensorFormat == 1, options.secondModel, options.secondWeight, param().onnx(), param().optimizer());
+            SYNET_ERROR("Can't load file '" << options.testParam << "' !");
+        param().optimizer().bf16().enable() = options.bf16;
+        param().optimizer().saveUnoptimized() = options.saveUnoptimized;
+        return Synet::ConvertOnnxToSynet(options.firstWeight, options.tensorFormat == 1, options.secondModel, options.secondWeight, param().onnx(), param().optimizer());
     }
 }
 #else
@@ -60,13 +59,19 @@ int main(int argc, char* argv[])
 {
     Test::Options options(argc, argv);
 
+    Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
+    Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
+
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
     if (options.mode == "convert")
     {
-        SYNET_PERF_FUNC();
-        std::cout << "Convert network from Onnx to Synet : ";
+        int64_t start = Cpl::TimeCounter();
+        std::cout << "Convert network from Onnx to Synet :" << std::flush;
         options.result = Test::ConvertOnnxToSynet(options);
-        std::cout << (options.result ? "OK." : " Conversion finished with errors!") << std::endl;
+        if (options.result)
+            std::cout << " finished successfully in " << Test::ExecTimeStr(start) << "." << std::endl;
+        else
+            std::cout << " Conversion finished with errors!" << std::endl;
     }
     else 
 #endif
@@ -76,7 +81,9 @@ int main(int argc, char* argv[])
         options.result = comparer.Run();
     }
     else
-        std::cout << "Unknown mode : " << options.mode << std::endl;
+    {
+        CPL_LOG_SS(Error, "Unknown mode : " << options.mode);
+    }
 
     return options.result ? 0 : 1;
 }

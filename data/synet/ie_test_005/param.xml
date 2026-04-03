@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test>
+	<lower>0</lower>
+	<upper>255</upper>
+	<input>
+		<item>
+			<name>0</name>
+			<dims>1 3 48 48</dims>
+		</item>
+	</input>
+</test>
+

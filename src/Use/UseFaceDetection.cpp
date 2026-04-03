@@ -1,7 +1,7 @@
 /*
 * Use samples for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2019 Yermalayeu Ihar.
+* Copyright (c) 2018-2024 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -25,10 +25,10 @@
 #define SYNET_SIMD_LIBRARY_ENABLE
 #endif
 #include "Synet/Network.h"
-#include "Synet/Converters/InferenceEngine.h"
+#include "Cvt/InferenceEngine/InferenceEngine.h"
 #include "Simd/SimdDrawing.hpp"
 
-typedef Synet::Network<float> Net;
+typedef Synet::Network Net;
 typedef Synet::View View;
 typedef Synet::Shape Shape;
 typedef Synet::Region<float> Region;

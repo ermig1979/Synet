@@ -1,0 +1,60 @@
+/*
+* Synet Framework (http://github.com/ermig1979/Synet).
+*
+* Copyright (c) 2018-2025 Yermalayeu Ihar.
+*
+* Permission is hereby granted, free of charge, to any person obtaining a copy
+* of this software and associated documentation files (the "Software"), to deal
+* in the Software without restriction, including without limitation the rights
+* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the Software is
+* furnished to do so, subject to the following conditions:
+*
+* The above copyright notice and this permission notice shall be included in
+* all copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+* SOFTWARE.
+*/
+
+#pragma once
+
+#include "Synet/Layer.h"
+
+#include "Synet/Utils/Gather.h"
+
+namespace Synet
+{
+    class GatherLayer : public Layer
+    {
+    public:
+        GatherLayer(const LayerParam& param, Context* context);
+
+        virtual LowPrecisionType LowPrecision(TensorType type) const;
+
+        virtual bool CanIgnoreInSubGraph(size_t index, bool src) const;
+
+        virtual size_t MemoryUsage() const;
+
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+
+        typedef void (*GatherPtr)(const uint8_t* src8, size_t srcOuter, size_t srcCount, size_t srcInner, const uint8_t* idx8, size_t idxOuter, size_t idxCount, uint8_t* dst8);
+        typedef void (*GatherElementsPtr)(const uint8_t* src8, size_t srcOuter, size_t srcCount, size_t srcInner, const uint8_t* idx8, size_t idxCount, uint8_t* dst8);
+
+    protected:
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
+
+    private:
+        int _version;
+        TensorType _srcType, _idxType;
+        size_t _axis, _srcOuter, _srcCount, _srcInner, _idxOuter, _idxCount, _idxInner;
+        GatherPtr _gather;
+        GatherElementsPtr _gatherElements;
+        GatherElements _gatherElementsSimd;
+    };
+}

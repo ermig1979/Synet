@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2024 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -24,80 +24,10 @@
 
 #pragma once
 
-#include "TestCommon.h"
-#include "Synet/Params.h"
-#include "Synet/Tensor.h"
-#include "Synet/Converters/Optimizer.h"
-#include "Synet/Converters/OnnxRuntime.h"
-#include "Synet/Decoders/Anchor.h"
-#include "Synet/Decoders/Ultraface.h"
-#include "Synet/Decoders/YoloV5.h"
+#include "TestParams.h"
 
 namespace Test
 {
-    using Synet::Shp;
-
-    typedef Synet::Shape Shape;
-    typedef Synet::Shapes Shapes;
-    typedef Synet::Floats Floats;
-
-    struct SizeParam
-    {
-        CPL_PARAM_VALUE(String, name, String());
-        CPL_PARAM_VALUE(int32_t, size, 0);
-    };
-
-    struct ShapeParam
-    {
-        CPL_PARAM_VALUE(String, name, String());
-        CPL_PARAM_VECTOR(SizeParam, shape);
-        CPL_PARAM_VALUE(int32_t, size, 0);
-    };
-
-    struct DetectionParam
-    {
-        CPL_PARAM_VALUE(float, confidence, 0.5f);
-        CPL_PARAM_VALUE(float, overlap, 0.5f);
-        CPL_PARAM_VALUE(String, decoder, String());
-        CPL_PARAM_STRUCT_MOD(Synet::AnchorParam, epsilon, Synet::GetEpsilonParam());
-        CPL_PARAM_STRUCT_MOD(Synet::AnchorParam, retina, Synet::GetRetinaParam());
-        CPL_PARAM_STRUCT(Synet::UltrafaceParam, ultraface);
-        CPL_PARAM_STRUCT(Synet::YoloV5Param, yoloV5);
-    };
-
-    struct IdParam
-    {
-        CPL_PARAM_VALUE(String, name, "");
-        CPL_PARAM_VALUE(int, id, 0);
-    };
-
-    struct IndexParam
-    {
-        CPL_PARAM_VALUE(String, type, "");
-        CPL_PARAM_VALUE(String, name, "index.txt");
-        CPL_PARAM_VECTOR(IdParam, ids);
-    };
-
-    struct TestParam
-    {
-        CPL_PARAM_VALUE(String, inputType, "images");
-        CPL_PARAM_VALUE(String, images, String());
-        CPL_PARAM_VALUE(Floats, lower, Floats(1, 0.0f));
-        CPL_PARAM_VALUE(Floats, upper, Floats(1, 1.0f));
-        CPL_PARAM_VALUE(String, model, String());
-        CPL_PARAM_VALUE(String, order, String());
-        CPL_PARAM_VECTOR(ShapeParam, input);
-        CPL_PARAM_VECTOR(ShapeParam, output);
-        CPL_PARAM_STRUCT(DetectionParam, detection);
-        CPL_PARAM_STRUCT(IndexParam, index);
-        CPL_PARAM_STRUCT(Synet::OptimizerParam, optimizer);
-        CPL_PARAM_STRUCT(Synet::OnnxParam, onnx);
-    };
-
-    CPL_PARAM_HOLDER(TestParamHolder, TestParam, test);
-
-    //-------------------------------------------------------------------------
-
     typedef Synet::Region<float> Region;
     typedef std::vector<Region> Regions;
     typedef Synet::Floats Floats;
@@ -116,8 +46,9 @@ namespace Test
             int performanceLog;
             int debugPrint;
             float regionThreshold;
+            String ortProvider;
             bool bf16Test;
-            Options(String od, size_t wt, bool cs, int bs, int pl, int dp, float rt, bool bf)
+            Options(String od, size_t wt, bool cs, int bs, int pl, int dp, float rt, bool bf, String op)
                 : outputDirectory(od)
                 , workThreads(wt)
                 , consoleSilence(cs)
@@ -126,6 +57,7 @@ namespace Test
                 , debugPrint(dp)
                 , regionThreshold(rt)
                 , bf16Test(bf)
+                , ortProvider(op)
             {}
         };
 
@@ -135,6 +67,7 @@ namespace Test
         virtual String Type() const { return String(); }
         virtual size_t SrcCount() const { return 0; }
         virtual Shape SrcShape(size_t index) const { return Shape(); }
+        virtual Synet::TensorType SrcType(size_t index) const { return Synet::TensorType32f; }
         virtual size_t SrcSize(size_t index) const { return 0; }
         virtual bool Init(const String & model, const String & weight, const Options & options, const TestParam & param) { return false; }
         virtual void Free() { _output.clear(); }
@@ -142,10 +75,12 @@ namespace Test
         virtual void DebugPrint(const Tensors& src, std::ostream & os, int flag, int first, int last, int precision) { }
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const { return Regions(); }
         virtual size_t MemoryUsage() const { return 0; }
+        virtual int PerfLogMask() const { return -1; }
 
     protected:
         Tensors _output;
         float _regionThreshold;
+        String _decoderName;
     };
     typedef std::shared_ptr<Network> NetworkPtr;
     typedef std::vector<NetworkPtr> NetworkPtrs;

@@ -1,0 +1,281 @@
+/*
+* Synet Framework (http://github.com/ermig1979/Synet).
+*
+* Copyright (c) 2018-2025 Yermalayeu Ihar.
+*
+* Permission is hereby granted, free of charge, to any person obtaining a copy
+* of this software and associated documentation files (the "Software"), to deal
+* in the Software without restriction, including without limitation the rights
+* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the Software is
+* furnished to do so, subject to the following conditions:
+*
+* The above copyright notice and this permission notice shall be included in
+* all copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+* SOFTWARE.
+*/
+
+#include "Synet/Layers/Activation/ActivationLayers.h"
+#include "Synet/Layers/Activation/PreluLayer.h"
+
+#include "Synet/Layers/Const/ConstLayer.h"
+#include "Synet/Layers/Const/ConstantOfShapeLayer.h"
+
+#include "Synet/Layers/Convolution/Convolution32fLayer.h"
+#include "Synet/Layers/Convolution/Convolution16bLayer.h"
+#include "Synet/Layers/Convolution/Convolution8iLayer.h"
+
+#include "Synet/Layers/Deconvolution/Deconvolution32fLayer.h"
+#include "Synet/Layers/Deconvolution/Deconvolution16bLayer.h"
+
+#include "Synet/Layers/Detection/CtcGreedyDecoderLayer.h"
+#include "Synet/Layers/Detection/DetectionOutputLayer.h"
+#include "Synet/Layers/Detection/PriorBoxLayer.h"
+#include "Synet/Layers/Detection/PriorBoxClusteredLayer.h"
+#include "Synet/Layers/Detection/YoloLayer.h"
+#include "Synet/Layers/Detection/YoloV7Layer.h"
+
+#include "Synet/Layers/InnerProduct/InnerProduct32fLayer.h"
+#include "Synet/Layers/InnerProduct/InnerProduct16bLayer.h"
+#include "Synet/Layers/InnerProduct/InnerProduct8iLayer.h"
+
+#include "Synet/Layers/Legacy/BroadcastLayer.h"
+#include "Synet/Layers/Legacy/FusedLayer.h"
+#include "Synet/Layers/Legacy/LrnLayer.h"
+#include "Synet/Layers/Legacy/RegionLayer.h"
+#include "Synet/Layers/Legacy/ReorgLayer.h"
+#include "Synet/Layers/Legacy/SwitchLayer.h"
+#include "Synet/Layers/Legacy/UpsampleLayer.h"
+
+#include "Synet/Layers/Math/AddLayer.h"
+#include "Synet/Layers/Math/BiasLayer.h"
+#include "Synet/Layers/Math/BinaryOperationLayer.h"
+#include "Synet/Layers/Math/CastLayer.h"
+#include "Synet/Layers/Math/EltwiseLayer.h"
+#include "Synet/Layers/Math/MulLayer.h"
+#include "Synet/Layers/Math/PowerLayer.h"
+#include "Synet/Layers/Math/ScaleLayer.h"
+#include "Synet/Layers/Math/UnaryOperationLayer.h"
+
+#include "Synet/Layers/MergedConvolution/MergedConvolution32fLayer.h"
+#include "Synet/Layers/MergedConvolution/MergedConvolution16bLayer.h"
+#include "Synet/Layers/MergedConvolution/MergedConvolution8iLayer.h"
+
+#include "Synet/Layers/Normalize/NormalizeLayer.h"
+#include "Synet/Layers/Normalize/SqueezeExcitationLayer.h"
+
+#include "Synet/Layers/Quantized/DequantizeLinearLayer.h"
+#include "Synet/Layers/Quantized/QuantizedAddLayer.h"
+#include "Synet/Layers/Quantized/QuantizedConcatLayer.h"
+#include "Synet/Layers/Quantized/QuantizedConvolutionLayer.h"
+#include "Synet/Layers/Quantized/QuantizedInnerProductLayer.h"
+#include "Synet/Layers/Quantized/QuantizedMergedConvolutionLayer.h"
+#include "Synet/Layers/Quantized/QuantizedPoolingLayer.h"
+#include "Synet/Layers/Quantized/QuantizedPreluLayer.h"
+#include "Synet/Layers/Quantized/QuantizedScaleLayer.h"
+#include "Synet/Layers/Quantized/QuantizedShuffleLayer.h"
+#include "Synet/Layers/Quantized/QuantizeLinearLayer.h"
+
+#include "Synet/Layers/Recurrent/LstmLayer.h"
+#include "Synet/Layers/Recurrent/ReverseSequenceLayer.h"
+#include "Synet/Layers/Recurrent/RnnGruBdLayer.h"
+#include "Synet/Layers/Recurrent/TensorIteratorLayer.h"
+
+#include "Synet/Layers/Reorder/ConcatLayer.h"
+#include "Synet/Layers/Reorder/PermuteLayer.h"
+#include "Synet/Layers/Reorder/ShuffleLayer.h"
+#include "Synet/Layers/Reorder/SpaceToDepthLayer.h"
+#include "Synet/Layers/Reorder/UnpackLayer.h"
+
+#include "Synet/Layers/Reshape/ExpandDimsLayer.h"
+#include "Synet/Layers/Reshape/FlattenLayer.h"
+#include "Synet/Layers/Reshape/MetaLayer.h"
+#include "Synet/Layers/Reshape/ReshapeLayer.h"
+#include "Synet/Layers/Reshape/SqueezeLayer.h"
+
+#include "Synet/Layers/Resize/InterpLayer.h"
+#include "Synet/Layers/Resize/PadLayer.h"
+#include "Synet/Layers/Resize/PoolingLayer.h"
+#include "Synet/Layers/Resize/TileLayer.h"
+#include "Synet/Layers/Resize/TiledScale2DLayer.h"
+
+#include "Synet/Layers/Select/GatherLayer.h"
+#include "Synet/Layers/Select/SliceLayer.h"
+#include "Synet/Layers/Select/StridedSliceLayer.h"
+#include "Synet/Layers/Select/TopKLayer.h"
+#include "Synet/Layers/Select/WhereLayer.h"
+
+#include "Synet/Layers/System/InputLayer.h"
+#include "Synet/Layers/System/StubLayer.h"
+
+#include "Synet/Layers/ArgMaxLayer.h"
+#include "Synet/Layers/CompareLayer.h"
+#include "Synet/Layers/GridSampleLayer.h"
+#include "Synet/Layers/NonZeroLayer.h"
+#include "Synet/Layers/ReductionLayer.h"
+#include "Synet/Layers/ScaledDotProductAttentionLayer.h"
+#include "Synet/Layers/ScatterNdLayer.h"
+#include "Synet/Layers/SoftmaxLayer.h"
+
+#include "Synet/Fabric.h"
+
+namespace Synet
+{
+    SYNET_INLINE bool Use8i(const MergedConvolutionParam& param)
+    {
+        if (param.conv().size() == 3)
+            return param.conv()[0].quantizationLevel() == TensorType8i && param.conv()[2].quantizationLevel() == TensorType8i;
+        else
+            return param.conv()[0].quantizationLevel() == TensorType8i || param.conv()[1].quantizationLevel() == TensorType8i;
+    }
+
+    SYNET_INLINE bool IsAdd(const LayerParam& layer)
+    {
+        if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum &&
+            (layer.eltwise().coefficients().empty() || layer.eltwise().coefficients() == Floats({ 1.0f, 1.0f })) && layer.src().size() == 2)
+            return true;
+        if (layer.type() == LayerTypeAdd)
+            return true;
+        return false;
+    }
+
+    SYNET_INLINE bool IsMul(const LayerParam& layer)
+    {
+        if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeProduct && layer.src().size() == 2)
+            return true;
+        if (layer.type() == LayerTypeMul)
+            return true;
+        return false;
+    }
+
+    Layer* Fabric::Create(const LayerParam & param, Context* context, QuantizationMethod method)
+    {
+        switch (param.type())
+        {
+        case LayerTypeAdd: return new AddLayer(param, context, method);
+        case LayerTypeArgMax: return new ArgMaxLayer(param, context);
+        case LayerTypeBias: return new BiasLayer(param, context);
+        case LayerTypeBinaryOperation: return new BinaryOperationLayer(param, context);
+        case LayerTypeBroadcast: return new BroadcastLayer(param, context);
+        case LayerTypeCast: return new CastLayer(param, context);
+        case LayerTypeCompare: return new CompareLayer(param, context);
+        case LayerTypeConcat: return new ConcatLayer(param, context);
+        case LayerTypeConst: return new ConstLayer(param, context);
+        case LayerTypeConstantOfShape: return new ConstantOfShapeLayer(param, context);
+        case LayerTypeConvolution:
+            if (param.convolution().quantizationLevel() == TensorType8i)
+                return new Convolution8iLayer(param, context, method);
+            else if (context->options.BFloat16Enable() && (param.lowPrecision().bf16Type() == LowPrecisionTypeActive || param.lowPrecision().bf16Type() == LowPrecisionTypeHybrid))
+                return new Convolution16bLayer(param, context);
+            else
+                return new Convolution32fLayer(param, context);
+        case LayerTypeCtcGreedyDecoder: return new CtcGreedyDecoderLayer(param, context);
+        case LayerTypeDeconvolution: 
+            if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
+                return new Deconvolution16bLayer(param, context);
+            else
+                return new Deconvolution32fLayer(param, context);
+        case LayerTypeDequantizeLinear: return new DequantizeLinearLayer(param, context);
+        case LayerTypeDetectionOutput: return new DetectionOutputLayer(param, context);
+        case LayerTypeEltwise: 
+            if(IsAdd(param))
+                return new AddLayer(param, context, method);
+            else if (IsMul(param))
+                return new MulLayer(param, context);
+            else
+                return new EltwiseLayer(param, context);
+        case LayerTypeElu: return new EluLayer(param, context);
+        case LayerTypeExpandDims: return new ExpandDimsLayer(param, context);
+        case LayerTypeFlatten: return new FlattenLayer(param, context);
+        case LayerTypeFused: return new FusedLayer(param, context);
+        case LayerTypeGather: return new GatherLayer(param, context);
+        case LayerTypeGelu: return new GeluLayer(param, context);
+        case LayerTypeGridSample: return new GridSampleLayer(param, context);
+        case LayerTypeHswish: return new HswishLayer(param, context);
+        case LayerTypeHardSigmoid: return new HardSigmoidLayer(param, context);
+        case LayerTypeInnerProduct: 
+            if (param.innerProduct().quantizationLevel() == TensorType8i)
+                return new InnerProduct8iLayer(param, context, method);
+            else if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
+                return new InnerProduct16bLayer(param, context);
+            else
+                return new InnerProduct32fLayer(param, context);
+        case LayerTypeInput: return new InputLayer(param, context);
+        case LayerTypeInterp: return new InterpLayer(param, context);
+        case LayerTypeLrn: return new LrnLayer(param, context);
+        case LayerTypeLstm: return new LstmLayer(param, context);
+        case LayerTypeMergedConvolution:
+            if (Use8i(param.mergedConvolution()))
+                return new MergedConvolution8iLayer(param, context, method);
+            else if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
+                return new MergedConvolution16bLayer(param, context);
+            else
+                return new MergedConvolution32fLayer(param, context);
+        case LayerTypeMeta: return new MetaLayer(param, context);
+        case LayerTypeMish: return new MishLayer(param, context);
+        case LayerTypeMul: return new MulLayer(param, context);
+        case LayerTypeNonMaxSuppression: return new StubLayer(param, context);
+        case LayerTypeNonZero: return new NonZeroLayer(param, context);
+        case LayerTypeNormalize: return new NormalizeLayer(param, context);
+        case LayerTypePad: return new PadLayer(param, context);
+        case LayerTypePermute: return new PermuteLayer(param, context);
+        case LayerTypePooling: return new PoolingLayer(param, context);
+        case LayerTypePower: return new PowerLayer(param, context);
+        case LayerTypePrelu: return new PreluLayer(param, context);
+        case LayerTypePriorBox: return new PriorBoxLayer(param, context);
+        case LayerTypePriorBoxClustered: return new PriorBoxClusteredLayer(param, context);
+        case LayerTypeQuantizedAdd: return new QuantizedAddLayer(param, context);
+        case LayerTypeQuantizedConcat: return new QuantizedConcatLayer(param, context);
+        case LayerTypeQuantizedConvolution: return new QuantizedConvolutionLayer(param, context);
+        case LayerTypeQuantizedInnerProduct: return new QuantizedInnerProductLayer(param, context);
+        case LayerTypeQuantizedMergedConvolution: return new QuantizedMergedConvolutionLayer(param, context);
+        case LayerTypeQuantizedPooling: return new QuantizedPoolingLayer(param, context);
+        case LayerTypeQuantizedPrelu: return new QuantizedPreluLayer(param, context);
+        case LayerTypeQuantizedScale: return new QuantizedScaleLayer(param, context);
+        case LayerTypeQuantizedShuffle: return new QuantizedShuffleLayer(param, context);
+        case LayerTypeQuantizeLinear: return new QuantizeLinearLayer(param, context);
+        case LayerTypeReduction: return new ReductionLayer(param, context);
+        case LayerTypeRegion: return new RegionLayer(param, context);
+        case LayerTypeRelu: return new ReluLayer(param, context);
+        case LayerTypeReorg: return new ReorgLayer(param, context);
+        case LayerTypeReshape: return new ReshapeLayer(param, context);
+        case LayerTypeRestrictRange: return new RestrictRangeLayer(param, context);
+        case LayerTypeReverseSequence: return new ReverseSequenceLayer(param, context);
+        case LayerTypeRnnGruBd: return new RnnGruBdLayer(param, context);
+        case LayerTypeScale: return new ScaleLayer(param, context, method);
+        case LayerTypeScaledDotProductAttention: return new ScaledDotProductAttentionLayer(param, context);
+        case LayerTypeScatterNd: return new ScatterNdLayer(param, context);
+        case LayerTypeShuffle: return new ShuffleLayer(param, context);
+        case LayerTypeSigmoid: return new SigmoidLayer(param, context);
+        case LayerTypeSlice: return new SliceLayer(param, context);
+        case LayerTypeSoftmax: return new SoftmaxLayer(param, context);
+        case LayerTypeSoftplus: return new SoftplusLayer(param, context);
+        case LayerTypeSpaceToDepth: return new SpaceToDepthLayer(param, context);
+        case LayerTypeSqueeze: return new SqueezeLayer(param, context);
+        case LayerTypeSqueezeExcitation: return new SqueezeExcitationLayer(param, context, method);
+        case LayerTypeStridedSlice: return new StridedSliceLayer(param, context);
+        case LayerTypeStub: return new StubLayer(param, context);
+        case LayerTypeSwish: return new SwishLayer(param, context);
+        case LayerTypeSwitch: return new SwitchLayer(param, context);
+        case LayerTypeTensorIterator: return new TensorIteratorLayer(param, context);
+        case LayerTypeTile: return new TileLayer(param, context);
+        case LayerTypeTiledScale2D: return new TiledScale2DLayer(param, context);
+        case LayerTypeTopK: return new TopKLayer(param, context);
+        case LayerTypeUnaryOperation: return new UnaryOperationLayer(param, context);
+        case LayerTypeUnpack: return new UnpackLayer(param, context);
+        case LayerTypeUpsample: return new UpsampleLayer(param, context);
+        case LayerTypeWhere: return new WhereLayer(param, context);
+        case LayerTypeYolo: return new YoloLayer(param, context);
+        case LayerTypeYoloV7: return new YoloV7Layer(param, context);
+        default:
+            return NULL;
+        }
+    }
+}

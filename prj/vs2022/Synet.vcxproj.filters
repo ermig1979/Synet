@@ -1,73 +1,291 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\..\src\Synet\Synet.cpp" />
+    <ClCompile Include="..\..\src\Synet\Network.cpp" />
+    <ClCompile Include="..\..\src\Synet\Utils\SetInput.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Utils\Activation.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\ArgMaxLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\GridSampleLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\CompareLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\ReductionLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\NonZeroLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.cpp">
+      <Filter>Layers\Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\LrnLayer.cpp">
+      <Filter>Layers\Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\FusedLayer.cpp">
+      <Filter>Layers\Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\RegionLayer.cpp">
+      <Filter>Layers\Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\ReorgLayer.cpp">
+      <Filter>Layers\Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\ScatterNdLayer.cpp">
+      <Filter>Layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\SwitchLayer.cpp">
+      <Filter>Layers\Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Legacy\UpsampleLayer.cpp">
+      <Filter>Layers\Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Fabric.cpp" />
+    <ClCompile Include="..\..\src\Synet\Utils\UniversalBinary.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizeLinearLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedConvolutionLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedInnerProductLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedPoolingLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedShuffleLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedConcatLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedMergedConvolutionLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Convolution\Convolution8iLayer.cpp">
+      <Filter>Layers\Convolution</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Convolution\Convolution16bLayer.cpp">
+      <Filter>Layers\Convolution</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Convolution\Convolution32fLayer.cpp">
+      <Filter>Layers\Convolution</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Convolution\ConvolutionLayer.cpp">
+      <Filter>Layers\Convolution</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Deconvolution\Deconvolution16bLayer.cpp">
+      <Filter>Layers\Deconvolution</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Deconvolution\Deconvolution32fLayer.cpp">
+      <Filter>Layers\Deconvolution</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Deconvolution\DeconvolutionLayer.cpp">
+      <Filter>Layers\Deconvolution</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct8iLayer.cpp">
+      <Filter>Layers\InnerProduct</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct16bLayer.cpp">
+      <Filter>Layers\InnerProduct</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct32fLayer.cpp">
+      <Filter>Layers\InnerProduct</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\InnerProduct\InnerProductLayer.cpp">
+      <Filter>Layers\InnerProduct</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution8iLayer.cpp">
+      <Filter>Layers\MergedConvolution</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution16bLayer.cpp">
+      <Filter>Layers\MergedConvolution</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution32fLayer.cpp">
+      <Filter>Layers\MergedConvolution</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolutionLayer.cpp">
+      <Filter>Layers\MergedConvolution</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\CtcGreedyDecoderLayer.cpp">
+      <Filter>Layers\Detection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\DetectionOutputLayer.cpp">
+      <Filter>Layers\Detection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\PriorBoxClusteredLayer.cpp">
+      <Filter>Layers\Detection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\PriorBoxLayer.cpp">
+      <Filter>Layers\Detection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\YoloLayer.cpp">
+      <Filter>Layers\Detection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\YoloV7Layer.cpp">
+      <Filter>Layers\Detection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedScaleLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reshape\ExpandDimsLayer.cpp">
+      <Filter>Layers\Reshape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reshape\FlattenLayer.cpp">
+      <Filter>Layers\Reshape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reshape\MetaLayer.cpp">
+      <Filter>Layers\Reshape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reshape\ReshapeLayer.cpp">
+      <Filter>Layers\Reshape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reshape\SqueezeLayer.cpp">
+      <Filter>Layers\Reshape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedPreluLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Recurrent\LstmLayer.cpp">
+      <Filter>Layers\Recurrent</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Recurrent\ReverseSequenceLayer.cpp">
+      <Filter>Layers\Recurrent</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Recurrent\RnnGruBdLayer.cpp">
+      <Filter>Layers\Recurrent</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Recurrent\TensorIteratorLayer.cpp">
+      <Filter>Layers\Recurrent</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reorder\ConcatLayer.cpp">
+      <Filter>Layers\Reorder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reorder\PermuteLayer.cpp">
+      <Filter>Layers\Reorder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reorder\ShuffleLayer.cpp">
+      <Filter>Layers\Reorder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reorder\SpaceToDepthLayer.cpp">
+      <Filter>Layers\Reorder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Reorder\UnpackLayer.cpp">
+      <Filter>Layers\Reorder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\AddLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\BiasLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\BinaryOperationLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\CastLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\MulLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\PowerLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\ScaleLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\UnaryOperationLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Math\EltwiseLayer.cpp">
+      <Filter>Layers\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Resize\InterpLayer.cpp">
+      <Filter>Layers\Resize</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Resize\PadLayer.cpp">
+      <Filter>Layers\Resize</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Resize\PoolingLayer.cpp">
+      <Filter>Layers\Resize</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Normalize\NormalizeLayer.cpp">
+      <Filter>Layers\Normalize</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.cpp">
+      <Filter>Layers\Normalize</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Activation\ActivationLayers.cpp">
+      <Filter>Layers\Activation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Activation\PreluLayer.cpp">
+      <Filter>Layers\Activation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Const\ConstantOfShapeLayer.cpp">
+      <Filter>Layers\Const</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Const\ConstLayer.cpp">
+      <Filter>Layers\Const</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Common.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\System\InputLayer.cpp">
+      <Filter>Layers\System</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\System\StubLayer.cpp">
+      <Filter>Layers\System</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Resize\TiledScale2DLayer.cpp">
+      <Filter>Layers\Resize</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Resize\TileLayer.cpp">
+      <Filter>Layers\Resize</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Select\GatherLayer.cpp">
+      <Filter>Layers\Select</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Select\SliceLayer.cpp">
+      <Filter>Layers\Select</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Select\StridedSliceLayer.cpp">
+      <Filter>Layers\Select</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Select\TopKLayer.cpp">
+      <Filter>Layers\Select</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Select\WhereLayer.cpp">
+      <Filter>Layers\Select</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
     <ClInclude Include="..\..\src\Synet\Network.h" />
     <ClInclude Include="..\..\src\Synet\Params.h" />
-    <ClInclude Include="..\..\src\Synet\Synet.h" />
     <ClInclude Include="..\..\src\Synet\Tensor.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Activation.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\BatchNormLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\BiasLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\BinaryOperationLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\CastLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ConcatLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ConstLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ConvolutionLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\CtcGreedyDecoderLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\DeconvolutionLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\DetectionOutputLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\EltwiseLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ExpandDimsLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\FlattenLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\FillLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\FusedLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\GatherLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\InputLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\Interp2Layer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\InterpLayer.h">
-      <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\ConvParam.h">
       <Filter>Utils</Filter>
@@ -87,106 +305,10 @@
     <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\InferenceEngine.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineBase.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\InferenceEngineV10.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolutionLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\LrnLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\LogLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\InnerProductLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\MetaLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\NormalizeLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\PadLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\PermuteLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\PoolingLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\PowerLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\PriorBoxClusteredLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\PreluLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\PriorBoxLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\RegionLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ReorgLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ReshapeLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ScaleLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ShortcutLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ShuffleLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\SliceLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\SqueezeLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\StridedSliceLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\StubLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\SwitchLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\UnaryOperationLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\UnpackLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\UpsampleLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\YoloLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\TileLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\SetInput.h">
@@ -198,17 +320,8 @@
     <ClInclude Include="..\..\src\Synet\Utils\MergedConvolution.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\Optimizer.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Winograd.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Common.h" />
     <ClInclude Include="..\..\src\Synet\Buffer.h" />
-    <ClInclude Include="..\..\src\Synet\Converters\Deoptimizer.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\FileUtils.h">
       <Filter>Utils</Filter>
     </ClInclude>
@@ -217,12 +330,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\Difference.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\Convolution8iLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\Convolution32fLayer.h">
-      <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Quantization\Gemm.h">
       <Filter>Quantization</Filter>
@@ -233,45 +340,15 @@
     <ClInclude Include="..\..\src\Synet\Quantization\Const.h">
       <Filter>Quantization</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\SqueezeExcitationLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\AddLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Quantization\Stat.h">
       <Filter>Quantization</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution32fLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution8iLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Region.h" />
-    <ClInclude Include="..\..\src\Synet\Converters\SynetUtils.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\BroadcastLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ReverseSequenceLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Fabric.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\TensorIteratorLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\InnerProduct.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Context.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\RnnGruBdLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Converters\OnnxRuntime.h">
-      <Filter>Converters</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Ultraface.h">
       <Filter>Decoders</Filter>
     </ClInclude>
@@ -317,16 +394,7 @@
     <ClInclude Include="..\..\src\Synet\Decoders\Anchor.h">
       <Filter>Decoders</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ActivationLayers.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Version.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\TopKLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\NonMaxSuppressionLayer.h">
-      <Filter>Layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Quantization\Bf16.h">
       <Filter>Quantization</Filter>
     </ClInclude>
@@ -336,19 +404,328 @@
     <ClInclude Include="..\..\src\Synet\Layers\ArgMaxLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\LstmLayer.h">
+    <ClInclude Include="..\..\src\Synet\Decoders\YoloV7.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ScatterNdLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\SpaceToDepthLayer.h">
+    <ClInclude Include="..\..\src\Synet\Layers\CompareLayer.h">
       <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Iim.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\GridSampleLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Shape.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Scale.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\YoloV8.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\NonZeroLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Permute.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Rtdetr.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\DetOut.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Yolo.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Scrfd.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\RtdetrV2.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Alpha.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Add.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.h">
+      <Filter>Layers\Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\LrnLayer.h">
+      <Filter>Layers\Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\FusedLayer.h">
+      <Filter>Layers\Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\RegionLayer.h">
+      <Filter>Layers\Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\ReorgLayer.h">
+      <Filter>Layers\Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\SwitchLayer.h">
+      <Filter>Layers\Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Legacy\UpsampleLayer.h">
+      <Filter>Layers\Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Region.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\UniversalBinary.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizeLinearLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedConvolutionLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedInnerProductLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Quantization\QuantizeLinear.h">
+      <Filter>Quantization</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Nanodet.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\YoloV11.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Quantization\DequantizeLinear.h">
+      <Filter>Quantization</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedPoolingLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\ScrfdV2.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedShuffleLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedConcatLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedMergedConvolutionLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Convolution\Convolution8iLayer.h">
+      <Filter>Layers\Convolution</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Convolution\Convolution16bLayer.h">
+      <Filter>Layers\Convolution</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Convolution\Convolution32fLayer.h">
+      <Filter>Layers\Convolution</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Convolution\ConvolutionLayer.h">
+      <Filter>Layers\Convolution</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Deconvolution\Deconvolution16bLayer.h">
+      <Filter>Layers\Deconvolution</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Deconvolution\Deconvolution32fLayer.h">
+      <Filter>Layers\Deconvolution</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Deconvolution\DeconvolutionLayer.h">
+      <Filter>Layers\Deconvolution</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct8iLayer.h">
+      <Filter>Layers\InnerProduct</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct16bLayer.h">
+      <Filter>Layers\InnerProduct</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct32fLayer.h">
+      <Filter>Layers\InnerProduct</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\InnerProduct\InnerProductLayer.h">
+      <Filter>Layers\InnerProduct</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution8iLayer.h">
+      <Filter>Layers\MergedConvolution</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution16bLayer.h">
+      <Filter>Layers\MergedConvolution</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution32fLayer.h">
+      <Filter>Layers\MergedConvolution</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolutionLayer.h">
+      <Filter>Layers\MergedConvolution</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\CtcGreedyDecoderLayer.h">
+      <Filter>Layers\Detection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\DetectionOutputLayer.h">
+      <Filter>Layers\Detection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\PriorBoxClusteredLayer.h">
+      <Filter>Layers\Detection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\PriorBoxLayer.h">
+      <Filter>Layers\Detection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\YoloLayer.h">
+      <Filter>Layers\Detection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\YoloV7Layer.h">
+      <Filter>Layers\Detection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedScaleLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reshape\ExpandDimsLayer.h">
+      <Filter>Layers\Reshape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reshape\FlattenLayer.h">
+      <Filter>Layers\Reshape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reshape\MetaLayer.h">
+      <Filter>Layers\Reshape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reshape\ReshapeLayer.h">
+      <Filter>Layers\Reshape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reshape\SqueezeLayer.h">
+      <Filter>Layers\Reshape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedPreluLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Recurrent\LstmLayer.h">
+      <Filter>Layers\Recurrent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Recurrent\ReverseSequenceLayer.h">
+      <Filter>Layers\Recurrent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Recurrent\RnnGruBdLayer.h">
+      <Filter>Layers\Recurrent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Recurrent\TensorIteratorLayer.h">
+      <Filter>Layers\Recurrent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reorder\ConcatLayer.h">
+      <Filter>Layers\Reorder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reorder\PermuteLayer.h">
+      <Filter>Layers\Reorder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reorder\ShuffleLayer.h">
+      <Filter>Layers\Reorder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reorder\SpaceToDepthLayer.h">
+      <Filter>Layers\Reorder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Reorder\UnpackLayer.h">
+      <Filter>Layers\Reorder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\AddLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\BiasLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\BinaryOperationLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\CastLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\MulLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\PowerLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\ScaleLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\UnaryOperationLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Math\EltwiseLayer.h">
+      <Filter>Layers\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Resize\InterpLayer.h">
+      <Filter>Layers\Resize</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Resize\PadLayer.h">
+      <Filter>Layers\Resize</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Resize\PoolingLayer.h">
+      <Filter>Layers\Resize</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Normalize\NormalizeLayer.h">
+      <Filter>Layers\Normalize</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.h">
+      <Filter>Layers\Normalize</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Activation\ActivationLayers.h">
+      <Filter>Layers\Activation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Activation\PreluLayer.h">
+      <Filter>Layers\Activation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Const\ConstantOfShapeLayer.h">
+      <Filter>Layers\Const</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Const\ConstLayer.h">
+      <Filter>Layers\Const</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\System\InputLayer.h">
+      <Filter>Layers\System</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\System\StubLayer.h">
+      <Filter>Layers\System</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Resize\TiledScale2DLayer.h">
+      <Filter>Layers\Resize</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Resize\TileLayer.h">
+      <Filter>Layers\Resize</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Select\GatherLayer.h">
+      <Filter>Layers\Select</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Select\SliceLayer.h">
+      <Filter>Layers\Select</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Select\StridedSliceLayer.h">
+      <Filter>Layers\Select</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Select\TopKLayer.h">
+      <Filter>Layers\Select</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Select\WhereLayer.h">
+      <Filter>Layers\Select</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\Gather.h">
+      <Filter>Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
       <UniqueIdentifier>{2b236438-b274-4f2f-a02b-72175df7cd1a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Converters">
-      <UniqueIdentifier>{3b086818-329c-4b6e-81ca-035978ca699d}</UniqueIdentifier>
     </Filter>
     <Filter Include="Utils">
       <UniqueIdentifier>{36aa89bf-afc4-4b67-8db6-28ef952a4fc5}</UniqueIdentifier>
@@ -361,6 +738,57 @@
     </Filter>
     <Filter Include="Cpl">
       <UniqueIdentifier>{61106982-3cf0-4d97-94af-941102a58b36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Legacy">
+      <UniqueIdentifier>{bd4270e8-bca4-4558-be00-ce82d571c796}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Quantized">
+      <UniqueIdentifier>{eab212be-fd12-4eec-900c-8df9283378a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Convolution">
+      <UniqueIdentifier>{514b5db3-30c7-4406-9da4-288527382bcc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Deconvolution">
+      <UniqueIdentifier>{200049ec-b4a1-4497-acd3-d2c58b6ac76b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\InnerProduct">
+      <UniqueIdentifier>{b1a8e52d-00e1-459d-b194-07e6b33dc110}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\MergedConvolution">
+      <UniqueIdentifier>{d4cd0a84-5350-477f-80ea-dd28d85ea0f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Detection">
+      <UniqueIdentifier>{edad7bc8-f3d7-4414-b75d-511d077650b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Reshape">
+      <UniqueIdentifier>{dcf7b270-4b41-4d2b-a42b-c7f23500881b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Recurrent">
+      <UniqueIdentifier>{7aed8d2e-cfc0-4ffc-8929-086dc0ff5f9b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Reorder">
+      <UniqueIdentifier>{74ab632a-5066-4c8b-aa84-c6f6ec38aa48}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Math">
+      <UniqueIdentifier>{7beb6499-f218-41cf-a807-d425b04bc4dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Resize">
+      <UniqueIdentifier>{3d68823c-7964-4ca1-b7a3-16764bf854cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Normalize">
+      <UniqueIdentifier>{b1234bf4-00c3-45b5-a443-294ca6b28407}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Activation">
+      <UniqueIdentifier>{714d4540-e7e3-4689-88f2-ef5afe266193}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Const">
+      <UniqueIdentifier>{458bb4ef-16fe-4778-a41c-618fffb0ab96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\System">
+      <UniqueIdentifier>{65a183c1-932f-4050-b108-e20cf559e787}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Select">
+      <UniqueIdentifier>{ed84254a-2b31-43d5-bd92-b1cf0fa57bae}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

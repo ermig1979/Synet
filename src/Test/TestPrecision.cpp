@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2024 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,9 @@ int main(int argc, char* argv[])
 {
     Test::Precision::Options options(argc, argv);
 
+    Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
+    Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
+
     if (options.mode == "classification")
     {
         Test::ClassificationPrecision precision(options);
@@ -47,7 +50,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        std::cout << "Unknown mode: " << options.mode << " !" << std::endl;
+        CPL_LOG_SS(Error, "Unknown mode : " << options.mode);
         return 2;
     }
 

@@ -1,25 +1,39 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.28)
 project(Synet)
 
 option(SYNET_INFO "Print build information" ON)
 option(SYNET_GET_VERSION "Get Synet version" ON)
 option(SYNET_SIMD "Use Simd Library to accelerate Synet" ON)
 option(SYNET_BF16_ROUND_TEST "Test BF16 rounding error" OFF)
+option(SYNET_SHARED "Build as SHARED library" OFF)
+option(SYNET_PERF "Performance statistics level: 0 - no statistics, 1 - Synet statistics, 2 - Simd statistics" OFF)
+option(SYNET_PYTHON "Enabling of Synet Python wrapper" ON)
+option(SYNET_OPENCV "OpenCV tests enable" OFF)
+option(SYNET_ORT_DNNL "Enabling of OnnxRuntime DNNL provider" OFF)
 option(SIMD_AVX512 "Use AVX-512 (AVX-512F, AVX-512CD, AVX-512VL, AVX-512DQ, AVX-512BW)" OFF)
 option(SIMD_AVX512VNNI "Use AVX-512VNNI" OFF)
-option(SIMD_AVX512BF16 "Use AVX-512BF16" OFF)
-option(SIMD_AMX "Use AMX" OFF)
+option(SIMD_AMXBF16 "Use AMX-INT8, AMX-BF16 and AVX-512BF16" OFF)
 option(SIMD_AMX_EMULATE "Emulate AMX" OFF)
-option(PERF_STAT "Performance statistics level: 0 - no statistics, 1 - Synet statistics, 2 - Simd statistics" OFF)
 set(MAX_ERRORS 5)
 
+if(SYNET_SHARED)
+    set(SYNET_LIB_TYPE "SHARED")
+else()
+    set(SYNET_LIB_TYPE "STATIC")
+endif()
 
-if(NOT((MODE STREQUAL "all") OR 
-       (MODE STREQUAL "inference_engine") OR (MODE STREQUAL "onnx") OR 
-       (MODE STREQUAL "performance_difference") OR (MODE STREQUAL "precision") OR 
-       (MODE STREQUAL "quantization") OR (MODE OR (MODE STREQUAL "stability") OR
-       (MODE STREQUAL "use_samples"))))
-    message(FATAL_ERROR "Unknown value of MODE: '${MODE}'!")
+if(SYNET_TEST STREQUAL "")
+    set(SYNET_TEST "all")
+endif()
+
+if(NOT((SYNET_TEST STREQUAL "all") OR (SYNET_TEST STREQUAL "none") OR
+       (SYNET_TEST STREQUAL "inference_engine") OR (SYNET_TEST STREQUAL "onnx") OR 
+       (SYNET_TEST STREQUAL "performance_difference") OR (SYNET_TEST STREQUAL "precision") OR 
+       (SYNET_TEST STREQUAL "quantization") OR (SYNET_TEST STREQUAL "stability") OR
+       (SYNET_TEST STREQUAL "optimizer") OR (SYNET_TEST STREQUAL "bf16") OR
+       (SYNET_TEST STREQUAL "multi_threads") OR (SYNET_TEST STREQUAL "video") OR
+       (SYNET_TEST STREQUAL "use_samples")))
+    message(FATAL_ERROR "Unknown value of SYNET_TEST: '${SYNET_TEST}'!")
 endif()
 
 set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
@@ -36,9 +50,11 @@ endif()
 
 if(SYNET_INFO)
 	message("Build type: ${CMAKE_BUILD_TYPE}")
+	message("Library type: ${SYNET_LIB_TYPE}")
 	message("Toolchain: ${CMAKE_CXX_COMPILER}")
 	message("ID: ${CMAKE_CXX_COMPILER_ID}")
 	message("Version: ${CMAKE_CXX_COMPILER_VERSION}")
+	message("Test frameworks: ${SYNET_TEST}")
 endif()
 
 if(SYNET_GET_VERSION)
@@ -52,100 +68,27 @@ else()
 	add_definitions(-DSYNET_VERSION="unknown")
 endif()
 
-include_directories(${ROOT_DIR}/src)
-include_directories(${ROOT_DIR}/3rd/Cpl/src)
-
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(COMMON_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -O3 -std=c++17 -fmax-errors=${MAX_ERRORS}")
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(COMMON_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -O0 -std=c++17 -fmax-errors=${MAX_ERRORS}")
+    set(COMMON_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -O0 -g -std=c++17 -fmax-errors=${MAX_ERRORS}")
 else()
     message(FATAL_ERROR "Unknown value of CMAKE_BUILD_TYPE!")
 endif()
 
-if(PERF_STAT GREATER_EQUAL 1)
-	list(APPEND SYNET_DEFINITIONS -DSYNET_PERFORMANCE_STATISTIC)
-endif()
-
-if(SYNET_BF16_ROUND_TEST)
-	list(APPEND SYNET_DEFINITIONS -DSYNET_BF16_ROUND_TEST)
-endif()
-
 include(${ROOT_DIR}/prj/cmake/Simd.cmake)
+include(${ROOT_DIR}/prj/cmake/Synet.cmake)
+include(${ROOT_DIR}/prj/cmake/CvtCore.cmake)
 
-if((MODE STREQUAL "inference_engine") OR (MODE STREQUAL "all"))
-	include(${ROOT_DIR}/prj/cmake/openvino.cmake)
-	file(GLOB_RECURSE TEST_IE_SRC ${ROOT_DIR}/src/Test/TestInferenceEngine.cpp)
-	set_source_files_properties(${TEST_IE_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
-	add_executable(test_inference_engine ${TEST_IE_SRC})
-	add_dependencies(test_inference_engine make_openvino)
-	target_compile_definitions(test_inference_engine PUBLIC ${SYNET_DEFINITIONS})
-	target_link_libraries(test_inference_engine ${IE_BIN_LIBS} ${SIMD_LIB} -ldl -lpthread)
+if(SYNET_PYTHON)
+	add_custom_command(TARGET Synet POST_BUILD 
+		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/SynetPy/*.py ${CMAKE_BINARY_DIR}
+		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/Scripts/Check.py ${CMAKE_BINARY_DIR}
+		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/Scripts/Perf.py ${CMAKE_BINARY_DIR}
+		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/Scripts/PerfBf16.py ${CMAKE_BINARY_DIR}
+		)
 endif()
 
-if((MODE STREQUAL "onnx") OR (MODE STREQUAL "all"))
-	file(GLOB_RECURSE TEST_ONNX_SRC ${ROOT_DIR}/src/Test/TestOnnx.cpp)
-	set_source_files_properties(${TEST_ONNX_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
-	add_executable(test_onnx ${TEST_ONNX_SRC})
-	include(${ROOT_DIR}/prj/cmake/onnxruntime.cmake)
-	target_compile_definitions(test_onnx PUBLIC -DSYNET_ONNXRUNTIME_ENABLE ${SYNET_DEFINITIONS})
-	target_include_directories(test_onnx PUBLIC ${ORT_INCS})
-	set(ONNX_PB_CC ${ORT_ONNX}/onnx/onnx.pb.cc)
-	add_custom_command(OUTPUT ${ONNX_PB_CC} DEPENDS make_ort
-		COMMAND ${CMAKE_COMMAND} -E copy ${ORT_DIR}/cmake/external/onnx/onnx/onnx.proto ${ORT_ONNX}/onnx/onnx.proto
-		COMMAND ${PB_BIN}/protoc --cpp_out=. onnx.proto WORKING_DIRECTORY ${ORT_ONNX}/onnx)
-	add_custom_target(make_onnx_pb_cc DEPENDS ${ONNX_PB_CC})
-	add_dependencies(test_onnx make_ort make_onnx_pb_cc)
-	target_sources(test_onnx PUBLIC ${ONNX_PB_CC})
-	set_property(SOURCE ${ONNX_PB_CC} PROPERTY GENERATED 1)
-	target_link_libraries(test_onnx ${ORT_LIBS})
-	target_link_libraries(test_onnx ${SIMD_LIB} -ldl -lpthread)
-endif()
-
-if((MODE STREQUAL "performance_difference") OR (MODE STREQUAL "all"))	
-	file(GLOB_RECURSE PERF_DIFF_SRC ${ROOT_DIR}/src/Test/TestPerformanceDifference.cpp)
-	set_source_files_properties(${PERF_DIFF_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
-	add_executable(test_performance_difference ${PERF_DIFF_SRC})
-	target_compile_definitions(test_performance_difference PUBLIC ${SYNET_DEFINITIONS})
-	target_link_libraries(test_performance_difference ${SIMD_LIB} -ldl -lpthread)
-endif()
-
-if((MODE STREQUAL "precision") OR (MODE STREQUAL "all"))	
-	if (MODE STREQUAL "precision")
-		include(${ROOT_DIR}/prj/cmake/inference-engine.cmake)
-	endif()
-	file(GLOB_RECURSE PRECISION_SRC ${ROOT_DIR}/src/Test/TestPrecision.cpp)
-	set_source_files_properties(${PRECISION_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
-	add_executable(test_precision ${PRECISION_SRC})
-	add_dependencies(test_precision make_openvino)
-	target_compile_definitions(test_precision PUBLIC ${SYNET_DEFINITIONS})
-	target_link_libraries(test_precision ${IE_BIN_LIBS} ${SIMD_LIB} -ldl -lpthread)
-endif()
-
-if((MODE STREQUAL "quantization") OR (MODE STREQUAL "all"))	
-	file(GLOB_RECURSE QUANTIZATION_SRC ${ROOT_DIR}/src/Test/TestQuantization.cpp)
-	set_source_files_properties(${QUANTIZATION_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
-	add_executable(test_quantization ${QUANTIZATION_SRC})
-	target_compile_definitions(test_quantization PUBLIC ${SYNET_DEFINITIONS})
-	target_link_libraries(test_quantization ${SIMD_LIB} -ldl -lpthread)
-endif()
-
-if((MODE STREQUAL "stability") OR (MODE STREQUAL "all"))
-	file(GLOB_RECURSE STABILITY_SRC ${ROOT_DIR}/src/Test/TestStability.cpp)
-	set_source_files_properties(${STABILITY_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
-	add_executable(test_stability ${STABILITY_SRC})
-	target_compile_definitions(test_stability PUBLIC ${SYNET_DEFINITIONS})
-	target_link_libraries(test_stability ${SIMD_LIB} -ldl -lpthread)
-endif()
-	
-if((MODE STREQUAL "use_samples") OR (MODE STREQUAL "all"))
-	file(GLOB USE_FD_SRC ${ROOT_DIR}/src/Use/UseFaceDetection.cpp)
-	set_source_files_properties(${USE_FD_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
-	add_executable(use_face_detection ${USE_FD_SRC})
-	target_compile_definitions(use_face_detection PUBLIC ${SYNET_DEFINITIONS})
-	target_link_libraries(use_face_detection ${SIMD_LIB} -ldl -lpthread)
-	file(GLOB USE_FD_DATA  ${ROOT_DIR}/data/use_samples/face_detection/*.*)
-	file(COPY ${USE_FD_DATA} DESTINATION ${CMAKE_BINARY_DIR})
-endif()
-
+include(${ROOT_DIR}/prj/cmake/Test.cmake)
+include(${ROOT_DIR}/prj/cmake/Use.cmake)
 

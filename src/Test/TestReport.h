@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2025 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -52,21 +52,25 @@ namespace Test
 			if (ofs.is_open())
 			{
 				FillSummary();
-				Cpl::Table table(TableSize().x, TableSize().y);
-				SetHeader(table);
-				SetCells(table, _summary, 0, true);
-				SetCells(table, _tests, _summary.size(), false);
 				if (text)
 				{
+					Cpl::Table summary(ColNum(true), _summary.size());
+					SetHeader(summary, true);
+					SetCells(summary, _summary, 0, true);
+
+					Cpl::Table tests(ColNum(false), _tests.size());
+					SetHeader(tests, false);
+					SetCells(tests, _tests, 0, false);
+
 					ofs << "~~~~~~~~~~~~~~~~~~~~~ Synet Performance Report ~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 					ofs << "Test generation time: " + Cpl::CurrentDateTimeString() << std::endl;
 					ofs << "Synet version: " + Synet::Version() << std::endl;
 					ofs << "Number of test threads: " << _options.testThreads << std::endl;
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-					ofs << SystemInfo() << std::endl;
 					Simd::PrintInfo(ofs);
 #endif
-					ofs << table.GenerateText();
+					ofs << summary.GenerateText() << std::endl;
+					ofs << tests.GenerateText();
 				}
 				else
 				{
@@ -82,13 +86,22 @@ namespace Test
 					html.WriteValue("h4", Cpl::Html::Attr(), String("Synet version: ") + Synet::Version(), true);
 					html.WriteValue("h4", Cpl::Html::Attr(), String("Number of test threads: ") + ToString(_options.testThreads), true);
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-					html.WriteValue("h4", Cpl::Html::Attr(), SystemInfo(), true);
 					html.WriteBegin("h4", Cpl::Html::Attr(), true, true);
 					Simd::PrintInfo(ofs);
 					html.WriteEnd("h4", true, true);
 #endif
 
-					ofs << table.GenerateHtml(html.Indent());
+					Cpl::Table summary(ColNum(true), _summary.size());
+					SetHeader(summary, true);
+					SetCells(summary, _summary, 0, true);
+					html.WriteValue("h3", Cpl::Html::Attr(), String("Summary:"), true);
+					ofs << summary.GenerateHtml(0, true, true, true);
+
+					Cpl::Table tests(ColNum(false), _tests.size());
+					SetHeader(tests, false);
+					SetCells(tests, _tests, 0, false);
+					html.WriteValue("h3", Cpl::Html::Attr(), String("Tests:"), true);
+					ofs << tests.GenerateHtml(0, false, true, true);
 
 					html.WriteEnd("body", true, true);
 					html.WriteEnd("html", true, true);
@@ -109,9 +122,9 @@ namespace Test
 		struct Test
 		{
 			String name, desc, link;
-			int batch, count, skip;
+			int batch, count, skip, bf16;
 			Data<double> first, second;
-			Test(const String & n = "", int b = 0) : name(n), batch(b), count(0), skip(0) {}
+			Test(const String & n = "", int b = 0, int bf = 0) : name(n), batch(b), count(0), skip(0), bf16(bf) {}
 		};
 		typedef std::vector<Test> Tests;
 
@@ -134,16 +147,17 @@ namespace Test
 					{
 						Test test;
 						Cpl::ToVal(values[0], test.name);
-						Cpl::ToVal(values[1], test.batch);
-						Cpl::ToVal(values[2], test.first.time);
-						Cpl::ToVal(values[3], test.second.time);
-						Cpl::ToVal(values[4], test.first.flops);
-						Cpl::ToVal(values[5], test.second.flops);
-						Cpl::ToVal(values[6], test.first.memory);
-						Cpl::ToVal(values[7], test.second.memory);
-						Cpl::ToVal(values[8], test.desc);
-						Cpl::ToVal(values[9], test.link);
-						Cpl::ToVal(values[10], test.skip);
+						Cpl::ToVal(values[1], test.bf16);
+						Cpl::ToVal(values[2], test.batch);
+						Cpl::ToVal(values[3], test.first.time);
+						Cpl::ToVal(values[4], test.second.time);
+						Cpl::ToVal(values[5], test.first.flops);
+						Cpl::ToVal(values[6], test.second.flops);
+						Cpl::ToVal(values[7], test.first.memory);
+						Cpl::ToVal(values[8], test.second.memory);
+						Cpl::ToVal(values[9], test.desc);
+						Cpl::ToVal(values[10], test.link);
+						Cpl::ToVal(values[11], test.skip);
 						_tests.push_back(test);
 					}
 				}
@@ -168,6 +182,7 @@ namespace Test
 				for (size_t i = 0; i < _tests.size(); ++i)
 				{
 					ofs << _tests[i].name << _separator;
+					ofs << _tests[i].bf16 << _separator;
 					ofs << _tests[i].batch << _separator;
 					ofs << _tests[i].first.time << _separator;
 					ofs << _tests[i].second.time << _separator;
@@ -193,6 +208,7 @@ namespace Test
 			Test test;
 			test.name = TestName(_options.logName);
 			test.batch = _options.batchSize;
+			test.bf16 = _options.bf16;
 			test.first.time = NetworkPredictPm(_options.firstName, _options.firstType).Average() / test.batch;
 			test.second.time = NetworkPredictPm(_options.secondName, _options.secondType).Average() / test.batch;
 			test.first.flops = NetworkPredictPm(_options.firstName, _options.firstType).GFlops();
@@ -209,21 +225,28 @@ namespace Test
 		String TestName(const String & path)
 		{
 			String name = GetNameByPath(path);
-			size_t beg = name.find("_") + 1, end = name.rfind(String("_t"));
+			size_t beg = 1;// name.find("_") + 1;
+			size_t end = name.rfind(String("_t"));
 			return name.substr(beg, end - beg);
 		}
 
 		String NetworkPredictName(const String & framework, const String& description)
 		{
 			std::stringstream ss;
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 			ss << "Test::";
 			ss << framework;
 			ss << "Network::Predict";
+#elif defined(__GNUC__) 
+#if __GNUC__ >= 13
+			ss << "virtual const Test::Tensors& Test::";
+			ss << framework;
+			ss << "Network::Predict(const Test::Tensors&)";
 #else
 			ss << "virtual const Tensors& Test::";
 			ss << framework;
 			ss << "Network::Predict(const Tensors&)";
+#endif
 #endif
 			if (!description.empty())
 				ss << "{ " << description << " }";
@@ -245,24 +268,43 @@ namespace Test
 			Synet::NetworkParamHolder model;
 			if (model.Load(path))
 			{
+				for (size_t i = 0; i < model().layers().size(); ++i)
+				{
+					const Synet::LayerParam& layer = model().layers()[i];
+					if (layer.type() == Synet::LayerTypeInput)
+					{
+						Synet::Shape dim = layer.input().shape()[0].dim();
+						if (layer.input().shape()[0].format() == Synet::TensorFormatNhwc && dim.size() == 4)
+							dim = Synet::Shp(dim[0], dim[3], dim[1], dim[2]);
+						for (size_t d = 0; d < dim.size(); ++d)
+						{
+							if (d)
+								desc.push_back('x');
+							desc = desc + Cpl::ToStr(dim[d]);
+						}
+						desc.push_back('-');
+						break;
+					}
+				}
 				std::set<Synet::LayerType> layers;
 				for (size_t i = 0; i < model().layers().size(); ++i)
 					layers.insert(model().layers()[i].type());
-				if (layers.find(Synet::LayerTypeConvolution) != layers.end()) desc.push_back('C');
-				if (layers.find(Synet::LayerTypePooling) != layers.end()) desc.push_back('P');
-				if (layers.find(Synet::LayerTypeMergedConvolution) != layers.end()) desc.push_back('G');
-                if (layers.find(Synet::LayerTypeInnerProduct) != layers.end()) desc.push_back('I');
-                if (layers.find(Synet::LayerTypeTensorIterator) != layers.end()) desc.push_back('T');
-				if (layers.find(Synet::LayerTypeDetectionOutput) != layers.end()) desc.push_back('D');
-                if (layers.find(Synet::LayerTypeYolo) != layers.end()) desc.push_back('Y');
-                if (layers.find(Synet::LayerTypeRegion) != layers.end()) desc.push_back('R');
+				if (layers.find(Synet::LayerTypeConvolution) != layers.end()) desc += String("C");
+				if (layers.find(Synet::LayerTypePooling) != layers.end()) desc += String("P");
+				if (layers.find(Synet::LayerTypeDeconvolution) != layers.end()) desc += String("D");
+				if (layers.find(Synet::LayerTypeMergedConvolution) != layers.end()) desc += String("Mc");
+                if (layers.find(Synet::LayerTypeInnerProduct) != layers.end()) desc += String("Ip");
+                if (layers.find(Synet::LayerTypeTensorIterator) != layers.end()) desc += String("Ti");
+				if (layers.find(Synet::LayerTypeDetectionOutput) != layers.end()) desc += String("Do");
+                if (layers.find(Synet::LayerTypeYolo) != layers.end()) desc += String("Y");
+                if (layers.find(Synet::LayerTypeInterp) != layers.end()) desc += String("I");
             }
 			return desc;
 		}
 
-		Size TableSize()
+		size_t ColNum(bool summary) const
 		{
-			size_t col = 3;
+			size_t col = summary ? 5 : 4;
 			if (_other.time)
 				col++;
 			if (_synet.time)
@@ -277,17 +319,19 @@ namespace Test
 				col++;
 			if (_synet.memory)
 				col++;
-			size_t row = _summary.size() + _tests.size();
-			return Size(col, row);
+			return col;
 		}
 
-		void SetHeader(Cpl::Table& table)
+		void SetHeader(Cpl::Table& table, bool summary)
 		{
 			String first = Options::FullName(_options.firstName, _options.firstType);
 			String second = Options::FullName(_options.secondName, _options.secondType);
 			size_t col = 0;
 			table.SetHeader(col++, "Test", true, Cpl::Table::Center);
+			table.SetHeader(col++, "Format", true, Cpl::Table::Center);
 			table.SetHeader(col++, "Batch", true, Cpl::Table::Center);
+			if(summary)
+				table.SetHeader(col++, "Number", true, Cpl::Table::Center);
 			if (_other.time)
 				table.SetHeader(col++, first + ", ms", true, Cpl::Table::Center);
 			if (_synet.time)
@@ -311,8 +355,14 @@ namespace Test
 			{
 				const Test& test = tests[i];
 				size_t col = 0;
-				table.SetCell(col++, row, test.name, Cpl::Table::Black, test.link);
+				if (test.link.empty())
+					table.SetCell(col++, row, test.name, Cpl::Table::Black);
+				else
+					table.SetCell(col++, row, test.name + (test.bf16 == 0 ? String("_fp32_") : String("_bf16_")) + ToString(test.batch), Cpl::Table::Black, test.link);
+				table.SetCell(col++, row, test.bf16 < 0 ? String("-") : test.bf16 == 0 ? String("FP32") : String("BF16"));
 				table.SetCell(col++, row, test.batch ? ToString(test.batch) : String("-"));
+				if (summary)
+					table.SetCell(col++, row, ToString(test.count));
 				if (_other.time)
 					table.SetCell(col++, row, ToString(test.first.time, 3), test.skip == 1 ? Cpl::Table::Red : Cpl::Table::Black);
 				if (_synet.time)
@@ -327,9 +377,9 @@ namespace Test
 				if (_synet.flops)
 					table.SetCell(col++, row, ToString(test.second.flops, 1));
 				if (_other.memory)
-					table.SetCell(col++, row, summary ? String("-") : ToString(test.first.memory, 1));
+					table.SetCell(col++, row, ToString(test.first.memory, 1));
 				if (_synet.memory)
-					table.SetCell(col++, row, summary ? String("-") : ToString(test.second.memory, 1));
+					table.SetCell(col++, row, ToString(test.second.memory, 1));
 				table.SetCell(col++, row, summary ? String("-") : test.desc);
 				table.SetRowProp(row, summary && i == tests.size() - 1, summary);
 			}
@@ -340,7 +390,11 @@ namespace Test
 			for (size_t i = 0; i < _tests.size(); ++i)
 			{
 				const Test& test = _tests[i];
-				if ((summary.batch && test.batch != summary.batch) || test.skip)
+				if (test.skip)
+					continue;
+				if (summary.batch && test.batch != summary.batch)
+					continue;
+				if (summary.bf16 >= 0 && test.bf16 != summary.bf16)
 					continue;
 				summary.count++;
 				if (_other.time)
@@ -351,6 +405,10 @@ namespace Test
 					summary.first.flops += ::log(test.first.flops);
 				if (_synet.flops)
 					summary.second.flops += ::log(test.second.flops);
+				if (_other.memory)
+					summary.first.memory += ::log(test.first.memory);
+				if (_synet.memory)
+					summary.second.memory += ::log(test.second.memory);
 			}
 			if (_other.time)
 				summary.first.time = summary.count > 0 ? ::exp(summary.first.time / summary.count) : 0;
@@ -360,18 +418,31 @@ namespace Test
 				summary.first.flops = summary.count > 0 ? ::exp(summary.first.flops / summary.count) : 0;
 			if (_synet.flops)
 				summary.second.flops = summary.count > 0 ? ::exp(summary.second.flops / summary.count) : 0;
+			if (_other.memory)
+				summary.first.memory = summary.count > 0 ? ::exp(summary.first.memory / summary.count) : 0;
+			if (_synet.memory)
+				summary.second.memory = summary.count > 0 ? ::exp(summary.second.memory / summary.count) : 0;
 		}
 
 		void FillSummary()
 		{
 			typedef std::set<int> Set;
-			Set batch;
+			Set batch, bf16;
 			for (size_t i = 0; i < _tests.size(); ++i)
+			{
 				batch.insert(_tests[i].batch);
+				bf16.insert(_tests[i].bf16);
+			}
 			_summary.clear();
-			_summary.push_back(Test("Common", 0));
-			for (Set::const_iterator it = batch.begin(); it != batch.end(); ++it)
-				_summary.push_back(Test(String("Batch-") + ToString(*it), *it));
+			if(bf16.size() > 1)
+				_summary.push_back(Test("Common", 0, -1));
+			for (Set::const_iterator f = bf16.begin(); f != bf16.end(); ++f)
+			{
+				String format = *f ? String("BF16") : String("FP32");
+				_summary.push_back(Test(format + "-Common", 0, *f));
+				for (Set::const_iterator b = batch.begin(); b != batch.end(); ++b)
+					_summary.push_back(Test(format + "-Batch-" + ToString(*b), *b, *f));
+			}
 			for (size_t i = 0; i < _summary.size(); ++i)
 				FillSummary(_summary[i]);
 		}

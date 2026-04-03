@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2021 Yermalayeu Ihar.
+* Copyright (c) 2018-2025 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Synet/Common.h"
+#include "Synet/Quantization/Bf16.h"
 
 namespace Synet
 {
@@ -38,22 +39,43 @@ namespace Synet
             PerfomanceLogSubnet,
         };
 
+        enum Bf16Support
+        {
+            Bf16SupportNone = 0,
+            Bf16SupportHard,
+            Bf16SupportSoft
+        };
+
         PerfomanceLog performanceLog;
-        bool bf16RoundTest;
+        Bf16Support bf16Support;
 
         Options()
         {
             performanceLog = PerfomanceLogEmpty;
-            bf16RoundTest = false;
+            bf16Support = Bf16SupportHard;
+        }
+
+        bool BFloat16Enable() const
+        {
+            return (bf16Support == Bf16SupportSoft) || (bf16Support == Bf16SupportHard && BFloat16HardwareSupport());
         }
     };
 
     struct Context
     {
         Options options;
+        std::map<String, size_t> tensorUsers;
+        size_t batchSize, threads;
 
         Context()
+            : batchSize(1)
+            , threads(1)
         {
+        }
+
+        void Clear()
+        {
+            tensorUsers.clear();
         }
     };
 }

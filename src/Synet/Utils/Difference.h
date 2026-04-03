@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2020 Yermalayeu Ihar.
+* Copyright (c) 2018-2024 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -102,7 +102,7 @@ namespace Synet
 
         bool Init(const Tensor& first, const Tensor& second)
         {
-            if (first.Format() != second.Format() || first.Shape() != second.Shape())
+            if ((first.Shape().size() == 4 && first.Format() != second.Format()) || first.Shape() != second.Shape())
                 return false;
             _format = first.Format();
             _shape = first.Shape();
@@ -127,6 +127,7 @@ namespace Synet
             }
             else if (_shape.size() == 2)
             {
+                _format = TensorFormatNchw;
                 _batch = _shape[0];
                 _channels = 1;
                 _height = 1;
@@ -134,8 +135,8 @@ namespace Synet
             }
             else
                 return false;
-            _first = first.CpuData();
-            _second = second.CpuData();
+            _first = first. template Data<Type>();
+            _second = second. template Data<Type>();
             return true;
         }
 

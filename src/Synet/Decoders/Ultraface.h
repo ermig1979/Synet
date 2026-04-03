@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2024 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,9 @@ namespace Synet
     public: 
         typedef Synet::Region<float> Region;
         typedef std::vector<Region> Regions;
-        typedef Synet::Network<float> Net;
+        typedef Synet::Tensor<float> Tensor;
+        typedef std::vector<Tensor> Tensors;
+        typedef Synet::Network Net;
 
         UltrafaceDecoder()
         {
@@ -89,21 +91,45 @@ namespace Synet
             return regions;
         }
 
-        std::vector<Regions> GetRegions(const Net& net, size_t srcW, size_t srcH, float threshold, float overlap) const
+        std::vector<Regions> GetRegions(const Net& net, size_t srcW, size_t srcH, float threshold, float overlap, size_t thread = 0) const
         {
             std::vector<Regions> result(net.NchwShape()[0]);
             for (size_t b = 0; b < result.size(); ++b)
             {
-                const float* boxes = net.Dst(_names[0])->CpuData(Shp(b, 0, 0));
-                const float* scores = net.Dst(_names[1])->CpuData(Shp(b, 0, 0));
-                size_t size = net.Dst(_names[0])->Size(1, 2);
+                const float* boxes = net.Dst(_names[0], thread)->Data<float>(Shp(b, 0, 0));
+                const float* scores = net.Dst(_names[1], thread)->Data<float>(Shp(b, 0, 0));
+                size_t size = net.Dst(_names[0], thread)->Size(1, 2);
                 result[b] = GetRegions(boxes, scores, size, srcW, srcH, threshold, overlap);
+            }
+            return result;
+        }
+
+        std::vector<Regions> GetRegions(const Tensors & dst, size_t srcW, size_t srcH, float threshold, float overlap) const
+        {
+            std::vector<Regions> result(dst[0].Axis(0));
+            for (size_t b = 0; b < result.size(); ++b)
+            {
+                const float* boxes = GetPtr(dst, _names[0], b);
+                const float* scores = GetPtr(dst, _names[1], b);
+                if (boxes && scores)
+                {
+                    size_t size = dst[0].Size(1, 2);
+                    result[b] = GetRegions(boxes, scores, size, srcW, srcH, threshold, overlap);
+                }
             }
             return result;
         }
 
     private:
         Strings _names;
+
+        SYNET_INLINE const float* GetPtr(const Tensors& dst, const String& name, size_t b) const
+        {
+            for (size_t d = 0; d < dst.size(); d++)
+                if (dst[d].Name() == name)
+                    return dst[d].Data<float>(Shp(b, 0, 0));
+            return NULL;
+        }
     };
 }
 

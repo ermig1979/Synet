@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2025 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -26,19 +26,10 @@
 
 #include "TestCommon.h"
 #include "TestPerformance.h"
-
-#if defined(SYNET_PERFORMANCE_STATISTIC) && !defined(SYNET_PERF_FUNC)
-#define SYNET_PERF_FUNC() CPL_PERF_FUNC()
-#define SYNET_PERF_BLOCK(name) CPL_PERF_BEG(name)
-#define SYNET_PERF_BLOCK_END(name) CPL_PERF_END(name)
-#define SYNET_PERF_DECL(name) Cpl::PerformanceMeasurer * name;
-#define SYNET_PERF_SET(name, value) name = value;
-#define SYNET_PERF_INIT(name, desc, flop) name = Cpl::PerformanceStorage::Global().Get(desc, flop);
-#define SYNET_PERF_TEST(name) Cpl::PerformanceHolder CPL_CAT(__pmh,__LINE__)(name);
-#endif
-#include "Synet/Synet.h"
-
 #include "TestNetwork.h"
+#include "TestRegionDecoder.h"
+
+#include "Synet/Network.h"
 
 namespace Test
 {
@@ -51,7 +42,7 @@ namespace Test
 
         virtual String Type() const
         {
-            return _net.Is8i() ? "int8" : "fp32";
+            return _net.Is8i() ? "int8" : _net.Is16b() ? "bf16" : "fp32";
         }
 
         virtual size_t SrcCount() const
@@ -66,6 +57,11 @@ namespace Test
             return shape.size() == 4 && format == Synet::TensorFormatNhwc ? Shp(shape[0], shape[3], shape[1], shape[2]) : shape;
         }
 
+        virtual Synet::TensorType SrcType(size_t index) const
+        {
+            return _net.Src()[index]->GetType();
+        }
+
         virtual size_t SrcSize(size_t index) const
         {
             return _net.Src()[index]->Size();
@@ -75,6 +71,7 @@ namespace Test
         {
             CPL_PERF_BEG(Type());
             _regionThreshold = options.regionThreshold;
+            _decoderName = param.detection().decoder();
             Synet::SetThreadNumber(options.workThreads);
             if (Load(model, weight, options))
             {
@@ -90,22 +87,15 @@ namespace Test
                     const Shape & shape = _net.NchwShape();
                     if (shape.size() == 4 && shape[0] != options.batchSize)
                     {
-                        if (!_net.Reshape(shape[3], shape[2], options.batchSize))
+                        if (!_net.Reshape(shape[3], shape[2], options.batchSize, CTX_NUM))
                             return false;
                     }
                 }
-                _net.CompactWeight();
+                _net.CompactWeight(!(options.debugPrint&2));
                 _lower = param.lower();
                 _upper = param.upper();
                 _synetMemoryUsage = _net.MemoryUsage();
-                if(param.detection().decoder() == "epsilon")
-                    _anchor.Init(_net, param.detection().epsilon());
-                if (param.detection().decoder() == "retina")
-                    _anchor.Init(_net, param.detection().retina());
-                if (param.detection().decoder() == "ultraface")
-                    _ultraface.Init(param.detection().ultraface());
-                if (param.detection().decoder() == "yoloV5")
-                    _yoloV5.Init(param.detection().yoloV5());
+                _regionDecoder.Init(_net, param);
                 return true;
             }
             return false;
@@ -125,7 +115,7 @@ namespace Test
             SetInput(src);
             {
                 CPL_PERF_BEGF(Type(), _net.Flop());
-                _net.Forward();
+                _net.Forward(CTX_NUM - 1);
             }
             SetOutput();
             return _output;
@@ -136,20 +126,16 @@ namespace Test
             if (flag)
             {
                 SetInput(src);
-                _net.DebugPrint(os, flag, first, last, precision);
+                _net.DebugPrint(os, flag, first, last, precision, CTX_NUM - 1);
             }
         };
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
-            if (_anchor.Enable())
-                return _anchor.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
-            else if (_ultraface.Enable())
-                return _ultraface.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
-            else if (_yoloV5.Enable())
-                return _yoloV5.GetRegions(_net, size.x, size.y, threshold, overlap)[0];
+            if (_regionDecoder.Enable())
+                return _regionDecoder.GetRegions(_net, size, threshold, overlap, CTX_NUM - 1);
             else
-                return _net.GetRegions(size.x, size.y, threshold, overlap);
+                return _net.GetRegions(size.x, size.y, threshold, overlap, CTX_NUM - 1);
         }
 
         virtual size_t MemoryUsage() const
@@ -158,20 +144,21 @@ namespace Test
         }
 
     private:
-        typedef Synet::Network<float> Net;
+        typedef Synet::Network Net;
         Net _net;
         bool _trans, _sort;
         Floats _lower, _upper;
         size_t _synetMemoryUsage;
-        Synet::AnchorDecoder _anchor;
-        Synet::UltrafaceDecoder _ultraface;
-        Synet::YoloV5Decoder _yoloV5;
+        RegionDecoder _regionDecoder;
+        const int CTX_NUM = 1;
 
         bool Load(const String & model, const String & weight, const Options& options)
         {
             Synet::Options synOpt;
             synOpt.performanceLog = (Synet::Options::PerfomanceLog)options.performanceLog;
-            synOpt.bf16RoundTest = options.bf16Test;
+            if(options.bf16Test)
+                synOpt.bf16Support = Synet::Options::Bf16SupportSoft;
+            //synOpt.bf16Support = Synet::Options::Bf16SupportNone;
 
 #ifdef SYNET_TEST_MEMORY_LOAD
             std::ifstream mifs(model, std::ios::binary);
@@ -196,39 +183,49 @@ namespace Test
             wifs.read(wdata.data(), (std::streamsize)wsize);
             wifs.close();
 
-            return _net.Load(mdata.data(), msize, wdata.data(), wsize, synOpt);
+            return _net.Load(mdata.data(), msize, wdata.data(), wsize, synOpt, CTX_NUM);
 #else
-            return _net.Load(model, weight, synOpt);
+            return _net.Load(model, weight, synOpt, CTX_NUM);
 #endif
         }
 
-        void SetInput(const Tensors& x)
+        template<class T> static void SetInput(const Tensor & src, Tensor & dst)
         {
-            assert(x.size() == _net.Src().size());
+            assert(src.Size() == dst.Size() && src.GetType() == dst.GetType());
+            if (dst.Format() == Synet::TensorFormatNhwc && dst.Count() == 4)
+            {
+                for (size_t n = 0; n < src.Axis(0); ++n)
+                    for (size_t c = 0; c < src.Axis(1); ++c)
+                        for (size_t y = 0; y < src.Axis(2); ++y)
+                            for (size_t x = 0; x < src.Axis(3); ++x)
+                                dst.Data<T>(Shape({ n, y, x, c }))[0] = src.Data<T>(Shape({ n, c, y, x }))[0];
+            }
+            else
+                memcpy(dst.RawData(), src.RawData(), src.RawSize());
+        }
+
+        void SetInput(const Tensors& src)
+        {
+            assert(src.size() == _net.Src().size());
 #ifdef SYNET_TEST_SET_INPUT
-            if (_net.Src().size() == 1 && _net.Src()[0]->Count() == 4)
+            if (_net.Src().size() == 1 && _net.Src()[0]->Count() == 4 && _netSrc().GetType() == Synet::TensorType32f)
             {
                 Views views;
                 InputToViews(x[0], views);
-                _net.SetInput(views, _lower, _upper);
+                _net.SetInput(views, _lower, _upper, CTX_NUM - 1);
                 return;
             }
 #endif
-            for (size_t i = 0; i < x.size(); ++i)
+            for (size_t i = 0; i < src.size(); ++i)
             {
-                Net::Tensor & src = *_net.Src()[i];
-                assert(x[i].Size() == src.Size());
-                if (src.Format() == Synet::TensorFormatNhwc && src.Count() == 4)
+                switch (src[i].GetType())
                 {
-                    const float * pX = x[i].CpuData();
-                    for (size_t n = 0; n < src.Axis(0); ++n)
-                        for (size_t c = 0; c < src.Axis(3); ++c)
-                            for (size_t y = 0; y < src.Axis(1); ++y)
-                                for (size_t x = 0; x < src.Axis(2); ++x)
-                                    src.CpuData(Shape({ n, y, x, c }))[0] = *pX++;
+                case Synet::TensorType32f: SetInput<float>(src[i], *_net.Src(CTX_NUM - 1)[i]); break;
+                case Synet::TensorType32i: SetInput<int32_t>(src[i], *_net.Src(CTX_NUM - 1)[i]); break;
+                case Synet::TensorType64i: SetInput<int64_t>(src[i], *_net.Src(CTX_NUM - 1)[i]); break;
+                default:
+                    assert(0);
                 }
-                else
-                    memcpy(src.CpuData(), x[i].CpuData(), x[i].Size() * sizeof(float));
             }
         }
 
@@ -249,7 +246,7 @@ namespace Test
                     for (size_t y = 0; y < shape[2]; ++y)
                         for (size_t x = 0; x < shape[3]; ++x)
                             dst[b].data[dst[b].stride*y + x * (shape[1] == 1 ? 1 : 4) + c] = 
-                            Float32ToUint8(src.CpuData(Shp( b, c, y, x ))[0], _lower[c], _upper[c]);
+                            Float32ToUint8(src.Data<float>(Shp( b, c, y, x ))[0], _lower[c], _upper[c]);
             }
         }
 
@@ -266,7 +263,7 @@ namespace Test
                 typedef std::map<String, Net::Tensor*> Dst;
                 Dst dst;
                 for (size_t i = 0; i < _net.Dst().size(); ++i)
-                    dst[_net.Dst()[i]->Name()] = _net.Dst()[i];
+                    dst[_net.Dst(CTX_NUM - 1)[i]->Name()] = _net.Dst(CTX_NUM - 1)[i];
                 _output.resize(dst.size());
                 size_t i = 0;
                 for (Dst::const_iterator it = dst.begin(); it != dst.end(); ++it, ++i)
@@ -276,7 +273,7 @@ namespace Test
             {
                 _output.resize(_net.Dst().size());
                 for (size_t i = 0; i < _net.Dst().size(); ++i)
-                    SetOutput(*_net.Dst()[i], *_net.Back()[i], _output[i]);
+                    SetOutput(*_net.Dst(CTX_NUM - 1)[i], *_net.Back()[i], _output[i]);
             }
         }
 
@@ -285,26 +282,29 @@ namespace Test
             switch (src.GetType())
             {
             case Synet::TensorType32f:
-                SetOutputT(src.As32f(), back, dst);
+                SetOutputT<float>(src, back, dst);
                 break;
             case Synet::TensorType32i:
-                SetOutputT(src.As32i(), back, dst);
+                SetOutputT<int32_t>(src, back, dst);
                 break;
             case Synet::TensorType64i:
-                SetOutputT(src.As64i(), back, dst);
+                SetOutputT<int64_t>(src, back, dst);
+                break;
+            case Synet::TensorType8u:
+                SetOutputT<uint8_t>(src, back, dst);
                 break;
             default:
                 assert(0);
             }
         }
 
-        template<class T> void SetOutputT(const Synet::Tensor<T> & src, const Net::Layer & back, Tensor & dst)
+        template<class T> void SetOutputT(const Tensor & src, const Net::Layer & back, Tensor & dst)
         {
             if (src.Count() == 4 && src.Axis(3) == 7 && back.Param().type() == Synet::LayerTypeDetectionOutput)
             {
                 assert(src.Axis(0) == 1);
                 Vector tmp;
-                const T * pSrc = src.CpuData();
+                const T * pSrc = src.Data<T>();
                 for (size_t j = 0; j < src.Axis(2); ++j, pSrc += 7)
                 {
                     if (pSrc[0] == -1)
@@ -322,8 +322,30 @@ namespace Test
                     tmp[offset + 6] = (float)pSrc[6];
                 }
                 SortDetectionOutput(tmp.data(), tmp.size());
-                dst.Reshape(Shp(1, 1, tmp.size()/7, 7));
-                memcpy(dst.CpuData(), tmp.data(), dst.Size() * sizeof(float));
+                dst.Reshape(Synet::TensorType32f, Shp(1, 1, tmp.size()/7, 7));
+                memcpy(dst.RawData(), tmp.data(), dst.RawSize());
+            }
+            else if (_decoderName == "rtdetr")
+            {
+                assert(src.Axis(0) == 1 && src.Axis(2) == 6);
+                Vector tmp;
+                const T* pSrc = src.Data<T>();
+                for (size_t i = 0, n = src.Axis(1); i < n; ++i, pSrc += 6)
+                {
+                    if (pSrc[4] <= _regionThreshold)
+                        continue;
+                    size_t offset = tmp.size();
+                    tmp.resize(offset + 6);
+                    tmp[offset + 0] = (float)pSrc[0];
+                    tmp[offset + 1] = (float)pSrc[1];
+                    tmp[offset + 2] = (float)pSrc[2];
+                    tmp[offset + 3] = (float)pSrc[3];
+                    tmp[offset + 4] = (float)pSrc[4];
+                    tmp[offset + 5] = (float)pSrc[5];
+                }
+                SortRtdetr(tmp.data(), tmp.size());
+                dst.Reshape(Synet::TensorType32f, Shp(1, tmp.size() / 6, 6));
+                memcpy(dst.RawData(), tmp.data(), dst.RawSize());
             }
             else
             {
@@ -331,46 +353,47 @@ namespace Test
                 bool batch = _net.Src()[0]->Axis(0) != 1;
                 if (trans && src.Count() == 4)
                 {
-                    dst.Reshape(Shp(src.Axis(0), src.Axis(3), src.Axis(1), src.Axis(2)), Synet::TensorFormatNchw);
+                    dst.Reshape(Synet::TensorType32f, Shp(src.Axis(0), src.Axis(3), src.Axis(1), src.Axis(2)), Synet::TensorFormatNchw);
                     for (size_t n = 0; n < src.Axis(0); ++n)
                         for (size_t c = 0; c < src.Axis(3); ++c)
                             for (size_t y = 0; y < src.Axis(1); ++y)
                                 for (size_t x = 0; x < src.Axis(2); ++x)
-                                    dst.CpuData(Shp(n, c, y, x))[0] = (float)src.CpuData(Shp(n, y, x, c))[0];
+                                    dst.Data<float>(Shp(n, c, y, x))[0] = (float)src.Data<T>(Shp(n, y, x, c))[0];
                 }
                 else if (trans && src.Count() == 3)
                 {
                     if (batch)
                     {
-                        dst.Reshape(Shp(src.Axis(0), src.Axis(2), src.Axis(1)), Synet::TensorFormatNchw);
+                        dst.Reshape(Synet::TensorType32f, Shp(src.Axis(0), src.Axis(2), src.Axis(1)), Synet::TensorFormatNchw);
                         for (size_t n = 0; n < src.Axis(0); ++n)
                             for (size_t c = 0; c < src.Axis(2); ++c)
                                 for (size_t s = 0; s < src.Axis(1); ++s)
-                                    dst.CpuData(Shp(n, c, s))[0] = (float)src.CpuData(Shp(n, s, c))[0];
+                                    dst.Data<float>(Shp(n, c, s))[0] = (float)src.Data<T>(Shp(n, s, c))[0];
                     }
                     else
                     {
-                        dst.Reshape(Shp(src.Axis(2), src.Axis(0), src.Axis(1)), Synet::TensorFormatNchw);
+                        dst.Reshape(Synet::TensorType32f, Shp(src.Axis(2), src.Axis(0), src.Axis(1)), Synet::TensorFormatNchw);
                         for (size_t c = 0; c < src.Axis(2); ++c)
                             for (size_t y = 0; y < src.Axis(0); ++y)
                                 for (size_t x = 0; x < src.Axis(1); ++x)
-                                    dst.CpuData(Shp(c, y, x))[0] = (float)src.CpuData(Shp(y, x, c))[0];
+                                    dst.Data<float>(Shp(c, y, x))[0] = (float)src.Data<T>(Shp(y, x, c))[0];
                     }
                 }
                 else if (trans && src.Count() == 2 && (src.Axis(0) == 1 || src.Format() == Synet::TensorFormatNhwc))
                 {
-                    dst.Reshape(Shp(src.Axis(1), src.Axis(0)), Synet::TensorFormatNchw);
+                    dst.Reshape(Synet::TensorType32f, Shp(src.Axis(1), src.Axis(0)), Synet::TensorFormatNchw);
                     for (size_t c = 0; c < src.Axis(1); ++c)
                         for (size_t s = 0; s < src.Axis(0); ++s)
-                            dst.CpuData(Shp(c, s))[0] = (float)src.CpuData(Shp(s, c))[0];
+                            dst.Data<float>(Shp(c, s))[0] = (float)src.Data<T>(Shp(s, c))[0];
                 }
                 else
                 {
-                    dst.Reshape(src.Shape(), Synet::TensorFormatNchw);
+                    dst.Reshape(Synet::TensorType32f, src.Shape(), Synet::TensorFormatNchw);
                     for (size_t i = 0; i < src.Size(); ++i)
-                        dst.CpuData()[i] = (float)src.CpuData()[i];
+                        dst.Data<float>()[i] = (float)src.Data<T>()[i];
                 }
             }
+            dst.SetName(src.Name());
         }
 
         bool Reshape(const TestParam & param, size_t batchSize)
@@ -379,34 +402,20 @@ namespace Test
             Shapes srcShapes;
             for (size_t i = 0; i < param.input().size(); ++i)
             {
-                const ShapeParam & shape = param.input()[i];
+                const InputParam & shape = param.input()[i];
                 srcNames.push_back(shape.name());
                 Shape srcShape;
-                if (shape.size() > 0)
-                    srcShape.push_back(shape.size());
+                if (shape.dims().size())
+                    srcShape = shape.dims();
                 else
                 {
                     for (size_t j = 0; j < shape.shape().size(); ++j)
                     {
-                        const SizeParam & size = shape.shape()[j];
+                        const SizeParam& size = shape.shape()[j];
                         if (size.size() > 0)
                             srcShape.push_back(size.size());
-                        else if (size.name().size() > 0)
-                        {
-                            Net::Tensor tensor;
-                            if (_net.GetMetaConst(size.name(), tensor) && tensor.GetType() == Synet::TensorType32i && tensor.Size())
-                            {
-                                int32_t value = tensor.As32i().CpuData()[0];
-                                if (value > 0)
-                                    srcShape.push_back(value);
-                                else
-                                    return false;
-                            }
-                            else
-                                return false;
-                        }
                         else
-                            return false;
+                            SYNET_ERROR("Test parameter input.shape.size must be > 0!");
                     }
                 }
                 if (srcShape.size() > 1)   
@@ -417,7 +426,7 @@ namespace Test
                         srcShape = Shape({ srcShape[0], srcShape[2], srcShape[3], srcShape[1] });
                 }
                 if (srcShape.empty())
-                    return false;
+                    SYNET_ERROR("Test parameter input.shape is empty!");
                 srcShapes.push_back(srcShape);
             }
 
@@ -438,11 +447,11 @@ namespace Test
             }
 #ifdef SYNET_TEST_NET_RESHAPE
             if (_trans)
-                return _net.Reshape(srcShapes[0][2], srcShapes[0][1], srcShapes[0][0]);
+                return _net.Reshape(srcShapes[0][2], srcShapes[0][1], srcShapes[0][0], CTX_NUM);
             else
-                return _net.Reshape(srcShapes[0][3], srcShapes[0][2], srcShapes[0][0]);
+                return _net.Reshape(srcShapes[0][3], srcShapes[0][2], srcShapes[0][0], CTX_NUM);
 #endif
-            return equal || _net.Reshape(srcNames, srcShapes, dstNames);
+            return equal || _net.Reshape(srcNames, srcShapes, dstNames, CTX_NUM);
         }
     };
 }

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test>
+	<lower>0</lower>
+	<upper>255</upper>
+	<input>
+		<item>
+			<name>image</name>
+			<dims>1 3 256 256</dims>
+		</item>
+	</input>
+	<detection>
+		<decoder>detOut</decoder>
+	</detection>
+</test>
+

@@ -1,0 +1,517 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network>
+	<version>1</version>
+	<name>landmarks-regression-retail-0009</name>
+	<layers>
+		<item>
+			<type>Input</type>
+			<name>0</name>
+			<dst>0</dst>
+			<input>
+				<shape>
+					<item>
+						<dim>1 48 48 3</dim>
+						<format>Nhwc</format>
+					</item>
+				</shape>
+			</input>
+		</item>
+		<item>
+			<type>Scale</type>
+			<name>Mul_/Fused_Mul_/FusedScaleShift_</name>
+			<src>0</src>
+			<dst>0</dst>
+			<weight>
+				<item>
+					<dim>3</dim>
+					<offset>0</offset>
+					<size>12</size>
+				</item>
+				<item>
+					<dim>3</dim>
+					<offset>12</offset>
+					<size>12</size>
+				</item>
+			</weight>
+			<scale>
+				<biasTerm>1</biasTerm>
+			</scale>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>68</name>
+			<src>0</src>
+			<dst>68</dst>
+			<weight>
+				<item>
+					<dim>3 3 3 16</dim>
+					<format>Nhwc</format>
+					<offset>24</offset>
+					<size>1728</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>1752</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>1</dim>
+					<offset>1816</offset>
+					<size>4</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>16</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Prelu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Pooling</type>
+			<name>70</name>
+			<src>68</src>
+			<dst>70</dst>
+			<pooling>
+				<method>Max</method>
+				<kernel>2 2</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>2 2</stride>
+				<roundingType>Floor</roundingType>
+			</pooling>
+		</item>
+		<item>
+			<type>Scale</type>
+			<name>Mul1_1007/Fused_Mul_/FusedScaleShift_</name>
+			<src>70</src>
+			<dst>70</dst>
+			<weight>
+				<item>
+					<dim>16</dim>
+					<offset>1820</offset>
+					<size>64</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>1884</offset>
+					<size>64</size>
+				</item>
+			</weight>
+			<scale>
+				<biasTerm>1</biasTerm>
+			</scale>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>72</name>
+			<src>70</src>
+			<dst>72</dst>
+			<weight>
+				<item>
+					<dim>3 3 16 32</dim>
+					<format>Nhwc</format>
+					<offset>1948</offset>
+					<size>18432</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>20380</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>1</dim>
+					<offset>20508</offset>
+					<size>4</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>32</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Prelu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Pooling</type>
+			<name>74</name>
+			<src>72</src>
+			<dst>74</dst>
+			<pooling>
+				<method>Max</method>
+				<kernel>2 2</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>2 2</stride>
+				<roundingType>Floor</roundingType>
+			</pooling>
+		</item>
+		<item>
+			<type>Scale</type>
+			<name>Mul1_962/Fused_Mul_/FusedScaleShift_</name>
+			<src>74</src>
+			<dst>74</dst>
+			<weight>
+				<item>
+					<dim>32</dim>
+					<offset>20512</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>20640</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<scale>
+				<biasTerm>1</biasTerm>
+			</scale>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>76</name>
+			<src>74</src>
+			<dst>76</dst>
+			<weight>
+				<item>
+					<dim>3 3 32 64</dim>
+					<format>Nhwc</format>
+					<offset>20768</offset>
+					<size>73728</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>94496</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1</dim>
+					<offset>94752</offset>
+					<size>4</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Prelu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Pooling</type>
+			<name>78</name>
+			<src>76</src>
+			<dst>78</dst>
+			<pooling>
+				<method>Max</method>
+				<kernel>2 2</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>2 2</stride>
+				<roundingType>Floor</roundingType>
+			</pooling>
+		</item>
+		<item>
+			<type>Scale</type>
+			<name>Mul1_989/Fused_Mul_/FusedScaleShift_</name>
+			<src>78</src>
+			<dst>78</dst>
+			<weight>
+				<item>
+					<dim>64</dim>
+					<offset>94756</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>95012</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<scale>
+				<biasTerm>1</biasTerm>
+			</scale>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>80</name>
+			<src>78</src>
+			<dst>80</dst>
+			<weight>
+				<item>
+					<dim>3 3 64 64</dim>
+					<format>Nhwc</format>
+					<offset>95268</offset>
+					<size>147456</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>242724</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1</dim>
+					<offset>242980</offset>
+					<size>4</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Prelu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Scale</type>
+			<name>Mul1_980/Fused_Mul_/FusedScaleShift_</name>
+			<src>80</src>
+			<dst>80</dst>
+			<weight>
+				<item>
+					<dim>64</dim>
+					<offset>242984</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>243240</offset>
+					<size>256</size>
+				</item>
+			</weight>
+			<scale>
+				<biasTerm>1</biasTerm>
+			</scale>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>83</name>
+			<src>80</src>
+			<dst>83</dst>
+			<weight>
+				<item>
+					<dim>3 3 64 128</dim>
+					<format>Nhwc</format>
+					<offset>243496</offset>
+					<size>294912</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>538408</offset>
+					<size>512</size>
+				</item>
+				<item>
+					<dim>1</dim>
+					<offset>538920</offset>
+					<size>4</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>128</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Prelu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Scale</type>
+			<name>Mul1_/Fused_Mul_/FusedScaleShift_</name>
+			<src>83</src>
+			<dst>83</dst>
+			<weight>
+				<item>
+					<dim>128</dim>
+					<offset>538924</offset>
+					<size>512</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>539436</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<scale>
+				<biasTerm>1</biasTerm>
+			</scale>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>86</name>
+			<src>83</src>
+			<dst>86</dst>
+			<weight>
+				<item>
+					<dim>6 6 1 128</dim>
+					<format>Nhwc</format>
+					<offset>539948</offset>
+					<size>18432</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>558380</offset>
+					<size>512</size>
+				</item>
+				<item>
+					<dim>1</dim>
+					<offset>558892</offset>
+					<size>4</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>128</outputNum>
+				<kernel>6 6</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<group>128</group>
+				<activationType>Prelu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Scale</type>
+			<name>Mul1_1016/Fused_Mul_/FusedScaleShift_</name>
+			<src>86</src>
+			<dst>86</dst>
+			<weight>
+				<item>
+					<dim>128</dim>
+					<offset>558896</offset>
+					<size>512</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>559408</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<scale>
+				<biasTerm>1</biasTerm>
+			</scale>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>89</name>
+			<src>86</src>
+			<dst>89</dst>
+			<weight>
+				<item>
+					<dim>1 1 128 256</dim>
+					<format>Nhwc</format>
+					<offset>559920</offset>
+					<size>131072</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>690992</offset>
+					<size>1024</size>
+				</item>
+				<item>
+					<dim>1</dim>
+					<offset>692016</offset>
+					<size>4</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>256</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Prelu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Scale</type>
+			<name>Mul1_971/Fused_Mul_/FusedScaleShift_</name>
+			<src>89</src>
+			<dst>89</dst>
+			<weight>
+				<item>
+					<dim>256</dim>
+					<offset>692020</offset>
+					<size>1024</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>693044</offset>
+					<size>1024</size>
+				</item>
+			</weight>
+			<scale>
+				<biasTerm>1</biasTerm>
+			</scale>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>92</name>
+			<src>89</src>
+			<dst>92</dst>
+			<weight>
+				<item>
+					<dim>1 1 256 64</dim>
+					<format>Nhwc</format>
+					<offset>694068</offset>
+					<size>65536</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>759604</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1</dim>
+					<offset>759860</offset>
+					<size>4</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>64</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<activationType>Prelu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>94</name>
+			<src>92</src>
+			<dst>94</dst>
+			<weight>
+				<item>
+					<dim>1 1 64 10</dim>
+					<format>Nhwc</format>
+					<offset>759864</offset>
+					<size>2560</size>
+				</item>
+				<item>
+					<dim>10</dim>
+					<offset>762424</offset>
+					<size>40</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>10</outputNum>
+				<kernel>1 1</kernel>
+				<pad>0 0 0 0</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Sigmoid</type>
+			<name>95</name>
+			<src>94</src>
+			<dst>95</dst>
+		</item>
+	</layers>
+</network>
+

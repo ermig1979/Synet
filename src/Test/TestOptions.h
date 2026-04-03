@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2025 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,26 @@
 */
 
 #pragma once
+
+#ifndef FIRST_MODEL_DEFAULT
+#define FIRST_MODEL_DEFAULT "other.dsc"
+#endif
+
+#ifndef FIRST_WEIGHT_DEFAULT
+#define FIRST_WEIGHT_DEFAULT "other.dat"
+#endif
+
+#ifndef SECOND_MODEL_DEFAULT
+#define SECOND_MODEL_DEFAULT "synet.xml"
+#endif
+
+#ifndef SECOND_WEIGHT_DEFAULT
+#define SECOND_WEIGHT_DEFAULT "synet.bin"
+#endif
+
+#ifndef IMAGE_DIRECTORY_DEFAULT
+#define IMAGE_DIRECTORY_DEFAULT "image"
+#endif
 
 #include "Cpl/Args.h"
 
@@ -59,6 +79,7 @@ namespace Test
         size_t testThreads;
         float compareThreshold;
         double compareQuantile;
+        bool comparePrecise;
         String logName;
         bool consoleSilence;
         bool reverseExecution;
@@ -78,6 +99,9 @@ namespace Test
         float regionOverlap;
         double statFilter;
         bool bf16;
+        bool saveUnoptimized;
+        bool pinThread;
+        String ortProvider;
 
         mutable bool result;
         mutable size_t firstMemoryUsage,  secondMemoryUsage;
@@ -92,13 +116,13 @@ namespace Test
             mode = GetArg2("-m", "-mode");
             enable = FromString<int>(GetArg2("-e", "-enable", "3"));
             textWeight = GetArg("-tw", "other.txt");
-            firstModel = GetArg("-fm", QuantizationTest() ? "synet.xml" : "other.dsc");
-            firstWeight = GetArg("-fw", QuantizationTest() ? "synet.bin" : "other.dat");
-            secondModel = GetArg("-sm", QuantizationTest() ? "int8.xml" : "synet.xml");
-            secondWeight = GetArg("-sw", "synet.bin");
+            firstModel = GetArg("-fm", FIRST_MODEL_DEFAULT);
+            firstWeight = GetArg("-fw", FIRST_WEIGHT_DEFAULT);
+            secondModel = GetArg("-sm", SECOND_MODEL_DEFAULT);
+            secondWeight = GetArg("-sw", SECOND_WEIGHT_DEFAULT);
             testParam = GetArg("-tp", "param.xml");
             quantParam = GetArg("-qp", "quant.xml");
-            imageDirectory = GetArg("-id", QuantizationTest() ? "" : "image");
+            imageDirectory = GetArg("-id", IMAGE_DIRECTORY_DEFAULT);
             imageFilter = GetArg("-if", "*.*");
             imageBegin = FromString<size_t>(GetArg("-ib", "0"));
             imageEnd = FromString<size_t>(GetArg("-ie", "1000000"));
@@ -111,11 +135,12 @@ namespace Test
             testThreads = FromString<size_t>(GetArg("-tt", "0"));
             compareThreshold = FromString<float>(GetArg("-ct", "0.001"));
             compareQuantile = FromString<double>(GetArg("-cq", "0.0"));
+            comparePrecise = FromString<bool>(GetArg("-cp", "1"));
             logName = GetArg("-ln", "", false);
             consoleSilence = FromString<bool>(GetArg("-cs", "0"));
             reverseExecution = FromString<bool>(GetArg("-re", "0"));
             syncName = GetArg("-sn", "", false);
-            skipThreshold = FromString<double>(GetArg("-st", "20.0"));
+            skipThreshold = FromString<double>(GetArg("-st", "100.0"));
             textReport = GetArg("-tr", "", false);
             htmlReport = GetArg("-hr", "", false);
             tensorFormat = FromString<int>(GetArg("-tf", "1"));
@@ -126,10 +151,13 @@ namespace Test
             debugPrintLast = FromString<int>(GetArg("-dpl", "2"));
             debugPrintPrecision = FromString<int>(GetArg("-dpp", "4"));
             annotateRegions = FromString<int>(GetArg("-ar", "0"));
-            regionThreshold = FromString<float>(GetArg("-rt", "0.3"));
+            regionThreshold = FromString<float>(GetArg("-rt", "0.5"));
             regionOverlap = FromString<float>(GetArg("-ro", "0.5"));
             statFilter = FromString<double>(GetArg("-sf", "0.0"));
             bf16 = FromString<bool>(GetArg("-bf", "0"));
+            saveUnoptimized = FromString<bool>(GetArg("-su", "0"));
+            pinThread = FromString<bool>(GetArg("-pt", "1"));
+            ortProvider = GetArg("-op", "cpu", false);
             if (enable < 1 || enable > 3)
             {
                 std::cout << "Parameter '-e' (enable) must be only 1, 2, 3!" << std::endl;
@@ -178,16 +206,6 @@ namespace Test
         size_t TestThreads() const
         {
             return std::max<size_t>(1, testThreads);
-        }
-
-        bool QuantizationTest() const
-        {
-            String app = AppName();
-#ifdef WIN32
-            return app.find("Quantization") != std::string::npos;
-#else
-            return app.find("quantization") != std::string::npos;
-#endif
         }
 
         static inline String FullName(const String& name, const String& type)

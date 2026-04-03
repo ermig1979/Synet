@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2025 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -35,33 +35,38 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeArgMax,
     LayerTypeBias,
     LayerTypeBinaryOperation,
-    LayerTypeBroadcast,
+    LayerTypeBroadcast,//not used?
     LayerTypeCast,
+    LayerTypeCompare,
     LayerTypeConcat,
     LayerTypeConst,
+    LayerTypeConstantOfShape,
     LayerTypeConvolution,
     LayerTypeCtcGreedyDecoder,
     LayerTypeDeconvolution,
+    LayerTypeDequantizeLinear,
     LayerTypeDetectionOutput,
     LayerTypeEltwise,
     LayerTypeElu,
     LayerTypeExpandDims,
     LayerTypeFlatten,
-    LayerTypeFused,
+    LayerTypeFused,//not used?
     LayerTypeGather,
+    LayerTypeGelu,
+    LayerTypeGridSample,
     LayerTypeHardSigmoid,
     LayerTypeHswish,
     LayerTypeInnerProduct,
     LayerTypeInput,
     LayerTypeInterp,
-    LayerTypeInterp2,
-    LayerTypeLog,
-    LayerTypeLrn,
+    LayerTypeLrn,//legacy?
     LayerTypeLstm,
     LayerTypeMergedConvolution,
     LayerTypeMeta,
     LayerTypeMish,
+    LayerTypeMul,
     LayerTypeNonMaxSuppression,
+    LayerTypeNonZero,
     LayerTypeNormalize,
     LayerTypePad,
     LayerTypePermute,
@@ -70,16 +75,27 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypePrelu,
     LayerTypePriorBox,
     LayerTypePriorBoxClustered,
+    LayerTypeQuantizedAdd,
+    LayerTypeQuantizedConcat,
+    LayerTypeQuantizedConvolution,
+    LayerTypeQuantizedInnerProduct,
+    LayerTypeQuantizedMergedConvolution,
+    LayerTypeQuantizedPooling,
+    LayerTypeQuantizedPrelu,
+    LayerTypeQuantizedScale,
+    LayerTypeQuantizedShuffle,
+    LayerTypeQuantizeLinear,
     LayerTypeReduction,
-    LayerTypeRegion,
+    LayerTypeRegion,//legacy
     LayerTypeRelu,
-    LayerTypeReorg,
+    LayerTypeReorg,//legacy
     LayerTypeReshape,
     LayerTypeRestrictRange,
     LayerTypeReverseSequence,
     LayerTypeRnnGruBd,
     LayerTypeScale,
-    LayerTypeShortcut,
+    LayerTypeScaledDotProductAttention,
+    LayerTypeScatterNd,
     LayerTypeShuffle,
     LayerTypeSigmoid,
     LayerTypeSlice,
@@ -91,14 +107,17 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeStridedSlice,
     LayerTypeStub,
     LayerTypeSwish,
-    LayerTypeSwitch,
+    LayerTypeSwitch,//legacy
     LayerTypeTensorIterator,
     LayerTypeTile,
+    LayerTypeTiledScale2D,
     LayerTypeTopK,
     LayerTypeUnaryOperation,
     LayerTypeUnpack,
-    LayerTypeUpsample,
-    LayerTypeYolo); 
+    LayerTypeUpsample,//legacy
+    LayerTypeWhere,
+    LayerTypeYolo,
+    LayerTypeYoloV7);
 
 CPL_PARAM_ENUM1(Synet, ActivationFunctionType,
     ActivationFunctionTypeIdentity,
@@ -110,15 +129,30 @@ CPL_PARAM_ENUM1(Synet, ActivationFunctionType,
     ActivationFunctionTypeHswish,
     ActivationFunctionTypeMish,
     ActivationFunctionTypeHardSigmoid,
-    ActivationFunctionTypeSwish);
+    ActivationFunctionTypeSwish,
+    ActivationFunctionTypeGelu);
+
+CPL_PARAM_ENUM1(Synet, LowPrecisionType,
+    LowPrecisionTypeNone,
+    LowPrecisionTypeInternal,
+    LowPrecisionTypePassive,
+    LowPrecisionTypeHybrid,
+    LowPrecisionTypeActive);
 
 CPL_PARAM_ENUM1(Synet, BinaryOperationType,
+    BinaryOperationTypeAdd,
+    BinaryOperationTypeAnd,
     BinaryOperationTypeDiv,
+    BinaryOperationTypeMod,
     BinaryOperationTypeSub);
 
-CPL_PARAM_ENUM1(Synet, BoxEncodingType,
-    BoxEncodingTypeCorner,
-    BoxEncodingTypeCenter);
+CPL_PARAM_ENUM1(Synet, CompareType,
+    CompareTypeEqual,
+    CompareTypeNotEqual,
+    CompareTypeGreaterThan,
+    CompareTypeGreaterOrEqual,
+    CompareTypeLessThan,
+    CompareTypeLessOrEqual);
 
 CPL_PARAM_ENUM1(Synet, CoordinateTransformType,
     CoordinateTransformTypeLegacy,
@@ -126,11 +160,25 @@ CPL_PARAM_ENUM1(Synet, CoordinateTransformType,
     CoordinateTransformTypeCaffe,
     CoordinateTransformTypePytorch);
 
+CPL_PARAM_ENUM1(Synet, BoxEncodingType,
+    BoxEncodingTypeCorner,
+    BoxEncodingTypeCenter);
+
 CPL_PARAM_ENUM1(Synet, EltwiseOperationType,
     EltwiseOperationTypeProduct,
     EltwiseOperationTypeSum,
     EltwiseOperationTypeMax,
     EltwiseOperationTypeMin);
+
+CPL_PARAM_ENUM1(Synet, GridSampleInterpMode,
+    GridSampleInterpModeBilinear,
+    GridSampleInterpModeNearest,
+    GridSampleInterpModeBicubic);
+
+CPL_PARAM_ENUM1(Synet, GridSamplePaddingMode,
+    GridSamplePaddingModeZeros,
+    GridSamplePaddingModeBorder,
+    GridSamplePaddingModeReflection);
 
 CPL_PARAM_ENUM1(Synet, InterpolationType,
     InterpolationTypeBilinear,
@@ -144,50 +192,43 @@ CPL_PARAM_ENUM1(Synet, LstmDirectionType,
 CPL_PARAM_ENUM1(Synet, MetaType,
     MetaTypeAdd,
     MetaTypeCast,
+    MetaTypeCeil,
     MetaTypeConst,
+    MetaTypeConstantOfShape,
     MetaTypeDiv,
     MetaTypeEqual,
     MetaTypeExpandDims,
-    MetaTypeFill,
     MetaTypeFloor,
     MetaTypeGather,
-    MetaTypeGreater,
-    MetaTypeInput,
-    MetaTypeInputWithDefault,
-    MetaTypeMaximum,
-    MetaTypeMinimum,
+    MetaTypeMod,
     MetaTypeMul,
     MetaTypePack,
+    MetaTypePermute,
     MetaTypeRange,
-    MetaTypeRealDiv,
     MetaTypeReduceMin,
     MetaTypeReduceProd,
     MetaTypeReshape,
-    MetaTypeRsqrt,
     MetaTypeSelect,
     MetaTypeShape,
     MetaTypeSlice,
-    MetaTypeSqrt,
     MetaTypeSqueeze,
     MetaTypeStridedSlice,
     MetaTypeStub,
-    MetaTypeSub,
-    MetaTypeSwitch,
-    MetaTypeTensorArray,
-    MetaTypeTensorArrayRead,
-    MetaTypeTensorArraySize,
-    MetaTypeTensorArrayWrite,
-    MetaTypeTile,
-    MetaTypeUnpack);
+    MetaTypeSub);
 
 CPL_PARAM_ENUM1(Synet, NormRegionType,
     NormRegionTypeAcrossChannels,
     NormRegionTypeWithinChannel);
+
+CPL_PARAM_ENUM1(Synet, PadMode,
+    PadModeConstant,
+    PadModeReflect,
+    PadModeEdge,
+    PadModeWrap);
     
 CPL_PARAM_ENUM1(Synet, PoolingMethodType,
     PoolingMethodTypeMax,
-    PoolingMethodTypeAverage,
-    PoolingMethodTypeStochastic);
+    PoolingMethodTypeAverage);
 
 CPL_PARAM_ENUM1(Synet, PoolingPadType,
     PoolingPadTypeTensorflowSame);
@@ -203,7 +244,8 @@ CPL_PARAM_ENUM1(Synet, ReductionType,
     ReductionTypeMin,
     ReductionTypeSum,
     ReductionTypeProd,
-    ReductionTypeL2);
+    ReductionTypeL2,
+    ReductionTypeMean);
 
 CPL_PARAM_ENUM1(Synet, RoundingType,
     RoundingTypeCeil,
@@ -216,17 +258,7 @@ CPL_PARAM_ENUM1(Synet, QuantizationMethod,
 
 CPL_PARAM_ENUM1(Synet, TensorFormat,
     TensorFormatNchw,
-    TensorFormatNhwc,
-    TensorFormatNchw4c,
-    TensorFormatNchw8c,
-    TensorFormatNchw16c,
-    TensorFormatNchwXc,
-    TensorFormatOiyx,
-    TensorFormatYxio,
-    TensorFormatOyxi4o,
-    TensorFormatOyxi8o,
-    TensorFormatOyxi16o,
-    TensorFormatOyxiXo);
+    TensorFormatNhwc);
 
 CPL_PARAM_ENUM1(Synet, TensorType,
     TensorType32f,
@@ -234,7 +266,10 @@ CPL_PARAM_ENUM1(Synet, TensorType,
     TensorType8i,
     TensorType8u,
     TensorType64i,
-    TensorType64u);
+    TensorType64u,
+    TensorTypeBool,
+    TensorType16b,
+    TensorType16f);
 
 CPL_PARAM_ENUM1(Synet, TopKMode,
     TopKModeMax,
@@ -247,23 +282,33 @@ CPL_PARAM_ENUM1(Synet, TopKSort,
 
 CPL_PARAM_ENUM1(Synet, UnaryOperationType,
     UnaryOperationTypeAbs,
+    UnaryOperationTypeCeil,
+    UnaryOperationTypeCos,
+    UnaryOperationTypeErf,
     UnaryOperationTypeExp,
+    UnaryOperationTypeFloor,
     UnaryOperationTypeLog,
     UnaryOperationTypeNeg,
+    UnaryOperationTypeNot,
+    UnaryOperationTypeRcp,
+    UnaryOperationTypeRound,
     UnaryOperationTypeRsqrt,
+    UnaryOperationTypeSign,
+    UnaryOperationTypeSin,
     UnaryOperationTypeSqrt,
     UnaryOperationTypeTanh,
     UnaryOperationTypeZero);
 
+//-------------------------------------------------------------------------------------------------
+
 namespace Synet
 {
-    //-------------------------------------------------------------------------
-
     struct TensorParam
     {
         CPL_PARAM_VALUE(TensorType, type, TensorTypeUnknown);
         CPL_PARAM_VALUE(TensorFormat, format, TensorFormatUnknown);
         CPL_PARAM_VALUE(Shape, shape, Shape());
+        CPL_PARAM_VALUE(bool, scalar, false);
         CPL_PARAM_VALUE(Ints, i32, Ints());
         CPL_PARAM_VALUE(Floats, f32, Floats());
         CPL_PARAM_VALUE(Longs, i64, Longs());
@@ -275,6 +320,7 @@ namespace Synet
         CPL_PARAM_VALUE(Shape, dim, Shape());
         CPL_PARAM_VALUE(TensorType, type, TensorType32f);
         CPL_PARAM_VALUE(TensorFormat, format, TensorFormatNchw);
+        CPL_PARAM_VALUE(bool, scalar, false);
         CPL_PARAM_VALUE(size_t, offset, -1);
         CPL_PARAM_VALUE(size_t, size, -1);
     };
@@ -290,6 +336,22 @@ namespace Synet
     {
         CPL_PARAM_VALUE(Shape, dim, Shape());
         CPL_PARAM_VALUE(TensorFormat, format, TensorFormatNchw);
+        CPL_PARAM_VALUE(TensorType, type, TensorType32f);
+        CPL_PARAM_VALUE(bool, scalar, false);
+    };
+
+    struct LowPrecisionParam
+    {
+        CPL_PARAM_VALUE(LowPrecisionType, bf16Type, LowPrecisionTypeNone);
+    };
+
+    //-------------------------------------------------------------------------------------------------
+
+    struct ActivationParam
+    {
+        CPL_PARAM_VALUE(ActivationFunctionType, type, ActivationFunctionTypeIdentity);
+        CPL_PARAM_VALUE(float, param0, 0.0f);
+        CPL_PARAM_VALUE(float, param1, 6.0f);
     };
 
     struct ArgMaxParam
@@ -309,21 +371,26 @@ namespace Synet
         CPL_PARAM_VALUE(BinaryOperationType, type, BinaryOperationTypeUnknown);
     };
 
-    struct BroadcastParam
-    {
-        CPL_PARAM_VALUE(bool, fixed, false);
-    };
-
     struct CastParam
     {
         CPL_PARAM_VALUE(TensorType, type, TensorTypeUnknown);
     };
 
+    struct CompareParam
+    {
+        CPL_PARAM_VALUE(CompareType, compareType, CompareTypeUnknown);
+        CPL_PARAM_VALUE(TensorType, dstType, TensorTypeBool);
+    };
+
     struct ConcatParam
     {
-        CPL_PARAM_VALUE(uint32_t, axis, 1);
-        CPL_PARAM_VALUE(bool, fixed, false);
+        CPL_PARAM_VALUE(int32_t, axis, 1);
         CPL_PARAM_VALUE(bool, can8i, true);
+    };
+
+    struct ConstantOfShapeParam
+    {
+        CPL_PARAM_STRUCT(TensorParam, value);
     };
 
     struct ConvolutionParam
@@ -341,7 +408,6 @@ namespace Synet
         CPL_PARAM_VALUE(float, activationParam0, 0.0f);
         CPL_PARAM_VALUE(float, activationParam1, 6.0f);
         CPL_PARAM_VALUE(TensorType, quantizationLevel, TensorType32f);
-        CPL_PARAM_VALUE(bool, bf16, false);
     };
 
     struct DetectionOutputParam
@@ -392,6 +458,14 @@ namespace Synet
     {
         CPL_PARAM_VALUE(int, batchDims, 0);
         CPL_PARAM_VALUE(int, axis, 0);
+        CPL_PARAM_VALUE(int, version, 0);
+    };
+
+    struct GridSampleParam
+    {
+        CPL_PARAM_VALUE(bool, alignCorners, false);
+        CPL_PARAM_VALUE(GridSampleInterpMode, interpMode, GridSampleInterpModeBilinear);
+        CPL_PARAM_VALUE(GridSamplePaddingMode, paddingMode, GridSamplePaddingModeZeros);
     };
 
     struct HardSigmoidParam
@@ -412,9 +486,11 @@ namespace Synet
         CPL_PARAM_VALUE(bool, biasTerm, true);
         CPL_PARAM_VALUE(bool, transposeA, false);
         CPL_PARAM_VALUE(bool, transposeB, false);
-        CPL_PARAM_VALUE(uint32_t, axis, 1);
+        CPL_PARAM_VALUE(int32_t, axis, 1);
+        CPL_PARAM_VALUE(ActivationFunctionType, activationType, ActivationFunctionTypeIdentity);
+        CPL_PARAM_VALUE(float, activationParam0, 0.0f);
+        CPL_PARAM_VALUE(float, activationParam1, 6.0f);
         CPL_PARAM_VALUE(TensorType, quantizationLevel, TensorType32f);
-        CPL_PARAM_VALUE(bool, bf16, false);
     };
 
     struct InputParam
@@ -435,22 +511,6 @@ namespace Synet
         CPL_PARAM_VALUE(CoordinateTransformType, coordinateTransformType, CoordinateTransformTypeLegacy);
     };
 
-    struct Interp2Param
-    {
-        CPL_PARAM_VALUE(float, factor, 1.0f);
-        CPL_PARAM_VALUE(int32_t, height, 0);
-        CPL_PARAM_VALUE(int32_t, width, 0);
-        CPL_PARAM_VALUE(Shape, pad, Shape());
-        CPL_PARAM_VALUE(bool, alignCorners, false);
-    };
-
-    struct LogParam
-    {
-        CPL_PARAM_VALUE(float, base, -1.0f);
-        CPL_PARAM_VALUE(float, scale, 1.0f);
-        CPL_PARAM_VALUE(float, shift, 0.0f);
-    };
-
     struct LrnParam
     {
         CPL_PARAM_VALUE(uint32_t, localSize, 5);
@@ -469,7 +529,7 @@ namespace Synet
     struct MergedConvolutionParam
     {
         CPL_PARAM_VECTOR(ConvolutionParam, conv);
-        CPL_PARAM_VALUE(bool, add, false);
+        CPL_PARAM_VALUE(int, add, 0);
     };
 
     struct MetaParam
@@ -495,12 +555,22 @@ namespace Synet
         CPL_PARAM_VALUE(bool, acrossSpatial, true);
         CPL_PARAM_VALUE(bool, channelShared, true);
         CPL_PARAM_VALUE(float, eps, 1e-10f);
+        CPL_PARAM_LIMITED(int, version, 1, 1, 5);
+        CPL_PARAM_VALUE(int, axis, -1);
+    };
+
+    struct PadParam
+    {
+        CPL_PARAM_VALUE(PadMode, mode, PadModeConstant);
+        CPL_PARAM_VALUE(Longs, pads, Longs());
+        CPL_PARAM_STRUCT(TensorParam, value);
     };
 
     struct PermuteParam
     {
         CPL_PARAM_VALUE(Shape, order, Shape());
         CPL_PARAM_VALUE(TensorFormat, format, TensorFormatUnknown);
+        CPL_PARAM_VALUE(bool, skip, false);
     };
 
     struct PoolingParam
@@ -557,6 +627,16 @@ namespace Synet
         CPL_PARAM_VALUE(float, offset, 0.5f);
     };
 
+    struct QuantizeParam
+    {
+        //CPL_PARAM_VALUE(float, scale, 0.0f);
+        CPL_PARAM_VALUE(double, scale, 0.0);
+        CPL_PARAM_VALUE(int, zero, 0);
+        CPL_PARAM_VALUE(int, axis, 0);
+        CPL_PARAM_VALUE(TensorType, type, TensorTypeUnknown);
+        CPL_PARAM_VALUE(int, weights, 0);
+    };
+
     struct ReductionParam
     {
         CPL_PARAM_VALUE(ReductionType, type, ReductionTypeUnknown);
@@ -605,10 +685,26 @@ namespace Synet
 
     struct ScaleParam
     {
-        CPL_PARAM_VALUE(uint32_t, axis, 1);
+        CPL_PARAM_VALUE(int32_t, axis, 1);
         CPL_PARAM_VALUE(uint32_t, numAxes, 1);
         CPL_PARAM_VALUE(bool, biasTerm, false);
         CPL_PARAM_VALUE(TensorType, quantizationLevel, TensorTypeUnknown);
+    };
+
+    struct ScatterParam
+    {
+        CPL_PARAM_VALUE(int, axis, 0);
+        CPL_PARAM_VALUE(int, version, 0);
+        CPL_PARAM_VALUE(String, reduction, String("none"));
+    };
+
+    struct SqueezeExcitationParam
+    {
+        CPL_PARAM_VALUE(bool, biasTerm0, false);
+        CPL_PARAM_VALUE(ActivationFunctionType, activationType, ActivationFunctionTypeRelu);
+        CPL_PARAM_VALUE(float, activationParam0, 0.0f);
+        CPL_PARAM_VALUE(float, activationParam1, 6.0f);
+        CPL_PARAM_VALUE(bool, biasTerm1, false);
     };
 
     struct ShuffleParam
@@ -624,7 +720,7 @@ namespace Synet
 
     struct SoftmaxParam
     {
-        CPL_PARAM_VALUE(uint32_t, axis, 1);
+        CPL_PARAM_VALUE(int32_t, axis, 1);
         CPL_PARAM_VALUE(bool, log, false);
     };
 
@@ -646,9 +742,9 @@ namespace Synet
         CPL_PARAM_VALUE(Shape, endMask, Shape());
         CPL_PARAM_VALUE(Shape, newAxisMask, Shape());
         CPL_PARAM_VALUE(Shape, shrinkAxisMask, Shape());
-        CPL_PARAM_VALUE(Shape, beginDims, Shape());
-        CPL_PARAM_VALUE(Shape, endDims, Shape());
-        CPL_PARAM_VALUE(Shape, strideDims, Shape());
+        CPL_PARAM_VALUE(Longs, beginDims, Longs());
+        CPL_PARAM_VALUE(Longs, endDims, Longs());
+        CPL_PARAM_VALUE(Longs, strideDims, Longs());
         CPL_PARAM_VALUE(Shape, axes, Shape());
     };
 
@@ -660,10 +756,11 @@ namespace Synet
 
     struct TopKParam
     {
-        CPL_PARAM_VALUE(uint32_t, axis, 0);
+        CPL_PARAM_VALUE(int32_t, axis, 0);
         CPL_PARAM_VALUE(TopKMode, mode, TopKModeMax);
         CPL_PARAM_VALUE(TopKSort, sort, TopKSortValue); 
         CPL_PARAM_VALUE(TensorType, indexElementType, TensorType64i);
+        CPL_PARAM_VALUE(uint64_t, k, 0);
     };
 
     struct ConnectionParam
@@ -700,6 +797,7 @@ namespace Synet
 
     struct YoloParam
     {
+        CPL_PARAM_VALUE(String, name, String());
         CPL_PARAM_VALUE(uint32_t, classes, 20);
         CPL_PARAM_VALUE(uint32_t, num, 1);
         CPL_PARAM_VALUE(uint32_t, total, 1);
@@ -711,6 +809,16 @@ namespace Synet
         CPL_PARAM_VALUE(Floats, anchors, Floats());
     };
 
+    struct YoloV7Param
+    {
+        CPL_PARAM_VALUE(int, maxOutputBoxesPerClass, 0);
+        CPL_PARAM_VALUE(float, iouThreshold, 0);
+        CPL_PARAM_VALUE(float, scoreThreshold, 0);
+        CPL_PARAM_VALUE(bool, oneClass, false);
+    };
+
+    //-------------------------------------------------------------------------------------------------
+
     struct LayerParam
     {
         CPL_PARAM_VALUE(String, parent, String());
@@ -720,13 +828,18 @@ namespace Synet
         CPL_PARAM_VALUE(Strings, dst, Strings());
         CPL_PARAM_VECTOR(WeightParam, weight);
         CPL_PARAM_VALUE(Strings, origin, Strings());
+        CPL_PARAM_STRUCT(LowPrecisionParam, lowPrecision);
+        CPL_PARAM_VECTOR(QuantizeParam, qSrc);
+        CPL_PARAM_VECTOR(QuantizeParam, qDst);
 
+        CPL_PARAM_STRUCT(ActivationParam, activation);
         CPL_PARAM_STRUCT(ArgMaxParam, argMax);
         CPL_PARAM_STRUCT(BiasParam, bias);
         CPL_PARAM_STRUCT(BinaryOperationParam, binaryOperation);
-        CPL_PARAM_STRUCT(BroadcastParam, broadcast);
         CPL_PARAM_STRUCT(CastParam, cast);
+        CPL_PARAM_STRUCT(CompareParam, compare);
         CPL_PARAM_STRUCT(ConcatParam, concat);
+        CPL_PARAM_STRUCT(ConstantOfShapeParam, constantOfShape);
         CPL_PARAM_STRUCT(ConvolutionParam, convolution);
         CPL_PARAM_STRUCT(DetectionOutputParam, detectionOutput);
         CPL_PARAM_STRUCT(EltwiseParam, eltwise);
@@ -735,25 +848,26 @@ namespace Synet
         CPL_PARAM_STRUCT(FlattenParam, flatten);
         CPL_PARAM_STRUCT(FusedParam, fused);
         CPL_PARAM_STRUCT(GatherParam, gather);
+        CPL_PARAM_STRUCT(GridSampleParam, gridSample);
         CPL_PARAM_STRUCT(HardSigmoidParam, hardSigmoid);
         CPL_PARAM_STRUCT(HswishParam, hswish);
         CPL_PARAM_STRUCT(InnerProductParam, innerProduct);
         CPL_PARAM_STRUCT(InputParam, input);
         CPL_PARAM_STRUCT(InterpParam, interp);
-        CPL_PARAM_STRUCT(Interp2Param, interp2);
-        CPL_PARAM_STRUCT(LogParam, log);
         CPL_PARAM_STRUCT(LrnParam, lrn);
         CPL_PARAM_STRUCT(LstmParam, lstm);
         CPL_PARAM_STRUCT(MergedConvolutionParam, mergedConvolution);
         CPL_PARAM_STRUCT(MetaParam, meta);
         CPL_PARAM_STRUCT(NonMaxSuppressionParam, nonMaxSuppression);
         CPL_PARAM_STRUCT(NormalizeParam, normalize);
+        CPL_PARAM_STRUCT(PadParam, pad);
         CPL_PARAM_STRUCT(PermuteParam, permute);
         CPL_PARAM_STRUCT(PoolingParam, pooling);
         CPL_PARAM_STRUCT(PowerParam, power);
         CPL_PARAM_STRUCT(PreluParam, prelu);
         CPL_PARAM_STRUCT(PriorBoxParam, priorBox);
         CPL_PARAM_STRUCT(PriorBoxClusteredParam, priorBoxClustered);
+        CPL_PARAM_STRUCT(QuantizeParam, quantize);
         CPL_PARAM_STRUCT(ReductionParam, reduction);
         CPL_PARAM_STRUCT(RegionParam, region);
         CPL_PARAM_STRUCT(ReluParam, relu);
@@ -762,11 +876,13 @@ namespace Synet
         CPL_PARAM_STRUCT(RestrictRangeParam, restrictRange);
         CPL_PARAM_STRUCT(ReverseSequenceParam, reverseSequence);
         CPL_PARAM_STRUCT(ScaleParam, scale);
+        CPL_PARAM_STRUCT(ScatterParam, scatter);
         CPL_PARAM_STRUCT(ShuffleParam, shuffle);
         CPL_PARAM_STRUCT(SliceParam, slice);
         CPL_PARAM_STRUCT(SoftmaxParam, softmax);
         CPL_PARAM_STRUCT(SoftplusParam, softplus);
         CPL_PARAM_STRUCT(SqueezeParam, squeeze);
+        CPL_PARAM_STRUCT(SqueezeExcitationParam, squeezeExcitation);
         CPL_PARAM_STRUCT(StridedSliceParam, stridedSlice);
         CPL_PARAM_STRUCT(TileParam, tile);
         CPL_PARAM_STRUCT(TensorIteratorParam, tensorIterator);
@@ -775,6 +891,7 @@ namespace Synet
         CPL_PARAM_STRUCT(UnpackParam, unpack);
         CPL_PARAM_STRUCT(UpsampleParam, upsample);
         CPL_PARAM_STRUCT(YoloParam, yolo);
+        CPL_PARAM_STRUCT(YoloV7Param, yoloV7);
 
         CPL_PARAM_VALUE(Strings, debug, Strings());
     };

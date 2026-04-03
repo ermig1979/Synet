@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="OnnxRuntime">
+      <UniqueIdentifier>{25012212-983f-461a-b3fd-3f61c33b37aa}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInitializer.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInput.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearConvNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearAddNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearGlobalAveragePoolNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearMatMulNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConstantNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceMeanNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertBatchNormalizationNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConvOrConvTransposeNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearAveragePoolNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertPreluNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDropoutNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertFlattenNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDequantizeLinearNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQuantizeLinearNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAddNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGemmNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGlobalAveragePoolNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceL2Node.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertNonMaxSuppressionNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGreaterNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertEqualNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessOrEqualNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertRoundNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMulNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertClipNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertCastNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertHardSwishNode.cpp">
+      <Filter>OnnxRuntime</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.h">
+      <Filter>OnnxRuntime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Cvt\OnnxRuntime\Common.h">
+      <Filter>OnnxRuntime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Cvt\OnnxRuntime\Convert.h">
+      <Filter>OnnxRuntime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Cvt\OnnxRuntime\Attribute.h">
+      <Filter>OnnxRuntime</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

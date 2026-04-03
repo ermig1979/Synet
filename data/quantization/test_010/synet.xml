@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network>
-	<version>1</version>
-	<name>face-detection-retail-0005</name>
+	<info>
+		<version>1</version>
+		<name>face-detection-retail-0005</name>
+		<from>InferenceEngine-v10</from>
+		<when>2023.08.16 16:04:57</when>
+		<synet>1.0.0.master-89c846db</synet>
+	</info>
 	<layers>
 		<item>
 			<type>Input</type>
@@ -17,10 +22,10 @@
 			</input>
 		</item>
 		<item>
-			<type>Fused</type>
+			<type>Scale</type>
 			<name>Add1_8474/Fused_Add_</name>
 			<src>input.1</src>
-			<dst>Add1_8474/Fused_Add_</dst>
+			<dst>input.1</dst>
 			<weight>
 				<item>
 					<dim>3</dim>
@@ -33,15 +38,14 @@
 					<size>12</size>
 				</item>
 			</weight>
-			<fused>
-				<type>10</type>
-				<floats>0.003922 0.000000 1.000000 0.000000</floats>
-			</fused>
+			<scale>
+				<biasTerm>1</biasTerm>
+			</scale>
 		</item>
 		<item>
 			<type>MergedConvolution</type>
 			<name>Add1_8294/Fused_Add_</name>
-			<src>Add1_8474/Fused_Add_</src>
+			<src>input.1</src>
 			<dst>Add1_8294/Fused_Add_</dst>
 			<weight>
 				<item>
@@ -1222,10 +1226,10 @@
 			</mergedConvolution>
 		</item>
 		<item>
-			<type>Convolution</type>
-			<name>482/Fused_Add_</name>
+			<type>MergedConvolution</type>
+			<name>485</name>
 			<src>Add1_7946/Fused_Add_</src>
-			<dst>482/Fused_Add_</dst>
+			<dst>485</dst>
 			<weight>
 				<item>
 					<dim>3 3 1 360</dim>
@@ -1238,23 +1242,6 @@
 					<offset>3989212</offset>
 					<size>1440</size>
 				</item>
-			</weight>
-			<convolution>
-				<outputNum>360</outputNum>
-				<kernel>3 3</kernel>
-				<pad>1 1 1 1</pad>
-				<stride>1 1</stride>
-				<dilation>1 1</dilation>
-				<group>360</group>
-				<activationType>Relu</activationType>
-			</convolution>
-		</item>
-		<item>
-			<type>Convolution</type>
-			<name>485</name>
-			<src>482/Fused_Add_</src>
-			<dst>485</dst>
-			<weight>
 				<item>
 					<dim>1 1 360 36</dim>
 					<format>Nhwc</format>
@@ -1267,13 +1254,26 @@
 					<size>144</size>
 				</item>
 			</weight>
-			<convolution>
-				<outputNum>36</outputNum>
-				<kernel>1 1</kernel>
-				<pad>0 0 0 0</pad>
-				<stride>1 1</stride>
-				<dilation>1 1</dilation>
-			</convolution>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>360</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>360</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>36</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+			</mergedConvolution>
 		</item>
 		<item>
 			<type>Permute</type>
@@ -1291,15 +1291,15 @@
 			<src>517</src>
 			<dst>525</dst>
 			<reshape>
-				<shape>-1</shape>
+				<shape>12996</shape>
 				<axis>1</axis>
 			</reshape>
 		</item>
 		<item>
-			<type>Convolution</type>
-			<name>478/Fused_Add_</name>
+			<type>MergedConvolution</type>
+			<name>481</name>
 			<src>Add1_7946/Fused_Add_</src>
-			<dst>478/Fused_Add_</dst>
+			<dst>481</dst>
 			<weight>
 				<item>
 					<dim>3 3 1 360</dim>
@@ -1312,23 +1312,6 @@
 					<offset>4055644</offset>
 					<size>1440</size>
 				</item>
-			</weight>
-			<convolution>
-				<outputNum>360</outputNum>
-				<kernel>3 3</kernel>
-				<pad>1 1 1 1</pad>
-				<stride>1 1</stride>
-				<dilation>1 1</dilation>
-				<group>360</group>
-				<activationType>Relu</activationType>
-			</convolution>
-		</item>
-		<item>
-			<type>Convolution</type>
-			<name>481</name>
-			<src>478/Fused_Add_</src>
-			<dst>481</dst>
-			<weight>
 				<item>
 					<dim>1 1 360 18</dim>
 					<format>Nhwc</format>
@@ -1341,13 +1324,26 @@
 					<size>72</size>
 				</item>
 			</weight>
-			<convolution>
-				<outputNum>18</outputNum>
-				<kernel>1 1</kernel>
-				<pad>0 0 0 0</pad>
-				<stride>1 1</stride>
-				<dilation>1 1</dilation>
-			</convolution>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>360</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>360</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>18</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+					</item>
+				</conv>
+			</mergedConvolution>
 		</item>
 		<item>
 			<type>Permute</type>
@@ -1365,7 +1361,7 @@
 			<src>488</src>
 			<dst>496</dst>
 			<reshape>
-				<shape>-1</shape>
+				<shape>6498</shape>
 				<axis>1</axis>
 			</reshape>
 		</item>
@@ -1375,7 +1371,7 @@
 			<src>496</src>
 			<dst>507</dst>
 			<reshape>
-				<shape>-1 2</shape>
+				<shape>3249 2</shape>
 				<axis>1</axis>
 			</reshape>
 		</item>
@@ -1383,7 +1379,7 @@
 			<type>Softmax</type>
 			<name>508</name>
 			<src>507</src>
-			<dst>508</dst>
+			<dst>507</dst>
 			<softmax>
 				<axis>2</axis>
 			</softmax>
@@ -1391,10 +1387,10 @@
 		<item>
 			<type>Reshape</type>
 			<name>516</name>
-			<src>508</src>
+			<src>507</src>
 			<dst>516</dst>
 			<reshape>
-				<shape>-1</shape>
+				<shape>6498</shape>
 				<axis>1</axis>
 			</reshape>
 		</item>
@@ -1483,7 +1479,7 @@
 		<item>
 			<type>Meta</type>
 			<name>486/1_port</name>
-			<src>Add1_8474/Fused_Add_</src>
+			<src>input.1</src>
 			<dst>486/1_port</dst>
 			<meta>
 				<type>Shape</type>
@@ -1564,9 +1560,9 @@
 		</item>
 		<item>
 			<type>PriorBoxClustered</type>
-			<name>486</name>
+			<name>486/naked_not_unsqueezed</name>
 			<src>15253 15255</src>
-			<dst>486</dst>
+			<dst>486/naked_not_unsqueezed</dst>
 			<priorBoxClustered>
 				<widths>9.400000 25.100000 14.700000 34.700001 143.000000 77.400002 128.800003 51.099998 75.599998</widths>
 				<heights>15.000000 39.599998 25.500000 63.200001 227.500000 162.899994 124.500000 105.099998 72.599998</heights>
@@ -1576,9 +1572,9 @@
 		</item>
 		<item>
 			<type>DetectionOutput</type>
-			<name>527/sink_port_0</name>
-			<src>525 516 486</src>
-			<dst>527/sink_port_0</dst>
+			<name>527</name>
+			<src>525 516 486/naked_not_unsqueezed</src>
+			<dst>527</dst>
 			<detectionOutput>
 				<numClasses>2</numClasses>
 				<nms>

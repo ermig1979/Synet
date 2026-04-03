@@ -1,7 +1,7 @@
 /*
 * Tests for Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2022 Yermalayeu Ihar.
+* Copyright (c) 2018-2025 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@
 #include "TestCommon.h"
 #include "TestPerformance.h"
 #include "TestNetwork.h"
+#include "TestRegionDecoder.h"
 
 #include <openvino/openvino.hpp>
 
@@ -82,10 +83,11 @@ namespace Test
         virtual bool Init(const String& model, const String& weight, const Options& options, const TestParam& param)
         {
             CPL_PERF_FUNC();
+            _regionThreshold = options.regionThreshold;
+            _decoderName = param.detection().decoder();
 
             ::setenv("OMP_NUM_THREADS", std::to_string(options.workThreads).c_str(), 1);
             ::setenv("OMP_WAIT_POLICY", "PASSIVE", 1);
-            _regionThreshold = options.regionThreshold;
             try
             {
                 if (!InitCore(options))
@@ -105,13 +107,12 @@ namespace Test
                 {
                     if (_ov->model->is_dynamic())
                     {
-                        std::cout << "Inference Engine model is dynamic. This case is not implemented!" << std::endl;
-                        return false;
+                        SYNET_ERROR("Inference Engine model is dynamic. This case is not implemented!");
                     }
                     else
                     {
                         if (!options.consoleSilence)
-                            std::cout << "Inference Engine model is static. Try to emulate batch > 1." << std::endl;
+                            CPL_LOG_SS(Warning, "Inference Engine model is static. Try to emulate batch > 1.");
                         _ov->batchSize = options.batchSize;
                         CreateCompiledModelAndInferRequest();
                     }
@@ -120,11 +121,11 @@ namespace Test
                     CreateCompiledModelAndInferRequest();
                 GetTensors();
                 StubInfer();
+                _ov->regionDecoder.Init(Shape(_ov->model->input(0).get_shape()), _ov->outputNames, param);
             }
             catch (std::exception& e)
             {
-                std::cout << "Inference Engine init error: " << e.what() << std::endl;
-                return false;
+                SYNET_ERROR("Inference Engine init error: " << e.what());
             }
             return true;
         }
@@ -156,31 +157,36 @@ namespace Test
         virtual void DebugPrint(const Tensors& src, std::ostream& os, int flag, int first, int last, int precision)
         {
             for (size_t o = 0; o < _ov->output.size(); ++o)
-                DebugPrint(os, _ov->output[o], _ov->outputNames[o], flag, first, last, precision);
+                DebugPrint(os, o, _ov->output[o], _ov->outputNames[o], flag, first, last, precision);
         }
 
         virtual Regions GetRegions(const Size& size, float threshold, float overlap) const
         {
-            Regions regions;
-            if (_output[0].Axis(-1) == 7)
+            if (_ov->regionDecoder.Enable())
+                return _ov->regionDecoder.GetRegions(_output, size, threshold, overlap);
+            else
             {
-                for (size_t i = 0; i < _output[0].Size(); i += 7)
+                Regions regions;
+                if (_output[0].Axis(-1) == 7)
                 {
-                    const float* output = _output[0].CpuData();
-                    if (output[i + 2] > threshold)
+                    for (size_t i = 0; i < _output[0].Size(); i += 7)
                     {
-                        Region region;
-                        region.id = (size_t)output[i + 1];
-                        region.prob = output[i + 2];
-                        region.x = size.x * (output[i + 3] + output[i + 5]) / 2.0f;
-                        region.y = size.y * (output[i + 4] + output[i + 6]) / 2.0f;
-                        region.w = size.x * (output[i + 5] - output[i + 3]);
-                        region.h = size.y * (output[i + 6] - output[i + 4]);
-                        regions.push_back(region);
+                        const float* output = _output[0].Data<float>();
+                        if (output[i + 2] > threshold)
+                        {
+                            Region region;
+                            region.id = (size_t)output[i + 1];
+                            region.prob = output[i + 2];
+                            region.x = size.x * (output[i + 3] + output[i + 5]) / 2.0f;
+                            region.y = size.y * (output[i + 4] + output[i + 6]) / 2.0f;
+                            region.w = size.x * (output[i + 5] - output[i + 3]);
+                            region.h = size.y * (output[i + 6] - output[i + 4]);
+                            regions.push_back(region);
+                        }
                     }
                 }
+                return regions;
             }
-            return regions;
         }
 
         virtual void Free()
@@ -190,7 +196,6 @@ namespace Test
         }
 
     private:
-        typedef InferenceEngine::SizeVector Sizes;
         typedef std::map<std::string, std::string> StringMap;
         struct Ov
         {
@@ -201,6 +206,7 @@ namespace Test
             std::vector<ov::Tensor> input, output;
             Strings inputNames, outputNames;
             size_t batchSize;
+            RegionDecoder regionDecoder;
         };
         typedef std::shared_ptr<Ov> OvPtr;
         OvPtr _ov;
@@ -215,6 +221,8 @@ namespace Test
                 std::cout << "Inference Engine uses PriorBoxV2 extension." << std::endl;
 #endif
             _ov->core.set_property(_ieDeviceName, ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY));
+            _ov->core.set_property(_ieDeviceName, ov::inference_num_threads(1));
+            _ov->core.set_property(_ieDeviceName, ov::num_streams(1));
             return true;
         }
 
@@ -240,7 +248,10 @@ namespace Test
                     return false;
                 }
             } 
-            _ov->model = _ov->core.read_model(model, weight);
+            if (onnx)
+                _ov->model = _ov->core.read_model(dst);
+            else
+                _ov->model = _ov->core.read_model(dst, bin);
             return true;
         }
 
@@ -250,10 +261,7 @@ namespace Test
             if (param.input().size())
             {
                 if (_ov->model->inputs().size() != param.input().size())
-                {
-                    std::cout << "Incorrect input count :" << param.input().size() << std::endl;
-                    return false;
-                }
+                    SYNET_ERROR("Incorrect input count :" << param.input().size());
                 for (size_t i = 0; i < param.input().size(); ++i)
                 {
                     const String & name = param.input()[i].name();
@@ -264,14 +272,19 @@ namespace Test
                         if (_ov->model->inputs()[j].get_any_name() == name)
                         {
                             found = true;
+                            ov::PartialShape shape = _ov->model->inputs()[j].get_partial_shape();
+                            if (param.input()[i].dims().size() == shape.size())
+                            {
+                                for (size_t d = 0; d < param.input()[i].dims().size(); ++d)
+                                    shape[d] = param.input()[i].dims()[d];
+                                _ov->model->reshape(shape);
+                            }
                             break;
                         }
                     }
                     if (!found)
-                    {
-                        std::cout << "Input with name '" << name << "' is not exist! " << std::endl;
-                        return false;
-                    }
+                        SYNET_ERROR("Input with name '" << name << "' is not exist! ");
+
                 }
             }
             else
@@ -305,7 +318,7 @@ namespace Test
                 ov::inference_num_threads(1),
                 ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY),
                 ov::num_streams(1),
-                ov::affinity(ov::Affinity::CORE));
+                ov::hint::enable_cpu_pinning(true));
             _ov->inferRequest = _ov->compiledModel.create_infer_request();
         }
 
@@ -323,7 +336,7 @@ namespace Test
         {
             Tensors stub(SrcCount());
             for (size_t i = 0; i < SrcCount(); ++i)
-                stub[i].Reshape(SrcShape(i));
+                stub[i].Reshape(Synet::TensorType32f, SrcShape(i));
             SetInput(stub, 0);
             _ov->inferRequest.infer();
         }
@@ -333,7 +346,7 @@ namespace Test
             assert(_ov->input.size() == x.size());
             for (size_t i = 0; i < x.size(); ++i)
             {
-                const float* src = x[i].CpuData() + b * x[i].Size() / _ov->batchSize;
+                const float* src = x[i].Data<float>() + b * x[i].Size() / _ov->batchSize;
                 const ov::Shape& dims = _ov->input[i].get_shape();
                 const ov::Strides & strides = _ov->input[i].get_strides();
                 uint8_t* dst = (uint8_t*)_ov->input[i].data();
@@ -388,8 +401,8 @@ namespace Test
                         tmp[size + 6] = pOut[6];
                     }
                     SortDetectionOutput(tmp.data(), tmp.size());
-                    _output[o].Reshape(Shp(1, 1, tmp.size() / 7, 7), Synet::TensorFormatNchw);
-                    memcpy(_output[o].CpuData(), tmp.data(), _output[o].Size() * sizeof(float));
+                    _output[o].Reshape(Synet::TensorType32f, Shp(1, 1, tmp.size() / 7, 7), Synet::TensorFormatNchw);
+                    memcpy(_output[o].Data<float>(), tmp.data(), _output[o].RawSize());
                 }
                 else
                 {
@@ -403,7 +416,7 @@ namespace Test
                             else
                                 shape.insert(shape.begin(), _ov->batchSize);
                         }
-                        _output[o].Reshape(shape, Synet::TensorFormatNchw);
+                        _output[o].Reshape(Synet::TensorType32f, shape, Synet::TensorFormatNchw);
                     }
                     size_t size = 1;
                     for (size_t i = 0; i < dims.size(); ++i)
@@ -411,18 +424,20 @@ namespace Test
                     switch (type)
                     {
                     case ov::element::Type_t::f32:
-                        SetOutput(dims, strides, 0, _ov->output[o].data<float>(), _output[o].CpuData() + b * size);
+                        SetOutput(dims, strides, 0, _ov->output[o].data<float>(), _output[o].Data<float>() + b * size);
                         break;
                     case ov::element::Type_t::i32:
-                        SetOutput(dims, strides, 0, _ov->output[o].data<int32_t>(), _output[o].CpuData() + b * size);
+                        SetOutput(dims, strides, 0, _ov->output[o].data<int32_t>(), _output[o].Data<float>() + b * size);
                         break;
                     case ov::element::Type_t::i64:
-                        SetOutput(dims, strides, 0, _ov->output[o].data<int64_t>(), _output[o].CpuData() + b * size);
+                        SetOutput(dims, strides, 0, _ov->output[o].data<int64_t>(), _output[o].Data<float>() + b * size);
                         break;
                     default:
+                        CPL_LOG_SS(Error, "OpenVino wrapper: unknown type of output tensor!");
                         assert(0);
                     }
                 }
+                _output[o].SetName(_ov->outputNames[o]);
             }
         }
 
@@ -444,9 +459,9 @@ namespace Test
             }
         }
 
-        void DebugPrint(std::ostream& os, const ov::Tensor & src, const String & name, int flag, int first, int last, int precision)
+        void DebugPrint(std::ostream& os, size_t o, const ov::Tensor & src, const String & name, int flag, int first, int last, int precision)
         {
-            os << "Layer: " << name;
+            os << "Output layer " << o << ": " << name;
             os << " : " << std::endl;
             Shape dims = src.get_shape();
             Shape strides = src.get_strides();
@@ -458,46 +473,46 @@ namespace Test
             {
             case ov::element::Type_t::f32:
             {
-                Synet::Tensor<float> tensor(dims, format);
+                Synet::Tensor<float> tensor(Synet::TensorType32f, dims, format);
                 const float* pOut = (float*)src.data();
-                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }
             case ov::element::Type_t::i32:
             {
-                Synet::Tensor<int32_t> tensor(dims, format);
+                Synet::Tensor<int32_t> tensor(Synet::TensorType32i, dims, format);
                 const int32_t* pOut = (int32_t*)src.data();
-                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }
             case ov::element::Type_t::i64:
             {
-                Synet::Tensor<int64_t> tensor(dims, format);
+                Synet::Tensor<int64_t> tensor(Synet::TensorType64i, dims, format);
                 const int64_t* pOut = (int64_t*)src.data();
-                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }
             case ov::element::Type_t::u8:
             {
-                Synet::Tensor<uint8_t> tensor(dims, format);
+                Synet::Tensor<uint8_t> tensor(Synet::TensorType8u, dims, format);
                 const uint8_t* pOut = (uint8_t*)src.data();
-                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }
             case ov::element::Type_t::i8:
             {
-                Synet::Tensor<int8_t> tensor(dims, format);
+                Synet::Tensor<int8_t> tensor(Synet::TensorType8i, dims, format);
                 const int8_t* pOut = (int8_t*)src.data();
-                SetOutput(dims, strides, 0, pOut, tensor.CpuData());
+                SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
                 break;
             }
             default:
-                std::cout << "Can't debug print for layer '" << name << "' , unknown type: " << src.get_element_type() << std::endl;
+                CPL_LOG_SS(Error, "Can't debug print for layer '" << name << "' , unknown type: " << src.get_element_type());
                 break;
             }
         }

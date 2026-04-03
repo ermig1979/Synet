@@ -1,0 +1,2025 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network>
+	<version>1</version>
+	<name>icv-pedestrian-detection-mobilenet-ssd-v2.0</name>
+	<layers>
+		<item>
+			<type>Input</type>
+			<name>data</name>
+			<dst>data</dst>
+			<input>
+				<shape>
+					<item>
+						<dim>1 384 672 3</dim>
+						<format>Nhwc</format>
+					</item>
+				</shape>
+			</input>
+		</item>
+		<item>
+			<type>Scale</type>
+			<name>Mul_/Fused_Mul_/FusedScaleShift_</name>
+			<src>data</src>
+			<dst>data</dst>
+			<weight>
+				<item>
+					<dim>3</dim>
+					<offset>0</offset>
+					<size>12</size>
+				</item>
+				<item>
+					<dim>3</dim>
+					<offset>12</offset>
+					<size>12</size>
+				</item>
+			</weight>
+			<scale>
+				<biasTerm>1</biasTerm>
+			</scale>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>conv2_1/dw</name>
+			<src>data</src>
+			<dst>conv2_1/dw</dst>
+			<weight>
+				<item>
+					<dim>3 3 3 32</dim>
+					<format>Nhwc</format>
+					<offset>24</offset>
+					<size>3456</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>3480</offset>
+					<size>128</size>
+				</item>
+				<item>
+					<dim>3 3 1 32</dim>
+					<format>Nhwc</format>
+					<offset>3608</offset>
+					<size>1152</size>
+				</item>
+				<item>
+					<dim>32</dim>
+					<offset>4760</offset>
+					<size>128</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>2 2</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>32</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>32</group>
+						<activationType>Relu</activationType>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>conv2_2/dw</name>
+			<src>conv2_1/dw</src>
+			<dst>conv2_2/dw</dst>
+			<weight>
+				<item>
+					<dim>1 1 32 56</dim>
+					<format>Nhwc</format>
+					<offset>4888</offset>
+					<size>7168</size>
+				</item>
+				<item>
+					<dim>56</dim>
+					<offset>12056</offset>
+					<size>224</size>
+				</item>
+				<item>
+					<dim>3 3 1 56</dim>
+					<format>Nhwc</format>
+					<offset>12280</offset>
+					<size>2016</size>
+				</item>
+				<item>
+					<dim>56</dim>
+					<offset>14296</offset>
+					<size>224</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>56</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>56</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>2 2</stride>
+						<dilation>1 1</dilation>
+						<group>56</group>
+						<activationType>Relu</activationType>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>conv3_1/sep</name>
+			<src>conv2_2/dw</src>
+			<dst>conv3_1/sep</dst>
+			<weight>
+				<item>
+					<dim>1 1 56 112</dim>
+					<format>Nhwc</format>
+					<offset>14520</offset>
+					<size>25088</size>
+				</item>
+				<item>
+					<dim>112</dim>
+					<offset>39608</offset>
+					<size>448</size>
+				</item>
+				<item>
+					<dim>3 3 1 112</dim>
+					<format>Nhwc</format>
+					<offset>40056</offset>
+					<size>4032</size>
+				</item>
+				<item>
+					<dim>112</dim>
+					<offset>44088</offset>
+					<size>448</size>
+				</item>
+				<item>
+					<dim>1 1 112 96</dim>
+					<format>Nhwc</format>
+					<offset>44536</offset>
+					<size>43008</size>
+				</item>
+				<item>
+					<dim>96</dim>
+					<offset>87544</offset>
+					<size>384</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>112</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>112</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>112</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>96</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv3_2/dw</name>
+			<src>conv3_1/sep</src>
+			<dst>conv3_2/dw</dst>
+			<weight>
+				<item>
+					<dim>3 3 1 96</dim>
+					<format>Nhwc</format>
+					<offset>87928</offset>
+					<size>3456</size>
+				</item>
+				<item>
+					<dim>96</dim>
+					<offset>91384</offset>
+					<size>384</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>96</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>2 2</stride>
+				<dilation>1 1</dilation>
+				<group>96</group>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>conv4_1/sep</name>
+			<src>conv3_2/dw</src>
+			<dst>conv4_1/sep</dst>
+			<weight>
+				<item>
+					<dim>1 1 96 232</dim>
+					<format>Nhwc</format>
+					<offset>91768</offset>
+					<size>89088</size>
+				</item>
+				<item>
+					<dim>232</dim>
+					<offset>180856</offset>
+					<size>928</size>
+				</item>
+				<item>
+					<dim>3 3 1 232</dim>
+					<format>Nhwc</format>
+					<offset>181784</offset>
+					<size>8352</size>
+				</item>
+				<item>
+					<dim>232</dim>
+					<offset>190136</offset>
+					<size>928</size>
+				</item>
+				<item>
+					<dim>1 1 232 208</dim>
+					<format>Nhwc</format>
+					<offset>191064</offset>
+					<size>193024</size>
+				</item>
+				<item>
+					<dim>208</dim>
+					<offset>384088</offset>
+					<size>832</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>232</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>232</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>232</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>208</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv4_2/dw</name>
+			<src>conv4_1/sep</src>
+			<dst>conv4_2/dw</dst>
+			<weight>
+				<item>
+					<dim>3 3 1 208</dim>
+					<format>Nhwc</format>
+					<offset>384920</offset>
+					<size>7488</size>
+				</item>
+				<item>
+					<dim>208</dim>
+					<offset>392408</offset>
+					<size>832</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>208</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>2 2</stride>
+				<dilation>1 1</dilation>
+				<group>208</group>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>conv5_1/sep</name>
+			<src>conv4_2/dw</src>
+			<dst>conv5_1/sep</dst>
+			<weight>
+				<item>
+					<dim>1 1 208 352</dim>
+					<format>Nhwc</format>
+					<offset>393240</offset>
+					<size>292864</size>
+				</item>
+				<item>
+					<dim>352</dim>
+					<offset>686104</offset>
+					<size>1408</size>
+				</item>
+				<item>
+					<dim>3 3 1 352</dim>
+					<format>Nhwc</format>
+					<offset>687512</offset>
+					<size>12672</size>
+				</item>
+				<item>
+					<dim>352</dim>
+					<offset>700184</offset>
+					<size>1408</size>
+				</item>
+				<item>
+					<dim>1 1 352 320</dim>
+					<format>Nhwc</format>
+					<offset>701592</offset>
+					<size>450560</size>
+				</item>
+				<item>
+					<dim>320</dim>
+					<offset>1152152</offset>
+					<size>1280</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>352</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>352</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>352</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>320</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv5_2/dw</name>
+			<src>conv5_1/sep</src>
+			<dst>conv5_2/dw</dst>
+			<weight>
+				<item>
+					<dim>3 3 1 320</dim>
+					<format>Nhwc</format>
+					<offset>1153432</offset>
+					<size>11520</size>
+				</item>
+				<item>
+					<dim>320</dim>
+					<offset>1164952</offset>
+					<size>1280</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>320</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<group>320</group>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>conv5_3/sep</name>
+			<src>conv5_2/dw</src>
+			<dst>conv5_3/sep</dst>
+			<weight>
+				<item>
+					<dim>1 1 320 296</dim>
+					<format>Nhwc</format>
+					<offset>1166232</offset>
+					<size>378880</size>
+				</item>
+				<item>
+					<dim>296</dim>
+					<offset>1545112</offset>
+					<size>1184</size>
+				</item>
+				<item>
+					<dim>3 3 1 296</dim>
+					<format>Nhwc</format>
+					<offset>1546296</offset>
+					<size>10656</size>
+				</item>
+				<item>
+					<dim>296</dim>
+					<offset>1556952</offset>
+					<size>1184</size>
+				</item>
+				<item>
+					<dim>1 1 296 248</dim>
+					<format>Nhwc</format>
+					<offset>1558136</offset>
+					<size>293632</size>
+				</item>
+				<item>
+					<dim>248</dim>
+					<offset>1851768</offset>
+					<size>992</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>296</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>296</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>296</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>248</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv5_4/dw</name>
+			<src>conv5_3/sep</src>
+			<dst>conv5_4/dw</dst>
+			<weight>
+				<item>
+					<dim>3 3 1 248</dim>
+					<format>Nhwc</format>
+					<offset>1852760</offset>
+					<size>8928</size>
+				</item>
+				<item>
+					<dim>248</dim>
+					<offset>1861688</offset>
+					<size>992</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>248</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+				<group>248</group>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>conv5_5/sep</name>
+			<src>conv5_4/dw</src>
+			<dst>conv5_5/sep</dst>
+			<weight>
+				<item>
+					<dim>1 1 248 272</dim>
+					<format>Nhwc</format>
+					<offset>1862680</offset>
+					<size>269824</size>
+				</item>
+				<item>
+					<dim>272</dim>
+					<offset>2132504</offset>
+					<size>1088</size>
+				</item>
+				<item>
+					<dim>3 3 1 272</dim>
+					<format>Nhwc</format>
+					<offset>2133592</offset>
+					<size>9792</size>
+				</item>
+				<item>
+					<dim>272</dim>
+					<offset>2143384</offset>
+					<size>1088</size>
+				</item>
+				<item>
+					<dim>1 1 272 176</dim>
+					<format>Nhwc</format>
+					<offset>2144472</offset>
+					<size>191488</size>
+				</item>
+				<item>
+					<dim>176</dim>
+					<offset>2335960</offset>
+					<size>704</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>272</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>272</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>272</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>176</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv4_3_0_norm_mbox_loc</name>
+			<src>conv5_5/sep</src>
+			<dst>conv4_3_0_norm_mbox_loc</dst>
+			<weight>
+				<item>
+					<dim>3 3 176 16</dim>
+					<format>Nhwc</format>
+					<offset>2336664</offset>
+					<size>101376</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>2438040</offset>
+					<size>64</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>16</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv4_3_0_norm_mbox_loc_perm</name>
+			<src>conv4_3_0_norm_mbox_loc</src>
+			<dst>conv4_3_0_norm_mbox_loc_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv4_3_0_norm_mbox_loc_flat</name>
+			<src>conv4_3_0_norm_mbox_loc_perm</src>
+			<dst>conv4_3_0_norm_mbox_loc_flat</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv4_3_norm_mbox_loc</name>
+			<src>conv5_5/sep</src>
+			<dst>conv4_3_norm_mbox_loc</dst>
+			<weight>
+				<item>
+					<dim>3 3 176 16</dim>
+					<format>Nhwc</format>
+					<offset>2438104</offset>
+					<size>101376</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>2539480</offset>
+					<size>64</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>16</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv4_3_norm_mbox_loc_perm</name>
+			<src>conv4_3_norm_mbox_loc</src>
+			<dst>conv4_3_norm_mbox_loc_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv4_3_norm_mbox_loc_flat</name>
+			<src>conv4_3_norm_mbox_loc_perm</src>
+			<dst>conv4_3_norm_mbox_loc_flat</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv5_6/dw</name>
+			<src>conv5_5/sep</src>
+			<dst>conv5_6/dw</dst>
+			<weight>
+				<item>
+					<dim>3 3 1 176</dim>
+					<format>Nhwc</format>
+					<offset>2539544</offset>
+					<size>6336</size>
+				</item>
+				<item>
+					<dim>176</dim>
+					<offset>2545880</offset>
+					<size>704</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>176</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>2 2</stride>
+				<dilation>1 1</dilation>
+				<group>176</group>
+				<activationType>Relu</activationType>
+			</convolution>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>conv6/sep</name>
+			<src>conv5_6/dw</src>
+			<dst>conv6/sep</dst>
+			<weight>
+				<item>
+					<dim>1 1 176 256</dim>
+					<format>Nhwc</format>
+					<offset>2546584</offset>
+					<size>180224</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>2726808</offset>
+					<size>1024</size>
+				</item>
+				<item>
+					<dim>3 3 1 256</dim>
+					<format>Nhwc</format>
+					<offset>2727832</offset>
+					<size>9216</size>
+				</item>
+				<item>
+					<dim>256</dim>
+					<offset>2737048</offset>
+					<size>1024</size>
+				</item>
+				<item>
+					<dim>1 1 256 96</dim>
+					<format>Nhwc</format>
+					<offset>2738072</offset>
+					<size>98304</size>
+				</item>
+				<item>
+					<dim>96</dim>
+					<offset>2836376</offset>
+					<size>384</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>256</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>256</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<group>256</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>96</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fc7_0_mbox_loc</name>
+			<src>conv6/sep</src>
+			<dst>fc7_0_mbox_loc</dst>
+			<weight>
+				<item>
+					<dim>3 3 96 24</dim>
+					<format>Nhwc</format>
+					<offset>2836760</offset>
+					<size>82944</size>
+				</item>
+				<item>
+					<dim>24</dim>
+					<offset>2919704</offset>
+					<size>96</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>24</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>fc7_0_mbox_loc_perm</name>
+			<src>fc7_0_mbox_loc</src>
+			<dst>fc7_0_mbox_loc_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>fc7_0_mbox_loc_flat</name>
+			<src>fc7_0_mbox_loc_perm</src>
+			<dst>fc7_0_mbox_loc_flat</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fc7_mbox_loc</name>
+			<src>conv6/sep</src>
+			<dst>fc7_mbox_loc</dst>
+			<weight>
+				<item>
+					<dim>3 3 96 24</dim>
+					<format>Nhwc</format>
+					<offset>2919800</offset>
+					<size>82944</size>
+				</item>
+				<item>
+					<dim>24</dim>
+					<offset>3002744</offset>
+					<size>96</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>24</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>fc7_mbox_loc_perm</name>
+			<src>fc7_mbox_loc</src>
+			<dst>fc7_mbox_loc_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>fc7_mbox_loc_flat</name>
+			<src>fc7_mbox_loc_perm</src>
+			<dst>fc7_mbox_loc_flat</dst>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>conv6_2_new</name>
+			<src>conv6/sep</src>
+			<dst>conv6_2_new</dst>
+			<weight>
+				<item>
+					<dim>1 1 96 96</dim>
+					<format>Nhwc</format>
+					<offset>3002840</offset>
+					<size>36864</size>
+				</item>
+				<item>
+					<dim>96</dim>
+					<offset>3039704</offset>
+					<size>384</size>
+				</item>
+				<item>
+					<dim>3 3 1 96</dim>
+					<format>Nhwc</format>
+					<offset>3040088</offset>
+					<size>3456</size>
+				</item>
+				<item>
+					<dim>96</dim>
+					<offset>3043544</offset>
+					<size>384</size>
+				</item>
+				<item>
+					<dim>1 1 96 120</dim>
+					<format>Nhwc</format>
+					<offset>3043928</offset>
+					<size>46080</size>
+				</item>
+				<item>
+					<dim>120</dim>
+					<offset>3090008</offset>
+					<size>480</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>96</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>96</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>2 2</stride>
+						<dilation>1 1</dilation>
+						<group>96</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>120</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv6_2_mbox_loc</name>
+			<src>conv6_2_new</src>
+			<dst>conv6_2_mbox_loc</dst>
+			<weight>
+				<item>
+					<dim>3 3 120 24</dim>
+					<format>Nhwc</format>
+					<offset>3090488</offset>
+					<size>103680</size>
+				</item>
+				<item>
+					<dim>24</dim>
+					<offset>3194168</offset>
+					<size>96</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>24</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv6_2_mbox_loc_perm</name>
+			<src>conv6_2_mbox_loc</src>
+			<dst>conv6_2_mbox_loc_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv6_2_mbox_loc_flat</name>
+			<src>conv6_2_mbox_loc_perm</src>
+			<dst>conv6_2_mbox_loc_flat</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv6_2_mbox_loc_bigpriors</name>
+			<src>conv6_2_new</src>
+			<dst>conv6_2_mbox_loc_bigpriors</dst>
+			<weight>
+				<item>
+					<dim>3 3 120 24</dim>
+					<format>Nhwc</format>
+					<offset>3194264</offset>
+					<size>103680</size>
+				</item>
+				<item>
+					<dim>24</dim>
+					<offset>3297944</offset>
+					<size>96</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>24</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv6_2_mbox_loc_perm_bigpriors</name>
+			<src>conv6_2_mbox_loc_bigpriors</src>
+			<dst>conv6_2_mbox_loc_perm_bigpriors</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv6_2_mbox_loc_flat_bigpriors</name>
+			<src>conv6_2_mbox_loc_perm_bigpriors</src>
+			<dst>conv6_2_mbox_loc_flat_bigpriors</dst>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>conv7_2_new</name>
+			<src>conv6_2_new</src>
+			<dst>conv7_2_new</dst>
+			<weight>
+				<item>
+					<dim>1 1 120 120</dim>
+					<format>Nhwc</format>
+					<offset>3298040</offset>
+					<size>57600</size>
+				</item>
+				<item>
+					<dim>120</dim>
+					<offset>3355640</offset>
+					<size>480</size>
+				</item>
+				<item>
+					<dim>3 3 1 120</dim>
+					<format>Nhwc</format>
+					<offset>3356120</offset>
+					<size>4320</size>
+				</item>
+				<item>
+					<dim>120</dim>
+					<offset>3360440</offset>
+					<size>480</size>
+				</item>
+				<item>
+					<dim>1 1 120 144</dim>
+					<format>Nhwc</format>
+					<offset>3360920</offset>
+					<size>69120</size>
+				</item>
+				<item>
+					<dim>144</dim>
+					<offset>3430040</offset>
+					<size>576</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>120</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>120</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>2 2</stride>
+						<dilation>1 1</dilation>
+						<group>120</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>144</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv7_2_mbox_loc</name>
+			<src>conv7_2_new</src>
+			<dst>conv7_2_mbox_loc</dst>
+			<weight>
+				<item>
+					<dim>3 3 144 24</dim>
+					<format>Nhwc</format>
+					<offset>3430616</offset>
+					<size>124416</size>
+				</item>
+				<item>
+					<dim>24</dim>
+					<offset>3555032</offset>
+					<size>96</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>24</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv7_2_mbox_loc_perm</name>
+			<src>conv7_2_mbox_loc</src>
+			<dst>conv7_2_mbox_loc_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv7_2_mbox_loc_flat</name>
+			<src>conv7_2_mbox_loc_perm</src>
+			<dst>conv7_2_mbox_loc_flat</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv7_2_mbox_loc_bigpriors</name>
+			<src>conv7_2_new</src>
+			<dst>conv7_2_mbox_loc_bigpriors</dst>
+			<weight>
+				<item>
+					<dim>3 3 144 24</dim>
+					<format>Nhwc</format>
+					<offset>3555128</offset>
+					<size>124416</size>
+				</item>
+				<item>
+					<dim>24</dim>
+					<offset>3679544</offset>
+					<size>96</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>24</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv7_2_mbox_loc_perm_bigpriors</name>
+			<src>conv7_2_mbox_loc_bigpriors</src>
+			<dst>conv7_2_mbox_loc_perm_bigpriors</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv7_2_mbox_loc_flat_bigpriors</name>
+			<src>conv7_2_mbox_loc_perm_bigpriors</src>
+			<dst>conv7_2_mbox_loc_flat_bigpriors</dst>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>conv8_2_new</name>
+			<src>conv7_2_new</src>
+			<dst>conv8_2_new</dst>
+			<weight>
+				<item>
+					<dim>1 1 144 120</dim>
+					<format>Nhwc</format>
+					<offset>3679640</offset>
+					<size>69120</size>
+				</item>
+				<item>
+					<dim>120</dim>
+					<offset>3748760</offset>
+					<size>480</size>
+				</item>
+				<item>
+					<dim>3 3 1 120</dim>
+					<format>Nhwc</format>
+					<offset>3749240</offset>
+					<size>4320</size>
+				</item>
+				<item>
+					<dim>120</dim>
+					<offset>3753560</offset>
+					<size>480</size>
+				</item>
+				<item>
+					<dim>1 1 120 216</dim>
+					<format>Nhwc</format>
+					<offset>3754040</offset>
+					<size>103680</size>
+				</item>
+				<item>
+					<dim>216</dim>
+					<offset>3857720</offset>
+					<size>864</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>120</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>120</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>2 2</stride>
+						<dilation>1 1</dilation>
+						<group>120</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>216</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv8_2_mbox_loc</name>
+			<src>conv8_2_new</src>
+			<dst>conv8_2_mbox_loc</dst>
+			<weight>
+				<item>
+					<dim>3 3 216 16</dim>
+					<format>Nhwc</format>
+					<offset>3858584</offset>
+					<size>124416</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>3983000</offset>
+					<size>64</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>16</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv8_2_mbox_loc_perm</name>
+			<src>conv8_2_mbox_loc</src>
+			<dst>conv8_2_mbox_loc_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv8_2_mbox_loc_flat</name>
+			<src>conv8_2_mbox_loc_perm</src>
+			<dst>conv8_2_mbox_loc_flat</dst>
+		</item>
+		<item>
+			<type>MergedConvolution</type>
+			<name>conv9_2_new</name>
+			<src>conv8_2_new</src>
+			<dst>conv9_2_new</dst>
+			<weight>
+				<item>
+					<dim>1 1 216 64</dim>
+					<format>Nhwc</format>
+					<offset>3983064</offset>
+					<size>55296</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>4038360</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>3 3 1 64</dim>
+					<format>Nhwc</format>
+					<offset>4038616</offset>
+					<size>2304</size>
+				</item>
+				<item>
+					<dim>64</dim>
+					<offset>4040920</offset>
+					<size>256</size>
+				</item>
+				<item>
+					<dim>1 1 64 128</dim>
+					<format>Nhwc</format>
+					<offset>4041176</offset>
+					<size>32768</size>
+				</item>
+				<item>
+					<dim>128</dim>
+					<offset>4073944</offset>
+					<size>512</size>
+				</item>
+			</weight>
+			<mergedConvolution>
+				<conv>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>64</outputNum>
+						<kernel>3 3</kernel>
+						<pad>1 1 1 1</pad>
+						<stride>2 2</stride>
+						<dilation>1 1</dilation>
+						<group>64</group>
+						<activationType>Relu</activationType>
+					</item>
+					<item>
+						<outputNum>128</outputNum>
+						<kernel>1 1</kernel>
+						<pad>0 0 0 0</pad>
+						<stride>1 1</stride>
+						<dilation>1 1</dilation>
+						<activationType>Relu</activationType>
+					</item>
+				</conv>
+			</mergedConvolution>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv9_2_mbox_loc</name>
+			<src>conv9_2_new</src>
+			<dst>conv9_2_mbox_loc</dst>
+			<weight>
+				<item>
+					<dim>3 3 128 16</dim>
+					<format>Nhwc</format>
+					<offset>4074456</offset>
+					<size>73728</size>
+				</item>
+				<item>
+					<dim>16</dim>
+					<offset>4148184</offset>
+					<size>64</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>16</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv9_2_mbox_loc_perm</name>
+			<src>conv9_2_mbox_loc</src>
+			<dst>conv9_2_mbox_loc_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv9_2_mbox_loc_flat</name>
+			<src>conv9_2_mbox_loc_perm</src>
+			<dst>conv9_2_mbox_loc_flat</dst>
+		</item>
+		<item>
+			<type>Concat</type>
+			<name>mbox_loc</name>
+			<src>conv4_3_0_norm_mbox_loc_flat conv4_3_norm_mbox_loc_flat fc7_0_mbox_loc_flat fc7_mbox_loc_flat conv6_2_mbox_loc_flat conv6_2_mbox_loc_flat_bigpriors conv7_2_mbox_loc_flat conv7_2_mbox_loc_flat_bigpriors conv8_2_mbox_loc_flat conv9_2_mbox_loc_flat</src>
+			<dst>mbox_loc</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv4_3_0_norm_mbox_conf</name>
+			<src>conv5_5/sep</src>
+			<dst>conv4_3_0_norm_mbox_conf</dst>
+			<weight>
+				<item>
+					<dim>3 3 176 8</dim>
+					<format>Nhwc</format>
+					<offset>4148248</offset>
+					<size>50688</size>
+				</item>
+				<item>
+					<dim>8</dim>
+					<offset>4198936</offset>
+					<size>32</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>8</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv4_3_0_norm_mbox_conf_perm</name>
+			<src>conv4_3_0_norm_mbox_conf</src>
+			<dst>conv4_3_0_norm_mbox_conf_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv4_3_0_norm_mbox_conf_flat</name>
+			<src>conv4_3_0_norm_mbox_conf_perm</src>
+			<dst>conv4_3_0_norm_mbox_conf_flat</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv4_3_norm_mbox_conf</name>
+			<src>conv5_5/sep</src>
+			<dst>conv4_3_norm_mbox_conf</dst>
+			<weight>
+				<item>
+					<dim>3 3 176 8</dim>
+					<format>Nhwc</format>
+					<offset>4198968</offset>
+					<size>50688</size>
+				</item>
+				<item>
+					<dim>8</dim>
+					<offset>4249656</offset>
+					<size>32</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>8</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv4_3_norm_mbox_conf_perm</name>
+			<src>conv4_3_norm_mbox_conf</src>
+			<dst>conv4_3_norm_mbox_conf_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv4_3_norm_mbox_conf_flat</name>
+			<src>conv4_3_norm_mbox_conf_perm</src>
+			<dst>conv4_3_norm_mbox_conf_flat</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fc7_0_mbox_conf</name>
+			<src>conv6/sep</src>
+			<dst>fc7_0_mbox_conf</dst>
+			<weight>
+				<item>
+					<dim>3 3 96 12</dim>
+					<format>Nhwc</format>
+					<offset>4249688</offset>
+					<size>41472</size>
+				</item>
+				<item>
+					<dim>12</dim>
+					<offset>4291160</offset>
+					<size>48</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>12</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>fc7_0_mbox_conf_perm</name>
+			<src>fc7_0_mbox_conf</src>
+			<dst>fc7_0_mbox_conf_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>fc7_0_mbox_conf_flat</name>
+			<src>fc7_0_mbox_conf_perm</src>
+			<dst>fc7_0_mbox_conf_flat</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>fc7_mbox_conf</name>
+			<src>conv6/sep</src>
+			<dst>fc7_mbox_conf</dst>
+			<weight>
+				<item>
+					<dim>3 3 96 12</dim>
+					<format>Nhwc</format>
+					<offset>4291208</offset>
+					<size>41472</size>
+				</item>
+				<item>
+					<dim>12</dim>
+					<offset>4332680</offset>
+					<size>48</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>12</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>fc7_mbox_conf_perm</name>
+			<src>fc7_mbox_conf</src>
+			<dst>fc7_mbox_conf_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>fc7_mbox_conf_flat</name>
+			<src>fc7_mbox_conf_perm</src>
+			<dst>fc7_mbox_conf_flat</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv6_2_mbox_conf</name>
+			<src>conv6_2_new</src>
+			<dst>conv6_2_mbox_conf</dst>
+			<weight>
+				<item>
+					<dim>3 3 120 12</dim>
+					<format>Nhwc</format>
+					<offset>4332728</offset>
+					<size>51840</size>
+				</item>
+				<item>
+					<dim>12</dim>
+					<offset>4384568</offset>
+					<size>48</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>12</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv6_2_mbox_conf_perm</name>
+			<src>conv6_2_mbox_conf</src>
+			<dst>conv6_2_mbox_conf_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv6_2_mbox_conf_flat</name>
+			<src>conv6_2_mbox_conf_perm</src>
+			<dst>conv6_2_mbox_conf_flat</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv6_2_mbox_conf_bigpriors</name>
+			<src>conv6_2_new</src>
+			<dst>conv6_2_mbox_conf_bigpriors</dst>
+			<weight>
+				<item>
+					<dim>3 3 120 12</dim>
+					<format>Nhwc</format>
+					<offset>4384616</offset>
+					<size>51840</size>
+				</item>
+				<item>
+					<dim>12</dim>
+					<offset>4436456</offset>
+					<size>48</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>12</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv6_2_mbox_conf_perm_bigpriors</name>
+			<src>conv6_2_mbox_conf_bigpriors</src>
+			<dst>conv6_2_mbox_conf_perm_bigpriors</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv6_2_mbox_conf_flat_bigpriors</name>
+			<src>conv6_2_mbox_conf_perm_bigpriors</src>
+			<dst>conv6_2_mbox_conf_flat_bigpriors</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv7_2_mbox_conf</name>
+			<src>conv7_2_new</src>
+			<dst>conv7_2_mbox_conf</dst>
+			<weight>
+				<item>
+					<dim>3 3 144 12</dim>
+					<format>Nhwc</format>
+					<offset>4436504</offset>
+					<size>62208</size>
+				</item>
+				<item>
+					<dim>12</dim>
+					<offset>4498712</offset>
+					<size>48</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>12</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv7_2_mbox_conf_perm</name>
+			<src>conv7_2_mbox_conf</src>
+			<dst>conv7_2_mbox_conf_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv7_2_mbox_conf_flat</name>
+			<src>conv7_2_mbox_conf_perm</src>
+			<dst>conv7_2_mbox_conf_flat</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv7_2_mbox_conf_bigpriors</name>
+			<src>conv7_2_new</src>
+			<dst>conv7_2_mbox_conf_bigpriors</dst>
+			<weight>
+				<item>
+					<dim>3 3 144 12</dim>
+					<format>Nhwc</format>
+					<offset>4498760</offset>
+					<size>62208</size>
+				</item>
+				<item>
+					<dim>12</dim>
+					<offset>4560968</offset>
+					<size>48</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>12</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv7_2_mbox_conf_perm_bigpriors</name>
+			<src>conv7_2_mbox_conf_bigpriors</src>
+			<dst>conv7_2_mbox_conf_perm_bigpriors</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv7_2_mbox_conf_flat_bigpriors</name>
+			<src>conv7_2_mbox_conf_perm_bigpriors</src>
+			<dst>conv7_2_mbox_conf_flat_bigpriors</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv8_2_mbox_conf</name>
+			<src>conv8_2_new</src>
+			<dst>conv8_2_mbox_conf</dst>
+			<weight>
+				<item>
+					<dim>3 3 216 8</dim>
+					<format>Nhwc</format>
+					<offset>4561016</offset>
+					<size>62208</size>
+				</item>
+				<item>
+					<dim>8</dim>
+					<offset>4623224</offset>
+					<size>32</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>8</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv8_2_mbox_conf_perm</name>
+			<src>conv8_2_mbox_conf</src>
+			<dst>conv8_2_mbox_conf_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv8_2_mbox_conf_flat</name>
+			<src>conv8_2_mbox_conf_perm</src>
+			<dst>conv8_2_mbox_conf_flat</dst>
+		</item>
+		<item>
+			<type>Convolution</type>
+			<name>conv9_2_mbox_conf</name>
+			<src>conv9_2_new</src>
+			<dst>conv9_2_mbox_conf</dst>
+			<weight>
+				<item>
+					<dim>3 3 128 8</dim>
+					<format>Nhwc</format>
+					<offset>4623256</offset>
+					<size>36864</size>
+				</item>
+				<item>
+					<dim>8</dim>
+					<offset>4660120</offset>
+					<size>32</size>
+				</item>
+			</weight>
+			<convolution>
+				<outputNum>8</outputNum>
+				<kernel>3 3</kernel>
+				<pad>1 1 1 1</pad>
+				<stride>1 1</stride>
+				<dilation>1 1</dilation>
+			</convolution>
+		</item>
+		<item>
+			<type>Permute</type>
+			<name>conv9_2_mbox_conf_perm</name>
+			<src>conv9_2_mbox_conf</src>
+			<dst>conv9_2_mbox_conf_perm</dst>
+			<permute>
+				<order>0 1 2 3</order>
+				<format>Nchw</format>
+			</permute>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>conv9_2_mbox_conf_flat</name>
+			<src>conv9_2_mbox_conf_perm</src>
+			<dst>conv9_2_mbox_conf_flat</dst>
+		</item>
+		<item>
+			<type>Concat</type>
+			<name>mbox_conf</name>
+			<src>conv4_3_0_norm_mbox_conf_flat conv4_3_norm_mbox_conf_flat fc7_0_mbox_conf_flat fc7_mbox_conf_flat conv6_2_mbox_conf_flat conv6_2_mbox_conf_flat_bigpriors conv7_2_mbox_conf_flat conv7_2_mbox_conf_flat_bigpriors conv8_2_mbox_conf_flat conv9_2_mbox_conf_flat</src>
+			<dst>mbox_conf</dst>
+		</item>
+		<item>
+			<type>Reshape</type>
+			<name>mbox_conf_reshape</name>
+			<src>mbox_conf</src>
+			<dst>mbox_conf_reshape</dst>
+			<reshape>
+				<shape>-1 2</shape>
+				<axis>1</axis>
+			</reshape>
+		</item>
+		<item>
+			<type>Softmax</type>
+			<name>mbox_conf_softmax</name>
+			<src>mbox_conf_reshape</src>
+			<dst>mbox_conf_softmax</dst>
+			<softmax>
+				<axis>2</axis>
+			</softmax>
+		</item>
+		<item>
+			<type>Flatten</type>
+			<name>mbox_conf_flatten</name>
+			<src>mbox_conf_softmax</src>
+			<dst>mbox_conf_flatten</dst>
+		</item>
+		<item>
+			<type>PriorBox</type>
+			<name>conv4_3_0_norm_mbox_priorbox</name>
+			<src>conv5_5/sep data</src>
+			<dst>conv4_3_0_norm_mbox_priorbox</dst>
+			<priorBox>
+				<version>1</version>
+				<minSize>16.000000</minSize>
+				<maxSize>38.400002</maxSize>
+				<aspectRatio>2.000000</aspectRatio>
+				<variance>0.100000 0.100000 0.200000 0.200000</variance>
+				<step>16.000000</step>
+			</priorBox>
+		</item>
+		<item>
+			<type>PriorBox</type>
+			<name>conv4_3_norm_mbox_priorbox</name>
+			<src>conv5_5/sep data</src>
+			<dst>conv4_3_norm_mbox_priorbox</dst>
+			<priorBox>
+				<version>1</version>
+				<minSize>38.400002</minSize>
+				<maxSize>76.800003</maxSize>
+				<aspectRatio>2.000000</aspectRatio>
+				<variance>0.100000 0.100000 0.200000 0.200000</variance>
+				<step>16.000000</step>
+			</priorBox>
+		</item>
+		<item>
+			<type>PriorBox</type>
+			<name>fc7_0_mbox_priorbox</name>
+			<src>conv6/sep data</src>
+			<dst>fc7_0_mbox_priorbox</dst>
+			<priorBox>
+				<version>1</version>
+				<minSize>76.800003</minSize>
+				<maxSize>124.800003</maxSize>
+				<aspectRatio>2.000000 3.000000</aspectRatio>
+				<variance>0.100000 0.100000 0.200000 0.200000</variance>
+				<step>32.000000</step>
+			</priorBox>
+		</item>
+		<item>
+			<type>PriorBox</type>
+			<name>fc7_mbox_priorbox</name>
+			<src>conv6/sep data</src>
+			<dst>fc7_mbox_priorbox</dst>
+			<priorBox>
+				<version>1</version>
+				<minSize>124.800003</minSize>
+				<maxSize>172.800003</maxSize>
+				<aspectRatio>2.000000 3.000000</aspectRatio>
+				<variance>0.100000 0.100000 0.200000 0.200000</variance>
+				<step>32.000000</step>
+			</priorBox>
+		</item>
+		<item>
+			<type>PriorBox</type>
+			<name>conv6_2_mbox_priorbox</name>
+			<src>conv6_2_new data</src>
+			<dst>conv6_2_mbox_priorbox</dst>
+			<priorBox>
+				<version>1</version>
+				<minSize>172.800003</minSize>
+				<maxSize>201.600006</maxSize>
+				<aspectRatio>2.000000 3.000000</aspectRatio>
+				<variance>0.100000 0.100000 0.200000 0.200000</variance>
+				<step>64.000000</step>
+			</priorBox>
+		</item>
+		<item>
+			<type>PriorBox</type>
+			<name>conv6_2_mbox_priorbox_bigpriors</name>
+			<src>conv6_2_new data</src>
+			<dst>conv6_2_mbox_priorbox_bigpriors</dst>
+			<priorBox>
+				<version>1</version>
+				<minSize>201.600006</minSize>
+				<maxSize>230.399994</maxSize>
+				<aspectRatio>2.000000 3.000000</aspectRatio>
+				<variance>0.100000 0.100000 0.200000 0.200000</variance>
+				<step>64.000000</step>
+			</priorBox>
+		</item>
+		<item>
+			<type>PriorBox</type>
+			<name>conv7_2_mbox_priorbox</name>
+			<src>conv7_2_new data</src>
+			<dst>conv7_2_mbox_priorbox</dst>
+			<priorBox>
+				<version>1</version>
+				<minSize>230.399994</minSize>
+				<maxSize>259.200012</maxSize>
+				<aspectRatio>2.000000 3.000000</aspectRatio>
+				<variance>0.100000 0.100000 0.200000 0.200000</variance>
+				<step>128.000000</step>
+			</priorBox>
+		</item>
+		<item>
+			<type>PriorBox</type>
+			<name>conv7_2_mbox_priorbox_bigpriors</name>
+			<src>conv7_2_new data</src>
+			<dst>conv7_2_mbox_priorbox_bigpriors</dst>
+			<priorBox>
+				<version>1</version>
+				<minSize>259.200012</minSize>
+				<maxSize>288.000000</maxSize>
+				<aspectRatio>2.000000 3.000000</aspectRatio>
+				<variance>0.100000 0.100000 0.200000 0.200000</variance>
+				<step>128.000000</step>
+			</priorBox>
+		</item>
+		<item>
+			<type>PriorBox</type>
+			<name>conv8_2_mbox_priorbox</name>
+			<src>conv8_2_new data</src>
+			<dst>conv8_2_mbox_priorbox</dst>
+			<priorBox>
+				<version>1</version>
+				<minSize>288.000000</minSize>
+				<maxSize>345.600006</maxSize>
+				<aspectRatio>2.000000</aspectRatio>
+				<variance>0.100000 0.100000 0.200000 0.200000</variance>
+			</priorBox>
+		</item>
+		<item>
+			<type>PriorBox</type>
+			<name>conv9_2_mbox_priorbox</name>
+			<src>conv9_2_new data</src>
+			<dst>conv9_2_mbox_priorbox</dst>
+			<priorBox>
+				<version>1</version>
+				<minSize>345.600006</minSize>
+				<maxSize>403.200012</maxSize>
+				<aspectRatio>2.000000</aspectRatio>
+				<variance>0.100000 0.100000 0.200000 0.200000</variance>
+			</priorBox>
+		</item>
+		<item>
+			<type>Concat</type>
+			<name>mbox_priorbox</name>
+			<src>conv4_3_0_norm_mbox_priorbox conv4_3_norm_mbox_priorbox fc7_0_mbox_priorbox fc7_mbox_priorbox conv6_2_mbox_priorbox conv6_2_mbox_priorbox_bigpriors conv7_2_mbox_priorbox conv7_2_mbox_priorbox_bigpriors conv8_2_mbox_priorbox conv9_2_mbox_priorbox</src>
+			<dst>mbox_priorbox</dst>
+			<concat>
+				<axis>2</axis>
+				<fixed>1</fixed>
+			</concat>
+		</item>
+		<item>
+			<type>DetectionOutput</type>
+			<name>detection_out</name>
+			<src>mbox_loc mbox_conf_flatten mbox_priorbox</src>
+			<dst>detection_out</dst>
+			<detectionOutput>
+				<numClasses>2</numClasses>
+				<nms>
+					<nmsThreshold>0.450000</nmsThreshold>
+					<topK>400</topK>
+				</nms>
+				<codeType>CenterSize</codeType>
+				<keepTopK>200</keepTopK>
+				<confidenceThreshold>0.010000</confidenceThreshold>
+			</detectionOutput>
+		</item>
+	</layers>
+</network>
+

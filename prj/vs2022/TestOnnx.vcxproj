@@ -34,7 +34,10 @@
     <ClInclude Include="..\..\src\Test\TestNetwork.h" />
     <ClInclude Include="..\..\src\Test\TestOnnxRuntime.h" />
     <ClInclude Include="..\..\src\Test\TestOptions.h" />
+    <ClInclude Include="..\..\src\Test\TestOutputComparer.h" />
+    <ClInclude Include="..\..\src\Test\TestParams.h" />
     <ClInclude Include="..\..\src\Test\TestPerformance.h" />
+    <ClInclude Include="..\..\src\Test\TestRegionDecoder.h" />
     <ClInclude Include="..\..\src\Test\TestReport.h" />
     <ClInclude Include="..\..\src\Test\TestSynet.h" />
     <ClInclude Include="..\..\src\Test\TestUtils.h" />
@@ -42,6 +45,12 @@
   <ItemGroup>
     <ProjectReference Include="..\..\3rd\Simd\prj\vs2022\Simd.vcxproj">
       <Project>{c809d7a3-6c52-4e36-8582-00ced929317d}</Project>
+    </ProjectReference>
+    <ProjectReference Include="CvtCore.vcxproj">
+      <Project>{b5ca8c94-9973-44a4-912d-500fbde0bc96}</Project>
+    </ProjectReference>
+    <ProjectReference Include="CvtOnnx.vcxproj">
+      <Project>{a0d937c5-9297-4183-a64c-f9294334c642}</Project>
     </ProjectReference>
     <ProjectReference Include="Synet.vcxproj">
       <Project>{c809d7a3-6c52-4e36-8582-00ced929317f}</Project>
