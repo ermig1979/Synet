@@ -10,6 +10,7 @@ option(SYNET_PERF "Performance statistics level: 0 - no statistics, 1 - Synet st
 option(SYNET_PYTHON "Enabling of Synet Python wrapper" ON)
 option(SYNET_OPENCV "OpenCV tests enable" OFF)
 option(SYNET_ORT_DNNL "Enabling of OnnxRuntime DNNL provider" OFF)
+option(SYNET_USE_CONAN_PACKAGES "Use pre-built Conan packages for OpenVINO and ONNX Runtime instead of building from submodules" OFF)
 option(SIMD_AVX512 "Use AVX-512 (AVX-512F, AVX-512CD, AVX-512VL, AVX-512DQ, AVX-512BW)" OFF)
 option(SIMD_AVX512VNNI "Use AVX-512VNNI" OFF)
 option(SIMD_AMXBF16 "Use AMX-INT8, AMX-BF16 and AVX-512BF16" OFF)
