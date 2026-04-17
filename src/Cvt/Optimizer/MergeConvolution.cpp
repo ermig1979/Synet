@@ -214,8 +214,8 @@ namespace Synet
                 return false;
             if (k1.size() < 2 || (k1[0] != k1[1] || (k1[0] != 3 && k1[0] != 5 && k1[0] != 7)))
                 return false;
-            if (l0.lowPrecision().bf16Type() == LowPrecisionTypeActive && k0[0] != 1)
-                return false;
+            //if (l0.lowPrecision().bf16Type() == LowPrecisionTypeActive && k0[0] != 1)
+            //    return false;
             if (d1.size() < 2 || d1[0] != 1 || d1[1] != 1)
                 return false;
             if (l0.weight()[0].dim()[2] > param.mergeConvolutionsInputNumMax())
@@ -234,8 +234,10 @@ namespace Synet
         if (layer.mergedConvolution().conv()[0].quantizationLevel() == TensorType8i ||
             layer.mergedConvolution().conv()[1].quantizationLevel() == TensorType8i)
             layer.origin().push_back(l0.name());
-        if (l0.lowPrecision().bf16Type() == LowPrecisionTypeActive || l1.lowPrecision().bf16Type() == LowPrecisionTypeActive)
-            layer.lowPrecision().bf16Type() = LowPrecisionTypeActive;
+        if (l0.lowPrecision().bf16Type() != LowPrecisionTypeNone && AtLeast2D(l0.convolution().kernel()) == Shp(1, 1))
+            layer.lowPrecision().bf16Type() = l0.lowPrecision().bf16Type();
+        if (l1.lowPrecision().bf16Type() != LowPrecisionTypeNone)
+            layer.lowPrecision().bf16Type() = l1.lowPrecision().bf16Type();
         index += 1;
         dst.push_back(layer);
         return true;

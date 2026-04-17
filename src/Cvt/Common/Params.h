@@ -44,7 +44,7 @@ namespace Synet
     struct Bf16OptParam
     {
         CPL_PARAM_VALUE(bool, enable, false);
-        CPL_PARAM_VALUE(uint32_t, minSrcC, 32);
+        CPL_PARAM_VALUE(uint32_t, minSrcC, 27);
         CPL_PARAM_VALUE(uint32_t, minDstC, 8);
         CPL_PARAM_VALUE(LowPrecisionType, addType, LowPrecisionTypeActive);
         CPL_PARAM_VALUE(LowPrecisionType, reluType, LowPrecisionTypePassive);
