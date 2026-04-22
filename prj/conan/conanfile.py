@@ -1,7 +1,8 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout, CMakeToolchain, CMakeDeps
-from conan.tools.files import copy, load, rmdir
+from conan.tools.files import copy, load, rmdir, save
 import os
+import stat
 
 
 class SynetConan(ConanFile):
@@ -231,6 +232,19 @@ class SynetConan(ConanFile):
             for binary in test_binaries.get(str(self.options.test), []):
                 copy(self, binary, src=self.build_folder,
                      dst=os.path.join(self.package_folder, "bin"), keep_path=False)
+
+            copied = copy(self, "Check.py",
+                          src=os.path.join(self.source_folder, "py", "Scripts"),
+                          dst=os.path.join(self.package_folder, "bin"), keep_path=False)
+            if not copied:
+                raise Exception("Check.py not found in py/Scripts — was it exported?")
+
+            check_sh_path = os.path.join(self.package_folder, "bin", "check.sh")
+            save(self, check_sh_path,
+                 '#!/bin/sh\n'
+                 'dir="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"\n'
+                 'python3 "$dir/Check.py" "$@"\n')
+            os.chmod(check_sh_path, os.stat(check_sh_path).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
         rmdir(self, os.path.join(self.package_folder, "share"))
 
