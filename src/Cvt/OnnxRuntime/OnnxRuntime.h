@@ -36,7 +36,7 @@
 
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
 
-#include "onnx/onnx.pb.h"
+#include "onnx/onnx_pb.h"
 
 #include "Cvt/OnnxRuntime/Common.h"
 #include "Cvt/OnnxRuntime/Attribute.h"

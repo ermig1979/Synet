@@ -5,13 +5,13 @@
 	branch = master
 [submodule "3rd/openvino"]
 	path = 3rd/openvino
-	url = https://github.com/openvinotoolkit/openvino.git
-	branch = releases/2024/6
+	url = git@github.com:Centimo/openvino.git
+	branch = conan-recipe-2026.0.2
 	ignore = dirty
 [submodule "3rd/onnxruntime"]
 	path = 3rd/onnxruntime
-	url = https://github.com/microsoft/onnxruntime.git
-	branch = rel-1.23.1
+	url = git@github.com:Centimo/onnxruntime.git
+	branch = conan-recipe-1.23.2
 	ignore = dirty
 [submodule "3rd/Cpl"]
 	path = 3rd/Cpl

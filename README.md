@@ -20,6 +20,33 @@ And applications `test_inference_engine`, `test_onnx`, `test_optimizer`, `test_p
 `test_quantization`, `test_stability`, `use_face_detection` will be created in directory `build`.
 There is a detail description of these test applications below.
 
+Building tests with pre-built Conan packages (OpenVINO and ONNX Runtime)
+==============================
+Instead of building OpenVINO and ONNX Runtime from submodules, you can use pre-built Conan packages.
+This requires [Conan](https://conan.io/) 2.x installed (`pip3 install conan`).
+
+Step 1 — install packages into the local Conan cache:
+
+    ./prj/sh/conan_install_deps.sh --output-dir build
+
+To fetch packages from a Nexus server instead of building from source:
+
+    ./prj/sh/conan_install_deps.sh --nexus-url https://nexus.example.com/repository/conan-local --output-dir build
+
+Or set the environment variable:
+
+    export CONAN_NEXUS_URL=https://nexus.example.com/repository/conan-local
+    ./prj/sh/conan_install_deps.sh --output-dir build
+
+Step 2 — configure and build with the `-DSYNET_USE_CONAN_PACKAGES=ON` option:
+
+    cmake prj/cmake -B build \
+        -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake \
+        -DSYNET_USE_CONAN_PACKAGES=ON \
+        -DSYNET_TEST=all \
+        -DCMAKE_BUILD_TYPE=Release
+    cmake --build build -j8
+
 OpenVINO test application
 ========================
 The test application `test_inference_engine` is used for [OpenVINO](https://github.com/openvinotoolkit/openvino) to Synet model conversion:

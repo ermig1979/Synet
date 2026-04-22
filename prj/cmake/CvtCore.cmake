@@ -14,7 +14,7 @@ set(CVT_CORE_SRC "${CVT_COMMON_SRC};${CVT_DEOPTIMIZER_SRC};${CVT_OPTIMIZER_SRC};
 
 set_source_files_properties(${CVT_CORE_SRC} PROPERTIES COMPILE_FLAGS "${COMMON_CXX_FLAGS}")
 add_library(CvtCore STATIC ${CVT_CORE_SRC})
-target_link_libraries(CvtCore -ldl -lpthread)
+target_link_libraries(CvtCore ${SIMD_LIB} -ldl -lpthread)
 if(cpl_FOUND)
     target_link_libraries(CvtCore cpl::cpl)
 endif()

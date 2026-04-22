@@ -31,7 +31,7 @@
 
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
 
-#include "onnx/onnx.pb.h"
+#include "onnx/onnx_pb.h"
 
 namespace Synet
 {
