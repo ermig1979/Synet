@@ -264,7 +264,7 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "ReduceL2" && !ConvertReduceL2Node(node, trans, network.layers(), layer))
                 return ErrorMessage(i, node);
-            if (node.op_type() == "ReduceMax" && !ConvertReduceMaxNode(node, trans, network.layers(), layer))
+            if (node.op_type() == "ReduceMax" && !ConvertReduceMaxNode(node, trans, network.layers(), layer, &tensorFormatMap))
                 return ErrorMessage(i, node);
             if (node.op_type() == "ReduceMean" && !ConvertReduceMeanNode(node, trans, network.layers(), layer, merged))
                 return ErrorMessage(i, node);

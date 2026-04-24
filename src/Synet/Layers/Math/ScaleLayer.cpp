@@ -326,7 +326,9 @@ namespace Synet
         else
         {
             if (Options().BFloat16Enable())
-                UsePerfStat(ToChar(src[0]->GetType()) + ToChar(dst[0]->GetType()));
+            {
+                UsePerfStat(ToChar(src[0]->GetType()) + ToChar(dst[0]->GetType()) + " " + Cpl::ToStr(_batch) + "x" + Cpl::ToStr(_channels) + "x" + Cpl::ToStr(_height) + "x" + Cpl::ToStr(_width));
+            }
             else
                 UsePerfStat();
             _const = false;

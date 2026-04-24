@@ -242,6 +242,12 @@ namespace Synet
             padC, padY, padX, dst, dstC, dstH, dstW, (SimdTensorFormatType)format);
     }
 
+    template <> SYNET_INLINE void PoolingMax2D<uint16_t>(const uint16_t* src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
+        size_t strideY, size_t strideX, size_t padY, size_t padX, uint16_t* dst, size_t dstH, size_t dstW, TensorFormat format)
+    {
+        SimdSynetPoolingMax16b(src, channels, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dst, dstH, dstW, (SimdTensorFormatType)format);
+    }
+
     template <> SYNET_INLINE void PoolingMax2D<uint8_t>(const uint8_t* src, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
         size_t strideY, size_t strideX, size_t padY, size_t padX, uint8_t* dst, size_t dstH, size_t dstW, TensorFormat format)
     {
@@ -270,7 +276,7 @@ namespace Synet
 
     LowPrecisionType PoolingLayer::LowPrecision(TensorType type) const
     {
-        if (type == TensorType8u && _method == PoolingMethodTypeMax)
+        if ((type == TensorType8u || type == TensorType16b) && _method == PoolingMethodTypeMax)
             return LowPrecisionTypePassive;
         return LowPrecisionTypeNone;
     }
@@ -485,7 +491,7 @@ namespace Synet
         {
             if(_type != TensorType32f && _method == PoolingMethodTypeAverage)
                 SYNET_ERROR("PoolingLayer does not support 3D pooling for PoolingMethodTypeAverage!");
-            if(_type != TensorType32f && _type != TensorType8u && _type != TensorType8i)
+            if(_type != TensorType32f && _type != TensorType16b && _type != TensorType8u && _type != TensorType8i)
                 SYNET_ERROR("PoolingLayer: unsupported input type!");
 
             TensorFormat format = src[0]->Format();
@@ -522,6 +528,7 @@ namespace Synet
         switch (_type)
         {
         case TensorType32f: Forward(src[0]->Data<float>(), dst[0]->Data<float>()); break;
+        case TensorType16b: Forward(src[0]->Data<uint16_t>(), dst[0]->Data<uint16_t>()); break;
         case TensorType8u: Forward(src[0]->Data<uint8_t>(), dst[0]->Data<uint8_t>()); break;
         case TensorType8i: Forward(src[0]->Data<int8_t>(), dst[0]->Data<int8_t>()); break;
         }

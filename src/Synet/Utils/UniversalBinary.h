@@ -86,7 +86,7 @@ namespace Synet
     SYNET_INLINE void CompactShapes(Shape& a, Shape& b, Shape& d)
     {
         Shape _a = FullSrcShape(a, d), _b = FullSrcShape(b, d), _d = d;
-        a.resize(1), b.resize(1), d.resize(1);
+        a = Shp(_a[0]), b = Shp(_b[0]), d = Shp(_d[0]);
         for (size_t i = 1; i < _d.size(); ++i)
         {
             if (Relation(a.back(), b.back(), d.back()) == Relation(_a[i], _b[i], _d[i]) || d.back() == 1 || _d[i] == 1)

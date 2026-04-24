@@ -57,6 +57,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearMatMulNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQuantizeLinearNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceL2Node.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceMaxNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceMeanNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertRoundNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp" />
