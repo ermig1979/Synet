@@ -34,7 +34,7 @@
 #include <stdexcept>
 
 #include "onnxruntime_cxx_api.h"
-#include "onnxruntime/cpu_provider_factory.h"
+#include "cpu_provider_factory.h"
 
 namespace Test
 {

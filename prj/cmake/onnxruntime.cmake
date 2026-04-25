@@ -17,7 +17,12 @@ else()
     list(APPEND SYNET_DEFINITIONS -DSYNET_ORT_DNNL_ENABLE)
   endif()
 
-  set(ORT_INCS ${ORT_ONNX} ${ORT_BIN}/_deps/protobuf-src/src ${ORT_DIR}/include ${ORT_DIR}/include/onnxruntime/core/session)
+  set(ORT_INCS 
+    ${ORT_ONNX} 
+    ${ORT_BIN}/_deps/protobuf-src/src 
+    ${ORT_DIR}/include ${ORT_DIR}/include/onnxruntime 
+    ${ORT_DIR}/include/onnxruntime/core/session 
+    ${ORT_DIR}/include/onnxruntime/core/providers/cpu)
 
   set(ORT_BUILD_OPTIONS
     -DCMAKE_BUILD_TYPE="Release"
