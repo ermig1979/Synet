@@ -205,7 +205,11 @@ namespace Synet
         if (_src16b || _dst16b)
             _scale16b.Init(_channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, true, false);
         if (Options().BFloat16Enable())
-            this->UsePerfStat(ToChar(src[0]->GetType()) + ToChar(dst[0]->GetType()));
+        {
+            this->UsePerfStat(ToChar(src[0]->GetType()) + ToChar(dst[0]->GetType()) 
+                + " " + Cpl::ToStr(_batch) + "x" + Cpl::ToStr(_channels) + "x" + Cpl::ToStr(_height) + "x" + Cpl::ToStr(_width)
+                + "-" + Cpl::ToStr(_squeeze));
+        }
         else
             this->UsePerfStat();
         return true;
