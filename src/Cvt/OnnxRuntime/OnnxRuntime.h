@@ -1393,37 +1393,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertTileNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src1 == NULL)
-                return false;
-            layer.type() = Synet::LayerTypeTile;
-            if (src1->type() == LayerTypeMeta && src1->meta().type() == MetaTypeConst && src1->meta().alpha().type() == TensorType64i)
-            {
-                Longs shape = src1->meta().alpha().i64();
-                if (trans && !PermutedToNchw(layers, false, false, false))
-                {
-                    return false;
-                }                
-                for (size_t i = 0, already = 0; i < shape.size(); ++i)
-                {
-                    if (shape[i] != 1)
-                    {
-                        if (already)
-                            return false;
-                        layer.tile().axis() = i;
-                        layer.tile().tiles() = (uint32_t)shape[i];
-                        already = 1;
-                    }
-                }
-                layer.src().resize(1);
-            }
-            return true;
-        }
-
         bool ConvertTopKNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))

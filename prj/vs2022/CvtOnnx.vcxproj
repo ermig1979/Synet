@@ -61,6 +61,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceMeanNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertRoundNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTileNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.cpp" />
   </ItemGroup>
   <ItemGroup>
