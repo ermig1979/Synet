@@ -705,6 +705,7 @@ namespace Synet
         CPL_PARAM_VALUE(float, activationParam0, 0.0f);
         CPL_PARAM_VALUE(float, activationParam1, 6.0f);
         CPL_PARAM_VALUE(bool, biasTerm1, false);
+        CPL_PARAM_VALUE(bool, hardSigmoid, false);
     };
 
     struct ShuffleParam
