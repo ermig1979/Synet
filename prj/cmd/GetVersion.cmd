@@ -24,7 +24,7 @@ where /Q git > nul
 if not errorlevel 1 (
 	git -C %ROOT_DIR% rev-parse 2>nul
 	if not errorlevel 1 (
-		git -C %ROOT_DIR% show -s --date=format:'%Y-%m-%d' --format='%cd' HEAD>%FULL_VERSION_TXT%
+		git -C %ROOT_DIR% show -s --date=format:"%%Y-%%m-%%d" --format="%%cd" HEAD>%FULL_VERSION_TXT%
 		set /P GIT_DATE=<%FULL_VERSION_TXT%
 		git -C %ROOT_DIR% rev-parse --short HEAD>%FULL_VERSION_TXT%
 		set /P GIT_REVISION=<%FULL_VERSION_TXT%
@@ -34,8 +34,8 @@ if not errorlevel 1 (
 )
 
 echo %USER_VERSION%>%FULL_VERSION_TXT%
-if not "%GIT_BRANCH%" == "" if not "%GIT_REVISION%" == "" (	
-	echo %USER_VERSION%.%GIT_BRANCH%-%GIT_REVISION%>%FULL_VERSION_TXT%
+if not "%GIT_DATE%" == "" if not "%GIT_BRANCH%" == "" if not "%GIT_REVISION%" == "" (	
+	echo %USER_VERSION%.%GIT_DATE%.%GIT_BRANCH%-%GIT_REVISION%>%FULL_VERSION_TXT%
 )
 
 set /P FULL_VERSION=<%FULL_VERSION_TXT%
