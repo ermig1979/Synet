@@ -722,6 +722,9 @@
     <ClInclude Include="..\..\src\Synet\Utils\Gather.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Utils\VersionInfo.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">

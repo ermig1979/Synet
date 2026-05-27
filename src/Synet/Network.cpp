@@ -28,6 +28,7 @@
 
 #include "Synet/Utils/SetInput.h"
 #include "Synet/Utils/Statistics.h"
+#include "Synet/Utils/VersionInfo.h"
 
 #include "Synet/Layers/Legacy/RegionLayer.h"
 #include "Synet/Layers/Detection/DetectionOutputLayer.h"
