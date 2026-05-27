@@ -1276,59 +1276,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertSqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 1, 2))
-                return false;
-            if (layer.src().size() == 1)
-            {
-                const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-                if (src0 == NULL)
-                    return false;
-                if (src0->type() == LayerTypeMeta)
-                {
-                    layer.type() = LayerTypeMeta;
-                    layer.meta().type() = MetaTypeSqueeze;
-                }
-                else
-                {
-                    layer.type() = Synet::LayerTypeSqueeze;
-                    if (!ConvertAtrributeInts(node, "axes", layer.squeeze().axes()))
-                        return false;
-                }
-            }
-            else if (layer.src().size() == 2)
-            {
-                const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-                const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-                if (src0 == NULL || src1 == NULL)
-                    return false;
-                if (src1->type() != LayerTypeMeta || src1->meta().type() != MetaTypeConst)
-                    return false;
-                const TensorParam & alpha = src1->meta().alpha();
-                if (src0->type() == LayerTypeMeta)
-                {
-                    layer.type() = LayerTypeMeta;
-                    layer.meta().type() = MetaTypeSqueeze;
-                    layer.meta().alpha() = alpha;
-                }
-                else
-                {
-                    layer.type() = Synet::LayerTypeSqueeze;
-                    if (alpha.type() == TensorType64i)
-                    {
-                        layer.squeeze().axes().resize(alpha.i64().size());
-                        for (size_t i = 0; i < alpha.i64().size(); ++i)
-                            layer.squeeze().axes()[i] = (int)alpha.i64()[i];
-                    }
-                    else
-                        return false;
-                }
-                layer.src().resize(1);
-            }
-            return true;
-        }
-
         bool ConvertSubNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered)
         {
             if (!CheckSourceNumber(layer, 2))

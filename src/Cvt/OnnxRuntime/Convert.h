@@ -103,6 +103,8 @@ namespace Synet
 
     bool ConvertSignNode(const onnx::NodeProto& node, LayerParam& layer);
 
+    bool ConvertSqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
     bool ConvertTileNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap);
 }
 
