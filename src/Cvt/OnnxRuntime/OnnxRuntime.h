@@ -61,13 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertAbsNode(const onnx::NodeProto& node, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypeUnaryOperation;
-            layer.unaryOperation().type() = UnaryOperationTypeAbs;
-            return true;
-        }
-
         bool ConvertAndNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
@@ -1283,59 +1276,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertSqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 1, 2))
-                return false;
-            if (layer.src().size() == 1)
-            {
-                const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-                if (src0 == NULL)
-                    return false;
-                if (src0->type() == LayerTypeMeta)
-                {
-                    layer.type() = LayerTypeMeta;
-                    layer.meta().type() = MetaTypeSqueeze;
-                }
-                else
-                {
-                    layer.type() = Synet::LayerTypeSqueeze;
-                    if (!ConvertAtrributeInts(node, "axes", layer.squeeze().axes()))
-                        return false;
-                }
-            }
-            else if (layer.src().size() == 2)
-            {
-                const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-                const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-                if (src0 == NULL || src1 == NULL)
-                    return false;
-                if (src1->type() != LayerTypeMeta || src1->meta().type() != MetaTypeConst)
-                    return false;
-                const TensorParam & alpha = src1->meta().alpha();
-                if (src0->type() == LayerTypeMeta)
-                {
-                    layer.type() = LayerTypeMeta;
-                    layer.meta().type() = MetaTypeSqueeze;
-                    layer.meta().alpha() = alpha;
-                }
-                else
-                {
-                    layer.type() = Synet::LayerTypeSqueeze;
-                    if (alpha.type() == TensorType64i)
-                    {
-                        layer.squeeze().axes().resize(alpha.i64().size());
-                        for (size_t i = 0; i < alpha.i64().size(); ++i)
-                            layer.squeeze().axes()[i] = (int)alpha.i64()[i];
-                    }
-                    else
-                        return false;
-                }
-                layer.src().resize(1);
-            }
-            return true;
-        }
-
         bool ConvertSubNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered)
         {
             if (!CheckSourceNumber(layer, 2))
@@ -1390,37 +1330,6 @@ namespace Synet
         {
             layer.type() = Synet::LayerTypeUnaryOperation;
             layer.unaryOperation().type() = UnaryOperationTypeTanh;
-            return true;
-        }
-
-        bool ConvertTileNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src1 == NULL)
-                return false;
-            layer.type() = Synet::LayerTypeTile;
-            if (src1->type() == LayerTypeMeta && src1->meta().type() == MetaTypeConst && src1->meta().alpha().type() == TensorType64i)
-            {
-                Longs shape = src1->meta().alpha().i64();
-                if (trans && !PermutedToNchw(layers, false, false, false))
-                {
-                    return false;
-                }                
-                for (size_t i = 0, already = 0; i < shape.size(); ++i)
-                {
-                    if (shape[i] != 1)
-                    {
-                        if (already)
-                            return false;
-                        layer.tile().axis() = i;
-                        layer.tile().tiles() = (uint32_t)shape[i];
-                        already = 1;
-                    }
-                }
-                layer.src().resize(1);
-            }
             return true;
         }
 

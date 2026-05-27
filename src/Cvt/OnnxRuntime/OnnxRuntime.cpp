@@ -306,7 +306,7 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "Tanh" && !ConvertTanhNode(node, layer))
                 return ErrorMessage(i, node);
-            if (node.op_type() == "Tile" && !ConvertTileNode(node, trans, network.layers(), layer))
+            if (node.op_type() == "Tile" && !ConvertTileNode(node, trans, network.layers(), layer, &tensorFormatMap))
                 return ErrorMessage(i, node);
             if (node.op_type() == "TopK" && !ConvertTopKNode(node, network.layers(), layer))
                 return ErrorMessage(i, node);

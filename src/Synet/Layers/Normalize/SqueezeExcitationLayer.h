@@ -66,7 +66,7 @@ namespace Synet
         void Normalize(float* norm0, float* norm1);
 
     private:
-        bool _src8u, _dst8u, _src16b, _dst16b, _hasBias[2];
+        bool _src8u, _dst8u, _src16b, _dst16b, _hasBias[2], _hardSigmoid;
         TensorFormat _format;
         size_t _batch, _channels, _height, _width, _size, _squeeze, _sci; 
         ActivationFunctionType _actType;

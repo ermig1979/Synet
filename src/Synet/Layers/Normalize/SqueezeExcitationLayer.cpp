@@ -123,6 +123,7 @@ namespace Synet
         _actType = param.activationType();
         _hasBias[0] = param.biasTerm0();
         _hasBias[1] = param.biasTerm1();
+        _hardSigmoid = param.hardSigmoid();
         _params.resize(2);
         _params[0] = param.activationParam0();
         _params[1] = param.activationParam1();
@@ -205,7 +206,11 @@ namespace Synet
         if (_src16b || _dst16b)
             _scale16b.Init(_channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, true, false);
         if (Options().BFloat16Enable())
-            this->UsePerfStat(ToChar(src[0]->GetType()) + ToChar(dst[0]->GetType()));
+        {
+            this->UsePerfStat(ToChar(src[0]->GetType()) + ToChar(dst[0]->GetType()) 
+                + " " + Cpl::ToStr(_batch) + "x" + Cpl::ToStr(_channels) + "x" + Cpl::ToStr(_height) + "x" + Cpl::ToStr(_width)
+                + "-" + Cpl::ToStr(_squeeze));
+        }
         else
             this->UsePerfStat();
         return true;
@@ -508,6 +513,9 @@ namespace Synet
             break;
         }
         Detail::InnerProductLayerForwardCpu<float>(norm1, _rWeight[1].data(), _hasBias[1] ? weight[_sci + 1].Data<float>() : NULL, _channels, _squeeze, norm0);
-        CpuSigmoid(norm0, _channels, norm0);
+        if(_hardSigmoid)
+            CpuHardSigmoid(norm0, _channels, 1.0f / 6.0f, 0.5f, norm0);
+        else
+            CpuSigmoid(norm0, _channels, norm0);
     }
 }

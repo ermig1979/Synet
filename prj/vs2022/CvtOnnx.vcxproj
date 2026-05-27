@@ -29,6 +29,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAbsNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAddNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertBatchNormalizationNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertCastNode.cpp" />
@@ -61,6 +62,8 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceMeanNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertRoundNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSqueezeNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTileNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.cpp" />
   </ItemGroup>
   <ItemGroup>
