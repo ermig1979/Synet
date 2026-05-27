@@ -158,6 +158,8 @@ namespace Synet
         NameIdSetMap _srcIds, _dstIds;
         Threads _threads;
 
+        bool CheckModelVersion(Options::VersionCheck versionCheck, const String& model = String());
+
         bool CreateLayers();
 
         bool Init(size_t threads);

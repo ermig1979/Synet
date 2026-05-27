@@ -46,13 +46,22 @@ namespace Synet
             Bf16SupportSoft
         };
 
+        enum VersionCheck
+        {
+            VersionCheckSilence = 0,
+            VersionCheckWarning,
+            VersionCheckError
+        };
+
         PerfomanceLog performanceLog;
         Bf16Support bf16Support;
+        VersionCheck versionCheck;
 
         Options()
         {
             performanceLog = PerfomanceLogEmpty;
             bf16Support = Bf16SupportHard;
+            versionCheck = VersionCheckWarning;
         }
 
         bool BFloat16Enable() const
