@@ -234,6 +234,49 @@ namespace Synet
     {
         virtual ~Deletable() {}
     };
+
+    //---------------------------------------------------------------------------------------------
+
+    struct VersionInfo
+    {
+        int major, minor, release;
+        String original, date, branch, revision;
+
+        VersionInfo(const String& version)
+            : original(version)
+            , major(0)
+            , minor(0)
+            , release(0)
+        {
+            size_t beg = 0, end = 0;
+            end = original.find('.', beg);
+            if (end == String::npos)
+                return;
+            Cpl::ToVal(version.substr(beg, end - beg), major);
+            beg = end + 1;
+            end = original.find('.', beg);
+            if (end == String::npos)
+                return;
+            Cpl::ToVal(version.substr(beg, end - beg), minor);
+            beg = end + 1;
+            end = original.find('.', beg);
+            if (end == String::npos)
+                return;
+            Cpl::ToVal(version.substr(beg, end - beg), release);
+            beg = end + 1;
+        }
+
+        bool LessThan(const VersionInfo& other) const
+        {
+            if (major < other.major)
+                return true;
+            if (major == other.major && minor < other.minor)
+                return true;
+            if (major == other.major && minor == other.minor && release < other.release)
+                return true;
+            return false;
+        }
+    };
 }
 
 #define SYNET_ERROR(message) \
