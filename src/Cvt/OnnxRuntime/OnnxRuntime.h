@@ -61,19 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertAndNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src0 == NULL || src1 == NULL)
-                return false;
-            layer.type() = Synet::LayerTypeBinaryOperation;
-            layer.binaryOperation().type() = BinaryOperationTypeAnd;
-            return true;
-        }
-
         bool ConvertArgMaxNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1))
