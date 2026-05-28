@@ -4,6 +4,15 @@
     <Filter Include="OnnxRuntime">
       <UniqueIdentifier>{25012212-983f-461a-b3fd-3f61c33b37aa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="OnnxRuntime\A">
+      <UniqueIdentifier>{bf224fb2-1832-4c98-a6a8-c05cd021f48a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OnnxRuntime\B">
+      <UniqueIdentifier>{98d57781-889b-43a4-a08a-055ce254de39}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OnnxRuntime\C">
+      <UniqueIdentifier>{b12c88f5-fe8c-4279-9920-1d8729e7643d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.cpp">
@@ -27,16 +36,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearMatMulNode.cpp">
       <Filter>OnnxRuntime</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConstantNode.cpp">
-      <Filter>OnnxRuntime</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceMeanNode.cpp">
-      <Filter>OnnxRuntime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertBatchNormalizationNode.cpp">
-      <Filter>OnnxRuntime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConvOrConvTransposeNode.cpp">
       <Filter>OnnxRuntime</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearAveragePoolNode.cpp">
@@ -55,9 +55,6 @@
       <Filter>OnnxRuntime</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQuantizeLinearNode.cpp">
-      <Filter>OnnxRuntime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAddNode.cpp">
       <Filter>OnnxRuntime</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGemmNode.cpp">
@@ -93,12 +90,6 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMulNode.cpp">
       <Filter>OnnxRuntime</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertClipNode.cpp">
-      <Filter>OnnxRuntime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertCastNode.cpp">
-      <Filter>OnnxRuntime</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertHardSwishNode.cpp">
       <Filter>OnnxRuntime</Filter>
     </ClCompile>
@@ -108,17 +99,38 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTileNode.cpp">
       <Filter>OnnxRuntime</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAbsNode.cpp">
-      <Filter>OnnxRuntime</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSqueezeNode.cpp">
       <Filter>OnnxRuntime</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAbsNode.cpp">
+      <Filter>OnnxRuntime\A</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAddNode.cpp">
+      <Filter>OnnxRuntime\A</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAndNode.cpp">
-      <Filter>OnnxRuntime</Filter>
+      <Filter>OnnxRuntime\A</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertArgMaxNode.cpp">
-      <Filter>OnnxRuntime</Filter>
+      <Filter>OnnxRuntime\A</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAveragePoolNode.cpp">
+      <Filter>OnnxRuntime\A</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertBatchNormalizationNode.cpp">
+      <Filter>OnnxRuntime\B</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertCastNode.cpp">
+      <Filter>OnnxRuntime\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertClipNode.cpp">
+      <Filter>OnnxRuntime\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConstantNode.cpp">
+      <Filter>OnnxRuntime\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConvOrConvTransposeNode.cpp">
+      <Filter>OnnxRuntime\C</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

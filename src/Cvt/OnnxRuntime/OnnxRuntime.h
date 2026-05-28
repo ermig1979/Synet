@@ -61,38 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertAveragePoolNode(const onnx::NodeProto& node, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypePooling;
-            layer.pooling().method() = PoolingMethodTypeAverage;
-            if (!ConvertAtrributeInts(node, "kernel_shape", layer.pooling().kernel()))
-                return false;
-            if (GetAtrribute(node, "pads"))
-            {
-                if (!ConvertAtrributeInts(node, "pads", layer.pooling().pad()))
-                    return false;
-            }
-            if (!ConvertAtrributeInts(node, "strides", layer.pooling().stride()))
-                return false;
-            if (GetAtrribute(node, "ceil_mode") == NULL)
-                layer.pooling().roundingType() = RoundingTypeFloor;
-            else
-            {
-                int ceilMode;
-                if (!ConvertAtrributeInt(node, "ceil_mode", ceilMode))
-                    return false;
-                layer.pooling().roundingType() = ceilMode ? RoundingTypeCeil : RoundingTypeFloor;
-            }
-            if (GetAtrribute(node, "count_include_pad"))
-            {
-                int64_t countIncludePad;
-                if (!ConvertAtrributeInt(node, "count_include_pad", countIncludePad))
-                    return false;
-                layer.pooling().excludePad() = (countIncludePad == 0);
-            }
-            return true;
-        }
-
         bool ConvertCeilNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1))
