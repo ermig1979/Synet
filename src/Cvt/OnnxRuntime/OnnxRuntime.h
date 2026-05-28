@@ -61,18 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertArgMaxNode(const onnx::NodeProto& node, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 1))
-                return false;
-            layer.type() = Synet::LayerTypeArgMax;
-            if (!ConvertAtrributeInt(node, "axis", layer.argMax().axis()))
-                return false;
-            if (!ConvertAtrributeInt(node, "keepdims", layer.argMax().keepDims()))
-                return false;
-            return true;
-        }
-
         bool ConvertAveragePoolNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypePooling;
