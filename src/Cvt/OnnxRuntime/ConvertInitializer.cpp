@@ -229,6 +229,32 @@ namespace Synet
                 }
             }
         }
+        else if (tensor.data_type() == onnx::TensorProto_DataType_BOOL)
+        {
+            layer.type() = LayerTypeConst;
+            layer.weight().resize(1);
+            layer.weight()[0].type() = TensorTypeBool;
+            uint64_t size = 1, offset = weight.size();
+            for (size_t i = 0; i < tensor.dims_size(); ++i)
+            {
+                size *= (size_t)tensor.dims(i);
+                layer.weight()[0].dim().push_back((size_t)tensor.dims(i));
+            }
+            layer.weight()[0].offset() = offset;
+            layer.weight()[0].size() = size * sizeof(bool);
+            if (size)
+            {
+                if (size == 1 && layer.weight()[0].dim().empty())
+                {
+                    layer.weight()[0].dim().push_back(1);
+                    layer.weight()[0].scalar() = true;
+                }
+                if (tensor.has_raw_data())
+                    Append(weight, layer.weight()[0], tensor.raw_data().c_str());
+                else
+                    SYNET_ERROR("Can't parse '" << layer.name() << "' BOOL tensor!");
+            }
+        }
         else
             SYNET_ERROR(" Unknown tensor type " << tensor.data_type() << " !");
         network.layers().push_back(layer);
