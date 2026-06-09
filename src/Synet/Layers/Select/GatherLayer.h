@@ -53,6 +53,7 @@ namespace Synet
         int _version;
         TensorType _srcType, _idxType;
         size_t _axis, _srcOuter, _srcCount, _srcInner, _idxOuter, _idxCount, _idxInner;
+        Tensor _index;
         GatherPtr _gather;
         GatherElementsPtr _gatherElements;
         GatherElements _gatherElementsSimd;
