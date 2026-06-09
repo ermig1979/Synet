@@ -350,42 +350,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertGatherNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src0 == NULL || src1 == NULL)
-                return false;
-            if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
-            {
-                layer.type() = LayerTypeMeta;
-                layer.meta().type() = MetaTypeGather;
-            }
-            else
-            {
-                layer.type() = LayerTypeGather;
-                if (node.op_type() == "Gather")
-                {
-                    if (!ConvertAtrributeInt(node, "axis", layer.gather().axis()))
-                        return false;
-                }
-                if (node.op_type() == "GatherElements")
-                {
-                    if (!ConvertAtrributeInt(node, "axis", layer.gather().axis()))
-                        return false;
-                    layer.gather().version() = 1;
-                }
-                if (node.op_type() == "GatherND")
-                {
-                    if (!ConvertAtrributeInt(node, "batch_dims", layer.gather().axis(), true, 0))
-                        return false;
-                }
-            }
-            return true;
-        }
-
         bool ConvertGridSampleNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))

@@ -43,6 +43,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDropoutNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertEqualNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertFlattenNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGatherNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGemmNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGlobalAveragePoolNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGreaterNode.cpp" />
