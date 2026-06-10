@@ -366,6 +366,7 @@ namespace Synet
                 SYNET_ERROR("GatherLayer has wrong src[1] type: " << Cpl::ToStr(_idxType) << " !");
             _srcCount = data.Size(_axis, _axis + _idxCount);
             _srcInner = data.Size(_axis + _idxCount);
+            _idxCount = 1;
         }
         else
             SYNET_ERROR("GatherLayer parameter version: " << _version << " is unsupported!");
