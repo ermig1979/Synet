@@ -54,7 +54,8 @@ namespace Synet
         else if(c1.convolution().activationType() == ActivationFunctionTypeHardSigmoid)
         {
             const LayerParam& em = src[index + 3];
-            if (em.type() != LayerTypeEltwise || em.eltwise().operation() != EltwiseOperationTypeProduct || em.src()[0] != pa.src()[0] || em.src()[1] != c1.dst()[0])
+            if (em.type() != LayerTypeEltwise || em.eltwise().operation() != EltwiseOperationTypeProduct || 
+                ((em.src()[0] != pa.src()[0] || em.src()[1] != c1.dst()[0]) && (em.src()[0] != c1.dst()[0] || em.src()[1] != pa.src()[0])))
                 return false;
             emi = 3;
         }
