@@ -278,6 +278,8 @@ namespace Synet
     {
         if (!IsMul(src[index]))
             return false;
+        if (src[index].src().size() != 2)
+            return false;
         size_t dst0 = GetIndexByName(dst, src[index].src()[0]);
         size_t dst1 = GetIndexByName(dst, src[index].src()[1]);
         if (dst0 >= dst.size() || dst1 >= dst.size())
