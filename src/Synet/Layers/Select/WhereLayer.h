@@ -35,8 +35,8 @@ namespace Synet
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
 
-        typedef void (*Where1Ptr)(const uint8_t* cnd, const uint8_t* pos, const uint8_t* neg, size_t size, uint8_t* dst);
-        typedef void (*WhereNPtr)(const uint8_t* cnd, const Shape & cndSteps, const uint8_t* pos, const Shape& posSteps, 
+        typedef void (*WhereUniformPtr)(const uint8_t* cnd, const uint8_t* pos, const uint8_t* neg, size_t size, uint8_t* dst);
+        typedef void (*WhereUniversalPtr)(const uint8_t* cnd, const Shape & cndSteps, const uint8_t* pos, const Shape& posSteps, 
             const uint8_t* neg, const Shape& negSteps, uint8_t* dst, const Shape& dstShape);
 
     protected:
@@ -46,7 +46,7 @@ namespace Synet
         TensorType _cndType, _dstType;
         Shape _cndSteps, _posSteps, _negSteps, _dstShape;
         size_t _size, _count;
-        Where1Ptr _where1;
-        WhereNPtr _whereN;
+        WhereUniformPtr _whereUniform;
+        WhereUniversalPtr _whereUniversal;
     };
 }
