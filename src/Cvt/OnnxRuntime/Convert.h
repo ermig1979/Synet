@@ -41,6 +41,12 @@ namespace Synet
 
     bool ConvertAddNode(const onnx::NodeProto& node, LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer);
 
+    bool ConvertAndNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
+    bool ConvertArgMaxNode(const onnx::NodeProto& node, LayerParam& layer);
+
+    bool ConvertAveragePoolNode(const onnx::NodeProto& node, LayerParam& layer);
+
     bool ConvertCastNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer);
 
     bool ConvertClipNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer);
@@ -58,6 +64,8 @@ namespace Synet
     bool ConvertEqualNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
 
     bool ConvertFlattenNode(const onnx::NodeProto& node, LayerParam& layer);
+
+    bool ConvertGatherNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
 
     bool ConvertGemmNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered, TensorFormatMap* tensorFormatMap, UniqNames& merged);
 

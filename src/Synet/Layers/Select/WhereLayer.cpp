@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2024 Yermalayeu Ihar.
+* Copyright (c) 2018-2026 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,11 @@
 
 #include "Synet/Layers/Select/WhereLayer.h"
 #include "Synet/Utils/Math.h"
+#include "Synet/Utils/UniversalBinary.h"
 
 namespace Synet
 {
-    template <class C, class D> void Where1(const uint8_t* cnd8, const uint8_t* pos8, const uint8_t* neg8, size_t size, uint8_t* dst8)
+    template <class C, class D> void WhereUniform(const uint8_t* cnd8, const uint8_t* pos8, const uint8_t* neg8, size_t size, uint8_t* dst8)
     {
         const C* cnd = (const C*)cnd8;
         const D* pos = (const D*)pos8;
@@ -39,26 +40,26 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template<class C> WhereLayer::Where1Ptr GetWhere1(TensorType dst)
+    template<class C> WhereLayer::WhereUniformPtr GetWhereUniform(TensorType dst)
     {
         switch (dst)
         {
-        case TensorType32f: return Where1<C, float>;
-        case TensorType32i: return Where1<C, uint32_t>;
-        case TensorType64i: return Where1<C, uint64_t>;
+        case TensorType32f: return WhereUniform<C, float>;
+        case TensorType32i: return WhereUniform<C, uint32_t>;
+        case TensorType64i: return WhereUniform<C, uint64_t>;
         default:
             return NULL;
         }
     }
 
-    WhereLayer::Where1Ptr GetWhere1(TensorType cnd, TensorType dst)
+    WhereLayer::WhereUniformPtr GetWhereUniform(TensorType cnd, TensorType dst)
     {
         switch (cnd)
         {
-        case TensorType32f: return GetWhere1<uint32_t>(dst);
-        case TensorType32i: return GetWhere1<uint32_t>(dst);
-        case TensorType64i: return GetWhere1<uint64_t>(dst);
-        case TensorTypeBool: return GetWhere1<bool>(dst);
+        case TensorType32f: return GetWhereUniform<uint32_t>(dst);
+        case TensorType32i: return GetWhereUniform<uint32_t>(dst);
+        case TensorType64i: return GetWhereUniform<uint64_t>(dst);
+        case TensorTypeBool: return GetWhereUniform<bool>(dst);
         default:
             return NULL;
         }
@@ -66,8 +67,8 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template <class C, class D, size_t N> void WhereN(const uint8_t* cnd8, const Shape& cndSteps, const uint8_t* pos8, const Shape& posSteps,
-        const uint8_t* neg8, const Shape& negSteps, uint8_t* dst8, const Shape& dstShape)
+    template <class C, class D, size_t N> void WhereUniversal(const uint8_t* cnd8, const Shape& cndSteps, 
+        const uint8_t* pos8, const Shape& posSteps, const uint8_t* neg8, const Shape& negSteps, uint8_t* dst8, const Shape& dstShape)
     {
         const C* cnd = (const C*)cnd8;
         const D* pos = (const D*)pos8;
@@ -139,38 +140,38 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template<class C, class D> WhereLayer::WhereNPtr GetWhereN(size_t dim)
+    template<class C, class D> WhereLayer::WhereUniversalPtr GetWhereUniversal(size_t dim)
     {
         switch (dim)
         {
-        case 1: return WhereN<C, D, 1>;
-        case 2: return WhereN<C, D, 2>;
-        case 3: return WhereN<C, D, 3>;
+        case 1: return WhereUniversal<C, D, 1>;
+        case 2: return WhereUniversal<C, D, 2>;
+        case 3: return WhereUniversal<C, D, 3>;
         default:
-            return NULL;
+            SYNET_ERROR("WhereUniversal does not support " << dim << "D algorithm!");
         }
     }
 
-    template<class C> WhereLayer::WhereNPtr GetWhereN(TensorType dst, size_t dim)
+    template<class C> WhereLayer::WhereUniversalPtr GetWhereUniversal(TensorType dst, size_t dim)
     {
         switch (dst)
         {
-        case TensorType32f: return GetWhereN<C, float>(dim);
-        case TensorType32i: return GetWhereN<C, int32_t>(dim);
-        case TensorType64i: return GetWhereN<C, int64_t>(dim);
+        case TensorType32f: return GetWhereUniversal<C, float>(dim);
+        case TensorType32i: return GetWhereUniversal<C, int32_t>(dim);
+        case TensorType64i: return GetWhereUniversal<C, int64_t>(dim);
         default:
             return NULL;
         }
     }
 
-    WhereLayer::WhereNPtr GetWhereN(TensorType cnd, TensorType dst, size_t dim)
+    WhereLayer::WhereUniversalPtr GetWhereUniversal(TensorType cnd, TensorType dst, size_t dim)
     {
         switch (cnd)
         {
-        case TensorType32f: return GetWhereN<uint32_t>(dst, dim);
-        case TensorType32i: return GetWhereN<uint32_t>(dst, dim);
-        case TensorType64i: return GetWhereN<uint64_t>(dst, dim);
-        case TensorTypeBool: return GetWhereN<bool>(dst, dim);
+        case TensorType32f: return GetWhereUniversal<uint32_t>(dst, dim);
+        case TensorType32i: return GetWhereUniversal<uint32_t>(dst, dim);
+        case TensorType64i: return GetWhereUniversal<uint64_t>(dst, dim);
+        case TensorTypeBool: return GetWhereUniversal<bool>(dst, dim);
         default:
             return NULL;
         }
@@ -180,8 +181,8 @@ namespace Synet
 
     WhereLayer::WhereLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
-        , _where1(NULL)
-        , _whereN(NULL)
+        , _whereUniform(NULL)
+        , _whereUniversal(NULL)
     {
     }
 
@@ -212,32 +213,26 @@ namespace Synet
         {
             _size = src[0]->Size();
             dst[0]->Reshape(_dstType, src[0]->Shape(), src[0]->Format());
-            _where1 = GetWhere1(_cndType, _dstType);
-            if(_where1 == NULL)
-                SYNET_ERROR("WhereLayer can't work when src[0] " << Cpl::ToStr(_cndType) << " and src[1] " << Cpl::ToStr(_dstType) << " !");
+            _whereUniform = GetWhereUniform(_cndType, _dstType);
+            if(_whereUniform == NULL)
+                SYNET_ERROR("WhereLayer can't get uniform worker when src[0] " << Cpl::ToStr(_cndType) << " and src[1] " << Cpl::ToStr(_dstType) << " !");
         }
         else
         {
-            _count = Max(src[0]->Count(), Max(src[1]->Count(), src[2]->Count()));
             Shape cndShape = src[0]->Shape(), posShape = src[1]->Shape(), negShape = src[2]->Shape();
-            if (cndShape == Shp(1))
-                cndShape.resize(_count, 1);
-            if (posShape == Shp(1))
-                posShape.resize(_count, 1);
-            if (negShape == Shp(1))
-                negShape.resize(_count, 1);
-            if(cndShape.size() != _count || posShape.size() != _count || negShape.size() != _count)
-                SYNET_ERROR("WhereLayer has incompatible inputs!");
-            _dstShape.resize(_count, 1);
-            for (size_t i = 0; i < _count; ++i)
-                _dstShape[i] = Max(cndShape[i], Max(posShape[i], negShape[i]));
+            if(!IsCompatible(cndShape, posShape) || !IsCompatible(cndShape, negShape))
+                SYNET_ERROR("WhereLayer incompatible input shapes!");
+
+            Shape dstShape = OutputShape(OutputShape(cndShape, posShape), negShape);
+            _dstShape = dstShape;
+            CompactShapes(cndShape, posShape, negShape, _dstShape);
             if (!(GetSteps(cndShape, _dstShape, _cndSteps) &&
                 GetSteps(posShape, _dstShape, _posSteps) &&
                 GetSteps(negShape, _dstShape, _negSteps)))
                 SYNET_ERROR("WhereLayer has incompatible inputs!");
-            dst[0]->Reshape(_dstType, _dstShape, src[0]->Format());
-            _whereN = GetWhereN(_cndType, _dstType, _dstShape.size());
-            if (_whereN == NULL)
+            dst[0]->Reshape(_dstType, dstShape, src[0]->Format());
+            _whereUniversal = GetWhereUniversal(_cndType, _dstType, _dstShape.size());
+            if (_whereUniversal == NULL)
                 SYNET_ERROR("WhereLayer can't work when src[0] " << Cpl::ToStr(_cndType) << " and src[1] " << Cpl::ToStr(_dstType) << " and dst[0] " << ToStr(_dstShape) << " !");
         }
 
@@ -257,9 +252,9 @@ namespace Synet
 
     void WhereLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
-        if (_where1)
-            _where1(src[0]->RawData(), src[1]->RawData(), src[2]->RawData(), _size, dst[0]->RawData());
+        if (_whereUniform)
+            _whereUniform(src[0]->RawData(), src[1]->RawData(), src[2]->RawData(), _size, dst[0]->RawData());
         else
-            _whereN(src[0]->RawData(), _cndSteps, src[1]->RawData(), _posSteps, src[2]->RawData(), _negSteps, dst[0]->RawData(), _dstShape);
+            _whereUniversal(src[0]->RawData(), _cndSteps, src[1]->RawData(), _posSteps, src[2]->RawData(), _negSteps, dst[0]->RawData(), _dstShape);
     }
 }

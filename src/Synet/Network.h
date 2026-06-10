@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2025 Yermalayeu Ihar,
+* Copyright (c) 2018-2026 Yermalayeu Ihar,
 *               2018-2021 Antonenka Mikhail.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -157,6 +157,8 @@ namespace Synet
         NameIdMap _tensorId, _layerId, _statId;
         NameIdSetMap _srcIds, _dstIds;
         Threads _threads;
+
+        bool CheckModelVersion(Options::VersionCheck versionCheck, const String& model = String());
 
         bool CreateLayers();
 

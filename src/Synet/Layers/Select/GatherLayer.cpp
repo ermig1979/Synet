@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2025 Yermalayeu Ihar.
+* Copyright (c) 2018-2026 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -317,6 +317,57 @@ namespace Synet
             if (_gatherElementsSimd.Enable() && src[1]->Const())
                 _gatherElementsSimd.SetIndex(src[1]->RawData());
         }
+        else if (_version == 2)
+        {
+            if (!index.Const())
+                SYNET_ERROR("GatherLayer support only const index for version 2 !");
+            _gather = GetGather(_srcType, TensorType32i);
+            if (_gather == NULL)
+                SYNET_ERROR("GatherLayer can't get 'gatherNd' worker!");
+
+            for (size_t i = 0; i < _axis; ++i)
+                dstShape.push_back(idxShape[i]);
+            if (idxShape.back() == srcShape.size() - _axis)
+            {
+                for (size_t i = _axis, n = idxShape.size() - 1; i < n; ++i)
+                    dstShape.push_back(idxShape[i]);
+            }
+            else
+            {
+                for (size_t i = _axis, n = idxShape.size() - 1; i < n; ++i)
+                    dstShape.push_back(idxShape[i]);
+                for (size_t i = _axis + idxShape.back(); i < srcShape.size(); ++i)
+                    dstShape.push_back(srcShape[i]);
+            }
+            Shape indexShape(idxShape.begin(), idxShape.begin() + idxShape.size() - 1);
+            _index.Reshape(TensorType32i, indexShape);
+            _idxOuter = index.Size(0, -1);
+            _idxCount = index.Size(-1);
+            if (_idxType == TensorType64i)
+            {
+                const int64_t* idx = index.Data<int64_t>();
+                for (size_t o = 0; o < _idxOuter; o++)
+                {
+                    int64_t offset = 0;
+                    for (size_t c = 0; c < _idxCount; c++)
+                    {
+                        int64_t _idx = idx[c], axis = data.Axis(_axis + c);
+                        if (_idx < 0)
+                            _idx += axis;
+                        if(_idx < 0 || _idx > axis)
+                            SYNET_ERROR("GatherLayer(version 2) find wrong index !");
+                        offset += _idx * data.Size(_axis + c + 1, _axis + _idxCount);
+                    }
+                    idx += _idxCount;
+                    _index.Data<int32_t>()[o] = (int32_t)offset;
+                }
+            }
+            else
+                SYNET_ERROR("GatherLayer has wrong src[1] type: " << Cpl::ToStr(_idxType) << " !");
+            _srcCount = data.Size(_axis, _axis + _idxCount);
+            _srcInner = data.Size(_axis + _idxCount);
+            _idxCount = 1;
+        }
         else
             SYNET_ERROR("GatherLayer parameter version: " << _version << " is unsupported!");
 
@@ -350,8 +401,57 @@ namespace Synet
             else
                 _gatherElements(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, src[1]->RawData(), _idxCount, dst[0]->RawData());
             break;
+        case 2:
+            _gather(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, _index.RawData(), _idxOuter, _idxCount, dst[0]->RawData());
+            break;
         default:
             assert(0);
         }
     }
 }
+
+#if 0 
+def _gather_nd_impl(
+    data: np.ndarray, indices : np.ndarray, batch_dims : int
+)->tuple[np.ndarray]:
+# Note the data rank - will be reused multiple times later
+data_rank = len(data.shape)
+
+# The list of data / indice shape of batch_dims.
+batch_dims_shape = []
+
+# The number of elements in the batch_dims for data / indice array.
+batch_dims_size = 1
+
+# Check the shape of indice and data are identical for batch dims.
+for i in range(batch_dims) :
+    batch_dims_shape.append(indices.shape[i])
+    batch_dims_size *= indices.shape[i]
+
+    # Compute output of the op as below.
+    # Compute shape of output array.
+    output_shape = (
+        batch_dims_shape + list(indices.shape)[batch_dims:-1]
+        if (indices.shape[-1] == data_rank - batch_dims)
+        else batch_dims_shape
+            + list(indices.shape)[batch_dims:-1]
+            + list(data.shape)[batch_dims + indices.shape[-1]:]
+            )
+
+    # Placeholder for output data.
+            output_data_buffer = []
+
+            # Flatten 'indices' to 2D array.
+            reshaped_indices = indices.reshape(batch_dims_size, -1, indices.shape[-1])
+
+            # Flatten 'data' to array of shape
+# (batch_dim_size, data.shape[batch_dimes:]).
+            reshaped_data = data.reshape((batch_dims_size, ) + data.shape[batch_dims:])
+
+            # Gather each scalar value from 'data'.
+            for batch_dim in range(reshaped_indices.shape[0]) :
+                for outer_dim in range(reshaped_indices.shape[1]) :
+                    gather_index = tuple(reshaped_indices[batch_dim][outer_dim])
+                    output_data_buffer.append(reshaped_data[(batch_dim, *gather_index)])
+                    return (np.asarray(output_data_buffer, dtype = data.dtype).reshape(output_shape), )
+#endif

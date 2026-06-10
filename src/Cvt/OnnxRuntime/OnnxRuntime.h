@@ -61,63 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertAndNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src0 == NULL || src1 == NULL)
-                return false;
-            layer.type() = Synet::LayerTypeBinaryOperation;
-            layer.binaryOperation().type() = BinaryOperationTypeAnd;
-            return true;
-        }
-
-        bool ConvertArgMaxNode(const onnx::NodeProto& node, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 1))
-                return false;
-            layer.type() = Synet::LayerTypeArgMax;
-            if (!ConvertAtrributeInt(node, "axis", layer.argMax().axis()))
-                return false;
-            if (!ConvertAtrributeInt(node, "keepdims", layer.argMax().keepDims()))
-                return false;
-            return true;
-        }
-
-        bool ConvertAveragePoolNode(const onnx::NodeProto& node, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypePooling;
-            layer.pooling().method() = PoolingMethodTypeAverage;
-            if (!ConvertAtrributeInts(node, "kernel_shape", layer.pooling().kernel()))
-                return false;
-            if (GetAtrribute(node, "pads"))
-            {
-                if (!ConvertAtrributeInts(node, "pads", layer.pooling().pad()))
-                    return false;
-            }
-            if (!ConvertAtrributeInts(node, "strides", layer.pooling().stride()))
-                return false;
-            if (GetAtrribute(node, "ceil_mode") == NULL)
-                layer.pooling().roundingType() = RoundingTypeFloor;
-            else
-            {
-                int ceilMode;
-                if (!ConvertAtrributeInt(node, "ceil_mode", ceilMode))
-                    return false;
-                layer.pooling().roundingType() = ceilMode ? RoundingTypeCeil : RoundingTypeFloor;
-            }
-            if (GetAtrribute(node, "count_include_pad"))
-            {
-                int64_t countIncludePad;
-                if (!ConvertAtrributeInt(node, "count_include_pad", countIncludePad))
-                    return false;
-                layer.pooling().excludePad() = (countIncludePad == 0);
-            }
-            return true;
-        }
-
         bool ConvertCeilNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1))
@@ -403,42 +346,6 @@ namespace Synet
             {
                 layer.type() = Synet::LayerTypeUnaryOperation;
                 layer.unaryOperation().type() = Synet::UnaryOperationTypeFloor;
-            }
-            return true;
-        }
-
-        bool ConvertGatherNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src0 == NULL || src1 == NULL)
-                return false;
-            if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
-            {
-                layer.type() = LayerTypeMeta;
-                layer.meta().type() = MetaTypeGather;
-            }
-            else
-            {
-                layer.type() = LayerTypeGather;
-                if (node.op_type() == "Gather")
-                {
-                    if (!ConvertAtrributeInt(node, "axis", layer.gather().axis()))
-                        return false;
-                }
-                if (node.op_type() == "GatherElements")
-                {
-                    if (!ConvertAtrributeInt(node, "axis", layer.gather().axis()))
-                        return false;
-                    layer.gather().version() = 1;
-                }
-                if (node.op_type() == "GatherND")
-                {
-                    if (!ConvertAtrributeInt(node, "batch_dims", layer.gather().axis(), true, 0))
-                        return false;
-                }
             }
             return true;
         }

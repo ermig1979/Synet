@@ -31,6 +31,9 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAbsNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAddNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAndNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertArgMaxNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAveragePoolNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertBatchNormalizationNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertCastNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertClipNode.cpp" />
@@ -40,6 +43,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDropoutNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertEqualNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertFlattenNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGatherNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGemmNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGlobalAveragePoolNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGreaterNode.cpp" />

@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2025 Yermalayeu Ihar,
+* Copyright (c) 2018-2026 Yermalayeu Ihar,
 *               2018-2021 Antonenka Mikhail.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,6 +28,7 @@
 
 #include "Synet/Utils/SetInput.h"
 #include "Synet/Utils/Statistics.h"
+#include "Synet/Utils/VersionInfo.h"
 
 #include "Synet/Layers/Legacy/RegionLayer.h"
 #include "Synet/Layers/Detection/DetectionOutputLayer.h"
@@ -86,12 +87,36 @@ namespace Synet
         _empty = true;
     }
 
+    bool Network::CheckModelVersion(Options::VersionCheck versionCheck, const String& model)
+    {
+        VersionInfo modelVersion(_param().info().synet());
+        VersionInfo synetVersion(Version());
+        if (synetVersion.LessThan(modelVersion) && versionCheck != Options::VersionCheckSilence)
+        {
+            std::stringstream message;
+            message << "Model ";
+            if (model != String())
+                message << "file '" << model << "' ";
+            message << "is generated newer verion of Synet ";
+            message << "(model: " << _param().info().synet();
+            message << ", synet: " << Version() << ") !";
+            if (versionCheck == Options::VersionCheckWarning)
+                CPL_LOG_SS(Warning, message.str());
+            if (versionCheck == Options::VersionCheckError)
+                SYNET_ERROR(message.str());
+        }
+        return true;
+    }
+
     bool Network::Load(const String & model, const String & weight, const Options & options, size_t threads)
     {
         Clear();
 
         if (!_param.Load(model))
             SYNET_ERROR("Can't load model file '" << model << "' !");
+
+        if (!CheckModelVersion(options.versionCheck, model))
+            return false;
 
         _context.options = options;
         if (!CreateLayers())
@@ -129,6 +154,9 @@ namespace Synet
 
         if (!_param.Load(modelData, modelSize, Cpl::ParamFormatXml))
             SYNET_ERROR("Can't load model from memory!");
+
+        if (!CheckModelVersion(options.versionCheck))
+            return false;
 
         _context.options = options;
 

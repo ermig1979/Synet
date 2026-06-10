@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2025 Yermalayeu Ihar.
+* Copyright (c) 2018-2026 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -53,6 +53,7 @@ namespace Synet
         int _version;
         TensorType _srcType, _idxType;
         size_t _axis, _srcOuter, _srcCount, _srcInner, _idxOuter, _idxCount, _idxInner;
+        Tensor _index;
         GatherPtr _gather;
         GatherElementsPtr _gatherElements;
         GatherElements _gatherElementsSimd;

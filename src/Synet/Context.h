@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2025 Yermalayeu Ihar.
+* Copyright (c) 2018-2026 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -46,13 +46,22 @@ namespace Synet
             Bf16SupportSoft
         };
 
+        enum VersionCheck
+        {
+            VersionCheckSilence = 0,
+            VersionCheckWarning,
+            VersionCheckError
+        };
+
         PerfomanceLog performanceLog;
         Bf16Support bf16Support;
+        VersionCheck versionCheck;
 
         Options()
         {
             performanceLog = PerfomanceLogEmpty;
             bf16Support = Bf16SupportHard;
+            versionCheck = VersionCheckWarning;
         }
 
         bool BFloat16Enable() const

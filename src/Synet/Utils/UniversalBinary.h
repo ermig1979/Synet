@@ -1,7 +1,7 @@
 /*
 * Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2025 Yermalayeu Ihar.
+* Copyright (c) 2018-2026 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -99,6 +99,50 @@ namespace Synet
             {
                 a.push_back(_a[i]);
                 b.push_back(_b[i]);
+                d.push_back(_d[i]);
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    SYNET_INLINE int Relation(size_t a, size_t b, size_t c, size_t d)
+    {
+        if (a < d && b < d && c < d)
+            return 1;
+        if (a < d && b < d)
+            return 2;
+        if (a < d && c < d)
+            return 3;
+        if (b < d && c < d)
+            return 4;
+        if (a < d)
+            return 5;
+        if (b < d)
+            return 6;
+        if (c < d)
+            return 7;
+        return 0;
+    }
+
+    SYNET_INLINE void CompactShapes(Shape& a, Shape& b, Shape& c, Shape& d)
+    {
+        Shape _a = FullSrcShape(a, d), _b = FullSrcShape(b, d), _c = FullSrcShape(c, d), _d = d;
+        a = Shp(_a[0]), b = Shp(_b[0]), c = Shp(_c[0]), d = Shp(_d[0]);
+        for (size_t i = 1; i < _d.size(); ++i)
+        {
+            if (Relation(a.back(), b.back(), c.back(), d.back()) == Relation(_a[i], _b[i], _c[i], _d[i]) || d.back() == 1 || _d[i] == 1)
+            {
+                a.back() *= _a[i];
+                b.back() *= _b[i];
+                c.back() *= _c[i];
+                d.back() *= _d[i];
+            }
+            else
+            {
+                a.push_back(_a[i]);
+                b.push_back(_b[i]);
+                c.push_back(_c[i]);
                 d.push_back(_d[i]);
             }
         }
