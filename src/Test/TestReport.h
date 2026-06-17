@@ -298,7 +298,10 @@ namespace Test
 				if (layers.find(Synet::LayerTypeDetectionOutput) != layers.end()) desc += String("Do");
                 if (layers.find(Synet::LayerTypeYolo) != layers.end()) desc += String("Y");
                 if (layers.find(Synet::LayerTypeInterp) != layers.end()) desc += String("I");
-            }
+				if (layers.find(Synet::LayerTypeQuantizedConvolution) != layers.end()) desc += String("Qc");
+				if (layers.find(Synet::LayerTypeQuantizedMergedConvolution) != layers.end()) desc += String("Qm");
+				if (layers.find(Synet::LayerTypeQuantizedInnerProduct) != layers.end()) desc += String("Qi");
+			}
 			return desc;
 		}
 
