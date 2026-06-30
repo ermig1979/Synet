@@ -1,0 +1,57 @@
+name: Simd pin gate
+
+# Invariant enforced on every push to master: the bundled Simd submodule
+# (3rd/Simd) must point at a tagged Simd release, and that tag must match the
+# Simd version Synet will request from Conan.
+#
+# Rationale: Synet's recipe reads the Simd version from 3rd/Simd/prj/txt/
+# UserVersion.txt and does `requires(f"simd/{version}")`. If the submodule sits
+# on an untagged, post-release commit (e.g. v7.0.160-88-gXXXX), the requested
+# binary may not exist in Nexus / may not be reproducible. Pinning to a release
+# tag keeps the version Synet ships honest.
+#
+# The check is unconditional on every master push (state, not diff) so it can
+# never be bypassed by force-push, the first push, or a version change that
+# arrives via merge/squash rather than a dedicated commit.
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  simd-pin-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with submodules, full tags)
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Fetch Simd tags
+        working-directory: 3rd/Simd
+        run: git fetch --tags --force origin
+
+      - name: Require submodule Simd to be on a matching release tag
+        run: |
+          set -euo pipefail
+
+          simd_sha="$(git -C 3rd/Simd rev-parse HEAD)"
+          echo "Simd submodule commit: $simd_sha"
+
+          # (a) the commit must be exactly a release tag
+          if ! tag="$(git -C 3rd/Simd describe --tags --exact-match "$simd_sha" 2>/dev/null)"; then
+            descr="$(git -C 3rd/Simd describe --tags "$simd_sha" 2>/dev/null || echo "$simd_sha")"
+            echo "::error::The 3rd/Simd submodule is not on a release tag (currently: $descr). Pin 3rd/Simd to a tagged Simd release (vX.Y.Z)."
+            exit 1
+          fi
+          echo "Simd tag: $tag"
+
+          # (b) the tag must match the Simd version Synet requests via Conan
+          simd_version_file="$(cat 3rd/Simd/prj/txt/UserVersion.txt)"
+          if [ "$tag" != "v${simd_version_file}" ]; then
+            echo "::error::Simd tag '$tag' does not match the version in 3rd/Simd/prj/txt/UserVersion.txt ('$simd_version_file'). Synet would request 'simd/${simd_version_file}', which is inconsistent with the pinned tag."
+            exit 1
+          fi
+
+          echo "OK: 3rd/Simd is pinned to release tag $tag (== simd/$simd_version_file)."
