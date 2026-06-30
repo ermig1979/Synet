@@ -156,6 +156,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInput.cpp">
       <Filter>OnnxRuntime\I</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConcatNode.cpp">
+      <Filter>OnnxRuntime\C</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.h">

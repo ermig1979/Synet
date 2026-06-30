@@ -166,7 +166,7 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "Clip" && !ConvertClipNode(node, network.layers(), original, layer))
                 return ErrorMessage(i, node);
-            if (node.op_type() == "Concat" && !ConvertConcatNode(node, trans, network.layers(), layer))
+            if (node.op_type() == "Concat" && !ConvertConcatNode(node, trans, network.layers(), layer, &tensorFormatMap))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Constant" && !ConvertConstantNode(node, layer, original, reordered))
                 return ErrorMessage(i, node);
