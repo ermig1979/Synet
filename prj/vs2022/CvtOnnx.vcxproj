@@ -37,6 +37,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertBatchNormalizationNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertCastNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertClipNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConcatNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConstantNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConvOrConvTransposeNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDequantizeLinearNode.cpp" />
@@ -57,6 +58,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertPreluNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearAddNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearAveragePoolNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearConcatNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearConvNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearGlobalAveragePoolNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearMatMulNode.cpp" />

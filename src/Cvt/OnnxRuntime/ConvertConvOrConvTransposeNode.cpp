@@ -45,7 +45,10 @@ namespace Synet
             return false;
         if (!ConvertAtrributeInts(node, "kernel_shape", layer.convolution().kernel(), true))
             return false;
-        if (!ConvertAtrributeInts(node, "pads", layer.convolution().pad()))
+        String autoPad;
+        ConvertAtrributeString(node, "auto_pad", autoPad, true);
+        layer.convolution().autoPad() = (autoPad == "SAME_UPPER" || autoPad == "SAME_LOWER");
+        if (!ConvertAtrributeInts(node, "pads", layer.convolution().pad(), true))
             return false;
         if (!ConvertAtrributeInts(node, "strides", layer.convolution().stride()))
             return false;

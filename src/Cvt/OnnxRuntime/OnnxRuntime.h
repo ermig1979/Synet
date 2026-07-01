@@ -80,32 +80,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertConcatNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
-        {
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            if (src0 == NULL)
-                return false;
-            const LayerParam* src1 = layer.src().size() < 2 ? 0 : GetLayer(layers, layer.src()[1]);
-            if (src0->type() == Synet::LayerTypeMeta || (src1 && src1->type() == Synet::LayerTypeMeta))
-            {
-                layer.type() = Synet::LayerTypeMeta;
-                layer.meta().type() = Synet::MetaTypePack;
-            }
-            else
-            {
-                layer.type() = Synet::LayerTypeConcat;
-                if (!ConvertAtrributeInt(node, "axis", layer.concat().axis()))
-                    return false;
-                if (trans && CurrentTensorFormat(layers, layer.src(), true, true, true) == TensorFormatNhwc)
-                {
-                    Shape nchw = Shape({ 0, 3, 1, 2 });
-                    if(layer.concat().axis() >= 0 && layer.concat().axis() < 4)
-                        layer.concat().axis() = (uint32_t)nchw[layer.concat().axis()];
-                }
-            }
-            return true;
-        }
-
         bool ConvertConstantOfShapeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer, Bytes& original, Bytes& reordered)
         {
             const LayerParam* src0 = GetLayer(layers, layer.src()[0]);

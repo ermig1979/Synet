@@ -51,6 +51,8 @@ namespace Synet
 
     bool ConvertClipNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer);
 
+    bool ConvertConcatNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap);
+
     bool ConvertConstantNode(const onnx::NodeProto& node, LayerParam& layer, Bytes& original, Bytes& reordered);
 
     bool ConvertConvOrConvTransposeNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin, TensorFormatMap* tensorFormatMap, UniqNames& merged);
@@ -92,6 +94,8 @@ namespace Synet
     bool ConvertQLinearAddNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer);
 
     bool ConvertQLinearAveragePoolNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer);
+
+    bool ConvertQLinearConcatNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer, TensorFormatMap* tensorFormatMap);
 
     bool ConvertQLinearConvNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin, TensorFormatMap* tensorFormatMap);
 

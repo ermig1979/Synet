@@ -166,7 +166,7 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "Clip" && !ConvertClipNode(node, network.layers(), original, layer))
                 return ErrorMessage(i, node);
-            if (node.op_type() == "Concat" && !ConvertConcatNode(node, trans, network.layers(), layer))
+            if (node.op_type() == "Concat" && !ConvertConcatNode(node, trans, network.layers(), layer, &tensorFormatMap))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Constant" && !ConvertConstantNode(node, layer, original, reordered))
                 return ErrorMessage(i, node);
@@ -251,6 +251,8 @@ namespace Synet
             if ((node.op_type() == "QLinearAdd") && !ConvertQLinearAddNode(node, network.layers(), original, layer))
                 return ErrorMessage(i, node);
             if ((node.op_type() == "QLinearAveragePool") && !ConvertQLinearAveragePoolNode(node, network.layers(), original, layer))
+                return ErrorMessage(i, node);
+            if ((node.op_type() == "QLinearConcat") && !ConvertQLinearConcatNode(node, trans, network.layers(), original, layer, &tensorFormatMap))
                 return ErrorMessage(i, node);
             if ((node.op_type() == "QLinearConv") && !ConvertQLinearConvNode(node, trans, network.layers(), original, layer, reordered, &tensorFormatMap))
                 return ErrorMessage(i, node);
