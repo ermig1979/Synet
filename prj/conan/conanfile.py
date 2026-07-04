@@ -1,4 +1,5 @@
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, cmake_layout, CMakeToolchain, CMakeDeps
 from conan.tools.files import copy, load, rmdir, save
 import os
@@ -26,6 +27,7 @@ class SynetConan(ConanFile):
         "bf16_round_test": [True, False],     # SYNET_BF16_ROUND_TEST
         "perf_level": [0, 1, 2],             # SYNET_PERF
         "python_wrapper": [True, False],     # SYNET_PYTHON
+        "opencv": [True, False],             # SYNET_OPENCV
         "test": [
             "none", "inference_engine", "onnx", "precision",
             "performance_difference", "quantization", "stability",
@@ -39,11 +41,16 @@ class SynetConan(ConanFile):
         "bf16_round_test": False,
         "perf_level": 0,
         "python_wrapper": False,
+        "opencv": False,
         "test": "none",
     }
 
     _openvino_tests = ("inference_engine", "precision", "all")
     _onnxruntime_tests = ("onnx", "all")
+    _opencv_tests = ("video", "all")
+
+    def _opencv_enabled(self):
+        return bool(self.options.opencv) and str(self.options.test) in self._opencv_tests
 
     def _repo_root(self):
         return os.path.normpath(os.path.join(self.recipe_folder, "..", ".."))
@@ -94,6 +101,8 @@ class SynetConan(ConanFile):
         if str(self.options.test) in self._onnxruntime_tests:
             self.requires("onnxruntime/1.23.2", visible=False)
             self.requires("onnx/1.18.0", transitive_headers=True, visible=False)
+        if self._opencv_enabled():
+            self.requires("opencv/4.12.0", headers=True, libs=True, visible=False)
 
     def package_id(self):
         _requires = [
@@ -104,6 +113,28 @@ class SynetConan(ConanFile):
         for name in _requires:
             if name in self.info.requires:
                 self.info.requires[name].full_package_mode()
+
+        # OpenCV is an optional, test-only build dependency (used exclusively by
+        # test_video, gated behind the SYNET_OPENCV_ENABLE macro). The Synet library
+        # itself is never compiled against OpenCV, so the produced artifact is
+        # identical regardless of it and it must not contribute to the package id.
+        # It reaches this graph both directly (opencv option) and transitively from
+        # simd (when a consumer sets simd:opencv=True), so drop both the option and
+        # the requirement from the id.
+        del self.info.options.opencv
+        if "opencv" in self.info.requires:
+            self.info.requires.remove("opencv")
+
+    def validate(self):
+        # test_video is the only OpenCV-dependent test. Without opencv=True it would
+        # compile to a non-functional stub (Video::Native methods all return false),
+        # silently producing a useless binary. Refuse such a build outright: any test
+        # selection that includes test_video (video, all) requires opencv=True.
+        if str(self.options.test) in self._opencv_tests and not self.options.opencv:
+            raise ConanInvalidConfiguration(
+                f"test='{self.options.test}' builds test_video, which requires OpenCV. "
+                f"Set opencv=True, or choose a test that does not build test_video."
+            )
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -155,6 +186,7 @@ class SynetConan(ConanFile):
         tc.variables["SYNET_PERF"] = int(self.options.perf_level)
         tc.variables["SYNET_PYTHON"] = self.options.python_wrapper
         tc.variables["SYNET_BF16_ROUND_TEST"] = self.options.bf16_round_test
+        tc.variables["SYNET_OPENCV"] = self._opencv_enabled()
         tc.variables["SYNET_TEST"] = str(self.options.test)
         tc.variables["SYNET_USE_CONAN_PACKAGES"] = True
         tc.variables["SYNET_INFO"] = True
