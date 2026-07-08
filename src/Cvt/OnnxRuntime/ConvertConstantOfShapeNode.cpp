@@ -96,25 +96,17 @@ namespace Synet
                 else
                     return false;
                 if (shape.empty())
-                {
-                    layer.type() = Synet::LayerTypeConstantOfShape;
-                    layer.constantOfShape().value().type() = TensorType32i;
-                    layer.constantOfShape().value().shape() = Shp(1);
-                    layer.constantOfShape().value().i32().resize(1, value);
-                }
-                else
-                {
-                    layer.type() = Synet::LayerTypeConst;
-                    layer.weight().resize(1);
-                    layer.weight()[0].type() = Synet::TensorType32i;
-                    layer.weight()[0].dim() = shape;
-                    layer.weight()[0].scalar() = true;
-                    layer.weight()[0].offset() = original.size();
-                    layer.weight()[0].size() = sizeof(int32_t);
-                    PushBack<int32_t>(original, value);
-                    PushBack<int32_t>(reordered, value);
-                    layer.src().clear();
-                }
+                    shape = Shp(1);
+                layer.type() = Synet::LayerTypeConst;
+                layer.weight().resize(1);
+                layer.weight()[0].type() = Synet::TensorType32i;
+                layer.weight()[0].dim() = shape;
+                layer.weight()[0].scalar() = true;
+                layer.weight()[0].offset() = original.size();
+                layer.weight()[0].size() = sizeof(int32_t);
+                PushBack<int32_t>(original, value);
+                PushBack<int32_t>(reordered, value);
+                layer.src().clear();
             }
             else
                 return false;
