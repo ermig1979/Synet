@@ -31,6 +31,15 @@
     <Filter Include="OnnxRuntime\I">
       <UniqueIdentifier>{cddeae58-43fc-4929-a5db-7c46cb5ff469}</UniqueIdentifier>
     </Filter>
+    <Filter Include="OnnxRuntime\L">
+      <UniqueIdentifier>{fe47a3dc-9320-4384-aebc-4bbbf86cca02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OnnxRuntime\M">
+      <UniqueIdentifier>{9fa57741-ac41-4928-b4d1-ca115a9d9601}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OnnxRuntime\N">
+      <UniqueIdentifier>{b4dc0b36-c8f9-4067-b91e-0191dc9767e3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.cpp">
@@ -63,22 +72,10 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceL2Node.cpp">
       <Filter>OnnxRuntime</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertNonMaxSuppressionNode.cpp">
-      <Filter>OnnxRuntime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessNode.cpp">
-      <Filter>OnnxRuntime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessOrEqualNode.cpp">
-      <Filter>OnnxRuntime</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertRoundNode.cpp">
       <Filter>OnnxRuntime</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp">
-      <Filter>OnnxRuntime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMulNode.cpp">
       <Filter>OnnxRuntime</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceMaxNode.cpp">
@@ -158,6 +155,18 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConcatNode.cpp">
       <Filter>OnnxRuntime\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessNode.cpp">
+      <Filter>OnnxRuntime\L</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessOrEqualNode.cpp">
+      <Filter>OnnxRuntime\L</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMulNode.cpp">
+      <Filter>OnnxRuntime\M</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertNonMaxSuppressionNode.cpp">
+      <Filter>OnnxRuntime\N</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
