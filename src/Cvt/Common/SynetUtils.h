@@ -305,6 +305,18 @@ namespace Synet
                     *shared = true;
                 return next;
             }
+            if (next->type() == LayerTypeStub)
+            {
+                if (next->src().size() != 1)
+                    SYNET_ERROR("Stub layer " << curr->src()[0] << " has wrong inputs number!");
+                next = GetLayer(layers, next->src()[0]);
+                if (next == NULL || next->type() == LayerTypeConst)
+                {
+                    if (shared)
+                        *shared = true;
+                    return next;
+                }
+            }
         }
         SYNET_ERROR("Can't found weight " << name << " !");
     }
