@@ -245,7 +245,7 @@ namespace Synet
             return false;
         if (InsideLink(src, index + 1, 5))
             return false;
-        size_t tile = GetIndexByName(src, src[index + 2].src()[1]);
+        size_t tile = GetLayerIndex(src, src[index + 2].src()[1]);
         if (tile == src.size() || tile < 2)
             return false;
         if (src[tile - 0].type() != LayerTypeTile || src[tile - 0].src()[0] != src[tile - 1].name())
@@ -280,8 +280,8 @@ namespace Synet
             return false;
         if (src[index].src().size() != 2)
             return false;
-        size_t dst0 = GetIndexByName(dst, src[index].src()[0]);
-        size_t dst1 = GetIndexByName(dst, src[index].src()[1]);
+        size_t dst0 = GetLayerIndex(dst, src[index].src()[0]);
+        size_t dst1 = GetLayerIndex(dst, src[index].src()[1]);
         if (dst0 >= dst.size() || dst1 >= dst.size())
             return false;
         if (dst[dst0].type() != LayerTypeSigmoid && dst[dst1].type() != LayerTypeSigmoid)
@@ -292,10 +292,10 @@ namespace Synet
         layer.dst().push_back(layer.name());
         if (dst[dst0].type() == LayerTypeSigmoid)
         {
-            size_t dst00 = GetIndexByName(dst, dst[dst0].src()[0]);
+            size_t dst00 = GetLayerIndex(dst, dst[dst0].src()[0]);
             if (dst00 >= dst.size() || dst00 != dst1)
                 return false;
-            size_t src0 = GetIndexByName(src, src[index].src()[0]);
+            size_t src0 = GetLayerIndex(src, src[index].src()[0]);
             if (UserCount(src, src0) != 1)
                 return false;
             layer.src().push_back(dst[dst0].src()[0]);
@@ -303,10 +303,10 @@ namespace Synet
         }
         else
         {
-            size_t dst10 = GetIndexByName(dst, dst[dst1].src()[0]);
+            size_t dst10 = GetLayerIndex(dst, dst[dst1].src()[0]);
             if (dst10 >= dst.size() || dst10 != dst0)
                 return false;
-            size_t src1 = GetIndexByName(src, src[index].src()[1]);
+            size_t src1 = GetLayerIndex(src, src[index].src()[1]);
             if (UserCount(src, src1) != 1)
                 return false;
             layer.src().push_back(dst[dst1].src()[0]);
@@ -371,8 +371,8 @@ namespace Synet
         }
         if (type == ActivationFunctionTypeIdentity)
             return false;
-        size_t dst0 = GetIndexByName(dst, act.src()[0]);
-        size_t src0 = GetIndexByName(src, act.src()[0]);
+        size_t dst0 = GetLayerIndex(dst, act.src()[0]);
+        size_t src0 = GetLayerIndex(src, act.src()[0]);
         if (dst0 >= dst.size() || src0 >= src.size())
             return false;
         if (UserCount(src, src0) != 1)

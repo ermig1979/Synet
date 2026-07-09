@@ -34,8 +34,8 @@ namespace Synet
             return false;
         if (ql.quantize().weights())
             return false;
-        size_t dst0 = GetIndexByName(dst, ql.src()[0]);
-        size_t src0 = GetIndexByName(src, ql.src()[0]);
+        size_t dst0 = GetLayerIndex(dst, ql.src()[0]);
+        size_t src0 = GetLayerIndex(src, ql.src()[0]);
         if (dst0 >= dst.size() || src0 >= src.size())
             return false;
         LayerParam& other = dst[dst0];
@@ -94,12 +94,12 @@ namespace Synet
         //    type = ActivationFunctionTypeElu;
         //    param0 = act.elu().alpha();
         //}
-        //if (act.type() == LayerTypeHswish)
-        //{
-        //    type = ActivationFunctionTypeHswish;
-        //    param0 = act.hswish().shift();
-        //    param1 = act.hswish().scale();
-        //}
+        if (act.type() == LayerTypeQuantizedHswish)
+        {
+            type = ActivationFunctionTypeHswish;
+            param0 = act.hswish().shift();
+            param1 = act.hswish().scale();
+        }
         //if (act.type() == LayerTypeMish)
         //{
         //    type = ActivationFunctionTypeMish;
@@ -122,8 +122,8 @@ namespace Synet
         //}
         if (type == ActivationFunctionTypeIdentity)
             return false;
-        size_t dst0 = GetIndexByName(dst, act.src()[0]);
-        size_t src0 = GetIndexByName(src, act.src()[0]);
+        size_t dst0 = GetLayerIndex(dst, act.src()[0]);
+        size_t src0 = GetLayerIndex(src, act.src()[0]);
         if (dst0 >= dst.size() || src0 >= src.size())
             return false;
         if (UserCount(src, src0) != 1)
@@ -147,8 +147,9 @@ namespace Synet
                 qConv.weight().push_back(act.weight()[0]);
             qConv.qSrc().push_back(act.qSrc()[0]);
             qConv.qDst() = act.qDst();
+            return true;
         }
-        return true;
+        return false;
     }
 
     //--------------------------------------------------------------------------------------------------

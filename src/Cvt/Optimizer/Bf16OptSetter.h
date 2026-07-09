@@ -128,10 +128,10 @@ namespace Synet
                 const LayerParam * conv = &layers[i];
                 if (conv->type() != Synet::LayerTypeConvolution || conv->lowPrecision().bf16Type() != LowPrecisionTypeActive)
                     continue;
-                const LayerParam* relu = GetLayerByName(layers, conv->src()[0]);
+                const LayerParam* relu = GetLayer(layers, conv->src()[0]);
                 if (relu == NULL || relu->type() != Synet::LayerTypeRelu || relu->lowPrecision().bf16Type() != LowPrecisionTypePassive)
                     continue;
-                const LayerParam* add = GetLayerByName(layers, relu->src()[0]);
+                const LayerParam* add = GetLayer(layers, relu->src()[0]);
                 if (add == NULL || add->type() != Synet::LayerTypeAdd || add->lowPrecision().bf16Type() != LowPrecisionTypePassive)
                     continue;
                 if (IsExclude(layers, add->name()))

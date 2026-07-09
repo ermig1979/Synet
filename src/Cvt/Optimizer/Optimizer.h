@@ -1204,10 +1204,10 @@ namespace Synet
         {
             if (index < layers.size() && (layers[index].type() == LayerTypeEltwise && layers[index].src().size() == 2) || layers[index].type() == LayerTypeAdd)
             {
-                const LayerParam* src0 = GetLayerByName(layers, layers[index].src()[0]);
+                const LayerParam* src0 = GetLayer(layers, layers[index].src()[0]);
                 if (src0 && src0->type() == LayerTypeConst)
                     return src0->weight().data() + 0;
-                const LayerParam* src1 = GetLayerByName(layers, layers[index].src()[1]);
+                const LayerParam* src1 = GetLayer(layers, layers[index].src()[1]);
                 if (src1 && src1->type() == LayerTypeConst)
                     return src1->weight().data() + 0;
             }
@@ -1333,7 +1333,7 @@ namespace Synet
             {
                 if (Users(layer.dst()[0], network.layers(), 0, layer.parent()) > 0)// && !HasOutput(network, layer))
                     return true;
-                const LayerParam* prev = GetLayerByName(network.layers(), layer.src()[0]);
+                const LayerParam* prev = GetLayer(network.layers(), layer.src()[0]);
                 if (prev && prev->type() == LayerTypeDetectionOutput)
                     return true;
             }
