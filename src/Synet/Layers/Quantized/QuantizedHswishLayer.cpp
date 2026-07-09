@@ -40,10 +40,14 @@ namespace Synet
 
     static void QuantizedHswishLayerForward(const uint8_t* src, const float* srcScale, int srcZero, size_t size, float shift, float scale, uint8_t* dst, const float* dstScale, int dstZero)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        SimdSynetQuantizedHswishLayerForward(src, srcScale, srcZero, size, &shift, &scale, dst, dstScale, dstZero);
+#else
         float sBias = -srcZero;
         float sNorm = srcScale[0], dNorm = 1.0f / dstScale[0];
         for(size_t i = 0; i < size; ++i)
             QuantizedHswish(src[i], sBias, sNorm, shift, scale, dst[i], dNorm, dstZero);
+#endif
     }
 
     //-------------------------------------------------------------------------------------------------
