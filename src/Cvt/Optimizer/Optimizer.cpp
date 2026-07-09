@@ -38,7 +38,7 @@ namespace Synet
         Bf16OptSetter bf16OptSetter(_param.bf16());
         if (!bf16OptSetter.Run(network, bin))
             return false;
-        for (int stage = 0; stage < 10; stage++)
+        for (int stage = 0; stage < 11; stage++)
         {
             if (!OptimizeLayers(network, bin, stage))
                 return false;
@@ -161,6 +161,8 @@ namespace Synet
                     continue;
                 if (MergeQuantizedScale(network.layers(), i, merged, changes))
                     continue;
+                if (MergeQuantizedHswish(network.layers(), i, merged, changes))
+                    continue;
                 if (MergeQuantizedPrelu(network.layers(), i, merged, changes))
                     continue;
                 if (MergeQuantizedAdd(network.layers(), i, merged, changes))
@@ -168,6 +170,12 @@ namespace Synet
                 break;
             }
             case 5:
+            {
+                if (MergeQuantizedHswish(network.layers(), i, merged, changes))
+                    continue;
+                break;
+            }
+            case 6:
             {
                 if (MergePowerAndScaleAndPower(network.layers(), i, bin, buf, merged, changes))
                     continue;
@@ -177,7 +185,7 @@ namespace Synet
                     continue;
                 break;
             }
-            case 6:
+            case 7:
             {
                 if (_param.convToNhwc() && isNhwc && TransposeConvolutions(network.layers(), i, bin, buf, merged, changes))
                     continue;
@@ -193,7 +201,7 @@ namespace Synet
                     continue;
                 break;
             }
-            case 7:
+            case 8:
             {
                 if (MergeThreeConvolutions(network.layers(), i, method, _param, merged, changes))
                     continue;
@@ -205,7 +213,7 @@ namespace Synet
                     continue;
                 break;
             }
-            case 8:
+            case 9:
             {
                 if (MergeTwoConvolutions(network.layers(), i, method, _param, merged, changes))
                     continue;
@@ -213,7 +221,7 @@ namespace Synet
                     continue;
                 break;
             }
-            case 9:
+            case 10:
             {
                 if (MergeParallelConvolutions(network.layers(), i, bin, buf, merged, changes))
                     continue;
