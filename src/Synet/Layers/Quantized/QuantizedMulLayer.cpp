@@ -36,7 +36,7 @@ namespace Synet
     {
         float _a = DequantizeLinear(a, aBias, aScale);
         float _b = DequantizeLinear(b, bBias, bScale);
-        dst = (uint8_t)RestrictRange(NearByInt(_a * _b), 0, 255);
+        dst = (uint8_t)QuantizeLinear(_a * _b, scale, dZero, 0, 255);
     }
 
     template<class D> void QuantizedMulUniformV0(const uint8_t* a, float aScale, int aZero, const uint8_t* b, float bScale, int bZero, size_t size, float dScale, int dZero, uint8_t* dst8)

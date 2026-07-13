@@ -103,6 +103,8 @@ namespace Synet
 
     bool MergeQuantizedHswish(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
+    bool MergeQuantizedMul(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
     bool MergeQuantizedPrelu(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
     bool MergeQuantizedScale(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
