@@ -281,6 +281,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedHswishLayer.cpp">
       <Filter>Layers\Quantized</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedMulLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -729,6 +732,9 @@
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedHswishLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedMulLayer.h">
       <Filter>Layers\Quantized</Filter>
     </ClInclude>
   </ItemGroup>

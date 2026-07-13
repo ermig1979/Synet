@@ -94,12 +94,12 @@ namespace Synet
         //    type = ActivationFunctionTypeElu;
         //    param0 = act.elu().alpha();
         //}
-        if (act.type() == LayerTypeQuantizedHswish)
-        {
-            type = ActivationFunctionTypeHswish;
-            param0 = act.hswish().shift();
-            param1 = act.hswish().scale();
-        }
+        //if (act.type() == LayerTypeQuantizedHswish)
+        //{
+        //    type = ActivationFunctionTypeHswish;
+        //    param0 = act.hswish().shift();
+        //    param1 = act.hswish().scale();
+        //}
         //if (act.type() == LayerTypeMish)
         //{
         //    type = ActivationFunctionTypeMish;

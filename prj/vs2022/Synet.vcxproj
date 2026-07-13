@@ -81,6 +81,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedHswishLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedInnerProductLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedMergedConvolutionLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedMulLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedPoolingLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedPreluLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedScaleLayer.cpp" />
@@ -207,6 +208,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedHswishLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedInnerProductLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedMergedConvolutionLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedMulLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedPoolingLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedPreluLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedScaleLayer.h" />
