@@ -246,20 +246,24 @@ namespace Synet
         shapeB = FullSrcShape(shapeB, shapeD);
         shapeA = FullSrcShape(shapeA, shapeD);
 
-        _uniform = NULL, _universal = NULL;
-        if (shapeA == shapeB)
+        _quantizedMul.Init(shapeA, _aType, _aScale, _aZero, shapeB, _bType, _bScale, _bZero, _dType, _dScale, _dZero);
+        if (!_quantizedMul.Enable())
         {
-            _uniform = _dType == TensorType8u ?  QuantizedMulUniformV0<uint8_t> : QuantizedMulUniformV0<float>;
-        }
-        else
-        {
-            _dShape = shapeD;
-            CompactShapes(shapeA, shapeB, _dShape);
-            _aSteps = SourceSteps(shapeA, _dShape);
-            _bSteps = SourceSteps(shapeB, _dShape);
-            _universal = GetQuantizedMulUniversal(_dType, shapeA.size());
-            if (_universal == NULL)
-                SYNET_ERROR("QuantizedMulLayer can create universal worker!");
+            _uniform = NULL, _universal = NULL;
+            if (shapeA == shapeB)
+            {
+                _uniform = _dType == TensorType8u ? QuantizedMulUniformV0<uint8_t> : QuantizedMulUniformV0<float>;
+            }
+            else
+            {
+                _dShape = shapeD;
+                CompactShapes(shapeA, shapeB, _dShape);
+                _aSteps = SourceSteps(shapeA, _dShape);
+                _bSteps = SourceSteps(shapeB, _dShape);
+                _universal = GetQuantizedMulUniversal(_dType, shapeA.size());
+                if (_universal == NULL)
+                    SYNET_ERROR("QuantizedMulLayer can create universal worker!");
+            }
         }
 
         if (TensorUsers(Param().src()[0]) == 1 && !src[0]->Const() && shapeD == src[0]->Shape() && dst[0] != src[0])
@@ -286,7 +290,9 @@ namespace Synet
 
     void QuantizedMulLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
-        if(_uniform)
+        if (_quantizedMul.Enable())
+            _quantizedMul.Forward(src[0]->RawData(), src[1]->RawData(), dst[0]->RawData());
+        else if(_uniform)
             _uniform(src[0]->Data<uint8_t>(), _aScale, _aZero, src[1]->Data<uint8_t>(), _bScale, _bZero, _size, _dScale, _dZero, dst[0]->RawData());
         else if (_universal)
             _universal(src[0]->Data<uint8_t>(), _aSteps, _aScale, _aZero, src[1]->Data<uint8_t>(), _bSteps, _bScale, _bZero, dst[0]->RawData(), _dShape, _dScale, _dZero);

@@ -26,6 +26,8 @@
 
 #include "Synet/Layer.h"
 
+#include "Synet/Utils/Mul.h"
+
 namespace Synet
 {
     class QuantizedMulLayer : public Layer
@@ -56,5 +58,6 @@ namespace Synet
 
         UniformPtr _uniform;
         UniversalPtr _universal;
+        QuantizedMul _quantizedMul;
     };
 }
