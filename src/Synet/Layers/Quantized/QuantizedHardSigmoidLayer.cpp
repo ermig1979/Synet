@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/Quantized/QuantizedHswishLayer.h"
+#include "Synet/Layers/Quantized/QuantizedHardSigmoidLayer.h"
 
 #include "Synet/Quantization/QuantizeLinear.h"
 #include "Synet/Quantization/DequantizeLinear.h"
@@ -31,68 +31,68 @@
 
 namespace Synet
 {
-    SYNET_INLINE void QuantizedHswish(const uint8_t& src, int sBias, float sNorm, float shift, float scale, uint8_t& dst, float dNorm, int dZero)
+    SYNET_INLINE void QuantizedHardSigmoid(const uint8_t& src, int sBias, float sNorm, float scale, float shift, uint8_t& dst, float dNorm, int dZero)
     {
         float _src = DequantizeLinear(src, sBias, sNorm);
-        float _dst = CpuHswish(_src, shift, scale);
+        float _dst = CpuHardSigmoid(_src, scale, shift);
         dst = (uint8_t)QuantizeLinear(_dst, dNorm, dZero, 0, 255);
     }
 
-    static void QuantizedHswishLayerForward(const uint8_t* src, const float* srcScale, int srcZero, size_t size, float shift, float scale, uint8_t* dst, const float* dstScale, int dstZero)
+    static void QuantizedHardSigmoidLayerForward(const uint8_t* src, const float* srcScale, int srcZero, size_t size, float scale, float shift, uint8_t* dst, const float* dstScale, int dstZero)
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        SimdSynetQuantizedHswish(src, srcScale, srcZero, size, &shift, &scale, dst, dstScale, dstZero);
+        SimdSynetQuantizedHardSigmoid(src, srcScale, srcZero, size, &scale, &shift, dst, dstScale, dstZero);
 #else
         float sBias = -srcZero;
         float sNorm = srcScale[0], dNorm = 1.0f / dstScale[0];
         for(size_t i = 0; i < size; ++i)
-            QuantizedHswish(src[i], sBias, sNorm, shift, scale, dst[i], dNorm, dstZero);
+            QuantizedHardSigmoid(src[i], sBias, sNorm, scale, shift, dst[i], dNorm, dstZero);
 #endif
     }
 
     //-------------------------------------------------------------------------------------------------
 
-    QuantizedHswishLayer::QuantizedHswishLayer(const LayerParam & param, Context* context)
+    QuantizedHardSigmoidLayer::QuantizedHardSigmoidLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
     {
     }
 
-    int64_t QuantizedHswishLayer::Flop() const
+    int64_t QuantizedHardSigmoidLayer::Flop() const
     {
         if (_const)
             return 0;
-        return _size * 9;
+        return _size * 8;
     }
 
-    LowPrecisionType QuantizedHswishLayer::LowPrecision(TensorType type) const
+    LowPrecisionType QuantizedHardSigmoidLayer::LowPrecision(TensorType type) const
     {
         if (type == TensorType8u)
             return LowPrecisionTypeActive;
         return LowPrecisionTypeNone;
     }
 
-    bool QuantizedHswishLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool QuantizedHardSigmoidLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
     {
         if (src.size() != 1 || dst.size() != 1)
-            SYNET_ERROR("QuantizedHswishLayer supports 1 input and 1 output!");
+            SYNET_ERROR("QuantizedHardSigmoidLayer supports 1 input and 1 output!");
         if (src[0]->GetType() != TensorType8u)
-            SYNET_ERROR("QuantizedHswishLayer supports only UINT8 input and output!");
+            SYNET_ERROR("QuantizedHardSigmoidLayer supports only UINT8 input and output!");
 
         _size = src[0]->Size();
         const LayerParam& param = this->Param();
         if (param.qSrc().size() != 1 || param.qDst().size() != 1)
-            SYNET_ERROR("QuantizedHswishLayer must have 1 input and 1 output quantization parameters!");
+            SYNET_ERROR("QuantizedHardSigmoidLayer must have 1 input and 1 output quantization parameters!");
         if (param.qSrc()[0].weights() != 0 || param.qDst()[0].weights() != 0)
-            SYNET_ERROR("QuantizedHswishLayer supports only uniform quantization!");
+            SYNET_ERROR("QuantizedHardSigmoidLayer supports only uniform quantization!");
 
         _srcScale = float(param.qSrc()[0].scale());
         _srcZero = param.qSrc()[0].zero();
         _dstScale = float(param.qDst()[0].scale());
         _dstZero = param.qDst()[0].zero();
 
-        HswishParam hswish = param.hswish();
-        _shift = hswish.shift();
-        _scale = hswish.scale();
+        HardSigmoidParam hardSigmoid = param.hardSigmoid();
+        _scale = hardSigmoid.scale();
+        _shift = hardSigmoid.shift();
 
         if (dst[0] != src[0])
         {
@@ -117,10 +117,10 @@ namespace Synet
         return true;
     }
 
-    void QuantizedHswishLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
+    void QuantizedHardSigmoidLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         const uint8_t* src0 = src[0]->Data<uint8_t>();
         uint8_t* dst0 = dst[0]->Data<uint8_t>();
-        QuantizedHswishLayerForward(src0, &_srcScale, _srcZero, _size, _shift, _scale, dst0, &_dstScale, _dstZero);
+        QuantizedHardSigmoidLayerForward(src0, &_srcScale, _srcZero, _size, _scale, _shift, dst0, &_dstScale, _dstZero);
     }
 }

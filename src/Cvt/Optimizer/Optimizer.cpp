@@ -172,6 +172,8 @@ namespace Synet
                     continue;
                 if (MergeQuantizedScale(network.layers(), i, merged, changes))
                     continue;
+                if (MergeQuantizedHardSigmoid(network.layers(), i, merged, changes))
+                    continue;
                 if (MergeQuantizedHswish(network.layers(), i, merged, changes))
                     continue;
                 if (MergeQuantizedPrelu(network.layers(), i, merged, changes))

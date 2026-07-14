@@ -101,6 +101,8 @@ namespace Synet
 
     bool MergeQuantizedConvolutionAndQuantizedActivation(const LayerParams& src, size_t index, QuantizationMethod method, LayerParams& dst, Changes& changes);
 
+    bool MergeQuantizedHardSigmoid(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
     bool MergeQuantizedHswish(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
     bool MergeQuantizedMul(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
