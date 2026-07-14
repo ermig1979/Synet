@@ -28,6 +28,52 @@
 
 namespace Synet
 {
+    void QuantizedPoolingAverageGlobal2D(const uint8_t* src, int32_t srcZero, float srcScale,
+        size_t batch, size_t channels, size_t spatial, int32_t* buf, uint8_t* dst, float dstScale, int32_t dstZero, TensorFormat format)
+    {
+        int32_t bias = -srcZero * int32_t(spatial);
+        constexpr int min = std::numeric_limits<uint8_t>::min();
+        constexpr int max = std::numeric_limits<uint8_t>::max();
+        float norm = srcScale / (dstScale * float(spatial));
+        if (format == TensorFormatNhwc)
+        {
+            for (size_t b = 0; b < batch; ++b)
+            {
+#if 0
+                for (size_t c = 0; c < channels; ++c)
+                    buf[c] = 0;
+                for (size_t s = 0; s < spatial; ++s)
+                {
+                    for (size_t c = 0; c < channels; ++c)
+                        buf[c] += src[c];
+                }
+#endif
+                SimdGetColSums(src, channels, channels, spatial, (uint32_t*)buf);
+                for (size_t c = 0; c < channels; ++c)
+                    dst[c] = (uint8_t)QuantizeSumLinear(buf[c], bias, norm, dstZero, min, max);
+                src += spatial * channels;
+                dst += channels;
+            }
+        }
+        else if (format == TensorFormatNchw)
+        {
+            for (size_t b = 0; b < batch; ++b)
+            {
+                for (size_t c = 0; c < channels; ++c)
+                {
+                    int32_t sum = 0;
+                    for (size_t s = 0; s < spatial; ++s)
+                        sum += src[s];
+                    dst[0] = (uint8_t)QuantizeSumLinear(sum, bias, norm, dstZero, min, max);
+                    src += spatial;
+                    dst += 1;
+                }
+            }
+        }
+        else
+            assert(0);
+    }
+
     void QuantizedPoolingAverage2D(const uint8_t * src, int32_t srcZero, float srcScale,
         size_t batch, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX, size_t strideY, size_t strideX, size_t padY, size_t padX, 
         int32_t* buf, uint8_t* dst, float dstScale, int32_t dstZero, size_t dstH, size_t dstW, int excludePad, TensorFormat format)
@@ -305,9 +351,17 @@ namespace Synet
     {
         if (_method == PoolingMethodTypeAverage)
         {
-            QuantizedPoolingAverage2D(src[0]->Data<uint8_t>(), _srcZero, _srcScale,
-                _batch, _srcC, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX,
-                Layer::Buf32i(buf, 0), dst[0]->Data<uint8_t>(), _dstScale, _dstZero, _dstH, _dstW, _excludePad, _format);
+            if (_globalPooling)
+            {
+                QuantizedPoolingAverageGlobal2D(src[0]->Data<uint8_t>(), _srcZero, _srcScale,
+                    _batch, _srcC, _srcH * _srcW, Layer::Buf32i(buf, 0), dst[0]->Data<uint8_t>(), _dstScale, _dstZero, _format);
+            }
+            else
+            {
+                QuantizedPoolingAverage2D(src[0]->Data<uint8_t>(), _srcZero, _srcScale,
+                    _batch, _srcC, _srcH, _srcW, _kernelY, _kernelX, _strideY, _strideX, _padY, _padX,
+                    Layer::Buf32i(buf, 0), dst[0]->Data<uint8_t>(), _dstScale, _dstZero, _dstH, _dstW, _excludePad, _format);
+            }
         }
         else
             assert(0);
