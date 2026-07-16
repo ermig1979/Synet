@@ -87,6 +87,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedPreluLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedScaleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedShuffleLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedSqueezeExcitationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizeLinearLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Recurrent\LstmLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Recurrent\ReverseSequenceLayer.cpp" />
@@ -215,6 +216,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedPreluLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedScaleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedShuffleLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedSqueezeExcitationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizeLinearLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Recurrent\LstmLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Recurrent\ReverseSequenceLayer.h" />
