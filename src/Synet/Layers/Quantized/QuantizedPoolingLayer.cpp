@@ -39,7 +39,9 @@ namespace Synet
         {
             for (size_t b = 0; b < batch; ++b)
             {
-#if 0
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+                SimdGetColSums(src, channels, channels, spatial, (uint32_t*)buf);
+#else
                 for (size_t c = 0; c < channels; ++c)
                     buf[c] = 0;
                 for (size_t s = 0; s < spatial; ++s)
@@ -48,7 +50,6 @@ namespace Synet
                         buf[c] += src[c];
                 }
 #endif
-                SimdGetColSums(src, channels, channels, spatial, (uint32_t*)buf);
                 for (size_t c = 0; c < channels; ++c)
                     dst[c] = (uint8_t)QuantizeSumLinear(buf[c], bias, norm, dstZero, min, max);
                 src += spatial * channels;
@@ -78,6 +79,11 @@ namespace Synet
         size_t batch, size_t channels, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX, size_t strideY, size_t strideX, size_t padY, size_t padX, 
         int32_t* buf, uint8_t* dst, float dstScale, int32_t dstZero, size_t dstH, size_t dstW, int excludePad, TensorFormat format)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        SimdSynetQuantizedPoolingAverage(src, &srcScale, srcZero, batch, channels, srcH, srcW, kernelY, kernelX, 
+            strideY, strideX, padY, padX, (SimdBool)excludePad, dst, &dstScale, dstZero, dstH, dstW, (SimdTensorFormatType)format);
+        return;
+#endif
         int32_t bias = -srcZero * int32_t(kernelY * kernelX);
         constexpr int min = std::numeric_limits<uint8_t>::min();
         constexpr int max = std::numeric_limits<uint8_t>::max();
@@ -351,7 +357,7 @@ namespace Synet
     {
         if (_method == PoolingMethodTypeAverage)
         {
-            if (_globalPooling)
+            if (_globalPooling && 0)
             {
                 QuantizedPoolingAverageGlobal2D(src[0]->Data<uint8_t>(), _srcZero, _srcScale,
                     _batch, _srcC, _srcH * _srcW, Layer::Buf32i(buf, 0), dst[0]->Data<uint8_t>(), _dstScale, _dstZero, _format);
