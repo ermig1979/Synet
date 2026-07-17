@@ -47,14 +47,6 @@ namespace Synet
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
-        void Forward8i(const uint8_t* src, int32_t* sum, float* norm0, float* norm1, uint8_t* dst8u, float* dst32f);
-
-        void Init8i();
-
-        void Scale8i(const uint8_t* src, float* norm, uint8_t* dst);
-
-        void Normalize(float* norm0, float* norm1);
-
     private:
         bool _src8u, _dst8u, _src16b, _dst16b, _hasBias[2], _hardSigmoid;
         TensorFormat _format;
@@ -63,7 +55,5 @@ namespace Synet
         float _kAvg;
         QuantizationMethod _method;
         Floats _sumScale, _sumShift, _rWeight[2], _params;
-        Synet::Scale8i _scale8i;
-        Synet::Scale16b _scale16b;
     };
 }
