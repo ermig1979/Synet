@@ -26,6 +26,7 @@
 
 #include "Synet/Layer.h"
 #include "Synet/Utils/Scale.h"
+#include "Synet/Utils/InnerProduct.h"
 
 namespace Synet
 {
@@ -48,12 +49,13 @@ namespace Synet
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
     private:
-        bool _src8u, _dst8u, _src16b, _dst16b, _hasBias[2], _hardSigmoid;
+        bool _hasBias[2], _hardSigmoid;
+        int32_t _srcZero, _avgZero, _ipZero[2], _actZero[2], _dstZero;
+        float _srcScale, _avgScale, _ipScale[2], _actScale[2], _dstScale;
+        Floats _params;
         TensorFormat _format;
-        size_t _batch, _channels, _height, _width, _size, _squeeze, _sci; 
+        size_t _batch, _channels, _height, _width, _squeeze, _sci; 
         ActivationFunctionType _actType;
-        float _kAvg;
-        QuantizationMethod _method;
-        Floats _sumScale, _sumShift, _rWeight[2], _params;
+        QuantizedInnerProduct _quantizedInnerProduct[2];
     };
 }
