@@ -75,8 +75,11 @@
 #include "Synet/Layers/Quantized/QuantizedAddLayer.h"
 #include "Synet/Layers/Quantized/QuantizedConcatLayer.h"
 #include "Synet/Layers/Quantized/QuantizedConvolutionLayer.h"
+#include "Synet/Layers/Quantized/QuantizedHardSigmoidLayer.h"
+#include "Synet/Layers/Quantized/QuantizedHswishLayer.h"
 #include "Synet/Layers/Quantized/QuantizedInnerProductLayer.h"
 #include "Synet/Layers/Quantized/QuantizedMergedConvolutionLayer.h"
+#include "Synet/Layers/Quantized/QuantizedMulLayer.h"
 #include "Synet/Layers/Quantized/QuantizedPoolingLayer.h"
 #include "Synet/Layers/Quantized/QuantizedPreluLayer.h"
 #include "Synet/Layers/Quantized/QuantizedScaleLayer.h"
@@ -234,8 +237,11 @@ namespace Synet
         case LayerTypeQuantizedAdd: return new QuantizedAddLayer(param, context);
         case LayerTypeQuantizedConcat: return new QuantizedConcatLayer(param, context);
         case LayerTypeQuantizedConvolution: return new QuantizedConvolutionLayer(param, context);
+        case LayerTypeQuantizedHardSigmoid: return new QuantizedHardSigmoidLayer(param, context);
+        case LayerTypeQuantizedHswish: return new QuantizedHswishLayer(param, context);
         case LayerTypeQuantizedInnerProduct: return new QuantizedInnerProductLayer(param, context);
         case LayerTypeQuantizedMergedConvolution: return new QuantizedMergedConvolutionLayer(param, context);
+        case LayerTypeQuantizedMul: return new QuantizedMulLayer(param, context);
         case LayerTypeQuantizedPooling: return new QuantizedPoolingLayer(param, context);
         case LayerTypeQuantizedPrelu: return new QuantizedPreluLayer(param, context);
         case LayerTypeQuantizedScale: return new QuantizedScaleLayer(param, context);

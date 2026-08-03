@@ -34,8 +34,8 @@ namespace Synet
         if (!CheckSourceNumber(layer, 3))
             return false;
         const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-        const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-        const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
+        const LayerParam* src1 = GetWeightLayer(layers, layer.src()[1]);
+        const LayerParam* src2 = GetWeightLayer(layers, layer.src()[2]);
         if (src0 == NULL || src1 == NULL || src2 == NULL)
             return false;
         layer.type() = Synet::LayerTypeQuantizeLinear;

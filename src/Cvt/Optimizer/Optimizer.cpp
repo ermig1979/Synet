@@ -38,10 +38,21 @@ namespace Synet
         Bf16OptSetter bf16OptSetter(_param.bf16());
         if (!bf16OptSetter.Run(network, bin))
             return false;
-        for (int stage = 0; stage < 10; stage++)
+        for (int stage = 0; stage < 12; stage++)
         {
             if (!OptimizeLayers(network, bin, stage))
                 return false;
+            if (!RemoveStub(network))
+                return false;
+#if 0
+            {
+                Synet::NetworkParamHolder holder;
+                holder() = network;
+                String path = String("stage_") + Cpl::ToStr(stage) + ".xml";
+                if (!holder.Save(path, false))
+                    SYNET_ERROR("Can't save unoptimized Synet model '" << path << "' !");
+            }
+#endif
         }
         if (!bf16OptSetter.Run(network, bin))
             return false;
@@ -161,13 +172,25 @@ namespace Synet
                     continue;
                 if (MergeQuantizedScale(network.layers(), i, merged, changes))
                     continue;
+                if (MergeQuantizedHardSigmoid(network.layers(), i, merged, changes))
+                    continue;
+                if (MergeQuantizedHswish(network.layers(), i, merged, changes))
+                    continue;
                 if (MergeQuantizedPrelu(network.layers(), i, merged, changes))
                     continue;
                 if (MergeQuantizedAdd(network.layers(), i, merged, changes))
                     continue;
+                if (MergeQuantizedMul(network.layers(), i, merged, changes))
+                    continue;
                 break;
             }
             case 5:
+            {
+                if (MergeQuantizedHswish(network.layers(), i, merged, changes))
+                    continue;
+                break;
+            }
+            case 6:
             {
                 if (MergePowerAndScaleAndPower(network.layers(), i, bin, buf, merged, changes))
                     continue;
@@ -177,7 +200,7 @@ namespace Synet
                     continue;
                 break;
             }
-            case 6:
+            case 7:
             {
                 if (_param.convToNhwc() && isNhwc && TransposeConvolutions(network.layers(), i, bin, buf, merged, changes))
                     continue;
@@ -189,11 +212,15 @@ namespace Synet
                     continue;
                 if (SkipUnnecessaryDequantize(network.layers(), i, method, merged, changes))
                     continue;
+                break;
+            }
+            case 8:
+            {
                 if (MergeQuantizedConvolutionAndQuantizedActivation(network.layers(), i, method, merged, changes))
                     continue;
                 break;
             }
-            case 7:
+            case 9:
             {
                 if (MergeThreeConvolutions(network.layers(), i, method, _param, merged, changes))
                     continue;
@@ -205,7 +232,7 @@ namespace Synet
                     continue;
                 break;
             }
-            case 8:
+            case 10:
             {
                 if (MergeTwoConvolutions(network.layers(), i, method, _param, merged, changes))
                     continue;
@@ -213,7 +240,7 @@ namespace Synet
                     continue;
                 break;
             }
-            case 9:
+            case 11:
             {
                 if (MergeParallelConvolutions(network.layers(), i, bin, buf, merged, changes))
                     continue;

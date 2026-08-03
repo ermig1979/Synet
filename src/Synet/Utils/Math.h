@@ -254,31 +254,31 @@ namespace Synet
         ::SimdFill32f(dst, size, &value);
     }
 
-    template <> SYNET_INLINE void CpuAxpy<float>(const float * x, size_t size, const float & alpha, float * y)
-    {
-        ::SimdNeuralAddVectorMultipliedByValue(x, size, &alpha, y);
-    }
+    //template <> SYNET_INLINE void CpuAxpy<float>(const float * x, size_t size, const float & alpha, float * y)
+    //{
+    //    ::SimdNeuralAddVectorMultipliedByValue(x, size, &alpha, y);
+    //}
 
-    template <> SYNET_INLINE void CpuPow<float>(const float * src, size_t size, const float & exp, float * dst)
-    {
-        ::SimdNeuralPow(src, size, &exp, dst);
-    }
+    //template <> SYNET_INLINE void CpuPow<float>(const float * src, size_t size, const float & exp, float * dst)
+    //{
+    //    ::SimdNeuralPow(src, size, &exp, dst);
+    //}
 
-    template <> SYNET_INLINE void CpuAdd<float>(const float & value, float * dst, size_t size)
-    {
-        ::SimdNeuralAddValue( &value, dst, size);
-    }
+    //template <> SYNET_INLINE void CpuAdd<float>(const float & value, float * dst, size_t size)
+    //{
+    //    ::SimdNeuralAddValue( &value, dst, size);
+    //}
 
     template <> SYNET_INLINE void CpuAddBias<float>(const float * bias, size_t count, size_t size, float * dst, int trans)
     {
         ::SimdSynetAddBias(bias, count, size, dst, (::SimdTensorFormatType)trans);
     }
 
-    template <> SYNET_INLINE float CpuDotProduct<float>(const float * a, const float * b, size_t size)
-    {
-        float sum = 0;
-        ::SimdNeuralProductSum(a, b, size, &sum);
-        return sum;
-    }
+    //template <> SYNET_INLINE float CpuDotProduct<float>(const float * a, const float * b, size_t size)
+    //{
+    //    float sum = 0;
+    //    ::SimdNeuralProductSum(a, b, size, &sum);
+    //    return sum;
+    //}
 #endif
 }

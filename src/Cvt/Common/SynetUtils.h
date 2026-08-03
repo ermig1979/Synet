@@ -305,27 +305,20 @@ namespace Synet
                     *shared = true;
                 return next;
             }
+            if (next->type() == LayerTypeStub)
+            {
+                if (next->src().size() != 1)
+                    SYNET_ERROR("Stub layer " << curr->src()[0] << " has wrong inputs number!");
+                next = GetLayer(layers, next->src()[0]);
+                if (next == NULL || next->type() == LayerTypeConst)
+                {
+                    if (shared)
+                        *shared = true;
+                    return next;
+                }
+            }
         }
         SYNET_ERROR("Can't found weight " << name << " !");
-    }
-
-    inline const LayerParam* GetLayerByName(const LayerParams& layers, const String& name)
-    {
-        for (size_t i = 0; i < layers.size(); ++i)
-        {
-            if (layers[i].name() == name)
-                return &layers[i];
-        }
-        return NULL;
-    }
-
-    inline size_t GetIndexByName(const LayerParams& layers, const String& name)
-    {
-        size_t i = 0;
-        for (; i < layers.size(); ++i)
-            if (layers[i].name() == name)
-                break;
-        return i;
     }
 
     inline LayerType GetLayerType(const LayerParams& layers, const String& name)
@@ -525,10 +518,11 @@ namespace Synet
     inline size_t UserCount(const LayerParams& layers, size_t index)
     {
         size_t users = 0;
-        for (size_t j = index + 1; j < layers.size(); ++j)
-            for (size_t k = 0; k < layers[j].src().size(); ++k)
-                if (layers[j].src()[k] == layers[index].name())
-                    users++;
+        for (size_t l = index + 1; l < layers.size(); ++l)
+            for (size_t s = 0; s < layers[l].src().size(); ++s)
+                for (size_t d = 0; d < layers[index].dst().size(); ++d)
+                    if (layers[l].src()[s] == layers[index].dst()[d])
+                        users++;
         return users;
     }
 

@@ -34,8 +34,8 @@ namespace Synet
             return false;
         if (ql.quantize().weights())
             return false;
-        size_t dst0 = GetIndexByName(dst, ql.src()[0]);
-        size_t src0 = GetIndexByName(src, ql.src()[0]);
+        size_t dst0 = GetLayerIndex(dst, ql.src()[0]);
+        size_t src0 = GetLayerIndex(src, ql.src()[0]);
         if (dst0 >= dst.size() || src0 >= src.size())
             return false;
         LayerParam& other = dst[dst0];
@@ -94,7 +94,7 @@ namespace Synet
         //    type = ActivationFunctionTypeElu;
         //    param0 = act.elu().alpha();
         //}
-        //if (act.type() == LayerTypeHswish)
+        //if (act.type() == LayerTypeQuantizedHswish)
         //{
         //    type = ActivationFunctionTypeHswish;
         //    param0 = act.hswish().shift();
@@ -122,8 +122,8 @@ namespace Synet
         //}
         if (type == ActivationFunctionTypeIdentity)
             return false;
-        size_t dst0 = GetIndexByName(dst, act.src()[0]);
-        size_t src0 = GetIndexByName(src, act.src()[0]);
+        size_t dst0 = GetLayerIndex(dst, act.src()[0]);
+        size_t src0 = GetLayerIndex(src, act.src()[0]);
         if (dst0 >= dst.size() || src0 >= src.size())
             return false;
         if (UserCount(src, src0) != 1)
@@ -147,8 +147,9 @@ namespace Synet
                 qConv.weight().push_back(act.weight()[0]);
             qConv.qSrc().push_back(act.qSrc()[0]);
             qConv.qDst() = act.qDst();
+            return true;
         }
-        return true;
+        return false;
     }
 
     //--------------------------------------------------------------------------------------------------
@@ -215,6 +216,95 @@ namespace Synet
         else
             layer.dst() = src[is4].dst();
         dst[id2] = layer;
+        return true;
+    }
+
+    //--------------------------------------------------------------------------------------------------
+
+    bool MergeQuantizedMul(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+    {
+        size_t is3 = index;
+        if (src[is3].type() != LayerTypeQuantizeLinear)
+            return false;
+        size_t is2 = GetLayerIndex(src, src[is3].src()[0]);
+        size_t id2 = GetLayerIndex(dst, src[is3].src()[0]);
+        if (is2 >= src.size() || id2 >= dst.size() || !IsMul(src[is2]) || UserCount(src, is2) > 1)
+            return false;
+        size_t is1 = GetLayerIndex(src, src[is2].src()[1]);
+        size_t id1 = GetLayerIndex(dst, src[is2].src()[1]);
+        if (is1 >= src.size() || id1 >= dst.size() || src[is1].type() != LayerTypeDequantizeLinear || UserCount(src, is1) > 1)
+            return false;
+        size_t is0 = GetLayerIndex(src, src[is2].src()[0]);
+        size_t id0 = GetLayerIndex(dst, src[is2].src()[0]);
+        if (is0 >= src.size() || id0 >= dst.size() || src[is0].type() != LayerTypeDequantizeLinear || UserCount(src, is0) > 1)
+            return false;
+        LayerParam layer;
+        layer.type() = LayerTypeQuantizedMul;
+        layer.name() = src[is2].name();
+        layer.src().push_back(src[is2].src()[0]);
+        layer.src().push_back(src[is2].src()[1]);
+        layer.qSrc().push_back(src[is0].quantize());
+        layer.qSrc().push_back(src[is1].quantize());
+        layer.dst().push_back(src[is2].dst()[0]);
+        layer.qDst().push_back(src[is3].quantize());
+        layer.dst() = src[is3].dst();
+        dst[id0].type() = LayerTypeStub;
+        dst[id1].type() = LayerTypeStub;
+        dst[id2] = layer;
+        return true;
+    }
+
+    //--------------------------------------------------------------------------------------------------
+
+    bool MergeQuantizedHardSigmoid(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+    {
+        if (src.size() < index + 2)
+            return false;
+        if (src[index + 0].type() != LayerTypeDequantizeLinear)
+            return false;
+        if (src[index + 1].type() != LayerTypeHardSigmoid)
+            return false;
+        if (src[index + 2].type() != LayerTypeQuantizeLinear)
+            return false;
+        if (InsideLink(src, index, 2, 1))
+            return false;
+        LayerParam layer;
+        layer.type() = LayerTypeQuantizedHardSigmoid;
+        layer.name() = src[index + 0].name();
+        layer.src().push_back(src[index + 0].src()[0]);
+        layer.qSrc().push_back(src[index + 0].quantize());
+        layer.hardSigmoid() = src[index + 1].hardSigmoid();
+        layer.dst().push_back(src[index + 2].dst()[0]);
+        layer.qDst().push_back(src[index + 2].quantize());
+        index += 2;
+        dst.push_back(layer);
+        return true;
+    }
+
+    //--------------------------------------------------------------------------------------------------
+
+    bool MergeQuantizedHswish(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
+    {
+        if (src.size() < index + 2)
+            return false;
+        if (src[index + 0].type() != LayerTypeDequantizeLinear)
+            return false;
+        if (src[index + 1].type() != LayerTypeHswish)
+            return false;
+        if (src[index + 2].type() != LayerTypeQuantizeLinear)
+            return false;
+        if (InsideLink(src, index, 2, 1))
+            return false;
+        LayerParam layer;
+        layer.type() = LayerTypeQuantizedHswish;
+        layer.name() = src[index + 0].name();
+        layer.src().push_back(src[index + 0].src()[0]);
+        layer.qSrc().push_back(src[index + 0].quantize());
+        layer.hswish() = src[index + 1].hswish();
+        layer.dst().push_back(src[index + 2].dst()[0]);
+        layer.qDst().push_back(src[index + 2].quantize());
+        index += 2;
+        dst.push_back(layer);
         return true;
     }
 
