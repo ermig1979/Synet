@@ -43,6 +43,11 @@ namespace Synet
                 shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
                 layer.input().shape()[0].format() = TensorFormatNhwc;
             }
+            if (shape.size() == 3)
+            {
+                shape = Shape({ shape[1], shape[2], shape[0] });
+                layer.input().shape()[0].format() = TensorFormatNhwc;
+            }
         }
         if (shape.size() > 1 && shape[0] == -1)
             shape[0] = 1;
