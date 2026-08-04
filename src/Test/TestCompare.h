@@ -191,8 +191,9 @@ namespace Test
             if (!network.Init(model, weight, options, _param()))
                 SYNET_ERROR("Can't load " << network.Name() << " from '" << model << "' and '" << weight << "' !");
             Shape shape = network.SrcShape(0);
-            if (!(shape[1] == 1 || shape[1] == 3 || _param().inputType() == "binary"))
-                SYNET_ERROR("Wrong " << network.Name() << " network model channels count '" << shape[1] << " !");
+            size_t channels = _param().inputType() == "binary" ? 1 : (shape.size() == 4 ? shape[1] : shape[0]);
+            if (!(channels == 1 || channels == 3 || channels == 4))
+                SYNET_ERROR("Wrong " << network.Name() << " network model channels count '" << channels << " !");
             return true;
         }
 
@@ -372,7 +373,7 @@ namespace Test
                                 if (upper.size() == 1)
                                     upper.resize(shape[1], upper[0]);
 
-                                View converted(original.Size(), shape[1] == 1 ? View::Gray8 : View::Bgr24);
+                                View converted(original.Size(), shape[1] == 1 ? View::Gray8 : (shape[1] == 3 ? View::Bgr24 : View::Bgra32));
                                 Simd::Convert(original, converted);
 
                                 View resized(Size(shape[3], shape[2]), converted.format);
@@ -380,6 +381,22 @@ namespace Test
 
                                 Simd::SynetSetInput(resized, lower.data(), upper.data(), input, shape[1], SimdTensorFormatNchw, _param().order() == "rgb");
                                 input += shape[1] * shape[2] * shape[3];
+                            }
+                            else if (shape.size() == 3)
+                            {
+                                if (lower.size() == 1)
+                                    lower.resize(shape[0], lower[0]);
+                                if (upper.size() == 1)
+                                    upper.resize(shape[0], upper[0]);
+
+                                View converted(original.Size(), shape[0] == 1 ? View::Gray8 : (shape[0] == 3 ? View::Bgr24 : View::Bgra32));
+                                Simd::Convert(original, converted);
+
+                                View resized(Size(shape[2], shape[1]), converted.format);
+                                ResizeImage(converted, resized);
+
+                                Simd::SynetSetInput(resized, lower.data(), upper.data(), input, shape[0], SimdTensorFormatNchw, _param().order() == "rgb");
+                                input += shape[0] * shape[1] * shape[2];
                             }
                             else if (shape.size() == 2)
                             {
