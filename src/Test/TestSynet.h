@@ -200,6 +200,13 @@ namespace Test
                             for (size_t x = 0; x < src.Axis(3); ++x)
                                 dst.Data<T>(Shape({ n, y, x, c }))[0] = src.Data<T>(Shape({ n, c, y, x }))[0];
             }
+            else if (dst.Format() == Synet::TensorFormatNhwc && dst.Count() == 3)
+            {
+                for (size_t c = 0; c < src.Axis(0); ++c)
+                    for (size_t y = 0; y < src.Axis(1); ++y)
+                        for (size_t x = 0; x < src.Axis(2); ++x)
+                            dst.Data<T>(Shape({ y, x, c }))[0] = src.Data<T>(Shape({ c, y, x }))[0];
+            }
             else
                 memcpy(dst.RawData(), src.RawData(), src.RawSize());
         }
@@ -424,6 +431,8 @@ namespace Test
                         srcShape[0] = batchSize;
                     if (_trans && srcShape.size() == 4)
                         srcShape = Shape({ srcShape[0], srcShape[2], srcShape[3], srcShape[1] });
+                    if (_trans && srcShape.size() == 3)
+                        srcShape = Shape({ srcShape[1], srcShape[2], srcShape[0] });
                 }
                 if (srcShape.empty())
                     SYNET_ERROR("Test parameter input.shape is empty!");

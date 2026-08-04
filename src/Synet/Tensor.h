@@ -511,6 +511,21 @@ namespace Synet
                 }
                 return;
             }
+            else if (shape.size() == 3 && format == TensorFormatNhwc && !weight)
+            {
+                Tensor<U> trans(tensor.GetType(), Shp(shape[2], shape[0], shape[1]), TensorFormatNchw);
+                for (size_t c = 0; c < shape[2]; ++c)
+                    for (size_t y = 0; y < shape[0]; ++y)
+                        for (size_t x = 0; x < shape[1]; ++x)
+                            trans.template Data<U>({ c, y, x })[0] = tensor.template Data<U>({ y, x, c })[0];
+                std::stringstream ss;
+                ss << name << " NHWC { ";
+                for (size_t i = 0; i < shape.size(); ++i)
+                    ss << shape[i] << " ";
+                ss << "} -> ";
+                trans.DebugPrint(os, ss.str(), weight, first, last, precision);
+                return;
+            }
             os << name;
             if (weight)
                 os << (format == TensorFormatNchw && shape.size() == 4 ? " OIHW" : (format == TensorFormatNhwc && shape.size() == 4 ? " HWIO" : ""));
