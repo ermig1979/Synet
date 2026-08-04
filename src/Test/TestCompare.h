@@ -426,6 +426,15 @@ namespace Test
                             }
                         }
                     }
+                    else if (_param().input().size() && _param().input()[s].from() == "param_data")
+                    {
+                        if (tensor.GetType() == Synet::TensorType32f)
+                        {
+                            size_t size = tensor.Size(), offs = t * size;
+                            for (size_t i = 0; i < size; ++i)
+                                tensor.Data<float>()[i] = _param().input()[s].data()[offs + i];
+                        }
+                    }
                     else
                     {
                         SYNET_ERROR("Can't process input parameter 'from'!");
