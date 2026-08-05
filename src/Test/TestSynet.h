@@ -54,7 +54,12 @@ namespace Test
         {
             Shape shape = _net.Src()[index]->Shape();
             Synet::TensorFormat format = _net.Src()[index]->Format();
-            return shape.size() == 4 && format == Synet::TensorFormatNhwc ? Shp(shape[0], shape[3], shape[1], shape[2]) : shape;
+            if (shape.size() == 4 && format == Synet::TensorFormatNhwc)
+                return Shp(shape[0], shape[3], shape[1], shape[2]);
+            else if (shape.size() == 3 && format == Synet::TensorFormatNhwc)
+                return Shp(shape[2], shape[0], shape[1]);
+            else
+                return shape;
         }
 
         virtual Synet::TensorType SrcType(size_t index) const
