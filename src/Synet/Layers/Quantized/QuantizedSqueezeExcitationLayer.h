@@ -27,6 +27,7 @@
 #include "Synet/Layer.h"
 #include "Synet/Utils/Scale.h"
 #include "Synet/Utils/InnerProduct.h"
+#include "Synet/Utils/Mul.h"
 
 namespace Synet
 {
@@ -51,11 +52,12 @@ namespace Synet
     private:
         bool _hasBias[2], _hardSigmoid;
         int32_t _srcZero, _avgZero, _ipZero[2], _actZero[2], _dstZero;
-        float _srcScale, _avgScale, _ipScale[2], _actScale[2], _dstScale;
+        float _srcScale, _avgScale, _ipScale[2], _actScale[2], _dstScale, _scale, _shift;
         Floats _params;
         TensorFormat _format;
-        size_t _batch, _channels, _height, _width, _squeeze, _sci; 
+        size_t _batch, _channels, _height, _width, _squeeze, _spi; 
         ActivationFunctionType _actType;
         QuantizedInnerProduct _quantizedInnerProduct[2];
+        QuantizedMul _quantizedMul;
     };
 }

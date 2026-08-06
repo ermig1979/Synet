@@ -29,6 +29,7 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeActivation.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolution.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantized.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedSqueezeExcitation.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeScale.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeSqueezeExcitation.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\Optimizer.cpp" />

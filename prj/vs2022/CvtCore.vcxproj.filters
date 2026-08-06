@@ -25,6 +25,9 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeSqueezeExcitation.cpp">
       <Filter>Optimizer</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedSqueezeExcitation.cpp">
+      <Filter>Optimizer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cvt\Common\Params.h">

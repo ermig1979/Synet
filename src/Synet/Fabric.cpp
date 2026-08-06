@@ -84,6 +84,7 @@
 #include "Synet/Layers/Quantized/QuantizedPreluLayer.h"
 #include "Synet/Layers/Quantized/QuantizedScaleLayer.h"
 #include "Synet/Layers/Quantized/QuantizedShuffleLayer.h"
+#include "Synet/Layers/Quantized/QuantizedSqueezeExcitationLayer.h"
 #include "Synet/Layers/Quantized/QuantizeLinearLayer.h"
 
 #include "Synet/Layers/Recurrent/LstmLayer.h"
@@ -246,6 +247,7 @@ namespace Synet
         case LayerTypeQuantizedPrelu: return new QuantizedPreluLayer(param, context);
         case LayerTypeQuantizedScale: return new QuantizedScaleLayer(param, context);
         case LayerTypeQuantizedShuffle: return new QuantizedShuffleLayer(param, context);
+        case LayerTypeQuantizedSqueezeExcitation: return new QuantizedSqueezeExcitationLayer(param, context);
         case LayerTypeQuantizeLinear: return new QuantizeLinearLayer(param, context);
         case LayerTypeReduction: return new ReductionLayer(param, context);
         case LayerTypeRegion: return new RegionLayer(param, context);

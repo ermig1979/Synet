@@ -41,7 +41,7 @@ namespace Synet
     void QuantizedSqueezeExcitationLayer::CompactWeight()
     {
         ((Tensor&)this->Weight()[0]).Clear();
-        ((Tensor&)this->Weight()[_sci]).Clear();
+        ((Tensor&)this->Weight()[_spi]).Clear();
     }
 
     size_t QuantizedSqueezeExcitationLayer::MemoryUsage() const
@@ -78,15 +78,16 @@ namespace Synet
         _params.resize(2);
         _params[0] = seParam.activationParam0();
         _params[1] = seParam.activationParam1();
+        _scale = 1.0f / 6.0f;
+        _shift = 0.5f;
 
-        size_t qSrcSize = 1 + 1 + 3 + (_hasBias[0] ? 2 : 0) + (_actType != ActivationFunctionTypeIdentity ? 1 : 0) +
-            3 + (_hasBias[1] ? 2 : 0) + 1;
+        size_t qSrcSize = 1 + (_hasBias[0] ? 3 : 2) + (_actType != ActivationFunctionTypeIdentity ? 1 : 0) +
+            (_hasBias[1] ? 3 : 2) + 1 + 1;
         if (param.qSrc().size() < qSrcSize)
             SYNET_ERROR("QuantizedSqueezeExcitationLayer must have at least " << qSrcSize << " input dequantizers!");
 
         _format = src[0]->Format();
         _batch = src[0]->Axis(0);
-        _squeeze = weight[0].Axis(3);
         if (_format == TensorFormatNchw)
         {
             _channels = src[0]->Axis(1);
@@ -99,6 +100,7 @@ namespace Synet
             _height = src[0]->Axis(1);
             _width = src[0]->Axis(2);
             _channels = src[0]->Axis(3);
+            _squeeze = weight[0].Axis(3);
         }
         else
             assert(0);
@@ -113,12 +115,12 @@ namespace Synet
         if (param.qSrc()[1].weights() != 0)
             SYNET_ERROR("QuantizedSqueezeExcitationLayer supports only uniform averaging quantization!");
 
-        Layer::Extend8u(buf, 0, Shp(_channels));
-        Layer::Extend8u(buf, 1, Shp(_squeeze));
+        Layer::Extend8u(buf, 0, Shp(_batch, _channels + _squeeze));
+        Layer::Extend8u(buf, 1, Shp(_batch, _channels + _squeeze));
 
         int weight0 = 0;
         int bias0 = weight0 + param.qSrc()[2].weights();
-        int dst0 = _hasBias[0] ? 3 : 2;
+        int dst0 = _hasBias[0] ? 4 : 3;
         _ipScale[0] = float(param.qSrc()[dst0].scale());
         _ipZero[0] = param.qSrc()[dst0].zero();
         
@@ -126,9 +128,7 @@ namespace Synet
         if (_quantizedInnerProduct[0].Enable())
         {
             Layer::Extend8u(buf, 1, Shp(_quantizedInnerProduct[0].ExternalBufferSize()));
-            const Tensors& weight = this->Weight();
-            int bias = param.qSrc()[2].weights();
-            uint8_t srcZero = (uint8_t)_avgZero, dstZero = (uint8_t)param.qDst()[0].zero();
+            uint8_t srcZero = (uint8_t)_avgZero, dstZero = (uint8_t)_ipZero[0];
             _quantizedInnerProduct[0].SetParams(&_avgScale, &srcZero, weight[weight0 + 0].Data<int8_t>(), weight[weight0 + 1].Data<float>(),
                 _hasBias[0] ? weight[bias0 + 0].Data<int32_t>() : NULL, &_ipScale[0], &dstZero);
         }
@@ -136,43 +136,33 @@ namespace Synet
             SYNET_ERROR("QuantizedSqueezeExcitationLayer can't initalize primarily QuantizedInnerProduct!");
 
         int weight1 = bias0 + (_hasBias[0] ? param.qSrc()[3].weights() : 2);
-        int bias1 = bias0 + param.qSrc()[dst0].weights();
-        int dst1 = dst0 + (_hasBias[1] ? 2 : 1);
+        int bias1 = weight1 + param.qSrc()[dst0 + 1].weights();
+        int dst1 = dst0 + (_hasBias[1] ? 3 : 2);
+        _ipScale[1] = float(param.qSrc()[dst1].scale());
+        _ipZero[1] = param.qSrc()[dst1].zero();
+        _spi = weight1;
 
+        _quantizedInnerProduct[1].Init(_batch, _channels, _squeeze, TensorType8u, TensorType8i, TensorType8u, 1, true, _hasBias[1] ? 1 : 0);
+        if (_quantizedInnerProduct[1].Enable())
+        {
+            Layer::Extend8u(buf, 1, Shp(_quantizedInnerProduct[1].ExternalBufferSize()));
+            uint8_t srcZero = (uint8_t)_ipZero[0], dstZero = (uint8_t)_ipZero[1];
+            _quantizedInnerProduct[1].SetParams(&_ipScale[0], &srcZero, weight[weight1 + 0].Data<int8_t>(), weight[weight1 + 1].Data<float>(),
+                _hasBias[1] ? weight[bias1 + 0].Data<int32_t>() : NULL, &_ipScale[1], &dstZero);
+        }
+        else
+            SYNET_ERROR("QuantizedSqueezeExcitationLayer can't initalize secondary QuantizedInnerProduct!");
+
+        _actScale[1] = float(param.qSrc()[dst1 + 1].scale());
+        _actZero[1] = param.qSrc()[dst1 + 1].zero();
 
         _dstScale = float(param.qDst()[0].scale());
         _dstZero = param.qDst()[0].zero();
 
-        //_sci = 1 + (_hasBias[0] ? 1 : 0) + (_actType == ActivationFunctionTypePrelu ? 1 : 0);
-        //if(weight.size() != _sci + 1 + (_hasBias[1] ? 1 : 0))
-        //    SYNET_ERROR("QuantizedSqueezeExcitationLayer: check weight count!");
-        //if(weight[0].Count() != 4 || weight[_sci].Count() != 4)
-        //    SYNET_ERROR("QuantizedSqueezeExcitationLayer: check weight dims!");
-
-        _format = src[0]->Format();
-        _batch = src[0]->Axis(0);
-        if (_format == TensorFormatNchw)
-        {
-            _channels = src[0]->Axis(1);
-            _height = src[0]->Axis(2);
-            _width = src[0]->Axis(3);
-            _squeeze = weight[0].Axis(0);
-            if(weight[_sci].Axis(0) != _channels)
-                SYNET_ERROR("QuantizedSqueezeExcitationLayer: check weight[" << _sci << "] axis 0!");
-        }
-        else if (_format == TensorFormatNhwc)
-        {
-            _height = src[0]->Axis(1);
-            _width = src[0]->Axis(2);
-            _channels = src[0]->Axis(3);
-            _squeeze = weight[0].Axis(3);
-            if(weight[_sci].Axis(3) != _channels)
-                SYNET_ERROR("QuantizedSqueezeExcitationLayer: check weight[" << _sci << "] axis 3!");
-        }
-        else
-            assert(0);
-
-        Layer::Extend8u(buf, 0, Shp(_channels + _squeeze));
+        _quantizedMul.Init(Shp(_batch, _channels), TensorType8u, _actScale[1], _actZero[1], 
+            src[0]->Shape(), TensorType8u, _srcScale, _srcZero, TensorType8u, _dstScale, _dstZero);
+        if(!_quantizedMul.Enable())
+            SYNET_ERROR("QuantizedSqueezeExcitationLayer can't initalize QuantizedMul!");
 
         if (src[0] != dst[0])
         {
@@ -195,6 +185,18 @@ namespace Synet
 
     void QuantizedSqueezeExcitationLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        uint8_t* buf0 = Layer::Buf8u(buf, 0), * buf1 = buf0 + _batch * _channels, * buf2 = Layer::Buf8u(buf, 1);
+        const uint8_t* src0 = src[0]->Data<uint8_t>();
+        uint8_t* dst0 = dst[0]->Data<uint8_t>();
+        SimdSynetQuantizedPoolingAverage(src0, &_srcScale, _srcZero, _batch, _channels, _height, _width, _height, _width,
+            1, 1, 0, 0, SimdTrue, buf0, &_dstScale, _dstZero, 1, 1, (SimdTensorFormatType)_format);
+        _quantizedInnerProduct[0].Forward(buf0, NULL, buf2, buf1);
+        _quantizedInnerProduct[1].Forward(buf1, NULL, buf2, buf0);
+        SimdSynetQuantizedHardSigmoid(buf0, &_ipScale[1], _ipZero[1], _batch*_channels, &_scale, &_shift, buf0, &_actScale[1], _actZero[1]);
+        _quantizedMul.Forward(buf0, src0, dst0);
+#else
         assert(0);
+#endif
     }
 }
