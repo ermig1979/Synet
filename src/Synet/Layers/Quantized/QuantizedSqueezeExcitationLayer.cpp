@@ -116,7 +116,6 @@ namespace Synet
             SYNET_ERROR("QuantizedSqueezeExcitationLayer supports only uniform averaging quantization!");
 
         Layer::Extend8u(buf, 0, Shp(_batch, _channels + _squeeze));
-        Layer::Extend8u(buf, 1, Shp(_batch, _channels + _squeeze));
 
         int weight0 = 0;
         int bias0 = weight0 + param.qSrc()[2].weights();
@@ -124,7 +123,7 @@ namespace Synet
         _ipScale[0] = float(param.qSrc()[dst0].scale());
         _ipZero[0] = param.qSrc()[dst0].zero();
         
-        _quantizedInnerProduct[0].Init(_batch, _squeeze, _channels, TensorType8u, TensorType8i, TensorType8u, 1, true, _hasBias[0] ? 1 : 0);
+        _quantizedInnerProduct[0].Init(_batch, _squeeze, _channels, TensorType8u, TensorType8i, TensorType8u, _format == TensorFormatNchw ? 1 : 0, 1, _hasBias[0] ? 1 : 0);
         if (_quantizedInnerProduct[0].Enable())
         {
             Layer::Extend8u(buf, 1, Shp(_quantizedInnerProduct[0].ExternalBufferSize()));
@@ -142,7 +141,7 @@ namespace Synet
         _ipZero[1] = param.qSrc()[dst1].zero();
         _spi = weight1;
 
-        _quantizedInnerProduct[1].Init(_batch, _channels, _squeeze, TensorType8u, TensorType8i, TensorType8u, 1, true, _hasBias[1] ? 1 : 0);
+        _quantizedInnerProduct[1].Init(_batch, _channels, _squeeze, TensorType8u, TensorType8i, TensorType8u, _format == TensorFormatNchw ? 1 : 0, 1, _hasBias[1] ? 1 : 0);
         if (_quantizedInnerProduct[1].Enable())
         {
             Layer::Extend8u(buf, 1, Shp(_quantizedInnerProduct[1].ExternalBufferSize()));
@@ -190,7 +189,7 @@ namespace Synet
         const uint8_t* src0 = src[0]->Data<uint8_t>();
         uint8_t* dst0 = dst[0]->Data<uint8_t>();
         SimdSynetQuantizedPoolingAverage(src0, &_srcScale, _srcZero, _batch, _channels, _height, _width, _height, _width,
-            1, 1, 0, 0, SimdTrue, buf0, &_dstScale, _dstZero, 1, 1, (SimdTensorFormatType)_format);
+            1, 1, 0, 0, SimdTrue, buf0, &_avgScale, _avgZero, 1, 1, (SimdTensorFormatType)_format);
         _quantizedInnerProduct[0].Forward(buf0, NULL, buf2, buf1);
         _quantizedInnerProduct[1].Forward(buf1, NULL, buf2, buf0);
         SimdSynetQuantizedHardSigmoid(buf0, &_ipScale[1], _ipZero[1], _batch*_channels, &_scale, &_shift, buf0, &_actScale[1], _actZero[1]);
