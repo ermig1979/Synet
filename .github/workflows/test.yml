@@ -1,0 +1,19 @@
+name: Test
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  simd-pin-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main repository only
+        uses: actions/checkout@v6
+        with:
+          submodules: false
+          
+      - name: Select and update specific submodules
+        run: |
+          git submodule update --init 3rd/Cpl
+
