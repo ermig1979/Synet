@@ -5,15 +5,32 @@ on:
     branches: [dev]
 
 jobs:
-  simd-pin-gate:
+  build_and_test_x86:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        gcc_version: [13]
+        build_type: [Release]
+
     steps:
       - name: Checkout main repository only
         uses: actions/checkout@v6
         with:
           submodules: false
-          
+
       - name: Select and update specific submodules
         run: |
           git submodule update --init 3rd/Cpl
+          git submodule update --init 3rd/Simd
+
+      - name: Host properties
+        run: lscpu
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update 
+          sudo apt-get -y install g++-${{matrix.gcc_version}}
+          sudo apt-get install python3-numpy
+          
 
