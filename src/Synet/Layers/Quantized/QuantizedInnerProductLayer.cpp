@@ -56,7 +56,10 @@ namespace Synet
     void QuantizedInnerProductLayer::CompactWeight()
     {
         if (_quantizedInnerProduct.Enable())
-            ((Tensor&)this->Weight()[0]).Clear();
+        {
+            for (size_t i = 0; i < this->Weight().size(); ++i)
+                ((Tensor&)this->Weight()[i]).Clear();
+        }
     }
 
     LowPrecisionType QuantizedInnerProductLayer::LowPrecision(TensorType type) const

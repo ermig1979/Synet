@@ -40,8 +40,8 @@ namespace Synet
 
     void QuantizedSqueezeExcitationLayer::CompactWeight()
     {
-        ((Tensor&)this->Weight()[0]).Clear();
-        ((Tensor&)this->Weight()[_spi]).Clear();
+        for(size_t i = 0; i < this->Weight().size(); ++i)
+            ((Tensor&)this->Weight()[i]).Clear();
     }
 
     size_t QuantizedSqueezeExcitationLayer::MemoryUsage() const
@@ -139,7 +139,6 @@ namespace Synet
         int dst1 = dst0 + (_hasBias[1] ? 3 : 2);
         _ipScale[1] = float(param.qSrc()[dst1].scale());
         _ipZero[1] = param.qSrc()[dst1].zero();
-        _spi = weight1;
 
         _quantizedInnerProduct[1].Init(_batch, _channels, _squeeze, TensorType8u, TensorType8i, TensorType8u, _format == TensorFormatNchw ? 1 : 0, 1, _hasBias[1] ? 1 : 0);
         if (_quantizedInnerProduct[1].Enable())

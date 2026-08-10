@@ -55,7 +55,7 @@ namespace Synet
         float _srcScale, _avgScale, _ipScale[2], _actScale[2], _dstScale, _scale, _shift;
         Floats _params;
         TensorFormat _format;
-        size_t _batch, _channels, _height, _width, _squeeze, _spi; 
+        size_t _batch, _channels, _height, _width, _squeeze; 
         ActivationFunctionType _actType;
         QuantizedInnerProduct _quantizedInnerProduct[2];
         QuantizedMul _quantizedMul;
