@@ -16,3 +16,7 @@
 [submodule "3rd/Cpl"]
 	path = 3rd/Cpl
 	url = https://github.com/ermig1979/Cpl.git
+[submodule "3rd/bin"]
+	path = 3rd/bin
+	url = https://github.com/ermig1979/SynetBin.git
+	branch = master
