@@ -23,6 +23,7 @@ jobs:
         run: |
           git submodule update --init 3rd/Cpl
           git submodule update --init 3rd/Simd
+          git submodule update --init 3rd/bin
 
       - name: Host properties
         run: lscpu
