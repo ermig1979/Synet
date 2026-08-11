@@ -6,11 +6,12 @@ if(SYNET_USE_BIN)
     ${ORT_DIR}/include ${ORT_DIR}/include/onnxruntime 
     ${ORT_DIR}/include/onnxruntime/core/session 
     ${ORT_DIR}/include/onnxruntime/core/providers/cpu)
-  set(ORT_LIBS ${ORT_BIN}/libonnxruntime.so.1)
+  set(ORT_LIBS_IN ${ORT_BIN}/libonnxruntime.so.1)
+  set(ORT_LIBS ${CMAKE_BINARY_DIR}/libonnxruntime.so.1)
   add_custom_command(
     OUTPUT ${ORT_LIBS}
-    COMMAND ${CMAKE_COMMAND} -E copy ${ORT_LIBS} ${CMAKE_BINARY_DIR}
-    WORKING_DIRECTORY ${ORT_BIN})
+    COMMAND ${CMAKE_COMMAND} -E copy ${ORT_LIBS_IN} ${CMAKE_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
   add_custom_target(make_ort DEPENDS ${ORT_LIBS})
 elseif(SYNET_USE_CONAN_PACKAGES)
