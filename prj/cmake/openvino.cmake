@@ -6,7 +6,9 @@ if(SYNET_USE_BIN)
     ${IE_BIN_DIR}/libopenvino_intel_cpu_plugin.so
     ${IE_BIN_DIR}/libopenvino_ir_frontend.so
     ${IE_BIN_DIR}/libopenvino_onnx_frontend.so
-    ${IE_BIN_DIR}/libopenvino.so)
+    ${IE_BIN_DIR}/libopenvino.so
+    ${IE_BIN_DIR}/libiomp5.so
+    ${IE_BIN_DIR}/libtbb.so)
 
   set(IE_BIN_LIBS
     ${CMAKE_BINARY_DIR}/libopenvino_intel_cpu_plugin.so
