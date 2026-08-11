@@ -8,7 +8,6 @@ if(SYNET_USE_BIN)
     ${IE_BIN_DIR}/libopenvino_onnx_frontend.so
     ${IE_BIN_DIR}/libopenvino.so
     ${IE_BIN_DIR}/libiomp5.so
-    ${IE_BIN_DIR}/libtbb.so
     ${IE_BIN_DIR}/libtbb.so.12)
 
   set(IE_BIN_LIBS
