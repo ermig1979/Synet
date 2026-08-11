@@ -6,12 +6,11 @@ if(SYNET_USE_BIN)
     ${ORT_DIR}/include ${ORT_DIR}/include/onnxruntime 
     ${ORT_DIR}/include/onnxruntime/core/session 
     ${ORT_DIR}/include/onnxruntime/core/providers/cpu)
-  set(ORT_LIBS_IN ${ORT_BIN}/libonnxruntime.so.1)
-  set(ORT_LIBS ${CMAKE_BINARY_DIR}/libonnxruntime.so.1)
+  set(ORT_LIBS_IN ${ORT_BIN}/libonnxruntime.so)
+  set(ORT_LIBS ${CMAKE_BINARY_DIR}/libonnxruntime.so)
   add_custom_command(
     OUTPUT ${ORT_LIBS}
-    COMMAND ${CMAKE_COMMAND} -E copy ${ORT_LIBS_IN} ${CMAKE_BINARY_DIR}
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+    COMMAND ${CMAKE_COMMAND} -E copy ${ORT_LIBS_IN} ${CMAKE_BINARY_DIR})
 
   add_custom_target(make_ort DEPENDS ${ORT_LIBS})
 elseif(SYNET_USE_CONAN_PACKAGES)
@@ -24,7 +23,7 @@ else()
   set(ORT_ONNX ${ORT_BIN}/_deps/onnx-build)
   set(PB_BIN ${ORT_BIN}/_deps/protobuf-build)
 
-  set(ORT_LIBS ${ORT_BIN}/libonnxruntime.so.1 ${PB_BIN}/libprotobuf.a)
+  set(ORT_LIBS ${ORT_BIN}/libonnxruntime.so ${PB_BIN}/libprotobuf.a)
   if(SYNET_ORT_DNNL)
     set(ORT_LIBS ${ORT_LIBS} ${ORT_BIN}/libonnxruntime_providers_dnnl.so ${ORT_BIN}/libonnxruntime_providers_shared.so)
     set(ORT_LIBS ${ORT_LIBS} ${ORT_BIN}/dnnl/install/lib/libdnnl.so.3)
