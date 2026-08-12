@@ -713,7 +713,8 @@ namespace Test
                 TestData& test = *_tests[i];
                 for (size_t r = 0; r < repeats; ++r, ++current)
                 {
-                    std::cout << ProgressString(current, total) << std::flush;
+                    if (!_options.consoleSilence)
+                        std::cout << ProgressString(current, total) << std::flush;
                     if (_options.reverseExecution)
                     {
                         if(!(SingleThreadRunSecond(i, r) && SingleThreadRunFirst(i, r)))
@@ -727,8 +728,9 @@ namespace Test
 #if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_TEST_SECOND_RUN)
                     if (r == 0 && _options.enable == (ENABLE_FIRST | ENABLE_SECOND) && !CompareResults(test, i, 0))
                         return false;
-#endif             
-                    std::cout << " \r" << std::flush;
+#endif   
+                    if (!_options.consoleSilence)
+                        std::cout << " \r" << std::flush;
                 }
             }
 #ifdef SYNET_TEST_FIRST_RUN
