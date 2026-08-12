@@ -375,6 +375,9 @@ def main():
 	
 	if not context.error :
 		print("All tests finished {3}successfully{4} in {0}:{1:02d}:{2:02d} !\n".format(elapsed.seconds // 3600, elapsed.seconds % 3600 // 60, elapsed.seconds % 60, GreenColor(), DefaultColor()))
+	else:
+		print("Tests are {0}failed{1} ! \n".format(RedColor(), DefaultColor()))
+		return 1
 	
 	return 0
 	
