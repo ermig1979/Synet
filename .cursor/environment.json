@@ -1,0 +1,4 @@
+{
+  "name": "Synet",
+  "install": "bash .cursor/install.sh"
+}
