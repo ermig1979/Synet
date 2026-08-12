@@ -2,14 +2,21 @@
 #
 # Cloud Agent install script for Synet.
 #
-# Prepares a fresh checkout so the core framework and the CPU-only test
-# applications can be built and run. It is idempotent: re-running it reconfigures
-# and rebuilds incrementally, reusing the (slow) Simd compilation from cache.
+# Builds the core framework and the CPU-only test applications, then caches the
+# compiled output outside /workspace so it survives the per-boot git checkout
+# (which wipes untracked files such as build/). The companion start.sh restores
+# the cache into /workspace/build on every boot.
+#
+# Idempotent: re-running reconfigures/rebuilds incrementally and refreshes the
+# cache.
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+
+# shellcheck source=/dev/null
+source "$ROOT/.cursor/env.sh"
 
 # The base image's default C/C++ compiler alternative resolves to clang, which
 # cannot find libstdc++ in this image. Synet's build.sh hard-codes /usr/bin/c++,
@@ -33,10 +40,17 @@ git submodule update --init 3rd/Simd 3rd/Cpl
 # private OpenVINO/ONNX Runtime submodules. The first mode compiles Simd (the
 # slow part, several minutes); subsequent modes reuse the CMake cache and only
 # rebuild their small test executable.
-for mode in stability quantization optimizer performance_difference bf16 multi_threads video; do
+for mode in "${SYNET_CPU_TARGETS[@]}"; do
     echo "=== Building Synet test target: ${mode} ==="
     bash build.sh "${mode}"
 done
 
+# Cache the compiled output outside /workspace so future boots can restore it
+# without recompiling (a fresh checkout wipes the untracked build/ directory).
+echo "=== Caching build output to ${SYNET_BUILD_CACHE} ==="
+mkdir -p "$(dirname "$SYNET_BUILD_CACHE")"
+rm -rf "$SYNET_BUILD_CACHE"
+cp -a "$ROOT/build" "$SYNET_BUILD_CACHE"
+
 echo "=== Synet install complete. Built applications: ==="
-ls -1 build/test_* 2>/dev/null || true
+ls -1 "$ROOT"/build/test_* 2>/dev/null || true
