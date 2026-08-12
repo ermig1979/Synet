@@ -41,3 +41,7 @@ jobs:
 
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{matrix.build_type}} --parallel$(nproc)
+        
+      - name: Correctness Check
+        working-directory: ${{github.workspace}}
+        run: bash check.sh
