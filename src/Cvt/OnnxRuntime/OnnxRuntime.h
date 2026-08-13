@@ -61,38 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertExpandNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src0 == NULL || src1 == NULL)
-                return false;
-            if (src1->type() == LayerTypeMeta)
-            {
-                const MetaParam & meta = src1->meta();
-                if (meta.type() == MetaTypeConst && meta.alpha().type() == TensorType64i && AllEqualTo(meta.alpha().i64(), int64_t(1)))
-                {
-                    layer.type() = Synet::LayerTypeStub;
-                    layer.src().resize(1);
-                }
-                else if (meta.type() == MetaTypeConst && meta.alpha().type() == TensorType64i &&
-                    src0->type() == LayerTypeConst && Shp(meta.alpha().i64()) == src0->weight()[0].dim())
-                {
-                    layer.type() = Synet::LayerTypeStub;
-                    layer.src().resize(1);
-                }
-                else
-                {
-                    layer.type() = Synet::LayerTypeTile;
-                }
-            }
-            else
-                return false;
-            return true;
-        }
-
         bool ConvertFloorNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1))

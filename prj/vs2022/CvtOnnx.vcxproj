@@ -49,6 +49,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertEqualNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertErfNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertExpNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertExpandNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertFlattenNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGatherNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGemmNode.cpp" />
