@@ -120,6 +120,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertFlattenNode.cpp">
       <Filter>OnnxRuntime\F</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertFloorNode.cpp">
+      <Filter>OnnxRuntime\F</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGatherNode.cpp">
       <Filter>OnnxRuntime\G</Filter>
     </ClCompile>

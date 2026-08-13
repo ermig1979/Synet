@@ -61,26 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertFloorNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 1))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            if (src0 == NULL)
-                return false;
-            if (src0->type() == LayerTypeMeta)
-            {
-                layer.type() = Synet::LayerTypeMeta;
-                layer.meta().type() = Synet::MetaTypeFloor;
-            }
-            else
-            {
-                layer.type() = Synet::LayerTypeUnaryOperation;
-                layer.unaryOperation().type() = Synet::UnaryOperationTypeFloor;
-            }
-            return true;
-        }
-
         bool ConvertGridSampleNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))
