@@ -61,46 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertGridSampleNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src0 == NULL || src1 == NULL)
-                return false;
-
-            layer.type() = LayerTypeGridSample;
-            if (!ConvertAtrributeInt(node, "align_corners", layer.gridSample().alignCorners()))
-                return false;
-
-            String interpMode;
-            if (!ConvertAtrributeString(node, "mode", interpMode))
-                return false;
-            if (interpMode == "bilinear")
-                layer.gridSample().interpMode() = GridSampleInterpModeBilinear;
-            else if (interpMode == "nearest")
-                layer.gridSample().interpMode() = GridSampleInterpModeNearest;
-            else if (interpMode == "bicubic")
-                layer.gridSample().interpMode() = GridSampleInterpModeBicubic;
-            else
-                return false;
-
-            String paddingMode;
-            if (!ConvertAtrributeString(node, "padding_mode", paddingMode))
-                return false;
-            if (paddingMode == "zeros")
-                layer.gridSample().paddingMode() = GridSamplePaddingModeZeros;
-            else if (paddingMode == "border")
-                layer.gridSample().paddingMode() = GridSamplePaddingModeBorder;
-            else if (paddingMode == "reflection")
-                layer.gridSample().paddingMode() = GridSamplePaddingModeReflection;
-            else
-                return false;
-
-            return true;
-        }
-
         bool ConvertHardSigmoidNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeHardSigmoid;
