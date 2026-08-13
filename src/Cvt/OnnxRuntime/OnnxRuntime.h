@@ -61,13 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertCosNode(const onnx::NodeProto& node, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypeUnaryOperation;
-            layer.unaryOperation().type() = UnaryOperationTypeCos;
-            return true;
-        }
-
         bool ConvertDivNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered)
         {
             if (!CheckSourceNumber(layer, 2))
