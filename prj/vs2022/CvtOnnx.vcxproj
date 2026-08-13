@@ -44,6 +44,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConvOrConvTransposeNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertCosNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDequantizeLinearNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDivNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDropoutNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertEqualNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertFlattenNode.cpp" />

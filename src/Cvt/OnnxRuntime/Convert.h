@@ -67,6 +67,8 @@ namespace Synet
 
     bool ConvertDequantizeLinearNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer);
 
+    bool ConvertDivNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered);
+
     bool ConvertDropoutNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertEqualNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
