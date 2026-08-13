@@ -81,6 +81,8 @@ namespace Synet
 
     bool ConvertFlattenNode(const onnx::NodeProto& node, LayerParam& layer);
 
+    bool ConvertFloorNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
     bool ConvertGatherNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
 
     bool ConvertGemmNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered, TensorFormatMap* tensorFormatMap, UniqNames& merged);
