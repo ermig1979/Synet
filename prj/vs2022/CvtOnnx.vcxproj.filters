@@ -135,6 +135,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGreaterNode.cpp">
       <Filter>OnnxRuntime\G</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGridSampleNode.cpp">
+      <Filter>OnnxRuntime\G</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertHardSwishNode.cpp">
       <Filter>OnnxRuntime\H</Filter>
     </ClCompile>
