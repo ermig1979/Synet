@@ -75,6 +75,8 @@ namespace Synet
 
     bool ConvertErfNode(const onnx::NodeProto& node, LayerParam& layer);
 
+    bool ConvertExpNode(const onnx::NodeProto& node, LayerParam& layer);
+
     bool ConvertFlattenNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertGatherNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);

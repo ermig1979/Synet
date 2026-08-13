@@ -111,6 +111,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertErfNode.cpp">
       <Filter>OnnxRuntime\E</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertExpNode.cpp">
+      <Filter>OnnxRuntime\E</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertFlattenNode.cpp">
       <Filter>OnnxRuntime\F</Filter>
     </ClCompile>
