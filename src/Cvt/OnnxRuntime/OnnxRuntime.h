@@ -61,25 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertCeilNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 1))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            if (src0 == NULL)
-                return false;
-            if (src0->type() == LayerTypeMeta)
-            {
-                layer.type() = Synet::LayerTypeMeta;
-                layer.meta().type() = Synet::MetaTypeCeil;
-            }
-            else
-            {
-                SYNET_ERROR("Unsupported src type!");
-            }
-            return true;
-        }
-
         bool ConvertCosNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeUnaryOperation;

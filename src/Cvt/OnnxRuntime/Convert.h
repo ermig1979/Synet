@@ -49,6 +49,8 @@ namespace Synet
 
     bool ConvertCastNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer);
 
+    bool ConvertCeilNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
     bool ConvertClipNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer);
 
     bool ConvertConcatNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap);
