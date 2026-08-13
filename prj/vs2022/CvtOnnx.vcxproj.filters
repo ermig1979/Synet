@@ -81,6 +81,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertCastNode.cpp">
       <Filter>OnnxRuntime\C</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertCeilNode.cpp">
+      <Filter>OnnxRuntime\C</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertClipNode.cpp">
       <Filter>OnnxRuntime\C</Filter>
     </ClCompile>

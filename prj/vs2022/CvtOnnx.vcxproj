@@ -36,6 +36,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertAveragePoolNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertBatchNormalizationNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertCastNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertCeilNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertClipNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConcatNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConstantNode.cpp" />
