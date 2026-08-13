@@ -28,63 +28,6 @@
 
 namespace Synet
 {
-    class Add16b
-    {
-    public:
-        Add16b()
-            : _context(NULL)
-        {
-        }
-
-        virtual ~Add16b()
-        {
-            Clear();
-        }
-
-        SYNET_INLINE void Init(const Shape & aShape, TensorType aType, const Shape& bShape, TensorType bType, TensorType dstType, TensorFormat format)
-        {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-            if (_aShape != aShape || _bShape != bShape)
-            {
-                Clear();
-                _aShape = aShape, _bShape = aShape;
-                _context = ::SimdSynetAdd16bInit(_aShape.data(), _aShape.size(), (SimdTensorDataType)aType, 
-                    _bShape.data(), _bShape.size(), (SimdTensorDataType)bType,
-                    (SimdTensorDataType)dstType, (SimdTensorFormatType)format);
-            }
-#endif
-        }
-
-        SYNET_INLINE bool Enable() const
-        {
-            return _context != NULL;
-        }
-
-        SYNET_INLINE void Forward(const uint8_t* a, const uint8_t* b, uint8_t* dst)
-        {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-            if (_context)
-                ::SimdSynetAdd16bForward(_context, a, b, dst);
-#endif
-        }
-
-        SYNET_INLINE void Clear()
-        {
-#ifdef SYNET_SIMD_LIBRARY_ENABLE
-            if (_context)
-                ::SimdRelease(_context), _context = NULL;
-            _aShape.clear();
-            _bShape.clear();
-#endif
-        }
-
-    private:
-        void* _context;
-        Shape _aShape, _bShape;
-    };
-
-    //-------------------------------------------------------------------------------------------------
-
     class QuantizedAdd
     {
     public:

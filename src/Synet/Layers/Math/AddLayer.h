@@ -26,7 +26,10 @@
 #pragma once
 
 #include "Synet/Layer.h"
-#include "Synet/Utils/Add.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -75,6 +78,8 @@ namespace Synet
         UniformPtr _uniform;
         AddBiasPtr _addBias;
         UniversalPtr _universal;
-        Add16b _add16b;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetAdd16b _add16b;
+#endif
     };
 }

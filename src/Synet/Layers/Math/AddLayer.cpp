@@ -548,10 +548,12 @@ namespace Synet
             _addBias = GetAddBias(_typeA, _typeB, _typeD);
             if(_uniform == NULL || _addBias == NULL)
                 SYNET_ERROR("AddLayer can't process input type!");
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
             if (shapeA == shapeB)
-                _add16b.Init(shapeA, _typeA, shapeB, _typeB, _typeD, _format);
+                _add16b.Init(shapeA, (SimdTensorDataType)_typeA, shapeB, (SimdTensorDataType)_typeB, (SimdTensorDataType)_typeD, (SimdTensorFormatType)_format);
             else
                 _add16b.Clear();
+#endif
         }
 
         if (_src[0]->Const() && _src[1]->Const())
@@ -591,11 +593,13 @@ namespace Synet
             const uint8_t* srcA = _src[0]->RawData();
             const uint8_t* srcB = _src[1]->RawData();
             uint8_t* dst0 = dst[0]->RawData();
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
             if (_add16b.Enable())
             {
                 _add16b.Forward(srcA, srcB, dst0);
                 return;
             }
+#endif
             switch (_special)
             {
             case SpecialNone:
