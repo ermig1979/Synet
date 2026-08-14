@@ -61,25 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertIdentityNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 1))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            if (src0 == NULL)
-                return false;
-            if (src0->type() == LayerTypeMeta)
-            {
-                layer.type() = LayerTypeMeta;
-                layer.meta().type() = MetaTypeStub;
-            }
-            else
-            {
-                layer.type() = LayerTypeStub;
-            }
-            return true;
-        }
-
         bool ConvertInstanceNormalizationNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 3))
