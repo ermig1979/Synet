@@ -64,6 +64,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInput.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInstanceNormalizationNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLayerNormalizationNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLeakyReluNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessOrEqualNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMulNode.cpp" />

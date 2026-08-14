@@ -61,14 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertLeakyReluNode(const onnx::NodeProto& node, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypeRelu;
-            if (!ConvertAtrributeFloat(node, "alpha", layer.relu().negativeSlope()))
-                return false;
-            return true;
-        }
-
         bool ConvertLogNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeUnaryOperation;

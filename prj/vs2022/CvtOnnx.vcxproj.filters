@@ -162,6 +162,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLayerNormalizationNode.cpp">
       <Filter>OnnxRuntime\L</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLeakyReluNode.cpp">
+      <Filter>OnnxRuntime\L</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessNode.cpp">
       <Filter>OnnxRuntime\L</Filter>
     </ClCompile>
