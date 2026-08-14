@@ -467,9 +467,6 @@
     <ClInclude Include="..\..\src\Synet\Decoders\Alpha.h">
       <Filter>Decoders</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Add.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.h">
       <Filter>Layers\Legacy</Filter>
     </ClInclude>
