@@ -144,6 +144,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertHardSwishNode.cpp">
       <Filter>OnnxRuntime\H</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertIdentityNode.cpp">
+      <Filter>OnnxRuntime\I</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInitializer.cpp">
       <Filter>OnnxRuntime\I</Filter>
     </ClCompile>

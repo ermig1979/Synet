@@ -97,6 +97,8 @@ namespace Synet
 
     bool ConvertHardSwishNode(const onnx::NodeProto& node, LayerParam& layer);
 
+    bool ConvertIdentityNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
     bool ConvertInitializer(const onnx::TensorProto& tensor, Synet::NetworkParam& network, Bytes& weight, Renames& renames);
 
     bool ConvertInput(const onnx::ValueInfoProto& input, bool trans, Synet::NetworkParam& network, Renames& renames);
