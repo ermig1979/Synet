@@ -105,6 +105,8 @@ namespace Synet
 
     bool ConvertInstanceNormalizationNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer);
 
+    bool ConvertLayerNormalizationNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer);
+
     bool ConvertLessNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertLessOrEqualNode(const onnx::NodeProto& node, LayerParam& layer);
