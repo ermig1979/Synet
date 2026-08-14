@@ -61,33 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertInstanceNormalizationNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 3))
-                return false;
-            layer.type() = Synet::LayerTypeNormalize;
-            layer.normalize().version() = 3;
-            if (!ConvertAtrributeFloat(node, "epsilon", layer.normalize().eps()))
-                return false;
-            layer.weight().resize(2);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src1 == NULL || src1->type() != LayerTypeConst)
-                return false;
-            layer.weight()[0] = src1->weight()[0];
-            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
-            if (src2 == NULL || src2->type() != LayerTypeConst)
-                return false;
-            layer.weight()[1] = src2->weight()[0];
-            layer.src().resize(1);
-            if (trans && !PermutedToNchw(layers, layer.src(), false, false, false))
-            {
-                layer.normalize().axis() = -1;
-            }
-            else
-                layer.normalize().axis() = 1;
-            return true;
-        }
-
         bool ConvertLayerNormalizationNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 3))
