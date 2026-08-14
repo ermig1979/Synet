@@ -62,6 +62,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertIdentityNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInitializer.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInput.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInstanceNormalizationNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessOrEqualNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMulNode.cpp" />
