@@ -61,14 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertHardSigmoidNode(const onnx::NodeProto& node, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypeHardSigmoid;
-            if (!ConvertAtrributeFloat(node, "alpha", layer.hardSigmoid().scale()))
-                return false;
-            return true;
-        }
-
         bool ConvertIdentityNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1))

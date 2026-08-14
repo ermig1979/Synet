@@ -57,6 +57,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGlobalAveragePoolNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGreaterNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGridSampleNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertHardSigmoidNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertHardSwishNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInitializer.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInput.cpp" />
