@@ -51,7 +51,9 @@ namespace Synet
             SYNET_ERROR("InstanceNormalization src[2] must be Const type!");
         layer.weight()[1] = src2->weight()[0];
         layer.src().resize(1);
-        if (trans && !PermutedToNchw(layers, layer.src(), false, false, false))
+        // PermutedToNchw is protected on SynetUtils; expose it for this free function.
+        struct Utils : SynetUtils { using SynetUtils::PermutedToNchw; };
+        if (trans && !Utils::PermutedToNchw(layers, layer.src(), false, false, false))
         {
             layer.normalize().axis() = -1;
         }
