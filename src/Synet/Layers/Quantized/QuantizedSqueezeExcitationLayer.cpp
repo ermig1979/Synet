@@ -157,10 +157,12 @@ namespace Synet
         _dstScale = float(param.qDst()[0].scale());
         _dstZero = param.qDst()[0].zero();
 
-        _quantizedMul.Init(_format == TensorFormatNchw ? Shp(_batch, _channels, 1, 1) : Shp(_batch, 1, 1, _channels), TensorType8u, 
-            _actScale[1], _actZero[1], src[0]->Shape(), TensorType8u, _srcScale, _srcZero, TensorType8u, _dstScale, _dstZero);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _quantizedMul.Init(_format == TensorFormatNchw ? Shp(_batch, _channels, 1, 1) : Shp(_batch, 1, 1, _channels), SimdTensorData8u,
+            _actScale[1], _actZero[1], src[0]->Shape(), SimdTensorData8u, _srcScale, _srcZero, SimdTensorData8u, _dstScale, _dstZero);
         if(!_quantizedMul.Enable())
             SYNET_ERROR("QuantizedSqueezeExcitationLayer can't initalize QuantizedMul!");
+#endif
 
         if (src[0] != dst[0])
         {
