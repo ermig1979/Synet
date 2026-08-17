@@ -61,42 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertLstmNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypeLstm;
-            if (!ConvertAtrributeInt(node, "hidden_size", layer.lstm().hiddenSize()))
-                return false;
-            String direction;
-            if (!ConvertAtrributeString(node, "direction", direction))
-                return false;
-            if (direction == "forward")
-                layer.lstm().direction() = LstmDirectionTypeForward;
-            else if (direction == "reverse")
-                layer.lstm().direction() = LstmDirectionTypeReverse;
-            else if (direction == "bidirectional")
-                layer.lstm().direction() = LstmDirectionTypeBidirectional;
-            else
-                return false;
-            if (!CheckSourceNumber(layer, 6))
-                return false;
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src1 == NULL || src1->type() != LayerTypeConst)
-                return false;
-            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
-            if (src2 == NULL || src2->type() != LayerTypeConst)
-                return false;
-            const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
-            if (src3 == NULL || src3->type() != LayerTypeConst)
-                return false;
-            layer.weight().resize(3);
-            layer.weight()[0] = src1->weight()[0];
-            layer.weight()[1] = src2->weight()[0];           
-            layer.weight()[2] = src3->weight()[0];
-            layer.src().erase(layer.src().begin() + 1, layer.src().begin() + 4);
-            layer.dst().resize(1);
-            return true;
-        }
-
         bool ConvertMatMulNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, TensorFormatMap *tensorFormatMap)
         {
             if (!CheckSourceNumber(layer, 2))
