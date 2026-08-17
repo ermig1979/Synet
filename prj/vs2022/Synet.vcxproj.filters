@@ -740,9 +740,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedMulLayer.h">
       <Filter>Layers\Quantized</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Mul.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedHardSigmoidLayer.h">
       <Filter>Layers\Quantized</Filter>
     </ClInclude>
