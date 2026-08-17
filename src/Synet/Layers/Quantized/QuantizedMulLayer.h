@@ -26,7 +26,9 @@
 
 #include "Synet/Layer.h"
 
-#include "Synet/Utils/Mul.h"
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -58,6 +60,8 @@ namespace Synet
 
         UniformPtr _uniform;
         UniversalPtr _universal;
-        QuantizedMul _quantizedMul;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetQuantizedMul _quantizedMul;
+#endif
     };
 }

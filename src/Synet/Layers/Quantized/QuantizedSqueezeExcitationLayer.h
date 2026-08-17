@@ -27,7 +27,9 @@
 #include "Synet/Layer.h"
 #include "Synet/Utils/Scale.h"
 #include "Synet/Utils/InnerProduct.h"
-#include "Synet/Utils/Mul.h"
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -58,6 +60,8 @@ namespace Synet
         size_t _batch, _channels, _height, _width, _squeeze; 
         ActivationFunctionType _actType;
         QuantizedInnerProduct _quantizedInnerProduct[2];
-        QuantizedMul _quantizedMul;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetQuantizedMul _quantizedMul;
+#endif
     };
 }
