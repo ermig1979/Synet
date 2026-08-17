@@ -171,6 +171,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessOrEqualNode.cpp">
       <Filter>OnnxRuntime\L</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLogNode.cpp">
+      <Filter>OnnxRuntime\L</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMulNode.cpp">
       <Filter>OnnxRuntime\M</Filter>
     </ClCompile>
