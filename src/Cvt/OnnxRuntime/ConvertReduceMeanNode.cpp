@@ -53,7 +53,7 @@ namespace Synet
                 SYNET_ERROR("ReduceMeanNode: src[1] is not const!");
         }
 
-        if (axes == Ints({ 2, 3 }) || axes == Ints({ -1, -2 }))
+        if (axes == Ints({ 2, 3 }) || axes == Ints({ -1, -2 }) || axes == Ints({ -2, -1 }))
         {
             if (GetLayerType(layers, layer.src()[0]) == LayerTypeDequantizeLinear)
             {
