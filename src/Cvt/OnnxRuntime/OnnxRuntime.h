@@ -61,20 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertLogSoftmaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypeSoftmax;
-            if (!ConvertAtrributeInt(node, "axis", layer.softmax().axis()))
-                return false;
-            if (trans && !PermutedToNchw(layers, layer.src(), false, false, false))
-            {
-                CPL_LOG_SS(Error, "This layer can work only in NCHW format!");
-                return false;
-            }
-            layer.softmax().log() = true;
-            return true;
-        }
-
         bool ConvertLstmNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeLstm;
