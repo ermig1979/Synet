@@ -177,6 +177,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLogSoftmaxNode.cpp">
       <Filter>OnnxRuntime\L</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLstmNode.cpp">
+      <Filter>OnnxRuntime\L</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMulNode.cpp">
       <Filter>OnnxRuntime\M</Filter>
     </ClCompile>
