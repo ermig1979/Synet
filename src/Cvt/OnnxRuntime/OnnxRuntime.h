@@ -61,57 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertMatMulNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, TensorFormatMap *tensorFormatMap)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            layer.type() = Synet::LayerTypeInnerProduct;
-            int transB = false;
-            layer.weight().resize(layer.src().size() - 1);
-            layer.innerProduct().biasTerm() = false;
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src1 == NULL)
-                return false;
-            if (src1->type() == LayerTypeConst)
-            {
-                layer.weight()[0] = src1->weight()[0];
-            }
-            else if (src1->type() == LayerTypePermute)
-            {
-                if (!CheckSourceNumber(*src1, 1))
-                    return false;
-                const LayerParam* src10 = GetLayer(layers, src1->src()[0]);
-                if (src10 == NULL) 
-                    return false;
-                if (src10->type() == LayerTypeConst)
-                {
-                    transB = true;
-                    layer.weight() = src10->weight();
-                    layers.erase(layers.begin() + (src1 - layers.data()));
-                }
-            }
-            Shape weight = layer.weight()[0].dim();
-            layer.innerProduct().transposeB() = !transB;
-            if (weight.empty())
-            {
-                layer.weight().clear();
-                layer.innerProduct().outputNum() = 0;
-                layer.innerProduct().axis() = -1;
-            }
-            else
-            {
-                //if (!CheckSignificantDims(weight, 2, "MatMul weight"))
-                //    return false;
-                if(weight.size() > 2)
-                    layer.innerProduct().axis() = weight.size() - 1;
-                layer.innerProduct().outputNum() = (uint32_t)(transB ? weight[weight.size() - 2] : weight[weight.size() - 1]);
-                layer.src().resize(1);
-                if (trans && CurrentTensorFormat(layers, layer.src(), true, false, true, tensorFormatMap) == TensorFormatNhwc)
-                    SYNET_ERROR("Can 't convert MatMul node for NHWC format!");
-            }
-            return true;
-        }
-
         bool ConvertMaxPoolNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypePooling;
