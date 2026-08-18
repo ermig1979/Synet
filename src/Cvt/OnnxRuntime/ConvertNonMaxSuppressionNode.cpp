@@ -36,26 +36,50 @@ namespace Synet
 
         const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
         if (src2 == NULL || src2->type() != LayerTypeMeta || src2->meta().type() != MetaTypeConst)
-            return false;
+            SYNET_ERROR("Can't process 2-nd input!");
         layer.nonMaxSuppression().maxOutputBoxesPerClass() = src2->meta().alpha().i64()[0];
 
         const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
-        if (src3 == NULL || src3->type() != LayerTypeConst)
+        if (src3 == NULL)
             return false;
-        const float* wgt3 = GetWeight<float>(bin, src3->weight()[0]);
-        if (wgt3 == NULL)
-            return false;
-        layer.nonMaxSuppression().iouThreshold() = wgt3[0];
+        if (src3->type() == LayerTypeConst)
+        {
+            const float* wgt3 = GetWeight<float>(bin, src3->weight()[0]);
+            if (wgt3 == NULL)
+                return false;
+            layer.nonMaxSuppression().iouThreshold() = wgt3[0];
+        }
+        else if (src3->type() == LayerTypeConstantOfShape)
+        {
+            const TensorParam &value = src3->constantOfShape().value();
+            if(value.type() != TensorType32f)
+                SYNET_ERROR("3-rd parameter must have FP32 type!");
+            layer.nonMaxSuppression().iouThreshold() = value.f32()[0];
+        }
+        else
+            SYNET_ERROR("Can't process 3-rd input!");
 
         if (layer.src().size() > 4)
         {
             const LayerParam* src4 = GetLayer(layers, layer.src()[4]);
-            if (src4 == NULL || src4->type() != LayerTypeConst)
+            if (src4 == NULL)
                 return false;
-            const float* wgt4 = GetWeight<float>(bin, src4->weight()[0]);
-            if (wgt4 == NULL)
-                return false;
-            layer.nonMaxSuppression().scoreThreshold() = wgt4[0];
+            if (src4->type() == LayerTypeConst)
+            {
+                const float* wgt4 = GetWeight<float>(bin, src4->weight()[0]);
+                if (wgt4 == NULL)
+                    return false;
+                layer.nonMaxSuppression().scoreThreshold() = wgt4[0];
+            }
+            else if (src4->type() == LayerTypeConstantOfShape)
+            {
+                const TensorParam& value = src4->constantOfShape().value();
+                if (value.type() != TensorType32f)
+                    SYNET_ERROR("4-th parameter must have FP32 type!");
+                layer.nonMaxSuppression().scoreThreshold() = value.f32()[0];
+            }
+            else
+                SYNET_ERROR("Can't process 4-th input!");
         }
 
         layer.type() = Synet::LayerTypeNonMaxSuppression;
