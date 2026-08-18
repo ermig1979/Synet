@@ -42,6 +42,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\Deconvolution\DeconvolutionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Detection\CtcGreedyDecoderLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Detection\DetectionOutputLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\NonMaxSuppressionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Detection\PriorBoxClusteredLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Detection\PriorBoxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Detection\YoloLayer.cpp" />
@@ -171,6 +172,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\Deconvolution\DeconvolutionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Detection\CtcGreedyDecoderLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Detection\DetectionOutputLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\NonMaxSuppressionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Detection\PriorBoxClusteredLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Detection\PriorBoxLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Detection\YoloLayer.h" />

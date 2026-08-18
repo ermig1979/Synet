@@ -290,6 +290,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedSqueezeExcitationLayer.cpp">
       <Filter>Layers\Quantized</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\NonMaxSuppressionLayer.cpp">
+      <Filter>Layers\Detection</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -745,6 +748,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedSqueezeExcitationLayer.h">
       <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\NonMaxSuppressionLayer.h">
+      <Filter>Layers\Detection</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

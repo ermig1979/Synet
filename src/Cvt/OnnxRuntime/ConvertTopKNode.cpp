@@ -46,11 +46,11 @@ namespace Synet
         if (!ConvertAtrributeInt(node, "axis", layer.topK().axis()))
             return false;
         int64_t largest;
-        if (!ConvertAtrributeInt(node, "largest", largest))
+        if (!ConvertAtrributeInt(node, "largest", largest, true, int64_t(1)))
             return false;
         layer.topK().mode() = largest ? TopKModeMax : TopKModeMin;
         int64_t sorted;
-        if (!ConvertAtrributeInt(node, "sorted", sorted))
+        if (!ConvertAtrributeInt(node, "sorted", sorted, true, int64_t(1)))
             return false;
         layer.topK().sort() = sorted ? TopKSortValue : TopKSortIndex;
         layer.topK().indexElementType() = TensorType64i;

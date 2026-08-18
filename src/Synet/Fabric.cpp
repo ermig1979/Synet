@@ -37,6 +37,7 @@
 
 #include "Synet/Layers/Detection/CtcGreedyDecoderLayer.h"
 #include "Synet/Layers/Detection/DetectionOutputLayer.h"
+#include "Synet/Layers/Detection/NonMaxSuppressionLayer.h"
 #include "Synet/Layers/Detection/PriorBoxLayer.h"
 #include "Synet/Layers/Detection/PriorBoxClusteredLayer.h"
 #include "Synet/Layers/Detection/YoloLayer.h"
@@ -225,7 +226,7 @@ namespace Synet
         case LayerTypeMeta: return new MetaLayer(param, context);
         case LayerTypeMish: return new MishLayer(param, context);
         case LayerTypeMul: return new MulLayer(param, context);
-        case LayerTypeNonMaxSuppression: return new StubLayer(param, context);
+        case LayerTypeNonMaxSuppression: return new NonMaxSuppressionLayer(param, context);
         case LayerTypeNonZero: return new NonZeroLayer(param, context);
         case LayerTypeNormalize: return new NormalizeLayer(param, context);
         case LayerTypePad: return new PadLayer(param, context);
