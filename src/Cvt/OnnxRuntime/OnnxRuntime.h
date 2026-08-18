@@ -61,29 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertMaxPoolNode(const onnx::NodeProto& node, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypePooling;
-            layer.pooling().method() = PoolingMethodTypeMax;
-            if (!ConvertAtrributeInts(node, "kernel_shape", layer.pooling().kernel()))
-                return false;
-            if (!ConvertAtrributeInts(node, "pads", layer.pooling().pad()))
-                return false;
-            if (!ConvertAtrributeInts(node, "strides", layer.pooling().stride()))
-                return false;
-
-            if(GetAtrribute(node, "ceil_mode") == NULL)
-                layer.pooling().roundingType() = RoundingTypeFloor;
-            else
-            {
-                int ceilMode;
-                if (!ConvertAtrributeInt(node, "ceil_mode", ceilMode))
-                    return false;
-                layer.pooling().roundingType() = ceilMode ? RoundingTypeCeil : RoundingTypeFloor;
-            }
-            return true;
-        }
-
         bool ConvertModNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 2))

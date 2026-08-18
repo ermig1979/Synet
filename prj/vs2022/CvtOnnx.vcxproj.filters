@@ -183,6 +183,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMatMulNode.cpp">
       <Filter>OnnxRuntime\M</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMaxPoolNode.cpp">
+      <Filter>OnnxRuntime\M</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMulNode.cpp">
       <Filter>OnnxRuntime\M</Filter>
     </ClCompile>
