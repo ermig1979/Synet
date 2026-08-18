@@ -37,5 +37,8 @@ namespace Synet
 
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
+
+    private:
+        size_t _batch, _size, _classNum, _maxOutputBoxesPerClass;
     };
 }

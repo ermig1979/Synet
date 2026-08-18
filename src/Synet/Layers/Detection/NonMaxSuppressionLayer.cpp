@@ -35,7 +35,23 @@ namespace Synet
     {
         if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("NonMaxSuppressionLayer supports only 2 inputs and 1 output!");
-        return false;
+        if (src[0]->Count() != 3 || src[1]->Count() != 3)
+            SYNET_ERROR("NonMaxSuppressionLayer supports only 3D input tensors!");
+        if (src[0]->GetType() != TensorType32f || src[1]->GetType() != TensorType32f)
+            SYNET_ERROR("NonMaxSuppressionLayer supports only FP32 input tensors!");
+        if (src[0]->Axis(0) != src[1]->Axis(0) || src[0]->Axis(1) != src[1]->Axis(2) || src[0]->Axis(2) != 4)
+            SYNET_ERROR("NonMaxSuppressionLayer: check input tensors shapes!");
+
+        const NonMaxSuppressionParam& param = this->Param().nonMaxSuppression();
+        _maxOutputBoxesPerClass = param.maxOutputBoxesPerClass();
+        _batch = src[0]->Axis(0);
+        _size = src[0]->Axis(1);
+        _classNum = src[1]->Axis(1);
+
+        dst[0]->Reshape(TensorType64i, Shp(_batch, _maxOutputBoxesPerClass, 3));
+        this->UsePerfStat();
+
+        return true;
     }
 
     void NonMaxSuppressionLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
