@@ -123,6 +123,8 @@ namespace Synet
 
     bool ConvertMaxPoolNode(const onnx::NodeProto& node, LayerParam& layer);
 
+    bool ConvertModNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
     bool ConvertMulNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer);
 
     bool ConvertNonMaxSuppressionNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& bin, LayerParam& layer);

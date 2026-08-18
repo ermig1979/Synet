@@ -61,27 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertModNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src0 == NULL || src1 == NULL)
-                return false;
-            if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
-            {
-                layer.type() = LayerTypeMeta;
-                layer.meta().type() = MetaTypeMod;
-            }
-            else
-            {
-                layer.type() = Synet::LayerTypeBinaryOperation;
-                layer.binaryOperation().type() = BinaryOperationTypeMod;
-            }
-            return true;
-        }
-
         bool ConvertNegNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeUnaryOperation;
