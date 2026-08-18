@@ -660,35 +660,6 @@ namespace Synet
             return true;
         }
 
-        bool ConvertTopKNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src1 == NULL)
-                return false;
-
-            layer.type() = Synet::LayerTypeTopK;
-            if (src1->type() == LayerTypeMeta && src1->meta().type() == MetaTypeConst && src1->meta().alpha().type() == TensorType64i)
-            {
-                layer.topK().k() = src1->meta().alpha().i64()[0];
-                layer.src().resize(1);
-            }
-            if (!ConvertAtrributeInt(node, "axis", layer.topK().axis()))
-                return false;
-            int64_t largest;
-            if (!ConvertAtrributeInt(node, "largest", largest))
-                return false;
-            layer.topK().mode() = largest ? TopKModeMax : TopKModeMin;
-            int64_t sorted;
-            if (!ConvertAtrributeInt(node, "sorted", sorted))
-                return false;
-            layer.topK().sort() = sorted ? TopKSortValue : TopKSortIndex;
-            layer.topK().indexElementType() = TensorType64i;
-
-            return true;
-        }
-
         bool ConvertUnsqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1, 2))
