@@ -243,6 +243,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTileNode.cpp">
       <Filter>OnnxRuntime\T</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTopKNode.cpp">
+      <Filter>OnnxRuntime\T</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTransposeNode.cpp">
       <Filter>OnnxRuntime\T</Filter>
     </ClCompile>
