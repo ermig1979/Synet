@@ -40,5 +40,6 @@ namespace Synet
 
     private:
         size_t _batch, _size, _classNum, _maxOutputBoxesPerClass;
+        float _threshold, _overlap;
     };
 }

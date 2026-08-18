@@ -26,6 +26,39 @@
 
 namespace Synet
 {
+    struct SelectedIndex 
+    {
+        int64_t batchIndex = 0;
+        int64_t classIndex = 0;
+        int64_t boxIndex = 0;
+
+        SYNET_INLINE SelectedIndex(int64_t batchIdx = 0, int64_t classIdx = 0, int64_t boxIdx = 0)
+            : batchIndex(batchIdx)
+            , classIndex(classIdx)
+            , boxIndex(boxIdx)
+        {
+        }
+    };
+
+    struct BoxInfo
+    {
+        float score;
+        int64_t index;
+
+        SYNET_INLINE BoxInfo(float scr = 0.0f, int64_t idx = 0)
+            : score(scr)
+            , index(idx) 
+        {
+        }
+
+        SYNET_INLINE bool operator<(const BoxInfo& rhs) const 
+        {
+            return score < rhs.score || (score == rhs.score && index > rhs.index);
+        }
+    };
+
+    //-------------------------------------------------------------------------------------------------
+
     NonMaxSuppressionLayer::NonMaxSuppressionLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
     {
@@ -44,6 +77,8 @@ namespace Synet
 
         const NonMaxSuppressionParam& param = this->Param().nonMaxSuppression();
         _maxOutputBoxesPerClass = param.maxOutputBoxesPerClass();
+        _threshold = param.scoreThreshold();
+        _overlap = param.iouThreshold();
         _batch = src[0]->Axis(0);
         _size = src[0]->Axis(1);
         _classNum = src[1]->Axis(1);
