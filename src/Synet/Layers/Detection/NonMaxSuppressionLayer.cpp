@@ -48,7 +48,7 @@ namespace Synet
         _size = src[0]->Axis(1);
         _classNum = src[1]->Axis(1);
 
-        dst[0]->Reshape(TensorType64i, Shp(_batch, _maxOutputBoxesPerClass, 3));
+        dst[0]->Reshape(TensorType64i, Shp(_maxOutputBoxesPerClass, 3));
         this->UsePerfStat();
 
         return true;

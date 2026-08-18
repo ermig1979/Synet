@@ -552,11 +552,14 @@ namespace Synet
 
     bool MetaLayer::ReshapeReduceMin(const TensorPtrs& src, const TensorParam& alpha, const TensorPtrs& dst)
     {
-        if (src.size() != 2 || dst.size() != 1)
-            SYNET_ERROR("MetaLayer::ReshapeReduceMin supports only 2 inputs and 1 output!");
-        if (src[1]->GetType() != TensorType64i)
-            SYNET_ERROR("MetaLayer::ReshapeReduceMin has unsupported src[1] type!");
-        size_t axis = (size_t)src[1]->Data<int64_t>()[0];
+        if ((src.size() != 1 && src.size() != 2) || dst.size() != 1)
+            SYNET_ERROR("MetaLayer::ReshapeReduceMin supports only 1-2 inputs and 1 output!");
+        if (src.size() > 1)
+        {
+            if (src[1]->GetType() != TensorType64i)
+                SYNET_ERROR("MetaLayer::ReshapeReduceMin has unsupported src[1] type!");
+            size_t axis = (size_t)src[1]->Data<int64_t>()[0];
+        }
 
         if (alpha.shape() != Shp(1) || alpha.type() != TensorType32i)
             SYNET_ERROR("MetaLayer::ReshapeReduceMin has wrong alpha parameter!");
