@@ -119,6 +119,8 @@ namespace Synet
 
     bool ConvertLstmNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
 
+    bool ConvertMatMulNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap);
+
     bool ConvertMulNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer);
 
     bool ConvertNonMaxSuppressionNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& bin, LayerParam& layer);
