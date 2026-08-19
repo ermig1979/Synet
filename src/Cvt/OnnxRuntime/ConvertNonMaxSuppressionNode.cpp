@@ -82,6 +82,14 @@ namespace Synet
                 SYNET_ERROR("Can't process 4-th input!");
         }
 
+        int64_t centerPointBox;
+        if (!ConvertAtrributeInt(node, "center_point_box", centerPointBox, true, int64_t(0)))
+            return false;
+        if (centerPointBox)
+            layer.nonMaxSuppression().boxEncoding() = BoxEncodingTypeCenter;
+        else
+            layer.nonMaxSuppression().boxEncoding() = BoxEncodingTypeCorner;
+
         layer.type() = Synet::LayerTypeNonMaxSuppression;
         layer.src().resize(2);
 

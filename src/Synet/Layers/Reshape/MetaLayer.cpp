@@ -572,7 +572,7 @@ namespace Synet
             int32_t min = INT_MAX;
             for (size_t i = 0; i < src[0]->Size(); ++i)
                 min = Min(min, src[0]->Data<int32_t>()[i]);
-            dst[0]->Reshape(TensorType64i, Shp(1), TensorFormatUnknown, min);
+            dst[0]->Reshape(TensorType32i, Shp(1), TensorFormatUnknown, min);
         }
         else
             SYNET_ERROR("MetaLayer::ReshapeReduceMin has unsupported src[0] type!");
