@@ -33,7 +33,7 @@ namespace Synet
     public:
         WhereLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init = true);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         typedef void (*WhereUniformPtr)(const uint8_t* cnd, const uint8_t* pos, const uint8_t* neg, size_t size, uint8_t* dst);
         typedef void (*WhereUniversalPtr)(const uint8_t* cnd, const Shape & cndSteps, const uint8_t* pos, const Shape& posSteps, 

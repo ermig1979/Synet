@@ -33,7 +33,7 @@ namespace Synet
     public:
         TopKLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init = true);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         typedef void (*TopKPtr)(const uint8_t* src8, size_t outer, size_t count, size_t inner, size_t k, uint8_t* buf8, uint8_t* dst8, uint8_t* idx8);
 

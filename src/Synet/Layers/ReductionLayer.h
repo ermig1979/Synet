@@ -33,7 +33,7 @@ namespace Synet
     public:
         ReductionLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init = true);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         typedef void(*ReducePtr)(const uint8_t * src, size_t outer, size_t count, size_t inner, uint8_t* dst);
 

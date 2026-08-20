@@ -37,7 +37,7 @@ namespace Synet
 
         YoloLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init = true);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         void GetRegions(const TensorPtrs& src, size_t netW, size_t netH, float threshold, Regions& dst) const;
 

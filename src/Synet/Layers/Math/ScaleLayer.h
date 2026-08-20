@@ -40,7 +40,7 @@ namespace Synet
 
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init = true);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         virtual size_t MemoryUsage() const;
 
