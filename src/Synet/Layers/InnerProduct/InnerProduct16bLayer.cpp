@@ -51,7 +51,7 @@ namespace Synet
 
     bool InnerProduct16bLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
-        if (!InnerProductLayer::Reshape(src, buf, dst))
+        if (!InnerProductLayer::Reshape(src, buf, dst, init))
             return false;
         if ((src[0]->GetType() != TensorType32f && src[0]->GetType() != TensorType16b) ||
             (src.size() > 1 && src[1]->GetType() != TensorType32f && src[1]->GetType() != TensorType16b) ||
