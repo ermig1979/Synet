@@ -34,7 +34,7 @@ namespace Test
     struct Stability
     {
         typedef Synet::Network Network;
-        typedef Synet::Tensor<float> Tensor;
+        typedef Synet::Tensor Tensor;
         typedef std::vector<Tensor> Tensors;
 
         //-----------------------------------------------------------------------------------------

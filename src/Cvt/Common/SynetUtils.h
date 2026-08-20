@@ -433,7 +433,7 @@ namespace Synet
         case LayerTypeQuantizedConvolution:
         {
             shape = Shape({ shape[2], shape[3], shape[1], shape[0] });
-            Tensor<float> dst((uint8_t*)pDst, weight.size(), weight.type(), shape, weight.format());
+            Tensor dst((uint8_t*)pDst, weight.size(), weight.type(), shape, weight.format());
             for (size_t o = 0; o < shape[3]; ++o)
                 for (size_t i = 0; i < shape[2]; ++i)
                     for (size_t y = 0; y < shape[0]; ++y)
@@ -444,7 +444,7 @@ namespace Synet
         case LayerTypeDeconvolution:
         {
             shape = Shape({ shape[0], shape[2], shape[3], shape[1] });
-            Tensor<float> dst((uint8_t*)pDst, weight.size(), TensorType32f, shape, weight.format());
+            Tensor dst((uint8_t*)pDst, weight.size(), TensorType32f, shape, weight.format());
             for (size_t i = 0; i < shape[0]; ++i)
                 for (size_t c = 0; c < shape[3]; ++c)
                     for (size_t y = 0; y < shape[1]; ++y)
@@ -635,7 +635,7 @@ namespace Synet
     class SynetUtils
     {
     protected:
-        typedef Synet::Tensor<float> Tensor;
+        typedef Synet::Tensor Tensor;
         typedef std::vector<Tensor> Tensors;
         typedef std::map<String, bool> PermuteMap;
 

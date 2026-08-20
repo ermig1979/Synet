@@ -34,7 +34,7 @@ namespace Synet
     public: 
         typedef Synet::Region<float> Region;
         typedef std::vector<Region> Regions;
-        typedef Synet::Tensor<float> Tensor;
+        typedef Synet::Tensor Tensor;
         typedef std::vector<Tensor> Tensors;
         typedef Synet::Network Net;
 

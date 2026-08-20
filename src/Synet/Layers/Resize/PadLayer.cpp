@@ -26,7 +26,7 @@
 
 namespace Synet
 {
-    template<class T> void PadConstant4(const Tensor<T> & src, const Shape& padB, const Shape& padE, Tensor<T> & dst)
+    template<class T> void PadConstant4(const Tensor & src, const Shape& padB, const Shape& padE, Tensor & dst)
     {
         assert(src.Count() == 4 && padB.size() == 4 && padE.size() == 4 && dst.Count() == 4);
         size_t size = src.Axis(3) * sizeof(T);
@@ -36,8 +36,8 @@ namespace Synet
             {
                 for (size_t i2 = 0; i2 < src.Axis(2); ++i2)
                 {
-                    const T* pSrc = src.template Data<T>(Shp(i0, i1, i2, 0));
-                    T* pDst = dst.template Data<T>(Shp(i0 + padB[0], i1 + padB[1], i2 + padB[2], padB[3]));
+                    const T* pSrc = src.Data<T>(Shp(i0, i1, i2, 0));
+                    T* pDst = dst.Data<T>(Shp(i0 + padB[0], i1 + padB[1], i2 + padB[2], padB[3]));
                     memcpy(pDst, pSrc, size);
                 }
             }
@@ -141,7 +141,7 @@ namespace Synet
         switch (_dims)
         {
         case 4:
-            PadConstant4(*src[0], _padB, _padE, *dst[0]);
+            PadConstant4<float>(*src[0], _padB, _padE, *dst[0]);
             break;
         default:
             assert(0);
