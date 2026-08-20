@@ -30,7 +30,7 @@
 
 namespace Test
 {
-    class RegionDecoder
+    class RegionDetection
     {
         Shape _shape;
         Strings _names;
@@ -61,7 +61,7 @@ namespace Test
         typedef std::vector<Tensor> Tensors;
         typedef Synet::Network Net;
 
-        RegionDecoder()
+        RegionDetection()
             : _enable(false)
         {
         }

@@ -41,7 +41,7 @@
     <ClInclude Include="..\..\src\Test\TestOutputComparer.h" />
     <ClInclude Include="..\..\src\Test\TestParams.h" />
     <ClInclude Include="..\..\src\Test\TestPerformance.h" />
-    <ClInclude Include="..\..\src\Test\TestRegionDecoder.h" />
+    <ClInclude Include="..\..\src\Test\TestRegionDetection.h" />
     <ClInclude Include="..\..\src\Test\TestReport.h" />
     <ClInclude Include="..\..\src\Test\TestUtils.h" />
   </ItemGroup>

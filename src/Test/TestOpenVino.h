@@ -27,7 +27,7 @@
 #include "TestCommon.h"
 #include "TestPerformance.h"
 #include "TestNetwork.h"
-#include "TestRegionDecoder.h"
+#include "TestRegionDetection.h"
 
 #include <openvino/openvino.hpp>
 
@@ -121,7 +121,7 @@ namespace Test
                     CreateCompiledModelAndInferRequest();
                 GetTensors();
                 StubInfer();
-                _ov->regionDecoder.Init(Shape(_ov->model->input(0).get_shape()), _ov->outputNames, param.detection());
+                _ov->regionDetection.Init(Shape(_ov->model->input(0).get_shape()), _ov->outputNames, param.detection());
             }
             catch (std::exception& e)
             {
@@ -162,8 +162,8 @@ namespace Test
 
         virtual Regions GetRegions(const Size& size, float threshold, float overlap) const
         {
-            if (_ov->regionDecoder.Enable())
-                return _ov->regionDecoder.GetRegions(_output, size, threshold, overlap);
+            if (_ov->regionDetection.Enable())
+                return _ov->regionDetection.GetRegions(_output, size, threshold, overlap);
             else
             {
                 Regions regions;
@@ -206,7 +206,7 @@ namespace Test
             std::vector<ov::Tensor> input, output;
             Strings inputNames, outputNames;
             size_t batchSize;
-            RegionDecoder regionDecoder;
+            RegionDetection regionDetection;
         };
         typedef std::shared_ptr<Ov> OvPtr;
         OvPtr _ov;
