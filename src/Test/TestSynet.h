@@ -27,7 +27,7 @@
 #include "TestCommon.h"
 #include "TestPerformance.h"
 #include "TestNetwork.h"
-#include "TestRegionDecoder.h"
+#include "TestRegionDetection.h"
 
 #include "Synet/Network.h"
 
@@ -100,7 +100,7 @@ namespace Test
                 _lower = param.lower();
                 _upper = param.upper();
                 _synetMemoryUsage = _net.MemoryUsage();
-                _regionDecoder.Init(_net, param.detection());
+                _regionDetection.Init(_net, param.detection());
                 return true;
             }
             return false;
@@ -137,8 +137,8 @@ namespace Test
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
-            if (_regionDecoder.Enable())
-                return _regionDecoder.GetRegions(_net, size, threshold, overlap, CTX_NUM - 1);
+            if (_regionDetection.Enable())
+                return _regionDetection.GetRegions(_net, size, threshold, overlap, CTX_NUM - 1);
             else
                 return _net.GetRegions(size.x, size.y, threshold, overlap, CTX_NUM - 1);
         }
@@ -154,7 +154,7 @@ namespace Test
         bool _trans, _sort;
         Floats _lower, _upper;
         size_t _synetMemoryUsage;
-        RegionDecoder _regionDecoder;
+        RegionDetection _regionDetection;
         const int CTX_NUM = 1;
 
         bool Load(const String & model, const String & weight, const Options& options)

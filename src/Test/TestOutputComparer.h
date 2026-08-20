@@ -26,7 +26,7 @@
 
 #include "TestParams.h"
 #include "TestOptions.h"
-#include "TestRegionDecoder.h"
+#include "TestRegionDetection.h"
 
 #include "Synet/Utils/Difference.h"
 #include "Synet/Utils/DebugPrint.h"
@@ -37,7 +37,7 @@ namespace Test
     {
         const Options & _options;
         const TestParam& _param;
-        RegionDecoder _regionDecoder;
+        RegionDetection _regionDetection;
 
     public:
         typedef Synet::Region<float> Region;
@@ -55,7 +55,7 @@ namespace Test
                 Strings names;
                 for (size_t i = 0; i < dst.size(); ++i)
                     names.push_back(dst[i].Name());
-                _regionDecoder.Init(src, names, _param.detection());
+                _regionDetection.Init(src, names, _param.detection());
             }
         }
 
@@ -69,7 +69,7 @@ namespace Test
                 SYNET_ERROR(failed << std::endl << "Dst count : " << first.size() << " != " << second.size());
             if (_param.output().size() != first.size() && _param.output().size() != 0)
                 SYNET_ERROR(failed << std::endl << "Check output parameter size!" << _param.output().size() << " != " << first.size() << " !");
-            if (_regionDecoder.Enable())
+            if (_regionDetection.Enable())
                 return CompareRegions(first, second, failed);
             for (size_t d = 0; d < first.size(); ++d)
             {
@@ -391,8 +391,8 @@ namespace Test
                 if (_param.output().size() && _param.output()[0].fp32Threshold() != 0.0f)
                     compareThreshold = _param.output()[0].fp32Threshold();
             }
-            Regions rf = _regionDecoder.GetRegions(f, Size(1, 1), _param.detection().confidence(), _options.regionOverlap);
-            Regions rs = _regionDecoder.GetRegions(s, Size(1, 1), _param.detection().confidence(), _options.regionOverlap);
+            Regions rf = _regionDetection.GetRegions(f, Size(1, 1), _param.detection().confidence(), _options.regionOverlap);
+            Regions rs = _regionDetection.GetRegions(s, Size(1, 1), _param.detection().confidence(), _options.regionOverlap);
             SortRegionsByProb(rf);
             SortRegionsByProb(rs);
             size_t n = std::min(rf.size(), rs.size());
