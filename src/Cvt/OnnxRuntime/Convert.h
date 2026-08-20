@@ -127,6 +127,8 @@ namespace Synet
 
     bool ConvertMulNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer);
 
+    bool ConvertNegNode(const onnx::NodeProto& node, LayerParam& layer);
+
     bool ConvertNonMaxSuppressionNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& bin, LayerParam& layer);
 
     bool ConvertPreluNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer);

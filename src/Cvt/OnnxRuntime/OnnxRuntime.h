@@ -61,13 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertNegNode(const onnx::NodeProto& node, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypeUnaryOperation;
-            layer.unaryOperation().type() = Synet::UnaryOperationTypeNeg;
-            return true;
-        }
-
         bool ConvertNonZeroNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1))
