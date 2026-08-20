@@ -31,7 +31,7 @@ namespace Synet
     {
     }
 
-    bool SqueezeLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool SqueezeLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if ((src.size() != 1 && src.size() != 2) || dst.size() != 1)
             SYNET_ERROR("SqueezeLayer supports only 1-2 inputs and 1 output!");

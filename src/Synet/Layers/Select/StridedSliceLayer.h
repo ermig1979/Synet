@@ -33,7 +33,7 @@ namespace Synet
     public:
         StridedSliceLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         typedef void(*StridedSlicePtr)(const uint8_t* src, const int64_t* srcStrides, const int64_t* beginDims, const int64_t* dstDims, const int64_t* strideDims, uint8_t* dst, const int64_t* dstStrides);
 

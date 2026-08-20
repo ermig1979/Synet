@@ -54,7 +54,7 @@ namespace Synet
     {
     }
 
-    bool BroadcastLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool BroadcastLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("BroadcastLayer supports only 2 inputs and 1 output!");

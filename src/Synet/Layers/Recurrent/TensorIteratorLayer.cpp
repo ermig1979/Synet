@@ -33,7 +33,7 @@ namespace Synet
     {
     }
 
-    bool TensorIteratorLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool TensorIteratorLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (_empty)
         {
@@ -61,7 +61,7 @@ namespace Synet
         for (size_t s = 0; s < _threads[0].stages.size(); ++s)
         {
             Stage& stage = _threads[0].stages[s];
-            stage.layer->Reshape(stage.src, buf, stage.dst);
+            stage.layer->Reshape(stage.src, buf, stage.dst, init);
         }
 
         for (size_t b = 0; b < _bLink.size(); ++b)

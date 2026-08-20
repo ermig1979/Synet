@@ -58,7 +58,7 @@ namespace Synet
             ((Tensor&)this->Weight()[0]).Clear();
     }
 
-    bool ScatterNdLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool ScatterNdLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if ((src.size() != 2 && src.size() != 3) || dst.size() != 1)
             SYNET_ERROR("ScatterNdLayer supports only 2-3 inputs and 1 output!");

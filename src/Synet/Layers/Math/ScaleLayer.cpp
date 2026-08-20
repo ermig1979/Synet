@@ -202,7 +202,7 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
-    bool ScaleLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool ScaleLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         const ScaleParam & param = this->Param().scale();
         _axis = src[0]->Index(param.axis());

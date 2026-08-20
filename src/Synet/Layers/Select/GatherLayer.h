@@ -41,7 +41,7 @@ namespace Synet
 
         virtual size_t MemoryUsage() const;
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         typedef void (*GatherPtr)(const uint8_t* src8, size_t srcOuter, size_t srcCount, size_t srcInner, const uint8_t* idx8, size_t idxOuter, size_t idxCount, uint8_t* dst8);
         typedef void (*GatherElementsPtr)(const uint8_t* src8, size_t srcOuter, size_t srcCount, size_t srcInner, const uint8_t* idx8, size_t idxCount, uint8_t* dst8);

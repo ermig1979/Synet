@@ -35,7 +35,7 @@ namespace Synet
             _internal[i] = 0;
     }
 
-    bool LstmLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool LstmLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 3 || dst.size() != 1)
             SYNET_ERROR("LstmLayer supports 3 input1 and 1 output!");

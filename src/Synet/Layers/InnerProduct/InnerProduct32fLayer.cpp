@@ -47,9 +47,9 @@ namespace Synet
             ((Tensor&)this->Weight()[0]).Clear();
     }
 
-    bool InnerProduct32fLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool InnerProduct32fLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
-        if (!InnerProductLayer::Reshape(src, buf, dst))
+        if (!InnerProductLayer::Reshape(src, buf, dst, init))
             return false;
         Shape dstShape = src[0]->Shape();
         dstShape.resize(_axis + 1);

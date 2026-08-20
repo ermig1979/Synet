@@ -40,7 +40,7 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
-    bool UnpackLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool UnpackLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         const UnpackParam & param = this->Param().unpack();
         _srcType = src[0]->GetType();

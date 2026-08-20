@@ -148,7 +148,7 @@ namespace Synet
     {
     }
 
-    bool TopKLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool TopKLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if ((src.size() != 1 && src.size() != 2) || dst.size() != 2)
             SYNET_ERROR("TopKLayer supports only 1-2 inputs and 2 outputs!");

@@ -31,7 +31,7 @@ namespace Synet
     {
     }
 
-    bool ConstLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool ConstLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 0 || dst.size() != 1)
             SYNET_ERROR("ConstLayer supports only 1 output!");

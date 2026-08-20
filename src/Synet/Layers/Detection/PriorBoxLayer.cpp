@@ -31,7 +31,7 @@ namespace Synet
     {
     }
 
-    bool PriorBoxLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool PriorBoxLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         const PriorBoxParam & param = this->Param().priorBox();
         _version = param.version();

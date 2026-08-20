@@ -130,7 +130,7 @@ namespace Synet
 
         bool SetStats(const StatSharedPtrs& stats);
 
-        virtual bool Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
+        virtual bool Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, bool init = true) = 0;
 
         void ForwardPerf(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 

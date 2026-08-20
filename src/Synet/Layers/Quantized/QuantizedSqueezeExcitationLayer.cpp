@@ -55,7 +55,7 @@ namespace Synet
         return _batch * (_channels * _height * _width * 2 + _squeeze * _channels * 4 + _squeeze * 2 + _channels * 22);
     }
 
-    bool QuantizedSqueezeExcitationLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool QuantizedSqueezeExcitationLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
 #if !defined(SYNET_SIMD_LIBRARY_ENABLE) || defined(SYNET_SIMD_SYNET_DISABLE)
         SYNET_ERROR("QuantizedSqueezeExcitationLayer work only with SimdLibrary support!");

@@ -69,7 +69,7 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
-    bool QuantizedInnerProductLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool QuantizedInnerProductLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if ((src.size() != 1 && src.size() != 2) || dst.size() != 1)
             SYNET_ERROR("QuantizedInnerProductLayer supports only 1 or 2 inputs and 1 output!");

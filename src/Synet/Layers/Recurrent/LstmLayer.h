@@ -35,7 +35,7 @@ namespace Synet
     public:
         LstmLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         virtual int64_t Flop() const;
 

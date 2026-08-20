@@ -184,7 +184,7 @@ namespace Synet
     {
     }
 
-    bool StridedSliceLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool StridedSliceLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         StridedSliceParam param = this->Param().stridedSlice();
 		if ((src.size() != 1 && src.size() != 4 && src.size() != 5) || dst.size() != 1)

@@ -35,7 +35,7 @@ namespace Synet
     public:
         EluLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         virtual int64_t Flop() const;
 
@@ -56,7 +56,7 @@ namespace Synet
 
         virtual int64_t Flop() const;
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
@@ -74,7 +74,7 @@ namespace Synet
 
         virtual int64_t Flop() const;
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
@@ -93,7 +93,7 @@ namespace Synet
 
         virtual int64_t Flop() const;
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
@@ -110,7 +110,7 @@ namespace Synet
     public:
         MishLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         virtual int64_t Flop() const;
 
@@ -133,7 +133,7 @@ namespace Synet
 
         virtual int64_t Flop() const;        
         
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
@@ -153,7 +153,7 @@ namespace Synet
 
         virtual int64_t Flop() const;
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
@@ -172,7 +172,7 @@ namespace Synet
 
         virtual int64_t Flop() const;
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
@@ -188,7 +188,7 @@ namespace Synet
     public:
         SoftplusLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         virtual int64_t Flop() const;
 
@@ -207,7 +207,7 @@ namespace Synet
     public:
         SwishLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         virtual int64_t Flop() const;
 

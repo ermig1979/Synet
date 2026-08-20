@@ -32,7 +32,7 @@ namespace Synet
     {
     }
 
-    bool EluLayer::Reshape(const TensorPtrs & src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool EluLayer::Reshape(const TensorPtrs & src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         _alpha = this->Param().elu().alpha();
         if (src.size() != 1 || dst.size() != 1)
@@ -87,7 +87,7 @@ namespace Synet
         return _size * 26;
     }
 
-    bool GeluLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool GeluLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("GeluLayer supports only 1 input and 1 output!");
@@ -131,7 +131,7 @@ namespace Synet
         return _size * 4;
     }
 
-    bool HardSigmoidLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool HardSigmoidLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         HardSigmoidParam hardSigmoid = this->Param().hardSigmoid();
         _scale = hardSigmoid.scale();
@@ -178,7 +178,7 @@ namespace Synet
         return _size * 5;
     }
 
-    bool HswishLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool HswishLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         HswishParam hswish = this->Param().hswish();
         _shift = hswish.shift();
@@ -218,7 +218,7 @@ namespace Synet
     {
     }
 
-    bool MishLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool MishLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         _threshold = this->Param().softplus().threshold(); // threshold to avoid FP32 overflow in exp() function.
         if (src.size() != 1 || dst.size() != 1)
@@ -279,7 +279,7 @@ namespace Synet
         return _size * 1;
     }
 
-    bool ReluLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool ReluLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         _negativeSlope = this->Param().relu().negativeSlope();
         if (src.size() != 1 || dst.size() != 1)
@@ -335,7 +335,7 @@ namespace Synet
         return _size * 2;
     }
 
-    bool RestrictRangeLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool RestrictRangeLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         const RestrictRangeParam& param = this->Param().restrictRange();
         _lower = param.lower();
@@ -382,7 +382,7 @@ namespace Synet
     {
     }
 
-    bool SigmoidLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool SigmoidLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("SigmoidLayer supports only 1 input and 1 output!");
@@ -426,7 +426,7 @@ namespace Synet
     {
     }
 
-    bool SoftplusLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool SoftplusLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         const SoftplusParam& param = this->Param().softplus();
         _beta = param.beta();
@@ -473,7 +473,7 @@ namespace Synet
     {
     }
 
-    bool SwishLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool SwishLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("SwishLayer supports only 1 input and 1 output!");

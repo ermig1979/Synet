@@ -31,7 +31,7 @@ namespace Synet
     {
     }
 
-    bool DetectionOutputLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool DetectionOutputLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 3 || dst.size() != 1)
             SYNET_ERROR("DetectionOutputLayer supports only 3 inputs and 1 output!");

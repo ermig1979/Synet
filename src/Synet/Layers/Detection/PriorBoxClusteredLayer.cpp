@@ -31,7 +31,7 @@ namespace Synet
     {
     }
 
-    bool PriorBoxClusteredLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool PriorBoxClusteredLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         const PriorBoxClusteredParam & param = this->Param().priorBoxClustered();
 

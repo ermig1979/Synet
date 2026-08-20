@@ -246,7 +246,7 @@ namespace Synet
         return _gatherElementsSimd.InternalBufferSize();
     }
 
-    bool GatherLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool GatherLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("GatherLayer supports only 2 inputs and 1 output!");
