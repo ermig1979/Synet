@@ -44,6 +44,7 @@
 #include "Synet/Decoders/Alpha.h"
 #include "Synet/Decoders/Nanodet.h"
 #include "Synet/Decoders/YoloV11.h"
+#include "Synet/Decoders/Ssd.h"
 
 #include "Cvt/Common/Params.h"
 #include "Cvt/OnnxRuntime/OnnxRuntime.h"
@@ -96,6 +97,7 @@ namespace Test
         CPL_PARAM_STRUCT(Synet::RegionParam, region);
         CPL_PARAM_STRUCT(Synet::NanodetParam, nanodet);
         CPL_PARAM_STRUCT(Synet::YoloV11Param, yoloV11);
+        CPL_PARAM_STRUCT(Synet::SsdParam, ssd);
     };
 
     struct IdParam

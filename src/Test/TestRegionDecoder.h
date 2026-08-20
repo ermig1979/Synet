@@ -52,6 +52,7 @@ namespace Test
         Synet::RegionDecoder _region;
         Synet::NanodetDecoder _nanodet;
         Synet::YoloV11Decoder _yoloV11;
+        Synet::SsdDecoder _ssd;
 
     public:
         typedef Synet::Region<float> Region;
@@ -114,6 +115,8 @@ namespace Test
                 _enable = _nanodet.Init(_shape[3], _shape[2], param.detection().nanodet());
             else if (decoder == "yoloV11")
                 _enable = _yoloV11.Init(_shape[3], _shape[2], param.detection().yoloV11());
+            else if (decoder == "ssd")
+                _enable = _ssd.Init(param.detection().ssd());
             return _enable;
         }
 
@@ -156,6 +159,8 @@ namespace Test
                 return _nanodet.GetRegions(net, size.x, size.y, threshold, overlap, Synet::Index(), thread)[0];
             else if (_yoloV11.Enable())
                 return _yoloV11.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
+            else if (_ssd.Enable())
+                return _ssd.GetRegions(net, size.x, size.y, threshold, overlap, thread)[0];
             else
                 return net.GetRegions(size.x, size.y, threshold, overlap, thread);
         }
@@ -194,6 +199,8 @@ namespace Test
                 return _nanodet.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
             else if (_yoloV11.Enable())
                 return _yoloV11.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
+            else if (_ssd.Enable())
+                return _ssd.GetRegions(dst, size.x, size.y, threshold, overlap)[0];
             else
                 return Regions();
         }

@@ -752,6 +752,9 @@
     <ClInclude Include="..\..\src\Synet\Layers\Detection\NonMaxSuppressionLayer.h">
       <Filter>Layers\Detection</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Ssd.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
