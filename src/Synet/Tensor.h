@@ -72,13 +72,20 @@ namespace Synet
 
     class Tensor
     {
+    private:
+        enum TensorFlagType
+        {
+            TensorFlagConst = 0,
+            TensorFlagDynamic,
+        };
+
     public:
         SYNET_INLINE Tensor()
             : _buffer(std::make_shared<Buffer>())
             , _type(TensorTypeUnknown)
             , _format(TensorFormatUnknown)
             , _size(0)
-            , _const(false)
+            , _flags(0)
         {
         }
 
@@ -87,7 +94,7 @@ namespace Synet
             , _shape(shape)
             , _buffer(std::make_shared<Buffer>())
             , _format(format)
-            , _const(false)
+            , _flags(0)
         {
             Resize();
         }
@@ -98,7 +105,7 @@ namespace Synet
             , _buffer(std::make_shared<Buffer>())
             , _format(format)
             , _name(name)
-            , _const(false)
+            , _flags(0)
         {
             Resize<U>(value);
         }
@@ -109,7 +116,7 @@ namespace Synet
             , _type(type)
             , _format(format)
             , _name(name)
-            , _const(false)
+            , _flags(0)
         {
             _size = Size(0, _shape.size());
             assert(_size * TypeSize() == _buffer->size);
@@ -146,7 +153,7 @@ namespace Synet
             _shape = shape;
             _format = format;
             _size = Size(0, _shape.size());
-            _const = false;
+            _flags = 0;
             size_t size = _size * TypeSize();
             if (size > _buffer->size)
                 _buffer->Resize(size);
@@ -159,7 +166,7 @@ namespace Synet
             _format = TensorFormatUnknown;
             _shape.clear();
             _size = 0;
-            _const = false;
+            _flags = 0;
 #ifdef SYNET_MALLOC_DEBUG
             size_t size = _buffer->size;
             if (size > SYNET_MALLOC_TRIM_THRESHOLD)
@@ -215,12 +222,28 @@ namespace Synet
 
         SYNET_INLINE bool Const() const
         {
-            return _const;
+            return (_flags & (1 << TensorFlagConst)) != 0;
         }
 
         SYNET_INLINE void SetConst(bool value)
         {
-            _const = value;
+            if(value)
+                _flags |= 1 << TensorFlagConst;
+            else
+                _flags &= ~(1 << TensorFlagConst);
+        }
+
+        SYNET_INLINE bool Dynamic() const
+        {
+            return (_flags & (1 << TensorFlagDynamic)) != 0;
+        }
+
+        SYNET_INLINE void SetDynamic(bool value)
+        {
+            if (value)
+                _flags |= 1 << TensorFlagDynamic;
+            else
+                _flags &= ~(1 << TensorFlagDynamic);
         }
 
         SYNET_INLINE const Synet::Shape & Shape() const
@@ -353,7 +376,7 @@ namespace Synet
             _format = tensor._format;
             _name = tensor._name;
             _buffer = tensor._buffer;
-            _const = tensor._const;
+            _flags = tensor._flags;
         }
 
         SYNET_INLINE void ShareAs(const Tensor & tensor, const Synet::Shape & shape, const TensorFormat & format = TensorFormatUnknown)
@@ -365,7 +388,7 @@ namespace Synet
             _shape = shape;
             _size = Size(0, _shape.size());
             _format = format;
-            _const = tensor._const;
+            _flags = tensor._flags;
             assert(_size * TypeSize() <= _buffer->size);
         }
 
@@ -376,7 +399,7 @@ namespace Synet
             _shape = shape;
             _size = Size(0, _shape.size());
             _format = format;
-            _const = false;
+            _flags = 0;
             assert(_size * TypeSize() <= _buffer->size);
         }
 
@@ -387,7 +410,7 @@ namespace Synet
             _size = tensor._size;
             _format = tensor._format;
             _name = tensor._name;
-            _const = tensor._const;
+            _flags = tensor._flags;
             _buffer.reset(tensor._buffer->Clone());
         }
 
@@ -403,7 +426,7 @@ namespace Synet
             default:
                 SYNET_ERROR("Can't import " << Cpl::ToStr(param.type()) << " tensor!")
             }
-            _const = true;
+            SetConst(true);
             return true;
         }
 
@@ -548,7 +571,7 @@ namespace Synet
             _size = Size(0, _shape.size());
             _buffer->Resize(_size * TypeSize());
             CpuSet(_size, value, Data<U>());
-            _const = false;
+            _flags = 0;
         }
 
         SYNET_INLINE void Resize()
@@ -557,7 +580,7 @@ namespace Synet
             _size = Size(0, _shape.size());
             _buffer->Resize(_size * TypeSize());
             memset(_buffer->data, 0, _buffer->size);
-            _const = false;
+            _flags = 0;
         }
 
         typedef Synet::Buffer<uint8_t> Buffer;
@@ -569,7 +592,6 @@ namespace Synet
         Synet::Shape _shape;
         size_t _size;
         BufferPtr _buffer;
-        bool _const;
-
+        uint64_t _flags;
     };
 }

@@ -48,6 +48,7 @@ namespace Synet
             , _context(context)
             , _isBack(false)
             , _const(false)
+            , _dynamic(false)
             , _perfEnable(false)
             , _perfFlop(0)
         {
@@ -105,6 +106,11 @@ namespace Synet
         bool Const() const
         {
             return _const;
+        }
+
+        bool Dynamic() const
+        {
+            return _dynamic;
         }
 
         virtual void DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
@@ -186,7 +192,7 @@ namespace Synet
         }
 
     protected:
-        bool _const;
+        bool _const, _dynamic;
 
     private:
         friend class Network;
