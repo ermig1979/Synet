@@ -100,7 +100,7 @@ namespace Test
                 _lower = param.lower();
                 _upper = param.upper();
                 _synetMemoryUsage = _net.MemoryUsage();
-                _regionDecoder.Init(_net, param);
+                _regionDecoder.Init(_net, param.detection());
                 return true;
             }
             return false;

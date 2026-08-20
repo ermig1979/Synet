@@ -55,7 +55,7 @@ namespace Test
                 Strings names;
                 for (size_t i = 0; i < dst.size(); ++i)
                     names.push_back(dst[i].Name());
-                _regionDecoder.Init(src, names, _param);
+                _regionDecoder.Init(src, names, _param.detection());
             }
         }
 

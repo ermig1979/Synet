@@ -121,7 +121,7 @@ namespace Test
                     CreateCompiledModelAndInferRequest();
                 GetTensors();
                 StubInfer();
-                _ov->regionDecoder.Init(Shape(_ov->model->input(0).get_shape()), _ov->outputNames, param);
+                _ov->regionDecoder.Init(Shape(_ov->model->input(0).get_shape()), _ov->outputNames, param.detection());
             }
             catch (std::exception& e)
             {

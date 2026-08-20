@@ -66,7 +66,7 @@ namespace Test
         {
         }
 
-        bool Init(const Net & net, const TestParam& param)
+        bool Init(const Net & net, const DetectionParam& param)
         {
             Strings names;
             for(size_t i = 0; i < net.Dst().size(); ++i)
@@ -74,49 +74,49 @@ namespace Test
             return Init(net.NchwShape(), names, param);
         }
 
-        bool Init(const Shape & shape, const Strings & names, const TestParam& param)
+        bool Init(const Shape & shape, const Strings & names, const DetectionParam& param)
         {
             if (shape.size() != 4)
                 return false;
             _shape = shape;
             _names = names;
-            const String& decoder = param.detection().decoder();
+            const String& decoder = param.decoder();
             if (decoder == "epsilon")
-                _enable = _anchor.Init(_shape[3], _shape[2], param.detection().epsilon());
+                _enable = _anchor.Init(_shape[3], _shape[2], param.epsilon());
             else if (decoder == "retina")
-                _enable = _anchor.Init(_shape[3], _shape[2], param.detection().retina());
+                _enable = _anchor.Init(_shape[3], _shape[2], param.retina());
             else if (decoder == "ultraface")
-                _enable = _ultraface.Init(param.detection().ultraface());
+                _enable = _ultraface.Init(param.ultraface());
             else if (decoder == "yoloV5")
-                _enable = _yoloV5.Init(_shape[3], _shape[2], param.detection().yoloV5());
+                _enable = _yoloV5.Init(_shape[3], _shape[2], param.yoloV5());
             else if (decoder == "yoloV7")
                 _enable = _yoloV7.Init(_shape[3], _shape[2]);
             else if (decoder == "yoloV8")
                 _enable = _yoloV8.Init(_shape[3], _shape[2]);
             else if (decoder == "iim")
-                _enable = _iim.Init(_shape[3], _shape[2], param.detection().iim());
+                _enable = _iim.Init(_shape[3], _shape[2], param.iim());
             else if (decoder == "rtdetr")
                 _enable = _rtdetr.Init();
             else if (decoder == "detOut")
                 _enable = _detOut.Init();
             else if (decoder == "yolo")
-                _enable = _yolo.Init(_shape[3], _shape[2], param.detection().yolo());
+                _enable = _yolo.Init(_shape[3], _shape[2], param.yolo());
             else if (decoder == "scrfd")
-                _enable = _scrfd.Init(_shape[3], _shape[2], param.detection().scrfd());
+                _enable = _scrfd.Init(_shape[3], _shape[2], param.scrfd());
             else if (decoder == "scrfdV2")
-                _enable = _scrfdV2.Init(_shape[3], _shape[2], param.detection().scrfdV2());
+                _enable = _scrfdV2.Init(_shape[3], _shape[2], param.scrfdV2());
             else if (decoder == "rtdetrV2")
-                _enable = _rtdetrV2.Init(_shape[3], _shape[2], param.detection().rtdetrV2());
+                _enable = _rtdetrV2.Init(_shape[3], _shape[2], param.rtdetrV2());
             else if (decoder == "alpha")
-                _enable = _alpha.Init(_shape[3], _shape[2], param.detection().alpha());
+                _enable = _alpha.Init(_shape[3], _shape[2], param.alpha());
             else if (decoder == "region")
-                _enable = _region.Init(param.detection().region());
+                _enable = _region.Init(param.region());
             else if (decoder == "nanodet")
-                _enable = _nanodet.Init(_shape[3], _shape[2], param.detection().nanodet());
+                _enable = _nanodet.Init(_shape[3], _shape[2], param.nanodet());
             else if (decoder == "yoloV11")
-                _enable = _yoloV11.Init(_shape[3], _shape[2], param.detection().yoloV11());
+                _enable = _yoloV11.Init(_shape[3], _shape[2], param.yoloV11());
             else if (decoder == "ssd")
-                _enable = _ssd.Init(param.detection().ssd());
+                _enable = _ssd.Init(param.ssd());
             return _enable;
         }
 

@@ -159,7 +159,7 @@ namespace Test
             _lower = _param().lower();
             _upper = _param().upper();
             _synetMemoryUsage = _net.MemoryUsage();
-            _regionDecoder.Init(_net, _param());
+            _regionDecoder.Init(_net, _param().detection());
 
             Shape shape = _net.NchwShape();
             if (!(_param().inputType() == "binary" || shape[1] == 1 || shape[1] == 3))

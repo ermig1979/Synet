@@ -207,7 +207,7 @@ namespace Test
             if(!_dynamicOutput)
                 ReshapeOutput();
 
-            _regionDecoder.Init(_inputShapes[0], _outputNameBuffers, param);
+            _regionDecoder.Init(_inputShapes[0], _outputNameBuffers, param.detection());
 
             return true;
         }
