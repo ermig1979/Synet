@@ -27,7 +27,6 @@
 #include "TestCommon.h"
 #include "TestPerformance.h"
 #include "TestNetwork.h"
-#include "TestRegionDetection.h"
 
 #include <openvino/openvino.hpp>
 
@@ -163,7 +162,7 @@ namespace Test
         virtual Regions GetRegions(const Size& size, float threshold, float overlap) const
         {
             if (_ov->regionDetection.Enable())
-                return _ov->regionDetection.GetRegions(_output, size, threshold, overlap);
+                return _ov->regionDetection.GetRegions(_output, size.x, size.y, threshold, overlap);
             else
             {
                 Regions regions;
@@ -206,7 +205,7 @@ namespace Test
             std::vector<ov::Tensor> input, output;
             Strings inputNames, outputNames;
             size_t batchSize;
-            RegionDetection regionDetection;
+            Synet::RegionDetection regionDetection;
         };
         typedef std::shared_ptr<Ov> OvPtr;
         OvPtr _ov;

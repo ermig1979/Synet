@@ -31,7 +31,6 @@
 #include "TestReport.h"
 #include "TestOptions.h"
 #include "TestParams.h"
-#include "TestRegionDetection.h"
 #include "TestOutputComparer.h"
 
 namespace Test
@@ -77,7 +76,7 @@ namespace Test
         bool _trans, _sort, _stopped;
         Floats _lower, _upper;
         size_t _synetMemoryUsage;
-        RegionDetection _regionDetection;
+        Synet::RegionDetection _regionDetection;
 
         typedef Tensors Output;
         typedef std::vector<Output> Outputs;
@@ -676,7 +675,7 @@ namespace Test
         Regions GetRegions(const Size& size, float threshold, float overlap, size_t thread) const
         {
             if (_regionDetection.Enable())
-                return _regionDetection.GetRegions(_net, size, threshold, overlap, thread);
+                return _regionDetection.GetRegions(_net, size.x, size.y, threshold, overlap, thread);
             else
                 return _net.GetRegions(size.x, size.y, threshold, overlap, thread);
         }
