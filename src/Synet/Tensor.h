@@ -413,10 +413,10 @@ namespace Synet
             param.shape() = _shape;
             switch (_type)
             {
-            case TensorType32f: param.f32().resize(Data<float>(), Data<float>() + Size()); break;
-            case TensorType32i: param.i32().resize(Data<int32_t>(), Data<int32_t>() + Size()); break;
-            case TensorType64i: param.i64().resize(Data<int64_t>(), Data<int64_t>() + Size()); break;
-            case TensorType64u: param.u64().resize(Data<uint64_t>(), Data<uint64_t>() + Size()); break;
+            case TensorType32f: param.f32().assign(Data<float>(), Data<float>() + Size()); break;
+            case TensorType32i: param.i32().assign(Data<int32_t>(), Data<int32_t>() + Size()); break;
+            case TensorType64i: param.i64().assign(Data<int64_t>(), Data<int64_t>() + Size()); break;
+            case TensorType64u: param.u64().assign(Data<uint64_t>(), Data<uint64_t>() + Size()); break;
             default:
                 SYNET_ERROR("Can't export " << Cpl::ToStr(_type) << " tensor!")
             }
