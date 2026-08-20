@@ -26,7 +26,6 @@
 
 #include "TestParams.h"
 #include "TestOptions.h"
-#include "TestRegionDetection.h"
 
 #include "Synet/Utils/Difference.h"
 #include "Synet/Utils/DebugPrint.h"
@@ -37,7 +36,7 @@ namespace Test
     {
         const Options & _options;
         const TestParam& _param;
-        RegionDetection _regionDetection;
+        Synet::RegionDetection _regionDetection;
 
     public:
         typedef Synet::Region<float> Region;
@@ -391,8 +390,8 @@ namespace Test
                 if (_param.output().size() && _param.output()[0].fp32Threshold() != 0.0f)
                     compareThreshold = _param.output()[0].fp32Threshold();
             }
-            Regions rf = _regionDetection.GetRegions(f, Size(1, 1), _param.detection().confidence(), _options.regionOverlap);
-            Regions rs = _regionDetection.GetRegions(s, Size(1, 1), _param.detection().confidence(), _options.regionOverlap);
+            Regions rf = _regionDetection.GetRegions(f, 1, 1, _param.detection().confidence(), _options.regionOverlap);
+            Regions rs = _regionDetection.GetRegions(s, 1, 1, _param.detection().confidence(), _options.regionOverlap);
             SortRegionsByProb(rf);
             SortRegionsByProb(rs);
             size_t n = std::min(rf.size(), rs.size());

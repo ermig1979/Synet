@@ -27,7 +27,6 @@
 #include "TestCommon.h"
 #include "TestPerformance.h"
 #include "TestNetwork.h"
-#include "TestRegionDetection.h"
 
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
 
@@ -269,7 +268,7 @@ namespace Test
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
             if (_regionDetection.Enable())
-                return _regionDetection.GetRegions(_output, size, threshold, overlap);
+                return _regionDetection.GetRegions(_output, size.x, size.y, threshold, overlap);
             else
             {
                 Regions regions;
@@ -321,7 +320,7 @@ namespace Test
         size_t _batchSize;
         bool _dynamicOutput;
 
-        RegionDetection _regionDetection;
+        Synet::RegionDetection _regionDetection;
 
         struct Env
         {
