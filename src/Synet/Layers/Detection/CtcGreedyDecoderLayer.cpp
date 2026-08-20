@@ -31,7 +31,7 @@ namespace Synet
     {
     }
 
-    bool CtcGreedyDecoderLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool CtcGreedyDecoderLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("CtcGreedyDecoderLayer supports only 2 inputs and 1 output!");

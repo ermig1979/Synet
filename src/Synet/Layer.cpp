@@ -46,7 +46,7 @@ namespace Synet
         SYNET_PERF_TEST(_perfComm[thread]);
         SYNET_PERF_TEST(_perfSpec[thread]);
         if (_dynamic)
-            Reshape(src, buf, dst);
+            Reshape(src, buf, dst, false);
         Forward(src, buf, dst, thread);
     }
 

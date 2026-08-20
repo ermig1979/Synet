@@ -355,7 +355,7 @@ namespace Synet
         return _batch * _channels * _spatial;
     }
 
-    bool AddLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool AddLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() + this->Weight().size() != 2 || dst.size() != 1)
             SYNET_ERROR("AddLayer supports 2 inputs (or 1 input and 1 weight) and 1 output!");

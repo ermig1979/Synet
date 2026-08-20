@@ -33,7 +33,7 @@ namespace Synet
     public:
         CompareLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init = true);
 
         typedef void (*ComparePtr)(const uint8_t* a, const uint8_t* b, size_t size, CompareType type, uint8_t* dst);
 

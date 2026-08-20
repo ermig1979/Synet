@@ -60,7 +60,7 @@ namespace Synet
         ((Tensor&)this->Weight()[0]).Clear();
     }
 
-    bool InnerProduct8iLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool InnerProduct8iLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (!InnerProductLayer::Reshape(src, buf, dst))
             return false;

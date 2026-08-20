@@ -35,7 +35,7 @@ namespace Synet
 
         virtual ~GridSampleLayer();
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init = true);
 
         virtual size_t MemoryUsage() const;
 

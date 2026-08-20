@@ -63,7 +63,7 @@ namespace Synet
         return _size * 2;
     }
 
-    bool DequantizeLinearLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool DequantizeLinearLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if ((src.size() != 0 && src.size() != 1) || dst.size() != 1)
             SYNET_ERROR("DequantizeLinearLayer supports only 0 or 1 inputs and 1 output!");

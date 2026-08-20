@@ -33,7 +33,7 @@ namespace Synet
     public:
         CastLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init = true);
 
         typedef void (*CastPtr)(const uint8_t* src8, size_t size, uint8_t* dst8);
 

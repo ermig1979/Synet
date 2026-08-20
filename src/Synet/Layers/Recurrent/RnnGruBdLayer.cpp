@@ -36,7 +36,7 @@ namespace Synet
         _internal[1] = 0;
     }
 
-    bool RnnGruBdLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool RnnGruBdLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 2 || dst.size() != 2)
             SYNET_ERROR("RnnGruBdLayer supports only 2 inputs and 2 outputs!");

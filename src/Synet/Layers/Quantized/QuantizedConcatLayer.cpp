@@ -69,7 +69,7 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
-    bool QuantizedConcatLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool QuantizedConcatLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (dst.size() != 1)
             SYNET_ERROR("QuantizedConcatLayer supports only 1 output!");

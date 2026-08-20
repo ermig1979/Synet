@@ -301,7 +301,7 @@ namespace Synet
     {
     }
 
-    bool FusedLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool FusedLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         for (size_t i = 0; i < src.size(); ++i)
             if (src[i]->GetType() != TensorType32f && src[i]->GetType() != TensorType64i)

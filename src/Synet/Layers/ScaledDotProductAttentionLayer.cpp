@@ -36,7 +36,7 @@ namespace Synet
         _simdPermute = std::make_shared<SimdPermute>();
     }
 
-    bool ScaledDotProductAttentionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool ScaledDotProductAttentionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 3 || dst.size() != 1)
             SYNET_ERROR("ScaledDotProductAttentionLayer supports only 3 inputs and 1 output!");

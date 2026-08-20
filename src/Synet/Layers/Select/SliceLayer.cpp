@@ -32,7 +32,7 @@ namespace Synet
     {
     }
 
-    bool SliceLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool SliceLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 1)
             SYNET_ERROR("SliceLayer supports only 2 input!");

@@ -250,7 +250,7 @@ namespace Synet
 #endif
     }
 
-    bool GridSampleLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool GridSampleLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("GridSampleLayer supports only 2 inputs and 1 output!");

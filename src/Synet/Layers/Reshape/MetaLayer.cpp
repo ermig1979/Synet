@@ -32,7 +32,7 @@ namespace Synet
     {
     }
 
-    bool MetaLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool MetaLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (!Reshape(src, dst))
             return false;
