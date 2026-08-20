@@ -683,7 +683,7 @@ namespace Synet
             {
                 for (size_t i = 0; i < _threads[t].tensors.size(); ++i)
                 {
-                    Tensor32f& tn = *_threads[t].tensors[i];
+                    Tensor& tn = *_threads[t].tensors[i];
                     if (tn.Const() && tn.Size() >= 16 && tn.Users() == 1)
                     {
                         const IdSet& ids = _srcIds[tn.Name()];

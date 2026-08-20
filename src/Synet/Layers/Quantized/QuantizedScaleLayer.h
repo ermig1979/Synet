@@ -49,6 +49,6 @@ namespace Synet
         int32_t _srcZero, _dstZero;
         float _srcScale, _dstScale;
         const float * _scale, *_bias;
-        Tensor32f _zero;
+        Tensor _zero;
     };
 }

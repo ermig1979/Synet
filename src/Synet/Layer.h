@@ -36,7 +36,7 @@ namespace Synet
     class Layer
     {
     public:
-        typedef Synet::Tensor<float> Tensor;
+        typedef Synet::Tensor Tensor;
         typedef std::vector<Tensor> Tensors;
         typedef Tensor* TensorPtr;
         typedef std::vector<TensorPtr> TensorPtrs;
@@ -139,19 +139,19 @@ namespace Synet
 
         static float * Buf32f(const TensorPtrs& buf, size_t idx)
         {
-            Synet::Tensor<float>* b = buf[TensorType32f * BUFFER_COUNT + idx];
+            Synet::Tensor* b = buf[TensorType32f * BUFFER_COUNT + idx];
             return b->Data<float>();
         }
 
         static int32_t * Buf32i(const TensorPtrs& buf, size_t idx)
         {
-            Synet::Tensor<float>* b = buf[TensorType32i * BUFFER_COUNT + idx];
+            Synet::Tensor* b = buf[TensorType32i * BUFFER_COUNT + idx];
             return b->Data<int32_t>();
         }
 
         static uint8_t* Buf8u(const TensorPtrs& buf, size_t idx)
         {
-            Synet::Tensor<float>* b = buf[TensorType8u * BUFFER_COUNT + idx];
+            Synet::Tensor* b = buf[TensorType8u * BUFFER_COUNT + idx];
             return b->Data<uint8_t>();
         }
 

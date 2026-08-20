@@ -32,7 +32,7 @@ namespace Synet
     {
     public:
         typedef T Type;
-        typedef Synet::Tensor<T> Tensor;
+        typedef Synet::Tensor Tensor;
         typedef std::vector<T> Vector;
 
         struct Specific
@@ -135,8 +135,8 @@ namespace Synet
             }
             else
                 return false;
-            _first = first. template Data<Type>();
-            _second = second. template Data<Type>();
+            _first = first.Data<Type>();
+            _second = second.Data<Type>();
             return true;
         }
 

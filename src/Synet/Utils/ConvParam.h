@@ -101,7 +101,7 @@ namespace Synet
             return true;
         }
 
-        template<class T> bool Set(const Tensor<T> & src, const Tensor<T>& dst, bool conv, bool autoPad)
+        bool Set(const Tensor & src, const Tensor& dst, bool conv, bool autoPad)
         {
             if (src.Format() == TensorFormatNhwc)
             {

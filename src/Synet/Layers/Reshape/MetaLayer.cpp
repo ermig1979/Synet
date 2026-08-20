@@ -84,7 +84,7 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template<class D> static D GetAs(const Synet::Tensor<float>& tensor, size_t offset)
+    template<class D> static D GetAs(const Synet::Tensor& tensor, size_t offset)
     {
         switch (tensor.GetType())
         {
@@ -118,13 +118,13 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template<class S, class D> void ReshapeCast(const Synet::Tensor<float>& src, Synet::Tensor<float>& dst)
+    template<class S, class D> void ReshapeCast(const Synet::Tensor& src, Synet::Tensor& dst)
     {
         for (size_t i = 0, n = src.Size(); i < n; ++i)
             dst.Data<D>()[i] = (D)src.Data<S>()[i];
     }
 
-    template<class S> bool ReshapeCast(const Synet::Tensor<float>& src, TensorType type, Synet::Tensor<float>& dst)
+    template<class S> bool ReshapeCast(const Synet::Tensor& src, TensorType type, Synet::Tensor& dst)
     {
         dst.Reshape(type, src.Shape(), src.Format());
         switch (type)
@@ -198,7 +198,7 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template<class T> bool ReshapeDiv(const Synet::Tensor<float>& src0, const Synet::Tensor<float>& src1, Synet::Tensor<float>& dst0)
+    template<class T> bool ReshapeDiv(const Synet::Tensor& src0, const Synet::Tensor& src1, Synet::Tensor& dst0)
     {
         dst0.Reshape(Synet::GetTensorType<T>(), src0.Shape(), src0.Format());
         if (src0.Size() == src1.Size())
@@ -348,7 +348,7 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template<class T> bool ReshapeMod(const Synet::Tensor<float>& src0, const Synet::Tensor<float>& src1, Synet::Tensor<float>& dst0)
+    template<class T> bool ReshapeMod(const Synet::Tensor& src0, const Synet::Tensor& src1, Synet::Tensor& dst0)
     {
         dst0.Reshape(Synet::GetTensorType<T>(), src0.Shape(), src0.Format());
         if (src0.Size() == src1.Size())
@@ -384,7 +384,7 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template<class T> bool ReshapeMul(const Synet::Tensor<float>& src0, const Synet::Tensor<float>& src1, Synet::Tensor<float>& dst0)
+    template<class T> bool ReshapeMul(const Synet::Tensor& src0, const Synet::Tensor& src1, Synet::Tensor& dst0)
     {
         dst0.Reshape(Synet::GetTensorType<T>(), src0.Shape(), src0.Format());
         if (src0.Size() == src1.Size())
@@ -512,7 +512,7 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template<class T> void ReshapeRange(const std::vector<Tensor<float>*> & src, const std::vector<Tensor<float>*> dst)
+    template<class T> void ReshapeRange(const std::vector<Tensor*> & src, const std::vector<Tensor*> dst)
     {
         T begin = src[0]->Data<T>()[0];
         T end = src[1]->Data<T>()[0];
@@ -837,7 +837,7 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template<class T> bool ReshapeSub(const Synet::Tensor<float>& src0, const Synet::Tensor<float>& src1, Synet::Tensor<float>& dst0)
+    template<class T> bool ReshapeSub(const Synet::Tensor& src0, const Synet::Tensor& src1, Synet::Tensor& dst0)
     {
         dst0.Reshape(Synet::GetTensorType<T>(), src0.Shape(), src0.Format());
         if (src0.Size() == src1.Size())

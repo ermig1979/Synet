@@ -472,7 +472,7 @@ namespace Test
             {
             case ov::element::Type_t::f32:
             {
-                Synet::Tensor<float> tensor(Synet::TensorType32f, dims, format);
+                Synet::Tensor tensor(Synet::TensorType32f, dims, format);
                 const float* pOut = (float*)src.data();
                 SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
@@ -480,7 +480,7 @@ namespace Test
             }
             case ov::element::Type_t::i32:
             {
-                Synet::Tensor<int32_t> tensor(Synet::TensorType32i, dims, format);
+                Synet::Tensor tensor(Synet::TensorType32i, dims, format);
                 const int32_t* pOut = (int32_t*)src.data();
                 SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
@@ -488,7 +488,7 @@ namespace Test
             }
             case ov::element::Type_t::i64:
             {
-                Synet::Tensor<int64_t> tensor(Synet::TensorType64i, dims, format);
+                Synet::Tensor tensor(Synet::TensorType64i, dims, format);
                 const int64_t* pOut = (int64_t*)src.data();
                 SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
@@ -496,7 +496,7 @@ namespace Test
             }
             case ov::element::Type_t::u8:
             {
-                Synet::Tensor<uint8_t> tensor(Synet::TensorType8u, dims, format);
+                Synet::Tensor tensor(Synet::TensorType8u, dims, format);
                 const uint8_t* pOut = (uint8_t*)src.data();
                 SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);
@@ -504,7 +504,7 @@ namespace Test
             }
             case ov::element::Type_t::i8:
             {
-                Synet::Tensor<int8_t> tensor(Synet::TensorType8i, dims, format);
+                Synet::Tensor tensor(Synet::TensorType8i, dims, format);
                 const int8_t* pOut = (int8_t*)src.data();
                 SetOutput(dims, strides, 0, pOut, tensor.Data<float>());
                 tensor.DebugPrint(os, "dst[0]", false, first, last, precision);

@@ -119,7 +119,7 @@ namespace Synet
     private:
 
         typedef std::vector<Synet::LayerParam> LayerParams;
-        typedef Synet::Tensor<float> Tensor;
+        typedef Synet::Tensor Tensor;
         typedef std::vector<Tensor> Tensors;
 
         typedef std::vector<float> Vector;

@@ -33,12 +33,7 @@
 
 namespace Synet
 {
-    struct Unknown
-    {
-    };
-
     template <class T> TensorType GetTensorType();
-    template <> SYNET_INLINE TensorType GetTensorType<Unknown>() { return TensorTypeUnknown; }
     template <> SYNET_INLINE TensorType GetTensorType<float>() { return TensorType32f; }
     template <> SYNET_INLINE TensorType GetTensorType<int32_t>() { return TensorType32i; }
     template <> SYNET_INLINE TensorType GetTensorType<int8_t>() { return TensorType8i; }
@@ -75,11 +70,9 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template<class T> class Tensor
+    class Tensor
     {
     public:
-        typedef T Type;
-
         SYNET_INLINE Tensor()
             : _buffer(std::make_shared<Buffer>())
             , _type(TensorTypeUnknown)
@@ -420,10 +413,10 @@ namespace Synet
             param.shape() = _shape;
             switch (_type)
             {
-            case TensorType32f: param.f32().resize(Data<float>(), Data<float>() + Size()); break;
-            case TensorType32i: param.i32().resize(Data<int32_t>(), Data<int32_t>() + Size()); break;
-            case TensorType64i: param.i64().resize(Data<int64_t>(), Data<int64_t>() + Size()); break;
-            case TensorType64u: param.u64().resize(Data<uint64_t>(), Data<uint64_t>() + Size()); break;
+            case TensorType32f: param.f32().assign(Data<float>(), Data<float>() + Size()); break;
+            case TensorType32i: param.i32().assign(Data<int32_t>(), Data<int32_t>() + Size()); break;
+            case TensorType64i: param.i64().assign(Data<int64_t>(), Data<int64_t>() + Size()); break;
+            case TensorType64u: param.u64().assign(Data<uint64_t>(), Data<uint64_t>() + Size()); break;
             default:
                 SYNET_ERROR("Can't export " << Cpl::ToStr(_type) << " tensor!")
             }
@@ -460,7 +453,7 @@ namespace Synet
         {
             if (_buffer->size)
             {
-                Tensor<T> tensor;
+                Tensor tensor;
                 tensor.ShareAs(*this, shape, format);
                 tensor.DebugPrint(os, name, weight, first, last, precision);
             }
@@ -473,7 +466,7 @@ namespace Synet
 
     private:
 
-        template <class U> static void DebugPrint(std::ostream& os, const Tensor<T> & tensor, const String& name, bool weight, size_t first, size_t last, size_t precision)
+        template <class U> static void DebugPrint(std::ostream& os, const Tensor & tensor, const String& name, bool weight, size_t first, size_t last, size_t precision)
         {
             const Synet::Shape& shape = tensor.Shape();
             TensorFormat format = tensor.Format();
@@ -481,12 +474,12 @@ namespace Synet
             {
                 if (weight)
                 {
-                    Tensor<U> trans(tensor.GetType(), Shp(shape[3], shape[2], shape[0], shape[1]), TensorFormatNchw);
+                    Tensor trans(tensor.GetType(), Shp(shape[3], shape[2], shape[0], shape[1]), TensorFormatNchw);
                     for (size_t y = 0; y < shape[0]; ++y)
                         for (size_t x = 0; x < shape[1]; ++x)
                             for (size_t i = 0; i < shape[2]; ++i)
                                 for (size_t o = 0; o < shape[3]; ++o)
-                                    trans.template Data<U>({ o, i, y, x })[0] = tensor.template Data<U>({ y, x, i, o })[0];
+                                    trans.Data<U>({ o, i, y, x })[0] = tensor.Data<U>({ y, x, i, o })[0];
                     std::stringstream ss;
                     ss << name << " HWIO { ";
                     for (size_t i = 0; i < shape.size(); ++i)
@@ -496,12 +489,12 @@ namespace Synet
                 }
                 else
                 {
-                    Tensor<U> trans(tensor.GetType(), Shp(shape[0], shape[3], shape[1], shape[2]), TensorFormatNchw);
+                    Tensor trans(tensor.GetType(), Shp(shape[0], shape[3], shape[1], shape[2]), TensorFormatNchw);
                     for (size_t n = 0; n < shape[0]; ++n)
                         for (size_t c = 0; c < shape[3]; ++c)
                             for (size_t y = 0; y < shape[1]; ++y)
                                 for (size_t x = 0; x < shape[2]; ++x)
-                                    trans.template Data<U>({ n, c, y, x })[0] = tensor.template Data<U>({ n, y, x, c })[0];
+                                    trans.Data<U>({ n, c, y, x })[0] = tensor.Data<U>({ n, y, x, c })[0];
                     std::stringstream ss;
                     ss << name << " NHWC { ";
                     for (size_t i = 0; i < shape.size(); ++i)
@@ -513,11 +506,11 @@ namespace Synet
             }
             else if (shape.size() == 3 && format == TensorFormatNhwc && !weight && shape[0] == 1)
             {
-                Tensor<U> trans(tensor.GetType(), Shp(shape[0], shape[2], shape[1]), TensorFormatNchw);
+                Tensor trans(tensor.GetType(), Shp(shape[0], shape[2], shape[1]), TensorFormatNchw);
                 for (size_t b = 0; b < shape[0]; ++b)
                     for (size_t c = 0; c < shape[2]; ++c)
                         for (size_t s = 0; s < shape[1]; ++s)
-                            trans.template Data<U>({ b, c, s })[0] = tensor.template Data<U>({ b, s, c })[0];
+                            trans.Data<U>({ b, c, s })[0] = tensor.Data<U>({ b, s, c })[0];
                 std::stringstream ss;
                 ss << name << " NHWC { ";
                 for (size_t i = 0; i < shape.size(); ++i)
@@ -528,11 +521,11 @@ namespace Synet
             }
             else if (shape.size() == 3 && format == TensorFormatNhwc && !weight)
             {
-                Tensor<U> trans(tensor.GetType(), Shp(shape[2], shape[0], shape[1]), TensorFormatNchw);
+                Tensor trans(tensor.GetType(), Shp(shape[2], shape[0], shape[1]), TensorFormatNchw);
                 for (size_t c = 0; c < shape[2]; ++c)
                     for (size_t y = 0; y < shape[0]; ++y)
                         for (size_t x = 0; x < shape[1]; ++x)
-                            trans.template Data<U>({ c, y, x })[0] = tensor.template Data<U>({ y, x, c })[0];
+                            trans.Data<U>({ c, y, x })[0] = tensor.Data<U>({ y, x, c })[0];
                 std::stringstream ss;
                 ss << name << " NHWC { ";
                 for (size_t i = 0; i < shape.size(); ++i)
@@ -546,7 +539,7 @@ namespace Synet
                 os << (format == TensorFormatNchw && shape.size() == 4 ? " OIHW" : (format == TensorFormatNhwc && shape.size() == 4 ? " HWIO" : ""));
             else
                 os << (format == TensorFormatNchw ? " NCHW" : (format == TensorFormatNhwc ? " NHWC" : ""));
-            Synet::DebugPrint<U>(os, tensor.template Data<U>(), tensor.Shape(), String(), tensor.Const(), first, last, precision);
+            Synet::DebugPrint<U>(os, tensor.Data<U>(), tensor.Shape(), String(), tensor.Const(), first, last, precision);
         }
 
         template<class U> SYNET_INLINE void Resize(U value)
@@ -579,13 +572,4 @@ namespace Synet
         bool _const;
 
     };
-
-    typedef Tensor<Unknown> TensorAny;
-    typedef Tensor<float> Tensor32f;
-    typedef Tensor<int32_t> Tensor32i;
-    typedef Tensor<int8_t> Tensor8i;
-    typedef Tensor<uint8_t> Tensor8u;
-    typedef Tensor<int64_t> Tensor64i;
-    typedef Tensor<uint64_t> Tensor64u;
-    typedef Tensor<bool> TensorBool;
 }

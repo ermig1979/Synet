@@ -26,7 +26,7 @@
 
 namespace Synet
 {
-    template<class T> void NonZero(const Tensor<float>& src, Tensor<float>& dst)
+    template<class T> void NonZero(const Tensor& src, Tensor& dst)
     {
         size_t size = src.Size(), nonzeros = 0;
         for (size_t i = 0; i < size; ++i)
