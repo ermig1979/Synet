@@ -76,6 +76,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMulNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertNegNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertNonMaxSuppressionNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertNonZeroNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertPreluNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearAddNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQLinearAveragePoolNode.cpp" />
