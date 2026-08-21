@@ -131,6 +131,8 @@ namespace Synet
 
     bool ConvertNonMaxSuppressionNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& bin, LayerParam& layer);
 
+    bool ConvertNonZeroNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
     bool ConvertPreluNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer);
 
     bool ConvertQLinearAddNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer);
