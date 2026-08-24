@@ -152,6 +152,8 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
+    const int NMS_FIXED_VERSION = 1;
+
     NonMaxSuppressionLayer::NonMaxSuppressionLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
     {
@@ -181,6 +183,8 @@ namespace Synet
 
         dst[0]->Reshape(TensorType64i, Shp(_maxOutputBoxesPerClass, 3));
         this->UsePerfStat();
+        if(!NMS_FIXED_VERSION)
+            dst[0]->SetDynamic(true);
 
         return true;
     }
@@ -226,7 +230,7 @@ namespace Synet
                 }
             }
         }
-        if (1)
+        if (NMS_FIXED_VERSION)
         {
             std::sort(selectedIndices.begin(), selectedIndices.end(), [src](const SelectedIndex& a, const SelectedIndex& b) -> bool
                 { 
@@ -234,8 +238,15 @@ namespace Synet
                     float bScore = src[1]->Data<float>(Shp(b.batchIndex, b.classIndex, b.boxIndex))[0];
                     return aScore > bScore; 
                 });
+            size_t num = Min(_maxOutputBoxesPerClass, selectedIndices.size());
+            memcpy(dst[0]->RawData(), selectedIndices.data(), num * sizeof(SelectedIndex));
         }
-        size_t num = Min(_maxOutputBoxesPerClass, selectedIndices.size());
-        memcpy(dst[0]->RawData(), selectedIndices.data(), num * sizeof(SelectedIndex));
+        else
+        {
+            size_t num = selectedIndices.size();
+            dst[0]->Reshape(TensorType64i, Shp(num, 3));
+            memcpy(dst[0]->RawData(), selectedIndices.data(), num * sizeof(SelectedIndex));
+            dst[0]->SetDynamic(true);
+        }
     }
 }
