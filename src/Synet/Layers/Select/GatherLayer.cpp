@@ -274,6 +274,11 @@ namespace Synet
             SYNET_ERROR("GatherLayer parameter axis: " << _axis << " has wrong value for input " << ToStr(srcShape) << " !");
         _version = gather.version();
 
+        _dynamic = false;
+        for (size_t i = 0; i < src.size(); ++i)
+            if (src[i]->Dynamic())
+                _dynamic = true;
+
         _srcOuter = src[0]->Size(0, _axis);
         _srcCount = src[0]->Axis(_axis);
         _srcInner = src[0]->Size(_axis + 1);
@@ -317,11 +322,14 @@ namespace Synet
             _idxInner = src[1]->Size(_axis + 1);
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-            _gatherElementsSimd.Init((SimdTensorDataType)_srcType, (SimdTensorDataType)_idxType,
-                src[1]->Const() ? SimdTrue : SimdFalse, TensorUsers(Param().src()[1]) == 1,
-                Shape(idxShape.begin(), idxShape.begin() + _axis), _srcCount, _srcInner, _idxCount);
-            if (_gatherElementsSimd.Enable() && src[1]->Const())
-                _gatherElementsSimd.SetIndex(src[1]->RawData());
+            if (!_dynamic)
+            {
+                _gatherElementsSimd.Init((SimdTensorDataType)_srcType, (SimdTensorDataType)_idxType,
+                    src[1]->Const() ? SimdTrue : SimdFalse, TensorUsers(Param().src()[1]) == 1,
+                    Shape(idxShape.begin(), idxShape.begin() + _axis), _srcCount, _srcInner, _idxCount);
+                if (_gatherElementsSimd.Enable() && src[1]->Const())
+                    _gatherElementsSimd.SetIndex(src[1]->RawData());
+            }
 #endif
         }
         else if (_version == 2)
@@ -387,11 +395,18 @@ namespace Synet
         }
         else
         {
-            std::stringstream desc;
-            desc << "v" << _version << ToChar(_srcType);
-            this->UsePerfStat(desc.str());
+            if (init)
+            {
+                std::stringstream desc;
+                desc << "v" << _version << ToChar(_srcType);
+                this->UsePerfStat(desc.str());
+            }
             _const = false;
         }
+
+        if (_dynamic)
+            dst[0]->SetDynamic(true);
+
         return true;
     }
 

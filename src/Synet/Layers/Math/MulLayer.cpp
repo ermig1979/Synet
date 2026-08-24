@@ -347,6 +347,11 @@ namespace Synet
         if (_src[0]->GetType() != _src[1]->GetType())
             SYNET_ERROR("MulLayer inputs must have the same type!");
 
+        _dynamic = false;
+        for(size_t i = 0; i < src.size(); ++i)
+            if (src[i]->Dynamic())
+                _dynamic = true;
+
         Shape shapeA = _src[0]->Shape(), shapeB = _src[1]->Shape();
         TensorFormat formatA = _src[0]->Format(), formatB = _src[1]->Format();
         if (!IsCompatible(shapeA, shapeB))
@@ -524,9 +529,13 @@ namespace Synet
         }
         else
         {
-            this->UsePerfStat();
+            if(init)
+                this->UsePerfStat();
             _const = false;
         }
+
+        if (_dynamic)
+            dst[0]->SetDynamic(true);
 
         return true;
     }

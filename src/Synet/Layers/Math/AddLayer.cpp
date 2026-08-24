@@ -361,6 +361,11 @@ namespace Synet
             SYNET_ERROR("AddLayer supports 2 inputs (or 1 input and 1 weight) and 1 output!");
         TensorPtrs _src = GetSrc(src);
 
+        _dynamic = false;
+        for (size_t i = 0; i < src.size(); ++i)
+            if (src[i]->Dynamic())
+                _dynamic = true;
+
         Shape shapeA = _src[0]->Shape(), shapeB = _src[1]->Shape();
         TensorFormat formatA = _src[0]->Format(), formatB = _src[1]->Format();
         if (!IsCompatible(shapeA, shapeB))
@@ -549,10 +554,13 @@ namespace Synet
             if(_uniform == NULL || _addBias == NULL)
                 SYNET_ERROR("AddLayer can't process input type!");
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-            if (shapeA == shapeB)
-                _add16b.Init(shapeA, (SimdTensorDataType)_typeA, shapeB, (SimdTensorDataType)_typeB, (SimdTensorDataType)_typeD, (SimdTensorFormatType)_format);
-            else
-                _add16b.Clear();
+            if (!_dynamic)
+            {
+                if (shapeA == shapeB)
+                    _add16b.Init(shapeA, (SimdTensorDataType)_typeA, shapeB, (SimdTensorDataType)_typeB, (SimdTensorDataType)_typeD, (SimdTensorFormatType)_format);
+                else
+                    _add16b.Clear();
+            }
 #endif
         }
 
@@ -564,12 +572,18 @@ namespace Synet
         }
         else
         {
-            if(Options().BFloat16Enable())
-                this->UsePerfStat(ToChar(_typeA) + ToChar(_typeB) + ToChar(_typeD));
-            else
-                this->UsePerfStat();
+            if (init)
+            {
+                if (Options().BFloat16Enable())
+                    this->UsePerfStat(ToChar(_typeA) + ToChar(_typeB) + ToChar(_typeD));
+                else
+                    this->UsePerfStat();
+            }
             _const = false;
         }
+
+        if (_dynamic)
+            dst[0]->SetDynamic(true);
 
         return true;
     }
