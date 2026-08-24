@@ -210,6 +210,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertPadNode.cpp">
       <Filter>OnnxRuntime\P</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertPowNode.cpp">
+      <Filter>OnnxRuntime\P</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertPreluNode.cpp">
       <Filter>OnnxRuntime\P</Filter>
     </ClCompile>
