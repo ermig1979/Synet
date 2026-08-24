@@ -61,29 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertPowNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src0 == NULL || src1 == NULL)
-                return false;
-            if (src1->type() == LayerTypeConst && TensorSize(src1->weight()[0].dim()) == 1)
-            {
-                layer.type() = Synet::LayerTypePower;
-                const float* pPower = GetWeight<float>(original, src1->weight()[0]);
-                layer.power().power() = pPower[0];
-                layer.src().resize(1);
-            }
-            else
-            {
-                std::cout << "PowerNode error: src1 { type: " << Cpl::ToStr(src1->type()) << " size: " << TensorSize(src1->weight()[0].dim()) << " }" << std::endl;
-                return false;
-            }
-            return true;
-        }
-
         bool ConvertRangeNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 3))

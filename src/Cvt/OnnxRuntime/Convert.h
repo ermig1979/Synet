@@ -137,6 +137,8 @@ namespace Synet
 
     bool ConvertPadNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer);
 
+    bool ConvertPowNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer);
+
     bool ConvertPreluNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer);
 
     bool ConvertQLinearAddNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& srcBin, LayerParam& layer);
