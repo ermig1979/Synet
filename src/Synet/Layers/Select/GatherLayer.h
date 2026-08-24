@@ -26,7 +26,9 @@
 
 #include "Synet/Layer.h"
 
-#include "Synet/Utils/Gather.h"
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -56,6 +58,8 @@ namespace Synet
         Tensor _index;
         GatherPtr _gather;
         GatherElementsPtr _gatherElements;
-        GatherElements _gatherElementsSimd;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetGatherElements _gatherElementsSimd;
+#endif
     };
 }
