@@ -165,6 +165,8 @@ namespace Synet
 
     bool ConvertReduceMinNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap);
 
+    bool ConvertReduceSumNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer);
+
     bool ConvertRoundNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertSignNode(const onnx::NodeProto& node, LayerParam& layer);
