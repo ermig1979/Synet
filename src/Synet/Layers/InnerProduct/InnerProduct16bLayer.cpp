@@ -40,7 +40,11 @@ namespace Synet
 
     size_t InnerProduct16bLayer::MemoryUsage() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return Layer::MemoryUsage() + _innerProduct16b.InternalBufferSize();
+#else
+        return Layer::MemoryUsage();
+#endif
     }
 
     void InnerProduct16bLayer::CompactWeight()
@@ -66,8 +70,12 @@ namespace Synet
         dstShape.resize(_axis + 1);
         dstShape[_axis] = _N;
         dst[0]->Reshape(dst[0]->GetType(), dstShape, TensorFormatNchw);
-        _innerProduct16b.Init(_M, _N, _K, src[0]->GetType(), src.size() > 1 ? src[1]->GetType() : TensorType32f,
-            dst[0]->GetType(), _transB ? 0 : 1, src.size() == 1 ? 1 : 0, _biasTerm ? 1 : 0, _activation);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _innerProduct16b.Init(_M, _N, _K, (SimdTensorDataType)src[0]->GetType(),
+            (SimdTensorDataType)(src.size() > 1 ? src[1]->GetType() : TensorType32f),
+            (SimdTensorDataType)dst[0]->GetType(), _transB ? SimdFalse : SimdTrue,
+            src.size() == 1 ? SimdTrue : SimdFalse, _biasTerm ? SimdTrue : SimdFalse,
+            (SimdConvolutionActivationType)_activation);
         if(!_innerProduct16b.Enable())
             SYNET_ERROR("InnerProduct16bLayer can't create SimdSynetInnerProduct16b backend!");
 
@@ -79,11 +87,15 @@ namespace Synet
         _innerProduct16b.SetParams(weight, bias, params);
         Layer::Extend8u(buf, 0, Shp(_innerProduct16b.ExternalBufferSize()), src[0]->Format());
         this->UsePerfStat(_desc + " " + _innerProduct16b.Info(), Flop());
+#else
+        SYNET_ERROR("InnerProduct16bLayer requires Simd Library!");
+#endif
         return true;
     }
 
     void InnerProduct16bLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_innerProduct16b.Enable())
         {
             const uint8_t* A = src[0]->RawData();
@@ -97,5 +109,6 @@ namespace Synet
                 C += _sizeC;
             }
         }
+#endif
     }
 }
