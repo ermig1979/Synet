@@ -38,7 +38,11 @@ namespace Synet
 
     size_t InnerProduct32fLayer::MemoryUsage() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return Layer::MemoryUsage() + _innerProduct32f.InternalBufferSize() * sizeof(float);
+#else
+        return Layer::MemoryUsage();
+#endif
     }
 
     void InnerProduct32fLayer::CompactWeight()
@@ -57,7 +61,9 @@ namespace Synet
         dst[0]->Reshape(TensorType32f, dstShape, TensorFormatNchw);
         if (!_transA)
         {
-            _innerProduct32f.Init(_M, _N, _K, _transB ? 0 : 1, src.size() == 1 ? 1 : 0, _biasTerm ? 1 : 0, _activation);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+            _innerProduct32f.Init(_M, _N, _K, _transB ? SimdFalse : SimdTrue, src.size() == 1 ? SimdTrue : SimdFalse,
+                _biasTerm ? SimdTrue : SimdFalse, (SimdConvolutionActivationType)_activation);
             if (_innerProduct32f.Enable())
             {
                 const float* weight = src.size() == 1 ? this->Weight()[0].Data<float>() : NULL;
@@ -65,9 +71,10 @@ namespace Synet
                 const float* bias = _biasTerm ? this->Weight()[biasIndex].Data<float>() : NULL;
                 size_t paramsIndex = biasIndex + (_biasTerm ? 1 : 0);
                 const float* params = _activation == ActivationFunctionTypePrelu ? this->Weight()[paramsIndex].Data<float>() : _params;
-                _innerProduct32f.SetParams(weight, &_internal, bias, params);
+                _innerProduct32f.SetParams(weight, (SimdBool*)&_internal, bias, params);
                 Layer::Extend32f(buf, 0, Shp(_innerProduct32f.ExternalBufferSize()), src[0]->Format());
             }
+#endif
         }
         return true;
     }
@@ -78,6 +85,7 @@ namespace Synet
         const float* B = src.size() > 1 ? src[1]->Data<float>() : NULL;
         float* buf0 = Layer::Buf32f(buf, 0);
         float* C = dst[0]->Data<float>();
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_innerProduct32f.Enable())
         {
             for (size_t b = 0; b < _batch; ++b)
@@ -87,8 +95,10 @@ namespace Synet
                 B += _K * _N;
                 C += _M * _N;
             }
+            return;
         }
-        else if (src.size() > 1)
+#endif
+        if (src.size() > 1)
         {
             for(size_t b = 0; b < _batch; ++b)
             {

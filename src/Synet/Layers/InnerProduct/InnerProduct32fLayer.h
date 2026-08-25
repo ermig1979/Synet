@@ -25,7 +25,10 @@
 #pragma once
 
 #include "Synet/Layers/InnerProduct/InnerProductLayer.h"
-#include "Synet/Utils/InnerProduct.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -73,6 +76,8 @@ namespace Synet
 
     private:
         int _internal;
-        InnerProduct32f _innerProduct32f;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetInnerProduct32f _innerProduct32f;
+#endif
     };
 }
