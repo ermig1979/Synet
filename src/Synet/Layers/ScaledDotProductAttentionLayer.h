@@ -26,6 +26,10 @@
 
 #include "Synet/Layer.h"
 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
+
 namespace Synet
 {
     class ScaledDotProductAttentionLayer : public Layer
@@ -46,6 +50,8 @@ namespace Synet
         float _scale;
         bool _fast;
 
-        std::shared_ptr<struct SimdPermute> _simdPermute;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetPermute _simdPermute;
+#endif
     };
 }

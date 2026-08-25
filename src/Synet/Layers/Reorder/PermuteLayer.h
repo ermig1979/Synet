@@ -26,6 +26,10 @@
 
 #include "Synet/Layer.h"
 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
+
 namespace Synet
 {
     class PermuteLayer : public Layer
@@ -46,7 +50,9 @@ namespace Synet
         PermutePtr _permute;
         size_t _count;
         Shape _srcOrder, _dstOrder, _srcShape, _dstShape, _srcStride, _dstStride;
-        std::shared_ptr<struct SimdPermute> _simdPermute;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetPermute _simdPermute;
+#endif
 
         void CompactShapes();
     };
