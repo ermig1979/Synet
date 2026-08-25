@@ -237,6 +237,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQuantizeLinearNode.cpp">
       <Filter>OnnxRuntime\Q</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertRangeNode.cpp">
+      <Filter>OnnxRuntime\R</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceL2Node.cpp">
       <Filter>OnnxRuntime\R</Filter>
     </ClCompile>

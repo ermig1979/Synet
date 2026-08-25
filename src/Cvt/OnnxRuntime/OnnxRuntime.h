@@ -61,26 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertRangeNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 3))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
-            if (src0 == NULL || src1 == NULL || src2 == NULL)
-                return false;
-            if (src0->type() != LayerTypeMeta && src0->type() != LayerTypeConst)
-                return false;
-            if (src1->type() != LayerTypeMeta && src1->type() != LayerTypeConst)
-                return false;
-            if (src2->type() != LayerTypeMeta && src2->type() != LayerTypeConst)
-                return false;
-            layer.type() = Synet::LayerTypeMeta;
-            layer.meta().type() = Synet::MetaTypeRange;
-            return true;
-        }
-
         bool ConvertReduceSumNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1, 2))

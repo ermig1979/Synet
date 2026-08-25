@@ -155,6 +155,8 @@ namespace Synet
 
     bool ConvertQuantizeLinearNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer);
 
+    bool ConvertRangeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
     bool ConvertReduceL2Node(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer);
 
     bool ConvertReduceMaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap);
