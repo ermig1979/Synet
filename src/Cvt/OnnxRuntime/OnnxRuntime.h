@@ -61,41 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertReduceSumNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 1, 2))
-                return false;
-            layer.type() = Synet::LayerTypeReduction;
-            layer.reduction().type() = ReductionTypeSum;
-            if (layer.src().size() == 2)
-            {
-                const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-                if (src1 == NULL || src1->type() != LayerTypeMeta || src1->meta().type() != Synet::MetaTypeConst)
-                    return false;
-                const TensorParam& alpha = src1->meta().alpha();
-                if (alpha.type() != TensorType64i)
-                    return false;
-                layer.reduction().axis().resize(alpha.i64().size());
-                for (size_t i = 0; i < alpha.i64().size(); ++i)
-                    layer.reduction().axis()[i] = (int)alpha.i64()[i];
-                layer.src().resize(1);
-            }
-            else
-            {
-                if (!ConvertAtrributeInts(node, "axes", layer.reduction().axis()))
-                    return false;
-            }
-            if (!ConvertAtrributeInt(node, "keepdims", layer.reduction().keepDims()))
-                return false;
-            if (trans && CurrentTensorFormat(layers, layer.src(), false, true, true) == TensorFormatNhwc)
-            {
-                Ints nchw = Ints({ 0, 3, 1, 2 }), axis = layer.reduction().axis();
-                for (size_t i = 0; i < axis.size(); ++i)
-                    layer.reduction().axis()[i] = nchw[axis[i]];
-            }
-            return true;
-        }
-
         bool ConvertReluNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeRelu;
