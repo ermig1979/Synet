@@ -171,6 +171,8 @@ namespace Synet
 
     bool ConvertReshapeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer, TensorFormatMap* tensorFormatMap);
 
+    bool ConvertResizeNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer);
+
     bool ConvertRoundNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertSignNode(const onnx::NodeProto& node, LayerParam& layer);
