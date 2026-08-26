@@ -25,7 +25,10 @@
 #pragma once
 
 #include "Synet/Layer.h"
-#include "Synet/Utils/InnerProduct.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -61,6 +64,8 @@ namespace Synet
         size_t _axis, _batch, _M, _N, _K;
         bool _biasTerm, _transA, _transB;
         Tensor _dstZero8u, _bias32i, _norm32f;
-        QuantizedInnerProduct _quantizedInnerProduct;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetQuantizedInnerProduct _quantizedInnerProduct;
+#endif
     };
 }

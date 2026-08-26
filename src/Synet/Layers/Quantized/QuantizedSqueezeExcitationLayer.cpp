@@ -46,8 +46,12 @@ namespace Synet
 
     size_t QuantizedSqueezeExcitationLayer::MemoryUsage() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return Layer::MemoryUsage() + _params.size() * sizeof(float) +
             _quantizedInnerProduct[0].InternalBufferSize() + _quantizedInnerProduct[1].InternalBufferSize();
+#else
+        return Layer::MemoryUsage() + _params.size() * sizeof(float);
+#endif
     }
 
     int64_t QuantizedSqueezeExcitationLayer::Flop() const
@@ -123,7 +127,9 @@ namespace Synet
         _ipScale[0] = float(param.qSrc()[dst0].scale());
         _ipZero[0] = param.qSrc()[dst0].zero();
         
-        _quantizedInnerProduct[0].Init(_batch, _squeeze, _channels, TensorType8u, TensorType8i, TensorType8u, _format == TensorFormatNchw ? 1 : 0, 1, _hasBias[0] ? 1 : 0);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _quantizedInnerProduct[0].Init(_batch, _squeeze, _channels, SimdTensorData8u, SimdTensorData8i, SimdTensorData8u,
+            _format == TensorFormatNchw ? SimdTrue : SimdFalse, SimdTrue, _hasBias[0] ? SimdTrue : SimdFalse);
         if (_quantizedInnerProduct[0].Enable())
         {
             Layer::Extend8u(buf, 1, Shp(_quantizedInnerProduct[0].ExternalBufferSize()));
@@ -133,6 +139,7 @@ namespace Synet
         }
         else
             SYNET_ERROR("QuantizedSqueezeExcitationLayer can't initalize primarily QuantizedInnerProduct!");
+#endif
 
         int weight1 = bias0 + (_hasBias[0] ? param.qSrc()[3].weights() : 2);
         int bias1 = weight1 + param.qSrc()[dst0 + 1].weights();
@@ -140,7 +147,9 @@ namespace Synet
         _ipScale[1] = float(param.qSrc()[dst1].scale());
         _ipZero[1] = param.qSrc()[dst1].zero();
 
-        _quantizedInnerProduct[1].Init(_batch, _channels, _squeeze, TensorType8u, TensorType8i, TensorType8u, _format == TensorFormatNchw ? 1 : 0, 1, _hasBias[1] ? 1 : 0);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _quantizedInnerProduct[1].Init(_batch, _channels, _squeeze, SimdTensorData8u, SimdTensorData8i, SimdTensorData8u,
+            _format == TensorFormatNchw ? SimdTrue : SimdFalse, SimdTrue, _hasBias[1] ? SimdTrue : SimdFalse);
         if (_quantizedInnerProduct[1].Enable())
         {
             Layer::Extend8u(buf, 1, Shp(_quantizedInnerProduct[1].ExternalBufferSize()));
@@ -150,6 +159,7 @@ namespace Synet
         }
         else
             SYNET_ERROR("QuantizedSqueezeExcitationLayer can't initalize secondary QuantizedInnerProduct!");
+#endif
 
         _actScale[1] = float(param.qSrc()[dst1 + 1].scale());
         _actZero[1] = param.qSrc()[dst1 + 1].zero();
