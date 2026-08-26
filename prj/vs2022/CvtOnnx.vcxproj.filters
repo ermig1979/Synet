@@ -273,6 +273,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceSumNode.cpp">
       <Filter>OnnxRuntime\R</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReluNode.cpp">
+      <Filter>OnnxRuntime\R</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.h">
