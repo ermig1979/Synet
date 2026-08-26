@@ -360,9 +360,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Region.h" />
     <ClInclude Include="..\..\src\Synet\Fabric.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\InnerProduct.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Context.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Ultraface.h">
       <Filter>Decoders</Filter>

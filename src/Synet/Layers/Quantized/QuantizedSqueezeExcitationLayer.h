@@ -26,7 +26,6 @@
 
 #include "Synet/Layer.h"
 #include "Synet/Utils/Scale.h"
-#include "Synet/Utils/InnerProduct.h"
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdSynet.hpp"
 #endif
@@ -59,8 +58,8 @@ namespace Synet
         TensorFormat _format;
         size_t _batch, _channels, _height, _width, _squeeze; 
         ActivationFunctionType _actType;
-        QuantizedInnerProduct _quantizedInnerProduct[2];
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetQuantizedInnerProduct _quantizedInnerProduct[2];
         Simd::SynetQuantizedMul _quantizedMul;
 #endif
     };
