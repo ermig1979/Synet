@@ -61,12 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertReluNode(const onnx::NodeProto& node, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypeRelu;
-            return true;
-        }
-
         bool ConvertReshapeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer, TensorFormatMap* tensorFormatMap)
         {
             if (!CheckSourceNumber(layer, 2))
