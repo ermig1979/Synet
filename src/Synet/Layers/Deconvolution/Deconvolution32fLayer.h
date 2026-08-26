@@ -26,6 +26,10 @@
 
 #include "Synet/Layers/Deconvolution/DeconvolutionLayer.h"
 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
+
 namespace Synet
 {
     class Deconvolution32fLayer : public DeconvolutionLayer
@@ -48,7 +52,9 @@ namespace Synet
         bool _transW;
         size_t _ldW, _ldS, _ldD, _grW, _grS, _grD, _siW, _siS, _siD;
 
-        Deconvolution32f _deconvolution32f;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetDeconvolution32f _deconvolution32f;
+#endif
         Tensor _weightT;
     };
 }
