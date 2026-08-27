@@ -26,7 +26,10 @@
 
 #include "Synet/Layer.h"
 #include "Synet/Utils/ConvParam.h"
-#include "Synet/Utils/MergedConvolution.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -65,6 +68,8 @@ namespace Synet
         const int8_t* _ptrW[COUNT_MAX];
         Tensor _bias32i[COUNT_MAX], _norm32f[COUNT_MAX], _dwSrcZero8u;
 
-        QuantizedMergedConvolution _quantizedMergedConvolution;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetQuantizedMergedConvolution _quantizedMergedConvolution;
+#endif
     };
 }

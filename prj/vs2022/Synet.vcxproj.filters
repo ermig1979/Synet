@@ -329,9 +329,6 @@
     <ClInclude Include="..\..\src\Synet\Utils\Math.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\MergedConvolution.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Common.h" />
     <ClInclude Include="..\..\src\Synet\Buffer.h" />
     <ClInclude Include="..\..\src\Synet\Utils\FileUtils.h">
