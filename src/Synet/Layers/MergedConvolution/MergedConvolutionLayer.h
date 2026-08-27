@@ -25,7 +25,7 @@
 #pragma once
 
 #include "Synet/Layer.h"
-#include "Synet/Utils/MergedConvolution.h"
+#include "Synet/Utils/ConvParam.h"
 #include "Synet/Layers/Activation/ActivationLayers.h"
 #include "Synet/Layers/Activation/PreluLayer.h"
 #include "Synet/Utils/ImgToCol.h"
