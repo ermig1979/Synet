@@ -33,7 +33,11 @@ namespace Synet
 
     size_t MergedConvolution16bLayer::MemoryUsage() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return Layer::MemoryUsage() + _mergedConvolution16b.InternalBufferSize();
+#else
+        return Layer::MemoryUsage();
+#endif
     }
 
     LowPrecisionType MergedConvolution16bLayer::LowPrecision(TensorType type) const
@@ -49,8 +53,10 @@ namespace Synet
         info << " bf16-" << (_src16b ? "b" : "f") << (_dst16b ? "b" : "f");
         if (_alg.count == 3)
             info << _alg.add;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_mergedConvolution16b.Enable())
             info << " " << _mergedConvolution16b.Info();
+#endif
         return info.str();
     }
 
@@ -72,21 +78,28 @@ namespace Synet
         const ConvParam& back = a.conv[a.count - 1];
         dst->Reshape(dst->GetType(), Shp(a.batch, back.dstH, back.dstW, back.dstC), src->Format());
 
-        _mergedConvolution16b.Init(a.batch, a.conv, a.count, a.add);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _mergedConvolution16b.Init(a.batch, (const SimdConvolutionParameters*)a.conv, a.count, (SimdBool)a.add);
         if (_mergedConvolution16b.Enable())
         {
             Layer::Extend8u(buf, 0, Shp(_mergedConvolution16b.ExternalBufferSize()));
-            _mergedConvolution16b.SetParams(a.weight, a.internal, a.bias, a.params);
+            _mergedConvolution16b.SetParams(a.weight, a.bias, a.params);
+            a.internal[0] = 1, a.internal[1] = 1, a.internal[2] = 1;
         }
         else
             SYNET_ERROR("MergedConvolution16bLayer can't create SimdSynetMergedConvolution16b backend!");
+#else
+        SYNET_ERROR("MergedConvolution16bLayer requires Simd Library!");
+#endif
 
         return true;
     }
 
     void MergedConvolution16bLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if(_mergedConvolution16b.Enable())
             _mergedConvolution16b.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());
+#endif
     }
 }

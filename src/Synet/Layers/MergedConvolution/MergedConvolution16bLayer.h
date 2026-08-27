@@ -24,8 +24,11 @@
 
 #pragma once
 
-#include "Synet/Utils/MergedConvolution.h"
 #include "Synet/Layers/MergedConvolution/MergedConvolutionLayer.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -49,6 +52,8 @@ namespace Synet
 
     private:
         bool _src16b, _dst16b;
-        MergedConvolution16b _mergedConvolution16b;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetMergedConvolution16b _mergedConvolution16b;
+#endif
     };
 }
