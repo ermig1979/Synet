@@ -25,7 +25,7 @@
 #pragma once
 
 #include "Synet/Layer.h"
-#include "Synet/Utils/Deconvolution.h"
+#include "Synet/Utils/ConvParam.h"
 
 namespace Synet
 {
