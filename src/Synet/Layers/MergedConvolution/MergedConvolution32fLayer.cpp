@@ -101,12 +101,20 @@ namespace Synet
 
     size_t MergedConvolution32fLayer::MemoryUsage() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return Layer::MemoryUsage() + _mergedConvolution32f.InternalBufferSize() * sizeof(float);
+#else
+        return Layer::MemoryUsage();
+#endif
     }
 
     String MergedConvolution32fLayer::InternalInfo() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return String(" fp32") + (_mergedConvolution32f.Enable() ? String(" ") + _mergedConvolution32f.Info() : String());
+#else
+        return String(" fp32");
+#endif
     }
 
     bool MergedConvolution32fLayer::Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
@@ -198,13 +206,15 @@ namespace Synet
         const ConvParam& back = a.conv[a.count - 1];
         dst->Reshape(TensorType32f, Shp(a.batch, back.dstH, back.dstW, back.dstC), src->Format());
 
-        _mergedConvolution32f.Init(a.batch, a.conv, a.count, a.add);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _mergedConvolution32f.Init(a.batch, (const SimdConvolutionParameters*)a.conv, a.count, (SimdBool)a.add);
         if (_mergedConvolution32f.Enable())
         {
             Layer::Extend32f(buf, 0, Shp(_mergedConvolution32f.ExternalBufferSize()));
-            _mergedConvolution32f.SetParams(a.weight, a.internal, a.bias, a.params);
+            _mergedConvolution32f.SetParams(a.weight, (SimdBool*)a.internal, a.bias, a.params);
         }
         else
+#endif
         {
             Layer::Extend32f(buf, 0, a.conv[0].DstShape(1));
             if (a.count > 2)
@@ -221,9 +231,11 @@ namespace Synet
 
     void MergedConvolution32fLayer::Forward(const float * src, float* buf0, float* buf1, float* dst)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_mergedConvolution32f.Enable())
             _mergedConvolution32f.Forward(src, buf0, dst);
         else
+#endif
         {
             const AlgParam& a = this->_alg;
             for (size_t b = 0; b < a.batch; ++b)

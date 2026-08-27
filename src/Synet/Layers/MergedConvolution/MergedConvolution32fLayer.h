@@ -24,8 +24,11 @@
 
 #pragma once
 
-#include "Synet/Utils/MergedConvolution.h"
 #include "Synet/Layers/MergedConvolution/MergedConvolutionLayer.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -51,6 +54,8 @@ namespace Synet
         typedef void(*ConvolutionBiasActivationPtr)(const float * src, const ConvParam & conv, const float* weight, const float* bias, const float* params, float* dst);
         ConvolutionBiasActivationPtr _convolution[Detail::MCC_MAX];
 
-        MergedConvolution32f _mergedConvolution32f;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetMergedConvolution32f _mergedConvolution32f;
+#endif
     };
 }
