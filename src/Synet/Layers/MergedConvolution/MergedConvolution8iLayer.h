@@ -24,9 +24,12 @@
 
 #pragma once
 
-#include "Synet/Utils/MergedConvolution.h"
 #include "Synet/Quantization/Convert.h"
 #include "Synet/Layers/MergedConvolution/MergedConvolutionLayer.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -64,6 +67,8 @@ namespace Synet
         typedef void(*DepthwiseConvolution32fPtr)(const float* src, const ConvParam& conv, const float* weight, const float* bias, const float* params, float* dst);
         DepthwiseConvolution32fPtr _depthwise;
 
-        MergedConvolution8i _mergedConvolution8i;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetMergedConvolution8i _mergedConvolution8i;
+#endif
     };
 }
