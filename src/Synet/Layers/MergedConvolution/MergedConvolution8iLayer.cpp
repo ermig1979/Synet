@@ -43,9 +43,15 @@ namespace Synet
 
     size_t MergedConvolution8iLayer::MemoryUsage() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return Layer::MemoryUsage() + _mergedConvolution8i.InternalBufferSize() +
             + _weight8i[0].MemoryUsage() + _norm32f[0].MemoryUsage() + _bias32f[0].MemoryUsage()
             + _weight8i[1].MemoryUsage() + _norm32f[1].MemoryUsage() + _bias32f[1].MemoryUsage();
+#else
+        return Layer::MemoryUsage() +
+            _weight8i[0].MemoryUsage() + _norm32f[0].MemoryUsage() + _bias32f[0].MemoryUsage()
+            + _weight8i[1].MemoryUsage() + _norm32f[1].MemoryUsage() + _bias32f[1].MemoryUsage();
+#endif
     }
 
     void MergedConvolution8iLayer::DebugPrint(std::ostream& os, int flag, int first, int last, int precision)
@@ -68,8 +74,10 @@ namespace Synet
     {
         std::stringstream info;
         info << " int8-" << (_src8u ? "u" : "f") << (_dst8u ? "u" : "f");
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_mergedConvolution8i.Enable())
             info << " " << _mergedConvolution8i.Info();
+#endif
         return info.str();
     }
 
@@ -88,7 +96,19 @@ namespace Synet
         Shape shape = back.DstShape(a.batch);
         dst->Reshape(dst->GetType(), shape, src->Format());
 
-        _mergedConvolution8i.Init(a.batch, a.conv, a.count, _method);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        SimdSynetCompatibilityType compatibility;
+        if (_method == QuantizationMethodIECompatible)
+        {
+            compatibility = SimdCpuInfo(SimdCpuInfoAvx512vnni) ? SimdSynetCompatibility8iPrecise : SimdSynetCompatibility8iOverflow;
+            compatibility = (SimdSynetCompatibilityType)(compatibility | SimdSynetCompatibilityFmaNoTail);
+            _mergedConvolution8i.Init(a.batch, (const SimdConvolutionParameters*)a.conv, a.count, compatibility);
+        }
+        else if (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed)
+        {
+            compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility8iNarrowed | SimdSynetCompatibilityFmaUse);
+            _mergedConvolution8i.Init(a.batch, (const SimdConvolutionParameters*)a.conv, a.count, compatibility);
+        }
         if (_mergedConvolution8i.Enable())
         {
             Layer::Extend8u(buf, 0, Shp(_mergedConvolution8i.ExternalBufferSize()));
@@ -102,9 +122,10 @@ namespace Synet
                 this->Stats(1).empty() ? NULL : this->Stats(1).back()->max.data(),
                 this->Stats(2).empty() ? NULL : this->Stats(2)[0]->min.data(),
                 this->Stats(2).empty() ? NULL : this->Stats(2)[0]->max.data()};
-            _mergedConvolution8i.SetParams(a.weight, a.internal, a.bias, a.params, stats);
+            _mergedConvolution8i.SetParams(a.weight, (SimdBool*)a.internal, a.bias, a.params, stats);
         }
         else
+#endif
         {
             if (_dw0)
             {
@@ -141,9 +162,11 @@ namespace Synet
 
     void MergedConvolution8iLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_mergedConvolution8i.Enable())
             _mergedConvolution8i.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());
         else
+#endif
         {
             float* buf0 = Layer::Buf32f(buf, 0);
             float* buf1 = Layer::Buf32f(buf, 1);
