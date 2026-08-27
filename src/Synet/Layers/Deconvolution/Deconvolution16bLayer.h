@@ -26,6 +26,10 @@
 
 #include "Synet/Layers/Deconvolution/DeconvolutionLayer.h"
 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
+
 namespace Synet
 {
     class Deconvolution16bLayer : public Synet::DeconvolutionLayer
@@ -46,6 +50,8 @@ namespace Synet
 
     private:
         bool _src16b, _dst16b;
-        Deconvolution16b _deconvolution16b;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetDeconvolution16b _deconvolution16b;
+#endif
     };
 }

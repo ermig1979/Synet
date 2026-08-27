@@ -311,9 +311,6 @@
     <ClInclude Include="..\..\src\Synet\Utils\DebugPrint.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Deconvolution.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\Gemm.h">
       <Filter>Utils</Filter>
     </ClInclude>
