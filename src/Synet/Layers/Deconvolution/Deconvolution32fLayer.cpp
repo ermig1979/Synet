@@ -38,7 +38,11 @@ namespace Synet
 
     size_t Deconvolution32fLayer::MemoryUsage() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return Layer::MemoryUsage() + (_deconvolution32f.InternalBufferSize() + _weightT.Size())*sizeof(float);
+#else
+        return Layer::MemoryUsage() + _weightT.Size()*sizeof(float);
+#endif
     }
 
     bool Deconvolution32fLayer::Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
@@ -91,14 +95,16 @@ namespace Synet
             _grD = _siD * _siS;
         }
 
-        _deconvolution32f.Init(_num, &_conv);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _deconvolution32f.Init(_num, (const SimdConvolutionParameters*)&_conv);
         if (_deconvolution32f.Enable())
         {
             buf[TensorType32f*BUFFER_COUNT]->Extend(TensorType32f, Shp(_deconvolution32f.ExternalBufferSize()));
-            _deconvolution32f.SetParams(weight[0].Data<float>(), &_internal, _biasTerm ? weight[1].Data<float>() : NULL,
+            _deconvolution32f.SetParams(weight[0].Data<float>(), (SimdBool*)&_internal, _biasTerm ? weight[1].Data<float>() : NULL,
                 _conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : _params);
         }
         else
+#endif
         {
             buf[TensorType32f*BUFFER_COUNT]->Extend(TensorType32f, Shp(_conv.dstC * _conv.kernelY * _conv.kernelX * _conv.srcH * _conv.srcW));
             if (_transW)
@@ -121,7 +127,11 @@ namespace Synet
 
     String Deconvolution32fLayer::InternalInfo() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return String(" fp32") + (_deconvolution32f.Enable() ? String(" ") + _deconvolution32f.Info() : String());
+#else
+        return String(" fp32");
+#endif
     }
 
     void Deconvolution32fLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
@@ -131,9 +141,11 @@ namespace Synet
 
     void Deconvolution32fLayer::Forward(const float* src, float* buf, float* dst)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_deconvolution32f.Enable())
             _deconvolution32f.Forward(src, buf, dst);
         else
+#endif
         {
             const float* weight = _transW ? _weightT.Data<float>() : this->Weight()[0].Data<float>();
             for (size_t n = 0; n < _num; ++n)
