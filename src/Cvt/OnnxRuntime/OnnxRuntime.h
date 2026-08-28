@@ -61,18 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertScaledDotProductAttentionNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer, Bytes& reordered)
-        {
-            if (!CheckSourceNumber(layer, 4))
-                return false;
-            const LayerParam* src3 = GetLayer(layers, layer.src()[3]);
-            if (src3 == NULL || src3->type() != LayerTypeConst || src3->weight()[0].type() != TensorType32f || src3->weight()[0].dim() != Shp(1))
-                return false;
-            layer.type() = Synet::LayerTypeScaledDotProductAttention;
-            layer.src().resize(3);
-            return true;
-        }
-
         bool ConvertScatterElementsNode(const onnx::NodeProto& node, const LayerParams& layers, Bytes& original, LayerParam& layer, Bytes& reordered)
         {
             if (!CheckSourceNumber(layer, 3))
