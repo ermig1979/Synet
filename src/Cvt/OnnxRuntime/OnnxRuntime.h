@@ -61,25 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertScatterElementsNode(const onnx::NodeProto& node, const LayerParams& layers, Bytes& original, LayerParam& layer, Bytes& reordered)
-        {
-            if (!CheckSourceNumber(layer, 3))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
-            if (src0 == NULL || src1 == NULL || src2 == NULL)
-                return false;
-            layer.type() = Synet::LayerTypeScatterNd;
-            layer.scatter().version() = 1;
-            if (!ConvertAtrributeInt(node, "axis", layer.scatter().axis()))
-                return false;
-            String reduction;
-            if (!ConvertAtrributeString(node, "reduction", reduction) || reduction != "none")
-                return false;
-            return true;
-        }
-
         bool ConvertScatterNdNode(const onnx::NodeProto& node, const LayerParams& layers, Bytes & original, LayerParam& layer, Bytes& reordered)
         {
             if (!CheckSourceNumber(layer, 3))

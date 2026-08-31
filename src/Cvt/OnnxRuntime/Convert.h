@@ -177,6 +177,8 @@ namespace Synet
 
     bool ConvertScaledDotProductAttentionNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer, Bytes& reordered);
 
+    bool ConvertScatterElementsNode(const onnx::NodeProto& node, const LayerParams& layers, Bytes& original, LayerParam& layer, Bytes& reordered);
+
     bool ConvertSignNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertSqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);

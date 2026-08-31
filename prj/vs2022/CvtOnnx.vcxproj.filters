@@ -255,6 +255,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertScaledDotProductAttentionNode.cpp">
       <Filter>OnnxRuntime\S</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertScatterElementsNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp">
       <Filter>OnnxRuntime\S</Filter>
     </ClCompile>
