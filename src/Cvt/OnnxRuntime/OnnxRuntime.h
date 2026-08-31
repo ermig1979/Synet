@@ -61,20 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertShapeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const OnnxParam& onnxParam, LayerParam& layer)
-        {
-            layer.type() = LayerTypeMeta;
-            layer.meta().type() = MetaTypeShape;
-            layer.meta().version() = 1;
-            if (trans)
-            {
-                for (size_t i = 0; i < onnxParam.shapeV2s().size(); ++i)
-                    if (layer.name() == onnxParam.shapeV2s()[i])
-                        layer.meta().version() = 2;
-            }
-            return true;
-        }
-
         bool ConvertSigmoidNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeSigmoid;
