@@ -61,45 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertScatterNdNode(const onnx::NodeProto& node, const LayerParams& layers, Bytes & original, LayerParam& layer, Bytes& reordered)
-        {
-            if (!CheckSourceNumber(layer, 3))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
-            if (src0 == NULL || src1 == NULL || src2 == NULL)
-                return false;
-            layer.type() = Synet::LayerTypeScatterNd;
-            if (src1->type() == LayerTypeMeta && src1->meta().type() == MetaTypeConst)
-            {
-                const TensorParam & alpha = src1->meta().alpha();
-                size_t size = TensorSize(alpha.shape()), offset = reordered.size();
-                layer.type() = Synet::LayerTypeScatterNd;
-                layer.weight().resize(1);
-                layer.weight()[0].dim() = alpha.shape();
-                layer.weight()[0].type() = TensorType32i;
-                layer.weight()[0].offset() = offset;
-                layer.weight()[0].size() = size * 4;
-                layer.src().erase(layer.src().begin() + 1);
-                original.resize(offset + size * 4);
-                reordered.resize(offset + size * 4);
-                if (alpha.type() == TensorType64i)
-                {
-                    const int64_t* src = alpha.i64().data();
-                    int32_t * dst = GetWeight<int32_t>(reordered, layer.weight()[0]);
-                    for (size_t i = 0; i < size; ++i)
-                        dst[i] = (int32_t)src[i];
-                }
-                else
-                {
-                    std::cout << "src[1] type must be meta const int64!" << std::endl;
-                    return false;
-                }
-            }
-            return true;
-        }
-
         bool ConvertShapeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const OnnxParam& onnxParam, LayerParam& layer)
         {
             layer.type() = LayerTypeMeta;
