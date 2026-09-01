@@ -25,7 +25,10 @@
 #pragma once
 
 #include "Synet/Layers/Convolution/ConvolutionLayer.h"
-#include "Synet/Utils/Convolution.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -49,6 +52,8 @@ namespace Synet
 
     private:
         bool _src16b, _dst16b;
-        Convolution16b _convolution16b;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetConvolution16b _convolution16b;
+#endif
     };
 }
