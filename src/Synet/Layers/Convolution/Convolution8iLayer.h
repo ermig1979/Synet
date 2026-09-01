@@ -25,8 +25,11 @@
 #pragma once
 
 #include "Synet/Layers/Convolution/ConvolutionLayer.h"
-#include "Synet/Utils/Convolution.h"
 #include "Synet/Quantization/Convert.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -62,6 +65,8 @@ namespace Synet
         Converter _srcCvt, _dstCvt;
         Tensor _weight8i, _norm32f, _bias32f;
 
-        Convolution8i _convolution8i;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetConvolution8i _convolution8i;
+#endif
     };
 }
