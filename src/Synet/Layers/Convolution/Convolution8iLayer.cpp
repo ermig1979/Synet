@@ -44,8 +44,13 @@ namespace Synet
 
     size_t Convolution8iLayer::MemoryUsage() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return Layer::MemoryUsage() + _convolution8i.InternalBufferSize()
             + _weight8i.MemoryUsage() + _norm32f.MemoryUsage() + _bias32f.MemoryUsage();
+#else
+        return Layer::MemoryUsage()
+            + _weight8i.MemoryUsage() + _norm32f.MemoryUsage() + _bias32f.MemoryUsage();
+#endif
     }
 
     LowPrecisionType Convolution8iLayer::LowPrecision(TensorType type) const
@@ -70,8 +75,10 @@ namespace Synet
     {
         std::stringstream info;
         info << " int8-" << (_src8u ? "u" : "f") << (_dst8u ? "u" : "f");
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_convolution8i.Enable())
             info << " " << _convolution8i.Info();
+#endif
         return info.str();
     }
 
@@ -92,7 +99,19 @@ namespace Synet
             dst->Reshape(TensorType8u, shape, src->Format());
         else
             dst->Reshape(TensorType32f, shape, src->Format());
-        _convolution8i.Init(alg.batch, &conv, _method);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        SimdSynetCompatibilityType compatibility;
+        if (_method == QuantizationMethodIECompatible)
+        {
+            compatibility = SimdCpuInfo(SimdCpuInfoAvx512vnni) ? SimdSynetCompatibility8iPrecise : SimdSynetCompatibility8iOverflow;
+            compatibility = (SimdSynetCompatibilityType)(compatibility | SimdSynetCompatibilityFmaNoTail);
+            _convolution8i.Init(alg.batch, (const SimdConvolutionParameters*)&conv, compatibility);
+        }
+        else if (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed)
+        {
+            compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility8iNarrowed | SimdSynetCompatibilityFmaUse);
+            _convolution8i.Init(alg.batch, (const SimdConvolutionParameters*)&conv, compatibility);
+        }
         if (_convolution8i.Enable())
         {
             Layer::Extend8u(buf, 0, Shp(_convolution8i.ExternalBufferSize()));
@@ -106,6 +125,7 @@ namespace Synet
             _convolution8i.SetParams(weight[0].Data<float>(), bias, params, stats);
         }
         else
+#endif
         {
             if (!_src8u)
                 Layer::Extend8u(buf, 0, conv.SrcShape(1));
@@ -122,9 +142,11 @@ namespace Synet
 
     void Convolution8iLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_convolution8i.Enable())
             _convolution8i.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());
         else
+#endif
         {
             const AlgParam& alg = this->_alg;
             const float* src32f = _src8u ? NULL : src[0]->Data<float>();
