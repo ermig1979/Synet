@@ -40,8 +40,12 @@ namespace Synet
 
     size_t QuantizedConvolutionLayer::MemoryUsage() const
     {
-        return Layer::MemoryUsage() + _norm32f.MemoryUsage() + _bias32i.MemoryUsage() + 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        return Layer::MemoryUsage() + _norm32f.MemoryUsage() + _bias32i.MemoryUsage() +
             _quantizedConvolution.InternalBufferSize();
+#else
+        return Layer::MemoryUsage() + _norm32f.MemoryUsage() + _bias32i.MemoryUsage();
+#endif
     }
 
     int64_t QuantizedConvolutionLayer::Flop() const
@@ -52,8 +56,10 @@ namespace Synet
 
     void QuantizedConvolutionLayer::CompactWeight()
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_quantizedConvolution.Enable())
             ((Tensor&)this->Weight()[0]).Clear();
+#endif
     }
 
     LowPrecisionType QuantizedConvolutionLayer::LowPrecision(TensorType type) const
@@ -123,7 +129,8 @@ namespace Synet
         if (!CheckParams())
             return false;
 
-        _quantizedConvolution.Init(_alg.batch, &_conv);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _quantizedConvolution.Init(_alg.batch, (const SimdConvolutionParameters*)&_conv);
         if (_quantizedConvolution.Enable())
         {
             Layer::Extend8u(buf, 0, Shp(_quantizedConvolution.ExternalBufferSize()));
@@ -134,6 +141,7 @@ namespace Synet
             _quantizedConvolution.SetParams(scale, zero, weight[0].Data<int8_t>(), weight[1].Data<float>(), _alg.bias ? weight[_biasStart].Data<int32_t>() : NULL, params);
         }
         else
+#endif
         {
             if (!InitParams())
                 return false;
@@ -151,8 +159,10 @@ namespace Synet
         desc << "-" << _conv.group;
         if (_conv.activation)
             desc << "-" << ShortStr(_conv.activation);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if(_quantizedConvolution.Enable())
             desc << " " << _quantizedConvolution.Info();
+#endif
         this->UsePerfStat(desc.str(), Flop()); 
 
         return true;
@@ -332,11 +342,13 @@ namespace Synet
 
     void QuantizedConvolutionLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_quantizedConvolution.Enable())
         {
             _quantizedConvolution.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());
             return;
         }
+#endif
         const AlgParam& alg = this->_alg;
         uint8_t* src8u = src[0]->Data<uint8_t>();
         uint8_t* buf8u = Layer::Buf8u(buf, 0);
