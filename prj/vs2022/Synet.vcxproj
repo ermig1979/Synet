@@ -265,7 +265,6 @@
     <ClInclude Include="..\..\src\Synet\Tensor.h" />
     <ClCompile Include="..\..\src\Synet\Network.cpp" />
     <ClInclude Include="..\..\src\Synet\Utils\Activation.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\Convolution.h" />
     <ClInclude Include="..\..\src\Synet\Utils\ConvParam.h" />
     <ClInclude Include="..\..\src\Synet\Utils\DebugPrint.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Difference.h" />
