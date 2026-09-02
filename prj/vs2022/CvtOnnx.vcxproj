@@ -104,6 +104,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertShapeNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSigmoidNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSinNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSqueezeNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTileNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTopKNode.cpp" />
