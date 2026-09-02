@@ -264,6 +264,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertShapeNode.cpp">
       <Filter>OnnxRuntime\S</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSigmoidNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp">
       <Filter>OnnxRuntime\S</Filter>
     </ClCompile>
