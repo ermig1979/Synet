@@ -25,7 +25,6 @@
 #include "Synet/Layers/ScaledDotProductAttentionLayer.h"
 #include "Synet/Layers/Math/ScaleLayer.h"
 #include "Synet/Layers/SoftmaxLayer.h"
-#include "Synet/Utils/Permute.h"
 #include "Synet/Utils/Gemm.h"
 
 namespace Synet
@@ -33,10 +32,9 @@ namespace Synet
     ScaledDotProductAttentionLayer::ScaledDotProductAttentionLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
     {
-        _simdPermute = std::make_shared<SimdPermute>();
     }
 
-    bool ScaledDotProductAttentionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool ScaledDotProductAttentionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 3 || dst.size() != 1)
             SYNET_ERROR("ScaledDotProductAttentionLayer supports only 3 inputs and 1 output!");
@@ -58,7 +56,9 @@ namespace Synet
         size_t size = _prev * _last * 2 + _prev * _prev;
         Layer::Extend32f(buf, 0, Shp(size), src[0]->Format());
 
-        _simdPermute->Init(Shp(_prev, _last), Shp(1, 0), TensorType32f);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _simdPermute.Init(Shp(_prev, _last), Shp(1, 0), SimdTensorData32f);
+#endif
 
         std::stringstream desc;
         desc << _batch << "-" << _prev << "-" << _last << (_fast ? "-f" : "-p");
@@ -86,7 +86,9 @@ namespace Synet
     void ScaledDotProductAttentionLayer::Attention(const float* query, const float* key, const float* value, float* buf, float* dst)
     {
         float* kbuf = buf, * abuf = kbuf + _prev * _last, * qbuf = _fast ? (float*)query : abuf + _prev * _prev;
-        _simdPermute->Forward(key, kbuf);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _simdPermute.Forward((const uint8_t*)key, (uint8_t*)kbuf);
+#endif
         if (_fast)
             CpuGemm(CblasNoTrans, CblasNoTrans, _prev, _prev, _last, _scale*_scale, kbuf, _last, qbuf, _prev, 0.0f, abuf, _prev);
         else

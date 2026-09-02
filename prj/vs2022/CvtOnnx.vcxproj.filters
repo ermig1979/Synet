@@ -81,6 +81,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertCastNode.cpp">
       <Filter>OnnxRuntime\C</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertCeilNode.cpp">
+      <Filter>OnnxRuntime\C</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertClipNode.cpp">
       <Filter>OnnxRuntime\C</Filter>
     </ClCompile>
@@ -90,7 +93,13 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConvOrConvTransposeNode.cpp">
       <Filter>OnnxRuntime\C</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertCosNode.cpp">
+      <Filter>OnnxRuntime\C</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDequantizeLinearNode.cpp">
+      <Filter>OnnxRuntime\D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDivNode.cpp">
       <Filter>OnnxRuntime\D</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDropoutNode.cpp">
@@ -99,7 +108,19 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertEqualNode.cpp">
       <Filter>OnnxRuntime\E</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertErfNode.cpp">
+      <Filter>OnnxRuntime\E</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertExpNode.cpp">
+      <Filter>OnnxRuntime\E</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertExpandNode.cpp">
+      <Filter>OnnxRuntime\E</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertFlattenNode.cpp">
+      <Filter>OnnxRuntime\F</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertFloorNode.cpp">
       <Filter>OnnxRuntime\F</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGatherNode.cpp">
@@ -114,8 +135,17 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGreaterNode.cpp">
       <Filter>OnnxRuntime\G</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertGridSampleNode.cpp">
+      <Filter>OnnxRuntime\G</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertHardSigmoidNode.cpp">
+      <Filter>OnnxRuntime\H</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertHardSwishNode.cpp">
       <Filter>OnnxRuntime\H</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertIdentityNode.cpp">
+      <Filter>OnnxRuntime\I</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInitializer.cpp">
       <Filter>OnnxRuntime\I</Filter>
@@ -123,8 +153,17 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInput.cpp">
       <Filter>OnnxRuntime\I</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertInstanceNormalizationNode.cpp">
+      <Filter>OnnxRuntime\I</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConcatNode.cpp">
       <Filter>OnnxRuntime\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLayerNormalizationNode.cpp">
+      <Filter>OnnxRuntime\L</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLeakyReluNode.cpp">
+      <Filter>OnnxRuntime\L</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessNode.cpp">
       <Filter>OnnxRuntime\L</Filter>
@@ -132,14 +171,47 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLessOrEqualNode.cpp">
       <Filter>OnnxRuntime\L</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLogNode.cpp">
+      <Filter>OnnxRuntime\L</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLogSoftmaxNode.cpp">
+      <Filter>OnnxRuntime\L</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertLstmNode.cpp">
+      <Filter>OnnxRuntime\L</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMatMulNode.cpp">
+      <Filter>OnnxRuntime\M</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMaxPoolNode.cpp">
+      <Filter>OnnxRuntime\M</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertModNode.cpp">
+      <Filter>OnnxRuntime\M</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMulNode.cpp">
       <Filter>OnnxRuntime\M</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertNegNode.cpp">
+      <Filter>OnnxRuntime\N</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertNonMaxSuppressionNode.cpp">
       <Filter>OnnxRuntime\N</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertNonZeroNode.cpp">
+      <Filter>OnnxRuntime\N</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertNotNode.cpp">
+      <Filter>OnnxRuntime\N</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertConstantOfShapeNode.cpp">
       <Filter>OnnxRuntime\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertPadNode.cpp">
+      <Filter>OnnxRuntime\P</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertPowNode.cpp">
+      <Filter>OnnxRuntime\P</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertPreluNode.cpp">
       <Filter>OnnxRuntime\P</Filter>
@@ -165,6 +237,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertQuantizeLinearNode.cpp">
       <Filter>OnnxRuntime\Q</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertRangeNode.cpp">
+      <Filter>OnnxRuntime\R</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceL2Node.cpp">
       <Filter>OnnxRuntime\R</Filter>
     </ClCompile>
@@ -177,6 +252,21 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertRoundNode.cpp">
       <Filter>OnnxRuntime\R</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertScaledDotProductAttentionNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertScatterElementsNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertScatterNdNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertShapeNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSigmoidNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp">
       <Filter>OnnxRuntime\S</Filter>
     </ClCompile>
@@ -185,6 +275,27 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTileNode.cpp">
       <Filter>OnnxRuntime\T</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTopKNode.cpp">
+      <Filter>OnnxRuntime\T</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTransposeNode.cpp">
+      <Filter>OnnxRuntime\T</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceMinNode.cpp">
+      <Filter>OnnxRuntime\R</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceSumNode.cpp">
+      <Filter>OnnxRuntime\R</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReluNode.cpp">
+      <Filter>OnnxRuntime\R</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReshapeNode.cpp">
+      <Filter>OnnxRuntime\R</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertResizeNode.cpp">
+      <Filter>OnnxRuntime\R</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -32,7 +32,6 @@
 #include "Synet/Quantization/Const.h"
 #include "Synet/Quantization/Bf16.h" 
 #include "Synet/Utils/Math.h"
-#include "Synet/Utils/InnerProduct.h"
 #include "Synet/Utils/Gemm.h"
 
 namespace Synet
@@ -60,9 +59,9 @@ namespace Synet
         ((Tensor&)this->Weight()[0]).Clear();
     }
 
-    bool InnerProduct8iLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool InnerProduct8iLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
-        if (!InnerProductLayer::Reshape(src, buf, dst))
+        if (!InnerProductLayer::Reshape(src, buf, dst, init))
             return false;
         if ((src[0]->GetType() != TensorType32f && src[0]->GetType() != TensorType8u) ||
             (dst[0]->GetType() != TensorType32f && dst[0]->GetType() != TensorType8u))

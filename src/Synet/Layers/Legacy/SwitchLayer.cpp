@@ -31,7 +31,7 @@ namespace Synet
     {
     }
 
-    bool SwitchLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool SwitchLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 2 || dst.size() != 2)
             SYNET_ERROR("SwitchLayer supports only 2 inputs and 2 outputs!");

@@ -243,10 +243,14 @@ namespace Synet
 
     size_t GatherLayer::MemoryUsage() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return _gatherElementsSimd.InternalBufferSize();
+#else
+        return 0;
+#endif
     }
 
-    bool GatherLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool GatherLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("GatherLayer supports only 2 inputs and 1 output!");
@@ -269,6 +273,11 @@ namespace Synet
         if(_axis >= srcShape.size())
             SYNET_ERROR("GatherLayer parameter axis: " << _axis << " has wrong value for input " << ToStr(srcShape) << " !");
         _version = gather.version();
+
+        _dynamic = false;
+        for (size_t i = 0; i < src.size(); ++i)
+            if (src[i]->Dynamic())
+                _dynamic = true;
 
         _srcOuter = src[0]->Size(0, _axis);
         _srcCount = src[0]->Axis(_axis);
@@ -312,10 +321,16 @@ namespace Synet
             _idxCount = src[1]->Axis(_axis);
             _idxInner = src[1]->Size(_axis + 1);
 
-            _gatherElementsSimd.Init(_srcType, _idxType, src[1]->Const(), 
-                TensorUsers(Param().src()[1]) == 1, idxShape.data(), _axis, _srcCount, _srcInner, _idxCount);
-            if (_gatherElementsSimd.Enable() && src[1]->Const())
-                _gatherElementsSimd.SetIndex(src[1]->RawData());
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+            if (!_dynamic)
+            {
+                _gatherElementsSimd.Init((SimdTensorDataType)_srcType, (SimdTensorDataType)_idxType,
+                    src[1]->Const() ? SimdTrue : SimdFalse, TensorUsers(Param().src()[1]) == 1,
+                    Shape(idxShape.begin(), idxShape.begin() + _axis), _srcCount, _srcInner, _idxCount);
+                if (_gatherElementsSimd.Enable() && src[1]->Const())
+                    _gatherElementsSimd.SetIndex(src[1]->RawData());
+            }
+#endif
         }
         else if (_version == 2)
         {
@@ -380,11 +395,18 @@ namespace Synet
         }
         else
         {
-            std::stringstream desc;
-            desc << "v" << _version << ToChar(_srcType);
-            this->UsePerfStat(desc.str());
+            if (init)
+            {
+                std::stringstream desc;
+                desc << "v" << _version << ToChar(_srcType);
+                this->UsePerfStat(desc.str());
+            }
             _const = false;
         }
+
+        if (_dynamic)
+            dst[0]->SetDynamic(true);
+
         return true;
     }
 
@@ -396,10 +418,14 @@ namespace Synet
             _gather(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, src[1]->RawData(), _idxOuter, _idxCount, dst[0]->RawData());
             break;
         case 1:
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
             if (_gatherElementsSimd.Enable())
+            {
                 _gatherElementsSimd.Forward(src[0]->RawData(), src[1]->RawData(), dst[0]->RawData());
-            else
-                _gatherElements(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, src[1]->RawData(), _idxCount, dst[0]->RawData());
+                return;
+            }
+#endif
+            _gatherElements(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, src[1]->RawData(), _idxCount, dst[0]->RawData());
             break;
         case 2:
             _gather(src[0]->RawData(), _srcOuter, _srcCount, _srcInner, _index.RawData(), _idxOuter, _idxCount, dst[0]->RawData());

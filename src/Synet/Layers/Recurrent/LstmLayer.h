@@ -25,7 +25,10 @@
 #pragma once
 
 #include "Synet/Layer.h"
-#include "Synet/Utils/InnerProduct.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -35,7 +38,7 @@ namespace Synet
     public:
         LstmLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         virtual int64_t Flop() const;
 
@@ -52,6 +55,8 @@ namespace Synet
         size_t _batch, _seqS, _srcS, _hidS, _dirS, _hidS4;
         const float*_w0, *_w1, *_r0, *_r1, *_b0, *_b1;
         int _internal[IPS];
-        InnerProduct32f _innerProduct32f[IPS];
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetInnerProduct32f _innerProduct32f[IPS];
+#endif
     };
 }

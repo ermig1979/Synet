@@ -40,8 +40,12 @@ namespace Synet
 
     size_t QuantizedConvolutionLayer::MemoryUsage() const
     {
-        return Layer::MemoryUsage() + _norm32f.MemoryUsage() + _bias32i.MemoryUsage() + 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        return Layer::MemoryUsage() + _norm32f.MemoryUsage() + _bias32i.MemoryUsage() +
             _quantizedConvolution.InternalBufferSize();
+#else
+        return Layer::MemoryUsage() + _norm32f.MemoryUsage() + _bias32i.MemoryUsage();
+#endif
     }
 
     int64_t QuantizedConvolutionLayer::Flop() const
@@ -52,8 +56,10 @@ namespace Synet
 
     void QuantizedConvolutionLayer::CompactWeight()
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_quantizedConvolution.Enable())
             ((Tensor&)this->Weight()[0]).Clear();
+#endif
     }
 
     LowPrecisionType QuantizedConvolutionLayer::LowPrecision(TensorType type) const
@@ -63,7 +69,7 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
-    bool QuantizedConvolutionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool QuantizedConvolutionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("QuantizedConvolutionLayer supports only 1 input and 1 output!");
@@ -123,7 +129,8 @@ namespace Synet
         if (!CheckParams())
             return false;
 
-        _quantizedConvolution.Init(_alg.batch, &_conv);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _quantizedConvolution.Init(_alg.batch, (const SimdConvolutionParameters*)&_conv);
         if (_quantizedConvolution.Enable())
         {
             Layer::Extend8u(buf, 0, Shp(_quantizedConvolution.ExternalBufferSize()));
@@ -134,6 +141,7 @@ namespace Synet
             _quantizedConvolution.SetParams(scale, zero, weight[0].Data<int8_t>(), weight[1].Data<float>(), _alg.bias ? weight[_biasStart].Data<int32_t>() : NULL, params);
         }
         else
+#endif
         {
             if (!InitParams())
                 return false;
@@ -151,8 +159,10 @@ namespace Synet
         desc << "-" << _conv.group;
         if (_conv.activation)
             desc << "-" << ShortStr(_conv.activation);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if(_quantizedConvolution.Enable())
             desc << " " << _quantizedConvolution.Info();
+#endif
         this->UsePerfStat(desc.str(), Flop()); 
 
         return true;
@@ -332,23 +342,25 @@ namespace Synet
 
     void QuantizedConvolutionLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_quantizedConvolution.Enable())
-        {
             _quantizedConvolution.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());
-            return;
-        }
-        const AlgParam& alg = this->_alg;
-        uint8_t* src8u = src[0]->Data<uint8_t>();
-        uint8_t* buf8u = Layer::Buf8u(buf, 0);
-        int32_t* sum32i = Layer::Buf32i(buf, 0);
-        float* buf32f = _conv.activation ? Layer::Buf32f(buf, 0) : 0;
-        uint8_t* dst8u = dst[0]->Data<uint8_t>();
-        for (size_t b = 0; b < alg.batch; ++b)
+        else
+#endif
         {
-            Convolution(src8u, buf8u, sum32i);
-            PostProcess(sum32i, buf32f, dst8u);
-            src8u += alg.sSize;
-            dst8u += alg.dSize;
+            const AlgParam& alg = this->_alg;
+            uint8_t* src8u = src[0]->Data<uint8_t>();
+            uint8_t* buf8u = Layer::Buf8u(buf, 0);
+            int32_t* sum32i = Layer::Buf32i(buf, 0);
+            float* buf32f = _conv.activation ? Layer::Buf32f(buf, 0) : 0;
+            uint8_t* dst8u = dst[0]->Data<uint8_t>();
+            for (size_t b = 0; b < alg.batch; ++b)
+            {
+                Convolution(src8u, buf8u, sum32i);
+                PostProcess(sum32i, buf32f, dst8u);
+                src8u += alg.sSize;
+                dst8u += alg.dSize;
+            }
         }
     }
 

@@ -103,7 +103,10 @@ class Context():
 			return
 		with self.lock:
 			self.curr += 1;
-			print("{4}Test{5} {0} of {1} log to : {2} \n{3}".format(self.curr, self.total, log, out, GreenColor(), DefaultColor()))
+			size = len(out)
+			if size >= 2 and out[size - 2] == '\n' and out[size - 1] == '\n' :
+				size = size - 1
+			print("{4}Test{5} {0} of {1} log to : {2} \n{3}".format(self.curr, self.total, log, out[:size], GreenColor(), DefaultColor()))
 			
 	def Error(self, text="") -> bool :
 		if text != "" :
@@ -286,7 +289,7 @@ def RunTest(context, test, format, batch, bf16):
 	if result.returncode != 0 :
 		return context.Error("Compare error in test {0} :\n{1}".format(log, out))
 
-	context.UpdateProgress(log, out[:len(out)-1])
+	context.UpdateProgress(log, out)
 	
 	return True
 
@@ -375,6 +378,9 @@ def main():
 	
 	if not context.error :
 		print("All tests finished {3}successfully{4} in {0}:{1:02d}:{2:02d} !\n".format(elapsed.seconds // 3600, elapsed.seconds % 3600 // 60, elapsed.seconds % 60, GreenColor(), DefaultColor()))
+	else:
+		print("Tests are {0}failed{1} ! \n".format(RedColor(), DefaultColor()))
+		return 1
 	
 	return 0
 	

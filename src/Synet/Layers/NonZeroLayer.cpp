@@ -26,7 +26,7 @@
 
 namespace Synet
 {
-    template<class T> void NonZero(const Tensor<float>& src, Tensor<float>& dst)
+    template<class T> void NonZero(const Tensor& src, Tensor& dst)
     {
         size_t size = src.Size(), nonzeros = 0;
         for (size_t i = 0; i < size; ++i)
@@ -82,7 +82,7 @@ namespace Synet
     {
     }
 
-    bool NonZeroLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool NonZeroLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("NonZeroLayer supports only 1 input and 1 output!");

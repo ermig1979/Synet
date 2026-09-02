@@ -49,6 +49,8 @@ namespace Synet
 
     bool ConvertCastNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer);
 
+    bool ConvertCeilNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
     bool ConvertClipNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer);
 
     bool ConvertConcatNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap);
@@ -59,15 +61,27 @@ namespace Synet
 
     bool ConvertConvOrConvTransposeNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin, TensorFormatMap* tensorFormatMap, UniqNames& merged);
 
+    bool ConvertCosNode(const onnx::NodeProto& node, LayerParam& layer);
+
     bool ConvertBatchNormalizationNode(const onnx::NodeProto& node, const LayerParams& layers, Bytes& original, LayerParam& layer, Bytes& reordered);
 
     bool ConvertDequantizeLinearNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer);
+
+    bool ConvertDivNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered);
 
     bool ConvertDropoutNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertEqualNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
 
+    bool ConvertErfNode(const onnx::NodeProto& node, LayerParam& layer);
+
+    bool ConvertExpNode(const onnx::NodeProto& node, LayerParam& layer);
+
+    bool ConvertExpandNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
     bool ConvertFlattenNode(const onnx::NodeProto& node, LayerParam& layer);
+
+    bool ConvertFloorNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
 
     bool ConvertGatherNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
 
@@ -77,19 +91,53 @@ namespace Synet
 
     bool ConvertGreaterNode(const onnx::NodeProto& node, LayerParam& layer);
 
+    bool ConvertGridSampleNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
+    bool ConvertHardSigmoidNode(const onnx::NodeProto& node, LayerParam& layer);
+
     bool ConvertHardSwishNode(const onnx::NodeProto& node, LayerParam& layer);
+
+    bool ConvertIdentityNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
 
     bool ConvertInitializer(const onnx::TensorProto& tensor, Synet::NetworkParam& network, Bytes& weight, Renames& renames);
 
     bool ConvertInput(const onnx::ValueInfoProto& input, bool trans, Synet::NetworkParam& network, Renames& renames);
 
+    bool ConvertInstanceNormalizationNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer);
+
+    bool ConvertLayerNormalizationNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer);
+
+    bool ConvertLeakyReluNode(const onnx::NodeProto& node, LayerParam& layer);
+
     bool ConvertLessNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertLessOrEqualNode(const onnx::NodeProto& node, LayerParam& layer);
 
+    bool ConvertLogNode(const onnx::NodeProto& node, LayerParam& layer);
+
+    bool ConvertLogSoftmaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer);
+
+    bool ConvertLstmNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
+    bool ConvertMatMulNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap);
+
+    bool ConvertMaxPoolNode(const onnx::NodeProto& node, LayerParam& layer);
+
+    bool ConvertModNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
     bool ConvertMulNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer);
 
+    bool ConvertNegNode(const onnx::NodeProto& node, LayerParam& layer);
+
     bool ConvertNonMaxSuppressionNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& bin, LayerParam& layer);
+
+    bool ConvertNonZeroNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
+    bool ConvertNotNode(const onnx::NodeProto& node, LayerParam& layer);
+
+    bool ConvertPadNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer);
+
+    bool ConvertPowNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer);
 
     bool ConvertPreluNode(const onnx::NodeProto& node, LayerParams& layers, LayerParam& layer);
 
@@ -107,19 +155,45 @@ namespace Synet
 
     bool ConvertQuantizeLinearNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer);
 
+    bool ConvertRangeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
     bool ConvertReduceL2Node(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer);
 
     bool ConvertReduceMaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap);
 
     bool ConvertReduceMeanNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, UniqNames& merged);
 
+    bool ConvertReduceMinNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap);
+
+    bool ConvertReduceSumNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer);
+
+    bool ConvertReluNode(const onnx::NodeProto& node, LayerParam& layer);
+
+    bool ConvertReshapeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer, TensorFormatMap* tensorFormatMap);
+
+    bool ConvertResizeNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer);
+
     bool ConvertRoundNode(const onnx::NodeProto& node, LayerParam& layer);
+
+    bool ConvertScaledDotProductAttentionNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer, Bytes& reordered);
+
+    bool ConvertScatterElementsNode(const onnx::NodeProto& node, const LayerParams& layers, Bytes& original, LayerParam& layer, Bytes& reordered);
+
+    bool ConvertScatterNdNode(const onnx::NodeProto& node, const LayerParams& layers, Bytes& original, LayerParam& layer, Bytes& reordered);
+
+    bool ConvertShapeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const OnnxParam& onnxParam, LayerParam& layer);
+
+    bool ConvertSigmoidNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertSignNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertSqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
 
     bool ConvertTileNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap);
+
+    bool ConvertTopKNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
+    bool ConvertTransposeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const OnnxParam& onnxParam, LayerParam& layer, TensorFormatMap* tensorFormatMap);
 }
 
 #endif

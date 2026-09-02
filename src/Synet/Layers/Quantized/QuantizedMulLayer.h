@@ -26,7 +26,9 @@
 
 #include "Synet/Layer.h"
 
-#include "Synet/Utils/Mul.h"
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -35,7 +37,7 @@ namespace Synet
     public:
         QuantizedMulLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         virtual int64_t Flop() const;
 
@@ -58,6 +60,8 @@ namespace Synet
 
         UniformPtr _uniform;
         UniversalPtr _universal;
-        QuantizedMul _quantizedMul;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetQuantizedMul _quantizedMul;
+#endif
     };
 }

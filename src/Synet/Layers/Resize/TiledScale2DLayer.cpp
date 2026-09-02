@@ -74,7 +74,7 @@ namespace Synet
     {
     }
 
-    bool TiledScale2DLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool TiledScale2DLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 3 || dst.size() != 1)
             SYNET_ERROR("TiledScale2DLayer supports only 3 inputs and 1 output!");

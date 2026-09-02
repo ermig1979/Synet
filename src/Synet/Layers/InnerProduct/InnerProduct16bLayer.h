@@ -25,7 +25,10 @@
 #pragma once
 
 #include "Synet/Layers/InnerProduct/InnerProductLayer.h"
-#include "Synet/Utils/InnerProduct.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -40,13 +43,15 @@ namespace Synet
 
         virtual void CompactWeight();
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
     private:
         size_t _sizeA, _sizeB, _sizeC;
-        InnerProduct16b _innerProduct16b;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetInnerProduct16b _innerProduct16b;
+#endif
     };
 }

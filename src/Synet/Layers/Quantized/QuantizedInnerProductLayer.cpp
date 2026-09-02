@@ -44,8 +44,12 @@ namespace Synet
 
     size_t QuantizedInnerProductLayer::MemoryUsage() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return Layer::MemoryUsage() + _norm32f.MemoryUsage() + _bias32i.MemoryUsage() +
             _quantizedInnerProduct.InternalBufferSize();
+#else
+        return Layer::MemoryUsage() + _norm32f.MemoryUsage() + _bias32i.MemoryUsage();
+#endif
     }
 
     int64_t QuantizedInnerProductLayer::Flop() const
@@ -55,8 +59,13 @@ namespace Synet
 
     void QuantizedInnerProductLayer::CompactWeight()
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_quantizedInnerProduct.Enable())
-            ((Tensor&)this->Weight()[0]).Clear();
+        {
+            for (size_t i = 0; i < this->Weight().size(); ++i)
+                ((Tensor&)this->Weight()[i]).Clear();
+        }
+#endif
     }
 
     LowPrecisionType QuantizedInnerProductLayer::LowPrecision(TensorType type) const
@@ -66,7 +75,7 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
-    bool QuantizedInnerProductLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool QuantizedInnerProductLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if ((src.size() != 1 && src.size() != 2) || dst.size() != 1)
             SYNET_ERROR("QuantizedInnerProductLayer supports only 1 or 2 inputs and 1 output!");
@@ -109,7 +118,11 @@ namespace Synet
                 SYNET_ERROR("QuantizedInnerProductLayer weight[1] has incorrect shape!");
         }
 
-        _quantizedInnerProduct.Init(_M, _N, _K, src[0]->GetType(), src.size() > 1 ? src[1]->GetType() : TensorType8i, dst[0]->GetType(), _transB ? 0 : 1, src.size() == 1, _biasTerm ? 1 : 0);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _quantizedInnerProduct.Init(_M, _N, _K, (SimdTensorDataType)src[0]->GetType(),
+            (SimdTensorDataType)(src.size() > 1 ? src[1]->GetType() : TensorType8i),
+            (SimdTensorDataType)dst[0]->GetType(), _transB ? SimdFalse : SimdTrue,
+            src.size() == 1 ? SimdTrue : SimdFalse, _biasTerm ? SimdTrue : SimdFalse);
         if (_quantizedInnerProduct.Enable())
         {
             Layer::Extend8u(buf, 0, Shp(_quantizedInnerProduct.ExternalBufferSize()));
@@ -121,6 +134,7 @@ namespace Synet
                 _biasTerm ? weight[bias + 0].Data<int32_t>() : NULL, &dstScale, &dstZero);
         }
         else
+#endif
         {
             if (!(Compartible() && InitParams()))
                 return false;
@@ -134,8 +148,10 @@ namespace Synet
         desc << _batch << "x" << _M << "x" << _K << "-" << _N << " ";
         desc << ToChar(src[0]->GetType()) << (src.size() > 1 ? ToChar(src[1]->GetType()) : "0") << ToChar(dst[0]->GetType()) << "-";
         desc << (_transB ? "n" : "t") << (_biasTerm ? "b" : "o");
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_quantizedInnerProduct.Enable())
             desc << " " << _quantizedInnerProduct.Info();
+#endif
         this->UsePerfStat(desc.str(), Flop());
 
         return true;
@@ -291,11 +307,13 @@ namespace Synet
 
     void QuantizedInnerProductLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_quantizedInnerProduct.Enable())
         {
             _quantizedInnerProduct.Forward(src[0]->RawData(), src.size() > 1 ? src[1]->RawData() : NULL, Layer::Buf8u(buf, 0), dst[0]->RawData());
             return;
         }
+#endif
         uint8_t* tmp = _src8u ? src[0]->Data<uint8_t>() : Layer::Buf8u(buf, 0);
         int32_t* sum = Layer::Buf32i(buf, 0);
         //if (!_src8u)

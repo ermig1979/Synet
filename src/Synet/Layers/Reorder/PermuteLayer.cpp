@@ -23,7 +23,6 @@
 */
 
 #include "Synet/Layers/Reorder/PermuteLayer.h"
-#include "Synet/Utils/Permute.h"
 
 namespace Synet
 {
@@ -157,7 +156,6 @@ namespace Synet
     PermuteLayer::PermuteLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
     {
-        _simdPermute = std::make_shared<SimdPermute>();
     }
 
     LowPrecisionType PermuteLayer::LowPrecision(TensorType type) const
@@ -169,7 +167,7 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
-    bool PermuteLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool PermuteLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("PermuteLayer supports only 1 input and 1 output!");
@@ -209,9 +207,11 @@ namespace Synet
         if (nontrivial)
         {
             dst[0]->Reshape(src[0]->GetType(), _dstShape, param.format() == TensorFormatUnknown ? src[0]->Format() : param.format());
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
             if(src[0]->GetType() != TensorType64i && src[0]->GetType() != TensorType64u)
-                _simdPermute->Init(src[0]->Shape(), param.order(), src[0]->GetType());
-            if (!_simdPermute->Enable())
+                _simdPermute.Init(src[0]->Shape(), param.order(), (SimdTensorDataType)src[0]->GetType());
+            if (!_simdPermute.Enable())
+#endif
             {
                 CompactShapes();
                 if (_count < 2 || _count > 5)
@@ -244,10 +244,14 @@ namespace Synet
 
     void PermuteLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
-        if (_simdPermute->Enable())
-            _simdPermute->Forward(src[0]->RawData(), dst[0]->RawData());
-        else
-            _permute(src[0]->RawData(), _dstShape, _srcStride, dst[0]->RawData());
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        if (_simdPermute.Enable())
+        {
+            _simdPermute.Forward(src[0]->RawData(), dst[0]->RawData());
+            return;
+        }
+#endif
+        _permute(src[0]->RawData(), _dstShape, _srcStride, dst[0]->RawData());
     }
 
     void PermuteLayer::CompactShapes()

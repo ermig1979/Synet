@@ -290,6 +290,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedSqueezeExcitationLayer.cpp">
       <Filter>Layers\Quantized</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\NonMaxSuppressionLayer.cpp">
+      <Filter>Layers\Detection</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -302,13 +305,7 @@
     <ClInclude Include="..\..\src\Synet\Utils\ConvParam.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Convolution.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\DebugPrint.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Deconvolution.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\Gemm.h">
@@ -327,9 +324,6 @@
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\Math.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\MergedConvolution.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Common.h" />
@@ -357,9 +351,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Region.h" />
     <ClInclude Include="..\..\src\Synet\Fabric.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\InnerProduct.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Context.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Ultraface.h">
       <Filter>Decoders</Filter>
@@ -446,13 +437,13 @@
     <ClInclude Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Permute.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Rtdetr.h">
       <Filter>Decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\DetOut.h">
+      <Filter>Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Detection.h">
       <Filter>Decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Yolo.h">
@@ -466,9 +457,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Alpha.h">
       <Filter>Decoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Add.h">
-      <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.h">
       <Filter>Layers\Legacy</Filter>
@@ -731,9 +719,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\Select\WhereLayer.h">
       <Filter>Layers\Select</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Gather.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\VersionInfo.h">
       <Filter>Utils</Filter>
     </ClInclude>
@@ -743,14 +728,17 @@
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedMulLayer.h">
       <Filter>Layers\Quantized</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Mul.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedHardSigmoidLayer.h">
       <Filter>Layers\Quantized</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedSqueezeExcitationLayer.h">
       <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\NonMaxSuppressionLayer.h">
+      <Filter>Layers\Detection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Decoders\Ssd.h">
+      <Filter>Decoders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

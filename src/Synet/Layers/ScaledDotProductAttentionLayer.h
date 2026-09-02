@@ -26,6 +26,10 @@
 
 #include "Synet/Layer.h"
 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
+
 namespace Synet
 {
     class ScaledDotProductAttentionLayer : public Layer
@@ -33,7 +37,7 @@ namespace Synet
     public:
         ScaledDotProductAttentionLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         virtual int64_t Flop() const;
 
@@ -46,6 +50,8 @@ namespace Synet
         float _scale;
         bool _fast;
 
-        std::shared_ptr<struct SimdPermute> _simdPermute;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetPermute _simdPermute;
+#endif
     };
 }

@@ -25,7 +25,7 @@
 #pragma once
 
 #include "Synet/Layer.h"
-#include "Synet/Utils/Deconvolution.h"
+#include "Synet/Utils/ConvParam.h"
 
 namespace Synet
 {
@@ -38,7 +38,7 @@ namespace Synet
 
         virtual void CompactWeight();
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
     protected:
 

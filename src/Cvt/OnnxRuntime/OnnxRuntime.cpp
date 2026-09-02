@@ -270,6 +270,8 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "ReduceMean" && !ConvertReduceMeanNode(node, trans, network.layers(), layer, merged))
                 return ErrorMessage(i, node);
+            if (node.op_type() == "ReduceMin" && !ConvertReduceMinNode(node, trans, network.layers(), layer, &tensorFormatMap))
+                return ErrorMessage(i, node);
             if (node.op_type() == "ReduceSum" && !ConvertReduceSumNode(node, trans, network.layers(), layer))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Relu" && !ConvertReluNode(node, layer))

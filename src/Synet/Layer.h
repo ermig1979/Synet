@@ -36,7 +36,7 @@ namespace Synet
     class Layer
     {
     public:
-        typedef Synet::Tensor<float> Tensor;
+        typedef Synet::Tensor Tensor;
         typedef std::vector<Tensor> Tensors;
         typedef Tensor* TensorPtr;
         typedef std::vector<TensorPtr> TensorPtrs;
@@ -48,6 +48,7 @@ namespace Synet
             , _context(context)
             , _isBack(false)
             , _const(false)
+            , _dynamic(false)
             , _perfEnable(false)
             , _perfFlop(0)
         {
@@ -107,6 +108,11 @@ namespace Synet
             return _const;
         }
 
+        bool Dynamic() const
+        {
+            return _dynamic;
+        }
+
         virtual void DebugPrint(std::ostream & os, int flag, int first, int last, int precision)
         {
         }
@@ -124,7 +130,7 @@ namespace Synet
 
         bool SetStats(const StatSharedPtrs& stats);
 
-        virtual bool Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst) = 0;
+        virtual bool Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, bool init = true) = 0;
 
         void ForwardPerf(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
@@ -139,19 +145,19 @@ namespace Synet
 
         static float * Buf32f(const TensorPtrs& buf, size_t idx)
         {
-            Synet::Tensor<float>* b = buf[TensorType32f * BUFFER_COUNT + idx];
+            Synet::Tensor* b = buf[TensorType32f * BUFFER_COUNT + idx];
             return b->Data<float>();
         }
 
         static int32_t * Buf32i(const TensorPtrs& buf, size_t idx)
         {
-            Synet::Tensor<float>* b = buf[TensorType32i * BUFFER_COUNT + idx];
+            Synet::Tensor* b = buf[TensorType32i * BUFFER_COUNT + idx];
             return b->Data<int32_t>();
         }
 
         static uint8_t* Buf8u(const TensorPtrs& buf, size_t idx)
         {
-            Synet::Tensor<float>* b = buf[TensorType8u * BUFFER_COUNT + idx];
+            Synet::Tensor* b = buf[TensorType8u * BUFFER_COUNT + idx];
             return b->Data<uint8_t>();
         }
 
@@ -186,7 +192,7 @@ namespace Synet
         }
 
     protected:
-        bool _const;
+        bool _const, _dynamic;
 
     private:
         friend class Network;

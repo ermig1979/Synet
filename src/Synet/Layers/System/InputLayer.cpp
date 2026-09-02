@@ -31,7 +31,7 @@ namespace Synet
     {
     }
 
-    bool InputLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool InputLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 0 || dst.size() == 0)
             SYNET_ERROR("InputLayer supports only outputs!");

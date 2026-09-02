@@ -58,7 +58,7 @@ namespace Synet
     {
     }
 
-    bool BiasLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool BiasLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() + this->Weight().size() != 2 || dst.size() != 1)
             SYNET_ERROR("BiasLayer supports only 2 inputs or 1 input + 1 weight and 1 output!");

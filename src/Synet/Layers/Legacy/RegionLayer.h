@@ -36,7 +36,7 @@ namespace Synet
 
         RegionLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         void GetRegions(const TensorPtrs& src, float threshold, Regions& dst) const;
 

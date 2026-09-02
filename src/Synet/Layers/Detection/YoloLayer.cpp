@@ -32,7 +32,7 @@ namespace Synet
     {
     }
 
-    bool YoloLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool YoloLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("YoloLayer supports 1 input and 1 output!");

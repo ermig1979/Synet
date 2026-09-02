@@ -36,7 +36,7 @@ namespace Synet
         return LowPrecisionTypePassive;
     }
 
-    bool ExpandDimsLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool ExpandDimsLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() > 2 || dst.size() != 1)
             SYNET_ERROR("ExpandDimsLayer supports 1 or 2 inputs and 1 output!");

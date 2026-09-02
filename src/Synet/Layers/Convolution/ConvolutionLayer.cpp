@@ -44,7 +44,7 @@ namespace Synet
             ((Tensor&)this->Weight()[0]).Clear();
     }
 
-    bool ConvolutionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool ConvolutionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         const ConvolutionParam & param = this->Param().convolution();
         Tensors & weight = (Tensors&)this->Weight();

@@ -187,7 +187,7 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
-    bool QuantizedPoolingLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool QuantizedPoolingLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if ((src.size() != 0 && src.size() != 1) || dst.size() != 1)
             SYNET_ERROR("QuantizedPoolingLayer supports only 1 inputs and 1 output!");

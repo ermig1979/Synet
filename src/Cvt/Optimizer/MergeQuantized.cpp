@@ -404,8 +404,8 @@ namespace Synet
         index += 7;
         dst.push_back(layer);
         return true;
-    }
-
+    }    
+    
     //--------------------------------------------------------------------------------------------------
 
     bool MergeThreeQuantizedConvolutions(const LayerParams& src, size_t& index, const OptimizerParam& param, LayerParams& dst, Changes& changes)

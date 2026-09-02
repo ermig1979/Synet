@@ -26,7 +26,10 @@
 #pragma once
 
 #include "Synet/Layer.h"
-#include "Synet/Utils/Add.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -39,7 +42,7 @@ namespace Synet
 
         virtual int64_t Flop() const;
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         typedef void (*UniformPtr)(const uint8_t* a, const uint8_t* b, size_t size, uint8_t* dst);
         typedef void (*AddBiasPtr)(const uint8_t* a, const uint8_t* b, size_t count, size_t size, uint8_t* dst, TensorFormat format);
@@ -75,6 +78,8 @@ namespace Synet
         UniformPtr _uniform;
         AddBiasPtr _addBias;
         UniversalPtr _universal;
-        Add16b _add16b;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetAdd16b _add16b;
+#endif
     };
 }

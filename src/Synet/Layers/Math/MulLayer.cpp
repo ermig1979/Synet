@@ -339,13 +339,18 @@ namespace Synet
         return _batch * _channels * _spatial;
     }
 
-    bool MulLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool MulLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() + this->Weight().size() != 2 || dst.size() != 1)
             SYNET_ERROR("MulLayer supports 2 inputs (or 1 input and 1 weight) and 1 output!");
         TensorPtrs _src = GetSrc(src);
         if (_src[0]->GetType() != _src[1]->GetType())
             SYNET_ERROR("MulLayer inputs must have the same type!");
+
+        _dynamic = false;
+        for(size_t i = 0; i < src.size(); ++i)
+            if (src[i]->Dynamic())
+                _dynamic = true;
 
         Shape shapeA = _src[0]->Shape(), shapeB = _src[1]->Shape();
         TensorFormat formatA = _src[0]->Format(), formatB = _src[1]->Format();
@@ -524,9 +529,13 @@ namespace Synet
         }
         else
         {
-            this->UsePerfStat();
+            if(init)
+                this->UsePerfStat();
             _const = false;
         }
+
+        if (_dynamic)
+            dst[0]->SetDynamic(true);
 
         return true;
     }

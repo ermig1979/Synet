@@ -60,7 +60,7 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
-    bool ConcatLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool ConcatLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         _concatAxis = src[0]->Index((int32_t)this->Param().concat().axis());
         _concatNum = src[0]->Size(0, _concatAxis);

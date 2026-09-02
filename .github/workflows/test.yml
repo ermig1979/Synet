@@ -1,0 +1,49 @@
+name: Test
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [ "dev" ]
+
+jobs:
+  build_and_test_x86:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        gcc_version: [13]
+        build_type: [Release]
+
+    steps:
+      - name: Checkout main repository only
+        uses: actions/checkout@v6
+        with:
+          submodules: false
+
+      - name: Select and update specific submodules
+        run: |
+          git submodule update --init 3rd/Cpl
+          git submodule update --init 3rd/Simd
+          git submodule update --init 3rd/bin
+
+      - name: Host properties
+        run: lscpu
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update 
+          sudo apt-get -y install g++-${{matrix.gcc_version}}
+          sudo apt-get install python3-numpy
+
+      - name: Configure CMake
+        run: >
+          cmake ./prj/cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DSIMD_TOOLCHAIN="g++-${{matrix.gcc_version}}" -DSYNET_TEST="all" -DSYNET_SIMD=1 -DSYNET_SHARED=1 -DSYNET_PERF=1 
+          -DSIMD_AVX512=0 -DSIMD_AVX512VNNI=0 -DSIMD_AMXBF16=0 -DSIMD_AMX_EMULATE=0 -DSYNET_BF16_ROUND_TEST=0 -DSYNET_ORT_DNNL=0 -DSYNET_OPENCV=OFF -DSYNET_USE_BIN=ON -DSYNET_INFO=ON
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --config ${{matrix.build_type}} --parallel$(nproc)
+        
+      - name: Correctness Check
+        working-directory: ${{github.workspace}}
+        run: bash check.sh

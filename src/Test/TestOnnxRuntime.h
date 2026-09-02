@@ -27,7 +27,6 @@
 #include "TestCommon.h"
 #include "TestPerformance.h"
 #include "TestNetwork.h"
-#include "TestRegionDecoder.h"
 
 #if defined(SYNET_ONNXRUNTIME_ENABLE)
 
@@ -207,7 +206,7 @@ namespace Test
             if(!_dynamicOutput)
                 ReshapeOutput();
 
-            _regionDecoder.Init(_inputShapes[0], _outputNameBuffers, param);
+            _regionDetection.Init(_inputShapes[0], _outputNameBuffers, param.detection());
 
             return true;
         }
@@ -268,8 +267,8 @@ namespace Test
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
-            if (_regionDecoder.Enable())
-                return _regionDecoder.GetRegions(_output, size, threshold, overlap);
+            if (_regionDetection.Enable())
+                return _regionDetection.GetRegions(_output, size.x, size.y, threshold, overlap);
             else
             {
                 Regions regions;
@@ -321,7 +320,7 @@ namespace Test
         size_t _batchSize;
         bool _dynamicOutput;
 
-        RegionDecoder _regionDecoder;
+        Synet::RegionDetection _regionDetection;
 
         struct Env
         {

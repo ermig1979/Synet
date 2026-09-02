@@ -27,7 +27,6 @@
 #include "TestCommon.h"
 #include "TestPerformance.h"
 #include "TestNetwork.h"
-#include "TestRegionDecoder.h"
 
 #include "Synet/Network.h"
 
@@ -54,7 +53,12 @@ namespace Test
         {
             Shape shape = _net.Src()[index]->Shape();
             Synet::TensorFormat format = _net.Src()[index]->Format();
-            return shape.size() == 4 && format == Synet::TensorFormatNhwc ? Shp(shape[0], shape[3], shape[1], shape[2]) : shape;
+            if (shape.size() == 4 && format == Synet::TensorFormatNhwc)
+                return Shp(shape[0], shape[3], shape[1], shape[2]);
+            else if (shape.size() == 3 && format == Synet::TensorFormatNhwc)
+                return Shp(shape[2], shape[0], shape[1]);
+            else
+                return shape;
         }
 
         virtual Synet::TensorType SrcType(size_t index) const
@@ -95,7 +99,7 @@ namespace Test
                 _lower = param.lower();
                 _upper = param.upper();
                 _synetMemoryUsage = _net.MemoryUsage();
-                _regionDecoder.Init(_net, param);
+                _regionDetection.Init(_net, param.detection());
                 return true;
             }
             return false;
@@ -132,8 +136,8 @@ namespace Test
 
         virtual Regions GetRegions(const Size & size, float threshold, float overlap) const
         {
-            if (_regionDecoder.Enable())
-                return _regionDecoder.GetRegions(_net, size, threshold, overlap, CTX_NUM - 1);
+            if (_regionDetection.Enable())
+                return _regionDetection.GetRegions(_net, size.x, size.y, threshold, overlap, CTX_NUM - 1);
             else
                 return _net.GetRegions(size.x, size.y, threshold, overlap, CTX_NUM - 1);
         }
@@ -149,7 +153,7 @@ namespace Test
         bool _trans, _sort;
         Floats _lower, _upper;
         size_t _synetMemoryUsage;
-        RegionDecoder _regionDecoder;
+        Synet::RegionDetection _regionDetection;
         const int CTX_NUM = 1;
 
         bool Load(const String & model, const String & weight, const Options& options)
@@ -199,6 +203,13 @@ namespace Test
                         for (size_t y = 0; y < src.Axis(2); ++y)
                             for (size_t x = 0; x < src.Axis(3); ++x)
                                 dst.Data<T>(Shape({ n, y, x, c }))[0] = src.Data<T>(Shape({ n, c, y, x }))[0];
+            }
+            else if (dst.Format() == Synet::TensorFormatNhwc && dst.Count() == 3)
+            {
+                for (size_t c = 0; c < src.Axis(0); ++c)
+                    for (size_t y = 0; y < src.Axis(1); ++y)
+                        for (size_t x = 0; x < src.Axis(2); ++x)
+                            dst.Data<T>(Shape({ y, x, c }))[0] = src.Data<T>(Shape({ c, y, x }))[0];
             }
             else
                 memcpy(dst.RawData(), src.RawData(), src.RawSize());
@@ -424,6 +435,8 @@ namespace Test
                         srcShape[0] = batchSize;
                     if (_trans && srcShape.size() == 4)
                         srcShape = Shape({ srcShape[0], srcShape[2], srcShape[3], srcShape[1] });
+                    if (_trans && srcShape.size() == 3)
+                        srcShape = Shape({ srcShape[1], srcShape[2], srcShape[0] });
                 }
                 if (srcShape.empty())
                     SYNET_ERROR("Test parameter input.shape is empty!");

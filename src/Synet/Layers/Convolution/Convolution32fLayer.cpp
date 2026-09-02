@@ -36,12 +36,20 @@ namespace Synet
 
     size_t Convolution32fLayer::MemoryUsage() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return ConvolutionLayer::MemoryUsage() + _convolution32f.InternalBufferSize() * sizeof(float);
+#else
+        return ConvolutionLayer::MemoryUsage();
+#endif
     }
 
     String Convolution32fLayer::InternalInfo() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return  String(" fp32") + (_convolution32f.Enable() ? String(" ") + _convolution32f.Info() : String());
+#else
+        return String(" fp32");
+#endif
     }
 
     bool Convolution32fLayer::Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
@@ -52,14 +60,16 @@ namespace Synet
         if(src->GetType() != TensorType32f || dst->GetType() != TensorType32f)
             SYNET_ERROR("Convolution32fLayer supports only FP32 input and output!");
         dst->Reshape(TensorType32f, conv.DstShape(alg.batch), src->Format());
-        _convolution32f.Init(alg.batch, &conv);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _convolution32f.Init(alg.batch, (const SimdConvolutionParameters*)&conv);
         if (_convolution32f.Enable())
         {
             Layer::Extend32f(buf, 0, Shp(_convolution32f.ExternalBufferSize()), src->Format());
-            _convolution32f.SetParams(weight[0].Data<float>(), &alg.internal, alg.bias ? weight[1].Data<float>() : NULL,
+            _convolution32f.SetParams(weight[0].Data<float>(), (SimdBool*)&alg.internal, alg.bias ? weight[1].Data<float>() : NULL,
                 conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : alg.params);
         }
         else
+#endif
             Layer::Extend32f(buf, 0, Shp(conv.ImgSize()), src->Format());
         return true;
     }
@@ -71,9 +81,11 @@ namespace Synet
 
     void Convolution32fLayer::Forward(const float * src, float* buf, float* dst)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_convolution32f.Enable())
             _convolution32f.Forward(src, buf, dst);
         else
+#endif
         {
             const float * weight = this->Weight()[0].Data<float>();
             const ConvParam& conv = this->_conv;

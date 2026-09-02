@@ -32,7 +32,7 @@ namespace Synet
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
         SimdSynetSoftmax32f(src, outer, count, inner, dst);
 #else
-        Tensor<float> _buffer(TensorType32f, Shp(inner), TensorFormatUnknown);
+        Tensor _buffer(TensorType32f, Shp(inner), TensorFormatUnknown);
         float * buffer = _buffer.Data<float>();
         for (size_t o = 0; o < outer; ++o)
         {
@@ -88,7 +88,7 @@ namespace Synet
 
     void LogSoftmaxLayerForward(const float* src, size_t outer, size_t count, size_t inner, float* dst)
     {
-        Tensor<float> _buffer(TensorType32f, Shp(inner * 2), TensorFormatUnknown);
+        Tensor _buffer(TensorType32f, Shp(inner * 2), TensorFormatUnknown);
         float* max = _buffer.Data<float>(), * sum = max + inner;
         for (size_t o = 0; o < outer; ++o)
         {
@@ -150,7 +150,7 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
-    bool SoftmaxLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool SoftmaxLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("SoftmaxLayer supports only 1 input and 1 output!");

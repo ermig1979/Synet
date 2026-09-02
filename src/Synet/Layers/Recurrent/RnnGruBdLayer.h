@@ -25,7 +25,10 @@
 #pragma once
 
 #include "Synet/Layer.h"
-#include "Synet/Utils/InnerProduct.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -34,7 +37,7 @@ namespace Synet
     public:
         RnnGruBdLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         virtual int64_t Flop() const;
 
@@ -46,7 +49,9 @@ namespace Synet
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
         int _internal[2];
-        InnerProduct32f _innerProduct32f[2];
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetInnerProduct32f _innerProduct32f[2];
+#endif
         size_t _batch, _input, _output;
     };
 }

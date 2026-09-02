@@ -1,6 +1,19 @@
 cmake_minimum_required(VERSION 3.10)
+if(SYNET_USE_BIN)
+  set(ORT_DIR ${ROOT_DIR}/3rd/bin/onnxruntime)
+  set(ORT_BIN ${ORT_DIR}/bin/intel64/Release)
+  set(ORT_INCS 
+    ${ORT_DIR}/include ${ORT_DIR}/include/onnxruntime 
+    ${ORT_DIR}/include/onnxruntime/core/session 
+    ${ORT_DIR}/include/onnxruntime/core/providers/cpu)
+  set(ORT_LIBS_IN ${ORT_BIN}/libonnxruntime.so ${ORT_BIN}/libonnxruntime.so.1)
+  set(ORT_LIBS ${CMAKE_BINARY_DIR}/libonnxruntime.so)
+  add_custom_command(
+    OUTPUT ${ORT_LIBS}
+    COMMAND ${CMAKE_COMMAND} -E copy ${ORT_LIBS_IN} ${CMAKE_BINARY_DIR})
 
-if(SYNET_USE_CONAN_PACKAGES)
+  add_custom_target(make_ort DEPENDS ${ORT_LIBS})
+elseif(SYNET_USE_CONAN_PACKAGES)
   find_package(onnxruntime REQUIRED)
   set(ORT_LIBS onnxruntime::onnxruntime)
   set(ORT_INCS)
@@ -10,7 +23,7 @@ else()
   set(ORT_ONNX ${ORT_BIN}/_deps/onnx-build)
   set(PB_BIN ${ORT_BIN}/_deps/protobuf-build)
 
-  set(ORT_LIBS ${ORT_BIN}/libonnxruntime.so.1 ${PB_BIN}/libprotobuf.a)
+  set(ORT_LIBS ${ORT_BIN}/libonnxruntime.so ${PB_BIN}/libprotobuf.a)
   if(SYNET_ORT_DNNL)
     set(ORT_LIBS ${ORT_LIBS} ${ORT_BIN}/libonnxruntime_providers_dnnl.so ${ORT_BIN}/libonnxruntime_providers_shared.so)
     set(ORT_LIBS ${ORT_LIBS} ${ORT_BIN}/dnnl/install/lib/libdnnl.so.3)

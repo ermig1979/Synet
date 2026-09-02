@@ -43,7 +43,9 @@ namespace Synet
         for (size_t c = 0; c < _count; ++c)
             size += _bias32i[c].RawSize() + _norm32f[c].RawSize();
         size += _dwSrcZero8u.RawSize();
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         size += _quantizedMergedConvolution.InternalBufferSize();
+#endif
         return size;
     }
 
@@ -63,11 +65,13 @@ namespace Synet
 
     void QuantizedMergedConvolutionLayer::CompactWeight()
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_quantizedMergedConvolution.Enable())
         {
             for (size_t i = 0; i < this->Weight().size(); ++i)
                 ((Tensor&)this->Weight()[i]).Clear();
         }
+#endif
     }
 
     LowPrecisionType QuantizedMergedConvolutionLayer::LowPrecision(TensorType type) const
@@ -77,7 +81,7 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
-    bool QuantizedMergedConvolutionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool QuantizedMergedConvolutionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("QuantizedMergedConvolutionLayer supports only 1 input and 1 output!");
@@ -188,13 +192,15 @@ namespace Synet
             _term = float(_ioZero[4]) - Fmadd(float(_ioZero[a]), _aNorm, float(_ioZero[b]) * _bNorm);
         }
 
-        _quantizedMergedConvolution.Init(_batch, _conv, _count, _add);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _quantizedMergedConvolution.Init(_batch, (const SimdConvolutionParameters*)_conv, _count, _add);
         if (_quantizedMergedConvolution.Enable())
         {
             Layer::Extend8u(buf, 0, Shp(_quantizedMergedConvolution.ExternalBufferSize()));
             _quantizedMergedConvolution.SetParams(_ioScale, _ioZero, _ptrW, _ptrS, _ptrB);
         }
         else
+#endif
         {
             for (size_t c = 0; c < _count; ++c)
             {
@@ -246,8 +252,10 @@ namespace Synet
         desc << _count << ": " << _batch << "x" << _conv[0].srcC << "x" << _conv[0].srcH << "x" << _conv[0].srcW;
         for (size_t i = 0; i < _count; ++i)
             desc << "-" << (_conv[i].IsDepthwise() ? String("") : Cpl::ToStr(_conv[i].dstC) + "x") << _conv[i].kernelY << "x" << _conv[i].strideY;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if(_quantizedMergedConvolution.Enable())
             desc << " " << _quantizedMergedConvolution.Info();
+#endif
         this->UsePerfStat(desc.str(), Flop()); 
 
         return true;
@@ -255,9 +263,11 @@ namespace Synet
 
     void QuantizedMergedConvolutionLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_quantizedMergedConvolution.Enable())
             _quantizedMergedConvolution.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());
         else
+#endif
             Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), Layer::Buf32i(buf, 0), dst[0]->RawData());
     }
 

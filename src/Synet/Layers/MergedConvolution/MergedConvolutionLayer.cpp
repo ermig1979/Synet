@@ -23,7 +23,6 @@
 */
 
 #include "Synet/Layer.h"
-#include "Synet/Utils/MergedConvolution.h"
 #include "Synet/Utils/ImgToCol.h"
 #include "Synet/Utils/Activation.h"
 #include "Synet/Layers/MergedConvolution/MergedConvolutionLayer.h"
@@ -35,7 +34,7 @@ namespace Synet
     {
     }
 
-    bool MergedConvolutionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool MergedConvolutionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("MergedConvolutionLayer supports only 1 input and 1 output!");

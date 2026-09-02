@@ -355,11 +355,16 @@ namespace Synet
         return _batch * _channels * _spatial;
     }
 
-    bool AddLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool AddLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() + this->Weight().size() != 2 || dst.size() != 1)
             SYNET_ERROR("AddLayer supports 2 inputs (or 1 input and 1 weight) and 1 output!");
         TensorPtrs _src = GetSrc(src);
+
+        _dynamic = false;
+        for (size_t i = 0; i < src.size(); ++i)
+            if (src[i]->Dynamic())
+                _dynamic = true;
 
         Shape shapeA = _src[0]->Shape(), shapeB = _src[1]->Shape();
         TensorFormat formatA = _src[0]->Format(), formatB = _src[1]->Format();
@@ -548,10 +553,15 @@ namespace Synet
             _addBias = GetAddBias(_typeA, _typeB, _typeD);
             if(_uniform == NULL || _addBias == NULL)
                 SYNET_ERROR("AddLayer can't process input type!");
-            if (shapeA == shapeB)
-                _add16b.Init(shapeA, _typeA, shapeB, _typeB, _typeD, _format);
-            else
-                _add16b.Clear();
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+            if (!_dynamic)
+            {
+                if (shapeA == shapeB)
+                    _add16b.Init(shapeA, (SimdTensorDataType)_typeA, shapeB, (SimdTensorDataType)_typeB, (SimdTensorDataType)_typeD, (SimdTensorFormatType)_format);
+                else
+                    _add16b.Clear();
+            }
+#endif
         }
 
         if (_src[0]->Const() && _src[1]->Const())
@@ -562,12 +572,18 @@ namespace Synet
         }
         else
         {
-            if(Options().BFloat16Enable())
-                this->UsePerfStat(ToChar(_typeA) + ToChar(_typeB) + ToChar(_typeD));
-            else
-                this->UsePerfStat();
+            if (init)
+            {
+                if (Options().BFloat16Enable())
+                    this->UsePerfStat(ToChar(_typeA) + ToChar(_typeB) + ToChar(_typeD));
+                else
+                    this->UsePerfStat();
+            }
             _const = false;
         }
+
+        if (_dynamic)
+            dst[0]->SetDynamic(true);
 
         return true;
     }
@@ -591,11 +607,13 @@ namespace Synet
             const uint8_t* srcA = _src[0]->RawData();
             const uint8_t* srcB = _src[1]->RawData();
             uint8_t* dst0 = dst[0]->RawData();
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
             if (_add16b.Enable())
             {
                 _add16b.Forward(srcA, srcB, dst0);
                 return;
             }
+#endif
             switch (_special)
             {
             case SpecialNone:

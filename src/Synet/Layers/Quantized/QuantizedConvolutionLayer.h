@@ -26,7 +26,10 @@
 
 #include "Synet/Layer.h"
 #include "Synet/Utils/ConvParam.h"
-#include "Synet/Utils/Convolution.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -43,7 +46,7 @@ namespace Synet
 
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
@@ -69,6 +72,8 @@ namespace Synet
         float _srcScale, _intScale, _dstScale;
         size_t _biasStart, _actStart;
 
-        QuantizedConvolution _quantizedConvolution;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetQuantizedConvolution _quantizedConvolution;
+#endif
     };
 }

@@ -113,6 +113,8 @@ namespace Synet
 
     bool MergeQuantizedShuffleV0(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
+    bool MergeQuantizedSqueezeExcitation(const LayerParams& src, size_t& index, const OptimizerParam& param, LayerParams& dst, Changes& changes);
+
     bool MergeSqueezeExcitation(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
     bool MergeThreeConvolutions(const LayerParams& src, size_t& index, QuantizationMethod method, const OptimizerParam& param, LayerParams& dst, Changes& changes);

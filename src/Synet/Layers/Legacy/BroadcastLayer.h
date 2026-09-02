@@ -33,7 +33,7 @@ namespace Synet
     public:
         BroadcastLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         typedef void (*BroadcastPtr)(const uint8_t* src, size_t size, uint8_t* dst);
 

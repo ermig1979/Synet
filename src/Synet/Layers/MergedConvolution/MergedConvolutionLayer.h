@@ -25,7 +25,7 @@
 #pragma once
 
 #include "Synet/Layer.h"
-#include "Synet/Utils/MergedConvolution.h"
+#include "Synet/Utils/ConvParam.h"
 #include "Synet/Layers/Activation/ActivationLayers.h"
 #include "Synet/Layers/Activation/PreluLayer.h"
 #include "Synet/Utils/ImgToCol.h"
@@ -172,7 +172,7 @@ namespace Synet
     public:
         MergedConvolutionLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         virtual void CompactWeight();
 

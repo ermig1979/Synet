@@ -35,7 +35,7 @@ namespace Synet
             _internal[i] = 0;
     }
 
-    bool LstmLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool LstmLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 3 || dst.size() != 1)
             SYNET_ERROR("LstmLayer supports 3 input1 and 1 output!");
@@ -72,17 +72,19 @@ namespace Synet
 
         dst[0]->Reshape(TensorType32f, Shp(_seqS, _dirS, _batch, _hidS), TensorFormatUnknown);
 
-        _innerProduct32f[0].Init(_seqS * _batch, _hidS4,_srcS,  1, 1, 1, ActivationFunctionTypeIdentity);
-        _innerProduct32f[0].SetParams(_w0, &_internal[0], NULL, NULL);
-        _innerProduct32f[2].Init(1, _hidS4, _hidS, 1, 1, 1, ActivationFunctionTypeIdentity);
-        _innerProduct32f[2].SetParams(_r0, &_internal[2], NULL, NULL);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _innerProduct32f[0].Init(_seqS * _batch, _hidS4, _srcS, SimdTrue, SimdTrue, SimdTrue, SimdConvolutionActivationIdentity);
+        _innerProduct32f[0].SetParams(_w0, (SimdBool*)&_internal[0], NULL, NULL);
+        _innerProduct32f[2].Init(1, _hidS4, _hidS, SimdTrue, SimdTrue, SimdTrue, SimdConvolutionActivationIdentity);
+        _innerProduct32f[2].SetParams(_r0, (SimdBool*)&_internal[2], NULL, NULL);
         if (_dirS > 1)
         {
-            _innerProduct32f[1].Init(_seqS * _batch, _hidS4, _srcS, 1, 1, 1, ActivationFunctionTypeIdentity);
-            _innerProduct32f[1].SetParams(_w1, &_internal[1], NULL, NULL);
-            _innerProduct32f[3].Init(1, _hidS4, _hidS, 1, 1, 1, ActivationFunctionTypeIdentity);
-            _innerProduct32f[3].SetParams(_r1, &_internal[3], NULL, NULL);
+            _innerProduct32f[1].Init(_seqS * _batch, _hidS4, _srcS, SimdTrue, SimdTrue, SimdTrue, SimdConvolutionActivationIdentity);
+            _innerProduct32f[1].SetParams(_w1, (SimdBool*)&_internal[1], NULL, NULL);
+            _innerProduct32f[3].Init(1, _hidS4, _hidS, SimdTrue, SimdTrue, SimdTrue, SimdConvolutionActivationIdentity);
+            _innerProduct32f[3].SetParams(_r1, (SimdBool*)&_internal[3], NULL, NULL);
         }
+#endif
 
         std::stringstream desc;
         desc << _seqS << "x" << _dirS << "x" << _batch << "x" << _hidS;
@@ -98,8 +100,10 @@ namespace Synet
     size_t LstmLayer::MemoryUsage() const
     {
         size_t size = 0;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         for (int i = 0; i < IPS; ++i)
             size += _innerProduct32f[i].InternalBufferSize();
+#endif
         return Layer::MemoryUsage() + size * sizeof(float);
     }
 
@@ -153,7 +157,9 @@ namespace Synet
         size_t idx = (rev && _dirS == 2) ? 1 : 0;
 
         memcpy(cBeg + cStep, c0, cStep * sizeof(float));
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         _innerProduct32f[0 + idx].Forward(x, NULL, NULL, xBuf);
+#endif
         for (size_t i = 0; i < _seqS; ++i)
         {
             float * xCurr = xBeg + i * xStep;
@@ -163,7 +169,9 @@ namespace Synet
             float * cPrev = cBeg + ((i - 1)&1) * cStep;
             for (size_t b = 0; b < _batch; ++b)
             {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
                 _innerProduct32f[2 + idx].Forward(hPrev, NULL, NULL, buf0);
+#endif
 
                 for (size_t k = 0; k < _hidS4; ++k)
                     buf0[k] = xCurr[k] + buf0[k] + bias[k] + bias[_hidS4 + k];

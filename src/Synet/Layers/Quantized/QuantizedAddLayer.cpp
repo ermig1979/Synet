@@ -228,7 +228,7 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
-    bool QuantizedAddLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool QuantizedAddLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 2 || dst.size() != 1)
             SYNET_ERROR("QuantizedAddLayer supports only 2 inputs and 1 output!");
@@ -274,9 +274,11 @@ namespace Synet
 
         shapeB = FullSrcShape(shapeB, shapeD);
         shapeA = FullSrcShape(shapeA, shapeD);
-        _quantizedAdd.Init(shapeA, _aType, _aScale, _aZero, shapeB, _bType, _bScale, _bZero,
-            _activationType, _params, _dType, _dScale, _dZero);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _quantizedAdd.Init(shapeA, (SimdTensorDataType)_aType, _aScale, _aZero, shapeB, (SimdTensorDataType)_bType, _bScale, _bZero,
+            (SimdConvolutionActivationType)_activationType, _params, (SimdTensorDataType)_dType, _dScale, _dZero);
         if (!_quantizedAdd.Enable())
+#endif
         {
             _uniform = NULL, _universal = NULL;
             if (shapeA == shapeB)
@@ -333,9 +335,14 @@ namespace Synet
 
     void QuantizedAddLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_quantizedAdd.Enable())
+        {
             _quantizedAdd.Forward(src[0]->RawData(), src[1]->RawData(), dst[0]->RawData());
-        else if(_uniform)
+            return;
+        }
+#endif
+        if(_uniform)
             _uniform(src[0]->Data<uint8_t>(), _aScale, _aZero, src[1]->Data<uint8_t>(), _bScale, _bZero, _size, _params, _dScale, _dZero, dst[0]->RawData());
         else if (_universal)
             _universal(src[0]->Data<uint8_t>(), _aSteps, _aScale, _aZero, src[1]->Data<uint8_t>(), _bSteps, _bScale, _bZero, _params, dst[0]->RawData(), _dShape, _dScale, _dZero);

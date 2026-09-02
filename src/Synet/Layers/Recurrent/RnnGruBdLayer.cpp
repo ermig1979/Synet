@@ -36,7 +36,7 @@ namespace Synet
         _internal[1] = 0;
     }
 
-    bool RnnGruBdLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool RnnGruBdLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 2 || dst.size() != 2)
             SYNET_ERROR("RnnGruBdLayer supports only 2 inputs and 2 outputs!");
@@ -63,12 +63,16 @@ namespace Synet
         if (weight[2].Axis(1) != _output + _input || weight[2].Axis(0) != weight[3].Axis(0) || weight[3].Axis(0) != _output)
             SYNET_ERROR("RnnGruBdLayer: check weight[2] or weight[3] shapes!");
 
-        _innerProduct32f[0].Init(_batch, 2 * _output, _input + _output, 1, 1, 1, ActivationFunctionTypeIdentity);
-        _innerProduct32f[1].Init(_batch, _output, _input + _output, 1, 1, 1, ActivationFunctionTypeIdentity);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _innerProduct32f[0].Init(_batch, 2 * _output, _input + _output, SimdTrue, SimdTrue, SimdTrue, SimdConvolutionActivationIdentity);
+        _innerProduct32f[1].Init(_batch, _output, _input + _output, SimdTrue, SimdTrue, SimdTrue, SimdConvolutionActivationIdentity);
         if(!_innerProduct32f[0].Enable() || !_innerProduct32f[1].Enable())
             SYNET_ERROR("RnnGruBdLayer: wrong input shapes!");
-        _innerProduct32f[0].SetParams(weight[0].Data<float>(), &_internal[0], weight[1].Data<float>(), NULL);
-        _innerProduct32f[1].SetParams(weight[2].Data<float>(), &_internal[1], weight[3].Data<float>(), NULL);
+        _innerProduct32f[0].SetParams(weight[0].Data<float>(), (SimdBool*)&_internal[0], weight[1].Data<float>(), NULL);
+        _innerProduct32f[1].SetParams(weight[2].Data<float>(), (SimdBool*)&_internal[1], weight[3].Data<float>(), NULL);
+#else
+        SYNET_ERROR("RnnGruBdLayer requires Simd Library!");
+#endif
 
         Layer::Extend32f(buf, 0, Shp(_batch, _input + 4 * _output), src[0]->Format());
 
@@ -89,7 +93,11 @@ namespace Synet
 
     size_t RnnGruBdLayer::MemoryUsage() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return Layer::MemoryUsage() + (_innerProduct32f[0].InternalBufferSize() + _innerProduct32f[1].InternalBufferSize()) * sizeof(float);
+#else
+        return Layer::MemoryUsage();
+#endif
     }
 
     void RnnGruBdLayer::CompactWeight()
@@ -118,13 +126,17 @@ namespace Synet
             memcpy(buf00, src0, _input * sizeof(float));
             memcpy(buf01, src1, _output * sizeof(float));
 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
             _innerProduct32f[0].Forward(buf00, NULL, NULL, buf10);
+#endif
             CpuSigmoid(buf10, _output * 2, buf10);
 
             for (size_t i = 0; i < _output; ++i)
                 buf01[i] = buf10[i] * src1[i];
 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
             _innerProduct32f[1].Forward(buf00, NULL, NULL, buf2);
+#endif
             UnaryOperation32f(buf2, _output, UnaryOperationTypeTanh, buf2);
 
             for (size_t i = 0; i < _output; ++i)

@@ -42,6 +42,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\Deconvolution\DeconvolutionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Detection\CtcGreedyDecoderLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Detection\DetectionOutputLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Detection\NonMaxSuppressionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Detection\PriorBoxClusteredLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Detection\PriorBoxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Detection\YoloLayer.cpp" />
@@ -141,6 +142,7 @@
     <ClInclude Include="..\..\src\Synet\Decoders\Alpha.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Anchor.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\DetOut.h" />
+    <ClInclude Include="..\..\src\Synet\Decoders\Detection.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Iim.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Nanodet.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Region.h" />
@@ -148,6 +150,7 @@
     <ClInclude Include="..\..\src\Synet\Decoders\RtdetrV2.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Scrfd.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\ScrfdV2.h" />
+    <ClInclude Include="..\..\src\Synet\Decoders\Ssd.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Ultraface.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\Yolo.h" />
     <ClInclude Include="..\..\src\Synet\Decoders\YoloV11.h" />
@@ -171,6 +174,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\Deconvolution\DeconvolutionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Detection\CtcGreedyDecoderLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Detection\DetectionOutputLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Detection\NonMaxSuppressionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Detection\PriorBoxClusteredLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Detection\PriorBoxLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Detection\YoloLayer.h" />
@@ -261,21 +265,13 @@
     <ClInclude Include="..\..\src\Synet\Tensor.h" />
     <ClCompile Include="..\..\src\Synet\Network.cpp" />
     <ClInclude Include="..\..\src\Synet\Utils\Activation.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\Add.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\Convolution.h" />
     <ClInclude Include="..\..\src\Synet\Utils\ConvParam.h" />
     <ClInclude Include="..\..\src\Synet\Utils\DebugPrint.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\Deconvolution.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Difference.h" />
     <ClInclude Include="..\..\src\Synet\Utils\FileUtils.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\Gather.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Gemm.h" />
     <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\InnerProduct.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Math.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\MergedConvolution.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\Mul.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\Permute.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Scale.h" />
     <ClInclude Include="..\..\src\Synet\Utils\SetInput.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Shape.h" />

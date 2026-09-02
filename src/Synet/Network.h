@@ -33,7 +33,7 @@ namespace Synet
     {
     public:
         typedef float Type;
-        typedef Synet::Tensor<Type> Tensor;
+        typedef Synet::Tensor Tensor;
         typedef std::vector<Tensor*> TensorPtrs;
         typedef Synet::Layer Layer;
         typedef Layer * LayerPtr;

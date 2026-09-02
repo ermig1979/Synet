@@ -28,22 +28,7 @@
 
 #include "Synet/Params.h"
 #include "Synet/Tensor.h"
-#include "Synet/Decoders/Anchor.h"
-#include "Synet/Decoders/Ultraface.h"
-#include "Synet/Decoders/YoloV5.h"
-#include "Synet/Decoders/YoloV7.h"
-#include "Synet/Decoders/YoloV8.h"
-#include "Synet/Decoders/Iim.h"
-#include "Synet/Decoders/Region.h"
-#include "Synet/Decoders/Rtdetr.h"
-#include "Synet/Decoders/RtdetrV2.h"
-#include "Synet/Decoders/DetOut.h"
-#include "Synet/Decoders/Yolo.h"
-#include "Synet/Decoders/Scrfd.h"
-#include "Synet/Decoders/ScrfdV2.h"
-#include "Synet/Decoders/Alpha.h"
-#include "Synet/Decoders/Nanodet.h"
-#include "Synet/Decoders/YoloV11.h"
+#include "Synet/Decoders/Detection.h"
 
 #include "Cvt/Common/Params.h"
 #include "Cvt/OnnxRuntime/OnnxRuntime.h"
@@ -78,26 +63,6 @@ namespace Test
         CPL_PARAM_VALUE(float, bf16Threshold, 0.0f);
     };
 
-    struct DetectionParam
-    {
-        CPL_PARAM_VALUE(float, confidence, 0.5f);
-        CPL_PARAM_VALUE(float, overlap, 0.5f);
-        CPL_PARAM_VALUE(String, decoder, String());
-        CPL_PARAM_STRUCT_MOD(Synet::AnchorParam, epsilon, Synet::GetEpsilonParam());
-        CPL_PARAM_STRUCT_MOD(Synet::AnchorParam, retina, Synet::GetRetinaParam());
-        CPL_PARAM_STRUCT(Synet::UltrafaceParam, ultraface);
-        CPL_PARAM_STRUCT(Synet::YoloV5Param, yoloV5);
-        CPL_PARAM_STRUCT(Synet::IimParam, iim);
-        CPL_PARAM_VECTOR(Synet::YoloParam, yolo);
-        CPL_PARAM_STRUCT(Synet::ScrfdParam, scrfd);
-        CPL_PARAM_STRUCT(Synet::ScrfdV2Param, scrfdV2);
-        CPL_PARAM_STRUCT(Synet::RtdetrV2Param, rtdetrV2);
-        CPL_PARAM_STRUCT(Synet::AlphaParam, alpha);
-        CPL_PARAM_STRUCT(Synet::RegionParam, region);
-        CPL_PARAM_STRUCT(Synet::NanodetParam, nanodet);
-        CPL_PARAM_STRUCT(Synet::YoloV11Param, yoloV11);
-    };
-
     struct IdParam
     {
         CPL_PARAM_VALUE(String, name, "");
@@ -124,7 +89,7 @@ namespace Test
         CPL_PARAM_VALUE(bool, batchEmulation, false);
         CPL_PARAM_VECTOR(InputParam, input);
         CPL_PARAM_VECTOR(OutputParam, output);
-        CPL_PARAM_STRUCT(DetectionParam, detection);
+        CPL_PARAM_STRUCT(Synet::DetectionParam, detection);
         CPL_PARAM_STRUCT(IndexParam, index);
         CPL_PARAM_STRUCT(Synet::OptimizerParam, optimizer);
         CPL_PARAM_STRUCT(Synet::OnnxParam, onnx);

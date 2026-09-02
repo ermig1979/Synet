@@ -144,7 +144,7 @@ namespace Synet
         return LowPrecisionTypeNone;
     }
 
-    bool ShuffleLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst)
+    bool ShuffleLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
         if (src.size() != 2 || dst.size() != 2)
             SYNET_ERROR("ShuffleLayer supports 2 inputs and 2 outputs!");

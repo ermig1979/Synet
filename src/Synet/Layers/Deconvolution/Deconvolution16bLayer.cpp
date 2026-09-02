@@ -39,15 +39,21 @@ namespace Synet
 
     size_t Deconvolution16bLayer::MemoryUsage() const
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return DeconvolutionLayer::MemoryUsage() + _deconvolution16b.InternalBufferSize();
+#else
+        return DeconvolutionLayer::MemoryUsage();
+#endif
     }
 
     String Deconvolution16bLayer::InternalInfo() const
     {
         std::stringstream info;
         info << " bf16-" << (_src16b ? "b" : "f") << (_dst16b ? "b" : "f");
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_deconvolution16b.Enable())
             info << " " << _deconvolution16b.Info();
+#endif
         return info.str();
     }
 
@@ -67,7 +73,8 @@ namespace Synet
             dst->Reshape(TensorType16b, shape, src->Format());
         else
             dst->Reshape(TensorType32f, shape, src->Format());
-        _deconvolution16b.Init(_num, &conv);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _deconvolution16b.Init(_num, (const SimdConvolutionParameters*)&conv);
         if (_deconvolution16b.Enable())
         {
             Layer::Extend8u(buf, 0, Shp(_deconvolution16b.ExternalBufferSize()), src->Format());
@@ -77,12 +84,17 @@ namespace Synet
         }
         else
             SYNET_ERROR("Deconvolution16bLayer can't create SimdSynetDeconvolution16b backend!");
+#else
+        SYNET_ERROR("Deconvolution16bLayer requires Simd Library!");
+#endif
         return true;
     }
 
     void Deconvolution16bLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_deconvolution16b.Enable())
             _deconvolution16b.Forward(src[0]->RawData(), Layer::Buf8u(buf, 0), dst[0]->RawData());
+#endif
     }
 }

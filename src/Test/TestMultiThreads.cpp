@@ -31,7 +31,6 @@
 #include "TestReport.h"
 #include "TestOptions.h"
 #include "TestParams.h"
-#include "TestRegionDecoder.h"
 #include "TestOutputComparer.h"
 
 namespace Test
@@ -40,7 +39,7 @@ namespace Test
     typedef Synet::Region<float> Region;
     typedef std::vector<Region> Regions;
     typedef Synet::Floats Floats;
-    typedef Synet::Tensor<float> Tensor;
+    typedef Synet::Tensor Tensor;
     typedef std::vector<Tensor> Tensors;
     typedef Synet::Index Index;
 
@@ -77,7 +76,7 @@ namespace Test
         bool _trans, _sort, _stopped;
         Floats _lower, _upper;
         size_t _synetMemoryUsage;
-        RegionDecoder _regionDecoder;
+        Synet::RegionDetection _regionDetection;
 
         typedef Tensors Output;
         typedef std::vector<Output> Outputs;
@@ -159,7 +158,7 @@ namespace Test
             _lower = _param().lower();
             _upper = _param().upper();
             _synetMemoryUsage = _net.MemoryUsage();
-            _regionDecoder.Init(_net, _param());
+            _regionDetection.Init(_net, _param().detection());
 
             Shape shape = _net.NchwShape();
             if (!(_param().inputType() == "binary" || shape[1] == 1 || shape[1] == 3))
@@ -675,8 +674,8 @@ namespace Test
 
         Regions GetRegions(const Size& size, float threshold, float overlap, size_t thread) const
         {
-            if (_regionDecoder.Enable())
-                return _regionDecoder.GetRegions(_net, size, threshold, overlap, thread);
+            if (_regionDetection.Enable())
+                return _regionDetection.GetRegions(_net, size.x, size.y, threshold, overlap, thread);
             else
                 return _net.GetRegions(size.x, size.y, threshold, overlap, thread);
         }

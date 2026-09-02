@@ -33,7 +33,7 @@ namespace Synet
     public:
         QuantizedScaleLayer(const LayerParam& param, Context* context);
 
-        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         virtual size_t MemoryUsage() const;
 
@@ -49,6 +49,6 @@ namespace Synet
         int32_t _srcZero, _dstZero;
         float _srcScale, _dstScale;
         const float * _scale, *_bias;
-        Tensor32f _zero;
+        Tensor _zero;
     };
 }
