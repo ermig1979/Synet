@@ -106,6 +106,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSinNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSliceNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSoftmaxNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSqueezeNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTileNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTopKNode.cpp" />

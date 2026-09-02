@@ -61,19 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertSoftmaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypeSoftmax;
-            if (!ConvertAtrributeInt(node, "axis", layer.softmax().axis()))
-                return false;
-            if (trans && !PermutedToNchw(layers, layer.src(), true, false, true))
-            {
-                CPL_LOG_SS(Error, "This layer can work only in NCHW format!");
-                return false;
-            }
-            return true;
-        }
-
         bool ConvertSplitNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer)
         {
             if (!CheckSourceNumber(layer, 1, 2))
