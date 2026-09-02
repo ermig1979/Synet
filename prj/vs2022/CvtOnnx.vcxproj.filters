@@ -270,6 +270,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp">
       <Filter>OnnxRuntime\S</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSinNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSqueezeNode.cpp">
       <Filter>OnnxRuntime\S</Filter>
     </ClCompile>

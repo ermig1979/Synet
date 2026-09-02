@@ -61,13 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertSinNode(const onnx::NodeProto& node, LayerParam& layer)
-        {
-            layer.type() = Synet::LayerTypeUnaryOperation;
-            layer.unaryOperation().type() = UnaryOperationTypeSin;
-            return true;
-        }
-
         bool ConvertSliceNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer, TensorFormatMap *tensorFormatMap)
         {
             if (layer.src().size() == 1)
