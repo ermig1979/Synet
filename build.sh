@@ -6,7 +6,6 @@ if [ "${TEST_MODE}" == "" ] || [ "${TEST_MODE}" == "a" ]; then TEST_MODE="all"; 
 if [ "${TEST_MODE}" == "n" ]; then TEST_MODE="none"; fi
 if [ "${TEST_MODE}" == "i" ]; then TEST_MODE="inference_engine"; fi
 if [ "${TEST_MODE}" == "o" ]; then TEST_MODE="onnx"; fi
-if [ "${TEST_MODE}" == "pd" ]; then TEST_MODE="performance_difference"; fi
 if [ "${TEST_MODE}" == "p" ]; then TEST_MODE="precision"; fi
 if [ "${TEST_MODE}" == "q" ]; then TEST_MODE="quantization"; fi
 if [ "${TEST_MODE}" == "s" ]; then TEST_MODE="stability"; fi

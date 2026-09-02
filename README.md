@@ -16,7 +16,7 @@ To build test applications you can run following bash script:
     cd clone
     ./build.sh
 
-And applications `test_inference_engine`, `test_onnx`, `test_optimizer`, `test_precision`, `test_performance_difference`, 
+And applications `test_inference_engine`, `test_onnx`, `test_optimizer`, `test_precision`, 
 `test_quantization`, `test_stability`, `use_face_detection` will be created in directory `build`.
 There is a detail description of these test applications below.
 
