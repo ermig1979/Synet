@@ -189,6 +189,8 @@ namespace Synet
 
     bool ConvertSinNode(const onnx::NodeProto& node, LayerParam& layer);
 
+    bool ConvertSliceNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap);
+
     bool ConvertSoftmaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer);
 
     bool ConvertSqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);

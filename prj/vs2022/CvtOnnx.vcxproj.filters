@@ -273,6 +273,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSinNode.cpp">
       <Filter>OnnxRuntime\S</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSliceNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSoftmaxNode.cpp">
       <Filter>OnnxRuntime\S</Filter>
     </ClCompile>
