@@ -183,6 +183,8 @@ namespace Synet
 
     bool ConvertShapeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const OnnxParam& onnxParam, LayerParam& layer);
 
+    bool ConvertSigmoidNode(const onnx::NodeProto& node, LayerParam& layer);
+
     bool ConvertSignNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertSqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);

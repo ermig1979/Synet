@@ -102,6 +102,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertScatterElementsNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertScatterNdNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertShapeNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSigmoidNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSqueezeNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTileNode.cpp" />
