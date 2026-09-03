@@ -74,6 +74,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolutionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\NonZeroLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Normalize\NormalizeLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Normalize\ScaledDotProductAttentionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.cpp" />
@@ -110,7 +111,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\Resize\PoolingLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Resize\TiledScale2DLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Resize\TileLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ScatterNdLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Select\GatherLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Select\SliceLayer.cpp" />
@@ -206,6 +206,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolutionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\NonZeroLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Normalize\NormalizeLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Normalize\ScaledDotProductAttentionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.h" />
@@ -242,7 +243,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\Resize\PoolingLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Resize\TiledScale2DLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Resize\TileLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ScatterNdLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Select\GatherLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Select\SliceLayer.h" />

@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/ScaledDotProductAttentionLayer.h"
+#include "Synet/Layers/Normalize/ScaledDotProductAttentionLayer.h"
 #include "Synet/Layers/Math/ScaleLayer.h"
 #include "Synet/Layers/SoftmaxLayer.h"
 #include "Synet/Utils/Gemm.h"
