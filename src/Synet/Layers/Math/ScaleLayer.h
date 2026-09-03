@@ -27,6 +27,10 @@
 #include "Synet/Layer.h"
 #include "Synet/Utils/Scale.h"
 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
+
 namespace Synet
 {
     void ScaleForward32f(const float* src, const float* scale, const float* bias, size_t channels, size_t height, size_t width, float* dst, TensorFormat format, int compatibility);
@@ -62,7 +66,9 @@ namespace Synet
         int _compatibility, _lower, _upper;
         bool _biasTerm, _src8u, _dst8u, _is8i, _src16b, _dst16b;
         Tensor _scale, _shift;
-        Scale8i _scale8i;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetScale8i _scale8i;
+#endif
         Scale16b _scale16b;
     };
 }
