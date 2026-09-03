@@ -101,8 +101,11 @@ namespace Synet
 
     size_t SqueezeExcitationLayer::MemoryUsage() const
     {
-        return (_sumScale.size() + _sumShift.size() + _rWeight[0].size() + _rWeight[1].size() + _params.size()) * sizeof(float) + 
-            _scale8i.InternalBufferSize();
+        return (_sumScale.size() + _sumShift.size() + _rWeight[0].size() + _rWeight[1].size() + _params.size()) * sizeof(float)
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+            + _scale8i.InternalBufferSize()
+#endif
+            ;
     }
 
     int64_t SqueezeExcitationLayer::Flop() const
@@ -192,7 +195,13 @@ namespace Synet
         }
         if (_src8u)
         {
-            _scale8i.Init(1, _channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, _method);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+            if (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed)
+            {
+                SimdSynetCompatibilityType compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility8iNarrowed | SimdSynetCompatibilityFmaUse);
+                _scale8i.Init(1, _channels, _height * _width, (SimdTensorDataType)src[0]->GetType(),
+                    (SimdTensorDataType)dst[0]->GetType(), (SimdTensorFormatType)_format, compatibility);
+            }
             if (_scale8i.Enable())
             {
                 const float* stats[4] = {
@@ -202,6 +211,7 @@ namespace Synet
                     this->Stats(2).empty() ? NULL : this->Stats(2)[0]->max.data() };
                 _scale8i.SetParams(_sumScale.data(), NULL, stats);
             }
+#endif
         }
         if (_src16b || _dst16b)
             _scale16b.Init(_channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, true, false);
@@ -293,12 +303,14 @@ namespace Synet
 
     void SqueezeExcitationLayer::Scale8i(const uint8_t* src, float* norm, uint8_t* dst)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_scale8i.Enable())
         {
             _scale8i.SetParams(norm, NULL, NULL);
             _scale8i.Forward(src, dst);
             return;
         }
+#endif
         int lower, upper;
         if (_method == QuantizationMethodIECompatible)
             lower = QUANT_IE_COMP_SRC_U8_MIN, upper = QUANT_IE_COMP_SRC_U8_MAX;
@@ -346,12 +358,14 @@ namespace Synet
 
     void SqueezeExcitationLayer::Scale8i(const uint8_t* src, float* norm, float* dst)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_scale8i.Enable())
         {
             _scale8i.SetParams(norm, NULL, NULL);
             _scale8i.Forward(src, (uint8_t*)dst);
             return;
         }
+#endif
         const float* srcScale = this->Stats(0)[0]->scale8uTo32f.data();
         const float* srcShift = this->Stats(0)[0]->shift8uTo32f.data();
         if (_format == TensorFormatNchw)

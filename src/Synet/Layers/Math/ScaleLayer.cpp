@@ -285,7 +285,13 @@ namespace Synet
             SYNET_ERROR("ScaleLayer: can't process input shape: " << ToStr(src[0]->Shape()) << " for weight size " << _channels << " and axis " << _axis << " !");
         if (_is8i)
         {
-            _scale8i.Init(_batch, _channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _processFormat, _method);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+            if (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed)
+            {
+                SimdSynetCompatibilityType compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility8iNarrowed | SimdSynetCompatibilityFmaUse);
+                _scale8i.Init(_batch, _channels, _height * _width, (SimdTensorDataType)src[0]->GetType(),
+                    (SimdTensorDataType)dst[0]->GetType(), (SimdTensorFormatType)_processFormat, compatibility);
+            }
             if (_scale8i.Enable())
             {
                 const float* bias = _biasTerm ? this->Weight()[1].Data<float>() : NULL;
@@ -297,6 +303,7 @@ namespace Synet
                 _scale8i.SetParams(this->Weight()[0].Data<float>(), bias, stats);
             }
             else
+#endif
                 Init8i();
             if (_dst8u)
                 dst[0]->Reshape(TensorType8u, src[0]->Shape(), _format);
@@ -339,7 +346,11 @@ namespace Synet
 
     size_t ScaleLayer::MemoryUsage() const
     { 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         return Layer::MemoryUsage() + _scale.MemoryUsage() + _shift.MemoryUsage() + _scale8i.InternalBufferSize();
+#else
+        return Layer::MemoryUsage() + _scale.MemoryUsage() + _shift.MemoryUsage();
+#endif
     }
 
     void ScaleLayer::CompactWeight()
@@ -361,9 +372,11 @@ namespace Synet
     {
         if (_is8i)
         {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
             if (_scale8i.Enable())
                 _scale8i.Forward(src[0]->RawData(), dst[0]->RawData());
             else
+#endif
             {
                 const float* scale = _scale.Data<float>();
                 const float* shift = _shift.Data<float>();

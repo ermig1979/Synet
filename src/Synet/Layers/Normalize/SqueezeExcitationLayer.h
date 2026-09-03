@@ -27,6 +27,10 @@
 #include "Synet/Layer.h"
 #include "Synet/Utils/Scale.h"
 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
+
 namespace Synet
 {
     class SqueezeExcitationLayer : public Layer
@@ -73,7 +77,9 @@ namespace Synet
         float _kAvg;
         QuantizationMethod _method;
         Floats _sumScale, _sumShift, _rWeight[2], _params;
-        Synet::Scale8i _scale8i;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetScale8i _scale8i;
+#endif
         Synet::Scale16b _scale16b;
     };
 }
