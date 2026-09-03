@@ -61,56 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertSubNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered)
-        {
-            if (!CheckSourceNumber(layer, 2))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            if (src0 == NULL || src1 == NULL)
-                return false;
-            if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta)
-            {
-                layer.type() = LayerTypeMeta;
-                layer.meta().type() = MetaTypeSub;
-            }
-            else if (src1->type() == LayerTypeConst && TensorSize(src1->weight()[0].dim()) == 1)
-            {
-                layer.type() = Synet::LayerTypePower;
-                const float* pShift = GetWeight<float>(original, src1->weight()[0]);
-                layer.power().shift() = -pShift[0];
-                layer.src().resize(1);
-            }
-            else if (src0->type() == LayerTypeConst && TensorSize(src0->weight()[0].dim()) == 1)
-            {
-                layer.type() = Synet::LayerTypePower;
-                layer.power().scale() = -1.0f;
-                const float* pShift = GetWeight<float>(original, src0->weight()[0]);
-                layer.power().shift() = pShift[0];
-                layer.src()[0] = layer.src()[1];
-                layer.src().resize(1);
-            }
-            else if (src1->type() == LayerTypeConst && SignificantDimsCount(src1->weight()[0].dim()) == 1)
-            {
-                layer.type() = Synet::LayerTypeBias;
-                layer.weight() = src1->weight();
-                if (!CompactShape(layer.weight()[0].dim()))
-                    return false;
-                const float* pSrc = GetWeight<float>(original, layer.weight()[0]);
-                float* pDst = GetWeight<float>(reordered, layer.weight()[0]);
-                size_t size = TensorSize(layer.weight()[0].dim());
-                for (size_t i = 0; i < size; ++i)
-                    pDst[i] = -pSrc[i];
-                layer.src().resize(1);
-            }
-            else
-            {
-                layer.type() = Synet::LayerTypeBinaryOperation;
-                layer.binaryOperation().type() = BinaryOperationTypeSub;
-            }
-            return true;
-        }
-
         bool ConvertTanhNode(const onnx::NodeProto& node, LayerParam& layer)
         {
             layer.type() = Synet::LayerTypeUnaryOperation;
