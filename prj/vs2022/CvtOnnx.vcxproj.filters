@@ -282,6 +282,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSplitNode.cpp">
       <Filter>OnnxRuntime\S</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSqrtNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSqueezeNode.cpp">
       <Filter>OnnxRuntime\S</Filter>
     </ClCompile>
