@@ -70,6 +70,7 @@
 #include "Synet/Layers/MergedConvolution/MergedConvolution8iLayer.h"
 
 #include "Synet/Layers/Normalize/NormalizeLayer.h"
+#include "Synet/Layers/Normalize/ScaledDotProductAttentionLayer.h"
 #include "Synet/Layers/Normalize/SqueezeExcitationLayer.h"
 
 #include "Synet/Layers/Quantized/DequantizeLinearLayer.h"
@@ -125,7 +126,6 @@
 #include "Synet/Layers/GridSampleLayer.h"
 #include "Synet/Layers/NonZeroLayer.h"
 #include "Synet/Layers/ReductionLayer.h"
-#include "Synet/Layers/ScaledDotProductAttentionLayer.h"
 #include "Synet/Layers/ScatterNdLayer.h"
 #include "Synet/Layers/SoftmaxLayer.h"
 
