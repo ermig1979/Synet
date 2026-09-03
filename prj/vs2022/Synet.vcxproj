@@ -272,7 +272,6 @@
     <ClInclude Include="..\..\src\Synet\Utils\Gemm.h" />
     <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Math.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\Scale.h" />
     <ClInclude Include="..\..\src\Synet\Utils\SetInput.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Shape.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Statistics.h" />

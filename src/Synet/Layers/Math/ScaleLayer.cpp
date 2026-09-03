@@ -312,8 +312,11 @@ namespace Synet
         }
         else if (src[0] != dst[0])
         {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
             if (_src16b || _dst16b)
-                _scale16b.Init(_channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, true, _biasTerm);
+                _scale16b.Init(_channels, _height * _width, (SimdTensorDataType)src[0]->GetType(),
+                    (SimdTensorDataType)dst[0]->GetType(), (SimdTensorFormatType)_format, SimdTrue, _biasTerm ? SimdTrue : SimdFalse);
+#endif
             if (_src16b == _dst16b && TensorUsers(Param().src()[0]) == 1 && !src[0]->Const())
                 dst[0]->Share(*src[0]);
             else
@@ -394,6 +397,7 @@ namespace Synet
         {
             const float* scale = this->Weight()[0].Data<float>();
             const float* shift = _shift.Data<float>();
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
             if (_scale16b.Enable())
             {
                 const uint8_t* src8 = src[0]->RawData();
@@ -406,6 +410,7 @@ namespace Synet
                 }
             }
             else
+#endif
             {
                 if (_src16b && _dst16b)
                     ScaleForward16b(src[0]->Data<uint16_t>(), _batch, _channels, _height * _width, _processFormat, scale, shift, dst[0]->Data<uint16_t>());
