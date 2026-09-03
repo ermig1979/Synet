@@ -25,7 +25,6 @@
 #pragma once
 
 #include "Synet/Layer.h"
-#include "Synet/Utils/Scale.h"
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdSynet.hpp"
@@ -68,7 +67,7 @@ namespace Synet
         Tensor _scale, _shift;
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
         Simd::SynetScale8i _scale8i;
+        Simd::SynetScale16b _scale16b;
 #endif
-        Scale16b _scale16b;
     };
 }

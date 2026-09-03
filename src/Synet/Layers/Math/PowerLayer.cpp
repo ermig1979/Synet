@@ -75,8 +75,11 @@ namespace Synet
 
         if (!disable16b && (_src16b || _dst16b))
         {
-            _scale16b.Init(1, _size, src[0]->GetType(), dst[0]->GetType(), TensorFormatNchw, true, true);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+            _scale16b.Init(1, _size, (SimdTensorDataType)src[0]->GetType(),
+                (SimdTensorDataType)dst[0]->GetType(), SimdTensorFormatNchw, SimdTrue, SimdTrue);
             if(!_scale16b.Enable())
+#endif
                 SYNET_ERROR("PowerLayer can't initialize Scale16b engine!");
         }
 
@@ -123,11 +126,14 @@ namespace Synet
 
     void PowerLayer::Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_scale16b.Enable())
         {
             _scale16b.Forward(src[0]->RawData(), &_scale, &_shift, dst[0]->RawData());
         }
-        else if (src[0]->GetType() == TensorType32f)
+        else
+#endif
+        if (src[0]->GetType() == TensorType32f)
         {
             const float* pSrc = src[0]->Data<float>();
             float* pDst = dst[0]->Data<float>();
