@@ -61,27 +61,6 @@ namespace Synet
 
         //-----------------------------------------------------------------------------------------
 
-        bool ConvertWhereNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer)
-        {
-            if (!CheckSourceNumber(layer, 3))
-                return false;
-            const LayerParam* src0 = GetLayer(layers, layer.src()[0]);
-            const LayerParam* src1 = GetLayer(layers, layer.src()[1]);
-            const LayerParam* src2 = GetLayer(layers, layer.src()[2]);
-            if (src0 == NULL || src1 == NULL || src2 == NULL)
-                return false;
-            if (src0->type() == LayerTypeMeta && src1->type() == LayerTypeMeta && src2->type() == LayerTypeMeta)
-            {
-                layer.type() = Synet::LayerTypeMeta;
-                layer.meta().type() = MetaTypeSelect;
-            }
-            else
-                layer.type() = Synet::LayerTypeWhere;
-            return true;
-        }
-
-        //-----------------------------------------------------------------------------------------
-
         bool PrintGraph(const onnx::GraphProto& graph, std::ostream & os, bool printConst = false, bool filterInput = true)
         {
             os << std::endl;

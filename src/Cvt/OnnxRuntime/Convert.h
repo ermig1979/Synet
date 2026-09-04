@@ -210,6 +210,8 @@ namespace Synet
     bool ConvertTransposeNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const OnnxParam& onnxParam, LayerParam& layer, TensorFormatMap* tensorFormatMap);
 
     bool ConvertUnsqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
+
+    bool ConvertWhereNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
 }
 
 #endif
