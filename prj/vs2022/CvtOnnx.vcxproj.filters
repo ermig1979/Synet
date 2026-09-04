@@ -58,6 +58,9 @@
     <Filter Include="OnnxRuntime\U">
       <UniqueIdentifier>{8c6e1d4a-2f7b-4e91-a3c5-9b0d7e4f1a62}</UniqueIdentifier>
     </Filter>
+    <Filter Include="OnnxRuntime\W">
+      <UniqueIdentifier>{c4e8a1b7-6d2f-4a90-8e3c-1f7b5a9d0e24}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.cpp">
@@ -308,6 +311,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertUnsqueezeNode.cpp">
       <Filter>OnnxRuntime\U</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertWhereNode.cpp">
+      <Filter>OnnxRuntime\W</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceMinNode.cpp">
       <Filter>OnnxRuntime\R</Filter>
