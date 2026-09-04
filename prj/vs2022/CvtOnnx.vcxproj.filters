@@ -291,6 +291,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSubNode.cpp">
       <Filter>OnnxRuntime\S</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTanhNode.cpp">
+      <Filter>OnnxRuntime\T</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTileNode.cpp">
       <Filter>OnnxRuntime\T</Filter>
     </ClCompile>
