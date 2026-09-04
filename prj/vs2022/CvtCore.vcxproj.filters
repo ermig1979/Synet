@@ -13,7 +13,10 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantized.cpp">
       <Filter>Optimizer</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeScale.cpp">
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolutionAndScale.cpp">
+      <Filter>Optimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeInnerProductAndScale.cpp">
       <Filter>Optimizer</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolution.cpp">
