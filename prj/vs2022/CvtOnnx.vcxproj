@@ -115,6 +115,7 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTileNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTopKNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTransposeNode.cpp" />
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertUnsqueezeNode.cpp" />
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.cpp" />
   </ItemGroup>
   <ItemGroup>
