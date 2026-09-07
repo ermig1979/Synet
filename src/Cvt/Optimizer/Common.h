@@ -69,6 +69,8 @@ namespace Synet
 
     bool TransposeInnerProduct(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst);
 
+    bool TransposeConvolutions(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, const OptimizerParam& param, LayerParams& dst, Changes& changes);
+
     bool MergeCurrentAndBias(const LayerParams& src, size_t& index, Bytes& bin, LayerParams& dst, Changes& changes);
 
     bool MergePowerAndScaleAndPower(const LayerParams& src, size_t& index, Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
@@ -112,6 +114,10 @@ namespace Synet
     bool MergeTiledScale2D(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
     bool MergeUnpack4(const LayerParams& src, size_t& index, bool isNhwc, LayerParams& dst, Changes& changes);
+
+    bool MergeRnnGruBd(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
+    bool MergeYoloV7(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
     bool MergeConvolutionAndScale(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
 
@@ -178,4 +184,8 @@ namespace Synet
     bool SkipUnnecessaryDequantizeQuantizeV1(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes);
 
     bool SkipUnnecessaryDequantize(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes);
+
+    bool SkipTwoPermutes(const LayerParams& src, size_t& index, LayerParams& dst);
+
+    bool SimplifyInterp(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 }

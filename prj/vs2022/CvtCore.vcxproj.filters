@@ -67,10 +67,22 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeNormalize.cpp">
       <Filter>Optimizer\N</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeRnnGruBd.cpp">
+      <Filter>Optimizer\R</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\ReduceTensorIteratorIO.cpp">
       <Filter>Optimizer\R</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\SkipTwoPermutes.cpp">
+      <Filter>Optimizer\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\SimplifyInterp.cpp">
+      <Filter>Optimizer\S</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\TransposeInnerProduct.cpp">
+      <Filter>Optimizer\T</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\TransposeConvolutions.cpp">
       <Filter>Optimizer\T</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTiledScale2D.cpp">
@@ -78,6 +90,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeUnpack.cpp">
       <Filter>Optimizer\U</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeYoloV7.cpp">
+      <Filter>Optimizer\Y</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -151,6 +166,9 @@
     </Filter>
     <Filter Include="Optimizer\U">
       <UniqueIdentifier>{d8c15a46-7e23-4b9f-91d0-6a4c3e8f2057}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\Y">
+      <UniqueIdentifier>{e9d26b57-8f34-4c0a-a2e1-7b5d4f9c3168}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

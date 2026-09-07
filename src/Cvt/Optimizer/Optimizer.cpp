@@ -202,7 +202,7 @@ namespace Synet
             }
             case 7:
             {
-                if (_param.convToNhwc() && isNhwc && TransposeConvolutions(network.layers(), i, bin, buf, merged, changes))
+                if (_param.convToNhwc() && isNhwc && TransposeConvolutions(network.layers(), i, bin, buf, _param, merged, changes))
                     continue;
                 if (MergeOtherAndQuantizeLinear(network.layers(), i, method, merged, changes))
                     continue;

@@ -40,6 +40,7 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergePowerAndScaleAndPower.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantized.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedSqueezeExcitation.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeRnnGruBd.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeScale.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeShuffle.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeSoftmax.cpp" />
@@ -47,8 +48,12 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeSqueezeExcitation.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTiledScale2D.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeUnpack.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeYoloV7.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\Optimizer.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\ReduceTensorIteratorIO.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\SimplifyInterp.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\SkipTwoPermutes.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\TransposeConvolutions.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\TransposeInnerProduct.cpp" />
     <ClInclude Include="..\..\src\Cvt\Common\Params.h" />
     <ClInclude Include="..\..\src\Cvt\Common\SynetUtils.h" />
