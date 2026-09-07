@@ -31,6 +31,33 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolutionAndScale.cpp">
       <Filter>Optimizer\C</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeBiasAndScale.cpp">
+      <Filter>Optimizer\B</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolutionAndPower.cpp">
+      <Filter>Optimizer\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeCurrentAndBias.cpp">
+      <Filter>Optimizer\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeInnerProductAndPower.cpp">
+      <Filter>Optimizer\I</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergePowerAndScaleAndPower.cpp">
+      <Filter>Optimizer\P</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeShuffle.cpp">
+      <Filter>Optimizer\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeSoftmax.cpp">
+      <Filter>Optimizer\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\ReduceTensorIteratorIO.cpp">
+      <Filter>Optimizer\R</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\TransposeInnerProduct.cpp">
+      <Filter>Optimizer\T</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cvt\Common\Params.h">
@@ -85,6 +112,18 @@
     </Filter>
     <Filter Include="Optimizer\C">
       <UniqueIdentifier>{8187ea4b-f69a-4e3f-ad72-fad5e0a9c3de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\B">
+      <UniqueIdentifier>{a7c4e91f-2b18-4d6a-9e53-1f80c6d4b2a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\P">
+      <UniqueIdentifier>{c3d8f0a1-6e47-4b92-8c15-7a9e2d5f3b10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\R">
+      <UniqueIdentifier>{e1b27c58-9d04-4f71-a836-4c5e8a0d19b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\T">
+      <UniqueIdentifier>{f6a90d3b-5c12-48e7-b4d1-2e7f9c8a6514}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

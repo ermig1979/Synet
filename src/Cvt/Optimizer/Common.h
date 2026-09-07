@@ -65,6 +65,34 @@ namespace Synet
 
     //--------------------------------------------------------------------------------------------------
 
+    bool ReduceTensorIteratorIO(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst);
+
+    bool TransposeInnerProduct(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst);
+
+    bool MergeCurrentAndBias(const LayerParams& src, size_t& index, Bytes& bin, LayerParams& dst, Changes& changes);
+
+    bool MergePowerAndScaleAndPower(const LayerParams& src, size_t& index, Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
+
+    bool MergeBiasAndScale(const LayerParams& src, size_t& index, Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
+
+    bool MergeConvolutionAndPower(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
+
+    bool MergeInnerProductAndPower(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
+
+    bool MergeSoftmax(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
+    bool MergeShuffle0(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
+    bool MergeShuffle1(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
+    bool MergeShuffle2(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
+    bool MergeShuffle3(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
+    bool MergeShuffle3cut(const LayerParams& src, size_t& index, bool isNhwc, LayerParams& dst, Changes& changes);
+
+    bool MergeShuffle4(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
     bool MergeConvolutionAndScale(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
 
     bool MergeConvolutionOrOtherAndActivation(const LayerParams& src, size_t index, QuantizationMethod method, LayerParams& dst, Changes& changes);
