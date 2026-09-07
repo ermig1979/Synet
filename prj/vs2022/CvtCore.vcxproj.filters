@@ -13,23 +13,23 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantized.cpp">
       <Filter>Optimizer</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolutionAndScale.cpp">
-      <Filter>Optimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeInnerProductAndScale.cpp">
-      <Filter>Optimizer</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolution.cpp">
       <Filter>Optimizer</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeActivation.cpp">
       <Filter>Optimizer</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeSqueezeExcitation.cpp">
-      <Filter>Optimizer</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedSqueezeExcitation.cpp">
-      <Filter>Optimizer</Filter>
+      <Filter>Optimizer\Q</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeSqueezeExcitation.cpp">
+      <Filter>Optimizer\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeInnerProductAndScale.cpp">
+      <Filter>Optimizer\I</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolutionAndScale.cpp">
+      <Filter>Optimizer\C</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -73,6 +73,18 @@
     </Filter>
     <Filter Include="InferenceEngine">
       <UniqueIdentifier>{ba55f2e2-6f63-495d-842d-c8821e77631e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\Q">
+      <UniqueIdentifier>{51f10aae-cc2a-4c89-a0bc-669340487d13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\S">
+      <UniqueIdentifier>{13c84462-b402-4e6f-ba3b-32c5e9a5daa2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\I">
+      <UniqueIdentifier>{003f3466-b56e-4507-8712-eb499ecba96b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\C">
+      <UniqueIdentifier>{8187ea4b-f69a-4e3f-ad72-fad5e0a9c3de}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
