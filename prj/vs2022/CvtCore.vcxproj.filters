@@ -13,8 +13,8 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantized.cpp">
       <Filter>Optimizer</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolution.cpp">
-      <Filter>Optimizer</Filter>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConcatedParallelConvolutions.cpp">
+      <Filter>Optimizer\C</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedSqueezeExcitation.cpp">
       <Filter>Optimizer\Q</Filter>
@@ -55,6 +55,15 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergePrelu.cpp">
       <Filter>Optimizer\P</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeParallelConvolutions.cpp">
+      <Filter>Optimizer\P</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeParallelDepthwiseConvolutions.cpp">
+      <Filter>Optimizer\P</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeParallelScaleAndDepthwiseConvolution.cpp">
+      <Filter>Optimizer\P</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeShuffle.cpp">
       <Filter>Optimizer\S</Filter>
     </ClCompile>
@@ -92,6 +101,12 @@
       <Filter>Optimizer\T</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTiledScale2D.cpp">
+      <Filter>Optimizer\T</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeThreeConvolutions.cpp">
+      <Filter>Optimizer\T</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTwoConvolutions.cpp">
       <Filter>Optimizer\T</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeUnpack.cpp">
