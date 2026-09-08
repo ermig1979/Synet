@@ -16,9 +16,6 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolution.cpp">
       <Filter>Optimizer</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeActivation.cpp">
-      <Filter>Optimizer</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedSqueezeExcitation.cpp">
       <Filter>Optimizer\Q</Filter>
     </ClCompile>
@@ -40,6 +37,9 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeCurrentAndBias.cpp">
       <Filter>Optimizer\C</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolutionOrOtherAndActivation.cpp">
+      <Filter>Optimizer\C</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeInnerProductAndPower.cpp">
       <Filter>Optimizer\I</Filter>
     </ClCompile>
@@ -52,6 +52,9 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergePooling.cpp">
       <Filter>Optimizer\P</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergePrelu.cpp">
+      <Filter>Optimizer\P</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeShuffle.cpp">
       <Filter>Optimizer\S</Filter>
     </ClCompile>
@@ -62,6 +65,9 @@
       <Filter>Optimizer\S</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeSpaceToDepth.cpp">
+      <Filter>Optimizer\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeSwish.cpp">
       <Filter>Optimizer\S</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeNormalize.cpp">
@@ -93,6 +99,15 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeYoloV7.cpp">
       <Filter>Optimizer\Y</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeGelu.cpp">
+      <Filter>Optimizer\G</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeHswish.cpp">
+      <Filter>Optimizer\H</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeMish.cpp">
+      <Filter>Optimizer\M</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -169,6 +184,15 @@
     </Filter>
     <Filter Include="Optimizer\Y">
       <UniqueIdentifier>{e9d26b57-8f34-4c0a-a2e1-7b5d4f9c3168}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\G">
+      <UniqueIdentifier>{c51c415f-82eb-418d-a9ef-292463bf5d73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\H">
+      <UniqueIdentifier>{3cb98796-747b-41a1-8154-8bfc045d3cf2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\M">
+      <UniqueIdentifier>{1848cb75-9a74-4224-8d44-0be2cab75fa4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

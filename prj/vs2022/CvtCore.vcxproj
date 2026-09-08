@@ -26,18 +26,22 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\Cvt\Deoptimizer\Deoptimizer.cpp" />
     <ClCompile Include="..\..\src\Cvt\InferenceEngine\InferenceEngine.cpp" />
-    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeActivation.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeBiasAndScale.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolution.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolutionAndPower.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolutionAndScale.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolutionOrOtherAndActivation.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeCurrentAndBias.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeGelu.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeHswish.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeInnerProductAndPower.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeInnerProductAndScale.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeMish.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeNormalize.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergePermute.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergePooling.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergePowerAndScaleAndPower.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergePrelu.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantized.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedSqueezeExcitation.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeRnnGruBd.cpp" />
@@ -46,6 +50,7 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeSoftmax.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeSpaceToDepth.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeSqueezeExcitation.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeSwish.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTiledScale2D.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeUnpack.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeYoloV7.cpp" />
