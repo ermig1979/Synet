@@ -10,11 +10,35 @@
     <ClCompile Include="..\..\src\Cvt\InferenceEngine\InferenceEngine.cpp">
       <Filter>InferenceEngine</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantized.cpp">
-      <Filter>Optimizer</Filter>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeOtherAndQuantizeLinear.cpp">
+      <Filter>Optimizer\O</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConcatedParallelConvolutions.cpp">
       <Filter>Optimizer\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedAdd.cpp">
+      <Filter>Optimizer\Q</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedConvolutionAndQuantizedActivation.cpp">
+      <Filter>Optimizer\Q</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedHardSigmoid.cpp">
+      <Filter>Optimizer\Q</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedHswish.cpp">
+      <Filter>Optimizer\Q</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedMul.cpp">
+      <Filter>Optimizer\Q</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedPrelu.cpp">
+      <Filter>Optimizer\Q</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedScale.cpp">
+      <Filter>Optimizer\Q</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedShuffle.cpp">
+      <Filter>Optimizer\Q</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedSqueezeExcitation.cpp">
       <Filter>Optimizer\Q</Filter>
@@ -91,6 +115,12 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\SkipTwoPermutes.cpp">
       <Filter>Optimizer\S</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\SkipUnnecessaryDequantize.cpp">
+      <Filter>Optimizer\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\SkipUnnecessaryDequantizeQuantize.cpp">
+      <Filter>Optimizer\S</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\SimplifyInterp.cpp">
       <Filter>Optimizer\S</Filter>
     </ClCompile>
@@ -107,6 +137,12 @@
       <Filter>Optimizer\T</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTwoConvolutions.cpp">
+      <Filter>Optimizer\T</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeThreeQuantizedConvolutions.cpp">
+      <Filter>Optimizer\T</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTwoQuantizedConvolutions.cpp">
       <Filter>Optimizer\T</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeUnpack.cpp">
@@ -208,6 +244,9 @@
     </Filter>
     <Filter Include="Optimizer\M">
       <UniqueIdentifier>{1848cb75-9a74-4224-8d44-0be2cab75fa4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\O">
+      <UniqueIdentifier>{7c369371-3667-4ce3-9150-9345497dd951}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
