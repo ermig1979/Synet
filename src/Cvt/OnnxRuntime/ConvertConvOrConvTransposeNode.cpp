@@ -37,7 +37,7 @@ namespace Synet
             layer.type() = Synet::LayerTypeDeconvolution;
         else
             return false;
-        if (layer.src().size() < 2 || layer.src().size() > 3)
+        if (!CheckSourceNumber(layer, 2, 3))
             return false;
         if (!ConvertAtrributeInts(node, "dilations", layer.convolution().dilation(), true))
             return false;
@@ -96,6 +96,8 @@ namespace Synet
                 layer.weight()[0] = bias->weight()[0];
                 layer.src().resize(2);
             }
+            if (trans && CurrentTensorFormat(layers, layer.src(), false, false, false, tensorFormatMap) == TensorFormatNhwc)
+                SYNET_ERROR("Convolution with dynamic weight is not support NHWC inputs!");;
         }
         else
         {
