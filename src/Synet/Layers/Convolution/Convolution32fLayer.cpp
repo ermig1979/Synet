@@ -65,8 +65,11 @@ namespace Synet
         if (_convolution32f.Enable())
         {
             Layer::Extend32f(buf, 0, Shp(_convolution32f.ExternalBufferSize()), src->Format());
-            _convolution32f.SetParams(weight[0].Data<float>(), (SimdBool*)&alg.internal, alg.bias ? weight[1].Data<float>() : NULL,
-                conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : alg.params);
+            if (_alg.constW)
+            {
+                _convolution32f.SetParams(weight[0].Data<float>(), (SimdBool*)&alg.internal, alg.bias ? weight[1].Data<float>() : NULL,
+                    conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : alg.params);
+            }
         }
         else
 #endif
@@ -76,18 +79,26 @@ namespace Synet
 
     void Convolution32fLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
-        Forward(src[0]->Data<float>(), Layer::Buf32f(buf, 0), dst[0]->Data<float>());
+        Forward(src[0]->Data<float>(), _alg.constW ? NULL : src[1]->Data<float>(), Layer::Buf32f(buf, 0), dst[0]->Data<float>());
     }
 
-    void Convolution32fLayer::Forward(const float * src, float* buf, float* dst)
+    void Convolution32fLayer::Forward(const float * src, const float* wgt, float* buf, float* dst)
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_convolution32f.Enable())
+        {
+            if (_alg.constW == 0)
+            {
+                const Tensors& weight = this->Weight();
+                _convolution32f.SetParams(wgt, NULL, _alg.bias ? weight[0].Data<float>() : NULL,
+                    _conv.activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : _alg.params);
+            }
             _convolution32f.Forward(src, buf, dst);
+        }
         else
 #endif
         {
-            const float * weight = this->Weight()[0].Data<float>();
+            const float * weight = _alg.constW == 0 ? wgt : this->Weight()[0].Data<float>();
             const ConvParam& conv = this->_conv;
             const AlgParam& alg = this->_alg;
             for (size_t b = 0; b < alg.batch; ++b)
@@ -119,7 +130,7 @@ namespace Synet
                             tmp + alg.grS * g, alg.ldS, 0.0f, dst + alg.grD * g, alg.ldD);
                 }
                 if (alg.bias)
-                    CpuAddBias(this->Weight()[1].Data<float>(), conv.dstC, conv.dstH*conv.dstW, dst, alg.trans);
+                    CpuAddBias(this->Weight()[alg.constW].Data<float>(), conv.dstC, conv.dstH*conv.dstW, dst, alg.trans);
                 switch (conv.activation)
                 {
                 case ActivationFunctionTypeIdentity:

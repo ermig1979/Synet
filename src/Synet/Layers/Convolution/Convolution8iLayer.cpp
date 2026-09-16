@@ -84,6 +84,8 @@ namespace Synet
 
     bool Convolution8iLayer::Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
     {
+        if(_alg.constW == 0)
+            SYNET_ERROR("Convolution8iLayer does not support dynamic weight!");
         const Tensors& weight = this->Weight();
         const ConvParam& conv = this->_conv;
         AlgParam& alg = this->_alg;
