@@ -17,7 +17,7 @@ To build test applications you can run following bash script:
     ./build.sh
 
 And applications `test_inference_engine`, `test_onnx`, `test_optimizer`, `test_precision`, 
-`test_quantization`, `use_face_detection` will be created in directory `build`.
+`use_face_detection` will be created in directory `build`.
 There is a detail description of these test applications below.
 
 Building tests with pre-built Conan packages (OpenVINO and ONNX Runtime)
@@ -80,11 +80,6 @@ Precision test application
 ========================
 The precision test application `test_precision` is used for independent accuracy testing of quantized Synet and OpenVINO models.
 There is `./prec.sh` test script (in the file you have to manually uncomment unit test that you need).
-
-Quantization test application
-========================
-The quantization test application `test_quantization` is used for INT8 quantization of FP32 Synet models and testing of them.
-There is `./quant.sh` test script (in the file you have to manually uncomment unit test that you need).
 
 Using samples
 =======================================

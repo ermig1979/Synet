@@ -7,7 +7,6 @@ if [ "${TEST_MODE}" == "n" ]; then TEST_MODE="none"; fi
 if [ "${TEST_MODE}" == "i" ]; then TEST_MODE="inference_engine"; fi
 if [ "${TEST_MODE}" == "o" ]; then TEST_MODE="onnx"; fi
 if [ "${TEST_MODE}" == "p" ]; then TEST_MODE="precision"; fi
-if [ "${TEST_MODE}" == "q" ]; then TEST_MODE="quantization"; fi
 if [ "${TEST_MODE}" == "op" ]; then TEST_MODE="optimizer"; fi
 if [ "${TEST_MODE}" == "b" ]; then TEST_MODE="bf16"; fi
 if [ "${TEST_MODE}" == "m" ]; then TEST_MODE="multi_threads"; fi

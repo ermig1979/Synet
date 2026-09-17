@@ -28,10 +28,7 @@ if [ "${BF16}" = "1" ]; then
 else
   THRESHOLD=0.002; QUANTILE=0.0; METHOD=-1; NUM_FMT="fp32"
 fi
-if [ "$FRAMEWORK" = "quantization" ]; then
-  PATHES="-fm=$DIR/synet.xml -fw=$DIR/synet.bin -sm=$DIR/int8.xml"
-  THRESHOLD=0.01; QUANTILE=0.0; METHOD=0; NUM_FMT="int8"
-elif [ "$FRAMEWORK" = "inference_engine" ]; then 
+if [ "$FRAMEWORK" = "inference_engine" ]; then 
   PATHES="-fm=$DIR/other.xml -fw=$DIR/other.bin -sm=$DIR/synet.xml"
 elif [ "$FRAMEWORK" = "onnx" ]; then 
   PATHES="-fw=$DIR/other.onnx -sm=$DIR/synet.xml"
@@ -78,10 +75,6 @@ if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 #TEST onnx "" test_000 face 80 10 1 1 0 006 2
 TEST onnx "" test_001 faces 30 0 1 1 0 004 2
 #TEST onnx "" test_002 faces 1 0 1 1 0 000 2
-
-#TEST quantization "" test_003 faces 100 1 1 1 0 000t 0
-#TEST quantization "" test_009 persons 1 0 1 1 0 000t 0
-#TEST quantization "" test_010 faces 100 4 1 1 0 000t 0
 
 
 exit

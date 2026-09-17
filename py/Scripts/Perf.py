@@ -73,8 +73,6 @@ def ValidateParameters(context : Context):
 		args.framework = "inference_engine"
 	elif args.framework == "o" :
 		args.framework = "onnx"
-	elif args.framework == "q" :
-		args.framework = "quantization"
 	else :
 		print("Unknown parameter -f={0}!".format(args.framework))
 		return False
@@ -207,17 +205,14 @@ def RunTest(context, test, batch, bf16):
 	else :	
 		threshold = args.onnxThreshold
 	pathArgs = ""
-	if args.framework == "quantization" :
-		pathArgs += "-fm={0}/synet.xml -fw={0}/synet.bin -sm={0}/int8.xml".format(testPath)
-	else:
-		if test.framework == "inference_engine" :
-			pathArgs += "-fm={0}/other.xml -fw={0}/other.bin".format(testPath)
-		elif test.framework == "onnx" :
-			pathArgs += "-fw={0}/other.onnx".format(testPath)
-		if bf16 :
-			pathArgs += " -sm={0}/synet2.xml".format(testPath)
-		else :
-			pathArgs += " -sm={0}/synet.xml".format(testPath)
+	if test.framework == "inference_engine" :
+		pathArgs += "-fm={0}/other.xml -fw={0}/other.bin".format(testPath)
+	elif test.framework == "onnx" :
+		pathArgs += "-fw={0}/other.onnx".format(testPath)
+	if bf16 :
+		pathArgs += " -sm={0}/synet2.xml".format(testPath)
+	else :
+		pathArgs += " -sm={0}/synet.xml".format(testPath)
 	pathArgs += " -sw={0}/synet.bin -id={1} -od={0}/output -tp={0}/param.xml -sn={2}/sync.txt -hr={2}/_report.html -tr={2}/_report.txt".format(testPath, imagePath, context.dst)
 	
 	trashFile = imagePath + os.path.sep + "descript.ion"
@@ -269,7 +264,7 @@ def main():
 	parser.add_argument("-b", "--bin", help="Tests binary path.", required=False, type=str, default="./build")
 	parser.add_argument("-d", "--dst", help="Output tests path.", required=False, type=str, default="../test/perf")
 	parser.add_argument("-t", "--threads", help="Tests threads number.", required=False, type=int, default=1)
-	parser.add_argument("-f", "--framework", help="Framework to test. It can be i(inference_engine), o(onnx), or q(quantization).", required=False, type=str, default="o", choices=["i", "o", "q"])
+	parser.add_argument("-f", "--framework", help="Framework to test. It can be i(inference_engine) or o(onnx).", required=False, type=str, default="o", choices=["i", "o"])
 	parser.add_argument("-i", "--include", help="Include tests filter.", required=False, default=[], action="append")
 	parser.add_argument("-e", "--exclude", help="Exclude tests filter.", required=False, default=[], action="append")
 	parser.add_argument("-fp", "--fp32", help="Run FP32 tests.", required=False, type=bool, default=True)
