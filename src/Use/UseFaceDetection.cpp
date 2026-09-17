@@ -25,7 +25,7 @@
 #define SYNET_SIMD_LIBRARY_ENABLE
 #endif
 #include "Synet/Network.h"
-#include "Cvt/InferenceEngine/InferenceEngine.h"
+#include "Synet/Decoders/Detection.h"
 #include "Simd/SimdDrawing.hpp"
 
 typedef Synet::Network Net;
@@ -33,21 +33,24 @@ typedef Synet::View View;
 typedef Synet::Shape Shape;
 typedef Synet::Region<float> Region;
 typedef std::vector<Region> Regions;
+typedef Synet::DetOutDecoder Decoder;
 
 int main(int argc, char* argv[])
 {
-    Synet::ConvertInferenceEngineToSynet("ie_fd.xml", "ie_fd.bin", 
-		true, "synet.xml", "synet.bin");
+    Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
+    Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
+
+    CPL_LOG_SS(Info, "Synet face detection example:");
 
     Net net;
-    net.Load("synet.xml", "synet.bin");
-
-    net.Reshape(256, 256, 1);
+    if (!net.Load("face_detector.xml", "face_detector.bin"))
+        SYNET_ERROR("Can't load model files: face_detector.xml and face_detector.bin !");
 
     Shape shape = net.NchwShape();
 
     View original;
-    original.Load("faces_0.ppm");
+    if (!original.Load("faces.jpg", View::Bgra32))
+        SYNET_ERROR("Can't load test image: faces.jpg !");
 
     View resized(shape[3], shape[2], original.format);
     Simd::Resize(original, resized, ::SimdResizeMethodArea);
@@ -56,8 +59,9 @@ int main(int argc, char* argv[])
 
     net.Forward();
 
-    Regions faces = net.GetRegions(original.width, original.height, 0.5f, 0.5f);
-    uint32_t white = 0xFFFFFFFF;
+    Decoder decoder;
+    Regions faces = decoder.GetRegions(net, original.width, original.height, 0.5f, 0.5f)[0];
+    uint32_t color = 0xFF00FF00;
     for (size_t i = 0; i < faces.size(); ++i)
     {
         const Region & face = faces[i];
@@ -65,9 +69,13 @@ int main(int argc, char* argv[])
         ptrdiff_t t = ptrdiff_t(face.y - face.h / 2);
         ptrdiff_t r = ptrdiff_t(face.x + face.w / 2);
         ptrdiff_t b = ptrdiff_t(face.y + face.h / 2);
-        Simd::DrawRectangle(original, l, t, r, b, white);
+        Simd::DrawRectangle(original, l, t, r, b, color, 2);
     }
-    original.Save("annotated_faces_0.ppm");
+
+    if(!original.Save("annotated_faces.jpg"))
+        SYNET_ERROR("Can't save annotated image: annotated_faces.jpg !");
+
+    CPL_LOG_SS(Info, "Annotated image saved to 'annotated_faces.jpg'.");
 
     return 0;
 }
