@@ -30,7 +30,7 @@ class SynetConan(ConanFile):
         "opencv": [True, False],             # SYNET_OPENCV
         "test": [
             "none", "inference_engine", "onnx", "precision",
-            "quantization", "stability",
+            "quantization",
             "optimizer", "bf16", "multi_threads", "video", "use_samples", "all",
         ],
     }
@@ -249,14 +249,13 @@ class SynetConan(ConanFile):
                 "onnx": ["test_onnx"],
                 "precision": ["test_precision"],
                 "quantization": ["test_quantization"],
-                "stability": ["test_stability"],
                 "optimizer": ["test_optimizer"],
                 "bf16": ["test_bf16"],
                 "multi_threads": ["test_multi_threads"],
                 "video": ["test_video"],
                 "all": [
                     "test_inference_engine", "test_onnx",
-                    "test_precision", "test_quantization", "test_stability",
+                    "test_precision", "test_quantization",
                     "test_optimizer", "test_bf16", "test_multi_threads", "test_video",
                 ],
             }
