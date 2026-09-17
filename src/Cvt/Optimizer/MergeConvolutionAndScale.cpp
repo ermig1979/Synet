@@ -33,7 +33,7 @@ namespace Synet
             return false;
         const LayerParam& conv = src[index - 1];
         const LayerParam& scale = src[index];
-        if (conv.type() != LayerTypeConvolution || conv.convolution().activationType() != ActivationFunctionTypeIdentity)
+        if (conv.type() != LayerTypeConvolution || conv.convolution().activationType() != ActivationFunctionTypeIdentity || conv.src().size() != 1)
             return false;
         if (scale.type() != LayerTypeScale || scale.src()[0] != conv.name())
             return false;

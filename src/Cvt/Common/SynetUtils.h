@@ -350,7 +350,12 @@ namespace Synet
         if (tensorFormatMap && tensorFormatMap->find(layer.name()) != tensorFormatMap->end())
             return (*tensorFormatMap)[layer.name()];
         if (layer.type() == LayerTypeConvolution || layer.type() == LayerTypeDeconvolution)
-            return Cache(layer, layer.weight()[0].format(), tensorFormatMap);
+        {
+            if (layer.src().size() == 1)
+                return Cache(layer, layer.weight()[0].format(), tensorFormatMap);
+            else
+                return Cache(layer, layer.convolution().format(), tensorFormatMap);
+        }
         if (layer.type() == LayerTypePermute && layer.permute().format() != TensorFormatUnknown)
             return Cache(layer, layer.permute().format(), tensorFormatMap);
         if (layer.type() == LayerTypeInnerProduct)
