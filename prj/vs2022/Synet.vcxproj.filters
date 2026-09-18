@@ -111,9 +111,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\InnerProduct\InnerProductLayer.cpp">
       <Filter>Layers\InnerProduct</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution8iLayer.cpp">
-      <Filter>Layers\MergedConvolution</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution16bLayer.cpp">
       <Filter>Layers\MergedConvolution</Filter>
     </ClCompile>
@@ -544,9 +541,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\InnerProduct\InnerProductLayer.h">
       <Filter>Layers\InnerProduct</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution8iLayer.h">
-      <Filter>Layers\MergedConvolution</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution16bLayer.h">
       <Filter>Layers\MergedConvolution</Filter>

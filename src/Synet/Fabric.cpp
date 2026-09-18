@@ -65,7 +65,6 @@
 
 #include "Synet/Layers/MergedConvolution/MergedConvolution32fLayer.h"
 #include "Synet/Layers/MergedConvolution/MergedConvolution16bLayer.h"
-#include "Synet/Layers/MergedConvolution/MergedConvolution8iLayer.h"
 
 #include "Synet/Layers/Normalize/NormalizeLayer.h"
 #include "Synet/Layers/Normalize/ScaledDotProductAttentionLayer.h"
@@ -131,14 +130,6 @@
 
 namespace Synet
 {
-    SYNET_INLINE bool Use8i(const MergedConvolutionParam& param)
-    {
-        if (param.conv().size() == 3)
-            return param.conv()[0].quantizationLevel() == TensorType8i && param.conv()[2].quantizationLevel() == TensorType8i;
-        else
-            return param.conv()[0].quantizationLevel() == TensorType8i || param.conv()[1].quantizationLevel() == TensorType8i;
-    }
-
     SYNET_INLINE bool IsAdd(const LayerParam& layer)
     {
         if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum &&
@@ -211,9 +202,7 @@ namespace Synet
         case LayerTypeLrn: return new LrnLayer(param, context);
         case LayerTypeLstm: return new LstmLayer(param, context);
         case LayerTypeMergedConvolution:
-            if (Use8i(param.mergedConvolution()))
-                return new MergedConvolution8iLayer(param, context, method);
-            else if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
+            if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
                 return new MergedConvolution16bLayer(param, context);
             else
                 return new MergedConvolution32fLayer(param, context);
