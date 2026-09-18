@@ -250,7 +250,6 @@
     <ClInclude Include="..\..\src\Synet\Params.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\Bf16.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\Const.h" />
-    <ClInclude Include="..\..\src\Synet\Quantization\Convert.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\DequantizeLinear.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\Gemm.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\QuantizeLinear.h" />
