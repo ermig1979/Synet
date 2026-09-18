@@ -68,7 +68,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\Math\UnaryOperationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution32fLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution8iLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolutionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\NonZeroLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Normalize\NormalizeLayer.cpp" />
@@ -198,7 +197,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\Math\UnaryOperationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution16bLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution32fLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution8iLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolutionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\NonZeroLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Normalize\NormalizeLayer.h" />
