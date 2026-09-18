@@ -30,7 +30,6 @@
 
 #include "Synet/Layers/Convolution/Convolution32fLayer.h"
 #include "Synet/Layers/Convolution/Convolution16bLayer.h"
-#include "Synet/Layers/Convolution/Convolution8iLayer.h"
 
 #include "Synet/Layers/Deconvolution/Deconvolution32fLayer.h"
 #include "Synet/Layers/Deconvolution/Deconvolution16bLayer.h"
@@ -175,9 +174,7 @@ namespace Synet
         case LayerTypeConst: return new ConstLayer(param, context);
         case LayerTypeConstantOfShape: return new ConstantOfShapeLayer(param, context);
         case LayerTypeConvolution:
-            if (param.convolution().quantizationLevel() == TensorType8i)
-                return new Convolution8iLayer(param, context, method);
-            else if (context->options.BFloat16Enable() && (param.lowPrecision().bf16Type() == LowPrecisionTypeActive || param.lowPrecision().bf16Type() == LowPrecisionTypeHybrid))
+            if (context->options.BFloat16Enable() && (param.lowPrecision().bf16Type() == LowPrecisionTypeActive || param.lowPrecision().bf16Type() == LowPrecisionTypeHybrid))
                 return new Convolution16bLayer(param, context);
             else
                 return new Convolution32fLayer(param, context);
