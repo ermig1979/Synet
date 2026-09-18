@@ -35,7 +35,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\Const\ConstLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Convolution\Convolution16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Convolution\Convolution32fLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\Convolution\Convolution8iLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Convolution\ConvolutionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Deconvolution\Deconvolution16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Deconvolution\Deconvolution32fLayer.cpp" />
@@ -167,7 +166,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\Const\ConstLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Convolution\Convolution16bLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Convolution\Convolution32fLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\Convolution\Convolution8iLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Convolution\ConvolutionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Deconvolution\Deconvolution16bLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Deconvolution\Deconvolution32fLayer.h" />
