@@ -153,7 +153,7 @@ namespace Synet
     {
         switch (param.type())
         {
-        case LayerTypeAdd: return new AddLayer(param, context, method);
+        case LayerTypeAdd: return new AddLayer(param, context);
         case LayerTypeArgMax: return new ArgMaxLayer(param, context);
         case LayerTypeBias: return new BiasLayer(param, context);
         case LayerTypeBinaryOperation: return new BinaryOperationLayer(param, context);
@@ -178,7 +178,7 @@ namespace Synet
         case LayerTypeDetectionOutput: return new DetectionOutputLayer(param, context);
         case LayerTypeEltwise: 
             if(IsAdd(param))
-                return new AddLayer(param, context, method);
+                return new AddLayer(param, context);
             else if (IsMul(param))
                 return new MulLayer(param, context);
             else

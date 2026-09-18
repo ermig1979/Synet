@@ -26,7 +26,6 @@
 #include "Synet/Layers/Math/AddLayer.h"
 #include "Synet/Utils/Math.h"
 #include "Synet/Utils/UniversalBinary.h"
-#include "Synet/Quantization/Convert.h"
 
 namespace Synet
 {
@@ -325,19 +324,15 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    AddLayer::AddLayer(const LayerParam & param, Context* context, QuantizationMethod method)
+    AddLayer::AddLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
-        , _method(method)
-        , _quant(false)
     {
     }
 
     LowPrecisionType AddLayer::LowPrecision(TensorType type) const
     {
         const LayerParam& p = this->Param();
-        if (type == TensorType8u && _method != QuantizationMethodUnknown)
-            return LowPrecisionTypeActive;
-        if (type == TensorType16b && Options().BFloat16Enable() && _method == QuantizationMethodUnknown && p.lowPrecision().bf16Type() >= LowPrecisionTypePassive)
+        if (type == TensorType16b && Options().BFloat16Enable() && p.lowPrecision().bf16Type() >= LowPrecisionTypePassive)
         {
             if (p.src()[0] != p.dst()[0] && (p.src().size() == 1 || p.src()[1] != p.dst()[0]))
                 return p.lowPrecision().bf16Type();
@@ -391,6 +386,8 @@ namespace Synet
             _typeD = _typeA;
         else
             _typeD = dst[0]->GetType();
+        if (_typeA == TensorType8u || _typeB == TensorType8u || _typeD == TensorType8u)
+            SYNET_ERROR("AddLayer does not support UINT8 tensors!");
         _format = formatA;
         if (dst[0] != _src[0] && dst[0])
         {
@@ -403,166 +400,134 @@ namespace Synet
                 dst[0]->Reshape(_typeD, shapeD, formatA);
         }
 
-        if (_method != QuantizationMethodUnknown && (_typeA == TensorType8u || _typeB == TensorType8u || _typeD == TensorType8u))
-        {
-            if (_typeA != _typeB)
-                SYNET_ERROR("AddLayer inputs for INT8 must have the same type!");
-            if (_src[0]->Count() != 4 && _format != TensorFormatUnknown)
-                SYNET_ERROR("AddLayer inputs for INT8 must be 4D tensors!");
-            _quant = ((_typeA == TensorType8u && _typeD == TensorType8u) || (_typeA == TensorType8u && _typeD == TensorType32f) || (_typeA == TensorType32f && _typeD == TensorType8u));
-        }
-
         shapeB = FullSrcShape(shapeB, shapeD);
         shapeA = FullSrcShape(shapeA, shapeD);
         CompactShapes(shapeA, shapeB, shapeD);
 
-        if (_quant)
-        {
-            if (_format == TensorFormatNhwc)
-            {
-                _batch = _src[0]->Axis(0);
-                _spatial = _src[0]->Axis(1) * _src[0]->Axis(2);
-                _channels = _src[0]->Axis(3);
-            }
-            else if (_format == TensorFormatNchw)
-            {
-                _batch = _src[0]->Axis(0);
-                _channels = _src[0]->Axis(1);
-                _spatial = _src[0]->Axis(2) * _src[0]->Axis(3);
-            }
-            else
-                assert(0);
-            this->Stats(0)[0]->Init8u(_method);
-            this->Stats(0)[1]->Init8u(_method);
-            this->Stats(2)[0]->Init8u(_method);
-        }
-        else
-        {
-            _special = SpecialUniversal;
-            _elemA = GetTensorTypeSize(_typeA);
-            _elemB = GetTensorTypeSize(_typeB);
-            _elemD = GetTensorTypeSize(_typeD);
+        _special = SpecialUniversal;
+        _elemA = GetTensorTypeSize(_typeA);
+        _elemB = GetTensorTypeSize(_typeB);
+        _elemD = GetTensorTypeSize(_typeD);
 
-            if (shapeA == shapeB)
+        if (shapeA == shapeB)
+        {
+            _special = SpecialNone;
+            _batch = 1, _channels = 1, _spatial = _src[0]->Size();
+        }
+        else if (_src[0]->Count() > 1 && _src[0]->Count() == _src[1]->Count() && _src[0]->Size(1) == _src[1]->Size(1))
+        {
+            _special = SpecialBatch;
+            _batch = Max(_src[0]->Axis(0), _src[1]->Axis(0));
+            _channels = 1, _spatial = _src[0]->Size(1);
+        }
+        else if (_src[0]->Count() == _src[1]->Count())
+        {
+            _special = SpecialBiasChannel;
+            _format = TensorFormatNhwc;
+            _batch = 1;
+            _channels = 1;
+            _spatial = 1;
+            bool invalid = false;
+            for (size_t i = 0, already = 0; i < _src[0]->Count(); ++i)
             {
-                _special = SpecialNone;
-                _batch = 1, _channels = 1, _spatial = _src[0]->Size();
-            }
-            else if (_src[0]->Count() > 1 && _src[0]->Count() == _src[1]->Count() && _src[0]->Size(1) == _src[1]->Size(1))
-            {
-                _special = SpecialBatch;
-                _batch = Max(_src[0]->Axis(0), _src[1]->Axis(0));
-                _channels = 1, _spatial = _src[0]->Size(1);
-            }
-            else if (_src[0]->Count() == _src[1]->Count())
-            {
-                _special = SpecialBiasChannel;
-                _format = TensorFormatNhwc;
-                _batch = 1;
-                _channels = 1;
-                _spatial = 1;
-                bool invalid = false;
-                for (size_t i = 0, already = 0; i < _src[0]->Count(); ++i)
+                if (_src[0]->Axis(i) == _src[1]->Axis(i))
                 {
-                    if (_src[0]->Axis(i) == _src[1]->Axis(i))
-                    {
-                        if (already)
-                            _channels *= _src[0]->Axis(i);
-                        else
-                            _batch *= _src[0]->Axis(i);
-                    }
+                    if (already)
+                        _channels *= _src[0]->Axis(i);
                     else
-                    {
-                        if (_src[1]->Axis(i) != 1)
-                            invalid = true;
-                        already = 1;
-                        _spatial *= _src[0]->Axis(i);
-                    }
+                        _batch *= _src[0]->Axis(i);
                 }
-                if (invalid)
-                    _special = SpecialUniversal;
+                else
+                {
+                    if (_src[1]->Axis(i) != 1)
+                        invalid = true;
+                    already = 1;
+                    _spatial *= _src[0]->Axis(i);
+                }
             }
-            else if (_src[1]->Size() == 1)
+            if (invalid)
+                _special = SpecialUniversal;
+        }
+        else if (_src[1]->Size() == 1)
+        {
+            _special = SpecialBiasChannel;
+            _format = TensorFormatNhwc;
+            _batch = 1;
+            _channels = 1;
+            _spatial = _src[0]->Size();
+        }
+        else if (_src[1]->Count() == 2)
+        {
+            if (_src[0]->Count() != 4)
             {
-                _special = SpecialBiasChannel;
+                _special = SpecialBiasChannelV2;
                 _format = TensorFormatNhwc;
-                _batch = 1;
+                _batch = _src[1]->Axis(0);
                 _channels = 1;
                 _spatial = _src[0]->Size();
             }
-            else if (_src[1]->Count() == 2)
-            {
-                if (_src[0]->Count() != 4)
-                {
-                    _special = SpecialBiasChannelV2;
-                    _format = TensorFormatNhwc;
-                    _batch = _src[1]->Axis(0);
-                    _channels = 1;
-                    _spatial = _src[0]->Size();
-                }
-            }
-            else if (_src[1]->Count() == 3 && _src[0]->Size(1) == _src[1]->Size(0))
-            {
-                _special = SpecialBiasChannel;
-                _format = TensorFormatNhwc;
-                _batch = 1;
-                _spatial = _src[0]->Axis(0);
-                _channels = _src[0]->Size(1);
-            }
-            else if (_src[0]->Count() == 3 && _src[1]->Count() == 1 && _src[0]->Axis(2) == _src[1]->Axis(0))
-            {
-                _special = SpecialBiasChannel;
-                _format = TensorFormatNhwc;
-                _batch = 1;
-                _spatial = _src[0]->Axis(0) * _src[0]->Axis(1);
-                _channels = _src[1]->Axis(0);
-            }
-            else if (_src[0]->Count() == 4 && _src[1]->Count() == 3)
-            {
-                _format = _src[0]->Format();
-                _batch = _src[0]->Axis(0);
-                _channels = _src[0]->Axis(_format == TensorFormatNhwc ? 3 : 1);
-                _spatial = _src[0]->Size() / _batch / _channels;
-                size_t size = _src[1]->Count() == 4 ? _src[1]->Size(1) : _src[1]->Size(0);
-                if (size == _channels)
-                    _special = SpecialBiasChannel;
-                else
-                    SYNET_ERROR("AddLayer can't process inputs with this shape!");
-            }
-            else if (_src[0]->Count() == 2 && _src[1]->Count() == 1)
-            {
-                _special = SpecialBiasChannel;
-                _batch = 1;
-                _channels = _src[1]->Axis(0);
-                _spatial = _src[0]->Size() / _channels;
-                _format = _src[0]->Axis(0) == _src[1]->Axis(0) ? TensorFormatNchw : TensorFormatNhwc;
-            }
-
-            if(_special == SpecialUniversal)
-            {
-                _dstShape = shapeD;
-                if(!IsCompatible(shapeA, shapeB))
-                    SYNET_ERROR("AddLayer has incompatible inputs!");
-                _aSteps = SourceSteps(shapeA, _dstShape);
-                _bSteps = SourceSteps(shapeB, _dstShape);
-                _universal = GetAddUniversal(_typeA, _typeB, _typeD, shapeA.size());
-                if (_universal == NULL)
-                    SYNET_ERROR("AddLayer can create universal worker!");
-            }
-            _uniform = GetUniform(_typeA, _typeB, _typeD);
-            _addBias = GetAddBias(_typeA, _typeB, _typeD);
-            if(_uniform == NULL || _addBias == NULL)
-                SYNET_ERROR("AddLayer can't process input type!");
-#if defined(SYNET_SIMD_LIBRARY_ENABLE)
-            if (!_dynamic)
-            {
-                if (shapeA == shapeB)
-                    _add16b.Init(shapeA, (SimdTensorDataType)_typeA, shapeB, (SimdTensorDataType)_typeB, (SimdTensorDataType)_typeD, (SimdTensorFormatType)_format);
-                else
-                    _add16b.Clear();
-            }
-#endif
         }
+        else if (_src[1]->Count() == 3 && _src[0]->Size(1) == _src[1]->Size(0))
+        {
+            _special = SpecialBiasChannel;
+            _format = TensorFormatNhwc;
+            _batch = 1;
+            _spatial = _src[0]->Axis(0);
+            _channels = _src[0]->Size(1);
+        }
+        else if (_src[0]->Count() == 3 && _src[1]->Count() == 1 && _src[0]->Axis(2) == _src[1]->Axis(0))
+        {
+            _special = SpecialBiasChannel;
+            _format = TensorFormatNhwc;
+            _batch = 1;
+            _spatial = _src[0]->Axis(0) * _src[0]->Axis(1);
+            _channels = _src[1]->Axis(0);
+        }
+        else if (_src[0]->Count() == 4 && _src[1]->Count() == 3)
+        {
+            _format = _src[0]->Format();
+            _batch = _src[0]->Axis(0);
+            _channels = _src[0]->Axis(_format == TensorFormatNhwc ? 3 : 1);
+            _spatial = _src[0]->Size() / _batch / _channels;
+            size_t size = _src[1]->Count() == 4 ? _src[1]->Size(1) : _src[1]->Size(0);
+            if (size == _channels)
+                _special = SpecialBiasChannel;
+            else
+                SYNET_ERROR("AddLayer can't process inputs with this shape!");
+        }
+        else if (_src[0]->Count() == 2 && _src[1]->Count() == 1)
+        {
+            _special = SpecialBiasChannel;
+            _batch = 1;
+            _channels = _src[1]->Axis(0);
+            _spatial = _src[0]->Size() / _channels;
+            _format = _src[0]->Axis(0) == _src[1]->Axis(0) ? TensorFormatNchw : TensorFormatNhwc;
+        }
+
+        if(_special == SpecialUniversal)
+        {
+            _dstShape = shapeD;
+            if(!IsCompatible(shapeA, shapeB))
+                SYNET_ERROR("AddLayer has incompatible inputs!");
+            _aSteps = SourceSteps(shapeA, _dstShape);
+            _bSteps = SourceSteps(shapeB, _dstShape);
+            _universal = GetAddUniversal(_typeA, _typeB, _typeD, shapeA.size());
+            if (_universal == NULL)
+                SYNET_ERROR("AddLayer can create universal worker!");
+        }
+        _uniform = GetUniform(_typeA, _typeB, _typeD);
+        _addBias = GetAddBias(_typeA, _typeB, _typeD);
+        if(_uniform == NULL || _addBias == NULL)
+            SYNET_ERROR("AddLayer can't process input type!");
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        if (!_dynamic)
+        {
+            if (shapeA == shapeB)
+                _add16b.Init(shapeA, (SimdTensorDataType)_typeA, shapeB, (SimdTensorDataType)_typeB, (SimdTensorDataType)_typeD, (SimdTensorFormatType)_format);
+            else
+                _add16b.Clear();
+        }
+#endif
 
         if (_src[0]->Const() && _src[1]->Const())
         {
@@ -591,195 +556,57 @@ namespace Synet
     void AddLayer::Forward(const TensorPtrs & src_, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
         TensorPtrs _src = GetSrc(src_);
-        if (_quant)
-        {
-            if (_typeA == TensorType8u && _typeD == TensorType8u)
-                Add8i(_src[0]->Data<uint8_t>(), _src[1]->Data<uint8_t>(), dst[0]->Data<uint8_t>());
-            else if (_typeA == TensorType8u && _typeD == TensorType32f)
-                Add8i(_src[0]->Data<uint8_t>(), _src[1]->Data<uint8_t>(), dst[0]->Data<float>());
-            else if (_typeA == TensorType32f && _typeD == TensorType8u)
-                Add8i(_src[0]->Data<float>(), _src[1]->Data<float>(), dst[0]->Data<uint8_t>());
-            else
-                assert(0);
-        }
-        else
-        {
-            const uint8_t* srcA = _src[0]->RawData();
-            const uint8_t* srcB = _src[1]->RawData();
-            uint8_t* dst0 = dst[0]->RawData();
+        const uint8_t* srcA = _src[0]->RawData();
+        const uint8_t* srcB = _src[1]->RawData();
+        uint8_t* dst0 = dst[0]->RawData();
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-            if (_add16b.Enable())
-            {
-                _add16b.Forward(srcA, srcB, dst0);
-                return;
-            }
-#endif
-            switch (_special)
-            {
-            case SpecialNone:
-                _uniform(srcA, srcB, _spatial, dst0);
-                break;
-            case SpecialBiasChannel:
-            {
-                for (size_t b = 0; b < _batch; ++b)
-                {
-                    _addBias(srcA, srcB, _channels, _spatial, dst0, _format);
-                    srcA += _channels * _spatial * _elemA;
-                    srcB += _channels * _elemB;
-                    dst0 += _channels * _spatial * _elemD;
-                }
-                break;
-            }
-            case SpecialBatch:
-            {
-                for (size_t b = 0; b < _batch; ++b)
-                {
-                    _uniform(srcA, srcB, _spatial, dst0);
-                    srcA += _channels * _spatial * _elemA;
-                    dst0 += _channels * _spatial * _elemD;
-                }
-                break;
-            }
-            case SpecialBiasChannelV2:
-            {
-                for (size_t b = 0; b < _batch; ++b)
-                {
-                    _addBias(srcA, srcB, _channels, _spatial, dst0, _format);
-                    srcB += _channels * _elemB;
-                    dst0 += _channels * _spatial * _elemD;
-                }
-                break;
-            }
-            case SpecialUniversal:
-                _universal(srcA, _aSteps, srcB, _bSteps, dst0, _dstShape);
-                break;
-            default: 
-                assert(0);
-            }
-        }
-    }
-
-    //-------------------------------------------------------------------------------------------------
-       
-    void AddLayer::Add8i(const uint8_t* src0, const uint8_t* src1, uint8_t * dst)
-    {
-        const float* scaleSrc0 = this->Stats(0)[0]->scale8uTo32f.data();
-        const float* shiftSrc0 = this->Stats(0)[0]->shift8uTo32f.data();
-        const float* scaleSrc1 = this->Stats(0)[1]->scale8uTo32f.data();
-        const float* shiftSrc1 = this->Stats(0)[1]->shift8uTo32f.data();
-        const float* scaleDst = this->Stats(2)[0]->scale32fTo8u.data();
-        const float* shiftDst = this->Stats(2)[0]->shift32fTo8u.data();
-#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        if (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed)
+        if (_add16b.Enable())
         {
-            SimdSynetCompatibilityType compatibility = (SimdSynetCompatibilityType)(SimdSynetCompatibility8iNarrowed | SimdSynetCompatibilityFmaUse);
-            ::SimdSynetAdd8i(src0, scaleSrc0, shiftSrc0, src1, scaleSrc1, shiftSrc1, dst, scaleDst, shiftDst, 
-                _batch, _channels, _spatial, (SimdTensorFormatType)_format, compatibility);
+            _add16b.Forward(srcA, srcB, dst0);
             return;
         }
 #endif
-        int upper = ((_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed) ? 
-            QUANT_SYMM_NARR_SRC_U8_MAX : QUANT_IE_COMP_SRC_U8_MAX);
-        for (size_t b = 0; b < _batch; ++b)
+        switch (_special)
         {
-            if (_format == TensorFormatNchw)
+        case SpecialNone:
+            _uniform(srcA, srcB, _spatial, dst0);
+            break;
+        case SpecialBiasChannel:
+        {
+            for (size_t b = 0; b < _batch; ++b)
             {
-                for (size_t c = 0; c < _channels; ++c)
-                {
-                    for (size_t s = 0; s < _spatial; ++s)
-                    {
-                        float s0 = Detail::Convert<uint8_t, float, float>(src0[s], scaleSrc0[c], shiftSrc0[c], INT_MIN, INT_MAX);
-                        float s1 = Detail::Convert<uint8_t, float, float>(src1[s], scaleSrc1[c], shiftSrc1[c], INT_MIN, INT_MAX);
-                        dst[s] = Detail::Convert<float, uint8_t, float>(s0 + s1, scaleDst[c], shiftDst[c], 0, upper);
-                    }
-                    dst += _spatial, src0 += _spatial, src1 += _spatial;
-                }
+                _addBias(srcA, srcB, _channels, _spatial, dst0, _format);
+                srcA += _channels * _spatial * _elemA;
+                srcB += _channels * _elemB;
+                dst0 += _channels * _spatial * _elemD;
             }
-            else if (_format == TensorFormatNhwc)
-            {
-                for (size_t s = 0; s < _spatial; ++s)
-                {
-                    for (size_t c = 0; c < _channels; ++c)
-                    {
-                        float s0 = Detail::Convert<uint8_t, float, float>(src0[c], scaleSrc0[c], shiftSrc0[c], INT_MIN, INT_MAX);
-                        float s1 = Detail::Convert<uint8_t, float, float>(src1[c], scaleSrc1[c], shiftSrc1[c], INT_MIN, INT_MAX);
-                        dst[c] = Detail::Convert<float, uint8_t, float>(s0 + s1, scaleDst[c], shiftDst[c], 0, upper);
-                    }
-                    dst += _channels, src0 += _channels, src1 += _channels;
-                }
-            }
-            else
-                assert(0);
+            break;
         }
-    }
-
-    void AddLayer::Add8i(const uint8_t* src0, const uint8_t* src1, float* dst)
-    {
-        const float* scaleSrc0 = this->Stats(0)[0]->scale8uTo32f.data();
-        const float* shiftSrc0 = this->Stats(0)[0]->shift8uTo32f.data();
-        const float* scaleSrc1 = this->Stats(0)[1]->scale8uTo32f.data();
-        const float* shiftSrc1 = this->Stats(0)[1]->shift8uTo32f.data();
-        for (size_t b = 0; b < _batch; ++b)
+        case SpecialBatch:
         {
-            if (_format == TensorFormatNchw)
+            for (size_t b = 0; b < _batch; ++b)
             {
-                for (size_t c = 0; c < _channels; ++c)
-                {
-                    for (size_t s = 0; s < _spatial; ++s)
-                    {
-                        float s0 = Detail::Convert<uint8_t, float, float>(src0[s], scaleSrc0[c], shiftSrc0[c], INT_MIN, INT_MAX);
-                        float s1 = Detail::Convert<uint8_t, float, float>(src1[s], scaleSrc1[c], shiftSrc1[c], INT_MIN, INT_MAX);
-                        dst[s] = s0 + s1;
-                        dst += _spatial, src0 += _spatial, src1 += _spatial;
-                    }
-                }
+                _uniform(srcA, srcB, _spatial, dst0);
+                srcA += _channels * _spatial * _elemA;
+                dst0 += _channels * _spatial * _elemD;
             }
-            else if (_format == TensorFormatNhwc)
-            {
-                for (size_t s = 0; s < _spatial; ++s)
-                {
-                    for (size_t c = 0; c < _channels; ++c)
-                    {
-                        float s0 = Detail::Convert<uint8_t, float, float>(src0[c], scaleSrc0[c], shiftSrc0[c], INT_MIN, INT_MAX);
-                        float s1 = Detail::Convert<uint8_t, float, float>(src1[c], scaleSrc1[c], shiftSrc1[c], INT_MIN, INT_MAX);
-                        dst[c] = s0 + s1;
-                    }
-                    dst += _channels, src0 += _channels, src1 += _channels;
-                }
-            }
-            else
-                assert(0);
+            break;
         }
-    }
-
-    void AddLayer::Add8i(const float* src0, const float* src1, uint8_t * dst)
-    {
-        const float* scaleDst = this->Stats(2)[0]->scale32fTo8u.data();
-        const float* shiftDst = this->Stats(2)[0]->shift32fTo8u.data();
-        int upper = ((_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed) ?
-            QUANT_SYMM_NARR_SRC_U8_MAX : QUANT_IE_COMP_SRC_U8_MAX);
-        for (size_t b = 0; b < _batch; ++b)
+        case SpecialBiasChannelV2:
         {
-            if (_format == TensorFormatNchw)
+            for (size_t b = 0; b < _batch; ++b)
             {
-                for (size_t c = 0; c < _channels; ++c)
-                {
-                    for (size_t s = 0; s < _spatial; ++s)
-                         dst[s] = Detail::Convert<float, uint8_t, float>(src0[s] + src1[s], scaleDst[c], shiftDst[c], 0, upper);
-                    dst += _spatial, src0 += _spatial, src1 += _spatial;
-                }
+                _addBias(srcA, srcB, _channels, _spatial, dst0, _format);
+                srcB += _channels * _elemB;
+                dst0 += _channels * _spatial * _elemD;
             }
-            else if (_format == TensorFormatNhwc)
-            {
-                for (size_t s = 0; s < _spatial; ++s)
-                {
-                    for (size_t c = 0; c < _channels; ++c)
-                        dst[c] = Detail::Convert<float, uint8_t, float>(src0[c] + src1[c], scaleDst[c], shiftDst[c], 0, upper);
-                    dst += _channels, src0 += _channels, src1 += _channels;
-                }
-            }
-            else
-                assert(0);
+            break;
+        }
+        case SpecialUniversal:
+            _universal(srcA, _aSteps, srcB, _bSteps, dst0, _dstShape);
+            break;
+        default: 
+            assert(0);
         }
     }
 

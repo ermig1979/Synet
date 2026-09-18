@@ -36,7 +36,7 @@ namespace Synet
     class AddLayer : public Layer
     {
     public:
-        AddLayer(const LayerParam& param, Context* context, QuantizationMethod method);
+        AddLayer(const LayerParam& param, Context* context);
 
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
@@ -50,12 +50,6 @@ namespace Synet
 
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
-        
-        void Add8i(const uint8_t* src0, const uint8_t* src1, uint8_t* dst);
-
-        void Add8i(const uint8_t* src0, const uint8_t* src1, float* dst);
-
-        void Add8i(const float* src0, const float* src1, uint8_t* dst);
 
         TensorPtrs GetSrc(const TensorPtrs& src);
 
@@ -68,8 +62,6 @@ namespace Synet
             SpecialBiasChannelV2,
             SpecialUniversal,
         } _special;
-        bool _quant;
-        QuantizationMethod _method;
         TensorFormat _format;
         TensorType _typeA, _typeB, _typeD;
         size_t _batch, _channels, _spatial, _elemA, _elemB, _elemD;
