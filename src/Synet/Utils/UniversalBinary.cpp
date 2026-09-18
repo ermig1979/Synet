@@ -24,7 +24,6 @@
 
 #include "Synet/Utils/UniversalBinary.h"
 #include "Synet/Utils/Math.h"
-#include "Synet/Quantization/Convert.h"
 
 namespace Synet
 {
