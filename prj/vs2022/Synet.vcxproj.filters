@@ -102,9 +102,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\Deconvolution\DeconvolutionLayer.cpp">
       <Filter>Layers\Deconvolution</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct8iLayer.cpp">
-      <Filter>Layers\InnerProduct</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct16bLayer.cpp">
       <Filter>Layers\InnerProduct</Filter>
     </ClCompile>
@@ -538,9 +535,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Deconvolution\DeconvolutionLayer.h">
       <Filter>Layers\Deconvolution</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct8iLayer.h">
-      <Filter>Layers\InnerProduct</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct16bLayer.h">
       <Filter>Layers\InnerProduct</Filter>
