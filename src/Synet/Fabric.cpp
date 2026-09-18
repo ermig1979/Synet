@@ -44,7 +44,6 @@
 
 #include "Synet/Layers/InnerProduct/InnerProduct32fLayer.h"
 #include "Synet/Layers/InnerProduct/InnerProduct16bLayer.h"
-#include "Synet/Layers/InnerProduct/InnerProduct8iLayer.h"
 
 #include "Synet/Layers/Legacy/BroadcastLayer.h"
 #include "Synet/Layers/Legacy/FusedLayer.h"
@@ -203,9 +202,7 @@ namespace Synet
         case LayerTypeHswish: return new HswishLayer(param, context);
         case LayerTypeHardSigmoid: return new HardSigmoidLayer(param, context);
         case LayerTypeInnerProduct: 
-            if (param.innerProduct().quantizationLevel() == TensorType8i)
-                return new InnerProduct8iLayer(param, context, method);
-            else if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
+            if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
                 return new InnerProduct16bLayer(param, context);
             else
                 return new InnerProduct32fLayer(param, context);
