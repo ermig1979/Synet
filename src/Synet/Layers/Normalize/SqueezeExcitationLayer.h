@@ -35,7 +35,7 @@ namespace Synet
     class SqueezeExcitationLayer : public Layer
     {
     public:
-        SqueezeExcitationLayer(const LayerParam& param, Context* context, QuantizationMethod method);
+        SqueezeExcitationLayer(const LayerParam& param, Context* context);
 
         virtual void CompactWeight();
 
@@ -52,14 +52,6 @@ namespace Synet
 
         void Forward32f(const float* src, float* sum, float* norm0, float* norm1, float* dst);
 
-        void Forward8i(const uint8_t* src, int32_t* sum, float* norm0, float* norm1, uint8_t* dst8u, float* dst32f);
-
-        void Init8i();
-
-        void Scale8i(const uint8_t* src, float* norm, uint8_t* dst);
-
-        void Scale8i(const uint8_t* src, float* norm, float* dst);
-
         void Forward16b(const uint16_t* src, float* sum, float* norm0, float* norm1, uint16_t* dst16u, float* dst32f);
 
         void Scale16b(const uint16_t* src, float* norm, uint16_t* dst);
@@ -69,15 +61,13 @@ namespace Synet
         void Normalize(float* norm0, float* norm1);
 
     private:
-        bool _src8u, _dst8u, _src16b, _dst16b, _hasBias[2], _hardSigmoid;
+        bool _src16b, _dst16b, _hasBias[2], _hardSigmoid;
         TensorFormat _format;
         size_t _batch, _channels, _height, _width, _size, _squeeze, _sci; 
         ActivationFunctionType _actType;
         float _kAvg;
-        QuantizationMethod _method;
-        Floats _sumScale, _sumShift, _rWeight[2], _params;
+        Floats _rWeight[2], _params;
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-        Simd::SynetScale8i _scale8i;
         Simd::SynetScale16b _scale16b;
 #endif
     };

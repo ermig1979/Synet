@@ -251,7 +251,7 @@ namespace Synet
         case LayerTypeSoftplus: return new SoftplusLayer(param, context);
         case LayerTypeSpaceToDepth: return new SpaceToDepthLayer(param, context);
         case LayerTypeSqueeze: return new SqueezeLayer(param, context);
-        case LayerTypeSqueezeExcitation: return new SqueezeExcitationLayer(param, context, method);
+        case LayerTypeSqueezeExcitation: return new SqueezeExcitationLayer(param, context);
         case LayerTypeStridedSlice: return new StridedSliceLayer(param, context);
         case LayerTypeStub: return new StubLayer(param, context);
         case LayerTypeSwish: return new SwishLayer(param, context);
