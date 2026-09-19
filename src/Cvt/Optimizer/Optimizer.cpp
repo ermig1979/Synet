@@ -70,8 +70,7 @@ namespace Synet
 
     bool Optimizer::OptimizeLayers(Synet::NetworkParam& network, Bytes& bin, int stage)
     {
-        QuantizationMethod method = network.quantization().method();
-        const bool is8i = network.quantization().method() != QuantizationMethodUnknown;
+        QuantizationMethod method = QuantizationMethodUnknown;
         const bool isNhwc = IsNnwc(network);
         Changes changes;
         LayerParams merged;
@@ -363,8 +362,6 @@ namespace Synet
 
     bool Optimizer::ReuseLayers(Synet::NetworkParam& network)
     {
-        if (network.quantization().method() != QuantizationMethodUnknown)
-            return true;
         LayerParams & layers = network.layers();
         for (size_t i = 0; i < layers.size(); ++i)
         {

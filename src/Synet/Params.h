@@ -902,19 +902,6 @@ namespace Synet
         CPL_PARAM_VALUE(Strings, debug, Strings());
     };
 
-    struct StatisticParam
-    {
-        CPL_PARAM_VALUE(String, name, String());
-        CPL_PARAM_VALUE(Floats, min, Floats());
-        CPL_PARAM_VALUE(Floats, max, Floats());
-    };
-
-    struct QuantizationParam
-    {
-        CPL_PARAM_VALUE(QuantizationMethod, method, QuantizationMethodUnknown);
-        CPL_PARAM_VECTOR(StatisticParam, statistics);
-    };
-
     struct InfoParam
     {
         CPL_PARAM_VALUE(int32_t, version, 0);
@@ -929,7 +916,6 @@ namespace Synet
         CPL_PARAM_STRUCT(InfoParam, info);
         CPL_PARAM_VALUE(Strings, dst, Strings());
         CPL_PARAM_VECTOR(LayerParam, layers);
-        CPL_PARAM_STRUCT(QuantizationParam, quantization);
     };
 
     CPL_PARAM_HOLDER(NetworkParamHolder, NetworkParam, network);

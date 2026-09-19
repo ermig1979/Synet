@@ -334,9 +334,6 @@
     <ClInclude Include="..\..\src\Synet\Quantization\Const.h">
       <Filter>Quantization</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Quantization\Stat.h">
-      <Filter>Quantization</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Region.h" />
     <ClInclude Include="..\..\src\Synet\Fabric.h" />
     <ClInclude Include="..\..\src\Synet\Context.h" />

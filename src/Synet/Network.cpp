@@ -27,7 +27,6 @@
 #include "Synet/Network.h"
 
 #include "Synet/Utils/SetInput.h"
-#include "Synet/Utils/Statistics.h"
 #include "Synet/Utils/VersionInfo.h"
 
 #include "Synet/Layers/Legacy/RegionLayer.h"
@@ -68,10 +67,8 @@ namespace Synet
         _layers.clear();
         _param() = NetworkParam();
         _back.clear();
-        _stats.clear();
         _tensorId.clear();
         _layerId.clear();
-        _statId.clear();
         _srcIds.clear();
         _dstIds.clear();
         _context.Clear();
@@ -503,14 +500,6 @@ namespace Synet
         SetFastMode(mode);
     }
 
-    void Network::UpdateStatistics(float quantile, float epsilon)
-    {
-        SYNET_PERF_FUNC();
-        for (size_t t = 0; t < _threads.size(); ++t)
-            for (size_t i = 0; i < _threads[t].tensors.size(); ++i)
-                UpdateStatistics(*_threads[t].tensors[i], quantile, epsilon);
-    }
-
     void Network::DebugPrint(std::ostream & os, int flag, int first, int last, int precision, size_t thread)
     {
         assert(thread < _threads.size());
@@ -668,8 +657,6 @@ namespace Synet
                 }
             }
         }
-        for (size_t i = 0; i < _stats.size(); ++i)
-            memoryUsage += _stats[i]->MemoryUsage();
         return memoryUsage;
     }
 
@@ -716,8 +703,8 @@ namespace Synet
 
     bool Network::Is8i() const
     {
-        return _param().quantization().method() != QuantizationMethodUnknown;
-    }  
+        return false;
+    }
 
     bool Network::Is16b() const
     {
@@ -755,7 +742,7 @@ namespace Synet
                 CPL_LOG_SS(Info, msg.str());
             }
 #endif            
-            LayerSharedPtr layer(Fabric::Create(param, &_context, _param().quantization().method()));
+            LayerSharedPtr layer(Fabric::Create(param, &_context, QuantizationMethodUnknown));
             if (layer)
             {
                 layerId[param.name()] = _layers.size();
@@ -777,7 +764,6 @@ namespace Synet
     {
         _threads.resize(1);
         SetBuffers();
-        SetStats();
 
         NameSet available;
         for (size_t i = 0; i < _layers.size(); ++i)
@@ -836,8 +822,6 @@ namespace Synet
                     _threads[0].src.push_back(_threads[0].tensors.back().get());
                 }
             }
-            if (Is8i())
-                stage.layer->SetStats(_stats);
             if (param.type() == LayerTypeInput)
                 _threads[0].input.push_back(stage);
             else
@@ -875,11 +859,6 @@ namespace Synet
             }
         }
         SetTensorType32f();
-        if (Is8i())
-        {
-            SetLowPrecisionTensorType(TensorType8u);
-            UnifyStats();
-        }
         if (Is16b())
         {
             SetLowPrecisionTensorType(TensorType16b);
@@ -1054,66 +1033,6 @@ namespace Synet
         }
     }
 
-    bool Network::IsSubGraphEndConv(size_t s)
-    {
-        const Stage& stage = _threads[0].stages[s];
-        const Layer & layer = *stage.layer;
-        if (layer._isBack)
-            return false;
-        const LayerParam & param = layer.Param();
-        for (size_t d = 0; d < param.dst().size(); ++d)
-        {
-            const String & name = param.dst()[d];
-            const IdSet & ids = _srcIds[name];
-            for (IdSet::const_iterator id = ids.begin(); id != ids.end(); ++id)
-            {
-                if (*id <= s)
-                    continue;
-                const Stage & dst = _threads[0].stages[*id];
-                const LayerParam & param = dst.layer->Param();
-                if (param.type() == LayerTypeConvolution && param.convolution().group() != param.convolution().outputNum())
-                    continue;
-                if (param.type() == LayerTypeMergedConvolution)
-                    continue;
-                if (param.type() == LayerTypePriorBox)
-                    continue;
-                if (IsSubGraphEndConv(*id))
-                    continue;
-                return false;
-            }
-        }
-        return true;
-    }
-
-    void Network::UnifyStats()
-    {
-        if (_param().quantization().method() == QuantizationMethodSymmetricNarrowed)
-            return;
-        for (size_t i = 0; i < _threads[0].input.size(); ++i)
-            _stats[_statId[_threads[0].input[i].layer->Param().name()]]->Unify();
-        for (size_t s = 0; s < _threads[0].stages.size(); ++s)
-        {
-            if (IsSubGraphEndConv(s))
-            {
-                const LayerParam & param = _threads[0].stages[s].layer->Param();
-                if (param.type() == LayerTypeConvolution || param.type() == LayerTypeMergedConvolution || param.type() == LayerTypeScale)
-                    _stats[_statId[param.dst()[0]]]->Unify();
-
-                if (param.type() == LayerTypePooling && param.pooling().method() == PoolingMethodTypeMax && !_stats[_statId[param.src()[0]]]->channels)
-                    _stats[_statId[param.dst()[0]]]->UnifyAs(*_stats[_statId[param.src()[0]]]);
-                if (param.type() == LayerTypeRelu && param.relu().negativeSlope() == 0.0f)
-                    _stats[_statId[param.dst()[0]]]->UnifyAs(*_stats[_statId[param.src()[0]]]);
-                if (param.type() == LayerTypeConcat)
-                {
-                    StatPtrs stats;
-                    for (size_t c = 0; c < param.src().size(); ++c)
-                        stats.push_back(_stats[_statId[param.src()[c]]].get());
-                    _stats[_statId[param.dst()[0]]]->UnifyAs(stats.data(), stats.size());
-                }
-            }
-        }
-    }
-
     bool Network::ReshapeStages()
     {
         for (size_t i = 0; i < _threads[0].stages.size(); ++i)
@@ -1214,40 +1133,6 @@ namespace Synet
                 _threads[0].buf.push_back(tensor.get());
             }
         }
-    }
-
-    void Network::SetStats()
-    {
-        for (size_t i = 0; i < _param().quantization().statistics().size(); ++i)
-        {
-            const StatisticParam & src = _param().quantization().statistics()[i];
-            StatSharedPtr stat(new Stat(src));
-            _statId[src.name()] = _stats.size();
-            _stats.push_back(stat);
-        }
-    }
-
-    void Network::UpdateStatistics(const Tensor & tensor, float quantile, float epsilon)
-    {
-        if (tensor.Name().empty() || tensor.GetType() != TensorType32f)
-            return;
-        size_t channels = GetChannels(tensor);
-        if (channels == 0)
-            return;
-        size_t index = 0;
-        for (; index < _param().quantization().statistics().size(); ++index)
-            if (_param().quantization().statistics()[index].name() == tensor.Name())
-                break;
-        if (index == _param().quantization().statistics().size())
-            _param().quantization().statistics().push_back(StatisticParam());
-        StatisticParam & stat = _param().quantization().statistics()[index];
-        if(stat.name().empty())
-            stat.name() = tensor.Name();
-        if (stat.min().empty())
-            stat.min().resize(channels, FLT_MAX);
-        if (stat.max().empty())
-            stat.max().resize(channels, -FLT_MAX);
-        UpdateChannelsQuantile(tensor, quantile, epsilon, stat.min().data(), stat.max().data());
     }
 
     bool Network::InsertDst(const String & name)

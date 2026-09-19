@@ -26,18 +26,6 @@
 
 namespace Synet
 {
-    bool Layer::SetStats(const StatSharedPtrs& stats)
-    {
-        bool result = true;
-        if (LowPrecision(TensorType8u) == LowPrecisionTypeActive)
-        {
-            result = result && SetStats(stats, _param.src(), _stats[0]);
-            result = result && SetStats(stats, _param.origin(), _stats[1]);
-            result = result && SetStats(stats, _param.dst(), _stats[2]);
-        }
-        return result;
-    }
-
     void Layer::ForwardPerf(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread)
     {
         if (_const)
@@ -163,30 +151,6 @@ namespace Synet
             }
             _perfInited[thread] = 1;
         }
-    }
-
-    bool Layer::SetStats(const StatSharedPtrs& src, const Strings& names, StatPtrs& dst)
-    {
-        dst.clear();
-        for (size_t i = 0; i < names.size(); ++i)
-        {
-            const String& name = names[i];
-            size_t j = 0;
-            for (; j < src.size(); ++j)
-            {
-                if (name == src[j]->name)
-                {
-                    dst.push_back(src[j].get());
-                    break;
-                }
-            }
-            if (j == src.size())
-            {
-                assert(0);
-                return false;
-            }
-        }
-        return true;
     }
 
     void Layer::Reshape(const WeightParam& param, Tensor& tensor) const
