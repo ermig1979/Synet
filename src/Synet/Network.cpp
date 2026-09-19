@@ -742,7 +742,7 @@ namespace Synet
                 CPL_LOG_SS(Info, msg.str());
             }
 #endif            
-            LayerSharedPtr layer(Fabric::Create(param, &_context, QuantizationMethodUnknown));
+            LayerSharedPtr layer(Fabric::Create(param, &_context));
             if (layer)
             {
                 layerId[param.name()] = _layers.size();

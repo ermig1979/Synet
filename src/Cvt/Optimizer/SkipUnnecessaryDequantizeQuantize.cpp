@@ -27,7 +27,7 @@
 
 namespace Synet
 {
-    bool SkipUnnecessaryDequantizeQuantizeV0(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes)
+    bool SkipUnnecessaryDequantizeQuantizeV0(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
     {
         if (src.size() < index + 3)
             return false;
@@ -55,7 +55,7 @@ namespace Synet
 
     //--------------------------------------------------------------------------------------------------
 
-    bool SkipUnnecessaryDequantizeQuantizeV1(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes)
+    bool SkipUnnecessaryDequantizeQuantizeV1(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
     {
         if (src.size() < index + 6)
             return false;

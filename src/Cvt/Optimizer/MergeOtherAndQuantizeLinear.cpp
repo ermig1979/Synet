@@ -27,7 +27,7 @@
 
 namespace Synet
 {
-    bool MergeOtherAndQuantizeLinear(const LayerParams& src, size_t index, QuantizationMethod method, LayerParams& dst, Changes& changes)
+    bool MergeOtherAndQuantizeLinear(const LayerParams& src, size_t index, LayerParams& dst, Changes& changes)
     {
         const LayerParam& ql = src[index];
         if (ql.type() != LayerTypeQuantizeLinear)

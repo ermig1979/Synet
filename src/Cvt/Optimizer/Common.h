@@ -121,7 +121,7 @@ namespace Synet
 
     bool MergeConvolutionAndScale(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
 
-    bool MergeConvolutionOrOtherAndActivation(const LayerParams& src, size_t index, QuantizationMethod method, LayerParams& dst, Changes& changes);
+    bool MergeConvolutionOrOtherAndActivation(const LayerParams& src, size_t index, LayerParams& dst, Changes& changes);
 
     bool MergeInnerProductAndScale(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
 
@@ -149,11 +149,11 @@ namespace Synet
 
     bool MergeParallelScaleAndDepthwiseConvolution(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
 
-    bool MergeOtherAndQuantizeLinear(const LayerParams& src, size_t index, QuantizationMethod method, LayerParams& dst, Changes& changes);
+    bool MergeOtherAndQuantizeLinear(const LayerParams& src, size_t index, LayerParams& dst, Changes& changes);
 
     bool MergeQuantizedAdd(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
-    bool MergeQuantizedConvolutionAndQuantizedActivation(const LayerParams& src, size_t index, QuantizationMethod method, LayerParams& dst, Changes& changes);
+    bool MergeQuantizedConvolutionAndQuantizedActivation(const LayerParams& src, size_t index, LayerParams& dst, Changes& changes);
 
     bool MergeQuantizedHardSigmoid(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
@@ -171,19 +171,19 @@ namespace Synet
 
     bool MergeSqueezeExcitation(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
-    bool MergeThreeConvolutions(const LayerParams& src, size_t& index, QuantizationMethod method, const OptimizerParam& param, LayerParams& dst, Changes& changes);
+    bool MergeThreeConvolutions(const LayerParams& src, size_t& index, const OptimizerParam& param, LayerParams& dst, Changes& changes);
 
     bool MergeTwoQuantizedConvolutions(const LayerParams& src, size_t& index, const OptimizerParam& param, LayerParams& dst, Changes& changes);
 
     bool MergeThreeQuantizedConvolutions(const LayerParams& src, size_t& index, const OptimizerParam& param, LayerParams& dst, Changes& changes);
 
-    bool MergeTwoConvolutions(const LayerParams& src, size_t& index, QuantizationMethod method, const OptimizerParam& param, LayerParams& dst, Changes& changes);
+    bool MergeTwoConvolutions(const LayerParams& src, size_t& index, const OptimizerParam& param, LayerParams& dst, Changes& changes);
 
-    bool SkipUnnecessaryDequantizeQuantizeV0(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes);
+    bool SkipUnnecessaryDequantizeQuantizeV0(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
-    bool SkipUnnecessaryDequantizeQuantizeV1(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes);
+    bool SkipUnnecessaryDequantizeQuantizeV1(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
-    bool SkipUnnecessaryDequantize(const LayerParams& src, size_t& index, QuantizationMethod method, LayerParams& dst, Changes& changes);
+    bool SkipUnnecessaryDequantize(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
     bool SkipTwoPermutes(const LayerParams& src, size_t& index, LayerParams& dst);
 

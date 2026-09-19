@@ -149,7 +149,7 @@ namespace Synet
         return false;
     }
 
-    Layer* Fabric::Create(const LayerParam & param, Context* context, QuantizationMethod method)
+    Layer* Fabric::Create(const LayerParam & param, Context* context)
     {
         switch (param.type())
         {
