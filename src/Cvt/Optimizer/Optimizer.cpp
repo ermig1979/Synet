@@ -70,7 +70,6 @@ namespace Synet
 
     bool Optimizer::OptimizeLayers(Synet::NetworkParam& network, Bytes& bin, int stage)
     {
-        QuantizationMethod method = QuantizationMethodUnknown;
         const bool isNhwc = IsNnwc(network);
         Changes changes;
         LayerParams merged;
@@ -193,7 +192,7 @@ namespace Synet
             {
                 if (MergePowerAndScaleAndPower(network.layers(), i, bin, buf, merged, changes))
                     continue;
-                if (MergeConvolutionOrOtherAndActivation(network.layers(), i, method, merged, changes))
+                if (MergeConvolutionOrOtherAndActivation(network.layers(), i, merged, changes))
                     continue;
                 if (MergeRnnGruBd(network.layers(), i, merged, changes))
                     continue;
@@ -203,25 +202,25 @@ namespace Synet
             {
                 if (_param.convToNhwc() && isNhwc && TransposeConvolutions(network.layers(), i, bin, buf, _param, merged, changes))
                     continue;
-                if (MergeOtherAndQuantizeLinear(network.layers(), i, method, merged, changes))
+                if (MergeOtherAndQuantizeLinear(network.layers(), i, merged, changes))
                     continue;
-                if (SkipUnnecessaryDequantizeQuantizeV0(network.layers(), i, method, merged, changes))
+                if (SkipUnnecessaryDequantizeQuantizeV0(network.layers(), i, merged, changes))
                     continue;
-                if (SkipUnnecessaryDequantizeQuantizeV1(network.layers(), i, method, merged, changes))
+                if (SkipUnnecessaryDequantizeQuantizeV1(network.layers(), i, merged, changes))
                     continue;
-                if (SkipUnnecessaryDequantize(network.layers(), i, method, merged, changes))
+                if (SkipUnnecessaryDequantize(network.layers(), i, merged, changes))
                     continue;
                 break;
             }
             case 8:
             {
-                if (MergeQuantizedConvolutionAndQuantizedActivation(network.layers(), i, method, merged, changes))
+                if (MergeQuantizedConvolutionAndQuantizedActivation(network.layers(), i, merged, changes))
                     continue;
                 break;
             }
             case 9:
             {
-                if (MergeThreeConvolutions(network.layers(), i, method, _param, merged, changes))
+                if (MergeThreeConvolutions(network.layers(), i, _param, merged, changes))
                     continue;
                 if (MergeThreeQuantizedConvolutions(network.layers(), i, _param, merged, changes))
                     continue;
@@ -235,7 +234,7 @@ namespace Synet
             }
             case 10:
             {
-                if (MergeTwoConvolutions(network.layers(), i, method, _param, merged, changes))
+                if (MergeTwoConvolutions(network.layers(), i, _param, merged, changes))
                     continue;
                 if (MergeTwoQuantizedConvolutions(network.layers(), i, _param, merged, changes))
                     continue;

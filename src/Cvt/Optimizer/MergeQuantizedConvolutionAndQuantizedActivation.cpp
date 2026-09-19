@@ -27,7 +27,7 @@
 
 namespace Synet
 {
-    bool MergeQuantizedConvolutionAndQuantizedActivation(const LayerParams& src, size_t index, QuantizationMethod method, LayerParams& dst, Changes& changes)
+    bool MergeQuantizedConvolutionAndQuantizedActivation(const LayerParams& src, size_t index, LayerParams& dst, Changes& changes)
     {
         const LayerParam& act = src[index];
         ActivationFunctionType type = ActivationFunctionTypeIdentity;

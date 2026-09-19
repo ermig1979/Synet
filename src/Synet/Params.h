@@ -255,11 +255,6 @@ CPL_PARAM_ENUM1(Synet, RoundingType,
     RoundingTypeCeil,
     RoundingTypeFloor);
 
-CPL_PARAM_ENUM1(Synet, QuantizationMethod,
-    QuantizationMethodIECompatible,
-    QuantizationMethodSymmetricNarrowed,
-    QuantizationMethodUnifiedNarrowed);
-
 CPL_PARAM_ENUM1(Synet, TensorFormat,
     TensorFormatNchw,
     TensorFormatNhwc);

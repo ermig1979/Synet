@@ -27,7 +27,7 @@
 
 namespace Synet
 {
-    bool MergeConvolutionOrOtherAndActivation(const LayerParams& src, size_t index, QuantizationMethod method, LayerParams& dst, Changes& changes)
+    bool MergeConvolutionOrOtherAndActivation(const LayerParams& src, size_t index, LayerParams& dst, Changes& changes)
     {
         const LayerParam& act = src[index];
         ActivationFunctionType type = ActivationFunctionTypeIdentity;
@@ -43,7 +43,7 @@ namespace Synet
             type = act.relu().negativeSlope() == 0.0f ? ActivationFunctionTypeRelu : ActivationFunctionTypeLeakyRelu;
             param0 = act.relu().negativeSlope();
         }
-        if (act.type() == LayerTypePrelu && method != QuantizationMethodIECompatible)
+        if (act.type() == LayerTypePrelu)
         {
             type = ActivationFunctionTypePrelu;
         }
