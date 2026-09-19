@@ -266,7 +266,6 @@
     <ClInclude Include="..\..\src\Synet\Utils\Math.h" />
     <ClInclude Include="..\..\src\Synet\Utils\SetInput.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Shape.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\Statistics.h" />
     <ClInclude Include="..\..\src\Synet\Utils\UniversalBinary.h" />
     <ClInclude Include="..\..\src\Synet\Utils\VersionInfo.h" />
     <ClInclude Include="..\..\src\Synet\Version.h" />
