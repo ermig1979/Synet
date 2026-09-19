@@ -99,8 +99,6 @@ namespace Synet
 
         void Forward(size_t thread = 0);
 
-        void UpdateStatistics(float quantile, float epsilon);
-
         void DebugPrint(std::ostream& os, int flag, int first, int last, int precision, size_t thread = 0);
 
         Regions GetRegions(size_t imageW, size_t imageH, Type threshold, Type overlap, size_t thread = 0) const;
@@ -151,10 +149,9 @@ namespace Synet
         NetworkParamHolder _param;
         Context _context;
         LayerSharedPtrs _layers;
-        StatSharedPtrs _stats;
 
         LayerPtrs _back;
-        NameIdMap _tensorId, _layerId, _statId;
+        NameIdMap _tensorId, _layerId;
         NameIdSetMap _srcIds, _dstIds;
         Threads _threads;
 
@@ -176,17 +173,9 @@ namespace Synet
 
         void SetLowPrecisionTensorType(TensorType type);
 
-        bool IsSubGraphEndConv(size_t s);
-
-        void UnifyStats();
-
         bool ReshapeStages();
 
         void SetBuffers();
-
-        void SetStats();
-
-        void UpdateStatistics(const Tensor& tensor, float quantile, float epsilon);
 
         bool InsertDst(const String& name);
 

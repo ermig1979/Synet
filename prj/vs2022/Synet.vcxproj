@@ -253,7 +253,6 @@
     <ClInclude Include="..\..\src\Synet\Quantization\DequantizeLinear.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\Gemm.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\QuantizeLinear.h" />
-    <ClInclude Include="..\..\src\Synet\Quantization\Stat.h" />
     <ClInclude Include="..\..\src\Synet\Region.h" />
     <ClInclude Include="..\..\src\Synet\Tensor.h" />
     <ClCompile Include="..\..\src\Synet\Network.cpp" />
