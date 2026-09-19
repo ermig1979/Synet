@@ -322,9 +322,6 @@
     <ClInclude Include="..\..\src\Synet\Utils\FileUtils.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Statistics.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\Difference.h">
       <Filter>Utils</Filter>
     </ClInclude>
