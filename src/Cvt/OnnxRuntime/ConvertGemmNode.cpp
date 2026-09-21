@@ -49,7 +49,7 @@ namespace Synet
             if (!CheckDims(shape, 2, "quantized inner product weight"))
                 return false;
             layer.innerProduct().outputNum() = (uint32_t)(transB ? shape[0] : shape[1]);
-            layer.convolution().biasTerm() = layer.src().size() > 2;
+            layer.innerProduct().biasTerm() = layer.src().size() > 2;
             if (!MoveDequantizeLinearToLayer(layers, layer, merged))
                 return false;
             return true;

@@ -28,12 +28,29 @@
 
 namespace Synet
 {
-    bool ConvertMatMulNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap)
+    bool ConvertMatMulNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap, UniqNames& merged)
     {
         if (!CheckSourceNumber(layer, 2))
             return false;
-        layer.type() = Synet::LayerTypeInnerProduct;
         int transB = false;
+        if (GetLayerType(layers, layer.src()[0]) == LayerTypeDequantizeLinear &&
+            GetLayerType(layers, layer.src()[1]) == LayerTypeDequantizeLinear)
+        {
+            layer.type() = Synet::LayerTypeQuantizedInnerProduct;
+            const LayerParam* dequantized = GetLayer(layers, layer.src()[1]);
+            if (dequantized->weight().empty())
+                return false;
+            const Shape& shape = dequantized->weight()[0].dim();
+            if (!CheckDims(shape, 2, "quantized inner product weight"))
+                return false;
+            layer.innerProduct().outputNum() = (uint32_t)(transB ? shape[0] : shape[1]);
+            layer.innerProduct().biasTerm() = false;
+            layer.innerProduct().axis() = -1;
+            if (!MoveDequantizeLinearToLayer(layers, layer, merged))
+                return false;
+            return true;
+        }
+        layer.type() = Synet::LayerTypeInnerProduct;
         layer.weight().resize(layer.src().size() - 1);
         layer.innerProduct().biasTerm() = false;
         const LayerParam* src1 = GetLayer(layers, layer.src()[1]);

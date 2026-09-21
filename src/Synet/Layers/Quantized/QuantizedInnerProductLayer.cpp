@@ -109,11 +109,16 @@ namespace Synet
         dstShape[_axis] = _N;
         dst[0]->Reshape(_dst8u ? TensorType8u : TensorType32f, dstShape, TensorFormatNchw);
 
-        Tensor& scale = ((Tensors&)this->Weight())[1];
-        if (scale.Size() != _N)
+        Tensors& weight = ((Tensors&)this->Weight());
+        if (weight.size() == 1)
         {
-            if (scale.Size() == 1)
-                scale.Reshape(TensorType32f, Shp(_N), TensorFormatNchw, scale.Data<float>()[0]);
+            weight.resize(2);
+            weight[1].Reshape(TensorType32f, Shp(_N), TensorFormatNchw, param.qSrc()[1].scale());
+        }
+        if (weight[1].Size() != _N)
+        {
+            if (weight[1].Size() == 1)
+                weight[1].Reshape(TensorType32f, Shp(_N), TensorFormatNchw, weight[1].Data<float>()[0]);
             else
                 SYNET_ERROR("QuantizedInnerProductLayer weight[1] has incorrect shape!");
         }
