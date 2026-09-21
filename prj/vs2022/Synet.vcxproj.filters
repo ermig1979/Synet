@@ -26,8 +26,8 @@
     <ClCompile Include="..\..\src\Synet\Layers\NonZeroLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp">
-      <Filter>Layers</Filter>
+    <ClCompile Include="..\..\src\Synet\Layers\Normalize\ScaledDotProductAttentionLayer.cpp">
+      <Filter>Layers\Normalize</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.cpp">
       <Filter>Layers\Legacy</Filter>
@@ -84,9 +84,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedMergedConvolutionLayer.cpp">
       <Filter>Layers\Quantized</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\Convolution\Convolution8iLayer.cpp">
-      <Filter>Layers\Convolution</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\Convolution\Convolution16bLayer.cpp">
       <Filter>Layers\Convolution</Filter>
     </ClCompile>
@@ -105,9 +102,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\Deconvolution\DeconvolutionLayer.cpp">
       <Filter>Layers\Deconvolution</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct8iLayer.cpp">
-      <Filter>Layers\InnerProduct</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct16bLayer.cpp">
       <Filter>Layers\InnerProduct</Filter>
     </ClCompile>
@@ -116,9 +110,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\InnerProduct\InnerProductLayer.cpp">
       <Filter>Layers\InnerProduct</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution8iLayer.cpp">
-      <Filter>Layers\MergedConvolution</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution16bLayer.cpp">
       <Filter>Layers\MergedConvolution</Filter>
@@ -331,22 +322,10 @@
     <ClInclude Include="..\..\src\Synet\Utils\FileUtils.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Statistics.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\Difference.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Quantization\Gemm.h">
-      <Filter>Quantization</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Quantization\Convert.h">
-      <Filter>Quantization</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Quantization\Const.h">
-      <Filter>Quantization</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Quantization\Stat.h">
       <Filter>Quantization</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Region.h" />
@@ -425,17 +404,14 @@
     <ClInclude Include="..\..\src\Synet\Utils\Shape.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Utils\Scale.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\YoloV8.h">
       <Filter>Decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\NonZeroLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.h">
-      <Filter>Layers</Filter>
+    <ClInclude Include="..\..\src\Synet\Layers\Normalize\ScaledDotProductAttentionLayer.h">
+      <Filter>Layers\Normalize</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Decoders\Rtdetr.h">
       <Filter>Decoders</Filter>
@@ -527,9 +503,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedMergedConvolutionLayer.h">
       <Filter>Layers\Quantized</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\Convolution\Convolution8iLayer.h">
-      <Filter>Layers\Convolution</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\Convolution\Convolution16bLayer.h">
       <Filter>Layers\Convolution</Filter>
     </ClInclude>
@@ -548,9 +521,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\Deconvolution\DeconvolutionLayer.h">
       <Filter>Layers\Deconvolution</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct8iLayer.h">
-      <Filter>Layers\InnerProduct</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct16bLayer.h">
       <Filter>Layers\InnerProduct</Filter>
     </ClInclude>
@@ -559,9 +529,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\InnerProduct\InnerProductLayer.h">
       <Filter>Layers\InnerProduct</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution8iLayer.h">
-      <Filter>Layers\MergedConvolution</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution16bLayer.h">
       <Filter>Layers\MergedConvolution</Filter>

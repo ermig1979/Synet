@@ -48,7 +48,7 @@ namespace Synet
 
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
-        void Forward(const float* src, float* buf, float* dst);
+        void Forward(const float* src, const float * wgt, float* buf, float* dst);
 
     private:
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)

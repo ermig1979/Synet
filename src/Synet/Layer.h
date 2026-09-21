@@ -29,7 +29,6 @@
 #include "Synet/Params.h"
 #include "Synet/Region.h"
 #include "Synet/Context.h"
-#include "Synet/Quantization/Stat.h"
 
 namespace Synet
 {
@@ -122,14 +121,6 @@ namespace Synet
             assert(0);
         }
 
-        const StatPtrs & Stats(size_t index) const
-        {
-            assert(index < 3);
-            return _stats[index];
-        }
-
-        bool SetStats(const StatSharedPtrs& stats);
-
         virtual bool Reshape(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, bool init = true) = 0;
 
         void ForwardPerf(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
@@ -200,7 +191,6 @@ namespace Synet
         const LayerParam & _param;
         Synet::Context* _context;
         Tensors _weight;
-        StatPtrs _stats[3];
         bool _isBack;
 
         bool _perfEnable;
@@ -213,8 +203,6 @@ namespace Synet
         bool ShareExisted(size_t offset, const LayerSharedPtrs& layers, Tensor& tensor);
 
         void InitPerfStat(size_t thread);
-
-        bool SetStats(const StatSharedPtrs& src, const Strings& names, StatPtrs& dst);
 
         void Reshape(const WeightParam& param, Tensor& tensor) const;
 

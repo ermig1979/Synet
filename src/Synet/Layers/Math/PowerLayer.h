@@ -25,7 +25,10 @@
 #pragma once
 
 #include "Synet/Layer.h"
-#include "Synet/Utils/Scale.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -47,6 +50,8 @@ namespace Synet
         float _power, _scale, _shift;
         bool _src16b, _dst16b;
         size_t _size;
-        Scale16b _scale16b;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetScale16b _scale16b;
+#endif
     };
 }

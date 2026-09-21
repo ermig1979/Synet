@@ -35,7 +35,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\Const\ConstLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Convolution\Convolution16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Convolution\Convolution32fLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\Convolution\Convolution8iLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Convolution\ConvolutionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Deconvolution\Deconvolution16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Deconvolution\Deconvolution32fLayer.cpp" />
@@ -50,7 +49,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\GridSampleLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct32fLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct8iLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\InnerProduct\InnerProductLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Legacy\FusedLayer.cpp" />
@@ -70,10 +68,10 @@
     <ClCompile Include="..\..\src\Synet\Layers\Math\UnaryOperationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution16bLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution32fLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution8iLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolutionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\NonZeroLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Normalize\NormalizeLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Normalize\ScaledDotProductAttentionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.cpp" />
@@ -110,7 +108,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\Resize\PoolingLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Resize\TiledScale2DLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Resize\TileLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\ScatterNdLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Select\GatherLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Select\SliceLayer.cpp" />
@@ -167,7 +164,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\Const\ConstLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Convolution\Convolution16bLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Convolution\Convolution32fLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\Convolution\Convolution8iLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Convolution\ConvolutionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Deconvolution\Deconvolution16bLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Deconvolution\Deconvolution32fLayer.h" />
@@ -182,7 +178,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\GridSampleLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct16bLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct32fLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\InnerProduct\InnerProduct8iLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\InnerProduct\InnerProductLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\BroadcastLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Legacy\FusedLayer.h" />
@@ -202,10 +197,10 @@
     <ClInclude Include="..\..\src\Synet\Layers\Math\UnaryOperationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution16bLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution32fLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolution8iLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\MergedConvolution\MergedConvolutionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\NonZeroLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Normalize\NormalizeLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Normalize\ScaledDotProductAttentionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.h" />
@@ -242,7 +237,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\Resize\PoolingLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Resize\TiledScale2DLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Resize\TileLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\ScaledDotProductAttentionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\ScatterNdLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Select\GatherLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Select\SliceLayer.h" />
@@ -255,12 +249,9 @@
     <ClInclude Include="..\..\src\Synet\Network.h" />
     <ClInclude Include="..\..\src\Synet\Params.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\Bf16.h" />
-    <ClInclude Include="..\..\src\Synet\Quantization\Const.h" />
-    <ClInclude Include="..\..\src\Synet\Quantization\Convert.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\DequantizeLinear.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\Gemm.h" />
     <ClInclude Include="..\..\src\Synet\Quantization\QuantizeLinear.h" />
-    <ClInclude Include="..\..\src\Synet\Quantization\Stat.h" />
     <ClInclude Include="..\..\src\Synet\Region.h" />
     <ClInclude Include="..\..\src\Synet\Tensor.h" />
     <ClCompile Include="..\..\src\Synet\Network.cpp" />
@@ -272,10 +263,8 @@
     <ClInclude Include="..\..\src\Synet\Utils\Gemm.h" />
     <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Math.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\Scale.h" />
     <ClInclude Include="..\..\src\Synet\Utils\SetInput.h" />
     <ClInclude Include="..\..\src\Synet\Utils\Shape.h" />
-    <ClInclude Include="..\..\src\Synet\Utils\Statistics.h" />
     <ClInclude Include="..\..\src\Synet\Utils\UniversalBinary.h" />
     <ClInclude Include="..\..\src\Synet\Utils\VersionInfo.h" />
     <ClInclude Include="..\..\src\Synet\Version.h" />

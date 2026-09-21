@@ -25,7 +25,10 @@
 #pragma once
 
 #include "Synet/Layer.h"
-#include "Synet/Utils/Scale.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
 
 namespace Synet
 {
@@ -36,15 +39,13 @@ namespace Synet
     class ScaleLayer : public Layer
     {
     public:
-        ScaleLayer(const LayerParam& param, Context* context, QuantizationMethod method);
+        ScaleLayer(const LayerParam& param, Context* context);
 
         virtual LowPrecisionType LowPrecision(TensorType type) const;
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
         virtual size_t MemoryUsage() const;
-
-        virtual void CompactWeight();
 
         virtual int64_t Flop() const;
 
@@ -53,16 +54,14 @@ namespace Synet
 
         void Scale32f(const float* src, float* dst);
 
-        void Init8i();
-
     private:
-        QuantizationMethod _method;
         TensorFormat _format, _processFormat;
         size_t _axis, _batch, _channels, _height, _width;
-        int _compatibility, _lower, _upper;
-        bool _biasTerm, _src8u, _dst8u, _is8i, _src16b, _dst16b;
-        Tensor _scale, _shift;
-        Scale8i _scale8i;
-        Scale16b _scale16b;
+        int _compatibility;
+        bool _biasTerm, _src16b, _dst16b;
+        Tensor _shift;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetScale16b _scale16b;
+#endif
     };
 }

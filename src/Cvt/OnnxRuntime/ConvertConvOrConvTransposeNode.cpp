@@ -29,6 +29,38 @@
 
 namespace Synet
 {
+    template<class T> inline bool ReorderDynamicConvolutionWeight(const Bytes& srcBin, const Shape& input, LayerParam& layer, Bytes& dstBin)
+    {
+
+        WeightParam& weight = layer.weight()[0];
+        const T* pSrc = GetWeight<T>(srcBin, weight);
+        T* pDst = GetWeight<T>(dstBin, weight);
+        weight.format() = TensorFormatNhwc;
+        Shape shape = Shp(weight.dim()[0], input[2], input[3], input[1], input[0]);
+        Tensor dst((uint8_t*)pDst, weight.size(), weight.type(), shape, weight.format());
+        for (size_t n = 0; n < shape[0]; ++n)
+            for (size_t o = 0; o < shape[4]; ++o)
+                for (size_t i = 0; i < shape[3]; ++i)
+                    for (size_t y = 0; y < shape[1]; ++y)
+                        for (size_t x = 0; x < shape[2]; ++x)
+                            dst.Data<T>(Shape({ n, y, x, i, o }))[0] = *pSrc++;
+        return true;
+    }
+
+    inline bool ReorderDynamicConvolutionWeight(const Bytes& srcBin, const Shape& input, LayerParam& layer, Bytes& dstBin)
+    {
+        if (layer.weight().size() < 1)
+            SYNET_ERROR("There is no weight to reorder!");
+        const WeightParam& weight = layer.weight()[0];
+        switch (weight.type())
+        {
+        case TensorType32f: return ReorderDynamicConvolutionWeight<float>(srcBin, input, layer, dstBin);
+        case TensorType8i: return ReorderDynamicConvolutionWeight<int8_t>(srcBin, input, layer, dstBin);
+        default:
+            SYNET_ERROR("ReorderDynamicWeight: unsupported type: " << weight.type() << " !");
+        }
+    }
+
     bool ConvertConvOrConvTransposeNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, const Bytes& srcBin, LayerParam& layer, Bytes& dstBin, TensorFormatMap* tensorFormatMap, UniqNames& merged)
     {
         if (node.op_type() == "Conv")
@@ -37,7 +69,7 @@ namespace Synet
             layer.type() = Synet::LayerTypeDeconvolution;
         else
             return false;
-        if (layer.src().size() < 2 || layer.src().size() > 3)
+        if (!CheckSourceNumber(layer, 2, 3))
             return false;
         if (!ConvertAtrributeInts(node, "dilations", layer.convolution().dilation(), true))
             return false;
@@ -73,30 +105,66 @@ namespace Synet
                 return ReorderWeight(srcBin, Shape(), layer, dstBin);
             return true;
         }
-        const LayerParam* weight = GetWeightLayer(layers, layer.src()[1]);
-        if (weight == NULL || weight->type() != LayerTypeConst)
+        LayerParam* src1 = GetLayer(layers, layer.src()[1]);
+        if (src1 == NULL)
             return false;
-        const Shape& shape = weight->weight()[0].dim();
-        if (layer.convolution().kernel().empty())
+        if (src1->type() == LayerTypeReshape)
         {
-            if (shape.size() != 4)
-                SYNET_ERROR("Convolution weight must be 4D tensor!");
-            layer.convolution().kernel() = Shp(shape[2], shape[3]);
+            Shape shape = src1->reshape().shape();
+            if (layer.convolution().kernel().empty())
+            {
+                if (shape.size() != 4)
+                    SYNET_ERROR("Convolution weight must be 4D tensor!");
+                layer.convolution().kernel() = Shp(shape[2], shape[3]);
+            }
+            layer.convolution().outputNum() = uint32_t(layer.type() == Synet::LayerTypeConvolution ? shape[0] : shape[1] * layer.convolution().group());
+            layer.convolution().biasTerm() = layer.src().size() > 2;
+            if (layer.convolution().biasTerm())
+            {
+                const LayerParam* bias = GetWeightLayer(layers, layer.src()[2]);
+                if (bias == NULL || bias->type() != LayerTypeConst)
+                    return false;
+                layer.weight().resize(1);
+                layer.weight()[0] = bias->weight()[0];
+                layer.src().resize(2);
+            }
+            if (trans && CurrentTensorFormat(layers, Strings({ layer.src()[0] }), false, false, false, tensorFormatMap) == TensorFormatNhwc)
+            {
+                LayerParam* ip = GetLayer(layers, src1->src()[0]);
+                if (ip == NULL || ip->type() != LayerTypeInnerProduct)
+                    return false;
+                src1->reshape().shape() = Shp(shape[2], shape[3], shape[1], shape[0]);
+                layer.convolution().format() = TensorFormatNhwc;
+                return ReorderDynamicConvolutionWeight(srcBin, shape, *ip, dstBin);
+            }
         }
-        layer.weight().resize(layer.src().size() - 1);
-        layer.weight()[0] = weight->weight()[0];
-        layer.convolution().outputNum() = uint32_t(layer.type() == Synet::LayerTypeConvolution ? shape[0] : shape[1] * layer.convolution().group());
-        layer.convolution().biasTerm() = layer.src().size() > 2;
-        if (layer.convolution().biasTerm())
+        else
         {
-            const LayerParam* bias = GetWeightLayer(layers, layer.src()[2]);
-            if (bias == NULL || bias->type() != LayerTypeConst)
+            const LayerParam* weight = GetWeightLayer(layers, layer.src()[1]);
+            if (weight == NULL || weight->type() != LayerTypeConst)
                 return false;
-            layer.weight()[1] = bias->weight()[0];
+            const Shape& shape = weight->weight()[0].dim();
+            if (layer.convolution().kernel().empty())
+            {
+                if (shape.size() != 4)
+                    SYNET_ERROR("Convolution weight must be 4D tensor!");
+                layer.convolution().kernel() = Shp(shape[2], shape[3]);
+            }
+            layer.weight().resize(layer.src().size() - 1);
+            layer.weight()[0] = weight->weight()[0];
+            layer.convolution().outputNum() = uint32_t(layer.type() == Synet::LayerTypeConvolution ? shape[0] : shape[1] * layer.convolution().group());
+            layer.convolution().biasTerm() = layer.src().size() > 2;
+            if (layer.convolution().biasTerm())
+            {
+                const LayerParam* bias = GetWeightLayer(layers, layer.src()[2]);
+                if (bias == NULL || bias->type() != LayerTypeConst)
+                    return false;
+                layer.weight()[1] = bias->weight()[0];
+            }
+            layer.src().resize(1);
+            if (trans && CurrentTensorFormat(layers, layer.src(), true, false, false, tensorFormatMap) == TensorFormatNhwc)
+                return ReorderWeight(srcBin, Shape(), layer, dstBin);
         }
-        layer.src().resize(1);
-        if (trans && CurrentTensorFormat(layers, layer.src(), true, false, false, tensorFormatMap) == TensorFormatNhwc)
-            return ReorderWeight(srcBin, Shape(), layer, dstBin);
         return true;
     }
 }

@@ -52,26 +52,27 @@ namespace Synet
         bool is1d = src[0]->Count() == 3;
         if (is1d)
             To2D(*src[0]), To2D(weight[0]);
-        if (src.size() != 1 || dst.size() != 1)
-            SYNET_ERROR("ConvolutionLayer supports only 1 input and 1 output!");
+        if ((src.size() != 1 && src.size() != 2) || dst.size() != 1)
+            SYNET_ERROR("ConvolutionLayer supports only 1 or 2 inputs and 1 output!");
         if (src[0]->Count() != 4)
             SYNET_ERROR("ConvolutionLayer supports only 4D input tensor!");
 
         _conv.Set(param);
         _conv.Set(*src[0], *dst[0], true, param.autoPad());
 
+        _alg.constW = src.size() == 1 ? 1 : 0;
         _alg.is1x1 = _conv.Is1x1() ? 1 : 0;
         _alg.bias = param.biasTerm() ? 1 : 0;
         if (_alg.bias)
         {
-            if(weight[1].Size() != _conv.dstC)
+            if(weight[_alg.constW].Size() != _conv.dstC)
                 SYNET_ERROR("ConvolutionLayer has wrong bias size!");
         }
 
         _alg.params[0] = param.activationParam0();
         _alg.params[1] = param.activationParam1();
 
-        if(weight.size() != 1 + _alg.bias + (_conv.activation == ActivationFunctionTypePrelu))
+        if(weight.size() != _alg.constW + _alg.bias + (_conv.activation == ActivationFunctionTypePrelu))
             SYNET_ERROR("ConvolutionLayer has wrong weight number!");
 
         if (_conv.activation == ActivationFunctionTypePrelu)
@@ -90,9 +91,10 @@ namespace Synet
 
         _alg.batch = src[0]->Axis(0);
         _alg.trans = _conv.Trans();
-        if (weight[0].Shape() != _conv.WeightShape(_alg.trans != 0, true) || 
-           (weight[0].Format() == TensorFormatNhwc && src[0]->Format() != TensorFormatNhwc))
-            SYNET_ERROR("ConvolutionLayer: check weight[0] size or format!");
+        const Tensor& W = _alg.constW ? weight[0] : *src[1];
+        if (W.Shape() != _conv.WeightShape(_alg.trans != 0, true) ||
+           (W.Format() == TensorFormatNhwc && src[0]->Format() != TensorFormatNhwc))
+            SYNET_ERROR("ConvolutionLayer: check " << (_alg.constW ? "weight[0]" : "src[1]") << " size or format!");
 
         if (_alg.trans)
         {
@@ -134,7 +136,10 @@ namespace Synet
         desc << _alg.batch << "x" << _conv.srcC << "x" << _conv.srcH << "x" << _conv.srcW;
         desc << "-" << _conv.dstC << "x" << _conv.kernelY << "x" << _conv.kernelX;
         desc << "-" << Max(_conv.dilationY, _conv.dilationX) << "-" << Max(_conv.strideY, _conv.strideX);
-        desc << "-" << _conv.group << InternalInfo();
+        desc << "-" << _conv.group;
+        if(_alg.constW == 0)
+            desc << "-dynW";
+        desc << InternalInfo();
         this->UsePerfStat(desc.str(), Flop());
         return true;
     }

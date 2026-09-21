@@ -27,15 +27,6 @@ ONNX tests
 | test_001 | Face detection | UltraFace | [1.6 MB](https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB/blob/master/models/onnx/version-RFB-640.onnx) |
 
 ----------------------
-Quantization tests
-======================
-
-| Name | Description |
-| --- | --- |
-| test_003 | Face detection |
-| test_010 | Face detection |
-
-----------------------
 Precision tests
 ======================
 

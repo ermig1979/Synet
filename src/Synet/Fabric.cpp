@@ -30,7 +30,6 @@
 
 #include "Synet/Layers/Convolution/Convolution32fLayer.h"
 #include "Synet/Layers/Convolution/Convolution16bLayer.h"
-#include "Synet/Layers/Convolution/Convolution8iLayer.h"
 
 #include "Synet/Layers/Deconvolution/Deconvolution32fLayer.h"
 #include "Synet/Layers/Deconvolution/Deconvolution16bLayer.h"
@@ -45,7 +44,6 @@
 
 #include "Synet/Layers/InnerProduct/InnerProduct32fLayer.h"
 #include "Synet/Layers/InnerProduct/InnerProduct16bLayer.h"
-#include "Synet/Layers/InnerProduct/InnerProduct8iLayer.h"
 
 #include "Synet/Layers/Legacy/BroadcastLayer.h"
 #include "Synet/Layers/Legacy/FusedLayer.h"
@@ -67,9 +65,9 @@
 
 #include "Synet/Layers/MergedConvolution/MergedConvolution32fLayer.h"
 #include "Synet/Layers/MergedConvolution/MergedConvolution16bLayer.h"
-#include "Synet/Layers/MergedConvolution/MergedConvolution8iLayer.h"
 
 #include "Synet/Layers/Normalize/NormalizeLayer.h"
+#include "Synet/Layers/Normalize/ScaledDotProductAttentionLayer.h"
 #include "Synet/Layers/Normalize/SqueezeExcitationLayer.h"
 
 #include "Synet/Layers/Quantized/DequantizeLinearLayer.h"
@@ -125,7 +123,6 @@
 #include "Synet/Layers/GridSampleLayer.h"
 #include "Synet/Layers/NonZeroLayer.h"
 #include "Synet/Layers/ReductionLayer.h"
-#include "Synet/Layers/ScaledDotProductAttentionLayer.h"
 #include "Synet/Layers/ScatterNdLayer.h"
 #include "Synet/Layers/SoftmaxLayer.h"
 
@@ -133,14 +130,6 @@
 
 namespace Synet
 {
-    SYNET_INLINE bool Use8i(const MergedConvolutionParam& param)
-    {
-        if (param.conv().size() == 3)
-            return param.conv()[0].quantizationLevel() == TensorType8i && param.conv()[2].quantizationLevel() == TensorType8i;
-        else
-            return param.conv()[0].quantizationLevel() == TensorType8i || param.conv()[1].quantizationLevel() == TensorType8i;
-    }
-
     SYNET_INLINE bool IsAdd(const LayerParam& layer)
     {
         if (layer.type() == LayerTypeEltwise && layer.eltwise().operation() == EltwiseOperationTypeSum &&
@@ -160,11 +149,11 @@ namespace Synet
         return false;
     }
 
-    Layer* Fabric::Create(const LayerParam & param, Context* context, QuantizationMethod method)
+    Layer* Fabric::Create(const LayerParam & param, Context* context)
     {
         switch (param.type())
         {
-        case LayerTypeAdd: return new AddLayer(param, context, method);
+        case LayerTypeAdd: return new AddLayer(param, context);
         case LayerTypeArgMax: return new ArgMaxLayer(param, context);
         case LayerTypeBias: return new BiasLayer(param, context);
         case LayerTypeBinaryOperation: return new BinaryOperationLayer(param, context);
@@ -175,9 +164,7 @@ namespace Synet
         case LayerTypeConst: return new ConstLayer(param, context);
         case LayerTypeConstantOfShape: return new ConstantOfShapeLayer(param, context);
         case LayerTypeConvolution:
-            if (param.convolution().quantizationLevel() == TensorType8i)
-                return new Convolution8iLayer(param, context, method);
-            else if (context->options.BFloat16Enable() && (param.lowPrecision().bf16Type() == LowPrecisionTypeActive || param.lowPrecision().bf16Type() == LowPrecisionTypeHybrid))
+            if (context->options.BFloat16Enable() && (param.lowPrecision().bf16Type() == LowPrecisionTypeActive || param.lowPrecision().bf16Type() == LowPrecisionTypeHybrid))
                 return new Convolution16bLayer(param, context);
             else
                 return new Convolution32fLayer(param, context);
@@ -191,7 +178,7 @@ namespace Synet
         case LayerTypeDetectionOutput: return new DetectionOutputLayer(param, context);
         case LayerTypeEltwise: 
             if(IsAdd(param))
-                return new AddLayer(param, context, method);
+                return new AddLayer(param, context);
             else if (IsMul(param))
                 return new MulLayer(param, context);
             else
@@ -206,9 +193,7 @@ namespace Synet
         case LayerTypeHswish: return new HswishLayer(param, context);
         case LayerTypeHardSigmoid: return new HardSigmoidLayer(param, context);
         case LayerTypeInnerProduct: 
-            if (param.innerProduct().quantizationLevel() == TensorType8i)
-                return new InnerProduct8iLayer(param, context, method);
-            else if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
+            if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
                 return new InnerProduct16bLayer(param, context);
             else
                 return new InnerProduct32fLayer(param, context);
@@ -217,9 +202,7 @@ namespace Synet
         case LayerTypeLrn: return new LrnLayer(param, context);
         case LayerTypeLstm: return new LstmLayer(param, context);
         case LayerTypeMergedConvolution:
-            if (Use8i(param.mergedConvolution()))
-                return new MergedConvolution8iLayer(param, context, method);
-            else if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
+            if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
                 return new MergedConvolution16bLayer(param, context);
             else
                 return new MergedConvolution32fLayer(param, context);
@@ -258,7 +241,7 @@ namespace Synet
         case LayerTypeRestrictRange: return new RestrictRangeLayer(param, context);
         case LayerTypeReverseSequence: return new ReverseSequenceLayer(param, context);
         case LayerTypeRnnGruBd: return new RnnGruBdLayer(param, context);
-        case LayerTypeScale: return new ScaleLayer(param, context, method);
+        case LayerTypeScale: return new ScaleLayer(param, context);
         case LayerTypeScaledDotProductAttention: return new ScaledDotProductAttentionLayer(param, context);
         case LayerTypeScatterNd: return new ScatterNdLayer(param, context);
         case LayerTypeShuffle: return new ShuffleLayer(param, context);
@@ -268,7 +251,7 @@ namespace Synet
         case LayerTypeSoftplus: return new SoftplusLayer(param, context);
         case LayerTypeSpaceToDepth: return new SpaceToDepthLayer(param, context);
         case LayerTypeSqueeze: return new SqueezeLayer(param, context);
-        case LayerTypeSqueezeExcitation: return new SqueezeExcitationLayer(param, context, method);
+        case LayerTypeSqueezeExcitation: return new SqueezeExcitationLayer(param, context);
         case LayerTypeStridedSlice: return new StridedSliceLayer(param, context);
         case LayerTypeStub: return new StubLayer(param, context);
         case LayerTypeSwish: return new SwishLayer(param, context);

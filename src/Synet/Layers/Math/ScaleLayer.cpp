@@ -26,8 +26,6 @@
 
 #include "Synet/Quantization/Bf16.h"
 
-#include "Synet/Utils/Math.h"
-
 namespace Synet
 {
     void ScaleForward32f(const float* src, const float* scale, const float* bias, size_t channels, size_t height, size_t width, float* dst, TensorFormat format, int compatibility)
@@ -88,62 +86,6 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    template<class S, class D> D ScaleForward8i(S value, float scale, float shift, int lower, int upper);
-
-    template<> SYNET_INLINE float ScaleForward8i<uint8_t, float>(uint8_t value, float scale, float shift, int lower, int upper)
-    {
-        return float(value) * scale + shift;
-    }
-
-    template<> SYNET_INLINE uint8_t ScaleForward8i<uint8_t, uint8_t>(uint8_t value, float scale, float shift, int lower, int upper)
-    {
-        return (uint8_t)Synet::RestrictRange(Round(float(value) * scale + shift), lower, upper);
-    }
-
-    template<> SYNET_INLINE uint8_t ScaleForward8i<float, uint8_t>(float value, float scale, float shift, int lower, int upper)
-    {
-        return (uint8_t)Synet::RestrictRange(Round(value * scale + shift), lower, upper);
-    }
-
-    template<> SYNET_INLINE float ScaleForward8i<float, float>(float value, float scale, float shift, int lower, int upper)
-    {
-        return value * scale + shift;
-    }
-
-    template<class S, class D> void ScaleForward8i(const S* src, size_t batch, size_t channels, size_t spatial,
-        TensorFormat format, const float* scale, const float* shift, int lower, int upper, D* dst)
-    {
-        for (size_t b = 0; b < batch; ++b)
-        {
-            if (format == TensorFormatNchw)
-            {
-                for (size_t c = 0; c < channels; ++c)
-                {
-                    float _scale = scale[c];
-                    float _shift = shift[c];
-                    for (size_t s = 0; s < spatial; ++s)
-                        dst[s] = ScaleForward8i<S, D>(src[s], _scale, _shift, lower, upper);
-                    src += spatial;
-                    dst += spatial;
-                }
-            }
-            else if (format == TensorFormatNhwc)
-            {
-                for (size_t s = 0; s < spatial; ++s)
-                {
-                    for (size_t c = 0; c < channels; ++c)
-                        dst[c] = ScaleForward8i<S, D>(src[c], scale[c], shift[c], lower, upper);
-                    src += channels;
-                    dst += channels;
-                }
-            }
-            else
-                assert(0);
-        }
-    }
-
-    //-------------------------------------------------------------------------------------------------
-
     template<class S, class D> void ScaleForward16b(const S* src, size_t batch, size_t channels, size_t spatial,
         TensorFormat format, const float* scale, const float* shift, D* dst)
     {
@@ -184,19 +126,14 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
-    ScaleLayer::ScaleLayer(const LayerParam & param, Context* context, QuantizationMethod method)
+    ScaleLayer::ScaleLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
-        , _method(method)
     {
-        _is8i = (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed) &&
-            param.scale().quantizationLevel() != TensorType32f;
     }
 
     LowPrecisionType ScaleLayer::LowPrecision(TensorType type) const
     {
         const LayerParam& p = this->Param();
-        if (type == TensorType8u && _is8i)
-            return LowPrecisionTypeActive;
         if (type == TensorType16b && Options().BFloat16Enable())
             return p.src()[0] != p.dst()[0] ? LowPrecisionTypeActive : LowPrecisionTypePassive;
         return LowPrecisionTypeNone;
@@ -209,12 +146,10 @@ namespace Synet
         _biasTerm = param.biasTerm();
         if (src.size() != 1 || dst.size() != 1)
             SYNET_ERROR("ScaleLayer supports only 1 input and 1 output!");
-        if (src[0]->GetType() != TensorType32f && src[0]->GetType() != TensorType16b && src[0]->GetType() != TensorType8u)
-            SYNET_ERROR("ScaleLayer input must have FP32, BF16 or INT8 type!");
-        if (dst[0]->GetType() != TensorType32f && dst[0]->GetType() != TensorType16b && dst[0]->GetType() != TensorType8u)
-            SYNET_ERROR("ScaleLayer output must have FP32, BF16 or INT8 type!");
-        _src8u = src[0]->GetType() == TensorType8u;
-        _dst8u = dst[0]->GetType() == TensorType8u;
+        if (src[0]->GetType() != TensorType32f && src[0]->GetType() != TensorType16b)
+            SYNET_ERROR("ScaleLayer input must have FP32 or BF16 type!");
+        if (dst[0]->GetType() != TensorType32f && dst[0]->GetType() != TensorType16b)
+            SYNET_ERROR("ScaleLayer output must have FP32 or BF16 type!");
         _src16b = src[0]->GetType() == TensorType16b;
         _dst16b = dst[0]->GetType() == TensorType16b;
         _format = src[0]->Format();
@@ -283,30 +218,13 @@ namespace Synet
         }
         if (src[0]->Size() != _batch * _channels * _height * _width)
             SYNET_ERROR("ScaleLayer: can't process input shape: " << ToStr(src[0]->Shape()) << " for weight size " << _channels << " and axis " << _axis << " !");
-        if (_is8i)
+        if (src[0] != dst[0])
         {
-            _scale8i.Init(_batch, _channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _processFormat, _method);
-            if (_scale8i.Enable())
-            {
-                const float* bias = _biasTerm ? this->Weight()[1].Data<float>() : NULL;
-                const float* stats[4] = {
-                    this->Stats(0).empty() ? NULL : this->Stats(0)[0]->min.data(),
-                    this->Stats(0).empty() ? NULL : this->Stats(0)[0]->max.data(),
-                    this->Stats(2).empty() ? NULL : this->Stats(2)[0]->min.data(),
-                    this->Stats(2).empty() ? NULL : this->Stats(2)[0]->max.data() };
-                _scale8i.SetParams(this->Weight()[0].Data<float>(), bias, stats);
-            }
-            else
-                Init8i();
-            if (_dst8u)
-                dst[0]->Reshape(TensorType8u, src[0]->Shape(), _format);
-            else
-                dst[0]->Reshape(TensorType32f, src[0]->Shape(), _format);
-        }
-        else if (src[0] != dst[0])
-        {
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
             if (_src16b || _dst16b)
-                _scale16b.Init(_channels, _height * _width, src[0]->GetType(), dst[0]->GetType(), _format, true, _biasTerm);
+                _scale16b.Init(_channels, _height * _width, (SimdTensorDataType)src[0]->GetType(),
+                    (SimdTensorDataType)dst[0]->GetType(), (SimdTensorFormatType)_format, SimdTrue, _biasTerm ? SimdTrue : SimdFalse);
+#endif
             if (_src16b == _dst16b && TensorUsers(Param().src()[0]) == 1 && !src[0]->Const())
                 dst[0]->Share(*src[0]);
             else
@@ -339,17 +257,7 @@ namespace Synet
 
     size_t ScaleLayer::MemoryUsage() const
     { 
-        return Layer::MemoryUsage() + _scale.MemoryUsage() + _shift.MemoryUsage() + _scale8i.InternalBufferSize();
-    }
-
-    void ScaleLayer::CompactWeight()
-    {
-        if (_is8i)
-        {
-            ((Tensor&)this->Weight()[0]).Clear();
-            if(_biasTerm)
-                ((Tensor&)this->Weight()[1]).Clear();
-        }
+        return Layer::MemoryUsage() + _shift.MemoryUsage();
     }
 
     int64_t ScaleLayer::Flop() const
@@ -359,28 +267,11 @@ namespace Synet
 
     void ScaleLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
-        if (_is8i)
-        {
-            if (_scale8i.Enable())
-                _scale8i.Forward(src[0]->RawData(), dst[0]->RawData());
-            else
-            {
-                const float* scale = _scale.Data<float>();
-                const float* shift = _shift.Data<float>();
-                if (_src8u && _dst8u)
-                    ScaleForward8i(src[0]->Data<uint8_t>(), _batch, _channels, _height * _width, _format, scale, shift, _lower, _upper, dst[0]->Data<uint8_t>());
-                else if (!_src8u && _dst8u)
-                    ScaleForward8i(src[0]->Data<float>(), _batch, _channels, _height * _width, _format, scale, shift, _lower, _upper, dst[0]->Data<uint8_t>());
-                else if (_src8u && !_dst8u)
-                    ScaleForward8i(src[0]->Data<uint8_t>(), _batch, _channels, _height * _width, _format, scale, shift, _lower, _upper, dst[0]->Data<float>());
-                else
-                    ScaleForward8i(src[0]->Data<float>(), _batch, _channels, _height * _width, _format, scale, shift, _lower, _upper, dst[0]->Data<float>());
-            }
-        }
-        else if (_src16b || _dst16b)
+        if (_src16b || _dst16b)
         {
             const float* scale = this->Weight()[0].Data<float>();
             const float* shift = _shift.Data<float>();
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
             if (_scale16b.Enable())
             {
                 const uint8_t* src8 = src[0]->RawData();
@@ -393,6 +284,7 @@ namespace Synet
                 }
             }
             else
+#endif
             {
                 if (_src16b && _dst16b)
                     ScaleForward16b(src[0]->Data<uint16_t>(), _batch, _channels, _height * _width, _processFormat, scale, shift, dst[0]->Data<uint16_t>());
@@ -416,54 +308,5 @@ namespace Synet
             src += _channels * _height * _width;
             dst += _channels * _height * _width;
         }
-    }
-
-    void ScaleLayer::Init8i()
-    {
-        Stat& statS = *this->Stats(0)[0];
-        Stat& statD = *this->Stats(2)[0];
-        statS.Init8u(_method);
-        statD.Init8u(_method);
-        _scale.Reshape(TensorType32f, Shp(_channels), TensorFormatUnknown, 1.0f);
-        _shift.Reshape(TensorType32f, Shp(_channels), TensorFormatUnknown, 0.0f);
-        if (_src8u)
-        {
-            for (size_t c = 0; c < _channels; ++c)
-            {
-                _scale.Data<float>()[c] = statS.scale8uTo32f[c];
-                _shift.Data<float>()[c] = statS.shift8uTo32f[c];
-            }
-        }
-        const float* scale = this->Weight()[0].Data<float>();
-        if (_biasTerm)
-        {
-
-            const float* bias = this->Weight()[1].Data<float>();
-            for (size_t c = 0; c < _channels; ++c)
-            {
-                _scale.Data<float>()[c] = _scale.Data<float>()[c] * scale[c];
-                _shift.Data<float>()[c] = _shift.Data<float>()[c] * scale[c] + bias[c];
-            }
-        }
-        else
-        {
-            for (size_t c = 0; c < _channels; ++c)
-            {
-                _scale.Data<float>()[c] = _scale.Data<float>()[c] * scale[c];
-                _shift.Data<float>()[c] = _shift.Data<float>()[c] * scale[c];
-            }
-        }
-        if (_dst8u)
-        {
-            for (size_t c = 0; c < _channels; ++c)
-            {
-                _scale.Data<float>()[c] = _scale.Data<float>()[c] * statD.scale32fTo8u[c];
-                _shift.Data<float>()[c] = _shift.Data<float>()[c] * statD.scale32fTo8u[c] + statD.shift32fTo8u[c];
-            }
-        }
-        if (_method == QuantizationMethodIECompatible)
-            _lower = QUANT_IE_COMP_SRC_U8_MIN, _upper = QUANT_IE_COMP_SRC_U8_MAX;
-        else if (_method == QuantizationMethodSymmetricNarrowed || _method == QuantizationMethodUnifiedNarrowed)
-            _lower = QUANT_SYMM_NARR_SRC_U8_MIN, _upper = QUANT_SYMM_NARR_SRC_U8_MAX;
     }
 }

@@ -55,6 +55,12 @@
     <Filter Include="OnnxRuntime\T">
       <UniqueIdentifier>{35ab3e4f-b67f-466a-9929-111bfd6f603a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="OnnxRuntime\U">
+      <UniqueIdentifier>{8c6e1d4a-2f7b-4e91-a3c5-9b0d7e4f1a62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OnnxRuntime\W">
+      <UniqueIdentifier>{c4e8a1b7-6d2f-4a90-8e3c-1f7b5a9d0e24}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.cpp">
@@ -270,8 +276,29 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSignNode.cpp">
       <Filter>OnnxRuntime\S</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSinNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSliceNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSoftmaxNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSplitNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSqrtNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSqueezeNode.cpp">
       <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertSubNode.cpp">
+      <Filter>OnnxRuntime\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTanhNode.cpp">
+      <Filter>OnnxRuntime\T</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTileNode.cpp">
       <Filter>OnnxRuntime\T</Filter>
@@ -281,6 +308,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertTransposeNode.cpp">
       <Filter>OnnxRuntime\T</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertUnsqueezeNode.cpp">
+      <Filter>OnnxRuntime\U</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertWhereNode.cpp">
+      <Filter>OnnxRuntime\W</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertReduceMinNode.cpp">
       <Filter>OnnxRuntime\R</Filter>

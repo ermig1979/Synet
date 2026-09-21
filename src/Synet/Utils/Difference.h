@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "Synet/Utils/Statistics.h"
+#include "Synet/Tensor.h"
 
 namespace Synet
 {
@@ -145,10 +145,51 @@ namespace Synet
             Vector min, max;
             min.resize(_channels, std::numeric_limits<Type>::max());
             max.resize(_channels, std::numeric_limits<Type>::lowest());
-            Detail::UpdateChannelsMinMax(src, _batch, _channels, _height, _width, _format, min.data(), max.data());
+            UpdateChannelsMinMax(src, min.data(), max.data());
             _norm.resize(_channels);
             for (size_t c = 0; c < _channels; ++c)
                 _norm[c] = Type(1) / Max(Type(1), max[c] - min[c]);
+        }
+
+        void UpdateChannelsMinMax(const T* src, T* min, T* max)
+        {
+            for (size_t b = 0; b < _batch; ++b)
+            {
+                if (_format == TensorFormatNhwc)
+                {
+                    for (size_t h = 0; h < _height; ++h)
+                    {
+                        for (size_t w = 0; w < _width; ++w)
+                        {
+                            for (size_t c = 0; c < _channels; ++c)
+                            {
+                                T value = src[c];
+                                min[c] = Min(min[c], value);
+                                max[c] = Max(max[c], value);
+                            }
+                            src += _channels;
+                        }
+                    }
+                }
+                else if (_format == TensorFormatNchw)
+                {
+                    for (size_t c = 0; c < _channels; ++c)
+                    {
+                        for (size_t h = 0; h < _height; ++h)
+                        {
+                            for (size_t w = 0; w < _width; ++w)
+                            {
+                                T value = src[w];
+                                min[c] = Min(min[c], value);
+                                max[c] = Max(max[c], value);
+                            }
+                            src += _width;
+                        }
+                    }
+                }
+                else
+                    assert(0);
+            }
         }
 
         void CollectStatistics(double threshold)

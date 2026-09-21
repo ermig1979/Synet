@@ -59,6 +59,8 @@ namespace Synet
 
     bool Convolution16bLayer::Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
     {
+        if (_alg.constW == 0)
+            SYNET_ERROR("Convolution16bLayer does not support dynamic weight!");
         const Tensors& weight = this->Weight();
         const ConvParam& conv = this->_conv;
         AlgParam & alg = this->_alg;

@@ -49,7 +49,7 @@ namespace Synet
         ConvParam _conv;
         struct AlgParam
         {
-            int is1x1, bias, trans, internal;
+            int is1x1, bias, trans, internal, constW;
             size_t batch, sSize, dSize, ldW, ldS, ldD, grW, grS, grD, siW, siS, siD;
             float params[2];
         } _alg;

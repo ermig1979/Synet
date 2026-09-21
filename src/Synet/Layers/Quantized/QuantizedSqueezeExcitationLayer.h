@@ -25,7 +25,6 @@
 #pragma once
 
 #include "Synet/Layer.h"
-#include "Synet/Utils/Scale.h"
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
 #include "Simd/SimdSynet.hpp"
 #endif

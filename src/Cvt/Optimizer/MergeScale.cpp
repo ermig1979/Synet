@@ -27,99 +27,47 @@
 
 namespace Synet
 {
-    bool MergeConvolutionAndScale(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes)
+    static const WeightParam* GetEltwiseWeight(size_t index, const LayerParams& layers)
     {
-        if (index == 0)
-            return false;
-        const LayerParam& conv = src[index - 1];
-        const LayerParam& scale = src[index];
-        if (conv.type() != LayerTypeConvolution || conv.convolution().activationType() != ActivationFunctionTypeIdentity)
-            return false;
-        if (scale.type() != LayerTypeScale || scale.src()[0] != conv.name())
-            return false;
-        if (InsideLink(src, index - 1, 2))
-            return false;
-        if (buf.empty())
-            buf = bin;
-        dst.back().name() = scale.name();
-        dst.back().dst() = scale.dst();
-        const float* pScale = GetWeight<float>(bin, scale.weight()[0]);
-        const float* pSrc = GetWeight<float>(bin, conv.weight()[0]);
-        float* pDst = GetWeight<float>(buf, conv.weight()[0]);
-        const Shape& dim = conv.weight()[0].dim();
-        if (conv.weight()[0].format() == TensorFormatNhwc)
+        if (index < layers.size() && (layers[index].type() == LayerTypeEltwise && layers[index].src().size() == 2) || layers[index].type() == LayerTypeAdd)
         {
-            for (size_t i = 0, n = dim[0] * dim[1] * dim[2]; i < n; ++i)
-                for (size_t j = 0, m = dim[3]; j < m; ++j)
-                    pDst[i * m + j] = pSrc[i * m + j] * pScale[j];
+            const LayerParam* src0 = GetLayer(layers, layers[index].src()[0]);
+            if (src0 && src0->type() == LayerTypeConst)
+                return src0->weight().data() + 0;
+            const LayerParam* src1 = GetLayer(layers, layers[index].src()[1]);
+            if (src1 && src1->type() == LayerTypeConst)
+                return src1->weight().data() + 0;
         }
-        else if (conv.weight()[0].format() == TensorFormatNchw)
-        {
-            for (size_t j = 0, m = dim[0]; j < m; ++j)
-                for (size_t i = 0, n = dim[1] * dim[2] * dim[3]; i < n; ++i)
-                    pDst[j * n + i] = pSrc[j * n + i] * pScale[j];
-        }
-        else
-            return false;
-        if (conv.convolution().biasTerm())
-        {
-            const Shape& dim = conv.weight()[1].dim();
-            const float* pSrc = GetWeight<float>(bin, conv.weight()[1]);
-            float* pDst = NULL;
-            if (WeightUserCount(src, conv.weight()[1]) > 1)
-            {
-                pDst = GetWeight<float>(buf, scale.weight()[1]);
-                dst.back().weight()[1] = scale.weight()[1];
-            }
-            else
-                pDst = GetWeight<float>(buf, conv.weight()[1]);
-            for (size_t i = 0, n = dim[0]; i < n; ++i)
-                pDst[i] = pSrc[i] * pScale[i];
-            if (scale.scale().biasTerm())
-            {
-                const float* pShift = GetWeight<float>(bin, scale.weight()[1]);
-                for (size_t i = 0, n = dim[0]; i < n; ++i)
-                    pDst[i] += pShift[i];
-            }
-        }
-        else if (scale.scale().biasTerm())
-        {
-            dst.back().convolution().biasTerm() = true;
-            dst.back().weight().push_back(scale.weight()[1]);
-        }
-        return true;
+        return NULL;
     }
 
     //--------------------------------------------------------------------------------------------------
 
-    bool MergeInnerProductAndScale(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes)
+    bool MergeScale(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes)
     {
-        if (index == 0)
+        if (src.size() < index + 2)
             return false;
-        const LayerParam& ip = src[index - 1];
-        const LayerParam& scale = src[index];
-        if (ip.type() != LayerTypeInnerProduct || ip.innerProduct().biasTerm() || ip.innerProduct().transposeB())
+        const WeightParam* scale = GetEltwiseWeight(index + 0, src);
+        if (scale == NULL || src[index + 0].eltwise().operation() != EltwiseOperationTypeProduct)
             return false;
-        if (scale.type() != LayerTypeScale || scale.src()[0] != ip.name())
+        const WeightParam* shift = GetEltwiseWeight(index + 1, src);
+        if (shift == NULL || !IsAdd(src[index + 1]))
             return false;
-        if (InsideLink(src, index - 1, 2))
+        if(src[index + 1].src()[0] != src[index + 0].dst()[0])
             return false;
-        if (buf.empty())
-            buf = bin;
-        dst.back().name() = scale.name();
-        dst.back().dst() = scale.dst();
-        if (scale.scale().biasTerm())
-        {
-            dst.back().innerProduct().biasTerm() = true;
-            dst.back().weight().push_back(scale.weight()[1]);
-        }
-        const float* pSrc = GetWeight<float>(bin, ip.weight()[0]);
-        const float* pScale = GetWeight<float>(bin, scale.weight()[0]);
-        float* pDst = GetWeight<float>(buf, ip.weight()[0]);
-        const Shape& dim = ip.weight()[0].dim();
-        for (size_t i = 0; i < dim[0]; ++i)
-            for (size_t j = 0; j < dim[1]; ++j)
-                pDst[i * dim[1] + j] = pSrc[i * dim[1] + j] * pScale[i];
+        if (scale->dim() != shift->dim())
+            return false;
+
+        LayerParam layer;
+        layer.type() = LayerTypeScale;
+        layer.name() = src[index + 1].name();
+        layer.src().push_back(src[index + 0].src()[0]);
+        layer.dst().push_back(layer.name());
+        layer.scale().biasTerm() = true;
+        layer.weight().push_back(*scale);
+        layer.weight().push_back(*shift);
+        dst.push_back(layer);
+        index += 1;
         return true;
     }
 }
