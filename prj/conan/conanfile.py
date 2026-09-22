@@ -94,7 +94,7 @@ class SynetConan(ConanFile):
 
     def requirements(self):
         self.requires(f"simd/{self._read_simd_version()}")
-        self.requires("cpl/1.0.0")
+        self.requires("cpl/1.0.2")
         if str(self.options.test) in self._openvino_tests:
             self.requires("openvino/2026.0.2", visible=False)
         if str(self.options.test) in self._onnxruntime_tests:
