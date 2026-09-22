@@ -44,6 +44,7 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeParallelScaleAndDepthwiseConvolution.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergePermute.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergePooling.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergePoolingStatistics.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergePowerAndScaleAndPower.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergePrelu.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedAdd.cpp" />

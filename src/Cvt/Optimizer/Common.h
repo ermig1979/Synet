@@ -99,6 +99,8 @@ namespace Synet
 
     bool MergePooling(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
+    bool MergePoolingStatistics(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
     bool MergeSpaceToDepth(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
     bool MergeNormalize(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);

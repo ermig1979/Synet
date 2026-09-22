@@ -92,19 +92,10 @@ namespace Synet
             LayerParam& conv = dst[dst0];
             if (conv.convolution().activationType() != ActivationFunctionTypeIdentity)
                 return false;
-            if (conv.convolution().quantizationLevel() == TensorType8i)
-            {
-                conv.origin().push_back(conv.name());
-                conv.name() = act.name();
-                conv.dst()[0] = act.name();
-            }
+            if (index == src.size() - 1)
+                conv.dst() = act.dst();
             else
-            {
-                if (index == src.size() - 1)
-                    conv.dst() = act.dst();
-                else
-                    changes.push_back(Change(act.name(), conv.name()));
-            }
+                changes.push_back(Change(act.name(), conv.name()));
             conv.convolution().activationType() = type;
             conv.convolution().activationParam0() = param0;
             conv.convolution().activationParam1() = param1;

@@ -75,10 +75,6 @@ namespace Synet
                 l2.convolution().outputNum() >= l1.convolution().outputNum())
                 return false;
         }
-        if (l0.convolution().quantizationLevel() != l2.convolution().quantizationLevel())// || l0.lowPrecision().bf16Type() != l2.lowPrecision().bf16Type())
-        {
-            return false;
-        }
         LayerParam layer;
         layer.type() = LayerTypeMergedConvolution;
         layer.name() = l2.name();
@@ -90,12 +86,6 @@ namespace Synet
         layer.mergedConvolution().conv().push_back(l0.convolution());
         layer.mergedConvolution().conv().push_back(l1.convolution());
         layer.mergedConvolution().conv().push_back(l2.convolution());
-        if (layer.mergedConvolution().conv()[0].quantizationLevel() == TensorType8i ||
-            layer.mergedConvolution().conv()[2].quantizationLevel() == TensorType8i)
-        {
-            layer.origin().push_back(l0.name());
-            layer.origin().push_back(l1.name());
-        }
         if (l0.lowPrecision().bf16Type() != LowPrecisionTypeNone && AtLeast2D(l0.convolution().kernel()) == Shp(1, 1))
             layer.lowPrecision().bf16Type() = l0.lowPrecision().bf16Type();
         if (l2.lowPrecision().bf16Type() != LowPrecisionTypeNone && AtLeast2D(l0.convolution().kernel()) == Shp(1, 1))

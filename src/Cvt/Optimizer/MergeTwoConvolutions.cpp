@@ -82,9 +82,6 @@ namespace Synet
                 layer.weight().push_back(src[index + l].weight()[i]);
         layer.mergedConvolution().conv().push_back(l0.convolution());
         layer.mergedConvolution().conv().push_back(l1.convolution());
-        if (layer.mergedConvolution().conv()[0].quantizationLevel() == TensorType8i ||
-            layer.mergedConvolution().conv()[1].quantizationLevel() == TensorType8i)
-            layer.origin().push_back(l0.name());
         if (l0.lowPrecision().bf16Type() != LowPrecisionTypeNone && AtLeast2D(l0.convolution().kernel()) == Shp(1, 1))
             layer.lowPrecision().bf16Type() = l0.lowPrecision().bf16Type();
         if (l1.lowPrecision().bf16Type() != LowPrecisionTypeNone)

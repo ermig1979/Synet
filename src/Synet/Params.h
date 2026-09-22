@@ -71,6 +71,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypePad,
     LayerTypePermute,
     LayerTypePooling,
+    LayerTypePoolingStatistics,
     LayerTypePower,
     LayerTypePrelu,
     LayerTypePriorBox,
@@ -344,6 +345,15 @@ namespace Synet
         CPL_PARAM_VALUE(LowPrecisionType, bf16Type, LowPrecisionTypeNone);
     };
 
+    struct SharedParam
+    {
+        CPL_PARAM_VALUE(int, type, 0);
+        CPL_PARAM_VALUE(int, version, 0);
+        CPL_PARAM_VALUE(int, axis, 0);
+        CPL_PARAM_VALUE(Floats, floats, Floats());
+        CPL_PARAM_VALUE(Ints, ints, Ints());
+    };
+
     //-------------------------------------------------------------------------------------------------
 
     struct ActivationParam
@@ -406,7 +416,6 @@ namespace Synet
         CPL_PARAM_VALUE(ActivationFunctionType, activationType, ActivationFunctionTypeIdentity);
         CPL_PARAM_VALUE(float, activationParam0, 0.0f);
         CPL_PARAM_VALUE(float, activationParam1, 6.0f);
-        CPL_PARAM_VALUE(TensorType, quantizationLevel, TensorType32f);
         CPL_PARAM_VALUE(TensorFormat, format, TensorFormatNchw);
     };
 
@@ -828,10 +837,10 @@ namespace Synet
         CPL_PARAM_VALUE(Strings, src, Strings());
         CPL_PARAM_VALUE(Strings, dst, Strings());
         CPL_PARAM_VECTOR(WeightParam, weight);
-        CPL_PARAM_VALUE(Strings, origin, Strings());
         CPL_PARAM_STRUCT(LowPrecisionParam, lowPrecision);
         CPL_PARAM_VECTOR(QuantizeParam, qSrc);
         CPL_PARAM_VECTOR(QuantizeParam, qDst);
+        CPL_PARAM_STRUCT(SharedParam, shared);
 
         CPL_PARAM_STRUCT(ActivationParam, activation);
         CPL_PARAM_STRUCT(ArgMaxParam, argMax);
