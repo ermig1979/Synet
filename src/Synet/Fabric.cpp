@@ -115,6 +115,8 @@
 #include "Synet/Layers/Select/TopKLayer.h"
 #include "Synet/Layers/Select/WhereLayer.h"
 
+#include "Synet/Layers/Statistics/PoolingStatisticsLayer.h"
+
 #include "Synet/Layers/System/InputLayer.h"
 #include "Synet/Layers/System/StubLayer.h"
 
@@ -215,6 +217,7 @@ namespace Synet
         case LayerTypePad: return new PadLayer(param, context);
         case LayerTypePermute: return new PermuteLayer(param, context);
         case LayerTypePooling: return new PoolingLayer(param, context);
+        case LayerTypePoolingStatistics: return new PoolingStatisticsLayer(param, context);
         case LayerTypePower: return new PowerLayer(param, context);
         case LayerTypePrelu: return new PreluLayer(param, context);
         case LayerTypePriorBox: return new PriorBoxLayer(param, context);

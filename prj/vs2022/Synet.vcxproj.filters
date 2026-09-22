@@ -284,6 +284,9 @@
     <ClCompile Include="..\..\src\Synet\Layers\Detection\NonMaxSuppressionLayer.cpp">
       <Filter>Layers\Detection</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Statistics\PoolingStatisticsLayer.cpp">
+      <Filter>Layers\Statistics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -707,6 +710,9 @@
     <ClInclude Include="..\..\src\Synet\Decoders\Ssd.h">
       <Filter>Decoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Statistics\PoolingStatisticsLayer.h">
+      <Filter>Layers\Statistics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -774,6 +780,9 @@
     </Filter>
     <Filter Include="Layers\Select">
       <UniqueIdentifier>{ed84254a-2b31-43d5-bd92-b1cf0fa57bae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Statistics">
+      <UniqueIdentifier>{b9ce718a-06fd-4454-b1af-965c1d52b041}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

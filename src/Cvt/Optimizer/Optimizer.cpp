@@ -186,8 +186,8 @@ namespace Synet
             {
                 if (MergeQuantizedHswish(network.layers(), i, merged, changes))
                     continue;
-                //if (MergePoolingStatistics(network.layers(), i, merged, changes))
-                //    continue;
+                if (MergePoolingStatistics(network.layers(), i, merged, changes))
+                    continue;
                 break;
             }
             case 6:

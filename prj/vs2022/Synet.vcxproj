@@ -115,6 +115,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\Select\TopKLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Select\WhereLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Statistics\PoolingStatisticsLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\System\InputLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\System\StubLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\Activation.cpp" />
@@ -244,6 +245,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\Select\TopKLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Select\WhereLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Statistics\PoolingStatisticsLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\System\InputLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\System\StubLayer.h" />
     <ClInclude Include="..\..\src\Synet\Network.h" />
