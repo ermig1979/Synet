@@ -45,6 +45,7 @@ namespace Synet
                 return false;
             layer.innerProduct().outputNum() = (uint32_t)(transB ? shape[0] : shape[1]);
             layer.innerProduct().biasTerm() = false;
+            layer.innerProduct().transposeB() = !transB;
             layer.innerProduct().axis() = -1;
             if (!MoveDequantizeLinearToLayer(layers, layer, merged))
                 return false;
