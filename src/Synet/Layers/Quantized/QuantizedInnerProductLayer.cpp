@@ -113,7 +113,7 @@ namespace Synet
         if (weight.size() == 1)
         {
             weight.resize(2);
-            weight[1].Reshape(TensorType32f, Shp(_N), TensorFormatNchw, param.qSrc()[1].scale());
+            weight[1].Reshape(TensorType32f, Shp(_N), TensorFormatNchw, (float)param.qSrc()[1].scale());
         }
         if (weight[1].Size() != _N)
         {
