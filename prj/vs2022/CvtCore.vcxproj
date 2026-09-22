@@ -66,6 +66,7 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeThreeQuantizedConvolutions.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTiledScale2D.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTwoConvolutions.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTwoDynamicConvolutions.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTwoQuantizedConvolutions.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeUnpack.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeYoloV7.cpp" />

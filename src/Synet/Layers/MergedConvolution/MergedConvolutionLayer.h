@@ -185,8 +185,7 @@ namespace Synet
 
         struct AlgParam
         {
-            bool biasTerm[Detail::MCC_MAX];
-            int internal[Detail::MCC_MAX], add;
+            int biasTerm[Detail::MCC_MAX], internal[Detail::MCC_MAX], add, constW;
             size_t index[Detail::MCC_MAX], sSize, dSize, batch, count;
             ConvParam conv[Detail::MCC_MAX];
             float actParam[Detail::MCC_MAX][2];

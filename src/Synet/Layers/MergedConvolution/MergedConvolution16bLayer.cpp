@@ -62,6 +62,8 @@ namespace Synet
 
     bool MergedConvolution16bLayer::Reshape(const TensorPtr& src, const TensorPtrs& buf, const TensorPtr& dst)
     {
+        if (_alg.constW == 0)
+            SYNET_ERROR("MergedConvolution16bLayer does not support dynamic weight!");
         if ((src->GetType() != TensorType32f && src->GetType() != TensorType16b) ||
             (dst->GetType() != TensorType32f && dst->GetType() != TensorType16b))
             SYNET_ERROR("MergedConvolution16bLayer supports only FP32 or BF16 input and output!");

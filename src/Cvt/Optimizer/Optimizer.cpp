@@ -236,6 +236,8 @@ namespace Synet
             {
                 if (MergeTwoConvolutions(network.layers(), i, _param, merged, changes))
                     continue;
+                if (MergeTwoDynamicConvolutions(network.layers(), i, _param, merged, changes))
+                    continue;
                 if (MergeTwoQuantizedConvolutions(network.layers(), i, _param, merged, changes))
                     continue;
                 break;
