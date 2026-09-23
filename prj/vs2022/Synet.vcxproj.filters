@@ -713,6 +713,21 @@
     <ClInclude Include="..\..\src\Synet\Layers\Statistics\PoolingStatisticsLayer.h">
       <Filter>Layers\Statistics</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\GeometryUtils.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\ParamV2.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Prop.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Time.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Utils.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
