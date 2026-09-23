@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-#include "Synet/Layers/ReductionLayer.h"
+#include "Synet/Layers/Statistics/ReductionLayer.h"
 
 #include <limits>
 

@@ -71,6 +71,7 @@
 #include "Synet/Layers/Normalize/SqueezeExcitationLayer.h"
 
 #include "Synet/Layers/Quantized/DequantizeLinearLayer.h"
+#include "Synet/Layers/Quantized/DynamicQuantizeLinearLayer.h"
 #include "Synet/Layers/Quantized/QuantizedAddLayer.h"
 #include "Synet/Layers/Quantized/QuantizedConcatLayer.h"
 #include "Synet/Layers/Quantized/QuantizedConvolutionLayer.h"
@@ -116,6 +117,7 @@
 #include "Synet/Layers/Select/WhereLayer.h"
 
 #include "Synet/Layers/Statistics/PoolingStatisticsLayer.h"
+#include "Synet/Layers/Statistics/ReductionLayer.h"
 
 #include "Synet/Layers/System/InputLayer.h"
 #include "Synet/Layers/System/StubLayer.h"
@@ -124,7 +126,6 @@
 #include "Synet/Layers/CompareLayer.h"
 #include "Synet/Layers/GridSampleLayer.h"
 #include "Synet/Layers/NonZeroLayer.h"
-#include "Synet/Layers/ReductionLayer.h"
 #include "Synet/Layers/ScatterNdLayer.h"
 #include "Synet/Layers/SoftmaxLayer.h"
 
@@ -178,7 +179,8 @@ namespace Synet
                 return new Deconvolution32fLayer(param, context);
         case LayerTypeDequantizeLinear: return new DequantizeLinearLayer(param, context);
         case LayerTypeDetectionOutput: return new DetectionOutputLayer(param, context);
-        case LayerTypeEltwise: 
+        case LayerTypeDynamicQuantizeLinear: return new DynamicQuantizeLinearLayer(param, context);
+        case LayerTypeEltwise:
             if(IsAdd(param))
                 return new AddLayer(param, context);
             else if (IsMul(param))

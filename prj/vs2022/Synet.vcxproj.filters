@@ -17,9 +17,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\CompareLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\ReductionLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -287,6 +284,12 @@
     <ClCompile Include="..\..\src\Synet\Layers\Statistics\PoolingStatisticsLayer.cpp">
       <Filter>Layers\Statistics</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Statistics\ReductionLayer.cpp">
+      <Filter>Layers\Statistics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\DynamicQuantizeLinearLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -307,9 +310,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h">
-      <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h">
       <Filter>Layers</Filter>
@@ -727,6 +727,12 @@
     </ClInclude>
     <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Utils.h">
       <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Statistics\ReductionLayer.h">
+      <Filter>Layers\Statistics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\DynamicQuantizeLinearLayer.h">
+      <Filter>Layers\Quantized</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

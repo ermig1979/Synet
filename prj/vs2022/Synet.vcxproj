@@ -74,6 +74,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\Normalize\ScaledDotProductAttentionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\DynamicQuantizeLinearLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedConcatLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedConvolutionLayer.cpp" />
@@ -92,7 +93,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\Recurrent\ReverseSequenceLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Recurrent\RnnGruBdLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Recurrent\TensorIteratorLayer.cpp" />
-    <ClCompile Include="..\..\src\Synet\Layers\ReductionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Reorder\ConcatLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Reorder\PermuteLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Reorder\ShuffleLayer.cpp" />
@@ -116,6 +116,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\Select\WhereLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Statistics\PoolingStatisticsLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Statistics\ReductionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\System\InputLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\System\StubLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Utils\Activation.cpp" />
@@ -209,6 +210,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\Normalize\ScaledDotProductAttentionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\DynamicQuantizeLinearLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedConcatLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedConvolutionLayer.h" />
@@ -227,7 +229,6 @@
     <ClInclude Include="..\..\src\Synet\Layers\Recurrent\ReverseSequenceLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Recurrent\RnnGruBdLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Recurrent\TensorIteratorLayer.h" />
-    <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Reorder\ConcatLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Reorder\PermuteLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Reorder\ShuffleLayer.h" />
@@ -251,6 +252,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\Select\WhereLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Statistics\PoolingStatisticsLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Statistics\ReductionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\System\InputLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\System\StubLayer.h" />
     <ClInclude Include="..\..\src\Synet\Network.h" />

@@ -40,7 +40,7 @@ namespace Synet
                 dst[i] = (uint8_t)QuantizeLinear(src[i], scale, zero, 0, 255);
 #endif
         }
-        else if (type == TensorType8u)
+        else if (type == TensorType8i)
         {
             int8_t* dst = (int8_t*)dst8;
             for (size_t i = 0; i < size; ++i)
@@ -54,7 +54,6 @@ namespace Synet
 
     QuantizeLinearLayer::QuantizeLinearLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
-        , _uniform(NULL)
     {
     }
 
@@ -85,8 +84,6 @@ namespace Synet
         if (src[0]->GetType() != TensorType32f)
             SYNET_ERROR("QuantizeLinearLayer supports only FP32 input!");
 
-        _uniform = QuantizeLinearUniform;
-
         dst[0]->Reshape(_type, src[0]->Shape(), src[0]->Format());
         if (src[0]->Const())
         {
@@ -105,7 +102,6 @@ namespace Synet
 
     void QuantizeLinearLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
-        if(_uniform)
-            _uniform(src[0]->Data<float>(), _scale, _zero, _size, dst[0]->RawData(), _type);
+        QuantizeLinearUniform(src[0]->Data<float>(), _scale, _zero, _size, dst[0]->RawData(), _type);
     }
 }

@@ -71,6 +71,8 @@ namespace Synet
 
     bool ConvertDropoutNode(const onnx::NodeProto& node, LayerParam& layer);
 
+    bool ConvertDynamicQuantizeLinearNode(const onnx::NodeProto& node, LayerParam& layer);
+
     bool ConvertEqualNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
 
     bool ConvertErfNode(const onnx::NodeProto& node, LayerParam& layer);

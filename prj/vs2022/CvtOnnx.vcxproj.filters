@@ -330,6 +330,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertResizeNode.cpp">
       <Filter>OnnxRuntime\R</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDynamicQuantizeLinearNode.cpp">
+      <Filter>OnnxRuntime\D</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.h">
