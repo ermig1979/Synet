@@ -123,6 +123,8 @@ namespace Synet
 
     bool ConvertMatMulNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap, UniqNames& merged);
 
+    bool ConvertMatMulIntegerNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap);
+
     bool ConvertMaxPoolNode(const onnx::NodeProto& node, LayerParam& layer);
 
     bool ConvertModNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);

@@ -62,6 +62,7 @@ CPL_PARAM_ENUM1(Synet, LayerType,
     LayerTypeInterp,
     LayerTypeLrn,//legacy?
     LayerTypeLstm,
+    LayerTypeMatMulInteger,
     LayerTypeMergedConvolution,
     LayerTypeMeta,
     LayerTypeMish,

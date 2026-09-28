@@ -333,6 +333,9 @@
     <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertDynamicQuantizeLinearNode.cpp">
       <Filter>OnnxRuntime\D</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\OnnxRuntime\ConvertMatMulIntegerNode.cpp">
+      <Filter>OnnxRuntime\M</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cvt\OnnxRuntime\OnnxRuntime.h">

@@ -230,6 +230,8 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "MatMul" && !ConvertMatMulNode(node, trans, network.layers(), layer, &tensorFormatMap, merged))
                 return ErrorMessage(i, node);
+            if (node.op_type() == "MatMulInteger" && !ConvertMatMulIntegerNode(node, trans, network.layers(), layer, &tensorFormatMap))
+                return ErrorMessage(i, node);
             if (node.op_type() == "MaxPool" && !ConvertMaxPoolNode(node, layer))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Mod" && !ConvertModNode(node, network.layers(), layer))
