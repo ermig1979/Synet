@@ -20,6 +20,7 @@ class SynetConan(ConanFile):
 
     # Build settings and options
     settings = "os", "compiler", "build_type", "arch"
+    languages = ["C++"]
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
@@ -94,7 +95,7 @@ class SynetConan(ConanFile):
 
     def requirements(self):
         self.requires(f"simd/{self._read_simd_version()}")
-        self.requires("cpl/1.0.2")
+        self.requires("cpl/1.1.0")
         if str(self.options.test) in self._openvino_tests:
             self.requires("openvino/2026.0.2", visible=False)
         if str(self.options.test) in self._onnxruntime_tests:
@@ -123,6 +124,14 @@ class SynetConan(ConanFile):
         del self.info.options.opencv
         if "opencv" in self.info.requires:
             self.info.requires.remove("opencv")
+        # The C++ standard is fixed by the project itself, not by the profile: -std=c++17
+        # is hard-coded in COMMON_CXX_FLAGS (per-source COMPILE_FLAGS, applied after the
+        # toolchain flags; the last -std wins), generate() pins CMAKE_CXX_STANDARD to 17
+        # and removes the toolchain block that would turn compiler.cppstd into
+        # CMAKE_CXX_STANDARD/CMAKE_CXX_EXTENSIONS. Synet's own objects are identical for
+        # every compiler.cppstd, so the setting must not split the package id; the
+        # requirements above still contribute their own package ids.
+        self.info.settings.rm_safe("compiler.cppstd")
 
     def validate(self):
         # test_video is the only OpenCV-dependent test. Without opencv=True it would
@@ -179,6 +188,10 @@ class SynetConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+        # Drop the language-standard block (CMAKE_CXX_STANDARD/EXTENSIONS/REQUIRED and
+        # the C equivalents): the project sets its own standard, and package_id()
+        # relies on compiler.cppstd being inert for the build.
+        tc.blocks.remove("cppstd")
 
         tc.variables["SYNET_SHARED"] = self.options.shared
         tc.variables["SYNET_SIMD"] = self.options.simd_optimizations

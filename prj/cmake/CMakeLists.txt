@@ -43,7 +43,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "")
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-if(NOT TOOLCHAIN STREQUAL "")
+if(NOT "${TOOLCHAIN}" STREQUAL "")
     set(CMAKE_CXX_COMPILER ${TOOLCHAIN})
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE CMAKE_CXX_COMPILER_VERSION)
 	string(REGEX REPLACE "\n$" "" CMAKE_CXX_COMPILER_VERSION "${CMAKE_CXX_COMPILER_VERSION}")
@@ -67,6 +67,16 @@ if(SYNET_GET_VERSION)
 	endif()
 else()
 	add_definitions(-DSYNET_VERSION="unknown")
+endif()
+
+# The check runs only when the compiler is the one project() detected: TOOLCHAIN above may
+# replace it, and check_cxx_compiler_flag() probes the detected one anyway.
+if(CMAKE_CXX_COMPILER STREQUAL "$CACHE{CMAKE_CXX_COMPILER}")
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag("-std=c++17" SYNET_STD_CXX17_SUPPORTED)
+    if(NOT SYNET_STD_CXX17_SUPPORTED)
+        message(FATAL_ERROR "Synet is compiled as C++17, but ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} does not accept -std=c++17!")
+    endif()
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")

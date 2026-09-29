@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.10)
 
 include_directories(${ROOT_DIR}/src)
-include_directories(${ROOT_DIR}/3rd/Cpl/src)
+find_package(cpl QUIET)
+if(NOT cpl_FOUND)
+    include_directories(${ROOT_DIR}/3rd/Cpl/src)
+endif()
 
 file(GLOB_RECURSE CVT_ONNX_SRC ${ROOT_DIR}/src/Cvt/OnnxRuntime/*.cpp)
 
