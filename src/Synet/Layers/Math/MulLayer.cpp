@@ -452,11 +452,16 @@ namespace Synet
                     _spatial *= _channels;
                     _channels = 1;
                 }
-                else if (size == _channels)
-                    _special = SpecialScaleChannel;
+                else if (size == _channels)// && _batch == 1)
+                {
+                    if(_batch != 1 && _src[_index[1]]->Count() == 1)
+                        _special = SpecialUniversal;
+                    else
+                        _special = SpecialScaleChannel;
+                }
                 else if (size == _spatial)
                     _special = SpecialScaleSpatial;
-                else if (_src[_index[1]]->Count() == 4)
+                else if (_src[_index[1]]->Count() == 4)// || _src[_index[1]]->Count() == 1)
                     _special = SpecialUniversal;
                 else
                     SYNET_ERROR("MulLayer can't process inputs with this shape!");

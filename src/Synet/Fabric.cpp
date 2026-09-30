@@ -72,6 +72,7 @@
 
 #include "Synet/Layers/Quantized/DequantizeLinearLayer.h"
 #include "Synet/Layers/Quantized/DynamicQuantizeLinearLayer.h"
+#include "Synet/Layers/Quantized/MatMulIntegerLayer.h"
 #include "Synet/Layers/Quantized/QuantizedAddLayer.h"
 #include "Synet/Layers/Quantized/QuantizedConcatLayer.h"
 #include "Synet/Layers/Quantized/QuantizedConvolutionLayer.h"
@@ -205,6 +206,7 @@ namespace Synet
         case LayerTypeInterp: return new InterpLayer(param, context);
         case LayerTypeLrn: return new LrnLayer(param, context);
         case LayerTypeLstm: return new LstmLayer(param, context);
+        case LayerTypeMatMulInteger: return new MatMulIntegerLayer(param, context);
         case LayerTypeMergedConvolution:
             if (context->options.BFloat16Enable() && param.lowPrecision().bf16Type() == LowPrecisionTypeActive)
                 return new MergedConvolution16bLayer(param, context);
