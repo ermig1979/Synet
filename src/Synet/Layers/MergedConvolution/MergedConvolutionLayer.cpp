@@ -36,17 +36,18 @@ namespace Synet
 
     bool MergedConvolutionLayer::Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init)
     {
-        if (src.size() != 1 || dst.size() != 1)
-            SYNET_ERROR("MergedConvolutionLayer supports only 1 input and 1 output!");
-        if (src[0]->Count() != 4 || src[0]->Format() != TensorFormatNhwc)
-            SYNET_ERROR("MergedConvolutionLayer supports only 4D NHWC input tensor!");
-
         const MergedConvolutionParam & p = this->Param().mergedConvolution();
         const ConvolutionParam * conv = p.conv().data();
         AlgParam& a = _alg;
         a.count = p.conv().size();
+        a.constW = src.size() == 1 ? 1 : 0;
         if (a.count < 2 && a.count > 3)
             SYNET_ERROR("MergedConvolutionLayer supports only 2 or 3 merged convolutions!");
+
+        if ((src.size() != 1 && src.size() != 1 + a.count) || dst.size() != 1)
+            SYNET_ERROR("MergedConvolutionLayer supports only 1 or " << 1 + a.count << " inputs and 1 output!");
+        if (src[0]->Count() != 4 || src[0]->Format() != TensorFormatNhwc)
+            SYNET_ERROR("MergedConvolutionLayer supports only 4D NHWC input tensor!");
 
         const Tensors & weight = this->Weight();
         for (size_t i = 0, next = 0; i < a.count; ++i)
@@ -57,13 +58,23 @@ namespace Synet
             else
                 a.conv[i].Set(*src[0], *dst[0], true, conv[i].autoPad());
 
-            a.index[i] = next++;
-            const Tensor & w = weight[a.index[i]];
-            if(w.Shape() != a.conv[i].WeightShape(true, true) || w.Format() != src[0]->Format())
-                SYNET_ERROR("MergedConvolutionLayer: check weight[" << a.index[i] << "] size or format!");
-            a.weight[i] = w.Data<float>();
+            if (a.constW)
+            {
+                a.index[i] = next++;
+                const Tensor& w = weight[a.index[i]];
+                if (w.Shape() != a.conv[i].WeightShape(true, true) || w.Format() != src[0]->Format())
+                    SYNET_ERROR("MergedConvolutionLayer: check weight[" << a.index[i] << "] size or format!");
+                a.weight[i] = w.Data<float>();
+            }
+            else
+            {
+                const Tensor& w = *src[1 + i];
+                if (w.Shape() != a.conv[i].WeightShape(true, true) || conv[i].format() != src[0]->Format())
+                    SYNET_ERROR("MergedConvolutionLayer: check src[" << 1 + i << "] size or format!");
+                a.weight[i] = w.Data<float>();
+            }
 
-            a.biasTerm[i] = conv[i].biasTerm();
+            a.biasTerm[i] = conv[i].biasTerm()  ? 1 : 0;
             if (a.biasTerm[i])
             {
                 const Tensor & b = weight[next++];
@@ -113,6 +124,8 @@ namespace Synet
         desc << a.count << ": " << a.batch << "x" << a.conv[0].srcC << "x" << a.conv[0].srcH << "x" << a.conv[0].srcW;
         for(size_t i = 0; i < a.count; ++i)
             desc << "-" << (a.conv[i].IsDepthwise() ? String("") : Cpl::ToStr(a.conv[i].dstC) + "x") << a.conv[i].kernelY << "x" << a.conv[i].strideY;
+        if (_alg.constW == 0)
+            desc << "-dynW";
         desc << InternalInfo();
         this->UsePerfStat(desc.str(), Flop());
         return true;

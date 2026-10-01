@@ -152,7 +152,7 @@ namespace Synet
 
         size_t EffectiveSrcC(const LayerParam& layer)
         {
-            if (layer.type() == LayerTypeConvolution)
+            if (layer.type() == LayerTypeConvolution && layer.src().size() == 1)
             {
                 const WeightParam& weight = layer.weight()[0];
                 if (weight.format() == TensorFormatNhwc)
@@ -168,7 +168,7 @@ namespace Synet
                 else
                     return weight.dim()[1];
             }
-            if (layer.type() == LayerTypeDeconvolution)
+            if (layer.type() == LayerTypeDeconvolution && layer.src().size() == 1)
             {
                 const WeightParam& weight = layer.weight()[0];
                 if (weight.format() == TensorFormatNhwc)

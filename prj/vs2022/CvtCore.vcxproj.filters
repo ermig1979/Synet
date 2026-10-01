@@ -160,6 +160,12 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeMish.cpp">
       <Filter>Optimizer\M</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTwoDynamicConvolutions.cpp">
+      <Filter>Optimizer\T</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergePoolingStatistics.cpp">
+      <Filter>Optimizer\P</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cvt\Common\Params.h">

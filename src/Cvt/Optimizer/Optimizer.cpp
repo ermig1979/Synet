@@ -186,6 +186,8 @@ namespace Synet
             {
                 if (MergeQuantizedHswish(network.layers(), i, merged, changes))
                     continue;
+                if (MergePoolingStatistics(network.layers(), i, merged, changes))
+                    continue;
                 break;
             }
             case 6:
@@ -235,6 +237,8 @@ namespace Synet
             case 10:
             {
                 if (MergeTwoConvolutions(network.layers(), i, _param, merged, changes))
+                    continue;
+                if (MergeTwoDynamicConvolutions(network.layers(), i, _param, merged, changes))
                     continue;
                 if (MergeTwoQuantizedConvolutions(network.layers(), i, _param, merged, changes))
                     continue;

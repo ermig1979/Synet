@@ -71,6 +71,8 @@ namespace Synet
 
     bool ConvertDropoutNode(const onnx::NodeProto& node, LayerParam& layer);
 
+    bool ConvertDynamicQuantizeLinearNode(const onnx::NodeProto& node, LayerParam& layer);
+
     bool ConvertEqualNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
 
     bool ConvertErfNode(const onnx::NodeProto& node, LayerParam& layer);
@@ -119,7 +121,9 @@ namespace Synet
 
     bool ConvertLstmNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
 
-    bool ConvertMatMulNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap);
+    bool ConvertMatMulNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap, UniqNames& merged);
+
+    bool ConvertMatMulIntegerNode(const onnx::NodeProto& node, bool trans, LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap);
 
     bool ConvertMaxPoolNode(const onnx::NodeProto& node, LayerParam& layer);
 

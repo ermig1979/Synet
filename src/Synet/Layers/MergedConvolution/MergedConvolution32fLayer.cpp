@@ -211,7 +211,8 @@ namespace Synet
         if (_mergedConvolution32f.Enable())
         {
             Layer::Extend32f(buf, 0, Shp(_mergedConvolution32f.ExternalBufferSize()));
-            _mergedConvolution32f.SetParams(a.weight, (SimdBool*)a.internal, a.bias, a.params);
+            if(a.constW)
+                _mergedConvolution32f.SetParams(a.weight, (SimdBool*)a.internal, a.bias, a.params);
         }
         else
 #endif
@@ -231,13 +232,17 @@ namespace Synet
 
     void MergedConvolution32fLayer::Forward(const float * src, float* buf0, float* buf1, float* dst)
     {
+        const AlgParam& a = this->_alg;
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (_mergedConvolution32f.Enable())
+        {
+            if (!a.constW)
+                _mergedConvolution32f.SetParams(a.weight, NULL, a.bias, a.params);
             _mergedConvolution32f.Forward(src, buf0, dst);
+        }
         else
 #endif
         {
-            const AlgParam& a = this->_alg;
             for (size_t b = 0; b < a.batch; ++b)
             {
                 _convolution[0](src, a.conv[0], a.weight[0], a.bias[0], a.params[0], buf0);

@@ -17,9 +17,6 @@
     <ClCompile Include="..\..\src\Synet\Layers\CompareLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Synet\Layers\ReductionLayer.cpp">
-      <Filter>Layers</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Synet\Layers\SoftmaxLayer.cpp">
       <Filter>Layers</Filter>
     </ClCompile>
@@ -284,6 +281,18 @@
     <ClCompile Include="..\..\src\Synet\Layers\Detection\NonMaxSuppressionLayer.cpp">
       <Filter>Layers\Detection</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Statistics\PoolingStatisticsLayer.cpp">
+      <Filter>Layers\Statistics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Statistics\ReductionLayer.cpp">
+      <Filter>Layers\Statistics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\DynamicQuantizeLinearLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\MatMulIntegerLayer.cpp">
+      <Filter>Layers\Quantized</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Synet\Layer.h" />
@@ -304,9 +313,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Utils\ImgToCol.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Synet\Layers\ReductionLayer.h">
-      <Filter>Layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Synet\Layers\SoftmaxLayer.h">
       <Filter>Layers</Filter>
@@ -707,6 +713,33 @@
     <ClInclude Include="..\..\src\Synet\Decoders\Ssd.h">
       <Filter>Decoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Statistics\PoolingStatisticsLayer.h">
+      <Filter>Layers\Statistics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\GeometryUtils.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\ParamV2.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Prop.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Time.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\Cpl\src\Cpl\Utils.h">
+      <Filter>Cpl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Statistics\ReductionLayer.h">
+      <Filter>Layers\Statistics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\DynamicQuantizeLinearLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\MatMulIntegerLayer.h">
+      <Filter>Layers\Quantized</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Layers">
@@ -774,6 +807,9 @@
     </Filter>
     <Filter Include="Layers\Select">
       <UniqueIdentifier>{ed84254a-2b31-43d5-bd92-b1cf0fa57bae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layers\Statistics">
+      <UniqueIdentifier>{b9ce718a-06fd-4454-b1af-965c1d52b041}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

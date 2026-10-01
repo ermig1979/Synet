@@ -28,14 +28,10 @@
 
 namespace Synet
 {
-    void QuantizeLinearUniform(const float* src, float scale, int zero, size_t size, uint8_t* dst8, TensorType type);
-
-    //-------------------------------------------------------------------------------------------------
-
-    class QuantizeLinearLayer : public Layer
+    class DynamicQuantizeLinearLayer : public Layer
     {
     public:
-        QuantizeLinearLayer(const LayerParam& param, Context* context);
+        DynamicQuantizeLinearLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
@@ -44,9 +40,6 @@ namespace Synet
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
-        TensorType _type;
-        int32_t _zero;
-        float _scale;
-        size_t _axis, _size;
+        size_t _size;
     };
 }

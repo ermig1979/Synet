@@ -182,6 +182,8 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "Dropout" && !ConvertDropoutNode(node, layer))
                 return ErrorMessage(i, node);
+            if (node.op_type() == "DynamicQuantizeLinear" && !ConvertDynamicQuantizeLinearNode(node, layer))
+                return ErrorMessage(i, node);
             if (node.op_type() == "Erf" && !ConvertErfNode(node, layer))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Equal" && !ConvertEqualNode(node, network.layers(), layer))
@@ -226,7 +228,9 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "LSTM" && !ConvertLstmNode(node, network.layers(), layer))
                 return ErrorMessage(i, node);
-            if (node.op_type() == "MatMul" && !ConvertMatMulNode(node, trans, network.layers(), layer, &tensorFormatMap))
+            if (node.op_type() == "MatMul" && !ConvertMatMulNode(node, trans, network.layers(), layer, &tensorFormatMap, merged))
+                return ErrorMessage(i, node);
+            if (node.op_type() == "MatMulInteger" && !ConvertMatMulIntegerNode(node, trans, network.layers(), layer, &tensorFormatMap))
                 return ErrorMessage(i, node);
             if (node.op_type() == "MaxPool" && !ConvertMaxPoolNode(node, layer))
                 return ErrorMessage(i, node);

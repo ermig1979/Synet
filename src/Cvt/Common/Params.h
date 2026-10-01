@@ -59,7 +59,6 @@ namespace Synet
         CPL_PARAM_VALUE(uint32_t, mergeTwoConvolutionsOutputNumMax, 256);
         CPL_PARAM_VALUE(uint32_t, mergeConvolutionsInputNumMax, 512);
         CPL_PARAM_VALUE(bool, mergeQuantizedConvolutions, false);
-        CPL_PARAM_VALUE(bool, mergeInt8Convolutions, true);
         CPL_PARAM_VALUE(bool, saveUnoptimized, false);
         CPL_PARAM_VALUE(int, convToNhwc, 0);
         CPL_PARAM_VALUE(bool, skipPermute, false);

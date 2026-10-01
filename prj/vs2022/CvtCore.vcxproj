@@ -44,6 +44,7 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeParallelScaleAndDepthwiseConvolution.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergePermute.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergePooling.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergePoolingStatistics.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergePowerAndScaleAndPower.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergePrelu.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeQuantizedAdd.cpp" />
@@ -66,6 +67,7 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeThreeQuantizedConvolutions.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTiledScale2D.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTwoConvolutions.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTwoDynamicConvolutions.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeTwoQuantizedConvolutions.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeUnpack.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeYoloV7.cpp" />

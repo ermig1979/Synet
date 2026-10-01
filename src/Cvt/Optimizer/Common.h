@@ -99,6 +99,8 @@ namespace Synet
 
     bool MergePooling(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
+    bool MergePoolingStatistics(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
     bool MergeSpaceToDepth(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
     bool MergeNormalize(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
@@ -173,11 +175,13 @@ namespace Synet
 
     bool MergeThreeConvolutions(const LayerParams& src, size_t& index, const OptimizerParam& param, LayerParams& dst, Changes& changes);
 
-    bool MergeTwoQuantizedConvolutions(const LayerParams& src, size_t& index, const OptimizerParam& param, LayerParams& dst, Changes& changes);
-
     bool MergeThreeQuantizedConvolutions(const LayerParams& src, size_t& index, const OptimizerParam& param, LayerParams& dst, Changes& changes);
 
     bool MergeTwoConvolutions(const LayerParams& src, size_t& index, const OptimizerParam& param, LayerParams& dst, Changes& changes);
+
+    bool MergeTwoDynamicConvolutions(const LayerParams& src, size_t& index, const OptimizerParam& param, LayerParams& dst, Changes& changes);
+
+    bool MergeTwoQuantizedConvolutions(const LayerParams& src, size_t& index, const OptimizerParam& param, LayerParams& dst, Changes& changes);
 
     bool SkipUnnecessaryDequantizeQuantizeV0(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
