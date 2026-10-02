@@ -30,7 +30,7 @@ class SynetConan(ConanFile):
         "python_wrapper": [True, False],     # SYNET_PYTHON
         "opencv": [True, False],             # SYNET_OPENCV
         "test": [
-            "none", "inference_engine", "onnx", "precision",
+            "none", "inference_engine", "onnx",
             "optimizer", "bf16", "multi_threads", "video", "use_samples", "all",
         ],
     }
@@ -45,7 +45,7 @@ class SynetConan(ConanFile):
         "test": "none",
     }
 
-    _openvino_tests = ("inference_engine", "precision", "all")
+    _openvino_tests = ("inference_engine", "all")
     _onnxruntime_tests = ("onnx", "all")
     _opencv_tests = ("video", "all")
 
@@ -259,13 +259,12 @@ class SynetConan(ConanFile):
             test_binaries = {
                 "inference_engine": ["test_inference_engine"],
                 "onnx": ["test_onnx"],
-                "precision": ["test_precision"],
                 "optimizer": ["test_optimizer"],
                 "bf16": ["test_bf16"],
                 "multi_threads": ["test_multi_threads"],
                 "video": ["test_video"],
                 "all": [
-                    "test_inference_engine", "test_onnx", "test_precision",
+                    "test_inference_engine", "test_onnx",
                     "test_optimizer", "test_bf16", "test_multi_threads", "test_video",
                 ],
             }

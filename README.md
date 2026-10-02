@@ -16,7 +16,7 @@ To build test applications you can run following bash script:
     cd clone
     ./build.sh
 
-And applications `test_inference_engine`, `test_onnx`, `test_optimizer`, `test_precision`, 
+And applications `test_inference_engine`, `test_onnx`, `test_optimizer`, 
 `use_face_detection` will be created in directory `build`.
 There is a detail description of these test applications below.
 
@@ -75,11 +75,6 @@ There are several test scripts:
 * For manual testing you can use `./test.sh` (in the file you have to manually uncomment unit test that you need).
 * Script `./check.sh` checks correctness of all tests.
 * Script `./perf.sh` measures performance of Synet compare to OpenVINO.
-
-Precision test application
-========================
-The precision test application `test_precision` is used for independent accuracy testing of quantized Synet and OpenVINO models.
-There is `./prec.sh` test script (in the file you have to manually uncomment unit test that you need).
 
 Using samples
 =======================================
