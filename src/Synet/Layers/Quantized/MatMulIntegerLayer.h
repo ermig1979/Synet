@@ -28,6 +28,10 @@
 
 namespace Synet
 {
+    void MatMulIntegerGemm(size_t M, size_t N, size_t K, const uint8_t* src, int32_t zero, const int8_t* weight, int32_t* dst, bool overflow16i);
+
+    //-------------------------------------------------------------------------------------------------
+
     class MatMulIntegerLayer : public Layer
     {
     public:

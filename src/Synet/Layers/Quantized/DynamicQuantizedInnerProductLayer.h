@@ -26,24 +26,31 @@
 
 #include "Synet/Layer.h"
 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
+
 namespace Synet
 {
-    void DynamicQuantizeLinearLayerForward(const float* src, size_t size, uint8_t* dst, float* scale, uint8_t* zero);
-
-    //-------------------------------------------------------------------------------------------------
-
-    class DynamicQuantizeLinearLayer : public Layer
+    class DynamicQuantizedInnerProductLayer : public Layer
     {
     public:
-        DynamicQuantizeLinearLayer(const LayerParam& param, Context* context);
+        DynamicQuantizedInnerProductLayer(const LayerParam& param, Context* context);
 
         virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
+
+        virtual bool Resizable() const;
+
+        virtual size_t MemoryUsage() const;
+
+        virtual void CompactWeight();
 
         virtual int64_t Flop() const;
 
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
 
-        size_t _size;
+        size_t _M, _N, _K;
+        bool _biasTerm;
     };
 }

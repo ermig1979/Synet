@@ -74,6 +74,7 @@
     <ClCompile Include="..\..\src\Synet\Layers\Normalize\ScaledDotProductAttentionLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.cpp" />
+    <ClCompile Include="..\..\src\Synet\Layers\Quantized\DynamicQuantizedInnerProductLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\DynamicQuantizeLinearLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\MatMulIntegerLayer.cpp" />
     <ClCompile Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.cpp" />
@@ -211,6 +212,7 @@
     <ClInclude Include="..\..\src\Synet\Layers\Normalize\ScaledDotProductAttentionLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Normalize\SqueezeExcitationLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\DequantizeLinearLayer.h" />
+    <ClInclude Include="..\..\src\Synet\Layers\Quantized\DynamicQuantizedInnerProductLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\DynamicQuantizeLinearLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\MatMulIntegerLayer.h" />
     <ClInclude Include="..\..\src\Synet\Layers\Quantized\QuantizedAddLayer.h" />
