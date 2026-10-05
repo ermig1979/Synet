@@ -101,6 +101,6 @@ namespace Synet
 
     void DynamicQuantizeLinearLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
-        DynamicQuantizeLinearLayerForward(src[0]->Data<float>(), _size, dst[0]->RawData(), dst[1]->Data<float>()[0], dst[2]->Data<uint8_t>()[0]);
+        DynamicQuantizeLinearLayerForward(src[0]->Data<float>(), _size, dst[0]->Data<uint8_t>(), dst[1]->Data<float>()[0], dst[2]->Data<uint8_t>()[0]);
     }
 }

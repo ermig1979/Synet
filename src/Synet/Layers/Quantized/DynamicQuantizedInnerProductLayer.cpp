@@ -23,6 +23,7 @@
 */
 
 #include "Synet/Layers/Quantized/DynamicQuantizedInnerProductLayer.h"
+#include "Synet/Layers/Quantized/MatMulIntegerLayer.h"
 
 #include "Synet/Utils/Gemm.h"
 
@@ -77,7 +78,7 @@ namespace Synet
         _K = src[0]->Size(-1);
         _M = src[0]->Size(0, -1);
 
-        Tensors& weight = ((Tensors&)this->Weight());
+        const Tensors& weight = ((Tensors&)this->Weight());
         if (weight.size() < 3)
             SYNET_ERROR("DynamicQuantizedInnerProductLayer must have at least 3 weights!");
         if (weight[0].GetType() != TensorType8i || weight[1].GetType() != TensorType8i)
@@ -109,6 +110,20 @@ namespace Synet
 
     void DynamicQuantizedInnerProductLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
+        const Tensors& weight = ((Tensors&)this->Weight());
+        float scale;
+        uint8_t zero;
+        DynamicQuantizeLinearLayerForward(src[0]->Data<float>(), _M * _K, Layer::Buf8u(buf, 0), scale, zero);
+        float* norm = Layer::Buf32f(buf, 0);
+        for (size_t j = 0; j < _N; ++j)
+            norm[j] = weight[2].Data<float>()[j] * scale;
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
+        const bool overflow16i = SimdCpuInfo(SimdCpuInfoAvx512vnni) == 0;
+#else
+        const bool overflow16i = true;
+#endif
+        MatMulIntegerGemm(_M, _N, _K, Layer::Buf8u(buf, 0), zero, weight[0].Data<int8_t>(), Layer::Buf32i(buf, 0), overflow16i);
 
     }
 }
