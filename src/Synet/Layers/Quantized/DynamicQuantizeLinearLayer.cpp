@@ -94,6 +94,7 @@ namespace Synet
         float initialZeroPoint = qmin - min / scale;
         uint8_t zeroPoint = (uint8_t)NearByInt(Max(float(qmin), Min(float(qmax), initialZeroPoint)));
         float invScale = 1.0f / scale;
+        //float invScale = float(qmax - qmin) / (max == min ? 1.0f : (max - min));
         QuantizeLinearUniform(src[0]->Data<float>(), invScale, zeroPoint, _size, dst[0]->RawData(), TensorType8u);
         dst[1]->Data<float>()[0] = scale;
         dst[2]->Data<uint8_t>()[0] = zeroPoint;
