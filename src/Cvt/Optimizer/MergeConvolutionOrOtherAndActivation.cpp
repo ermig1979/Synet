@@ -102,7 +102,7 @@ namespace Synet
             if (act.weight().size())
                 conv.weight().push_back(act.weight()[0]);
         }
-        else if (prev.type() == LayerTypeInnerProduct)
+        else if (prev.type() == LayerTypeInnerProduct || prev.type() == LayerTypeDynamicQuantizedInnerProduct)
         {
             LayerParam& ip = dst[dst0];
             if (ip.innerProduct().activationType() != ActivationFunctionTypeIdentity)
@@ -110,7 +110,7 @@ namespace Synet
             if (index == src.size() - 1)
                 ip.dst() = act.dst();
             else
-                changes.push_back(Change(act.name(), ip.name()));
+                changes.push_back(Change(act.dst()[0], ip.dst()[0]));
             ip.innerProduct().activationType() = type;
             ip.innerProduct().activationParam0() = param0;
             ip.innerProduct().activationParam1() = param1;

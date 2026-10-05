@@ -73,6 +73,8 @@ namespace Synet
 
     bool MergeCurrentAndBias(const LayerParams& src, size_t& index, Bytes& bin, LayerParams& dst, Changes& changes);
 
+    bool MergeDynamicQuantizedInnerProduct(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
     bool MergePowerAndScaleAndPower(const LayerParams& src, size_t& index, Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
 
     bool MergeBiasAndScale(const LayerParams& src, size_t& index, Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);

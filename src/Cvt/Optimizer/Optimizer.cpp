@@ -188,6 +188,8 @@ namespace Synet
                     continue;
                 if (MergePoolingStatistics(network.layers(), i, merged, changes))
                     continue;
+                //if (MergeDynamicQuantizedInnerProduct(network.layers(), i, merged, changes))
+                //    continue;
                 break;
             }
             case 6:

@@ -166,6 +166,9 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergePoolingStatistics.cpp">
       <Filter>Optimizer\P</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeDynamicQuantizedInnerProduct.cpp">
+      <Filter>Optimizer\D</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cvt\Common\Params.h">
@@ -253,6 +256,9 @@
     </Filter>
     <Filter Include="Optimizer\O">
       <UniqueIdentifier>{7c369371-3667-4ce3-9150-9345497dd951}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\D">
+      <UniqueIdentifier>{1f75a309-7bbe-4bbc-86ac-9ff0ef982068}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
