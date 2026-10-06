@@ -133,6 +133,8 @@ namespace Synet
 
     bool MergeGeluV2(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
+    bool MergeGeluV3(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
     bool MergeHswish(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
     bool MergeHswishV2(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);

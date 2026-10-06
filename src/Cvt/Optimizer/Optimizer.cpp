@@ -160,6 +160,8 @@ namespace Synet
                     continue;
                 if (MergeGeluV2(network.layers(), i, merged, changes))
                     continue;
+                if (MergeGeluV3(network.layers(), i, merged, changes))
+                    continue;
                 if (MergeScale(network.layers(), i, merged, changes))
                     continue;
                 if (MergeTiledScale2D(network.layers(), i, merged, changes))
