@@ -23,15 +23,22 @@
 */
 
 #include "Synet/Layers/Quantized/DynamicQuantizedInnerProductLayer.h"
-#include "Synet/Layers/Quantized/MatMulIntegerLayer.h"
-
-#include "Synet/Utils/Gemm.h"
-
-#include "Synet/Quantization/Gemm.h"
 #include "Synet/Layers/Quantized/DynamicQuantizeLinearLayer.h"
+#include "Synet/Layers/Quantized/MatMulIntegerLayer.h"
+#include "Synet/Layers/Math/ScaleLayer.h"
+#include "Synet/Layers/Activation/PreluLayer.h"
+#include "Synet/Utils/Activation.h"
 
 namespace Synet
 {
+    void DynamicQuantizedInnerProductLayerCast(const int32_t* src, size_t size, float* dst)
+    {
+        for (size_t i = 0; i < size; ++i)
+            dst[i] = (float)src[i];
+    }
+
+    //--------------------------------------------------------------------------------------------------
+
     DynamicQuantizedInnerProductLayer::DynamicQuantizedInnerProductLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
     {
@@ -74,13 +81,17 @@ namespace Synet
         const InnerProductParam& ip = param.innerProduct();
 
         _biasTerm = ip.biasTerm();
+        _activation = ip.activationType();
+        _params[0] = ip.activationParam0();
+        _params[1] = ip.activationParam1();
         Shape shape = src[0]->Shape();
         _K = src[0]->Size(-1);
         _M = src[0]->Size(0, -1);
 
         const Tensors& weight = ((Tensors&)this->Weight());
-        if (weight.size() < 3)
-            SYNET_ERROR("DynamicQuantizedInnerProductLayer must have at least 3 weights!");
+        size_t weightNumNeed = 3 + (_biasTerm ? 1 : 0) + (_activation == ActivationFunctionTypePrelu ? 1 : 0);
+        if (weight.size() < weightNumNeed)
+            SYNET_ERROR("DynamicQuantizedInnerProductLayer must have at least " << weightNumNeed << " weights!");
         if (weight[0].GetType() != TensorType8i || weight[1].GetType() != TensorType8i)
             SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only INT8 weight[0] and weight[1]!");
         if (weight[2].GetType() != TensorType32f)
@@ -90,6 +101,26 @@ namespace Synet
             SYNET_ERROR("DynamicQuantizedInnerProductLayer: check src[0] and weight[0] size!");
         if (weight[1].Size(0) != _N || weight[2].Size(0) != _N)
             SYNET_ERROR("DynamicQuantizedInnerProductLayer: check weight[1] and weight[2] size!");
+        if (_biasTerm)
+        {
+            if (weight[3].GetType() != TensorType32f)
+                SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32 weight[3]!");
+        }
+        if (_activation == ActivationFunctionTypePrelu)
+        {
+            if (weight.back().GetType() != TensorType32f)
+                SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32 Prelu weight!");
+            if (weight.back().Size() == 1)
+            {
+                _activation = ActivationFunctionTypeLeakyRelu;
+                _params[0] = weight.back().Data<float>()[0];
+            }
+            else
+            {
+                if (weight.back().Size() != _N)
+                    SYNET_ERROR("DynamicQuantizedInnerProductLayer: check weight[" << weight.size() - 1 << "] size!");
+            }
+        }
 
         shape.back() = _N;
         dst[0]->Reshape(TensorType32f, shape, src[0]->Format());
@@ -125,5 +156,52 @@ namespace Synet
 #endif
         MatMulIntegerGemm(_M, _N, _K, Layer::Buf8u(buf, 0), zero, weight[0].Data<int8_t>(), Layer::Buf32i(buf, 0), overflow16i);
 
+        DynamicQuantizedInnerProductLayerCast(Layer::Buf32i(buf, 0), _M * _N, dst[0]->Data<float>());
+
+        const float* bias = _biasTerm ? weight[3].Data<float>() : NULL;
+        ScaleForward32f(dst[0]->Data<float>(), norm, bias, _N, 1, _M, dst[0]->Data<float>(), TensorFormatNhwc, 0);
+
+        Activation(dst[0]->Data<float>());
+    }
+
+    void DynamicQuantizedInnerProductLayer::Activation(float* dst)
+    {
+        switch (_activation)
+        {
+        case ActivationFunctionTypeIdentity:
+            break;
+        case ActivationFunctionTypeRelu:
+            CpuRelu(dst, _M * _N, 0.0f, dst);
+            break;
+        case ActivationFunctionTypeLeakyRelu:
+            CpuRelu(dst, _M * _N, _params[0], dst);
+            break;
+        case ActivationFunctionTypeRestrictRange:
+            CpuRestrictRange(dst, _M * _N, _params[0], _params[1], dst);
+            break;
+        case ActivationFunctionTypePrelu:
+            PreluLayerForward(dst, this->Weight().back().Data<float>(), _N, _M, dst, TensorFormatNhwc);
+            break;
+        case ActivationFunctionTypeElu:
+            CpuElu(dst, _M * _N, _params[0], dst);
+            break;
+        case ActivationFunctionTypeHswish:
+            CpuHswish(dst, _M * _N, _params[0], _params[1], dst);
+            break;
+        case ActivationFunctionTypeMish:
+            CpuMish(dst, _M * _N, _params[0], dst);
+            break;
+        case ActivationFunctionTypeHardSigmoid:
+            CpuHardSigmoid(dst, _M * _N, _params[0], _params[1], dst);
+            break;
+        case ActivationFunctionTypeSwish:
+            CpuSwish(dst, _M * _N, dst);
+            break;
+        case ActivationFunctionTypeGelu:
+            CpuGelu(dst, _M * _N, dst);
+            break;
+        default:
+            assert(0);
+        }
     }
 }

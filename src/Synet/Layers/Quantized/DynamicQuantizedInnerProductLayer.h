@@ -49,8 +49,11 @@ namespace Synet
 
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
+        void Activation(float * dst);
 
         size_t _M, _N, _K;
         bool _biasTerm;
+        ActivationFunctionType _activation;
+        float _params[2];
     };
 }

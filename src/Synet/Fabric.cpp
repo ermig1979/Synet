@@ -72,6 +72,7 @@
 
 #include "Synet/Layers/Quantized/DequantizeLinearLayer.h"
 #include "Synet/Layers/Quantized/DynamicQuantizeLinearLayer.h"
+#include "Synet/Layers/Quantized/DynamicQuantizedInnerProductLayer.h"
 #include "Synet/Layers/Quantized/MatMulIntegerLayer.h"
 #include "Synet/Layers/Quantized/QuantizedAddLayer.h"
 #include "Synet/Layers/Quantized/QuantizedConcatLayer.h"
@@ -181,6 +182,7 @@ namespace Synet
         case LayerTypeDequantizeLinear: return new DequantizeLinearLayer(param, context);
         case LayerTypeDetectionOutput: return new DetectionOutputLayer(param, context);
         case LayerTypeDynamicQuantizeLinear: return new DynamicQuantizeLinearLayer(param, context);
+        case LayerTypeDynamicQuantizedInnerProduct: return new DynamicQuantizedInnerProductLayer(param, context);
         case LayerTypeEltwise:
             if(IsAdd(param))
                 return new AddLayer(param, context);
