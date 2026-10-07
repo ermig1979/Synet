@@ -1,7 +1,7 @@
 /*
-* Tests for Synet Framework (http://github.com/ermig1979/Synet).
+* Synet Framework (http://github.com/ermig1979/Synet).
 *
-* Copyright (c) 2018-2024 Yermalayeu Ihar.
+* Copyright (c) 2018-2026 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,37 +22,38 @@
 * SOFTWARE.
 */
 
-#include "TestClassificationPrecision.h"
-#include "TestDetectionPrecision.h"
-#include "TestReidentificationPrecision.h"
+#pragma once
 
-int main(int argc, char* argv[])
+#include "Synet/Layer.h"
+
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+#include "Simd/SimdSynet.hpp"
+#endif
+
+namespace Synet
 {
-    Test::Precision::Options options(argc, argv);
+    class DynamicQuantizedInnerProductLayer : public Layer
+    {
+    public:
+        DynamicQuantizedInnerProductLayer(const LayerParam& param, Context* context);
 
-    Cpl::Log::Global().AddStdWriter(Cpl::Log::Info);
-    Cpl::Log::Global().SetFlags(Cpl::Log::BashFlags);
+        virtual bool Reshape(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, bool init);
 
-    if (options.mode == "classification")
-    {
-        Test::ClassificationPrecision precision(options);
-        options.result = precision.Run();
-    }
-    else if (options.mode == "detection")
-    {
-        Test::DetectionPrecision precision(options);
-        options.result = precision.Run();
-    }
-    else if (options.mode == "reidentification")
-    {
-        Test::ReidentificationPrecision precision(options);
-        options.result = precision.Run();
-    }
-    else
-    {
-        CPL_LOG_SS(Error, "Unknown mode : " << options.mode);
-        return 2;
-    }
+        virtual bool Resizable() const;
 
-    return options.result ? 0 : 1;
+        virtual size_t MemoryUsage() const;
+
+        virtual void CompactWeight();
+
+        virtual int64_t Flop() const;
+
+    protected:
+        virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
+        void Activation(float * dst);
+
+        size_t _M, _N, _K;
+        bool _biasTerm;
+        ActivationFunctionType _activation;
+        float _params[2];
+    };
 }

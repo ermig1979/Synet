@@ -177,7 +177,8 @@ namespace Synet
 
         template <class T> static void PrintDiagnostic(std::ostream& os, const T* data, size_t size, size_t precision)
         {
-            if (data == NULL || size == 0 || !(std::is_same<T, float>::value || std::is_same<T, uint16_t>::value || std::is_same<T, uint8_t>::value))
+            if (data == NULL || size == 0 || !(std::is_same<T, float>::value || std::is_same<T, uint16_t>::value || 
+                std::is_same<T, uint8_t>::value || std::is_same<T, int32_t>::value))
                 return;
             if (std::is_same<T, float>::value || std::is_same<T, uint16_t>::value)
             {
@@ -215,14 +216,22 @@ namespace Synet
             if (std::is_same<T, uint8_t>::value)
             {
                 int64_t max = (int64_t)std::numeric_limits<T>::min(), min = (int64_t)std::numeric_limits<T>::max();
-                if (std::is_same<T, uint8_t>::value)
+                uint8_t* ptr = (uint8_t*)data;
+                for (size_t i = 0; i < size; ++i)
                 {
-                    uint8_t* ptr = (uint8_t*)data;
-                    for (size_t i = 0; i < size; ++i)
-                    {
-                        max = std::max<int64_t>(max, ptr[i]);
-                        min = std::min<int64_t>(min, ptr[i]);
-                    }
+                    max = std::max<int64_t>(max, ptr[i]);
+                    min = std::min<int64_t>(min, ptr[i]);
+                }
+                os << " { " << min << " .. " << max << " }";
+            }
+            if (std::is_same<T, int32_t>::value)
+            {
+                int64_t max = (int64_t)std::numeric_limits<T>::min(), min = (int64_t)std::numeric_limits<T>::max();
+                int32_t* ptr = (int32_t*)data;
+                for (size_t i = 0; i < size; ++i)
+                {
+                    max = std::max<int64_t>(max, ptr[i]);
+                    min = std::min<int64_t>(min, ptr[i]);
                 }
                 os << " { " << min << " .. " << max << " }";
             }

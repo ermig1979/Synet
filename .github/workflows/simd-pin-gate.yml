@@ -16,7 +16,9 @@ name: Simd pin gate
 
 on:
   push:
-    branches: [master]
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
 
 jobs:
   simd-pin-gate:

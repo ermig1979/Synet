@@ -32,6 +32,7 @@
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolutionAndScale.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolutionOrOtherAndActivation.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeCurrentAndBias.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\MergeDynamicQuantizedInnerProduct.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeGelu.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeHswish.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeInnerProductAndPower.cpp" />

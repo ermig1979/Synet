@@ -43,6 +43,22 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
+    void DynamicQuantizeLinearLayerForward(const float* src, size_t size, uint8_t* dst, float& scale, uint8_t& zero)
+    {
+        float min, max;
+        DynamicQuantizeLinearMinMax(src, size, min, max);
+        min = Min(min, 0.0f);
+        max = Max(max, 0.0f);
+        const int qmin = std::numeric_limits<uint8_t>::min(), qmax = std::numeric_limits<uint8_t>::max();
+        scale = max == min ? 1.0f : (max - min) / float(qmax - qmin);
+        float initialZeroPoint = qmin - min / scale;
+        zero = (uint8_t)NearByInt(Max(float(qmin), Min(float(qmax), initialZeroPoint)));
+        float invScale = 1.0f / scale;
+        QuantizeLinearUniform(src, invScale, zero, size, dst, TensorType8u);
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     DynamicQuantizeLinearLayer::DynamicQuantizeLinearLayer(const LayerParam & param, Context* context)
         : Layer(param, context)
     {
@@ -85,16 +101,6 @@ namespace Synet
 
     void DynamicQuantizeLinearLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
-        float min, max;
-        DynamicQuantizeLinearMinMax(src[0]->Data<float>(), _size, min, max);
-        min = Min(min, 0.0f);
-        max = Max(max, 0.0f);
-        const int qmin = std::numeric_limits<uint8_t>::min(), qmax = std::numeric_limits<uint8_t>::max();
-        float scale = max == min ? 1.0f : (max - min) / float(qmax - qmin);
-        float initialZeroPoint = qmin - min / scale;
-        uint8_t zeroPoint = (uint8_t)NearByInt(Max(float(qmin), Min(float(qmax), initialZeroPoint)));
-        QuantizeLinearUniform(src[0]->Data<float>(), scale, zeroPoint, _size, dst[0]->RawData(), TensorType8u);
-        dst[1]->Data<float>()[0] = scale;
-        dst[2]->Data<uint8_t>()[0] = zeroPoint;
+        DynamicQuantizeLinearLayerForward(src[0]->Data<float>(), _size, dst[0]->Data<uint8_t>(), dst[1]->Data<float>()[0], dst[2]->Data<uint8_t>()[0]);
     }
 }

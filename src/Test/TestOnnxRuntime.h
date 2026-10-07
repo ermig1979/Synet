@@ -261,7 +261,7 @@ namespace Test
             for (size_t i = 0; i < _outputNames.size(); i++)
             {
                 os << "Output layer " << i << ": " << _outputNames[i] << " : " << std::endl;
-                _output[i].DebugPrint(os, "dst[0]", false, first, last, precision);
+                _output[i].DebugPrint(os, "dst[0]", false, first, last, _outputIntegers[i] ? 0 : precision);
             }
         }
 
@@ -315,6 +315,7 @@ namespace Test
         ValuesPtr _inputValues;
 
         std::vector<const char*> _outputNames;
+        Ints _outputIntegers;
         ValuesPtr _outputValues;
 
         size_t _batchSize;
@@ -401,6 +402,7 @@ namespace Test
             CPL_LOG_SS(Info, "OnnxRuntimeNetwork::SetOutput starts " << b);
 #endif
             _output.resize(_outputNames.size());
+            _outputIntegers.resize(_outputNames.size(), 0);
             for (size_t i = 0; i < _outputNames.size(); i++)
             {
                 Shape shape = Convert<size_t, int64_t>(_outputValues->at(i).GetTensorTypeAndShapeInfo().GetShape());
@@ -443,24 +445,28 @@ namespace Test
                 }
                 else if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64)
                 {
+                    _outputIntegers[i] = 1;
                     const int64_t * src = _outputValues->at(i).GetTensorMutableData<int64_t>();
                     for (size_t j = 0; j < size; ++j)
                         dst[j] = (float)src[j];
                 }
                 else if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_INT32)
                 {
+                    _outputIntegers[i] = 1;
                     const int32_t* src = _outputValues->at(i).GetTensorMutableData<int32_t>();
                     for (size_t j = 0; j < size; ++j)
                         dst[j] = (float)src[j];
                 }
                 else if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_BOOL)
                 {
+                    _outputIntegers[i] = 1;
                     const uint8_t* src = _outputValues->at(i).GetTensorMutableData<uint8_t>();
                     for (size_t j = 0; j < size; ++j)
                         dst[j] = (float)src[j];
                 }
                 else if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT8)
                 {
+                    _outputIntegers[i] = 1;
                     const uint8_t* src = _outputValues->at(i).GetTensorMutableData<uint8_t>();
                     for (size_t j = 0; j < size; ++j)
                         dst[j] = (float)src[j];

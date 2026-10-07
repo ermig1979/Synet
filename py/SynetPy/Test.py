@@ -43,8 +43,8 @@ def AnnotateDetection(image : Simd.Image, ptr : ctypes.POINTER(ctypes.c_float), 
 def main():
 	parser = argparse.ArgumentParser(prog="Synet", description="Synet Python Wrapper Tests.")
 	parser.add_argument("-b", "--bin", help="Directory with binary files.", required=False, type=str, default="")
-	parser.add_argument("-m", "--model", help="Path to model file.", required=False, type=str, default="./data/precision/detection/test_003/sy_fp32_v0.xml")
-	parser.add_argument("-w", "--weight", help="Path to weight file.", required=False, type=str, default="./data/precision/detection/test_003/synet.bin")
+	parser.add_argument("-m", "--model", help="Path to model file.", required=False, type=str, default="./data/use_samples/face_detection/face_detector.xml")
+	parser.add_argument("-w", "--weight", help="Path to weight file.", required=False, type=str, default="./data/use_samples/face_detection/face_detector.bin")
 	parser.add_argument("-i", "--image", help="Path to image file.", required=False, type=str, default="./data/images/faces/faces_000.jpg")
 	parser.add_argument("-o", "--output", help="Output directory.", required=False, type=str, default=pathlib.Path(__file__).parent.resolve())
 	args = parser.parse_args()

@@ -28,6 +28,10 @@
 
 namespace Synet
 {
+    void DynamicQuantizeLinearLayerForward(const float* src, size_t size, uint8_t* dst, float& scale, uint8_t& zero);
+
+    //-------------------------------------------------------------------------------------------------
+
     class DynamicQuantizeLinearLayer : public Layer
     {
     public:
