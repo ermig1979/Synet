@@ -51,7 +51,11 @@ namespace Synet
 
     size_t DynamicQuantizedInnerProductLayer::MemoryUsage() const
     {
-        return Layer::MemoryUsage();
+        size_t size = Layer::MemoryUsage();
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        size += _dynamicQuantizedInnerProduct.InternalBufferSize();
+#endif
+        return size;
     }
 
     int64_t DynamicQuantizedInnerProductLayer::Flop() const
@@ -62,11 +66,11 @@ namespace Synet
     void DynamicQuantizedInnerProductLayer::CompactWeight()
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-        //if (_quantizedInnerProduct.Enable())
-        //{
-        //    for (size_t i = 0; i < this->Weight().size(); ++i)
-        //        ((Tensor&)this->Weight()[i]).Clear();
-        //}
+        if (_dynamicQuantizedInnerProduct.Enable())
+        {
+            for (size_t i = 0; i < this->Weight().size(); ++i)
+                ((Tensor&)this->Weight()[i]).Clear();
+        }
 #endif
     }
 
@@ -125,6 +129,17 @@ namespace Synet
         shape.back() = _N;
         dst[0]->Reshape(TensorType32f, shape, src[0]->Format());
 
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        _dynamicQuantizedInnerProduct.Init(_M, _N, _K, _biasTerm ? SimdTrue : SimdFalse, (SimdConvolutionActivationType)_activation);
+        if (_dynamicQuantizedInnerProduct.Enable())
+        {
+            Layer::Extend8u(buf, 0, Shp(_dynamicQuantizedInnerProduct.ExternalBufferSize()));
+            _dynamicQuantizedInnerProduct.SetParams(weight[0].Data<int8_t>(), weight[2].Data<float>(),
+                _biasTerm ? weight[3].Data<float>() : NULL, 
+                _activation == ActivationFunctionTypePrelu ? weight.back().Data<float>() : _params);
+        }
+        else
+#endif
         {
             Layer::Extend8u(buf, 0, src[0]->Shape(), src[0]->Format());
             Layer::Extend32i(buf, 0, shape, src[0]->Format());
@@ -134,6 +149,12 @@ namespace Synet
         std::stringstream desc;
         desc << _M << "x" << _K << "-" << _N << " ";
         desc << (_biasTerm ? "b" : "o");
+        if (_activation)
+            desc << "-" << ShortStr(_activation);
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        if (_dynamicQuantizedInnerProduct.Enable())
+            desc << " " << _dynamicQuantizedInnerProduct.Info();
+#endif
         this->UsePerfStat(desc.str(), Flop());
 
         return true;
@@ -141,27 +162,34 @@ namespace Synet
 
     void DynamicQuantizedInnerProductLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
-        const Tensors& weight = ((Tensors&)this->Weight());
-        float scale;
-        uint8_t zero;
-        DynamicQuantizeLinearLayerForward(src[0]->Data<float>(), _M * _K, Layer::Buf8u(buf, 0), scale, zero);
-        float* norm = Layer::Buf32f(buf, 0);
-        for (size_t j = 0; j < _N; ++j)
-            norm[j] = weight[2].Data<float>()[j] * scale;
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        if (_dynamicQuantizedInnerProduct.Enable())
+            _dynamicQuantizedInnerProduct.Forward(src[0]->Data<float>(), Layer::Buf8u(buf, 0), dst[0]->Data<float>());
+        else
+#endif
+        {
+            const Tensors& weight = ((Tensors&)this->Weight());
+            float scale;
+            uint8_t zero;
+            DynamicQuantizeLinearLayerForward(src[0]->Data<float>(), _M * _K, Layer::Buf8u(buf, 0), scale, zero);
+            float* norm = Layer::Buf32f(buf, 0);
+            for (size_t j = 0; j < _N; ++j)
+                norm[j] = weight[2].Data<float>()[j] * scale;
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        const bool overflow16i = SimdCpuInfo(SimdCpuInfoAvx512vnni) == 0;
+            const bool overflow16i = SimdCpuInfo(SimdCpuInfoAvx512vnni) == 0;
 #else
-        const bool overflow16i = true;
+            const bool overflow16i = true;
 #endif
-        MatMulIntegerGemm(_M, _N, _K, Layer::Buf8u(buf, 0), zero, weight[0].Data<int8_t>(), Layer::Buf32i(buf, 0), overflow16i);
+            MatMulIntegerGemm(_M, _N, _K, Layer::Buf8u(buf, 0), zero, weight[0].Data<int8_t>(), Layer::Buf32i(buf, 0), overflow16i);
 
-        DynamicQuantizedInnerProductLayerCast(Layer::Buf32i(buf, 0), _M * _N, dst[0]->Data<float>());
+            DynamicQuantizedInnerProductLayerCast(Layer::Buf32i(buf, 0), _M * _N, dst[0]->Data<float>());
 
-        const float* bias = _biasTerm ? weight[3].Data<float>() : NULL;
-        ScaleForward32f(dst[0]->Data<float>(), norm, bias, _N, 1, _M, dst[0]->Data<float>(), TensorFormatNhwc, 0);
+            const float* bias = _biasTerm ? weight[3].Data<float>() : NULL;
+            ScaleForward32f(dst[0]->Data<float>(), norm, bias, _N, 1, _M, dst[0]->Data<float>(), TensorFormatNhwc, 0);
 
-        Activation(dst[0]->Data<float>());
+            Activation(dst[0]->Data<float>());
+        }
     }
 
     void DynamicQuantizedInnerProductLayer::Activation(float* dst)

@@ -55,5 +55,8 @@ namespace Synet
         bool _biasTerm;
         ActivationFunctionType _activation;
         float _params[2];
+#if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetDynamicQuantizedInnerProduct _dynamicQuantizedInnerProduct;
+#endif
     };
 }
