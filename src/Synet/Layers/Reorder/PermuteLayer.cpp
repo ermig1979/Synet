@@ -196,6 +196,8 @@ namespace Synet
             if (src[0]->Axis(permute[0]) == 1 || src[0]->Axis(permute[1]) == 1)
                 nontrivial = false;
         }
+        if(_dstOrder == Shp(0, 3, 1, 2) && src[0]->Axis(3) == 1)
+            nontrivial = false;
         _srcShape = src[0]->Shape();
         if(_srcShape.size() != _count)
             SYNET_ERROR("PermuteLayer parameter permute.order incompatible with input shape!");
