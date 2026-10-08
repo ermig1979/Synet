@@ -239,7 +239,7 @@ namespace Synet
     void NormalizeLayerForwardV3Cpu(const float* src, size_t batch, size_t channels, size_t spatial, const float* scale, const float* shift, float eps, int trans, float* buf, float* dst)
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        SimdSynetNormalizeLayerForwardV3(src, batch, channels, spatial, scale, shift, &eps, trans ? SimdTensorFormatNhwc : SimdTensorFormatNchw, buf, dst);
+        SimdSynetNormalizeLayerForwardV3(src, batch, channels, spatial, scale, shift, &eps, (trans && channels != 1) ? SimdTensorFormatNhwc : SimdTensorFormatNchw, buf, dst);
 #else
         float k = 1.0f / float(spatial);
         if (trans)
