@@ -302,7 +302,7 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "Slice" && !ConvertSliceNode(node, trans, network.layers(), layer, &tensorFormatMap))
                 return ErrorMessage(i, node);
-            if (node.op_type() == "Softmax" && !ConvertSoftmaxNode(node, trans, network.layers(), original, layer))
+            if (node.op_type() == "Softmax" && !ConvertSoftmaxNode(node, trans, network.layers(), layer, &tensorFormatMap))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Split" && !ConvertSplitNode(node, trans, network.layers(), layer))
                 return ErrorMessage(i, node);

@@ -45,7 +45,7 @@ namespace Synet
 
     //--------------------------------------------------------------------------------------------------
 
-    bool MergeNormalize(const LayerParams & src, size_t & index, LayerParams & dst, Changes & changes)
+    bool MergeNormalize(const LayerParams & src, size_t & index, bool isNhwc, LayerParams & dst, Changes & changes)
     {
         if (src.size() < index + 4)
             return false;
@@ -59,15 +59,17 @@ namespace Synet
             return false;
         if (src[index + 4].type() != LayerTypeBinaryOperation || src[index + 4].binaryOperation().type() != BinaryOperationTypeDiv)
             return false;
-
+        size_t pi = GetLayerIndex(src, src[index].src()[0]);
+        if (pi >= src.size() || (src[pi].type() != LayerTypeInput && src[pi].type() != LayerTypeConvolution))
+            return false;
         LayerParam layer;
         layer.type() = LayerTypeNormalize;
         layer.name() = src[index + 4].name();
         layer.src().push_back(src[index + 0].src()[0]);
-        layer.dst().push_back(layer.name());
-        layer.normalize().acrossSpatial() = true;
+        layer.dst() = src[index + 4].dst();
+        layer.normalize().acrossSpatial() = src[pi].type() != LayerTypeConvolution;
         layer.normalize().channelShared() = true;
-        layer.normalize().eps() = 0;
+        //layer.normalize().eps() = src[index + 1].restrictRange().lower();
         dst.push_back(layer);
         index += 4;
         return true;

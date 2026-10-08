@@ -148,7 +148,7 @@ namespace Synet
                     continue;
                 if (MergeSwish(network.layers(), i, merged, changes))
                     continue;
-                if (MergeNormalize(network.layers(), i, merged, changes))
+                if (MergeNormalize(network.layers(), i, isNhwc, merged, changes))
                     continue;
                 if (MergeNormalizeV2(network.layers(), i, isNhwc, merged, changes))
                     continue;

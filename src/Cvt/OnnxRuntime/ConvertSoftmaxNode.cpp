@@ -29,15 +29,23 @@
 
 namespace Synet
 {
-    bool ConvertSoftmaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, const Bytes& original, LayerParam& layer)
+    bool ConvertSoftmaxNode(const onnx::NodeProto& node, bool trans, const LayerParams& layers, LayerParam& layer, TensorFormatMap* tensorFormatMap)
     {
         layer.type() = Synet::LayerTypeSoftmax;
         if (!ConvertAtrributeInt(node, "axis", layer.softmax().axis()))
             return false;
-        // PermutedToNchw is protected on SynetUtils; expose it for this free function.
-        struct Utils : SynetUtils { using SynetUtils::PermutedToNchw; };
-        if (trans && !Utils::PermutedToNchw(layers, layer.src(), true, false, true))
-            SYNET_ERROR("This layer can work only in NCHW format!");
+        if (trans && CurrentTensorFormat(layers, layer.src(), false, true, true, tensorFormatMap) == TensorFormatNhwc)
+        {
+            const LayerParam* prev = GetLayer(layers, layer.src()[0]);
+            if (prev && prev->type() == LayerTypeConvolution && 0)
+            {
+                Shape nchw = Shape({ 0, 3, 1, 2 });
+                layer.softmax().axis() = nchw[layer.softmax().axis()];
+            }
+            else
+                SYNET_ERROR("This layer can work only in NCHW format!");
+
+        }
         return true;
     }
 }

@@ -105,7 +105,7 @@ namespace Synet
 
     bool MergeSpaceToDepth(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
-    bool MergeNormalize(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+    bool MergeNormalize(const LayerParams& src, size_t& index, bool isNhwc, LayerParams& dst, Changes& changes);
 
     bool MergeNormalizeV2(const LayerParams& src, size_t& index, bool isNhwc, LayerParams& dst, Changes& changes);
 
