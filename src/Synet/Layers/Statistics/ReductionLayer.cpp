@@ -218,17 +218,25 @@ namespace Synet
         if(_outer * _count * _inner != src[0]->Size())
             SYNET_ERROR("RecuctionLayer can't reduce src " << ToStr(src[0]->Shape()) << " for axis " << ToStr(Shp(param.axis())) << " !");
 
-        dst[0]->Reshape(_srcType, shape, src[0]->Format());
-        if (src[0]->Const())
+        if (_count == 1 && TensorUsers(src[0]->Name()) == 1)
         {
-            Forward(src, buf, dst, 0);
-            dst[0]->SetConst(true);
+            dst[0]->ShareAs(*src[0], shape, src[0]->Format());
             _const = true;
         }
         else
         {
-            this->UsePerfStat();
-            _const = false;
+            dst[0]->Reshape(_srcType, shape, src[0]->Format());
+            if (src[0]->Const())
+            {
+                Forward(src, buf, dst, 0);
+                dst[0]->SetConst(true);
+                _const = true;
+            }
+            else
+            {
+                this->UsePerfStat();
+                _const = false;
+            }
         }
         return true;
     }
