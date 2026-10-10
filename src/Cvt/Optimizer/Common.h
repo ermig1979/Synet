@@ -196,4 +196,7 @@ namespace Synet
     bool SkipTwoPermutes(const LayerParams& src, size_t& index, LayerParams& dst);
 
     bool SimplifyInterp(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
+    bool SimplifyInterpV2(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
 }

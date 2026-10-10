@@ -112,6 +112,8 @@ namespace Synet
                     continue;
                 if (SimplifyInterp(network.layers(), i, merged, changes))
                     continue;
+                if (SimplifyInterpV2(network.layers(), i, merged, changes))
+                    continue;
                 break;
             }
             case 4:
