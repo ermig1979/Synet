@@ -26,7 +26,7 @@
 
 namespace Synet
 {
-    template <class T> void SpaceToDepthLayerForwardCpu(const T * src, size_t srcC, size_t srcH, size_t srcW, T * dst, TensorFormat format)
+    template <class T> void SpaceToDepthForward2x2s(const T * src, size_t srcC, size_t srcH, size_t srcW, T * dst, TensorFormat format)
     {
         size_t dstC = srcC * 4, dstH = srcH / 2, dstW = srcW / 2;
         if (format == TensorFormatNhwc)
@@ -82,13 +82,13 @@ namespace Synet
             assert(0);
     }
 
-    template <class T> void SpaceToDepthLayerForwardCpu(const uint8_t* src8, size_t batch, size_t srcC, size_t srcH, size_t srcW, uint8_t* dst8, TensorFormat format)
+    template <class T> void SpaceToDepthForward2x2s(const uint8_t* src8, size_t batch, size_t srcC, size_t srcH, size_t srcW, uint8_t* dst8, TensorFormat format)
     {
         const T* src = (const T*)src8;
         T* dst = (T*)dst8;
         for (size_t b = 0; b < batch; ++b)
         {
-            SpaceToDepthLayerForwardCpu(src, srcC, srcH, srcW, dst, format);
+            SpaceToDepthForward2x2s(src, srcC, srcH, srcW, dst, format);
             src += srcC * srcH * srcW;
             dst += srcC * srcH * srcW;
         }
@@ -108,33 +108,72 @@ namespace Synet
             SYNET_ERROR("SpaceToDepthLayer supports only 1 input and 1 output!");
         if (src[0]->Count() != 4)
             SYNET_ERROR("SpaceToDepthLayer supports only 4D tensors!");
+        const SpaceToDepthParam& param = this->Param().spaceToDepth();
+        _kX = param.kX();
+        _kY = param.kY();
+        _back = param.backOperation();
+        _first = param.channelsFirst();
+
+        _type = src[0]->GetType();
         _format = src[0]->Format();
-        _batch = src[0]->Axis(0);
-        Shape shape;
+        const Shape & srcShape = src[0]->Shape();
+        _batch = srcShape[0];
+
         if (_format == TensorFormatNhwc)
         {
-            _srcH = src[0]->Axis(1);
-            _srcW = src[0]->Axis(2);
-            _srcC = src[0]->Axis(3);
-            shape = Shp(_batch, _srcH / 2, _srcW / 2, _srcC * 4);
+            _srcH = srcShape[1];
+            _srcW = srcShape[2];
+            _srcC = srcShape[3];
         }
         else
         {
-            _srcC = src[0]->Axis(1);
-            _srcH = src[0]->Axis(2);
-            _srcW = src[0]->Axis(3);
-            shape = Shp(_batch, _srcC * 4, _srcH / 2, _srcW / 2);
+            _srcC = srcShape[1];
+            _srcH = srcShape[2];
+            _srcW = srcShape[3];
         }
-        if(_srcH % 2 == 1 || _srcW % 2 == 1)
-            SYNET_ERROR("SpaceToDepthLayer input has wrong shape!");
-        switch (src[0]->GetType())
+        if (_back)
         {
-        case TensorType32f: _spaceToDepth = SpaceToDepthLayerForwardCpu<float>; break;
-        default:
-            SYNET_ERROR("SpaceToDepthLayer unsupports this input type!");
+            SYNET_ERROR("SpaceToDepthLayer is not support back transformation!");
+            if (_srcC % (_kY * _kX) != 0)
+                SYNET_ERROR("SpaceToDepthLayer input has wrong shape!");
+            _dstC = _srcC / _kX / _kY;
+            _dstH = _srcH * _kY;
+            _dstW = _srcW * _kX;
         }
-        dst[0]->Reshape(src[0]->GetType(), shape, _format);
-        this->UsePerfStat();
+        else
+        {
+            if (_srcH % _kY != 0 || _srcW % _kX != 0)
+                SYNET_ERROR("SpaceToDepthLayer input has wrong shape!");
+            _dstC = _srcC * _kX * _kY;
+            _dstH = _srcH / _kY;
+            _dstW = _srcW / _kX;
+        }
+
+        Shape dstShape;
+        if (_format == TensorFormatNhwc)
+            dstShape = Shp(_batch, _dstH, _dstW, _dstC);
+        else
+            dstShape = Shp(_batch, _dstC, _dstH, _dstW);
+
+        if (_kX == 2 && _kY == 2 && _first == false)
+        {
+            switch (src[0]->GetType())
+            {
+            case TensorType32f: _spaceToDepth = SpaceToDepthForward2x2s<float>; break;
+            default:
+                SYNET_ERROR("SpaceToDepthLayer unsupports this input type!");
+            }
+        }
+        else
+            SYNET_ERROR("SpaceToDepthLayer unsupports these kX " << _kX << " and kY " << _kY << " !");
+
+        dst[0]->Reshape(_type, dstShape, _format);
+        std::stringstream desc;
+        desc << srcShape[0] << "x" << srcShape[1] << "x" << srcShape[2] << "x" << srcShape[3];
+        desc << "-" << _kY << "x" << _kX;
+        desc << (_back ? "-b" : "-f") << (_first ? "c" : "s");
+        desc << "-" << Cpl::ToStr(_type);
+        this->UsePerfStat(desc.str());
         _const = false;
         return true;
     }

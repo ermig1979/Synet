@@ -743,6 +743,14 @@ namespace Synet
         CPL_PARAM_VALUE(float, threshold, 20.0f);
     };
 
+    struct SpaceToDepthParam
+    {
+        CPL_PARAM_VALUE(int32_t, kX, 2);
+        CPL_PARAM_VALUE(int32_t, kY, 2);
+        CPL_PARAM_VALUE(bool, channelsFirst, false);
+        CPL_PARAM_VALUE(bool, backOperation, false);
+    };
+
     struct SqueezeParam
     {
         CPL_PARAM_VALUE(Ints, axes, Ints());
@@ -894,6 +902,7 @@ namespace Synet
         CPL_PARAM_STRUCT(SliceParam, slice);
         CPL_PARAM_STRUCT(SoftmaxParam, softmax);
         CPL_PARAM_STRUCT(SoftplusParam, softplus);
+        CPL_PARAM_STRUCT(SpaceToDepthParam, spaceToDepth);
         CPL_PARAM_STRUCT(SqueezeParam, squeeze);
         CPL_PARAM_STRUCT(SqueezeExcitationParam, squeezeExcitation);
         CPL_PARAM_STRUCT(StridedSliceParam, stridedSlice);

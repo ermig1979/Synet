@@ -41,7 +41,9 @@ namespace Synet
     private:
         typedef void (*SpaceToDepthPtr)(const uint8_t* src8, size_t batch, size_t srcC, size_t srcH, size_t srcW, uint8_t* dst8, TensorFormat format);
         SpaceToDepthPtr _spaceToDepth;
+        TensorType _type;
         TensorFormat _format;
-        size_t _batch, _srcC, _srcH, _srcW;
+        size_t _batch, _srcC, _srcH, _srcW, _kX, _kY, _dstC, _dstH, _dstW;
+        bool _back, _first;
     };
 }
