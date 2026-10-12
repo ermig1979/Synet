@@ -580,15 +580,38 @@ namespace Test
                 View image;
                 if (!LoadImage(inputPath, image))
                     SYNET_ERROR("Can't read '" << inputPath << "' image!");
-                Regions regions = network.GetRegions(image.Size(), _options.regionThreshold, _options.regionOverlap);
-                for (size_t i = 0; i < regions.size(); ++i)
+                if (_param().smartResize())
                 {
-                    const Region& region = regions[i];
-                    ptrdiff_t l = ptrdiff_t(region.x - region.w / 2);
-                    ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
-                    ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
-                    ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
-                    Simd::DrawRectangle(image, l, t, r, b, GetColor(region.id), std::min<int>(image.height / 500 + 1, 3));
+                    size_t imgH = image.height, imgW = image.width;
+                    size_t netH = network.SrcShape(0)[2], netW = network.SrcShape(0)[3];
+                    ptrdiff_t d = imgW * netH - imgH * netW;
+                    size_t W = d > 0 ? imgW : imgH * netW / imgW;
+                    size_t w0 = d > 0 ? 0 : (W - imgW) / 2;
+                    size_t H = d < 0 ? imgH : imgW * netH / netH;
+                    size_t h0 = d < 0 ? 0 : (H - imgH) / 2;
+                    Regions regions = network.GetRegions(Point(W, H), _options.regionThreshold, _options.regionOverlap);
+                    for (size_t i = 0; i < regions.size(); ++i)
+                    {
+                        const Region& region = regions[i];
+                        ptrdiff_t l = ptrdiff_t(region.x - region.w / 2) - w0;
+                        ptrdiff_t t = ptrdiff_t(region.y - region.h / 2) - h0;
+                        ptrdiff_t r = ptrdiff_t(region.x + region.w / 2) - w0;
+                        ptrdiff_t b = ptrdiff_t(region.y + region.h / 2) - h0;
+                        Simd::DrawRectangle(image, l, t, r, b, GetColor(region.id), std::min<int>(image.height / 500 + 1, 3));
+                    }
+                }
+                else
+                {
+                    Regions regions = network.GetRegions(image.Size(), _options.regionThreshold, _options.regionOverlap);
+                    for (size_t i = 0; i < regions.size(); ++i)
+                    {
+                        const Region& region = regions[i];
+                        ptrdiff_t l = ptrdiff_t(region.x - region.w / 2);
+                        ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
+                        ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
+                        ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
+                        Simd::DrawRectangle(image, l, t, r, b, GetColor(region.id), std::min<int>(image.height / 500 + 1, 3));
+                    }
                 }
                 String outputPath = MakePath(_options.outputDirectory, Options::FullName(network.Name(), network.Type()) + "_" + GetNameByPath(inputPath));
                 if (!SaveImage(image, outputPath))
