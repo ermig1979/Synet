@@ -29,7 +29,7 @@
 
 namespace Synet
 {
-    bool ConvertSubNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered)
+    bool ConvertSubNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer, Bytes& reordered)
     {
         if (!CheckSourceNumber(layer, 2))
             return false;
@@ -56,19 +56,6 @@ namespace Synet
             const float* pShift = GetWeight<float>(original, src0->weight()[0]);
             layer.power().shift() = pShift[0];
             layer.src()[0] = layer.src()[1];
-            layer.src().resize(1);
-        }
-        else if (src1->type() == LayerTypeConst && SignificantDimsCount(src1->weight()[0].dim()) == 1)
-        {
-            layer.type() = Synet::LayerTypeBias;
-            layer.weight() = src1->weight();
-            if (!CompactShape(layer.weight()[0].dim()))
-                return false;
-            const float* pSrc = GetWeight<float>(original, layer.weight()[0]);
-            float* pDst = GetWeight<float>(reordered, layer.weight()[0]);
-            size_t size = TensorSize(layer.weight()[0].dim());
-            for (size_t i = 0; i < size; ++i)
-                pDst[i] = -pSrc[i];
             layer.src().resize(1);
         }
         else

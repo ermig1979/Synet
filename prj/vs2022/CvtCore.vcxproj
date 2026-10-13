@@ -26,6 +26,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\Cvt\Deoptimizer\Deoptimizer.cpp" />
     <ClCompile Include="..\..\src\Cvt\InferenceEngine\InferenceEngine.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Optimizer\BinaryOperationToBias.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeBiasAndScale.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConcatedParallelConvolutions.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\MergeConvolutionAndPower.cpp" />

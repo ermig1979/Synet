@@ -39,6 +39,7 @@ namespace Synet
         CPL_PARAM_VALUE(bool, mulToEltwise, true);
         CPL_PARAM_VALUE(bool, setReshapeAxis1, false);
         CPL_PARAM_VALUE(Strings, cast64iTo32i, Strings());
+        CPL_PARAM_VALUE(bool, addToBias, false);
     };
 
     struct Bf16OptParam

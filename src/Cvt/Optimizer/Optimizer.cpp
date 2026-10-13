@@ -82,6 +82,8 @@ namespace Synet
             {
                 if (ReduceTensorIteratorIO(network.layers(), i, bin, buf, merged))
                     continue;
+                if (BinaryOperationToBias(network.layers(), i, bin, buf, merged))
+                    continue;
                 break;
             }
             case 1:

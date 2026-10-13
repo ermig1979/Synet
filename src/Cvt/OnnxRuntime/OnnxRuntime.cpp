@@ -310,7 +310,7 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "Squeeze" && !ConvertSqueezeNode(node, network.layers(), layer))
                 return ErrorMessage(i, node);
-            if (node.op_type() == "Sub" && !ConvertSubNode(node, network.layers(), original, layer, reordered))
+            if (node.op_type() == "Sub" && !ConvertSubNode(node, network.layers(), original, onnxParam, layer, reordered))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Tanh" && !ConvertTanhNode(node, layer))
                 return ErrorMessage(i, node);

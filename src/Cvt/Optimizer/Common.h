@@ -65,6 +65,8 @@ namespace Synet
 
     //--------------------------------------------------------------------------------------------------
 
+    bool BinaryOperationToBias(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst);
+
     bool ReduceTensorIteratorIO(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst);
 
     bool TransposeInnerProduct(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst);

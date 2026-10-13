@@ -65,6 +65,15 @@ namespace Synet
             }
             layer.src().resize(1);
         }
+        else if (src1->type() == LayerTypeConst && src1->weight()[0].type() == TensorType32f && 
+            SignificantDimsCount(src1->weight()[0].dim()) == 1 && onnxParam.addToBias())
+        {
+            layer.type() = Synet::LayerTypeBias;
+            layer.weight() = src1->weight();
+            if (!CompactShape(layer.weight()[0].dim()))
+                return false;
+            layer.src().resize(1);
+        }
         else
         {
             if (onnxParam.addToEltwise())

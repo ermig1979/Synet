@@ -130,7 +130,7 @@ namespace Synet
         dst[0]->Reshape(TensorType32f, shape, src[0]->Format());
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-        _dynamicQuantizedInnerProduct.Init(_M, _N, _K, _biasTerm ? SimdTrue : SimdFalse, (SimdConvolutionActivationType)_activation);
+        //_dynamicQuantizedInnerProduct.Init(_M, _N, _K, _biasTerm ? SimdTrue : SimdFalse, (SimdConvolutionActivationType)_activation);
         if (_dynamicQuantizedInnerProduct.Enable())
         {
             Layer::Extend8u(buf, 0, Shp(_dynamicQuantizedInnerProduct.ExternalBufferSize()));

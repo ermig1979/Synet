@@ -203,7 +203,7 @@ namespace Synet
 
     bool ConvertSqueezeNode(const onnx::NodeProto& node, const LayerParams& layers, LayerParam& layer);
 
-    bool ConvertSubNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, LayerParam& layer, Bytes& reordered);
+    bool ConvertSubNode(const onnx::NodeProto& node, const LayerParams& layers, const Bytes& original, const OnnxParam& onnxParam, LayerParam& layer, Bytes& reordered);
 
     bool ConvertTanhNode(const onnx::NodeProto& node, LayerParam& layer);
 
