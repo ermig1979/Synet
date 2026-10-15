@@ -196,6 +196,8 @@ namespace Synet
                     continue;
                 if (MergeDynamicQuantizedInnerProduct(network.layers(), i, merged, changes))
                     continue;
+                if (MergeDynamicQuantizedInnerProductV2(network.layers(), i, merged, changes))
+                    continue;
                 break;
             }
             case 6:
