@@ -24,7 +24,7 @@
 
 #include "Cvt/Optimizer/Common.h"
 #include "Cvt/Optimizer/Optimizer.h"
-#include "Cvt/Optimizer/Bf16OptSetter.h"
+#include "Cvt/Bf16/Bf16OptSetter.h"
 
 namespace Synet
 {

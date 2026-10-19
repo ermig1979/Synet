@@ -1,6 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="..\..\src\Cvt\Bf16\Bf16OptSetter.cpp">
+      <Filter>Bf16</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Deoptimizer\Deoptimizer.cpp">
       <Filter>Deoptimizer</Filter>
     </ClCompile>
@@ -183,8 +186,8 @@
     <ClInclude Include="..\..\src\Cvt\Deoptimizer\Deoptimizer.h">
       <Filter>Deoptimizer</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Cvt\Optimizer\Bf16OptSetter.h">
-      <Filter>Optimizer</Filter>
+    <ClInclude Include="..\..\src\Cvt\Bf16\Bf16OptSetter.h">
+      <Filter>Bf16</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Cvt\Optimizer\Optimizer.h">
       <Filter>Optimizer</Filter>
@@ -203,6 +206,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <Filter Include="Bf16">
+      <UniqueIdentifier>{7e4c1a92-3b58-4d0e-9f61-2c8a5e6d4b17}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Common">
       <UniqueIdentifier>{eb69be5d-8c06-43c5-9f7e-7b515d6ee961}</UniqueIdentifier>
     </Filter>
