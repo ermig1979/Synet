@@ -54,6 +54,13 @@ namespace Synet
         CPL_PARAM_VALUE(Strings, manualActive, Strings());
     };
 
+    struct Int8OptParam
+    {
+        CPL_PARAM_VALUE(bool, enable, false);
+        CPL_PARAM_VALUE(uint32_t, minK, 64);
+        CPL_PARAM_VALUE(uint32_t, minN, 32);
+    };
+
     struct OptimizerParam
     {
         CPL_PARAM_VALUE(bool, mergeTwoConvolutions, true);
@@ -66,6 +73,7 @@ namespace Synet
         CPL_PARAM_VALUE(bool, reuseLayers, true);
         CPL_PARAM_VALUE(bool, reuseEltwise, false);
         CPL_PARAM_STRUCT(Bf16OptParam, bf16);
+        CPL_PARAM_STRUCT(Int8OptParam, int8);
     };
 
     CPL_PARAM_HOLDER(OptimizerParamHolder, OptimizerParam, optimizer);
