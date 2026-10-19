@@ -25,6 +25,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Cvt\Bf16\Bf16OptSetter.cpp" />
+    <ClCompile Include="..\..\src\Cvt\Int8\Int8Quantizer.cpp" />
     <ClCompile Include="..\..\src\Cvt\Deoptimizer\Deoptimizer.cpp" />
     <ClCompile Include="..\..\src\Cvt\InferenceEngine\InferenceEngine.cpp" />
     <ClCompile Include="..\..\src\Cvt\Optimizer\BinaryOperationToBias.cpp" />
@@ -89,6 +90,7 @@
     <ClInclude Include="..\..\src\Cvt\InferenceEngine\InferenceEngineBase.h" />
     <ClInclude Include="..\..\src\Cvt\InferenceEngine\InferenceEngineV10.h" />
     <ClInclude Include="..\..\src\Cvt\Bf16\Bf16OptSetter.h" />
+    <ClInclude Include="..\..\src\Cvt\Int8\Int8Quantizer.h" />
     <ClInclude Include="..\..\src\Cvt\Optimizer\Common.h" />
     <ClInclude Include="..\..\src\Cvt\Optimizer\Optimizer.h" />
   </ItemGroup>

@@ -4,6 +4,9 @@
     <ClCompile Include="..\..\src\Cvt\Bf16\Bf16OptSetter.cpp">
       <Filter>Bf16</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Cvt\Int8\Int8Quantizer.cpp">
+      <Filter>Int8</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Cvt\Deoptimizer\Deoptimizer.cpp">
       <Filter>Deoptimizer</Filter>
     </ClCompile>
@@ -189,6 +192,9 @@
     <ClInclude Include="..\..\src\Cvt\Bf16\Bf16OptSetter.h">
       <Filter>Bf16</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Cvt\Int8\Int8Quantizer.h">
+      <Filter>Int8</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\Cvt\Optimizer\Optimizer.h">
       <Filter>Optimizer</Filter>
     </ClInclude>
@@ -208,6 +214,9 @@
   <ItemGroup>
     <Filter Include="Bf16">
       <UniqueIdentifier>{7e4c1a92-3b58-4d0e-9f61-2c8a5e6d4b17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Int8">
+      <UniqueIdentifier>{9c2e7b14-6a48-4f03-b7d5-1e8a3c6f9052}</UniqueIdentifier>
     </Filter>
     <Filter Include="Common">
       <UniqueIdentifier>{eb69be5d-8c06-43c5-9f7e-7b515d6ee961}</UniqueIdentifier>

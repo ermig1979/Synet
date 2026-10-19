@@ -31,7 +31,7 @@ class SynetConan(ConanFile):
         "opencv": [True, False],             # SYNET_OPENCV
         "test": [
             "none", "inference_engine", "onnx",
-            "optimizer", "bf16", "multi_threads", "video", "use_samples", "all",
+            "optimizer", "bf16", "int8", "multi_threads", "video", "use_samples", "all",
         ],
     }
     default_options = {
@@ -261,11 +261,12 @@ class SynetConan(ConanFile):
                 "onnx": ["test_onnx"],
                 "optimizer": ["test_optimizer"],
                 "bf16": ["test_bf16"],
+                "int8": ["test_int8"],
                 "multi_threads": ["test_multi_threads"],
                 "video": ["test_video"],
                 "all": [
                     "test_inference_engine", "test_onnx",
-                    "test_optimizer", "test_bf16", "test_multi_threads", "test_video",
+                    "test_optimizer", "test_bf16", "test_int8", "test_multi_threads", "test_video",
                 ],
             }
             for binary in test_binaries.get(str(self.options.test), []):

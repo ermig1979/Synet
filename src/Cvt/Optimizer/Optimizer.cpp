@@ -25,6 +25,7 @@
 #include "Cvt/Optimizer/Common.h"
 #include "Cvt/Optimizer/Optimizer.h"
 #include "Cvt/Bf16/Bf16OptSetter.h"
+#include "Cvt/Int8/Int8Quantizer.h"
 
 namespace Synet
 {
@@ -59,6 +60,9 @@ namespace Synet
         if (!RemoveStub(network))
             return false;
         if (!RemoveUnusedConst(network.layers()))
+            return false;
+        Int8Quantizer int8Quantizer(_param.int8());
+        if (!int8Quantizer.Run(network, bin))
             return false;
         if (_param.reuseLayers())
         {
