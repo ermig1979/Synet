@@ -142,42 +142,9 @@ namespace Synet
             return 0;
         }
 
-        template <class T> static void DebugPrint(std::ostream& os, const T* data, const Shape & shape,
-            const Shape& firsts, const Shape& lasts, const Strings & separators, Shape index, size_t order, size_t precision, size_t padding)
-        {
-            if (order == shape.size())
-            {
-                DebugPrint(os, data[Offset(shape, index)], precision, padding);
-                return;
-            }
-            if (firsts[order] + lasts[order] < shape[order])
-            {
-                size_t lo = firsts[order], hi = shape[order] - lasts[order];
-                for (index[order] = 0; index[order] < lo; ++index[order])
-                {
-                    DebugPrint(os, data, shape, firsts, lasts, separators, index, order + 1, precision, padding);
-                    os << separators[order];
-                }
-                os << "..." << separators[order];
-                for (index[order] = hi; index[order] < shape[order]; ++index[order])
-                {
-                    DebugPrint(os, data, shape, firsts, lasts, separators, index, order + 1, precision, padding);
-                    os << separators[order];
-                }
-            }
-            else
-            {
-                for (index[order] = 0; index[order] < shape[order]; ++index[order])
-                {
-                    DebugPrint(os, data, shape, firsts, lasts, separators, index, order + 1, precision, padding);
-                    os << separators[order];
-                }
-            }
-        }
-
         template <class T> static void PrintDiagnostic(std::ostream& os, const T* data, size_t size, size_t precision)
         {
-            if (data == NULL || size == 0 || !(std::is_same<T, float>::value || std::is_same<T, uint16_t>::value || 
+            if (data == NULL || size == 0 || !(std::is_same<T, float>::value || std::is_same<T, uint16_t>::value ||
                 std::is_same<T, uint8_t>::value || std::is_same<T, int32_t>::value))
                 return;
             if (std::is_same<T, float>::value || std::is_same<T, uint16_t>::value)
@@ -236,6 +203,42 @@ namespace Synet
                 os << " { " << min << " .. " << max << " }";
             }
         }
+
+        template <class T> static void DebugPrint(std::ostream& os, const T* data, const Shape & shape,
+            const Shape& firsts, const Shape& lasts, const Strings & separators, Shape index, size_t order, size_t precision, size_t padding, bool diagnostic)
+        {
+            size_t offset = Offset(shape, index);
+            if (order == shape.size())
+            {
+                DebugPrint(os, data[offset], precision, padding);
+                return;
+            }
+            if (firsts[order] + lasts[order] < shape[order])
+            {
+                size_t lo = firsts[order], hi = shape[order] - lasts[order];
+                for (index[order] = 0; index[order] < lo; ++index[order])
+                {
+                    DebugPrint(os, data, shape, firsts, lasts, separators, index, order + 1, precision, padding, diagnostic);
+                    os << separators[order];
+                }
+                os << "..." << separators[order];
+                for (index[order] = hi; index[order] < shape[order]; ++index[order])
+                {
+                    DebugPrint(os, data, shape, firsts, lasts, separators, index, order + 1, precision, padding, diagnostic);
+                    os << separators[order];
+                }
+            }
+            else
+            {
+                for (index[order] = 0; index[order] < shape[order]; ++index[order])
+                {
+                    DebugPrint(os, data, shape, firsts, lasts, separators, index, order + 1, precision, padding, diagnostic);
+                    os << separators[order];
+                }
+            }
+            if(diagnostic && order == shape.size() - 1)
+                 Detail::PrintDiagnostic(os, data + offset, shape.back(), precision);
+        }
     }
 
     template<class T> inline void DebugPrint(std::ostream & os, const T * data, const Shape& shape, const std::string & name, bool cnst, size_t first = 6, size_t last = 2, size_t precision = 8, bool diagnostic = true)
@@ -265,7 +268,7 @@ namespace Synet
             }
         }
         size_t padding = Detail::DebugPrintPadding(data, shape, precision);
-        Detail::DebugPrint(os, data, shape, firsts, lasts, separators, index, 0, precision, padding);
+        Detail::DebugPrint(os, data, shape, firsts, lasts, separators, index, 0, precision, padding, diagnostic);
         if (n == 1 || n == 0)
             os << "\n";
     }

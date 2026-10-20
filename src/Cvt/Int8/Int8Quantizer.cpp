@@ -55,204 +55,6 @@ namespace Synet
                 memcpy(bin.data() + offset, data, bytes);
         }
 
-        struct TensorInfo
-        {
-            Shape shape;
-            TensorFormat format;
-            bool known;
-
-            TensorInfo()
-                : format(TensorFormatUnknown)
-                , known(false)
-            {
-            }
-        };
-
-        bool KnownShape(const Shape& shape)
-        {
-            if (shape.empty())
-                return false;
-            for (size_t i = 0; i < shape.size(); ++i)
-                if (shape[i] == 0)
-                    return false;
-            return true;
-        }
-
-        bool SameShape(LayerType type)
-        {
-            switch (type)
-            {
-            case LayerTypeAdd:
-            case LayerTypeBias:
-            case LayerTypeBinaryOperation:
-            case LayerTypeEltwise:
-            case LayerTypeElu:
-            case LayerTypeGelu:
-            case LayerTypeHardSigmoid:
-            case LayerTypeHswish:
-            case LayerTypeMish:
-            case LayerTypeMul:
-            case LayerTypeNormalize:
-            case LayerTypePower:
-            case LayerTypePrelu:
-            case LayerTypeRelu:
-            case LayerTypeRestrictRange:
-            case LayerTypeScale:
-            case LayerTypeSigmoid:
-            case LayerTypeSoftmax:
-            case LayerTypeSwish:
-            case LayerTypeUnaryOperation:
-                return true;
-            default:
-                return false;
-            }
-        }
-
-        bool ConvolutionOutput(const LayerParam& layer, const TensorInfo& src, TensorInfo& dst)
-        {
-            if (!src.known || src.shape.size() != 4 || layer.weight().empty())
-                return false;
-            TensorFormat format = layer.weight()[0].format();
-            if (format != TensorFormatNhwc && format != TensorFormatNchw)
-                format = src.format;
-            if (format != TensorFormatNhwc && format != TensorFormatNchw)
-                return false;
-            ConvParam conv;
-            if (!conv.Set(layer.convolution()))
-                return false;
-            conv.srcF = format;
-            conv.dstF = format;
-            conv.srcT = TensorType32f;
-            conv.dstT = TensorType32f;
-            if (format == TensorFormatNhwc)
-            {
-                conv.srcC = src.shape[3];
-                conv.srcH = src.shape[1];
-                conv.srcW = src.shape[2];
-            }
-            else
-            {
-                conv.srcC = src.shape[1];
-                conv.srcH = src.shape[2];
-                conv.srcW = src.shape[3];
-            }
-            if (!conv.SetDst(layer.type() == LayerTypeConvolution, layer.convolution().autoPad()))
-                return false;
-            dst.shape = conv.DstShape(src.shape[0]);
-            dst.format = format;
-            dst.known = KnownShape(dst.shape);
-            return dst.known;
-        }
-
-        bool PoolingOutput(const LayerParam& layer, const TensorInfo& src, TensorInfo& dst)
-        {
-            if (!src.known || src.shape.size() != 4)
-                return false;
-            if (src.format != TensorFormatNhwc && src.format != TensorFormatNchw)
-                return false;
-            const PoolingParam& pooling = layer.pooling();
-            if (pooling.yoloCompatible() || pooling.padType() == PoolingPadTypeTensorflowSame)
-                return false;
-            if (pooling.kernel().size() == 3 || pooling.stride().size() == 3 || pooling.pad().size() == 6)
-                return false;
-            size_t srcC, srcH, srcW;
-            if (src.format == TensorFormatNhwc)
-            {
-                srcC = src.shape[3];
-                srcH = src.shape[1];
-                srcW = src.shape[2];
-            }
-            else
-            {
-                srcC = src.shape[1];
-                srcH = src.shape[2];
-                srcW = src.shape[3];
-            }
-            size_t kernelY, kernelX, strideY, strideX, padY, padX, padH, padW;
-            if (pooling.globalPooling())
-            {
-                kernelY = srcH;
-                kernelX = srcW;
-                strideY = 1;
-                strideX = 1;
-                padY = padX = padH = padW = 0;
-            }
-            else
-            {
-                if (pooling.kernel().empty())
-                    return false;
-                kernelY = pooling.kernel()[0];
-                kernelX = pooling.kernel().size() > 1 ? pooling.kernel()[1] : kernelY;
-                strideY = pooling.stride().empty() ? 1 : pooling.stride()[0];
-                strideX = pooling.stride().size() > 1 ? pooling.stride()[1] : strideY;
-                padY = padX = padH = padW = 0;
-                const Shape& pad = pooling.pad();
-                if (pad.size() == 1)
-                    padY = padX = padH = padW = pad[0];
-                else if (pad.size() == 2)
-                {
-                    padY = padH = pad[0];
-                    padX = padW = pad[1];
-                }
-                else if (pad.size() >= 4)
-                {
-                    padY = pad[0];
-                    padX = pad[1];
-                    padH = pad[2];
-                    padW = pad[3];
-                }
-                if (kernelY == 0 || kernelX == 0 || strideY == 0 || strideX == 0)
-                    return false;
-            }
-            size_t dstH, dstW;
-            if (pooling.globalPooling())
-            {
-                dstH = 1;
-                dstW = 1;
-            }
-            else if (pooling.roundingType() == RoundingTypeFloor)
-            {
-                dstH = (size_t)::floor((float)(srcH + padY + padH - kernelY) / strideY) + 1;
-                dstW = (size_t)::floor((float)(srcW + padX + padW - kernelX) / strideX) + 1;
-            }
-            else
-            {
-                dstH = (size_t)::ceil((float)(srcH + padY + padH - kernelY) / strideY) + 1;
-                dstW = (size_t)::ceil((float)(srcW + padX + padW - kernelX) / strideX) + 1;
-            }
-            if (padX || padY)
-            {
-                if ((dstH - 1) * strideY >= srcH + padY)
-                    --dstH;
-                if ((dstW - 1) * strideX >= srcW + padX)
-                    --dstW;
-            }
-            if (src.format == TensorFormatNhwc)
-                dst.shape = Shp(src.shape[0], dstH, dstW, srcC);
-            else
-                dst.shape = Shp(src.shape[0], srcC, dstH, dstW);
-            dst.format = src.format;
-            dst.known = KnownShape(dst.shape);
-            return dst.known;
-        }
-
-        bool ReducesLastAxis(const Shape& src, int axis, size_t K)
-        {
-            if (src.empty())
-                return true;
-            int count = (int)src.size();
-            if (axis < 0)
-                axis += count;
-            if (axis < 0 || axis >= count)
-                return false;
-            size_t atAxis = 1;
-            for (int i = axis; i < count; ++i)
-                atAxis *= src[i];
-            if (atAxis == K)
-                return axis == count - 1;
-            return src.back() == K;
-        }
-
         bool QuantizeWeight(const float* src, size_t K, size_t N, bool transB, std::vector<int8_t>& dst, std::vector<float>& scale)
         {
             const bool overflow = Overflow16i();
@@ -293,43 +95,14 @@ namespace Synet
             return true;
         size_t converted = 0;
         LayerParams& layers = network.layers();
-        std::map<String, TensorInfo> tensors;
         for (size_t i = 0; i < layers.size(); ++i)
         {
             LayerParam& layer = layers[i];
-            TensorInfo src;
-            if (!layer.src().empty())
-            {
-                std::map<String, TensorInfo>::iterator it = tensors.find(layer.src()[0]);
-                if (it != tensors.end())
-                    src = it->second;
-            }
             bool changed = false;
-            if (!ConvertInnerProduct(layer, bin, /*src.known ? &src.shape : */NULL, changed))
+            if (!ConvertInnerProduct(layer, bin, changed))
                 return false;
             if (changed)
                 converted++;
-
-            //TensorInfo dst;
-            //if (layer.type() == LayerTypeInput && !layer.input().shape().empty())
-            //{
-            //    dst.shape = layer.input().shape()[0].dim();
-            //    dst.format = layer.input().shape()[0].format();
-            //    dst.known = KnownShape(dst.shape);
-            //}
-            //else if (layer.type() == LayerTypeConvolution || layer.type() == LayerTypeDeconvolution)
-            //    ConvolutionOutput(layer, src, dst);
-            //else if (layer.type() == LayerTypePooling)
-            //    PoolingOutput(layer, src, dst);
-            //else if (SameShape(layer.type()) && src.known)
-            //    dst = src;
-            //else if (changed && src.known && !src.shape.empty())
-            //{
-            //    dst = src;
-            //    dst.shape.back() = layer.innerProduct().outputNum();
-            //}
-            //for (size_t d = 0; d < layer.dst().size(); ++d)
-            //    tensors[layer.dst()[d]] = dst;
         }
         if (converted)
         {
@@ -340,7 +113,7 @@ namespace Synet
         return true;
     }
 
-    bool Int8Quantizer::ConvertInnerProduct(LayerParam& layer, Bytes& bin, const Shape* srcShape, bool& converted)
+    bool Int8Quantizer::ConvertInnerProduct(LayerParam& layer, Bytes& bin, bool& converted)
     {
         converted = false;
         if (layer.type() != LayerTypeInnerProduct || layer.src().size() != 1)
@@ -358,8 +131,6 @@ namespace Synet
             return true;
         if (layer.innerProduct().transposeB())
             return true;
-        //if (srcShape && !ReducesLastAxis(*srcShape, (int)layer.innerProduct().axis(), K))
-        //    return true;
         if (layer.innerProduct().outputNum() != 0 && layer.innerProduct().outputNum() != N)
             SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' outputNum does not match weight shape!");
         if (srcWeight.size() < K * N * sizeof(float))
