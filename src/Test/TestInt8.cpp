@@ -24,8 +24,8 @@
 
 #define FIRST_MODEL_DEFAULT "synet1.xml"
 #define FIRST_WEIGHT_DEFAULT "synet1.bin"
-#define SECOND_MODEL_DEFAULT "synet2.xml"
-#define SECOND_WEIGHT_DEFAULT "synet2.bin"
+#define SECOND_MODEL_DEFAULT "synet3.xml"
+#define SECOND_WEIGHT_DEFAULT "synet3.bin"
 
 #include "TestCompare.h"
 #include "TestReport.h"

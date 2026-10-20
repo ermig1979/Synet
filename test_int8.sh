@@ -33,7 +33,7 @@ if [ ! -f $DIR/synet1.xml ] | [ ! -f $DIR/synet1.bin ];then
   "$BIN_DIR"/test_"$FRAMEWORK" -m=convert $ORIG -sm=$DIR/synet1.xml -sw=$DIR/synet1.bin -tf=1 -cs=1 -dp=0 -su=1 -bf=0
 fi 
 
-PATHES="-fm=$DIR/synet1.xml -fw=$DIR/synet1.bin -sm=$DIR/synet2.xml -sw=$DIR/synet2.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
+PATHES="-fm=$DIR/synet1.xml -fw=$DIR/synet1.bin -sm=$DIR/synet3.xml -sw=$DIR/synet3.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
 if [ "$GROUP" = "" ]; then
   LOG=./test/int8/"$FRAMEWORK"/"$NAME"/"$PREFIX"_"$NAME"_t"$THREAD"_b"$BATCH"_int8_v"$VERSION"_p"$PERF".txt
 else
@@ -55,7 +55,7 @@ if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
-#TEST onnx "" test_000 face 80 1 1 000 2
+TEST onnx "" test_000 face 80 0 1 000 2
 #TEST synet "" ie_test_014f license_plates 10 1 1 000 2
 
 exit

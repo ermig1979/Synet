@@ -127,7 +127,7 @@ namespace Synet
         }
 
         shape.back() = _N;
-        dst[0]->Reshape(TensorType32f, shape, src[0]->Format());
+        dst[0]->Reshape(TensorType32f, shape, TensorFormatNchw);
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
         _dynamicQuantizedInnerProduct.Init(_M, _N, _K, _biasTerm ? SimdTrue : SimdFalse, (SimdConvolutionActivationType)_activation);
@@ -141,9 +141,9 @@ namespace Synet
         else
 #endif
         {
-            Layer::Extend8u(buf, 0, src[0]->Shape(), src[0]->Format());
-            Layer::Extend32i(buf, 0, shape, src[0]->Format());
-            Layer::Extend32f(buf, 0, Shp(_N), src[0]->Format());
+            Layer::Extend8u(buf, 0, src[0]->Shape(), TensorFormatNchw);
+            Layer::Extend32i(buf, 0, shape, TensorFormatNchw);
+            Layer::Extend32f(buf, 0, Shp(_N), TensorFormatNchw);
         }
 
         std::stringstream desc;

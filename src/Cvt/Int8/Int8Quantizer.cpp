@@ -305,31 +305,31 @@ namespace Synet
                     src = it->second;
             }
             bool changed = false;
-            if (!ConvertInnerProduct(layer, bin, src.known ? &src.shape : NULL, changed))
+            if (!ConvertInnerProduct(layer, bin, /*src.known ? &src.shape : */NULL, changed))
                 return false;
             if (changed)
                 converted++;
 
-            TensorInfo dst;
-            if (layer.type() == LayerTypeInput && !layer.input().shape().empty())
-            {
-                dst.shape = layer.input().shape()[0].dim();
-                dst.format = layer.input().shape()[0].format();
-                dst.known = KnownShape(dst.shape);
-            }
-            else if (layer.type() == LayerTypeConvolution || layer.type() == LayerTypeDeconvolution)
-                ConvolutionOutput(layer, src, dst);
-            else if (layer.type() == LayerTypePooling)
-                PoolingOutput(layer, src, dst);
-            else if (SameShape(layer.type()) && src.known)
-                dst = src;
-            else if (changed && src.known && !src.shape.empty())
-            {
-                dst = src;
-                dst.shape.back() = layer.innerProduct().outputNum();
-            }
-            for (size_t d = 0; d < layer.dst().size(); ++d)
-                tensors[layer.dst()[d]] = dst;
+            //TensorInfo dst;
+            //if (layer.type() == LayerTypeInput && !layer.input().shape().empty())
+            //{
+            //    dst.shape = layer.input().shape()[0].dim();
+            //    dst.format = layer.input().shape()[0].format();
+            //    dst.known = KnownShape(dst.shape);
+            //}
+            //else if (layer.type() == LayerTypeConvolution || layer.type() == LayerTypeDeconvolution)
+            //    ConvolutionOutput(layer, src, dst);
+            //else if (layer.type() == LayerTypePooling)
+            //    PoolingOutput(layer, src, dst);
+            //else if (SameShape(layer.type()) && src.known)
+            //    dst = src;
+            //else if (changed && src.known && !src.shape.empty())
+            //{
+            //    dst = src;
+            //    dst.shape.back() = layer.innerProduct().outputNum();
+            //}
+            //for (size_t d = 0; d < layer.dst().size(); ++d)
+            //    tensors[layer.dst()[d]] = dst;
         }
         if (converted)
         {
@@ -356,8 +356,10 @@ namespace Synet
         const size_t N = transB ? srcWeight.dim()[1] : srcWeight.dim()[0];
         if (K < _param.minK() || N < _param.minN())
             return true;
-        if (srcShape && !ReducesLastAxis(*srcShape, (int)layer.innerProduct().axis(), K))
+        if (layer.innerProduct().transposeB())
             return true;
+        //if (srcShape && !ReducesLastAxis(*srcShape, (int)layer.innerProduct().axis(), K))
+        //    return true;
         if (layer.innerProduct().outputNum() != 0 && layer.innerProduct().outputNum() != N)
             SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' outputNum does not match weight shape!");
         if (srcWeight.size() < K * N * sizeof(float))
@@ -419,7 +421,7 @@ namespace Synet
 
         layer.type() = LayerTypeDynamicQuantizedInnerProduct;
         layer.innerProduct().outputNum() = (uint32_t)N;
-        layer.innerProduct().transposeB() = true;
+        //layer.innerProduct().transposeB() = true;
         layer.weight() = weights;
         converted = true;
         return true;
