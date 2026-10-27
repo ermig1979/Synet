@@ -49,14 +49,14 @@ namespace Synet
 
     protected:
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
-        void Activation(float * dst);
+        void Activation(float * dst, size_t M);
 
         size_t _M, _N, _K;
         bool _biasTerm;
         ActivationFunctionType _activation;
         float _params[2];
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-        Simd::SynetDynamicQuantizedInnerProduct _dynamicQuantizedInnerProduct;
+        Simd::SynetDynamicQuantizedInnerProduct32f _dynamicQuantizedInnerProduct32f;
 #endif
     };
 }
