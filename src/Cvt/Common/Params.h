@@ -59,6 +59,7 @@ namespace Synet
         CPL_PARAM_VALUE(bool, enable, false);
         CPL_PARAM_VALUE(uint32_t, minK, 64);
         CPL_PARAM_VALUE(uint32_t, minN, 32);
+        CPL_PARAM_VALUE(bool, quantizeWeight, true);
     };
 
     struct OptimizerParam

@@ -51,12 +51,13 @@ namespace Synet
         virtual void Forward(const TensorPtrs& src, const TensorPtrs& buf, const TensorPtrs& dst, size_t thread);
         void Activation(float * dst, size_t M);
 
+        TensorType _typeA, _typeB, _typeC;
         size_t _M, _N, _K;
-        bool _biasTerm;
+        bool _biasTerm, _constB, _overflow;
         ActivationFunctionType _activation;
         float _params[2];
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-        Simd::SynetDynamicQuantizedInnerProduct32f _dynamicQuantizedInnerProduct32f;
+        Simd::SynetDynamicQuantizedInnerProduct16b _dynamicQuantizedInnerProduct16b;
 #endif
     };
 }

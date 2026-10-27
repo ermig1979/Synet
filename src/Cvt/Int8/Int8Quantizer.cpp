@@ -82,6 +82,18 @@ namespace Synet
             }
             return true;
         }
+
+        void TransposeWeight(WeightParam &param, Bytes& bin)
+        {
+            const size_t K = param.dim()[1], N = param.dim()[0];
+            Floats buf(K * N);
+            float* src = GetWeight<float>(bin, param), *dst = buf.data();
+            for (size_t k = 0; k < K; k++)
+                for (size_t j = 0; j < N; j++)
+                    dst[k * N + j] = src[j * K + k];
+            memcpy(src, dst, K * N * sizeof(float));
+            param.dim() = Shp(K, N);
+        }
     }
 
     Int8Quantizer::Int8Quantizer(const Int8OptParam& param)
@@ -142,59 +154,49 @@ namespace Synet
         if (layer.weight().size() < need)
             SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' has " << layer.weight().size() << " weights instead of " << need << "!");
 
-        std::vector<float> matrix(K * N);
-        memcpy(matrix.data(), GetWeight<float>(bin, srcWeight), K * N * sizeof(float));
-
-        std::vector<float> bias;
-        size_t next = 1;
+        size_t srcIndex = 1;
+        std::vector<WeightParam> weights;
+        if (_param.quantizeWeight())
+        {
+            const float* pWeight = GetWeight<float>(bin, srcWeight);
+            std::vector<int8_t> quantized;
+            std::vector<float> scale;
+            if (!QuantizeWeight(pWeight, K, N, transB, quantized, scale))
+                return false;
+            const TensorFormat format = srcWeight.format();
+            weights.resize(2);
+            AppendWeight(bin, quantized.data(), quantized.size() * sizeof(int8_t), Shp(K, N), TensorType8i, format, weights[0]);
+            AppendWeight(bin, scale.data(), scale.size() * sizeof(float), Shp(N), TensorType32f, TensorFormatNchw, weights[1]);
+            converted = true;
+        }
+        else
+        {
+            weights.resize(1);
+            weights[0] = srcWeight;
+            if (!transB)
+                TransposeWeight(weights[0], bin);
+        }
         if (biasTerm)
         {
-            const WeightParam& biasWeight = layer.weight()[next++];
+            const WeightParam& biasWeight = layer.weight()[srcIndex++];
             if (biasWeight.type() != TensorType32f || TensorSize(biasWeight.dim()) != N)
                 SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' bias must be FP32 of size " << N << "!");
             if (biasWeight.size() < N * sizeof(float))
                 SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' bias is truncated!");
-            bias.resize(N);
-            memcpy(bias.data(), GetWeight<float>(bin, biasWeight), N * sizeof(float));
+            weights.push_back(biasWeight);
         }
-
-        std::vector<float> preluWeight;
-        Shape preluDim;
-        TensorFormat preluFormat = TensorFormatNchw;
         if (prelu)
         {
-            const WeightParam& srcPrelu = layer.weight()[next++];
+            const WeightParam& srcPrelu = layer.weight()[srcIndex++];
             size_t count = TensorSize(srcPrelu.dim());
             if (srcPrelu.type() != TensorType32f || srcPrelu.size() < count * sizeof(float))
                 SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' Prelu weight must be FP32!");
-            preluWeight.resize(count);
-            memcpy(preluWeight.data(), GetWeight<float>(bin, srcPrelu), count * sizeof(float));
-            preluDim = srcPrelu.dim();
-            preluFormat = srcPrelu.format();
+            weights.push_back(srcPrelu);
         }
-
-        std::vector<int8_t> quantized;
-        std::vector<float> scale;
-        if (!QuantizeWeight(matrix.data(), K, N, transB, quantized, scale))
-            return false;
-        std::vector<int8_t> zero(N, 0);
-
-        const TensorFormat format = srcWeight.format();
-        std::vector<WeightParam> weights(3 + (biasTerm ? 1 : 0) + (prelu ? 1 : 0));
-        size_t index = 0;
-        AppendWeight(bin, quantized.data(), quantized.size() * sizeof(int8_t), Shp(K, N), TensorType8i, format, weights[index++]);
-        AppendWeight(bin, zero.data(), zero.size() * sizeof(int8_t), Shp(N), TensorType8i, TensorFormatNchw, weights[index++]);
-        AppendWeight(bin, scale.data(), scale.size() * sizeof(float), Shp(N), TensorType32f, TensorFormatNchw, weights[index++]);
-        if (biasTerm)
-            AppendWeight(bin, bias.data(), bias.size() * sizeof(float), Shp(N), TensorType32f, TensorFormatNchw, weights[index++]);
-        if (prelu)
-            AppendWeight(bin, preluWeight.data(), preluWeight.size() * sizeof(float), preluDim, TensorType32f, preluFormat, weights[index++]);
 
         layer.type() = LayerTypeDynamicQuantizedInnerProduct;
         layer.innerProduct().outputNum() = (uint32_t)N;
-        //layer.innerProduct().transposeB() = true;
         layer.weight() = weights;
-        converted = true;
         return true;
     }
 
