@@ -57,6 +57,7 @@ namespace Synet
     {
         size_t size = Layer::MemoryUsage();
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        size += _dynamicQuantizedInnerProduct32f.InternalBufferSize();
         size += _dynamicQuantizedInnerProduct16b.InternalBufferSize();
 #endif
         return size;
@@ -70,7 +71,7 @@ namespace Synet
     void DynamicQuantizedInnerProductLayer::CompactWeight()
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-        if (_dynamicQuantizedInnerProduct16b.Enable())
+        if (_dynamicQuantizedInnerProduct32f.Enable() || _dynamicQuantizedInnerProduct16b.Enable())
         {
             for (size_t i = 0; i < this->Weight().size(); ++i)
                 ((Tensor&)this->Weight()[i]).Clear();
@@ -116,11 +117,13 @@ namespace Synet
             idx++;
             if (_typeB == TensorType8i)
             {
+                if (weight[idx++].GetType() != TensorType8i)
+                    SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only INT8 weight[1]!");
                 idxS = idx++;
                 if (weight[idxS].GetType() != TensorType32f)
-                    SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32 weight[1]!");
-                if (weight[idxS].Size(0) != _N)
-                    SYNET_ERROR("DynamicQuantizedInnerProductLayer: check weight[1] and weight[1] size!");
+                    SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32 weight[2]!");
+                if (weight[1].Size(0) != _N || weight[idxS].Size(0) != _N)
+                    SYNET_ERROR("DynamicQuantizedInnerProductLayer: check weight[1] and weight[2] size!");
             }
         }
         else
@@ -164,9 +167,22 @@ namespace Synet
         dst[0]->Reshape(_typeC, shape, TensorFormatNchw);
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-        _dynamicQuantizedInnerProduct16b.Init(_M, _N, _K, (SimdTensorDataType)_typeA, (SimdTensorDataType)_typeB, (SimdTensorDataType)_typeC,
+        if (idxS == 2)
+        {
+            _dynamicQuantizedInnerProduct32f.Init(_M, _N, _K,  _biasTerm ? SimdTrue : SimdFalse, (SimdConvolutionActivationType)_activation);
+        }
+        else
+        {
+            _dynamicQuantizedInnerProduct16b.Init(_M, _N, _K, (SimdTensorDataType)_typeA, (SimdTensorDataType)_typeB, (SimdTensorDataType)_typeC,
                 _constB ? SimdTrue : SimdFalse, _biasTerm ? SimdTrue : SimdFalse, (SimdConvolutionActivationType)_activation, SimdTrue);
-        if (_dynamicQuantizedInnerProduct16b.Enable())
+        }
+        if (_dynamicQuantizedInnerProduct32f.Enable())
+        {
+            Layer::Extend8u(buf, 0, Shp(_dynamicQuantizedInnerProduct32f.ExternalBufferSize()));
+            _dynamicQuantizedInnerProduct32f.SetParams(weight[0].Data<int8_t>(), weight[idxS].Data<float>(),
+                _biasTerm ? weight[idxB].Data<float>() : NULL, _activation == ActivationFunctionTypePrelu ? weight[idxA].Data<float>() : _params);
+        }
+        else if (_dynamicQuantizedInnerProduct16b.Enable())
         {
             Layer::Extend8u(buf, 0, Shp(_dynamicQuantizedInnerProduct16b.ExternalBufferSize()));
             _dynamicQuantizedInnerProduct16b.SetParams(
@@ -190,6 +206,8 @@ namespace Synet
         if (_activation)
             desc << "-" << ShortStr(_activation);
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        if (_dynamicQuantizedInnerProduct32f.Enable())
+            desc << " " << _dynamicQuantizedInnerProduct32f.Info();
         if (_dynamicQuantizedInnerProduct16b.Enable())
             desc << " " << _dynamicQuantizedInnerProduct16b.Info();
 #endif
@@ -201,7 +219,9 @@ namespace Synet
     void DynamicQuantizedInnerProductLayer::Forward(const TensorPtrs & src, const TensorPtrs & buf, const TensorPtrs & dst, size_t thread)
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
-        if (_dynamicQuantizedInnerProduct16b.Enable())
+        if (_dynamicQuantizedInnerProduct32f.Enable())
+            _dynamicQuantizedInnerProduct32f.Forward(src[0]->Data<float>(), Layer::Buf8u(buf, 0), dst[0]->Data<float>());
+        else if (_dynamicQuantizedInnerProduct16b.Enable())
             _dynamicQuantizedInnerProduct16b.Forward(src[0]->RawData(), src.size() > 1 ? src[1]->RawData() : NULL, Layer::Buf8u(buf, 0), dst[0]->RawData());
         else
 #endif

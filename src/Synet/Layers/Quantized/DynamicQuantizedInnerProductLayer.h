@@ -57,6 +57,7 @@ namespace Synet
         ActivationFunctionType _activation;
         float _params[2];
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
+        Simd::SynetDynamicQuantizedInnerProduct32f _dynamicQuantizedInnerProduct32f;
         Simd::SynetDynamicQuantizedInnerProduct16b _dynamicQuantizedInnerProduct16b;
 #endif
     };
