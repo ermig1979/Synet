@@ -5,31 +5,11 @@
 	<input>
 		<item>
 			<name>data</name>
-			<shape>
-				<item>
-					<size>1</size>
-				</item>
-				<item>
-					<size>3</size>
-				</item>
-				<item>
-					<size>24</size>
-				</item>
-				<item>
-					<size>94</size>
-				</item>
-			</shape>
+			<dims>1 3 24 94</dims>
 		</item>
 		<item>
 			<name>seq_ind</name>
-			<shape>
-				<item>
-					<size>88</size>
-				</item>
-				<item>
-					<size>1</size>
-				</item>
-			</shape>
+			<dims>88 1</dims>
 		</item>
 	</input>
 </test>

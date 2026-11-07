@@ -137,16 +137,10 @@ namespace Test
             {
                 if (param.input().empty())
                     SYNET_ERROR("OnnxRuntime model has dynamic size but input size in parameters is absent!");
-                if (param.input()[0].dims().size() == 4)
-                {
-                    _inputShapes[0][2] = param.input()[0].dims()[2];
-                    _inputShapes[0][3] = param.input()[0].dims()[3];
-                }
-                else
-                {
-                    _inputShapes[0][2] = param.input()[0].shape()[2].size();
-                    _inputShapes[0][3] = param.input()[0].shape()[3].size();
-                }
+                if (param.input()[0].dims().size() != 4)
+                    SYNET_ERROR("Test parameter input.dims must have 4 dimensions!");
+                _inputShapes[0][2] = param.input()[0].dims()[2];
+                _inputShapes[0][3] = param.input()[0].dims()[3];
             }
 
             for (size_t i = 0; i < _inputShapes.size(); ++i)

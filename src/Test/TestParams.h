@@ -41,16 +41,10 @@ namespace Test
     typedef Synet::Shapes Shapes;
     typedef Synet::Floats Floats;
 
-    struct SizeParam
-    {
-        CPL_PARAM_VALUE(int32_t, size, 0);
-    };
-
     struct InputParam
     {
         CPL_PARAM_VALUE(String, name, String());
         CPL_PARAM_VALUE(Shape, dims, Shape());
-        CPL_PARAM_VECTOR(SizeParam, shape);
         CPL_PARAM_VALUE(String, from, String());
         CPL_PARAM_VALUE(Floats, data, Floats());
     };

@@ -187,22 +187,9 @@ namespace Test
             Shapes srcShapes;
             for (size_t i = 0; i < _param().input().size(); ++i)
             {
-                const InputParam& shape = _param().input()[i];
-                srcNames.push_back(shape.name());
-                Shape srcShape;
-                if (shape.dims().size())
-                    srcShape = shape.dims();
-                else
-                {
-                    for (size_t j = 0; j < shape.shape().size(); ++j)
-                    {
-                        const SizeParam& size = shape.shape()[j];
-                        if (size.size() > 0)
-                            srcShape.push_back(size.size());
-                        else
-                            SYNET_ERROR("Test parameter input.shape.size must be > 0!");
-                    }
-                }
+                const InputParam& input = _param().input()[i];
+                srcNames.push_back(input.name());
+                Shape srcShape = input.dims();
                 if (srcShape.size() > 1)
                 {
                     if (_options.batchSize != 1 && srcShape[0] == 1)
@@ -211,7 +198,7 @@ namespace Test
                         srcShape = Shape({ srcShape[0], srcShape[2], srcShape[3], srcShape[1] });
                 }
                 if (srcShape.empty())
-                    SYNET_ERROR("Test parameter input.shape is empty!");
+                    SYNET_ERROR("Test parameter input.dims is empty!");
                 srcShapes.push_back(srcShape);
             }
 
