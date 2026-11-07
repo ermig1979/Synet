@@ -65,6 +65,8 @@ namespace Synet
 
     //--------------------------------------------------------------------------------------------------
 
+    bool BinaryOperationToBias(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst);
+
     bool ReduceTensorIteratorIO(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst);
 
     bool TransposeInnerProduct(const LayerParams& src, size_t& index, const Bytes& bin, Bytes& buf, LayerParams& dst);
@@ -74,6 +76,8 @@ namespace Synet
     bool MergeCurrentAndBias(const LayerParams& src, size_t& index, Bytes& bin, LayerParams& dst, Changes& changes);
 
     bool MergeDynamicQuantizedInnerProduct(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
+    bool MergeDynamicQuantizedInnerProductV2(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
     bool MergePowerAndScaleAndPower(const LayerParams& src, size_t& index, Bytes& bin, Bytes& buf, LayerParams& dst, Changes& changes);
 
@@ -105,7 +109,7 @@ namespace Synet
 
     bool MergeSpaceToDepth(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
 
-    bool MergeNormalize(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+    bool MergeNormalize(const LayerParams& src, size_t& index, bool isNhwc, LayerParams& dst, Changes& changes);
 
     bool MergeNormalizeV2(const LayerParams& src, size_t& index, bool isNhwc, LayerParams& dst, Changes& changes);
 
@@ -196,4 +200,7 @@ namespace Synet
     bool SkipTwoPermutes(const LayerParams& src, size_t& index, LayerParams& dst);
 
     bool SimplifyInterp(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
+    bool SimplifyInterpV2(const LayerParams& src, size_t& index, LayerParams& dst, Changes& changes);
+
 }

@@ -337,6 +337,20 @@ namespace Synet
 
     //-------------------------------------------------------------------------------------------------
 
+    SYNET_INLINE bool IsMetaConst64i(const LayerParams& layers, const String & name, Longs value = Longs())
+    {
+        size_t index = GetLayerIndex(layers, name);
+        if (index >= layers.size())
+            return false;
+        const LayerParam& layer = layers[index];
+        if (layer.type() == LayerTypeMeta && layer.meta().type() == MetaTypeConst &&
+            layer.meta().alpha().type() == TensorType64i && (value.empty() || layer.meta().alpha().i64() == value))
+            return true;
+        return false;
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     inline TensorFormat Cache(const LayerParam& layer, TensorFormat value, TensorFormatMap* tensorFormatMap = NULL)
     {
         if (tensorFormatMap)

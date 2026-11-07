@@ -302,7 +302,7 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "Slice" && !ConvertSliceNode(node, trans, network.layers(), layer, &tensorFormatMap))
                 return ErrorMessage(i, node);
-            if (node.op_type() == "Softmax" && !ConvertSoftmaxNode(node, trans, network.layers(), original, layer))
+            if (node.op_type() == "Softmax" && !ConvertSoftmaxNode(node, trans, network.layers(), layer, &tensorFormatMap))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Split" && !ConvertSplitNode(node, trans, network.layers(), layer))
                 return ErrorMessage(i, node);
@@ -310,7 +310,7 @@ namespace Synet
                 return ErrorMessage(i, node);
             if (node.op_type() == "Squeeze" && !ConvertSqueezeNode(node, network.layers(), layer))
                 return ErrorMessage(i, node);
-            if (node.op_type() == "Sub" && !ConvertSubNode(node, network.layers(), original, layer, reordered))
+            if (node.op_type() == "Sub" && !ConvertSubNode(node, network.layers(), original, onnxParam, layer, reordered))
                 return ErrorMessage(i, node);
             if (node.op_type() == "Tanh" && !ConvertTanhNode(node, layer))
                 return ErrorMessage(i, node);

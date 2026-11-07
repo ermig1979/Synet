@@ -24,7 +24,8 @@
 
 #include "Cvt/Optimizer/Common.h"
 #include "Cvt/Optimizer/Optimizer.h"
-#include "Cvt/Optimizer/Bf16OptSetter.h"
+#include "Cvt/Bf16/Bf16OptSetter.h"
+#include "Cvt/Int8/Int8Quantizer.h"
 
 namespace Synet
 {
@@ -60,6 +61,9 @@ namespace Synet
             return false;
         if (!RemoveUnusedConst(network.layers()))
             return false;
+        Int8Quantizer int8Quantizer(_param.int8());
+        if (!int8Quantizer.Run(network, bin))
+            return false;
         if (_param.reuseLayers())
         {
             if (!ReuseLayers(network))
@@ -81,6 +85,8 @@ namespace Synet
             case 0:
             {
                 if (ReduceTensorIteratorIO(network.layers(), i, bin, buf, merged))
+                    continue;
+                if (BinaryOperationToBias(network.layers(), i, bin, buf, merged))
                     continue;
                 break;
             }
@@ -111,6 +117,8 @@ namespace Synet
                 if (MergeInnerProductAndScale(network.layers(), i, bin, buf, merged, changes))
                     continue;
                 if (SimplifyInterp(network.layers(), i, merged, changes))
+                    continue;
+                if (SimplifyInterpV2(network.layers(), i, merged, changes))
                     continue;
                 break;
             }
@@ -148,7 +156,7 @@ namespace Synet
                     continue;
                 if (MergeSwish(network.layers(), i, merged, changes))
                     continue;
-                if (MergeNormalize(network.layers(), i, merged, changes))
+                if (MergeNormalize(network.layers(), i, isNhwc, merged, changes))
                     continue;
                 if (MergeNormalizeV2(network.layers(), i, isNhwc, merged, changes))
                     continue;
@@ -191,6 +199,8 @@ namespace Synet
                 if (MergePoolingStatistics(network.layers(), i, merged, changes))
                     continue;
                 if (MergeDynamicQuantizedInnerProduct(network.layers(), i, merged, changes))
+                    continue;
+                if (MergeDynamicQuantizedInnerProductV2(network.layers(), i, merged, changes))
                     continue;
                 break;
             }

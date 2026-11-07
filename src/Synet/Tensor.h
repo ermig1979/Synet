@@ -64,7 +64,7 @@ namespace Synet
 
     SYNET_INLINE String ToChar(TensorType t)
     {
-        const char* tts[] = { "?", "f", "i", "u", "u", "l", "l", "~", "b", "h" };
+        const char* tts[] = { "?", "f", "i", "i", "u", "l", "l", "~", "b", "h" };
         return String(tts[int(t) + 1]);
     }
 

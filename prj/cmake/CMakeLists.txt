@@ -31,6 +31,7 @@ endif()
 if(NOT((SYNET_TEST STREQUAL "all") OR (SYNET_TEST STREQUAL "none") OR
        (SYNET_TEST STREQUAL "inference_engine") OR (SYNET_TEST STREQUAL "onnx") OR 
        (SYNET_TEST STREQUAL "optimizer") OR (SYNET_TEST STREQUAL "bf16") OR
+       (SYNET_TEST STREQUAL "int8") OR
        (SYNET_TEST STREQUAL "multi_threads") OR (SYNET_TEST STREQUAL "video") OR
        (SYNET_TEST STREQUAL "use_samples")))
     message(FATAL_ERROR "Unknown value of SYNET_TEST: '${SYNET_TEST}'!")
