@@ -76,17 +76,7 @@ namespace Test
                 String decType = _param.detection().decoder();
                 if (compType == "0" || compType == "false" || compType == "skip")
                     continue;
-                float compareThreshold = _options.compareThreshold;
-                if (_options.bf16)
-                {
-                    if (_param.output().size() && _param.output()[d].bf16Threshold() != 0.0f)
-                        compareThreshold = _param.output()[d].bf16Threshold();
-                }
-                else
-                {
-                    if (_param.output().size() && _param.output()[d].fp32Threshold() != 0.0f)
-                        compareThreshold = _param.output()[d].fp32Threshold();
-                }
+                float compareThreshold = CompareThreshold(_param.output()[d]);
                 const Tensor& f = first[d];
                 const Tensor& s = second[d];
 
@@ -132,6 +122,27 @@ namespace Test
         }
 
      private:
+        float CompareThreshold(const OutputParam & param) const
+        {
+            float compareThreshold = _options.compareThreshold;
+            if (_options.dynamicQuantization)
+            {
+                if (_param.output().size() && param.int8Threshold() != 0.0f)
+                    compareThreshold = param.int8Threshold();
+            }
+            else if (_options.bf16)
+            {
+                if (_param.output().size() && param.bf16Threshold() != 0.0f)
+                    compareThreshold = param.bf16Threshold();
+            }
+            else
+            {
+                if (_param.output().size() && param.fp32Threshold() != 0.0f)
+                    compareThreshold = param.fp32Threshold();
+            }
+            return compareThreshold;
+        }
+
         bool Compare(float a, float b, float t, float& e) const
         {
             float d = ::fabs(a - b);
@@ -379,17 +390,7 @@ namespace Test
 
         bool CompareRegions(const Tensors& f, const Tensors& s, const String& failed) const
         {
-            float compareThreshold = _options.compareThreshold;
-            if (_options.bf16)
-            {
-                if (_param.output().size() && _param.output()[0].bf16Threshold() != 0.0f)
-                    compareThreshold = _param.output()[0].bf16Threshold();
-            }
-            else
-            {
-                if (_param.output().size() && _param.output()[0].fp32Threshold() != 0.0f)
-                    compareThreshold = _param.output()[0].fp32Threshold();
-            }
+            float compareThreshold = CompareThreshold(_param.output()[0]);
             Regions rf = _regionDetection.GetRegions(f, 1, 1, _param.detection().confidence(), _options.regionOverlap);
             Regions rs = _regionDetection.GetRegions(s, 1, 1, _param.detection().confidence(), _options.regionOverlap);
             SortRegionsByProb(rf);

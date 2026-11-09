@@ -99,6 +99,7 @@ namespace Test
         float regionOverlap;
         double statFilter;
         bool bf16;
+        bool dynamicQuantization;
         bool saveUnoptimized;
         bool pinThread;
         String ortProvider;
@@ -155,6 +156,7 @@ namespace Test
             regionOverlap = FromString<float>(GetArg("-ro", "0.5"));
             statFilter = FromString<double>(GetArg("-sf", "0.0"));
             bf16 = FromString<bool>(GetArg("-bf", "0"));
+            dynamicQuantization = FromString<bool>(GetArg("-dq", "0"));
             saveUnoptimized = FromString<bool>(GetArg("-su", "0"));
             pinThread = FromString<bool>(GetArg("-pt", "1"));
             ortProvider = GetArg("-op", "cpu", false);
