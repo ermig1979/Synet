@@ -74,7 +74,6 @@ TEST inference_engine "" test_011f vehicles 40 2 1 1 1 004 2
 #TEST inference_engine "" test_017f faces 100 0 1 1 1 000 2
 #TEST inference_engine "" test_018f license_plates 100 0 1 1 1 001 2
 #TEST inference_engine "" test_019f face 500 0 1 1 1 000 2
-#TEST inference_engine "" test_020f persons 1 0 1 1 0 000 2 ???
 #TEST inference_engine "" test_021f persons 100 0 1 1 0 000 2
 #TEST inference_engine "" test_022f persons 1 0 0 1 0 000 2
 
