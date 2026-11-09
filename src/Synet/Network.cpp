@@ -703,7 +703,14 @@ namespace Synet
 
     bool Network::Is8i() const
     {
-        return false;
+        bool has8i = false;
+        for (size_t i = 0; i < _param().layers().size() && !has8i; ++i)
+        {
+            const LayerParam& layer = _param().layers()[i];
+            if (layer.type() == LayerTypeDynamicQuantizedInnerProduct)
+                has8i = true;
+        }
+        return has8i;
     }
 
     bool Network::Is16b() const

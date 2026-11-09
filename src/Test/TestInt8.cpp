@@ -47,7 +47,7 @@ namespace Test
     {
         virtual String Type() const
         {
-            return "fp32";
+            return SynetNetwork::Type() == String() ? "fp32" : SynetNetwork::Type();
         }
 
         virtual int PerfLogMask() const
@@ -60,7 +60,7 @@ namespace Test
     {
         virtual String Type() const
         {
-            return "int8";
+            return SynetNetwork::Type() == String() ? "int8" : SynetNetwork::Type();
         }
     };
 }
@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
     if (options.mode == "convert")
     {
         int64_t start = Cpl::TimeCounter();
-        std::cout << "Convert Synet FP32 model to INT8 :";
+        std::cout << "Convert Synet " << (options.bf16 ? "BF16" : "FP32") << " model to INT8 : ";
         options.result = Test::ConvertFp32ToInt8(options);
         if (options.result)
             std::cout << " finished successfully in " << Test::ExecTimeStr(start) << "." << std::endl;

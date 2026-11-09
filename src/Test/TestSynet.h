@@ -41,7 +41,12 @@ namespace Test
 
         virtual String Type() const
         {
-            return _net.Is8i() ? "int8" : _net.Is16b() ? "bf16" : "fp32";
+            if (_net.Empty())
+                return String();
+            String type = _net.Is16b() ? "bf16" : "fp32";
+            if (_net.Is8i())
+                type = type + "+int8";
+            return type;
         }
 
         virtual size_t SrcCount() const
