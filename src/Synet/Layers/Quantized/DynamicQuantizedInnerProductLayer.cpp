@@ -65,7 +65,7 @@ namespace Synet
 
     int64_t DynamicQuantizedInnerProductLayer::Flop() const
     {
-        return _M * _N * (_K * 2 + (_biasTerm ? 2 : 1));
+        return _batch * _M * _N * (_K * 2 + (_biasTerm ? 2 : 1));
     }
 
     void DynamicQuantizedInnerProductLayer::CompactWeight()
@@ -88,14 +88,14 @@ namespace Synet
         _typeA = src[0]->GetType();
         if (_typeA != TensorType32f && _typeA != TensorType16b)
             SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32 or BF16 input[0]!");
+        _elemA = _typeA == TensorType32f ? 4 : 2;
         _typeC = dst[0]->GetType();
         if (_typeC != TensorType32f && _typeC != TensorType16b)
             SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32 or BF16 output!");
-
-        _K = src[0]->Size(-1);
-        _M = src[0]->Size(0, -1);
+        _elemC = _typeC == TensorType32f ? 4 : 2;
 
         const InnerProductParam& ip = this->Param().innerProduct();
+        _axis = (int)src[0]->Index(ip.axis());
         _biasTerm = ip.biasTerm();
         _activation = ip.activationType();
         _params[0] = ip.activationParam0();
@@ -103,14 +103,19 @@ namespace Synet
 
         const Tensors& weight = ((Tensors&)this->Weight());
 
+        _K = src[0]->Size(-1);
+
         size_t idx = 0, idxS = 0, idxB = 0, idxA = 0;
         if (_constB)
         {
+            _batch = 1;
+            _M = src[0]->Size(0, -1);
             if (weight.empty())
                 SYNET_ERROR("DynamicQuantizedInnerProductLayer with 1 input must have at least 1 weights!");
             _typeB = weight[0].GetType();
             if (_typeB != TensorType32f && _typeB != TensorType8i)
                 SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32 or INT8 weight[0]!");
+            _elemB = _typeB == TensorType32f ? 4 : 1;
             _N = weight[0].Axis(-1);
             if (_N != ip.outputNum() || weight[0].Axis(0) != _K || (ip.outputNum() != _N && ip.outputNum() != 0))
                 SYNET_ERROR("DynamicQuantizedInnerProductLayer: wrong weight[0] size!");
@@ -128,10 +133,13 @@ namespace Synet
         }
         else
         {
+            _batch = _axis > 0 ? src[0]->Size(0, _axis - 1) : 1;
+            _M = src[0]->Size(Max<ptrdiff_t>(0, _axis - 1), _axis);
             _typeB = src[1]->GetType();
             if (_typeB != TensorType32f && _typeB != TensorType16b)
                 SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32 or BF16 input[1]!");
-            if (src[1]->Size(0, -1) != _K)
+            _elemB = _typeB == TensorType32f ? 4 : 2;
+            if (src[1]->Size(Max<ptrdiff_t>(0, _axis - 1), _axis) != _K)
                 SYNET_ERROR("DynamicQuantizedInnerProductLayer: wrong src[1] size!");
             _N = src[1]->Size(-1);
         }
@@ -200,7 +208,7 @@ namespace Synet
         }
 
         std::stringstream desc;
-        desc << _M << "x" << _K << "-" << _N << " ";
+        desc << _batch << "x" << _M << "x" << _K << "-" << _N << " ";
         desc << ToChar(_typeA) << ToChar(_typeB) << ToChar(_typeC) << " ";
         desc << src.size() << (_biasTerm ? "b" : "o");
         if (_activation)
@@ -222,7 +230,19 @@ namespace Synet
         if (_dynamicQuantizedInnerProduct32f.Enable())
             _dynamicQuantizedInnerProduct32f.Forward(src[0]->Data<float>(), Layer::Buf8u(buf, 0), dst[0]->Data<float>());
         else if (_dynamicQuantizedInnerProduct16b.Enable())
-            _dynamicQuantizedInnerProduct16b.Forward(src[0]->RawData(), src.size() > 1 ? src[1]->RawData() : NULL, Layer::Buf8u(buf, 0), dst[0]->RawData());
+        {
+            const uint8_t* A = src[0]->RawData();
+            const uint8_t* B = src.size() > 1 ? src[1]->RawData() : NULL;
+            uint8_t* buf0 = Layer::Buf8u(buf, 0);
+            uint8_t* C = dst[0]->RawData();
+            for (size_t b = 0; b < _batch; ++b)
+            {
+                _dynamicQuantizedInnerProduct16b.Forward(A, B, buf0, C);
+                A += _M * _K * _elemA;
+                B += _K * _N * _elemB;
+                C += _M * _N * _elemC;
+            }
+        }
         else
 #endif
         {

@@ -111,7 +111,7 @@ namespace Synet
         {
             LayerParam& layer = layers[i];
             bool changed = false;
-            if (!ConvertInnerProduct(layer, bin, changed))
+            if (!ConvertInnerProduct(layer, bin))
                 return false;
             if (changed)
                 converted++;
@@ -125,63 +125,61 @@ namespace Synet
         return true;
     }
 
-    bool Int8Quantizer::ConvertInnerProduct(LayerParam& layer, Bytes& bin, bool& converted)
+    bool Int8Quantizer::ConvertInnerProduct(LayerParam& layer, Bytes& bin)
     {
-        converted = false;
-        if (layer.type() != LayerTypeInnerProduct || layer.src().size() != 1)
+        if (layer.type() != LayerTypeInnerProduct)
             return true;
-        if (layer.weight().empty())
-            return true;
-        const WeightParam& srcWeight = layer.weight()[0];
-        if (srcWeight.type() != TensorType32f || srcWeight.dim().size() != 2)
-            return true;
-
-        const bool transB = layer.innerProduct().transposeB();
-        const size_t K = transB ? srcWeight.dim()[0] : srcWeight.dim()[1];
-        const size_t N = transB ? srcWeight.dim()[1] : srcWeight.dim()[0];
-        if (K < _param.minK() || N < _param.minN())
-            return true;
-        if (layer.innerProduct().transposeB())
-            return true;
-        if (layer.innerProduct().outputNum() != 0 && layer.innerProduct().outputNum() != N)
-            SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' outputNum does not match weight shape!");
-        if (srcWeight.size() < K * N * sizeof(float))
-            SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' weight[0] is truncated!");
 
         const bool biasTerm = layer.innerProduct().biasTerm();
         const bool prelu = layer.innerProduct().activationType() == ActivationFunctionTypePrelu;
-        const size_t need = 1 + (biasTerm ? 1 : 0) + (prelu ? 1 : 0);
+        const size_t need = (layer.src().size() == 1 ? 1 : 0) + (biasTerm ? 1 : 0) + (prelu ? 1 : 0);
         if (layer.weight().size() < need)
             SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' has " << layer.weight().size() << " weights instead of " << need << "!");
 
-        size_t srcIndex = 1;
+        size_t srcIndex = 0;
         std::vector<WeightParam> weights;
-        if (_param.quantizeWeight())
+        if (_param.innerProductNoConstWeight() && layer.src().size() == 2)
         {
-            const float* pWeight = GetWeight<float>(bin, srcWeight);
-            std::vector<int8_t> quantized;
-            std::vector<float> scale;
-            if (!QuantizeWeight(pWeight, K, N, transB, quantized, scale))
-                return false;
-            const TensorFormat format = srcWeight.format();
-            weights.resize(2);
-            AppendWeight(bin, quantized.data(), quantized.size() * sizeof(int8_t), Shp(K, N), TensorType8i, format, weights[0]);
-            AppendWeight(bin, scale.data(), scale.size() * sizeof(float), Shp(N), TensorType32f, TensorFormatNchw, weights[1]);
-            converted = true;
+
         }
         else
         {
+            if (layer.src().size() != 1)
+                return true;
+            if (layer.weight().empty())
+                return true;
+            const WeightParam& srcWeight = layer.weight()[0];
+            if (srcWeight.type() != TensorType32f || srcWeight.dim().size() != 2)
+                return true;
+
+            const bool transB = layer.innerProduct().transposeB();
+            const size_t K = transB ? srcWeight.dim()[0] : srcWeight.dim()[1];
+            const size_t N = transB ? srcWeight.dim()[1] : srcWeight.dim()[0];
+            if (K < _param.minK() || N < _param.minN())
+                return true;
+            if (layer.innerProduct().transposeB())
+                return true;
+            if (layer.innerProduct().outputNum() != 0 && layer.innerProduct().outputNum() != N)
+                SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' outputNum does not match weight shape!");
+            if (srcWeight.size() < K * N * sizeof(float))
+                SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' weight[0] is truncated!");
+            
+            srcIndex++;
             weights.resize(1);
             weights[0] = srcWeight;
             if (!transB)
                 TransposeWeight(weights[0], bin);
+            layer.innerProduct().outputNum() = (uint32_t)N;
         }
+
         if (biasTerm)
         {
             const WeightParam& biasWeight = layer.weight()[srcIndex++];
-            if (biasWeight.type() != TensorType32f || TensorSize(biasWeight.dim()) != N)
-                SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' bias must be FP32 of size " << N << "!");
-            if (biasWeight.size() < N * sizeof(float))
+            if (biasWeight.type() != TensorType32f)
+                SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' bias must be FP32 !");
+            if (layer.src().size() == 1 && TensorSize(biasWeight.dim()) != layer.innerProduct().outputNum())
+                SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' bias must has size " << layer.innerProduct().outputNum() << "!");
+            if (biasWeight.size() < layer.innerProduct().outputNum() * sizeof(float))
                 SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' bias is truncated!");
             weights.push_back(biasWeight);
         }
@@ -195,7 +193,6 @@ namespace Synet
         }
 
         layer.type() = LayerTypeDynamicQuantizedInnerProduct;
-        layer.innerProduct().outputNum() = (uint32_t)N;
         layer.weight() = weights;
         return true;
     }

@@ -52,7 +52,8 @@ namespace Synet
         void Activation(float * dst, size_t M);
 
         TensorType _typeA, _typeB, _typeC;
-        size_t _M, _N, _K;
+        size_t _elemA, _elemB, _elemC;
+        size_t _axis, _batch, _M, _N, _K;
         bool _biasTerm, _constB, _overflow;
         ActivationFunctionType _activation;
         float _params[2];
