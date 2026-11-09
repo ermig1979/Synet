@@ -53,6 +53,13 @@ namespace Synet
         return false;
     }
 
+    LowPrecisionType DynamicQuantizedInnerProductLayer::LowPrecision(TensorType type) const
+    {
+        if (type == TensorType16b)
+            return LowPrecisionTypeActive;
+        return LowPrecisionTypeNone;
+    }
+
     size_t DynamicQuantizedInnerProductLayer::MemoryUsage() const
     {
         size_t size = Layer::MemoryUsage();

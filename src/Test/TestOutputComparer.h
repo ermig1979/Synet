@@ -127,18 +127,29 @@ namespace Test
             float compareThreshold = _options.compareThreshold;
             if (_options.dynamicQuantization)
             {
-                if (_param.output().size() && param.int8Threshold() != 0.0f)
-                    compareThreshold = param.int8Threshold();
-            }
-            else if (_options.bf16)
-            {
-                if (_param.output().size() && param.bf16Threshold() != 0.0f)
-                    compareThreshold = param.bf16Threshold();
+                if (_options.bf16)
+                {
+                    if (_param.output().size() && param.bf16int8Threshold() != 0.0f)
+                        compareThreshold = param.bf16int8Threshold();
+                }
+                else
+                {
+                    if (_param.output().size() && param.fp32int8Threshold() != 0.0f)
+                        compareThreshold = param.fp32int8Threshold();
+                }
             }
             else
             {
-                if (_param.output().size() && param.fp32Threshold() != 0.0f)
-                    compareThreshold = param.fp32Threshold();
+                if (_options.bf16)
+                {
+                    if (_param.output().size() && param.bf16Threshold() != 0.0f)
+                        compareThreshold = param.bf16Threshold();
+                }
+                else
+                {
+                    if (_param.output().size() && param.fp32Threshold() != 0.0f)
+                        compareThreshold = param.fp32Threshold();
+                }
             }
             return compareThreshold;
         }
