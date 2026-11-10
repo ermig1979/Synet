@@ -19,8 +19,9 @@ THREAD=$6
 FORMAT=$7
 BATCH=$8
 BF16=$9
-VERSION=${10}
-PERF=${11}
+INT8=${10}
+VERSION=${11}
+PERF=${12}
 
 if [ "${BF16}" = "1" ]; then
   THRESHOLD=0.05; QUANTILE=0.0; METHOD=-1; NUM_FMT="bf16"
@@ -35,6 +36,9 @@ elif [ "$FRAMEWORK" = "onnx" ]; then
   #PATHES="-fw=$DIR/modified_other.onnx -sm=$DIR/synet.xml"
 fi
 PATHES="$PATHES -sw=$DIR/synet.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
+if [ "${INT8}" = "1" ]; then
+  NUM_FMT="${NUM_FMT}_int8"
+fi
 
 if [ "$GROUP" = "" ]; then
   LOG=./test/"$FRAMEWORK"/"$NAME"/"$PREFIX"_"$NAME"_t"$THREAD"_f"$FORMAT"_b"$BATCH"_"$NUM_FMT"_v"$VERSION"_p"$PERF".txt
@@ -51,28 +55,26 @@ if [ -f $IMAGE/descript.ion ];then rm $IMAGE/descript.ion; fi
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
 if [ "$THREAD" = "0" ]; then SU=1; else SU=0; fi
-"$BIN" -m=convert $PATHES -tf=$FORMAT -cs=1 -qm=$METHOD -qq=0.0001 -dp=0 -su=$SU -bf=$BF16
+"$BIN" -m=convert $PATHES -tf=$FORMAT -cs=1 -qm=$METHOD -qq=0.0001 -dp=0 -su=$SU -bf=$BF16 -dq=$INT8
 if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 
-"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -bf=$BF16 -re=0 -et=10.0 -ie=10 -be=100 -dp=3 -dpf=6 -dpl=2 -dpp=4 -ar=1 -rt=0.3 -cs=0 -pl=$PERF -ln=$LOG
+"$BIN" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=$FORMAT -bs=$BATCH -ct=$THRESHOLD -cq=$QUANTILE -bf=$BF16 -dq=$INT8 -re=0 -et=10.0 -ie=10 -be=100 -dp=3 -dpf=6 -dpl=2 -dpp=4 -ar=1 -rt=0.3 -cs=0 -cp=0 -pl=$PERF -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
-#TEST inference_engine "" test_010f faces 50 0 1 1 0 002 2
-#TEST inference_engine "" test_011f vehicles 40 0 1 1 1 004 2
-#TEST inference_engine "" test_012f persons 10 0 1 1 1 001 2
-#TEST inference_engine "" test_013f persons 20 0 1 1 1 001 2
-#TEST inference_engine "" test_015f license_plates 100 0 1 1 0 000 2
-#TEST inference_engine "" test_016f face 500 0 1 1 1 000 2
-#TEST inference_engine "" test_017f faces 100 0 1 1 1 000 2
-#TEST inference_engine "" test_018f license_plates 100 0 1 1 1 001 2
-#TEST inference_engine "" test_019f face 500 0 1 1 1 000 2
-#TEST inference_engine "" test_021f persons 100 0 1 1 0 000 2
-#TEST inference_engine "" test_022f persons 1 0 0 1 0 000 2
+#TEST inference_engine "" test_010f faces 50 0 1 1 0 0 002 2
+#TEST inference_engine "" test_011f vehicles 40 0 1 1 1 0 004 2
+#TEST inference_engine "" test_012f persons 10 0 1 1 1 0 001 2
+#TEST inference_engine "" test_013f persons 20 0 1 1 1 0 001 2
+#TEST inference_engine "" test_015f license_plates 100 0 1 1 0 0 000 2
+#TEST inference_engine "" test_016f face 500 0 1 1 1 0 000 2
+#TEST inference_engine "" test_017f faces 100 0 1 1 1 0 000 2
+#TEST inference_engine "" test_018f license_plates 100 0 1 1 1 0 001 2
+#TEST inference_engine "" test_019f face 500 0 1 1 1 0 000 2
+#TEST inference_engine "" test_021f persons 100 0 1 1 0 0 000 2
+#TEST inference_engine "" test_022f persons 1 0 0 1 0 0 000 2
 
-#TEST onnx "" test_000 face 80 10 1 1 0 006 2
-TEST onnx "" test_001 faces 30 0 1 1 0 004 2
-#TEST onnx "" test_002 faces 1 0 1 1 0 000 2
-
+TEST onnx "" test_000 face 80 1 1 1 1 1 006 2
+#TEST onnx "" test_001 faces 30 0 1 1 0 0 004 2
 
 exit

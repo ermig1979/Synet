@@ -42,6 +42,7 @@ namespace Test
         if (FileExists(options.testParam) && !param.Load(options.testParam))
             SYNET_ERROR("Can't load file '" << options.testParam << "' !");
         param().optimizer().bf16().enable() = options.bf16;
+        param().optimizer().int8().enable() = options.dynamicQuantization;
         param().optimizer().saveUnoptimized() = options.saveUnoptimized;
         return Synet::ConvertOnnxToSynet(options.firstWeight, options.tensorFormat == 1, options.secondModel, options.secondWeight, param().onnx(), param().optimizer());
     }

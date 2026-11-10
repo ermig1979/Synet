@@ -13,6 +13,10 @@
 		<item>
 			<name>output</name>
 			<compare>cos_dist</compare>
+			<fp32Threshold>0.0001</fp32Threshold>
+			<bf16Threshold>0.0004</bf16Threshold>
+			<fp32int8Threshold>0.0001</fp32int8Threshold>
+			<bf16int8Threshold>0.0010</bf16int8Threshold>
 		</item>
 	</output>
 </test>

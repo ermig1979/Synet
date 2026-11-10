@@ -52,7 +52,7 @@ namespace Test
     {
         virtual String Type() const
         {
-            return "fp32";
+            return SynetNetwork::Type() == String() ? "fp32" : SynetNetwork::Type();
         }
 
         virtual int PerfLogMask() const
@@ -65,7 +65,7 @@ namespace Test
     {
         virtual String Type() const
         {
-            return "bf16";
+            return SynetNetwork::Type() == String() ? "bf16" : SynetNetwork::Type();
         }
     };
 }

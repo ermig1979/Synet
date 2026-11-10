@@ -30,17 +30,34 @@
 #include "TestCompare.h"
 #include "TestReport.h"
 
+#include "Cvt/Deoptimizer/Deoptimizer.h"
+#include "Cvt/Optimizer/Optimizer.h"
 #include "Cvt/Int8/Int8Quantizer.h"
 
 namespace Test
 {
-    bool ConvertFp32ToInt8(const Test::Options& options)
+    bool ConvertFp32ToInt8Bf16(const Test::Options& options)
     {
         Test::TestParamHolder param;
         if (FileExists(options.testParam) && !param.Load(options.testParam))
             SYNET_ERROR("Can't load file '" << options.testParam << "' !");
-        param().optimizer().int8().enable() = true;
-        return Synet::Int8QuantizeSynetModel(options.firstModel, options.firstWeight, options.secondModel, options.secondWeight, param().optimizer().int8());
+        if (options.bf16)
+        {
+            String deoptPath = Test::MakePath(options.outputDirectory, "deopt.xml");
+            if (!CreateOutputDirectory(deoptPath) || !Synet::DeoptimizeSynetModel(options.firstModel, deoptPath))
+                SYNET_ERROR("Can't perform model deoptimizations!");
+            param().optimizer().bf16().enable() = true;
+            param().optimizer().int8().enable() = options.dynamicQuantization;
+            param().optimizer().saveUnoptimized() = options.saveUnoptimized;
+            return Synet::OptimizeSynetModel(deoptPath, options.firstWeight, options.secondModel, options.secondWeight, param().optimizer());
+        }
+        else if(options.dynamicQuantization)
+        {
+            param().optimizer().int8().enable() = true;
+            return Synet::Int8QuantizeSynetModel(options.firstModel, options.firstWeight, options.secondModel, options.secondWeight, param().optimizer().int8());
+        }
+        else
+            SYNET_ERROR("Can't convert FP32 model to FP32!");
     }
 
     struct SynetFp32Network : public SynetNetwork
@@ -56,11 +73,11 @@ namespace Test
         }
     };
 
-    struct SynetInt8Network : public SynetNetwork
+    struct SynetInt8Bf16Network : public SynetNetwork
     {
         virtual String Type() const
         {
-            return SynetNetwork::Type() == String() ? "int8" : SynetNetwork::Type();
+            return SynetNetwork::Type() == String() ? "int8/bf16" : SynetNetwork::Type();
         }
     };
 }
@@ -75,8 +92,8 @@ int main(int argc, char* argv[])
     if (options.mode == "convert")
     {
         int64_t start = Cpl::TimeCounter();
-        std::cout << "Convert Synet " << (options.bf16 ? "BF16" : "FP32") << " model to INT8 : ";
-        options.result = Test::ConvertFp32ToInt8(options);
+        std::cout << "Convert Synet FP32 model to INT8/BF16 : ";
+        options.result = Test::ConvertFp32ToInt8Bf16(options);
         if (options.result)
             std::cout << " finished successfully in " << Test::ExecTimeStr(start) << "." << std::endl;
         else
@@ -84,7 +101,7 @@ int main(int argc, char* argv[])
     }
     else if (options.mode == "compare")
     {
-        Test::Comparer<Test::SynetFp32Network, Test::SynetInt8Network> comparer(options);
+        Test::Comparer<Test::SynetFp32Network, Test::SynetInt8Bf16Network> comparer(options);
         options.result = comparer.Run();
     }
     else
