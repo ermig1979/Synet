@@ -105,10 +105,21 @@ namespace Test
         typedef std::vector<Color> Colors;
         mutable Colors _colors;
 
+        String SynetName() const
+        {
+            String name = String("Synet") + (_options.bf16 ? "_bf16" : "_fp32");
+            if (_options.dynamicQuantization)
+                name += "_int8";
+            return name;
+        }
+
         void PrintStartMessage() const
         {
             std::cout << "Start MultiThreadsTest for ";
-            std::cout << _options.testThreads << "-threads: " << std::endl;
+            std::cout << _options.testThreads << "-threads";
+            if (_options.dynamicQuantization)
+                std::cout << " (dynamic quantization)";
+            std::cout << ": " << std::endl;
         }
 
         bool PrintFinishMessage(int64_t start) const
@@ -623,7 +634,7 @@ namespace Test
         {
             if (_options.debugPrint)
             {
-                String name = String("Synet") + (_options.bf16 ? "_bf16" : "_fp32") + "_f" + std::to_string(_options.tensorFormat) +
+                String name = SynetName() + "_f" + std::to_string(_options.tensorFormat) +
                     "_b" + std::to_string(_options.batchSize) + "_i" + std::to_string(i) + "_t" + std::to_string(thread) + ".log";
                 String path = MakePath(_options.outputDirectory, name);
                 std::ofstream log(path);
@@ -684,7 +695,7 @@ namespace Test
                     ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
                     Simd::DrawRectangle(image, l, t, r, b, GetColor(region.id), std::min<int>(image.height / 500 + 1, 3));
                 }
-                String outputPath = MakePath(_options.outputDirectory, String("Synet") + (_options.bf16 ? "_bf16" : "_fp32")
+                String outputPath = MakePath(_options.outputDirectory, SynetName()
                     + "_t" + std::to_string(thread) + "_" + GetNameByPath(inputPath));
                 if (!SaveImage(image, outputPath))
                     SYNET_ERROR("Can't write '" << outputPath << "' image!");

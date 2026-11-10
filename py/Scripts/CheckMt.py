@@ -52,36 +52,38 @@ class Test():
 			self.bf16 = vals[5]
 		else :
 			self.bf16 = "0"
+		if len(vals) > 6 and args.int8 :
+			self.int8 = vals[6]
+		else :
+			self.int8 = "0"
 		self.path = ""
 		self.format = -1
 		
 	def TestNum(self) -> int :
+		batch = 1
+		if self.batch == "1" :
+			batch = 2
+		bf16 = 1
+		if self.bf16 == "1" :
+			bf16 = 2
+		int8 = 1
+		if self.int8 == "1" :
+			int8 = 2
 		if self.framework == "synet" :
-			if self.bf16 == "1" and self.batch == "0" :
-				return 1
-			elif self.bf16 == "1" and self.batch == "1" :
-				return 2
-			else :
-				return 0
+			return batch * (bf16 * int8 - 1)
 		else:
-			if self.batch == "1" and self.bf16 == "1":
-				return 5
-			elif self.batch == "1" and self.bf16 == "0" :
-				return 3
-			elif self.batch == "0" and self.bf16 == "1" :
-				return 3
-			else :
-				return 2
+			return 1 + batch * bf16 * int8
 			
-	def SubTest(self, format, bf16) :
+	def SubTest(self, format, bf16, int8) :
 		test = copy.deepcopy(self)
 		test.format = format
 		test.bf16 = bf16
+		test.int8 = int8
 		return test
 			
 	def Bin(self) -> str :
 		if self.framework == "synet" :
-			return "test_bf16"
+			return "test_int8"
 		else :
 			return "test_" + self.framework
 		
@@ -196,10 +198,14 @@ def OpimizeTestList(context : Context):
 	tests = []
 	for test in context.tests :
 		if test.framework != "synet" :
-			tests.append(test.SubTest(0, "0"))
-			tests.append(test.SubTest(1, "0"))
+			tests.append(test.SubTest(0, "0", "0"))
+			tests.append(test.SubTest(1, "0", "0"))
 		if test.bf16 == "1" :
-			tests.append(test.SubTest(1, "1"))
+			tests.append(test.SubTest(1, "1", "0"))
+		if test.int8 == "1" :
+			tests.append(test.SubTest(1, "0", "1"))
+		if test.bf16 == "1" and test.int8 == "1" :
+			tests.append(test.SubTest(1, "1", "1"))
 	random.shuffle(tests)
 	context.tests = tests;
 
@@ -224,7 +230,7 @@ def ValidateThreadNumber(context : Context):
 
 ###################################################################################################
 
-def RunTest(context, test, format, batch, bf16):
+def RunTest(context, test, format, batch, bf16, int8):
 	if context.error :
 		return False
 	args = context.args
@@ -253,9 +259,12 @@ def RunTest(context, test, format, batch, bf16):
 	else :
 		log = log + "m{0}_{1}__{2}_f{3}_b{4}_t{5}".format(test.framework[0], test.group, test.name, format, batch, args.internalThreads)
 	if bf16 == "1" :
-		log = log + "_bf16.txt"
+		log = log + "_bf16"
 	else :
-		log = log + "_fp32.txt"
+		log = log + "_fp32"
+	if int8 == "1" :
+		log = log + "_int8"
+	log = log + ".txt"
 
 	pathArgs = ""
 	if test.framework == "inference_engine" :
@@ -264,8 +273,12 @@ def RunTest(context, test, format, batch, bf16):
 		pathArgs += "-fw={0}/other.onnx".format(testPath)
 	elif test.framework == "synet" :
 		pathArgs += "-fm={0}/synet1.xml -fw={0}/synet1.bin".format(testPath)
-	if bf16 == "1" :
+	if bf16 == "1" and int8 == "0" :
 		pathArgs += " -sm={0}/synet2.xml -sw={0}/synet2.bin".format(testPath)
+	elif bf16 == "0" and int8 == "1" :
+		pathArgs += " -sm={0}/synet3.xml -sw={0}/synet3.bin".format(testPath)
+	elif bf16 == "1" and int8 == "1" :
+		pathArgs += " -sm={0}/synet4.xml -sw={0}/synet4.bin".format(testPath)
 	else :
 		pathArgs += " -sm={0}/synet{1}.xml -sw={0}/synet{1}.bin".format(testPath, format)
 	pathArgs += " -id={1} -od={0}/output -tp={0}/param.xml".format(testPath, imagePath)
@@ -278,14 +291,14 @@ def RunTest(context, test, format, batch, bf16):
 	
 	out = ""
 	if not args.fast and batch == 1 :
-		cmd = "{0} -m=convert {1} -tf={2} -cs=1 -bf={3}".format(binCvtPath, pathArgs, format, bf16)
+		cmd = "{0} -m=convert {1} -tf={2} -cs=1 -bf={3} -dq={4}".format(binCvtPath, pathArgs, format, bf16, int8)
 		result = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
 		out += result.stdout.decode('utf-8')
 		if result.returncode != 0 :
 			return context.Error("Conversion error in test {0} :\n{1}".format(log, out))
 		
 	num = 2 if args.fast else 10
-	cmd = "{0} -m=compare -e=3 {1} -rn=1 -wt=1 -tt={10} -ie={2} -be={2} -tf={3} -bs={4} -ct={5} -cs=1 -pt=0 -ln={6} -pl={7} -bf={8} -cp={9}".format(binTmtPath, pathArgs, num, format, batch, args.threshold, log, args.performanceLog, bf16, args.comparePrecise, args.internalThreads)
+	cmd = "{0} -m=compare -e=3 {1} -rn=1 -wt=1 -tt={10} -ie={2} -be={2} -tf={3} -bs={4} -ct={5} -cs=1 -pt=0 -ln={6} -pl={7} -bf={8} -dq={11} -cp={9}".format(binTmtPath, pathArgs, num, format, batch, args.threshold, log, args.performanceLog, bf16, args.comparePrecise, args.internalThreads, int8)
 	result = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
 	out += result.stdout.decode('utf-8')
 	if result.returncode != 0 :
@@ -301,25 +314,32 @@ def SingleThreadRun(context, beg, end):
 	for i in range(beg, end):
 		test = context.tests[i]
 		if test.format == -1 :
+			batches = {1}
+			if test.batch == "1" :
+				batches.add(2)
 			if test.framework != "synet" :
-				if not RunTest(context, test, 0, 1, "0") :
+				if not RunTest(context, test, 0, 1, "0", "0") :
 					return
-				if not RunTest(context, test, 1, 1, "0") :
-					return
-				if test.batch == "1" :
-					if not RunTest(context, test, 1, 2, "0") :
+				for batch in batches :
+					if not RunTest(context, test, 1, batch, "0", "0") :
 						return
 			if test.bf16 == "1" :
-				if not RunTest(context, test, 1, 1, "1") :
-					return
-			if test.batch == "1" and test.bf16 == "1" :
-				if not RunTest(context, test, 1, 2, "1") :
-					return
+				for batch in batches :
+					if not RunTest(context, test, 1, batch, "1", "0") :
+						return
+			if test.int8 == "1" :
+				for batch in batches :
+					if not RunTest(context, test, 1, batch, "0", "1") :
+						return
+			if test.bf16 == "1" and test.int8 == "1" :
+				for batch in batches :
+					if not RunTest(context, test, 1, batch, "1", "1") :
+						return
 		else :
-			if not RunTest(context, test, test.format, 1, test.bf16) :
+			if not RunTest(context, test, test.format, 1, test.bf16, test.int8) :
 				return
 			if test.batch == "1" and test.format != 0 :
-				if not RunTest(context, test, 1, 2, test.bf16) :
+				if not RunTest(context, test, 1, 2, test.bf16, test.int8) :
 					return
 
 ###################################################################################################
@@ -352,6 +372,7 @@ def main():
 	parser.add_argument("-e", "--exclude", help="Exclude tests filter.", required=False, default=[], action="append")
 	parser.add_argument("-pl", "--performanceLog", help="Level of performance log: (0 - no statistics, 1 - averaged, 2 - detailed).", required=False, type=int, default="0")
 	parser.add_argument("-bf", "--bf16", help="Run BF16 tests.", required=False, type=bool, default=False)
+	parser.add_argument("-dq", "--int8", help="Run INT8 tests.", required=False, type=bool, default=False)
 	parser.add_argument("-t", "--threshold", help="Threshold for multithread tests.", required=False, type=float, default=0.0001)
 	parser.add_argument("-cp", "--comparePrecise", help="Compare output precise (element-wise).", required=False, type=int, default="1")
 	context = Context(parser.parse_args())

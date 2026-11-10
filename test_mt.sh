@@ -21,13 +21,20 @@ THREAD=$6
 FORMAT=$7
 BATCH=$8
 BF16=$9
-VERSION=${10}
-PERF=${11}
+INT8=${10}
+VERSION=${11}
+PERF=${12}
 THRESHOLD=0.000001
 
-if [ "${BF16}" = "1" ]; then
+if [ "${BF16}" = "1" ] && [ "${INT8}" = "0" ]; then
   NUM_FMT="bf16"
   FILE_ID="2"
+elif [ "${BF16}" = "0" ] && [ "${INT8}" = "1" ]; then
+  NUM_FMT="fp32_int8"
+  FILE_ID="3"
+elif [ "${BF16}" = "1" ] && [ "${INT8}" = "1" ]; then
+  NUM_FMT="bf16_int8"
+  FILE_ID="4"
 else
   NUM_FMT="fp32"
   FILE_ID="$FORMAT"
@@ -41,10 +48,14 @@ if [[ ! -f $DIR/synet"$FILE_ID".xml ]] || [[ ! -f $DIR/synet"$FILE_ID".bin ]];th
     ORIG="-fw=$DIR/other.onnx"
   elif [ "$FRAMEWORK" = "synet" ]; then 
     ORIG="-fm=$DIR/synet1.xml -fw=$DIR/synet1.bin"
-    BIN_NAME="bf16"
+    if [ "${INT8}" = "1" ]; then
+      BIN_NAME="int8"
+    else
+      BIN_NAME="bf16"
+    fi
 	if [ "$FORMAT" = "0" ]; then echo "Can't convert Synet model format NHWC to NCHW!"; exit ; fi
   fi
-  "$BIN_DIR"/test_"$BIN_NAME" -m=convert $ORIG -sm=$DIR/synet"$FILE_ID".xml -sw=$DIR/synet"$FILE_ID".bin -tf="$FORMAT" -cs=1 -dp=0 -su=0 -bf="$BF16"
+  "$BIN_DIR"/test_"$BIN_NAME" -m=convert $ORIG -sm=$DIR/synet"$FILE_ID".xml -sw=$DIR/synet"$FILE_ID".bin -tf="$FORMAT" -cs=1 -dp=0 -su=0 -bf="$BF16" -dq="$INT8"
 fi
 
 PATHES="-sm=$DIR/synet${FILE_ID}.xml -sw=$DIR/synet${FILE_ID}.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
@@ -61,36 +72,36 @@ if [ -f $IMAGE/descript.ion ];then rm $IMAGE/descript.ion; fi
 
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
-"$BIN_TMT" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=1 -bs=$BATCH -ct=$THRESHOLD -bf=$BF16 -re=0 -et=10.0 -ie=10 -be=100 -dp=0 -dpf=6 -dpl=2 -dpp=4 -ar=0 -rt=0.3 -cs=0 -pl=$PERF -ln=$LOG
+"$BIN_TMT" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=1 -bs=$BATCH -ct=$THRESHOLD -bf=$BF16 -dq=$INT8 -re=0 -et=10.0 -ie=10 -be=100 -dp=0 -dpf=6 -dpl=2 -dpp=4 -ar=0 -rt=0.3 -cs=0 -pl=$PERF -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 
-#TEST inference_engine "" test_010f faces 50 0 1 1 0 002 2
-TEST inference_engine "" test_011f vehicles 40 2 1 1 1 004 2
-#TEST inference_engine "" test_012f persons 10 0 1 1 1 001 2
-#TEST inference_engine "" test_013f persons 20 0 1 1 1 001 2
-#TEST inference_engine "" test_015f license_plates 100 0 1 1 0 000 2
-#TEST inference_engine "" test_016f face 500 0 1 1 1 000 2
-#TEST inference_engine "" test_017f faces 100 0 1 1 1 000 2
-#TEST inference_engine "" test_018f license_plates 100 0 1 1 1 001 2
-#TEST inference_engine "" test_019f face 500 0 1 1 1 000 2
-#TEST inference_engine "" test_021f persons 100 0 1 1 0 000 2
-#TEST inference_engine "" test_022f persons 1 0 0 1 0 000 2
+#TEST inference_engine "" test_010f faces 50 0 1 1 0 0 002 2
+TEST inference_engine "" test_011f vehicles 40 2 1 1 1 0 004 2
+#TEST inference_engine "" test_012f persons 10 0 1 1 1 0 001 2
+#TEST inference_engine "" test_013f persons 20 0 1 1 1 0 001 2
+#TEST inference_engine "" test_015f license_plates 100 0 1 1 0 0 000 2
+#TEST inference_engine "" test_016f face 500 0 1 1 1 0 000 2
+#TEST inference_engine "" test_017f faces 100 0 1 1 1 0 000 2
+#TEST inference_engine "" test_018f license_plates 100 0 1 1 1 0 001 2
+#TEST inference_engine "" test_019f face 500 0 1 1 1 0 000 2
+#TEST inference_engine "" test_021f persons 100 0 1 1 0 0 000 2
+#TEST inference_engine "" test_022f persons 1 0 0 1 0 0 000 2
 
-#TEST onnx "" test_000 face 80 10 1 1 0 000 2
-#TEST onnx "" test_001 faces 30 1 1 1 0 004 2
-#TEST onnx "" test_002 faces 1 0 1 1 0 000 2
+#TEST onnx "" test_000 face 80 10 1 1 0 1 000 2
+#TEST onnx "" test_001 faces 30 1 1 1 0 0 004 2
+#TEST onnx "" test_002 faces 1 0 1 1 0 0 000 2
 
-#TEST synet "" dn_test_000 human_vehicle 50 0 1 1 0 000 2
-#TEST synet "" ie_test_000 human_vehicle 500 0 1 1 000 2
-#TEST synet "" ie_test_001 face 500 0 10 1 000 2
-#TEST synet "" ie_test_002 faces 20 1 1 1 000 2
-#TEST synet "" ie_test_003f faces 50 1 1 1 000 2
-#TEST synet "" ie_test_004 license_plate_ab 200 1 1 1 000 2
-#TEST synet "" ie_test_005 face 2000 1 10 1 000 2
-#TEST synet "" ie_test_006 face 100 1 10 1 000 2
-#TEST synet "" ie_test_007 person 500 1 1 0 001 2
-#TEST synet "" ie_test_009f persons 20 0 1 1 000 2
-#TEST synet "" ie_test_014f license_plate_ab 200 1 1 1 000 2
+#TEST synet "" dn_test_000 human_vehicle 50 0 1 1 0 0 000 2
+#TEST synet "" ie_test_000 human_vehicle 500 0 1 1 0 0 000 2
+#TEST synet "" ie_test_001 face 500 0 10 1 0 0 000 2
+#TEST synet "" ie_test_002 faces 20 1 1 1 0 0 000 2
+#TEST synet "" ie_test_003f faces 50 1 1 1 0 0 000 2
+#TEST synet "" ie_test_004 license_plate_ab 200 1 1 1 0 0 000 2
+#TEST synet "" ie_test_005 face 2000 1 10 1 0 0 000 2
+#TEST synet "" ie_test_006 face 100 1 10 1 0 0 000 2
+#TEST synet "" ie_test_007 person 500 1 1 0 0 0 001 2
+#TEST synet "" ie_test_009f persons 20 0 1 1 0 0 000 2
+#TEST synet "" ie_test_014f license_plate_ab 200 1 1 1 0 0 000 2
 
 exit
