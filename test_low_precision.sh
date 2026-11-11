@@ -35,12 +35,12 @@ fi
 
 PATHES="-fm=$DIR/synet1.xml -fw=$DIR/synet1.bin -sm=$DIR/synet3.xml -sw=$DIR/synet3.bin -id=$IMAGE -od=$DIR/output -tp=$DIR/param.xml"
 if [ "$GROUP" = "" ]; then
-  LOG=./test/int8/"$FRAMEWORK"/"$NAME"/"$PREFIX"_"$NAME"_t"$THREAD"_b"$BATCH"_int8_v"$VERSION"_p"$PERF".txt
+  LOG=./test/low_precision/"$FRAMEWORK"/"$NAME"/"$PREFIX"_"$NAME"_t"$THREAD"_b"$BATCH"_int8_v"$VERSION"_p"$PERF".txt
 else
-  LOG=./test/int8/"$FRAMEWORK"/"$GROUP"/"$NAME"/"$PREFIX"_"$NAME"_t"$THREAD"_b"$BATCH"_int8_v"$VERSION"_p"$PERF".txt
+  LOG=./test/low_precision/"$FRAMEWORK"/"$GROUP"/"$NAME"/"$PREFIX"_"$NAME"_t"$THREAD"_b"$BATCH"_int8_v"$VERSION"_p"$PERF".txt
 fi
 
-BIN_INT8="$BIN_DIR"/test_int8
+BIN_LOW_PRECISION="$BIN_DIR"/test_low_precision
 
 echo $LOG
 
@@ -48,10 +48,10 @@ if [ -f $IMAGE/descript.ion ];then rm $IMAGE/descript.ion; fi
 
 export LD_LIBRARY_PATH="$BIN_DIR":$LD_LIBRARY_PATH
 
-"$BIN_INT8" -m=convert $PATHES -tf=1 -cs=1 -dp=0 -su=1
+"$BIN_LOW_PRECISION" -m=convert $PATHES -tf=1 -cs=1 -dp=0 -su=1
 if [ $? -ne 0 ]; then echo "Test $DIR is failed!"; exit ; fi
 
-"$BIN_INT8" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=1 -bs=$BATCH -ct=$THRESHOLD -re=0 -et=10.0 -ie=10 -be=100 -dp=3 -dpf=6 -dpl=2 -dpp=4 -ar=1 -rt=0.3 -cs=0 -pl=$PERF -ln=$LOG
+"$BIN_LOW_PRECISION" -m=compare -e=3 $PATHES -if=*.* -rn=$NUMBER -wt=1 -tt=$THREAD -tf=1 -bs=$BATCH -ct=$THRESHOLD -re=0 -et=10.0 -ie=10 -be=100 -dp=3 -dpf=6 -dpl=2 -dpp=4 -ar=1 -rt=0.3 -cs=0 -pl=$PERF -ln=$LOG
 if [ $? -ne 0 ];then echo "Test $DIR is failed!"; exit; fi
 }
 

@@ -49,7 +49,7 @@ if [[ ! -f $DIR/synet"$FILE_ID".xml ]] || [[ ! -f $DIR/synet"$FILE_ID".bin ]];th
   elif [ "$FRAMEWORK" = "synet" ]; then 
     ORIG="-fm=$DIR/synet1.xml -fw=$DIR/synet1.bin"
     if [ "${INT8}" = "1" ]; then
-      BIN_NAME="int8"
+      BIN_NAME="low_precision"
     else
       BIN_NAME="bf16"
     fi
