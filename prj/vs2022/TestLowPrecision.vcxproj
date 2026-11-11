@@ -4,7 +4,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8F4C2A91-7D36-4E5B-A1C8-6B0E9F3D2A47}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>TestInt8</RootNamespace>
+    <RootNamespace>TestLowPrecision</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -33,7 +33,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\Test\TestInt8.cpp" />
+    <ClCompile Include="..\..\src\Test\TestLowPrecision.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Test\TestCommon.h" />

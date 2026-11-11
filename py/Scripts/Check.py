@@ -83,7 +83,7 @@ class Test():
 			
 	def Bin(self) -> str :
 		if self.framework == "synet" :
-			return "test_int8"
+			return "test_low_precision"
 		else :
 			return "test_" + self.framework
 		
