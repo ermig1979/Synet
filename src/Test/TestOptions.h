@@ -102,6 +102,7 @@ namespace Test
         bool dynamicQuantization;
         bool saveUnoptimized;
         bool pinThread;
+        bool exitOnError;
         String ortProvider;
 
         mutable bool result;
@@ -160,6 +161,7 @@ namespace Test
             saveUnoptimized = FromString<bool>(GetArg("-su", "0"));
             pinThread = FromString<bool>(GetArg("-pt", "1"));
             ortProvider = GetArg("-op", "cpu", false);
+            exitOnError = FromString<bool>(GetArg("-ee", "1", false));
             if (enable < 1 || enable > 3)
             {
                 std::cout << "Parameter '-e' (enable) must be only 1, 2, 3!" << std::endl;

@@ -731,6 +731,7 @@ namespace Test
                 PinThread(0);
             int64_t start = Cpl::TimeCounter();
             size_t repeats = std::max<size_t>(1, _options.repeatNumber), total = _tests.size() * repeats, current = 0;
+            bool exit = false;
             for (size_t i = 0; i < _tests.size(); ++i)
             {
                 TestData& test = *_tests[i];
@@ -749,8 +750,13 @@ namespace Test
                             return false;
                     }
 #if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_TEST_SECOND_RUN)
-                    if (r == 0 && _options.enable == (ENABLE_FIRST | ENABLE_SECOND) && !CompareResults(test, i, 0))
-                        return false;
+                    if (r == 0 && _options.enable == (ENABLE_FIRST | ENABLE_SECOND))
+                    {
+                        if (!CompareResults(test, i, 0))
+                            exit = true;
+                        if (_options.exitOnError && exit)
+                            return false;
+                    }
 #endif   
                     if (!_options.consoleSilence)
                         std::cout << " \r" << std::flush;
@@ -764,6 +770,8 @@ namespace Test
             if (_options.enable & ENABLE_SECOND)
                 _options.secondMemoryUsage = _seconds[0].MemoryUsage();
 #endif
+            if (exit)
+                return false;
             return PrintFinishMessage(start);
         }
 
@@ -804,6 +812,7 @@ namespace Test
             }
 
             _options.secondMemoryUsage = 0;
+            bool exit = false;
             for (size_t t = 0; t < _threads.size(); ++t)
             {
                 if (_threads[t].thread.joinable())
@@ -812,8 +821,13 @@ namespace Test
                 {
                     TestData& test = *_tests[i];
 #if defined(SYNET_TEST_FIRST_RUN) && defined(SYNET_TEST_SECOND_RUN)
-                    if (_options.enable == (ENABLE_FIRST | ENABLE_SECOND) && !CompareResults(test, i, t))
-                        return false;
+                    if (_options.enable == (ENABLE_FIRST | ENABLE_SECOND))
+                    {
+                        if(!CompareResults(test, i, 0))
+                            exit = true;
+                        if (_options.exitOnError && exit)
+                            return false;
+                    }
 #endif 
                 }
 #ifdef SYNET_TEST_FIRST_RUN
@@ -825,6 +839,8 @@ namespace Test
                     _options.secondMemoryUsage += _seconds[t].MemoryUsage();
 #endif            
             }
+            if (exit)
+                return false;
             return PrintFinishMessage(start);
         }
 
