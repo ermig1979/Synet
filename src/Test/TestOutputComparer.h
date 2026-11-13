@@ -122,6 +122,28 @@ namespace Test
         }
 
      private:
+         struct Error
+         {
+             bool status;
+             Shape index[2];
+             float first[2], second[2], error[2];
+
+             Error() 
+                 : status(true) 
+             {
+             }
+
+             bool Resume(const Tensor& f, const Tensor& s, size_t d, const String& message, const String& compType, float threshold) const
+             {
+                 using Synet::Detail::DebugPrint;
+                 if (status)
+                     return true;
+                 SYNET_ERROR(message << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape())
+                     << " first at " << DebugPrint(index[0]) << " : " << first[0] << " != " << second[0] << " ( " << error[0] << " > " << threshold << " ), "
+                     << " max at " << DebugPrint(index[1]) << " : " << first[1] << " != " << second[1] << " ( " << error[1] << " > " << threshold << " ) " << compType);
+             }
+         };
+
         float CompareThreshold(const OutputParam & param) const
         {
             float compareThreshold = _options.compareThreshold;
@@ -154,28 +176,50 @@ namespace Test
             return compareThreshold;
         }
 
-        bool Compare(float a, float b, float t, float& e) const
+        bool Compare(float a, float b, float threshold, float& error) const
         {
-            float d = ::fabs(a - b);
-            e = std::min(d, d / std::max(::fabs(a), ::fabs(b)));
-            return e <= t;
+            float diff = ::fabs(a - b);
+            float range = std::max(::fabs(a), ::fabs(b));
+            if (range == 0.0f)
+                range = 1.0f;
+            error = std::min(diff, diff / range);
+            return error <= threshold;
         }
 
-        bool Compare(const Tensor& f, const Tensor& s, const Shape& i, size_t d, const String& m, const String & c, float t) const
+        bool Compare(const Tensor& f, const Tensor& s, const Shape& i, size_t d, float t, Error & error) const
         {
-            using Synet::Detail::DebugPrint;
             float _f = f.Data<float>(i)[0], _s = s.Data<float>(i)[0], _e = 0;
             if (!Compare(_f, _s, t, _e))
-                SYNET_ERROR(m << std::endl << std::fixed << "Dst[" << d << "] " << s.Name() << " " << DebugPrint(f.Shape()) << " at " << DebugPrint(i) << " : " << _f << " != " << _s << " ( " << _e << " > " << t << " ) " << c);
+            {
+                if (error.status)
+                {
+                    error.index[1] = error.index[0] = i;
+                    error.first[1] = error.first[0] = _f;
+                    error.second[1] = error.second[0] = _s;
+                    error.error[1] = error.error[0] = _e;
+                    error.status = false;
+                }
+                else
+                {
+                    if (_e > error.error[1])
+                    {
+                        error.index[1] = i;
+                        error.first[1] = _f;
+                        error.second[1] = _s;
+                        error.error[1] = _e;
+                    }
+                }
+                return false;
+            }
             return true;
         }
 
         bool Compare1d(const Tensor& f, const Tensor& s, size_t d, const String& failed, String compType, float compareThreshold) const
         {
+            Error error;
             for (size_t n = 0; n < f.Axis(0); ++n)
-                if (!Compare(f, s, Shp(n), d, failed, "", compareThreshold))
-                    return false;
-            return true;
+                Compare(f, s, Shp(n), d, compareThreshold, error);
+            return error.Resume(f, s, d, failed, compType, compareThreshold);
         }
 
         bool Compare2d(const Tensor& f, const Tensor& s, size_t d, const String& failed, String compType, float compareThreshold) const
@@ -198,10 +242,11 @@ namespace Test
                 _s.Clone(s);
                 SimdSynetSoftmax32f(f.Data<float>(), f.Axis(0), f.Axis(1), 1, _f.Data<float>());
                 SimdSynetSoftmax32f(s.Data<float>(), s.Axis(0), s.Axis(1), 1, _s.Data<float>());
+                Error error;
                 for (size_t n = 0; n < f.Axis(0); ++n)
                     for (size_t c = 0; c < f.Axis(1); ++c)
-                        if (!Compare(_f, _s, Shp(n, c), d, failed, compType, compareThreshold))
-                            return false;
+                        Compare(_f, _s, Shp(n, c), d, compareThreshold, error);
+                return error.Resume(_f, _s, d, failed, compType, compareThreshold);
             }
             else if (compType == "sigmoid" && (_options.bf16 || !_options.comparePrecise))
             {
@@ -211,17 +256,19 @@ namespace Test
                 float _1 = 1.0;
                 SimdSynetSigmoid32f(f.Data<float>(), f.Size(), &_1, _f.Data<float>());
                 SimdSynetSigmoid32f(s.Data<float>(), s.Size(), &_1, _s.Data<float>());
+                Error error;
                 for (size_t n = 0; n < f.Axis(0); ++n)
                     for (size_t c = 0; c < f.Axis(1); ++c)
-                        if (!Compare(_f, _s, Shp(n, c), d, failed, compType, compareThreshold))
-                            return false;
+                        Compare(_f, _s, Shp(n, c), d, compareThreshold, error);
+                return error.Resume(_f, _s, d, failed, compType, compareThreshold);
             }
             else
             {
+                Error error;
                 for (size_t n = 0; n < f.Axis(0); ++n)
                     for (size_t c = 0; c < f.Axis(1); ++c)
-                        if (!Compare(f, s, Shp(n, c), d, failed, "", compareThreshold))
-                            return false;
+                        Compare(f, s, Shp(n, c), d, compareThreshold, error);
+                return error.Resume(f, s, d, failed, compType, compareThreshold);
             }
             return true;
         }
@@ -233,17 +280,20 @@ namespace Test
             if (decType == "yoloV8" && (_options.bf16 || !_options.comparePrecise))
             {
                 float threshold = _param.detection().confidence();
+                Error error;
                 for (size_t n = 0; n < f.Axis(0); ++n)
+                {
                     for (size_t y = 0; y < f.Axis(2); ++y)
                     {
                         float score = f.Data<float>(Shp(n, 4, y))[0];
                         if (score >= threshold)
                         {
                             for (size_t c = 0; c < 5; ++c)
-                                if (!Compare(f, s, Shp(n, c, y), d, failed, "", compareThreshold))
-                                    return false;
+                                Compare(f, s, Shp(n, c, y), d, compareThreshold, error);
                         }
                     }
+                }
+                return error.Resume(f, s, d, failed, compType, compareThreshold);
             }
             else if ((compType == "softmax-1" || compType == "softmax-2") && (_options.bf16 || !_options.comparePrecise))
             {
@@ -260,11 +310,12 @@ namespace Test
                     SimdSynetSoftmax32f(f.Data<float>(), f.Size(0, 2), f.Axis(2), 1, _f.Data<float>());
                     SimdSynetSoftmax32f(s.Data<float>(), s.Size(0, 2), s.Axis(2), 1, _s.Data<float>());
                 }
+                Error error;
                 for (size_t n = 0; n < _f.Axis(0); ++n)
                     for (size_t c = 0; c < _f.Axis(1); ++c)
                         for (size_t y = 0; y < _f.Axis(2); ++y)
-                            if (!Compare(_f, _s, Shp(n, c, y), d, failed, compType, compareThreshold))
-                                return false;
+                            Compare(_f, _s, Shp(n, c, y), d, compareThreshold, error);
+                return error.Resume(_f, _s, d, failed, compType, compareThreshold);
             }
             else if (compType == "sigmoid" && (_options.bf16 || !_options.comparePrecise))
             {
@@ -274,11 +325,12 @@ namespace Test
                 float _1 = 1.0;
                 SimdSynetSigmoid32f(f.Data<float>(), f.Size(), &_1, _f.Data<float>());
                 SimdSynetSigmoid32f(s.Data<float>(), s.Size(), &_1, _s.Data<float>());
+                Error error;
                 for (size_t n = 0; n < _f.Axis(0); ++n)
                     for (size_t c = 0; c < _f.Axis(1); ++c)
                         for (size_t y = 0; y < _f.Axis(2); ++y)
-                            if (!Compare(_f, _s, Shp(n, c, y), d, failed, compType, compareThreshold))
-                                return false;
+                            Compare(_f, _s, Shp(n, c, y), d, compareThreshold, error);
+                return error.Resume(_f, _s, d, failed, compType, compareThreshold);
             }
             else if (compType == "cos_dist-12" && (_options.bf16 || !_options.comparePrecise))
             {
@@ -292,11 +344,12 @@ namespace Test
             }
             else
             {
+                Error error;
                 for (size_t n = 0; n < f.Axis(0); ++n)
                     for (size_t c = 0; c < f.Axis(1); ++c)
                         for (size_t y = 0; y < f.Axis(2); ++y)
-                            if (!Compare(f, s, Shp(n, c, y), d, failed, "", compareThreshold))
-                                return false;
+                            Compare(f, s, Shp(n, c, y), d, compareThreshold, error);
+                return error.Resume(f, s, d, failed, compType, compareThreshold);
             }
             return true;
         }
@@ -322,12 +375,13 @@ namespace Test
                 float _1 = 1.0;
                 SimdSynetSigmoid32f(f.Data<float>(), f.Size(), &_1, _f.Data<float>());
                 SimdSynetSigmoid32f(s.Data<float>(), s.Size(), &_1, _s.Data<float>());
+                Error error;
                 for (size_t n = 0; n < _f.Axis(0); ++n)
                     for (size_t c = 0; c < _f.Axis(1); ++c)
                         for (size_t y = 0; y < _f.Axis(2); ++y)
                             for (size_t x = 0; x < _f.Axis(3); ++x)
-                                if (!Compare(_f, _s, Shp(n, c, y, x), d, failed, compType, compareThreshold))
-                                    return false;
+                                Compare(_f, _s, Shp(n, c, y, x), d, compareThreshold, error);
+                return error.Resume(_f, _s, d, failed, compType, compareThreshold);
             }
             else if (compType == "avg2x2" || compType == "avg4x4" || compType == "avg8x8" || compType == "avg16x16")
             {
@@ -346,21 +400,23 @@ namespace Test
                 _s.Reshape(Synet::TensorType32f, shape, Synet::TensorFormatNchw);
                 SimdSynetPoolingAverage(f.Data<float>(), f.Axis(0) * f.Axis(1), f.Axis(2), f.Axis(3), kY, kX, kY, kX, 0, 0, _f.Data<float>(), _f.Axis(2), _f.Axis(3), SimdFalse, SimdTensorFormatNchw);
                 SimdSynetPoolingAverage(s.Data<float>(), s.Axis(0) * s.Axis(1), s.Axis(2), s.Axis(3), kY, kX, kY, kX, 0, 0, _s.Data<float>(), _s.Axis(2), _s.Axis(3), SimdFalse, SimdTensorFormatNchw);
+                Error error;
                 for (size_t n = 0; n < _f.Axis(0); ++n)
                     for (size_t c = 0; c < _f.Axis(1); ++c)
                         for (size_t y = 0; y < _f.Axis(2); ++y)
                             for (size_t x = 0; x < _f.Axis(3); ++x)
-                                if (!Compare(_f, _s, Shp(n, c, y, x), d, failed, compType, compareThreshold))
-                                    return false;
+                                Compare(_f, _s, Shp(n, c, y, x), d, compareThreshold, error);
+                return error.Resume(_f, _s, d, failed, compType, compareThreshold);
             }
             else
             {
+                Error error;
                 for (size_t n = 0; n < f.Axis(0); ++n)
                     for (size_t c = 0; c < f.Axis(1); ++c)
                         for (size_t y = 0; y < f.Axis(2); ++y)
                             for (size_t x = 0; x < f.Axis(3); ++x)
-                                if (!Compare(f, s, Shp(n, c, y, x), d, failed, "", compareThreshold))
-                                    return false;
+                                Compare(f, s, Shp(n, c, y, x), d, compareThreshold, error);
+                return error.Resume(f, s, d, failed, compType, compareThreshold);
             }
             return true;
         }
@@ -422,7 +478,6 @@ namespace Test
                 SYNET_ERROR(failed << std::endl << "Regions number for '"
                     << _param.detection().decoder() << "' decoder is different: " << rf.size() << " != " << rs.size()
                     << " ; non detected region prob exceeding is " << maxExceeding << " !");
-            //std::cout << "CompareRegions: " << rf.size() << " and " << rs.size() << std::endl;
             for (size_t fi = 0; fi < n; ++fi)
             {
                 const Region& _f = rf[fi];
@@ -438,7 +493,6 @@ namespace Test
                     }
                 }
                 const Region& _s = rs[indexMax];
-                //std::cout << "CompareRegions: " << ToStr(_f) << " and " << ToStr(_s) << std::endl;
                 float d = std::max(std::max(::abs(_f.x - _s.x), ::abs(_f.y - _s.y)), std::max(abs(_f.w - _s.w), ::abs(_f.h - _s.h)));
                 if (_f.id != _s.id || d > compareThreshold)
                 {

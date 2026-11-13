@@ -597,7 +597,7 @@ namespace Test
                         ptrdiff_t t = ptrdiff_t(region.y - region.h / 2) - h0;
                         ptrdiff_t r = ptrdiff_t(region.x + region.w / 2) - w0;
                         ptrdiff_t b = ptrdiff_t(region.y + region.h / 2) - h0;
-                        Simd::DrawRectangle(image, l, t, r, b, GetColor(region.id), std::min<int>(image.height / 500 + 1, 3));
+                        Simd::DrawRectangle(image, l, t, r, b, GetColor(region.id), std::min(int(image.height) / 500 + 1, 3));
                     }
                 }
                 else
@@ -610,7 +610,7 @@ namespace Test
                         ptrdiff_t t = ptrdiff_t(region.y - region.h / 2);
                         ptrdiff_t r = ptrdiff_t(region.x + region.w / 2);
                         ptrdiff_t b = ptrdiff_t(region.y + region.h / 2);
-                        Simd::DrawRectangle(image, l, t, r, b, GetColor(region.id), std::min<int>(image.height / 500 + 1, 3));
+                        Simd::DrawRectangle(image, l, t, r, b, GetColor(region.id), std::min(int(image.height) / 500 + 1, 3));
                     }
                 }
                 String outputPath = MakePath(_options.outputDirectory, Options::FullName(network.Name(), network.Type()) + "_" + GetNameByPath(inputPath));
