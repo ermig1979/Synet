@@ -104,6 +104,10 @@ def CheckDirs(context : Context) :
 	context.dst = args.dst + os.path.sep
 	now = datetime.datetime.now()
 	context.dst += "{0:04d}_{1:02d}_{2:02d}__{3:02d}_{4:02d}{5}_t{6}".format(now.year, now.month, now.day, now.hour, now.minute, args.framework[0], args.threads)
+	if args.bf16 == 1 :
+		context.dst += "_bf16"
+	if args.int8 == 1 :
+		context.dst += "_int8"
 	if len(args.include) > 0 :
 		context.dst += "_dbg"
 	if not os.path.isdir(context.dst):
@@ -119,9 +123,9 @@ def CheckDirs(context : Context) :
 def TestModes(context : Context, test : Test):
 	args = context.args
 	modes = []
-	if args.bf16 and test.bf16 == "1" :
+	if args.bf16 and test.bf16 == "1" and (args.allTypes or not args.int8) :
 		modes.append(("1", "0"))
-	if args.int8 and test.int8 == "1" :
+	if args.int8 and test.int8 == "1" and (args.allTypes or not args.bf16) :
 		modes.append(("0", "1"))
 	if args.bf16 and args.int8 and test.bf16 == "1" and test.int8 == "1" :
 		modes.append(("1", "1"))
@@ -307,6 +311,7 @@ def main():
 	parser.add_argument("-dt", "--int8Threshold", help="Threshold for INT8 tests.", required=False, type=float, default=0.05)
 	parser.add_argument("-cp", "--comparePrecise", help="Compare output precise (element-wise).", required=False, type=bool, default=False)
 	parser.add_argument("-re", "--reverseExecution", help="Synet low precision is started first or second.", required=False, type=bool, default=False)
+	parser.add_argument("-at", "--allTypes", help="All types of chosed tests will be present.", required=False, type=bool, default=False)
 	context = Context(parser.parse_args())
 	
 	if not ValidateParameters(context) :
