@@ -31,6 +31,7 @@
     <Compile Include="CocoToTxt.py" />
     <Compile Include="Perf.py" />
     <Compile Include="PerfBf16.py" />
+    <Compile Include="PerfLp.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

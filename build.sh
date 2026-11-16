@@ -8,6 +8,7 @@ if [ "${TEST_MODE}" == "i" ]; then TEST_MODE="inference_engine"; fi
 if [ "${TEST_MODE}" == "o" ]; then TEST_MODE="onnx"; fi
 if [ "${TEST_MODE}" == "op" ]; then TEST_MODE="optimizer"; fi
 if [ "${TEST_MODE}" == "b" ]; then TEST_MODE="bf16"; fi
+if [ "${TEST_MODE}" == "l" ] || [ "${TEST_MODE}" == "lp" ]; then TEST_MODE="low_precision"; fi
 if [ "${TEST_MODE}" == "m" ]; then TEST_MODE="multi_threads"; fi
 if [ "${TEST_MODE}" == "v" ]; then TEST_MODE="video"; fi
 if [ "${TEST_MODE}" == "u" ]; then TEST_MODE="use_samples"; fi
