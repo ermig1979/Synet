@@ -127,7 +127,7 @@ namespace Synet
 
     bool Int8Quantizer::ConvertInnerProduct(LayerParam& layer, Bytes& bin)
     {
-        if (layer.type() != LayerTypeInnerProduct)
+        if (layer.type() != LayerTypeInnerProduct || !_param.innerProduct())
             return true;
 
         const bool biasTerm = layer.innerProduct().biasTerm();

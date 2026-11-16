@@ -289,7 +289,7 @@ def RunTest(context, test, format, batch, bf16, int8):
 	
 	out = ""
 	if not args.fast and batch == 1 :
-		cmd = "{0} -m=convert {1} -tf={2} -cs=1 -bf={3}, -dq={4}".format(binPath, pathArgs, format, bf16, int8)
+		cmd = "{0} -m=convert {1} -tf={2} -cs=1 -bf={3} -dq={4}".format(binPath, pathArgs, format, bf16, int8)
 		result = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
 		out += result.stdout.decode('utf-8')
 		if result.returncode != 0 :
