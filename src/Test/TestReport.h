@@ -122,9 +122,9 @@ namespace Test
 		struct Test
 		{
 			String name, desc, link;
-			int batch, count, skip, bf16;
+			int batch, count, skip, bf16, int8;
 			Data<double> first, second;
-			Test(const String & n = "", int b = 0, int bf = 0) : name(n), batch(b), count(0), skip(0), bf16(bf) {}
+			Test(const String & n = "", int b = 0, int bf = 0, int i8 = 0) : name(n), batch(b), count(0), skip(0), bf16(bf), int8(i8) {}
 		};
 		typedef std::vector<Test> Tests;
 
@@ -158,6 +158,8 @@ namespace Test
 						Cpl::ToVal(values[9], test.desc);
 						Cpl::ToVal(values[10], test.link);
 						Cpl::ToVal(values[11], test.skip);
+						if (values.size() > 12)
+							Cpl::ToVal(values[12], test.int8);
 						_tests.push_back(test);
 					}
 				}
@@ -193,6 +195,7 @@ namespace Test
 					ofs << _tests[i].desc << _separator;
 					ofs << _tests[i].link << _separator;
 					ofs << _tests[i].skip << _separator;
+					ofs << _tests[i].int8 << _separator;
 					ofs << std::endl;
 					Update(_tests[i].first, _other);
 					Update(_tests[i].second, _synet);
@@ -209,6 +212,7 @@ namespace Test
 			test.name = TestName(_options.logName);
 			test.batch = _options.batchSize;
 			test.bf16 = _options.bf16;
+			test.int8 = _options.dynamicQuantization ? 1 : 0;
 			test.first.time = NetworkPredictPm(_options.firstName, _options.firstType).Average() / test.batch;
 			test.second.time = NetworkPredictPm(_options.secondName, _options.secondType).Average() / test.batch;
 			test.first.flops = NetworkPredictPm(_options.firstName, _options.firstType).GFlops();
@@ -301,6 +305,7 @@ namespace Test
 				if (layers.find(Synet::LayerTypeQuantizedConvolution) != layers.end()) desc += String("Qc");
 				if (layers.find(Synet::LayerTypeQuantizedMergedConvolution) != layers.end()) desc += String("Qm");
 				if (layers.find(Synet::LayerTypeQuantizedInnerProduct) != layers.end()) desc += String("Qi");
+				if (layers.find(Synet::LayerTypeDynamicQuantizedInnerProduct) != layers.end()) desc += String("Di");
 			}
 			return desc;
 		}
@@ -361,8 +366,13 @@ namespace Test
 				if (test.link.empty())
 					table.SetCell(col++, row, test.name, Cpl::Table::Black);
 				else
-					table.SetCell(col++, row, test.name + (test.bf16 == 0 ? String("_fp32_") : String("_bf16_")) + ToString(test.batch), Cpl::Table::Black, test.link);
-				table.SetCell(col++, row, test.bf16 < 0 ? String("-") : test.bf16 == 0 ? String("FP32") : String("BF16"));
+				{
+					String suffix = test.bf16 == 0 ? String("_fp32") : String("_bf16");
+					if (test.int8)
+						suffix += "_int8";
+					table.SetCell(col++, row, test.name + suffix + "_" + ToString(test.batch), Cpl::Table::Black, test.link);
+				}
+				table.SetCell(col++, row, test.bf16 < 0 ? String("-") : FormatName(test.bf16, test.int8));
 				table.SetCell(col++, row, test.batch ? ToString(test.batch) : String("-"));
 				if (summary)
 					table.SetCell(col++, row, ToString(test.count));
@@ -399,6 +409,8 @@ namespace Test
 					continue;
 				if (summary.bf16 >= 0 && test.bf16 != summary.bf16)
 					continue;
+				if (summary.int8 >= 0 && test.int8 != summary.int8)
+					continue;
 				summary.count++;
 				if (_other.time)
 					summary.first.time += ::log(test.first.time);
@@ -427,24 +439,35 @@ namespace Test
 				summary.second.memory = summary.count > 0 ? ::exp(summary.second.memory / summary.count) : 0;
 		}
 
+		String FormatName(int bf16, int int8) const
+		{
+			String format = bf16 ? String("BF16") : String("FP32");
+			if (int8)
+				format += "+INT8";
+			return format;
+		}
+
 		void FillSummary()
 		{
 			typedef std::set<int> Set;
-			Set batch, bf16;
+			typedef std::pair<int, int> Format;
+			typedef std::set<Format> Formats;
+			Set batch;
+			Formats formats;
 			for (size_t i = 0; i < _tests.size(); ++i)
 			{
 				batch.insert(_tests[i].batch);
-				bf16.insert(_tests[i].bf16);
+				formats.insert(Format(_tests[i].bf16, _tests[i].int8));
 			}
 			_summary.clear();
-			if(bf16.size() > 1)
-				_summary.push_back(Test("Common", 0, -1));
-			for (Set::const_iterator f = bf16.begin(); f != bf16.end(); ++f)
+			if (formats.size() > 1)
+				_summary.push_back(Test("Common", 0, -1, -1));
+			for (Formats::const_iterator f = formats.begin(); f != formats.end(); ++f)
 			{
-				String format = *f ? String("BF16") : String("FP32");
-				_summary.push_back(Test(format + "-Common", 0, *f));
+				String format = FormatName(f->first, f->second);
+				_summary.push_back(Test(format + "-Common", 0, f->first, f->second));
 				for (Set::const_iterator b = batch.begin(); b != batch.end(); ++b)
-					_summary.push_back(Test(format + "-Batch-" + ToString(*b), *b, *f));
+					_summary.push_back(Test(format + "-Batch-" + ToString(*b), *b, f->first, f->second));
 			}
 			for (size_t i = 0; i < _summary.size(); ++i)
 				FillSummary(_summary[i]);
