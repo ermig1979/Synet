@@ -61,7 +61,7 @@ namespace Synet
         CPL_PARAM_VALUE(uint32_t, minN, 32);
         CPL_PARAM_VALUE(bool, innerProduct, true);
         CPL_PARAM_VALUE(bool, innerProductNoConstWeight, false);
-        CPL_PARAM_VALUE(bool, convolution, true);
+        CPL_PARAM_VALUE(bool, convolution, false);
     };
 
     struct OptimizerParam
