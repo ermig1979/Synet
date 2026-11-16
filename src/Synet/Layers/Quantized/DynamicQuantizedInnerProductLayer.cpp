@@ -179,7 +179,10 @@ namespace Synet
 
         Shape shape = src[0]->Shape();
         shape.back() = _N;
-        dst[0]->Reshape(_typeC, shape, TensorFormatNchw);
+        TensorFormat format = src[0]->Format();
+        if (format != TensorFormatNhwc)
+            format = TensorFormatNchw;
+        dst[0]->Reshape(_typeC, shape, format);
 
 #if defined(SYNET_SIMD_LIBRARY_ENABLE)
         if (idxS == 2)

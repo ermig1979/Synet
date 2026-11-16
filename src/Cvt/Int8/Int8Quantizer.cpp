@@ -94,6 +94,80 @@ namespace Synet
             memcpy(src, dst, K * N * sizeof(float));
             param.dim() = Shp(K, N);
         }
+
+        bool IsOnes(const Shape& shape, bool emptyMeansOne)
+        {
+            if (shape.empty())
+                return emptyMeansOne;
+            if (shape.size() == 1)
+                return shape[0] == 1;
+            return shape.size() == 2 && shape[0] == 1 && shape[1] == 1;
+        }
+
+        bool IsZeroPad(const Shape& pad)
+        {
+            if (pad.size() == 3 || pad.size() > 4)
+                return false;
+            for (size_t i = 0; i < pad.size(); ++i)
+                if (pad[i] != 0)
+                    return false;
+            return true;
+        }
+
+        bool SupportedActivation(ActivationFunctionType type)
+        {
+            switch (type)
+            {
+            case ActivationFunctionTypeIdentity:
+            case ActivationFunctionTypeRelu:
+            case ActivationFunctionTypeLeakyRelu:
+            case ActivationFunctionTypeRestrictRange:
+            case ActivationFunctionTypePrelu:
+            case ActivationFunctionTypeElu:
+            case ActivationFunctionTypeHswish:
+            case ActivationFunctionTypeMish:
+            case ActivationFunctionTypeHardSigmoid:
+            case ActivationFunctionTypeSwish:
+            case ActivationFunctionTypeGelu:
+                return true;
+            default:
+                return false;
+            }
+        }
+
+        bool NameUsed(const std::vector<LayerParam>& layers, const String& name)
+        {
+            for (size_t i = 0; i < layers.size(); ++i)
+            {
+                if (layers[i].name() == name)
+                    return true;
+                for (size_t d = 0; d < layers[i].dst().size(); ++d)
+                    if (layers[i].dst()[d] == name)
+                        return true;
+            }
+            return false;
+        }
+
+        String FreshName(const std::vector<LayerParam>& layers, const String& base)
+        {
+            if (!NameUsed(layers, base))
+                return base;
+            for (size_t i = 0; ; ++i)
+            {
+                String name = base + "_" + std::to_string(i);
+                if (!NameUsed(layers, name))
+                    return name;
+            }
+        }
+
+        bool SharesSrcDst(const LayerParam& layer)
+        {
+            for (size_t s = 0; s < layer.src().size(); ++s)
+                for (size_t d = 0; d < layer.dst().size(); ++d)
+                    if (layer.src()[s] == layer.dst()[d])
+                        return true;
+            return false;
+        }
     }
 
     Int8Quantizer::Int8Quantizer(const Int8OptParam& param)
@@ -105,28 +179,33 @@ namespace Synet
     {
         if (!_param.enable())
             return true;
-        size_t converted = 0;
+        size_t convertedIp = 0, convertedConv = 0;
         LayerParams& layers = network.layers();
         for (size_t i = 0; i < layers.size(); ++i)
         {
-            LayerParam& layer = layers[i];
             bool changed = false;
-            if (!ConvertInnerProduct(layer, bin))
+            if (!ConvertInnerProduct(layers[i], bin, changed))
                 return false;
             if (changed)
-                converted++;
+                convertedIp++;
+            changed = false;
+            if (!ConvertConvolution(layers, i, bin, changed))
+                return false;
+            if (changed)
+                convertedConv++;
         }
-        if (converted)
+        if (convertedIp || convertedConv)
         {
-            CPL_LOG_SS(Info, "Int8Quantizer: converted " << converted << " InnerProduct layer(s) to DynamicQuantizedInnerProduct.");
+            CPL_LOG_SS(Info, "Int8Quantizer: converted " << convertedIp << " InnerProduct and " << convertedConv << " Convolution layer(s) to DynamicQuantizedInnerProduct.");
             if (!CompactWeights(layers, bin))
                 return false;
         }
         return true;
     }
 
-    bool Int8Quantizer::ConvertInnerProduct(LayerParam& layer, Bytes& bin)
+    bool Int8Quantizer::ConvertInnerProduct(LayerParam& layer, Bytes& bin, bool& converted)
     {
+        converted = false;
         if (layer.type() != LayerTypeInnerProduct || !_param.innerProduct())
             return true;
 
@@ -194,6 +273,165 @@ namespace Synet
 
         layer.type() = LayerTypeDynamicQuantizedInnerProduct;
         layer.weight() = weights;
+        converted = true;
+        return true;
+    }
+
+    bool Int8Quantizer::ConvertConvolution(LayerParams& layers, size_t& index, Bytes& bin, bool& converted)
+    {
+        converted = false;
+        LayerParam& layer = layers[index];
+        if (layer.type() != LayerTypeConvolution || !_param.convolution())
+            return true;
+        if (layer.src().size() != 1 || layer.dst().empty() || SharesSrcDst(layer))
+            return true;
+
+        const ConvolutionParam& conv = layer.convolution();
+        if (conv.group() != 1 || conv.autoPad())
+            return true;
+        if (conv.kernel() != Shp(1, 1))
+            return true;
+        if (!IsOnes(conv.stride(), true) || !IsOnes(conv.dilation(), true) || !IsZeroPad(conv.pad()))
+            return true;
+        if (!SupportedActivation(conv.activationType()))
+            return true;
+        if (conv.outputNum() < _param.minN())
+            return true;
+        if (layer.weight().empty())
+            return true;
+
+        const WeightParam& srcWeight = layer.weight()[0];
+        if (srcWeight.type() != TensorType32f || srcWeight.dim().size() != 4)
+            return true;
+        const bool nhwc = srcWeight.format() == TensorFormatNhwc;
+        const bool nchw = srcWeight.format() == TensorFormatNchw;
+        if (!nhwc && !nchw)
+            return true;
+        if (nchw && layer.dst().size() != 1)
+            return true;
+
+        size_t srcC = 0, dstC = 0;
+        if (nhwc)
+        {
+            if (srcWeight.dim()[0] != 1 || srcWeight.dim()[1] != 1)
+                return true;
+            srcC = srcWeight.dim()[2];
+            dstC = srcWeight.dim()[3];
+        }
+        else
+        {
+            if (srcWeight.dim()[2] != 1 || srcWeight.dim()[3] != 1)
+                return true;
+            dstC = srcWeight.dim()[0];
+            srcC = srcWeight.dim()[1];
+        }
+        if (srcC < _param.minK())
+            return true;
+        if (conv.outputNum() != dstC)
+            SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' outputNum does not match weight shape!");
+        if (srcWeight.size() < srcC * dstC * sizeof(float))
+            SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' weight[0] is truncated!");
+
+        const bool biasTerm = conv.biasTerm();
+        const bool prelu = conv.activationType() == ActivationFunctionTypePrelu;
+        const size_t need = 1 + (biasTerm ? 1 : 0) + (prelu ? 1 : 0);
+        if (layer.weight().size() < need)
+            SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' has " << layer.weight().size() << " weights instead of " << need << "!");
+
+        size_t srcIndex = 1;
+        if (biasTerm)
+        {
+            const WeightParam& biasWeight = layer.weight()[srcIndex++];
+            if (biasWeight.type() != TensorType32f || TensorSize(biasWeight.dim()) != dstC)
+                SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' bias must be FP32 of size " << dstC << "!");
+            if (biasWeight.size() < dstC * sizeof(float))
+                SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' bias is truncated!");
+        }
+        if (prelu)
+        {
+            const WeightParam& srcPrelu = layer.weight()[srcIndex++];
+            size_t count = TensorSize(srcPrelu.dim());
+            if (srcPrelu.type() != TensorType32f || (count != 1 && count != dstC) || srcPrelu.size() < count * sizeof(float))
+                SYNET_ERROR("Int8Quantizer: layer '" << layer.name() << "' Prelu weight must be FP32 of size 1 or " << dstC << "!");
+        }
+
+        WeightParam matrix = srcWeight;
+        matrix.format() = TensorFormatNchw;
+        if (nhwc)
+            matrix.dim() = Shp(srcC, dstC);
+        else if (WeightUserCount(layers, srcWeight) > 1)
+        {
+            std::vector<float> copy(srcC * dstC);
+            memcpy(copy.data(), GetWeight<float>(bin, srcWeight), copy.size() * sizeof(float));
+            AppendWeight(bin, copy.data(), copy.size() * sizeof(float), Shp(dstC, srcC), TensorType32f, TensorFormatNchw, matrix);
+            TransposeWeight(matrix, bin);
+        }
+        else
+        {
+            matrix.dim() = Shp(dstC, srcC);
+            TransposeWeight(matrix, bin);
+        }
+
+        std::vector<WeightParam> weights;
+        weights.push_back(matrix);
+        srcIndex = 1;
+        if (biasTerm)
+            weights.push_back(layer.weight()[srcIndex++]);
+        if (prelu)
+            weights.push_back(layer.weight()[srcIndex++]);
+
+        LayerParam dqip = layer;
+        dqip.type() = LayerTypeDynamicQuantizedInnerProduct;
+        dqip.convolution() = ConvolutionParam();
+        dqip.innerProduct().outputNum() = (uint32_t)dstC;
+        dqip.innerProduct().biasTerm() = biasTerm;
+        dqip.innerProduct().transposeA() = false;
+        dqip.innerProduct().transposeB() = false;
+        dqip.innerProduct().axis() = -1;
+        dqip.innerProduct().activationType() = conv.activationType();
+        dqip.innerProduct().activationParam0() = conv.activationParam0();
+        dqip.innerProduct().activationParam1() = conv.activationParam1();
+        dqip.weight() = weights;
+
+        if (nhwc)
+        {
+            layers[index] = dqip;
+        }
+        else
+        {
+            // DynamicQuantizedInnerProduct reduces the last axis. An NCHW 1x1 convolution
+            // matches that GEMM only after the activation is permuted to NHWC and back.
+            const String toNhwcName = FreshName(layers, layer.name() + "_to_nhwc");
+            const String nhwcName = FreshName(layers, layer.name() + "_nhwc");
+            const String toNchwName = FreshName(layers, layer.name() + "_to_nchw");
+
+            LayerParam toNhwc;
+            toNhwc.type() = LayerTypePermute;
+            toNhwc.name() = toNhwcName;
+            toNhwc.src() = layer.src();
+            toNhwc.dst().push_back(toNhwcName);
+            toNhwc.permute().order() = Shp(0, 2, 3, 1);
+            toNhwc.permute().format() = TensorFormatNhwc;
+
+            dqip.src().resize(1);
+            dqip.src()[0] = toNhwcName;
+            dqip.dst().resize(1);
+            dqip.dst()[0] = nhwcName;
+
+            LayerParam toNchw;
+            toNchw.type() = LayerTypePermute;
+            toNchw.name() = toNchwName;
+            toNchw.src().push_back(nhwcName);
+            toNchw.dst() = layer.dst();
+            toNchw.permute().order() = Shp(0, 3, 1, 2);
+            toNchw.permute().format() = TensorFormatNchw;
+
+            layers[index] = toNhwc;
+            layers.insert(layers.begin() + index + 1, dqip);
+            layers.insert(layers.begin() + index + 2, toNchw);
+            index += 2;
+        }
+        converted = true;
         return true;
     }
 

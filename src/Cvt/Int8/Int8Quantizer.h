@@ -45,7 +45,9 @@ namespace Synet
 
         const Int8OptParam& _param;
 
-        bool ConvertInnerProduct(LayerParam& layer, Bytes& bin);
+        bool ConvertInnerProduct(LayerParam& layer, Bytes& bin, bool& converted);
+
+        bool ConvertConvolution(LayerParams& layers, size_t& index, Bytes& bin, bool& converted);
 
         bool CompactWeights(LayerParams& layers, Bytes& bin);
     };
