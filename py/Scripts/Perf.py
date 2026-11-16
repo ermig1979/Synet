@@ -40,6 +40,10 @@ class Test():
 			self.bf16 = vals[5]
 		else :
 			self.bf16 = "0"
+		if len(vals) > 6 and args.int8 :
+			self.int8 = vals[6]
+		else :
+			self.int8 = "0"
 		if args.fp32 :
 			self.fp32 = "1"
 		else :
@@ -153,11 +157,19 @@ def SetTestList(context : Context):
 			if skip :
 				continue
 		
+		if test.fp32 == "1":
+			if(test.batch == "1") :
+				context.total += 1
+			context.total += 1
 		if test.bf16 == "1":
 			if(test.batch == "1") :
 				context.total += 1
 			context.total += 1
-		if test.fp32 == "1":
+		if test.int8 == "1":
+			if(test.batch == "1") :
+				context.total += 1
+			context.total += 1
+		if test.bf16 == "1" and test.int8 == "1":
 			if(test.batch == "1") :
 				context.total += 1
 			context.total += 1
@@ -170,7 +182,7 @@ def SetTestList(context : Context):
 
 ###################################################################################################
 
-def RunTest(context, test, batch, bf16):
+def RunTest(context, test, batch, bf16, int8):
 	args = context.args
 	binPath = args.bin + os.path.sep + "test_" + test.framework
 	if not os.path.isfile(binPath):
@@ -194,9 +206,12 @@ def RunTest(context, test, batch, bf16):
 	else :
 		log = log + "c{0}_{1}__{2}_t{3}_b{4}".format(test.framework[0], test.group, test.name, args.threads, batch)
 	if bf16 == "1" :
-		log = log + "_bf16.txt"
+		log = log + "_bf16"
 	else :
-		log = log + "_fp32.txt"
+		log = log + "_fp32"
+	if int8 == "1" :
+		log = log + "_int8"
+	log = log + ".txt"
 
 	if bf16 == "1" :
 		threshold = args.bf16Threshold
@@ -209,11 +224,15 @@ def RunTest(context, test, batch, bf16):
 		pathArgs += "-fm={0}/other.xml -fw={0}/other.bin".format(testPath)
 	elif test.framework == "onnx" :
 		pathArgs += "-fw={0}/other.onnx".format(testPath)
-	if bf16 :
-		pathArgs += " -sm={0}/synet2.xml".format(testPath)
+	if bf16 == "1" and int8 == "0" :
+		pathArgs += " -sm={0}/synet2.xml -sw={0}/synet2.bin".format(testPath)
+	elif bf16 == "0" and int8 == "1" :
+		pathArgs += " -sm={0}/synet3.xml -sw={0}/synet3.bin".format(testPath)
+	elif bf16 == "1" and int8 == "1" :
+		pathArgs += " -sm={0}/synet4.xml -sw={0}/synet4.bin".format(testPath)
 	else :
-		pathArgs += " -sm={0}/synet.xml".format(testPath)
-	pathArgs += " -sw={0}/synet.bin -id={1} -od={0}/output -tp={0}/param.xml -sn={2}/sync.txt -hr={2}/_report.html -tr={2}/_report.txt".format(testPath, imagePath, context.dst)
+		pathArgs += " -sm={0}/synet.xml -sw={0}/synet.bin".format(testPath)
+	pathArgs += " -id={1} -od={0}/output -tp={0}/param.xml -sn={2}/sync.txt -hr={2}/_report.html -tr={2}/_report.txt".format(testPath, imagePath, context.dst)
 	
 	trashFile = imagePath + os.path.sep + "descript.ion"
 	if os.path.isfile(trashFile) :
@@ -224,12 +243,12 @@ def RunTest(context, test, batch, bf16):
 	os.environ['LD_LIBRARY_PATH'] = args.bin
 	
 	if batch == 1 :
-		cmd = "{0} -m=convert {1} -tf=1 -cs=1 -bf={2}".format(binPath, pathArgs, bf16)
+		cmd = "{0} -m=convert {1} -tf=1 -cs=1 -bf={2} -dq={3}".format(binPath, pathArgs, bf16, int8)
 		result = subprocess.run(cmd.split())
 		if result.returncode != 0 :
 			return context.Error("Error in test {0} !".format(log))
 		
-	cmd = "{0} -m=compare -e=3 {1} -rn=0 -et=10.0 -wt=1 -tt={2} -ie=10 -be=10 -tf=1 -bs={3} -ct={4} -cs=1 -ln={5} -bf={6} -cp={7} -re={8}".format(binPath, pathArgs, args.threads, batch, threshold, log, bf16, int(args.comparePrecise == True), int(args.reverseExecution == True))
+	cmd = "{0} -m=compare -e=3 {1} -rn=0 -et=10.0 -wt=1 -tt={2} -ie=10 -be=10 -tf=1 -bs={3} -ct={4} -cs=1 -ln={5} -bf={6} -dq={7} -cp={8} -re={9}".format(binPath, pathArgs, args.threads, batch, threshold, log, bf16, int8, int(args.comparePrecise == True), int(args.reverseExecution == True))
 	result = subprocess.run(cmd.split())
 	if result.returncode != 0 :
 		return context.Error("Error in test {0} !".format(log))
@@ -241,16 +260,28 @@ def RunTest(context, test, batch, bf16):
 def RunAllTests(context):
 	for test in context.tests:
 		if test.fp32 == "1" :
-			if not RunTest(context, test, 1, "0") :
+			if not RunTest(context, test, 1, "0", "0") :
 				return False
 		if test.fp32 == "1" and test.batch == "1" :
-			if not RunTest(context, test, 10, "0") :
+			if not RunTest(context, test, 10, "0", "0") :
 				return False
 		if test.bf16 == "1" :
-			if not RunTest(context, test, 1, "1") :
+			if not RunTest(context, test, 1, "1", "0") :
 				return False
 		if test.batch == "1" and test.bf16 == "1" :
-			if not RunTest(context, test, 10, "1") :
+			if not RunTest(context, test, 10, "1", "0") :
+				return False
+		if test.int8 == "1" :
+			if not RunTest(context, test, 1, "0", "1") :
+				return False
+		if test.batch == "1" and test.int8 == "1" :
+			if not RunTest(context, test, 10, "0", "1") :
+				return False
+		if test.bf16 == "1" and test.int8 == "1" :
+			if not RunTest(context, test, 1, "1", "1") :
+				return False
+		if test.batch == "1" and test.bf16 == "1" and test.int8 == "1" :
+			if not RunTest(context, test, 10, "1", "1") :
 				return False
 	return True
 
@@ -269,6 +300,7 @@ def main():
 	parser.add_argument("-e", "--exclude", help="Exclude tests filter.", required=False, default=[], action="append")
 	parser.add_argument("-fp", "--fp32", help="Run FP32 tests.", required=False, type=bool, default=True)
 	parser.add_argument("-bf", "--bf16", help="Run BF16 tests.", required=False, type=bool, default=False)
+	parser.add_argument("-dq", "--int8", help="Run INT8 tests.", required=False, type=bool, default=False)
 	parser.add_argument("-it", "--inferenceEngineThreshold", help="Threshold for Inference Engine tests.", required=False, type=float, default=0.000270)
 	parser.add_argument("-ot", "--onnxThreshold", help="Threshold for OnnxRuntime tests.", required=False, type=float, default=0.001317)
 	parser.add_argument("-bt", "--bf16Threshold", help="Threshold for BF16 tests.", required=False, type=float, default=0.011654)
