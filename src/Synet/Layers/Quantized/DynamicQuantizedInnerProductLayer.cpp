@@ -180,7 +180,7 @@ namespace Synet
         Shape shape = src[0]->Shape();
         shape.back() = _N;
         TensorFormat format = src[0]->Format();
-        if (format != TensorFormatNhwc)
+        if (format != TensorFormatNhwc || this->IsBack())
             format = TensorFormatNchw;
         dst[0]->Reshape(_typeC, shape, format);
 
