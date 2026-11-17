@@ -48,10 +48,10 @@ if [[ ! -f $DIR/synet"$FILE_ID".xml ]] || [[ ! -f $DIR/synet"$FILE_ID".bin ]];th
     ORIG="-fw=$DIR/other.onnx"
   elif [ "$FRAMEWORK" = "synet" ]; then 
     ORIG="-fm=$DIR/synet1.xml -fw=$DIR/synet1.bin"
-    if [ "${INT8}" = "1" ]; then
+    if [ "${INT8}" = "1" ] || [ "${BF16}" = "1" ]; then
       BIN_NAME="low_precision"
     else
-      BIN_NAME="bf16"
+      BIN_NAME="optimizer"
     fi
 	if [ "$FORMAT" = "0" ]; then echo "Can't convert Synet model format NHWC to NCHW!"; exit ; fi
   fi
