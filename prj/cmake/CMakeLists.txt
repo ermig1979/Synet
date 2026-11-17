@@ -30,7 +30,7 @@ endif()
 
 if(NOT((SYNET_TEST STREQUAL "all") OR (SYNET_TEST STREQUAL "none") OR
        (SYNET_TEST STREQUAL "inference_engine") OR (SYNET_TEST STREQUAL "onnx") OR 
-       (SYNET_TEST STREQUAL "optimizer") OR (SYNET_TEST STREQUAL "bf16") OR
+       (SYNET_TEST STREQUAL "optimizer") OR
        (SYNET_TEST STREQUAL "low_precision") OR
        (SYNET_TEST STREQUAL "multi_threads") OR (SYNET_TEST STREQUAL "video") OR
        (SYNET_TEST STREQUAL "use_samples")))
@@ -98,7 +98,6 @@ if(SYNET_PYTHON)
 		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/SynetPy/*.py ${CMAKE_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/Scripts/Check.py ${CMAKE_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/Scripts/Perf.py ${CMAKE_BINARY_DIR}
-		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/Scripts/PerfBf16.py ${CMAKE_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E copy ${ROOT_DIR}/py/Scripts/PerfLp.py ${CMAKE_BINARY_DIR}
 		)
 endif()
