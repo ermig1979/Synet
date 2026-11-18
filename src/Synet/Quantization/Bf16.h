@@ -72,7 +72,7 @@ namespace Synet
     SYNET_INLINE bool BFloat16HardwareSupport()
     {
 #if defined(SYNET_SIMD_LIBRARY_ENABLE) && !defined(SYNET_SIMD_SYNET_DISABLE)
-        return SimdCpuInfo(SimdCpuInfoAmxBf16) != 0;
+        return SimdCpuInfo(SimdCpuInfoAmxBf16) != 0 || SimdCpuInfo(SimdCpuInfoAvx512bf16) != 0;
 #else
         return false;
 #endif
