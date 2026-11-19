@@ -123,10 +123,12 @@ def CheckDirs(context : Context) :
 def TestModes(context : Context, test : Test):
 	args = context.args
 	modes = []
+	int8 = args.int8 if test.int8 == "1" else 0
+	bf16 = args.bf16 if test.bf16 == "1" else 0
 	if test.bf16 == "1" and args.testMode == "bf16" :
-		modes.append((str(args.bf16), str(args.int8)))
+		modes.append((str(bf16), str(int8)))
 	if test.int8 == "1" and args.testMode == "int8" :
-		modes.append((str(args.bf16), str(args.int8)))
+		modes.append((str(bf16), str(int8)))
 	return modes
 
 ###################################################################################################

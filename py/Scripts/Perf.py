@@ -36,18 +36,14 @@ class Test():
 		self.name = vals[2]
 		self.image = vals[3]
 		self.batch = vals[4]
-		if len(vals) > 5 and args.testMode == "bf16" :
+		if len(vals) > 5 :
 			self.bf16 = vals[5]
 		else :
 			self.bf16 = "0"
-		if len(vals) > 6 and args.testMode == "int8" :
+		if len(vals) > 6 :
 			self.int8 = vals[6]
 		else :
 			self.int8 = "0"
-		if args.testMode == "fp32" :
-			self.fp32 = "1"
-		else :
-			self.fp32 = "0"
 		self.path = ""
 		
 ###################################################################################################
@@ -77,6 +73,8 @@ def ValidateParameters(context : Context):
 		args.framework = "inference_engine"
 	elif args.framework == "o" :
 		args.framework = "onnx"
+	elif args.framework == "a" :
+		args.framework = "all"
 	else :
 		print("Unknown parameter -f={0}!".format(args.framework))
 		return False
@@ -117,6 +115,21 @@ def CheckDirs(context : Context) :
 		
 ###################################################################################################
 
+def TestModes(context : Context, test : Test):
+	args = context.args
+	modes = []
+	int8 = args.int8 if test.int8 == "1" else 0
+	bf16 = args.bf16 if test.bf16 == "1" else 0
+	if test.bf16 == "1" and args.testMode == "bf16" :
+		modes.append((str(bf16), str(int8)))
+	if test.int8 == "1" and args.testMode == "int8" :
+		modes.append((str(bf16), str(int8)))
+	if args.testMode == "fp32" :
+		modes.append((str(bf16), str(int8)))
+	return modes
+
+###################################################################################################
+
 def SetTestList(context : Context):
 	args = context.args
 	if args.list == "" :
@@ -137,7 +150,11 @@ def SetTestList(context : Context):
 			continue
 		test = Test(vals, args)
 		
-		if test.framework != args.framework :
+		if args.framework != "all" and args.framework != test.framework :
+			continue
+		
+		modes = TestModes(context, test)
+		if len(modes) == 0 :
 			continue
 		
 		test.path = test.framework
@@ -161,22 +178,8 @@ def SetTestList(context : Context):
 			if skip :
 				continue
 		
-		if test.fp32 == "1":
-			if(test.batch == "1") :
-				context.total += 1
-			context.total += 1
-		if test.bf16 == "1":
-			if(test.batch == "1") :
-				context.total += 1
-			context.total += 1
-		if test.int8 == "1":
-			if(test.batch == "1") :
-				context.total += 1
-			context.total += 1
-		if test.bf16 == "1" and test.int8 == "1":
-			if(test.batch == "1") :
-				context.total += 1
-			context.total += 1
+		repeat = 2 if test.batch == "1" else 1
+		context.total += len(modes) * repeat
 			
 		context.tests.append(test)
 	listFile.close()
@@ -262,31 +265,14 @@ def RunTest(context, test, batch, bf16, int8):
 ###################################################################################################
 
 def RunAllTests(context):
+	args = context.args
 	for test in context.tests:
-		if test.fp32 == "1" :
-			if not RunTest(context, test, 1, "0", "0") :
+		for bf16, int8 in TestModes(context, test) :
+			if not RunTest(context, test, 1, bf16, int8) :
 				return False
-		if test.fp32 == "1" and test.batch == "1" :
-			if not RunTest(context, test, 10, "0", "0") :
-				return False
-		if test.bf16 == "1" :
-			if not RunTest(context, test, 1, "1", "0") :
-				return False
-		if test.batch == "1" and test.bf16 == "1" :
-			if not RunTest(context, test, 10, "1", "0") :
-				return False
-		if test.int8 == "1" :
-			if not RunTest(context, test, 1, "0", "1") :
-				return False
-		if test.batch == "1" and test.int8 == "1" :
-			if not RunTest(context, test, 10, "0", "1") :
-				return False
-		if test.bf16 == "1" and test.int8 == "1" :
-			if not RunTest(context, test, 1, "1", "1") :
-				return False
-		if test.batch == "1" and test.bf16 == "1" and test.int8 == "1" :
-			if not RunTest(context, test, 10, "1", "1") :
-				return False
+			if test.batch == "1" :
+				if not RunTest(context, test, 10, bf16, int8) :
+					return False
 	return True
 
 ###################################################################################################
@@ -299,12 +285,11 @@ def main():
 	parser.add_argument("-b", "--bin", help="Tests binary path.", required=False, type=str, default="./build")
 	parser.add_argument("-d", "--dst", help="Output tests path.", required=False, type=str, default="../test/perf")
 	parser.add_argument("-t", "--threads", help="Tests threads number.", required=False, type=int, default=1)
-	parser.add_argument("-f", "--framework", help="Framework to test. It can be i(inference_engine) or o(onnx).", required=False, type=str, default="o", choices=["i", "o"])
+	parser.add_argument("-f", "--framework", help="Framework to test. It can be i(inference_engine) or o(onnx).", required=False, type=str, default="o", choices=["i", "o", "a"])
 	parser.add_argument("-i", "--include", help="Include tests filter.", required=False, default=[], action="append")
 	parser.add_argument("-e", "--exclude", help="Exclude tests filter.", required=False, default=[], action="append")
-	parser.add_argument("-fp", "--fp32", help="Run FP32 tests.", required=False, type=bool, default=True)
-	parser.add_argument("-bf", "--bf16", help="Run BF16 tests.", required=False, type=bool, default=False)
-	parser.add_argument("-dq", "--int8", help="Run INT8 tests.", required=False, type=bool, default=False)
+	parser.add_argument("-bf", "--bf16", help="Run BF16 tests.", required=False, type=int, default=1, choices=[0, 1])
+	parser.add_argument("-dq", "--int8", help="Run INT8 tests.", required=False, type=int, default=1, choices=[0, 1])
 	parser.add_argument("-it", "--inferenceEngineThreshold", help="Threshold for Inference Engine tests.", required=False, type=float, default=0.000270)
 	parser.add_argument("-ot", "--onnxThreshold", help="Threshold for OnnxRuntime tests.", required=False, type=float, default=0.001317)
 	parser.add_argument("-bt", "--bf16Threshold", help="Threshold for BF16 tests.", required=False, type=float, default=0.011654)
