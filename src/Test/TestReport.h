@@ -461,7 +461,11 @@ namespace Test
 			}
 			_summary.clear();
 			if (formats.size() > 1)
+			{
 				_summary.push_back(Test("Common", 0, -1, -1));
+				for (Set::const_iterator b = batch.begin(); b != batch.end(); ++b)
+					_summary.push_back(Test("Common-Batch-" + ToString(*b), *b, -1, -1));
+			}
 			for (Formats::const_iterator f = formats.begin(); f != formats.end(); ++f)
 			{
 				String format = FormatName(f->first, f->second);
