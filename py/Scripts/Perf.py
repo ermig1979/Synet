@@ -36,15 +36,15 @@ class Test():
 		self.name = vals[2]
 		self.image = vals[3]
 		self.batch = vals[4]
-		if len(vals) > 5 and args.bf16 :
+		if len(vals) > 5 and args.testMode == "bf16" :
 			self.bf16 = vals[5]
 		else :
 			self.bf16 = "0"
-		if len(vals) > 6 and args.int8 :
+		if len(vals) > 6 and args.testMode == "int8" :
 			self.int8 = vals[6]
 		else :
 			self.int8 = "0"
-		if args.fp32 :
+		if args.testMode == "fp32" :
 			self.fp32 = "1"
 		else :
 			self.fp32 = "0"
@@ -100,7 +100,11 @@ def CheckDirs(context : Context) :
 	
 	context.dst = args.dst + os.path.sep
 	now = datetime.datetime.now()
-	context.dst += "{0:04d}_{1:02d}_{2:02d}__{3:02d}_{4:02d}{5}_t{6}".format(now.year, now.month, now.day, now.hour, now.minute, args.framework[0], args.threads)
+	context.dst += "{0:04d}_{1:02d}_{2:02d}__{3:02d}_{4:02d}{5}{6}_t{7}".format(now.year, now.month, now.day, now.hour, now.minute, args.framework[0], args.testMode[0], args.threads)
+	if args.bf16 == 1 :
+		context.dst += "_bf16"
+	if args.int8 == 1 :
+		context.dst += "_int8"
 	if len(args.include) > 0 :
 		context.dst += "_dbg"
 	if not os.path.isdir(context.dst):
@@ -306,6 +310,7 @@ def main():
 	parser.add_argument("-bt", "--bf16Threshold", help="Threshold for BF16 tests.", required=False, type=float, default=0.011654)
 	parser.add_argument("-cp", "--comparePrecise", help="Compare output precise (element-wise).", required=False, type=bool, default=False)
 	parser.add_argument("-re", "--reverseExecution", help="Synet is started first or second.", required=False, type=bool, default=False)
+	parser.add_argument("-tm", "--testMode", help="Mode of test filtration.", required=False, type=str, default="bf16", choices=["fp32", "bf16", "int8"])
 	context = Context(parser.parse_args())
 	
 	ValidateParameters(context)
