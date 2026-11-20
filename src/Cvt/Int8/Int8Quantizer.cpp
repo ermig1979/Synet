@@ -287,7 +287,7 @@ namespace Synet
             return true;
 
         const ConvolutionParam& conv = layer.convolution();
-        if (conv.group() != 1 || conv.autoPad())
+        if (conv.group() != 1)// || conv.autoPad())
             return true;
         if (conv.kernel() != Shp(1, 1))
             return true;
