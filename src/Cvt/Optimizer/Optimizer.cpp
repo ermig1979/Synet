@@ -64,6 +64,10 @@ namespace Synet
         Int8Quantizer int8Quantizer(_param.int8());
         if (!int8Quantizer.Run(network, bin))
             return false;
+        if (!OptimizeLayers(network, bin, 9))
+            return false;
+        if (!RemoveStub(network))
+            return false;
         if (_param.reuseLayers())
         {
             if (!ReuseLayers(network))
