@@ -55,7 +55,7 @@ namespace Synet
 
     LowPrecisionType DynamicQuantizedInnerProductLayer::LowPrecision(TensorType type) const
     {
-        if (type == TensorType16b)
+        if (type == TensorType16b || type == TensorType16f)
             return LowPrecisionTypeActive;
         return LowPrecisionTypeNone;
     }
@@ -93,12 +93,12 @@ namespace Synet
 
         _constB = src.size() == 1;
         _typeA = src[0]->GetType();
-        if (_typeA != TensorType32f && _typeA != TensorType16b)
-            SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32 or BF16 input[0]!");
+        if (_typeA != TensorType32f && _typeA != TensorType16b && _typeA != TensorType16f)
+            SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32, BF16 or FP16 input[0]!");
         _elemA = _typeA == TensorType32f ? 4 : 2;
         _typeC = dst[0]->GetType();
-        if (_typeC != TensorType32f && _typeC != TensorType16b)
-            SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32 or BF16 output!");
+        if (_typeC != TensorType32f && _typeC != TensorType16b && _typeC != TensorType16f)
+            SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32, BF16 or FP16 output!");
         _elemC = _typeC == TensorType32f ? 4 : 2;
 
         const InnerProductParam& ip = this->Param().innerProduct();
@@ -120,9 +120,9 @@ namespace Synet
             if (weight.empty())
                 SYNET_ERROR("DynamicQuantizedInnerProductLayer with 1 input must have at least 1 weights!");
             _typeB = weight[0].GetType();
-            if (_typeB != TensorType32f && _typeB != TensorType8i)
-                SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32 or INT8 weight[0]!");
-            _elemB = _typeB == TensorType32f ? 4 : 1;
+            if (_typeB != TensorType32f && _typeB != TensorType16f && _typeB != TensorType8i)
+                SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32, FP16 or INT8 weight[0]!");
+            _elemB = _typeB == TensorType32f ? 4 : (_typeB == TensorType16f ? 2 : 1);
             _N = weight[0].Axis(-1);
             if (_N != ip.outputNum() || weight[0].Axis(0) != _K || (ip.outputNum() != _N && ip.outputNum() != 0))
                 SYNET_ERROR("DynamicQuantizedInnerProductLayer: wrong weight[0] size!");
@@ -143,8 +143,8 @@ namespace Synet
             _batch = _axis > 0 ? src[0]->Size(0, _axis - 1) : 1;
             _M = src[0]->Size(Max<ptrdiff_t>(0, _axis - 1), _axis);
             _typeB = src[1]->GetType();
-            if (_typeB != TensorType32f && _typeB != TensorType16b)
-                SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32 or BF16 input[1]!");
+            if (_typeB != TensorType32f && _typeB != TensorType16b && _typeB != TensorType16f)
+                SYNET_ERROR("DynamicQuantizedInnerProductLayer supports only FP32, BF16 or FP16 input[1]!");
             _elemB = _typeB == TensorType32f ? 4 : 2;
             if (src[1]->Size(Max<ptrdiff_t>(0, _axis - 1), _axis) != _K)
                 SYNET_ERROR("DynamicQuantizedInnerProductLayer: wrong src[1] size!");
